@@ -6,6 +6,8 @@
 
 :- dynamic waypoint/2.
 
+:- retractall(warning(_)).
+:- retractall(action(_)).
 :- retractall(current_state(_, _)).
 :- retractall(current_goal(_)).
 
@@ -59,7 +61,7 @@ add_goal(Goal) :-
             ->
                 assert(current_goal(Goal))
             ;
-                nl, write('WARNING: no valid solution for goal '), write(Goal), nl
+                add_warning(['No valid solution for goal ', Goal])
         )
     .
 
@@ -128,7 +130,7 @@ do_transition(State) :-
     assert(current_state(NewState, Priority)),
     nl, write('Transition: '), write(State), write(' ---> '), write(NewState), nl.
 do_transition(State) :-
-    nl, write('WARNING: Could not find a transition for state '), write(State), nl.
+    add_warning(['Could not find a transition for state ', State]).
 
 print_state_machine :-
    % find all transitions
