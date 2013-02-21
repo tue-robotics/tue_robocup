@@ -1,6 +1,8 @@
 :- dynamic module_status/2.
 :- dynamic current_state/2.
 :- dynamic current_goal/1.
+:- dynamic action/1.
+:- dynamic warning/1.
 
 :- dynamic waypoint/2.
 
@@ -37,9 +39,12 @@ transition(learn_person(ID), learn_person(ID)) :-
 %make_true(position(amigo, pose_2d(X, Y, Phi, FrameID))) :- false. % TODO
 
 achieve(Goal) :-
+    nl, write('Goal checked: '), write(Goal), nl,
     achieve(Goal, check)
     ->
+        (nl, write('Goal achieved: '), write(Goal), nl,
         retractall(Goal)
+        )
     ;
         (add_goal(Goal),
         fail)
@@ -50,25 +55,43 @@ add_goal(Goal) :-
     ->
         true
     ;
-        (   achieve(Goal, plan)
+        (   achieve(Goal, solution)
             ->
                 assert(current_goal(Goal))
             ;
-                nl, write('WARNING: no plan for goal '), write(Goal), nl
+                nl, write('WARNING: no valid solution for goal '), write(Goal), nl
         )
     .
+
+add_action(Action) :-
+    assert(action(Action)).
+
+add_warning(Warning) :-
+    terms_to_atoms(Warning, WarningAtoms),
+    atomic_list_concat(WarningAtoms, WarningMsg),
+    assert(warning(WarningMsg)).
+
+terms_to_atoms([], []).
+terms_to_atoms([X|Xs], [Atom|Atoms]) :-
+    not(atom(X)),
+    term_to_atom(X, Atom),
+    terms_to_atoms(Xs, Atoms).
+terms_to_atoms([X|Xs], [X|Atoms]) :-
+    atom(X),
+    terms_to_atoms(Xs, Atoms).
 
 achieve(position(amigo, Waypoint), check) :-
     waypoint(Waypoint, pose_2d(X, Y, Phi)),
     property_expected(amigo, position, pose_2d(X2, Y2, Phi2)),
     abs(X-X2, DX), abs(Y-Y2, DY), abs(Phi-Phi2, DPhi),
     DX < 0.1, DY < 0.2, (DPhi < 0.1; DPhi > 6.2).
-%achieve(position(amigo, Waypoint), plan) :-
-%    write('Navigating to '), write(Waypoint).
+achieve(position(amigo, Waypoint), solution) :-
+    waypoint(Waypoint, pose_2d(X, Y, Phi)),
+    add_action(navigate_to(X, Y, Phi, '/map')).
     
 achieve(module_status(Module, Status), check) :-
     module_status(Module, Status).
-achieve(module_status(Module, Status), plan) :-
+achieve(module_status(Module, Status), solution) :-
     assert(module_status(Module, Status)). % TODO
 
 property_expected(A, B, C) :-
@@ -77,10 +100,13 @@ property_expected(A, B, C) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-step(NewStates) :-
+step(Actions, Warnings) :-
+    retractall(action(_)),
+    retractall(warning(_)),
     list_states(States),
     do_transitions(States),
-    findall(NewState, current_state(NewState, _), NewStates).
+    findall(Action, action(Action), Actions),
+    findall(Warning, warning(Warning), Warnings).
 
 % Return States in a list in order of priority
 list_states(States) :-
