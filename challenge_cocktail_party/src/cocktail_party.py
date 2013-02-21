@@ -33,25 +33,37 @@ class CocktailParty(smach.StateMachine):
 
         robot.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
+        # Queries:
+        query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
+        query_storage_room = Compound("waypoint", "storage_room", Compound("pose_2d", "X", "Y", "Phi"))
+        query_detect_person = Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "person"),
+                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))
+                                          )
+
         with self:
-            query_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
+            
             smach.StateMachine.add( "START_CHALLENGE",
-                                    states.StartChallenge(robot, query_room), 
+                                    states.StartChallenge(robot, "initial", query_party_room), 
                                     transitions={   "Done":"CALL_PERSON", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"SAY_FAILED"})
 
             smach.StateMachine.add( "CALL_PERSON", 
                                     states.Say(robot, "Ladies and gentlemen, please step in front of me to order your drinks."),
-                                    transitions={   "spoken":"LEARN_PERSON"})
+                                    transitions={   "spoken":"DETECT_PERSON"})
 
+            smach.StateMachine.add( "DETECT_PERSON",
+                                    states.Wait_query_true(robot, query_detect_person, 10, pre_callback=lambda ud: robot.perception.toggle_recognition(faces=True)),
+                                    transitions={   "query_true":"LEARN_PERSON",
+                                                    "timed_out" :"CALL_PERSON",
+                                                    "preempted" :"CALL_PERSON"})
 
             smach.StateMachine.add( "LEARN_PERSON",
                                     states.Learn_Person(robot),
-                                    transitions={   "person_learned":"ASK_DRINK", 
-                                                    "learning_failed":"ASK_DRINK"})
+                                    transitions={   "person_learned":"TAKE_ORDER", 
+                                                    "learning_failed":"TAKE_ORDER"})
 
-            smach.StateMachine.add('ASK_DRINK', 
+            smach.StateMachine.add('TAKE_ORDER', 
                                     states.Timedout_QuestionMachine(
                                             robot=robot,
                                             default_option = "coke", 
@@ -60,19 +72,18 @@ class CocktailParty(smach.StateMachine):
                                                         "fanta":Compound("goal", Compound("serve", "fanta"))
                                                       }),
                                     transitions={   'answered':'DRIVE_TO_STORAGE',
-                                                    'not_answered':'ASK_DRINK'})
+                                                    'not_answered':'TAKE_ORDER'})
 
-            query_room = Compound("waypoint", "storage_room", Compound("pose_2d", "X", "Y", "Phi"))   
+               
             smach.StateMachine.add( 'DRIVE_TO_STORAGE',
-                                    states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
+                                    states.Navigate_to_queryoutcome(robot, query_storage_room, X="X", Y="Y", Phi="Phi"),
                                     transitions={   "arrived":"RETURN_DRINK",  # TODO
                                                     "unreachable":'Aborted',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'Aborted'})
 
-            query_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))   
             smach.StateMachine.add( 'RETURN_DRINK',
-                                    states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
+                                    states.Navigate_to_queryoutcome(robot, query_party_room, X="X", Y="Y", Phi="Phi"),
                                     transitions={   "arrived":"FINISH",  # TODO
                                                     "unreachable":'Aborted',
                                                     "preempted":'Aborted',
