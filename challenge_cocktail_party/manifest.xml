@@ -1,0 +1,15 @@
+<package>
+  <description brief="challenge_cocktail_party">
+
+     challenge_cocktail_party
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_cocktail_party</url>
+  <depend package="tue_execution_pack"/>
+
+</package>
+
+
