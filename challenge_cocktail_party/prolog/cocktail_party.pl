@@ -17,7 +17,7 @@
 :- retractall(current_goal(_)).
 
 % Set current state
-current_state(meta, wait_for_timeout, 0).
+%current_state(meta, wait_for_timeout, 0).
 current_state(cp, wait_for_door, 1).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

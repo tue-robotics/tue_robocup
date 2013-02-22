@@ -61,20 +61,20 @@ if __name__ == '__main__':
             warnings = result[0]["Warnings"]
             
             if actions.is_sequence() and actions.get_size() > 0:
-                print "ACTIONS"
+                print "ACTIONS:"
                 for action in actions:
                     print "    " + str(action)
                     do_action(robot, action)
                 print ""
 
             if transitions.is_sequence() and transitions.get_size() > 0:
-                print "TRANSITION"
+                print "TRANSITIONS:"
                 for transition in transitions:
                     print "    " + str(transition[0]) + ":" + str(transition[1]) + " ---> " + str(transition[0]) + ":" + str(transition[2])
                 print ""
 
             if warnings.is_sequence() and warnings.get_size() > 0:
-                print "WARNINGS"
+                print "WARNINGS:"
                 for warning in warnings:
                     print "    " + str(warning)
                 print ""
