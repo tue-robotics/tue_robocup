@@ -1,20 +1,40 @@
-:- dynamic module_status/2.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                      %
+%                                 INIT                                 %
+%                                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 :- dynamic current_state/3.
+:- retractall(current_state(_, _, _)).
+
 :- dynamic current_goal/1.
+:- retractall(current_goal(_)).
+
 :- dynamic action/1.
+:- retractall(action(_)).
+
 :- dynamic warning/1.
+:- retractall(warning(_)).
 
 :- dynamic heard_words/1.
+:- retractall(heard_words(_)).
 
 :- dynamic known_person/1.
-:- dynamic drink_ordered/2.
-:- dynamic object_state/2.
+:- retractall(known_person(_)).
 
-% initialization
-:- retractall(warning(_)).
-:- retractall(action(_)).
-:- retractall(current_state(_, _, _)).
-:- retractall(current_goal(_)).
+:- dynamic object_state/2.
+:- retractall(object_state(_, _)).
+
+% challenge specific
+
+:- dynamic drink_ordered/2.
+:- retractall(drink_ordered(_,_)).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                      %
+%                           INITITIAL STATE                            %
+%                                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Set current state
 %current_state(meta, wait_for_timeout, 0).
@@ -32,14 +52,12 @@ transition(cp, test, end) :-
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
-
 transition(meta, wait_for_timeout, wait_for_timeout).
 
 % init
 transition(cp, init, wait_for_door) :-
-    achieve(module_status(object_recognition, off)),
-    achieve(module_status(person_detection, off)),
+    achieve(module_status(template_matching, off)),
+    achieve(module_status(face_detection, off)),
     achieve(module_status(face_recognition, off)),
     achieve(look_at(point_3d(10, 0, 1.5, '/base_link'))).
 
@@ -65,7 +83,7 @@ transition(cp, confirm_order(PersonID, DrinkType), check_answer(PersonID, DrinkT
 transition(cp, check_answer(PersonID, DrinkType, yes), find_object(DrinkType)) :-
     assert(drink_ordered(PersonID, DrinkType)),
     achieve(say(['Alright! Ill get the ', DrinkType, ' for you!'])).
-transition(cp, check_answer(PersonID, _, no), take_order(PersonID)) :-
+transition(cp, check_answer(PersonID, _, _), take_order(PersonID)) :-
     achieve(say('I am so sorry.')).
 
 % find_object
@@ -126,7 +144,7 @@ transition(find_person(PersonID, Waypoints), start, explore(PersonID, Waypoints)
 transition(find_person(PersonID, _), explore(PersonID, _), end(ok)) :-
     property_expected(PersonID, class_label, person),
     property_expected(PersonID, position, in_front_of(amigo)),
-    achieve(module_status(person_detection, off)).
+    achieve(module_status(face_detection, off)).
 transition(find_person(PersonID, _), explore(PersonID, [Waypoint|Waypoints]), look(PersonID, Waypoints)) :-
     achieve(position(amigo, Waypoint)).
 transition(find_person(PersonID, _), explore(PersonID, []), end(fail)) :-
@@ -134,7 +152,7 @@ transition(find_person(PersonID, _), explore(PersonID, []), end(fail)) :-
     achieve(say(['I looked everywhere, but I could not find ', PersonName])).
 
 transition(find_person(PersonID, _), look(PersonID, Waypoints), explore(PersonID, Waypoints)) :-
-    achieve(module_status(person_detection, on)),
+    achieve(module_status(face_detection, on)),
     achieve(wait(10)).
 
 % % % % % % % % % % % % % % % LEARN PERSON % % % % % % % % % % % % % % %
@@ -144,16 +162,16 @@ transition(learn_person(PersonID), start, end(ok)) :-
     achieve(say('Hey, I know you! Good to see you again!')),
     achieve(module_status(face_recognition, off)).
 transition(learn_person(_), start, capture) :-
-    achieve(say('Let me have a look at you')),
+    achieve(say('Hi there! Always good to see a new face! Let me have a look at you')),
     achieve(look_at(point_3d(10, 0, 1.5, '/base_link'))).
 
+transition(learn_person(PersonID), capture, end(ok)) :-
+    known_person(PersonID),
+    achieve(say('OK, thank you! I will try very hard to remember you!')),
+    achieve(module_status(face_recognition, off)).
 transition(learn_person(PersonID), capture, capture) :-
     achieve(module_status(face_recognition, on)),
     assert(known_person(PersonID)).
-transition(learn_person(PersonID), capture, end(ok)) :-
-    known_person(PersonID),
-    achieve(say('OK, thank you. Now I can find you back later.')),
-    achieve(module_status(face_recognition, off)).
 
 % % % % % % % % % % % % % % % FIND OBJECT % % % % % % % % % % % % % % %
 
@@ -163,7 +181,7 @@ transition(find_object(_, _, Waypoints), start, explore(Waypoints)).
 transition(find_object(ObjectID, ObjectQuery, Waypoints), explore(Waypoints), end(ok)) :-
     call(ObjectQuery),
     property_expected(ObjectID, position, in_front_of(amigo)),
-    achieve(module_status(object_recognition, off)).
+    achieve(module_status(template_matching, off)).
 transition(find_object(_, _, _), explore([Waypoint|Waypoints]), look([Waypoint|Waypoints])) :-
     achieve(position(amigo, Waypoint)).
 transition(find_object(_, _, _), explore([]), end(fail)) :-
@@ -172,7 +190,7 @@ transition(find_object(_, _, _), explore([]), end(fail)) :-
 transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
     region_of_interest(Waypoint, ROI),
     achieve(look_at(ROI)),
-    achieve(module_status(object_recognition, on)),
+    achieve(module_status(template_matching, on)),
     achieve(wait(10)).
 
 transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
@@ -233,8 +251,7 @@ achieve(listen(Options, _), solution, _) :-
     add_action(listen(Options)).
     
 achieve(module_status(Module, Status), check, _) :-
-    retractall(module_status(Module, _)),
-    assert(module_status(Module, Status)). % TODO
+    add_action(toggle_module(Module, Status)).
 
 % look_at
 achieve(look_at(point_3d(X, Y, Z)), check, _) :-

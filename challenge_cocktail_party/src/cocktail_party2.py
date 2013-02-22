@@ -8,38 +8,46 @@ from tue_execution_pack import robot_parts
 
 from psi import *
 
+def navigate_to(robot, x, y, phi, frame_id):
+    pos = robot.base.point(x,y)
+    orient = robot.base.orient(phi)
+    robot.base.send_goal(pos, orient, block=True)
+
+def look_at(robot, x, y, z, frame_id):
+    robot.head.send_goal(robot.head.point(x, y, z), frame_id)
+
+def listen(robot, options):
+    robot.ears.forget()
+    robot.ears.start_listening()
+    rospy.sleep(5)
+    words = [ str(word) for word in options ]
+    print words
+    answer = robot.ears.last_heard_words(words, 5)
+    robot.ears.stop_listening()
+    print answer
+    robot.reasoner.query(Compound("retractall", Compound("heard_words", "X")))
+    robot.reasoner.assert_fact(Compound("heard_words", str(answer)))
+
+def toggle_module(robot, module, status):
+    if str(status) == "on":
+        robot.perception.toggle([module])
+    else:
+        robot.perception.toggle([])   
+
 def do_action(robot, action):
     if action.is_compound():
         if action.get_functor() == 'navigate_to':
-            x = float(action[0])
-            y = float(action[1])
-            phi = float(action[2])
-            frame_id = str(action[3])
-            
-            pos = robot.base.point(x,y)
-            orient = robot.base.orient(phi)
-
-            robot.base.send_goal(pos, orient, block=True)
+            navigate_to(robot, float(action[0]), float(action[1]), float(action[2]), str(action[3]))
         elif action.get_functor() == 'say':
             robot.speech.speak(str(action[0]))
         elif action.get_functor() == 'listen':
-            robot.ears.forget()
-            robot.ears.start_listening()
-            rospy.sleep(5)
-            words = [ str(word) for word in action[0] ]
-            print words
-            answer = robot.ears.last_heard_words(words, 5)
-            robot.ears.stop_listening()
-            print answer
-            robot.reasoner.assert_fact(Compound("heard_words", str(answer)))
+            listen(robot, action[0])
         elif action.get_functor() == 'wait':
             rospy.sleep(action[0].get_number())
         elif action.get_functor() == 'look_at':
-            x = float(action[0])
-            y = float(action[1])
-            z = float(action[2])
-            frame_id = str(action[3])
-            robot.head.send_goal(robot.head.point(x, y, z), frame_id)
+            look_at(robot, float(action[0]), float(action[1]), float(action[2]), str(action[3]))
+        elif action.get_functor() == 'toggle_module':
+            toggle_module(robot, str(action[0]), str(action[1]))
 
     #print action.functor()
   
