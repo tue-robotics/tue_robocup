@@ -83,7 +83,7 @@ transition(cp, wait_for_door, find_person_for_order) :-
 transition(cp, find_person_for_order, learn_person(PersonID)) :-
     achieve(find_person(PersonID, [party_room]), ok).
 transition(cp, find_person_for_order, find_person_for_order) :-
-    achieve(find_person(PersonID, [party_room]), fail),
+    achieve(find_person(_, [party_room]), fail),
     achieve(say('This looks like a great party! Does anyone need a drink? If so, please come over here!')).
 
 % learn_person
@@ -104,22 +104,18 @@ transition(cp, check_answer(PersonID, _, _), take_order(PersonID)) :-
     achieve(say('I am so sorry.')).
 
 % find_object
-transition(cp, find_object(Drink), NextState) :-
+transition(cp, find_object(Drink), grab_object(DrinkID)) :-
     findall(storage_room(A), waypoint(storage_room(A), _), Waypoints),
     achieve(find_object(
                 DrinkID,
                 ( synonym(Drink, ObjectType), property_expected(DrinkID, class_label, ObjectType) ),
                 Waypoints
-            ), Result),
-    (
-        Result = ok
-    ->
-        NextState = grab_object(DrinkID)
-    ;
-        achieve(say('What a pity. Maybe I have better luck with other people. Lets get back to the party!')),
-        NextState = find_person_for_order,
-        achieve(look_at(point_3d(10, 0, 1.5, '/base_link')))
-    ).
+            ), ok).
+transition(cp, find_object(_), find_person_for_order) :-
+    achieve(find_object(_, _, _), fail),
+    achieve(say('What a pity. Maybe I have better luck with other people. Lets get back to the party!')),
+    achieve(look_at(point_3d(10, 0, 1.5, '/base_link'))).
+
 
 % grab_object
 transition(cp, grab_object(DrinkID), return_to_person(Person)) :-
@@ -393,11 +389,12 @@ terms_to_atoms([X|Xs], [X|Atoms]) :-
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
+list_transitions(Transitions) :-
+    findall(transition(A, B, C), clause(transition(A, B, C), _), Transitions).
 
 print_state_machine :-
    % find all transitions
-   findall(transition(A, B), clause(transition(A, B), _), Transitions),
+   list_transitions(Transitions),
    print_transitions(Transitions).
 
 print_transitions([]).
