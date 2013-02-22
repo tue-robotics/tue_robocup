@@ -3,7 +3,7 @@ import roslib; roslib.load_manifest('challenge_cocktail_party')
 import rospy
 
 #from tue_execution_pack import states, smach, util, robot_parts
-from tue_execution_pack import robot_parts
+from tue_execution_pack import robot_parts, states
 #from robot_parts.reasoner import *
 
 from psi import *
@@ -32,7 +32,12 @@ def toggle_module(robot, module, status):
     if str(status) == "on":
         robot.perception.toggle([module])
     else:
-        robot.perception.toggle([])   
+        robot.perception.toggle([])
+
+def grab(robot, object_id):
+    grabpoint_query = Compound("property_expected", object_id, "position", Sequence("X", "Y", "Z"))
+    grab_machine = states.GrabMachine(robot.leftArm, robot, grabpoint_query)    
+    grab_machine.execute()
 
 def do_action(robot, action):
     if action.is_compound():
@@ -48,7 +53,8 @@ def do_action(robot, action):
             look_at(robot, float(action[0]), float(action[1]), float(action[2]), str(action[3]))
         elif action.get_functor() == 'toggle_module':
             toggle_module(robot, str(action[0]), str(action[1]))
-
+        elif action.get_functor() == 'grab':
+            grab(robot, action[0])
     #print action.functor()
   
 if __name__ == '__main__':
@@ -61,7 +67,7 @@ if __name__ == '__main__':
     client.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
     client.query(Compound("load_database", "challenge_cocktail_party", 'prolog/cocktail_party.pl'))
 
-    client.assert_fact(Compound("challenge", "cocktailparty"))
+    client.query(Compound("assert", Compound("challenge", "cocktailparty")))
 
     finished = False
     while not finished:

@@ -32,6 +32,21 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      %
+%                               SYNONYMS                               %
+%                                                                      %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+synonym(A, B) :-
+    synonym1(A, B).
+synonym(A, B) :-
+    synonym1(B, A).
+
+synonym1(coke, coke_can).
+synonym1(fanta, fanta_can).
+synonym1(water, bottle).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                      %
 %                           INITITIAL STATE                            %
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,9 +57,8 @@ current_state(cp, init, 1).
 %current_state(cp, test, 1).
 
 
-transition(cp, test, end) :-
-    region_of_interest(storage_room, ROI),
-    achieve(look_at(ROI)).
+%transition(cp, test, end) :-
+%    achieve(grab(obj1)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      %
@@ -67,7 +81,10 @@ transition(cp, wait_for_door, find_person_for_order) :-
 
 % find_person_for_order
 transition(cp, find_person_for_order, learn_person(PersonID)) :-
-    achieve(find_person(PersonID, [party_room])).
+    achieve(find_person(PersonID, [party_room]), ok).
+transition(cp, find_person_for_order, find_person_for_order) :-
+    achieve(find_person(PersonID, [party_room]), fail),
+    achieve(say('This looks like a great party! Does anyone need a drink? If so, please come over here!')).
 
 % learn_person
 transition(cp, learn_person(PersonID), take_order(PersonID)) :-
@@ -91,7 +108,7 @@ transition(cp, find_object(Drink), NextState) :-
     findall(storage_room(A), waypoint(storage_room(A), _), Waypoints),
     achieve(find_object(
                 DrinkID,
-                property_expected(DrinkID, class_label, Drink),
+                ( synonym(Drink, ObjectType), property_expected(DrinkID, class_label, ObjectType) ),
                 Waypoints
             ), Result),
     (
@@ -105,10 +122,10 @@ transition(cp, find_object(Drink), NextState) :-
     ).
 
 % grab_object
-%transition(cp, grab_object(DrinkID), return_to_person(Person)) :-
-%    achieve(grab_object(DrinkID)),
-%    property_expected(DrinkID, class_label, Drink),
-%    drink_ordered(Person, Drink).
+transition(cp, grab_object(DrinkID), return_to_person(Person)) :-
+    achieve(grab(DrinkID)),
+    property_expected(DrinkID, class_label, Drink),
+    drink_ordered(Person, Drink).
 
 % grab_drink
 %transition(grab_drink(DrinkID), find_person(Person)) :-
@@ -147,9 +164,7 @@ transition(find_person(PersonID, _), explore(PersonID, _), end(ok)) :-
     achieve(module_status(face_detection, off)).
 transition(find_person(PersonID, _), explore(PersonID, [Waypoint|Waypoints]), look(PersonID, Waypoints)) :-
     achieve(position(amigo, Waypoint)).
-transition(find_person(PersonID, _), explore(PersonID, []), end(fail)) :-
-    PersonName = 'the operator',
-    achieve(say(['I looked everywhere, but I could not find ', PersonName])).
+transition(find_person(PersonID, _), explore(PersonID, []), end(fail)).
 
 transition(find_person(PersonID, _), look(PersonID, Waypoints), explore(PersonID, Waypoints)) :-
     achieve(module_status(face_detection, on)),
@@ -197,11 +212,6 @@ transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints))
     not(region_of_interest(Waypoint, _)),
     achieve(say(['Hmmm, I dont know where to look here. Better continue exploring.'])).
 
-% % % % % % % % % % % % % % % GRAB OBJECT % % % % % % % % % % % % % % %
-
-% grab object
-transition(grab_object(_), start, end(ok)).
-
 % % % % % % % % % % % % % % % ASK ANSWER % % % % % % % % % % % % % % %
 
 transition(ask(_, _, _), start, speak).
@@ -218,7 +228,6 @@ transition(_, State, State).
 state_machine(find_person(_, _)).
 state_machine(learn_person(_PersonID)).
 state_machine(find_object(_ObjectID, _ObjectQuery, _Waypoints)).
-state_machine(grab_object(_ObjectID)).
 state_machine(ask(_, _, _)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -266,7 +275,6 @@ achieve(wait(Seconds), check, _) :-
 % grab
 achieve(grab(ObjectID), check, _) :-
     add_action(grab(ObjectID)).  % assume call is blocking
-
 
 % set-up sub-state print_state_machine
 achieve(Goal, check, Status) :-

@@ -13,7 +13,7 @@ close_door :-
            assert(object_state(entrance_door, close)))).
 
 add_person :-
-	wire:add_object_evidence(john, person, 1, 1, 1).
+	wire:add_object_evidence(john, person, 2, 1, 1).
 
 say(X) :-
 	query(assert(heard_words(X))).

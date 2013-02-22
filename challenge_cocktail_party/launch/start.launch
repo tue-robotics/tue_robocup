@@ -2,10 +2,21 @@
 
 <launch>
 
+    
+
     <arg if="$(optenv ROBOT_REAL false)" name="machine" default="amigo1"/>
     <arg unless="$(optenv ROBOT_REAL false)" name="machine" default="localhost"/>
 	
     <include file="$(find amigo_machine_files)/machines/$(arg machine).machine" />
+
+    <group unless="$(optenv ROBOT_REAL false)">
+        <!-- SIMULATION -->
+
+        <node pkg="gazebo_perception" type="gazebo_perception" respawn="false" name="gazebo_perception" output="screen" args="enable" >
+            <rosparam file="$(find challenge_cocktail_party)/parameters/fake_perception.yaml" command="load" ns=""/>
+        </node>
+    </group>
+
 
     <!-- Perception -->
     <include file="$(find blob_clustering)/launch/start.launch"/>
