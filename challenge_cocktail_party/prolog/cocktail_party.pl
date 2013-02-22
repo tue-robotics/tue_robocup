@@ -18,7 +18,13 @@
 
 % Set current state
 %current_state(meta, wait_for_timeout, 0).
-current_state(cp, wait_for_door, 1).
+current_state(cp, init, 1).
+%current_state(cp, test, 1).
+
+
+transition(cp, test, end) :-
+    region_of_interest(storage_room, ROI),
+    achieve(look_at(ROI)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      %
@@ -34,7 +40,8 @@ transition(meta, wait_for_timeout, wait_for_timeout).
 transition(cp, init, wait_for_door) :-
     achieve(module_status(object_recognition, off)),
     achieve(module_status(person_detection, off)),
-    achieve(module_status(face_recognition, off)).
+    achieve(module_status(face_recognition, off)),
+    achieve(look_at(point_3d(10, 0, 1.5, '/base_link'))).
 
 % wait_for_door
 transition(cp, wait_for_door, find_person_for_order) :-
@@ -63,10 +70,11 @@ transition(cp, check_answer(PersonID, _, no), take_order(PersonID)) :-
 
 % find_object
 transition(cp, find_object(Drink), NextState) :-
+    findall(storage_room(A), waypoint(storage_room(A), _), Waypoints),
     achieve(find_object(
                 DrinkID,
                 property_expected(DrinkID, class_label, Drink),
-                [storage_room]
+                Waypoints
             ), Result),
     (
         Result = ok
@@ -74,7 +82,8 @@ transition(cp, find_object(Drink), NextState) :-
         NextState = grab_object(DrinkID)
     ;
         achieve(say('What a pity. Maybe I have better luck with other people. Lets get back to the party!')),
-        NextState = find_person_for_order
+        NextState = find_person_for_order,
+        achieve(look_at(point_3d(10, 0, 1.5, '/base_link')))
     ).
 
 % grab_object
@@ -135,7 +144,8 @@ transition(learn_person(PersonID), start, end(ok)) :-
     achieve(say('Hey, I know you! Good to see you again!')),
     achieve(module_status(face_recognition, off)).
 transition(learn_person(_), start, capture) :-
-    achieve(say('Let me have a look at you')).
+    achieve(say('Let me have a look at you')),
+    achieve(look_at(point_3d(10, 0, 1.5, '/base_link'))).
 
 transition(learn_person(PersonID), capture, capture) :-
     achieve(module_status(face_recognition, on)),
@@ -219,6 +229,7 @@ achieve(listen(_, Words), check, _) :-
     heard_words(Words),
     retractall(heard_words(_)).
 achieve(listen(Options, _), solution, _) :-
+    retractall(heard_words(_)),
     add_action(listen(Options)).
     
 achieve(module_status(Module, Status), check, _) :-
@@ -228,6 +239,8 @@ achieve(module_status(Module, Status), check, _) :-
 % look_at
 achieve(look_at(point_3d(X, Y, Z)), check, _) :-
     add_action(look_at(X, Y, Z, '/map')). % assume call is blocking
+achieve(look_at(point_3d(X, Y, Z, FrameID)), check, _) :-
+    add_action(look_at(X, Y, Z, FrameID)). % assume call is blocking
 
 % wait
 achieve(wait(Seconds), check, _) :-

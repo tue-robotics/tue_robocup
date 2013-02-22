@@ -34,6 +34,13 @@ def do_action(robot, action):
             robot.reasoner.assert_fact(Compound("heard_words", str(answer)))
         elif action.get_functor() == 'wait':
             rospy.sleep(action[0].get_number())
+        elif action.get_functor() == 'look_at':
+            x = float(action[0])
+            y = float(action[1])
+            z = float(action[2])
+            frame_id = str(action[3])
+            robot.head.send_goal(robot.head.point(x, y, z), frame_id)
+
     #print action.functor()
   
 if __name__ == '__main__':
