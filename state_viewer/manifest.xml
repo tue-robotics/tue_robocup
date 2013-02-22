@@ -1,0 +1,18 @@
+<package>
+  <description brief="rdf_viewer">
+
+     rdf_viewer
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/rdf_viewer</url>
+  <depend package="roscpp"/>
+  <depend package="opencv2"/>
+  <depend package="opencv2"/>
+  <depend package="psi"/>
+
+</package>
+
+
