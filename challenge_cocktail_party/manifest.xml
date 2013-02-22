@@ -10,6 +10,11 @@
   <url>http://ros.org/wiki/challenge_cocktail_party</url>
   <depend package="tue_execution_pack"/>
 
+
+  <!-- for testing -->
+  <depend package="wire_jpl"/>
+  <depend package="gazebo_perception"/>
+
 </package>
 
 
