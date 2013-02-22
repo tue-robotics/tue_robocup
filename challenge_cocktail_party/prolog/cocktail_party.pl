@@ -27,7 +27,7 @@ current_state(cp, wait_for_door, 1).
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-transition(_, State, State).
+
 
 transition(meta, wait_for_timeout, wait_for_timeout).
 
@@ -106,16 +106,17 @@ transition(cp, find_object(Drink), grab_object(DrinkID)) :-
 
 % % % % % % % % % % % % % % % FIND PERSON % % % % % % % % % % % % % % %
 
-transition(find_person, start(PersonID, _), ok) :-
+transition(find_person(PersonID, Waypoints), start, start(PersonID, Waypoints)).
+transition(find_person(PersonID, _), start(PersonID, _), ok) :-
     property_expected(PersonID, class_label, person),
     property_expected(PersonID, position, in_front_of(amigo)),
     achieve(module_status(person_detection, off)).
-transition(find_person, start(PersonID, [Waypoint|Waypoints]), look(PersonID, Waypoints)) :-
+transition(find_person(PersonID, _), start(PersonID, [Waypoint|Waypoints]), look(PersonID, Waypoints)) :-
     achieve(position(amigo, Waypoint)).
-transition(find_person, start(PersonID, []), fail) :-
+transition(find_person(PersonID, _), start(PersonID, []), fail) :-
     achieve(say(['I looked everywhere, but I could not find ', PersonID])).
 
-transition(find_person, look(PersonID, Waypoints), start(PersonID, Waypoints)) :-
+transition(find_person(PersonID, _), look(PersonID, Waypoints), start(PersonID, Waypoints)) :-
     achieve(module_status(person_detection, on)),
     achieve(wait(10)).
 
@@ -149,14 +150,15 @@ transition(find_object(_, _), look([Waypoint|Waypoints]), start(Waypoints)) :-
     achieve(module_status(object_recognition, on)),
     achieve(wait(10)).
 
-% % % % % % % % % % % % % % % FIND OBJECT % % % % % % % % % % % % % % %
+% % % % % % % % % % % % % % % GRAB OBJECT % % % % % % % % % % % % % % %
 
 % grab object
 transition(grab_object(_), start, ok).
 
-% % % % % % % % % % % % % % % GRAB OBJECT % % % % % % % % % % % % % % %
 
-state_machine(find_person).
+transition(_, State, State).
+
+state_machine(find_person(_, _)).
 state_machine(learn_person(_PersonID)).
 state_machine(find_object(_ObjectID, _ObjectQuery, _Waypoints)).
 state_machine(grab_object(_ObjectID)).
