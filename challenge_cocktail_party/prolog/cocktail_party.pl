@@ -48,27 +48,34 @@ transition(cp, find_person_for_order, learn_person(PersonID)) :-
 transition(cp, learn_person(PersonID), take_order(PersonID)) :-
     achieve(learn_person(PersonID)).
 
-% take_order
-transition(cp, take_order(Person), find_object(Drink)) :-
-    drink_ordered(Person, Drink).
-transition(cp, take_order(Person), ask_order(Person)) :-
-    achieve(say(['So ', Person, '. What would you like to drink?'])).
-transition(cp, ask_order(Person), confirm_order(Person, Drink)) :-
-    achieve(listen([coke, fanta], Drink)).
-transition(cp, confirm_order(Person, Drink), confirm_order(Person, Drink, Answer)) :-
-    achieve(say(['I heard ', Drink, ', is that correct?'])),
-    achieve(listen([yes, no], Answer)).
-transition(cp, confirm_order(Person, _, no), take_order(Person)).
-transition(cp, confirm_order(Person, Drink, yes), take_order(Person)) :-
-    assert(drink_ordered(Person, Drink)).
+% taking the order
+transition(cp, take_order(PersonID), confirm_order(PersonID, DrinkType)) :-
+    achieve(ask('What would you like to drink?', [coke, fanta], DrinkType)).
+
+transition(cp, confirm_order(PersonID, DrinkType), check_answer(PersonID, DrinkType, Answer)) :-
+    achieve(ask(['I heard ', DrinkType, ', is that correct?'], [yes, no], Answer)).
+
+transition(cp, check_answer(PersonID, DrinkType, yes), find_object(DrinkType)) :-
+    assert(drink_ordered(PersonID, DrinkType)),
+    achieve(say(['Alright! Ill get the ', DrinkType, ' for you!'])).
+transition(cp, check_answer(PersonID, _, no), take_order(PersonID)) :-
+    achieve(say('I am so sorry.')).
 
 % find_object
-transition(cp, find_object(Drink), grab_object(DrinkID)) :-
+transition(cp, find_object(Drink), NextState) :-
     achieve(find_object(
                 DrinkID,
                 property_expected(DrinkID, class_label, Drink),
                 [storage_room]
-            )).
+            ), Result),
+    (
+        Result = ok
+    ->
+        NextState = grab_object(DrinkID)
+    ;
+        achieve(say('What a pity. Maybe I have better luck with other people. Lets get back to the party!')),
+        NextState = find_person_for_order
+    ).
 
 % grab_object
 %transition(cp, grab_object(DrinkID), return_to_person(Person)) :-
@@ -147,22 +154,36 @@ transition(find_object(ObjectID, ObjectQuery, Waypoints), explore(Waypoints), en
     call(ObjectQuery),
     property_expected(ObjectID, position, in_front_of(amigo)),
     achieve(module_status(object_recognition, off)).
-transition(find_object(_, _), explore(Waypoints), look(Waypoints)) :-
-    achieve(position(amigo, waypoint)).
-transition(find_object(_, _), explore([]), end(fail)) :-
+transition(find_object(_, _, _), explore([Waypoint|Waypoints]), look([Waypoint|Waypoints])) :-
+    achieve(position(amigo, Waypoint)).
+transition(find_object(_, _, _), explore([]), end(fail)) :-
         achieve(say(['I searched everywhere, but I could not find the object I was looking for.'])).
 
-transition(find_object(_, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
+transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
     region_of_interest(Waypoint, ROI),
     achieve(look_at(ROI)),
     achieve(module_status(object_recognition, on)),
     achieve(wait(10)).
+
+transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
+    not(region_of_interest(Waypoint, _)),
+    achieve(say(['Hmmm, I dont know where to look here. Better continue exploring.'])).
 
 % % % % % % % % % % % % % % % GRAB OBJECT % % % % % % % % % % % % % % %
 
 % grab object
 transition(grab_object(_), start, end(ok)).
 
+% % % % % % % % % % % % % % % ASK ANSWER % % % % % % % % % % % % % % %
+
+transition(ask(_, _, _), start, speak).
+transition(ask(Sentence, _, _), speak, listen) :-
+    achieve(say(Sentence)).
+transition(ask(_, Options, Answer), listen, end(ok)) :-
+    achieve(listen(Options, Answer), ok).
+transition(ask(_, Options, Answer), listen, speak) :-
+    achieve(listen(Options, Answer), fail),
+    achieve(say('Hmmm... I did not hear what you said. ')).
 
 transition(_, State, State).
 
@@ -170,6 +191,7 @@ state_machine(find_person(_, _)).
 state_machine(learn_person(_PersonID)).
 state_machine(find_object(_ObjectID, _ObjectQuery, _Waypoints)).
 state_machine(grab_object(_ObjectID)).
+state_machine(ask(_, _, _)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      %
@@ -181,7 +203,7 @@ achieve(position(amigo, Waypoint), check, _) :-
     waypoint(Waypoint, pose_2d(X, Y, Phi)),
     property_expected(amigo, pose, pose_2d(X2, Y2, Phi2)),
     abs(X-X2, DX), abs(Y-Y2, DY), abs(Phi-Phi2, DPhi),
-    DX < 0.1, DY < 0.2, (DPhi < 0.1; DPhi > 6.2).
+    DX < 0.1, DY < 0.1, (DPhi < 0.3; DPhi > 6.0).
 achieve(position(amigo, Waypoint), solution, _) :-
     waypoint(Waypoint, pose_2d(X, Y, Phi)),
     add_action(navigate_to(X, Y, Phi, '/map')).
@@ -279,7 +301,7 @@ achieve(Goal, Status) :-
     achieve(Goal, check, Status)
     ->
         (nl, write('Goal achieved: '), write(Goal), nl,
-        retractall(goal(Goal))
+        retractall(current_goal(Goal))
         )
     ;
         (add_goal(Goal),
