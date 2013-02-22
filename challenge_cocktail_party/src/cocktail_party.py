@@ -2,103 +2,107 @@
 import roslib; roslib.load_manifest('challenge_cocktail_party')
 import rospy
 
-from tue_execution_pack import states, smach, util, robot_parts
+#from tue_execution_pack import states, smach, util, robot_parts
+from tue_execution_pack import robot_parts, states
+#from robot_parts.reasoner import *
 
-from robot_parts.reasoner import *
+from psi import *
 
-#===============================TODOs===========================================
-#
-#===============================================================================
+def navigate_to(robot, x, y, phi, frame_id):
+    pos = robot.base.point(x,y)
+    orient = robot.base.orient(phi)
+    robot.base.send_goal(pos, orient, block=True)
 
-#================================ Bugs/Issues ==================================
-#
-#===============================================================================
+def look_at(robot, x, y, z, frame_id):
+    robot.head.send_goal(robot.head.point(x, y, z), frame_id)
 
-#========================== Other ideas for executive improvement ==============
-#
-#===============================================================================
- 
-class CocktailParty(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+def listen(robot, options):
+    robot.ears.forget()
+    robot.ears.start_listening()
+    rospy.sleep(5)
+    words = [ str(word) for word in options ]
+    print words
+    answer = robot.ears.last_heard_words(words, 5)
+    robot.ears.stop_listening()
+    print answer
+    robot.reasoner.query(Compound("retractall", Compound("heard_words", "X")))
+    robot.reasoner.assert_fact(Compound("heard_words", str(answer)))
 
-        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("goal", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("explored", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
-        robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
+def toggle_module(robot, module, status):
+    if str(status) == "on":
+        robot.perception.toggle([module])
+    else:
+        robot.perception.toggle([])
 
-        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+def grab(robot, object_id):
+    grabpoint_query = Compound("property_expected", object_id, "position", Sequence("X", "Y", "Z"))
+    grab_machine = states.GrabMachine(robot.leftArm, robot, grabpoint_query)    
+    grab_machine.execute()
 
-        robot.reasoner.assertz(Compound("challenge", "cocktailparty"))
-
-        # Queries:
-        query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
-        query_storage_room = Compound("waypoint", "storage_room", Compound("pose_2d", "X", "Y", "Phi"))
-        query_detect_person = Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "person"),
-                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))
-                                          )
-
-        with self:
-            
-            smach.StateMachine.add( "START_CHALLENGE",
-                                    states.StartChallenge(robot, "initial", query_party_room), 
-                                    transitions={   "Done":"CALL_PERSON", 
-                                                    "Aborted":"Aborted", 
-                                                    "Failed":"SAY_FAILED"})
-
-            smach.StateMachine.add( "CALL_PERSON", 
-                                    states.Say(robot, "Ladies and gentlemen, please step in front of me to order your drinks."),
-                                    transitions={   "spoken":"DETECT_PERSON"})
-
-            smach.StateMachine.add( "DETECT_PERSON",
-                                    states.Wait_query_true(robot, query_detect_person, 10, pre_callback=lambda ud: robot.perception.toggle_recognition(faces=True)),
-                                    transitions={   "query_true":"LEARN_PERSON",
-                                                    "timed_out" :"CALL_PERSON",
-                                                    "preempted" :"CALL_PERSON"})
-
-            smach.StateMachine.add( "LEARN_PERSON",
-                                    states.Learn_Person(robot),
-                                    transitions={   "person_learned":"TAKE_ORDER", 
-                                                    "learning_failed":"TAKE_ORDER"})
-
-            smach.StateMachine.add('TAKE_ORDER', 
-                                    states.Timedout_QuestionMachine(
-                                            robot=robot,
-                                            default_option = "coke", 
-                                            sentence = "What would you like to drink?", 
-                                            options = { "coke":Compound("goal", Compound("serve", "coke")),
-                                                        "fanta":Compound("goal", Compound("serve", "fanta"))
-                                                      }),
-                                    transitions={   'answered':'DRIVE_TO_STORAGE',
-                                                    'not_answered':'TAKE_ORDER'})
-
-               
-            smach.StateMachine.add( 'DRIVE_TO_STORAGE',
-                                    states.Navigate_to_queryoutcome(robot, query_storage_room, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   "arrived":"RETURN_DRINK",  # TODO
-                                                    "unreachable":'Aborted',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'Aborted'})
-
-            smach.StateMachine.add( 'RETURN_DRINK',
-                                    states.Navigate_to_queryoutcome(robot, query_party_room, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   "arrived":"FINISH",  # TODO
-                                                    "unreachable":'Aborted',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'Aborted'})
-
-            smach.StateMachine.add( 'FINISH', states.Finish(robot),
-                                transitions={'stop':'Done'})
-
-            smach.StateMachine.add("SAY_FAILED", 
-                                    states.Say(robot, "I could not accomplish my task, sorry about that, please forgive me."),
-                                    transitions={   "spoken":"Failed"})
- 
+def do_action(robot, action):
+    if action.is_compound():
+        if action.get_functor() == 'navigate_to':
+            navigate_to(robot, float(action[0]), float(action[1]), float(action[2]), str(action[3]))
+        elif action.get_functor() == 'say':
+            robot.speech.speak(str(action[0]))
+        elif action.get_functor() == 'listen':
+            listen(robot, action[0])
+        elif action.get_functor() == 'wait':
+            rospy.sleep(action[0].get_number())
+        elif action.get_functor() == 'look_at':
+            look_at(robot, float(action[0]), float(action[1]), float(action[2]), str(action[3]))
+        elif action.get_functor() == 'toggle_module':
+            toggle_module(robot, str(action[0]), str(action[1]))
+        elif action.get_functor() == 'grab':
+            grab(robot, action[0])
+    #print action.functor()
+  
 if __name__ == '__main__':
     rospy.init_node('executioner')
- 
-    util.startup(CocktailParty)
 
+    robot = robot_parts.amigo.Amigo(wait_services=True)
+    
+    client = Client("/reasoner/query", "/reasoner/assert")
+
+    client.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+    client.query(Compound("load_database", "challenge_cocktail_party", 'prolog/cocktail_party.pl'))
+
+    client.query(Compound("assert", Compound("challenge", "cocktailparty")))
+
+    finished = False
+    while not finished:
+
+        print "* * * * * * * * * * * * * * * * * "
+        print ""
+
+        result = client.query(Compound("step", "Actions", "Transitions", "Warnings"))
+        if result:
+            actions = result[0]["Actions"]
+            transitions = result[0]["Transitions"]
+            warnings = result[0]["Warnings"]
+            
+            if actions.is_sequence() and actions.get_size() > 0:
+                print "ACTIONS:"
+                for action in actions:
+                    print "    " + str(action)
+                    do_action(robot, action)
+                print ""
+
+            if transitions.is_sequence() and transitions.get_size() > 0:
+                print "TRANSITIONS:"
+                for transition in transitions:
+                    print "    " + str(transition[0]) + ":" + str(transition[1]) + " ---> " + str(transition[0]) + ":" + str(transition[2])
+                print ""
+
+            if warnings.is_sequence() and warnings.get_size() > 0:
+                print "WARNINGS:"
+                for warning in warnings:
+                    print "    " + str(warning)
+                print ""
+
+        else:
+            print "ERROR: step/2 did not succeed!"
+            finished = True
+
+        rospy.sleep(1)
     #print Compound("bla")
