@@ -32,6 +32,8 @@ def do_action(robot, action):
             robot.ears.stop_listening()
             print answer
             robot.reasoner.assert_fact(Compound("heard_words", str(answer)))
+        elif action.get_functor() == 'wait':
+            rospy.sleep(action[0].get_number())
     #print action.functor()
   
 if __name__ == '__main__':
@@ -52,20 +54,29 @@ if __name__ == '__main__':
         print "* * * * * * * * * * * * * * * * * "
         print ""
 
-        result = client.query(Compound("step", "Actions", "Warnings"))
+        result = client.query(Compound("step", "Actions", "Transitions", "Warnings"))
         if result:
             actions = result[0]["Actions"]
+            transitions = result[0]["Transitions"]
             warnings = result[0]["Warnings"]
             
-            if actions.is_sequence():
-
+            if actions.is_sequence() and actions.get_size() > 0:
+                print "ACTIONS"
                 for action in actions:
-                    print "ACTION: " + str(action)
+                    print "    " + str(action)
                     do_action(robot, action)
                 print ""
-            if warnings.is_sequence():
+
+            if transitions.is_sequence() and transitions.get_size() > 0:
+                print "TRANSITION"
+                for transition in transitions:
+                    print "    " + str(transition[0]) + ":" + str(transition[1]) + " ---> " + str(transition[0]) + ":" + str(transition[2])
+                print ""
+
+            if warnings.is_sequence() and warnings.get_size() > 0:
+                print "WARNINGS"
                 for warning in warnings:
-                    print "WARNING: " + str(warning)
+                    print "    " + str(warning)
                 print ""
 
         else:

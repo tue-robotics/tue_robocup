@@ -8,8 +8,7 @@
 
 :- dynamic known_person/1.
 :- dynamic drink_ordered/2.
-
-:- dynamic property_expected/3.
+:- dynamic object_state/2.
 
 % initialization
 :- retractall(warning(_)).
@@ -39,7 +38,7 @@ transition(cp, init, wait_for_door) :-
 
 % wait_for_door
 transition(cp, wait_for_door, find_person_for_order) :-
-    property_expected(entrance_door, status, open).
+    object_state(entrance_door, open).
 
 % find_person_for_order
 transition(cp, find_person_for_order, learn_person(PersonID)) :-
@@ -106,45 +105,54 @@ transition(cp, find_object(Drink), grab_object(DrinkID)) :-
 
 % % % % % % % % % % % % % % % FIND PERSON % % % % % % % % % % % % % % %
 
-transition(find_person(PersonID, Waypoints), start, start(PersonID, Waypoints)).
-transition(find_person(PersonID, _), start(PersonID, _), ok) :-
+transition(find_person(PersonID, Waypoints), start, explore(PersonID, Waypoints)).
+
+transition(find_person(PersonID, _), explore(PersonID, _), end(ok)) :-
     property_expected(PersonID, class_label, person),
     property_expected(PersonID, position, in_front_of(amigo)),
     achieve(module_status(person_detection, off)).
-transition(find_person(PersonID, _), start(PersonID, [Waypoint|Waypoints]), look(PersonID, Waypoints)) :-
+transition(find_person(PersonID, _), explore(PersonID, [Waypoint|Waypoints]), look(PersonID, Waypoints)) :-
     achieve(position(amigo, Waypoint)).
-transition(find_person(PersonID, _), start(PersonID, []), fail) :-
-    achieve(say(['I looked everywhere, but I could not find ', PersonID])).
+transition(find_person(PersonID, _), explore(PersonID, []), end(fail)) :-
+    PersonName = 'the operator',
+    achieve(say(['I looked everywhere, but I could not find ', PersonName])).
 
-transition(find_person(PersonID, _), look(PersonID, Waypoints), start(PersonID, Waypoints)) :-
+transition(find_person(PersonID, _), look(PersonID, Waypoints), explore(PersonID, Waypoints)) :-
     achieve(module_status(person_detection, on)),
     achieve(wait(10)).
 
 % % % % % % % % % % % % % % % LEARN PERSON % % % % % % % % % % % % % % %
 
-transition(learn_person(PersonID), start, ok) :-
+transition(learn_person(PersonID), start, end(ok)) :-
     known_person(PersonID),
     achieve(say('OK, thank you. Now I can find you back later.')),
     achieve(module_status(face_recognition, off)).
 transition(learn_person(_), start, capture) :-
     achieve(say('Let me have a look at you')).
+
 transition(learn_person(PersonID), capture, capture) :-
     achieve(module_status(face_recognition, on)),
     assert(known_person(PersonID)).
+transition(learn_person(PersonID), capture, end(ok)) :-
+    known_person(PersonID),
+    achieve(say('OK, thank you. Now I can find you back later.')),
+    achieve(module_status(face_recognition, off)).
 
 % % % % % % % % % % % % % % % FIND OBJECT % % % % % % % % % % % % % % %
 
 % find object
-transition(find_object(ObjectID, ObjectQuery, Waypoints), start(Waypoints), ok) :-
+transition(find_object(_, _, Waypoints), start, explore(Waypoints)).
+
+transition(find_object(ObjectID, ObjectQuery, Waypoints), explore(Waypoints), end(ok)) :-
     call(ObjectQuery),
     property_expected(ObjectID, position, in_front_of(amigo)),
     achieve(module_status(object_recognition, off)).
-transition(find_object(_, _), start(Waypoints), look(Waypoints)) :-
+transition(find_object(_, _), explore(Waypoints), look(Waypoints)) :-
     achieve(position(amigo, waypoint)).
-transition(find_object(_, _), start([]), fail) :-
+transition(find_object(_, _), explore([]), end(fail)) :-
         achieve(say(['I searched everywhere, but I could not find the object I was looking for.'])).
 
-transition(find_object(_, _), look([Waypoint|Waypoints]), start(Waypoints)) :-
+transition(find_object(_, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
     region_of_interest(Waypoint, ROI),
     achieve(look_at(ROI)),
     achieve(module_status(object_recognition, on)),
@@ -153,7 +161,7 @@ transition(find_object(_, _), look([Waypoint|Waypoints]), start(Waypoints)) :-
 % % % % % % % % % % % % % % % GRAB OBJECT % % % % % % % % % % % % % % %
 
 % grab object
-transition(grab_object(_), start, ok).
+transition(grab_object(_), start, end(ok)).
 
 
 transition(_, State, State).
@@ -169,55 +177,54 @@ state_machine(grab_object(_ObjectID)).
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% set-up sub-state print_state_machine
-achieve(Goal, check) :-
-    current_state(Goal, ok, _),
-    retractall(current_state(Goal, _, _)).
-achieve(Goal, solution) :-
-    state_machine(Goal),
-    get_new_priority_level(Priority),
-    assert(current_state(Goal, start, Priority)).
-
-% skills
-
-achieve(position(amigo, Waypoint), check) :-
+achieve(position(amigo, Waypoint), check, _) :-
     waypoint(Waypoint, pose_2d(X, Y, Phi)),
     property_expected(amigo, pose, pose_2d(X2, Y2, Phi2)),
     abs(X-X2, DX), abs(Y-Y2, DY), abs(Phi-Phi2, DPhi),
     DX < 0.1, DY < 0.2, (DPhi < 0.1; DPhi > 6.2).
-achieve(position(amigo, Waypoint), solution) :-
+achieve(position(amigo, Waypoint), solution, _) :-
     waypoint(Waypoint, pose_2d(X, Y, Phi)),
     add_action(navigate_to(X, Y, Phi, '/map')).
 
-achieve(say(TextList), check) :-
+achieve(say(TextList), check, _) :-
     terms_to_atoms(TextList, TextAtoms),
     atomic_list_concat(TextAtoms, Text),
     add_action(say(Text)).
-achieve(say(Text), check) :-
+achieve(say(Text), check, _) :-
     add_action(say(Text)).
 
-achieve(listen(_, Words), check) :-
+achieve(listen(_, Words), check, _) :-
     heard_words(Words),
     retractall(heard_words(_)).
-achieve(listen(Options, _), solution) :-
+achieve(listen(Options, _), solution, _) :-
     add_action(listen(Options)).
     
-achieve(module_status(Module, Status), check) :-
+achieve(module_status(Module, Status), check, _) :-
     module_status(Module, Status).
-achieve(module_status(Module, Status), solution) :-
+achieve(module_status(Module, Status), solution, _) :-
     assert(module_status(Module, Status)). % TODO
 
 % look_at
-achieve(look_at(point_3d(X, Y, Z)), check) :-
+achieve(look_at(point_3d(X, Y, Z)), check, _) :-
     add_action(look_at(X, Y, Z, '/map')). % assume call is blocking
 
 % wait
-achieve(wait(Seconds), check) :-
+achieve(wait(Seconds), check, _) :-
     add_action(wait(Seconds)). % assume call is blocking
 
 % grab
-achieve(grab(ObjectID), check) :-
+achieve(grab(ObjectID), check, _) :-
     add_action(grab(ObjectID)).  % assume call is blocking
+
+
+% set-up sub-state print_state_machine
+achieve(Goal, check, Status) :-
+    current_state(Goal, end(Status), _), !,
+    retractall(current_state(Goal, _, _)).
+achieve(Goal, solution, _) :-
+    state_machine(Goal),
+    get_new_priority_level(Priority),
+    add_state(Goal, start, Priority).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      %
@@ -225,11 +232,11 @@ achieve(grab(ObjectID), check) :-
 %                                                                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-step(Actions, Warnings) :-
+step(Actions, Transitions, Warnings) :-
     retractall(action(_)),
     retractall(warning(_)),
     list_states(States), !,
-    do_transitions(States),
+    do_transitions(States, Transitions),
     findall(Action, action(Action), Actions),
     findall(Warning, warning(Warning), Warnings).
 
@@ -242,25 +249,34 @@ list_states(Priority, [state(Machine, State, Priority2)|States]) :-
     list_states(Priority2, States).
 list_states(_, []).
 
-do_transitions([]).
-do_transitions([State|States]) :-
-    do_transition(State),
-    do_transitions(States).
+do_transitions([], []).
+do_transitions([state(Machine, State, Priority)|States], [Transition|Transitions]) :-
+    % since states may have been removed, check if state still exists
+    current_state(Machine, State, Priority),
+    do_transition(state(Machine, State, Priority), Transition),
+    do_transitions(States, Transitions).
+do_transitions([state(Machine, State, Priority)|States], Transitions) :-
+    % since states may have been removed, check if state still exists
+    not(current_state(Machine, State, Priority)),
+    do_transitions(States, Transitions).
 
-do_transition(state(Machine, State, Priority)) :-
+do_transition(state(Machine, State, Priority), transition(Machine, State, NewState)) :-
     transition(Machine, State, NewState), 
     retractall(current_state(Machine, State, Priority)), 
-    assert(current_state(Machine, NewState, Priority)), !,
+    add_state(Machine, NewState, Priority), !,
     nl, write('Transition: '), write(Machine), write(':'), write(State), write(' ---> '), write(NewState), nl.
-do_transition(state(Machine, State, _)) :-
+do_transition(state(Machine, State, _), transition(Machine, State, not_found)) :-
     add_warning(['Could not find a transition for state ', Machine, ':', State]).
 
 
 %make_true(position(amigo, pose_2d(X, Y, Phi, FrameID))) :- false. % TODO
 
 achieve(Goal) :-
+    achieve(Goal, ok).
+
+achieve(Goal, Status) :-
     nl, write('Goal checked: '), write(Goal), nl,
-    achieve(Goal, check)
+    achieve(Goal, check, Status)
     ->
         (nl, write('Goal achieved: '), write(Goal), nl,
         retractall(goal(Goal))
@@ -275,13 +291,17 @@ add_goal(Goal) :-
     ->
         true
     ;
-        (   achieve(Goal, solution)
+        (   achieve(Goal, solution, _)
             ->
                 assert(current_goal(Goal))
             ;
                 add_warning(['No valid solution for goal ', Goal])
         )
     .
+
+add_state(Machine, State, Priority) :-
+    nl, write('ADDING STATE: '), write(Machine), write(':'), write(State), nl,
+    assert(current_state(Machine, State, Priority)).
 
 add_action(Action) :-
     assert(action(Action)).
