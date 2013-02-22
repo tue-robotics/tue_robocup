@@ -14,7 +14,7 @@
 % initialization
 :- retractall(warning(_)).
 :- retractall(action(_)).
-:- retractall(current_state(_, _)).
+:- retractall(current_state(_, _, _)).
 :- retractall(current_goal(_)).
 
 % Set current state
@@ -226,7 +226,7 @@ achieve(grab(ObjectID), check) :-
 step(Actions, Warnings) :-
     retractall(action(_)),
     retractall(warning(_)),
-    list_states(States),
+    list_states(States), !,
     do_transitions(States),
     findall(Action, action(Action), Actions),
     findall(Warning, warning(Warning), Warnings).
@@ -246,9 +246,9 @@ do_transitions([State|States]) :-
     do_transitions(States).
 
 do_transition(state(Machine, State, Priority)) :-
-    transition(Machine, State, NewState), !,
-    retract(current_state(Machine, State, Priority)),
-    assert(current_state(Machine, NewState, Priority)),
+    transition(Machine, State, NewState), 
+    retractall(current_state(Machine, State, Priority)), 
+    assert(current_state(Machine, NewState, Priority)), !,
     nl, write('Transition: '), write(Machine), write(':'), write(State), write(' ---> '), write(NewState), nl.
 do_transition(state(Machine, State, _)) :-
     add_warning(['Could not find a transition for state ', Machine, ':', State]).
