@@ -132,7 +132,7 @@ transition(find_person(PersonID, _), look(PersonID, Waypoints), explore(PersonID
 
 transition(learn_person(PersonID), start, end(ok)) :-
     known_person(PersonID),
-    achieve(say('OK, thank you. Now I can find you back later.')),
+    achieve(say('Hey, I know you! Good to see you again!')),
     achieve(module_status(face_recognition, off)).
 transition(learn_person(_), start, capture) :-
     achieve(say('Let me have a look at you')).
@@ -222,8 +222,7 @@ achieve(listen(Options, _), solution, _) :-
     add_action(listen(Options)).
     
 achieve(module_status(Module, Status), check, _) :-
-    module_status(Module, Status).
-achieve(module_status(Module, Status), solution, _) :-
+    retractall(module_status(Module, _)),
     assert(module_status(Module, Status)). % TODO
 
 % look_at
