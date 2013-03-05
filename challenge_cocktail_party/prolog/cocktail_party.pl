@@ -123,6 +123,17 @@ transition(cp, grab_object(DrinkID), return_to_person(Person)) :-
     property_expected(DrinkID, class_label, Drink),
     drink_ordered(Person, Drink).
 
+% find_person_for_order
+transition(cp, return_to_person(Person), hand_over_drink(PersonID)) :-
+    achieve(find_person(PersonID, [party_room]), ok).
+transition(cp, return_to_person(Person), return_to_person(Person)) :-
+    achieve(find_person(_, [party_room]), fail),
+    achieve(say(['Hmmm, I cannot find ', PersonID, '. Could you please come over here?')).
+
+transition(cp, hand_over_drink(PersonID), end(ok)) :-
+    achieve(hand_over),
+    achieve(say['Thats it for now!']).
+
 % grab_drink
 %transition(grab_drink(DrinkID), find_person(Person)) :-
 %    achieve(grab(DrinkID)),
@@ -271,6 +282,9 @@ achieve(wait(Seconds), check, _) :-
 % grab
 achieve(grab(ObjectID), check, _) :-
     add_action(grab(ObjectID)).  % assume call is blocking
+
+achieve(hand_over, check, _) :-
+    add_action(hand_over).  % assume call is blocking
 
 % set-up sub-state print_state_machine
 achieve(Goal, check, Status) :-

@@ -43,13 +43,16 @@ def grab(robot, object_id):
     grab_machine = states.GrabMachine(robot.leftArm, robot, grabpoint_query)    
     grab_machine.execute()
 
+def hand_over(robot):
+    hand_over_machine = states.Handover_pose(robot.leftArm, robot)    
+    hand_over_machine.execute()    
+
 def check_door_state(scan):
     index = int(len(scan.ranges) / 2)
     range = scan.ranges[index]
     if range > 1.0 and range < scan.range_max:
         global door_is_open
-        door_is_open = True
-        
+        door_is_open = True        
 
 def do_action(robot, action):
     if action.is_compound():
@@ -67,6 +70,8 @@ def do_action(robot, action):
             toggle_module(robot, str(action[0]), str(action[1]))
         elif action.get_functor() == 'grab':
             grab(robot, action[0])
+        elif action.get_functor() == 'hand_over':
+            hand_over(robot)            
     #print action.functor()
   
 if __name__ == '__main__':
