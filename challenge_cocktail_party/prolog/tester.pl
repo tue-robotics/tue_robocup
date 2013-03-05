@@ -5,12 +5,12 @@
                    say/1]).
 
 open_door :-
-    query((retractall(object_state(entrance_door, _)),
-           assert(object_state(entrance_door, open)))).
+    query((retractall(state(entrance_door, _)),
+           assert(state(entrance_door, open)))).
 
 close_door :-
-    query((retractall(object_state(entrance_door, _)),
-           assert(object_state(entrance_door, close)))).
+    query((retractall(state(entrance_door, _)),
+           assert(state(entrance_door, close)))).
 
 add_person :-
 	wire:add_object_evidence(john, person, 2, 1, 1).

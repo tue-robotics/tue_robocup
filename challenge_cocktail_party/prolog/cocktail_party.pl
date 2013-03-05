@@ -22,8 +22,8 @@
 :- dynamic known_person/1.
 :- retractall(known_person(_)).
 
-:- dynamic object_state/2.
-:- retractall(object_state(_, _)).
+:- dynamic state/2.
+:- retractall(state(_, _)).
 
 % challenge specific
 
@@ -77,7 +77,7 @@ transition(cp, init, wait_for_door) :-
 
 % wait_for_door
 transition(cp, wait_for_door, find_person_for_order) :-
-    object_state(entrance_door, open).
+    state(entrance_door, open).
 
 % find_person_for_order
 transition(cp, find_person_for_order, learn_person(PersonID)) :-

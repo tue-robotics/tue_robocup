@@ -6,7 +6,11 @@ import rospy
 from tue_execution_pack import robot_parts, states
 #from robot_parts.reasoner import *
 
+from sensor_msgs.msg import LaserScan
+
 from psi import *
+
+global door_is_open
 
 def navigate_to(robot, x, y, phi, frame_id):
     pos = robot.base.point(x,y)
@@ -39,6 +43,14 @@ def grab(robot, object_id):
     grab_machine = states.GrabMachine(robot.leftArm, robot, grabpoint_query)    
     grab_machine.execute()
 
+def check_door_state(scan):
+    index = int(len(scan.ranges) / 2)
+    range = scan.ranges[index]
+    if range > 1.0 and range < scan.range_max:
+        global door_is_open
+        door_is_open = True
+        
+
 def do_action(robot, action):
     if action.is_compound():
         if action.get_functor() == 'navigate_to':
@@ -69,8 +81,17 @@ if __name__ == '__main__':
 
     client.query(Compound("assert", Compound("challenge", "cocktailparty")))
 
+    sub_laser_scan = rospy.Subscriber("/base_scan", LaserScan, check_door_state)
+    global door_is_open
+    door_is_open = False
+
+
     finished = False
     while not finished:
+
+        # Check door state
+        if door_is_open:
+            client.query(Compound("assert", Compound("state", "entrance_door", "open")))
 
         print "* * * * * * * * * * * * * * * * * "
         print ""
