@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "rdf_viewer");
     ros::NodeHandle nh;
 
-    psi::Client client("/reasoner/query", "/reasoner/assert");
+    psi::Client client("/reasoner");
 
     /* set up a graphviz context */
     gvc = gvContext();

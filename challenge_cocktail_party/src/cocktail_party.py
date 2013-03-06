@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     robot = robot_parts.amigo.Amigo(wait_services=True)
     
-    client = Client("/reasoner/query", "/reasoner/assert")
+    client = Client("/reasoner")
 
     client.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
     client.query(Compound("load_database", "challenge_cocktail_party", 'prolog/cocktail_party.pl'))
