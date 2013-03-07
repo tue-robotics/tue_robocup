@@ -10,8 +10,9 @@
   <url>http://ros.org/wiki/rdf_viewer</url>
   <depend package="roscpp"/>
   <depend package="opencv2"/>
-  <depend package="opencv2"/>
   <depend package="psi"/>
+
+  <rosdep name="libgraphviz-dev"/> <!-- defined in rosdep/tue.yaml -->
 
 </package>
 
