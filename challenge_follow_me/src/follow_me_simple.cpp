@@ -75,9 +75,9 @@ int main(int argc, char **argv) {
 
             geometry_msgs::PoseStamped start;
             start.header.frame_id = TRACKING_FRAME;
-            start.pose.position.x = pos_exp(0);
-            start.pose.position.y = pos_exp(1);
-            start.pose.position.z = pos_exp(2);
+            start.pose.position.x = 0;
+            start.pose.position.y = 0;
+            start.pose.position.z = 0;
 
             // set orientation
             // TODO: set correctly
@@ -90,9 +90,9 @@ int main(int argc, char **argv) {
 
             geometry_msgs::PoseStamped end_goal;
             end_goal.header.frame_id = TRACKING_FRAME;
-            end_goal.pose.position.x = pos_exp(0);
-            end_goal.pose.position.y = pos_exp(1);
-            end_goal.pose.position.z = pos_exp(2);
+            end_goal.pose.position.x = 0.75 * pos_exp(0);
+            end_goal.pose.position.y = 0.75 * pos_exp(1);
+            end_goal.pose.position.z = 0.75 * pos_exp(2);
 
             // set orientation
             // TODO: set correctly
