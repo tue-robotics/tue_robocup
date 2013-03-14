@@ -1,0 +1,17 @@
+<package>
+  <description brief="challenge_follow_me">
+
+     challenge_follow_me
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_follow_me</url>
+  <depend package="roscpp"/>
+  <depend package="wire_interface"/>
+  <depend package="tue_move_base_msgs"/>
+
+</package>
+
+
