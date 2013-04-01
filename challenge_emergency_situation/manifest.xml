@@ -1,0 +1,16 @@
+<package>
+  <description brief="challenge_emergency_situation">
+
+     challenge_emergency_situation
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_emergency_situation</url>
+
+  <depend package="amigo_smach_states"/>
+
+</package>
+
+
