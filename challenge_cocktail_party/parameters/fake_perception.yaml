@@ -1,0 +1,5 @@
+object_properties:
+    - gazebo_name: coke_can.*
+      class_label: coke_can
+      detection_radius: 15
+      dz: 0.1
