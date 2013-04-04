@@ -12,6 +12,8 @@
   <depend package="wire_interface"/>
   <depend package="tue_move_base_msgs"/>
   <depend package="actionlib"/>
+  <depend package="pein_msgs"/>
+  <depend package="tf"/>
 
   <!-- Why do a need this dependency? (Get linker error if left out) -->
   <depend package="costmap_2d"/>
