@@ -153,8 +153,10 @@ bool memorizeOperator() {
             actionlib::SimpleClientGoalState state = learn_face_ac_->getState();
             ROS_INFO("Learn operator action finished: %s", state.toString().c_str());
         }
-        else ROS_WARN("Learn operator action did not finish before the time out.");
-        return false;
+        else  {
+            ROS_WARN("Learn operator action did not finish before the time out.");
+            return false;
+        }
 
     } else {
         ROS_WARN("Not connected with the learn operator action server: no goal send");
