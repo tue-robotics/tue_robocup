@@ -22,7 +22,7 @@ double FIND_RATE = 1;                           // Rate check for operator at st
 const int N_MODELS = 40;                        // Rate check for operator at start of the challenge
 const double TIME_OUT_LEARN_FACE = 90;          // Rate check for operator at start of the challenge
 const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
-const double THRESHOLD_POS_COV_OPERATOR = 0.99; // If the position covariance of the operator is above the threshold: operator lost
+const double THRESHOLD_POS_COV_OPERATOR = 2.4;  // If the position covariance of the operator is above the threshold: operator lost
 
 
 //! Globals
@@ -111,13 +111,14 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 
                     //! Check if operator is lost based on uncertainty on its position
                     if (cov(0,0) > THRESHOLD_POS_COV_OPERATOR) {
+                        ROS_INFO("Found operator but uncertainty too large -> lost operator");
                         return false;
                     }
 
                     return true;
 
                 } else {
-                    ROS_WARN("Found an operator witout position attribute");
+                    ROS_WARN("Found an operator without valid position attribute");
                 }
             }
         }
@@ -288,6 +289,7 @@ int main(int argc, char **argv) {
             break;
         }
 
+        ROS_INFO("No operator found, waiting for operator...");
         find_rate.sleep();
     }
 
