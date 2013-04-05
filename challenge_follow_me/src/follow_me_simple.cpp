@@ -21,8 +21,8 @@ const double FOLLOW_RATE = 1;                   // Rate at which the move base g
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const int N_MODELS = 40;                        // Rate check for operator at start of the challenge
 const double TIME_OUT_LEARN_FACE = 90;          // Rate check for operator at start of the challenge
-const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
-const double THRESHOLD_POS_COV_OPERATOR = 2.4;  // If the position covariance of the operator is above the threshold: operator lost
+const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
+const double THRESHOLD_POS_COV_OPERATOR = 2.49;  // If the position covariance of the operator is above the threshold: operator lost
 
 
 //! Globals
@@ -240,6 +240,8 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
     //! Send goal to move base client
     move_base_ac_->sendGoal(move_base_goal);
+    
+    ROS_INFO("Move base goal: (x,y) = (%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y);
 
 }
 
