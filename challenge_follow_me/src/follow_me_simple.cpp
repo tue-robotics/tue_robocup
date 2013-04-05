@@ -16,7 +16,7 @@ using namespace std;
 
 
 //! Settings
-const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given
+const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 1;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const int N_MODELS = 40;                        // Rate check for operator at start of the challenge
@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
 
     //! Create a model for identifying the operator later
     if (!memorizeOperator()) {
-        ROS_ERROR("Learning operator failed");
+        ROS_ERROR("Learning operator failed: AMIGO does not know who to follow");
         return -1;
     }
 
