@@ -30,12 +30,12 @@ class WaitForPerson(smach.State):
                                             Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))
                                           )
 
-        self.robot.perception.toggle_recognition(faces=True)
+        self.robot.perception.toggle(["face_segmentation"])
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
         wait_result = wait_machine.execute()
 
-        self.robot.perception.toggle_recognition(faces=False)
+        self.robot.perception.toggle([])
 
         if wait_result == "timed_out":
             self.robot.speech.speak("Please, don't keep me waiting.", language="us", personality="kyle", voice="default", mood="excited")
@@ -82,11 +82,17 @@ class LookForDrink(smach.State):
         # we made it to the new goal. Let's have a look to see whether we can find the object here
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
+        # look to ROI
+        roi_answers = self.robot.reasoner.query(Compound("region_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
+        if roi_answers:
+            roi_answer = roi_answers[0]
+            self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
+
         self.robot.speech.speak("Let's see what I can find here", language="us", personality="kyle", voice="default", mood="excited")
 
-        self.robot.perception.toggle_recognition(objects=True)
+        self.robot.perception.toggle(["template_matching"])
         rospy.sleep(5.0)
-        self.robot.perception.toggle_recognition(objects=False)
+        self.robot.perception.toggle([])
 
         object_answers = self.robot.reasoner.query(Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
@@ -109,6 +115,7 @@ class CocktailParty(smach.StateMachine):
         robot.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
         robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
         robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
+        robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
 
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
 
