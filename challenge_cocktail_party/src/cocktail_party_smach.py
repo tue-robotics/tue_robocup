@@ -123,6 +123,10 @@ class CocktailParty(smach.StateMachine):
 
         # Queries:
         query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
+        query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
+                                           Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                           Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
         with self:
             
@@ -155,9 +159,14 @@ class CocktailParty(smach.StateMachine):
                
             smach.StateMachine.add( 'LOOK_FOR_DRINK',
                                     LookForDrink(robot),
-                                    transitions={   "looking":"LOOK_FOR_DRINK",  # TODO
-                                                    "found":'RETURN_DRINK',
+                                    transitions={   "looking":"LOOK_FOR_DRINK",
+                                                    "found":'PICKUP_DRINK',
                                                     "not_found":'SAY_FAILED'})
+
+            smach.StateMachine.add( 'PICKUP_DRINK',
+                                    GrabMachine(robot.leftArm, robot, query_grabpoint),
+                                    transitions={   "succeeded":"RETURN_DRINK",
+                                                    "failed":'PICKUP_DRINK' })            
 
             smach.StateMachine.add( 'RETURN_DRINK',
                                     Navigate_to_queryoutcome(robot, query_party_room, X="X", Y="Y", Phi="Phi"),
