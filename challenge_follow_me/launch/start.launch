@@ -3,7 +3,7 @@
 <launch>
 
   <!-- Top laser scanner -->
-  <node pkg="hokuyo_node" type="hokuyo_node" name="front_hokuyo_node" output="screen" machine="amigo1">
+  <node pkg="hokuyo_node" type="hokuyo_node" name="top_hokuyo_node" output="screen">
     <remap from="scan" to="/top_scan"/>
     <param name="frame_id" value="/top_laser"/>
   </node>
@@ -11,12 +11,12 @@
   <!-- People detection using top laser -->
   <include file="$(find laser_ppl_detection)/launch/detect_ppl.launch" />
   
-  <!-- Pein -->
+  <!-- Pein ->
   <include file="$(find pein_supervisor)/launch/start.launch" />
-  <include file="$(find pein_face_recognition)/launch/start.launch" />
+  <include file="$(find pein_face_recognition)/launch/start.launch" /-->
   
-  <!-- WIRE -->
-  <include file="$(find wire_core)/launch/start.launch" />
+  <!-- WIRE ->
+  <include file="$(find wire_core)/launch/start.launch" /-->
 
 </launch>
 
