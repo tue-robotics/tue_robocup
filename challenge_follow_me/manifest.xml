@@ -14,6 +14,7 @@
   <depend package="actionlib"/>
   <depend package="pein_msgs"/>
   <depend package="tf"/>
+  <depend package="std_srvs"/>
 
   <!-- Why do a need this dependency? (Get linker error if left out) -->
   <depend package="costmap_2d"/>

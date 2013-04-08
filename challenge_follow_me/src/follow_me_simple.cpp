@@ -8,6 +8,7 @@
 
 #include <pein_msgs/LearnAction.h>
 #include <std_msgs/String.h>
+#include <std_srvs/Empty.h>
 
 #include <tf/transform_datatypes.h>
 #include "problib/conversions.h"
@@ -16,21 +17,28 @@ using namespace std;
 
 
 //! Settings
+const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
+const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
+const double WAIT_TIME_OPERATOR_MAX = 30.0;     // Maximum waiting time for operator to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
+const int N_MODELS = 10;                        // Number of models used for recognition of the operator
+const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
 const double FOLLOW_RATE = 1;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-const int N_MODELS = 40;                        // Rate check for operator at start of the challenge
-const double TIME_OUT_LEARN_FACE = 90;          // Rate check for operator at start of the challenge
-const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
-const double THRESHOLD_POS_COV_OPERATOR = 2.49;  // If the position covariance of the operator is above the threshold: operator lost
+
+// NOTE: At this stage recognition is never performed, hence number of models can be small
 
 
 //! Globals
+double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
+double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
+double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
 bool itp2 = false;                                                                // Bookkeeping: at elevator yes or no
 bool itp3 = false;                                                                // Bookkeeping: passed elevator yes or no
-actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Move base action client
-actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Learn face action client
-ros::Publisher pub_speech_;                                                       // Publisher that makes AMIGO speak
+actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
+actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
+ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 
 
 /**
@@ -47,20 +55,86 @@ void amigoSpeak(string sentence) {
 
 
 /**
- * @brief findOperator, moves towards person closest to most recent operator position and turn on recognition
- * @param objects current list of world model objects
- * @param pos position the operator was seen last
+ * @brief findOperator, detects person in front of robot, empties WIRE and adds person as operator
+ * @param client used to query from/assert to WIRE
  */
-void findOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
+void findOperator(wire::Client& client) {
 
     //! It is allowed to call the operator once per section (points for the section will be lost)
     amigoSpeak("I have lost my operator, can you please stand in front of me");
 
     //! Give the operator some time to move to the robot
-    ros::Duration dt(7.5);
-    dt.sleep();
+    double t_start = ros::Time::now().toSec();
+    ros::Duration dt(1.0);
+    bool no_operator_found = true;
+    while (ros::Time::now().toSec() - t_start < WAIT_TIME_OPERATOR_MAX && no_operator_found) {
 
-    // TODO implement some search strategy (?)
+        //! Get latest world state estimate
+        vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
+
+        //! Iterate over all world model objects and look for a person in front of the robot
+        for(vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
+            wire::PropertySet& obj = *it_obj;
+            const wire::Property& prop_label = obj.getProperty("class_label");
+            if (prop_label.isValid() && prop_label.getValue().getExpectedValue().toString() == "person") {
+
+                //! Check position
+                const wire::Property& prop_pos = obj.getProperty("position");
+                if (prop_pos.isValid()) {
+
+                    //! Get position of potential operator
+                    pbl::PDF pos = prop_pos.getValue();
+                    pbl::Gaussian pos_gauss(3);
+                    if (pos.type() == pbl::PDF::GAUSSIAN) {
+                        pos_gauss = pbl::toGaussian(pos);
+
+                    } else {
+                        ROS_INFO("follow_me_simple (findOperator): Position person is not a Gaussian");
+                    }
+
+                    //! If operator, set name in world model
+                    if (pos_gauss.getMean()(0) < 2.0 && pos_gauss.getMean()(1) > -0.75 && pos_gauss.getMean()(1) < 0.75) {
+
+                        amigoSpeak("I found my operator");
+
+                        //! Reset
+                        last_var_operator_pos_ = -1;
+                        t_last_check_ = ros::Time::now().toSec();
+
+                        //! Evidence
+                        wire::Evidence ev(ros::Time::now().toSec());
+
+                        //! Set the position
+                        ev.addProperty("position", pos_gauss, NAVIGATION_FRAME);
+
+                        //! Name must be operator
+                        pbl::PMF name_pmf;
+                        name_pmf.setProbability("operator", 1.0);
+                        ev.addProperty("name", name_pmf);
+
+                        //! Reset the world model
+                        std_srvs::Empty srv;
+                        if (reset_wire_client_.call(srv)) {
+                            ROS_INFO("Cleared world model");
+                        } else {
+                            ROS_ERROR("Failed to clear world model");
+                        }
+
+                        //! Assert evidence to WIRE
+                        client.assertEvidence(ev);
+
+                        no_operator_found = false;
+                        break;
+                    }
+                }
+
+            }
+
+        }
+
+        dt.sleep();
+    }
+
 }
 
 
@@ -87,7 +161,6 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     pos = prop_pos.getValue();
 
                     //! Get position covariance
-
                     pbl::Gaussian pos_gauss(3);
                     if (pos.type() == pbl::PDF::GAUSSIAN) {
                         pos_gauss = pbl::toGaussian(pos);
@@ -109,11 +182,24 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
 
-                    //! Check if operator is lost based on uncertainty on its position
-                    if (cov(0,0) > THRESHOLD_POS_COV_OPERATOR) {
-                        ROS_INFO("Found operator but uncertainty too large -> lost operator");
-                        return false;
+
+                    //! Check if operator position is updated (initially negative)
+                    if (cov(0,0) < last_var_operator_pos_ || last_var_operator_pos_ < 0) {
+                        last_var_operator_pos_ = cov(0,0);
+                    } else {
+
+                        //! Uncertainty increased: operator out of side
+                        t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
+                        ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
+
+                        //! Position uncertainty increased too long: operator lost
+                        if (t_no_meas_ > TIME_OUT_OPERATOR_LOST) {
+                            ROS_INFO("I lost my operator");
+                            return false;
+                        }
                     }
+
+                    t_last_check_ = ros::Time::now().toSec();
 
                     return true;
 
@@ -185,7 +271,10 @@ void speechCallback(std_msgs::String res) {
 
 pbl::PDF findElevator() {
 
-    pbl::PDF el_pos;
+    // TODO: implement detection algorithm/service
+    pbl::Matrix cov(3,3);
+    cov.zeros();
+    pbl::PDF el_pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
     return el_pos;
 
 }
@@ -255,6 +344,9 @@ int main(int argc, char **argv) {
     //! Query WIRE for objects
     wire::Client client;
 
+    //! Client that allows reseting WIRE
+    reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
+
     //! Subscribe to the speech recognition topic
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
     bool itp2 = false;
@@ -272,29 +364,42 @@ int main(int argc, char **argv) {
     learn_face_ac_->waitForServer();
     ROS_INFO("Learn face client connected to the learn face server");
 
-    //! Create a model for identifying the operator later
-    if (!memorizeOperator()) {
-        ROS_ERROR("Learning operator failed: AMIGO does not know who to follow");
-        return -1;
-    }
-
     //! Administration
     pbl::PDF operator_pos;
 
-    //! Operator must be in the world model, remember position and ID
-    ros::Rate find_rate(FIND_RATE);
-    while(ros::ok()) {
+    //! Create a model for identifying the operator later
+    if (!memorizeOperator()) {
 
-        //! Get objects in estimated world state
-        vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
+        ROS_ERROR("Learning operator failed: AMIGO will not be able to recognize the operator");
+        findOperator(client);
 
-        //! Start challenge once the operator is found
-        if (getPositionOperator(objects, operator_pos)) {
-            break;
+    } else {
+
+        //! Operator must be in the world model, remember position
+        unsigned int n_tries = 0;
+        ros::Rate find_rate(FIND_RATE);
+        while(ros::ok()) {
+
+            //! Avoid too much delay due to some failure in perception
+            if (n_tries > 10) {
+                findOperator(client);
+                ROS_ERROR("Learning OK but no operator in world model, person in front of the robot is assumed to be the operator");
+                break;
+            }
+
+            //! Get objects in estimated world state
+            vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
+            t_last_check_ = ros::Time::now().toSec();
+
+            //! Start challenge once the operator is found
+            if (getPositionOperator(objects, operator_pos)) {
+                break;
+            }
+
+            ROS_INFO("No operator found, waiting for operator...");
+            ++n_tries;
+            find_rate.sleep();
         }
-
-        ROS_INFO("No operator found, waiting for operator...");
-        find_rate.sleep();
     }
 
     ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
@@ -338,7 +443,7 @@ int main(int argc, char **argv) {
 
                 //! If the operator is lost, move around the croud
 
-                // TODO: drive around croud
+                // TODO: drive around crowd
                 // TODO: somehow the operator must be recognized again
 
                 itp3 = false;
@@ -360,7 +465,7 @@ int main(int argc, char **argv) {
             } else {
 
                 //! Lost operator
-                findOperator(objects, operator_pos);
+                findOperator(client);
             }
         }
 
