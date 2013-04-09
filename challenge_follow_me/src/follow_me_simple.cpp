@@ -20,7 +20,7 @@ using namespace std;
 const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 30.0;     // Maximum waiting time for operator to return
-const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
+const string NAVIGATION_FRAME = "/front_laser"; // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 10;                        // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
 const double FOLLOW_RATE = 1;                   // Rate at which the move base goal is updated
@@ -134,6 +134,14 @@ void findOperator(wire::Client& client) {
 
         dt.sleep();
     }
+    
+    ros::Duration safety_delta(1.0);
+    safety_delta.sleep();
+    
+    
+    //! Reset
+    last_var_operator_pos_ = -1;
+    t_last_check_ = ros::Time::now().toSec();
 
 }
 
@@ -181,14 +189,19 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                         }
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
+                    
+                    ROS_INFO("Operator has variance %f, last variance is %f", cov(0,0), last_var_operator_pos_);
 
 
                     //! Check if operator position is updated (initially negative)
                     if (cov(0,0) < last_var_operator_pos_ || last_var_operator_pos_ < 0) {
                         last_var_operator_pos_ = cov(0,0);
+                        t_no_meas_ = 0;
+                        t_last_check_ = ros::Time::now().toSec();
                     } else {
 
                         //! Uncertainty increased: operator out of side
+                        last_var_operator_pos_ = cov(0,0);
                         t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
                         ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
 
