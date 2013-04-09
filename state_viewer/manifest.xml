@@ -1,10 +1,7 @@
 <package>
-  <description brief="rdf_viewer">
-
-     rdf_viewer
-
+  <description brief="state_viewer">
   </description>
-  <author>sdries</author>
+  <author>Sjoerd van den Dries</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/rdf_viewer</url>
