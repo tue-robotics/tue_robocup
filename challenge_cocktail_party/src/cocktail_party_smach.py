@@ -47,6 +47,16 @@ class WaitForPerson(smach.State):
             self.robot.speech.speak("Well hello there! Please let me have a look at you, such that I can remember you later.", language="us", personality="kyle", voice="default", mood="excited")
             return "continue"
 
+class LearnPersonCustom(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["face_learned" , "learn_failed"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        learn_machine = Learn_Person(self.robot, "person-1")
+        learn_result = learn_machine.execute()
+        return learn_result
+
 class LookForDrink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["looking" , "found", "not_found"])
@@ -104,6 +114,30 @@ class LookForDrink(smach.State):
         else:
             # have not found the drink, so let's keep looking
             return "looking"
+
+class LookForPerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["looking" , "found", "not_found"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.speech.speak("Let me see who I can find here...", language="us", personality="kyle", voice="default", mood="excited")
+
+        self.robot.perception.toggle(["face_recognition", "face_segmentation"])
+        rospy.sleep(5.0)
+        self.robot.perception.toggle([])
+
+        person_result = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                            Compound( "property_expected", "ObjectID", "name", "Name")
+                                          ))
+
+        if not person_result:
+            return "not_found"
+
+        name = person_result[0]["Name"]
+        self.robot.speech.speak("Hello " + str(name), language="us", personality="kyle", voice="default", mood="excited")        
+        return "found"
  
 class CocktailParty(smach.StateMachine):
     def __init__(self, robot):
@@ -139,11 +173,13 @@ class CocktailParty(smach.StateMachine):
             smach.StateMachine.add( "WAIT_FOR_PERSON", 
                                     WaitForPerson(robot),
                                     transitions={   "waiting":"WAIT_FOR_PERSON",
-                                                    "continue":"LEARN_PERSON"})
+                                                    "continue":"LOOK_FOR_PERSON"})  # TEMP!
+
+            # TODO: learn persons name
 
             smach.StateMachine.add( "LEARN_PERSON",
-                                    Learn_Person(robot),
-                                    transitions={   "face_learned":"TAKE_ORDER", 
+                                    LearnPersonCustom(robot),
+                                    transitions={   "face_learned":"TAKE_ORDER",
                                                     "learn_failed":"TAKE_ORDER"})
 
             smach.StateMachine.add('TAKE_ORDER', 
@@ -170,10 +206,16 @@ class CocktailParty(smach.StateMachine):
 
             smach.StateMachine.add( 'RETURN_DRINK',
                                     Navigate_to_queryoutcome(robot, query_party_room, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   "arrived":"FINISH",  # TODO
+                                    transitions={   "arrived":"LOOK_FOR_PERSON",  # TODO
                                                     "unreachable":'Aborted',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'Aborted'})
+
+            smach.StateMachine.add( 'LOOK_FOR_PERSON',
+                                    LookForPerson(robot),
+                                    transitions={   "looking":"LOOK_FOR_PERSON",
+                                                    "found":'FINISH',
+                                                    "not_found":'SAY_FAILED'})
 
             smach.StateMachine.add( 'FINISH', Finish(robot),
                                 transitions={'stop':'Done'})
