@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import threading
 

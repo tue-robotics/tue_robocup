@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_skills')
 from collections import deque
 import rospy
 import amigo_msgs.msg

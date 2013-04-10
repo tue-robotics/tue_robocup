@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import head
 #import worldmodel
@@ -81,7 +81,7 @@ class Amigo(object):
     #     Expects a worldmodel_target. Optional time_out
         
     #     Example:
-    #     >>> import roslib; roslib.load_manifest('tue_execution_pack')
+    #     >>> import roslib; roslib.load_manifest('robot_skills')
     #     >>> import object_msgs
     #     >>> o = object_msgs.msg.ExecutionTarget(ID=1, class_label='MarkEnSimon')
     #     >>> amigo.look_at(o) 

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_skills')
 import rospy
 from amigo_arm_navigation.msg._grasp_precomputeGoal import grasp_precomputeGoal
 import actionlib
