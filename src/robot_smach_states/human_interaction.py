@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import random
@@ -91,7 +91,7 @@ class QuestionMachine(smach.StateMachine):
                                               'question_sentence':'question_sentence'})
 
             smach.StateMachine.add("BEEP", 
-                                   PlaySound("~/ros/pkgs/tue-ros-pkg/dev/tue_executioner/tue_execution_pack/beep-6.mp3", 
+                                   PlaySound("~/ros/pkgs/tue-ros-pkg/dev/tue_executioner/robot_smach_states/beep-6.mp3", 
                                     blocking=True),
                                    transitions={'played':'WAIT_ANSWER',
                                                 'error':'WAIT_ANSWER'})

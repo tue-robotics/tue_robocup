@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import smach_ros
@@ -100,7 +100,7 @@ class Prepare_orientation(smach.State):
                 self.robot.speech.speak("I am very sorry but this object is out of my reach",mood="sad")
                 return 'orientation_failed'
             
-            rospy.loginfo("[tue_execution_pack] Desired target position: x = %f, y = %f",desired_base_pose_MAP.pose.position.x, desired_base_pose_MAP.pose.position.y)
+            rospy.loginfo("[robot_smach_states] Desired target position: x = %f, y = %f",desired_base_pose_MAP.pose.position.x, desired_base_pose_MAP.pose.position.y)
 
             if self.robot.base.send_goal(desired_base_pose_MAP.pose.position, desired_base_pose_MAP.pose.orientation, time=60):
                 '''wait for base goal to succeed for orientation'''
@@ -222,7 +222,7 @@ class Grab(smach.State):
             ''' Keep looking at end-effector for ar marker detection '''
             self.robot.head.set_position(0,0,0,frame_id=end_effector_frame_id,keep_tracking=True)
             
-            rospy.loginfo("[tue_execution_pack:grasp] Target position: {0}".format(target_position))
+            rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
             
             '''problem: Point not defined'''
             #if self.side == self.robot.leftArm:
@@ -241,8 +241,8 @@ class Grab(smach.State):
             
             target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
             
-            rospy.loginfo("[tue_execution_pack] Target position in base link: {0}".format(target_position_bl))
-                        #rospy.loginfo("[tue_execution_pack] Target position: %s",target_position)
+            rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
+                        #rospy.loginfo("[robot_smach_states] Target position: %s",target_position)
         
             #retrieve robot position and orientation
             #(robot_position, robot_orientation) = self.robot.base.location
@@ -655,7 +655,7 @@ class Point_at_object(smach.State):
             ''' Keep looking at end-effector for ar marker detection '''
             self.robot.head.set_position(0,0,0,frame_id=end_effector_frame_id,keep_tracking=True)
             
-            rospy.loginfo("[tue_execution_pack:grasp] Target position: {0}".format(target_position))
+            rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
             
             '''problem: Point not defined'''
             #if self.side == self.robot.leftArm:
@@ -674,8 +674,8 @@ class Point_at_object(smach.State):
             
             target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
             
-            rospy.loginfo("[tue_execution_pack] Target position in base link: {0}".format(target_position_bl))
-                        #rospy.loginfo("[tue_execution_pack] Target position: %s",target_position)
+            rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
+                        #rospy.loginfo("[robot_smach_states] Target position: %s",target_position)
         
             #retrieve robot position and orientation
             #(robot_position, robot_orientation) = self.robot.base.location
