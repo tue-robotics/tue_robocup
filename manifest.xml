@@ -1,0 +1,17 @@
+<package>
+  <description brief="robot_smach_states">
+
+     robot_smach_states
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/robot_smach_states</url>
+  <depend package="robot_skills"/>
+  <depend package="smach"/>
+  <depend package="smach_ros"/>
+
+</package>
+
+
