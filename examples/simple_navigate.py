@@ -5,7 +5,7 @@ import rospy
 from robot_skills.amigo import Amigo
 
 import robot_skills
-import robot_smach_states
+from robot_smach_states import navigation
 
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')
