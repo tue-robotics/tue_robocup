@@ -12,7 +12,7 @@ class Wait_for_door_reasoner(smach.State):
         
         self.robot = robot
         
-    def execute(self,userdata):
+    def execute(self,userdata=None):
         r = self.robot.reasoner
         query = Compound("state", "door1", "open")  # maybe change door1 to entrance_door would be better
 
@@ -39,7 +39,7 @@ class Ask_query_true(smach.State):
         self.tries = 0
 
 
-    def execute(self,userdata):
+    def execute(self,userdata=None):
         waittime = self.waittime
         starttime = rospy.Time.now()
         time2 = rospy.Time.now()
@@ -93,7 +93,7 @@ class Wait_query_true(smach.State):
 
         self.execute = decorate_with_pre_post(self.execute)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         starttime = rospy.Time.now()
         while (rospy.Time.now()-starttime) < self.timeout:
             answers = self.robot.reasoner.query(self.query)
@@ -114,7 +114,7 @@ class Retract_facts(smach.State):
         self.robot = robot
         self.facts = facts
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         for fact in self.facts:
             self.robot.reasoner.query(Compound("retractall", fact))
         return 'retracted'
