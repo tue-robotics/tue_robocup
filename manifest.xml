@@ -1,0 +1,15 @@
+<package>
+  <description brief="robot_skills">
+
+     robot_skills
+
+  </description>
+  <author>sdries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/robot_skills</url>
+  <depend package="rospy"/>
+
+</package>
+
+
