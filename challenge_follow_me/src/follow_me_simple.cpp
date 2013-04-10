@@ -64,6 +64,10 @@ void findOperator(wire::Client& client) {
     amigoSpeak("I have lost my operator, can you please stand in front of me");
 
     //! Give the operator some time to move to the robot
+    ros::Duration wait_for_operator(4.0);
+    wait_for_operator.sleep();
+
+    //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
     ros::Duration dt(1.0);
     bool no_operator_found = true;
