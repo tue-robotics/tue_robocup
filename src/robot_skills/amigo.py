@@ -21,6 +21,12 @@ import std_msgs.msg
 
 from math import degrees, radians
 
+# This is very ugly, but needed for mapgo, as it depends on robot_smach_states
+# It is not possible to add robot_smach_states to the manifest of robot_skills, as
+# robot_smach_states already depends on robot_skills (infinite recursion!)
+# TODO: find better solution
+roslib.load_manifest('robot_smach_states')
+
 class Amigo(object):
     """
     Interface to all parts of Amigo. When initializing Amigo, you can choose a list of components
@@ -227,8 +233,8 @@ if __name__ == "__main__":
     
     mapgo_old = amigo.base.go
     def mapgo(x,y,phi, dist=1.5):
-        import states_new as states
-        nav_state = states.navigation.NavigateGeneric(robot, goal_pose_2d=(x,y,phi), look_at_path_distance=dist)
+        from robot_smach_states import navigation       
+        nav_state = navigation.NavigateGeneric(robot, goal_pose_2d=(x,y,phi), look_at_path_distance=dist)
         return nav_state.execute()
     
     r = amigo.reasoner
