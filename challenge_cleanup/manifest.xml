@@ -1,0 +1,17 @@
+<package>
+  <description brief="challenge_cleanup">
+
+     challenge_cleanup
+
+  </description>
+  <author>Loy</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_cleanup</url>
+  <depend package="rospy"/>
+  <depend package="robot_skills"/>
+  <depend package="robot_smach_states"/>
+
+</package>
+
+
