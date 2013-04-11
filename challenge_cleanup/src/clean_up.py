@@ -7,9 +7,8 @@ import smach
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
-from util.startup import startup
-
 from robot_skills.reasoner  import Conjunction, Compound
+from util.startup import startup
 
 class Cleanup(smach.StateMachine):
 
