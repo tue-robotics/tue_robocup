@@ -16,7 +16,8 @@ from human_interaction import Say, Timedout_QuestionMachine, Say_generated, Ques
 from reasoning import Wait_query_true, Retract_facts
 from robot_parts.reasoner import Conjunction, Compound
 
-# import util.reasoning_helpers as urh # DOES NOT EXIST!
+import util.reasoning_helpers as urh
+
 class Learn_Person(smach.State):
     '''
     Maintainer: ziyang, Loy
