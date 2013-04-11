@@ -1,10 +1,13 @@
-#!/usr/bin/python
-import roslib; roslib.load_manifest('tue_execution_pack')
+#! /usr/bin/env python
+import roslib; roslib.load_manifest('challenge_cleanup')
 import rospy
-from robot_parts.reasoner  import Conjunction, Compound
+
 import smach
-from util.startup import startup
-import states_new as states
+
+from robot_skills.amigo import Amigo
+import robot_smach_states as states
+
+from robot_skills.reasoner  import Conjunction, Compound
 
 def setup_statemachine(robot):
 
@@ -325,5 +328,11 @@ def setup_statemachine(robot):
     return sm
 
 if __name__ == "__main__":
+    import ipdb; ipdb.set_trace()
     rospy.init_node('clean_up_exec')
-    startup(setup_statemachine)
+    
+    amigo = Amigo(wait_services=True)
+
+    machine = setup_statemachine(amigo)
+
+    machine.execute()
