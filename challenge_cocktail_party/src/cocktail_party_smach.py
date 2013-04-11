@@ -6,6 +6,9 @@ from robot_skills.amigo import Amigo
 
 from robot_smach_states import *
 
+names = ["john", "richard", "nancy", "alice", "bob"]
+name_index = 0
+
 #===============================TODOs===========================================
 #
 #===============================================================================
@@ -53,8 +56,17 @@ class LearnPersonCustom(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        learn_machine = Learn_Person(self.robot, "person-1")
+        global names, name_index
+        name = names[name_index]
+
+        learn_machine = Learn_Person(self.robot, name)
         learn_result = learn_machine.execute()
+        name_index = name_index + 1
+
+        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))
+        self.robot.reasoner.query(Compound("assert", Compound("current_person", name)))
+        self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # make sure we're not left with a goal from last time
+
         return learn_result
 
 class LookForDrink(smach.State):
@@ -123,6 +135,15 @@ class LookForPerson(smach.State):
     def execute(self, userdata=None):
         self.robot.speech.speak("Let me see who I can find here...", language="us", personality="kyle", voice="default", mood="excited")
 
+        # find out who we need to return the drink to
+        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
+        if not return_result:
+            self.robot.speech.speak("Thats horrible, I forgot who I should bring the drink to!")
+            return "not_found"
+
+        serving_person = return_result["Person"]
+
+
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
         rospy.sleep(5.0)
         self.robot.perception.toggle([])
@@ -145,6 +166,14 @@ class LookForPerson(smach.State):
             if prob > 0.6 and prob > name_prob:
                 name = str(name_possibility[1][0])
                 name_prob = prob
+
+        if not name:
+            self.robot.speech.speak("Mmmmm, I don't know who you are. Moving on!")
+            return "looking"        
+
+        if name != serving_person:
+            self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
+            return "looking"
 
         if name:
             self.robot.speech.speak("Hello " + str(name), language="us", personality="kyle", voice="default", mood="excited")        
@@ -179,7 +208,7 @@ class CocktailParty(smach.StateMachine):
             
             smach.StateMachine.add( "START_CHALLENGE",
                                     StartChallenge(robot, "initial", query_party_room), 
-                                    transitions={   "Done":"LOOK_FOR_PERSON", 
+                                    transitions={   "Done":"WAIT_FOR_PERSON", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"SAY_FAILED"})
 
@@ -192,8 +221,8 @@ class CocktailParty(smach.StateMachine):
 
             smach.StateMachine.add( "LEARN_PERSON",
                                     LearnPersonCustom(robot),
-                                    transitions={   "face_learned":"LOOK_FOR_PERSON",
-                                                    "learn_failed":"TAKE_ORDER"})
+                                    transitions={   "face_learned":"TAKE_ORDER",
+                                                    "learn_failed":"LEARN_PERSON"})
 
             smach.StateMachine.add('TAKE_ORDER', 
                                     Timedout_QuestionMachine(
