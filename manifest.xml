@@ -64,7 +64,7 @@
   <!--3d navigation -->
   <depend package="octomap_msgs"/>
   
-  <depend package="amigo_launch_files"/>
+<!--   <depend package="amigo_launch_files"/> -->
 
 </package>
 
