@@ -24,19 +24,23 @@ class Learn_Person(smach.State):
     Face learning state, learn face from left, right, and front view.
     '''
 
-    def __init__(self, robot):
+    def __init__(self, robot, name=None):
         smach.State.__init__(self,
                              outcomes = ['face_learned', 'learn_failed'])
         self.robot = robot
         self.name_query = Compound("name_to_learn", "Name")
+        self.name = name
 
     def execute(self, userdate=None):
-        answers = self.robot.reasoner.query(self.name_query)
-        if answers:
-            name_to_learn = str(answers[0]["Name"])
+        if self.name:
+            name_to_learn = self.name
         else:
-            rospy.logerr("Name to learn is not known.")
-            name_to_learn = "unknown"
+            answers = self.robot.reasoner.query(self.name_query)
+            if answers:
+                name_to_learn = str(answers[0]["Name"])
+            else:
+                rospy.logerr("Name to learn is not known.")
+                name_to_learn = "unknown"
 
         rospy.loginfo('Get user name {0}'.format(name_to_learn))
 
