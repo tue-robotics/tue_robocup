@@ -68,7 +68,8 @@ class Reasoner(object):
     #     return self.summarize_answer(self.constructed_query(query))
 
     def assertz(self, *facts):
-        return self.client.assert_facts(facts)
+        for fact in facts:
+            self.client.query(Compound("assert", fact))
 
         # reasoning_assert = tue_reasoner_msgs.srv.AssertRequest()
         # for fact in facts:
