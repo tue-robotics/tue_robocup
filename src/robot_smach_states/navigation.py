@@ -15,7 +15,7 @@ import copy
 import math
 
 from robot_parts.reasoner import Term, Compound, Conjunction
-from designators.designator import NoAnswerException
+#from designators.designator import NoAnswerException
 
 import actionlib
 
