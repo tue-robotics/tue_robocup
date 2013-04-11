@@ -1,0 +1,47 @@
+<launch>
+	
+	<!-- This launch file contains the nodes that are required to run the Clean up! Challenge
+		 without the executive itself (this makes testing easier) -->
+	<include file="$(find amigo_machine_files)/machines/amigo1.machine" />
+	<include file="$(find amigo_machine_files)/machines/amigo2.machine" />
+	<include file="$(find amigo_machine_files)/machines/amigo3.machine" />
+	<include file="$(find amigo_machine_files)/machines/amigo4.machine" />
+
+	<rosparam file="$(find amigo_demo)/dictionaries/en_extended.yaml" command="load" />
+	<rosparam file="$(find amigo_demo)/dictionaries/nl_extended.yaml" command="load" />
+	
+	<group if="$(optenv ROBOT_REAL false)">
+		<!-- REAL ROBOT -->
+		
+		<!-- Perception -->
+		<!--<include file="$(find blob_clustering)/launch/start.launch"/>-->
+		<include file="$(find pein_supervisor)/launch/start.launch"/>
+		<node pkg="pein_template_matching" type="detection_node" name="template_matching" machine="amigo1"/>
+				
+		<!-- Do we need this here? Ever? -->
+		<!--<node pkg="laserscan_starter" type="laserscan_starter" name="laserscan_starter" machine="amigo1"/>-->
+		
+		<!--<rosparam file="$(find tue_execution_pack)/locations/locations_robolab_hospital_room.yaml" command="load" />		-->
+
+		<include file="$(find tue_speech_recognition)/demo/demo_speech.launch" />
+		
+		<!-- teleop (amigo1) -->
+		<node name="teleop" pkg="teleop" type="teleop.py" respawn="false" launch-prefix="xterm -e">
+		</node>
+		
+		<include file="$(find amigo_velocity_kinematics)/launch/start.launch" />
+		
+	</group>
+	
+	<group unless="$(optenv ROBOT_REAL false)">
+		<!-- SIMULATION -->
+		
+		<include file="$(find gazebo_perception)/launch/start.launch"/>
+		
+		<node name="teleop" pkg="teleop" type="teleop.py" respawn="false" launch-prefix="xterm -e">
+		</node>
+		
+	</group>
+
+</launch>
+

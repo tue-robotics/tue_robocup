@@ -1,0 +1,15 @@
+en:
+    HELLO:      ["Hello", "Hey", "Yow", "Hai", "Heeej", "Good day", "Good day to you sir", "Hi"]
+    INTRODUCE:  ["My name is AMIGO", "I am Amigo", "Nice to meet you, I am Amigo"]
+    TUE:        ["I am the service robot of the TU Eindhoven", "I am the care robot the TU Eindhoven", "I am the famous Amigo, care and service robot from the TU Eindhoven"]
+    PICTURE:    ["Do you want to take a picture with me?", "Would you like to take a picture with me?", "Shall we take a picture together?", "Lets have a picture together"]
+    NO_BITE:    ["Don't be afraid, I wont bite you! How could I ever?", "Don't be afraid, I am very kind", "Don't be afraid, I am very friendly", "I am a dainty robot, don't be afraid"]
+    HI:         ["Hello", "Hey", "Yow", "Hai", "Heeej", "Good day", "Good day to you sir", "Hi"]
+    GREET:      ["Hello, My name is Amigo.", "Hi I am Amigo", "Hey, hey, I am a robot called Amigo"]
+    YOURNAME?:  ["What are you called?", "What is your name?", "How can I call you?"]
+    APPLAUSE:   ["Applause please!", "That deserves some applause!", "Let me hear your applause!"]
+    AUB:        ["Please!", "Here you are"]
+    OUCH:       ["Ouch! That hurts!", "Aw, that causes me pain!", "Ai, Ai that was painfull"]
+    !!str YES:  ["Yes!", "Yes please!", "For sure", "Yep"]
+    PASS:       ["May I please pass?", "Can I pass please?", "I would like to pass", "I have to get through. . Thank you"]
+

@@ -1,0 +1,18 @@
+<package>
+  <description brief="amigo_demo">
+
+     amigo_demo
+
+  </description>
+  <author>Loy</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/amigo_demo</url>
+  <depend package="rospy"/>
+  <depend package="robot_skills"/>
+  <depend package="robot_smach_states"/>
+  <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
+</package>
+
+

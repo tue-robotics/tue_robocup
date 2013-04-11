@@ -1,0 +1,28 @@
+<launch>
+	<include file="$(find amigo_demo)/launch/demo_exec_dependencies.launch" />
+	
+	<group if="$(optenv ROBOT_REAL false)">
+		<!-- REAL ROBOT -->
+		<node 	pkg="amigo_demo" 
+				type="demo_executioner.py" 
+				respawn="true" 
+				name="demo_executioner" 
+				output="screen" 
+				machine="amigo3"
+				launch-prefix="xterm -e">
+			<!--<param value="False" name=""/>--> <!--True for testmode, False for normal-->
+		</node>
+	</group>
+	
+	<group unless="$(optenv ROBOT_REAL false)">
+		<!-- SIMULATION -->
+		<node 	pkg="amigo_demo" 
+				type="demo_executioner.py" 
+				respawn="false" 
+				name="demo_executioner" 
+				output="screen"
+				launch-prefix="xterm -e">>
+			<param value="True" name=""/> <!--True for testmode, False for normal-->
+		</node>
+	</group>
+</launch>
