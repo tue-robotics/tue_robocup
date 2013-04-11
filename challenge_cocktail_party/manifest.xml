@@ -8,9 +8,7 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/challenge_cocktail_party</url>
-  <depend package="tue_execution_pack"/>
-
-  <depend package="amigo_smach_states"/>
+  <depend package="robot_smach_states"/>
 
   <!-- for testing -->
   <depend package="wire_jpl"/>

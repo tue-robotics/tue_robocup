@@ -2,9 +2,9 @@
 import roslib; roslib.load_manifest('challenge_cocktail_party')
 import rospy
 
-from amigo_skills.amigo import Amigo
+from robot_skills.amigo import Amigo
 
-from amigo_smach_states import *
+from robot_smach_states import *
 
 #===============================TODOs===========================================
 #
@@ -129,15 +129,28 @@ class LookForPerson(smach.State):
 
         person_result = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "face"),
                                             Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                            Compound( "property_expected", "ObjectID", "name", "Name")
+                                            Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))
                                           ))
 
         if not person_result:
             return "not_found"
 
-        name = person_result[0]["Name"]
-        self.robot.speech.speak("Hello " + str(name), language="us", personality="kyle", voice="default", mood="excited")        
-        return "found"
+        # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
+        name_pmf = person_result[0]["NamePMF"]
+        name=None
+        name_prob=0
+        for name_possibility in name_pmf:
+            print name_possibility
+            prob = float(name_possibility[0])
+            if prob > 0.6 and prob > name_prob:
+                name = str(name_possibility[1][0])
+                name_prob = prob
+
+        if name:
+            self.robot.speech.speak("Hello " + str(name), language="us", personality="kyle", voice="default", mood="excited")        
+            return "found"
+
+        return "not_found"
  
 class CocktailParty(smach.StateMachine):
     def __init__(self, robot):
@@ -166,20 +179,20 @@ class CocktailParty(smach.StateMachine):
             
             smach.StateMachine.add( "START_CHALLENGE",
                                     StartChallenge(robot, "initial", query_party_room), 
-                                    transitions={   "Done":"WAIT_FOR_PERSON", 
+                                    transitions={   "Done":"LOOK_FOR_PERSON", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"SAY_FAILED"})
 
             smach.StateMachine.add( "WAIT_FOR_PERSON", 
                                     WaitForPerson(robot),
                                     transitions={   "waiting":"WAIT_FOR_PERSON",
-                                                    "continue":"LOOK_FOR_PERSON"})  # TEMP!
+                                                    "continue":"LEARN_PERSON"})
 
             # TODO: learn persons name
 
             smach.StateMachine.add( "LEARN_PERSON",
                                     LearnPersonCustom(robot),
-                                    transitions={   "face_learned":"TAKE_ORDER",
+                                    transitions={   "face_learned":"LOOK_FOR_PERSON",
                                                     "learn_failed":"TAKE_ORDER"})
 
             smach.StateMachine.add('TAKE_ORDER', 
