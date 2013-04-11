@@ -7,6 +7,8 @@ import smach
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
+from util.startup import startup
+
 from robot_skills.reasoner  import Conjunction, Compound
 
 class Cleanup(smach.StateMachine):
@@ -329,8 +331,4 @@ class Cleanup(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('clean_up_exec')
     
-    amigo = Amigo(wait_services=True)
-
-    machine = Cleanup(amigo)
-
-    machine.execute()
+    startup(Cleanup)
