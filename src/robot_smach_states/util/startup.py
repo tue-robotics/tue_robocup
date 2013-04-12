@@ -2,8 +2,8 @@
 
 import rospy
 import smach_ros
-import robot_parts
-import robot_parts.amigo
+import robot_skills
+import robot_skills.amigo
 import sys, traceback
 
 from optparse import OptionParser
@@ -39,7 +39,7 @@ def startup(statemachine_creator, scenario_setup_function=None):
         amigo = build_amigo(fake=fakeparts, wait_services=True)
     else:
         print "If you want to test an executive, use the --test option and specify what parts you want to mock."
-        amigo = robot_parts.amigo.Amigo(wait_services=True)
+        amigo = robot_skills.amigo.Amigo(wait_services=True)
     
     introserver = None
     with amigo:
