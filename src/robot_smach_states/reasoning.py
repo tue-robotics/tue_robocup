@@ -3,7 +3,7 @@ import roslib; roslib.load_manifest("robot_smach_states")
 import rospy
 import smach
 
-from robot_parts.reasoner import Compound, Conjunction
+from psi import Compound, Conjunction
 
 # Wait_for_door state thought the reasoner 
 class Wait_for_door_reasoner(smach.State):

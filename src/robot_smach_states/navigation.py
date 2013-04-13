@@ -3,18 +3,14 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import geometry_msgs.msg
-
-import exc_functions
-import exc_to_ros
-import ros_functions
 import util
 import util.msg_constructors
-# import util.reasoning_helpers as urh # This file DOES NOT EXIST!
+import util.reasoning_helpers as urh
 
 import copy
 import math
 
-from robot_parts.reasoner import Term, Compound, Conjunction
+from psi import Term, Compound, Conjunction
 #from designators.designator import NoAnswerException
 
 import actionlib

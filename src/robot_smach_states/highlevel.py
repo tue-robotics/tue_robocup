@@ -10,7 +10,7 @@ import navigation
 import manipulation
 import reasoning
 
-from robot_parts.reasoner import Conjunction, Compound
+from psi import Conjunction, Compound
 
 # Wait_for_door state thought the reasoner 
 class Check_object_found_before(smach.State):

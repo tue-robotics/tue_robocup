@@ -8,13 +8,12 @@ import math
 import std_msgs.msg
 
 import util
-import exc_functions
 
 from sensor_msgs.msg import LaserScan
 
 from human_interaction import Say, Timedout_QuestionMachine, Say_generated, QuestionMachine
 from reasoning import Wait_query_true, Retract_facts
-from robot_parts.reasoner import Conjunction, Compound
+from psi import Conjunction, Compound
 
 import util.reasoning_helpers as urh
 
@@ -781,77 +780,6 @@ class LookForObjectsAtPoint(smach.State):
             r.assertz(Compound("current_object", object_id))
 
             return 'object_found'
-
-class Look_for_objects(smach.State):
-    def __init__(self, robot=None):
-        smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
-                                    input_keys=['rate','command','target','object_position','object_target_found','desired_objects','dropoff_location'],
-                                    output_keys=['object_position','object_target_found','target','dropoff_location'])
-        self.robot = robot
-        assert hasattr(self.robot, "perception")
-
-    def execute(self, gl):
-	rospy.loginfo("target before: {0}".format(gl.target))
-
-        rospy.Rate(gl.rate).sleep()
-
-        # Commented 22-03-2012: shouldn't be necessary
-        #wait_for_base(10)
-
-        #rospy.sleep(rospy.Duration(2.0))
-        self.robot.head.look_down()
-
-
-        '''Temp: dummy object'''
-        #gl.object_position.x = 0.4
-        #gl.object_position.y = 0.3
-        #gl.object_position.z = 0.9
-        #tf_transform(gl.object_position, "/map", "/base_link")
-        #gl.object_target_found = True
-        #return 'object_found'
-
-        #rospy.sleep(2.5)
-
-        if gl.command == "abort":
-            self.robot.head.reset_position()
-            return 'abort'
-        else:
-
-            rospy.loginfo("Start object recognition")
-            result = self.robot.perception.toggle_recognition(objects=True)
-
-            # Let the object recognition run for a certain period
-            rospy.sleep(10.0)
-
-            rospy.loginfo("Stop object recognition")
-
-            result = self.robot.perception.toggle_recognition(objects=False)
-            #rospy.sleep(5.0) #TODO: Why do we need this sleep???
-            gl.target = object_msgs.msg.ExecutionTarget()
-            #import pdb; pdb.set_trace()
-            [robot_position,robot_orientation] = self.robot.base.get_location()
-            gl.target.ID = self.robot.worldmodel.determine_object_target_ID(gl.desired_objects,robot_position)
-            gl.target.class_label = self.robot.worldmodel.determine_target_class_label_by_ID(gl.target.ID)
-
-            rospy.loginfo("target AFTER:".format(gl.target))
-            '''TODO: What happens in case of multiple desired objects?'''
-            if gl.target.ID == -1:
-                self.robot.speech.speak('The desired object is not on this location')
-                self.robot.head.reset_position()
-                return 'no_object_found'
-
-            else:
-                #TODO Erik and Loy: Make this bit more generic, this is kind of go_get_it- or clean_up-specific
-                gl.target.category = exc_functions.determine_target_category(gl.target,gl.desired_objects)
-                rospy.loginfo('Object recognized \n ID = {0} \n Name {1} \n Category {2}'.format(gl.target.ID,gl.target.class_label,gl.target.category))
-                self.robot.speech.speak('I found the object {0} which belongs to category {1}'.format(gl.target.class_label,gl.target.category))
-
-                # TODO Erik/Janno --> is this correct?
-                gl.dropoff_location =  object_msgs.msg.ExecutionTarget(class_label=gl.target.category)
-                # I would expect something like the following
-                gl.dropoff_location =  object_msgs.msg.ExecutionTarget(name=gl.target.category,class_label="location",ID=-2)
-                # Needs to be tested integrally
-                return 'object_found'
 
 @util.deprecated
 class Look(smach.State):

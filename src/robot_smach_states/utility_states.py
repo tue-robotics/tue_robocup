@@ -4,10 +4,6 @@ import rospy
 import smach
 import smach_ros
 #from object_msgs.msg import ExecutionTarget 
-from exc_to_ros import *
-from ros_to_exc import *
-from exc_functions import *
-from ros_functions import *
 import time
 import copy
 
@@ -17,8 +13,6 @@ import os
 
 import threading #For monitoring the ROS topic while waiting on the answer
 from std_msgs.msg import String
-
-import components
 
 from psi import *
 

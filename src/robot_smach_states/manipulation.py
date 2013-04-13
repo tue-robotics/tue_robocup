@@ -4,10 +4,6 @@ import rospy
 import smach
 import smach_ros
 #from object_msgs.msg import ExecutionTarget 
-from exc_to_ros import *
-from ros_to_exc import *
-from exc_functions import *
-from ros_functions import *
 import time
 import copy
 from util import transformations
@@ -19,8 +15,7 @@ import os
 import threading #For monitoring the ROS topic while waiting on the answer
 from std_msgs.msg import String
 
-import components
-from robot_parts.arms import State as ArmState
+from robot_skills.arms import State as ArmState
 
 from human_interaction import Say
 
@@ -550,7 +545,7 @@ class Gripper_to_query_position(smach.StateMachine):
                                                 'target_lost':'target_lost'})
 
 # ToDo Loy: ArmToJointPos is a much better name, this is confusing
-class ArmToPose(smach.State):
+class ArmToJointPos(smach.State):
     def __init__(self, robot, side, jointgoal):
         smach.State.__init__(self, outcomes=['done', "failed"])
         self.side = side
@@ -563,6 +558,8 @@ class ArmToPose(smach.State):
             return "done"
         else:
             return "failed"
+
+ArmToPose = ArmToJointPos
 
 class ArmToUserPose(smach.State):
     def __init__(self, side, x, y, z, roll=0, pitch=0, yaw=0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=False):

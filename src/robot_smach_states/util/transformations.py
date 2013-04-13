@@ -3,7 +3,6 @@ import rospy
 import geometry_msgs.msg
 import math
 import tf
-import util
 
 def euler_z_to_quaternion(angle):
     
@@ -79,12 +78,6 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
         return target_position
         """
       
-# @util.deprecated
-# def euclidian_distance(a, b):
-#     dx = a.x - b.x
-#     dy = a.y - b.y
-#     return math.sqrt(dx*dx + dy*dy)
-
 def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
     if not tf_listener: 
         tf_listener = tf.TransformListener()
