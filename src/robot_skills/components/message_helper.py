@@ -1,4 +1,4 @@
-import roslib; roslib.load_manifest('tue_execution_pack')
+import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import geometry_msgs.msg
 import amigo_msgs.msg
