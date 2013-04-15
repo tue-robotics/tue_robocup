@@ -11,6 +11,7 @@
   <depend package="robot_skills"/>
   <depend package="smach"/>
   <depend package="smach_ros"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 

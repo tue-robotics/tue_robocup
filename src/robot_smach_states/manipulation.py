@@ -14,6 +14,7 @@ import os
 
 import threading #For monitoring the ROS topic while waiting on the answer
 from std_msgs.msg import String
+import geometry_msgs
 
 from robot_skills.arms import State as ArmState
 
