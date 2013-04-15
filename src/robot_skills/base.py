@@ -78,6 +78,7 @@ class Base(object):
         
         self.plan_possible  = None
         self.poses_to_goal = 0
+        self.replan_timeout = 0
         self.base_pose = None
         self.obstacle_position = None
         self.use_2d = use_2d # Necessary to switch between 2D and 3D
@@ -138,6 +139,10 @@ class Base(object):
         self.poses_to_goal          = feedback.nr_poses_to_goal
         self.base_pose              = feedback.base_position
         self.obstacle_position      = feedback.obstacle_position
+        self.replan_timeout         = feedback.nr_sec_till_replan_execution
+        self.path              = feedback.path
+
+        #rospy.loginfo("Feedback from move_base = {0}".format(feedback))
 
         #print feedback.obstacle_position
 
@@ -170,6 +175,8 @@ class Base(object):
         path_result = self.get_plan(position, orientation_quaternion, frame_id)
 
         self.path = path_result.path
+
+        rospy.loginfo("Sending goal to {0}".format(position))
 
         if not self.path:
             rospy.loginfo("No feasible plan to ({0.x},{0.y})".format(position))
