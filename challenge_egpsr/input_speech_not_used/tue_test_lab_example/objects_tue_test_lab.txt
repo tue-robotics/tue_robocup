@@ -1,0 +1,4 @@
+// Objects
+<drink> = coke | icetea | teapack
+<bathroomstuff> = cif
+
