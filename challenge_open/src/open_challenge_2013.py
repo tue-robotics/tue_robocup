@@ -43,7 +43,19 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_START", 
                                 states.Say(robot, ["Hello everyone"]),
-                                transitions={   'spoken':'MOVE_TO_INTRO_POINT'})
+                                transitions={   'spoken':'QUESTION'})
+
+        smach.StateMachine.add('QUESTION', 
+                                    states.Timedout_QuestionMachine(
+                                            robot=robot,
+                                            default_option = "gotothelivingroom", 
+                                            sentence = "Where do you want me to go", 
+                                            options = { "gotothelivingroom":Compound("goal","living_room"),
+                                                        "gotothekitchen":Compound("goal", "kitchen"),
+                                                        "gotothelobby":Compound("goal", "lobby"),
+                                                        "gotothebedroom":Compound("goal", "bedroom")}),
+                                    transitions={   'answered':'MOVE_TO_INTRO_POINT',
+                                                    'not_answered':'QUESTION'})
                                 
         # ToDO: include some HRI
 
