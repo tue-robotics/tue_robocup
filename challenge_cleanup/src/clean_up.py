@@ -8,7 +8,7 @@ from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
 from robot_skills.reasoner  import Conjunction, Compound
-from util.startup import startup
+from robot_smach_states.util.startup import startup
 
 class Cleanup(smach.StateMachine):
 
@@ -104,7 +104,7 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add( 'DRIVE_TO_ROOM',
                                     states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
                                     transitions={   "arrived":"SAY_ARRIVED_IN_ROOM",
-                                                    "unreachable":'Aborted',
+                                                    "unreachable":'SAY_ARRIVED_IN_ROOM',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'Aborted'})
 
