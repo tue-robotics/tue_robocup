@@ -4,10 +4,14 @@
      challenge_rips
 
   </description>
-  <author>amigo</author>
+  <author>ErikGeerts</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/challenge_rips</url>
+  <depend package="rospy"/>
+  <depend package="robot_skills"/>
+  <depend package="robot_smach_states"/>
+  <depend package="psi"/>
 
 </package>
 
