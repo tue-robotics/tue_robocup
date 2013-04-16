@@ -75,17 +75,16 @@ class LearnPersonName(smach.State):
                                                         "alice"  :Compound("current_person", "alice")
                                                       })
         
-        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
-        if not return_result:
-            speak(self.robot, "That's horrible, I forgot who I should bring the drink to!")
-            return "not_found"
-
-        serving_person = str(return_result[0]["Person"])
-
-        speak(self.robot, "Hello " + serving_person + "!")
-
         res = q_state.execute()
         if res == "answered":
+            return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
+            if not return_result:
+                speak(self.robot, "That's horrible, I forgot who I should bring the drink to!")
+                return "failed"
+
+            serving_person = str(return_result[0]["Person"])
+
+            speak(self.robot, "Hello " + serving_person + "!")
             return "learned"
         else:
             return "failed"
