@@ -67,25 +67,6 @@ class Ask_continue(smach.State):
             return "no_continue"
 
 
-
-
-#! /usr/bin/env python
-import roslib; roslib.load_manifest('tue_execution_pack')
-import rospy
-import smach
-import smach_ros
-from object_msgs.msg import ExecutionTarget 
-from geometry_msgs.msg import Point
-from exc_to_ros import *
-from ros_to_exc import *
-from exc_functions import *
-from ros_functions import *
-import time
-
-import threading #For monitoring the ROS topic while waiting on the answer
-from std_msgs.msg import String
-
-
 class AmigoIntroductionRIPS(smach.State):
     def __init__(self, robot=None):
         smach.State.__init__(self, outcomes=['finished'])
@@ -122,7 +103,7 @@ class AmigoIntroductionRIPS(smach.State):
         self.robot.head.reset_position()
         
         self.robot.speech.speak("If you want me to stop, you can press my emergency button on my back")
-        self.robot.speech.speak("I will leave the arena if you say continue after my lights become green")
+        self.robot.speech.speak("I will leave the arena if you say continue after my lights become green")  # green light is done in speech interpreter
         
         return 'finished'
 
