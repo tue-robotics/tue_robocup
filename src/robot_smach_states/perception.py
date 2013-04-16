@@ -666,7 +666,7 @@ class LookForObjectsAtROI(smach.State):
             # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
             # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
             # ToDo: do we need to incorporate wait functions?
-            spindle_target = min(0.4,max(lookat_point.z - 0.41,0.15))
+            spindle_target = min(0.2,max(lookat_point.z - 0.41,0.15))
             rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.z, spindle_target))
 
             self.robot.head.send_goal(lookat_point, keep_tracking=True)
