@@ -1,0 +1,14 @@
+<package>
+  <description brief="challenge_rips">
+
+     challenge_rips
+
+  </description>
+  <author>amigo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_rips</url>
+
+</package>
+
+
