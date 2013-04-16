@@ -10,7 +10,7 @@ import threading
 
 from utility_states import Wait_time, PlaySound
 
-TTS_waittime = 0 #TODO: Needs to be measured and be made as long as possible.
+TTS_waittime = 0.000 #TODO: Needs to be measured and be made as long as possible.
 
 @util.deprecated
 class Dummy_Question(smach.State):
@@ -402,7 +402,7 @@ class Wait_Answer_Ears(smach.State):
 
     def execute(self, userdata):
         """Wait for the users' answer polling robot.ears"""
-        #self.robot.ears.forget()
+        self.robot.ears.forget()
         self.robot.ears.start_listening()
         waited_time = 0
         sleep_interval = 0.25
@@ -420,6 +420,7 @@ class Wait_Answer_Ears(smach.State):
             else:
                 try:
                     userdata.answer = self.robot.ears.get_words_for_duration(TTS_waittime)[-1][0] #Last element of queue, get the text
+                    rospy.loginfo("Answer: {0}".format(userdata.answer))
                 except:
                     userdata.answer = None
                 #return 'empty_answer'
@@ -450,8 +451,10 @@ class Confirm_Answer(smach.State):
         
     def execute(self, userdata):
         """Wait for the users' answer polling robot.ears"""
-        self.robot.ears.start_listening()
         self.robot.speech.speak("I heard {0}, is that correct?".format(userdata.answer))
+        #import ipdb; ipdb.set_trace()
+        self.robot.ears.forget()
+        self.robot.ears.start_listening()
         
         sleep_interval = 0.1
         waited_time = 0
@@ -459,6 +462,7 @@ class Confirm_Answer(smach.State):
         while waited_time < self.maxwait:
             try:
                 words = self.robot.ears.get_words_for_duration(TTS_waittime)
+                rospy.loginfo("I heard this for confirmation: {0}".format(words))
                 confirmation = words[-1][0].lower()
                 if confirmation in ['yes', 'ok']:
                     self.robot.ears.stop_listening()
