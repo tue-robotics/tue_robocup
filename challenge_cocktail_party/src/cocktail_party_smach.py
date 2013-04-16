@@ -21,13 +21,17 @@ name_index = 0
 #
 #===============================================================================
 
+def speak(robot, sentence):
+    #robot.speech.speak(sentence, language="us", personality="kyle", voice="default", mood="excited")
+    print sentence
+
 class WaitForPerson(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["waiting" , "continue"])
+        smach.State.__init__(self, outcomes=["waiting" , "unknown_person", "known_person"])
         self.robot = robot
 
     def execute(self, userdata=None):
-        self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drinks.", language="us", personality="kyle", voice="default", mood="excited")
+        speak(self.robot, "Ladies and gentlemen, please step in front of me to order your drinks.")
 
         query_detect_person = Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "face"),
                                             Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))
@@ -41,14 +45,51 @@ class WaitForPerson(smach.State):
         self.robot.perception.toggle([])
 
         if wait_result == "timed_out":
-            self.robot.speech.speak("Please, don't keep me waiting.", language="us", personality="kyle", voice="default", mood="excited")
+            speak(self.robot, "Please, don't keep me waiting.")
             return "waiting"
         elif wait_result == "preempted":
-            self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!", language="us", personality="kyle", voice="default", mood="excited")
+            speak(self.robot, "Waiting for person was preemted... I don't even know what that means!")
             return "waiting"
         elif wait_result == "query_true":
-            self.robot.speech.speak("Well hello there! Please let me have a look at you, such that I can remember you later.", language="us", personality="kyle", voice="default", mood="excited")
-            return "continue"
+            # check if we already know the person (the ID then already has a name in the world model)
+            res = self.robot.reasoner.query(Compound("property_expected", "ObjectID", "name", "Name"))
+            if not res:
+                return "unknown_person"
+            else:
+                speak(self.robot, "Hello " + str(res[0]["Name"]) + "!")
+                return "known_person"
+
+class LearnPersonName(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["learned" , "failed"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))        
+
+        q_state = Timedout_QuestionMachine( robot=self.robot,
+                                            default_option = "john", 
+                                            sentence = "Well hello there! I don't know you yet. Can you please tell me your name?", 
+                                            options = { "john"   :Compound("current_person", "john"),
+                                                        "richard":Compound("current_person", "richard"),
+                                                        "alice"  :Compound("current_person", "alice")
+                                                      })
+        
+        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
+        if not return_result:
+            speak(self.robot, "That's horrible, I forgot who I should bring the drink to!")
+            return "not_found"
+
+        serving_person = str(return_result[0]["Person"])
+
+        speak(self.robot, "Hello " + serving_person + "!")
+
+        res = q_state.execute()
+        if res == "answered":
+            return "learned"
+        else:
+            return "failed"
+
 
 class LearnPersonCustom(smach.State):
     def __init__(self, robot):
@@ -56,15 +97,20 @@ class LearnPersonCustom(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        global names, name_index
-        name = names[name_index]
+        # find out who we need to return the drink to
+        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
+        if not return_result:
+            speak(self.robot, "That's horrible, I forgot who I should bring the drink to!")
+            return "not_found"
 
-        learn_machine = Learn_Person(self.robot, name)
+        serving_person = str(return_result[0]["Person"])
+
+
+        speak(self.robot, "Now " + serving_person + ", let me have a look at you, such that I can remember you later.")
+
+        learn_machine = Learn_Person(self.robot, serving_person)
         learn_result = learn_machine.execute()
-        name_index = name_index + 1
-
-        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))
-        self.robot.reasoner.query(Compound("assert", Compound("current_person", name)))
+        
         self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # make sure we're not left with a goal from last time
 
         return learn_result
@@ -82,13 +128,13 @@ class LookForDrink(smach.State):
                                                  Compound("not", Compound("visited", "Waypoint"))))
 
         if not goal_answers:
-            self.robot.speech.speak("I want to find the drink, but I don't know where to go... I'm sorry!", language="us", personality="kyle", voice="default", mood="excited")
+            speak(self.robot, "I want to find the drink, but I don't know where to go... I'm sorry!")
             return "not_found"
 
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
-        self.robot.speech.speak("I'm on the move, looking for your drink!", language="us", personality="kyle", voice="default", mood="excited")
+        speak(self.robot, "I'm on the move, looking for your drink!")
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
@@ -110,7 +156,7 @@ class LookForDrink(smach.State):
             roi_answer = roi_answers[0]
             self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
 
-        self.robot.speech.speak("Let's see what I can find here", language="us", personality="kyle", voice="default", mood="excited")
+        speak(self.robot, "Let's see what I can find here")
 
         self.robot.perception.toggle(["template_matching"])
         rospy.sleep(5.0)
@@ -121,7 +167,7 @@ class LookForDrink(smach.State):
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
 
         if object_answers:
-            self.robot.speech.speak("Hey, I found the drink!", language="us", personality="kyle", voice="default", mood="excited")
+            speak(self.robot, "Hey, I found the drink!")
             return "found"
         else:
             # have not found the drink, so let's keep looking
@@ -136,7 +182,7 @@ class LookForPerson(smach.State):
         # find out who we need to return the drink to
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
-            self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
+            speak(self.robot, "That's horrible, I forgot who I should bring the drink to!")
             return "not_found"
 
         serving_person = str(return_result[0]["Person"])
@@ -148,13 +194,13 @@ class LookForPerson(smach.State):
                                                  Compound("not", Compound("visited", "Waypoint"))))
 
         if not goal_answers:
-            self.robot.speech.speak(str(serving_person) +", I have been looking everywhere but I cannot find you. Can you please step in front of me?")
+            speech.speak(self.robot, str(serving_person) +", I have been looking everywhere but I cannot find you. Can you please step in front of me?")
             return "not_found"
 
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
-        self.robot.speech.speak(str(serving_person) + ", I'm on my way!", language="us", personality="kyle", voice="default", mood="excited")
+        speak(self.robot, str(serving_person) + ", I'm on my way!", language="us", personality="kyle", voice="default", mood="excited")
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
@@ -170,7 +216,7 @@ class LookForPerson(smach.State):
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
-        self.robot.speech.speak("Let me see who I can find here...", language="us", personality="kyle", voice="default", mood="excited")
+        speak(self.robot, "Let me see who I can find here...")
 
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
         rospy.sleep(5.0)
@@ -182,7 +228,7 @@ class LookForPerson(smach.State):
                                           ))
 
         if not person_result:
-            self.robot.speech.speak("No one here. Moving on!")
+            speak(self.robot, "No one here. Moving on!")
             return "looking"
 
         # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
@@ -197,15 +243,15 @@ class LookForPerson(smach.State):
                 name_prob = prob
 
         if not name:
-            self.robot.speech.speak("Mmmmm, I don't know who you are. Moving on!")
+            speak(self.robot, "Mmmmm, I don't know who you are. Moving on!")
             return "looking"        
 
         if name != serving_person:
-            self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
+            speak(self.robot, "Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
             return "looking"
 
         if name:
-            self.robot.speech.speak("Hello " + str(name), language="us", personality="kyle", voice="default", mood="excited")        
+            speak(self.robot, "Hello " + str(name))        
             return "found"
 
         return "not_found"
@@ -232,14 +278,18 @@ class CocktailParty(smach.StateMachine):
             smach.StateMachine.add( "WAIT_FOR_PERSON", 
                                     WaitForPerson(robot),
                                     transitions={   "waiting":"WAIT_FOR_PERSON",
-                                                    "continue":"LEARN_PERSON"})
+                                                    "unknown_person":"LEARN_PERSON_NAME",
+                                                    "known_person":"TAKE_ORDER"})
 
-            # TODO: learn persons name
-
-            smach.StateMachine.add( "LEARN_PERSON",
+            smach.StateMachine.add( "LEARN_PERSON_NAME",
+                                    LearnPersonName(robot),
+                                    transitions={   "learned":"LEARN_PERSON_FACE",
+                                                    "failed":"LEARN_PERSON_NAME"})
+            
+            smach.StateMachine.add( "LEARN_PERSON_FACE",
                                     LearnPersonCustom(robot),
                                     transitions={   "face_learned":"TAKE_ORDER",
-                                                    "learn_failed":"LEARN_PERSON"})
+                                                    "learn_failed":"LEARN_PERSON_FACE"})
 
             smach.StateMachine.add('TAKE_ORDER', 
                                     Timedout_QuestionMachine(
@@ -294,8 +344,8 @@ if __name__ == '__main__':
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
-    #initial_state = None
-    initial_state= "LOOK_FOR_DRINK"
+    initial_state = None
+    #initial_state= "LOOK_FOR_DRINK"
 
     if initial_state == "LOOK_FOR_DRINK":
         amigo.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
