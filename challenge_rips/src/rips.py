@@ -7,7 +7,6 @@ from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 
-from amigo_introduction import AmigoIntroduction
 from speech_interpreter.srv import GetContinue # for speech_to_text only
 
 from psi import *
@@ -66,6 +65,66 @@ class Ask_continue(smach.State):
             return "done"
         else:
             return "no_continue"
+
+
+
+
+#! /usr/bin/env python
+import roslib; roslib.load_manifest('tue_execution_pack')
+import rospy
+import smach
+import smach_ros
+from object_msgs.msg import ExecutionTarget 
+from geometry_msgs.msg import Point
+from exc_to_ros import *
+from ros_to_exc import *
+from exc_functions import *
+from ros_functions import *
+import time
+
+import threading #For monitoring the ROS topic while waiting on the answer
+from std_msgs.msg import String
+
+
+class AmigoIntroductionRIPS(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['finished'])
+        
+        self.robot = robot
+        
+    def execute(self, userdata):      
+        rospy.loginfo("Introducing AMIGO")
+        
+        self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+        self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+        
+        self.robot.speech.speak("Hello, my name is amigo")
+        rospy.sleep(1.0)
+        self.robot.speech.speak("I am participating in robocup 2013 on behalf of Tech United Eindhoven")
+        
+        rospy.loginfo("Hand over registration form...")
+        
+        self.robot.speech.speak("Here is my registration form")
+                
+        ''' Left arm '''
+        head_goal = Point()
+        head_goal.x = 0.0
+        head_goal.y = 0.0
+        head_goal.z = 0.0
+        self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
+        self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
+        self.robot.leftArm.send_gripper_goal_open(10)
+        
+        #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
+        self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+        self.robot.leftArm.send_gripper_goal_close(5)
+        
+        self.robot.head.reset_position()
+        
+        self.robot.speech.speak("If you want me to stop, you can press my emergency button on my back")
+        self.robot.speech.speak("I will leave the arena if you say continue after my lights become green")
+        
+        return 'finished'
 
 
 def setup_statemachine(robot):
@@ -155,7 +214,7 @@ def setup_statemachine(robot):
 
         # It will start the introduction (MAKE SURE THAT THE FULL INTRODUCTION IS PLAYED DURING COMPETITION!!!))
         smach.StateMachine.add('INTRODUCE_AMIGO', 
-                                    AmigoIntroduction(robot),
+                                    AmigoIntroductionRIPS(robot),
                                     transitions={'finished':'ASK_CONTINUE'})
 
         smach.StateMachine.add("ASK_CONTINUE",
