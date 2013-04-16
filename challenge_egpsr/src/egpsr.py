@@ -36,9 +36,10 @@ from psi import *
 # - astart
 # - amiddle
 # - roslaunch create_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - rosrun tue_execution_pack gpsr.py
-
+# - !! Wait for speech.launch to finish before !!
+#   !!   launching speech interpreter          !!
+#   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
+# - rosrun challenge_egpsr egpsr.py
 
 #############################################################
 ## Locations that must be defined in database on forehand: ##
