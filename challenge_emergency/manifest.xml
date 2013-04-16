@@ -1,0 +1,14 @@
+<package>
+  <description brief="challenge_emergency">
+
+     challenge_emergency
+
+  </description>
+  <author>amigo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_emergency</url>
+
+</package>
+
+
