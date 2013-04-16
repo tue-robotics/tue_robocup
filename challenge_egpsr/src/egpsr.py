@@ -83,7 +83,7 @@ class Ask_action(smach.State):
 
             self.robot.reasoner.query(Compound("assertz", Compound("goal", self.response.action, self.response.start_location, self.response.end_location, self.response.object, self.response.object_room, self.response.object_location)))
             
-            if self.response.object == "no_answer"
+            if self.response.object == "no_answer":
                 return "no_action"
             ## Show values for action/start_location/end_location/object      
             #rospy.loginfo("action = {0}".format(self.response.action))
@@ -585,9 +585,9 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'DROP_OBJECT_FAILURE'})
 
             smach.StateMachine.add( 'DROP_OBJECT_FAILURE', states.SetGripper(robot, robot.leftArm, gripperstate=0),    #open
-                                    transitions={   'state_set':'CLOSE_AFTER_DROP'})
+                                    transitions={   'state_set':'CLOSE_AFTER_FAILURE'})
             smach.StateMachine.add( 'CLOSE_AFTER_FAILURE', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
-                                    transitions={   'state_set':'RESET_ARM'})
+                                    transitions={   'state_set':'RESET_ARM_FAILURE'})
             smach.StateMachine.add('RESET_ARM_FAILURE', 
                                     states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
                                     transitions={   'done':'MARK_DISPOSED',
@@ -750,8 +750,8 @@ def setup_statemachine(robot):
                                     states.Navigate_named(robot, "exit_1"),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'NOT_AT_EXIT', 
-                                                    'unreachable':'NOT_AT_EXIT', 
-                                                    'goal_not_defined':'NOT_AT_EXIT'})
+                                                    'unreachable':'GO_TO_EXIT_2', 
+                                                    'goal_not_defined':'GO_TO_EXIT_2'})
 
             smach.StateMachine.add('GO_TO_EXIT_2', 
                                     states.Navigate_named(robot, "exit_2"),
