@@ -7,6 +7,7 @@ import util
 import util.msg_constructors
 import util.reasoning_helpers as urh
 
+import random
 import copy
 import math
 

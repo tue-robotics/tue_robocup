@@ -78,6 +78,8 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
         return target_position
         """
       
+
+
 def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
     if not tf_listener: 
         tf_listener = tf.TransformListener()

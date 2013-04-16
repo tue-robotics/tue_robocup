@@ -3,7 +3,6 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import smach_ros
-#from object_msgs.msg import ExecutionTarget 
 import time
 import copy
 from util import transformations
@@ -370,7 +369,8 @@ class Grab(smach.State):
                         rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
                 rospy.loginfo("Gripper closed")
             else:
-                rospy.loginfo("opening gripper failed, good luck")
+                rospy.loginfo("Closing gripper failed, good luck")
+                # ToDo: shouldn't this be something different? Now we don't know why it didn't work
                 return 'grab_failed'
                     
             #Lift arm

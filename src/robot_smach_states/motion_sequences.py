@@ -3,7 +3,6 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import smach_ros
-#from object_msgs.msg import ExecutionTarget 
 import time
 import copy
 
