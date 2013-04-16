@@ -5,7 +5,8 @@ import smach
 import math
 import cv
 import roslib
-import sys
+#import sys
+import roslib.packages as p
 
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
@@ -18,7 +19,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
 
-import states_new as states 
+#import states_new as states 
 from psi import *
 
 
@@ -49,7 +50,7 @@ from psi import *
 # - !! Wait for speech.launch to finish before !!
 #   !!   launching speech interpreter          !!
 #   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - rosrun challenge_egpsr emergency.py
+# - rosrun challenge_emergency emergency.py
 
 
 
@@ -199,7 +200,7 @@ def setup_statemachine(robot):
         # Say that something is burning
         smach.StateMachine.add('SAY_IS_THERE_SOMETHING_BURNING',
                                     states.Say(robot, 'Is something burning?'),
-                                    transitions={'spoken':'TURN_ROUND_Z_AXIS'})
+                                    transitions={'spoken':'DETECT_PEOPLE'})  ###{'spoken':'TURN_ROUND_Z_AXIS'})
 
         ######################################################
         ################# DETECT FIRE/SMOKE ##################
@@ -207,7 +208,7 @@ def setup_statemachine(robot):
         # Turn 360 degrees to search for the smoke
         smach.StateMachine.add('TURN_ROUND_Z_AXIS',
                                     turn_Around_z_axis(robot, 10),
-                                    transitions={   'done':'SAY_NEXT_LOCATION',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
+                                    transitions={   'done':'SAY_NEXT_LOCATION',    ###### 
                                                     'abort':'Aborted'})
         # Inform people
         smach.StateMachine.add('SAY_NEXT_LOCATION',
@@ -307,7 +308,9 @@ def setup_statemachine(robot):
             def execute(self, gl):      
                 rospy.loginfo("Register person in file ....")
 
-                f = open('status.txt','a')
+                
+                f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')
+                #f = open('status.txt','a')
                 f.write('person_%d;1;' % self.person_no) 
                 pos, rot = self.robot.base.get_location()
                 f.write('%.2f;%.2f \n' % (pos.x, pos.y))
@@ -535,5 +538,5 @@ def setup_statemachine(robot):
     return sm
 
 if __name__ == "__main__":
-    rospy.init_node('emergency2_exec', log_level=rospy.DEBUG)
+    rospy.init_node('emergency_exec', log_level=rospy.DEBUG)
     startup(setup_statemachine)
