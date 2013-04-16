@@ -995,6 +995,7 @@ class Read_laser(smach.State):
             self.laser_value = 0.0
 
     def execute(self, userdata):
+        self.robot.lights.set_color(0,1,1)
         r = self.robot.reasoner
         rospy.Rate(self.rate).sleep()
 
@@ -1014,4 +1015,5 @@ class Read_laser(smach.State):
                     r.query(Compound("retract", Compound("state", self.door,"open")))
                 r.assertz(Compound("state", self.door,"closed"))
 
+        self.robot.lights.set_color(0,0,1)
         return 'laser_read'
