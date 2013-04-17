@@ -200,7 +200,7 @@ def setup_statemachine(robot):
         # Say that something is burning
         smach.StateMachine.add('SAY_IS_THERE_SOMETHING_BURNING',
                                     states.Say(robot, 'Is something burning?'),
-                                    transitions={'spoken':'DETECT_PEOPLE'})  ###{'spoken':'TURN_ROUND_Z_AXIS'})
+                                    transitions={'spoken':'TURN_ROUND_Z_AXIS'}) 
 
         ######################################################
         ################# DETECT FIRE/SMOKE ##################
@@ -323,31 +323,7 @@ def setup_statemachine(robot):
 
         # Class for taking a picture
 
-        class TakePicture(smach.State):
-            def __init__(self, robot=None):
-                smach.State.__init__(self, outcomes=['finished'])
-                self.robot = robot
-                cv.NamedWindow("Image window", 1)
-                self.bridge = CvBridge()
-                self.image_sub = rospy.Subscriber("/camera/rgb/image_rect_color",Image,self.callback)
-
-            def callback(self,data):
-                try:
-                    cv_image = self.bridge.imgmsg_to_cv(data, "bgr8")
-                except CvBridgeError, e:
-                    print e
-
-                (cols,rows) = cv.GetSize(cv_image)
-                if cols > 60 and rows > 60 :
-                    cv.Circle(cv_image, (50,50), 10, 255)
-
-                cv.ShowImage("Image window", cv_image)
-                cv.WaitKey(3)
-
-
-            def execute(self, gl):      
-                rospy.loginfo("Taking a picture of person/fire ....")
-                return 'finished'
+        ## TODO
 
         # Person is not ok and is left alone and registered
         smach.StateMachine.add('REGISTER_PERSON',
