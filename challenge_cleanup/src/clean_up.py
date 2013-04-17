@@ -10,6 +10,35 @@ import robot_smach_states as states
 from robot_skills.reasoner  import Conjunction, Compound
 from robot_smach_states.util.startup import startup
 
+from speech_interpreter.srv import GetCleanup
+
+class Ask_cleanup(smach.State):
+    def __init__(self, robot, tracking=True, rate=2):
+        smach.State.__init__(self, outcomes=["done"])
+
+        self.robot = robot
+        self.preempted = False
+        self.rate = rate
+        self.get_cleanup_service = rospy.ServiceProxy('interpreter/get_cleanup', GetCleanup)
+
+    def execute(self, userdata):
+
+        self.response = self.get_cleanup_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+
+        if self.response.answer == "cleanupthelivingroom":
+            room = "living_room"
+        elif self.response.answer == "cleanupthekitchen":
+            room = "kitchen"
+        elif self.response.answer == "cleanupthelobby":
+            room = "lobby"
+        elif self.response.answer == "cleanupthebedroom":
+            room = "bedroom"
+
+        self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("clean_up", room))))
+            
+        return "done"
+
+
 class Cleanup(smach.StateMachine):
 
     def __init__(self, robot):
@@ -78,7 +107,7 @@ class Cleanup(smach.StateMachine):
             query_meeting_point = Compound("waypoint", "meeting_point", Compound("pose_2d", "X", "Y", "Phi"))
             smach.StateMachine.add('ENTER_ROOM',
                                     states.Navigate_to_queryoutcome(robot, query_meeting_point, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   "arrived":"QUESTION",
+                                    transitions={   "arrived":"ASK_CLEANUP",
                                                     "unreachable":'CANNOT_GOTO_MEETINGPOINT',
                                                     "preempted":'CANNOT_GOTO_MEETINGPOINT',
                                                     "goal_not_defined":'CANNOT_GOTO_MEETINGPOINT'})
@@ -88,17 +117,21 @@ class Cleanup(smach.StateMachine):
                                     transitions={   'spoken':'Aborted'})
 
 
-            smach.StateMachine.add('QUESTION', 
-                                    states.Timedout_QuestionMachine(
-                                            robot=robot,
-                                            default_option = "cleanupthelivingroom", 
-                                            sentence = "Where do you want me to go", 
-                                            options = { "cleanupthelivingroom":Compound("goal", Compound("clean_up", "living_room")),
-                                                        "cleanupthekitchen":Compound("goal", Compound("clean_up", "kitchen")),
-                                                        "cleanupthelobby":Compound("goal", Compound("clean_up", "lobby")),
-                                                        "cleanupthebedroom":Compound("goal", Compound("clean_up", "bedroom"))}),
-                                    transitions={   'answered':'DRIVE_TO_ROOM',
-                                                    'not_answered':'QUESTION'})
+            # smach.StateMachine.add('ASK_CLEANUP', 
+            #                         states.Timedout_QuestionMachine(
+            #                                 robot=robot,
+            #                                 default_option = "cleanupthelivingroom", 
+            #                                 sentence = "Where do you want me to go", 
+            #                                 options = { "cleanupthelivingroom":Compound("goal", Compound("clean_up", "living_room")),
+            #                                             "cleanupthekitchen":Compound("goal", Compound("clean_up", "kitchen")),
+            #                                             "cleanupthelobby":Compound("goal", Compound("clean_up", "lobby")),
+            #                                             "cleanupthebedroom":Compound("goal", Compound("clean_up", "bedroom"))}),
+            #                         transitions={   'answered':'DRIVE_TO_ROOM',
+            #                                         'not_answered':'ASK_CLEANUP'})
+
+            smach.StateMachine.add("ASK_CLEANUP",
+                                Ask_cleanup(robot),
+                                transitions={'done':'DRIVE_TO_ROOM'})
 
             query_room = Conjunction(Compound("goal", Compound("clean_up", "Room")), Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi")))        
             smach.StateMachine.add( 'DRIVE_TO_ROOM',
