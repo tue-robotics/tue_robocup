@@ -12,6 +12,17 @@ from robot_smach_states.util.startup import startup
 
 from speech_interpreter.srv import GetCleanup
 
+##########################################
+############## What to run: ##############
+##########################################
+# - astart
+# - amiddle
+# - roslaunch create_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
+# - !! Wait for speech.launch to finish before !!
+#   !!   launching speech interpreter          !!
+#   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
+# - rosrun challenge_cleanup clean_up.py
+
 class Ask_cleanup(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
         smach.State.__init__(self, outcomes=["done"])
