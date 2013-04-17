@@ -84,7 +84,7 @@ class Ask_action(smach.State):
 
             self.robot.reasoner.query(Compound("assertz", Compound("goal", self.response.action, self.response.start_location, self.response.end_location, self.response.object, self.response.object_room, self.response.object_location)))
             
-            if self.response.object == "no_answer":
+            if self.response.object == "no_answer" or self.response.object == "wrong_answer":
                 return "no_action"
             ## Show values for action/start_location/end_location/object      
             #rospy.loginfo("action = {0}".format(self.response.action))
