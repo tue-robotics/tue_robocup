@@ -110,7 +110,7 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_right")
             self.robot.rightArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
-            self.robot.rightArm.send_gripper_goal_open(10)
+            self.robot.rightArm.send_gripper_goal_open(10)  
             
             #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
             self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
