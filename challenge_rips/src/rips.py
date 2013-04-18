@@ -6,6 +6,7 @@ import smach
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
+from geometry_msgs.msg import Point
 
 from speech_interpreter.srv import GetContinue # for speech_to_text only
 
@@ -129,7 +130,15 @@ def setup_statemachine(robot):
                                                 'abort':'Aborted'})
 
         smach.StateMachine.add('CLOSING_GRIPPER',
-                                    states.Say(robot, 'I will close my gripper now, put my registration form in my left hand.'),
+                                    states.Say(robot, 'I will open my gripper now, so that you can put my registration form in my left hand.'),
+                                    transitions={'spoken':'CLOSE_GRIPPER'}) 
+
+        smach.StateMachine.add('CLOSE_GRIPPER',
+                                    states.SetGripper(robot, robot.leftArm, gripperstate=0),
+                                    transitions={'state_set':'AT_FRONT_OF_DOOR'})
+
+        smach.StateMachine.add('CLOSING_GRIPPER',
+                                    states.Say(robot, 'I will close my gripper now.'),
                                     transitions={'spoken':'CLOSE_GRIPPER'}) 
 
         smach.StateMachine.add('CLOSE_GRIPPER',
