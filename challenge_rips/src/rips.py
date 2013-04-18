@@ -96,9 +96,8 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.y = 0.0
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
-            self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            self.robot.leftArm.send_goal(0,0,0,0,0.0,0.0,0.0)
-            #self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
+            #self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
+            self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
             #rospy.sleep(0.5)
             self.robot.leftArm.send_gripper_goal_open(10)
             
@@ -113,7 +112,6 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_right")
             self.robot.rightArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            self.robot.leftArm.send_goal(0,0,0,0,0.0,0.0,0.0)
             #rospy.sleep(0.5)
             self.robot.rightArm.send_gripper_goal_open(10)
             
@@ -150,7 +148,7 @@ def setup_statemachine(robot):
                                                 'abort':'Aborted'})
 
         smach.StateMachine.add('OPENING_GRIPPER',
-                                    states.Say(robot, 'I will open my right gripper now, so that you can put my registration form in it.'),
+                                    states.Say(robot, 'I will open my left gripper now, so that you can put my registration form in it.'),
                                     transitions={'spoken':'OPEN_GRIPPER'}) 
 
         smach.StateMachine.add('OPEN_GRIPPER',
@@ -237,7 +235,7 @@ def setup_statemachine(robot):
 
         # It will start the introduction (MAKE SURE THAT THE FULL INTRODUCTION IS PLAYED DURING COMPETITION!!!))
         smach.StateMachine.add('INTRODUCE_AMIGO', 
-                                    AmigoIntroductionRIPS(robot,gripper="right"),
+                                    AmigoIntroductionRIPS(robot,gripper="left"),
                                     transitions={'finished':'ASK_CONTINUE'})
 
         smach.StateMachine.add("ASK_CONTINUE",
