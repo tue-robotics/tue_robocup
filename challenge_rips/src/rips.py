@@ -69,10 +69,11 @@ class Ask_continue(smach.State):
 
 
 class AmigoIntroductionRIPS(smach.State):
-    def __init__(self, robot=None):
+    def __init__(self, robot=None, gripper="left"):
         smach.State.__init__(self, outcomes=['finished'])
         
         self.robot = robot
+        self.gripper = gripper
         
     def execute(self, userdata):      
         rospy.loginfo("Introducing AMIGO")
@@ -87,19 +88,33 @@ class AmigoIntroductionRIPS(smach.State):
         rospy.loginfo("Hand over registration form...")
         
         self.robot.speech.speak("Here is my registration form")
-                
-        ''' Left arm '''
-        head_goal = Point()
-        head_goal.x = 0.0
-        head_goal.y = 0.0
-        head_goal.z = 0.0
-        self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
-        self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
-        self.robot.leftArm.send_gripper_goal_open(10)
         
-        #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
-        self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
-        self.robot.leftArm.send_gripper_goal_close(5)
+        if self.gripper == "right":
+            ''' Left arm '''
+            head_goal = Point()
+            head_goal.x = 0.0
+            head_goal.y = 0.0
+            head_goal.z = 0.0
+            self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
+            self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
+            self.robot.leftArm.send_gripper_goal_open(10)
+            
+            #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
+            self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+            self.robot.leftArm.send_gripper_goal_close(5)
+        else:
+            ''' Right arm '''
+            head_goal = Point()
+            head_goal.x = 0.0
+            head_goal.y = 0.0
+            head_goal.z = 0.0
+            self.robot.head.send_goal_topic(head_goal,"/grippoint_right")
+            self.robot.rightArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
+            self.robot.rightArm.send_gripper_goal_open(10)
+            
+            #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
+            self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+            self.robot.rightArm.send_gripper_goal_close(5)
         
         self.robot.head.reset_position()
         
@@ -130,11 +145,11 @@ def setup_statemachine(robot):
                                                 'abort':'Aborted'})
 
         smach.StateMachine.add('OPENING_GRIPPER',
-                                    states.Say(robot, 'I will open my gripper now, so that you can put my registration form in my left hand.'),
+                                    states.Say(robot, 'I will open my right gripper now, so that you can put my registration form in it.'),
                                     transitions={'spoken':'OPEN_GRIPPER'}) 
 
         smach.StateMachine.add('OPEN_GRIPPER',
-                                    states.SetGripper(robot, robot.leftArm, gripperstate=0),
+                                    states.SetGripper(robot, robot.rightArm, gripperstate=0),
                                     transitions={'state_set':'CLOSING_GRIPPER'})
 
         smach.StateMachine.add('CLOSING_GRIPPER',
@@ -142,7 +157,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'CLOSE_GRIPPER'}) 
 
         smach.StateMachine.add('CLOSE_GRIPPER',
-                                    states.SetGripper(robot, robot.leftArm, gripperstate=1),
+                                    states.SetGripper(robot, robot.rightArm, gripperstate=1),
                                     transitions={'state_set':'AT_FRONT_OF_DOOR'})
 
         # If the door is open, amigo will say that it goes to the registration table
@@ -204,7 +219,7 @@ def setup_statemachine(robot):
 
         # It will start the introduction (MAKE SURE THAT THE FULL INTRODUCTION IS PLAYED DURING COMPETITION!!!))
         smach.StateMachine.add('INTRODUCE_AMIGO', 
-                                    AmigoIntroductionRIPS(robot),
+                                    AmigoIntroductionRIPS(robot, gripper="right"),
                                     transitions={'finished':'ASK_CONTINUE'})
 
         smach.StateMachine.add("ASK_CONTINUE",
