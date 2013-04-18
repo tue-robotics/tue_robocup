@@ -89,7 +89,7 @@ class AmigoIntroductionRIPS(smach.State):
         
         self.robot.speech.speak("Here is my registration form")
         
-        if self.gripper == "right":
+        if self.gripper == "left":
             ''' Left arm '''
             head_goal = Point()
             head_goal.x = 0.0
