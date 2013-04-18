@@ -481,8 +481,8 @@ class Navigate_goal_location(Navigate_abstract):
             self.object_action = object_action
             return self.get_loc_via_reasoner(self.object_action)
 
+
 class Navigate_Designator(smach.State):
-    # class used in gpsr 2013
 
     def __init__(self, robot, designator, dynamic=False):
         smach.State.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined", "all_matches_tried"])
