@@ -126,16 +126,16 @@ def setup_statemachine(robot):
                 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'CLOSING_GRIPPER',
+                                transitions={   'initialized':'OPENING_GRIPPER',
                                                 'abort':'Aborted'})
 
-        smach.StateMachine.add('CLOSING_GRIPPER',
+        smach.StateMachine.add('OPENING_GRIPPER',
                                     states.Say(robot, 'I will open my gripper now, so that you can put my registration form in my left hand.'),
-                                    transitions={'spoken':'CLOSE_GRIPPER'}) 
+                                    transitions={'spoken':'OPEN_GRIPPER'}) 
 
-        smach.StateMachine.add('CLOSE_GRIPPER',
+        smach.StateMachine.add('OPEN_GRIPPER',
                                     states.SetGripper(robot, robot.leftArm, gripperstate=0),
-                                    transitions={'state_set':'AT_FRONT_OF_DOOR'})
+                                    transitions={'state_set':'CLOSING_GRIPPER'})
 
         smach.StateMachine.add('CLOSING_GRIPPER',
                                     states.Say(robot, 'I will close my gripper now.'),
