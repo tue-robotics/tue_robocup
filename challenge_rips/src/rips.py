@@ -152,7 +152,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'OPEN_GRIPPER'}) 
 
         smach.StateMachine.add('OPEN_GRIPPER',
-                                    states.SetGripper(robot, robot.rightArm, gripperstate=0),
+                                    states.SetGripper(robot, robot.leftArm, gripperstate=0),
                                     transitions={'state_set':'CLOSING_GRIPPER'})
 
         smach.StateMachine.add('CLOSING_GRIPPER',
@@ -160,7 +160,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'CLOSE_GRIPPER'}) 
 
         smach.StateMachine.add('CLOSE_GRIPPER',
-                                    states.SetGripper(robot, robot.rightArm, gripperstate=1),
+                                    states.SetGripper(robot, robot.leftArm, gripperstate=1),
                                     transitions={'state_set':'AT_FRONT_OF_DOOR'})
 
         # If the door is open, amigo will say that it goes to the registration table
