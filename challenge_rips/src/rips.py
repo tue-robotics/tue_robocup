@@ -97,7 +97,7 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
             self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            rospy.sleep(3)
+            rospy.sleep(0.5)
             self.robot.leftArm.send_gripper_goal_open(10)
             
             #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
@@ -111,7 +111,7 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_right")
             self.robot.rightArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            rospy.sleep(3)
+            rospy.sleep(0.5)
             self.robot.rightArm.send_gripper_goal_open(10)
             
             #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
@@ -205,6 +205,19 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE', 
                                     states.Navigate_named(robot, "registration_table"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
+                                                    'preempted':'CLEAR_PATH_TO_REGISTRATION_TABLE', 
+                                                    'unreachable':'CLEAR_PATH_TO_REGISTRATION_TABLE', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_REGISTRATION_TABLE'})
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('CLEAR_PATH_TO_REGISTRATION_TABLE',
+                                    states.Say(robot, "At my first attempt I could not go to the meeting point. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_REGISTRATION_TABLE_SECOND_TRY'}) 
+
+        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        smach.StateMachine.add('GO_TO_REGISTRATION_TABLE_SECOND_TRY', 
+                                    states.Navigate_named(robot, "registration_table"),
+                                    transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
                                                     'preempted':'FAIL_BUT_INTRODUCE', 
                                                     'unreachable':'FAIL_BUT_INTRODUCE', 
                                                     'goal_not_defined':'FAIL_BUT_INTRODUCE'})
@@ -216,7 +229,7 @@ def setup_statemachine(robot):
 
         # In case the path is blocked, amigo will say that it still introduce itself.
         smach.StateMachine.add('FAIL_BUT_INTRODUCE',
-                                    states.Say(robot, "I couldn't get to the registration table, I will now introduce myself and leave my registration form here"),
+                                    states.Say(robot, "I stil couldn't get to the registration table, I will now introduce myself and leave my registration form here"),
                                     transitions={'spoken':'INTRODUCE_AMIGO'}) 
 
         # It will start the introduction (MAKE SURE THAT THE FULL INTRODUCTION IS PLAYED DURING COMPETITION!!!))
