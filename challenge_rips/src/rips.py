@@ -97,7 +97,7 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
             self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            rospy.sleep(0.5)
+            #rospy.sleep(0.5)
             self.robot.leftArm.send_gripper_goal_open(10)
             
             #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
@@ -111,7 +111,7 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_right")
             self.robot.rightArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            rospy.sleep(0.5)
+            #rospy.sleep(0.5)
             self.robot.rightArm.send_gripper_goal_open(10)
             
             #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
