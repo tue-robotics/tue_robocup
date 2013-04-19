@@ -7,14 +7,14 @@
 #include "hpdf.h"
 #include <ros/ros.h>
 #include <ros/package.h>
-#include <image_transport/image_transport.h>
+
 
 //! Dealing with files
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
-#include<dirent.h>
+#include <dirent.h>
 
 #ifndef HPDF_NOPNGLIB
 jmp_buf env;

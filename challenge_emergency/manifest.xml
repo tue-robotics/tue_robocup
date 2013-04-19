@@ -12,6 +12,10 @@
   <depend package="robot_skills"/>
   <depend package="robot_smach_states"/>
   <depend package="psi"/>
+  <depend package="roscpp"/>
+  <depend package="roscpp"/>
+  <depend package="image_transport"/>
+  <depend package="compressed_image_transport"/>
 
 </package>
 
