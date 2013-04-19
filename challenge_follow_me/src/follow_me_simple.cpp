@@ -23,7 +23,7 @@ const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates
 const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 30.0;     // Maximum waiting time for operator to return
 const string NAVIGATION_FRAME = "/front_laser"; // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const int N_MODELS = 10;                        // Number of models used for recognition of the operator
+const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
 const double FOLLOW_RATE = 1;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
@@ -367,6 +367,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     for(unsigned int i = 0; i < move_base_goal.path.size(); ++i) {
         geometry_msgs::PoseStamped waypoint_transformed;
         tf_listener.transformPose("/map", move_base_goal.path[i], waypoint_transformed);
+        waypoint_transformed.pose.position.z = 0;
         move_base_goal.path[i] = waypoint_transformed;
     }
 
@@ -411,6 +412,14 @@ int main(int argc, char **argv) {
     tf::TransformListener tf_listener;
     tf_listener.waitForTransform("/map", "/base_link", ros::Time(), ros::Duration(10));
     ROS_INFO("Transform listener ready");
+    
+    //! Always clear the world model
+    std_srvs::Empty srv;
+    if (reset_wire_client_.call(srv)) {
+        ROS_INFO("Cleared world model");
+    } else {
+        ROS_ERROR("Failed to clear world model");
+    }
 
     //! Administration
     pbl::PDF operator_pos;
