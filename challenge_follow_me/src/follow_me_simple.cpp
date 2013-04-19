@@ -25,6 +25,7 @@ const int N_MODELS = 10;                        // Number of models used for rec
 const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
 const double FOLLOW_RATE = 1;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
+double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
 
@@ -302,7 +303,7 @@ pbl::PDF findElevator() {
  * @param pos target position
  * @param offset, in case the position represents the operator position AMIGO must keep distance
  */
-void moveTowardsPosition(pbl::PDF& pos, double offset) {
+void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf_listener) {
 
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
 
@@ -342,7 +343,30 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
     end_goal.pose.position.x = pos_exp(0) * reduced_distance / full_distance;
     end_goal.pose.position.y = pos_exp(1) * reduced_distance / full_distance;
     end_goal.pose.position.z = 0;
+
+    //! Settings for interpolation of the desired path
+    int nr_steps = (int)(max(abs((double)end_goal.pose.position.x), abs((double)end_goal.pose.position.y)) / RESOLUTION_PATH);
+    double dx = end_goal.pose.position.x / nr_steps;
+    double dy = end_goal.pose.position.y / nr_steps;
+
+    //! Add interpolated way points (starting point is already added)
+    for(unsigned int i = 1; i < nr_steps; ++i) {
+        geometry_msgs::PoseStamped waypoint;
+        waypoint = end_goal;
+        waypoint.pose.position.x = i * dx;
+        waypoint.pose.position.y = i * dy;
+        move_base_goal.path.push_back(waypoint);
+    }
+
+    //! Add goal position
     move_base_goal.path.push_back(end_goal);
+
+    //! Transform path to /map frame
+    for(unsigned int i = 0; i < move_base_goal.path.size(); ++i) {
+        geometry_msgs::PoseStamped waypoint_transformed;
+        tf_listener.transformPose("/map", move_base_goal.path[i], waypoint_transformed);
+        move_base_goal.path[i] = waypoint_transformed;
+    }
 
     //! Send goal to move base client
     move_base_ac_->sendGoal(move_base_goal);
@@ -380,6 +404,11 @@ int main(int argc, char **argv) {
     learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);
     learn_face_ac_->waitForServer();
     ROS_INFO("Learn face client connected to the learn face server");
+
+    //! Transform listener (localization required)
+    tf::TransformListener tf_listener;
+    tf_listener.waitForTransform("/map", "/base_link", ros::Time(), ros::Duration(10));
+    ROS_INFO("Transform listener ready");
 
     //! Administration
     pbl::PDF operator_pos;
@@ -438,7 +467,7 @@ int main(int argc, char **argv) {
             pbl::PDF elevator_pos = findElevator();
 
             //! Enter elevator
-            moveTowardsPosition(elevator_pos, 0);
+            moveTowardsPosition(elevator_pos, 0, tf_listener);
 
             // TODO: find operator and wait for operator to leave
 
@@ -453,7 +482,7 @@ int main(int argc, char **argv) {
             if (getPositionOperator(objects, operator_pos)) {
 
                 //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
+                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR, tf_listener);
 
 
             } else {
@@ -476,7 +505,7 @@ int main(int argc, char **argv) {
             if (getPositionOperator(objects, operator_pos)) {
 
                 //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
+                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR, tf_listener);
 
 
             } else {
