@@ -258,9 +258,22 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GO_TO_EXIT', 
                                     states.Navigate_named(robot, "exit"),
                                     transitions={   'arrived':'AT_END', 
-                                                    'preempted':'AT_END', 
-                                                    'unreachable':'AT_END', 
-                                                    'goal_not_defined':'AT_END'})
+                                                    'preempted':'CLEAR_PATH_TO_EXIT', 
+                                                    'unreachable':'CLEAR_PATH_TO_EXIT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
+                                    states.Say(robot, "I couldn't go to the exit. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_EXIT_SECOND_TRY'}) 
+
+        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
+                                    states.Navigate_named(robot, "registration_table"),
+                                    transitions={   'arrived':'AT_END', 
+                                                    'preempted':'CLEAR_PATH_TO_EXIT', 
+                                                    'unreachable':'CLEAR_PATH_TO_EXIT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
 
         # Finally amigo will stop and says 'goodbye' to show that he's done.
         smach.StateMachine.add('AT_END',
