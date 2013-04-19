@@ -82,7 +82,7 @@ class turn_Around_z_axis(smach.State):
         self.robot    = robot
         self.rotation = rotation
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         """ 
         @return
         """
@@ -113,14 +113,80 @@ class Ask_yes_no(smach.State):
         self.rate = rate
         self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
 
-        self.response = self.get_yes_no_service(3 , 15)
+        self.response = self.get_yes_no_service(3 , 10) # 3 tries, each max 10 seconds
 
         if self.response.answer == "true":
             return "yes"
         else:
             return "no"
+
+# Class for moving arm back for guidance
+class MoveArmBack(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['finished'])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):      
+        rospy.loginfo("Moving arm back")
+    
+        self.robot.leftArm.send_joint_goal(0.0,-1.57,0.0,1.57,0.0,0.0,0.0)
+        self.robot.rightArm.send_joint_goal(0.0,-1.57,0.0,1.57,0.0,0.0,0.0)
+        rospy.sleep(1.5)
+        self.robot.leftArm.send_gripper_goal_open(10)
+        self.robot.rightArm.send_gripper_goal_open(10)
+        
+        self.robot.speech.speak("Please grab my hand")
+        return 'finished'
+
+ # Class for registering person
+class Register(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['finished'])
+        # TODO ERIK register person and assert him as visited and registered.
+        self.person_no = 1
+        self.robot = robot
+
+    def execute(self, userdata=None):      
+        rospy.loginfo("Register person in file ....")
+
+        
+        f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
+        #f = open('status.txt','a')
+        f.write('person_%d;1;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+        pos, rot = self.robot.base.get_location()
+        f.write('%.2f;%.2f \n' % (pos.x, pos.y))
+        f.close()
+
+        self.robot.speech.speak("Registering your location and status, so the fire department can find you.")
+
+        # TODO ERIK: MAKE PICTURE, SAVE AND SEND TO PDF FILE.
+
+        self.robot.speech.speak("Please stay at this location and stay calm.")
+        self.person_no = self.person_no + 1
+        return 'finished'
+
+# Class to move arm to initial pose
+class MoveArmInitial(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['finished'])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):   
+        self.robot.speech.speak("Can you please let go of my arm")   
+        rospy.loginfo("Moving arm back")
+    
+        self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+        self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
+        rospy.sleep(1.5)
+        self.robot.leftArm.send_gripper_goal_close(10)
+        self.robot.rightArm.send_gripper_goal_close(10)
+        
+        self.robot.speech.speak("We arrived at the exit, please stay here and wait for help")
+        return 'finished'
 
 def setup_statemachine(robot):
 
@@ -188,15 +254,44 @@ def setup_statemachine(robot):
         ######################################################
         # If the door is open, amigo will say that it goes to the registration table
         smach.StateMachine.add('THROUGH_DOOR',
-                                    states.Say(robot, 'Door is open, so I will go to in the kitchen'),
+                                    states.Say(robot, 'Door is open, so I will go to the kitchen'),
                                     transitions={'spoken':'INIT_POSE'}) 
 
         # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
         smach.StateMachine.add('INIT_POSE',
                                     states.Set_initial_pose(robot, 'initial'),
-                                    transitions={   'done':'SAY_IS_THERE_SOMETHING_BURNING',
-                                                    'preempted':'Aborted',
-                                                    'error':'Aborted'})
+                                    transitions={   'done':'GO_TO_KITCHEN',
+                                                    'preempted':'WAIT_FOR_DOOR',
+                                                    'error':'WAIT_FOR_DOOR'})
+
+        query_kitchen_1 = Compound("waypoint", "kitchen_1", Compound("pose_2d", "X", "Y", "Phi"))
+        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        smach.StateMachine.add('GO_TO_KITCHEN', 
+                                    states.Navigate_to_queryoutcome(robot, query_kitchen_1, X="X", Y="Y", Phi="Phi"),
+                                    transitions={   'arrived':'SAY_IS_THERE_SOMETHING_BURNING', 
+                                                    'preempted':'CLEAR_PATH_TO_KITCHEN', 
+                                                    'unreachable':'CLEAR_PATH_TO_KITCHEN', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_KITCHEN'})
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('CLEAR_PATH_TO_KITCHEN',
+                                    states.Say(robot, "At my first attempt I could not go to the kitchen. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_KITCHEN_SECOND_TRY'}) 
+
+        query_kitchen_2 = Compound("waypoint", "kitchen_2", Compound("pose_2d", "X", "Y", "Phi"))
+        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        smach.StateMachine.add('GO_TO_KITCHEN_SECOND_TRY', 
+                                    states.Navigate_to_queryoutcome(robot, query_kitchen_2, X="X", Y="Y", Phi="Phi"),
+                                    transitions={   'arrived':'SAY_IS_THERE_SOMETHING_BURNING', 
+                                                    'preempted':'FAIL_BUT_START_SEARCH', 
+                                                    'unreachable':'FAIL_BUT_START_SEARCH', 
+                                                    'goal_not_defined':'FAIL_BUT_START_SEARCH'})
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('FAIL_BUT_START_SEARCH',
+                                    states.Say(robot, "I was still not able to go to the kitchen, but I sense that there is something burning. I will try to look for people."),
+                                    transitions={'spoken':'FIND_PEOPLE'}) 
+
         # Say that something is burning
         smach.StateMachine.add('SAY_IS_THERE_SOMETHING_BURNING',
                                     states.Say(robot, 'Is something burning?'),
@@ -205,29 +300,32 @@ def setup_statemachine(robot):
         ######################################################
         ################# DETECT FIRE/SMOKE ##################
         ######################################################
+        '''
+        TODOS: In the rulebook it is said that smoke should be detected within 1 minute and that the robot should look and point 
+        from a close distance (less than 1 m) and take a picture. 
+        -> Build timer 1 minute!!
+        -> Detect fire
+        -> Make picture
+        '''
+
         # Turn 360 degrees to search for the smoke
         smach.StateMachine.add('TURN_ROUND_Z_AXIS',
                                     turn_Around_z_axis(robot, 10),
                                     transitions={   'done':'SAY_NEXT_LOCATION',    ###### 
-                                                    'abort':'Aborted'})
+                                                    'abort':'SAY_NEXT_LOCATION'})
         # Inform people
         smach.StateMachine.add('SAY_NEXT_LOCATION',
                                     states.Say(robot, 'Did not find fire. Maybe at the other side of the room'),
                                     transitions={'spoken':'NEXT_LOCATION'})
 
         # Query reasoner to find other side of goal
-        query_kitchen = Compound("waypoint", "kitchen", Compound("pose_2d", "X", "Y", "Phi"))
+        query_kitchen_3 = Compound("waypoint", "kitchen_3", Compound("pose_2d", "X", "Y", "Phi"))
         smach.StateMachine.add('NEXT_LOCATION',
-                                states.Navigate_to_queryoutcome(robot, query_kitchen, X="X", Y="Y", Phi="Phi"),
+                                states.Navigate_to_queryoutcome(robot, query_kitchen_3, X="X", Y="Y", Phi="Phi"),
                                 transitions={   "arrived":"TURN_AROUND_Z_AXIS2",
-                                                "unreachable":'CANNOT_GOTO_MEETINGPOINT',
-                                                "preempted":'CANNOT_GOTO_MEETINGPOINT',
-                                                "goal_not_defined":'CANNOT_GOTO_MEETINGPOINT'})
-
-        # Cannot reach the Goal
-        smach.StateMachine.add("CANNOT_GOTO_MEETINGPOINT", 
-                                states.Say(robot, ["I can't find a way to the meeting point. Please teach me the correct position and clear the path to it"]),
-                                transitions={   'spoken':'Aborted'})
+                                                "unreachable":'SAY_DETECT_SMOKE',
+                                                "preempted":'SAY_DETECT_SMOKE',
+                                                "goal_not_defined":'SAY_DETECT_SMOKE'})
 
         # Turn around your z-axis to detect person/smoke
         smach.StateMachine.add('TURN_AROUND_Z_AXIS2',
@@ -236,7 +334,7 @@ def setup_statemachine(robot):
                                                     'abort':'Aborted'})
         # Wait for some seconds 
         smach.StateMachine.add('WAIT_SOME_SECONDS',
-                                    states.Wait_time(robot,1),
+                                    states.Wait_time(robot,1),                    #adjust to one minute                  
                                     transitions={   'waited':'SAY_DETECT_SMOKE',
                                                     'preempted':'Aborted'})
         # Time ran out say, you couldn't find smoke
@@ -244,15 +342,28 @@ def setup_statemachine(robot):
                                     states.Say(robot, 'Time ran out, could not find fire. But I smell something burning. Going to look for people!'),
                                     transitions={'spoken':'FIND_PEOPLE'})
 
+        '''
+        Idea: FLASH RED light on and off after detecting smoke until the end of the challenge (not during interpretation). 
+        Then say: "If anyone can see or hear me, 
+        try to get to the exit!!"
+        '''
+
         ######################################################
         ################### SAVING PERSONS ###################
         ######################################################
+
+        ############ DRIVE TO PREDEFINED LOCATIONS ###########
+
         smach.StateMachine.add('SAY_FIND_PEOPLE',
                                     states.Say(robot, 'Going to look for more people.'),
                                     transitions={'spoken':'FIND_PEOPLE'})
 
         query_point = Compound("region_of_interest_emergency","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
         object_identifier_query = "ROI_Location"
+
+        '''
+        TODO ERIK: use pose_2d to drive to a location in stead of roi. navigate_to_queryoutcome could be used, but then location visited should be asserted
+        '''
 
         smach.StateMachine.add("FIND_PEOPLE",
                                 states.Visit_query_outcome_3d(robot, 
@@ -263,17 +374,36 @@ def setup_statemachine(robot):
                                                 'unreachable':'FAILED_DRIVING_TO_LOCATION',
                                                 'preempted':'FAILED_DRIVING_TO_LOCATION',
                                                 'goal_not_defined':'FAILED_DRIVING_TO_LOCATION',
-                                                'all_matches_tried':'AT_END'})
-        # Could not reach ROI
+                                                'all_matches_tried':'SAY_GO_TO_EXIT'})
+
+        # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
         smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
-                                states.Say(robot,"Now I should start my perception, but is not build in yet..."),
-                                transitions={'spoken':'START_PEOPLE_DETECTION'})
+                                states.Say(robot,"I was not able to go to a desired location to detect people. I will try another location."),
+                                transitions={'spoken':'FIND_PEOPLE'})
+
+        ############ DRIVE TO PREDEFINED LOCATIONS ###########
+        
+        '''
+        TODO BUILD IN PERCEPTION!!!
+
+        - state: say I will now start looking for people
+        - state: start perception (node of Jos using top laser scanner)
+        - state: query people in world model
+        - IF people_found
+            - state: say found people, drive to it now
+            - state: drive to location and go to state DETECT PEOPLE
+        - ELSE 
+            - state: go to state FIND_PEOPLE for next location.
+        '''
 
         # Start people detection
         # TODO ACTUALLY USE PEOPLE DETECTION
-        smach.StateMachine.add('START_PEOPLE_DETECTION',
-                                    states.Say(robot, 'Detected person. Are you okay?'),
-                                    transitions={'spoken':'ANSWER_ARE_YOU_OKAY'})
+        smach.StateMachine.add("START_PEOPLE_DETECTION",
+                                states.Say(robot,"Now I should start my perception, but is not build in yet..."),
+                                transitions={'spoken':'DETECT_PEOPLE'})
+
+
+        ############### GET INFO STATUS PERSON ###############
 
         # People detection
         smach.StateMachine.add('DETECT_PEOPLE',
@@ -283,8 +413,8 @@ def setup_statemachine(robot):
         smach.StateMachine.add('ANSWER_ARE_YOU_OKAY',
                                     Ask_yes_no(robot),
                                     transitions={   'yes':'ASK_IF_KNOWS_DIRECTION',
-                                                    'preempted':'REGISTER_PERSON',
-                                                    'no':'REGISTER_PERSON'})
+                                                    'preempted':'SAY_REGISTER',
+                                                    'no':'SAY_REGISTER'})      
 
         # Person is ok and is asked if he/she knows the way
         smach.StateMachine.add('ASK_IF_KNOWS_DIRECTION',
@@ -294,188 +424,12 @@ def setup_statemachine(robot):
         # Await question of he/she knows the way
         smach.StateMachine.add('ANSWER_IF_KNOWS_DIRECTION',
                                     Ask_yes_no(robot),
-                                    transitions={   'yes':'SAY_MOVE_TO_EXIT',
+                                    transitions={   'yes':'SAY_MOVE_TO_EXIT',       ''' TODO Erik: make state in which persons that are okay are registered and give input 0 (person is not oke)" '''
                                                     'preempted':'SAY_FOLLOW_ME',
-                                                    'no':'MOVE_ARM_BACK'})
+                                                    'no':'MOVE_ARM_BACK_SAY'})
 
-         # Class for registering person
-        class Register(smach.State):
-            def __init__(self, robot=None):
-                smach.State.__init__(self, outcomes=['finished'])
-                self.person_no = 1
-                self.robot = robot
-        
-            def execute(self, gl):      
-                rospy.loginfo("Register person in file ....")
-
-                
-                f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')
-                #f = open('status.txt','a')
-                f.write('person_%d;1;' % self.person_no) 
-                pos, rot = self.robot.base.get_location()
-                f.write('%.2f;%.2f \n' % (pos.x, pos.y))
-                f.close()
-
-                self.robot.speech.speak("Registering your location and status, so the fire department can find you.")
-                self.robot.speech.speak("Please stay at this location and stay calm.")
-                self.person_no = self.person_no + 1
-                return 'finished'
-
-        # Class for taking a picture
-
-        ## TODO
-
-        # Person is not ok and is left alone and registered
-        smach.StateMachine.add('REGISTER_PERSON',
-                                    Register(robot),
-                                    transitions={'finished':'SAY_FIND_PEOPLE'})
-        # Person is ok and needs no assistance to exit
-        smach.StateMachine.add('SAY_MOVE_TO_EXIT',
-                                    states.Say(robot, 'Okay, please move to the exit'),
-                                    transitions={'spoken':'SAY_FIND_PEOPLE'})
-
-        # Class for moving arm back for guidance
-        class MoveArmBack(smach.State):
-            def __init__(self, robot=None):
-                smach.State.__init__(self, outcomes=['finished'])
-        
-                self.robot = robot
-        
-            def execute(self, gl):      
-                rospy.loginfo("Moving arm back")
-            
-                self.robot.leftArm.send_joint_goal(0.0,-1.57,0.0,1.57,0.0,0.0,0.0)
-                self.robot.rightArm.send_joint_goal(0.0,-1.57,0.0,1.57,0.0,0.0,0.0)
-                rospy.sleep(1.5)
-                self.robot.leftArm.send_gripper_goal_open(10)
-                self.robot.rightArm.send_gripper_goal_open(10)
-                
-                self.robot.speech.speak("Please grab my hand")
-                return 'finished'
-
-        # Move arm back when person needs guidance
-        smach.StateMachine.add('MOVE_ARM_BACK',
-                                    MoveArmBack(robot),
-                                    transitions={'finished':'SAY_FOLLOW_ME'})
-
-        
-        # Person is ok and needs assistance to exit
-        smach.StateMachine.add('SAY_FOLLOW_ME',
-                                    states.Say(robot, 'Stay calm and follow me, please!'),
-                                    transitions={'spoken':'GO_TO_EXIT'})
-
-        # Amigo goes to the exit (waypoint stated in knowledge base)
-        smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.Navigate_named(robot, "exit"),
-                                    transitions={   'arrived':'MOVE_ARM_INITIAL', 
-                                                    'preempted':'AT_END', 
-                                                    'unreachable':'AT_END', 
-                                                    'goal_not_defined':'AT_END'})
-        # Class to move arm to initial pose
-        class MoveArmInitial(smach.State):
-            def __init__(self, robot=None):
-                smach.State.__init__(self, outcomes=['finished'])
-        
-                self.robot = robot
-        
-            def execute(self, gl):   
-                self.robot.speech.speak("Can you please let go of my arm")   
-                rospy.loginfo("Moving arm back")
-            
-                self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
-                self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
-                rospy.sleep(1.5)
-                self.robot.leftArm.send_gripper_goal_close(10)
-                self.robot.rightArm.send_gripper_goal_close(10)
-                
-                self.robot.speech.speak("We arrived at the exit, please stay here and wait for help")
-                return 'finished'
-
-        # When arrived at exit move arm to natural look
-        smach.StateMachine.add('MOVE_ARM_INITIAL',
-                                    MoveArmInitial(robot),
-                                    transitions={'finished':'SAY_FIND_PEOPLE'})
-
-
-        # Finally amigo will stop and says 'goodbye' to show that he's done.
-        smach.StateMachine.add('AT_END',
-                                    states.Say(robot, "Goodbye"),
-                                    transitions={'spoken':'Done'})
-
-        
-        
-        '''
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('AT_FRONT_OF_DOOR',
-                                    states.Say(robot, 'I will now check if it is open or not'),
-                                    transitions={'spoken':'STATE_DOOR'}) 
-        
-        smach.StateMachine.add('STATE_DOOR', states.Read_laser(robot,"entrance_door"),
-                                  transitions={'laser_read':'CHECK_DOOR'})
-              
-        dooropen_query = Compound("state","entrance_door", "open")
-        smach.StateMachine.add('CHECK_DOOR', 
-                                    states.Ask_query_true(robot, dooropen_query),
-                                    transitions={   'query_false':'STATE_DOOR',
-                                                    'query_true':'SAY_NAVIGATE_TO_KITCHEN',
-                                                    'waiting':'DOOR_CLOSED',
-                                                    'preempted':'Aborted'})
-
-        # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-        # in perception.py, amigo will speak and check again if the door is open
-        smach.StateMachine.add('DOOR_CLOSED',
-                                    states.Say(robot, 'Door is closed, please open the door'),
-                                    transitions={'spoken':'STATE_DOOR'}) 
-
-        # Go 
-        query_kitchen_1 = Compound("waypoint", Compound("kitchen", "one"), Compound("pose_2d", "X", "Y", "Phi"))
-
-        smach.StateMachine.add('SAY_NAVIGATE_TO_KITCHEN', 
-                                    states.Say_and_Navigate(
-                                        robot=robot,
-                                        sentence = "Door is open, so I will go to the kitchen",
-                                        input_keys=['navigate_to_queryoutcome',query_kitchen_1]),
-                                    transitions={'succeeded':'SAY_DETECT_SMOKE',
-                                                 'not_at_loc':'Aborted'})
-
-        
-
-        # My idea is to make a 360 degree turn, so that it seems that amigo is 'checking the kitchen for smoke'
-
-        # In the rulebook it is said that smoke should be detected within 1 minute and that the robot should look and point 
-        # from a close distance (less than 1 m)
-
-        # Idea: FLASH RED light on and off after detecting smoke until the end of the challenge (not during interpretation). Then say: "If anyone can see or hear me, 
-        #try to get to the exit!!"
-
-        smach.StateMachine.add('SAY_IS_THERE_SOMETHING_BURNING',
-                                    states.Say(robot, 'Hmm, is something burning?'),
-                                    transitions={'spoken':'TURN_ROUND_Z_AXIS'})
-
-        smach.StateMachine.add('TURN_ROUND_Z_AXIS',
-                                Turn_around_z_axis(robot,"slow"),
-                                transitions={   'done':'SAY_DETECT_SMOKE',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
-                                                'abort':'Aborted'})
-
-        smach.StateMachine.add('SAY_DETECT_SMOKE',
-                                    states.Say(robot, 'With my sensors I noticed that there is smoke! I will try to find people!'),
-                                    transitions={'spoken':'FINISH'})
-        '''
-        
-
-        ################### DETECT PERSON ####################
-
-        # Question: will a person lay on the ground?
-
-        # WHILE PERSONS_SAVED IS-NOT 1 AND NO MORE PEOPLE CAN BE FOUND -> try saving people
-        # Try several region of interests in kitchen
-        # Save to knowledge base: 
-        #   - how many times a region has been viewed (in case a double check for a certain region of interest is wanted)
-        #   - how many people have been detected in a certain 
-        #   - how many people are saved
-        #   - ...
-
-        ############### GET INFO STATUS PERSON ###############
+        ''' 
+        TODO ERIK: Better communication. Give more feedback.
 
         # - Say: "Are you able to speak?"
         # IF YES
@@ -492,25 +446,138 @@ def setup_statemachine(robot):
         # ELSE (Answer is no or no answer, person can't walk)
         #   - Say: "I did not hear you, I will register your position"
         #   - Register position (parse to teun)
+        '''
 
-        # Store information in the way teun would like it to have
+        # Person is ok and needs no assistance to exit
+        smach.StateMachine.add('SAY_REGISTER',
+                                    states.Say(robot, 'I will register your position and take a picture'),
+                                    transitions={'spoken':'REGISTER_PERSON'})     
 
+        # Person is not ok and is left alone and registered
+        smach.StateMachine.add('REGISTER_PERSON',
+                                    Register(robot),                            #TODO Erik: give input 1 (person is not oke)
+                                    transitions={'finished':'SAY_FIND_PEOPLE'})   
+
+
+        '''
+        TODO ERIK MAKE STATE AND CLASS THAT MAKES PICTURE OF PERSON, probably during register state.
+        '''
+
+        # Person is ok and needs no assistance to exit
+        smach.StateMachine.add('SAY_MOVE_TO_EXIT',
+                                    states.Say(robot, 'Okay, please go to the exit'),
+                                    transitions={'spoken':'SAY_FIND_PEOPLE'})
+        
         ################### GUIDE TO EXIT ####################
 
-        # If person does not know how to get to the exit, get him there.
+        smach.StateMachine.add('MOVE_ARM_BACK_SAY',
+                                    states.Say(robot, 'I will turn around and move my arms to the back, so that you can hold on to them'),
+                                    transitions={'spoken':'MOVE_ARM_BACK_TURN'})
 
-        # Since it is hard to look back constantly, we will put one or two arms backwards and say: 
-        # "Please hold on to one of my arms and I will drive slowely to the exit."
+        # Turn 360 degrees (will be 3/4 of a round)
+        smach.StateMachine.add('MOVE_ARM_BACK_TURN',
+                                    turn_Around_z_axis(robot, 10),
+                                    transitions={   'done':'MOVE_ARM_BACK',    ###### 
+                                                    'abort':'MOVE_ARM_BACK'})
+        
+
+        # Move arm back when person needs guidance
+        smach.StateMachine.add('MOVE_ARM_BACK',
+                                    MoveArmBack(robot),
+                                    transitions={'finished':'SAY_FOLLOW_ME'})
+
+        # Person is ok and needs assistance to exit
+        smach.StateMachine.add('SAY_FOLLOW_ME',
+                                    states.Say(robot, 'Please hold on to one of my arms and I will drive slowely to the exit.'),
+                                    transitions={'spoken':'GO_TO_FRONT_OF_EXIT'})
+
+
+        # Amigo goes to the exit (waypoint stated in knowledge base)
+        smach.StateMachine.add('GO_TO_FRONT_OF_EXIT', 
+                                    states.Navigate_named(robot, "front_of_exit"),   # TODO ERIK: create location 1 meter before exit and indicate that the exit is in front of amigo.
+                                    transitions={   'arrived':'SAY_GO_THROUGH_EXIT', 
+                                                    'preempted':'CLEAR_PATH_TO_FRONT_OF_EXIT', 
+                                                    'unreachable':'CLEAR_PATH_TO_FRONT_OF_EXIT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_FRONT_OF_EXIT'})
+
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('CLEAR_PATH_TO_FRONT_OF_EXIT',
+                                    states.Say(robot, "I could not go to the exit. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_FRONT_OF_EXIT_SECOND_TRY'}) 
+
+        # Amigo goes to the exit (waypoint stated in knowledge base)
+        smach.StateMachine.add('GO_TO_FRONT_OF_EXIT_SECOND_TRY', 
+                                    states.Navigate_named(robot, "front_of_exit"),   # TODO ERIK: create location 1 meter before exit and indicate that the exit is in front of amigo.
+                                    transitions={   'arrived':'SAY_GO_THROUGH_EXIT', 
+                                                    'preempted':'FAILED_GO_TO_FRONT_OF_EXIT', 
+                                                    'unreachable':'FAILED_GO_TO_FRONT_OF_EXIT', 
+                                                    'goal_not_defined':'FAILED_GO_TO_FRONT_OF_EXIT'})
+
+        # Person is ok and needs assistance to exit
+        smach.StateMachine.add('FAILED_GO_TO_FRONT_OF_EXIT',
+                                    states.Say(robot, 'I was not able to go to the exit, try to find it yourself or wait here for help since your location is registered.'),
+                                    transitions={'spoken':'MOVE_ARM_INITIAL'})
+        
+        # Person is ok and needs assistance to exit
+        smach.StateMachine.add('SAY_GO_THROUGH_EXIT',
+                                    states.Say(robot, 'You can find the exit 1 meter in front of me, please go through it!'),
+                                    transitions={'spoken':'MOVE_ARM_INITIAL'})
+
+        # When arrived at exit move arm to natural look
+        smach.StateMachine.add('MOVE_ARM_INITIAL',
+                                    MoveArmInitial(robot),
+                                    transitions={'finished':'SAY_FIND_PEOPLE'})
 
         ######################################################
         ###################### FINISHED ######################
         ######################################################
+        
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('SAY_GO_TO_EXIT',
+                                    states.Say(robot, "I have searched the whole apartment for people. Therefore I will go to the exit. If people are still here and can hear me, go to the exit!!"),
+                                    transitions={'spoken':'GO_TO_EXIT'}) 
 
-        ## TODO: Amigo should leave the room i guess and say that he's done.
+        # Amigo goes to the exit (waypoint stated in knowledge base)
+        smach.StateMachine.add('GO_TO_EXIT', 
+                                    states.Navigate_named(robot, "exit"),
+                                    transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
+                                                    'preempted':'CLEAR_PATH_TO_EXIT', 
+                                                    'unreachable':'CLEAR_PATH_TO_EXIT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
+                                    states.Say(robot, "I couldn't go to the exit. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_EXIT_SECOND_TRY'}) 
+
+        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
+                                    states.Navigate_named(robot, "registration_table"),
+                                    transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
+                                                    'preempted':'FAILED_GO_TO_EXIT', 
+                                                    'unreachable':'FAILED_GO_TO_EXIT', 
+                                                    'goal_not_defined':'FAILED_GO_TO_EXIT'})
+
+        smach.StateMachine.add('FAILED_GO_TO_EXIT',
+                                    states.Say(robot, 'I was not able to go to the exit. I will stop here and save all the information I gathered in a PDF file on a USB stick.'),
+                                    transitions={'spoken':'AT_END'})
+
+        smach.StateMachine.add('SUCCEED_GO_TO_EXIT',
+                                    states.Say(robot, 'I will now save all the information I gathered in a PDF file on a USB stick.'),
+                                    transitions={'spoken':'AT_END'})
+
+        '''
+        TODO make state to launch start.launch -> via launch file omdat parameters.yaml ingeladen moeten worden.
+        '''
+
+        # Finally amigo will stop and says 'goodbye' to show that he's done.
+        smach.StateMachine.add('AT_END',
+                                states.Say(robot, "Goodbye"),
+                                transitions={'spoken':'Done'})
 
 
-        smach.StateMachine.add('FINISH', states.Finish(robot),
-                                        transitions={'stop':'Done'})
+
     return sm
 
 if __name__ == "__main__":
