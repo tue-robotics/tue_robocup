@@ -19,20 +19,22 @@ public:
 
     void initialize(const std::string &name);
 
+    bool MoveToGoal(geometry_msgs::PoseStamped &goal);
+
+private:
+
     bool setGoal(geometry_msgs::PoseStamped& goal);
 
     bool computeVelocityCommand(geometry_msgs::Twist& cmd_vel);
 
-private:
-
     void setZeroVelocity(geometry_msgs::Twist& cmd_vel);
 
     double sign(double x){
-      return x < 0.0 ? -1.0 : 1.0;
+        return x < 0.0 ? -1.0 : 1.0;
     }
 
     void determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, const geometry_msgs::Twist& current_vel,
-                                   double dt, geometry_msgs::Twist& cmd_vel);
+                                  double dt, geometry_msgs::Twist& cmd_vel);
 
     double determineReference(double error_x, double vel, double max_vel, double max_acc, double dt);
 
@@ -75,7 +77,7 @@ private:
     // timestamp of last time cmd_vel was published
     double t_last_cmd_vel_;
 
-    ros::Publisher carrot_pub_, cmd_vel_pub_;
+    ros::Publisher carrot_pub_, vis_vel_pub_, cmd_vel_pub_;
     ros::Subscriber laser_scan_sub_;
 
     geometry_msgs::Twist last_cmd_vel_;

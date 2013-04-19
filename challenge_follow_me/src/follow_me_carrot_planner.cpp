@@ -27,7 +27,8 @@ void CarrotPlanner::initialize(const std::string& name) {
     STILL_MAX_VEL_SQ = STILL_MAX_VEL * STILL_MAX_VEL;
 
     carrot_pub_ = private_nh.advertise<visualization_msgs::Marker>("carrot", 1);
-    cmd_vel_pub_ = private_nh.advertise<visualization_msgs::Marker>("cmd_vel", 1);
+    vis_vel_pub_ = private_nh.advertise<visualization_msgs::Marker>("cmd_vel", 1);
+    cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 
     laser_scan_sub_ = private_nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 1, &CarrotPlanner::laserScanCallBack, this);
 
@@ -38,6 +39,18 @@ void CarrotPlanner::initialize(const std::string& name) {
 }
 
 CarrotPlanner::~CarrotPlanner() {
+}
+
+bool CarrotPlanner::MoveToGoal(geometry_msgs::PoseStamped &goal){
+    geometry_msgs::Twist cmd_vel;
+
+    if (setGoal(goal)) {
+        if(computeVelocityCommand(cmd_vel)) {
+            cmd_vel_pub_.publish(cmd_vel);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool CarrotPlanner::setGoal(geometry_msgs::PoseStamped &goal){
