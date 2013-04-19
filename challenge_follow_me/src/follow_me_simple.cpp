@@ -371,7 +371,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     //! Send goal to move base client
     move_base_ac_->sendGoal(move_base_goal);
     
-    ROS_INFO("Move base goal: (x,y) = (%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y);
+    ROS_INFO("Move base goal in %u steps: (x,y) = (%f,%f)", move_base_goal.path.size(), end_goal.pose.position.x, end_goal.pose.position.y);
 
 }
 
