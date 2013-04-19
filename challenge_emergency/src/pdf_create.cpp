@@ -231,9 +231,7 @@ int main (int argc, char **argv)
 
     //! Load image of 'map' and 'fire' and 'symbolic fire'
     #ifndef __WIN32__
-
     image_map = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/map.png").c_str());
-
     image_fire = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/fire.png").c_str());
     image_symbolic_fire = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/fire-graphic.png").c_str());
     #else
@@ -282,8 +280,8 @@ int main (int argc, char **argv)
         }
 
 
-    double length_map;//= 10;
-    double height_map;// = 12;
+    double length_map;
+    double height_map;
     //! Scaling between image and actual  map
     if (nh.getParam(ns+"/length_map", length_map))
         {
@@ -313,7 +311,7 @@ int main (int argc, char **argv)
     HPDF_Page_BeginText (page[n_page]);
     HPDF_Page_SetFontAndSize (page[n_page], font, 12);
     HPDF_Page_MoveTextPos (page[n_page], x, y-12.5);
-    HPDF_Page_ShowText (page[n_page], "Kitchen Room, red coordinates present person(s) in need of assistance");
+    HPDF_Page_ShowText (page[n_page], "Apartment, red coordinates present person(s) in need of assistance");
     HPDF_Page_EndText (page[n_page]);
 
     //! New page if y is below treshold
@@ -461,8 +459,7 @@ int main (int argc, char **argv)
         HPDF_Page_EndText (page[0]);
 
         y = y - 120;
-        cout<<"x_map"<<ratios[0]*(x_null+coordinates[i][0])<<endl;
-        cout<<"y_map"<<ratios[1]*(y_null+coordinates[i][1])<<endl;
+
         //! New page if y is below treshold
         if (y < 100)
         {
