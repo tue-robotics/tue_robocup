@@ -344,10 +344,27 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GO_TO_MEETING_POINT', 
                                     states.Navigate_named(robot, "meeting_point"),
                                     transitions={   'arrived':'INTRODUCE_SHORT', 
-                                                    'preempted':'Aborted', 
-                                                    'unreachable':'Aborted', 
-                                                    'goal_not_defined':'Aborted'})
+                                                    'preempted':'CLEAR_PATH_TO_MEETING_POINT', 
+                                                    'unreachable':'CLEAR_PATH_TO_MEETING_POINT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_MEETING_POINT'})
 
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('CLEAR_PATH_TO_MEETING_POINT',
+                                    states.Say(robot, "At my first attempt I could not go to the meeting point. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_MEETING_POINT_SECOND_TRY'}) 
+
+        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        smach.StateMachine.add('GO_TO_MEETING_POINT_SECOND_TRY', 
+                                    states.Navigate_named(robot, "meeting_point"),
+                                    transitions={   'arrived':'INTRODUCE_SHORT', 
+                                                    'preempted':'FAIL_BUT_INTRODUCE', 
+                                                    'unreachable':'FAIL_BUT_INTRODUCE', 
+                                                    'goal_not_defined':'FAIL_BUT_INTRODUCE'})
+
+        # Amigo will say that it arrives at the registration table
+        smach.StateMachine.add('FAIL_BUT_INTRODUCE',
+                                    states.Say(robot, "I was still not able to go to the meeting point, therefore I will introduce myself here."),
+                                    transitions={'spoken':'INTRODUCE_SHORT'}) 
 
         ######################################################
         #################### INSTRUCTIONS ####################             
@@ -777,6 +794,9 @@ def setup_statemachine(robot):
         ######################################################
         ########### CHECK NUMBER OF TASKS COMPLETED ##########
         ######################################################
+
+        ## maybe a reset head and reset spindle / arms over here?
+
 
         ## In case goal is given via speech interpreter:
         smach.StateMachine.add("FAILED_TASK",
