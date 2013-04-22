@@ -437,6 +437,7 @@ int main(int argc, char **argv) {
         unsigned int n_tries = 0;
         ros::Rate find_rate(FIND_RATE);
         while(ros::ok()) {
+            ros::spinOnce();
 
             //! Avoid too much delay due to some failure in perception
             if (n_tries > 10) {
@@ -466,6 +467,7 @@ int main(int argc, char **argv) {
     //! Follow operator
     ros::Rate follow_rate(FOLLOW_RATE);
     while(ros::ok()) {
+        ros::spinOnce();
 
         //! Get objects from the world state
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);

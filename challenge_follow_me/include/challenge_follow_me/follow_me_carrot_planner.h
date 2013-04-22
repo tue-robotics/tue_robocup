@@ -17,11 +17,11 @@ public:
 
     ~CarrotPlanner();
 
-    void initialize(const std::string &name);
-
     bool MoveToGoal(geometry_msgs::PoseStamped &goal);
 
 private:
+
+    void initialize(const std::string &name);
 
     bool setGoal(geometry_msgs::PoseStamped& goal);
 
@@ -38,9 +38,9 @@ private:
 
     double determineReference(double error_x, double vel, double max_vel, double max_acc, double dt);
 
-    bool isClearLine(const tf::Vector3& goal);
+    bool isClearLine(tf::Vector3& goal);
 
-    void laserScanCallBack(sensor_msgs::LaserScan laser_scan);
+    void laserScanCallBack(const sensor_msgs::LaserScan::ConstPtr& laser_scan);
 
     double calculateHeading(const tf::Vector3& goal);
 
