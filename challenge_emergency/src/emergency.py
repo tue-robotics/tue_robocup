@@ -192,8 +192,11 @@ class Register(smach.State):
 
     def execute(self, userdata=None):      
         rospy.loginfo("Register person in file ....")
+        if self.person_no == 1:
+            f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','w')  # 'a' means append
+        else:
+            f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
 
-        f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
         #f = open('status.txt','a')
         if self.status == 0:
             f.write('person_%d;0;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
@@ -271,7 +274,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized' : 'REGISTER_PERSON_NOT_OKAY',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
+                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
                                                     'abort'       : 'Aborted'})
     
         smach.StateMachine.add('AT_FRONT_OF_DOOR',
