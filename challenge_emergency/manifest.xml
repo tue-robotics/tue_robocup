@@ -15,6 +15,7 @@
   <depend package="roscpp"/>
   <depend package="image_transport"/>
   <depend package="compressed_image_transport"/>
+  <depend package="virtual_cam"/>
   
   <rosdep name="hpdf" />
   <rosdep name="png" />

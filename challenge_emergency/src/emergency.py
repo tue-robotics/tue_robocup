@@ -15,6 +15,8 @@ from robot_smach_states.util.startup import startup
 from std_msgs.msg import String
 from speech_interpreter.srv import GetContinue
 from speech_interpreter.srv import GetYesNo
+from virtual_cam.srv import cheese
+
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -104,6 +106,41 @@ class turn_Around_z_axis(smach.State):
         else:
             return "abort"
 
+
+class Look_for_people_emergency(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["visited", "unreachable", "all_matches_tried"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        # Move to the next waypoint in the storage room
+
+        goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("apartment", "W")),
+                                                 Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+                                                 Compound("not", Compound("visited", "Waypoint")),
+                                                 Compound("not", Compound("unreachable", "Waypoint"))))             # I do not use not_visited and not_unreachable since these are no roi's
+
+        if not goal_answers:
+            return "all_matches_tried"
+
+        # for now, take the first goal found : TODO, sort list on shortest distance!!
+        goal_answer = goal_answers[0]
+
+        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+        waypoint_name = goal_answer["Waypoint"]
+
+        nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
+        nav_result = nav.execute()
+
+        if nav_result == "unreachable" or nav_result == "preempted":  
+            self.robot.reasoner.query(Compound("assert", Compound("unreachable", waypoint_name)))            
+            return "unreachable"
+
+        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))                       
+
+        return "visited"
+
+
 class Ask_yes_no(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
         smach.State.__init__(self, outcomes=["yes", "preempted", "no"])
@@ -151,6 +188,8 @@ class Register(smach.State):
 
         self.status = status
 
+        self.get_picture = rospy.ServiceProxy('virtual_cam/cheese', cheese)
+
     def execute(self, userdata=None):      
         rospy.loginfo("Register person in file ....")
 
@@ -168,7 +207,14 @@ class Register(smach.State):
             f.write('%.2f;%.2f \n' % (pos.x, pos.y))
             f.close()
 
-        # TODO ERIK: MAKE PICTURE, SAVE AND SEND TO PDF FILE.
+        pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % self.person_no
+        
+        rospy.loginfo("pathname = %s".format(pathname))
+
+        if self.get_picture(pathname):  # bool terug. (filename met hele pad.png)
+            rospy.loginfo("picture taken!!")
+        else:
+            rospy.loginfo("no picture taken, i'm sorry")
 
         self.person_no = self.person_no + 1
         return 'finished'
@@ -225,7 +271,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
+                                    transitions={   'initialized' : 'REGISTER_PERSON_NOT_OKAY',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
                                                     'abort'       : 'Aborted'})
     
         smach.StateMachine.add('AT_FRONT_OF_DOOR',
@@ -363,27 +409,15 @@ def setup_statemachine(robot):
                                     states.Say(robot, 'I am going to look for more people.'),
                                     transitions={'spoken':'FIND_PEOPLE'})
 
-        query_point = Compound("region_of_interest_emergency","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
-        object_identifier_query = "ROI_Location"
-
-        '''
-        TODO ERIK: use pose_2d to drive to a location in stead of roi. navigate_to_queryoutcome could be used, but then location visited should be asserted
-        '''
-
         smach.StateMachine.add("FIND_PEOPLE",
-                                states.Visit_query_outcome_3d(robot, 
-                                                                  query_point, 
-                                                                  x_offset=0.7, y_offset=0.0001,
-                                                                  identifier=object_identifier_query),
-                                transitions={   'arrived':'START_PEOPLE_DETECTION',
+                                Look_for_people_emergency(robot),
+                                transitions={   'visited':'START_PEOPLE_DETECTION',
                                                 'unreachable':'FAILED_DRIVING_TO_LOCATION',
-                                                'preempted':'FAILED_DRIVING_TO_LOCATION',
-                                                'goal_not_defined':'FAILED_DRIVING_TO_LOCATION',
                                                 'all_matches_tried':'SAY_GO_TO_EXIT'})
 
         # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
         smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
-                                states.Say(robot,"I was not able to go to a desired location to detect people. I will try another location."),
+                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location."),
                                 transitions={'spoken':'FIND_PEOPLE'})
 
         ############ DRIVE TO PREDEFINED LOCATIONS ###########
@@ -430,7 +464,7 @@ def setup_statemachine(robot):
         # Await question of he/she knows the way
         smach.StateMachine.add('ANSWER_IF_KNOWS_DIRECTION',
                                     Ask_yes_no(robot),
-                                    transitions={   'yes':'SAY_REGISTER_OKAY_EXIT_BY_THEMSELVES',       ''' TODO Erik: make state in which persons that are okay are registered and give input 0 (person is not oke)" '''
+                                    transitions={   'yes':'SAY_REGISTER_OKAY_EXIT_BY_THEMSELVES',       
                                                     'preempted':'SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES',
                                                     'no':'SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES'})
 
