@@ -14,11 +14,11 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "follow_me_simple");
     ros::NodeHandle nh;
 
-    double goal_x = 0.9;    // goal x in /base_link frame
-    double goal_y = 0.3;    // goal y in /base_link frame
-    double path_res = 0.1;  // maximum distance between waypoints in path
+    //double goal_x = 0.9;    // goal x in /base_link frame
+    //double goal_y = 0.3;    // goal y in /base_link frame
+    //double path_res = 0.1;  // maximum distance between waypoints in path
 
-    bool transform_to_map_frame = true;
+    //bool transform_to_map_frame = true;
 
     ///tf::TransformListener tf_listener;
 
@@ -28,13 +28,16 @@ int main(int argc, char **argv) {
     //tf_listener.waitForTransform("/map", "/base_link", ros::Time(), ros::Duration(10));
 
     //tue_move_base_msgs::MoveBaseGoal move_base_goal;
-    //CarrotPlanner planner_;
-    //planner_.initialize("test_navigate");
+
+    ROS_INFO("Initializing Carrot Planner");
+    CarrotPlanner* planner_;
+    planner_ = new CarrotPlanner("test_navigate");
+    ROS_INFO("Initialized Carrot Planner");
 
     geometry_msgs::PoseStamped target;
     target.header.frame_id = "/base_link";
-    target.pose.position.x = 3;
-    target.pose.position.y = 3;
+    target.pose.position.x = -3;
+    target.pose.position.y = -3;
     target.pose.position.z = 0;
 
     tf::Quaternion q;
@@ -45,6 +48,12 @@ int main(int argc, char **argv) {
     target.pose.orientation.y = q.getY();
     target.pose.orientation.z = q.getZ();
     target.pose.orientation.w = q.getW();
+
+    ros::Rate follow_rate(10);
+    while(ros::ok()) {
+        planner_->MoveToGoal(target);
+        follow_rate.sleep();
+    }
 
     //planner_.MoveToGoal(target);
     //move_base_goal.path.push_back(target);

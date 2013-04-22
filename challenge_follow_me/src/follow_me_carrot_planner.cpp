@@ -1,6 +1,8 @@
 #include "challenge_follow_me/follow_me_carrot_planner.h"
 
-CarrotPlanner::CarrotPlanner() : initialized_(false) {}
+CarrotPlanner::CarrotPlanner(const std::string &name){
+    initialize(name);
+}
 
 void CarrotPlanner::initialize(const std::string& name) {
 
@@ -27,14 +29,17 @@ void CarrotPlanner::initialize(const std::string& name) {
     STILL_MAX_VEL_SQ = STILL_MAX_VEL * STILL_MAX_VEL;
 
     carrot_pub_ = private_nh.advertise<visualization_msgs::Marker>("carrot", 1);
-    vis_vel_pub_ = private_nh.advertise<visualization_msgs::Marker>("cmd_vel", 1);
     cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
 
-    laser_scan_sub_ = private_nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 1, &CarrotPlanner::laserScanCallBack, this);
+    laser_scan_sub_ = private_nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, &CarrotPlanner::laserScanCallBack, this);
 
     TRACKING_FRAME = "/base_link";
 
+    t_last_cmd_vel_ = ros::Time::now().toSec();
+
     initialized_ = true;
+    laser_data_ready_ = false;
+
 
 }
 
@@ -45,7 +50,9 @@ bool CarrotPlanner::MoveToGoal(geometry_msgs::PoseStamped &goal){
     geometry_msgs::Twist cmd_vel;
 
     if (setGoal(goal)) {
+        ROS_INFO("Goal is set");
         if(computeVelocityCommand(cmd_vel)) {
+            ROS_INFO("Cmd vel is computed, ready to publish");
             cmd_vel_pub_.publish(cmd_vel);
             return true;
         }
@@ -58,11 +65,12 @@ bool CarrotPlanner::setGoal(geometry_msgs::PoseStamped &goal){
         ROS_ERROR("Expecting goal in base_link frame");
         return false;
     }
+    ROS_INFO_STREAM("Goal is in frame " << goal.header.frame_id);
 
     goal_.setX(goal.pose.position.x);
     goal_.setY(goal.pose.position.y);
     goal_.setZ(goal.pose.position.z);
-    /// TODO: consdgvert to goal at FOLLOW_DISTANCE
+    /// TODO: convert to goal at FOLLOW_DISTANCE
     //double angle = calculateHeading(goal_);
 
     angle_ = tf::getYaw(goal.pose.orientation);
@@ -94,9 +102,11 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
 
 
     if(!isClearLine(e_pos_)) {
+        ROS_INFO("Line is not clear");
         setZeroVelocity(cmd_vel);
         return false;
     }
+    ROS_INFO("Line is clear");
 
     // determine the error in the orientation
     double e_theta = 0;
@@ -120,6 +130,9 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
 bool CarrotPlanner::isClearLine(const tf::Vector3 &goal){
     /// TODO: check laser data inbetween target and robot
     //double angle = calculateHeading(goal_);
+    if (!laser_data_ready_)
+        return false;
+
     int num_readings = laser_scan_.ranges.size();
     int num_incr = angle_/laser_scan_.angle_increment;
     double dist_to_obstacle = laser_scan_.ranges[num_readings/2 + num_incr];
@@ -133,8 +146,11 @@ bool CarrotPlanner::isClearLine(const tf::Vector3 &goal){
 }
 
 void CarrotPlanner::laserScanCallBack(sensor_msgs::LaserScan laser_scan){
+    ROS_INFO("CB");
     if(laser_scan.header.frame_id == "/front_laser"){
+        ROS_INFO_STREAM("Laser scan CB with size " << laser_scan.ranges.size());
         laser_scan_ = laser_scan;
+        laser_data_ready_ = true;
     }
 }
 

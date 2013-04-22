@@ -13,7 +13,7 @@ class CarrotPlanner
 
 public:
 
-    CarrotPlanner();
+    CarrotPlanner(const std::string& name);
 
     ~CarrotPlanner();
 
@@ -77,7 +77,7 @@ private:
     // timestamp of last time cmd_vel was published
     double t_last_cmd_vel_;
 
-    ros::Publisher carrot_pub_, vis_vel_pub_, cmd_vel_pub_;
+    ros::Publisher carrot_pub_, cmd_vel_pub_;
     ros::Subscriber laser_scan_sub_;
 
     geometry_msgs::Twist last_cmd_vel_;
@@ -86,6 +86,7 @@ private:
 
     double angle_;
 
+    bool laser_data_ready_;
 
 };
 
