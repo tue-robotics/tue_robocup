@@ -331,7 +331,8 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
     end_goal.header.frame_id = NAVIGATION_FRAME;
-    q.setRPY(pos_exp(0), pos_exp(1), 0);
+    double theta = atan2(pos_exp(0), pos_exp(1));
+    q.setRPY(0, 0, theta);
 
     //! Set orientation
     end_goal.pose.orientation.x = q.getX();
@@ -352,7 +353,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     double dy = end_goal.pose.position.y / nr_steps;
 
     //! Add interpolated way points (starting point is already added)
-    for(unsigned int i = 1; i < nr_steps; ++i) {
+    for (int i = 1; i < nr_steps; ++i) {
         geometry_msgs::PoseStamped waypoint;
         waypoint = end_goal;
         waypoint.pose.position.x = i * dx;
@@ -374,7 +375,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     //! Send goal to move base client
     move_base_ac_->sendGoal(move_base_goal);
     
-    ROS_INFO("Move base goal in %u steps: (x,y) = (%f,%f)", move_base_goal.path.size(), end_goal.pose.position.x, end_goal.pose.position.y);
+    ROS_INFO("Move base goal in %zu steps: (x,y,theta) = (%f,%f,%f)", move_base_goal.path.size(), end_goal.pose.position.x, end_goal.pose.position.y, theta);
 
 }
 
