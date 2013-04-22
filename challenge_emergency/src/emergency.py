@@ -143,28 +143,33 @@ class MoveArmBack(smach.State):
 
  # Class for registering person
 class Register(smach.State):
-    def __init__(self, robot=None):
+    def __init__(self, robot=None, status=1):
         smach.State.__init__(self, outcomes=['finished'])
         # TODO ERIK register person and assert him as visited and registered.
         self.person_no = 1
         self.robot = robot
 
+        self.status = status
+
     def execute(self, userdata=None):      
         rospy.loginfo("Register person in file ....")
 
-        
         f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
         #f = open('status.txt','a')
-        f.write('person_%d;1;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
-        pos, rot = self.robot.base.get_location()
-        f.write('%.2f;%.2f \n' % (pos.x, pos.y))
-        f.close()
+        if self.status == 0:
+            f.write('person_%d;0;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            pos, rot = self.robot.base.get_location()
+            f.write('%.2f;%.2f \n' % (pos.x, pos.y))
+            f.close()
 
-        self.robot.speech.speak("Registering your location and status, so the fire department can find you.")
+        elif self.status == 1:
+            f.write('person_%d;1;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            pos, rot = self.robot.base.get_location()
+            f.write('%.2f;%.2f \n' % (pos.x, pos.y))
+            f.close()
 
         # TODO ERIK: MAKE PICTURE, SAVE AND SEND TO PDF FILE.
 
-        self.robot.speech.speak("Please stay at this location and stay calm.")
         self.person_no = self.person_no + 1
         return 'finished'
 
@@ -355,7 +360,7 @@ def setup_statemachine(robot):
         ############ DRIVE TO PREDEFINED LOCATIONS ###########
 
         smach.StateMachine.add('SAY_FIND_PEOPLE',
-                                    states.Say(robot, 'Going to look for more people.'),
+                                    states.Say(robot, 'I am going to look for more people.'),
                                     transitions={'spoken':'FIND_PEOPLE'})
 
         query_point = Compound("region_of_interest_emergency","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
@@ -407,14 +412,15 @@ def setup_statemachine(robot):
 
         # People detection
         smach.StateMachine.add('DETECT_PEOPLE',
-                                    states.Say(robot, 'Detected person. Are you okay?'),
+                                    states.Say(robot, [ "Hello, are you okay?",
+                                                        "Hi, are you able to move?"]),
                                     transitions={'spoken':'ANSWER_ARE_YOU_OKAY'})
         # Await anser of question 1
         smach.StateMachine.add('ANSWER_ARE_YOU_OKAY',
                                     Ask_yes_no(robot),
                                     transitions={   'yes':'ASK_IF_KNOWS_DIRECTION',
-                                                    'preempted':'SAY_REGISTER',
-                                                    'no':'SAY_REGISTER'})      
+                                                    'preempted':'SAY_REGISTER_NOT_OKAY',
+                                                    'no':'SAY_REGISTER_NOT_OKAY'})      
 
         # Person is ok and is asked if he/she knows the way
         smach.StateMachine.add('ASK_IF_KNOWS_DIRECTION',
@@ -424,49 +430,46 @@ def setup_statemachine(robot):
         # Await question of he/she knows the way
         smach.StateMachine.add('ANSWER_IF_KNOWS_DIRECTION',
                                     Ask_yes_no(robot),
-                                    transitions={   'yes':'SAY_MOVE_TO_EXIT',       ''' TODO Erik: make state in which persons that are okay are registered and give input 0 (person is not oke)" '''
-                                                    'preempted':'SAY_FOLLOW_ME',
-                                                    'no':'MOVE_ARM_BACK_SAY'})
+                                    transitions={   'yes':'SAY_REGISTER_OKAY_EXIT_BY_THEMSELVES',       ''' TODO Erik: make state in which persons that are okay are registered and give input 0 (person is not oke)" '''
+                                                    'preempted':'SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES',
+                                                    'no':'SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES'})
 
-        ''' 
-        TODO ERIK: Better communication. Give more feedback.
+        ################## REGISTER PERSON ###################
 
-        # - Say: "Are you able to speak?"
-        # IF YES
-        #   - Say: "Are you able to walk?"
-        #   IF YES
-        #       - Say: "Do you now the way to the exit?"
-        #       IF YES
-        #           - Say: "Allright, you should go to the exit then!"
-        #       ELSE 
-        #           - Say: "Follow me then to the exit"
-        #   ELSE (Answer is no or no answer, person can't walk)
-        #       - Say: "I will register your position."
-        #       - Register position (parse to teun)
-        # ELSE (Answer is no or no answer, person can't walk)
-        #   - Say: "I did not hear you, I will register your position"
-        #   - Register position (parse to teun)
-        '''
+        # Person is not okay:
+        smach.StateMachine.add('SAY_REGISTER_NOT_OKAY',
+                                    states.Say(robot, 'Okay, I will register your position and take a picture so the fire department is able to find you.'),
+                                    transitions={'spoken':'REGISTER_PERSON_NOT_OKAY'})     
+
+        smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
+                                    Register(robot, 1),                             #input 1 (person is not oke)
+                                    transitions={'finished':'SAY_REGISTER_NOT_OKAY_CALM'})
+
+        smach.StateMachine.add('SAY_REGISTER_NOT_OKAY_CALM',
+                                    states.Say(robot, 'Please stay calm and help will arrive very soon.'),
+                                    transitions={'spoken':'SAY_FIND_PEOPLE'})     
 
         # Person is ok and needs no assistance to exit
-        smach.StateMachine.add('SAY_REGISTER',
-                                    states.Say(robot, 'I will register your position and take a picture'),
-                                    transitions={'spoken':'REGISTER_PERSON'})     
+        smach.StateMachine.add('SAY_REGISTER_OKAY_EXIT_BY_THEMSELVES',
+                                    states.Say(robot, 'I will register your position and take a picture.'),
+                                    transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES'})     
 
-        # Person is not ok and is left alone and registered
-        smach.StateMachine.add('REGISTER_PERSON',
-                                    Register(robot),                            #TODO Erik: give input 1 (person is not oke)
-                                    transitions={'finished':'SAY_FIND_PEOPLE'})   
+        smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES',
+                                    Register(robot, 0),                            #input 0 (person is oke)
+                                    transitions={'finished':'SAY_MOVE_TO_EXIT'})
 
-
-        '''
-        TODO ERIK MAKE STATE AND CLASS THAT MAKES PICTURE OF PERSON, probably during register state.
-        '''
-
-        # Person is ok and needs no assistance to exit
         smach.StateMachine.add('SAY_MOVE_TO_EXIT',
-                                    states.Say(robot, 'Okay, please go to the exit'),
+                                    states.Say(robot, 'Okay, please go to the exit and leave the room'),
                                     transitions={'spoken':'SAY_FIND_PEOPLE'})
+
+        # Person is ok and needs assistance to exit
+        smach.StateMachine.add('SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES',
+                                    states.Say(robot, 'Before escorting you to the exit, I will first register your position and take a picture.'),
+                                    transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})     
+
+        smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
+                                    Register(robot, 0),                            #input 0 (person is oke)
+                                    transitions={'finished':'MOVE_ARM_BACK_SAY'})
         
         ################### GUIDE TO EXIT ####################
 
