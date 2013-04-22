@@ -114,6 +114,29 @@ class LearnPersonCustom(smach.State):
 
         return learn_result
 
+class TakeOrder(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["answered", "not_answered"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        res_drinks = self.robot.reasoner.query(Compound("type", "Drink", "drink"))
+        if not res_drinks:
+            return "not_answered"
+
+        # store all drink options and their goals in a dictionary
+        drink_options = {}
+        for drink in res_drinks:
+            drink_name = drink["Drink"]
+            drink_options[drink_name] = Compound("goal", Compound("serve", drink_name))
+
+        q_machine =  Timedout_QuestionMachine(
+                                            robot=self.robot,
+                                            default_option = "coke", 
+                                            sentence = "What would you like to drink?", 
+                                            options = drink_options)
+        return q_machine.execute()
+
 class LookForDrink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["looking" , "found", "not_found"])
@@ -338,8 +361,10 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("retractall", Compound("current_object", "X")))
     amigo.reasoner.query(Compound("retractall", Compound("current_person", "X")))
     amigo.reasoner.query(Compound("retractall", Compound("visited", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
 
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+    amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
