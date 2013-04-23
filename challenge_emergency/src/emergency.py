@@ -183,6 +183,7 @@ class Register(smach.State):
     def __init__(self, robot=None, status=1):
         smach.State.__init__(self, outcomes=['finished'])
         # TODO ERIK register person and assert him as visited and registered.
+        # TODO Location of person / fire should be inserted.
         self.person_no = 1
         self.robot = robot
 
@@ -206,6 +207,12 @@ class Register(smach.State):
 
         elif self.status == 1:
             f.write('person_%d;1;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            pos, rot = self.robot.base.get_location()
+            f.write('%.2f;%.2f \n' % (pos.x, pos.y))
+            f.close()
+
+        elif self.status == 2:
+            f.write('fire_1;2;')  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
             pos, rot = self.robot.base.get_location()
             f.write('%.2f;%.2f \n' % (pos.x, pos.y))
             f.close()
@@ -274,7 +281,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
+                                    transitions={   'initialized' : 'SAY_FIND_PEOPLE',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
                                                     'abort'       : 'Aborted'})
     
         smach.StateMachine.add('AT_FRONT_OF_DOOR',
@@ -360,6 +367,10 @@ def setup_statemachine(robot):
         -> Build timer 1 minute!!
         -> Detect fire
         -> Make picture
+        '''
+
+        '''
+        RIJDEN NAAR STOVE!! Daar zeggen dat je het gevonden hebt en registreren
         '''
 
         # Turn 360 degrees to search for the smoke
@@ -621,5 +632,5 @@ def setup_statemachine(robot):
     return sm
 
 if __name__ == "__main__":
-    rospy.init_node('emergency_exec', log_level=rospy.DEBUG)
+    rospy.init_node('emergency_exec', log_level=rospy.INFO)
     startup(setup_statemachine)
