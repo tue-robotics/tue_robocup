@@ -1,0 +1,3 @@
+#! /bin/bash
+
+amiddle nav:=false localization:=false wire_frame:=/base_link wire_viz_frame:=/base_link
