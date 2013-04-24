@@ -146,17 +146,17 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
     int num_readings = laser_scan_.ranges.size();
     int num_incr = goal_angle_/laser_scan_.angle_increment;
     int index_beam_obst = num_readings/2 + num_incr;
-    int width = 2;
+    int width = 15;
 
-    for (int i = index_beam_obst - width; i <= index_beam_obst + width; i++){
+    for (int i = index_beam_obst - width; i <= index_beam_obst + width; ++i){
 
         //! Check if the intended direction falls within the range of the LRF
         if (i < num_readings) {
             double dist_to_obstacle = laser_scan_.ranges[i];
 
-            ROS_INFO("Distance at beam %d/%d is %f [m]", i, num_readings, dist_to_obstacle);
+            ROS_INFO("Distance at beam %d/%d is %f [m] (goal lies %f [m] ahead)", i, num_readings, dist_to_obstacle, goal_.length() - 0.1);
 
-            if (dist_to_obstacle < goal_.length() - 0.1) {
+            if (dist_to_obstacle < goal_.length() - 0.1 && dist_to_obstacle > 0.15) {
                 ROS_WARN("Obstacle detected at %f [m], whereas goal lies %f [m] ahead", dist_to_obstacle, goal_.length() - 0.1);
                 return false;
             }
