@@ -24,10 +24,10 @@ using namespace std;
 const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 30.0;     // Maximum waiting time for operator to return
-const string NAVIGATION_FRAME = "/front_laser"; // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
+const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
-const double FOLLOW_RATE = 1;                   // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 3;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
 
