@@ -698,7 +698,7 @@ class NavigateGeneric(smach.State):
                 if self.preempted:
                     self.preempted = False
                     self.service_preempt()
-                    print 'preempted'
+                    #print 'preempted'
                     return "preempted"
 
                 if self.look_at_path_distance > 0:
@@ -713,7 +713,7 @@ class NavigateGeneric(smach.State):
                                 lookat_point = self.robot.base.path[i].pose.position.x, self.robot.base.path[i].pose.position.y
 
                         if lookat_point:
-                            print "look at: " + str(lookat_point)
+                            rospy.logdebug("look at: " + str(lookat_point))
                             self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=True, timeout=0.0)
                         else:
                             self.robot.head.reset_position(timeout=0.0)
@@ -756,7 +756,7 @@ class NavigateGeneric(smach.State):
                         self.new_path_required = True
                        
             goal_status = self.robot.base.ac_move_base.get_state()
-            rospy.logwarn("GoalStatus = {0}".format(goal_status))
+            rospy.logdebug("GoalStatus = {0}".format(goal_status))
             rospy.sleep(0.5)
 
         

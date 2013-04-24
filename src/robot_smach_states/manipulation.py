@@ -491,7 +491,7 @@ class SetGripper(smach.State):
         self.side = side
         self.robot = robot
         self.gripperstate = gripperstate
-	self.drop_from_frame = drop_from_frame
+        self.drop_from_frame = drop_from_frame
 
     def execute(self, userdata):
         self.side.send_gripper_goal(self.gripperstate)
