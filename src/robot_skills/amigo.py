@@ -41,7 +41,7 @@ class Amigo(object):
         # if 'worldmodel' not in dontInclude:
         #     self.worldmodel = worldmodel.WorldModel(self.tf_listener)
         if 'base' not in dontInclude:
-            self.base = base.Base(self.tf_listener, wait_service=wait_services,use_2d=True)
+            self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=True)
         if 'spindle' not in dontInclude:
             self.spindle = spindle.Spindle(wait_service=wait_services)
         if 'speech' not in dontInclude:
