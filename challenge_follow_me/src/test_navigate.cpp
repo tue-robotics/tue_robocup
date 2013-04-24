@@ -35,12 +35,12 @@ int main(int argc, char **argv) {
 
     geometry_msgs::PoseStamped target;
     target.header.frame_id = "/base_link";
-    target.pose.position.x = 0;
+    target.pose.position.x = 2;
     target.pose.position.y = 0;
     target.pose.position.z = 0;
 
     tf::Quaternion q;
-    q.setRPY(0, 0, 0.1);
+    q.setRPY(0, 0, 0);
 
     //! Set orientation
     target.pose.orientation.x = q.getX();
