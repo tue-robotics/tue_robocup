@@ -7,7 +7,8 @@
 #include "hpdf.h"
 #include <ros/ros.h>
 #include <ros/package.h>
-
+#include <std_srvs/EmptyRequest.h>
+#include <std_srvs/EmptyResponse.h>
 
 //! Dealing with files
 #include <iostream>
@@ -33,14 +34,12 @@ error_handler  (HPDF_STATUS   error_no,
     longjmp(env, 1);
 }
 
+
 using namespace std;
-int main (int argc, char **argv)
+ros::ServiceServer startupSrv_;
+
+void createPDF()
 {
-
-    //! Start up node
-    ros::init(argc, argv, "emergency_paper");
-    ros::NodeHandle nh;
-
     //! Define string to pull out each line
     string STRING;
     ifstream myfile;
@@ -488,7 +487,26 @@ int main (int argc, char **argv)
 
     //! Clean up
     HPDF_Free (pdf);
-    ros::spinOnce();
+}
+
+
+bool startUp()
+{
+    // Create the pdf brother G
+    createPDF();
+    return true;
+}
+
+int main (int argc, char **argv)
+{
+
+    //! Start up node
+    ros::init(argc, argv, "emergency_paper");
+    ros::NodeHandle nh("~");
+    startupSrv_ = nh.advertiseService<std_srvs::EmptyRequest, std_srvs::EmptyResponse>("/start",);
+
+    while(ros::ok())
+        ros::spinOnce();
     return 0;
 }
 #else
