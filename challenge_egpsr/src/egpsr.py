@@ -279,7 +279,7 @@ def setup_statemachine(robot):
     
     #Load database
     robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
-    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/gpsr_2013_tue_test_lab.pl'))
+    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/egpsr.pl'))
 
     #Assert the current challenge.
     robot.reasoner.query(Compound("assertz",Compound("challenge", "gpsr")))
@@ -508,11 +508,11 @@ def setup_statemachine(robot):
 
             search_query            = Compound("search_query","ROI_Location",Compound("point_3d","X","Y","Z"))
             object_identifier_query = "ROI_Location"
-            # object_query            = Conjunction( 
-            #                              Compound("object_query","ObjectID", Sequence("X","Y","Z")),
-            #                              Compound("not", Compound("disposed", "ObjectID")))     
+            object_query            = Conjunction( 
+                                         Compound("object_query","ObjectID", Sequence("X","Y","Z")),
+                                         Compound("not", Compound("disposed", "ObjectID")))     
 
-            object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
+            #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
 
             smach.StateMachine.add('GET_OBJECT',
                                     states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query),  #TODO Erik van Loy: DIt is compleet ongetest, succes!
