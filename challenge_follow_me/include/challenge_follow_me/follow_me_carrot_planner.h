@@ -72,7 +72,7 @@ private:
 
     bool initialized_;
 
-    tf::Vector3 goal_, e_pos_;
+    tf::Vector3 goal_;
 
     // timestamp of last time cmd_vel was published
     double t_last_cmd_vel_;
@@ -84,7 +84,7 @@ private:
 
     sensor_msgs::LaserScan laser_scan_;
 
-    double angle_;
+    //double angle_;
 
     bool laser_data_ready_;
 

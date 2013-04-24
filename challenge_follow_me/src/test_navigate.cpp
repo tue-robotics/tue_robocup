@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
 
     geometry_msgs::PoseStamped target;
     target.header.frame_id = "/base_link";
-    target.pose.position.x = 0;
-    target.pose.position.y = -3;
+    target.pose.position.x = -2;
+    target.pose.position.y = 2;
     target.pose.position.z = 0;
 
     tf::Quaternion q;
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     target.pose.orientation.z = q.getZ();
     target.pose.orientation.w = q.getW();
 
-    ros::Rate follow_rate(5);
+    ros::Rate follow_rate(0.5);
     while(ros::ok()) {
         ros::spinOnce();
         planner_.MoveToGoal(target);

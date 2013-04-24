@@ -15,9 +15,6 @@ void CarrotPlanner::initialize(const std::string& name) {
     private_nh.param("max_acc_rotation", MAX_ACC_THETA, 1.0);
     private_nh.param("xy_goal_tolerance", XY_GOALREGION, 0.1);
     private_nh.param("yaw_goal_tolerance", THETA_GOALREGION, 0.1);
-
-    private_nh.param("max_yaw_error_driving", MAX_YAW_ERROR_DRIVING, 0.785398164); // 0.25 * PI
-    private_nh.param("max_yaw_error_still", MAX_YAW_ERROR_STILL, 0.1);
     private_nh.param("still_max_vel", STILL_MAX_VEL, 0.01);
 
     private_nh.param("max_local_goal_distance", MAX_LOCAL_GOAL_DISTANCE, 0.5);
@@ -27,7 +24,7 @@ void CarrotPlanner::initialize(const std::string& name) {
     STILL_MAX_VEL_SQ = STILL_MAX_VEL * STILL_MAX_VEL;
 
     carrot_pub_ = private_nh.advertise<visualization_msgs::Marker>("carrot", 1);
-    cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
+    cmd_vel_pub_ = private_nh.advertise<geometry_msgs::Twist>("/cmd_vel", 1);
 
     laser_scan_sub_ = private_nh.subscribe("/base_scan", 10, &CarrotPlanner::laserScanCallBack, this);
 
@@ -71,13 +68,11 @@ bool CarrotPlanner::setGoal(geometry_msgs::PoseStamped &goal){
     goal_.setX(goal.pose.position.x);
     goal_.setY(goal.pose.position.y);
     goal_.setZ(goal.pose.position.z);
-    angle_ = tf::getYaw(goal.pose.orientation);
 
-    //! Set e_pos_ (purpose?)
-    e_pos_ = goal_;
+    ROS_INFO_STREAM("[setGoal] goal = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << calculateHeading(goal_));
 
     //! Publish marker
-    publishCarrot(e_pos_, carrot_pub_);
+    publishCarrot(goal_, carrot_pub_);
 
     return true;
 
@@ -100,23 +95,22 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
     t_last_cmd_vel_ = time;
 
     //! Check if the path is free
-    if(!isClearLine(e_pos_)) {
+    if(!isClearLine(goal_)) {
         ROS_WARN("Path is not free");
         setZeroVelocity(cmd_vel);
-        return false;
     }
 
     ROS_INFO("Path is free");
 
     //! Normalize position
-    geometry_msgs::Twist e_pos_norm_msg;
-    tf::Vector3 e_pos_norm;
-    e_pos_norm = e_pos_.normalized();
-    tf::vector3TFToMsg(e_pos_norm, e_pos_norm_msg.linear);
-    ROS_DEBUG_STREAM("e_pos = " << e_pos_norm_msg.linear << ", angle_ = " << angle_);
+    geometry_msgs::Twist goal_norm_msg;
+    tf::Vector3 goal_norm;
+    goal_norm = goal_.normalized();
+    tf::vector3TFToMsg(goal_norm, goal_norm_msg.linear);
+    ROS_INFO_STREAM("goal = " << goal_norm_msg.linear << ", angle_ = " << calculateHeading(goal_));
 
     //! Determine velocity
-    determineDesiredVelocity(e_pos_, angle_, last_cmd_vel_, dt, cmd_vel);
+    determineDesiredVelocity(goal_, calculateHeading(goal_), last_cmd_vel_, dt, cmd_vel);
     last_cmd_vel_ = cmd_vel;
 
     return true;
@@ -134,7 +128,7 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
 
     //! Get number of beams and resolution LRF from most recent laser message
     int num_readings = laser_scan_.ranges.size();
-    int num_incr = angle_/laser_scan_.angle_increment;
+    int num_incr = calculateHeading(goal_)/laser_scan_.angle_increment;
 
     //! Check if the intended direction falls within the range of the LRF
     if (num_readings/2 + num_incr < num_readings) {
@@ -149,11 +143,7 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
 
     }
 
-    //! Inteded direction outside field of view LRF, rotate robot without moving forward?
-    goal.setX(0);
-    goal.setY(0);
-    goal.setZ(0);
-    ROS_WARN("Intended drving direction outside field of view LRF, only considering orientation to avoid collisions");
+    ROS_WARN("Intended driving direction outside field of view LRF, only considering orientation to avoid collisions");
 
     return true;
 }
@@ -179,28 +169,18 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
 
     tf::Vector3 current_vel_trans;
     tf::vector3MsgToTF(current_vel.linear, current_vel_trans);
-    double v_norm_sq = current_vel_trans.length2();
+    //double v_norm_sq = current_vel_trans.length2();
 
     // determine the maximum error of the orientation,
     // if this error is reached the robot stops and only controls the rotation
 
-    // during execution of the path
-    double max_theta_error = MAX_YAW_ERROR_DRIVING;
-
-    if (v_norm_sq < STILL_MAX_VEL_SQ) {
-        // when the robot is standing still
-        max_theta_error = MAX_YAW_ERROR_STILL;
-    }
-
     double v_wanted_norm = 0;
 
-    // HACK JOS: skip this check
-    if (true || (fabs(e_theta) < max_theta_error && e_norm > 0)) {
-
+    if (e_norm > 0) {
         v_wanted_norm = std::min(MAX_VEL, GAIN * sqrt(2 * e_norm * MAX_ACC));
         ROS_INFO("Updated v_wanted_norm to %f", v_wanted_norm);
     } else {
-        ROS_WARN("e_theta = %f (in determineDesiredVelocity, this is too large): v_wanted_norm is zero", fabs(e_theta));
+        ROS_WARN("e_norm = %f, e_theta = %f", e_norm, e_theta);
     }
 
     // make sure the wanted velocity has the direction towards the goal and the magnitude of v_wanted_norm
@@ -211,6 +191,7 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
     // check if the acceleration bound is violated
     tf::Vector3 vel_diff = vel_wanted - current_vel_trans;
     double acc_wanted = vel_diff.length() / dt;
+    ROS_INFO("vel_diff = %f, acc_wanted = %f", vel_diff, acc_wanted);
     if (acc_wanted > MAX_ACC) {
         tf::vector3TFToMsg(current_vel_trans + vel_diff.normalized() * MAX_ACC * dt, cmd_vel.linear);
     } else {
@@ -222,7 +203,7 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
     cmd_vel.angular.y = 0;
     cmd_vel.angular.z = determineReference(e_theta, current_vel.angular.z, MAX_VEL_THETA, MAX_ACC_THETA, dt);
 
-    ROS_INFO("Velocity command: (%f,%f,%f)", cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.linear.z);
+    ROS_INFO("Velocity command: (x:%f, y:%f, th:%f)", cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
 }
 
 // PARTLY TAKEN FROM amigo_ref_interpolator
@@ -324,9 +305,9 @@ double CarrotPlanner::determineReference(double error_x, double vel, double max_
 }
 
 void CarrotPlanner::setZeroVelocity(geometry_msgs::Twist& cmd_vel) {
-    cmd_vel.angular.x = 0;
-    cmd_vel.angular.y = 0;
-    cmd_vel.angular.z = 0;
+    //cmd_vel.angular.x = 0;
+    //cmd_vel.angular.y = 0;
+    //cmd_vel.angular.z = 0;
 
     cmd_vel.linear.x = 0;
     cmd_vel.linear.y = 0;
@@ -354,41 +335,12 @@ void CarrotPlanner::publishCarrot(const tf::Vector3& carrot, ros::Publisher& pub
     p1.y = 0;
     p1.z = 0.05;
     p2.x = carrot.getX();
-    p2.y = carrot.getZ();
+    p2.y = carrot.getY();
     p2.z = 0.05;
     marker.points.push_back(p1);
     marker.points.push_back(p2);
     pub.publish(marker);
 
-}
-
-void CarrotPlanner::publishCmdVel(const geometry_msgs::Twist& cmd_vel, ros::Publisher& pub) {
-
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = TRACKING_FRAME;
-    marker.header.stamp = ros::Time::now();
-    marker.ns = "cmd_vel";
-    marker.scale.x = 0.05;
-    marker.scale.y = 0.1;
-    marker.scale.z = 0.1;
-    marker.color.a = 1;
-    marker.color.r = 0;
-    marker.color.g = 0;
-    marker.color.b = 1;
-    marker.type = visualization_msgs::Marker::ARROW;
-
-    geometry_msgs::Point begin_vec, end_vec;
-    begin_vec.x = 0;
-    begin_vec.y = 0;
-    begin_vec.z = 0.05;
-    end_vec.x = 3*cmd_vel.linear.x;
-    end_vec.y = 3*cmd_vel.linear.y;
-    end_vec.z = 0.05 + 3*cmd_vel.linear.z;
-
-    marker.points.push_back(begin_vec);
-    marker.points.push_back(end_vec);
-
-    pub.publish(marker);
 }
 
 
