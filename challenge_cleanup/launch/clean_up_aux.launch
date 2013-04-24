@@ -1,0 +1,21 @@
+<launch>
+	
+	<!-- This launch file contains the nodes that are required to run the Clean up! Challenge
+		 without the executive itself (this makes testing easier) -->
+	<include file="$(find amigo_machine_files)/machines/amigo1.machine" />
+	<include file="$(find amigo_machine_files)/machines/amigo2.machine" />
+	<include file="$(find amigo_machine_files)/machines/amigo3.machine" />
+	
+	<include file="$(find tue_speech_recognition)/clean_up/clean_up_speech.launch" />
+	
+	<group if="$(optenv ROBOT_REAL false)">
+		<!-- REAL ROBOT -->
+		
+	</group>
+	
+	<group unless="$(optenv ROBOT_REAL false)">
+		<!-- SIMULATION -->
+	
+	</group>
+</launch>
+

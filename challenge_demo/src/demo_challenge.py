@@ -180,7 +180,7 @@ class DemoChallenge(smach.StateMachine):
                                     transitions={ 'spoken':'HOLDUP_ARMS' })
 
             smach.StateMachine.add( 'HOLDUP_ARMS', 
-                                    states.ArmToJointPos(robot, robot.leftArm, [0,0,0,0,0,0,0]), #TODO pose
+                                    states.ArmToJointPos(robot, robot.leftArm, [-0.1, -1.57, 0, 1.57, 0,0,0]), #Support pose
                                     transitions={   'done':"CARRY_TO_PATIENT",
                                                     'failed':"CARRY_TO_PATIENT"})
 
