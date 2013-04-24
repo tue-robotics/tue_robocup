@@ -16,6 +16,7 @@
 #include <tf/transform_listener.h>
 
 #include "challenge_follow_me/follow_me_carrot_planner.h"
+#include <amigo_msgs/head_ref.h>
 
 using namespace std;
 
@@ -27,7 +28,7 @@ const double WAIT_TIME_OPERATOR_MAX = 30.0;     // Maximum waiting time for oper
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
-const double FOLLOW_RATE = 3;                   // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 10;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
 
@@ -337,9 +338,9 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
     end_goal.header.frame_id = NAVIGATION_FRAME;
-    double theta = atan2(pos_exp(0), pos_exp(1));
+    double theta = atan2(pos_exp(1), pos_exp(0));
     tf::Quaternion q;
-    q.setRPY(0, 0, theta);
+    q.setRPY(0, 0, 0);
 
     //! Set orientation
     end_goal.pose.orientation.x = q.getX();
@@ -349,7 +350,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
 
     //! Incorporate offset in target position
     double full_distance = sqrt(pos_exp(0)*pos_exp(0)+pos_exp(1)*pos_exp(1));
-    double reduced_distance = full_distance - offset;
+    double reduced_distance = std::max(0.0, full_distance - offset);
     end_goal.pose.position.x = pos_exp(0) * reduced_distance / full_distance;
     end_goal.pose.position.y = pos_exp(1) * reduced_distance / full_distance;
     end_goal.pose.position.z = 0;
@@ -387,7 +388,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
 
 */
 
-    ROS_INFO("Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
+    ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
 
 }
 
@@ -395,14 +396,32 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
 int main(int argc, char **argv) {
     ros::init(argc, argv, "follow_me_simple");
     ros::NodeHandle nh;
-
-    ROS_INFO("Started Follow me");
+    
+     ROS_INFO("Started Follow me");
+    
+    /// to publish goals to the head Kinect, necessary to init the head downwards, other goals are handled by executives
+    ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
+    
+    /// set the head to look down in front of AMIGO
+    ros::Rate poll_rate(100);
+    while (head_ref_pub.getNumSubscribers() == 0) {
+        ROS_INFO_THROTTLE(1, "Waiting to connect to head ref topic...");
+        poll_rate.sleep();
+    }
+    ROS_INFO("Sending head ref goal");
+    amigo_msgs::head_ref goal;
+    goal.head_pan = 0.0;
+    goal.head_tilt = -0.2;
+    head_ref_pub.publish(goal);
+    
 
     //! Planner
     planner_ = new CarrotPlanner("follow_me_carrot_planner");
+    ROS_INFO("Carrot planner instantiated");
 
     //! Query WIRE for objects
     wire::Client client;
+    ROS_INFO("Wire client instantiated");
 
     //! Client that allows reseting WIRE
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
@@ -415,9 +434,9 @@ int main(int argc, char **argv) {
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
 
     //! Action client for sending move base goals
-    move_base_ac_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base",true);
-    move_base_ac_->waitForServer();
-    ROS_INFO("Move base client connected to the move base server");
+    //move_base_ac_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base",true);
+    //move_base_ac_->waitForServer();
+    //ROS_INFO("Move base client connected to the move base server");
 
     //! Action client for learning faces
     learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);

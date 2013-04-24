@@ -9,16 +9,14 @@ void CarrotPlanner::initialize(const std::string& name) {
     ros::NodeHandle private_nh("~/" + name);
 
     // parameters
-    private_nh.param("max_vel_translation", MAX_VEL, 0.6);
-    private_nh.param("max_acc_translation", MAX_ACC, 0.6);
-    private_nh.param("max_vel_rotation", MAX_VEL_THETA, 0.6);
-    private_nh.param("max_acc_rotation", MAX_ACC_THETA, 1.0);
+    private_nh.param("max_vel_translation", MAX_VEL, 0.5);
+    private_nh.param("max_acc_translation", MAX_ACC, 0.3);
+    private_nh.param("max_vel_rotation", MAX_VEL_THETA, 0.3);
+    private_nh.param("max_acc_rotation", MAX_ACC_THETA, 0.2);
     private_nh.param("xy_goal_tolerance", XY_GOALREGION, 0.1);
     private_nh.param("yaw_goal_tolerance", THETA_GOALREGION, 0.1);
     private_nh.param("still_max_vel", STILL_MAX_VEL, 0.01);
 
-    private_nh.param("max_local_goal_distance", MAX_LOCAL_GOAL_DISTANCE, 0.5);
-    private_nh.param("look_ahead", LOOKAHEAD, 2.0);
     private_nh.param("gain", GAIN, 0.9);
 
     STILL_MAX_VEL_SQ = STILL_MAX_VEL * STILL_MAX_VEL;
@@ -48,6 +46,13 @@ bool CarrotPlanner::MoveToGoal(geometry_msgs::PoseStamped &goal){
 
         //! Compute velocity command and publish
         if(computeVelocityCommand(cmd_vel)) {
+			if (cmd_vel.linear.x < 0 || cmd_vel.linear.x > MAX_VEL) {
+				cmd_vel.linear.x = 0;
+			}
+			if (cmd_vel.linear.y < 0 || cmd_vel.linear.y > MAX_VEL) {
+				cmd_vel.linear.y = 0;
+			}
+			ROS_INFO("Publishing velocity command: (x:%f, y:%f, th:%f)", cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
             cmd_vel_pub_.publish(cmd_vel);
             return true;
         }
@@ -93,6 +98,8 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
         dt = time - t_last_cmd_vel_;
     }
     t_last_cmd_vel_ = time;
+    
+    ROS_INFO_STREAM("goal before is clear line = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << calculateHeading(goal_));
 
     //! Check if the path is free
     if(!isClearLine(goal_)) {
@@ -101,12 +108,18 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
     }
 
     ROS_INFO("Path is free");
+    
+    ROS_INFO_STREAM("goal before normalization = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << calculateHeading(goal_));
 
     //! Normalize position
     geometry_msgs::Twist goal_norm_msg;
     tf::Vector3 goal_norm;
-    goal_norm = goal_.normalized();
-    tf::vector3TFToMsg(goal_norm, goal_norm_msg.linear);
+    if (goal_.length() > 0.00001) { 
+	    goal_norm = goal_.normalized();
+	    tf::vector3TFToMsg(goal_norm, goal_norm_msg.linear);
+	} else {
+		goal_norm = goal_;
+	}
     ROS_INFO_STREAM("goal = " << goal_norm_msg.linear << ", angle_ = " << calculateHeading(goal_));
 
     //! Determine velocity
@@ -185,7 +198,13 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
 
     // make sure the wanted velocity has the direction towards the goal and the magnitude of v_wanted_norm
     tf::Vector3 vel_wanted;
-    vel_wanted = e_pos.normalized();
+    if (e_pos.length() > 0) {
+	    vel_wanted = e_pos.normalized();
+	} else {
+		vel_wanted.setX(0);
+		vel_wanted.setY(0);
+		vel_wanted.setZ(0);
+	}
     vel_wanted *= v_wanted_norm;
 
     // check if the acceleration bound is violated
