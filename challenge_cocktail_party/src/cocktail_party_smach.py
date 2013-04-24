@@ -12,7 +12,8 @@ names = ["john", "richard", "nancy", "alice", "bob"]
 name_index = 0
 
 #===============================TODOs===========================================
-#
+# - Initial pose to x = -0.6
+# - Between detecting a person and recognizing them: asks them to look into my eyes
 #===============================================================================
 
 #================================ Bugs/Issues ==================================
@@ -208,9 +209,11 @@ class LookForPerson(smach.State):
 
 
         # Move to the next waypoint in the party room
-        goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("party_room", "W")),
-                                                 Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
-                                                 Compound("not", Compound("visited", "Waypoint"))))
+        goal_answers = self.robot.reasoner.query(Conjunction(  
+                                                    Compound("=", "Waypoint", Compound("party_room", "W")),
+                                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+                                                    Compound("not", Compound("visited", "Waypoint"))
+                                                            ))
 
         if not goal_answers:
             self.robot.speech.speak(str(serving_person) +", I have been looking everywhere but I cannot find you. Can you please step in front of me?")
@@ -306,6 +309,7 @@ class CocktailParty(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
 
         # Queries:
+        query_meeting_point = Compound("waypoint", Compound("meeting_point", "Index"), Compound("pose_2d", "X", "Y", "Phi"))
         query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
         query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
@@ -315,7 +319,7 @@ class CocktailParty(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    StartChallenge(robot, "initial", query_party_room), 
+                                    StartChallenge(robot, "initial", query_meeting_point), 
                                     transitions={   "Done":"ITERATE_PERSONS", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"SAY_FAILED"})
@@ -396,7 +400,7 @@ class CocktailParty(smach.StateMachine):
                                             transitions={"done":"GOTO_INITIAL"})
 
                     smach.StateMachine.add( "GOTO_INITIAL",
-                                            NavigateGeneric(robot, goal_name="initial"),
+                                            NavigateGeneric(robot, goal_query=query_party_room),
                                             transitions={   "arrived":"served", 
                                                             "unreachable":"served", 
                                                             "preempted":"not_served", 
