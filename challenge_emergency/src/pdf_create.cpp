@@ -7,8 +7,7 @@
 #include "hpdf.h"
 #include <ros/ros.h>
 #include <ros/package.h>
-#include <std_srvs/EmptyRequest.h>
-#include <std_srvs/EmptyResponse.h>
+#include "challenge_emergency/Start.h"
 
 //! Dealing with files
 #include <iostream>
@@ -38,8 +37,9 @@ error_handler  (HPDF_STATUS   error_no,
 using namespace std;
 ros::ServiceServer startupSrv_;
 
-void createPDF()
+int createPDF()
 {
+    ros::NodeHandle nh("~");
     //! Define string to pull out each line
     string STRING;
     ifstream myfile;
@@ -309,8 +309,8 @@ void createPDF()
     HPDF_Page_DrawImage (page[n_page], image_map, x, y, iw, ih);
     HPDF_Page_BeginText (page[n_page]);
     HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-    HPDF_Page_MoveTextPos (page[n_page], x, y-12.5);
-    HPDF_Page_ShowText (page[n_page], "Apartment, red coordinates present person(s) in need of assistance");
+    HPDF_Page_MoveTextPos (page[n_page], x, y-25.5);
+    HPDF_Page_ShowText (page[n_page], "Apartment: red coordinates present person(s) in need of assistance");
     HPDF_Page_EndText (page[n_page]);
 
     //! New page if y is below treshold
@@ -490,7 +490,7 @@ void createPDF()
 }
 
 
-bool startUp()
+bool startUp(challenge_emergency::Start::Request& req, challenge_emergency::Start::Response& resp)
 {
     // Create the pdf brother G
     createPDF();
@@ -499,11 +499,11 @@ bool startUp()
 
 int main (int argc, char **argv)
 {
-
     //! Start up node
     ros::init(argc, argv, "emergency_paper");
     ros::NodeHandle nh("~");
-    startupSrv_ = nh.advertiseService<std_srvs::EmptyRequest, std_srvs::EmptyResponse>("/start",);
+    ROS_INFO("Starting pdf creation service..");
+    startupSrv_ = nh.advertiseService("startup", &startUp);
 
     while(ros::ok())
         ros::spinOnce();
