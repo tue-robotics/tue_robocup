@@ -340,7 +340,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     end_goal.header.frame_id = NAVIGATION_FRAME;
     double theta = atan2(pos_exp(1), pos_exp(0));
     tf::Quaternion q;
-    q.setRPY(0, 0, 0);
+    q.setRPY(0, 0, theta);
 
     //! Set orientation
     end_goal.pose.orientation.x = q.getX();
@@ -517,6 +517,8 @@ int main(int argc, char **argv) {
             //! Enter elevator
             moveTowardsPosition(elevator_pos, 0, tf_listener);
 
+            // TODO: Turn 180 degrees towards operator
+            // TODO: Assert position operator to wire
             // TODO: find operator and wait for operator to leave
 
             itp2 = false;

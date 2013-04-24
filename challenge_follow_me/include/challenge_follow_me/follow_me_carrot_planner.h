@@ -73,6 +73,7 @@ private:
     bool initialized_;
 
     tf::Vector3 goal_;
+    double goal_angle_;
 
     // timestamp of last time cmd_vel was published
     double t_last_cmd_vel_;
