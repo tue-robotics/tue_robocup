@@ -244,14 +244,21 @@ class LookForPerson(smach.State):
         rospy.sleep(5.0)
         self.robot.perception.toggle([])
 
-        person_result = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                            Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))
-                                          ))
+        person_result = self.robot.reasoner.query(
+                                            Conjunction(  
+                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
 
         if not person_result:
             self.robot.speech.speak("No one here. Moving on!")
             return "looking"
+
+        self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")  
+        person_result = self.robot.reasoner.query(
+                                            Conjunction(  
+                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                                Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
 
         # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
         name_pmf = person_result[0]["NamePMF"]
@@ -338,7 +345,7 @@ class CocktailParty(smach.StateMachine):
                 with single:
                     #TODO: Retract visited(X) befor elooking for a person back again.
                     smach.StateMachine.add( "RETRACT_VISITED",
-                                            Retract_facts(robot, Compound("visited", "X")),
+                                            Retract_facts(robot, [Compound("visited", "X")]),
                                             transitions={"retracted":"WAIT_FOR_PERSON"})
 
                     smach.StateMachine.add( "WAIT_FOR_PERSON", 
@@ -381,8 +388,12 @@ class CocktailParty(smach.StateMachine):
 
                     smach.StateMachine.add( 'PICKUP_DRINK',
                                             GrabMachine(robot.leftArm, robot, query_grabpoint),
-                                            transitions={   "succeeded":"LOOK_FOR_PERSON",
-                                                            "failed":'PICKUP_DRINK' })            
+                                            transitions={   "succeeded":"RETRACT_VISITED_2",
+                                                            "failed":'PICKUP_DRINK' }) 
+
+                    smach.StateMachine.add( "RETRACT_VISITED_2",
+                                            Retract_facts(robot, [Compound("visited", "X")]),
+                                            transitions={"retracted":"LOOK_FOR_PERSON"})           
 
                     smach.StateMachine.add( 'LOOK_FOR_PERSON',
                                             LookForPerson(robot),
@@ -392,36 +403,51 @@ class CocktailParty(smach.StateMachine):
 
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you. Please take the drink from my hand", 
-                                                        "I can't find you. I really don't like fluids, so please take the drink from my hand."]),
-                                            transitions={   'spoken':'not_served' })
+                                                        "I can't find you. I really don't like fluids, so please take the drink from my hand.",
+                                                        ["I could not find you. Please just take the drink from my hand"]),
+                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' })
 
                     smach.StateMachine.add( 'HANDOVER_DRINK',
                                             HandoverToHuman(robot),
-                                            transitions={"done":"GOTO_INITIAL"})
+                                            transitions={"done":"GOTO_INITIAL_SUCCESS"})
 
-                    smach.StateMachine.add( "GOTO_INITIAL",
+                    smach.StateMachine.add( "GOTO_INITIAL_SUCCESS",
                                             NavigateGeneric(robot, goal_query=query_party_room),
                                             transitions={   "arrived":"served", 
                                                             "unreachable":"served", 
                                                             "preempted":"not_served", 
                                                             "goal_not_defined":"served"})
 
+                    smach.StateMachine.add( "GOTO_INITIAL_FAIL",
+                                            NavigateGeneric(robot, goal_query=query_party_room),
+                                            transitions={   "arrived":"not_served", 
+                                                            "unreachable":"not_served", 
+                                                            "preempted":"not_served", 
+                                                            "goal_not_defined":"not_served"})
+
                 persons_iterator.set_contained_state('SINGLE_COCKTAIL_SM', 
                                                           single, 
                                                           loop_outcomes=['served', 'not_served'])
 
-            smach.StateMachine.add('ITERATE_PERSONS', 
-                                   persons_iterator, 
-                                   transitions={'served':'FINISH',
+            smach.StateMachine.add( 'ITERATE_PERSONS', 
+                                    persons_iterator, 
+                                    transitions={'served':'EXIT',
                                                 'not_served':'SAY_FAILED',
-                                                'Done':"FINISH"})
+                                                'Done':"EXIT"})
+
+            smach.StateMachine.add( "EXIT",
+                                    NavigateGeneric(robot, goal_name="initial"),
+                                    transitions={"arrived":"FINISH", 
+                                                 "unreachable":"FINISH", 
+                                                 "preempted":"FINISH", 
+                                                 "goal_not_defined":"FINISH"})
 
             smach.StateMachine.add( 'FINISH', Finish(robot),
                                     transitions={'stop':'Done'})
 
             smach.StateMachine.add("SAY_FAILED", 
                                     Say(robot, "I could not accomplish my task, sorry about that, please forgive me."),
-                                    transitions={   "spoken":"Failed"})
+                                    transitions={   "spoken":"EXIT"})
  
 if __name__ == '__main__':
     rospy.init_node('executive_cocktail_party')
