@@ -15,6 +15,8 @@
 
 #include <tf/transform_listener.h>
 
+#include "challenge_follow_me/follow_me_carrot_planner.h"
+
 using namespace std;
 
 
@@ -33,6 +35,7 @@ double RESOLUTION_PATH = 0.1;                   // Resolution of the move base p
 
 
 //! Globals
+CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
 double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
@@ -307,8 +310,9 @@ pbl::PDF findElevator() {
  */
 void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf_listener) {
 
-    pbl::Vector pos_exp = pos.getExpectedValue().getVector();
 
+    pbl::Vector pos_exp = pos.getExpectedValue().getVector();
+    /*
     tue_move_base_msgs::MoveBaseGoal move_base_goal;
 
     //! Plan a path from the current position
@@ -328,10 +332,13 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     start.pose.orientation.w = q.getW();
     move_base_goal.path.push_back(start);
 
+    */
+
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
     end_goal.header.frame_id = NAVIGATION_FRAME;
     double theta = atan2(pos_exp(0), pos_exp(1));
+    tf::Quaternion q;
     q.setRPY(0, 0, theta);
 
     //! Set orientation
@@ -347,6 +354,9 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     end_goal.pose.position.y = pos_exp(1) * reduced_distance / full_distance;
     end_goal.pose.position.z = 0;
 
+    planner_->MoveToGoal(end_goal);
+
+    /*
     //! Settings for interpolation of the desired path
     int nr_steps = (int)(max(abs((double)end_goal.pose.position.x), abs((double)end_goal.pose.position.y)) / RESOLUTION_PATH);
     double dx = end_goal.pose.position.x / nr_steps;
@@ -374,8 +384,10 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
 
     //! Send goal to move base client
     move_base_ac_->sendGoal(move_base_goal);
-    
-    ROS_INFO("Move base goal in %zu steps: (x,y,theta) = (%f,%f,%f)", move_base_goal.path.size(), end_goal.pose.position.x, end_goal.pose.position.y, theta);
+
+*/
+
+    ROS_INFO("Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
 
 }
 
@@ -385,6 +397,9 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     ROS_INFO("Started Follow me");
+
+    //! Planner
+    planner_ = new CarrotPlanner("follow_me_carrot_planner");
 
     //! Query WIRE for objects
     wire::Client client;

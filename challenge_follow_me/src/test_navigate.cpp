@@ -30,8 +30,7 @@ int main(int argc, char **argv) {
     //tue_move_base_msgs::MoveBaseGoal move_base_goal;
 
     ROS_INFO("Initializing Carrot Planner");
-    CarrotPlanner* planner_;
-    planner_ = new CarrotPlanner("test_navigate");
+    CarrotPlanner planner_ = CarrotPlanner("test_navigate");
     ROS_INFO("Initialized Carrot Planner");
 
     geometry_msgs::PoseStamped target;
@@ -52,7 +51,7 @@ int main(int argc, char **argv) {
     ros::Rate follow_rate(5);
     while(ros::ok()) {
         ros::spinOnce();
-        planner_->MoveToGoal(target);
+        planner_.MoveToGoal(target);
         follow_rate.sleep();
     }
 
