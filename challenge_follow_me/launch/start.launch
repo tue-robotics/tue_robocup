@@ -8,8 +8,8 @@
     <param name="frame_id" value="/front_laser"/>
   </node>
   
-  <!-- People detection using top laser>
-  <include file="$(find laser_ppl_detection)/launch/detect_ppl.launch" /-->
+  <!-- People detection using top laser-->
+  <include file="$(find laser_ppl_detection)/launch/detect_ppl.launch" />
   
   <!-- Pein ->
   <include file="$(find pein_supervisor)/launch/start.launch" />
