@@ -47,7 +47,7 @@ class Base(object):
 
         #clear obstacles
         if use_2d:
-            self.clear_service  = rospy.ServiceProxy('/move_base/clear_costmaps',   std_srvs.srv.Empty)
+            self.clear_service  = rospy.ServiceProxy('/move_base/clear_costmap',   std_srvs.srv.Empty)
         else:
             self.clear_service  = rospy.ServiceProxy('/move_base_3d/clear_bbx',       octomap_msgs.srv.BoundingBoxQuery)
             self.unknown_to_free_service  = rospy.ServiceProxy('/move_base_3d/set_unknown_to_free_bbx',  octomap_msgs.srv.BoundingBoxQuery)
