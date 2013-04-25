@@ -525,7 +525,7 @@ def setup_statemachine(robot):
         # Say that something is burning
         smach.StateMachine.add('SAY_IS_THERE_SOMETHING_BURNING',
                                     states.Say(robot, 'Is something burning?'),
-                                    transitions={'spoken':'TURN_ROUND_Z_AXIS'}) 
+                                    transitions={'spoken':'SAY_NO_FIRE'}) 
 
         ######################################################
         ################# DETECT FIRE/SMOKE ##################
@@ -537,51 +537,57 @@ def setup_statemachine(robot):
         -> Detect fire
         -> Make picture
         '''
-
-        # Turn 360 degrees to search for the smoke
-        smach.StateMachine.add('TURN_ROUND_Z_AXIS',
-                                    turn_Around_z_axis(robot, 10),
-                                    transitions={   'done':'SAY_NEXT_LOCATION',    ###### 
-                                                    'abort':'SAY_NEXT_LOCATION'})
         # Inform people
-        smach.StateMachine.add('SAY_NEXT_LOCATION',
-                                    states.Say(robot, 'Did not find fire. Maybe at the other side of the room'),
-                                    transitions={'spoken':'NEXT_LOCATION'})
+        smach.StateMachine.add('SAY_NO_FIRE',
+                                    states.Say(robot, 'I cannot find any fire. Anyway, I will go look for people and help them!'),
+                                    transitions={'spoken':'FIND_PEOPLE'})
 
-        # Query reasoner to find other side of goal
-        query_kitchen_3 = Compound("waypoint", "kitchen_3", Compound("pose_2d", "X", "Y", "Phi"))
-        smach.StateMachine.add('NEXT_LOCATION',
-                                states.Navigate_to_queryoutcome(robot, query_kitchen_3, X="X", Y="Y", Phi="Phi"),
-                                transitions={   "arrived":"SAY_DETECT_SMOKE",
-                                                "unreachable":'SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN',
-                                                "preempted":'SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN',
-                                                "goal_not_defined":'SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN'})
+
+
+        # # Turn 360 degrees to search for the smoke
+        # smach.StateMachine.add('TURN_ROUND_Z_AXIS',
+        #                             turn_Around_z_axis(robot, 10),
+        #                             transitions={   'done':'SAY_NEXT_LOCATION',    ###### 
+        #                                             'abort':'SAY_NEXT_LOCATION'})
+        # # Inform people
+        # smach.StateMachine.add('SAY_NEXT_LOCATION',
+        #                             states.Say(robot, 'Did not find fire. Maybe at the other side of the room'),
+        #                             transitions={'spoken':'NEXT_LOCATION'})
+
+        # # Query reasoner to find other side of goal
+        # query_kitchen_3 = Compound("waypoint", "kitchen_3", Compound("pose_2d", "X", "Y", "Phi"))
+        # smach.StateMachine.add('NEXT_LOCATION',
+        #                         states.Navigate_to_queryoutcome(robot, query_kitchen_3, X="X", Y="Y", Phi="Phi"),
+        #                         transitions={   "arrived":"SAY_DETECT_SMOKE",
+        #                                         "unreachable":'SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN',
+        #                                         "preempted":'SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN',
+        #                                         "goal_not_defined":'SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN'})
         
-        # Time ran out say, you couldn't find smoke, but register
-        smach.StateMachine.add('SAY_DETECT_SMOKE',
-                                    states.Say(robot, 'Time ran out, could not find fire, but I smell something burning. Therefore I will register a picture of the stove.'),
-                                    transitions={'spoken':'REGISTER_FIRE'}) 
+        # # Time ran out say, you couldn't find smoke, but register
+        # smach.StateMachine.add('SAY_DETECT_SMOKE',
+        #                             states.Say(robot, 'Time ran out, could not find fire, but I smell something burning. Therefore I will register a picture of the stove.'),
+        #                             transitions={'spoken':'REGISTER_FIRE'}) 
 
-        # Time ran out say, you couldn't find smoke, but register
-        smach.StateMachine.add('SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN',
-                                    states.Say(robot, 'Time ran out, could not find fire, but I smell something burning. Therefore I will register a picture of the stove.'),
-                                    transitions={'spoken':'NEXT_LOCATION_2ND_TRY'})  
+        # # Time ran out say, you couldn't find smoke, but register
+        # smach.StateMachine.add('SAY_DETECT_SMOKE_FAILED_REACHING_KITCHEN',
+        #                             states.Say(robot, 'Time ran out, could not find fire, but I smell something burning. Therefore I will register a picture of the stove.'),
+        #                             transitions={'spoken':'NEXT_LOCATION_2ND_TRY'})  
 
-        smach.StateMachine.add('NEXT_LOCATION_2ND_TRY',
-                                states.Navigate_to_queryoutcome(robot, query_kitchen_3, X="X", Y="Y", Phi="Phi"),
-                                transitions={   "arrived":"REGISTER_FIRE",
-                                                "unreachable":'REGISTER_FIRE',
-                                                "preempted":'REGISTER_FIRE',
-                                                "goal_not_defined":'REGISTER_FIRE'})
+        # smach.StateMachine.add('NEXT_LOCATION_2ND_TRY',
+        #                         states.Navigate_to_queryoutcome(robot, query_kitchen_3, X="X", Y="Y", Phi="Phi"),
+        #                         transitions={   "arrived":"REGISTER_FIRE",
+        #                                         "unreachable":'REGISTER_FIRE',
+        #                                         "preempted":'REGISTER_FIRE',
+        #                                         "goal_not_defined":'REGISTER_FIRE'})
 
-        smach.StateMachine.add('REGISTER_FIRE',
-                                    Register(robot, 2),                            #input 2 (fire)
-                                    transitions={'finished':'SAY_FIND_FIRST_PEOPLE'})
+        # smach.StateMachine.add('REGISTER_FIRE',
+        #                             Register(robot, 2),                            #input 2 (fire)
+        #                             transitions={'finished':'SAY_FIND_FIRST_PEOPLE'})
 
-        # Time ran out say, you couldn't find smoke, but register
-        smach.StateMachine.add('SAY_FIND_FIRST_PEOPLE',
-                                    states.Say(robot, 'Now I am going to look for people!'),
-                                    transitions={'spoken':'FIND_PEOPLE'})  
+        # # Time ran out say, you couldn't find smoke, but register
+        # smach.StateMachine.add('SAY_FIND_FIRST_PEOPLE',
+        #                             states.Say(robot, 'Now I am going to look for people!'),
+        #                             transitions={'spoken':'FIND_PEOPLE'})  
 
         '''
         Idea: FLASH RED light on and off after detecting smoke until the end of the challenge (not during interpretation). 
