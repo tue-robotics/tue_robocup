@@ -21,3 +21,12 @@ amigo3:
 amigo3:
 
     rosrun challenge_open open_challenge_2013.py (if this keeps waiting for a transform, please restart)
+
+Sentences to say:
+- gotothelounge
+- gotothecabinet (not a real location)
+- gotothedesk
+- gotothedinnertable
+- gotothesink
+- gotothebar
+- gotothecouchtable
