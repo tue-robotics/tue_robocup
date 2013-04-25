@@ -144,7 +144,7 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
 
     //! Get number of beams and resolution LRF from most recent laser message
     int num_readings = laser_scan_.ranges.size();
-    int num_incr = goal_angle_/laser_scan_.angle_increment;
+    int num_incr = goal_angle_/laser_scan_.angle_increment; // Both in rad
     int index_beam_obst = num_readings/2 + num_incr;
     int width = 15;
 
@@ -162,6 +162,24 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
             }
         }
     }
+
+    //! Virtual wall in front of robot (0.5 [m])
+    double d_wall = 0.5, r_robot = 0.35;
+    int dth = atan2(r_robot, d_wall);
+    int d_step = dth/laser_scan_.angle_increment;
+    int beam_middle = num_readings/2;
+
+    for (int j = beam_middle - d_step; j < beam_middle + d_step; j=j+4) {
+        if (j < num_readings) {
+            double dist_to_obstacle = laser_scan_.ranges[j];
+
+            if (dist_to_obstacle < 0.5) {
+                ROS_WARN("Object too close: %f [m]", dist_to_obstacle);
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 

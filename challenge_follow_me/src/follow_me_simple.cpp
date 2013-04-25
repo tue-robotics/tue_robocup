@@ -65,10 +65,12 @@ void amigoSpeak(string sentence) {
  * @brief findOperator, detects person in front of robot, empties WIRE and adds person as operator
  * @param client used to query from/assert to WIRE
  */
-void findOperator(wire::Client& client) {
+void findOperator(wire::Client& client, bool lost = true) {
 
     //! It is allowed to call the operator once per section (points for the section will be lost)
-    amigoSpeak("I have lost my operator, can you please stand in front of me");
+    if (lost) {
+        amigoSpeak("I have lost my operator, can you please stand in front of me");
+    }
 
     //! Give the operator some time to move to the robot
     ros::Duration wait_for_operator(4.0);
@@ -245,7 +247,7 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 bool memorizeOperator() {
 
     //! Ask operator to look at AMIGO
-    amigoSpeak("Please look at me while moving your head from the left to the right");
+    amigoSpeak("Please stand at one meter in front of me and look at me");
 
     //! Send learn face goal to the action server
     pein_msgs::LearnGoal goal;
@@ -262,6 +264,7 @@ bool memorizeOperator() {
         if (learn_face_ac_->waitForResult(ros::Duration(TIME_OUT_LEARN_FACE))) {
             actionlib::SimpleClientGoalState state = learn_face_ac_->getState();
             ROS_INFO("Learn operator action finished: %s", state.toString().c_str());
+            amigoSpeak("Thank you");
         }
         else  {
             ROS_WARN("Learn operator action did not finish before the time out.");
@@ -290,17 +293,6 @@ void speechCallback(std_msgs::String res) {
     } else {
         ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
     }
-}
-
-
-pbl::PDF findElevator() {
-
-    // TODO: implement detection algorithm/service
-    pbl::Matrix cov(3,3);
-    cov.zeros();
-    pbl::PDF el_pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
-    return el_pos;
-
 }
 
 
@@ -391,6 +383,35 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
 
 }
+
+
+void findAndEnterElevator(wire::Client& client, tf::TransformListener& tf_listener) {
+
+    amigoSpeak("Okay, I will enter the elevator. Please step aside");
+    ros::Duration delta(5.0);
+    delta.sleep();
+
+    // TODO: implement detection algorithm/service
+    pbl::Matrix cov(3,3);
+    cov.zeros();
+    pbl::PDF el_pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+
+    //! Enter elevator
+    moveTowardsPosition(el_pos, 0.2, tf_listener);
+    pbl::PDF el_pos_far = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
+    moveTowardsPosition(el_pos_far, 0.5, tf_listener);// perhaps drive for an extra meter to be sure the robot is inside the elevator?
+
+    //! Turn at position (face entrance elevator
+    pbl::PDF turn_pos = pbl::Gaussian(pbl::Vector3(-0.1, 0, 0), cov);
+    moveTowardsPosition(turn_pos, 0, tf_listener);
+    amigoSpeak("Operator, you can join me now");
+
+    //! Find operator
+    findOperator(client, false);
+
+
+}
+
 
 
 int main(int argc, char **argv) {
@@ -511,15 +532,8 @@ int main(int argc, char **argv) {
 
             //! Robot is asked to enter elevator and must leave when the operator leaves
 
-            // TODO: find elevator
-            pbl::PDF elevator_pos = findElevator();
-
-            //! Enter elevator
-            moveTowardsPosition(elevator_pos, 0, tf_listener);
-
-            // TODO: Turn 180 degrees towards operator
-            // TODO: Assert position operator to wire
-            // TODO: find operator and wait for operator to leave
+            //! Find elevator
+            findAndEnterElevator(client, tf_listener);
 
             itp2 = false;
             itp3 = true;
@@ -528,7 +542,7 @@ int main(int argc, char **argv) {
 
             //! Operator will pass through a small crowd of people (4-5) and calls the robot from behind the group
 
-            //! Check for the (updated) operator position
+            //! Association will fail, hence this can be skipped. Check for the (updated) operator position
             if (getPositionOperator(objects, operator_pos)) {
 
                 //! Move towards operator
@@ -537,10 +551,28 @@ int main(int argc, char **argv) {
 
             } else {
 
-                //! If the operator is lost, move around the croud
+                //! If the operator is lost, move around a crowd croud (wild guess)
+                pbl::Matrix cov(3,3);
+                cov.zeros();
 
-                // TODO: drive around crowd
-                // TODO: somehow the operator must be recognized again
+                // Forward
+                pbl::PDF pos = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
+                moveTowardsPosition(pos, 0, tf_listener);
+
+                // Side
+                pos = pbl::Gaussian(pbl::Vector3(0, 3, 0), cov);
+                moveTowardsPosition(pos, 0, tf_listener);
+
+                // Forward
+                pos = pbl::Gaussian(pbl::Vector3(5, 0, 0), cov);
+                moveTowardsPosition(pos, 0, tf_listener);
+
+                // Back
+                pos = pbl::Gaussian(pbl::Vector3(0, -3, 0), cov);
+                moveTowardsPosition(pos, 0, tf_listener);
+
+                // Wild guess for operator
+                findOperator(client, false);
 
                 itp3 = false;
             }
