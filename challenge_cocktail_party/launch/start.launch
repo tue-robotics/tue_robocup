@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <launch>
-    <include file="$(find speech_interpreter)/launch/start_magdeburg.launch" />
+    <include file="$(find speech_interpreter)/launch/start_magdeburg2013.launch" />
     <node pkg="challenge_cocktail_party" type="cocktail_party_smach" name="cocktail_exec"/>
 </launch>
 
