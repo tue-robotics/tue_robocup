@@ -45,6 +45,8 @@ ros::ServiceClient reset_wire_client_;                                          
 bool freeze_amigo_ = false;                                                       // Bookkeeping: true if robot is asked to stop
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
+ros::ServiceClient srv_start_speech_;                                             // Communication: start speech
+ros::ServiceClient srv_stop_speech_;                                              // Communication: stop speech
 
 
 /**
@@ -52,10 +54,22 @@ unsigned int n_locations_learned_ = 0;                                          
  * @param sentence
  */
 void amigoSpeak(string sentence) {
+
+    std_srvs::Empty srv;
+    if (srv_stop_speech_.call(srv)) {
+        ROS_WARN("Unable to turn off speech recognition");
+    }
+
     ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
     std_msgs::String sentence_msgs;
     sentence_msgs.data = sentence;
     pub_speech_.publish(sentence_msgs);
+
+    if (srv_start_speech_.call(srv)) {
+        ROS_WARN("Unable to turn on speech recognition");
+    } else {
+        ROS_INFO("Started speech recognition");
+    }
 }
 
 
@@ -107,12 +121,9 @@ bool findGuide(wire::Client& client, bool lost = true) {
                         ROS_INFO("restaurant_simple (findGuide): Position person is not a Gaussian");
                     }
 
-                    //! If guide, set name in world model
+                    //! Check if the person stands in front of the robot
                     if (pos_gauss.getMean()(0) < 2.5 && pos_gauss.getMean()(0) > 0.4 && pos_gauss.getMean()(1) > -0.4 && pos_gauss.getMean()(1) < 0.4) {
-
                         vector_possible_guides.push_back(pos_gauss);
-
-                        amigoSpeak("Hi guide");
                         ROS_INFO("Found candidate guide at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
                     }
@@ -122,9 +133,10 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
         }
 
+        //! Found at least one candidate guide
         if (!vector_possible_guides.empty()) {
 
-            //! Position guide
+            //! Position candidate guide
             pbl::Gaussian pos_guide(3);
 
             //! Find person that has smallest y-distance to robot
@@ -134,9 +146,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
                 int i_best = 0;
 
                 for (unsigned int i = 0; i < vector_possible_guides.size(); ++i) {
-
                     double dy = fabs(vector_possible_guides[0].getMean()(1));
-
                     if (i == 0 || y_min < dy) {
                         y_min = dy;
                         i_best = i;
@@ -156,7 +166,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
             t_last_check_ = ros::Time::now().toSec();
 
             //! Evidence
-            wire::Evidence ev(ros::Time::now().toSec());
+            wire::Evidence ev(t_last_check_);
 
             //! Set the position
             ev.addProperty("position", pos_guide, NAVIGATION_FRAME);
@@ -179,7 +189,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
             no_guide_found = false;
 
-            amigoSpeak("I found my guide, hi guide");
+            amigoSpeak("I found my guide. Hi guide. I will follow you");
 
             ros::Duration safety_delta(1.0);
             safety_delta.sleep();
@@ -190,7 +200,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
         dt.sleep();
     }
     
-    amigoSpeak("I cannot find my guide");
+    amigoSpeak("I did not find my guide yet");
     return false;
 
 }
@@ -371,12 +381,19 @@ int main(int argc, char **argv) {
 
     //! Client that allows reseting WIRE
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
+    ROS_INFO("Service /wire/reset");
 
     //! Subscribe to the speech recognition topic
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_restaurant/output", 10, speechCallback);
 
+    //! Service clients that start/stop speech recognition
+    srv_start_speech_ = nh.serviceClient<std_srvs::Empty>("/speech_recognition_restaurant/start");
+    srv_stop_speech_ = nh.serviceClient<std_srvs::Empty>("/speech_recognition_restaurant/stop");
+    ROS_INFO("Communication with speech recognition started");
+
     //! Topic that makes AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
+    ROS_INFO("Publisher for text to speech started");
     
     //! Always clear the world model
     std_srvs::Empty srv;
@@ -389,6 +406,7 @@ int main(int argc, char **argv) {
     //! Administration
     pbl::PDF guide_pos;
 
+    ROS_INFO("Looking for guide");
     if (!findGuide(client, false)) {
         ROS_WARN("No guide can be found, try once more");
         if (!findGuide(client, false)) {
@@ -399,7 +417,7 @@ int main(int argc, char **argv) {
     }
 
     ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
-    amigoSpeak("I see my guide. Can you please show me the locations");
+    amigoSpeak("I see my guide. Can you please show me the locations. I will follow you");
 
     //! Follow guide
     ros::Rate follow_rate(FOLLOW_RATE);
@@ -410,7 +428,7 @@ int main(int argc, char **argv) {
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
         if (n_locations_learned_ == 5) {
-            ROS_INFO("Learned all locations");
+            ROS_WARN("Learned all locations");
         }
 
 
