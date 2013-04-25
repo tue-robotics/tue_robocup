@@ -25,8 +25,17 @@ class Base(object):
 
     _lock = threading.RLock() #Reentrant lock. Only the thread that acquired the lock can unlock it again.
     
-    def __init__(self, tf_listener, wait_service=True, use_2d=True):
+    def __init__(self, tf_listener, wait_service=True, use_2d=None):
         self._lock = threading.RLock()
+
+        if use_2d == None:
+            try:
+                rospy.wait_for_service('/move_base/get_plan', timeout=0.5)
+                rospy.loginfo("2d navigation is running, so I'll use that")
+                use_2d = True
+            except rospy.exceptions.ROSException:
+                rospy.loginfo("2d navigation is not running, so I assume 3D *is* running")
+                use_2d = False
 
         if use_2d:
             self.planner_feedback = rospy.Subscriber('/move_base/AStarPlannerROS/result',std_msgs.msg.Bool, self.__planner_callback) #/move_base_3d/AStarPlannerROS/result
