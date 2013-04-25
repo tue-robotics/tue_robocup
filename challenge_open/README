@@ -1,6 +1,23 @@
-amigo1:	astart
-hardware
-amigo1: amiddle 3dnav:=true wbc:=true (maybe more, an alias will be made)
-amigo3: roslaunch run_speech_files speech_magdeburg2013.launch (wait until it's ready)
-amigo3: roslaunch speech_interpreter start_magdeburg2013.launch
-amigo3: rosrun challenge_open open_challenge_2013.py (if this keeps waiting for a transform, please restart)
+# Responsible: Janno
+
+amigo1:
+
+    astart
+
+??? hardware ???
+
+amigo1:
+
+    amiddle 3dnav:=true wbc:=true (maybe more, an alias will be made)
+
+amigo3:
+
+    roslaunch run_speech_files speech_magdeburg2013.launch (wait until it's ready)
+
+amigo3:
+
+    roslaunch speech_interpreter start_magdeburg2013.launch
+
+amigo3:
+
+    rosrun challenge_open open_challenge_2013.py (if this keeps waiting for a transform, please restart)

@@ -1,4 +1,4 @@
-How to run:
+# Responsible: Erik
 
 !!! PUT USB STICK IN AMIGO3 !!!
 
@@ -26,10 +26,7 @@ amigo3: (wait for emergency_dependencies.launch)
 
     rosrun challenge_emergency emergency.py
 
-
-
-
-
+---------------------------------------
 
 More info:
 
