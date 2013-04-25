@@ -1,0 +1,25 @@
+<package>
+  <description brief="challenge_restaurant">
+
+     challenge_follow_me
+
+  </description>
+  <author>Jos Elfring</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_restaurant</url>
+  <depend package="roscpp"/>
+  <depend package="wire_interface"/>
+  <depend package="tue_move_base_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="pein_msgs"/>
+  <depend package="tf"/>
+  <depend package="std_srvs"/>
+  <depend package="amigo_msgs"/>
+
+  <!-- Why do a need this dependency? (Get linker error if left out) -->
+  <depend package="costmap_2d"/>
+
+</package>
+
+
