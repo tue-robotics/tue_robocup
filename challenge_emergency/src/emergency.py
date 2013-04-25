@@ -154,6 +154,7 @@ class Looking_for_people(smach.State):
 
         rospy.loginfo("Starting face segmentation")
         self.response_start = self.start_perception_service("{modules:[face_segmentation]}")
+        rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
         if self.response_start.error_code == 0:
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
@@ -450,7 +451,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
+                                    transitions={   'initialized' : 'SAY_START_PEOPLE_DETECTION',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
                                                     'abort'       : 'Aborted'})
     
         smach.StateMachine.add('AT_FRONT_OF_DOOR',
@@ -824,7 +825,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add('SUCCEED_GO_TO_EXIT',
-                                    states.Say(robot, 'I will now save all the information I gathered in a PDF file on a USB stick.'),
+                                    states.Say(robot, 'I will now save all the information I gathered in a PDFsvn file on a USB stick.'),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK',
