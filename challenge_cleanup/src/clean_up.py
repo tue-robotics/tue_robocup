@@ -315,7 +315,7 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add('MARK_DISPOSED', smach.CBState(deactivate_current_object),
                                     transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
                     
-            smach.StateMachine.add( 'RETURN', states.Navigate_exact(robot, 0,0,0),
+            smach.StateMachine.add( 'RETURN', states.NavigateGeneric(robot, goal_name="exitB"),
                                     transitions={   "arrived":"SAY_DONE",
                                                     "unreachable":'SAY_DONE', #Maybe this should not be "FINISHED?"
                                                     "preempted":'Aborted',
