@@ -643,15 +643,6 @@ class LookForObjectsAtROI(smach.State):
 
         try:
             lookat_answers = self.robot.reasoner.query(self.lookat_query)
-            # #selected_roi_answer = lookat_answers[0]
-            # look_at_coords = [(float(answer["X"]),
-            #                   float(answer["Y"]),
-            #                   float(answer["Z"])) for answer in lookat_answers]
-            # basepos = (self.robot.base.location[0].x, self.robot.base.location[0].y, 0)
-            # selected_roi_answer = min(look_at_coords, key=lambda xyz: self.calc_dist(basepos, xyz)) #sort by distance to base
-            # lookat_point = self.robot.head.point(*selected_roi_answer)
-            # print lookat_point
-
             basepos = self.robot.base.location[0]
             basepos = (basepos.x, basepos.y, basepos.z)
             selected_roi_answer = urh.select_answer(lookat_answers, 
