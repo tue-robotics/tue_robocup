@@ -26,8 +26,8 @@ const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates
 const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const int N_MODELS = 2;                         // Number of models used for recognition of the operator
-const double TIME_OUT_LEARN_FACE = 90;          // Time out on learning of the faces
+const int N_MODELS = 5;                         // Number of models used for recognition of the operator
+const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
 const double FOLLOW_RATE = 10;                   // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
@@ -287,12 +287,14 @@ bool memorizeOperator() {
  */
 void speechCallback(std_msgs::String res) {
 
-    if (res.data == "pleaseenterthelevator") {
+	
+	//amigoSpeak(res.data);
+    //if (res.data == "pleaseenterthelevator") {
         ROS_INFO("Received command from operator: %s", res.data.c_str());
         itp2 = true;
-    } else {
-        ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
-    }
+    //} else {
+    //    ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
+    //}
 }
 
 
@@ -484,7 +486,7 @@ int main(int argc, char **argv) {
     if (!memorizeOperator()) {
 
         ROS_ERROR("Learning operator failed: AMIGO will not be able to recognize the operator");
-        findOperator(client);
+        findOperator(client, false);
 
     } else {
 
