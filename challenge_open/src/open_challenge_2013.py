@@ -6,9 +6,51 @@ import smach
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
-from util.startup import startup #gives you speech-exception reading-out-loud and smach_viewer server
+from robot_smach_states.util.startup import startup
+import robot_smach_states.util.reasoning_helpers as urh
+
+# ToDo: replace GetCleanup
+#from speech_interpreter.srv import GetCleanup
+from speech_interpreter.srv import GetOpenChallenge
+from speech_interpreter.srv import GetYesNo
 
 from robot_skills.reasoner import Conjunction, Compound
+
+class Ask_goto(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.preempted = False
+        self.get_goto_service = rospy.ServiceProxy('interpreter/get_open_challenge', GetOpenChallenge)
+
+    def execute(self, userdata):
+
+        self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+
+        if self.response.answer == "gotothelounge":
+            location = "lounge"
+        elif self.response.answer == "gotothecabinet":
+            location = "cabinet"
+        elif self.response.answer == "gotothedesk":
+            location = "desk"
+        elif self.response.answer == "gotothedinnertable":
+            location = "dinner_table"
+        elif self.response.answer == "gotothesink":
+            location = "sink"
+        elif self.response.answer == "gotothebar":
+            location = "bar"
+        elif self.response.answer == "gotothecouchtable":
+            location = "couch_table"
+        elif self.response.answer == "no_answer":
+            self.robot.speech.speak("I have not heard an answer yet, so i will go to the dinner_table")
+            location = "dinner_table"
+        elif self.response.answer == "wrong_answer":
+            self.robot.speech.speak("I am afraid i have not understood you correctly, so i will go to the dinner table")
+            location = "dinner_table"
+
+        self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("open_challenge", location))))
+            
+        return "done"
 
 def setup_statemachine(robot):
 
@@ -28,12 +70,18 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-                              
+
+        # The real thing                              
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
                                 transitions={   'initialized':'INIT_POSE',
                                                 'abort':'Aborted'})
         
+        # Only for testing purposes
+        #smach.StateMachine.add('INITIALIZE',
+        #                        states.Initialize(robot),
+        #                        transitions={   'initialized':'LOOK_FOR_HANDLE',
+        #                                        'abort':'Aborted'})
 
         smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, "initial"),
@@ -43,19 +91,19 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_START", 
                                 states.Say(robot, ["Hello everyone"]),
-                                transitions={   'spoken':'QUESTION'})
+                                transitions={   'spoken':'ASK_GOTO'})
 
-        smach.StateMachine.add('QUESTION', 
-                                    states.Timedout_QuestionMachine(
-                                            robot=robot,
-                                            default_option = "gotothelivingroom", 
-                                            sentence = "Where do you want me to go", 
-                                            options = { "gotothelivingroom":Compound("goal","living_room"),
-                                                        "gotothekitchen":Compound("goal", "kitchen"),
-                                                        "gotothelobby":Compound("goal", "lobby"),
-                                                        "gotothebedroom":Compound("goal", "bedroom")}),
-                                    transitions={   'answered':'MOVE_TO_INTRO_POINT',
-                                                    'not_answered':'QUESTION'})
+        #smach.StateMachine.add('QUESTION', 
+        #                            states.Timedout_QuestionMachine(
+        #                                    robot=robot,
+        #                                    default_option = "gotothelivingroom", 
+        #                                    sentence = "Where do you want me to go", 
+        #                                    options = { "gotothelivingroom":Compound("goal","living_room"),
+        #                                                "gotothekitchen":Compound("goal", "kitchen"),
+        #                                                "gotothelobby":Compound("goal", "lobby"),
+        #                                                "gotothebedroom":Compound("goal", "bedroom")}),
+        #                            transitions={   'answered':'MOVE_TO_INTRO_POINT',
+        #                                            'not_answered':'QUESTION'})
                                 
         # ToDO: include some HRI
 
@@ -65,13 +113,29 @@ def setup_statemachine(robot):
         - A person blocks the path: tell him/her to move (also show in rviz)
         - An object blocks the path permanently: now the robot executes its alternative plan anyway
         Furthermore, the 3D map can be shown'''
-        query_intro_point = Compound("base_pose", "meeting_point", Compound("pose_2d", "X", "Y", "Phi"))
-        smach.StateMachine.add('MOVE_TO_INTRO_POINT',
-                                states.NavigateGeneric(robot, goal_query=query_intro_point, look_at_path_distance=1.5),
+        #query_intro_point = Compound("base_pose", "meeting_point", Compound("pose_2d", "X", "Y", "Phi"))
+        #smach.StateMachine.add('MOVE_TO_INTRO_POINT',
+        #                        states.NavigateGeneric(robot, goal_query=query_intro_point, look_at_path_distance=1.5),
+        #                        transitions={   "arrived":"SAY_WBC",
+        #                                        "unreachable":'SAY_WBC',
+        #                                        "preempted":'SAY_WBC',
+        #                                        "goal_not_defined":'SAY_WBC'})
+
+        smach.StateMachine.add("ASK_GOTO",
+                                Ask_goto(robot),
+                                transitions={   'done'  : 'GOTO'})
+        
+        query_room = Conjunction(Compound("goal", Compound("open_challenge", "Room")), Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi")))        
+        smach.StateMachine.add( 'GOTO',
+                                states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
                                 transitions={   "arrived":"SAY_WBC",
-                                                "unreachable":'SAY_WBC',
-                                                "preempted":'SAY_WBC',
-                                                "goal_not_defined":'SAY_WBC'})
+                                                "unreachable":'SAY_CANNOT_REACH',
+                                                "preempted":'SAY_CANNOT_REACH',
+                                                "goal_not_defined":'SAY_CANNOT_REACH'})
+
+        smach.StateMachine.add('SAY_CANNOT_REACH',
+                                states.Say(robot, ["I cannot seem to go where i am supposed to so i will start from here"]),
+                                transitions={   'spoken':'SAY_WBC'})
 
         smach.StateMachine.add("SAY_WBC", 
                                 states.Say(robot, ["Next to my navigation skills, I would like to show my new whole body controller"]),
@@ -95,6 +159,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_HELPFUL", 
                                 states.Say(robot, ["This is helpful in many ways"]),
+                                transitions={   'spoken':'SAY_NATURAL'})
+
+        smach.StateMachine.add("SAY_NATURAL",
+                                states.Say(robot, ["And it looks more natural"]),
                                 transitions={   'spoken':'RESET_LEFT_ARM'})
 
         smach.StateMachine.add("RESET_LEFT_ARM",
@@ -109,6 +177,25 @@ def setup_statemachine(robot):
                                 transitions={   "succeeded":"MOVE_TO_CABINET",
                                                 "failed":"MOVE_TO_CABINET"})
 
+        smach.StateMachine.add("SAY_ASK_GOTO_NEXT",
+                                states.Say(robot, ["Where will I go next"]),
+                                transitions={   'spoken': 'ASK_GOTO_NEXT'})
+
+        smach.StateMachine.add("ASK_GOTO_NEXT",
+                                Ask_goto(robot),
+                                transitions={   'done'  : 'GOTO_NEXT'})
+        
+        query_room = Conjunction(Compound("goal", Compound("open_challenge", "Room")), Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi")))        
+        smach.StateMachine.add( 'GOTO_NEXT',
+                                states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
+                                transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
+                                                "unreachable":'SAY_CANNOT_REACH_NEXT',
+                                                "preempted":'SAY_CANNOT_REACH_NEXT',
+                                                "goal_not_defined":'SAY_CANNOT_REACH_NEXT'})
+
+        smach.StateMachine.add('SAY_CANNOT_REACH_NEXT',
+                                states.Say(robot, ["I cannot seem to go where i am supposed to so i will start from here"]),
+                                transitions={   'spoken':'ASK_NEW_ASSIGNMENT'})
 
         query_expedit_point = Compound("base_pose", "cabinet_expedit_1", Compound("pose_2d", "X", "Y", "Phi"))
         smach.StateMachine.add('MOVE_TO_CABINET',
@@ -137,6 +224,10 @@ def setup_statemachine(robot):
                                                 'object_found':'SAY_FOUND_SOMETHING',
                                                 'no_object_found':'LOOK',
                                                 'abort':'SAY_ABORT'})
+
+        smach.StateMachine.add('SAY_CANNOT_FIND_ANYTHING',
+                                states.Say(robot, ["I cannot seem to find anything, I better go do something else"]),
+                                transitions={   'spoken'    : 'ASK_NEW_ASSIGNMENT'})
                                                 
         smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                 states.Say(robot, ["I have found something"]),
@@ -156,11 +247,13 @@ def setup_statemachine(robot):
         ''' Erik: "TODO: In case of failure grasping: make state in which AMIGO asks for help: put coke can in hand manually."'''
         smach.StateMachine.add('SAY_PITY',      
                                 states.Say(robot, ["That is a pity. I was not able to get the object. I will try to show some other skills anyway"]),
-                                transitions={ 'spoken':'LOOK_FOR_HANDLE' })
+                                transitions={ 'spoken':'ASK_NEW_ASSIGNMENT' })
 
         # ToDo: make a decent query (for both)
+        # Compound("type",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
         query_lookat = Compound("region_of_interest", "cabinet_expedit_1", Compound("point_3d", "X", "Y", "Z"))
-        query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
+        query_object = Conjunction(Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
+                                   Compound("type", "ObjectID", Compound("exact", "handle")))
         smach.StateMachine.add('LOOK_FOR_HANDLE',
                                 states.LookForObjectsAtROI(robot, query_lookat, query_object),
                                 transitions={   'looking':'LOOK',
@@ -265,6 +358,32 @@ def setup_statemachine(robot):
         ''' What else can we do, e.g., Human Robot Interaction '''
            
         ''' What is the fallback scenario if nothing works? '''
+        ''' Start moving around '''
+        smach.StateMachine.add("ASK_NEW_ASSIGNMENT",
+                                states.Say(robot, ["Should I go somewhere else", "Can i be of any service somewhere else", "Do I have to go to some other room"]),
+                                transitions={   'spoken': 'ASK_YES_NO_NEW_ASSIGNMENT'})
+
+        smach.StateMachine.add("ASK_YES_NO_NEW_ASSIGNMENT",
+                                states.Ask_yes_no(robot),
+                                transitions={   'yes'       : 'SAY_FINISH',
+                                                'no'        : 'SAY_FINISH',
+                                                'preempted' : 'SAY_FINISH'})
+
+        smach.StateMachine.add("ASK_GOTO_BACKUP",
+                                Ask_goto(robot),
+                                transitions={   'done'  : 'GOTO_BACKUP'})
+        
+        query_room = Conjunction(Compound("goal", Compound("open_challenge", "Room")), Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi")))        
+        smach.StateMachine.add( 'GOTO_BACKUP',
+                                states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
+                                transitions={   "arrived":"SAY_ARRIVED_BACKUP",
+                                                "unreachable":'SAY_ARRIVED_BACKUP',
+                                                "preempted":'SAY_ABORT',
+                                                "goal_not_defined":'SAY_ABORT'})
+
+        smach.StateMachine.add( 'SAY_ARRIVED_BACKUP',
+                                states.Say(robot, ["I have arrived", "Here i am"]),
+                                transitions={   'spoken' : 'ASK_NEW_ASSIGNMENT'})
 
         smach.StateMachine.add("SAY_ABORT", 
                                 states.Say(robot, ["I am not feeling very well today, so i am sorry but i will leave now"]),
