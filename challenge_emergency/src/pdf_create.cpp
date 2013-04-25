@@ -7,6 +7,9 @@
 #include "hpdf.h"
 #include <ros/ros.h>
 #include <ros/package.h>
+#include <opencv2/core/core.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include "challenge_emergency/Start.h"
 
 //! Dealing with files
@@ -29,7 +32,7 @@ error_handler  (HPDF_STATUS   error_no,
                 void         *user_data)
 {
     printf ("ERROR: error_no=%04X, detail_no=%u\n", (HPDF_UINT)error_no,
-                (HPDF_UINT)detail_no);
+            (HPDF_UINT)detail_no);
     longjmp(env, 1);
 }
 
@@ -129,20 +132,20 @@ int createPDF()
     struct dirent *ent;
     string usb_dir;
     if ((dir = opendir ("/media/")) != NULL) {
-      /* print all the files and directories within directory */
+        /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
-        //printf ("%s\n", ent->d_name);
-        if (strlen(ent->d_name)>3)
-        {
-        printf("%s\n", ent->d_name);
-        usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
+            //printf ("%s\n", ent->d_name);
+            if (strlen(ent->d_name)>3)
+            {
+                printf("%s\n", ent->d_name);
+                usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
+            }
         }
-        }
-      closedir (dir);
+        closedir (dir);
     } else {
-      /* could not open directory */
-      perror ("");
-      return EXIT_FAILURE;
+        /* could not open directory */
+        perror ("");
+        return EXIT_FAILURE;
     }
 
     cout << usb_dir << endl;
@@ -229,15 +232,9 @@ int createPDF()
     HPDF_Page_EndText (page[n_page]);
 
     //! Load image of 'map' and 'fire' and 'symbolic fire'
-    #ifndef __WIN32__
     image_map = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/map.png").c_str());
     image_fire = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/fire.png").c_str());
     image_symbolic_fire = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/fire-graphic.png").c_str());
-    #else
-    image_map = HPDF_LoadPngImageFromFile (pdf, "pngsuite\\map.png");
-    image_fire = HPDF_LoadPngImageFromFile (pdf, "pngsuite\\fire.png");
-    image_symbolic_fire = HPDF_LoadPngImageFromFile (pdf, "pngsuite\\fire-graphic.png");
-    #endif
 
 
     //! Image width and height of map needed for transformations of placing fire and people in map
@@ -262,43 +259,47 @@ int createPDF()
     ROS_INFO("ns = %s",ns.c_str());
     //! Starting location of the map
     if (nh.getParam(ns+"/x_null", x_null))
-        {
-          ROS_INFO("Got param x_null: %f", x_null);
-        }
-        else
-        {
-          ROS_ERROR("Failed to get param 'x_null'.");
-        }
+    {
+        ROS_INFO("Got param x_null: %f", x_null);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'x_null'.");
+    }
     if (nh.getParam(ns+"/y_null", y_null))
-        {
-          ROS_INFO("Got param y_null: %f", y_null);
-        }
-        else
-        {
-          ROS_ERROR("Failed to get param 'x_null'.");
-        }
+    {
+        ROS_INFO("Got param y_null: %f", y_null);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'x_null'.");
+    }
 
 
     double length_map;
     double height_map;
     //! Scaling between image and actual  map
     if (nh.getParam(ns+"/length_map", length_map))
-        {
-          ROS_INFO("Got param length_map: %f", length_map);
-        }
-        else
-        {
-          ROS_ERROR("Failed to get param 'length_map'.");
-        }
+    {
+        ROS_INFO("Got param length_map: %f", length_map);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'length_map'.");
+    }
     if (nh.getParam(ns+"/height_map", height_map))
-        {
-          ROS_INFO("Got param height_map: %f", height_map);
-        }
-        else
-        {
-          ROS_ERROR("Failed to get param 'height_mapl'.");
-        }
+    {
+        ROS_INFO("Got param height_map: %f", height_map);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'height_mapl'.");
+    }
 
+
+    cv::Mat image_map_cv = cv::imread(ros::package::getPath("challenge_emergency") + "/output/map.png");
+    double scaledWidth = 1/0.025; //image_map_cv.size().width / length_map;
+    double scaledHeight = 1/0.025; //image_map_cv.size().height / height_map;
 
 
     //! Calculate tranformation ratio between pixels/meters
@@ -367,13 +368,27 @@ int createPDF()
         {
             person_stat = "\n Status: Need Assistance!";
             r = 1;
+            ROS_INFO("Scaled width: %f, height: %f", scaledWidth, scaledHeight);
+            ROS_INFO("Coordinates meters x: %f, y: %f", coordinates[i][0], coordinates[i][1]);
+            ROS_INFO("Coordinates pixels x: %f, y: %f", coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50);
+
+            //! Draw a picture of 'fire' with subscript
+            cv::putText(image_map_cv, "-", cv::Point(coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
         }
         else if (status[i]==1)
         {
             person_stat = "\n Status: Ok!";
             r = 0;
+            ROS_INFO("Scaled width: %f, height: %f", scaledWidth, scaledHeight);
+            ROS_INFO("Coordinates meters x: %f, y: %f", coordinates[i][0], coordinates[i][1]);
+            ROS_INFO("Coordinates pixels x: %f, y: %f", coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50);
+
+            //! Draw a picture of 'fire' with subscript
+            cv::putText(image_map_cv, "+", cv::Point(coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
 
         }
+
+
         //! 'status'==2 then 'fire' location immediatly print
         else
         {
@@ -381,7 +396,13 @@ int createPDF()
             iw = 150;
             ih = 150;
 
+            ROS_INFO("Scaled width: %f, height: %f", scaledWidth, scaledHeight);
+            ROS_INFO("Coordinates meters x: %f, y: %f", coordinates[i][0], coordinates[i][1]);
+            ROS_INFO("Coordinates pixels x: %f, y: %f", coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50);
+
             //! Draw a picture of 'fire' with subscript
+            cv::putText(image_map_cv, "X", cv::Point(coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+
             sprintf(person_coords, "FIRE location(x,y): x = %f, y = %f", coordinates[i][0], coordinates[i][1]);
             HPDF_Page_DrawImage (page[n_page], image_fire, x, y, iw, ih);
             HPDF_Page_BeginText (page[n_page]);
@@ -423,12 +444,12 @@ int createPDF()
             printf("malloc failed!\n");
         }
         //! Load image of person
-        #ifndef __WIN32__
+#ifndef __WIN32__
         sprintf(person_image, "/output/person_%d.png",i);
         string string_person_image = ros::package::getPath("challenge_emergency")+person_image;
-        #else
+#else
         //sprintf(person_image, "pngsuite\\person_%d.png",i);
-        #endif
+#endif
         image_person = HPDF_LoadPngImageFromFile (pdf, string_person_image.c_str());
 
 
@@ -482,6 +503,9 @@ int createPDF()
             y = HPDF_Page_GetHeight (page[n_page]) - 170;
         }
     }
+
+    cv::imshow("nice_map", image_map_cv);
+    cv::waitKey(0);
     //! Save the document to a file
     HPDF_SaveToFile (pdf, fname);
 
@@ -504,6 +528,8 @@ int main (int argc, char **argv)
     ros::NodeHandle nh("~");
     ROS_INFO("Starting pdf creation service..");
     startupSrv_ = nh.advertiseService("startup", &startUp);
+
+    createPDF();
 
     while(ros::ok())
         ros::spinOnce();
