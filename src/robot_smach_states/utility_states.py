@@ -23,7 +23,6 @@ class Initialize(smach.State):
 
     def execute(self, userdata):
         self.robot.lights.set_color(0,0,1)  #be sure lights are blue
-        
         self.robot.head.reset_position()
         self.robot.leftArm.reset_arm()
         #self.robot.leftArm.send_gripper_goal_close()

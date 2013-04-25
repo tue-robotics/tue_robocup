@@ -10,7 +10,7 @@ import threading
 
 from utility_states import Wait_time, PlaySound
 
-TTS_waittime = 0.000 #TODO: Needs to be measured and be made as long as possible.
+TTS_waittime = 0 #TODO: Needs to be measured and be made as long as possible.
 
 @util.deprecated
 class Dummy_Question(smach.State):
@@ -402,7 +402,7 @@ class Wait_Answer_Ears(smach.State):
 
     def execute(self, userdata):
         """Wait for the users' answer polling robot.ears"""
-        self.robot.ears.forget()
+        #self.robot.ears.forget()
         self.robot.ears.start_listening()
         waited_time = 0
         sleep_interval = 0.25
