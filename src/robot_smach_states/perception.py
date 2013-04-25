@@ -86,7 +86,11 @@ class Learn_person_face_recognition(smach.State):
                              output_keys=['target'])
         self.robot = robot
         self.no_of_introductions = 0
-        assert hasattr(self.robot, "perception")
+        try:
+            assert hasattr(self.robot, "perception")
+        except AssertionError:
+            rospy.logerr("perception not available, but still trying without")
+            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
 
     def execute(self, gl):
         #rospy.Rate(rate).sleep()
@@ -630,7 +634,11 @@ class LookForObjectsAtROI(smach.State):
             self.robot = robot
             self.maxdist = maxdist
             assert hasattr(self.robot, "reasoner")
-            assert hasattr(self.robot, "perception")
+            try:
+                assert hasattr(self.robot, "perception")
+            except AssertionError:
+                rospy.logerr("perception not available, but still trying without")
+                self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
             assert hasattr(self.robot, "head")
 
     def calc_dist(self, (xA,yA,zA), (xB,yB,zB)):
@@ -721,7 +729,11 @@ class LookForObjectsAtPoint(smach.State):
         self.robot = robot
         self.point_stamped = point_stamped
         assert hasattr(self.robot, "head")
-        assert hasattr(self.robot, "perception")
+        try:
+            assert hasattr(self.robot, "perception")
+        except AssertionError:
+            rospy.logerr("perception not available, but still trying without")
+            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
         assert hasattr(self.robot, "reasoner")
 
     def execute(self, userdata):
@@ -973,7 +985,11 @@ class Read_laser(smach.State):
         self.door = door
 
         self.laser_listener = rospy.Subscriber("/base_scan",LaserScan,self.callback_laser)
-        assert hasattr(self.robot, "perception")
+        try:
+            assert hasattr(self.robot, "perception")
+        except AssertionError:
+            rospy.logerr("perception not available, but still trying without")
+            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
         assert hasattr(self.robot, "reasoner")
 
     def callback_laser(self, data):
