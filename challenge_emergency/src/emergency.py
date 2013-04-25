@@ -18,6 +18,8 @@ from speech_interpreter.srv import GetYesNo
 from virtual_cam.srv import cheese
 from challenge_emergency.srv import Start
 
+from perception_srvs.srv import StartPerception
+
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -141,6 +143,35 @@ class Look_for_people_emergency(smach.State):
         return "visited"
 
 
+class Looking_for_people(smach.State):
+    def __init__(self, robot, tracking=True, rate=2):
+        smach.State.__init__(self, outcomes=["done", "failed"])
+
+        self.robot = robot
+        self.start_perception_service = rospy.ServiceProxy('start_perception', StartPerception)
+
+    def execute(self, userdata):
+
+        rospy.loginfo("Starting face segmentation")
+        self.response_start = self.start_perception_service("{modules:[face_segmentation]}")
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Face segmentation has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.loginfo("Face segmentation failed to start")
+            return "failed"
+        rospy.sleep(10)
+
+        rospy.loginfo("Face segmentation will be stopped now")
+        self.response_stop = self.start_perception_service("{modules:[]}")
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Face segmentation is stopped")
+            return "done"
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping face segmentation")
+            return "failed"
+
+
 # class Check_persons_found2(smach.State):
 #     def __init__(self, robot):
 #         smach.State.__init__(self, outcomes=["no_person_found", "person_unreachable", "person_found"])
@@ -151,7 +182,7 @@ class Look_for_people_emergency(smach.State):
 #         # Move to the next waypoint in the storage room
 
 #         persons_answers = self.robot.reasoner.query(Conjunction( 
-#                                                     Compound("property_expected","ObjectID", "class_label", "person"),
+#                                                     Compound("property_expected","ObjectID", "class_label", "face"),
 #                                                     Compound("property_expected","ObjectID", Sequence("X","Y","Z")),
 #                                                     Compound("not", Compound("registered", "ObjectID"))))
 
@@ -191,7 +222,7 @@ class Check_persons_found(smach.State):
     def execute(self, userdata=None):
 
         person_query = Conjunction( 
-                            Compound("property_expected","ObjectID", "class_label", "person"),
+                            Compound("property_expected","ObjectID", "class_label", "face"),
                             Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")),
                             Compound("not", Compound("registered", "ObjectID")))
 
@@ -205,15 +236,15 @@ class Check_persons_found(smach.State):
         elif not persons_answers[1]:
             self.robot.speech.speak("I found someone!")
 
-        def distance_to_base(xyphi_tup):
-                x = float(xyphi_tup[0])
-                y = float(xyphi_tup[1])
+        # def distance_to_base(xyphi_tup):
+        #         x = float(xyphi_tup[0])
+        #         y = float(xyphi_tup[1])
 
-                origX = self.robot.base.location[0].x
-                origY = self.robot.base.location[0].y
+        #         origX = self.robot.base.location[0].x
+        #         origY = self.robot.base.location[0].y
 
-                dist = math.sqrt(abs(origX-x)**2 + abs(origY-y)**2)
-                return dist
+        #         dist = math.sqrt(abs(origX-x)**2 + abs(origY-y)**2)
+        #         return dist
 
         #####################################################################################
         # TODO Loy: 
@@ -237,10 +268,8 @@ class Check_persons_found(smach.State):
         # rospy.loginfo("x = {0}, y = {1}, phi = {2}".format(x, y, phi))
 
 
-
-
-
-        nav = states.NavigateGeneric(self.robot, lookat_query=person_query, goal_sorter=distance_to_base) 
+        nav = states.NavigateGeneric(self.robot, lookat_query=person_query) 
+        #nav = states.NavigateGeneric(self.robot, lookat_query=person_query, goal_sorter=distance_to_base) 
         nav_result = nav.execute()
 
         if nav_result == "unreachable" or nav_result == "preempted":  
@@ -379,6 +408,7 @@ class Run_pdf_creator(smach.State):
             self.response = self.startup_pdf_creator()  # starts pdf creator
         except KeyError, ke:
             rospy.loginfo("FAILED creating pdf on usb-stick")
+            return "failed"
         rospy.loginfo("PDF is created on usb-stick")
         
         return "done"
@@ -419,7 +449,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized' : 'CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
+                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
                                                     'abort'       : 'Aborted'})
     
         smach.StateMachine.add('AT_FRONT_OF_DOOR',
@@ -597,9 +627,15 @@ def setup_statemachine(robot):
 
         # Start people detection
         # TODO ACTUALLY USE PEOPLE DETECTION
+        smach.StateMachine.add("SAY_START_PEOPLE_DETECTION",
+                                states.Say(robot,"I will start my perception"),
+                                transitions={'spoken':'START_PEOPLE_DETECTION'})
+
         smach.StateMachine.add("START_PEOPLE_DETECTION",
-                                states.Say(robot,"Now I should start my perception, but is not build in yet..."),
-                                transitions={'spoken':'CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE'})
+                                Looking_for_people(robot),
+                                transitions={'done':'CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE',
+                                             'failed':'START_PEOPLE_DETECTION'})
+
 
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE",
                                 Check_persons_found(robot),
