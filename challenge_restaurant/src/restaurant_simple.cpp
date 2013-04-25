@@ -13,20 +13,22 @@
 #include <tf/transform_datatypes.h>
 #include "problib/conversions.h"
 
-#include <tf/transform_listener.h>
-
 #include "challenge_restaurant/restaurant_carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
 
 using namespace std;
 
+// Possible speech commands
+// amigostop
+// thislocationisnamed
+
 
 //! Settings
-const int TIME_OUT_GUIDE_LOST = 5;          // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_GUIDE = 2.0;           // Distance AMIGO keeps towards guide
-const double WAIT_TIME_GUIDE_MAX = 5.0;     // Maximum waiting time for guide to return
+const int TIME_OUT_GUIDE_LOST = 5;              // Time interval without updates after which operator is considered to be lost
+const double DISTANCE_GUIDE = 1.5;              // Distance AMIGO keeps towards guide
+const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const double FOLLOW_RATE = 10;                   // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
 double FIND_RATE = 5;                           // Rate check for guide at start of the challenge
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
@@ -36,10 +38,13 @@ double FIND_RATE = 5;                           // Rate check for guide at start
 CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long guide is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time guide position was checked
-double last_var_guide_pos_ = -1;                                               // Bookkeeping: last variance in x-position guide
+double last_var_guide_pos_ = -1;                                                  // Bookkeeping: last variance in x-position guide
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
+bool freeze_amigo_ = false;                                                       // Bookkeeping: true if robot is asked to stop
+ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
+unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
 
 
 /**
@@ -59,7 +64,7 @@ void amigoSpeak(string sentence) {
  * @brief findGuide, detects person in front of robot, empties WIRE and adds person as guide
  * @param client used to query from/assert to WIRE
  */
-void findGuide(wire::Client& client, bool lost = true) {
+bool findGuide(wire::Client& client, bool lost = true) {
 
     //! It is allowed to call the guide once per section (points for the section will be lost)
     if (lost) {
@@ -69,6 +74,9 @@ void findGuide(wire::Client& client, bool lost = true) {
     //! Give the guide some time to move to the robot
     ros::Duration wait_for_guide(6.0);
     wait_for_guide.sleep();
+
+    //! Vector with candidate guides
+    vector<pbl::Gaussian> vector_possible_guides;
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
@@ -100,38 +108,13 @@ void findGuide(wire::Client& client, bool lost = true) {
                     }
 
                     //! If guide, set name in world model
-                    if (pos_gauss.getMean()(0) < 2.0 && pos_gauss.getMean()(1) > -0.75 && pos_gauss.getMean()(1) < 0.75) {
+                    if (pos_gauss.getMean()(0) < 2.5 && pos_gauss.getMean()(0) > 0.4 && pos_gauss.getMean()(1) > -0.4 && pos_gauss.getMean()(1) < 0.4) {
 
-                        amigoSpeak("I found my guide");
+                        vector_possible_guides.push_back(pos_gauss);
 
-                        //! Reset
-                        last_var_guide_pos_ = -1;
-                        t_last_check_ = ros::Time::now().toSec();
+                        amigoSpeak("Hi guide");
+                        ROS_INFO("Found candidate guide at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
-                        //! Evidence
-                        wire::Evidence ev(ros::Time::now().toSec());
-
-                        //! Set the position
-                        ev.addProperty("position", pos_gauss, NAVIGATION_FRAME);
-
-                        //! Name must be guide
-                        pbl::PMF name_pmf;
-                        name_pmf.setProbability("guide", 1.0);
-                        ev.addProperty("name", name_pmf);
-
-                        //! Reset the world model
-                        std_srvs::Empty srv;
-                        if (reset_wire_client_.call(srv)) {
-                            ROS_INFO("Cleared world model");
-                        } else {
-                            ROS_ERROR("Failed to clear world model");
-                        }
-
-                        //! Assert evidence to WIRE
-                        client.assertEvidence(ev);
-
-                        no_guide_found = false;
-                        break;
                     }
                 }
 
@@ -139,16 +122,76 @@ void findGuide(wire::Client& client, bool lost = true) {
 
         }
 
+        if (!vector_possible_guides.empty()) {
+
+            //! Position guide
+            pbl::Gaussian pos_guide(3);
+
+            //! Find person that has smallest y-distance to robot
+            if (vector_possible_guides.size() > 1) {
+
+                double y_min = 0.0;
+                int i_best = 0;
+
+                for (unsigned int i = 0; i < vector_possible_guides.size(); ++i) {
+
+                    double dy = fabs(vector_possible_guides[0].getMean()(1));
+
+                    if (i == 0 || y_min < dy) {
+                        y_min = dy;
+                        i_best = i;
+                    }
+                }
+
+                pos_guide = vector_possible_guides[i_best];
+
+            } else {
+                pos_guide = vector_possible_guides[0];
+            }
+
+            ROS_INFO("Found guide at (x,y) = (%f,%f)", pos_guide.getMean()(0), pos_guide.getMean()(1));
+
+            //! Reset
+            last_var_guide_pos_ = -1;
+            t_last_check_ = ros::Time::now().toSec();
+
+            //! Evidence
+            wire::Evidence ev(ros::Time::now().toSec());
+
+            //! Set the position
+            ev.addProperty("position", pos_guide, NAVIGATION_FRAME);
+
+            //! Name must be guide
+            pbl::PMF name_pmf;
+            name_pmf.setProbability("guide", 1.0);
+            ev.addProperty("name", name_pmf);
+
+            //! Reset the world model
+            std_srvs::Empty srv;
+            if (reset_wire_client_.call(srv)) {
+                ROS_INFO("Cleared world model");
+            } else {
+                ROS_ERROR("Failed to clear world model");
+            }
+
+            //! Assert evidence to WIRE
+            client.assertEvidence(ev);
+
+            no_guide_found = false;
+
+            amigoSpeak("I found my guide, hi guide");
+
+            ros::Duration safety_delta(1.0);
+            safety_delta.sleep();
+            return true;
+
+        }
+
         dt.sleep();
     }
     
-    ros::Duration safety_delta(1.0);
-    safety_delta.sleep();
-    
-    
-    //! Reset
-    last_var_guide_pos_ = -1;
-    t_last_check_ = ros::Time::now().toSec();
+    amigoSpeak("I cannot find my guide");
+    return false;
 
 }
 
@@ -242,12 +285,16 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
  */
 void speechCallback(std_msgs::String res) {
 
-    //amigoSpeak(res.data);
-    //if (res.data == "pleaseenterthelevator") {
-    ROS_WARN("Received command: %s", res.data.c_str());
-    //} else {
-    //    ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
-    //}
+    ROS_INFO("Received command: %s", res.data.c_str());
+
+    if (res.data == "amigostop") {
+        freeze_amigo_ = true;
+        amigoSpeak("I will remember this location. How is it called?");
+    } else if (res.data == "thislocationisnamed") {
+        freeze_amigo_ = false;
+        amigoSpeak("Thank you. I will now continue following you");
+        ++n_locations_learned_;
+    }
 }
 
 
@@ -256,7 +303,7 @@ void speechCallback(std_msgs::String res) {
  * @param pos target position
  * @param offset, in case the position represents the guide position AMIGO must keep distance
  */
-void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf_listener) {
+void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
  
@@ -266,6 +313,11 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
     double theta = atan2(pos_exp(1), pos_exp(0));
     tf::Quaternion q;
     q.setRPY(0, 0, theta);
+
+    amigo_msgs::head_ref goal;
+    goal.head_pan = theta;
+    goal.head_tilt = 0.0;
+    head_ref_pub_.publish(goal);
 
     //! Set orientation
     end_goal.pose.orientation.x = q.getX();
@@ -295,11 +347,11 @@ int main(int argc, char **argv) {
      ROS_INFO("Started Restaurant");
     
     /// Head ref
-    ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
+    head_ref_pub_ = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
     
     /// set the head to look down in front of AMIGO
     ros::Rate poll_rate(100);
-    while (head_ref_pub.getNumSubscribers() == 0) {
+    while (head_ref_pub_.getNumSubscribers() == 0) {
         ROS_INFO_THROTTLE(1, "Waiting to connect to head ref topic...");
         poll_rate.sleep();
     }
@@ -307,9 +359,8 @@ int main(int argc, char **argv) {
     amigo_msgs::head_ref goal;
     goal.head_pan = 0.0;
     goal.head_tilt = 0.0;
-    head_ref_pub.publish(goal);
+    head_ref_pub_.publish(goal);
     
-
     //! Planner
     planner_ = new CarrotPlanner("restaurant_carrot_planner");
     ROS_INFO("Carrot planner instantiated");
@@ -326,11 +377,6 @@ int main(int argc, char **argv) {
 
     //! Topic that makes AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
-
-    //! Transform listener (localization required)
-    tf::TransformListener tf_listener;
-    tf_listener.waitForTransform("/map", "/base_link", ros::Time(), ros::Duration(10));
-    ROS_INFO("Transform listener ready");
     
     //! Always clear the world model
     std_srvs::Empty srv;
@@ -343,10 +389,17 @@ int main(int argc, char **argv) {
     //! Administration
     pbl::PDF guide_pos;
 
-	findGuide(client, false);
+    if (!findGuide(client, false)) {
+        ROS_WARN("No guide can be found, try once more");
+        if (!findGuide(client, false)) {
+            ROS_ERROR("No guide found - fail");
+            amigoSpeak("I cannot find a guide, I give up");
+            return 0;
+        }
+    }
 
     ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
-    amigoSpeak("Please show me the locations");
+    amigoSpeak("I see my guide. Can you please show me the locations");
 
     //! Follow guide
     ros::Rate follow_rate(FOLLOW_RATE);
@@ -356,69 +409,38 @@ int main(int argc, char **argv) {
         //! Get objects from the world state
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
-
-        //! Check if the robot arrived at itp two
-        if (true) {
-
-            //! Robot is asked to enter elevator and must leave when the guide leaves
-
-            //! Find elevator
-            //findAndEnterElevator(client, tf_listener);
-
-        } else if (true) {
-
-            //! Guide will pass through a small crowd of people (4-5) and calls the robot from behind the group
-
-            //! Association will fail, hence this can be skipped. Check for the (updated) guide position
-            if (getPositionGuide(objects, guide_pos)) {
-
-                //! Move towards guide
-                moveTowardsPosition(guide_pos, DISTANCE_GUIDE, tf_listener);
+        if (n_locations_learned_ == 5) {
+            ROS_INFO("Learned all locations");
+        }
 
 
-            } else {
+        //! Check if the robot has to move
+        if (freeze_amigo_) {
 
-                //! If the guide is lost, move around a crowd croud (wild guess)
-                pbl::Matrix cov(3,3);
-                cov.zeros();
-
-                // Forward
-                pbl::PDF pos = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
-
-                // Side
-                pos = pbl::Gaussian(pbl::Vector3(0, 3, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
-
-                // Forward
-                pos = pbl::Gaussian(pbl::Vector3(5, 0, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
-
-                // Back
-                pos = pbl::Gaussian(pbl::Vector3(0, -3, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
-
-                // Wild guess for guide
-                findGuide(client, false);
-            }
-
-
+            //! Robot is waiting for the name and will then continue following
+            pbl::Matrix cov(3,3);
+            cov.zeros();
+            pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+            moveTowardsPosition(pos, 0);
 
         } else {
 
-            // Not at itp2/itp3, just follow guide
+            // Just follow
 
             //! Check for the (updated) guide position
             if (getPositionGuide(objects, guide_pos)) {
 
                 //! Move towards guide
-                moveTowardsPosition(guide_pos, DISTANCE_GUIDE, tf_listener);
+                moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
 
 
             } else {
 
                 //! Lost guide
-                findGuide(client);
+                bool found = findGuide(client);
+                if (!found) {
+                    ROS_WARN("Lost guide and failed to find one!");
+                }
             }
         }
 
