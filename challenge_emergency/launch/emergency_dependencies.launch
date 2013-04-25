@@ -6,8 +6,8 @@
   <node pkg="challenge_emergency" type="emergency_paper" respawn="false" name="emergency_paper" output="screen">
   </node>
 
-  <!--<node pkg="virtual_cam" type="save" args="SERVICE" name="virtual_cam" /> 
+  <node pkg="virtual_cam" type="save" args="SERVICE" name="virtual_cam" /> 
 
   <include file="$(find run_speech_files)/output_folder/magdeburg2013/speech_magdeburg2013.launch" />
-  -->
+  
 </launch>	

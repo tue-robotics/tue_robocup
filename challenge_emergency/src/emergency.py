@@ -491,7 +491,7 @@ def setup_statemachine(robot):
         # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
         smach.StateMachine.add('INIT_POSE',
                                     states.Set_initial_pose(robot, 'initial'),
-                                    transitions={   'done':'SAY_FIND_PEOPLE',
+                                    transitions={   'done':'FIND_PEOPLE',
                                                     'preempted':'WAIT_FOR_DOOR',
                                                     'error':'WAIT_FOR_DOOR'})
 
