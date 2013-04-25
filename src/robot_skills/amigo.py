@@ -226,6 +226,11 @@ if __name__ == "__main__":
     look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/base_link")
     
     mapgo = amigo.base.go
+
+    def airgo(x,y,z, xoffset=0.5, yoffset=0.1):
+        target = amigo.base.point(x,y,z, stamped=True)
+        ik_pose = amigo.base.get_base_pose(target, xoffset, yoffset)
+        amigo.base.send_goal(ik_pose.pose.position, ik_pose.pose.orientation)
     
     r = amigo.reasoner
     open_door   = lambda: r.assertz(r.state("door1", "open"))
