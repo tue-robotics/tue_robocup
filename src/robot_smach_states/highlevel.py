@@ -168,7 +168,7 @@ class GotoForMeetingpoint(smach.State):
     def execute(self, userdata=None):
         # Move to the next waypoint in the storage room
 
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
 
         all_goal_answers = self.robot.reasoner.query(self.goto_query)
         reachable_goal_answers = self.robot.reasoner.query(Conjunction(self.goto_query,
