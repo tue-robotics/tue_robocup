@@ -16,8 +16,18 @@ def euler_z_to_quaternion(angle):
     orientation_goal.z = quaternion[2]
     orientation_goal.w = quaternion[3]
     
-    
     return orientation_goal
+
+def euler_z_from_quaternion(quaternion):
+    
+    try:
+        [rx,ry,rz] = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
+        
+    except TypeError, te:
+        rospy.logerr("Quaternion {0} cannot be transformed to Euler".format(te))
+        return None
+
+    return rz
 
 def compute_relative_angle(absolute_angle, robot_orientation):
     

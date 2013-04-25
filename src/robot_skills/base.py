@@ -62,6 +62,8 @@ class Base(object):
         else:
             self.clear_service  = rospy.ServiceProxy('/move_base_3d/clear_bbx',       octomap_msgs.srv.BoundingBoxQuery)
             self.unknown_to_free_service  = rospy.ServiceProxy('/move_base_3d/set_unknown_to_free_bbx',  octomap_msgs.srv.BoundingBoxQuery)
+            self.reset_costmap_service = rospy.ServiceProxy('/move_base_3d/reset', std_srvs.srv.Empty)
+
 
         #Get plan
         if use_2d:
@@ -98,7 +100,7 @@ class Base(object):
         with self._lock:
             self.plan_possible = msg.data
     
-    def get_plan(self, position, orientation, frame_id="/map"):
+    def get_plan(self, position, orientation, frame_id="/map", goal_area_radius=0.1):
         path_request = tue_move_base_msgs.srv.GetPathRequest()
 
         path_request.target_pose.header.frame_id = frame_id
@@ -111,7 +113,7 @@ class Base(object):
             #path_request.path_resolution = 1
             #path_request.goal_area_size = 0
             #path_request.nr_area_samples = 1
-            path_request.goal_area_radius = 0.1
+            path_request.goal_area_radius = goal_area_radius
         except AttributeError, ae:
             rospy.logerr("Attribute could not be set, please update to correct to move_base_msgs: {0}".format(ae))
             
@@ -182,8 +184,8 @@ class Base(object):
 
         return distance_map
 
-    def send_goal(self, position, orientation_quaternion, frame_id ='/map', time=0, block=True):
-        path_result = self.get_plan(position, orientation_quaternion, frame_id)
+    def send_goal(self, position, orientation_quaternion, frame_id ='/map', time=0, block=True, goal_area_radius=0.1):
+        path_result = self.get_plan(position, orientation_quaternion, frame_id, goal_area_radius)
 
         self.path = path_result.path
 
@@ -336,6 +338,15 @@ class Base(object):
             bbx_request.max.y = pos_y + (window_size/2)
             bbx_request.max.z = 2
             self.unknown_to_free_service(bbx_request)
+
+    def reset_costmap(self):
+        if self.use_2d:
+            rospy.logwarn("No costmap reset in case of 2D navigation")
+            return False
+        else:
+            self.reset_costmap_service()
+            return True
+
         
     def get_base_pose(self, target_point_stamped, x_offset, y_offset):
         # ToDo: get_goal_pose would be a much better name

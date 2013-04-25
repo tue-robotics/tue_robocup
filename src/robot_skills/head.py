@@ -10,6 +10,7 @@ from math import sqrt
 from math import sin
 from math import cos
 from components import message_helper
+import random
 
 class Head(object):
     """
@@ -29,11 +30,13 @@ class Head(object):
     def __init__(self):
         self._ac_head_ref_action = actionlib.SimpleActionClient("head_ref_action",  HeadRefAction)
         self._head_topic = rospy.Publisher("/head_target", geometry_msgs.msg.PointStamped)
+        self._search_movement_random_timer = rospy.Time.now()
+        self._search_movement_random_offsets = [0,0,0]
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
 
-    def send_goal(self, position, frame_id="/map", timeout=4.0, keep_tracking=False):
+    def send_goal(self, position, frame_id="/map", timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
         Send a goal for the head, Executes a HeadRefAction
         Expects a position which is a geometry_msgs.msg.Point().
@@ -55,6 +58,11 @@ class Head(object):
             head_goal.target_point.header.stamp = rospy.get_rostime();
             head_goal.target_point.header.frame_id = frame_id
             head_goal.target_point.point = position #This goes wrong when position is a raw geometry_msgs.Point, which has no header.
+
+        head_goal.min_pan  = min_pan
+        head_goal.max_pan  = max_pan
+        head_goal.min_tilt = min_tilt
+        head_goal.max_tilt = max_tilt
 
         #rospy.loginfo(head_goal)
 
@@ -150,7 +158,7 @@ class Head(object):
 
         return self.send_goal(reset_head_goal.point, reset_head_goal.header.frame_id, keep_tracking=False, timeout=timeout)
 
-    def set_position(self, x, y, z, frame_id='/map', keep_tracking=False):
+    def set_position(self, x, y, z, frame_id='/map', keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
         Set head goal at a specified position
         Expects: x,y,z coordinates, and optional frame_id
@@ -165,7 +173,8 @@ class Head(object):
 
         return self.send_goal(manual_head_goal.point,
                        manual_head_goal.header.frame_id,
-                       keep_tracking=keep_tracking)
+                       keep_tracking=keep_tracking, 
+                       min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 
     def set_position_topic(self, x, y, z, frame_id="/maps"):
         """
@@ -191,10 +200,11 @@ class Head(object):
 
         return True
 
-    def search_movement(self):
+    def search_movement(self, target_point, updatetime, x_min=0, y_min=0, z_min=0, x_max=0, y_max=0, z_max=0):
         """
         Look around and search for movement
         """
+        '''
         search_head_goal = geometry_msgs.msg.PointStamped()
 
         search_head_goal.header.frame_id = "/base_link"
@@ -209,6 +219,22 @@ class Head(object):
         self.send_goal(search_head_goal.point,
                        search_head_goal.header.frame_id)
         rospy.logwarn("head.search_movement has not been updated yet")
+        '''
+        # Update only after a fixed timing interval
+        if ((rospy.Time.now() - self._search_movement_random_timer)) > rospy.Duration(updatetime):
+            xoffset = x_min + random.random() * (x_max - x_min)
+            yoffset = y_min + random.random() * (y_max - y_min)
+            zoffset = z_min + random.random() * (z_max - z_min)
+            self._search_movement_random_offsets = [xoffset,yoffset,zoffset]
+            self._search_movement_random_timer = rospy.Time.now()
+
+        target_point.point.x += self._search_movement_random_offsets[0]
+        target_point.point.y += self._search_movement_random_offsets[1]
+        target_point.point.z += self._search_movement_random_offsets[2]
+
+        return self.send_goal(target_point, keep_tracking=False)
+
+
         
     def look_at_hand(self, side, keep_tracking=True):
         """
