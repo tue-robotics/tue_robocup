@@ -30,6 +30,8 @@ class Base(object):
 
         if use_2d == None:
             try:
+                #If this somehow stops working:
+                #if [toplist for toplist in rospy.client.get_published_topics() if '/move_base_3d/goal' in toplist]: print "we have 3d"
                 rospy.wait_for_service('/move_base/get_plan', timeout=0.5)
                 rospy.loginfo("2d navigation is running, so I'll use that")
                 use_2d = True
