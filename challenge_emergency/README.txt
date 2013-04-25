@@ -1,0 +1,48 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% README for emergency %%%
+%% created by Erik Geerts %%
+%% created: 25 april 2013 %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+step 1: 
+**on amigo1**
+amiddle
+
+step 2:
+**on amigo3**
+roslaunch challenge_emergency emergency_dependencies.launch
+
+%% launch file includes:
+% roslaunch run_speech_files speech_magdeburg2013.launch
+% including paramaters.yaml in emergency package
+% running virtual_cam for starting service
+
+step 3:
+**on amigo3, only after step 2 stopped printing tekst on screen!!!**
+roslaunch speech_interpreter start_magdeburg2013.launch
+
+step 3.1: ALSAMIXER
+** Alsamixer is buggy, therefore this step, no questions, just do it ;): **
+** on amigo3 **
+alsamixer
+
+** Adjust every slider one time up and down. Also press F4 and adjust those sliders to the following settings**
+** Mic Boost -> 100 **
+** Capture -> 44 **
+** Digital -> 29 **
+** Mic on mute!!! (Should be muted already)**
+
+step 3.2: Test Microphone
+** Test if mic works, call upon service, if not possible, repeat step 3 **
+** n_tries_max should NOT be 0, time_out should be long enough to test **
+
+** on amigo3 **
+rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0" 
+
+step 3.3: Test speaker
+** on amigo3 **
+say test
+
+step 4:
+rosrun challenge_emergency emergency.py
+
