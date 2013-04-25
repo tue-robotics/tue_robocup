@@ -148,12 +148,11 @@ class Looking_for_people(smach.State):
         smach.State.__init__(self, outcomes=["done", "failed"])
 
         self.robot = robot
-        self.start_perception_service = rospy.ServiceProxy('start_perception', StartPerception)
 
     def execute(self, userdata):
 
         rospy.loginfo("Starting face segmentation")
-        self.response_start = self.start_perception_service("face_segmentation")
+        self.response_start = self.robot.perception.toggle(['face_segmentation'])
         rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
         rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
         if self.response_start.error_code == 0:
@@ -165,7 +164,7 @@ class Looking_for_people(smach.State):
         rospy.sleep(10)
 
         rospy.loginfo("Face segmentation will be stopped now")
-        self.response_stop = self.start_perception_service("")
+        self.response_stop = self.robot.perception.toggle([])
         
         if self.response_stop.error_code == 0:
             rospy.loginfo("Face segmentation is stopped")
