@@ -40,8 +40,8 @@ CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
 double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
-bool itp2 = false;                                                                // Bookkeeping: at elevator yes or no
-bool itp3 = false;                                                                // Bookkeeping: passed elevator yes or no
+bool itp2_ = false;                                                                // Bookkeeping: at elevator yes or no
+bool itp3_ = false;                                                                // Bookkeeping: passed elevator yes or no
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
@@ -287,11 +287,10 @@ bool memorizeOperator() {
  */
 void speechCallback(std_msgs::String res) {
 
-	
-	//amigoSpeak(res.data);
+    //amigoSpeak(res.data);
     //if (res.data == "pleaseenterthelevator") {
-        ROS_INFO("Received command from operator: %s", res.data.c_str());
-        itp2 = true;
+    ROS_WARN("Received command: %s", res.data.c_str());
+    itp2_ = true;
     //} else {
     //    ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
     //}
@@ -422,7 +421,7 @@ int main(int argc, char **argv) {
     
      ROS_INFO("Started Follow me");
     
-    /// to publish goals to the head Kinect, necessary to init the head downwards, other goals are handled by executives
+    /// Head ref
     ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
     
     /// set the head to look down in front of AMIGO
@@ -451,7 +450,7 @@ int main(int argc, char **argv) {
 
     //! Subscribe to the speech recognition topic
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
-    bool itp2 = false;
+    itp2_ = false;
 
     //! Topic that makes AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
@@ -529,18 +528,20 @@ int main(int argc, char **argv) {
         //! Get objects from the world state
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
+        ROS_DEBUG("itp2_ is %s", itp2_?"true":"false");
+
         //! Check if the robot arrived at itp two
-        if (itp2) {
+        if (itp2_) {
 
             //! Robot is asked to enter elevator and must leave when the operator leaves
 
             //! Find elevator
             findAndEnterElevator(client, tf_listener);
 
-            itp2 = false;
-            itp3 = true;
+            itp2_ = false;
+            itp3_ = true;
 
-        } else if (itp3) {
+        } else if (itp3_) {
 
             //! Operator will pass through a small crowd of people (4-5) and calls the robot from behind the group
 
@@ -576,7 +577,7 @@ int main(int argc, char **argv) {
                 // Wild guess for operator
                 findOperator(client, false);
 
-                itp3 = false;
+                itp3_ = false;
             }
 
 
