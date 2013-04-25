@@ -688,10 +688,7 @@ class NavigateGeneric(smach.State):
                     self.robot.speech.speak("I could not find a path to the goal")
                     #self.robot.speech.speak("I am going to the next goal")
                     return "unreachable"
-                
-                # New additions are encouraged!
-                sentences = ["Jetst gate lowes","Lets roll","Here we go","Hey ho lets go"]
-                self.robot.speech.speak(random.choice(sentences))
+                self.robot.speech.speak("Jetst gate lowes")
 
 
             # If not preempted and goalstatus active, only keep looking at path
@@ -701,7 +698,7 @@ class NavigateGeneric(smach.State):
                 if self.preempted:
                     self.preempted = False
                     self.service_preempt()
-                    print 'preempted'
+                    #print 'preempted'
                     return "preempted"
 
                 if self.look_at_path_distance > 0:
