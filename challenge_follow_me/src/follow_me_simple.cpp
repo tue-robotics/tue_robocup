@@ -13,8 +13,6 @@
 #include <tf/transform_datatypes.h>
 #include "problib/conversions.h"
 
-#include <tf/transform_listener.h>
-
 #include "challenge_follow_me/follow_me_carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
 
@@ -33,6 +31,8 @@ double FIND_RATE = 1;                           // Rate check for operator at st
 double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
+
+// QUESTION: Do we want to follow the operator into the elevator and wait with moving out (risk enter too soon)
 
 
 //! Globals
@@ -302,31 +302,10 @@ void speechCallback(std_msgs::String res) {
  * @param pos target position
  * @param offset, in case the position represents the operator position AMIGO must keep distance
  */
-void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf_listener) {
+void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
 
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
-    /*
-    tue_move_base_msgs::MoveBaseGoal move_base_goal;
-
-    //! Plan a path from the current position
-    geometry_msgs::PoseStamped start;
-    start.header.frame_id = NAVIGATION_FRAME;
-    start.pose.position.x = 0;
-    start.pose.position.y = 0;
-    start.pose.position.z = 0;
-
-    tf::Quaternion q;
-    q.setRPY(0, 0, 0);
-
-    //! Set orientation
-    start.pose.orientation.x = q.getX();
-    start.pose.orientation.y = q.getY();
-    start.pose.orientation.z = q.getZ();
-    start.pose.orientation.w = q.getW();
-    move_base_goal.path.push_back(start);
-
-    */
 
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
@@ -350,43 +329,12 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
 
     planner_->MoveToGoal(end_goal);
 
-    /*
-    //! Settings for interpolation of the desired path
-    int nr_steps = (int)(max(abs((double)end_goal.pose.position.x), abs((double)end_goal.pose.position.y)) / RESOLUTION_PATH);
-    double dx = end_goal.pose.position.x / nr_steps;
-    double dy = end_goal.pose.position.y / nr_steps;
-
-    //! Add interpolated way points (starting point is already added)
-    for (int i = 1; i < nr_steps; ++i) {
-        geometry_msgs::PoseStamped waypoint;
-        waypoint = end_goal;
-        waypoint.pose.position.x = i * dx;
-        waypoint.pose.position.y = i * dy;
-        move_base_goal.path.push_back(waypoint);
-    }
-
-    //! Add goal position
-    move_base_goal.path.push_back(end_goal);
-
-    //! Transform path to /map frame
-    for(unsigned int i = 0; i < move_base_goal.path.size(); ++i) {
-        geometry_msgs::PoseStamped waypoint_transformed;
-        tf_listener.transformPose("/map", move_base_goal.path[i], waypoint_transformed);
-        waypoint_transformed.pose.position.z = 0;
-        move_base_goal.path[i] = waypoint_transformed;
-    }
-
-    //! Send goal to move base client
-    move_base_ac_->sendGoal(move_base_goal);
-
-*/
-
     ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
 
 }
 
 
-void findAndEnterElevator(wire::Client& client, tf::TransformListener& tf_listener) {
+void findAndEnterElevator(wire::Client& client) {
 
     amigoSpeak("Okay, I will enter the elevator. Please step aside");
     ros::Duration delta(5.0);
@@ -398,13 +346,13 @@ void findAndEnterElevator(wire::Client& client, tf::TransformListener& tf_listen
     pbl::PDF el_pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
 
     //! Enter elevator
-    moveTowardsPosition(el_pos, 0.2, tf_listener);
+    moveTowardsPosition(el_pos, 0.2);
     pbl::PDF el_pos_far = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
-    moveTowardsPosition(el_pos_far, 0.5, tf_listener);// perhaps drive for an extra meter to be sure the robot is inside the elevator?
+    moveTowardsPosition(el_pos_far, 0.5);// perhaps drive for an extra meter to be sure the robot is inside the elevator?
 
     //! Turn at position (face entrance elevator
     pbl::PDF turn_pos = pbl::Gaussian(pbl::Vector3(-0.1, 0, 0), cov);
-    moveTowardsPosition(turn_pos, 0, tf_listener);
+    moveTowardsPosition(turn_pos, 0);
     amigoSpeak("Operator, you can join me now");
 
     //! Find operator
@@ -455,20 +403,10 @@ int main(int argc, char **argv) {
     //! Topic that makes AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
 
-    //! Action client for sending move base goals
-    //move_base_ac_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base",true);
-    //move_base_ac_->waitForServer();
-    //ROS_INFO("Move base client connected to the move base server");
-
     //! Action client for learning faces
     learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);
     learn_face_ac_->waitForServer();
     ROS_INFO("Learn face client connected to the learn face server");
-
-    //! Transform listener (localization required)
-    tf::TransformListener tf_listener;
-    tf_listener.waitForTransform("/map", "/base_link", ros::Time(), ros::Duration(10));
-    ROS_INFO("Transform listener ready");
     
     //! Always clear the world model
     std_srvs::Empty srv;
@@ -536,7 +474,7 @@ int main(int argc, char **argv) {
             //! Robot is asked to enter elevator and must leave when the operator leaves
 
             //! Find elevator
-            findAndEnterElevator(client, tf_listener);
+            findAndEnterElevator(client);
 
             itp2_ = false;
             itp3_ = true;
@@ -549,7 +487,7 @@ int main(int argc, char **argv) {
             if (getPositionOperator(objects, operator_pos)) {
 
                 //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR, tf_listener);
+                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
 
 
             } else {
@@ -560,19 +498,19 @@ int main(int argc, char **argv) {
 
                 // Forward
                 pbl::PDF pos = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
+                moveTowardsPosition(pos, 0);
 
                 // Side
                 pos = pbl::Gaussian(pbl::Vector3(0, 3, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
+                moveTowardsPosition(pos, 0);
 
                 // Forward
                 pos = pbl::Gaussian(pbl::Vector3(5, 0, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
+                moveTowardsPosition(pos, 0);
 
                 // Back
                 pos = pbl::Gaussian(pbl::Vector3(0, -3, 0), cov);
-                moveTowardsPosition(pos, 0, tf_listener);
+                moveTowardsPosition(pos, 0);
 
                 // Wild guess for operator
                 findOperator(client, false);
@@ -590,7 +528,7 @@ int main(int argc, char **argv) {
             if (getPositionOperator(objects, operator_pos)) {
 
                 //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR, tf_listener);
+                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
 
 
             } else {
