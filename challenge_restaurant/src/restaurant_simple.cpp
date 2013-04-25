@@ -22,28 +22,22 @@ using namespace std;
 
 
 //! Settings
-const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
-const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
+const int TIME_OUT_GUIDE_LOST = 5;          // Time interval without updates after which operator is considered to be lost
+const double DISTANCE_GUIDE = 2.0;           // Distance AMIGO keeps towards guide
+const double WAIT_TIME_GUIDE_MAX = 5.0;     // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const int N_MODELS = 5;                         // Number of models used for recognition of the operator
-const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
 const double FOLLOW_RATE = 10;                   // Rate at which the move base goal is updated
-double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
+double FIND_RATE = 5;                           // Rate check for guide at start of the challenge
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
 
 
 //! Globals
 CarrotPlanner* planner_;
-double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
-double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
-double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
-bool itp2_ = false;                                                                // Bookkeeping: at elevator yes or no
-bool itp3_ = false;                                                                // Bookkeeping: passed elevator yes or no
+double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long guide is not observed
+double t_last_check_ = 0;                                                         // Bookkeeping: last time guide position was checked
+double last_var_guide_pos_ = -1;                                               // Bookkeeping: last variance in x-position guide
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
-actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 
@@ -62,25 +56,25 @@ void amigoSpeak(string sentence) {
 
 
 /**
- * @brief findOperator, detects person in front of robot, empties WIRE and adds person as operator
+ * @brief findGuide, detects person in front of robot, empties WIRE and adds person as guide
  * @param client used to query from/assert to WIRE
  */
-void findOperator(wire::Client& client, bool lost = true) {
+void findGuide(wire::Client& client, bool lost = true) {
 
-    //! It is allowed to call the operator once per section (points for the section will be lost)
+    //! It is allowed to call the guide once per section (points for the section will be lost)
     if (lost) {
-        amigoSpeak("I have lost my operator, can you please stand in front of me");
+        amigoSpeak("I have lost my guide, can you please stand in front of me");
     }
 
-    //! Give the operator some time to move to the robot
-    ros::Duration wait_for_operator(7.0);
-    wait_for_operator.sleep();
+    //! Give the guide some time to move to the robot
+    ros::Duration wait_for_guide(6.0);
+    wait_for_guide.sleep();
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
     ros::Duration dt(1.0);
-    bool no_operator_found = true;
-    while (ros::Time::now().toSec() - t_start < WAIT_TIME_OPERATOR_MAX && no_operator_found) {
+    bool no_guide_found = true;
+    while (ros::Time::now().toSec() - t_start < WAIT_TIME_GUIDE_MAX && no_guide_found) {
 
         //! Get latest world state estimate
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
@@ -95,23 +89,23 @@ void findOperator(wire::Client& client, bool lost = true) {
                 const wire::Property& prop_pos = obj.getProperty("position");
                 if (prop_pos.isValid()) {
 
-                    //! Get position of potential operator
+                    //! Get position of potential guide
                     pbl::PDF pos = prop_pos.getValue();
                     pbl::Gaussian pos_gauss(3);
                     if (pos.type() == pbl::PDF::GAUSSIAN) {
                         pos_gauss = pbl::toGaussian(pos);
 
                     } else {
-                        ROS_INFO("follow_me_simple (findOperator): Position person is not a Gaussian");
+                        ROS_INFO("restaurant_simple (findGuide): Position person is not a Gaussian");
                     }
 
-                    //! If operator, set name in world model
+                    //! If guide, set name in world model
                     if (pos_gauss.getMean()(0) < 2.0 && pos_gauss.getMean()(1) > -0.75 && pos_gauss.getMean()(1) < 0.75) {
 
-                        amigoSpeak("I found my operator");
+                        amigoSpeak("I found my guide");
 
                         //! Reset
-                        last_var_operator_pos_ = -1;
+                        last_var_guide_pos_ = -1;
                         t_last_check_ = ros::Time::now().toSec();
 
                         //! Evidence
@@ -120,9 +114,9 @@ void findOperator(wire::Client& client, bool lost = true) {
                         //! Set the position
                         ev.addProperty("position", pos_gauss, NAVIGATION_FRAME);
 
-                        //! Name must be operator
+                        //! Name must be guide
                         pbl::PMF name_pmf;
-                        name_pmf.setProbability("operator", 1.0);
+                        name_pmf.setProbability("guide", 1.0);
                         ev.addProperty("name", name_pmf);
 
                         //! Reset the world model
@@ -136,7 +130,7 @@ void findOperator(wire::Client& client, bool lost = true) {
                         //! Assert evidence to WIRE
                         client.assertEvidence(ev);
 
-                        no_operator_found = false;
+                        no_guide_found = false;
                         break;
                     }
                 }
@@ -153,19 +147,19 @@ void findOperator(wire::Client& client, bool lost = true) {
     
     
     //! Reset
-    last_var_operator_pos_ = -1;
+    last_var_guide_pos_ = -1;
     t_last_check_ = ros::Time::now().toSec();
 
 }
 
 
 /**
-* @brief getPositionOperator
+* @brief getPositionGuide
 * @param objects input objects received from WIRE
-* @param pos position of the operator (output)
-* @return bool indicating whether or not the operator was found
+* @param pos position of the guide (output)
+* @return bool indicating whether or not the guide was found
 */
-bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
+bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 
     //! Iterate over all world model objects
     for(vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
@@ -173,12 +167,12 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
         const wire::Property& prop_name = obj.getProperty("name");
         if (prop_name.isValid()) {
 
-            //! Check if the object represents the operator
-            if (prop_name.getValue().getExpectedValue().toString() == "operator") {
+            //! Check if the object represents the guide
+            if (prop_name.getValue().getExpectedValue().toString() == "guide") {
                 const wire::Property& prop_pos = obj.getProperty("position");
                 if (prop_pos.isValid()) {
 
-                    //! Get the operator's position
+                    //! Get the guide's position
                     pos = prop_pos.getValue();
 
                     //! Get position covariance
@@ -203,24 +197,24 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
                     
-                    ROS_INFO("Operator has variance %f, last variance is %f", cov(0,0), last_var_operator_pos_);
+                    ROS_INFO("Guide has variance %f, last variance is %f", cov(0,0), last_var_guide_pos_);
 
 
-                    //! Check if operator position is updated (initially negative)
-                    if (cov(0,0) < last_var_operator_pos_ || last_var_operator_pos_ < 0) {
-                        last_var_operator_pos_ = cov(0,0);
+                    //! Check if guide position is updated (initially negative)
+                    if (cov(0,0) < last_var_guide_pos_ || last_var_guide_pos_ < 0) {
+                        last_var_guide_pos_ = cov(0,0);
                         t_no_meas_ = 0;
                         t_last_check_ = ros::Time::now().toSec();
                     } else {
 
-                        //! Uncertainty increased: operator out of side
-                        last_var_operator_pos_ = cov(0,0);
+                        //! Uncertainty increased: guide out of side
+                        last_var_guide_pos_ = cov(0,0);
                         t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
-                        ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
+                        ROS_INFO("%f [s] without position update guide: ", t_no_meas_);
 
-                        //! Position uncertainty increased too long: operator lost
-                        if (t_no_meas_ > TIME_OUT_OPERATOR_LOST) {
-                            ROS_INFO("I lost my operator");
+                        //! Position uncertainty increased too long: guide lost
+                        if (t_no_meas_ > TIME_OUT_GUIDE_LOST) {
+                            ROS_INFO("I lost my guide");
                             return false;
                         }
                     }
@@ -230,55 +224,16 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     return true;
 
                 } else {
-                    ROS_WARN("Found an operator without valid position attribute");
+                    ROS_WARN("Found a guide without valid position attribute");
                 }
             }
         }
     }
 
-    //! If no operator was found, return false
+    //! If no guide was found, return false
     return false;
 }
 
-/**
- * @brief Learn a model with name operator for the person standing in front of the robot
- * @return boolean indicating success of the learning action
- */
-bool memorizeOperator() {
-
-    //! Ask operator to look at AMIGO
-    amigoSpeak("Please stand at one meter in front of me and look at me");
-
-    //! Send learn face goal to the action server
-    pein_msgs::LearnGoal goal;
-    goal.module = "face_learning";
-    goal.n_models = N_MODELS;
-    goal.model_name = "operator";
-    goal.publish_while_learning = true;
-    goal.view = "front";
-
-    if (learn_face_ac_->isServerConnected()) {
-        learn_face_ac_->sendGoal(goal);
-
-        //! Wait for the action to return
-        if (learn_face_ac_->waitForResult(ros::Duration(TIME_OUT_LEARN_FACE))) {
-            actionlib::SimpleClientGoalState state = learn_face_ac_->getState();
-            ROS_INFO("Learn operator action finished: %s", state.toString().c_str());
-            amigoSpeak("Thank you");
-        }
-        else  {
-            ROS_WARN("Learn operator action did not finish before the time out.");
-            return false;
-        }
-
-    } else {
-        ROS_WARN("Not connected with the learn operator action server: no goal send");
-        return false;
-    }
-
-    return true;
-
-}
 
 
 /**
@@ -290,7 +245,6 @@ void speechCallback(std_msgs::String res) {
     //amigoSpeak(res.data);
     //if (res.data == "pleaseenterthelevator") {
     ROS_WARN("Received command: %s", res.data.c_str());
-    itp2_ = true;
     //} else {
     //    ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
     //}
@@ -300,34 +254,12 @@ void speechCallback(std_msgs::String res) {
 /**
  * @brief moveTowardsPosition Let AMIGO move from its current position towards the given position
  * @param pos target position
- * @param offset, in case the position represents the operator position AMIGO must keep distance
+ * @param offset, in case the position represents the guide position AMIGO must keep distance
  */
 void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf_listener) {
 
-
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
-    /*
-    tue_move_base_msgs::MoveBaseGoal move_base_goal;
-
-    //! Plan a path from the current position
-    geometry_msgs::PoseStamped start;
-    start.header.frame_id = NAVIGATION_FRAME;
-    start.pose.position.x = 0;
-    start.pose.position.y = 0;
-    start.pose.position.z = 0;
-
-    tf::Quaternion q;
-    q.setRPY(0, 0, 0);
-
-    //! Set orientation
-    start.pose.orientation.x = q.getX();
-    start.pose.orientation.y = q.getY();
-    start.pose.orientation.z = q.getZ();
-    start.pose.orientation.w = q.getW();
-    move_base_goal.path.push_back(start);
-
-    */
-
+ 
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
     end_goal.header.frame_id = NAVIGATION_FRAME;
@@ -350,66 +282,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset, tf::TransformListener& tf
 
     planner_->MoveToGoal(end_goal);
 
-    /*
-    //! Settings for interpolation of the desired path
-    int nr_steps = (int)(max(abs((double)end_goal.pose.position.x), abs((double)end_goal.pose.position.y)) / RESOLUTION_PATH);
-    double dx = end_goal.pose.position.x / nr_steps;
-    double dy = end_goal.pose.position.y / nr_steps;
-
-    //! Add interpolated way points (starting point is already added)
-    for (int i = 1; i < nr_steps; ++i) {
-        geometry_msgs::PoseStamped waypoint;
-        waypoint = end_goal;
-        waypoint.pose.position.x = i * dx;
-        waypoint.pose.position.y = i * dy;
-        move_base_goal.path.push_back(waypoint);
-    }
-
-    //! Add goal position
-    move_base_goal.path.push_back(end_goal);
-
-    //! Transform path to /map frame
-    for(unsigned int i = 0; i < move_base_goal.path.size(); ++i) {
-        geometry_msgs::PoseStamped waypoint_transformed;
-        tf_listener.transformPose("/map", move_base_goal.path[i], waypoint_transformed);
-        waypoint_transformed.pose.position.z = 0;
-        move_base_goal.path[i] = waypoint_transformed;
-    }
-
-    //! Send goal to move base client
-    move_base_ac_->sendGoal(move_base_goal);
-
-*/
-
     ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
-
-}
-
-
-void findAndEnterElevator(wire::Client& client, tf::TransformListener& tf_listener) {
-
-    amigoSpeak("Okay, I will enter the elevator. Please step aside");
-    ros::Duration delta(5.0);
-    delta.sleep();
-
-    // TODO: implement detection algorithm/service
-    pbl::Matrix cov(3,3);
-    cov.zeros();
-    pbl::PDF el_pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
-
-    //! Enter elevator
-    moveTowardsPosition(el_pos, 0.2, tf_listener);
-    pbl::PDF el_pos_far = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
-    moveTowardsPosition(el_pos_far, 0.5, tf_listener);// perhaps drive for an extra meter to be sure the robot is inside the elevator?
-
-    //! Turn at position (face entrance elevator
-    pbl::PDF turn_pos = pbl::Gaussian(pbl::Vector3(-0.1, 0, 0), cov);
-    moveTowardsPosition(turn_pos, 0, tf_listener);
-    amigoSpeak("Operator, you can join me now");
-
-    //! Find operator
-    findOperator(client, false);
-
 
 }
 
@@ -433,7 +306,7 @@ int main(int argc, char **argv) {
     ROS_INFO("Sending head ref goal");
     amigo_msgs::head_ref goal;
     goal.head_pan = 0.0;
-    goal.head_tilt = -0.2;
+    goal.head_tilt = 0.0;
     head_ref_pub.publish(goal);
     
 
@@ -450,20 +323,9 @@ int main(int argc, char **argv) {
 
     //! Subscribe to the speech recognition topic
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_restaurant/output", 10, speechCallback);
-    itp2_ = false;
 
     //! Topic that makes AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
-
-    //! Action client for sending move base goals
-    //move_base_ac_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base",true);
-    //move_base_ac_->waitForServer();
-    //ROS_INFO("Move base client connected to the move base server");
-
-    //! Action client for learning faces
-    learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);
-    learn_face_ac_->waitForServer();
-    ROS_INFO("Learn face client connected to the learn face server");
 
     //! Transform listener (localization required)
     tf::TransformListener tf_listener;
@@ -479,48 +341,14 @@ int main(int argc, char **argv) {
     }
 
     //! Administration
-    pbl::PDF operator_pos;
+    pbl::PDF guide_pos;
 
-    //! Create a model for identifying the operator later
-    if (!memorizeOperator()) {
+	findGuide(client, false);
 
-        ROS_ERROR("Learning operator failed: AMIGO will not be able to recognize the operator");
-        findOperator(client, false);
+    ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
+    amigoSpeak("Please show me the locations");
 
-    } else {
-
-        //! Operator must be in the world model, remember position
-        unsigned int n_tries = 0;
-        ros::Rate find_rate(FIND_RATE);
-        while(ros::ok()) {
-            ros::spinOnce();
-
-            //! Avoid too much delay due to some failure in perception
-            if (n_tries > 10) {
-                findOperator(client);
-                ROS_ERROR("Learning OK but no operator in world model, person in front of the robot is assumed to be the operator");
-                break;
-            }
-
-            //! Get objects in estimated world state
-            vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
-            t_last_check_ = ros::Time::now().toSec();
-
-            //! Start challenge once the operator is found
-            if (getPositionOperator(objects, operator_pos)) {
-                break;
-            }
-
-            ROS_INFO("No operator found, waiting for operator...");
-            ++n_tries;
-            find_rate.sleep();
-        }
-    }
-
-    ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
-    amigoSpeak("I will now start following you");
-
-    //! Follow operator
+    //! Follow guide
     ros::Rate follow_rate(FOLLOW_RATE);
     while(ros::ok()) {
         ros::spinOnce();
@@ -528,33 +356,29 @@ int main(int argc, char **argv) {
         //! Get objects from the world state
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
-        ROS_DEBUG("itp2_ is %s", itp2_?"true":"false");
 
         //! Check if the robot arrived at itp two
-        if (itp2_) {
+        if (true) {
 
-            //! Robot is asked to enter elevator and must leave when the operator leaves
+            //! Robot is asked to enter elevator and must leave when the guide leaves
 
             //! Find elevator
-            findAndEnterElevator(client, tf_listener);
+            //findAndEnterElevator(client, tf_listener);
 
-            itp2_ = false;
-            itp3_ = true;
+        } else if (true) {
 
-        } else if (itp3_) {
+            //! Guide will pass through a small crowd of people (4-5) and calls the robot from behind the group
 
-            //! Operator will pass through a small crowd of people (4-5) and calls the robot from behind the group
+            //! Association will fail, hence this can be skipped. Check for the (updated) guide position
+            if (getPositionGuide(objects, guide_pos)) {
 
-            //! Association will fail, hence this can be skipped. Check for the (updated) operator position
-            if (getPositionOperator(objects, operator_pos)) {
-
-                //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR, tf_listener);
+                //! Move towards guide
+                moveTowardsPosition(guide_pos, DISTANCE_GUIDE, tf_listener);
 
 
             } else {
 
-                //! If the operator is lost, move around a crowd croud (wild guess)
+                //! If the guide is lost, move around a crowd croud (wild guess)
                 pbl::Matrix cov(3,3);
                 cov.zeros();
 
@@ -574,29 +398,27 @@ int main(int argc, char **argv) {
                 pos = pbl::Gaussian(pbl::Vector3(0, -3, 0), cov);
                 moveTowardsPosition(pos, 0, tf_listener);
 
-                // Wild guess for operator
-                findOperator(client, false);
-
-                itp3_ = false;
+                // Wild guess for guide
+                findGuide(client, false);
             }
 
 
 
         } else {
 
-            // Not at itp2/itp3, just follow operator
+            // Not at itp2/itp3, just follow guide
 
-            //! Check for the (updated) operator position
-            if (getPositionOperator(objects, operator_pos)) {
+            //! Check for the (updated) guide position
+            if (getPositionGuide(objects, guide_pos)) {
 
-                //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR, tf_listener);
+                //! Move towards guide
+                moveTowardsPosition(guide_pos, DISTANCE_GUIDE, tf_listener);
 
 
             } else {
 
-                //! Lost operator
-                findOperator(client);
+                //! Lost guide
+                findGuide(client);
             }
         }
 
