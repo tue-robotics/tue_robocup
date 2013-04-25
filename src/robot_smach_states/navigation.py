@@ -1130,10 +1130,6 @@ class NavigateGeneric(smach.StateMachine):
 
         self.userdata.goal = None
 
-        import smach_ros
-        sis = smach_ros.IntrospectionServer('SmachIntrospectionServer', self, '/SM_ROOT')
-        sis.start()
-
         assert hasattr(robot, 'base')
 
         with self:
