@@ -16,6 +16,7 @@
   <depend package="image_transport"/>
   <depend package="compressed_image_transport"/>
   <depend package="virtual_cam"/>
+  <depend package="perception_srvs"/>
   
   <rosdep name="hpdf" />
   <rosdep name="png" />
