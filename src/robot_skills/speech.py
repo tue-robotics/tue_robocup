@@ -13,6 +13,7 @@ class Speech(object):
     def __init__(self, wait_service=True):
         self.amigo_speak_up = rospy.Publisher("/amigo_speak_up", String)
         self.amigo_speak_up_info = rospy.Publisher("/amigo_speak_up_info", String)
+        self.pub_amigo_speech_sim = rospy.Publisher("/amigo_speech_sim", String)    # For using amigo's speech in simulation
 
         if wait_service:
             rospy.loginfo("Waiting for service amigo_speakup_advanced")
@@ -59,6 +60,10 @@ class Speech(object):
             if language == 'nl' and not (personality in ['david', 'marjolein']):
                 personality = 'david' #kyle doesn't work for NL
             rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
+            
+            # Also send the sentence over a topic (for simulation purposes)
+            self.pub_amigo_speech_sim.publish(sentence)
+
             resp1 = self.speech_service(language, personality, character, mood, sentence)
             return resp1.result
 
