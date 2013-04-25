@@ -73,7 +73,7 @@ void findOperator(wire::Client& client, bool lost = true) {
     }
 
     //! Give the operator some time to move to the robot
-    ros::Duration wait_for_operator(4.0);
+    ros::Duration wait_for_operator(7.0);
     wait_for_operator.sleep();
 
     //! See if the a person stands in front of the robot

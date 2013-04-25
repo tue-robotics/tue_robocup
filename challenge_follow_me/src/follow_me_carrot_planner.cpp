@@ -75,7 +75,7 @@ bool CarrotPlanner::setGoal(geometry_msgs::PoseStamped &goal){
     goal_.setY(goal.pose.position.y);
     goal_.setZ(goal.pose.position.z);
 
-    ROS_INFO_STREAM("[setGoal] goal = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << goal_angle_);
+    ROS_DEBUG_STREAM("[setGoal] goal = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << goal_angle_);
 
     //! Publish marker
     publishCarrot(goal_, carrot_pub_);
@@ -100,7 +100,7 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
     }
     t_last_cmd_vel_ = time;
     
-    ROS_INFO_STREAM("goal before is clear line = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << goal_angle_);
+    ROS_DEBUG_STREAM("goal before is clear line = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << goal_angle_);
 
     //! Check if the path is free
     if(!isClearLine(goal_)) {
@@ -112,7 +112,7 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
 
     ROS_INFO("Path is free");
     
-    ROS_INFO_STREAM("goal before normalization = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << goal_angle_);
+    ROS_DEBUG_STREAM("goal before normalization = " << goal_.getX() << " " << goal_.getY() << ", angle_ = " << goal_angle_);
 
     //! Normalize position
     geometry_msgs::Twist goal_norm_msg;
@@ -154,7 +154,7 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
         if (i < num_readings) {
             double dist_to_obstacle = laser_scan_.ranges[i];
 
-            ROS_INFO("Distance at beam %d/%d is %f [m] (goal lies %f [m] ahead)", i, num_readings, dist_to_obstacle, goal_.length() - 0.1);
+            ROS_DEBUG("Distance at beam %d/%d is %f [m] (goal lies %f [m] ahead)", i, num_readings, dist_to_obstacle, goal_.length() - 0.1);
 
             if (dist_to_obstacle < goal_.length() - 0.1 && dist_to_obstacle > 0.15) {
                 ROS_WARN("Obstacle detected at %f [m], whereas goal lies %f [m] ahead", dist_to_obstacle, goal_.length() - 0.1);
@@ -215,9 +215,9 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
 
     if (e_norm > 0) {
         v_wanted_norm = std::min(MAX_VEL, GAIN * sqrt(2 * e_norm * MAX_ACC));
-        ROS_INFO("Updated v_wanted_norm to %f", v_wanted_norm);
+        ROS_DEBUG("Updated v_wanted_norm to %f", v_wanted_norm);
     } else {
-        ROS_WARN("e_norm = %f, e_theta = %f", e_norm, e_theta);
+        ROS_DEBUG("e_norm = %f, e_theta = %f", e_norm, e_theta);
     }
 
     // make sure the wanted velocity has the direction towards the goal and the magnitude of v_wanted_norm
@@ -234,7 +234,7 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
     // check if the acceleration bound is violated
     tf::Vector3 vel_diff = vel_wanted - current_vel_trans;
     double acc_wanted = vel_diff.length() / dt;
-    ROS_INFO("vel_diff = (%f,%f,%f), acc_wanted = %f", vel_diff.getX(), vel_diff.getY(), vel_diff.getZ(), acc_wanted);
+    ROS_DEBUG("vel_diff = (%f,%f,%f), acc_wanted = %f", vel_diff.getX(), vel_diff.getY(), vel_diff.getZ(), acc_wanted);
     if (acc_wanted > MAX_ACC) {
         tf::vector3TFToMsg(current_vel_trans + vel_diff.normalized() * MAX_ACC * dt, cmd_vel.linear);
     } else {
