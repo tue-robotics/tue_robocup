@@ -12,8 +12,7 @@ names = ["john", "richard", "nancy", "alice", "bob"]
 name_index = 0
 
 #===============================TODOs===========================================
-# - Initial pose to x = -0.6
-# - Between detecting a person and recognizing them: asks them to look into my eyes
+# - head goal and base goal must correspond
 #===============================================================================
 
 #================================ Bugs/Issues ==================================
@@ -23,6 +22,66 @@ name_index = 0
 #========================== Other ideas for executive improvement ==============
 #
 #===============================================================================
+
+class StartChallengeRobust(smach.StateMachine):
+    """Initialize, wait for the door to be opened and drive inside"""
+
+    def __init__(self, robot, initial_pose, goto_query):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        assert hasattr(robot, "base")
+        assert hasattr(robot, "reasoner")
+        assert hasattr(robot, "speech")
+
+        with self:
+            smach.StateMachine.add( "INITIALIZE", 
+                                    utility_states.Initialize(robot), 
+                                    transitions={   "initialized"   :"INIT_POSE",
+                                                    "abort"         :"Aborted"})
+
+            smach.StateMachine.add('INIT_POSE',
+                                utility_states.Set_initial_pose(robot, initial_pose),
+                                transitions={   'done':'INSTRUCT_WAIT_FOR_DOOR',
+                                                'preempted':'Aborted',
+                                                'error':'Aborted'})
+
+            smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
+                                    human_interaction.Say(robot, [  "I will now wait until the door is opened", 
+                                                                    "Knockknock, may I please come in?"]),
+                                    transitions={   "spoken":"ASSESS_DOOR"})
+
+
+             # Start laser sensor that may change the state of the door if the door is open:
+            smach.StateMachine.add( "ASSESS_DOOR", 
+                                    perception.Read_laser(robot, "entrance_door"),
+                                    transitions={   "laser_read":"WAIT_FOR_DOOR"})       
+            
+            # define query for the question wether the door is open in the state WAIT_FOR_DOOR
+            dooropen_query = robot.reasoner.state("entrance_door","open")
+        
+            # Query if the door is open:
+            smach.StateMachine.add( "WAIT_FOR_DOOR", 
+                                    reasoning.Ask_query_true(robot, dooropen_query),
+                                    transitions={   "query_false":"ASSESS_DOOR",
+                                                    "query_true":"THROUGH_DOOR",
+                                                    "waiting":"DOOR_CLOSED",
+                                                    "preempted":"Aborted"})
+
+            # If the door is still closed after certain number of iterations, defined in Ask_query_true 
+            # in perception.py, amigo will speak and check again if the door is open
+            smach.StateMachine.add( "DOOR_CLOSED",
+                                    human_interaction.Say(robot, "Door is closed, please open the door"),
+                                    transitions={   "spoken":"ASSESS_DOOR"}) 
+
+            # If the door is open, amigo will say that it goes to the registration table
+            smach.StateMachine.add( "THROUGH_DOOR",
+                                    human_interaction.Say(robot, "Door is open, so I will start my task"),
+                                    transitions={   "spoken":"ENTER_ROOM"}) 
+
+            smach.StateMachine.add('ENTER_ROOM',
+                                    LookForMeetingpoint(robot),
+                                    transitions={   "found":"Done", 
+                                                    "not_found":"ENTER_ROOM", 
+                                                    "no_goal":"Failed"})
 
 class WaitForPerson(smach.State):
     def __init__(self, robot):
@@ -134,6 +193,45 @@ class TakeOrder(smach.State):
                                             sentence = "What would you like to drink?", 
                                             options = drink_options)
         return q_machine.execute()
+
+class LookForMeetingpoint(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        # Move to the next waypoint in the storage room
+
+        goal_answers = self.robot.reasoner.query(Conjunction(Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
+                                                 Compound("not", Compound("unreachable", "Waypoint"))))
+
+        if not goal_answers:
+            self.robot.speech.speak("I want to go to a meeting point, but I don't know where to go... I'm sorry!")
+            return "not_found"
+
+        # for now, take the first goal found
+        goal_answer = goal_answers[0]
+
+        self.robot.speech.speak("I'm coming to the meeting point!")
+
+        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+        waypoint_name = goal_answer["Waypoint"]
+
+        nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
+        nav_result = nav.execute()
+
+        if nav_result == "unreachable":  
+            self.robot.reasoner.query(Compound("assert", Compound("unreachable", waypoint_name)))                  
+            return "not_found"
+        elif nav_result == "preempted":
+            return "not_found"
+        elif nav_result == "arrived":
+            self.robot.speech.speak("I reached a meeting point")
+            self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
+            return "found"
+        else: #goal not defined
+            self.robot.speech.speak("I really don't know where to go, oops.")
+            return "no_goal"
 
 class LookForDrink(smach.State):
     def __init__(self, robot):
@@ -316,7 +414,7 @@ class CocktailParty(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
 
         # Queries:
-        query_meeting_point = Compound("waypoint", Compound("meeting_point", "Index"), Compound("pose_2d", "X", "Y", "Phi"))
+        query_meeting_point = Compound("waypoint", Compound("meeting_point", "Object"), Compound("pose_2d", "X", "Y", "Phi"))
         query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
         query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
@@ -326,12 +424,10 @@ class CocktailParty(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    StartChallenge(robot, "initial", query_meeting_point), 
+                                    StartChallengeRobust(robot, "initial", query_meeting_point), 
                                     transitions={   "Done":"ITERATE_PERSONS", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"SAY_FAILED"})
-
-
 
             persons_iterator = smach.Iterator(  outcomes=['served', 'not_served'], 
                                                 it=lambda: range(3),
@@ -404,7 +500,7 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you. Please take the drink from my hand", 
                                                         "I can't find you. I really don't like fluids, so please take the drink from my hand.",
-                                                        ["I could not find you. Please just take the drink from my hand"]),
+                                                        "I could not find you. Please just take the drink from my hand"]),
                                             transitions={   'spoken':'GOTO_INITIAL_FAIL' })
 
                     smach.StateMachine.add( 'HANDOVER_DRINK',
