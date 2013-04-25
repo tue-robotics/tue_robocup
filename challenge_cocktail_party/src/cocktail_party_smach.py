@@ -549,7 +549,7 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
                                             Say(robot, ["I could not find the drink you wanted.", 
                                                         "I looked really hard, but I couldn't find your drink."]),
-                                            transitions={   'spoken':'not_served' }) 
+                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' }) 
 
                     smach.StateMachine.add( 'PICKUP_DRINK',
                                             GrabMachine(robot.leftArm, robot, query_grabpoint),
