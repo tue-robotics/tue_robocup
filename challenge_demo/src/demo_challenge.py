@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-#import ipdb; ipdb.set_trace() #import sys; [item for item in sys.path if "tue_execution_pack" in item]
+#TODO: holding_pose, escorting to breakfast, asking for brekfast
 
 import roslib; roslib.load_manifest('challenge_demo')
 import rospy

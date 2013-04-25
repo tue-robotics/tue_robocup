@@ -6,7 +6,7 @@
 	<include file="$(find amigo_machine_files)/machines/amigo2.machine" />
 	<include file="$(find amigo_machine_files)/machines/amigo3.machine" />
 	
-	<include file="$(find tue_speech_recognition)/clean_up/clean_up_speech.launch" />
+	<include file="$(find speech_interpreter)/launch/start_tue_test_lab.launch" />
 	
 	<group if="$(optenv ROBOT_REAL false)">
 		<!-- REAL ROBOT -->

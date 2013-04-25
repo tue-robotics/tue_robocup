@@ -68,63 +68,22 @@ class Cleanup(smach.StateMachine):
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
         #Assert the current challenge.
         robot.reasoner.assertz(Compound("challenge", "clean_up"))
+
+
+        query_meeting_point = Compound("waypoint", Compound("meeting_point", "M"), Compound("pose_2d", "X", "Y", "Phi"))
         
         with self:
-                                  
-            smach.StateMachine.add('INITIALIZE',
-                                    states.Initialize(robot),
-                                    transitions={   'initialized':'ASK_OPEN_DOOR',
-                                                    'abort':'Aborted'})
 
-            smach.StateMachine.add("ASK_OPEN_DOOR", 
-                                    states.Say(robot, ["Knock, Knock, please open the door.", "May I please come in?", "I'm ready to clean up, please let me in so that I can get started."]),
-                                    transitions={   'spoken':'STATE_DOOR'})
-
-            ### UNDERSTANDING STATES COME FROM REGISTRATION. WAIT FOR DOOR STATES didn't work while testing. Loy, maybe have a look at you WAIT_FOR_DOOR states.
-
-            # Start laser sensor that may change the state of the door if the door is open:
-            smach.StateMachine.add('STATE_DOOR', 
-                                        states.Read_laser(robot, "entrance_door"),
-                                        transitions={'laser_read':'WAIT_FOR_DOOR'})       
-            
-            # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-            dooropen_query = Compound("state", "entrance_door", "open")
-            
-            # Query if the door is open:
-            smach.StateMachine.add('WAIT_FOR_DOOR', 
-                                        states.Ask_query_true(robot, dooropen_query),
-                                        transitions={   'query_false':'STATE_DOOR',
-                                                        'query_true':'THROUGH_DOOR',
-                                                        'waiting':'DOOR_CLOSED',
-                                                        'preempted':'Aborted'})
-
-            # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-            # in perception.py, amigo will speak and check again if the door is open
-            smach.StateMachine.add('DOOR_CLOSED',
-                                        states.Say(robot, 'Door is closed, please open the door'),
-                                        transitions={'spoken':'STATE_DOOR'}) 
-
-            # If the door is open, amigo will say that it goes to the meeting point
-            smach.StateMachine.add('THROUGH_DOOR',
-                                        states.Say(robot, "Thank you for letting me in, I'll see you at the meeting point"),
-                                        transitions={'spoken':'INIT_POSE'})
-
-            smach.StateMachine.add('INIT_POSE',
-                                    states.Set_initial_pose(robot, "initial"),
-                                    transitions={   'done':'ENTER_ROOM',
-                                                    'preempted':'Aborted',
-                                                    'error':'Aborted'})
-           
-            query_meeting_point = Compound("waypoint", "meeting_point", Compound("pose_2d", "X", "Y", "Phi"))
-            smach.StateMachine.add('ENTER_ROOM',
-                                    states.Navigate_to_queryoutcome(robot, query_meeting_point, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   "arrived":"ASK_CLEANUP",
-                                                    "unreachable":'CANNOT_GOTO_MEETINGPOINT',
-                                                    "preempted":'CANNOT_GOTO_MEETINGPOINT',
-                                                    "goal_not_defined":'CANNOT_GOTO_MEETINGPOINT'})
+            smach.StateMachine.add( "START_CHALLENGE",
+                                    states.StartChallenge(robot, "initial", query_meeting_point), 
+                                    transitions={   "Done":"ASK_CLEANUP", 
+                                                    "Aborted":"Aborted", 
+                                                    "Failed":"CANNOT_GOTO_MEETINGPOINT"})
 
             smach.StateMachine.add("CANNOT_GOTO_MEETINGPOINT", 
-                                    states.Say(robot, ["I can't find a way to the meeting point. Please teach me the correct position and clear the path to it"]),
+                                    states.Say(robot, [ "I can't find a way to the meeting point. Please teach me the correct position and clear the path to it", 
+                                                        "I couldn't even get to my first waypoint. May I try again?", 
+                                                        "This ended before I could get started, because my first waypoint is unreachable."]]),
                                     transitions={   'spoken':'Aborted'})
 
 
