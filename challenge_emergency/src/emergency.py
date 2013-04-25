@@ -158,6 +158,7 @@ class Looking_for_people(smach.State):
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
             rospy.loginfo("Face segmentation failed to start")
+            self.robot.speech.speak("I was not able to start face segmentation.")
             return "failed"
         rospy.sleep(10)
 
@@ -634,7 +635,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add("START_PEOPLE_DETECTION",
                                 Looking_for_people(robot),
                                 transitions={'done':'CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE',
-                                             'failed':'START_PEOPLE_DETECTION'})
+                                             'failed':'FAILED_PERCEPTION'})
+
+        # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
+        smach.StateMachine.add("FAILED_PERCEPTION",
+                                states.Say(robot,"I failed starting perception, maybe more luck at the next location."),
+                                transitions={'spoken':'FIND_PEOPLE'})
 
 
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE",
