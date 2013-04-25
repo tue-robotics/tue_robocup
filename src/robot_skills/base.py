@@ -344,7 +344,10 @@ class Base(object):
             rospy.logwarn("No costmap reset in case of 2D navigation")
             return False
         else:
-            self.reset_costmap_service()
+            try:
+                self.reset_costmap_service()
+            except:
+                rospy.logerr("Clear costmap service does not return correctly")
             return True
 
         
