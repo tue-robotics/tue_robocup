@@ -64,6 +64,7 @@ class Cleanup(smach.StateMachine):
         
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'magdeburg2013_knowledge.pl'))
         #Assert the current challenge.
         robot.reasoner.assertz(Compound("challenge", "clean_up"))
 
