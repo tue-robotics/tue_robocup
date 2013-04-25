@@ -83,7 +83,7 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add("CANNOT_GOTO_MEETINGPOINT", 
                                     states.Say(robot, [ "I can't find a way to the meeting point. Please teach me the correct position and clear the path to it", 
                                                         "I couldn't even get to my first waypoint. May I try again?", 
-                                                        "This ended before I could get started, because my first waypoint is unreachable."]]),
+                                                        "This ended before I could get started, because my first waypoint is unreachable."]),
                                     transitions={   'spoken':'Aborted'})
 
 

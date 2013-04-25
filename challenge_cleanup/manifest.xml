@@ -11,6 +11,8 @@
   <depend package="rospy"/>
   <depend package="robot_skills"/>
   <depend package="robot_smach_states"/>
+  <depend package="speech_interpreter"/>
+  <depend package="run_speech_files"/>
 
 </package>
 

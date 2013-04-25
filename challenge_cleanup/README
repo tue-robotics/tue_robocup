@@ -1,0 +1,6 @@
+Needs: 
+- 2/3D navigation. Check robot_skills for that. Switch between 2/d will be made automagically later.
+- roslaunch challenge_cleanup clean_up_aux.launch, which includes:
+- 	#roslaunch run_speech_files speech_magdeburg2013.launch #should wait for it to finish launching
+- 	#roslaunch speech_interpreter start.launch
+- rosrun challenge_cleanup clean_up.py
