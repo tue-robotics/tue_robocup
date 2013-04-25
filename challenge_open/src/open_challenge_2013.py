@@ -24,6 +24,7 @@ class Ask_goto(smach.State):
         self.get_goto_service = rospy.ServiceProxy('interpreter/get_open_challenge', GetOpenChallenge)
 
     def execute(self, userdata):
+        self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("open_challenge", "X"))))
 
         self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
@@ -47,8 +48,6 @@ class Ask_goto(smach.State):
         elif self.response.answer == "wrong_answer":
             self.robot.speech.speak("I am afraid i have not understood you correctly, so i will go to the dinner table")
             location = "dinner_table"
-
-        rospy.logerr("Location = {0}".format(location))
 
         self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("open_challenge", location))))
             
