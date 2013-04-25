@@ -10,7 +10,7 @@ import robot_smach_states as states
 from robot_skills.reasoner  import Conjunction, Compound
 from robot_smach_states.util.startup import startup
 
-from speech_interpreter.srv import GetCleanup
+from speech_interpreter.srv import GetInfo
 
 ##########################################
 ############## What to run: ##############
@@ -28,22 +28,20 @@ class Ask_cleanup(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
         self.robot = robot
-        self.preempted = False
-        self.rate = rate
-        self.get_cleanup_service = rospy.ServiceProxy('interpreter/get_cleanup', GetCleanup)
+        self.get_cleanup_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata):
 
-        self.response = self.get_cleanup_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
-        if self.response.answer == "cleanupthelivingroom":
+        if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             room = "living_room"
-        elif self.response.answer == "cleanupthekitchen":
+        elif self.response.answer == "livingroom":
+            room = "living_room"
+        elif self.response.answer == "diningroom":
+            room = "dining_room"
+        elif self.response.answer == "kitchen":
             room = "kitchen"
-        elif self.response.answer == "cleanupthelobby":
-            room = "lobby"
-        elif self.response.answer == "cleanupthebedroom":
-            room = "bedroom"
 
         self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("clean_up", room))))
             
