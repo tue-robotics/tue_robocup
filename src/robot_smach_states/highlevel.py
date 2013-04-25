@@ -156,26 +156,33 @@ class StartChallengeRobust(smach.StateMachine):
                                     GotoForMeetingpoint(robot, goto_query),
                                     transitions={   "found":"Done", 
                                                     "not_found":"ENTER_ROOM", 
-                                                    "no_goal":"Failed"})
+                                                    "no_goal":"Failed",
+                                                    "all_unreachable":"Failed"})
 
 class GotoForMeetingpoint(smach.State):
     def __init__(self, robot, goto_query):
-        smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found"])
+        smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
         self.robot = robot
         self.goto_query = goto_query
 
     def execute(self, userdata=None):
         # Move to the next waypoint in the storage room
 
-        goal_answers = self.robot.reasoner.query(Conjunction(self.goto_query,
+        import ipdb; ipdb.set_trace()
+
+        all_goal_answers = self.robot.reasoner.query(self.goto_query)
+        reachable_goal_answers = self.robot.reasoner.query(Conjunction(self.goto_query,
                                                  Compound("not", Compound("unreachable", "Waypoint"))))
 
-        if not goal_answers:
+        if all_goal_answers and not reachable_goal_answers:
+            self.robot.speech.speak("There are a couple of meeting points, but they are all unreachable. Sorry.")
+            return "all_unreachable"
+        if not reachable_goal_answers:
             self.robot.speech.speak("I want to go to a meeting point, but I don't know where to go... I'm sorry!")
             return "not_found"
 
         # for now, take the first goal found
-        goal_answer = goal_answers[0]
+        goal_answer = reachable_goal_answers[0]
 
         self.robot.speech.speak("I'm coming to the meeting point!")
 
