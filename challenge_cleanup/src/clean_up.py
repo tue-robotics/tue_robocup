@@ -56,6 +56,7 @@ class Cleanup(smach.StateMachine):
         robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
         robot.reasoner.query(Compound("retractall", Compound("goal", "X")))
         robot.reasoner.query(Compound("retractall", Compound("explored", "X")))
+        robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
         robot.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
         robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
         robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
@@ -67,12 +68,12 @@ class Cleanup(smach.StateMachine):
         robot.reasoner.assertz(Compound("challenge", "clean_up"))
 
 
-        query_meeting_point = Compound("waypoint", Compound("meeting_point", "M"), Compound("pose_2d", "X", "Y", "Phi"))
+        query_meeting_point = Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
         
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    states.StartChallengeRobust(robot, "initial", query_meeting_point), 
+                                    states.StartChallengeRobust(robot, "initial"), 
                                     transitions={   "Done":"ASK_CLEANUP", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"CANNOT_GOTO_MEETINGPOINT"})
