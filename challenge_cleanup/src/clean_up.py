@@ -47,7 +47,6 @@ class Ask_cleanup(smach.State):
             
         return "done"
 
-
 class Cleanup(smach.StateMachine):
 
     def __init__(self, robot):
@@ -73,7 +72,7 @@ class Cleanup(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    states.StartChallenge(robot, "initial", query_meeting_point), 
+                                    states.StartChallengeRobust(robot, "initial", query_meeting_point), 
                                     transitions={   "Done":"ASK_CLEANUP", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"CANNOT_GOTO_MEETINGPOINT"})
