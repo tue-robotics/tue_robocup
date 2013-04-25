@@ -155,6 +155,7 @@ class Looking_for_people(smach.State):
         rospy.loginfo("Starting face segmentation")
         self.response_start = self.start_perception_service("{modules:[face_segmentation]}")
         rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
+        rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
         if self.response_start.error_code == 0:
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
