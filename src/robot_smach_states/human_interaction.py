@@ -8,6 +8,8 @@ import util
 from std_msgs.msg import String
 import threading
 
+from speech_interpreter.srv import GetYesNo
+
 from utility_states import Wait_time, PlaySound
 
 TTS_waittime = 0.000 #TODO: Needs to be measured and be made as long as possible.
@@ -699,3 +701,20 @@ class YesNoQuestion(smach.StateMachine):
                 
             smach.StateMachine.add('YES_NO_CONCURRENT',
                                    yesno_cc)
+
+class Ask_yes_no(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["yes", "preempted", "no"])
+
+        self.robot = robot
+        self.preempted = False
+        self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
+
+    def execute(self, userdata=None):
+
+        self.response = self.get_yes_no_service(3 , 10) # 3 tries, each max 10 seconds
+
+        if self.response.answer == "true":
+            return "yes"
+        else:
+            return "no"

@@ -340,7 +340,7 @@ class Grab(smach.State):
                     rospy.logerr("failed to go to the arm position")
                     self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                     
-                    ''' Future: This should be a delta base on some visual feedback '''
+                    ''' Future: This should be a delta based on some visual feedback '''
             else:
                 self.robot.speech.speak("I can see both my hand and the object, now I shouldn't miss")
                 #import ipdb;ipdb.set_trace()
