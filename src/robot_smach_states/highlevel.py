@@ -101,7 +101,7 @@ class StartChallenge(smach.StateMachine):
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
-    def __init__(self, robot, initial_pose, goto_query):
+    def __init__(self, robot, initial_pose):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
         assert hasattr(robot, "reasoner")
@@ -153,26 +153,25 @@ class StartChallengeRobust(smach.StateMachine):
                                     transitions={   "spoken":"ENTER_ROOM"}) 
 
             smach.StateMachine.add('ENTER_ROOM',
-                                    GotoForMeetingpoint(robot, goto_query),
+                                    GotoForMeetingpoint(robot),
                                     transitions={   "found":"Done", 
                                                     "not_found":"ENTER_ROOM", 
                                                     "no_goal":"Failed",
                                                     "all_unreachable":"Failed"})
 
 class GotoForMeetingpoint(smach.State):
-    def __init__(self, robot, goto_query):
+    def __init__(self, robot):
         smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
         self.robot = robot
-        self.goto_query = goto_query
+        self.goto_query = Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
 
     def execute(self, userdata=None):
         # Move to the next waypoint in the storage room
-
-        #import ipdb; ipdb.set_trace()
-
         all_goal_answers = self.robot.reasoner.query(self.goto_query)
-        reachable_goal_answers = self.robot.reasoner.query(Conjunction(self.goto_query,
-                                                 Compound("not", Compound("unreachable", "Waypoint"))))
+        reachable_goal_answers = self.robot.reasoner.query(
+                                    Conjunction(
+                                        Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
+                                        Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint")))))
 
         if all_goal_answers and not reachable_goal_answers:
             self.robot.speech.speak("There are a couple of meeting points, but they are all unreachable. Sorry.")
@@ -192,8 +191,10 @@ class GotoForMeetingpoint(smach.State):
         nav = navigation.NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
 
-        if nav_result == "unreachable":  
-            self.robot.reasoner.query(Compound("assert", Compound("unreachable", waypoint_name)))                  
+        #import ipdb; ipdb.set_trace()
+
+        if nav_result == "unreachable":  #Compound("meeting_point", waypoint_name)
+            self.robot.reasoner.query(Compound("assert", Compound("unreachable", Compound("meeting_point", waypoint_name))))
             return "not_found"
         elif nav_result == "preempted":
             return "not_found"
