@@ -231,7 +231,7 @@ class Navigate_to_queryoutcome(Navigate_abstract):
         # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
         # is a mapping of variable to a constant, like a string or number
         answers = self.robot.reasoner.query(self.queryTerm)
-
+	rospy.loginfo("answers for {0}: {1}".format(self.queryTerm, answers))
         if not answers:
             return None
             rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
