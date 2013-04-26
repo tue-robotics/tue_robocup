@@ -679,11 +679,13 @@ class LookForObjectsAtROI(smach.State):
             
         # Toggle perception on
 
+        rospy.sleep(3.0)
+
         rospy.loginfo("Start object recognition")
         result = self.robot.perception.toggle_recognition(objects=True)
 
         # Let the object recognition run for a certain period
-        rospy.sleep(5.0)
+        rospy.sleep(4.0)
 
         rospy.loginfo("Stop object recognition")
 
