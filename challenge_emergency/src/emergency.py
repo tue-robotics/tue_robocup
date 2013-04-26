@@ -5,6 +5,8 @@ import smach
 import math
 import cv
 import roslib
+import geometry_msgs.msg
+
 #import sys
 import roslib.packages as p
 
@@ -76,6 +78,11 @@ from psi import *
 ##### STATEMACHINE #####
 ########################
 
+
+
+
+
+
 class turn_Around_z_axis(smach.State):
     def __init__(self, robot, rotation):
         """
@@ -116,31 +123,89 @@ class Look_for_people_emergency(smach.State):
 
     def execute(self, userdata=None):
         # Move to the next waypoint in the storage room
+        self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
 
-        goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("apartment", "W")),
+        navigate_apartment = Conjunction(  Compound("=", "Waypoint", Compound("apartment", "W")),
                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
                                                  Compound("not", Compound("visited", "Waypoint")),
-                                                 Compound("not", Compound("unreachable", "Waypoint"))))             # I do not use not_visited and not_unreachable since these are no roi's
+                                                 Compound("not", Compound("unreachable", "Waypoint")))
+
+        goal_answers = self.robot.reasoner.query(navigate_apartment)             # I do not use not_visited and not_unreachable since these are no roi's
 
         if not goal_answers:
-            return "all_matches_tried"
+            return "all_matches_tried"                   
 
-        # for now, take the first goal found : TODO, sort list on shortest distance!!
-        goal_answer = goal_answers[0]
-
-        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
-        waypoint_name = goal_answer["Waypoint"]
-
-        nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
+        #nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
+        nav = Navigate_to_queryoutcome_emergency(self.robot, navigate_apartment, X="X", Y="Y", Phi="Phi")
         nav_result = nav.execute()
 
-        if nav_result == "unreachable" or nav_result == "preempted":  
-            self.robot.reasoner.query(Compound("assert", Compound("unreachable", waypoint_name)))            
-            return "unreachable"
+        if nav_result == "unreachable" or nav_result == "preempted":
 
-        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))                       
+            self.robot.speech.speak("My first attempt to reach a location failed, I'll give it another try.")
+            nav_result2 = nav.execute()
+
+            if nav_result2 == "unreachable" or nav_result2 == "preempted":
+                self.robot.reasoner.query(Conjunction(Compound("current_exploration_target", "Waypoint_name"),
+                                                      Compound("assert", Compound("unreachable", "Waypoint_name"))))
+                return "unreachable"
+            elif nav_result2 == "goal_not_defined":
+                rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
+                return "unreachable"
+
+        elif nav_result == "goal_not_defined":
+            rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
+            return "unreachable"
+        
+        self.robot.reasoner.query(Conjunction(Compound("current_exploration_target", "Waypoint_name"),
+                                              Compound("assert", Compound("visited", "Waypoint_name"))))
 
         return "visited"
+
+
+class Navigate_to_queryoutcome_emergency(states.Navigate_abstract):
+    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
+    
+    The state can take some parameters that specify which keys of the dictionary to use for which data.
+    By default, the binding-key "X" refers to the x-part of the goal, etc. 
+    
+    Optionally, also a sorter can be given that sorts the bindings according to some measure.
+    """
+    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
+        states.Navigate_abstract.__init__(self, robot)
+
+        assert isinstance(query, Term)
+
+        self.queryTerm = query
+        self.X, self.Y, self.Phi = X, Y, Phi
+        
+    def get_goal(self, userdata):
+        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
+        
+        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+        # is a mapping of variable to a constant, like a string or number
+        answers = self.robot.reasoner.query(self.queryTerm)
+
+        if not answers:
+            return None
+            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
+        else:
+            chosen_answer = answers[0]
+            #From the summarized answer, 
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Phi])) for answer in answers]
+
+            x,y,phi = possible_locations[0]
+            
+            goal = possible_locations[0]
+            rospy.loginfo("goal = {0}".format(goal))
+            waypoint_name = chosen_answer["Waypoint"]
+
+            
+            self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", waypoint_name))) 
+
+            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
+            return self.robot.base.point(x,y), self.robot.base.orient(phi)
 
 
 class Looking_for_people(smach.State):
@@ -150,7 +215,10 @@ class Looking_for_people(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-
+        rospy.loginfo("reset_head")
+        self.robot.head.reset_position()
+        rospy.sleep(1.5)
+        
         rospy.loginfo("Starting face segmentation")
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
         rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
@@ -161,7 +229,7 @@ class Looking_for_people(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return "failed"
-        rospy.sleep(10)
+        rospy.sleep(3)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -233,9 +301,9 @@ class Check_persons_found(smach.State):
         if not persons_answers:
             return "no_person_found"
         
-        if persons_answers[1]:
+        if len(persons_answers) > 1:
             self.robot.speech.speak("I see some people!")
-        elif not persons_answers[1]:
+        else:
             self.robot.speech.speak("I found someone!")
 
         # def distance_to_base(xyphi_tup):
@@ -270,22 +338,91 @@ class Check_persons_found(smach.State):
         # rospy.loginfo("x = {0}, y = {1}, phi = {2}".format(x, y, phi))
 
 
-        nav = states.NavigateGeneric(self.robot, lookat_query=person_query) 
+        #nav = states.NavigateGeneric(self.robot, lookat_query=person_query) 
         #nav = states.NavigateGeneric(self.robot, lookat_query=person_query, goal_sorter=distance_to_base) 
+
+        nav = Navigate_to_queryoutcome_point_emergency(self.robot, person_query, X="X", Y="Y", Z="Z")
+
         nav_result = nav.execute()
 
-        if nav_result == "unreachable" or nav_result == "preempted":  
-            self.robot.reasoner.query(Compound("assert", Compound("registered", person_id)))  
-            self.robot.speech.speak("Although I was not able to reach the person I want to speak, I will still ask you some questions.")          
-            return "person_unreachable"
+        if nav_result == "unreachable" or nav_result == "preempted":
+            self.robot.speech.speak("My first attempt to reach a location failed, I'll give it another try.")
+            nav_result2 = nav.execute()
+
+            if nav_result2 == "unreachable" or nav_result2 == "preempted":
+                self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
+                                                      Compound("assert", Compound("registered", "ObjectID"))))
+                return "person_unreachable"
+            elif nav_result2 == "goal_not_defined":
+                rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
+                return "no_person_found"
+
         elif nav_result == "goal_not_defined":
             rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
             return "no_person_found"
 
-        self.robot.reasoner.query(Compound("assert", Compound("registered", person_id)))                       
+        self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
+                                              Compound("assert", Compound("registered", "ObjectID"))))                 
 
         return "person_found"
 
+
+class Navigate_to_queryoutcome_point_emergency(states.Navigate_abstract):
+    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
+    
+    The state can take some parameters that specify which keys of the dictionary to use for which data.
+    By default, the binding-key "X" refers to the x-part of the goal, etc. 
+    
+    Optionally, also a sorter can be given that sorts the bindings according to some measure.
+    """
+    def __init__(self, robot, query, X="X", Y="Y", Z="Z"):
+        states.Navigate_abstract.__init__(self, robot)
+
+        assert isinstance(query, Term)
+
+        self.queryTerm = query
+        self.X, self.Y, self.Z = X, Y, Z
+        
+    def get_goal(self, userdata):
+        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
+        
+        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X"))) 
+        
+        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+        # is a mapping of variable to a constant, like a string or number
+        answers = self.robot.reasoner.query(self.queryTerm)
+
+        if not answers:
+            return None
+            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
+        else:
+            chosen_answer = answers[0]
+            #From the summarized answer, 
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Z])) for answer in answers]
+
+            x,y,z = possible_locations[0]
+            
+            goal = possible_locations[0]
+            rospy.loginfo("goal = {0}".format(goal))
+            waypoint_name = chosen_answer["ObjectID"]
+
+            
+            self.robot.reasoner.query(Compound("assert", Compound("current_person", waypoint_name))) 
+
+            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,z)))
+
+            look_point = geometry_msgs.msg.PointStamped()
+            look_point.point = self.robot.base.point(x,y)
+            pose = states.util.msg_constructors.Quaternion(z=1.0)
+
+            base_pose_for_point = self.robot.base.get_base_pose(look_point, 0.7, 0.0001)
+            if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
+                rospy.logerr("IK returned empty pose.")
+                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+
+            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
 
 
 class Ask_yes_no(smach.State):
@@ -451,9 +588,9 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized' : 'SAY_START_PEOPLE_DETECTION',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
+                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
                                                     'abort'       : 'Aborted'})
-    
+        
         smach.StateMachine.add('AT_FRONT_OF_DOOR',
                                     states.Say(robot, 'I will now check if the door is open or not'),
                                     transitions={   'spoken':'STATE_DOOR'}) 
@@ -470,7 +607,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('WAIT_FOR_DOOR', 
                                     states.Ask_query_true(robot, dooropen_query),
                                     transitions={   'query_false':'STATE_DOOR',
-                                                    'query_true':'THROUGH_DOOR',
+                                                    'query_true':'INIT_POSE',
                                                     'waiting':'DOOR_CLOSED',
                                                     'preempted':'INIT_POSE'})
 
@@ -483,17 +620,28 @@ def setup_statemachine(robot):
         ######################################################
         ############ ENTER ROOM AND GO TO KITCHEN ############
         ######################################################
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('THROUGH_DOOR',
-                                    states.Say(robot, 'Door is open, so I will go to the kitchen'),
-                                    transitions={'spoken':'INIT_POSE'}) 
 
         # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
         smach.StateMachine.add('INIT_POSE',
                                     states.Set_initial_pose(robot, 'initial'),
-                                    transitions={   'done':'FIND_PEOPLE',
+                                    transitions={   'done':'ENTER_ROOM',
                                                     'preempted':'WAIT_FOR_DOOR',
                                                     'error':'WAIT_FOR_DOOR'})
+
+        # # If the door is open, amigo will say that it goes to the registration table
+        # smach.StateMachine.add('THROUGH_DOOR',
+        #                             states.Say(robot, 'Door is open, so I will enter the room.'),
+        #                             transitions={'spoken':'ENTER_ROOM'}) 
+
+        # Enter the arena with force drive as back-up
+        smach.StateMachine.add('ENTER_ROOM',
+                                    states.EnterArena(robot),
+                                    transitions={   "done":"ENTERED_ROOM" })
+
+        # If the door is open, amigo will say that it goes to the registration table
+        smach.StateMachine.add('ENTERED_ROOM',
+                                    states.Say(robot, 'Now I will go to the kitchen'),
+                                    transitions={'spoken':'GO_TO_KITCHEN'}) 
 
         query_kitchen_1 = Compound("waypoint", "kitchen_1", Compound("pose_2d", "X", "Y", "Phi"))
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
@@ -517,6 +665,7 @@ def setup_statemachine(robot):
                                                     'preempted':'FAIL_BUT_START_SEARCH', 
                                                     'unreachable':'FAIL_BUT_START_SEARCH', 
                                                     'goal_not_defined':'FAIL_BUT_START_SEARCH'})
+
 
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('FAIL_BUT_START_SEARCH',
@@ -608,7 +757,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("FIND_PEOPLE",
                                 Look_for_people_emergency(robot),
-                                transitions={   'visited':'START_PEOPLE_DETECTION',
+                                transitions={   'visited':'SAY_START_PEOPLE_DETECTION',
                                                 'unreachable':'FAILED_DRIVING_TO_LOCATION',
                                                 'all_matches_tried':'SAY_GO_TO_EXIT'})
 
@@ -619,22 +768,8 @@ def setup_statemachine(robot):
 
         ############ DRIVE TO PREDEFINED LOCATIONS ###########
         
-        '''
-        TODO BUILD IN PERCEPTION!!!
-
-        - state: say I will now start looking for people
-        - state: start perception (node of Jos using top laser scanner)
-        - state: query people in world model
-        - IF people_found
-            - state: say found people, drive to it now
-            - state: drive to location and go to state DETECT PEOPLE
-        - ELSE 
-            - state: go to state FIND_PEOPLE for next location.
-        - CHECK FOR UNREGISTERED PEOPLE!
-        '''
 
         # Start people detection
-        # TODO ACTUALLY USE PEOPLE DETECTION
         smach.StateMachine.add("SAY_START_PEOPLE_DETECTION",
                                 states.Say(robot,"I will start my perception"),
                                 transitions={'spoken':'START_PEOPLE_DETECTION'})
@@ -653,7 +788,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE",
                                 Check_persons_found(robot),
                                 transitions={'no_person_found':'NO_PERSON_FOUND',
-                                             'person_unreachable':'DETECT_PEOPLE',
+                                             'person_unreachable':'SAY_PERSON_UNREACHABLE',
                                              'person_found':'DETECT_PEOPLE'})
 
         smach.StateMachine.add("NO_PERSON_FOUND",
@@ -663,8 +798,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_MORE_UNREGISTERED_PEOPLE",
                                 Check_persons_found(robot),
                                 transitions={'no_person_found':'SAY_FIND_PEOPLE',
-                                             'person_unreachable':'DETECT_PEOPLE',
+                                             'person_unreachable':'SAY_PERSON_UNREACHABLE',
                                              'person_found':'DETECT_PEOPLE'})
+
+        smach.StateMachine.add("SAY_PERSON_UNREACHABLE",
+                                states.Say(robot,["I failed going to the desired person, I will ask my questions from here.", "Although I was not able to reach the person I want to speak, I will still ask you some questions."]),
+                                transitions={'spoken':'DETECT_PEOPLE'})
 
         ############### GET INFO STATUS PERSON ###############
 
@@ -701,7 +840,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
                                     Register(robot, 1),                             #input 1 (person is not oke)
-                                    transitions={'finished':'SAY_REGISTER_NOT_OKAY_CALM'})
+                                    transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_NOT_OKAY'})
+
+        smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_NOT_OKAY',
+                                    Run_pdf_creator(robot),
+                                    transitions={'done':'SAY_REGISTER_NOT_OKAY_CALM',
+                                                 'failed':'SAY_REGISTER_NOT_OKAY_CALM'})
 
         smach.StateMachine.add('SAY_REGISTER_NOT_OKAY_CALM',
                                     states.Say(robot, 'Please stay calm and help will arrive very soon.'),
@@ -714,7 +858,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES',
                                     Register(robot, 0),                            #input 0 (person is oke)
-                                    transitions={'finished':'SAY_MOVE_TO_EXIT'})
+                                    transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_BY_THEMSELVES'})
+
+        smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_BY_THEMSELVES',
+                                    Run_pdf_creator(robot),
+                                    transitions={'done':'SAY_MOVE_TO_EXIT',
+                                                 'failed':'SAY_MOVE_TO_EXIT'})
 
         smach.StateMachine.add('SAY_MOVE_TO_EXIT',
                                     states.Say(robot, 'Okay, please go to the exit and leave the room'),
@@ -727,7 +876,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
                                     Register(robot, 0),                            #input 0 (person is oke)
-                                    transitions={'finished':'MOVE_ARM_BACK_SAY'})
+                                    transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})
+
+        smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
+                                    Run_pdf_creator(robot),
+                                    transitions={'done':'MOVE_ARM_BACK_SAY',
+                                                 'failed':'MOVE_ARM_BACK_SAY'})
         
         ################### GUIDE TO EXIT ####################
 
@@ -749,7 +903,7 @@ def setup_statemachine(robot):
 
         # Person is ok and needs assistance to exit
         smach.StateMachine.add('SAY_FOLLOW_ME',
-                                    states.Say(robot, 'Please hold on to one of my arms and I will drive slowely to the exit.'),
+                                    states.Say(robot, 'Please hold on to one of my arms and I will drive to the exit.'),
                                     transitions={'spoken':'GO_TO_FRONT_OF_EXIT'})
 
 
@@ -801,7 +955,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.Navigate_named(robot, "test_exit"),
+                                    states.Navigate_named(robot, "exit"),
                                     transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
                                                     'preempted':'CLEAR_PATH_TO_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_EXIT', 
@@ -814,7 +968,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
-                                    states.Navigate_named(robot, "test_exit"),
+                                    states.Navigate_named(robot, "exit_1"),
                                     transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
                                                     'preempted':'FAILED_GO_TO_EXIT', 
                                                     'unreachable':'FAILED_GO_TO_EXIT', 
