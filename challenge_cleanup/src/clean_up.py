@@ -132,7 +132,7 @@ class Cleanup(smach.StateMachine):
                                                        )    
 
                 answers = robot.reasoner.query(query_exploration_target)
-		rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target, answers)
+                rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target, answers)
                 # First time: 
                 # [   {'Y': 1.351, 'X': 4.952, 'Phi': 1.57, 'Room': living_room, 'Target': cabinet_expedit_1}, 
                 #     {'Y': -1.598, 'X': 6.058, 'Phi': 3.113, 'Room': living_room, 'Target': bed_1}]
