@@ -95,6 +95,11 @@ class Base(object):
         self.base_pose = None
         self.obstacle_position = None
         self.use_2d = use_2d # Necessary to switch between 2D and 3D
+
+        # By Sjoerd, ask him:
+        self.path_blocked = False
+        self.reached_blocked_timeout = False
+        self.last_replan_timeout = 0
                
     def __planner_callback(self, msg):
         with self._lock:
@@ -149,6 +154,18 @@ class Base(object):
 
     @util.concurrent_util.synchronized(_lock)
     def movebase_feedback(self, feedback, result=None):
+
+        if self.replan_timeout > 0:
+            self.path_blocked = True
+
+            if self.replan_timeout < 1.0:
+                self.reached_blocked_timeout = True
+            else:
+                self.reached_blocked_timeout = False
+
+        else:
+            self.path_blocked = False
+
         self.poses_to_goal          = feedback.nr_poses_to_goal
         self.base_pose              = feedback.base_position
         self.obstacle_position      = feedback.obstacle_position
