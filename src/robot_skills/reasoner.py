@@ -175,7 +175,20 @@ class Reasoner(object):
                 result = self.sv_object_in_gripper(request)
         except:
             pass
-            
+
+    def set_time_marker(self, name):
+        self.query(Compound("retractall", Compound("time_marker", name, "X")))
+        self.query(Compound("assert", Compound("time_marker", name, Constant(rospy.Time.now().secs))))
+
+    # returns rospy.Duration
+    def get_time_since(self, name):
+        res = self.query(Compound("time_marker", name, "Time"))
+        if not res:
+            rospy.logerr("No time marker found with name '" + str(name) + "'")
+            return None
+        
+        t_secs = float(res[0]["Time"])
+        return rospy.Time.now() - rospy.Time(t_secs)            
 
 # class QueryBuilder(type):
 #     """The QueryBuilder provides and easy interface for defining predicates for thr reasoner. 
