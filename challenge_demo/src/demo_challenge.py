@@ -32,7 +32,7 @@ class TalkToCook(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'REPORT', 
-                                    states.Say(robot, ["Hi cook, I will wake the patients, escort them to the breakfast and teke their breakfast orders. I'll be back!"]), 
+                                    states.Say(robot, ["Hi cook, I will wake the patients, escort them to the breakfast and take their breakfast orders. I'll be back!"]), 
                                     transitions={   'spoken':"Done"})
 
 class EscortToBreakfast(smach.StateMachine):
@@ -177,10 +177,19 @@ class DemoChallenge(smach.StateMachine):
                     return "done"
             
             smach.StateMachine.add('ASSERT_NEW_PATIENT_POSITION', smach.CBState(assert_new_patient_pos),
-                                    transitions={   'asserted':'ASK_WHAT_FOR_BREAKFAST',
-                                                    'done':'ASK_WHAT_FOR_BREAKFAST'})
+                                    transitions={   'asserted':'SAY_SIT_DOWN',
+                                                    'done':'SAY_SIT_DOWN'})
 
-            #TODO: turn around befor taking the order
+            smach.StateMachine.add( 'SAY_SIT_DOWN', 
+                                    states.Say(robot, ["Please take a seat", "Please sit down"]), 
+                                    transitions={   'spoken':"LOOK_DOWN"})
+
+            @smach.cb_interface(outcomes=['done'])
+            def look_down(userdata):
+                robot.head.look_down()
+                return "done"
+            smach.StateMachine.add('LOOK_DOWN', smach.CBState(look_down),
+                                    transitions={   'done':'ASK_WHAT_FOR_BREAKFAST'})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
                                     states.Timedout_QuestionMachine(
@@ -194,10 +203,19 @@ class DemoChallenge(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_KITCHEN_TO_REPORT_ORDER', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
-                                    transitions={   "arrived":"REPORT_BREAKFAST",
+                                    transitions={   "arrived":"HOLDUP_ARMS_FOR_TRAY_LEFT",
                                                     "unreachable":"Aborted",
                                                     "preempted":"Aborted",
                                                     "goal_not_defined":"Aborted"})
+            
+            smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_LEFT', 
+                                    states.ArmToJointPos(robot, robot.leftArm, HOLD_TRAY_POSE),
+                                    transitions={   'done':"HOLDUP_ARMS_FOR_TRAY_RIGHT",
+                                                    'failed':"HOLDUP_ARMS_FOR_TRAY_RIGHT"})
+            smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_RIGHT', 
+                                    states.ArmToJointPos(robot, robot.rightArm, HOLD_TRAY_POSE),
+                                    transitions={   'done':"REPORT_BREAKFAST",
+                                                    'failed':"REPORT_BREAKFAST"})
 
             def generate_report_sentence(*args,**kwargs):
                 try:
@@ -210,18 +228,7 @@ class DemoChallenge(smach.StateMachine):
                     return "I forgot what whatsisname again wants for breakfast"
             smach.StateMachine.add('REPORT_BREAKFAST',
                                     states.Say_generated(robot, sentence_creator=generate_report_sentence),
-                                    transitions={ 'spoken':'HOLDUP_ARMS_FOR_TRAY_LEFT' })
-
-            smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_LEFT', 
-                                    states.ArmToJointPos(robot, robot.leftArm, HOLD_TRAY_POSE),
-                                    transitions={   'done':"HOLDUP_ARMS_FOR_TRAY_RIGHT",
-                                                    'failed':"HOLDUP_ARMS_FOR_TRAY_RIGHT"})
-            smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_RIGHT', 
-                                    states.ArmToJointPos(robot, robot.rightArm, HOLD_TRAY_POSE),
-                                    transitions={   'done':"CARRY_TO_PATIENT",
-                                                    'failed':"CARRY_TO_PATIENT"})
-
-            #TODO: wait  sec before driving again
+                                    transitions={ 'spoken':'CARRY_TO_PATIENT' })
 
             smach.StateMachine.add( 'CARRY_TO_PATIENT', 
                                     states.NavigateGeneric(robot, goal_query=patient_destination_query), 
