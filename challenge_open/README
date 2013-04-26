@@ -17,10 +17,24 @@ amigo3:
 amigo3:
 
     roslaunch speech_interpreter start_magdeburg2013.launch
+    
+amigo3:
+
+    alsamixer
+        Mic Boost -> 100
+        Capture -> 44
+        Digital -> 29
+        Mic on mute!!! (Should be muted already)
+        
+    rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
+
+    say test
 
 amigo3:
 
     rosrun challenge_open open_challenge_2013.py (if this keeps waiting for a transform, please restart)
+    
+
 
 Sentences to say:
 - gotothelounge
