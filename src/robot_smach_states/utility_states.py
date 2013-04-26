@@ -456,3 +456,25 @@ class PlaySound(smach.State):
             return "played"
         except:
             return "error"
+
+class SetTimeMarker(smach.State,):
+    def __init__(self, robot, name):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.name = name
+
+    def execute(self, userdata=None):
+        self.robot.reasoner.set_time_marker(self.name)
+
+class CheckTime(smach.State):
+    def __init__(self, robot, name, max_duration):
+        smach.State.__init__(self, outcomes=["ok", "timeout"])
+        self.robot = robot
+        self.max_duration = max_duration
+        self.name = name
+
+    def execute(self, userdata=None):
+        if self.robot.reasoner.get_time_since(self.name) > self.max_duration:
+            return "timout"
+        else:
+            return "ok"

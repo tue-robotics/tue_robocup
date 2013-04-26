@@ -459,8 +459,8 @@ class Learn_Person_SM(smach.StateMachine):
             #                        transitions={'spoken':'learning_failed'})
 
 class GetObject(smach.StateMachine):
-    def __init__(self, robot, roi_query, object_query, object_identifier="Object"):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+    def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
         self.roi_query = roi_query
@@ -471,6 +471,10 @@ class GetObject(smach.StateMachine):
         assert hasattr(robot, "perception")
 
         with self:
+
+            smach.StateMachine.add('SET_TIME_MARKER',
+                                    utility_states.SetTimeMarker(robot, "get_object_start"),
+                                    transitions={   'done':'CHECK_OBJECT_QUERY' })
  
             smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            # TODO ERIK: Test this state. Not yet done
                                     Check_object_found_before(robot, self.object_query),
@@ -485,8 +489,8 @@ class GetObject(smach.StateMachine):
                                     transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable':'Failed',
                                                     'preempted':'Aborted',
-                                                    'goal_not_defined':'Failed',
-                                                    'all_matches_tried':'Failed'})
+                                                    'goal_not_defined':'Failed',      # End State
+                                                    'all_matches_tried':'Failed'})    # End State
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     human_interaction.Say(robot, ["Lets see what I can find here."]),
@@ -496,8 +500,13 @@ class GetObject(smach.StateMachine):
                                     perception.LookForObjectsAtROI(robot, self.roi_query, self.object_query),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
-                                                    'no_object_found':'DRIVE_TO_SEARCHPOS',
-                                                    'abort':'Aborted'})
+                                                    'no_object_found':'CHECK_TIME',
+                                                    'abort':'Aborted'})      # End State
+
+            smach.StateMachine.add('CHECK_TIME',
+                                    utility_states.CheckTime(robot, "get_object_start", max_duration),
+                                    transitions={   'ok':'DRIVE_TO_SEARCHPOS',
+                                                    'timeout':'Timeout' })   # End State
                                                     
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     human_interaction.Say(robot, ["I have found something"]),
@@ -512,7 +521,9 @@ class GetObject(smach.StateMachine):
             smach.StateMachine.add('GRAB',
                                     manipulation.GrabMachine(robot.leftArm, robot, query_grabpoint),
                                     transitions={   'succeeded':'Done',
-                                                    'failed':'Failed' })
+                                                    'failed':'Failed' })   # End State
+
+
         
 class Say_and_Navigate(smach.StateMachine):
     ## This class gives the ability to say something and at the same time start to navigate to the desired location.
