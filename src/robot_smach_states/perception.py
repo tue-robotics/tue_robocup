@@ -673,7 +673,7 @@ class LookForObjectsAtROI(smach.State):
             
         except ValueError, ve:
             rospy.loginfo("lookat_answers = {0}".format(lookat_answers))
-            rospy.loginfo("Further processing yielded", ve)
+            rospy.loginfo("Further processing yielded {0}".format(ve))
             self.robot.speech.speak("I did not find an object.")
             return 'no_object_found'
             
