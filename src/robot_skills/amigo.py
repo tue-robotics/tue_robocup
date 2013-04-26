@@ -231,6 +231,7 @@ if __name__ == "__main__":
         target = amigo.base.point(x,y,z, stamped=True)
         ik_pose = amigo.base.get_base_pose(target, xoffset, yoffset)
         amigo.base.send_goal(ik_pose.pose.position, ik_pose.pose.orientation)
+	amigo.head.send_goal(amigo.head.point(x,y,z))
     
     r = amigo.reasoner
     open_door   = lambda: r.assertz(r.state("door1", "open"))
