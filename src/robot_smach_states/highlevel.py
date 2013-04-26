@@ -156,8 +156,12 @@ class StartChallengeRobust(smach.StateMachine):
                                     GotoForMeetingpoint(robot),
                                     transitions={   "found":"Done", 
                                                     "not_found":"ENTER_ROOM", 
-                                                    "no_goal":"Failed",
-                                                    "all_unreachable":"Failed"})
+                                                    "no_goal":"FORCE_DRIVE_THROUGH_DOOR",
+                                                    "all_unreachable":"FORCE_DRIVE_THROUGH_DOOR"})
+
+            smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
+                                    ForceDrive(robot),
+                                    transitions={   "done":"Done"})
 
 class GotoForMeetingpoint(smach.State):
     def __init__(self, robot):
@@ -166,19 +170,21 @@ class GotoForMeetingpoint(smach.State):
         self.goto_query = Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
 
     def execute(self, userdata=None):
-        # Move to the next waypoint in the storage room
-        all_goal_answers = self.robot.reasoner.query(self.goto_query)
+        # Move to the next waypoint in the storage room        
         reachable_goal_answers = self.robot.reasoner.query(
                                     Conjunction(
                                         Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint")))))
 
-        if all_goal_answers and not reachable_goal_answers:
-            self.robot.speech.speak("There are a couple of meeting points, but they are all unreachable. Sorry.")
-            return "all_unreachable"
         if not reachable_goal_answers:
-            self.robot.speech.speak("I want to go to a meeting point, but I don't know where to go... I'm sorry!")
-            return "not_found"
+            # check if there are any meeting points (someone may have forgotten to specify them)            
+            all_goal_answers = self.robot.reasoner.query(self.goto_query)
+            if not all_goal_answers:
+                self.robot.speech.speak("No-one has specified meeting locations. Please do so in the locations file!")
+                return "all_unreachable"
+            else:
+                self.robot.speech.speak("There are a couple of meeting points, but they are all unreachable. Sorry.")
+                return "all_unreachable"
 
         # for now, take the first goal found
         goal_answer = reachable_goal_answers[0]
@@ -205,6 +211,16 @@ class GotoForMeetingpoint(smach.State):
         else: #goal not defined
             self.robot.speech.speak("I really don't know where to go, oops.")
             return "no_goal"
+
+class ForceDrive(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.")
+        self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
+        return "done"
 
 class Learn_Person_SM(smach.StateMachine):
     def __init__(self, robot, testmode=False):
