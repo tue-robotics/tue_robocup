@@ -8,6 +8,6 @@
 
   <node pkg="virtual_cam" type="save" args="SERVICE" name="virtual_cam" /> 
 
-  <include file="$(find run_speech_files)/output_folder/magdeburg2013/speech_magdeburg2013.launch" />
+<!--  <include file="$(find run_speech_files)/output_folder/magdeburg2013/speech_magdeburg2013.launch" /> -->
   
 </launch>	

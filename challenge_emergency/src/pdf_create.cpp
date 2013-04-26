@@ -40,6 +40,11 @@ error_handler  (HPDF_STATUS   error_no,
 using namespace std;
 ros::ServiceServer startupSrv_;
 
+const double scaledWidth = 1/0.025;
+const double scaledHeight = 1/0.025;
+const int originOffsetX = 41;
+const int originOffsetY = 100;
+
 int createPDF()
 {
     ros::NodeHandle nh("~");
@@ -130,7 +135,7 @@ int createPDF()
     //! Find USB name
     DIR *dir;
     struct dirent *ent;
-    string usb_dir;
+    string usb_dir, img_path;
     if ((dir = opendir ("/media/")) != NULL) {
         /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
@@ -139,6 +144,8 @@ int createPDF()
             {
                 printf("%s\n", ent->d_name);
                 usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
+                img_path = "/media/" + string(ent->d_name) + "/";
+
             }
         }
         closedir (dir);
@@ -231,6 +238,15 @@ int createPDF()
     HPDF_Page_ShowText (page[n_page], string_number_people);
     HPDF_Page_EndText (page[n_page]);
 
+    y = y -14;
+    HPDF_Page_BeginText (page[n_page]);
+    HPDF_Page_SetFontAndSize (page[n_page], font, 12);
+    HPDF_Page_MoveTextPos (page[n_page], x, y);
+    HPDF_Page_ShowText (page[n_page], "If text is red: people need help");
+    HPDF_Page_EndText (page[n_page]);
+
+    y = y - 14;
+
     //! Load image of 'map' and 'fire' and 'symbolic fire'
     image_map = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/map.png").c_str());
     image_fire = HPDF_LoadPngImageFromFile (pdf, (ros::package::getPath("challenge_emergency")+"/output/fire.png").c_str());
@@ -247,7 +263,7 @@ int createPDF()
     HPDF_Page_SetLineWidth (page[n_page], 0.5);
 
     //! Coordinates for map (needed for placing persons/fire in map)
-    y = y - (ih+50);
+    //y = y - (ih+50);
     y_map = y;
 
     // Need to be given
@@ -297,54 +313,13 @@ int createPDF()
     }
 
 
+    //! Read map into OpenCV
     cv::Mat image_map_cv = cv::imread(ros::package::getPath("challenge_emergency") + "/output/map.png");
-    double scaledWidth = 1/0.025; //image_map_cv.size().width / length_map;
-    double scaledHeight = 1/0.025; //image_map_cv.size().height / height_map;
-
 
     //! Calculate tranformation ratio between pixels/meters
     double ratios [2] = {iw/length_map, ih/height_map};
     cout<<ratios[0]<<ratios[1]<<endl;
     //double ratios [2] = {3,3};
-
-    HPDF_Page_DrawImage (page[n_page], image_map, x, y, iw, ih);
-    HPDF_Page_BeginText (page[n_page]);
-    HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-    HPDF_Page_MoveTextPos (page[n_page], x, y-25.5);
-    HPDF_Page_ShowText (page[n_page], "Apartment: red coordinates present person(s) in need of assistance");
-    HPDF_Page_EndText (page[n_page]);
-
-    //! New page if y is below treshold
-    if (y < 300)
-    {
-        n_page = n_page + 1;
-        //! Add a new page object
-        page[n_page] = HPDF_AddPage (pdf);
-
-        HPDF_Page_SetWidth (page[n_page], 550);
-        HPDF_Page_SetHeight (page[n_page], 650);
-
-        dst = HPDF_Page_CreateDestination (page[n_page]);
-        HPDF_Destination_SetXYZ (dst, 0, HPDF_Page_GetHeight (page[n_page]), 1);
-        HPDF_SetOpenAction(pdf, dst);
-
-        HPDF_Page_BeginText (page[n_page]);
-        HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-        HPDF_Page_MoveTextPos (page[n_page], x, HPDF_Page_GetHeight (page[n_page]) - 50);
-        HPDF_Page_ShowText (page[n_page], "Emergency Report, Tech United Eindhoven");
-        HPDF_Page_EndText (page[n_page]);
-        y = HPDF_Page_GetHeight (page[n_page]) - 100;
-    }
-
-    //! List of people (pictures, status and coordinates)
-    //! Start a list with header
-    HPDF_Page_BeginText (page[n_page]);
-    HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-    HPDF_Page_MoveTextPos (page[n_page], x, y);
-    HPDF_Page_ShowText (page[n_page], "List of People and Fire :");
-    HPDF_Page_EndText (page[n_page]);
-
-    y = y - 170;
 
     //! Initialize strings to display person (number, status, coordinates and image)
     char person_num[20];
@@ -354,11 +329,17 @@ int createPDF()
     char * new_str ;
     float r = 0; //print red or black depends on status
 
+
     //! Find the number of persons (= status-'fire')
     int n_person = sizeof(status)/sizeof(int);
 
     //! Loop over persons and fire!
+    int person_index = 1;
     for (int i = 0; i < n_person; i++){
+
+        //! Position person/fire
+        int pos_x = coordinates[i][0] * scaledWidth+originOffsetX;
+        int pos_y = image_map_cv.size().height - coordinates[i][1] * scaledHeight-originOffsetY;
 
         //! Give number to person
         sprintf(person_num, "Person %d, ", i);
@@ -368,23 +349,28 @@ int createPDF()
         {
             person_stat = "\n Status: Need Assistance!";
             r = 1;
-            ROS_INFO("Scaled width: %f, height: %f", scaledWidth, scaledHeight);
-            ROS_INFO("Coordinates meters x: %f, y: %f", coordinates[i][0], coordinates[i][1]);
-            ROS_INFO("Coordinates pixels x: %f, y: %f", coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50);
+
 
             //! Draw a picture of 'fire' with subscript
-            cv::putText(image_map_cv, "-", cv::Point(coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            stringstream ss;
+            ss << "pers" << person_index;
+            cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            cv::putText(image_map_cv, "help!", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            ++person_index;
         }
         else if (status[i]==1)
         {
             person_stat = "\n Status: Ok!";
             r = 0;
-            ROS_INFO("Scaled width: %f, height: %f", scaledWidth, scaledHeight);
-            ROS_INFO("Coordinates meters x: %f, y: %f", coordinates[i][0], coordinates[i][1]);
-            ROS_INFO("Coordinates pixels x: %f, y: %f", coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50);
+
 
             //! Draw a picture of 'fire' with subscript
-            cv::putText(image_map_cv, "+", cv::Point(coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            stringstream ss;
+            ss << "pers" << person_index;
+            cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            cv::putText(image_map_cv, "=ok", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            ++person_index;
+
 
         }
 
@@ -396,13 +382,18 @@ int createPDF()
             iw = 150;
             ih = 150;
 
-            ROS_INFO("Scaled width: %f, height: %f", scaledWidth, scaledHeight);
-            ROS_INFO("Coordinates meters x: %f, y: %f", coordinates[i][0], coordinates[i][1]);
-            ROS_INFO("Coordinates pixels x: %f, y: %f", coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50);
-
             //! Draw a picture of 'fire' with subscript
-            cv::putText(image_map_cv, "X", cv::Point(coordinates[i][0] * scaledWidth+0, image_map_cv.size().height - coordinates[i][1] * scaledHeight-50), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            cv::Mat img_fire = cv::imread(ros::package::getPath("challenge_emergency") + "/output/fire_small.png");
+            int fire_width = img_fire.size().width;
+            int fire_height = img_fire.size().height;
+            if (pos_x-fire_width/2+fire_width <= image_map_cv.size().width && pos_y-fire_height/2+fire_height) {
+                img_fire.copyTo(image_map_cv(cv::Rect(pos_x-fire_width/2, pos_y-fire_height/2, fire_width, fire_height)));
+            } else {
+                cv::putText(image_map_cv, "X", cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            }
 
+
+            /*
             sprintf(person_coords, "FIRE location(x,y): x = %f, y = %f", coordinates[i][0], coordinates[i][1]);
             HPDF_Page_DrawImage (page[n_page], image_fire, x, y, iw, ih);
             HPDF_Page_BeginText (page[n_page]);
@@ -419,15 +410,65 @@ int createPDF()
             // SS to char
             std::string s = ss_symbolic_fire.str();
             const char* string_symbolic_fire = s.c_str();
+            */
 
+            /*
             HPDF_Page_DrawImage (page[0], image_symbolic_fire, x_map+ratios[0]*(x_null+coordinates[i][0]), y_map+ratios[1]*(y_null+coordinates[i][1]), 20, 20);
             HPDF_Page_BeginText (page[0]);
             HPDF_Page_SetFontAndSize (page[0], font, 8);
             HPDF_Page_MoveTextPos (page[0], x_map+ratios[0]*(x_null+coordinates[i][0])-5, y_map+ratios[1]*(y_null+coordinates[i][1])-10);
             HPDF_Page_ShowText (page[0], string_symbolic_fire);
             HPDF_Page_EndText (page[0]);
+            */
+
             continue;
         }
+
+
+
+        // y = y - ih;
+
+        /*
+            HPDF_Page_DrawImage (page[n_page], image_map, x, y, iw, ih);
+            HPDF_Page_BeginText (page[n_page]);
+            HPDF_Page_SetFontAndSize (page[n_page], font, 12);
+            HPDF_Page_MoveTextPos (page[n_page], x, y-25.5);
+            HPDF_Page_ShowText (page[n_page], "Apartment: red coordinates present person(s) in need of assistance");
+            HPDF_Page_EndText (page[n_page]);
+        */
+        //! New page if y is below treshold
+
+        if (y < 300)
+        {
+            ROS_INFO("y = %f, new page needed", y);
+            n_page = n_page + 1;
+            //! Add a new page object
+            page[n_page] = HPDF_AddPage (pdf);
+
+            HPDF_Page_SetWidth (page[n_page], 550);
+            HPDF_Page_SetHeight (page[n_page], 650);
+
+            dst = HPDF_Page_CreateDestination (page[n_page]);
+            HPDF_Destination_SetXYZ (dst, 0, HPDF_Page_GetHeight (page[n_page]), 1);
+            HPDF_SetOpenAction(pdf, dst);
+
+            HPDF_Page_BeginText (page[n_page]);
+            HPDF_Page_SetFontAndSize (page[n_page], font, 12);
+            HPDF_Page_MoveTextPos (page[n_page], x, HPDF_Page_GetHeight (page[n_page]) - 50);
+            HPDF_Page_ShowText (page[n_page], "Emergency Report, Tech United Eindhoven");
+            HPDF_Page_EndText (page[n_page]);
+            y = HPDF_Page_GetHeight (page[n_page]) - 100;
+            ROS_INFO("y updated to %f", y);
+        }
+
+        //! List of people (pictures, status and coordinates)
+        //! Start a list with header
+        HPDF_Page_BeginText (page[n_page]);
+        HPDF_Page_SetFontAndSize (page[n_page], font, 12);
+        HPDF_Page_MoveTextPos (page[n_page], x, y);
+        HPDF_Page_ShowText (page[n_page], "List of People:");
+        HPDF_Page_EndText (page[n_page]);
+        y -= 170;
 
 
         //! Give location to person
@@ -463,6 +504,7 @@ int createPDF()
         HPDF_Page_EndText (page[n_page]);
 
         //! Draw person in the map
+        /*
         stringstream ss_symbolic_person;
         ss_symbolic_person << "x = " << coordinates[i][0] << ",\n y = " << coordinates[i][1];
         // SS to char
@@ -477,9 +519,10 @@ int createPDF()
         HPDF_Page_MoveTextPos (page[0], x_map+ratios[0]*(x_null+coordinates[i][0])-5, y_map+ratios[1]*(y_null+coordinates[i][1])-10);
         HPDF_Page_ShowText (page[0], string_symbolic_person);
         HPDF_Page_EndText (page[0]);
+        */
 
         y = y - 120;
-
+/*
         //! New page if y is below treshold
         if (y < 100)
         {
@@ -501,11 +544,55 @@ int createPDF()
             HPDF_Page_ShowText (page[n_page], "Emergency Report, Tech United Eindhoven");
             HPDF_Page_EndText (page[n_page]);
             y = HPDF_Page_GetHeight (page[n_page]) - 170;
-        }
+        }*/
     }
 
-    cv::imshow("nice_map", image_map_cv);
-    cv::waitKey(0);
+    //cv::imshow("nice_map", image_map_cv);
+    //cv::waitKey(0);
+
+    //! Store generated image on disk
+    string file_name_map = img_path + "img_map_cv.png";
+    cv::imwrite(file_name_map.c_str(), image_map_cv);
+
+    //! Load this image and draw it in pdf
+    HPDF_Image image_map_generated = HPDF_LoadPngImageFromFile (pdf, file_name_map.c_str());
+    //HPDF_Page_DrawImage (page[n_page], image_map, x, y, image_map_cv.size().width, image_map_cv.size().height);
+    int width_map_in_pdf = image_map_cv.size().width;
+    int height_map_in_pdf = image_map_cv.size().height;
+    if (width_map_in_pdf > 500) {
+        height_map_in_pdf = 500.0/(double)width_map_in_pdf * height_map_in_pdf;
+        width_map_in_pdf = 500;
+    }
+
+    //! New page
+    n_page = n_page + 1;
+
+    //! Add a new page object
+    page[n_page] = HPDF_AddPage (pdf);
+
+    HPDF_Page_SetWidth (page[n_page], 550);
+    HPDF_Page_SetHeight (page[n_page], 650);
+
+    dst = HPDF_Page_CreateDestination (page[n_page]);
+    HPDF_Destination_SetXYZ (dst, 0, HPDF_Page_GetHeight (page[n_page]), 1);
+    HPDF_SetOpenAction(pdf, dst);
+
+    HPDF_Page_BeginText (page[n_page]);
+    HPDF_Page_SetFontAndSize (page[n_page], font, 12);
+    HPDF_Page_MoveTextPos (page[n_page], x, HPDF_Page_GetHeight (page[n_page]) - 50);
+    HPDF_Page_ShowText (page[n_page], "Emergency Report, Tech United Eindhoven");
+    HPDF_Page_EndText (page[n_page]);
+    //y = HPDF_Page_GetHeight (page[n_page]) - 170;
+
+    //! Map in pdf
+    y -= 180;
+    HPDF_Page_DrawImage (page[n_page], image_map_generated, x, y, width_map_in_pdf, height_map_in_pdf);
+    HPDF_Page_BeginText (page[n_page]);
+    HPDF_Page_SetFontAndSize (page[n_page], font, 12);
+    HPDF_Page_MoveTextPos (page[n_page], x, y-25.5);
+    //HPDF_Page_ShowText (page[n_page], "Apartment: red coordinates present person(s) in need of assistance");
+    HPDF_Page_EndText (page[n_page]);
+
     //! Save the document to a file
     HPDF_SaveToFile (pdf, fname);
 

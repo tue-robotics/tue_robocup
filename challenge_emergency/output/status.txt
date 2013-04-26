@@ -1,5 +1,6 @@
-fire_1;2;6.97;6.15 
-
-person_1;1;6.0;0
-person_2;0;2.0;5
-person_3;0;0.1;0.1
+fire_1;2;5.37;4.93 
+person_1;1;0;0
+person_2;0;3.0;3
+person_3;0;6;6
+person_4;0;8;5
+person_5;1;2;3
