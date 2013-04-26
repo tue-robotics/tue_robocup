@@ -138,8 +138,14 @@ class DemoChallenge(smach.StateMachine):
                                     transitions={   'played':'SAY_GOODMORNING',
                                                     'error':'SAY_GOODMORNING'})
 
+            def generate_time_sentence(*args, **kwargs):
+                import time, random
+                timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
+                sentences = [   "Goodmorning sir, its {0} already, time to wake up. Hold on to me, I'll escort you to breakfast".format(timestr), 
+                                "Wakey Wakey! Its {0}, time to wake up. I'll bring you to the canteen".format(timestr)]
+                return random.choice(sentences)
             smach.StateMachine.add( 'SAY_GOODMORNING', 
-                                    states.Say(robot, ["Goodmorning sir. Hold on to me, I'll escort you to breakfast", "Wakey Wakey! I'll bring you to the canteen"]), 
+                                    states.Say_generated(robot, generate_time_sentence),#["Goodmorning sir. Hold on to me, I'll escort you to breakfast", "Wakey Wakey! I'll bring you to the canteen"]), 
                                     transitions={   'spoken':"ESCORT_TO_BREAKFAST"})
 
             smach.StateMachine.add( 'ESCORT_TO_BREAKFAST', 
@@ -236,7 +242,8 @@ class DemoChallenge(smach.StateMachine):
                                                     "goal_not_defined":"Aborted"})
 
             smach.StateMachine.add( 'HANDOVER_BREAKFAST', 
-                                    states.Say(robot, ["Your breakfast, sir.", "Enjoy your breakfast, sir"]), 
+                                    states.Say(robot, [ "Your breakfast, sir. Remember to take your pills after eating", 
+                                                        "Enjoy your breakfast, sir. But, after you are done, take the pills the doctor supscribed!"]), 
                                     transitions={   'spoken':"ASSERT_CURRENT_PATIENT_DONE"})
 
             @smach.cb_interface(outcomes=['asserted'])
@@ -272,9 +279,6 @@ class DemoChallenge(smach.StateMachine):
             smach.StateMachine.add( 'SAY_DONE', 
                                     states.Say(robot, ["I'm done here. It's always nice to help people", "My work here is done."]), 
                                     transitions={   'spoken':"Done"})
-
-
-
 
 if __name__ == "__main__":
     rospy.init_node('demo_chalenge_exec')
