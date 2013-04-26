@@ -35,7 +35,7 @@ class Ask_cleanup(smach.State):
         self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-            room = "dining_room"
+            room = "kitchen"
         elif self.response.answer == "livingroom":
             room = "living_room"
         elif self.response.answer == "diningroom":
@@ -129,7 +129,7 @@ class Cleanup(smach.StateMachine):
                                                         Compound("exploration_target", "Room", "Target"),
                                                         Compound("not", Compound("explored", "Target")),
                                                         Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi"))
-                                                       )    
+                                                       )
 
                 answers = robot.reasoner.query(query_exploration_target)
                 rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target, answers))
