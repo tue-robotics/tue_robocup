@@ -42,6 +42,10 @@ class Ask_goto(smach.State):
             location = "bar"
         elif self.response.answer == "gotothecouchtable":
             location = "couch_table"
+        elif self.response.answer == "gotothefridge":
+            location = "fridge"
+        elif self.response.answer == "gotothesidetable":
+            location = "side_table"
         elif self.response.answer == "no_answer":
             self.robot.speech.speak("I have not heard an answer yet, so i will go to the dinner_table")
             location = "dinner_table"
