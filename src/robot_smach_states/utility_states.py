@@ -465,6 +465,7 @@ class SetTimeMarker(smach.State,):
 
     def execute(self, userdata=None):
         self.robot.reasoner.set_time_marker(self.name)
+        return "done"
 
 class CheckTime(smach.State):
     def __init__(self, robot, name, max_duration):
