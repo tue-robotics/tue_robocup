@@ -7,6 +7,9 @@ amigo1:
     amiddle-emergency
 
 amigo3:
+
+     pumount --yes-I-really-want-lazy-unmount /media/usb-stick/
+     pmount /dev/sdc1 usb-stick
     
     roslaunch challenge_emergency emergency_dependencies.launch
 
