@@ -220,7 +220,7 @@ class Head(object):
                        search_head_goal.header.frame_id)
         rospy.logwarn("head.search_movement has not been updated yet")
         '''
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         # Update only after a fixed timing interval
         if ((rospy.Time.now() - self._search_movement_random_timer)) > rospy.Duration(updatetime):
             xoffset = x_min + random.random() * (x_max - x_min)
@@ -235,30 +235,33 @@ class Head(object):
 
         return self.send_goal(target_point, keep_tracking=False)
 
-    def search_movement(self, target_point, searchtime, x_min=-2, y_min=-2, z_min=-2, x_max=2, y_max=2, z_max=2):
-        sleeptime = 0.25
+    # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
+    #    cube_size: the size of the cube around the obstacle
+    #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
+    def search_movement(self, target_point, cube_size=0.5, step_time=0.6):
+        tx = target_point.point.x
+        ty = target_point.point.y
+        tz = target_point.point.z
 
-        self.send_goal(target_point, keep_tracking=False, timeout=sleeptime)
+        points = [  (tx - cube_size, ty - cube_size, tz - cube_size),
+                    (tx + cube_size, ty - cube_size, tz - cube_size),
+                    (tx - cube_size, ty + cube_size, tz - cube_size),
+                    (tx - cube_size, ty - cube_size, tz + cube_size),
+                    (tx + cube_size, ty - cube_size, tz + cube_size),
+                    (tx + cube_size, ty + cube_size, tz - cube_size),
+                    (tx - cube_size, ty + cube_size, tz + cube_size),
+                    (tx + cube_size, ty + cube_size, tz + cube_size),
+                    (tx, ty, tz) ]
 
-        ticks = range((int(searchtime/sleeptime)))
+        for p in points:
+            target_point.point.x = p[0]
+            target_point.point.y = p[1]
+            target_point.point.z = p[2]
 
-        for i in ticks:
-            try:
-                xoffset = x_min + random.random() * (x_max - x_min)
-                yoffset = y_min + random.random() * (y_max - y_min)
-                zoffset = z_min + random.random() * (z_max - z_min)
-                self._search_movement_random_offsets = [xoffset,yoffset,zoffset]
-                self._search_movement_random_timer = rospy.Time.now()
+            print "Search movement: looking at " + str(p[0]) + ", " + str(p[1]) + ", " + str(p[2])
 
-                target_point.point.x += self._search_movement_random_offsets[0]
-                target_point.point.y += self._search_movement_random_offsets[1]
-                target_point.point.z += self._search_movement_random_offsets[2]
+            self.send_goal(target_point, keep_tracking=False, timeout=step_time)
 
-                self.send_goal(target_point, keep_tracking=False, timeout=sleeptime)
-            except KeyboardInterrupt:
-                return False
-            finally:
-                self.reset_position()
         return True
 
         
