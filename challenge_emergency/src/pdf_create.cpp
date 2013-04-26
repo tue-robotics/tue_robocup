@@ -513,6 +513,7 @@ int createPDF()
 
         //! Give location to person
         sprintf(person_coords, "\t Location(x,y): x = %f, y = %f,", coordinates[i][0], coordinates[i][1]);
+        
 
         //! Merge person and status and location
         if((new_str = (char*) malloc(strlen(person_num)+strlen(person_stat)+strlen(person_coords))+1) != NULL){
@@ -526,11 +527,12 @@ int createPDF()
         }
         //! Load image of person
 #ifndef __WIN32__
-        sprintf(person_image, "/output/person_%d.png",i);
+        sprintf(person_image, "/output/person_%d.png",i+1);
         string string_person_image = ros::package::getPath("challenge_emergency")+person_image;
 #else
         //sprintf(person_image, "pngsuite\\person_%d.png",i);
 #endif
+		ROS_INFO("Trying to load %s", string_person_image.c_str());
         image_person = HPDF_LoadPngImageFromFile (pdf, string_person_image.c_str());
         ROS_INFO("Loaded image person");
 
