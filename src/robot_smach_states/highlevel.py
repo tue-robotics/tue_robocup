@@ -152,18 +152,105 @@ class StartChallengeRobust(smach.StateMachine):
                                     human_interaction.Say(robot, "Door is open, so I will start my task"),
                                     transitions={   "spoken":"ENTER_ROOM"}) 
 
+            # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
-                                    GotoForMeetingpoint(robot),
+                                    EnterArena(robot),
+                                    transitions={   "done":"GOTO_MEETING_POINT" })
+
+            # TODO: Get this out of here and move it to the challenge itself. All challenges need a robust start, 
+            # but not all challenges need to go to a meeting point (e.g. the emergency challenge)
+            smach.StateMachine.add('GOTO_MEETING_POINT',
+                                    GotoMeetingPoint(robot),
                                     transitions={   "found":"Done", 
+                                                    "not_found":"ENTER_ROOM", 
+                                                    "no_goal":"Done",  # We are in the arena, so the current location is fine
+                                                    "all_unreachable":"Done"})    # We are in the arena, so the current location is fine
+
+# Enter the arena with force drive as back-up
+class EnterArena(smach.StateMachine):
+
+    class GotoEntryPoint(smach.State):
+        def __init__(self, robot):
+            smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
+            self.robot = robot
+            self.goto_query = Compound("waypoint", Compound("entry_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
+
+        def execute(self, userdata=None):
+            # Move to the next waypoint in the storage room        
+            reachable_goal_answers = self.robot.reasoner.query(
+                                        Conjunction(
+                                            Compound("waypoint", Compound("entry_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
+                                            Compound("not", Compound("unreachable", Compound("entry_point", "Waypoint")))))
+
+            if not reachable_goal_answers:
+                # check if there are any entry points (someone may have forgotten to specify them)            
+                all_goal_answers = self.robot.reasoner.query(self.goto_query)
+                if not all_goal_answers:
+                    self.robot.speech.speak("No-one has specified entry_point locations. Please do so in the locations file!")
+                    return "all_unreachable"
+                else:
+                    self.robot.speech.speak("There are a couple of entry points, but they are all unreachable. Sorry.")
+                    return "all_unreachable"
+
+            # for now, take the first goal found
+            goal_answer = reachable_goal_answers[0]
+
+            self.robot.speech.speak("I am about to enter the arena!")
+
+            goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+            waypoint_name = goal_answer["Waypoint"]
+
+            nav = navigation.NavigateGeneric(self.robot, goal_pose_2d=goal)
+            nav_result = nav.execute()
+
+            #import ipdb; ipdb.set_trace()
+
+            if nav_result == "unreachable":  #Compound("entry_point", waypoint_name)
+                self.robot.reasoner.query(Compound("assert", Compound("unreachable", Compound("entry_point", waypoint_name))))
+                return "not_found"
+            elif nav_result == "preempted":
+                return "not_found"
+            elif nav_result == "arrived":
+                self.robot.speech.speak("I am in the arena")
+                self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
+                return "found"
+            else: #goal not defined
+                self.robot.speech.speak("I really don't know where to go, oops.")
+                return "no_goal"
+
+    class ForceDrive(smach.State):
+        def __init__(self, robot):
+            smach.State.__init__(self, outcomes=["done"])
+            self.robot = robot
+
+        def execute(self, userdata=None):
+            self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.")
+            self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
+            return "done"
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self,outcomes=['done'])
+        self.robot = robot
+
+        with self:
+            # If the door is open, amigo will say that it goes to the registration table
+            smach.StateMachine.add( "THROUGH_DOOR",
+                                    human_interaction.Say(robot, "Door is open, so I will start my task"),
+                                    transitions={   "spoken":"ENTER_ROOM"}) 
+
+            smach.StateMachine.add('ENTER_ROOM',
+                                    self.GotoEntryPoint(robot),
+                                    transitions={   "found":"done", 
                                                     "not_found":"ENTER_ROOM", 
                                                     "no_goal":"FORCE_DRIVE_THROUGH_DOOR",
                                                     "all_unreachable":"FORCE_DRIVE_THROUGH_DOOR"})
 
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
-                                    ForceDrive(robot),
-                                    transitions={   "done":"Done"})
+                                    self.ForceDrive(robot),
+                                    transitions={   "done":"done"})            
 
-class GotoForMeetingpoint(smach.State):
+
+class GotoMeetingPoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
         self.robot = robot
@@ -211,16 +298,6 @@ class GotoForMeetingpoint(smach.State):
         else: #goal not defined
             self.robot.speech.speak("I really don't know where to go, oops.")
             return "no_goal"
-
-class ForceDrive(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-        self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.")
-        self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
-        return "done"
 
 class Learn_Person_SM(smach.StateMachine):
     def __init__(self, robot, testmode=False):
