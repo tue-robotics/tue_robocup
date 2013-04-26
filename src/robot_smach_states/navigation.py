@@ -1062,6 +1062,8 @@ class Waiting_to_execute(smach.State):
             self.previous_replan_timeout = self.robot.base.replan_timeout
             # Wait 0.5 seconds to avoid looping too fast
             rospy.sleep(rospy.Duration(0.5))
+            
+        return 'done'
 
 
 class Recover(smach.State):
