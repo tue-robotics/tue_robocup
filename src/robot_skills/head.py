@@ -176,7 +176,7 @@ class Head(object):
                        keep_tracking=keep_tracking, 
                        min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 
-    def set_position_topic(self, x, y, z, frame_id="/maps"):
+    def set_position_topic(self, x, y, z, frame_id="/map"):
         """
         Set head goal on specified position, uses topic does not use
         action client. Expects x,y,z coordinates and optional frame_id
@@ -200,7 +200,7 @@ class Head(object):
 
         return True
 
-    def search_movement(self, target_point, updatetime, x_min=0, y_min=0, z_min=0, x_max=0, y_max=0, z_max=0):
+    def search_movement_old(self, target_point, updatetime, x_min=0, y_min=0, z_min=0, x_max=0, y_max=0, z_max=0):
         """
         Look around and search for movement
         """
@@ -220,6 +220,7 @@ class Head(object):
                        search_head_goal.header.frame_id)
         rospy.logwarn("head.search_movement has not been updated yet")
         '''
+        import ipdb; ipdb.set_trace()
         # Update only after a fixed timing interval
         if ((rospy.Time.now() - self._search_movement_random_timer)) > rospy.Duration(updatetime):
             xoffset = x_min + random.random() * (x_max - x_min)
@@ -234,6 +235,31 @@ class Head(object):
 
         return self.send_goal(target_point, keep_tracking=False)
 
+    def search_movement(self, target_point, searchtime, x_min=-2, y_min=-2, z_min=-2, x_max=2, y_max=2, z_max=2):
+        sleeptime = 0.25
+
+        self.send_goal(target_point, keep_tracking=False, timeout=sleeptime)
+
+        ticks = range((int(searchtime/sleeptime)))
+
+        for i in ticks:
+            try:
+                xoffset = x_min + random.random() * (x_max - x_min)
+                yoffset = y_min + random.random() * (y_max - y_min)
+                zoffset = z_min + random.random() * (z_max - z_min)
+                self._search_movement_random_offsets = [xoffset,yoffset,zoffset]
+                self._search_movement_random_timer = rospy.Time.now()
+
+                target_point.point.x += self._search_movement_random_offsets[0]
+                target_point.point.y += self._search_movement_random_offsets[1]
+                target_point.point.z += self._search_movement_random_offsets[2]
+
+                self.send_goal(target_point, keep_tracking=False, timeout=sleeptime)
+            except KeyboardInterrupt:
+                return False
+            finally:
+                self.reset_position()
+        return True
 
         
     def look_at_hand(self, side, keep_tracking=True):
