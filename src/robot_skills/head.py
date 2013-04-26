@@ -136,7 +136,7 @@ class Head(object):
         # head_goal = self.point_stamped(1.0, 0.0, 0.8, '/base_link')
         # return self.send_goal(head_goal.point, head_goal.header.frame_id, keep_tracking=False)
 
-        return self.set_pan_tilt(0.0, 0.2)
+        return self.set_pan_tilt(0.0, 0.4)
 
     def look_up(self):
         """
