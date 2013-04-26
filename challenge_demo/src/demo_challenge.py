@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 
 #TODO: 
-# - asking for breakfast
-#   - sandwiches
-#   - ham and eggs
-#   - bacon
-#   - eggs
-#   - chocolate sprinkles (real dutch!)
+# - what do you want on your sandwich?
+#   - Jam
+#   - peanut butter
+#   - cheese
+#   - salami
+#   - chocolade
 
 import roslib; roslib.load_manifest('challenge_demo')
 import rospy
@@ -193,7 +193,11 @@ class DemoChallenge(smach.StateMachine):
                 robot.head.look_down()
                 return "done"
             smach.StateMachine.add('LOOK_DOWN', smach.CBState(look_down),
-                                    transitions={   'done':'ASK_WHAT_FOR_BREAKFAST'})
+                                    transitions={   'done':'RECITE_BREAKFAST_OPTIONS'})
+
+            smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
+                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolade. Which do you want?"),
+                                    transitions={'spoken':"ASK_WHAT_FOR_BREAKFAST"})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
                                     states.Timedout_QuestionMachine(
