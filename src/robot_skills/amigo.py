@@ -264,6 +264,15 @@ if __name__ == "__main__":
         rospy.loginfo("Telling Amigo '{0}'".format(text))
         pub.publish(std_msgs.msg.String(text))
 
+    def save_sentence(sentence):
+        """Let amigo say a sentence and them move the generated speech file to a separate file that will not be overwritten"""
+        speak(sentence)
+        import os
+        path = sentence.replace(" ", "_")
+        path += ".wav"
+        os.system("mv /tmp/speech.wav /tmp/{0}".format(path))
+
+
     print """\033[1;33m You can now command amigo from the python REPL. 
     Type e.g. help(amigo) for help on objects and functions, 
     or type 'amigo.' <TAB> to see what methods are available. 
