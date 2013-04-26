@@ -35,7 +35,7 @@ class Ask_cleanup(smach.State):
         self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-            room = "living_room"
+            room = "dining_room"
         elif self.response.answer == "livingroom":
             room = "living_room"
         elif self.response.answer == "diningroom":
@@ -172,7 +172,7 @@ class Cleanup(smach.StateMachine):
             
             smach.StateMachine.add('DETERMINE_EXPLORATION_TARGET', smach.CBState(determine_exploration_target),
                                     transitions={   'found_exploration_target':'DRIVE_TO_EXPLORATION_TARGET',
-                                                    'done':'RETURN'})
+                                                    'done':'SAY_ALL_EXPLORED'})
 
             ################################################################
 
@@ -316,6 +316,12 @@ class Cleanup(smach.StateMachine):
                 return 'done'
             smach.StateMachine.add('MARK_DISPOSED', smach.CBState(deactivate_current_object),
                                     transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
+
+            smach.StateMachine.add("SAY_ALL_EXPLORED", 
+                                    states.Say(robot, [ "I searched at all locations I know of, so cleaning is done.", 
+                                                        "All locations I know of are explored, there is nothing I can find anymore", 
+                                                        "All locations I know of are explored, there are no locations to search anymore"]),
+                                    transitions={   'spoken':'RETURN'})
                     
             smach.StateMachine.add( 'RETURN', states.NavigateGeneric(robot, goal_name="exitB"),
                                     transitions={   "arrived":"SAY_DONE",
