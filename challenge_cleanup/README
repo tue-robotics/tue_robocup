@@ -4,15 +4,25 @@ amigo1:
 
     amiddle-cleanup
 
-amigo1:
+amigo3:
 
     roslaunch run_speech_files speech_magdeburg2013.launch
 
-amigo1:
+amigo3:
 
     roslaunch speech_interpreter start_magdeburg2013.launch
 
-amigo3:
+athome3
+
+    alsamixer
+        Mic Boost -> 100
+        Capture -> 44
+        Digital -> 29
+        Mic on mute!!! (Should be muted already)
+        
+    rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
+
+    say test
 
     rosrun challenge_cleanup clean_up.py
 
