@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<launch>
+ 
+  <include file="$(find run_speech_files)/output_folder/magdeburg2013/speech_magdeburg2013.launch" />
+  
+</launch>	
