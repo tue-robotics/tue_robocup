@@ -429,10 +429,19 @@ def setup_statemachine(robot):
                                          Compound("not", Compound("disposed", "ObjectID")))
             
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query),  #TODO Erik van Loy: DIt is compleet ongetest, succes!
+                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)),  #TODO Erik van Loy: DIt is compleet ongetest, succes!
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
-                                                 'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO'})
+                                                 'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
+                                                 'Timeout':'GET_OBJECT_TIMED_OUT' })
+
+            smach.StateMachine.add('GET_OBJECT_TIMED_OUT',
+                                    states.Say_and_Navigate(
+                                        robot=robot,
+                                        sentence = "I am sorry, I have to return to the meeting point to be back in time.",                               
+                                        input_keys=['navigate_named', 'meeting_point']),         
+                                        transitions={'succeeded':'FAILED_AT_MEETING_POINT',
+                                                     'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
             smach.StateMachine.add('SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',                                ## TODO: make state/class in which this task is defined as not finished.
                                     states.Say_and_Navigate(
@@ -530,7 +539,16 @@ def setup_statemachine(robot):
                                     states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query),  #TODO Erik van Loy: DIt is compleet ongetest, succes!
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
-                                                 'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO'})
+                                                 'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
+                                                 'Timeout':'GET_OBJECT_TIMED_OUT' })
+
+            smach.StateMachine.add('GET_OBJECT_TIMED_OUT',
+                                    states.Say_and_Navigate(
+                                        robot=robot,
+                                        sentence = "I am sorry, I have to return to the meeting point to be back in time.",                               
+                                        input_keys=['navigate_named', 'meeting_point']),         
+                                        transitions={'succeeded':'FAILED_AT_MEETING_POINT',
+                                                     'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
             # In case goal object couldt be reached, return directly. In class Finished_goal it thinks that it has \
             # completed the goal correctly. So something should be implemented here that the goal is not finished.
