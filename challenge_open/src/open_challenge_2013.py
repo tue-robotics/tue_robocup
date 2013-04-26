@@ -137,7 +137,7 @@ def setup_statemachine(robot):
         
         query_room = Conjunction(Compound("goal", Compound("open_challenge", "Location")), Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))        
         smach.StateMachine.add( 'GOTO',
-                                states.NavigateGeneric(robot, goal_query=query_room, goal_area_radius=0.5),
+                                states.NavigateGeneric(robot, goal_query=query_room, goal_area_radius=0.5,look_at_path_distance=2.0),
                                 transitions={   "arrived":"SAY_WBC",
                                                 "unreachable":'SAY_CANNOT_REACH',
                                                 "preempted":'SAY_CANNOT_REACH',
@@ -202,7 +202,7 @@ def setup_statemachine(robot):
         
         query_room = Conjunction(Compound("goal", Compound("open_challenge", "Location")), Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))        
         smach.StateMachine.add( 'GOTO_NEXT',
-                                states.NavigateGeneric(robot, goal_query=query_room, goal_area_radius=0.1),
+                                states.NavigateGeneric(robot, goal_query=query_room, goal_area_radius=0.1, look_at_path_distance=2.0),
                                 transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
                                                 "unreachable":'SAY_CANNOT_REACH_NEXT',
                                                 "preempted":'SAY_CANNOT_REACH_NEXT',
@@ -400,7 +400,7 @@ def setup_statemachine(robot):
         
         query_room = Conjunction(Compound("goal", Compound("open_challenge", "Location")), Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))        
         smach.StateMachine.add( 'GOTO_BACKUP',
-                                states.NavigateGeneric(robot, goal_query=query_room, goal_area_radius=0.5),
+                                states.NavigateGeneric(robot, goal_query=query_room, goal_area_radius=0.5, look_at_path_distance=2.0),
                                 transitions={   "arrived":"SAY_ARRIVED_BACKUP",
                                                 "unreachable":'SAY_ARRIVED_BACKUP',
                                                 "preempted":'SAY_ABORT',
@@ -421,7 +421,7 @@ def setup_statemachine(robot):
         # Move out again
         query_exit_point = Compound("base_pose", "initial", Compound("pose_2d", "X", "Y", "Phi"))
         smach.StateMachine.add('EXIT',
-                                states.NavigateGeneric(robot, goal_query=query_exit_point, look_at_path_distance=1.5),
+                                states.NavigateGeneric(robot, goal_query=query_exit_point, look_at_path_distance=2.0),
                                 transitions={   "arrived":"Done",
                                                 "unreachable":'SAY_STUCK',
                                                 "preempted":'Aborted',
