@@ -1049,7 +1049,11 @@ class Waiting_to_execute(smach.State):
             if self.z_offset_timer == 2.0:
                 self.z_offset_direction = self.z_offset_direction * -1
                 self.z_offset_timer = 0'''
-            self.robot.head.search_movement(self.robot.base.obstacle_position, 2.0, x_min=0, y_min=0, z_min=0, x_max=0, y_max=0, z_max=0.5)
+
+            # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
+            #    cube_size: the size of the cube around the obstacle
+            #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
+            self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=0.5, step_time=0.6)
 
             # If waittime suddenly becomes zero this means that the old path has been cleared
             if self.previous_replan_timeout > 1.0:
