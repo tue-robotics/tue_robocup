@@ -55,7 +55,7 @@ bool CarrotPlanner::MoveToGoal(geometry_msgs::PoseStamped &goal){
             ROS_INFO("Publishing velocity command: (x:%f, y:%f, th:%f)", cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
             if (cmd_vel.angular.z > 3.14/4) {
 				ROS_WARN("Angle is %f",  cmd_vel.angular.z);
-			} else if (fabs(cmd_vel.angular.z) < 3.14 / 15) {
+			} else if (fabs(cmd_vel.angular.z) < 3.14 / 10) {
 				ROS_WARN("Small angle will be ignored");
 				cmd_vel.angular.z = 0;
 			}
@@ -152,8 +152,8 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
     int num_readings = laser_scan_.ranges.size();
     int num_incr = goal_angle_/laser_scan_.angle_increment; // Both in rad
     int index_beam_obst = num_readings/2 + num_incr;
-    int width = 15;
-
+    //int width = 15;
+/*
     for (int i = index_beam_obst - width; i <= index_beam_obst + width; ++i){
 
         //! Check if the intended direction falls within the range of the LRF
@@ -167,15 +167,15 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
                 return false;
             }
         }
-    }
+    }*/
 
     //! Virtual wall in front of robot (0.5 [m])
     double d_wall = 0.6, r_robot = 0.35;
     double dth = atan2(r_robot, d_wall);
     int d_step = dth/laser_scan_.angle_increment;
-    int beam_middle = num_readings/2;
+    //int beam_middle = num_readings/2;
 
-    for (int j = beam_middle - d_step; j < beam_middle + d_step; j=j+4) {
+    for (int j = index_beam_obst - d_step; j < index_beam_obst + d_step; j=j+4) {
         if (j < num_readings) {
             double dist_to_obstacle = laser_scan_.ranges[j];
             //ROS_INFO("distance to virtual wall is %f", dist_to_obstacle);
