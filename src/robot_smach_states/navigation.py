@@ -893,7 +893,7 @@ class Determine_goal(smach.State):
                 for ROI in possible_ROIs:
                     look_point = self.robot.base.point(ROI[0],ROI[1],stamped=True)
                     # ToDo: Parameterize offsets
-                    base_pose_for_point = self.base.get_base_pose(look_point,0.7,0.0)
+                    base_pose_for_point = self.robot.base.get_base_pose(look_point,0.7,0.0)
                     if not (base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0):
                         # Convert to x, y, phi
                         phi = util.transformations.euler_z_from_quaternion(base_pose_for_point.pose.orientation)
