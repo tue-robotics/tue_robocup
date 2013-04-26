@@ -1,15 +1,13 @@
 #! /usr/bin/env python
 
 #TODO: 
-# - holding_pose, 
-# - escorting to breakfast, 
 # - asking for breakfast
 #   - sandwiches
 #   - ham and eggs
 #   - bacon
 #   - eggs
-#   - 
-#   - 
+#   - chocolate sprinkles (real dutch!)
+
 import roslib; roslib.load_manifest('challenge_demo')
 import rospy
 
