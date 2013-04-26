@@ -89,7 +89,7 @@ def setup_statemachine(robot):
         #                                        'abort':'Aborted'})
 
         smach.StateMachine.add('INIT_POSE',
-                                states.Set_initial_pose(robot, "initial"),
+                                states.Set_initial_pose(robot, "initial_open_challenge"),
                                 transitions={   'done':'SAY_START',
                                                 'preempted':'Aborted',
                                                 'error':'Aborted'})
@@ -128,7 +128,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("ASK_GOTO",
                                 Ask_goto(robot),
-                                transitions={   'done'  : 'GOTO'})
+                                transitions={   'done'  : 'WAIT_GOTO'})
+
+        smach.StateMachine.add("WAIT_GOTO",
+                                states.Wait_time(waittime=2),
+                                transitions={   'waited':   'GOTO',
+                                                'preempted':'GOTO'})
         
         query_room = Conjunction(Compound("goal", Compound("open_challenge", "Location")), Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))        
         smach.StateMachine.add( 'GOTO',
@@ -188,7 +193,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("ASK_GOTO_NEXT",
                                 Ask_goto(robot),
-                                transitions={   'done'  : 'GOTO_NEXT'})
+                                transitions={   'done'  : 'WAIT_GOTO_NEXT'})
+
+        smach.StateMachine.add("WAIT_GOTO_NEXT",
+                                states.Wait_time(waittime=2),
+                                transitions={   'waited':   'GOTO_NEXT',
+                                                'preempted':'GOTO_NEXT'})
         
         query_room = Conjunction(Compound("goal", Compound("open_challenge", "Location")), Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))        
         smach.StateMachine.add( 'GOTO_NEXT',
@@ -381,7 +391,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("ASK_GOTO_BACKUP",
                                 Ask_goto(robot),
-                                transitions={   'done'  : 'GOTO_BACKUP'})
+                                transitions={   'done'  : 'WAIT_GOTO_BACKUP'})
+
+        smach.StateMachine.add("WAIT_GOTO_BACKUP",
+                                states.Wait_time(waittime=2),
+                                transitions={   'waited':   'GOTO_BACKUP',
+                                                'preempted':'GOTO_BACKUP'})
         
         query_room = Conjunction(Compound("goal", Compound("open_challenge", "Location")), Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))        
         smach.StateMachine.add( 'GOTO_BACKUP',
