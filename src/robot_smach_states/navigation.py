@@ -1039,7 +1039,7 @@ class Waiting_to_execute(smach.State):
 
     def execute(self, userdata):
 
-        while (self.robot.base.replan_timeout > 0.0 and not rospy.is_shutdown() ):
+        while (self.robot.base.path_blocked and not rospy.is_shutdown() ):
             
             if self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.PREEMPTED or self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.RECALLED:
                 return 'preempted'
@@ -1058,17 +1058,16 @@ class Waiting_to_execute(smach.State):
             #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
             self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=0.5, step_time=0.6)
 
-            # If waittime suddenly becomes zero this means that the old path has been cleared
-            if self.previous_replan_timeout > 1.0:
-                self.robot.speech.speak("My original path is clear again so i can take that anyway")
-            else:
-                self.robot.speech.speak("This is not going to work, i will take the other route")
-            self.robot.previous_replan_timeout = 0.0
-            return 'done'
-
-            self.previous_replan_timeout = self.robot.base.replan_timeout
+            #self.previous_replan_timeout = self.robot.base.replan_timeout
             # Wait 0.5 seconds to avoid looping too fast
             rospy.sleep(rospy.Duration(0.5))
+
+        if self.robot.base.reached_blocked_timeout:
+            self.robot.speech.speak("This is not going to work, i will take the other route")
+            #self.previous_replan_timeout = 0.0
+            return 'done'
+        else:
+            self.robot.speech.speak("My original path is clear again so i can take that anyway")         
             
         return 'done'
 
