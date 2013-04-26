@@ -39,7 +39,7 @@ class Navigate_abstract(smach.State):
     def get_goal(self, userdata):
         raise NotImplementedError("Navigate_abstract does not implement get_goal, use a subclass instead.")    
 
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if not self.dynamic:
             goal = self.get_goal(userdata)
             if goal:
@@ -316,11 +316,11 @@ class Visit_query_outcome(Navigate_to_queryoutcome):
                 rospy.loginfo("outcome=arrived, the following fact should be retracted = not_visited({0})".format(self.current_identifier))
 
             elif outcome == "failed":
-                visited_assertion = Compound("retractall", Compound("not_reachable", self.current_identifier))
+                visited_assertion = Compound("retractall", Compound("not_unreachable", self.current_identifier))
                 self.robot.reasoner.query(visited_assertion)
                 self.current_identifier = None
 
-                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_reachable({0})".format(self.current_identifier))
+                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_unreachable({0})".format(self.current_identifier))
 
         else:
             rospy.logerr("current_identifier was None, should not happen.")
@@ -627,6 +627,7 @@ class NavigateGenericOld(smach.State):
             x,y,phi = possible_locations[0]
 
         return self.robot.base.point(x,y), self.robot.base.orient(phi)
+
 
     def execute(self, userdata=None):
 
