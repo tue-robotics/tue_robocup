@@ -1,3 +1,12 @@
+/**
+ * USB ON UBUNTU SERVER EDITION (AMIGO)
+ * 
+ * Before starting this node, make sure you type:
+ * $ pmount /dev/sdc1
+ * 
+ * This will mount the device at /media/sdc1 (which is now hardcoded as path) with the correct permissions
+ */
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -133,18 +142,20 @@ int createPDF()
     double ih;
 
     //! Find USB name
+    bool found_file_in_media = false;
     DIR *dir;
     struct dirent *ent;
     string usb_dir, img_path;
     if ((dir = opendir ("/media/")) != NULL) {
         /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
-            //printf ("%s\n", ent->d_name);
-            if (strlen(ent->d_name)>3)
+            ROS_INFO("file or directory in /media/: %s", string(ent->d_name).c_str());
+            if (false) // TODO: hack for ubuntu server strlen(ent->d_name)>3)
             {
                 printf("%s\n", ent->d_name);
                 usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
                 img_path = "/media/" + string(ent->d_name) + "/";
+                found_file_in_media = true;
 
             }
         }
@@ -154,11 +165,21 @@ int createPDF()
         perror ("");
         return EXIT_FAILURE;
     }
+    
+    if (!found_file_in_media) {
+		ROS_WARN("No files/directories found in /media/ -> no USB stick to write to");
+		usb_dir = "/media/sdc1/emergency_paper.pdf";
+		//usb_dir = ros::package::getPath("challenge_emergency")+"/emergency_paper.pdf";
+		img_path = "/media/sdc1/";
+		//img_path = ros::package::getPath("challenge_emergency")+"/";
+	}
 
     cout << usb_dir << endl;
 
     fname = usb_dir.c_str();
     // save location
+    ROS_INFO("usb_dir = %s", usb_dir.c_str());
+    ROS_INFO("pdf will be stored as %s", fname);
     //strcpy (fname, "/media/2856-DCA4/emergency_paper");
     //strcat (fname, ".pdf");
 
@@ -315,6 +336,7 @@ int createPDF()
 
     //! Read map into OpenCV
     cv::Mat image_map_cv = cv::imread(ros::package::getPath("challenge_emergency") + "/output/map.png");
+    ROS_INFO("Loaded map image");
 
     //! Calculate tranformation ratio between pixels/meters
     double ratios [2] = {iw/length_map, ih/height_map};
@@ -335,6 +357,7 @@ int createPDF()
 
     //! Loop over persons and fire!
     int person_index = 1;
+    ROS_INFO("Start looping over %d persons (and fire)", n_person);
     for (int i = 0; i < n_person; i++){
 
         //! Position person/fire
@@ -357,6 +380,8 @@ int createPDF()
             cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             cv::putText(image_map_cv, "help!", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             ++person_index;
+            
+            ROS_INFO("Added text to image (help)");
         }
         else if (status[i]==1)
         {
@@ -370,7 +395,8 @@ int createPDF()
             cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             cv::putText(image_map_cv, "=ok", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             ++person_index;
-
+            
+			ROS_INFO("Added text to image (ok)");
 
         }
 
@@ -378,19 +404,30 @@ int createPDF()
         //! 'status'==2 then 'fire' location immediatly print
         else
         {
+			
+			ROS_INFO("Found fire");
+			
             //! Image size of fire
             iw = 150;
             ih = 150;
 
             //! Draw a picture of 'fire' with subscript
-            cv::Mat img_fire = cv::imread(ros::package::getPath("challenge_emergency") + "/output/fire_small.png");
+            string path_fire_small = ros::package::getPath("challenge_emergency") + "/output/fire_small.png";
+            ROS_INFO("Reading fire image: %s", path_fire_small.c_str());
+            cv::Mat img_fire = cv::imread(path_fire_small.c_str());
+            ROS_INFO("Loaded image fire_small");
             int fire_width = img_fire.size().width;
             int fire_height = img_fire.size().height;
-            if (pos_x-fire_width/2+fire_width <= image_map_cv.size().width && pos_y-fire_height/2+fire_height) {
+            ROS_INFO("Position fire must be (%d,%d)", pos_x, pos_y);
+            ROS_INFO("Image fire has size %dx%d", fire_width, fire_height);
+            ROS_INFO("Image map has size %dx%d", image_map_cv.size().width, image_map_cv.size().height);
+            if (pos_x-fire_width/2+fire_width <= image_map_cv.size().width && pos_y-fire_height/2+fire_height < image_map_cv.size().height) {
                 img_fire.copyTo(image_map_cv(cv::Rect(pos_x-fire_width/2, pos_y-fire_height/2, fire_width, fire_height)));
             } else {
                 cv::putText(image_map_cv, "X", cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             }
+            
+            ROS_INFO("Added fire icon to image");
 
 
             /*
@@ -469,6 +506,8 @@ int createPDF()
         HPDF_Page_ShowText (page[n_page], "List of People:");
         HPDF_Page_EndText (page[n_page]);
         y -= 170;
+        
+        ROS_INFO("Print list of people text");
 
 
         //! Give location to person
@@ -492,6 +531,7 @@ int createPDF()
         //sprintf(person_image, "pngsuite\\person_%d.png",i);
 #endif
         image_person = HPDF_LoadPngImageFromFile (pdf, string_person_image.c_str());
+        ROS_INFO("Loaded image person");
 
 
         //! Print picture of person and give status in PDF format
@@ -502,6 +542,8 @@ int createPDF()
         HPDF_Page_MoveTextPos (page[n_page], x, y-10);
         HPDF_Page_ShowText (page[n_page], new_str);
         HPDF_Page_EndText (page[n_page]);
+        
+        ROS_INFO("Added image person");
 
         //! Draw person in the map
         /*
@@ -551,8 +593,11 @@ int createPDF()
     //cv::waitKey(0);
 
     //! Store generated image on disk
+    ROS_INFO("Storing image on disk...");
     string file_name_map = img_path + "img_map_cv.png";
+    ROS_INFO("Image name: %s", file_name_map.c_str());
     cv::imwrite(file_name_map.c_str(), image_map_cv);
+    ROS_INFO("Image stored");
 
     //! Load this image and draw it in pdf
     HPDF_Image image_map_generated = HPDF_LoadPngImageFromFile (pdf, file_name_map.c_str());
@@ -585,6 +630,7 @@ int createPDF()
     //y = HPDF_Page_GetHeight (page[n_page]) - 170;
 
     //! Map in pdf
+    ROS_INFO("Adding map to pdf...");
     y -= 180;
     HPDF_Page_DrawImage (page[n_page], image_map_generated, x, y, width_map_in_pdf, height_map_in_pdf);
     HPDF_Page_BeginText (page[n_page]);
@@ -592,9 +638,12 @@ int createPDF()
     HPDF_Page_MoveTextPos (page[n_page], x, y-25.5);
     //HPDF_Page_ShowText (page[n_page], "Apartment: red coordinates present person(s) in need of assistance");
     HPDF_Page_EndText (page[n_page]);
+    ROS_INFO("added");
 
     //! Save the document to a file
+    ROS_INFO("Saving pdf to file...");
     HPDF_SaveToFile (pdf, fname);
+    ROS_INFO("Saved pdf");
 
     //! Clean up
     HPDF_Free (pdf);
