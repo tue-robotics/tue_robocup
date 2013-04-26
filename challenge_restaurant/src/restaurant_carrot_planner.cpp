@@ -181,7 +181,15 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
             //ROS_INFO("distance to virtual wall is %f", dist_to_obstacle);
 
             if (dist_to_obstacle > 0.03 && dist_to_obstacle < d_wall) {
+				// REMEMBER: correction is only needed if the angle is below the threshold
+				// NOTE: check on angular velocity, not on angle
                 ROS_WARN("Object too close: %f [m]", dist_to_obstacle);
+                double angle = laser_scan_.angle_min + j * laser_scan_.angle_increment;
+                ROS_INFO("angle beam is %d", angle);
+                double dy = sin(angle)*dist_to_obstacle;
+                ROS_INFO("dy = %d", dy);
+                ROS_INFO("");
+                // TODO: decrease/increase y-coordinate goal: goal_.setY(goal_.getY()-dy);
                 return false;
             }
         }
