@@ -830,6 +830,7 @@ class Determine_goal(smach.State):
             if not answers:
                 rospy.logerr("No answers found for query {query}".format(query=query))
             else:
+                rospy.loginfo("Determined possible goals for name {0}: {1}".format(self.goal_name, answers))
                 possible_locations += [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
 
         if self.goal_query:
@@ -841,6 +842,7 @@ class Determine_goal(smach.State):
             if not answers:
                 rospy.logerr("No answers found for query {query}".format(query=self.goal_query))                                
             else:
+                rospy.loginfo("Determined possible goals for query {0}: {1}".format(self.goal_query, answers))
                 #From the summarized answer, 
                 possible_locations += [(   float(answer["X"]), 
                                            float(answer["Y"]), 
@@ -856,6 +858,7 @@ class Determine_goal(smach.State):
             if not answers:
                 rospy.logerr("No answers found for query {query}".format(query=self.lookat_query))                                
             else:
+                rospy.logerr("Answers found for query {query}: {answers}".format(query=self.lookat_query, answers=answers))
                 #From the summarized answer, 
                 possible_ROIs = [(   float(answer["X"]), 
                                       float(answer["Y"]), 
