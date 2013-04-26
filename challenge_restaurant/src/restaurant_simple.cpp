@@ -25,7 +25,7 @@ using namespace std;
 
 //! Settings
 const int TIME_OUT_GUIDE_LOST = 5;              // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_GUIDE = 1.5;              // Distance AMIGO keeps towards guide
+const double DISTANCE_GUIDE = 1;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
@@ -300,10 +300,14 @@ void speechCallback(std_msgs::String res) {
     if (res.data == "amigostop") {
         freeze_amigo_ = true;
         amigoSpeak("I will remember this location. How is it called?");
-    } else if (res.data == "thislocationisnamed") {
+    } else if (res.data == "thislocationisnamed" && freeze_amigo_) {
         freeze_amigo_ = false;
-        amigoSpeak("Thank you. I will now continue following you");
         ++n_locations_learned_;
+        std::stringstream ss;
+        if (n_locations_learned_ == 1) ss << "I know " << n_locations_learned_ << " location now.";
+        else if (n_locations_learned_ == 5) ss << "I know all locations now.";
+        else ss << "I know " << n_locations_learned_ << " locations now.";
+        amigoSpeak(ss.str());
     }
 }
 
@@ -417,9 +421,10 @@ int main(int argc, char **argv) {
     }
 
     ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
-    amigoSpeak("I see my guide. Can you please show me the locations. I will follow you");
+    amigoSpeak("Can you please show me the locations");
 
     //! Follow guide
+    freeze_amigo_ = false;
     ros::Rate follow_rate(FOLLOW_RATE);
     while(ros::ok()) {
         ros::spinOnce();
@@ -428,12 +433,16 @@ int main(int argc, char **argv) {
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
         if (n_locations_learned_ == 5) {
-            ROS_WARN("Learned all locations");
+            //ROS_WARN("Learned all locations");
+            
+            ROS_INFO("I know five locations");
         }
 
 
         //! Check if the robot has to move
         if (freeze_amigo_) {
+			
+			bool no_use = getPositionGuide(objects, guide_pos);
 
             //! Robot is waiting for the name and will then continue following
             pbl::Matrix cov(3,3);
@@ -447,12 +456,15 @@ int main(int argc, char **argv) {
 
             //! Check for the (updated) guide position
             if (getPositionGuide(objects, guide_pos)) {
+				ROS_INFO("Just follow...");
 
                 //! Move towards guide
                 moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
 
 
             } else {
+				
+				ROS_INFO("Lost guide");
 
                 //! Lost guide
                 bool found = findGuide(client);
