@@ -2,7 +2,8 @@
  * USB ON UBUNTU SERVER EDITION (AMIGO)
  * 
  * Before starting this node, make sure you type:
- * $ pmount /dev/sdc1
+ * $ pumount --yes-I-really-want-lazy-unmount /media/usb-stick/
+ * $ pmount /dev/sdc1 usb-stick
  * 
  * This will mount the device at /media/sdc1 (which is now hardcoded as path) with the correct permissions
  */
@@ -168,9 +169,9 @@ int createPDF()
     
     if (!found_file_in_media) {
 		ROS_WARN("No files/directories found in /media/ -> no USB stick to write to");
-		usb_dir = "/media/sdc1/emergency_paper.pdf";
+		usb_dir = "/media/usb-stick/emergency_paper.pdf";
 		//usb_dir = ros::package::getPath("challenge_emergency")+"/emergency_paper.pdf";
-		img_path = "/media/sdc1/";
+		img_path = "/media/usb-stick/";
 		//img_path = ros::package::getPath("challenge_emergency")+"/";
 	}
 
