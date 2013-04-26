@@ -40,10 +40,6 @@ class EscortToBreakfast(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         with self:
-            smach.StateMachine.add( 'DUMMY', 
-                                    states.Say(robot, ["Please follow me, I'll bring you to the breakfast room. You can support yourself by using my arms"]), 
-                                    transitions={   'spoken':"SUPPORT_LEFT"})
-
             smach.StateMachine.add( 'SUPPORT_LEFT',
                                     states.ArmToJointPos(robot, robot.leftArm, SUPPORT_PATIENT_POSE),
                                     transitions={'done':'SUPPORT_RIGHT',
@@ -51,8 +47,11 @@ class EscortToBreakfast(smach.StateMachine):
 
             smach.StateMachine.add( 'SUPPORT_RIGHT',
                                     states.ArmToJointPos(robot, robot.rightArm, SUPPORT_PATIENT_POSE),
-                                    transitions={'done':'GOTO_BREAKFAST',
-                                                 'failed':'GOTO_BREAKFAST'})
+                                    transitions={'done':'DUMMY',
+                                                 'failed':'DUMMY'})
+            smach.StateMachine.add( 'DUMMY', 
+                                    states.Say(robot, ["Please follow me, I'll bring you to the breakfast room. You can support yourself by using my arms"]), 
+                                    transitions={   'spoken':"GOTO_BREAKFAST"})
             
             smach.StateMachine.add( 'GOTO_BREAKFAST', 
                                     states.NavigateGeneric(robot, goal_query=patient_destination_query), 
@@ -64,6 +63,9 @@ class EscortToBreakfast(smach.StateMachine):
 class DemoChallenge(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+
+        robot.reasoner.query(Compound("retractall", Compound("at", "X", "Y")))
+        robot.reasoner.query(Compound("retractall", Compound("current_patient", "X")))
 
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
@@ -120,7 +122,6 @@ class DemoChallenge(smach.StateMachine):
                     rospy.loginfo("Current patient = {0}".format(patient))
                     robot.reasoner.query(Compound("retractall", Compound("current_patient", "X")))
                     robot.reasoner.assertz(Compound("current_patient", patient))
-                    import ipdb; ipdb.set_trace()       
                     return 'patient_set'
             
             smach.StateMachine.add('DETERMINE_CURRENT_PATIENT', smach.CBState(determine_current_patient),
@@ -169,7 +170,7 @@ class DemoChallenge(smach.StateMachine):
                     destination = destination_answers[0]["Object"]
 
                     robot.reasoner.query(Compound("retractall", Compound("at", patient, "X"))) #The patient 
-                    robot.reasoner.assertz(Compound("at", patient, "X"))        
+                    robot.reasoner.assertz(Compound("at", patient, destination))        
                     return 'asserted'
                 else:
                     rospy.loginfo("Something went terribly wrong! Exiting with done")
@@ -236,7 +237,7 @@ class DemoChallenge(smach.StateMachine):
             @smach.cb_interface(outcomes=['asserted'])
             def retract_current_patient(userdata):
                 patient_answers = robot.reasoner.query(current_patient_query)
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 if patient_answers:       
                     patient = patient_answers[0]["Patient"]
 
