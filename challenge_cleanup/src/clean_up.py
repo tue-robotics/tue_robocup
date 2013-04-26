@@ -100,7 +100,7 @@ class Cleanup(smach.StateMachine):
 
             smach.StateMachine.add("ASK_CLEANUP",
                                 Ask_cleanup(robot),
-                                transitions={'done':'DRIVE_TO_ROOM'})
+                                transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
 
             query_room = Conjunction(Compound("goal", Compound("clean_up", "Room")), Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi")))        
             smach.StateMachine.add( 'DRIVE_TO_ROOM',
