@@ -279,10 +279,10 @@ def setup_statemachine(robot):
     
     #Load database
     robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
-    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/egpsr.pl'))
+    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/egpsr2.pl'))
 
     #Assert the current challenge.
-    robot.reasoner.query(Compound("assertz",Compound("challenge", "gpsr")))
+    robot.reasoner.query(Compound("assertz",Compound("challenge", "egpsr")))
     robot.reasoner.query(Compound("assertz",Compound("tasks_done", "0.0")))
     robot.reasoner.query(Compound("assertz",Compound("tasks_max", "10.0")))  # Define how many tasks you want to perform
 
@@ -292,86 +292,98 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-        
+        # DURING A CHALLENGE, AMIGO STARTS AT A DESIGNATED POSITION!
+
         ######################################################
         ##################### INITIALIZE #####################             
         ######################################################
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'AT_FRONT_OF_DOOR',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
+                                transitions={   'initialized':'INTRODUCE_SHORT',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
                                                 'abort':'Aborted'})
 
         ######################################################
         ##################### ENTER ROOM #####################             
         ######################################################
 
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('AT_FRONT_OF_DOOR',
-                                    states.Say(robot, 'I will now check if the door is open or not'),
-                                    transitions={'spoken':'STATE_DOOR'}) 
+        # # If the door is open, amigo will say that it goes to the registration table
+        # smach.StateMachine.add('AT_FRONT_OF_DOOR',
+        #                             states.Say(robot, 'I will now check if the door is open or not'),
+        #                             transitions={'spoken':'STATE_DOOR'}) 
         
-        smach.StateMachine.add('STATE_DOOR', states.Read_laser(robot,"entrance_door"),
-                                  transitions={'laser_read':'CHECK_DOOR'})
+        # smach.StateMachine.add('STATE_DOOR', states.Read_laser(robot,"entrance_door"),
+        #                           transitions={'laser_read':'CHECK_DOOR'})
               
-        dooropen_query = Compound("state","entrance_door", "open")
-        smach.StateMachine.add('CHECK_DOOR', 
-                                    states.Ask_query_true(robot, dooropen_query),
-                                    transitions={   'query_false':'STATE_DOOR',
-                                                    'query_true':'THROUGH_DOOR',
-                                                    'waiting':'DOOR_CLOSED',
-                                                    'preempted':'Aborted'})
+        # dooropen_query = Compound("state","entrance_door", "open")
+        # smach.StateMachine.add('CHECK_DOOR', 
+        #                             states.Ask_query_true(robot, dooropen_query),
+        #                             transitions={   'query_false':'STATE_DOOR',
+        #                                             'query_true':'ENTER_ROOM',
+        #                                             'waiting':'DOOR_CLOSED',
+        #                                             'preempted':'Aborted'})
 
-        # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-        # in perception.py, amigo will speak and check again if the door is open
-        smach.StateMachine.add('DOOR_CLOSED',
-                                    states.Say(robot, 'Door is closed, please open the door'),
-                                    transitions={'spoken':'STATE_DOOR'}) 
+        # # If the door is still closed after certain number of iterations, defined in Ask_query_true 
+        # # in perception.py, amigo will speak and check again if the door is open
+        # smach.StateMachine.add('DOOR_CLOSED',
+        #                             states.Say(robot, 'Door is closed, please open the door'),
+        #                             transitions={'spoken':'STATE_DOOR'}) 
 
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('THROUGH_DOOR',
-                                    states.Say(robot, 'Door is open, so I will go to the meeting point'),
-                                    transitions={'spoken':'INIT_POSE'}) 
+        # # # If the door is open, amigo will say that it goes to the registration table
+        # # smach.StateMachine.add('THROUGH_DOOR',
+        # #                             states.Say(robot, 'Door is open, so I will go to the meeting point'),
+        # #                             transitions={'spoken':'INIT_POSE'}) 
 
-        # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
-        smach.StateMachine.add('INIT_POSE',
-                                states.Set_initial_pose(robot, 'initial'),
-                                transitions={   'done':'GO_TO_MEETING_POINT',
-                                                'preempted':'CHECK_DOOR',
-                                                'error':'CHECK_DOOR'})
+        # # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
+        # smach.StateMachine.add('INIT_POSE',
+        #                         states.Set_initial_pose(robot, 'initial'),
+        #                         transitions={   'done':'ENTER_ROOM',
+        #                                         'preempted':'CHECK_DOOR',
+        #                                         'error':'CHECK_DOOR'})
 
-        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
-        smach.StateMachine.add('GO_TO_MEETING_POINT', 
-                                    states.Navigate_named(robot, "meeting_point"),
-                                    transitions={   'arrived':'INTRODUCE_SHORT', 
-                                                    'preempted':'CLEAR_PATH_TO_MEETING_POINT', 
-                                                    'unreachable':'CLEAR_PATH_TO_MEETING_POINT', 
-                                                    'goal_not_defined':'CLEAR_PATH_TO_MEETING_POINT'})
+        # # Enter the arena with force drive as back-up
+        # smach.StateMachine.add('ENTER_ROOM',
+        #                             states.EnterArena(robot),
+        #                             transitions={   "done":"ENTERED_ROOM" })
 
-        # Amigo will say that it arrives at the registration table
-        smach.StateMachine.add('CLEAR_PATH_TO_MEETING_POINT',
-                                    states.Say(robot, "At my first attempt I could not go to the meeting point. Please clear the path, I will give it another try."),
-                                    transitions={'spoken':'GO_TO_MEETING_POINT_SECOND_TRY'}) 
+        # # If the door is open, amigo will say that it goes to the registration table
+        # smach.StateMachine.add('ENTERED_ROOM',
+        #                             states.Say(robot, 'I will go to the meeting point'),
+        #                             transitions={'spoken':'GO_TO_MEETING_POINT'}) 
 
-        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
-        smach.StateMachine.add('GO_TO_MEETING_POINT_SECOND_TRY', 
-                                    states.Navigate_named(robot, "meeting_point"),
-                                    transitions={   'arrived':'INTRODUCE_SHORT', 
-                                                    'preempted':'FAIL_BUT_INTRODUCE', 
-                                                    'unreachable':'FAIL_BUT_INTRODUCE', 
-                                                    'goal_not_defined':'FAIL_BUT_INTRODUCE'})
+        # # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        # smach.StateMachine.add('GO_TO_MEETING_POINT', 
+        #                             states.Navigate_named(robot, "meeting_point"),
+        #                             transitions={   'arrived':'INTRODUCE_SHORT', 
+        #                                             'preempted':'CLEAR_PATH_TO_MEETING_POINT', 
+        #                                             'unreachable':'CLEAR_PATH_TO_MEETING_POINT', 
+        #                                             'goal_not_defined':'CLEAR_PATH_TO_MEETING_POINT'})
 
-        # Amigo will say that it arrives at the registration table
-        smach.StateMachine.add('FAIL_BUT_INTRODUCE',
-                                    states.Say(robot, "I was still not able to go to the meeting point, therefore I will introduce myself here."),
-                                    transitions={'spoken':'INTRODUCE_SHORT'}) 
+        # # Amigo will say that it arrives at the registration table
+        # smach.StateMachine.add('CLEAR_PATH_TO_MEETING_POINT',
+        #                             states.Say(robot, "At my first attempt I could not go to the meeting point. Please clear the path, I will give it another try."),
+        #                             transitions={'spoken':'GO_TO_MEETING_POINT_SECOND_TRY'}) 
+
+        # # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        # smach.StateMachine.add('GO_TO_MEETING_POINT_SECOND_TRY', 
+        #                             states.Navigate_named(robot, "meeting_point"),
+        #                             transitions={   'arrived':'INTRODUCE_SHORT', 
+        #                                             'preempted':'FAIL_BUT_INTRODUCE', 
+        #                                             'unreachable':'FAIL_BUT_INTRODUCE', 
+        #                                             'goal_not_defined':'FAIL_BUT_INTRODUCE'})
+
+        # # Amigo will say that it arrives at the registration table
+        # smach.StateMachine.add('FAIL_BUT_INTRODUCE',
+        #                             states.Say(robot, "I was still not able to go to the meeting point, therefore I will introduce myself here."),
+        #                             transitions={'spoken':'INTRODUCE_SHORT'}) 
 
         ######################################################
         #################### INSTRUCTIONS ####################             
         ######################################################
 
+
         smach.StateMachine.add("INTRODUCE_SHORT",
-                               states.Say(robot,"Hi, my name is Amigo."),
+                               states.Say(robot,"Hi, my name is Amigo. I will just wait here and wonder if I can do something for you"),
                                transitions={'spoken':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
