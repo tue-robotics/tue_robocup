@@ -12,7 +12,7 @@ amigo3:
 
     roslaunch speech_interpreter start_magdeburg2013.launch
 
-athome3
+athome3:
 
     alsamixer
         Mic Boost -> 100
