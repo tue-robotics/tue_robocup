@@ -231,7 +231,7 @@ class Navigate_to_queryoutcome(Navigate_abstract):
         # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
         # is a mapping of variable to a constant, like a string or number
         answers = self.robot.reasoner.query(self.queryTerm)
-	rospy.loginfo("answers for {0}: {1}".format(self.queryTerm, answers))
+
         if not answers:
             return None
             rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
@@ -316,11 +316,11 @@ class Visit_query_outcome(Navigate_to_queryoutcome):
                 rospy.loginfo("outcome=arrived, the following fact should be retracted = not_visited({0})".format(self.current_identifier))
 
             elif outcome == "failed":
-                visited_assertion = Compound("retractall", Compound("not_unreachable", self.current_identifier))
+                visited_assertion = Compound("retractall", Compound("not_reachable", self.current_identifier))
                 self.robot.reasoner.query(visited_assertion)
                 self.current_identifier = None
 
-                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_unreachable({0})".format(self.current_identifier))
+                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_reachable({0})".format(self.current_identifier))
 
         else:
             rospy.logerr("current_identifier was None, should not happen.")
@@ -846,35 +846,6 @@ class Determine_goal(smach.State):
                                            float(answer["Y"]), 
                                            float(answer["Phi"])) for answer in answers]
 
-        '''
-        answers = self.robot.reasoner.query(self.decorated_query)
-
-        if not answers:
-            rospy.logwarn("No answers found for query {query} that are not visited and are not unreachable.".format(query=self.decorated_query))
-            return None
-        else:
-        basepos = self.robot.base.location[0]
-            basepos = (basepos.x, basepos.y, basepos.z)
-            selected_answer = urh.select_answer(answers, 
-                                                lambda answer: urh.xyz_dist(answer, basepos), 
-                                                minmax=min, 
-                                                criteria=[lambda answer: urh.xyz_dist(answer, basepos) < self.maxdist])
-            x,y,z = urh.answer_to_tuple(selected_answer)
-            location = selected_answer[self.ROI_Location]
-
-            self.current_identifier = location
-           
-            look_point = geometry_msgs.msg.PointStamped()
-            look_point.point = self.robot.base.point(x,y)
-            pose = util.msg_constructors.Quaternion(z=1.0)
-
-            base_pose_for_point = self.robot.base.get_base_pose(look_point, self.x_offset, self.y_offset)
-            if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y ==0:
-                rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
-
-            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
-        '''
         if self.lookat_query:
             rospy.logwarn("lookat_query")
             # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
@@ -907,6 +878,19 @@ class Determine_goal(smach.State):
             rospy.logerr("No goal could be defined in {state}".format(state=self))
             self.robot.speech.speak("I don't know where to go. I'm very sorry.")
             return 'failed'
+
+        ''' New stuff '''
+        # Main idea: check all possible locations for feasibility
+        # If no feasible locations: reset_costmap
+        # Else: pick best feasible location as below
+
+        # feasible_locations = []
+        # #def query_costmap(self, points, frame_id="/map"):
+        # #if isinstance(points, geometry_msgs.msg.Point):
+        # for (possible_location in possible_locations):
+        #     self.robot.base.query_costmap
+        ''' End new stuff '''
+
 
         # Get the best possible location according to self.goal_sorter, or get the first one if sorter not specified
         # ToDo: include costmap query
@@ -943,21 +927,22 @@ class Get_plan(smach.State):
 
         rospy.loginfo("Looking for a path")
         rospy.loginfo("Get_plan, goal = {0}".format(userdata.goal))
+
         self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
         #rospy.logdebug("Path found = {0}".format(self.robot.base.path))
 
-        if not self.robot.base.path:
-            # Clear costmap and try once more
-            # ToDo: @BasC: is this the way to go?
-            rospy.logwarn("Clearing costmap around robot")
-            self.robot.speech.speak("I am going to clear the map around myself")
-            self.robot.base.clear_costmap(1.0)
-            rospy.sleep(rospy.Duration(1.0))
-            rospy.logwarn("Setting unknown space to free around robot")
-            self.robot.base.free_unknown_space(0.2)
-            rospy.sleep(rospy.Duration(1.0))
-            self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
+        # if not self.robot.base.path:
+        #     # Clear costmap and try once more
+        #     # ToDo: @BasC: is this the way to go?
+        #     rospy.logwarn("Clearing costmap around robot")
+        #     self.robot.speech.speak("I am going to clear the map around myself")
+        #     self.robot.base.clear_costmap(1.0)
+        #     rospy.sleep(rospy.Duration(1.0))
+        #     rospy.logwarn("Setting unknown space to free around robot")
+        #     self.robot.base.free_unknown_space(0.2)
+        #     rospy.sleep(rospy.Duration(1.0))
+        #     self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
         # Ultimate fallback: reset entire map
         if (not self.robot.base.path and (rospy.Time.now() - self.last_reset) > rospy.Duration(10.0) ):
@@ -1077,7 +1062,6 @@ class Waiting_to_execute(smach.State):
             self.previous_replan_timeout = self.robot.base.replan_timeout
             # Wait 0.5 seconds to avoid looping too fast
             rospy.sleep(rospy.Duration(0.5))
-        return 'done'
 
 
 class Recover(smach.State):
@@ -1096,7 +1080,11 @@ class Recover(smach.State):
         if (self.robot.base.obstacle_position.point.x == -1 and self.robot.base.obstacle_position.point.y == -1 and self.robot.base.obstacle_position.point.z == -1):
             # size must be large enough to clear unknown space around the robot
             self.robot.speech.speak("I am not sure if the space in front of me is clear")
-            
+            self.robot.speech.speak("Watch out, I am going to clear it")
+            rospy.logdebug("Freeing unknown space and clearing costmap around robot")
+            self.robot.base.free_unknown_space(0.2)
+            self.robot.base.clear_costmap(1.2)
+            # Sleep for a second to ensure the map is cleared and obstacles are inserted again
             rospy.sleep(rospy.Duration(1.0))
             return 'new_path_required'
         # otherwise the goal is unreachable or base is in obstacle, needs clearing
@@ -1108,6 +1096,10 @@ class Recover(smach.State):
             rospy.logwarn("Distance = {0}".format(distance))
             if distance < 0.1:
                 self.robot.speech.speak("I have the funny feeling that I am inside an obstacle")
+                self.robot.speech.speak("I am going to clear the map around myself")
+                self.robot.base.clear_costmap(1.2)
+                # Sleep for a second to ensure the map is cleared and obstacles are inserted again
+                rospy.sleep(rospy.Duration(1.0))
                 return 'new_path_required'
             else:
                 self.robot.speech.speak("Oh no, I can not reach my precious goal")
