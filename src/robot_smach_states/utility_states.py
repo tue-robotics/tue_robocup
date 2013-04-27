@@ -451,7 +451,6 @@ class PlaySound(smach.State):
         extension = os.path.splitext(self.file)[1]
         player = {".mp3":"mpg123", ".wav":"aplay"}[extension]
         command = (player, self.file)
-        import ipdb; ipdb.set_trace()
         try:
             rospy.loginfo("Running '{0}'".format(*command))
             if self.blocking:
