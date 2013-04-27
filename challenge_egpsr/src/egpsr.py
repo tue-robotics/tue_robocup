@@ -840,10 +840,10 @@ def setup_statemachine(robot):
 
             smach.StateMachine.add("SAY_AT_GOAL_NAVIGATE_TO_LOC_TO",
                                    states.Say(robot,"You should have the object now. Therefore I will drive back to the meeting point."),
-                                   transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO3'}) 
+                                   transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO33'}) 
 
 
-            smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO3',                               
+            smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO33',                               
                                     states.GotoMeetingPointEGPSR(robot),
                                         transitions={'succeeded':'AT_MEETING_POINT',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
