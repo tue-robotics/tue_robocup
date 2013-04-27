@@ -362,7 +362,9 @@ class Base(object):
 
     def reset_costmap(self):
         if self.use_2d:
-            rospy.logwarn("No costmap reset in case of 2D navigation")
+            #rospy.logwarn("No costmap reset in case of 2D navigation")
+            # There is no reset costmap in tue_move_base (2D), hence, only the costmap is cleared
+            self.clear_costmap()
             return False
         else:
             try:
