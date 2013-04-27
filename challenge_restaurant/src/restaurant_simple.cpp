@@ -50,6 +50,7 @@ ros::Publisher head_ref_pub_;                                                   
 unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
 ros::ServiceClient srv_start_speech_;                                             // Communication: start speech
 ros::ServiceClient srv_stop_speech_;                                              // Communication: stop speech
+double t_freeze_ = 0;
 
 
 /**
@@ -313,10 +314,12 @@ void speechCallback(std_msgs::String res) {
     if (res.data == "amigostop") {
         candidate_freeze_amigo_ = true;
         amigoSpeak("Do you want me to stop?");
+        t_freeze_ = ros::Time::now().toSec();
     } else if (candidate_freeze_amigo_ &&  res.data == "yes") {
 		freeze_amigo_ = true;
+		candidate_freeze_amigo_ = false;
 		amigoSpeak("I will remember this location. How is it called?");
-    } else if (candidate_freeze_amigo_) {
+    } else if (candidate_freeze_amigo_ && res.data != "yes" && res.data != "") {
 		candidate_freeze_amigo_ = false;
 		amigoSpeak("Sorry. I misunderstood. I will follow you");	
 	} else if (freeze_amigo_ && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
@@ -426,7 +429,7 @@ int main(int argc, char **argv) {
     //! Administration
     pbl::PDF guide_pos;
 
-    ROS_INFO("Looking for guide");
+    amigoSpeak("I am looking for my guide");
     if (!findGuide(client, false)) {
         ROS_WARN("No guide can be found, try once more");
         if (!findGuide(client, false)) {
@@ -456,6 +459,8 @@ int main(int argc, char **argv) {
         //! Check if the robot has to move
         if (freeze_amigo_) {
 			
+			
+			
 			bool no_use = getPositionGuide(objects, guide_pos);
 
             //! Robot is waiting for the name and will then continue following
@@ -463,10 +468,18 @@ int main(int argc, char **argv) {
             cov.zeros();
             pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
             moveTowardsPosition(pos, 0);
+            
 
         } else {
 
             // Just follow
+            if (candidate_freeze_amigo_) {
+	            ROS_INFO("Time out is %f", ros::Time::now().toSec() - t_freeze_);
+	            if (ros::Time::now().toSec() - t_freeze_ > 4) {
+					ROS_WARN("Time out");
+					candidate_freeze_amigo_ = false;
+				}
+			}
 
             //! Check for the (updated) guide position
             if (getPositionGuide(objects, guide_pos)) {
