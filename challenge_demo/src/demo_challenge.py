@@ -56,9 +56,7 @@ class AskBreakfast(smach.State):
         self.ask_breakfast_failed = 0
         self.person_breakfast = 0
 
-    def execute(self, userdata=None):
-        self.robot.reasoner.query(Compound("retractall", Compound("current_patient", "X")))        
-
+    def execute(self, userdata=None):     
         self.response = self.get_breakfast_question_service("demo_challenge", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
@@ -82,7 +80,6 @@ class AskBreakfast(smach.State):
         if not return_result:
             self.robot.speech.speak("That's horrible, I forgot what breakfast you want. I should see a doctor!")
             return "failed"
-
         return "done"
 
 class TalkToCook(smach.StateMachine):
