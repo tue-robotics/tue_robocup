@@ -796,6 +796,19 @@ class NavigateGenericOld(smach.State):
         self.preempted = True
         self.robot.base.cancel_goal()
 
+class ResetCostmap(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+
+        self.robot = robot
+
+    def execute(self):
+
+        self.robot.base.reset_costmap()
+
+        return 'done'
+
+
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
     def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None):
