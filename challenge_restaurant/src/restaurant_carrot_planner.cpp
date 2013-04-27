@@ -132,6 +132,11 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
     ROS_INFO_STREAM("goal = " << goal_norm_msg.linear << ", angle_ = " << goal_angle_);
 
     //! Determine velocity
+    // TODO: threshold on theta should be on this place
+    // if (e_theta > VALUE) {
+    cmd_vel.angular.z = determineReference(e_theta, current_vel.angular.z, MAX_VEL_THETA, MAX_ACC_THETA, dt);
+ 	// } else cmd_vel.angular.z = 0;
+
     determineDesiredVelocity(goal_, goal_angle_, last_cmd_vel_, dt, cmd_vel);
     last_cmd_vel_ = cmd_vel;
 
@@ -152,7 +157,7 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
     int num_readings = laser_scan_.ranges.size();
     int num_incr = goal_angle_/laser_scan_.angle_increment; // Both in rad
     int index_beam_obst = num_readings/2 + num_incr;
-    //int width = 15;
+    int width = 15;
 /*
     for (int i = index_beam_obst - width; i <= index_beam_obst + width; ++i){
 
@@ -173,14 +178,15 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
     double d_wall = 0.6, r_robot = 0.35;
     double dth = atan2(r_robot, d_wall);
     int d_step = dth/laser_scan_.angle_increment;
-    //int beam_middle = num_readings/2;
+    int beam_middle = num_readings/2;
 
-    for (int j = index_beam_obst - d_step; j < index_beam_obst + d_step; j=j+4) {
+	for (int j = beam_middle - d_step; j < beam_middle + d_step; j=j+2) {
+    //for (int j = index_beam_obst - d_step; j < index_beam_obst + d_step; j=j+4) {
         if (j < num_readings) {
             double dist_to_obstacle = laser_scan_.ranges[j];
             //ROS_INFO("distance to virtual wall is %f", dist_to_obstacle);
 
-            if (dist_to_obstacle > 0.03 && dist_to_obstacle < d_wall) {
+            if (dist_to_obstacle > 0.02 && dist_to_obstacle < d_wall) {
 				// REMEMBER: correction is only needed if the angle is below the threshold
 				// NOTE: check on angular velocity, not on angle
                 ROS_WARN("Object too close: %f [m]", dist_to_obstacle);

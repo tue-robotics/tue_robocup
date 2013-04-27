@@ -10,11 +10,12 @@
 #include <std_msgs/String.h>
 #include <std_srvs/Empty.h>
 
-#include <tf/transform_datatypes.h>
 #include "problib/conversions.h"
 
 #include "challenge_restaurant/restaurant_carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
+
+#include <text_to_speech_philips/amigo_speakup_advanced.h>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ using namespace std;
 
 //! Settings
 const int TIME_OUT_GUIDE_LOST = 5;              // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_GUIDE = 1;              // Distance AMIGO keeps towards guide
+const double DISTANCE_GUIDE = 2.0;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
@@ -41,8 +42,10 @@ double t_last_check_ = 0;                                                       
 double last_var_guide_pos_ = -1;                                                  // Bookkeeping: last variance in x-position guide
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
-bool freeze_amigo_ = false;                                                       // Bookkeeping: true if robot is asked to stop
+bool freeze_amigo_ = false;                                                       // Bookkeeping: true if stop command is confirmed
+bool candidate_freeze_amigo_ = false;                                             // Bookkeeping: true if robot is asked to stop
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
 ros::ServiceClient srv_start_speech_;                                             // Communication: start speech
@@ -54,18 +57,28 @@ ros::ServiceClient srv_stop_speech_;                                            
  * @param sentence
  */
 void amigoSpeak(string sentence) {
+	
+	ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
 
     std_srvs::Empty srv;
-    if (srv_stop_speech_.call(srv)) {
+    if (!srv_stop_speech_.call(srv)) {
         ROS_WARN("Unable to turn off speech recognition");
     }
+    
+    //! Call speech service
+	text_to_speech_philips::amigo_speakup_advanced speak;
+	speak.request.sentence = sentence;
+    speak.request.language = "us";
+    speak.request.character = "kyle";
+    speak.request.voice = "default";
+    speak.request.emotion = "excited";
+    if (!srv_speech_.call(speak)) {
+		std_msgs::String sentence_msgs;
+		sentence_msgs.data = sentence;
+		pub_speech_.publish(sentence_msgs);
+	}
 
-    ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
-    std_msgs::String sentence_msgs;
-    sentence_msgs.data = sentence;
-    pub_speech_.publish(sentence_msgs);
-
-    if (srv_start_speech_.call(srv)) {
+    if (!srv_start_speech_.call(srv)) {
         ROS_WARN("Unable to turn on speech recognition");
     } else {
         ROS_INFO("Started speech recognition");
@@ -298,10 +311,17 @@ void speechCallback(std_msgs::String res) {
     ROS_INFO("Received command: %s", res.data.c_str());
 
     if (res.data == "amigostop") {
-        freeze_amigo_ = true;
-        amigoSpeak("I will remember this location. How is it called?");
-    } else if (res.data == "thislocationisnamed" && freeze_amigo_) {
+        candidate_freeze_amigo_ = true;
+        amigoSpeak("Do you want me to stop?");
+    } else if (candidate_freeze_amigo_ &&  res.data == "yes") {
+		freeze_amigo_ = true;
+		amigoSpeak("I will remember this location. How is it called?");
+    } else if (candidate_freeze_amigo_) {
+		candidate_freeze_amigo_ = false;
+		amigoSpeak("Sorry. I misunderstood. I will follow you");	
+	} else if (freeze_amigo && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
         freeze_amigo_ = false;
+        amigoSpeak("Thank you. I will now continue to follow you");
         ++n_locations_learned_;
         std::stringstream ss;
         if (n_locations_learned_ == 1) ss << "I know " << n_locations_learned_ << " location now.";
@@ -348,7 +368,7 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
     planner_->MoveToGoal(end_goal);
 
-    ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
+    ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
 
 }
 
@@ -395,9 +415,10 @@ int main(int argc, char **argv) {
     srv_stop_speech_ = nh.serviceClient<std_srvs::Empty>("/speech_recognition_restaurant/stop");
     ROS_INFO("Communication with speech recognition started");
 
-    //! Topic that makes AMIGO speak
+    //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
-    ROS_INFO("Publisher for text to speech started");
+    srv_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
+    ROS_INFO("Publisher/service client for text to speech started");
     
     //! Always clear the world model
     std_srvs::Empty srv;
@@ -433,9 +454,7 @@ int main(int argc, char **argv) {
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
         if (n_locations_learned_ == 5) {
-            //ROS_WARN("Learned all locations");
-            
-            ROS_INFO("I know five locations");
+            ROS_WARN("I think I know all locations");
         }
 
 
@@ -450,7 +469,7 @@ int main(int argc, char **argv) {
             pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
             moveTowardsPosition(pos, 0);
 
-        } else {
+        else {
 
             // Just follow
 
@@ -467,6 +486,7 @@ int main(int argc, char **argv) {
 				ROS_INFO("Lost guide");
 
                 //! Lost guide
+                // TODO Only find if candidate_freeze_amigo_ is false?
                 bool found = findGuide(client);
                 if (!found) {
                     ROS_WARN("Lost guide and failed to find one!");
