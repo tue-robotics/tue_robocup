@@ -334,7 +334,7 @@ def setup_statemachine(robot):
     
     #Load database
     robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
-    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/egpsr2.pl'))
+    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/egpsr.pl'))
 
     #Assert the current challenge.
     robot.reasoner.query(Compound("assertz",Compound("challenge", "egpsr")))
