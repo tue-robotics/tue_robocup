@@ -287,9 +287,9 @@ class DemoChallenge(smach.StateMachine):
             smach.StateMachine.add( 'GOTO_KITCHEN_TO_REPORT_ORDER', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
                                     transitions={   "arrived":"HOLDUP_ARMS_FOR_TRAY_LEFT",
-                                                    "unreachable":"Aborted",
+                                                    "unreachable":"HOLDUP_ARMS_FOR_TRAY_LEFT",
                                                     "preempted":"Aborted",
-                                                    "goal_not_defined":"Aborted"})
+                                                    "goal_not_defined":"HOLDUP_ARMS_FOR_TRAY_LEFT"})
             
             smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_LEFT', 
                                     states.ArmToJointPos(robot, robot.leftArm, HOLD_TRAY_POSE),
