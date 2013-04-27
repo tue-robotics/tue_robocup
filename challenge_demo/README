@@ -28,7 +28,6 @@ amigo3:
 
 ---------------------------------------
 BUGS: Remove bug if fixed:
-- Keuken moet grotere x krijgen om niet tegen de koelkast aan te slaan
 - Testen of we een blad kunnen dragen
 
 (- Carry to patient geeft unknown location (kan alleen de halve statemachine testen). Hier is ook meer robuustheid mogelijk )

@@ -122,6 +122,7 @@ class DemoChallenge(smach.StateMachine):
 
         robot.reasoner.query(Compound("retractall", Compound("at", "X", "Y")))
         robot.reasoner.query(Compound("retractall", Compound("current_patient", "X")))
+        robot.reasoner.query(Compound("retractall", Compound("breakfast", "X")))
 
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
@@ -316,9 +317,14 @@ class DemoChallenge(smach.StateMachine):
             smach.StateMachine.add( 'CARRY_TO_PATIENT', 
                                     states.NavigateGeneric(robot, goal_query=patient_destination_query), 
                                     transitions={   "arrived":"HANDOVER_BREAKFAST",
-                                                    "unreachable":"Aborted",
+                                                    "unreachable":"CANT_GET_TO_PATIENT",
                                                     "preempted":"Aborted",
-                                                    "goal_not_defined":"Aborted"})
+                                                    "goal_not_defined":"CANT_GET_TO_PATIENT"})
+
+            smach.StateMachine.add( 'CANT_GET_TO_PATIENT', 
+                                    states.Say(robot, [ "I can't seem to get to the patients somehow. Team, pick my brain to figure this out",
+                                                        "I seem to be unable reach the receiver of this lovely breakfast. Please just take it"]), 
+                                    transitions={   'spoken':"HANDOVER_BREAKFAST"})
 
             smach.StateMachine.add( 'HANDOVER_BREAKFAST', 
                                     states.Say(robot, [ "Your breakfast, sir. Remember to take your pills after eating", 
