@@ -439,7 +439,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("INTRODUCE_SHORT",
                                states.Say(robot,"Hi, my name is Amigo. I will just wait here and wonder if I can do something for you"),
-                               transitions={'spoken':'ASK_ACTION'})
+                               transitions={'spoken':'INIT_POSE'})
+
+        smach.StateMachine.add('INIT_POSE',
+                                states.Set_initial_pose(robot, 'initial_egpsr_1'),
+                                transitions={   'done':'ASK_ACTION',
+                                                'preempted':'ASK_ACTION',
+                                                'error':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
