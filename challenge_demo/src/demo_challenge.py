@@ -349,7 +349,7 @@ class DemoChallenge(smach.StateMachine):
                                                     'failed':"DETERMINE_CURRENT_PATIENT"})
 
             smach.StateMachine.add( 'EXIT', 
-                                    states.NavigateGeneric(robot, goal_name="exit"), 
+                                    states.NavigateGeneric(robot, goal_name="exitB"), 
                                     transitions={   "arrived":"SAY_DONE",
                                                     "unreachable":"SAY_DONE",
                                                     "preempted":"SAY_DONE",
