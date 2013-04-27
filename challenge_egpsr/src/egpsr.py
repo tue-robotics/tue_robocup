@@ -838,7 +838,7 @@ def setup_statemachine(robot):
             #                             transitions={'succeeded':'AT_MEETING_POINT',
             #                                          'not_at_loc':'NOT_AT_MEETING_POINT'})
 
-            smach.StateMachine.add("SAY_AT_GOAL_NAVIGATE_TO_LOC_TO",
+            smach.StateMachine.add("SAY_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT",
                                    states.Say(robot,"You should have the object now. Therefore I will drive back to the meeting point."),
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_23'}) 
 
@@ -868,16 +868,6 @@ def setup_statemachine(robot):
             #                                          'not_at_loc':'NOT_AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED'})
 
 
-            smach.StateMachine.add("SAY_NOT_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT",
-                                   states.Say(robot,"I could not reach the drop off location. So I will drive back to the \
-                                                    meeting point and try to deliver the object there. I am sorry!"),
-                                   transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_24'}) 
-
-
-            smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_24',                               
-                                    states.GotoMeetingPointEGPSR(robot),
-                                        transitions={'succeeded':'AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED',
-                                                     'not_at_loc':'NOT_AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED'})
 
 
             # smach.StateMachine.add('SAY_NOT_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT', 
