@@ -23,7 +23,7 @@ from psi import Conjunction, Compound
 
 from tf.transformations import euler_from_quaternion
 
-HOLD_TRAY_POSE = [-0.1, 0.13, 0, 1.57, 0, 0.3, 0]
+HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
 SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
 RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 
