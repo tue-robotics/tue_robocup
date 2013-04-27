@@ -154,6 +154,16 @@ class Base(object):
 
     @util.concurrent_util.synchronized(_lock)
     def movebase_feedback(self, feedback, result=None):
+        self.obstacle_position      = feedback.obstacle_position
+        self.poses_to_goal          = feedback.nr_poses_to_goal
+        self.base_pose              = feedback.base_position
+        self.path                   = feedback.path
+        self.replan_timeout         = feedback.nr_sec_till_replan_execution
+
+        if self.replan_timeout < 0:
+            self.replan_timeout = 0  # Move_base sometimes returns negative times; this should be fixed, but before
+                                     # that time, we can simply deal with it this way    
+
 
         if self.replan_timeout > 0:
             self.path_blocked = True
@@ -164,13 +174,7 @@ class Base(object):
                 self.reached_blocked_timeout = False
 
         else:
-            self.path_blocked = False
-
-        self.poses_to_goal          = feedback.nr_poses_to_goal
-        self.base_pose              = feedback.base_position
-        self.obstacle_position      = feedback.obstacle_position
-        self.replan_timeout         = feedback.nr_sec_till_replan_execution
-        self.path              = feedback.path
+            self.path_blocked = False        
 
         #rospy.loginfo("Feedback from move_base = {0}".format(feedback))
 
