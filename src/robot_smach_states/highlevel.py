@@ -487,7 +487,7 @@ class GetObject(smach.StateMachine):
                                                                       x_offset=0.7, y_offset=0.0001,
                                                                       identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
                                     transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
-                                                    'unreachable':'Failed',
+                                                    'unreachable':'DRIVE_TO_SEARCHPOS',
                                                     'preempted':'Aborted',
                                                     'goal_not_defined':'Failed',      # End State
                                                     'all_matches_tried':'Failed'})    # End State
