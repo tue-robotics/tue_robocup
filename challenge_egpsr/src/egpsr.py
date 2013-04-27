@@ -35,7 +35,7 @@ from psi import *
 ##########################################
 # - astart
 # - amiddle
-# - roslaunch create_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
+# - roslaunch run_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
 # - !! Wait for speech.launch to finish before !!
 #   !!   launching speech interpreter          !!
 #   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
@@ -152,6 +152,61 @@ class Query_specific_action(smach.State):
             return "action_leave"
         else:
             return "error"
+
+
+class Navigate_to_queryoutcome_point_location(states.Navigate_abstract):
+    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
+    
+    The state can take some parameters that specify which keys of the dictionary to use for which data.
+    By default, the binding-key "X" refers to the x-part of the goal, etc. 
+    
+    Optionally, also a sorter can be given that sorts the bindings according to some measure.
+    """
+    def __init__(self, robot, query, X="X", Y="Y", Z="Z"):
+        states.Navigate_abstract.__init__(self, robot)
+
+        assert isinstance(query, Term)
+
+        self.queryTerm = query
+        self.X, self.Y, self.Z = X, Y, Z
+        
+    def get_goal(self, userdata):
+        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """     
+
+        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+        # is a mapping of variable to a constant, like a string or number
+        answers = self.robot.reasoner.query(self.queryTerm)
+
+        if not answers:
+            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
+            return None
+        else:
+            chosen_answer = answers[0]
+            #From the summarized answer, 
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Z])) for answer in answers]
+
+            x,y,z = possible_locations[0]
+            
+            goal = possible_locations[0]
+            rospy.loginfo("goal = {0}".format(goal))
+            roi_name = chosen_answer["ROI_Location"]
+
+            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,z)))
+            
+            self.robot.reasoner.query(Compound("assert", Compound("point_roi_tried", roi_name))) 
+            
+            look_point = geometry_msgs.msg.PointStamped()
+            look_point.point = self.robot.base.point(x,y)
+            pose = states.util.msg_constructors.Quaternion(z=1.0)
+
+            base_pose_for_point = self.robot.base.get_base_pose(look_point, 0.7, 0.0001)
+            if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
+                rospy.logerr("IK returned empty pose.")
+                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+
+            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
 
 
 class Finished_goal(smach.State):
@@ -384,7 +439,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("INTRODUCE_SHORT",
                                states.Say(robot,"Hi, my name is Amigo. I will just wait here and wonder if I can do something for you"),
-                               transitions={'spoken':'ASK_ACTION'})
+                               transitions={'spoken':'SUB_SM_POINT'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
@@ -439,7 +494,7 @@ def setup_statemachine(robot):
                                     states.Say_and_Navigate(
                                         robot=robot,
                                         sentence = "I am sorry, I have to return to the meeting point to be back in time.",                               
-                                        input_keys=['navigate_named', 'meeting_point']),         
+                                        input_keys=['navigate_named', 'initial_egpsr_1']),         
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -448,7 +503,7 @@ def setup_statemachine(robot):
                                         robot=robot,
                                         sentence = "I failed picking up the object. I am sorry, but I will go back to the meeting point and \
                                                     ask for another task",                               
-                                        input_keys=['navigate_named','meeting_point']),         
+                                        input_keys=['navigate_named','initial_egpsr_1']),         
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -546,7 +601,7 @@ def setup_statemachine(robot):
                                     states.Say_and_Navigate(
                                         robot=robot,
                                         sentence = "I am sorry, I have to return to the meeting point to be back in time.",                               
-                                        input_keys=['navigate_named', 'meeting_point']),         
+                                        input_keys=['navigate_named', 'initial_egpsr_1']),         
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -558,7 +613,7 @@ def setup_statemachine(robot):
                                         robot=robot,
                                         sentence = "I failed picking up the object. I am sorry, but I will go back to the \
                                                     meeting point and ask for another task",
-                                        input_keys=['navigate_named','meeting_point']),         
+                                        input_keys=['navigate_named','initial_egpsr_1']),         
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -600,7 +655,7 @@ def setup_statemachine(robot):
                                     states.Say_and_Navigate(
                                         robot=robot,
                                         sentence = "You should have the object now. Therefore I will drive back to the meeting point.",
-                                        input_keys=['navigate_named','meeting_point']),
+                                        input_keys=['navigate_named','initial_egpsr_1']),
                                         transitions={'succeeded':'AT_MEETING_POINT',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -619,7 +674,7 @@ def setup_statemachine(robot):
                                         robot=robot,
                                         sentence = "I could not reach the drop off location. So I will drive back to the \
                                                     meeting point and try to deliver the object there. I am sorry!",
-                                        input_keys=['navigate_named','meeting_point']),
+                                        input_keys=['navigate_named','initial_egpsr_1']),
                                         transitions={'succeeded':'AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED'})
 
@@ -681,19 +736,29 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'GO_TO_POINT_LOCATION'})
 
 
-            query_point = Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
+            query_point = Conjunction(  Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z")),
+                                        Compound("not",Compound("point_roi_tried","ROI_Location")))
+
             object_identifier_query = "ROI_Location"
 
-            smach.StateMachine.add("GO_TO_POINT_LOCATION",
-                                    states.Visit_query_outcome_3d(robot, 
-                                                                      query_point, 
-                                                                      x_offset=0.7, y_offset=0.0001,
-                                                                      identifier=object_identifier_query),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
-                                    transitions={   'arrived':'SAY_AND_POINT_LOCATION',
-                                                    'unreachable':'FAILED_DRIVING_TO_LOCATION',
-                                                    'preempted':'FAILED_DRIVING_TO_LOCATION',
-                                                    'goal_not_defined':'FAILED_DRIVING_TO_LOCATION',
-                                                    'all_matches_tried':'FAILED_DRIVING_TO_LOCATION'})
+            # smach.StateMachine.add("GO_TO_POINT_LOCATION",
+            #                         states.Visit_query_outcome_3d(robot, 
+            #                                                           query_point, 
+            #                                                           x_offset=0.7, y_offset=0.0001,
+            #                                                           identifier=object_identifier_query),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
+            #                         transitions={   'arrived':'SAY_AND_POINT_LOCATION',
+            #                                         'unreachable':'FAILED_DRIVING_TO_LOCATION',
+            #                                         'preempted':'FAILED_DRIVING_TO_LOCATION',
+            #                                         'goal_not_defined':'FAILED_DRIVING_TO_LOCATION',
+            #                                         'all_matches_tried':'FAILED_DRIVING_TO_LOCATION'})
+
+
+            smach.StateMachine.add('GO_TO_POINT_LOCATION', 
+                                    Navigate_to_queryoutcome_point_location(robot, query_point, X="X", Y="Y", Z="Z"),
+                                    transitions={   'arrived':'SAY_AND_POINT_LOCATION', 
+                                                    'preempted':'GO_TO_POINT_LOCATION', 
+                                                    'unreachable':'GO_TO_POINT_LOCATION', 
+                                                    'goal_not_defined':'FAILED_DRIVING_TO_LOCATION'})
 
             smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
                                     states.Say(robot,"I am sorry but I was not able to drive to the desired location!"),
@@ -710,7 +775,7 @@ def setup_statemachine(robot):
                                     states.Say_and_Navigate(
                                         robot=robot,
                                         sentence = "Am I right? I will go back to the meeting point now.",
-                                        input_keys=['navigate_named','meeting_point']),               
+                                        input_keys=['navigate_named','initial_egpsr_1']),               
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -755,7 +820,7 @@ def setup_statemachine(robot):
                                         robot=robot,
                                         sentence = "I failed finding the object. I am sorry, but I will go back to the meeting point and \
                                                     ask for another task",                               
-                                        input_keys=['navigate_named','meeting_point']),         
+                                        input_keys=['navigate_named','initial_egpsr_1']),         
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
