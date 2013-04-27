@@ -13,6 +13,7 @@ import rospy
 
 import smach
 
+from speech_interpreter.srv import GetInfo
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
@@ -23,6 +24,46 @@ from psi import Conjunction, Compound
 HOLD_TRAY_POSE = [-0.1, 0.13, 0, 1.57, 0, 0.3, 0]
 SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
 RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
+
+
+class AskBreakfast(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done" , "failed"])
+        self.robot = robot
+        self.get_learn_person_name_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_breakfast_failed = 0
+        self.person_breakfast = 0
+
+    def execute(self, userdata=None):
+        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))        
+
+        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+
+        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
+            if self.ask_breakfast_failed == 1:
+                self.robot.speech.speak("I will just give you a sandwich with peanutbutter")
+                self.response = "peanutbutter"
+            if self.ask_breakfast_failed == 0:
+                self.robot.speech.speak("I will just give you a sandwich with cheese")
+                self.response = "cheese"
+                self.ask_breakfast_failed = 1
+        else:
+            self.robot.speech.speak("I will give you a sandwich with" + self.response.answer)
+
+        if self.person_breakfast == 1:
+            self.robot.reasoner.query(Compound("assert", Compound("person2", self.response.answer)))
+        if self.person_breakfast == 0:
+            self.robot.reasoner.query(Compound("assert", Compound("person1", self.response.answer)))
+            self.person_breakfast = 1          
+
+        return_result = self.robot.reasoner.query(Compound("person1", "Breakfast"))        
+        if not return_result:
+            self.robot.speech.speak("That's horrible, I forgot what breakfast you want. I should see a doctor!")
+            return "failed"
+
+        return "done"
+
+
 
 class TalkToCook(smach.StateMachine):
     def __init__(self, robot):
@@ -200,14 +241,9 @@ class DemoChallenge(smach.StateMachine):
                                     transitions={'spoken':"ASK_WHAT_FOR_BREAKFAST"})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
-                                    states.Timedout_QuestionMachine(
-                                            robot=robot,
-                                            default_option = "sandwich", 
-                                            sentence = "What do you want for breakfast", 
-                                            options = { "sandwich":Compound("breakfast", "sandwich"),
-                                                        "eggs":Compound("breakfast", "eggs")}),
-                                    transitions={   'answered':'GOTO_KITCHEN_TO_REPORT_ORDER',
-                                                    'not_answered':'GOTO_PATIENT'})
+                                    AskBreakfast(robot),
+                                    transitions={   'done':'GOTO_KITCHEN_TO_REPORT_ORDER',
+                                                    'failed':'GOTO_PATIENT'})
 
             smach.StateMachine.add( 'GOTO_KITCHEN_TO_REPORT_ORDER', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
