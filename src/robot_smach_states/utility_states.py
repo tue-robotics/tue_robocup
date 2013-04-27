@@ -481,6 +481,6 @@ class CheckTime(smach.State):
 
     def execute(self, userdata=None):
         if self.robot.reasoner.get_time_since(self.name) > self.max_duration:
-            return "timout"
+            return "timeout"
         else:
             return "ok"
