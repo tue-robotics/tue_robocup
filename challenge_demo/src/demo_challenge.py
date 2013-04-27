@@ -134,7 +134,7 @@ class DemoChallenge(smach.StateMachine):
                                                     "goal_not_defined":"DETERMINE_CURRENT_PATIENT"})
 
             smach.StateMachine.add( 'WAKE_UP', 
-                                    states.PlaySound(robot, "alarm.mp3"), 
+                                    states.PlaySound("/home/amigo/Music/Toeter1.mp3", blocking=True), 
                                     transitions={   'played':'SAY_GOODMORNING',
                                                     'error':'SAY_GOODMORNING'})
 
