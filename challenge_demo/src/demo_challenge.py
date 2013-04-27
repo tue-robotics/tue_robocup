@@ -226,7 +226,7 @@ class DemoChallenge(smach.StateMachine):
                 import time, random
                 timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
                 sentences = [   "Goodmorning sir, its {0} already, time to wake up. Hold on to me, I'll escort you to breakfast".format(timestr), 
-                                "Wakey Wakey! Its {0}, time to wake up. I'll bring you to the canteen".format(timestr)]
+                                "Wakey Wakey! Its {0}, time to wake up. Let me escort you to the table".format(timestr)]
                 return random.choice(sentences)
             smach.StateMachine.add( 'SAY_GOODMORNING', 
                                     states.Say_generated(robot, generate_time_sentence),#["Goodmorning sir. Hold on to me, I'll escort you to breakfast", "Wakey Wakey! I'll bring you to the canteen"]), 
@@ -307,12 +307,17 @@ class DemoChallenge(smach.StateMachine):
                     patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
                     breakfast   = breakfasts[0]["Breakfast"]
                     patient     = patients[0]["Patient"]
-                    return "{0} wants {1} for breakfast. If you give it to me, i'll bring it to {0}".format(patient, breakfast)
+                    return "{0} wants {1} for breakfast. If you give it to me, i'll bring it to {0}. I'll wait here for a second so you can give it to me".format(patient, breakfast)
                 except:
                     return "I forgot what whatsisname again wants for breakfast"
             smach.StateMachine.add('REPORT_BREAKFAST',
                                     states.Say_generated(robot, sentence_creator=generate_report_sentence),
-                                    transitions={ 'spoken':'CARRY_TO_PATIENT' })
+                                    transitions={ 'spoken':'WAIT_FOR_LOAD' })
+
+            smach.StateMachine.add( 'WAIT_FOR_LOAD',
+                                    states.Wait_time(robot, waittime=10),
+                                    transitions={   'waited':'CARRY_TO_PATIENT',
+                                                    'preempted':'CARRY_TO_PATIENT'})
 
             smach.StateMachine.add( 'CARRY_TO_PATIENT', 
                                     states.NavigateGeneric(robot, goal_query=patient_destination_query), 
