@@ -3,6 +3,7 @@ import roslib; roslib.load_manifest('challenge_egpsr')
 import rospy
 #import robot_parts.speech
 from std_msgs.msg import String
+import geometry_msgs
 import smach
 
 from robot_skills.amigo import Amigo
