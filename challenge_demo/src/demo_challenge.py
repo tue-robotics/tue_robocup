@@ -32,7 +32,7 @@ class TurnAround(smach.State):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
         self.angle = angle
-        
+
     def execute(self, userdata):
         orig = self.robot.base.location
         orig_pos = orig[0]
@@ -57,28 +57,28 @@ class AskBreakfast(smach.State):
         self.person_breakfast = 0
 
     def execute(self, userdata=None):
-        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))        
+        self.robot.reasoner.query(Compound("retractall", Compound("current_patient", "X")))        
 
         self.response = self.get_breakfast_question_service("demo_challenge", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             if self.ask_breakfast_failed == 1:
                 self.robot.speech.speak("I will just give you a sandwich with peanutbutter")
-                self.response = "peanutbutter"
+                self.response.answer = "peanutbutter"
             if self.ask_breakfast_failed == 0:
                 self.robot.speech.speak("I will just give you a sandwich with cheese")
-                self.response = "cheese"
+                self.response.answer = "cheese"
                 self.ask_breakfast_failed = 1
         else:
-            self.robot.speech.speak("I will bring you a sandwich with" + self.response.answer)
+            self.robot.speech.speak("I will bring you a sandwich with " + self.response.answer)
 
         if self.person_breakfast == 1:
-            self.robot.reasoner.query(Compound("assert", Compound("person2", self.response.answer)))
+            self.robot.reasoner.query(Compound("assert", Compound("breakfast", self.response.answer)))
         if self.person_breakfast == 0:
-            self.robot.reasoner.query(Compound("assert", Compound("person1", self.response.answer)))
+            self.robot.reasoner.query(Compound("assert", Compound("breakfast", self.response.answer)))
             self.person_breakfast = 1          
 
-        return_result = self.robot.reasoner.query(Compound("person1", "Breakfast"))        
+        return_result = self.robot.reasoner.query(Compound("breakfast", "Breakfast"))        
         if not return_result:
             self.robot.speech.speak("That's horrible, I forgot what breakfast you want. I should see a doctor!")
             return "failed"
@@ -164,11 +164,22 @@ class DemoChallenge(smach.StateMachine):
                         Compound("type","Object", "breakfasttable"),
                         Compound("base_pose","Object", "dropoff", Compound("pose_2d", "X", "Y", "Phi")))
 
+        @smach.cb_interface(outcomes=['done'])
+        def look_down(userdata):
+            robot.head.look_down()
+            return "done"
+
         with self:
             smach.StateMachine.add( 'INITIALIZE', 
                                     states.Initialize(robot), 
-                                    transitions={   'initialized':'GOTO_KITCHEN',
+                                    transitions={   'initialized':'INIT_POSE',
                                                     'abort':'Aborted'})
+
+            smach.StateMachine.add('INIT_POSE',
+                                states.Set_initial_pose(robot, "breakfast_1"),
+                                transitions={   'done':'GOTO_KITCHEN',
+                                                'preempted':'GOTO_KITCHEN',
+                                                'error':'GOTO_KITCHEN'})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
@@ -200,10 +211,13 @@ class DemoChallenge(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_PATIENT', 
                                     states.NavigateGeneric(robot, goal_query=patient_ROI),
-                                     transitions={  "arrived":"WAKE_UP",
+                                     transitions={  "arrived":"LOOK_TO_PATIENT",
                                                     "unreachable":"DETERMINE_CURRENT_PATIENT",
                                                     "preempted":"SAY_DONE",
                                                     "goal_not_defined":"DETERMINE_CURRENT_PATIENT"})
+
+            smach.StateMachine.add('LOOK_TO_PATIENT', smach.CBState(look_down),
+                                    transitions={   'done':'WAKE_UP'})
 
             smach.StateMachine.add( 'WAKE_UP', 
                                     states.PlaySound("/home/amigo/Music/Toeter1.mp3", blocking=True), 
@@ -255,13 +269,13 @@ class DemoChallenge(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_SIT_DOWN', 
                                     states.Say(robot, ["Please take a seat", "Please sit down"]), 
-                                    transitions={   'spoken':"LOOK_DOWN"})
+                                    transitions={   'spoken':"LOOK_TO_BREAKFAST"})
 
             @smach.cb_interface(outcomes=['done'])
             def look_down(userdata):
                 robot.head.look_down()
                 return "done"
-            smach.StateMachine.add('LOOK_DOWN', smach.CBState(look_down),
+            smach.StateMachine.add('LOOK_TO_BREAKFAST', smach.CBState(look_down),
                                     transitions={   'done':'RECITE_BREAKFAST_OPTIONS'})
 
             smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
