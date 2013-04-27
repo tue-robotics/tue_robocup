@@ -28,3 +28,7 @@ amigo3:
 
 ---------------------------------------
 BUGS: Remove bug if fixed:
+
+- Omdraaien voor wegrijden bij bedden
+- bed_1 x += 0.2
+- Dinner table ergens anders
