@@ -447,14 +447,20 @@ class PlaySound(smach.State):
         self.blocking = blocking
         
     def execute(self, ud):
+        import os
+        extension = os.path.splitext(self.file)[1]
+        player = {".mp3":"mpg123", ".wav":"aplay"}[extension]
+        command = (player, self.file)
+        import ipdb; ipdb.set_trace()
         try:
-            rospy.loginfo("Playing {0}".format(self.file))
+            rospy.loginfo("Running '{0}'".format(*command))
             if self.blocking:
-                os.system('aplay {0}'.format(self.file))
+                os.system("{0} {1}".format(*command))
             else:
-                thread.start_new_thread(os.system,('aplay {0}'.format(self.file),))
+                thread.start_new_thread(os.system,("".join(command)))
             return "played"
-        except:
+        except Exception, e:
+            rospy.logerr(e)
             return "error"
 
 class SetTimeMarker(smach.State,):
