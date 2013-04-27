@@ -316,11 +316,11 @@ class Visit_query_outcome(Navigate_to_queryoutcome):
                 rospy.loginfo("outcome=arrived, the following fact should be retracted = not_visited({0})".format(self.current_identifier))
 
             elif outcome == "failed":
-                visited_assertion = Compound("retractall", Compound("not_reachable", self.current_identifier))
+                visited_assertion = Compound("retractall", Compound("not_unreachable", self.current_identifier))
                 self.robot.reasoner.query(visited_assertion)
                 self.current_identifier = None
 
-                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_reachable({0})".format(self.current_identifier))
+                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_unreachable({0})".format(self.current_identifier))
 
         else:
             rospy.logerr("current_identifier was None, should not happen.")
