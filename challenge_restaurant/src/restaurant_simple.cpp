@@ -25,7 +25,7 @@ using namespace std;
 
 
 //! Settings
-const int TIME_OUT_GUIDE_LOST = 5;              // Time interval without updates after which operator is considered to be lost
+const int TIME_OUT_GUIDE_LOST = 8;              // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_GUIDE = 2.0;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
@@ -322,8 +322,11 @@ void speechCallback(std_msgs::String res) {
     } else if (candidate_freeze_amigo_ && res.data != "yes" && res.data != "") {
 		candidate_freeze_amigo_ = false;
 		amigoSpeak("Sorry. I misunderstood. I will follow you");	
-	} else if (freeze_amigo_ && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
+	//} else if (freeze_amigo_ && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
+	} else if (res.data.find("thislocationisnamed") != std::string::npos || res.data.find("thislocationiscalleds") != std::string::npos) {
         freeze_amigo_ = false;
+        ros::Duration delta(2.0);
+        delta.sleep();
         amigoSpeak("Thank you. I will now continue to follow you");
         ++n_locations_learned_;
     }
