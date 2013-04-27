@@ -1,5 +1,9 @@
 # Responsible: Erik
 
+amigo2:
+
+    hardware: base, spindle, left-arm, head
+
 amigo1:
     
     amiddle-egpsr
