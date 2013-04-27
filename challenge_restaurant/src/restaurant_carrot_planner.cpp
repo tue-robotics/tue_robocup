@@ -132,11 +132,6 @@ bool CarrotPlanner::computeVelocityCommand(geometry_msgs::Twist &cmd_vel){
     ROS_INFO_STREAM("goal = " << goal_norm_msg.linear << ", angle_ = " << goal_angle_);
 
     //! Determine velocity
-    // TODO: threshold on theta should be on this place
-    // if (e_theta > VALUE) {
-    cmd_vel.angular.z = determineReference(e_theta, current_vel.angular.z, MAX_VEL_THETA, MAX_ACC_THETA, dt);
- 	// } else cmd_vel.angular.z = 0;
-
     determineDesiredVelocity(goal_, goal_angle_, last_cmd_vel_, dt, cmd_vel);
     last_cmd_vel_ = cmd_vel;
 
@@ -189,12 +184,12 @@ bool CarrotPlanner::isClearLine(tf::Vector3 &goal){
             if (dist_to_obstacle > 0.02 && dist_to_obstacle < d_wall) {
 				// REMEMBER: correction is only needed if the angle is below the threshold
 				// NOTE: check on angular velocity, not on angle
-                ROS_WARN("Object too close: %f [m]", dist_to_obstacle);
+                //ROS_WARN("Object too close: %f [m]", dist_to_obstacle);
                 double angle = laser_scan_.angle_min + j * laser_scan_.angle_increment;
-                ROS_INFO("angle beam is %d", angle);
+                //ROS_INFO("angle beam is %d", angle);
                 double dy = sin(angle)*dist_to_obstacle;
-                ROS_INFO("dy = %d", dy);
-                ROS_INFO("");
+                //ROS_INFO("dy = %d", dy);
+                //ROS_INFO("");
                 // TODO: decrease/increase y-coordinate goal: goal_.setY(goal_.getY()-dy);
                 return false;
             }
@@ -265,7 +260,10 @@ void CarrotPlanner::determineDesiredVelocity(tf::Vector3 e_pos, double e_theta, 
     // the rotation is always controlled
     cmd_vel.angular.x = 0;
     cmd_vel.angular.y = 0;
+    // TODO: threshold on theta should be on this place
+    // if (e_theta > VALUE) {
     cmd_vel.angular.z = determineReference(e_theta, current_vel.angular.z, MAX_VEL_THETA, MAX_ACC_THETA, dt);
+ 	// } else cmd_vel.angular.z = 0;
 
     ROS_INFO("Velocity command: (x:%f, y:%f, th:%f)", cmd_vel.linear.x, cmd_vel.linear.y, cmd_vel.angular.z);
 }

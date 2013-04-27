@@ -319,15 +319,10 @@ void speechCallback(std_msgs::String res) {
     } else if (candidate_freeze_amigo_) {
 		candidate_freeze_amigo_ = false;
 		amigoSpeak("Sorry. I misunderstood. I will follow you");	
-	} else if (freeze_amigo && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
+	} else if (freeze_amigo_ && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
         freeze_amigo_ = false;
         amigoSpeak("Thank you. I will now continue to follow you");
         ++n_locations_learned_;
-        std::stringstream ss;
-        if (n_locations_learned_ == 1) ss << "I know " << n_locations_learned_ << " location now.";
-        else if (n_locations_learned_ == 5) ss << "I know all locations now.";
-        else ss << "I know " << n_locations_learned_ << " locations now.";
-        amigoSpeak(ss.str());
     }
 }
 
@@ -469,21 +464,18 @@ int main(int argc, char **argv) {
             pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
             moveTowardsPosition(pos, 0);
 
-        else {
+        } else {
 
             // Just follow
 
             //! Check for the (updated) guide position
             if (getPositionGuide(objects, guide_pos)) {
-				ROS_INFO("Just follow...");
 
                 //! Move towards guide
                 moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
 
 
             } else {
-				
-				ROS_INFO("Lost guide");
 
                 //! Lost guide
                 // TODO Only find if candidate_freeze_amigo_ is false?
