@@ -12,6 +12,8 @@
   <depend package="robot_skills"/>
   <depend package="robot_smach_states"/>
   <depend package="psi"/>
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 

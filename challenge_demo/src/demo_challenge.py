@@ -21,23 +21,45 @@ from robot_smach_states.util.startup import startup #gives you speech-exception 
 
 from psi import Conjunction, Compound
 
+from tf.transformations import euler_from_quaternion
+
 HOLD_TRAY_POSE = [-0.1, 0.13, 0, 1.57, 0, 0.3, 0]
 SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
 RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 
+class TurnAround(smach.State):
+    def __init__(self, robot, angle):
+        smach.State.__init__(self, outcomes=["done" , "failed"])
+        self.robot = robot
+        self.angle = angle
+        
+    def execute(self, userdata):
+        orig = self.robot.base.location
+        orig_pos = orig[0]
+        orig_orient = orig[1]
+        orig_orient = [orig_orient.x, orig_orient.y, orig_orient.z, orig_orient.w]
+        angle = list(euler_from_quaternion(orig_orient))
+        angle[2] += self.angle
+        new_orient = self.robot.base.orient(angle[2])
+
+        result = self.robot.base.send_goal(orig_pos, new_orient)
+        if result:
+            return "done"
+        else:
+            return "failed"
 
 class AskBreakfast(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
-        self.get_learn_person_name_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.get_breakfast_question_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
         self.ask_breakfast_failed = 0
         self.person_breakfast = 0
 
     def execute(self, userdata=None):
         self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))        
 
-        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.get_breakfast_question_service("demo_challenge", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             if self.ask_breakfast_failed == 1:
@@ -48,7 +70,7 @@ class AskBreakfast(smach.State):
                 self.response = "cheese"
                 self.ask_breakfast_failed = 1
         else:
-            self.robot.speech.speak("I will give you a sandwich with" + self.response.answer)
+            self.robot.speech.speak("I will bring you a sandwich with" + self.response.answer)
 
         if self.person_breakfast == 1:
             self.robot.reasoner.query(Compound("assert", Compound("person2", self.response.answer)))
@@ -62,8 +84,6 @@ class AskBreakfast(smach.State):
             return "failed"
 
         return "done"
-
-
 
 class TalkToCook(smach.StateMachine):
     def __init__(self, robot):
@@ -127,11 +147,22 @@ class DemoChallenge(smach.StateMachine):
                         Compound("at", "Patient", "Object"),
                         Compound("base_pose","Object", Compound("pose_2d", "X", "Y", "Phi")))
 
+        patient_pickup = Conjunction(
+                        current_patient_query,
+                        Compound("at", "Patient", "Object"),
+                        Compound("base_pose","Object", "pickup" ,Compound("pose_2d", "X", "Y", "Phi")))
+
         patient_destination_query = Conjunction(
                         current_patient_query,
                         Compound("owner","Object", "Patient"),
                         Compound("type","Object", "breakfasttable"),
-                        Compound("base_pose","Object", Compound("pose_2d", "X", "Y", "Phi")))
+                        Compound("base_pose","Object", Compound("pose_2d", "X", "Y", "Phi")))        
+
+        patient_dropoff_query = Conjunction(
+                        current_patient_query,
+                        Compound("owner","Object", "Patient"),
+                        Compound("type","Object", "breakfasttable"),
+                        Compound("base_pose","Object", "dropoff", Compound("pose_2d", "X", "Y", "Phi")))
 
         with self:
             smach.StateMachine.add( 'INITIALIZE', 
@@ -187,20 +218,17 @@ class DemoChallenge(smach.StateMachine):
                 return random.choice(sentences)
             smach.StateMachine.add( 'SAY_GOODMORNING', 
                                     states.Say_generated(robot, generate_time_sentence),#["Goodmorning sir. Hold on to me, I'll escort you to breakfast", "Wakey Wakey! I'll bring you to the canteen"]), 
-                                    transitions={   'spoken':"ESCORT_TO_BREAKFAST"})
+                                    transitions={   'spoken':"TURN_AROUND"})
+
+            smach.StateMachine.add( "TURN_AROUND",
+                                    TurnAround(robot, 3.14),
+                                    transitions={'done':'ESCORT_TO_BREAKFAST',
+                                                 'failed':'ESCORT_TO_BREAKFAST'})
 
             smach.StateMachine.add( 'ESCORT_TO_BREAKFAST', 
                                     EscortToBreakfast(robot, patient_destination_query), 
                                     transitions={   'Done':"ASSERT_NEW_PATIENT_POSITION",
                                                     'Aborted':""})
-
-            # smach.StateMachine.add( 'ESCORT_TO_BREAKFAST', 
-            #                         states.NavigateGeneric(robot, goal_query=patient_destination_query),
-            #                          transitions={  "arrived":"ASK_WHAT_FOR_BREAKFAST",
-            #                                         "unreachable":"ASK_WHAT_FOR_BREAKFAST",
-            #                                         "preempted":"SAY_DONE",
-            #                                         "goal_not_defined":"ASK_WHAT_FOR_BREAKFAST"})
-
 
             @smach.cb_interface(outcomes=['asserted', 'done'])
             def assert_new_patient_pos(userdata):

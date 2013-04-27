@@ -31,7 +31,9 @@ BUGS: Remove bug if fixed:
 
 - Omdraaien voor wegrijden bij bedden
 - bed_1 x += 0.2
-- Dinner table ergens anders
+- Dinner table ergens anders (Bar)
+- Naar bed kijken
+- Initial pose
 
 - Additions: als hij niet naar de keuken kan rijden om keuze door te geven stopt de statemachine
 - Keuken moet grotere x krijgen om niet tegen de koelkast aan te slaan
