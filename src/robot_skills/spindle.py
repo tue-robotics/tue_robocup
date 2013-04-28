@@ -49,7 +49,7 @@ class Spindle(object):
         return self.send_goal(0.2)
         
     def low(self):
-        return self.send_goal(0.05)
+        return self.send_goal(0.085)
         
     def reset(self):
         return self.send_goal(0.35)
