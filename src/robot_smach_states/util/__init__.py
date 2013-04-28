@@ -39,7 +39,11 @@ def deprecated_replace_with(replacement):
         def wrapper(*args, **kwargs):
             RED = '\033[91m'
             END = '\033[0m'
-            rospy.logerr(RED+"Function or class {0} is deprecated. You should use {1} instead".format(func_or_cls.__name__, replacement)+END)
+
+            itemname = func_or_cls.__name__
+            if itemname == "__init__":
+                itemname = args[0]
+            rospy.logerr(RED+"Function or class {0} is deprecated. You should use {1} instead".format(itemname, replacement)+END)
             return func_or_cls(*args, **kwargs)
         return wrapper
     return deprecated
