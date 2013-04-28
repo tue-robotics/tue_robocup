@@ -18,12 +18,13 @@ from psi import Term, Compound, Conjunction
 import actionlib
 
 #TODO: Refactor these Navigate_*-classes so that get_loc_via reasoner is not a method of _abstract.
+
 class Navigate_abstract(smach.State):
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined"])
 
         self.robot = robot
-    #import ipdb; ipdb.set_trace()
         assert hasattr(robot, 'base')
 
         self.preempted = False
@@ -114,8 +115,8 @@ class Navigate_abstract(smach.State):
             rospy.logdebug("Found location for '{0}': {1}".format(name, (x,y,phi)))
             return self.robot.base.point(x,y), self.robot.base.orient(phi)
 
-@util.deprecated
 class Navigate_predefined(Navigate_abstract):
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, goal):
         Navigate_abstract.__init__(robot)
 
@@ -127,6 +128,7 @@ class Navigate_predefined(Navigate_abstract):
 class Navigate_exact(Navigate_abstract):
     """ Navigate to an exact x,y,phi location in /map.
     Overrides get_goal, the rest is inherited from Navigate_abstract"""
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, x, y, phi):
         Navigate_abstract.__init__(self, robot)
         
@@ -142,6 +144,7 @@ class Navigate_exact(Navigate_abstract):
 class Navigate_named(Navigate_abstract):
     """Navigate to a location from a list of locations, indexed by name
     The constructor already sets the point and location, so we can use the inherited get_goal unmodified"""
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, name):
         Navigate_abstract.__init__(self, robot)
         
@@ -153,9 +156,9 @@ class Navigate_named(Navigate_abstract):
     def get_goal(self, userdata):
         return self.get_loc_via_reasoner(self.goal_name)
 
-@util.deprecated
 class Navigate_generated_name(Navigate_abstract):
     """Move to a named location from the locations_list, with the name specified by the callback"""
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, 
                        callback):
         Navigate_abstract.__init__(self, robot)
@@ -172,9 +175,9 @@ class Navigate_generated_name(Navigate_abstract):
         
         return self.get_loc_via_reasoner(name)
 
-@util.deprecated
 class Navigate_generated_coords(Navigate_abstract):
     """Move to a named location from the locations_list, with the name specified by the callback"""
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, 
                        callback):
         Navigate_abstract.__init__(self, robot)
@@ -193,9 +196,9 @@ class Navigate_generated_coords(Navigate_abstract):
         else:
             return None
 
-@util.deprecated
 class Navigate_userdata_loc(Navigate_abstract):
     """Move to a named location from the locations_list, with the name specified by userdata.location_name"""
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot):
         Navigate_abstract.__init__(self, robot)
         self.register_input_keys(['goallocation_name'])
@@ -215,6 +218,7 @@ class Navigate_to_queryoutcome(Navigate_abstract):
     
     Optionally, also a sorter can be given that sorts the bindings according to some measure.
     """
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, query, X="X", Y="Y", Phi="Phi", sorter=None):
         Navigate_abstract.__init__(self, robot)
 
@@ -404,8 +408,8 @@ class Visit_query_outcome_3d(Visit_query_outcome):
 
             return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
 
-@util.deprecated
 class Look_at_obstacle(smach.State):
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, tracking=True, rate=2):
         smach.State.__init__(self, outcomes=["done", "preempted", "no_obstacle"])
 
@@ -453,6 +457,7 @@ class Look_at_obstacle(smach.State):
 class Navigate_goal_location(Navigate_abstract):
     # class used in gpsr 2013
 
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, location):                    #!!!! location should be named: loc_from, loc_to or object_action
         Navigate_abstract.__init__(self, robot)
         
@@ -482,10 +487,8 @@ class Navigate_goal_location(Navigate_abstract):
             self.object_action = object_action
             return self.get_loc_via_reasoner(self.object_action)
 
-
 class Navigate_Designator(smach.State):
     # class used in gpsr 2013
-
     def __init__(self, robot, designator, dynamic=False):
         smach.State.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined", "all_matches_tried"])
         
@@ -565,6 +568,7 @@ class Navigate_Designator(smach.State):
 #############################################################################################################
 
 class NavigateGenericOld(smach.State):
+    @util.deprecated_replace_with("NavigateGeneric")
     def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, goal_sorter=None, look_at_path_distance=1.5):
         smach.State.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined"])
 
@@ -808,7 +812,6 @@ class ResetCostmap(smach.State):
 
         return 'done'
 
-
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
     def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None):
@@ -1040,7 +1043,6 @@ class Execute_path(smach.State):
             # Wait 0.5 seconds to avoid looping to fast
             rospy.sleep(0.5)
 
-
 class Waiting_to_execute(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,outcomes=['done','preempted'])
@@ -1084,7 +1086,6 @@ class Waiting_to_execute(smach.State):
             
         return 'done'
 
-
 class Recover(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,outcomes=['new_path_required','new_goal_required'])
@@ -1125,7 +1126,6 @@ class Recover(smach.State):
             else:
                 self.robot.speech.speak("Oh no, I can not reach my precious goal")
                 return 'new_goal_required'
-
 
 class NavigateGeneric(smach.StateMachine):
     def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None, look_at_path_distance=1.5, goal_area_radius=0.1):

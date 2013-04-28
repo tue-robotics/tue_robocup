@@ -2,10 +2,12 @@
 import roslib; roslib.load_manifest("robot_smach_states")
 import rospy
 import smach
+import util
 
 from psi import Compound, Conjunction
 
-# Wait_for_door state thought the reasoner 
+# Wait_for_door state thought the reasoner
+@util.deprecated
 class Wait_for_door_reasoner(smach.State):
     def __init__(self, robot=None):
         smach.State.__init__(self, outcomes=['door_open'])

@@ -19,6 +19,14 @@ from robot_skills.arms import State as ArmState
 
 from human_interaction import Say
 
+#TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
+#TODO: Make Place_Object also use a query 
+
+#Enum class.
+class StandardPoses(object): 
+    POINT_AT_OBJECT_BACKWARD = [-0.4 ,-0.750 , 0.50 , 1.50 , 0.000 , 0.7500 , 0.000]
+    POINT_AT_OBJECT_FORWARD = [-0.2 ,-0.250 , 0.40 , 1.25 , 0.000 ,0.500 , 0.000]
+
 class Prepare_orientation(smach.State):
     def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
         smach.State.__init__(self, outcomes=['orientation_succeeded','orientation_failed','abort','target_lost'])
@@ -112,6 +120,7 @@ class Prepare_orientation(smach.State):
 
 ########################################### State Prepare grab###############################################
 class Carrying_pose(smach.State):
+    #Cannot be replaced by ArmToJointPos because sending an xyz goal also uses the spindle
     def __init__(self, arm, robot=None):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         
@@ -416,7 +425,7 @@ class Human_handover(smach.StateMachine):
             
             smach.StateMachine.add( 'CLOSE_AFTER_INSERT', SetGripper(robot, robot.leftArm, gripperstate=1), #close
                                 transitions={   'state_set':'succeeded'})
-                        
+                  
 class Place_Object(smach.State):
     def __init__(self, side, robot=None):
         smach.State.__init__(self, outcomes=['object_placed'],
@@ -519,7 +528,7 @@ class Gripper_to_query_position(smach.StateMachine):
                                                     'orientation_failed':'failed',
                                                     'abort':'failed',
                                                     'target_lost':'target_lost'})
-
+            #TODO: Replace with ArmToUserPose
             @smach.cb_interface(outcomes=['succeeded', 'failed', 'target_lost'])
             def move_to_point(userdata):
                 #import ipdb; ipdb.set_trace()
@@ -597,8 +606,6 @@ class ArmToUserPose(smach.State):
                 return 'succeeded'
             else:
                 return 'failed'
-
-
 ########################################### State Point ###############################################
 
 class PointMachine(smach.StateMachine):

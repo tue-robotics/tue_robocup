@@ -37,66 +37,66 @@ class Check_object_found_before(smach.State):
 
 
 
-class StartChallenge(smach.StateMachine):
-    """Initialize, wait for the door to be opened and drive inside"""
+# class StartChallenge(smach.StateMachine):
+#     """Initialize, wait for the door to be opened and drive inside"""
 
-    def __init__(self, robot, initial_pose, goto_query):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
-        assert hasattr(robot, "base")
-        assert hasattr(robot, "reasoner")
-        assert hasattr(robot, "speech")
+#     def __init__(self, robot, initial_pose, goto_query):
+#         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+#         assert hasattr(robot, "base")
+#         assert hasattr(robot, "reasoner")
+#         assert hasattr(robot, "speech")
 
-        with self:
-            smach.StateMachine.add( "INITIALIZE", 
-                                    utility_states.Initialize(robot), 
-                                    transitions={   "initialized"   :"INIT_POSE",
-                                                    "abort"         :"Aborted"})
+#         with self:
+#             smach.StateMachine.add( "INITIALIZE", 
+#                                     utility_states.Initialize(robot), 
+#                                     transitions={   "initialized"   :"INIT_POSE",
+#                                                     "abort"         :"Aborted"})
 
-            smach.StateMachine.add('INIT_POSE',
-                                utility_states.Set_initial_pose(robot, initial_pose),
-                                transitions={   'done':'INSTRUCT_WAIT_FOR_DOOR',
-                                                'preempted':'Aborted',
-                                                'error':'Aborted'})
+#             smach.StateMachine.add('INIT_POSE',
+#                                 utility_states.Set_initial_pose(robot, initial_pose),
+#                                 transitions={   'done':'INSTRUCT_WAIT_FOR_DOOR',
+#                                                 'preempted':'Aborted',
+#                                                 'error':'Aborted'})
 
-            smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
-                                    human_interaction.Say(robot, [  "I will now wait until the door is opened", 
-                                                                    "Knockknock, may I please come in?"]),
-                                    transitions={   "spoken":"ASSESS_DOOR"})
+#             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
+#                                     human_interaction.Say(robot, [  "I will now wait until the door is opened", 
+#                                                                     "Knockknock, may I please come in?"]),
+#                                     transitions={   "spoken":"ASSESS_DOOR"})
 
 
-             # Start laser sensor that may change the state of the door if the door is open:
-            smach.StateMachine.add( "ASSESS_DOOR", 
-                                    perception.Read_laser(robot, "entrance_door"),
-                                    transitions={   "laser_read":"WAIT_FOR_DOOR"})       
+#              # Start laser sensor that may change the state of the door if the door is open:
+#             smach.StateMachine.add( "ASSESS_DOOR", 
+#                                     perception.Read_laser(robot, "entrance_door"),
+#                                     transitions={   "laser_read":"WAIT_FOR_DOOR"})       
             
-            # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-            dooropen_query = robot.reasoner.state("entrance_door","open")
+#             # define query for the question wether the door is open in the state WAIT_FOR_DOOR
+#             dooropen_query = robot.reasoner.state("entrance_door","open")
         
-            # Query if the door is open:
-            smach.StateMachine.add( "WAIT_FOR_DOOR", 
-                                    reasoning.Ask_query_true(robot, dooropen_query),
-                                    transitions={   "query_false":"ASSESS_DOOR",
-                                                    "query_true":"THROUGH_DOOR",
-                                                    "waiting":"DOOR_CLOSED",
-                                                    "preempted":"Aborted"})
+#             # Query if the door is open:
+#             smach.StateMachine.add( "WAIT_FOR_DOOR", 
+#                                     reasoning.Ask_query_true(robot, dooropen_query),
+#                                     transitions={   "query_false":"ASSESS_DOOR",
+#                                                     "query_true":"THROUGH_DOOR",
+#                                                     "waiting":"DOOR_CLOSED",
+#                                                     "preempted":"Aborted"})
 
-            # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-            # in perception.py, amigo will speak and check again if the door is open
-            smach.StateMachine.add( "DOOR_CLOSED",
-                                    human_interaction.Say(robot, "Door is closed, please open the door"),
-                                    transitions={   "spoken":"ASSESS_DOOR"}) 
+#             # If the door is still closed after certain number of iterations, defined in Ask_query_true 
+#             # in perception.py, amigo will speak and check again if the door is open
+#             smach.StateMachine.add( "DOOR_CLOSED",
+#                                     human_interaction.Say(robot, "Door is closed, please open the door"),
+#                                     transitions={   "spoken":"ASSESS_DOOR"}) 
 
-            # If the door is open, amigo will say that it goes to the registration table
-            smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, "Door is open, so I will start my task"),
-                                    transitions={   "spoken":"ENTER_ROOM"}) 
+#             # If the door is open, amigo will say that it goes to the registration table
+#             smach.StateMachine.add( "THROUGH_DOOR",
+#                                     human_interaction.Say(robot, "Door is open, so I will start my task"),
+#                                     transitions={   "spoken":"ENTER_ROOM"}) 
 
-            smach.StateMachine.add('ENTER_ROOM',
-                                    navigation.Navigate_to_queryoutcome(robot, goto_query, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   "arrived":"Done", 
-                                                    "preempted":"Aborted", 
-                                                    "unreachable":"Failed", 
-                                                    "goal_not_defined":"Failed"})
+#             smach.StateMachine.add('ENTER_ROOM',
+#                                     navigation.Navigate_to_queryoutcome(robot, goto_query, X="X", Y="Y", Phi="Phi"),
+#                                     transitions={   "arrived":"Done", 
+#                                                     "preempted":"Aborted", 
+#                                                     "unreachable":"Failed", 
+#                                                     "goal_not_defined":"Failed"})
 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
@@ -299,164 +299,164 @@ class GotoMeetingPoint(smach.State):
             self.robot.speech.speak("I really don't know where to go, oops.")
             return "no_goal"
 
-class Learn_Person_SM(smach.StateMachine):
-    def __init__(self, robot, testmode=False):
-        smach.StateMachine.__init__(self, 
-            outcomes=["person_learned", "learning_failed"],
-            input_keys=['rate'], #TODO Loy Eric Janno: Why do we need command everywhere? Look needed it, now removed
-            output_keys=["name", "ID"])
+# class Learn_Person_SM(smach.StateMachine):
+#     def __init__(self, robot, testmode=False):
+#         smach.StateMachine.__init__(self, 
+#             outcomes=["person_learned", "learning_failed"],
+#             input_keys=['rate'], #TODO Loy Eric Janno: Why do we need command everywhere? Look needed it, now removed
+#             output_keys=["name", "ID"])
             
-        self.robot = robot
-        assert hasattr(self.robot, "perception")
-        assert hasattr(self.robot, "reasoner")
+#         self.robot = robot
+#         assert hasattr(self.robot, "perception")
+#         assert hasattr(self.robot, "reasoner")
             
-        with self:
-            smach.StateMachine.add( "RETRACT_OLD_NAMES",
-                                    reasoning.Retract_facts(robot, [Compound("name_to_learn", "X")]),
-                                    transitions={   'retracted':'SAY_AWAIT_PERSON'})
+#         with self:
+#             smach.StateMachine.add( "RETRACT_OLD_NAMES",
+#                                     reasoning.Retract_facts(robot, [Compound("name_to_learn", "X")]),
+#                                     transitions={   'retracted':'SAY_AWAIT_PERSON'})
 
-            smach.StateMachine.add( "SAY_AWAIT_PERSON",
-                                    human_interaction.Say(robot, 
-                                        "I'm waiting for a new person to appear, please step in front of me."),
-                                        # ["I'm waiting for a new person to appear, please step in front of me.",
-                                        #  "I'm ready for a new person to be learned, please step in front of me."]),
-                                    transitions={   "spoken":"GREET"})
-                                    #transitions={   "spoken":"WAIT_PERSON"})
+#             smach.StateMachine.add( "SAY_AWAIT_PERSON",
+#                                     human_interaction.Say(robot, 
+#                                         "I'm waiting for a new person to appear, please step in front of me."),
+#                                         # ["I'm waiting for a new person to appear, please step in front of me.",
+#                                         #  "I'm ready for a new person to be learned, please step in front of me."]),
+#                                     transitions={   "spoken":"GREET"})
+#                                     #transitions={   "spoken":"WAIT_PERSON"})
 
-            # wait_person_query = Conjunction(
-            #     Compound( "type", "Object", "person"),
-            #     #Compound( "type", "Object", "ComplexType"), #TODO Sjoerd/Loy: someway query persons here.
-            #     Compound("position", "Object", Compound("point", "X", "Y", "Z")))
-            # smach.StateMachine.add( "WAIT_PERSON",
-            #                         reasoning.Wait_query_true(robot,wait_person_query, 30, pre_callback=lambda ud: self.robot.perception.toggle_recognition(faces=True)),
-            #                         transitions={   "query_true":"LOOK_AT_PERSON",
-            #                                         "timed_out" :"SAY_NO_PERSON",
-            #                                         "preempted" :"learning_failed"})
+#             # wait_person_query = Conjunction(
+#             #     Compound( "type", "Object", "person"),
+#             #     #Compound( "type", "Object", "ComplexType"), #TODO Sjoerd/Loy: someway query persons here.
+#             #     Compound("position", "Object", Compound("point", "X", "Y", "Z")))
+#             # smach.StateMachine.add( "WAIT_PERSON",
+#             #                         reasoning.Wait_query_true(robot,wait_person_query, 30, pre_callback=lambda ud: self.robot.perception.toggle_recognition(faces=True)),
+#             #                         transitions={   "query_true":"LOOK_AT_PERSON",
+#             #                                         "timed_out" :"SAY_NO_PERSON",
+#             #                                         "preempted" :"learning_failed"})
 
-            # smach.StateMachine.add( "SAY_NO_PERSON",
-            #                         human_interaction.Say(robot, ["This took me too long, I'm very sorry"]),
-            #                         transitions={   "spoken":"learning_failed"})
+#             # smach.StateMachine.add( "SAY_NO_PERSON",
+#             #                         human_interaction.Say(robot, ["This took me too long, I'm very sorry"]),
+#             #                         transitions={   "spoken":"learning_failed"})
             
-            # query_object = Conjunction(Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
-            # smach.StateMachine.add('LOOK_AT_PERSON',
-            #                     perception.LookForObjectsAtROI(robot, query_object, wait_person_query),
-            #                     transitions={   'looking':'LOOK_AT_PERSON',
-            #                                     'object_found':'GREET',
-            #                                     'no_object_found':'GREET',
-            #                                     'abort':'learning_failed'}) 
+#             # query_object = Conjunction(Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
+#             # smach.StateMachine.add('LOOK_AT_PERSON',
+#             #                     perception.LookForObjectsAtROI(robot, query_object, wait_person_query),
+#             #                     transitions={   'looking':'LOOK_AT_PERSON',
+#             #                                     'object_found':'GREET',
+#             #                                     'no_object_found':'GREET',
+#             #                                     'abort':'learning_failed'}) 
             
-            smach.StateMachine.add('GREET', 
-                                   human_interaction.Say(self.robot, sentence="Hello. My name is Amigo."),
-                                   transitions={'spoken':'ASK_NAME'})
+#             smach.StateMachine.add('GREET', 
+#                                    human_interaction.Say(self.robot, sentence="Hello. My name is Amigo."),
+#                                    transitions={'spoken':'ASK_NAME'})
             
-            #explicitly do not set the default_option
-            #Get the sentence from userdata.
-            names_dict = {  "charlie"   :Compound("name_to_learn", "charlie"),
-                            "john"      :Compound("name_to_learn", "john"),
-                            "william"   :Compound("name_to_learn", "william"),
-                            "maria"     :Compound("name_to_learn", "maria"),
-                            "alex"      :Compound("name_to_learn", "alex")}
+#             #explicitly do not set the default_option
+#             #Get the sentence from userdata.
+#             names_dict = {  "charlie"   :Compound("name_to_learn", "charlie"),
+#                             "john"      :Compound("name_to_learn", "john"),
+#                             "william"   :Compound("name_to_learn", "william"),
+#                             "maria"     :Compound("name_to_learn", "maria"),
+#                             "alex"      :Compound("name_to_learn", "alex")}
 
-            smach.StateMachine.add('ASK_NAME',
-                                   human_interaction.Timedout_QuestionMachine(robot=self.robot, 
-                                                            default_option=False,  
-                                                            sentence="What is your name?",
-                                                            options=names_dict), 
-                                   remapping={'answer':'name'},
-                                   transitions={'answered':'INSTRUCT',
-                                                'not_answered':'GENERATE_ALT_NAME'})
+#             smach.StateMachine.add('ASK_NAME',
+#                                    human_interaction.Timedout_QuestionMachine(robot=self.robot, 
+#                                                             default_option=False,  
+#                                                             sentence="What is your name?",
+#                                                             options=names_dict), 
+#                                    remapping={'answer':'name'},
+#                                    transitions={'answered':'INSTRUCT',
+#                                                 'not_answered':'GENERATE_ALT_NAME'})
             
-            def generate_instruction(userdata):
-                query = Compound("name_to_learn", "Name")
-                answers = self.robot.reasoner.query(query)
-                if answers:
-                    current_person = answers[0]["Name"]
-                    return "Hi {0}, I'll now learn what you look like, please look into my eyes.".format(current_person)
-                else:
-                    "Something went terribly wrong, I forgot your name already."
-            smach.StateMachine.add('INSTRUCT',
-                                   human_interaction.Say_generated(robot=robot, 
-                                                 sentence_creator=generate_instruction),
-                                   transitions={'spoken':'CALL_LEARN_PERSON'})
+#             def generate_instruction(userdata):
+#                 query = Compound("name_to_learn", "Name")
+#                 answers = self.robot.reasoner.query(query)
+#                 if answers:
+#                     current_person = answers[0]["Name"]
+#                     return "Hi {0}, I'll now learn what you look like, please look into my eyes.".format(current_person)
+#                 else:
+#                     "Something went terribly wrong, I forgot your name already."
+#             smach.StateMachine.add('INSTRUCT',
+#                                    human_interaction.Say_generated(robot=robot, 
+#                                                  sentence_creator=generate_instruction),
+#                                    transitions={'spoken':'CALL_LEARN_PERSON'})
             
-            '''GENERATE_ALT_NAME generates a sentence specific for the user and stores it in userdata.sentence'''
-            alternative_names = ['Z', 'Y', 'X']
-            @smach.cb_interface(input_keys=['name'],
-                output_keys=['name'],
-                outcomes=['name_generated'])
-            def generate_alt_name(userdata):
-                index = alternative_names.pop()
-                name = "mr {0}".format(index)
-                self.robot.reasoner.assertz(Compound("name_to_learn", name))
-                self.robot.speech.speak("I will call you {0} from now on.".format(name))
-                return 'name_generated'
+#             '''GENERATE_ALT_NAME generates a sentence specific for the user and stores it in userdata.sentence'''
+#             alternative_names = ['Z', 'Y', 'X']
+#             @smach.cb_interface(input_keys=['name'],
+#                 output_keys=['name'],
+#                 outcomes=['name_generated'])
+#             def generate_alt_name(userdata):
+#                 index = alternative_names.pop()
+#                 name = "mr {0}".format(index)
+#                 self.robot.reasoner.assertz(Compound("name_to_learn", name))
+#                 self.robot.speech.speak("I will call you {0} from now on.".format(name))
+#                 return 'name_generated'
                     
-            smach.StateMachine.add('GENERATE_ALT_NAME', 
-                                   smach.CBState(generate_alt_name),
-                                   transitions={'name_generated':'INSTRUCT'})
+#             smach.StateMachine.add('GENERATE_ALT_NAME', 
+#                                    smach.CBState(generate_alt_name),
+#                                    transitions={'name_generated':'INSTRUCT'})
             
-            # @smach.cb_interface(input_keys=['name', 'target'],
-            #     outcomes=['face_learned', 'learn_failed'])
-            # def call_learn_person(userdata, robot):
-            #     q = Compound("name_to_learn", "Name")
-            #     answers = self.robot.reasoner.query(q)
-            #     if answers:
-            #         current_person = answers[0]["Name"]
-            #         result = robot.perception.learn_person(current_person)
-            #         if result:
-            #             return 'face_learned'
-            #         else:
-            #             return 'learn_failed'
-            #     else:
-            #         return 'learn_failed'
+#             # @smach.cb_interface(input_keys=['name', 'target'],
+#             #     outcomes=['face_learned', 'learn_failed'])
+#             # def call_learn_person(userdata, robot):
+#             #     q = Compound("name_to_learn", "Name")
+#             #     answers = self.robot.reasoner.query(q)
+#             #     if answers:
+#             #         current_person = answers[0]["Name"]
+#             #         result = robot.perception.learn_person(current_person)
+#             #         if result:
+#             #             return 'face_learned'
+#             #         else:
+#             #             return 'learn_failed'
+#             #     else:
+#             #         return 'learn_failed'
                     
-            smach.StateMachine.add('CALL_LEARN_PERSON', 
-                                   perception.Learn_Person(self.robot),#smach.CBState(call_learn_person, cb_kwargs={'robot':self.robot}),
-                                   transitions={'face_learned':'INFORM_SUCCESS',
-                                                'learn_failed':'INFORM_FAIL'})
+#             smach.StateMachine.add('CALL_LEARN_PERSON', 
+#                                    perception.Learn_Person(self.robot),#smach.CBState(call_learn_person, cb_kwargs={'robot':self.robot}),
+#                                    transitions={'face_learned':'INFORM_SUCCESS',
+#                                                 'learn_failed':'INFORM_FAIL'})
             
-            smach.StateMachine.add('INFORM_FAIL',
-                                   human_interaction.Say(self.robot, "I could not learn you as well as I wanted, \
-                                                    but I will do my best to recognize you."),
-                                   transitions={'spoken':'learning_failed'}) #TODO: Test recognition
+#             smach.StateMachine.add('INFORM_FAIL',
+#                                    human_interaction.Say(self.robot, "I could not learn you as well as I wanted, \
+#                                                     but I will do my best to recognize you."),
+#                                    transitions={'spoken':'learning_failed'}) #TODO: Test recognition
             
-            smach.StateMachine.add('INFORM_SUCCESS',
-                                   human_interaction.Say(self.robot, "Allright, I think I know you now."),
-                                   transitions={'spoken':'person_learned'})
+#             smach.StateMachine.add('INFORM_SUCCESS',
+#                                    human_interaction.Say(self.robot, "Allright, I think I know you now."),
+#                                    transitions={'spoken':'person_learned'})
             
-            # @smach.cb_interface(input_keys =['target', 'name', 'ID'],
-            #                     outcomes=['recognized','failed'],
-            #                     output_keys=['ID'])
-            # def recognize(userdata, robot):
-            #     rospy.loginfo("Starting face recognition...")
-            #     robot.perception.toggle_recognition(faces=True)
-            #     rospy.loginfo("Started face recognition")
-            #     rospy.sleep(3)
-            #     robot.perception.toggle_recognition(faces=False)
-            #     rospy.loginfo("Stopped face recognition")
+#             # @smach.cb_interface(input_keys =['target', 'name', 'ID'],
+#             #                     outcomes=['recognized','failed'],
+#             #                     output_keys=['ID'])
+#             # def recognize(userdata, robot):
+#             #     rospy.loginfo("Starting face recognition...")
+#             #     robot.perception.toggle_recognition(faces=True)
+#             #     rospy.loginfo("Started face recognition")
+#             #     rospy.sleep(3)
+#             #     robot.perception.toggle_recognition(faces=False)
+#             #     rospy.loginfo("Stopped face recognition")
                 
-            #     #closest_person = robot.closest_target(class_label='person')
+#             #     #closest_person = robot.closest_target(class_label='person')
 
                 
-            #     #import pdb; pdb.set_trace()
-            #     if closest_person and closest_person.name.lower() == userdata.name.lower():
-            #         userdata.ID = closest_person.ID
-            #         return 'recognized'
-            #     else:
-            #         # wrong_target = robot.closest_target()
-            #         # rospy.loginfo('The closest target is (instead of a person):')
-            #         # robot.worldmodel.print_info()
-            #         return 'failed'
+#             #     #import pdb; pdb.set_trace()
+#             #     if closest_person and closest_person.name.lower() == userdata.name.lower():
+#             #         userdata.ID = closest_person.ID
+#             #         return 'recognized'
+#             #     else:
+#             #         # wrong_target = robot.closest_target()
+#             #         # rospy.loginfo('The closest target is (instead of a person):')
+#             #         # robot.worldmodel.print_info()
+#             #         return 'failed'
             
-            # smach.StateMachine.add('TEST_RECOGNITION',
-            #                        smach.CBState(recognize, 
-            #                                      cb_kwargs={'robot':self.robot}),#Say(self.robot, "Loy has to program me so that I test if I really learned to recognize you"),
-            #                        transitions={'recognized':'person_learned',
-            #                                     'failed':'INFORM_FAIL_2'})
+#             # smach.StateMachine.add('TEST_RECOGNITION',
+#             #                        smach.CBState(recognize, 
+#             #                                      cb_kwargs={'robot':self.robot}),#Say(self.robot, "Loy has to program me so that I test if I really learned to recognize you"),
+#             #                        transitions={'recognized':'person_learned',
+#             #                                     'failed':'INFORM_FAIL_2'})
             
-            # smach.StateMachine.add('INFORM_FAIL_2',
-            #                        Say(self.robot, "I did not recognize you when I tested my recognition, but I will do my best to recognize you later on anyway. Fingers crossed!"),
-            #                        transitions={'spoken':'learning_failed'})
+#             # smach.StateMachine.add('INFORM_FAIL_2',
+#             #                        Say(self.robot, "I did not recognize you when I tested my recognition, but I will do my best to recognize you later on anyway. Fingers crossed!"),
+#             #                        transitions={'spoken':'learning_failed'})
 
 class GetObject(smach.StateMachine):
     def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
@@ -523,8 +523,6 @@ class GetObject(smach.StateMachine):
                                     transitions={   'succeeded':'Done',
                                                     'failed':'Failed' })   # End State
 
-
-        
 class Say_and_Navigate(smach.StateMachine):
     ## This class gives the ability to say something and at the same time start to navigate to the desired location.
     ## This makes the robot faster and 'look' smarter.
@@ -661,7 +659,6 @@ class Say_and_point_location(smach.StateMachine):
 
             smach.StateMachine.add('SUB_CONT_SAY_POINT',
                                     cc)
-
 
 class Navigate_to_queryoutcome_waypoint_location(navigation.Navigate_abstract):
     """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.

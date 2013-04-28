@@ -14,7 +14,7 @@ from utility_states import Wait_time, PlaySound
 
 TTS_waittime = 0.000 #TODO: Needs to be measured and be made as long as possible.
 
-@util.deprecated
+@util.deprecated_replace_with("speech_interpreter")
 class Dummy_Question(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['target_room_received','no_target_room_received'], 
@@ -54,7 +54,8 @@ class Dummy_Question(smach.State):
         
         return 'target_room_received'
 
-############################## Hierarchical StateMachine QuestionMachine  ###################################   
+############################## Hierarchical StateMachine QuestionMachine  ###################################
+@util.deprecated_replace_with("speech_interpreter")
 class QuestionMachine(smach.StateMachine):
     
     #TODO: Add timeouts. DONE, in Timedout_QuestionMachine
@@ -167,6 +168,7 @@ class QuestionMachine(smach.StateMachine):
                                    smach.CBState(set_default_option),
                                    transitions={'stored':'REMEMBER_ANSWER'})
   
+@util.deprecated_replace_with("speech_interpreter")
 class Ask(smach.State):
     def __init__(self, robot, recite_options=False):
         smach.State.__init__(self,
@@ -186,6 +188,7 @@ class Ask(smach.State):
         
         return "question_asked"
     
+@util.deprecated_replace_with("Ask_query_true")
 class tueMonitorState(smach.State):
     """The tueMonitorState takes a callback, a topic and a messagetype as arguments. 
        This callback takes userdata and a message of the given type.
@@ -266,6 +269,7 @@ class tueMonitorState(smach.State):
         rospy.loginfo("self.monitor_passed=False, returning invalid")
         return 'invalid'
 
+@util.deprecated_replace_with("Await_Text_Ears")
 class Wait_Answer(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,
@@ -393,6 +397,7 @@ class Wait_Answer(smach.State):
         rospy.loginfo("self.result=False, returning invalid")
         return 'invalid' #'invalid'
 
+@util.deprecated_replace_with("Await_Text_Ears")
 class Wait_Answer_Ears(smach.State):
     def __init__(self, robot, maxtime=30):
         smach.State.__init__(self,
@@ -442,6 +447,7 @@ class Wait_Answer_Ears(smach.State):
         self.robot.ears.stop_listening()
         return 'no_answer'    
 
+@util.deprecated_replace_with("speech_interpreter")
 class Confirm_Answer(smach.State):
     def __init__(self, robot, maxwait=10):
         smach.State.__init__(self,
@@ -482,6 +488,7 @@ class Confirm_Answer(smach.State):
         self.robot.ears.stop_listening()
         return 'no_confirm'
 
+@util.deprecated_replace_with("speech_interpreter")
 class Timedout_QuestionMachine(smach.StateMachine):
     def __init__(self, 
                  default_option, sentence, robot,
@@ -522,7 +529,7 @@ class Timedout_QuestionMachine(smach.StateMachine):
             smach.StateMachine.add('ASK_QUESTION_TOP',
                                    max_wait_for_answer_cc)
 
-@util.deprecated
+@util.deprecated_replace_with("Await_Text_Ears")
 class Await_Text(smach.State):
     def __init__(self, sentence=None, topic="/speech/output", waittime=30):
         smach.State.__init__(self,
@@ -643,7 +650,8 @@ class Say(smach.State):
             sentence = self.sentence
         self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood)
         return "spoken"
-    
+
+@util.deprecated_replace_with("Say_generated")
 class Say_userdata_sentence(smach.State):
     def __init__(self, robot): #other option for sentence_selection is 'constructor'
         smach.State.__init__(self,
@@ -673,6 +681,7 @@ class Say_generated(smach.State):
         self.robot.speech.speak(sentence)
         return "spoken"
 
+@util.deprecated_replace_with("Ask_yes_no")
 class YesNoQuestion(smach.StateMachine):
     def __init__(self, robot, question):
         smach.StateMachine.__init__(self, outcomes=["yes", "no", 'unknown'])
