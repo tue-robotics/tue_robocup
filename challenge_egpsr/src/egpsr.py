@@ -34,13 +34,7 @@ from psi import *
 ############## What to run: ##############
 ############ updated 15-4-2013 ###########
 ##########################################
-# - astart
-# - amiddle
-# - roslaunch run_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - !! Wait for speech.launch to finish before !!
-#   !!   launching speech interpreter          !!
-#   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - rosrun challenge_egpsr egpsr.py
+# - see README file
 
 #############################################################
 ## Locations that must be defined in database on forehand: ##
@@ -154,128 +148,6 @@ class Query_specific_action(smach.State):
         else:
             return "error"
 
-
-class Navigate_to_queryoutcome_waypoint_location(states.Navigate_abstract):
-    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
-    
-    The state can take some parameters that specify which keys of the dictionary to use for which data.
-    By default, the binding-key "X" refers to the x-part of the goal, etc. 
-    
-    Optionally, also a sorter can be given that sorts the bindings according to some measure.
-    """
-    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
-        states.Navigate_abstract.__init__(self, robot)
-
-        assert isinstance(query, Term)
-
-        self.queryTerm = query
-        self.X, self.Y, self.Phi = X, Y, Phi
-        
-    def get_goal(self, userdata):
-        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
-        
-        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-        # is a mapping of variable to a constant, like a string or number
-        answers = self.robot.reasoner.query(self.queryTerm)
-
-        if not answers:
-            return None
-            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
-        else:
-            #From the summarized answer, 
-            possible_locations = [( float(answer[self.X]), 
-                                    float(answer[self.Y]), 
-                                    float(answer[self.Phi])) for answer in answers]
-
-            x,y,phi = possible_locations[0]
-            
-            goal = possible_locations[0]
-            rospy.loginfo("goal = {0}".format(goal))
-
-            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
-
-#### USED FOR NAV TO MEETING_POINT2_BACKUP
-class Navigate_to_queryoutcome_waypoint_location2(states.Navigate_abstract):  
-    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
-    
-    The state can take some parameters that specify which keys of the dictionary to use for which data.
-    By default, the binding-key "X" refers to the x-part of the goal, etc. 
-    
-    Optionally, also a sorter can be given that sorts the bindings according to some measure.
-    """
-    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
-        states.Navigate_abstract.__init__(self, robot)
-
-        assert isinstance(query, Term)
-
-        self.queryTerm = query
-        self.X, self.Y, self.Phi = X, Y, Phi
-        
-    def get_goal(self, userdata):
-        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
-        
-        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-        # is a mapping of variable to a constant, like a string or number
-        answers = self.robot.reasoner.query(self.queryTerm)
-
-        if not answers:
-            return None
-            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
-        else:
-            #From the summarized answer, 
-            possible_locations = [( float(answer[self.X]), 
-                                    float(answer[self.Y]), 
-                                    float(answer[self.Phi])) for answer in answers]
-
-            x,y,phi = possible_locations[1]
-            
-            goal = possible_locations[1]
-            rospy.loginfo("goal = {0}".format(goal))
-
-            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
-
-#### USED FOR NAV TO MEETING_POINT3_BACKUP
-class Navigate_to_queryoutcome_waypoint_location3(states.Navigate_abstract):  
-    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
-    
-    The state can take some parameters that specify which keys of the dictionary to use for which data.
-    By default, the binding-key "X" refers to the x-part of the goal, etc. 
-    
-    Optionally, also a sorter can be given that sorts the bindings according to some measure.
-    """
-    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
-        states.Navigate_abstract.__init__(self, robot)
-
-        assert isinstance(query, Term)
-
-        self.queryTerm = query
-        self.X, self.Y, self.Phi = X, Y, Phi
-        
-    def get_goal(self, userdata):
-        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
-        
-        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-        # is a mapping of variable to a constant, like a string or number
-        answers = self.robot.reasoner.query(self.queryTerm)
-
-        if not answers:
-            return None
-            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
-        else:
-            #From the summarized answer, 
-            possible_locations = [( float(answer[self.X]), 
-                                    float(answer[self.Y]), 
-                                    float(answer[self.Phi])) for answer in answers]
-
-            x,y,phi = possible_locations[1]
-            
-            goal = possible_locations[1]
-            rospy.loginfo("goal = {0}".format(goal))
-
-            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
 
 class Navigate_to_queryoutcome_point_location(states.Navigate_abstract):
     """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
@@ -433,6 +305,171 @@ class Failed_goal(smach.State):
         return "new_task"
 
 
+class Navigate_to_queryoutcome_waypoint_location1(states.Navigate_abstract):
+    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
+    
+    The state can take some parameters that specify which keys of the dictionary to use for which data.
+    By default, the binding-key "X" refers to the x-part of the goal, etc. 
+    
+    Optionally, also a sorter can be given that sorts the bindings according to some measure.
+    """
+    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
+        states.Navigate_abstract.__init__(self, robot)
+
+        self.queryTerm = query
+        self.X, self.Y, self.Phi = X, Y, Phi
+        
+    def get_goal(self, userdata):
+        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
+        
+        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+        # is a mapping of variable to a constant, like a string or number
+        answers = self.robot.reasoner.query(self.queryTerm)
+
+        if not answers:
+            return None
+            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
+        else:
+            #From the summarized answer, 
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Phi])) for answer in answers]
+
+            x,y,phi = possible_locations[0]
+            
+            goal = possible_locations[0]
+            rospy.loginfo("goal = {0}".format(goal))
+
+            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
+            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+
+#### USED FOR NAV TO MEETING_POINT2_BACKUP
+class Navigate_to_queryoutcome_waypoint_location2(states.Navigate_abstract):  
+    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
+    
+    The state can take some parameters that specify which keys of the dictionary to use for which data.
+    By default, the binding-key "X" refers to the x-part of the goal, etc. 
+    
+    Optionally, also a sorter can be given that sorts the bindings according to some measure.
+    """
+    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
+        states.Navigate_abstract.__init__(self, robot)
+
+
+        self.queryTerm = query
+        self.X, self.Y, self.Phi = X, Y, Phi
+        
+    def get_goal(self, userdata):
+        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
+        
+        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+        # is a mapping of variable to a constant, like a string or number
+        answers = self.robot.reasoner.query(self.queryTerm)
+
+        if not answers:
+            return None
+            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
+        else:
+            #From the summarized answer, 
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Phi])) for answer in answers]
+
+            x,y,phi = possible_locations[1]
+            
+            goal = possible_locations[1]
+            rospy.loginfo("goal = {0}".format(goal))
+
+            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
+            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+
+#### USED FOR NAV TO MEETING_POINT3_BACKUP
+class Navigate_to_queryoutcome_waypoint_location3(states.Navigate_abstract):  
+    """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
+    
+    The state can take some parameters that specify which keys of the dictionary to use for which data.
+    By default, the binding-key "X" refers to the x-part of the goal, etc. 
+    
+    Optionally, also a sorter can be given that sorts the bindings according to some measure.
+    """
+    def __init__(self, robot, query, X="X", Y="Y", Phi="Phi"):
+        states.Navigate_abstract.__init__(self, robot)
+
+        self.queryTerm = query
+        self.X, self.Y, self.Phi = X, Y, Phi
+        
+    def get_goal(self, userdata):
+        """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """
+        
+        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+        # is a mapping of variable to a constant, like a string or number
+        answers = self.robot.reasoner.query(self.queryTerm)
+
+        if not answers:
+            return None
+            rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
+        else:
+            #From the summarized answer, 
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Phi])) for answer in answers]
+
+            x,y,phi = possible_locations[2]
+            
+            goal = possible_locations[2]
+            rospy.loginfo("goal = {0}".format(goal))
+
+            rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
+            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+
+
+# It is important for the EGPSR to get back to the meeting point!! Otherwise restart, therefore understanding solution.
+class GotoMeetingPointRobustEGPSR(smach.StateMachine):
+    """Initialize, wait for the door to be opened and drive inside"""
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "not_at_loc"])
+
+
+        with self:
+            navigate_meeting_point_1 = Conjunction(  Compound("=", "Waypoint", Compound("initial_egpsr_1", "a")),
+                                                     Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_MEETING_POINT_EGPSR_1', 
+                                    Navigate_to_queryoutcome_waypoint_location1(robot, navigate_meeting_point_1, X="X", Y="Y", Phi="Phi"),
+                                    transitions={   'arrived':'succeeded', 
+                                                    'preempted':'FAILED_FIRST_ATTEMPT', 
+                                                    'unreachable':'FAILED_FIRST_ATTEMPT', 
+                                                    'goal_not_defined':'FAILED_FIRST_ATTEMPT'})
+
+            smach.StateMachine.add("FAILED_FIRST_ATTEMPT",
+                                    states.Say(robot, ["I was not able to reach the meeting point at first attempt, I will try it again."]),
+                                    transitions={   "spoken":"GO_TO_MEETING_POINT_EGPSR_2"})
+
+            navigate_meeting_point_2 = Conjunction(  Compound("=", "Waypoint", Compound("initial_egpsr_1", "a")),
+                                                     Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_MEETING_POINT_EGPSR_2', 
+                                    Navigate_to_queryoutcome_waypoint_location2(robot, navigate_meeting_point_2, X="X", Y="Y", Phi="Phi"),
+                                    transitions={   'arrived':'succeeded', 
+                                                    'preempted':'FAILED_SECOND_ATTEMPT', 
+                                                    'unreachable':'FAILED_SECOND_ATTEMPT', 
+                                                    'goal_not_defined':'FAILED_SECOND_ATTEMPT'})
+
+            smach.StateMachine.add("FAILED_SECOND_ATTEMPT",
+                                    states.Say(robot, [  "Also my second attempt was not succesful. One last try."]),
+                                    transitions={   "spoken":"GO_TO_MEETING_POINT_EGPSR_3"})
+
+            navigate_meeting_point_3 = Conjunction(  Compound("=", "Waypoint", Compound("initial_egpsr_1", "a")),
+                                                     Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_MEETING_POINT_EGPSR_3', 
+                                    Navigate_to_queryoutcome_waypoint_location3(robot, navigate_meeting_point_3, X="X", Y="Y", Phi="Phi"),
+                                    transitions={   'arrived':'succeeded', 
+                                                    'preempted':'not_at_loc', 
+                                                    'unreachable':'not_at_loc', 
+                                                    'goal_not_defined':'not_at_loc'})
+
+
 ########################
 ##### STATEMACHINE #####
 ########################
@@ -471,7 +508,7 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-        # DURING A CHALLENGE, AMIGO STARTS AT A DESIGNATED POSITION!
+        # DURING A CHALLENGE, AMIGO STARTS AT A DESIGNATED POSITION, NOT IN FRONT OF A DOOR
 
         ######################################################
         ##################### INITIALIZE #####################             
@@ -482,79 +519,6 @@ def setup_statemachine(robot):
                                 transitions={   'initialized':'INTRODUCE_SHORT',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
                                                 'abort':'Aborted'})
 
-        ######################################################
-        ##################### ENTER ROOM #####################             
-        ######################################################
-
-        # # If the door is open, amigo will say that it goes to the registration table
-        # smach.StateMachine.add('AT_FRONT_OF_DOOR',
-        #                             states.Say(robot, 'I will now check if the door is open or not'),
-        #                             transitions={'spoken':'STATE_DOOR'}) 
-        
-        # smach.StateMachine.add('STATE_DOOR', states.Read_laser(robot,"entrance_door"),
-        #                           transitions={'laser_read':'CHECK_DOOR'})
-              
-        # dooropen_query = Compound("state","entrance_door", "open")
-        # smach.StateMachine.add('CHECK_DOOR', 
-        #                             states.Ask_query_true(robot, dooropen_query),
-        #                             transitions={   'query_false':'STATE_DOOR',
-        #                                             'query_true':'ENTER_ROOM',
-        #                                             'waiting':'DOOR_CLOSED',
-        #                                             'preempted':'Aborted'})
-
-        # # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-        # # in perception.py, amigo will speak and check again if the door is open
-        # smach.StateMachine.add('DOOR_CLOSED',
-        #                             states.Say(robot, 'Door is closed, please open the door'),
-        #                             transitions={'spoken':'STATE_DOOR'}) 
-
-        # # # If the door is open, amigo will say that it goes to the registration table
-        # # smach.StateMachine.add('THROUGH_DOOR',
-        # #                             states.Say(robot, 'Door is open, so I will go to the meeting point'),
-        # #                             transitions={'spoken':'INIT_POSE'}) 
-
-        # # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
-        # smach.StateMachine.add('INIT_POSE',
-        #                         states.Set_initial_pose(robot, 'initial'),
-        #                         transitions={   'done':'ENTER_ROOM',
-        #                                         'preempted':'CHECK_DOOR',
-        #                                         'error':'CHECK_DOOR'})
-
-        # # Enter the arena with force drive as back-up
-        # smach.StateMachine.add('ENTER_ROOM',
-        #                             states.EnterArena(robot),
-        #                             transitions={   "done":"ENTERED_ROOM" })
-
-        # # If the door is open, amigo will say that it goes to the registration table
-        # smach.StateMachine.add('ENTERED_ROOM',
-        #                             states.Say(robot, 'I will go to the meeting point'),
-        #                             transitions={'spoken':'GO_TO_MEETING_POINT'}) 
-
-        # # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
-        # smach.StateMachine.add('GO_TO_MEETING_POINT', 
-        #                             states.Navigate_named(robot, "meeting_point"),
-        #                             transitions={   'arrived':'INTRODUCE_SHORT', 
-        #                                             'preempted':'CLEAR_PATH_TO_MEETING_POINT', 
-        #                                             'unreachable':'CLEAR_PATH_TO_MEETING_POINT', 
-        #                                             'goal_not_defined':'CLEAR_PATH_TO_MEETING_POINT'})
-
-        # # Amigo will say that it arrives at the registration table
-        # smach.StateMachine.add('CLEAR_PATH_TO_MEETING_POINT',
-        #                             states.Say(robot, "At my first attempt I could not go to the meeting point. Please clear the path, I will give it another try."),
-        #                             transitions={'spoken':'GO_TO_MEETING_POINT_SECOND_TRY'}) 
-
-        # # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
-        # smach.StateMachine.add('GO_TO_MEETING_POINT_SECOND_TRY', 
-        #                             states.Navigate_named(robot, "meeting_point"),
-        #                             transitions={   'arrived':'INTRODUCE_SHORT', 
-        #                                             'preempted':'FAIL_BUT_INTRODUCE', 
-        #                                             'unreachable':'FAIL_BUT_INTRODUCE', 
-        #                                             'goal_not_defined':'FAIL_BUT_INTRODUCE'})
-
-        # # Amigo will say that it arrives at the registration table
-        # smach.StateMachine.add('FAIL_BUT_INTRODUCE',
-        #                             states.Say(robot, "I was still not able to go to the meeting point, therefore I will introduce myself here."),
-        #                             transitions={'spoken':'INTRODUCE_SHORT'}) 
 
         ######################################################
         #################### INSTRUCTIONS ####################             
@@ -567,20 +531,25 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, 'initial_egpsr_1'),
-                                transitions={   'done':'ASK_ACTION',
-                                                'preempted':'ASK_ACTION',
-                                                'error':'ASK_ACTION'})
+                                transitions={   'done':'GIVE_ACTION_WITHOUT_MIC',
+                                                'preempted':'GIVE_ACTION_WITHOUT_MIC',
+                                                'error':'GIVE_ACTION_WITHOUT_MIC'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
-                                transitions={'done':'QUERY_SPECIFIC_ACTION',
+                                transitions={'done':'RETRACT_POINT_ROI',
                                              'no_action':'ASK_ACTION'})
 
         smach.StateMachine.add("GIVE_ACTION_WITHOUT_MIC",
                                 Ask_action_without_mic(robot),
-                                transitions={'done':'QUERY_SPECIFIC_ACTION',
+                                transitions={'done':'RETRACT_POINT_ROI',
                                              'no_action':'GIVE_ACTION_WITHOUT_MIC'})
-        
+
+        smach.StateMachine.add("RETRACT_POINT_ROI",
+                                states.Retract_facts(robot, [Compound("point_roi_tried", "X")]),
+                                transitions={'retracted':'QUERY_SPECIFIC_ACTION'})
+
+
         ######################################################
         ################### EXECUTE ACTION ###################
         ######################################################
@@ -634,7 +603,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_10'}) 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_10',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -653,7 +622,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_11'}) 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_11',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -678,7 +647,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_12'}) 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_12',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -769,7 +738,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_21'}) 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_21',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -783,7 +752,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_22',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -860,7 +829,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_23',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'AT_MEETING_POINT',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -902,7 +871,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_25',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED'})
 
@@ -1014,7 +983,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_31',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -1070,7 +1039,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_41',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -1097,7 +1066,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_LOC_TO_42',                               
-                                    states.GotoMeetingPointEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot),
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -1161,28 +1130,28 @@ def setup_statemachine(robot):
         ## maybe a reset head and reset spindle / arms over here?
 
 
-        ## In case goal is given via speech interpreter:
-        smach.StateMachine.add("FAILED_TASK",
-                                Failed_goal(robot),
-                                transitions={'new_task':'ASK_ACTION'})
-
-
-        smach.StateMachine.add("FINISHED_TASK",
-                                Finished_goal(robot),
-                                transitions={'new_task':'ASK_ACTION',
-                                              'tasks_completed':'FINISH'})
-
-
-        ## In case goal is given via amigo-console:
+        # ## In case goal is given via speech interpreter:
         # smach.StateMachine.add("FAILED_TASK",
         #                         Failed_goal(robot),
-        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
+        #                         transitions={'new_task':'ASK_ACTION'})
 
 
         # smach.StateMachine.add("FINISHED_TASK",
         #                         Finished_goal(robot),
-        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
+        #                         transitions={'new_task':'ASK_ACTION',
         #                                       'tasks_completed':'FINISH'})
+
+
+        # In case goal is given via amigo-console:
+        smach.StateMachine.add("FAILED_TASK",
+                                Failed_goal(robot),
+                                transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
+
+
+        smach.StateMachine.add("FINISHED_TASK",
+                                Finished_goal(robot),
+                                transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
+                                              'tasks_completed':'FINISH'})
         
 
         ######################################################
