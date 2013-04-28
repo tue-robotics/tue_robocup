@@ -23,9 +23,12 @@ from human_interaction import Say
 #TODO: Make Place_Object also use a query 
 
 #Enum class.
-class StandardPoses(object): 
+class StandardPoses: 
     POINT_AT_OBJECT_BACKWARD = [-0.4 ,-0.750 , 0.50 , 1.50 , 0.000 , 0.7500 , 0.000]
     POINT_AT_OBJECT_FORWARD = [-0.2 ,-0.250 , 0.40 , 1.25 , 0.000 ,0.500 , 0.000]
+    HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
+    SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
+    RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 
 class Prepare_orientation(smach.State):
     def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
