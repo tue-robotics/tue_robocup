@@ -10,13 +10,11 @@
   <url>http://ros.org/wiki/challenge_restaurant</url>
   <depend package="roscpp"/>
   <depend package="wire_interface"/>
-  <depend package="tue_move_base_msgs"/>
   <depend package="actionlib"/>
   <depend package="pein_msgs"/>
   <depend package="std_srvs"/>
   <depend package="amigo_msgs"/>
   <depend package="text_to_speech_philips"/>
-  <depend package="tf"/>
   <depend package="tue_carrot_planner"/>
 
 </package>
