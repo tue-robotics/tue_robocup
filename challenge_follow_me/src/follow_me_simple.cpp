@@ -10,10 +10,9 @@
 #include <std_msgs/String.h>
 #include <std_srvs/Empty.h>
 
-#include <tf/transform_datatypes.h>
 #include "problib/conversions.h"
 
-#include "challenge_follow_me/follow_me_carrot_planner.h"
+#include "tue_carrot_planner/carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
 
 using namespace std;

@@ -15,9 +15,7 @@
   <depend package="pein_msgs"/>
   <depend package="std_srvs"/>
   <depend package="amigo_msgs"/>
-
-  <!-- Why do a need this dependency? (Get linker error if left out) -->
-  <depend package="costmap_2d"/>
+  <depend package="tue_carrot_planner"/>
 
 </package>
 

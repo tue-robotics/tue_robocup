@@ -12,7 +12,7 @@
 
 #include "problib/conversions.h"
 
-#include "challenge_restaurant/restaurant_carrot_planner.h"
+#include "tue_carrot_planner/carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
 
 #include <text_to_speech_philips/amigo_speakup_advanced.h>

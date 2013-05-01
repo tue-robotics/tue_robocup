@@ -3,7 +3,7 @@
 #include <geometry_msgs/PoseStamped.h>
 // Action client
 //#include <actionlib/client/simple_action_client.h>
-#include "challenge_follow_me/follow_me_carrot_planner.h"
+#include "tue_carrot_planner/carrot_planner.h"
 #include <tf/tf.h>
 
 using namespace std;

@@ -17,6 +17,7 @@
   <depend package="amigo_msgs"/>
   <depend package="text_to_speech_philips"/>
   <depend package="tf"/>
+  <depend package="tue_carrot_planner"/>
 
 </package>
 
