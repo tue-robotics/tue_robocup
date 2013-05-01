@@ -10,7 +10,6 @@
   <url>http://ros.org/wiki/challenge_follow_me</url>
   <depend package="roscpp"/>
   <depend package="wire_interface"/>
-  <depend package="tue_move_base_msgs"/>
   <depend package="actionlib"/>
   <depend package="pein_msgs"/>
   <depend package="std_srvs"/>
