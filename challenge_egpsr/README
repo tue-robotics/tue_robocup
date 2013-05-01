@@ -15,6 +15,10 @@ amigo3:
 amigo3: (wait for egpsr_dependencies.launch)
     
     roslaunch speech_interpreter start_magdeburg2013.launch
+    
+    or in tue_test_lab:
+    
+    roslaunch speech_interpreter start_tue_test_lab.launch
 
     alsamixer
         Mic Boost -> 100

@@ -531,9 +531,9 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, 'initial_egpsr_1'),
-                                transitions={   'done':'GIVE_ACTION_WITHOUT_MIC',
-                                                'preempted':'GIVE_ACTION_WITHOUT_MIC',
-                                                'error':'GIVE_ACTION_WITHOUT_MIC'})
+                                transitions={   'done':'ASK_ACTION',
+                                                'preempted':'ASK_ACTION',
+                                                'error':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
@@ -583,7 +583,7 @@ def setup_statemachine(robot):
                                          Compound("not", Compound("disposed", "ObjectID")))
             
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)),  #TODO Erik van Loy: DIt is compleet ongetest, succes!
+                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
@@ -608,7 +608,7 @@ def setup_statemachine(robot):
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
 
-            # smach.StateMachine.add('SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',                                ## TODO: make state/class in which this task is defined as not finished.
+            # smach.StateMachine.add('SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',                               
             #                         states.Say_and_Navigate(
             #                             robot=robot,
             #                             sentence = "I failed picking up the object. I am sorry, but I will go back to the meeting point and \
@@ -719,7 +719,7 @@ def setup_statemachine(robot):
             #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
 
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query),  #TODO Erik van Loy: DIt is compleet ongetest, succes!
+                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
@@ -1024,7 +1024,7 @@ def setup_statemachine(robot):
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO'})
 
-            # smach.StateMachine.add('SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',                                ## TODO: make state/class in which this task is defined as not finished.
+            # smach.StateMachine.add('SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',                              
             #                         states.Say_and_Navigate(
             #                             robot=robot,
             #                             sentence = "I failed finding the object. I am sorry, but I will go back to the meeting point and \
@@ -1130,28 +1130,28 @@ def setup_statemachine(robot):
         ## maybe a reset head and reset spindle / arms over here?
 
 
-        # ## In case goal is given via speech interpreter:
-        # smach.StateMachine.add("FAILED_TASK",
-        #                         Failed_goal(robot),
-        #                         transitions={'new_task':'ASK_ACTION'})
-
-
-        # smach.StateMachine.add("FINISHED_TASK",
-        #                         Finished_goal(robot),
-        #                         transitions={'new_task':'ASK_ACTION',
-        #                                       'tasks_completed':'FINISH'})
-
-
-        # In case goal is given via amigo-console:
+        ## In case goal is given via speech interpreter:
         smach.StateMachine.add("FAILED_TASK",
                                 Failed_goal(robot),
-                                transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
+                                transitions={'new_task':'ASK_ACTION'})
 
 
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
-                                transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
+                                transitions={'new_task':'ASK_ACTION',
                                               'tasks_completed':'FINISH'})
+
+
+        # # In case goal is given via amigo-console:
+        # smach.StateMachine.add("FAILED_TASK",
+        #                         Failed_goal(robot),
+        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
+
+
+        # smach.StateMachine.add("FINISHED_TASK",
+        #                         Finished_goal(robot),
+        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
+        #                                       'tasks_completed':'FINISH'})
         
 
         ######################################################

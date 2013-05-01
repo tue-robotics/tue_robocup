@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
- 
+  <!--
   <include file="$(find run_speech_files)/output_folder/magdeburg2013/speech_magdeburg2013.launch" />
-  
+  -->
+  <include file="$(find run_speech_files)/output_folder/tue_test_lab/speech_tue_test_lab.launch" />
 </launch>	
