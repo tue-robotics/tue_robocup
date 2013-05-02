@@ -540,5 +540,11 @@ int main(int argc, char **argv) {
         follow_rate.sleep();
     }
 
+    //! When node is shut down, cancel goal by sending zero
+    pbl::Matrix cov(3,3);
+    cov.zeros();
+    pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+    moveTowardsPosition(pos, 0);
+
     return 0;
 }
