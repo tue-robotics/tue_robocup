@@ -26,7 +26,7 @@ using namespace std;
 
 //! Settings
 const int TIME_OUT_GUIDE_LOST = 8;              // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_GUIDE = 2.0;              // Distance AMIGO keeps towards guide
+const double DISTANCE_GUIDE = 0.8;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
@@ -264,7 +264,7 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
                     
-                    ROS_INFO("Guide has variance %f, last variance is %f", cov(0,0), last_var_guide_pos_);
+                    //ROS_INFO("Guide has variance %f, last variance is %f", cov(0,0), last_var_guide_pos_);
 
 
                     //! Check if guide position is updated (initially negative)
@@ -488,7 +488,13 @@ int main(int argc, char **argv) {
             if (getPositionGuide(objects, guide_pos)) {
 
                 //! Move towards guide
-                moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
+                // Bad: driving is not very smooth
+                // Good: if the operator cannot be reached, e.g., because he is close but his position
+                //       can't be updated either, the executive keeps sending a goal. Robot reacts, but
+                //       if the robot doesn't observe the guide, it keeps on driving the wrong way
+                if (t_no_meas_ < 1.5) { // makes driving less accurate, but avoids continuously sending a goal
+					moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
+				}
 
 
             } else {
