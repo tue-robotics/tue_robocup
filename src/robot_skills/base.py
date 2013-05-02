@@ -67,9 +67,9 @@ class Base(object):
 
         #Get plan
         if use_2d:
-            self._get_plan      = rospy.ServiceProxy('/move_base/get_plan',         tue_move_base_msgs.srv.GetPath)
+            self._get_plan_service      = rospy.ServiceProxy('/move_base/get_plan',         tue_move_base_msgs.srv.GetPath)
         else:
-            self._get_plan      = rospy.ServiceProxy('/move_base_3d/get_plan',         tue_move_base_msgs.srv.GetPath)
+            self._get_plan_service      = rospy.ServiceProxy('/move_base_3d/get_plan',         tue_move_base_msgs.srv.GetPath)
         
         #query costmap
         if use_2d:
@@ -106,6 +106,12 @@ class Base(object):
             self.plan_possible = msg.data
     
     def get_plan(self, position, orientation, frame_id="/map", goal_area_radius=0.1):
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose.header.frame_id = frame_id
+
+        return self.__get_plan(target_pose)
+
+    def get_plan_OLD(self, position, orientation, frame_id="/map", goal_area_radius=0.1):
         path_request = tue_move_base_msgs.srv.GetPathRequest()
 
         path_request.target_pose.header.frame_id = frame_id
@@ -122,12 +128,33 @@ class Base(object):
         except AttributeError, ae:
             rospy.logerr("Attribute could not be set, please update to correct to move_base_msgs: {0}".format(ae))
             
-        path = self._get_plan(path_request)
+        path = self._get_plan_service(path_request)
 
         if not path:
             rospy.logwarn("No path could be found to get to target pose {0}".format(path_request.target_pose))
 
         return path
+
+    def __get_plan(self, target_pose, goal_area_radius=0.1):
+        path_request = tue_move_base_msgs.srv.GetPathRequest()
+
+        path_request.target_pose = target_pose
+
+        try:
+            #path_request.path_resolution = 1
+            #path_request.goal_area_size = 0
+            #path_request.nr_area_samples = 1
+            path_request.goal_area_radius = goal_area_radius
+        except AttributeError, ae:
+            rospy.logerr("Attribute could not be set, please update to correct to move_base_msgs: {0}".format(ae))
+            
+        path = self._get_plan_service(path_request)
+
+        if not path:
+            rospy.logwarn("No path could be found to get to target pose {0}".format(path_request.target_pose))
+
+        return path
+
 
     @util.concurrent_util.synchronized(_lock)
     def execute_plan(self, path, time=0, block=True):
