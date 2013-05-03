@@ -158,6 +158,18 @@ void findOperator(wire::Client& client, bool lost = true) {
 }
 
 
+
+bool detectCrowd(vector<wire::PropertySet>& objects) {
+
+    // Loop over world objects, if at least one person close to operator: crowd detected. Also determine width crowd.
+
+    // Can be based on getPositionOperator()
+
+    return true;
+}
+
+
+
 /**
 * @brief getPositionOperator
 * @param objects input objects received from WIRE
@@ -287,12 +299,12 @@ bool memorizeOperator() {
 void speechCallback(std_msgs::String res) {
 
     //amigoSpeak(res.data);
-    //if (res.data == "pleaseenterthelevator") {
-    ROS_WARN("Received command: %s", res.data.c_str());
-    itp2_ = true;
-    //} else {
-    //    ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
-    //}
+    if (res.data.find("pleaseleavethelevator") != std::string::npos) {
+        ROS_WARN("Received command: %s", res.data.c_str());
+        itp2_ = true;
+    } else {
+        ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
+    }
 }
 
 
@@ -366,7 +378,7 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "follow_me_simple");
     ros::NodeHandle nh;
     
-     ROS_INFO("Started Follow me");
+    ROS_INFO("Started Follow me");
     
     /// Head ref
     ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
@@ -470,17 +482,84 @@ int main(int argc, char **argv) {
         //! Check if the robot arrived at itp two
         if (itp2_) {
 
-            //! Robot is asked to enter elevator and must leave when the operator leaves
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // * * * * * * * * * * * * * * * * * * * * * * * * * * * ITP 2 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *//
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            //! Find elevator
-            findAndEnterElevator(client);
+            //! Robot is asked to leave the elevator
+            amigoSpeak("I will leave the elevator now");
+
+            //! First turn, leave and turn again
+
+            ////
+            // TODO: Find exit function
+            //   start with beam in the middle and check distance, move to neighboring beams until exit is found
+            // or
+            //   more advanced: detect wall with opening (not really needed I guess)
+            ////
+
+
+            pbl::Matrix cov(3,3);
+            cov.zeros();
+            pbl::PDF pos = pbl::Gaussian(pbl::Vector3(-2.5, 0, 0), cov);
+            moveTowardsPosition(pos, 0);
+            ROS_INFO("Left the elevator");
+            pos = pbl::Gaussian(pbl::Vector3(0.5, 0, 0), cov);
+            moveTowardsPosition(pos, 0);
+            ROS_INFO("Turned around");
+
+            //! Operator is the man standing in front of the robot (resets world model)
+            findOperator(client, false);
 
             itp2_ = false;
             itp3_ = true;
 
         } else if (itp3_) {
 
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // * * * * * * * * * * * * * * * * * * * * * * * * * * * ITP 3 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *//
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
             //! Operator will pass through a small crowd of people (4-5) and calls the robot from behind the group
+
+            if (detectCrowd(objects)) {
+
+                ////
+                // TODO: Detecting crowd is feasible, but how should the robot drive around the crowd?
+                //       Option 1 is assuming that driving a fixed length, e.g., 4 [m] is enough to
+                //        pass the crowd (first move sidewards, then 4 [m] forward, then turn and call
+                //        find(operator(client, false).
+                //       Option 2 is using some form of feedback, e.g., by entering a separate mode that
+                //        lets the robot drive as long as at least one (two?) person is on its side.
+                //        Potential risk is that this can be the operator already, furthermore, this
+                //        will require a new bool itp3_crowd_ and some hacks? Maybe the potential risk
+                //        isn't even a real problem: the operator will call the robot, hence the mic
+                //        and or face detection can be of help here.
+                ////
+
+                ROS_INFO("Found crowd!");
+
+                // TODO: try to drive around the crowd
+
+            } else {
+
+                //! Just follow
+                if (getPositionOperator(objects, operator_pos)) {
+
+                    //! Move towards operator
+                    moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
+
+
+                } else {
+
+                    //! Lost operator
+                    findOperator(client);
+
+                }
+
+            }
+
+            /*
 
             //! Association will fail, hence this can be skipped. Check for the (updated) operator position
             if (getPositionOperator(objects, operator_pos)) {
@@ -516,10 +595,15 @@ int main(int argc, char **argv) {
 
                 itp3_ = false;
             }
+            */
 
 
 
         } else {
+
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            // * * * * * * * * * * * * * * * * * * * * * * * * * * * ITP 1 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *//
+            ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
             // Not at itp2/itp3, just follow operator
 
