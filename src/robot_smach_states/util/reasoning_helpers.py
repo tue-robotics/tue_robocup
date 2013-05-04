@@ -3,6 +3,8 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import math
 
+import pprint
+
 def xyz_dist(answer, (origX, origY, origZ), mapping={"X":"X", "Y":"Y", "Z":"Z"}):
     """
     >>> xyz_dist({'X': 0.5, 'Y': 0.5, 'Z': 0.0}, (0.0,0.0,0.0)) == 0.70710678118654757
@@ -65,10 +67,10 @@ def select_answer(answers, keyfunc, minmax=min, criteria=None):
         """
 
     criteria = criteria or []
-    rospy.loginfo("{0} answers before filtering: {1}".format(len(answers), answers))
+    rospy.loginfo("{0} answers before filtering: {1}".format(len(answers), pprint.pformat(answers)))
     for criterium in criteria:
         answers = filter(criterium, answers)
-        rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(criterium, len(answers), answers))
+        rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(criterium, len(answers), pprint.pformat(answers)))
 
     if not answers:
         raise ValueError("No answers matched the critera.")
