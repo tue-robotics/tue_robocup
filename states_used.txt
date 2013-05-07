@@ -1,0 +1,140 @@
+States used in 2013 challenges:
+- Timedout_QuestionMachine: 1 (Demo) --> speech_interpreter
+- Say_generated: 2
+- Say: 7
+- LookForObjectsAtPoint: 1 (Demo)
+- GrabMachine: 4
+	- Carrying_pose
+	- Prepare_orientation
+	- Grab
+- Carrying_pose: 1 (Demo)
+- AmigoIntroductionEnglish: 1 (Demo)
+- AmigoIntroductionDutch: 1 (Demo)
+- GetObject: 2
+	- SetTimeMarker
+	- Check_object_found_before --> Ask_query_true
+- Gripper_to_query_position: 2
+	- Prepare_orientation
+- SetGripper: 3
+- ArmToPose/ArmToJointPos: 4
+- StartChallengeRobust: 3
+	- ...
+	- EnterArena
+	- GotoMeetingPoint
+- Navigate_to_query_outcome: 2 --> NavigateGeneric
+- LookForObjectsAtROI: 2
+- Human_handover: 1 (cleanup)
+	- Carrying_pose
+	- SetGripper
+	- Say
+- Finish:3 (empty state)
+- Retract_facts: 1 (cocktail)
+- Learn_Person: 1 (cocktail)
+- HandoverToHuman: 1 (cocktail)
+	- Handover_pose: (cocktail) --> ArmToUserPose
+- Navigate_abstract: 2
+- Navigate_to_queryoutcome: 3
+- Navigate_named: 4
+- Initialize: 5 
+- Set_initial_pose: 5
+- Say_and_Navigate: 1 (egpsr)
+	- Say
+	- Navigate_xxx --> NavigateGeneric
+- Say_and_point_location: 1 (egpsr)
+	- Say
+	- Point_location_hardcoded
+- PointObject: 1 (egpsr)
+- Wait_time:  (open)
+- Ask_yes_no (Open) --> speech_interpreter
+- Read_laser: 3
+- Ask_query_true: 2
+
+	- Demo:
+		- Timedout_QuestionMachine
+		- Say_generated
+		- Say
+		- LookForObjectsAtPoint
+		- GrabMachine
+		- Carrying_pose
+		- AmigoIntroductionEnglish
+		- AmigoIntroductionDutch
+		- GetObject
+		- Gripper_to_query_position
+		- SetGripper
+		- ArmToPose --> ArmToJointPos
+	- Cleanup
+		- StartChallengeRobust
+		- Say
+		- Navigate_to_queryoutcome
+		- LookForObjectsAtROI
+		- Say_generated
+		- GrabMachine
+		- Human_handover
+		- Gripper_to_query_position
+		- SetGripper
+		- ArmToPose
+		- NavigateGeneric
+		- Finish
+	- Cocktail party:
+		- StartChallengeRobust (custom for now)
+			- Initialize
+			- LookForMeetingpoint
+			- Set_initial_pose
+			- Read_laser
+			- Ask_query_true
+		- Retract_facts
+		- Learn_Person
+		- NavigateGeneric
+		- Say
+		- GrabMachine
+		- HandoverToHuman
+			- Say
+			- Handover_pose
+			- SetGripper
+		- Finish
+	- Emergency:
+		- Navigate_abstract
+		-  StartChallenge 
+			- Initialize
+			- Say
+			- Read_laser
+			- Ask_query_true
+			- Set_initial_pose
+			- EnterArena
+		- Navigate_to_queryoutcome
+		- Navigate_named
+	- Egpsr
+		- Navigate_abstract
+		- Initialize
+		- Say
+		- Set_initial_pose
+		- GetObject
+		- Say_and_Navigate
+		- ArmToPose
+		- Say_and_point_location
+		- PointObject
+		- Navigate_named --> NavigateGeneric(goal_name=...)
+		- Finish
+	- Open
+		- Initialize
+		- Set_initial_pose
+		- Say
+		- Wait_time
+		- NavigateGeneric
+		- ArmToUserPose --> ArmToPose??
+		- LookForObjectsAtROI
+		- GrabMachine 
+		- Ask_yes_no
+	- RIPS:
+		- Initialize
+		- Say
+		- SetGripper
+		- Read_laser
+		- Ask_query_true
+		- Set_initial_pose
+		- Navigate_named
+Replacements:
+	- QuestionMachine --> speech_interpreter
+	- Navigate_to_queryoutcome --> NavigateGeneric
+	- Navigate_named --> NavigateGeneric
+	- StartChallenge {repeated sequence} --> StartChallengeRobust

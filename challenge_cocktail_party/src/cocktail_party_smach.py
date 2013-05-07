@@ -210,7 +210,6 @@ class Ask_drink(smach.State):
 
         return "done"
 
-
 class LearnPersonCustom(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["face_learned" , "learn_failed"])
@@ -234,29 +233,6 @@ class LearnPersonCustom(smach.State):
         self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # make sure we're not left with a goal from last time
 
         return learn_result
-
-class TakeOrder(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["answered", "not_answered"])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-        res_drinks = self.robot.reasoner.query(Compound("type", "Drink", "drink"))
-        if not res_drinks:
-            return "not_answered"
-
-        # store all drink options and their goals in a dictionary
-        drink_options = {}
-        for drink in res_drinks:
-            drink_name = drink["Drink"]
-            drink_options[drink_name] = Compound("goal", Compound("serve", drink_name))
-
-        q_machine =  Timedout_QuestionMachine(
-                                            robot=self.robot,
-                                            default_option = "coke", 
-                                            sentence = "What would you like to drink?", 
-                                            options = drink_options)
-        return q_machine.execute()
 
 class LookForMeetingpoint(smach.State):
     def __init__(self, robot):
