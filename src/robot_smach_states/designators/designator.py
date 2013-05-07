@@ -191,7 +191,7 @@ if __name__ == "__main__":
     r.assertz(r.base_pose("c", r.pose_2d(3, 4, 3.14)))
 
     pose_query = r.base_pose("Name", r.pose_2d("X", "Y", "Phi"))
-    roi_query = r.region_of_interest("Name", r.point_3d("X", "Y", "Z"))
+    roi_query = r.point_of_interest("Name", r.point_3d("X", "Y", "Z"))
 
     rpd = ReasonedPoseDesignator(robot, pose_query, identifier="Name")
     rrd = ReasonedRoiDesignator(robot, pose_query, identifier="Name")
