@@ -354,7 +354,7 @@ def grab_item(robot):
 
         
         query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
-                                    Compound("region_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
+                                    Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
 
         
         rospy.logerr("TODO Loy/Janno/Sjoerd: make query use current_object")
@@ -538,7 +538,7 @@ def grab_demo(robot):
     rospy.loginfo("Setting up state machine")
     sm = smach.StateMachine(outcomes=['Done', "Failed", "Aborted"])
 
-    search_query = Compound("region_of_interest", "Object", Compound("point_3d", "X", "Y", "Z"))
+    search_query = Compound("point_of_interest", "Object", Compound("point_3d", "X", "Y", "Z"))
     object_query = Compound("position", Compound("point_3d", "X", "Y", "Z")) #I don't care a bout the type for now.
 
     with sm:
@@ -548,7 +548,7 @@ def grab_demo(robot):
                                             'Failed':'Failed',
                                             'Aborted':'Aborted'})
 
-        query_dropoff_loc = Compound("region_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
         smach.StateMachine.add("DROPOFF_OBJECT",
                                 states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
                                 transitions={   'succeeded':'DROP_OBJECT',

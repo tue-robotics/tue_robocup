@@ -191,7 +191,7 @@ class Cleanup(smach.StateMachine):
                                     transitions={   'spoken':'LOOK'})
 
             query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
-                                        Compound("region_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
+                                        Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
 
             query_object = Conjunction(
                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
@@ -200,7 +200,7 @@ class Cleanup(smach.StateMachine):
                             #MARK_DISPOSED asserts disposed(current_objectID)
                             Compound("not", Compound("disposed", "ObjectID")))
 
-            #query_dropoff_loc = Compound("region_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
+            #query_dropoff_loc = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
             # 
             # Test this by: 
             # console 1: $ rosrun tue_reasoner_core reasoner
@@ -219,7 +219,7 @@ class Cleanup(smach.StateMachine):
                                             Compound("type",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
                                             Compound("disposal_type",       "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
                                             Compound("type",                "Dispose_to_object",  "Disposal_type"), #Find objects of that are of type trashbin
-                                            Compound("region_of_interest",  "Dispose_to_object",  \
+                                            Compound("point_of_interest",  "Dispose_to_object",  \
                                                         Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
             smach.StateMachine.add('LOOK',
@@ -271,7 +271,7 @@ class Cleanup(smach.StateMachine):
                                     transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
 
             query_dropoff_loc_backup = Conjunction( Compound("type",                "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
-                                                    Compound("region_of_interest",  "Dispose_to_object",  \
+                                                    Compound("point_of_interest",  "Dispose_to_object",  \
                                                         Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
                                     states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),

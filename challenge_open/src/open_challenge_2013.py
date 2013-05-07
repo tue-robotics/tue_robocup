@@ -229,8 +229,8 @@ def setup_statemachine(robot):
 
         # ToDo: Replace query
         #query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
-        #                            Compound("region_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
-        query_lookat = Compound("region_of_interest", "cabinet_expedit_1", Compound("point_3d", "X", "Y", "Z"))
+        #                            Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
+        query_lookat = Compound("point_of_interest", "cabinet_expedit_1", Compound("point_3d", "X", "Y", "Z"))
         query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
 
         smach.StateMachine.add('LOOK',
@@ -268,7 +268,7 @@ def setup_statemachine(robot):
         '''
         # ToDo: make a decent query (for both)
         # Compound("type",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-        query_lookat = Compound("region_of_interest", "cabinet_expedit_1", Compound("point_3d", "X", "Y", "Z"))
+        query_lookat = Compound("point_of_interest", "cabinet_expedit_1", Compound("point_3d", "X", "Y", "Z"))
         query_object = Conjunction(Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
                                    Compound("type", "ObjectID", Compound("exact", "handle")))
         smach.StateMachine.add('LOOK_FOR_HANDLE',

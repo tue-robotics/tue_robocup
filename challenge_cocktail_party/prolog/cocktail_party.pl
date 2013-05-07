@@ -210,13 +210,13 @@ transition(find_object(_, _, _), explore([]), end(fail)) :-
         achieve(say(['I searched everywhere, but I could not find the object I was looking for.'])).
 
 transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
-    region_of_interest(Waypoint, ROI),
+    point_of_interest(Waypoint, ROI),
     achieve(look_at(ROI)),
     achieve(module_status(template_matching, on)),
     achieve(wait(10)).
 
 transition(find_object(_, _, _), look([Waypoint|Waypoints]), explore(Waypoints)) :-
-    not(region_of_interest(Waypoint, _)),
+    not(point_of_interest(Waypoint, _)),
     achieve(say(['Hmmm, I dont know where to look here. Better continue exploring.'])).
 
 % % % % % % % % % % % % % % % ASK ANSWER % % % % % % % % % % % % % % %

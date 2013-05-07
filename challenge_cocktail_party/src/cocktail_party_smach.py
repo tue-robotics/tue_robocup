@@ -309,7 +309,7 @@ class LookForDrink(smach.State):
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
         # look to ROI
-        roi_answers = self.robot.reasoner.query(Compound("region_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
+        roi_answers = self.robot.reasoner.query(Compound("point_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
         if roi_answers:
             roi_answer = roi_answers[0]
             self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
