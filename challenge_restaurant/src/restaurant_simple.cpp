@@ -29,7 +29,7 @@ const int TIME_OUT_GUIDE_LOST = 8;              // Time interval without updates
 const double DISTANCE_GUIDE = 0.8;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 5;                           // Rate check for guide at start of the challenge
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
@@ -271,6 +271,7 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     if (cov(0,0) < last_var_guide_pos_ || last_var_guide_pos_ < 0) {
                         last_var_guide_pos_ = cov(0,0);
                         t_no_meas_ = 0;
+                        ROS_INFO("Time since last update was %f", ros::Time::now().toSec()-t_last_check_);
                         t_last_check_ = ros::Time::now().toSec();
                     } else {
 
