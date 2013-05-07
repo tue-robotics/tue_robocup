@@ -216,9 +216,9 @@ class Cleanup(smach.StateMachine):
             # If you enter query_dropoff_loc below into the amigo-console, 
             #   you can verify that it returns the same coords, but with more variables of course.
             query_dropoff_loc = Conjunction(Compound("current_object",      "Obj_to_Dispose"), #Of the current object
-                                            Compound("type",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-                                            Compound("disposal_type",       "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
-                                            Compound("type",                "Dispose_to_object",  "Disposal_type"), #Find objects of that are of type trashbin
+                                            Compound("instance_of",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
+                                            Compound("storage_class",       "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
+                                            Compound("instance_of",                "Dispose_to_object",  "Disposal_type"), #Find objects of that are of type trashbin
                                             Compound("point_of_interest",  "Dispose_to_object",  \
                                                         Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
