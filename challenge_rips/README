@@ -28,4 +28,4 @@ amigo3:
 
     say test
 
-    rosrun challenge_egpsr egpsr.py
+    rosrun challenge_rips rips.py
