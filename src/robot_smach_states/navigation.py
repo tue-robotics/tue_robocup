@@ -1030,7 +1030,8 @@ class Execute_path(smach.State):
                         self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
                             min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
                     else:
-                        self.robot.head.reset_position(timeout=0.0)
+                        #self.robot.head.reset_position(timeout=0.0)
+                        self.robot.head.look_down()
                 else:
                     rospy.logwarn("nr of poses to goal is not set (equals {0})".format(self.robot.base.poses_to_goal))
 
