@@ -694,11 +694,9 @@ class NavigateGenericOld(smach.State):
                     # Clear costmap and try once more
                     rospy.logwarn("Clearing costmap around robot")
                     self.robot.speech.speak("I am going to clear the map around myself")
-                    self.robot.base.clear_costmap(1.0)
-                    rospy.sleep(rospy.Duration(1.0))
+                    self.robot.base.clear_costmap(1.2)
                     rospy.logwarn("Setting unknown space to free around robot")
-                    self.robot.base.free_unknown_space(0.2)
-                    rospy.sleep(rospy.Duration(1.0))
+                    self.robot.base.free_unknown_space(2.0)
                     self.robot.base.send_goal(pos, orient, time=0.5, block=False)
 
                 if not self.robot.base.path:
@@ -753,9 +751,7 @@ class NavigateGenericOld(smach.State):
                     # size must be large enough to clear unknown space around the robot
                     self.robot.speech.speak("I am not sure if the space in front of me is clear")
                     self.robot.speech.speak("Watch out, I am going to clear it")
-                    self.robot.base.free_unknown_space(0.2)
-                    # Sleep for a second to ensure the map is cleared and obstacles are inserted again
-                    rospy.sleep(rospy.Duration(1.0))
+                    self.robot.base.free_unknown_space(2.0)
                     self.new_path_required = True
                 # otherwise the goal is unreachable or base is in obstacle, needs clearing
                 else:    
@@ -768,9 +764,7 @@ class NavigateGenericOld(smach.State):
                         self.robot.speech.speak("I have the funny feeling that I am inside an obstacle")
                         # Size must be at least the diameter of the robot
                         self.robot.speech.speak("I am going to clear the map around myself")
-                        self.robot.base.clear_costmap(1.0)
-                        # Sleep for a second to ensure the map is cleared and obstacles are inserted again
-                        rospy.sleep(rospy.Duration(1.0))
+                        self.robot.base.clear_costmap(1.2)
                         self.new_path_required = True
                     else:
                         self.robot.speech.speak("Oh no, I can not reach my precious goal")
@@ -1095,10 +1089,8 @@ class Recover(smach.State):
             self.robot.speech.speak("I am not sure if the space in front of me is clear")
             self.robot.speech.speak("Watch out, I am going to clear it")
             rospy.logdebug("Freeing unknown space and clearing costmap around robot")
-            self.robot.base.free_unknown_space(0.2)
+            self.robot.base.free_unknown_space(2.0)
             self.robot.base.clear_costmap(1.2)
-            # Sleep for a second to ensure the map is cleared and obstacles are inserted again
-            rospy.sleep(rospy.Duration(1.0))
             return 'new_path_required'
         # otherwise the goal is unreachable or base is in obstacle, needs clearing
         else:    
@@ -1111,8 +1103,6 @@ class Recover(smach.State):
                 self.robot.speech.speak("I have the funny feeling that I am inside an obstacle")
                 self.robot.speech.speak("I am going to clear the map around myself")
                 self.robot.base.clear_costmap(1.2)
-                # Sleep for a second to ensure the map is cleared and obstacles are inserted again
-                rospy.sleep(rospy.Duration(1.0))
                 return 'new_path_required'
             else:
                 self.robot.speech.speak("Oh no, I can not reach my precious goal")
