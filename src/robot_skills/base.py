@@ -364,6 +364,8 @@ class Base(object):
             bbx_request.max.y = pos_y + (window_size/2)
             bbx_request.max.z = 2
             self.clear_service(bbx_request)
+            # Sleep for a while to ensure the map is cleared and obstacles are inserted again
+            rospy.sleep(rospy.Duration(2.0))
     
     def free_unknown_space(self, window_size=0.2):
         if self.use_2d:
@@ -386,16 +388,21 @@ class Base(object):
             bbx_request.max.y = pos_y + (window_size/2)
             bbx_request.max.z = 2
             self.unknown_to_free_service(bbx_request)
+            # Sleep for a while to ensure the map is cleared and obstacles are inserted again
+            rospy.sleep(rospy.Duration(2.0))
 
     def reset_costmap(self):
         if self.use_2d:
-            #rospy.logwarn("No costmap reset in case of 2D navigation")
-            # There is no reset costmap in tue_move_base (2D), hence, only the costmap is cleared
-            self.clear_costmap()
-            return False
+            try:
+                self.clear_service()
+            except:
+                rospy.logerr("Clear costmap service does not return correctly")
+            return True
         else:
             try:
                 self.reset_costmap_service()
+                # Sleep for a while to ensure the map is cleared and obstacles are inserted again
+                rospy.sleep(rospy.Duration(2.0))
             except:
                 rospy.logerr("Clear costmap service does not return correctly")
             return True
