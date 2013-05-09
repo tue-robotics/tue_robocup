@@ -36,7 +36,7 @@ class Head(object):
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
 
-    def send_goal(self, position, frame_id="/map", timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
+    def send_goal(self, position, frame_id='/map', timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
         Send a goal for the head, Executes a HeadRefAction
         Expects a position which is a geometry_msgs.msg.Point().
@@ -55,7 +55,7 @@ class Head(object):
         if isinstance(position, geometry_msgs.msg.PointStamped):
             head_goal.target_point = position
         elif isinstance(position, geometry_msgs.msg.Point):
-            head_goal.target_point.header.stamp = rospy.get_rostime();
+            head_goal.target_point.header.stamp = rospy.get_rostime()
             head_goal.target_point.header.frame_id = frame_id
             head_goal.target_point.point = position #This goes wrong when position is a raw geometry_msgs.Point, which has no header.
 
@@ -238,29 +238,32 @@ class Head(object):
     # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
     #    cube_size: the size of the cube around the obstacle
     #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
-    def search_movement(self, target_point, cube_size=0.5, step_time=0.6):
+    def search_movement(self, target_point, cube_size=1.0, step_time=1.5, min_pan=0.0, max_pan=0.0, min_tilt=0.0, max_tilt=0.0):
         tx = target_point.point.x
         ty = target_point.point.y
         tz = target_point.point.z
+        search_head_goal = geometry_msgs.msg.Point()
 
-        points = [  (tx - cube_size, ty - cube_size, tz - cube_size),
-                    (tx + cube_size, ty - cube_size, tz - cube_size),
-                    (tx - cube_size, ty + cube_size, tz - cube_size),
-                    (tx - cube_size, ty - cube_size, tz + cube_size),
+        # first scan around the obstacle at a heigher height
+        # next, scan the ground plane
+        points = [  (tx - cube_size, ty - cube_size, tz + cube_size),
                     (tx + cube_size, ty - cube_size, tz + cube_size),
-                    (tx + cube_size, ty + cube_size, tz - cube_size),
-                    (tx - cube_size, ty + cube_size, tz + cube_size),
                     (tx + cube_size, ty + cube_size, tz + cube_size),
+                    (tx - cube_size, ty + cube_size, tz + cube_size),
+                    (tx - cube_size, ty + cube_size, tz),
+                    (tx + cube_size, ty + cube_size, tz),
+                    (tx + cube_size, ty - cube_size, tz),
+                    (tx - cube_size, ty - cube_size, tz),
                     (tx, ty, tz) ]
 
         for p in points:
-            target_point.point.x = p[0]
-            target_point.point.y = p[1]
-            target_point.point.z = p[2]
+            search_head_goal.x = p[0]
+            search_head_goal.y = p[1]
+            search_head_goal.z = p[2]
 
             print "Search movement: looking at " + str(p[0]) + ", " + str(p[1]) + ", " + str(p[2])
 
-            self.send_goal(target_point, keep_tracking=False, timeout=step_time)
+            self.send_goal(search_head_goal, keep_tracking=False, timeout=step_time, min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 
         return True
 
