@@ -983,7 +983,7 @@ class Get_plan(smach.State):
         return 'succeeded'
 
 class Execute_path(smach.State):
-    def __init__(self, robot, look_at_path_distance=1.5):
+    def __init__(self, robot, look_at_path_distance=2.7):
         smach.State.__init__(self,outcomes=['arrived','aborted','waiting','preempted'])
 
         self.robot = robot
@@ -997,7 +997,7 @@ class Execute_path(smach.State):
             goal_status = self.robot.base.ac_move_base.get_state()
             rospy.logdebug("GoalStatus = {0}".format(goal_status))
 
-            if goal_status == actionlib.GoalStatus.PREEMPTED or self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.RECALLED:
+            if goal_status == actionlib.GoalStatus.PREEMPTED or goal_status == actionlib.GoalStatus.RECALLED:
                 return 'preempted'
 
             if goal_status == actionlib.GoalStatus.SUCCEEDED:
@@ -1034,7 +1034,7 @@ class Execute_path(smach.State):
                     if lookat_point:
                         rospy.logdebug("Look at {0}".format(lookat_point))
                         self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
-                            min_pan=-1.57,max_pan=1.57,min_tilt=-0.0,max_tilt=0.9)
+                            min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
                     else:
                         self.robot.head.reset_position(timeout=0.0)
                 else:
@@ -1059,19 +1059,10 @@ class Waiting_to_execute(smach.State):
             if self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.PREEMPTED or self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.RECALLED:
                 return 'preempted'
 
-            # ToDo: replace by search movement
-            '''head_target = self.robot.base.obstacle_position
-            head_target.point.z = head_target.point.z + 0.25 + (self.z_offset_direction * 0.25)
-            self.robot.head.send_goal(head_target)
-            self.z_offset_timer = self.z_offset_timer + 0.5
-            if self.z_offset_timer == 2.0:
-                self.z_offset_direction = self.z_offset_direction * -1
-                self.z_offset_timer = 0'''
-
             # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
             #    cube_size: the size of the cube around the obstacle
             #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
-            self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=0.5, step_time=0.6)
+            self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=1.0, step_time=1.5, min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
 
             #self.previous_replan_timeout = self.robot.base.replan_timeout
             # Wait 0.5 seconds to avoid looping too fast
@@ -1128,7 +1119,7 @@ class Recover(smach.State):
                 return 'new_goal_required'
 
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None, look_at_path_distance=1.5, goal_area_radius=0.1):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None, look_at_path_distance=2.7, goal_area_radius=0.1):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
@@ -1139,7 +1130,7 @@ class NavigateGeneric(smach.StateMachine):
         self.goal_sorter = goal_sorter
         self.look_at_path_distance = look_at_path_distance
         self.goal_area_radius = goal_area_radius
-        self.clearance_window_size = 0.6
+        self.clearance_window_size = 0.7
 
         self.preempted = False
 
