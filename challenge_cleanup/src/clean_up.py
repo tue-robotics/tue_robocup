@@ -69,8 +69,48 @@ class Cleanup(smach.StateMachine):
         robot.reasoner.assertz(Compound("challenge", "clean_up"))
 
 
-        query_meeting_point = Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
-        
+        query_meeting_point = Compound("waypoint", 
+                                Compound("meeting_point", "Waypoint"), 
+                                Compound("pose_2d", "X", "Y", "Phi"))
+
+        query_exploration_target_in_room = Conjunction( Compound("goal", Compound("clean_up", "Room")),
+                                                        Compound("exploration_target", "Room", "Target"),
+                                                        Compound("not", Compound("explored", "Target")),
+                                                        Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi"))
+                                                       )
+        query_room = Conjunction(   Compound("goal", Compound("clean_up", "Room")), 
+                                    Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi"))) 
+
+        query_exploration_target = Conjunction( Compound("current_exploration_target", "Target"),
+                                                Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi")))
+
+        query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
+                                    Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
+
+        #Make sure the object we're dealing with isn't already disposed (i.e. handled for cleanup)
+        #After cleaning the object up/disposing it, 
+        #MARK_DISPOSED asserts disposed(current_objectID)
+        query_object = Conjunction(
+                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
+                            Compound("not", Compound("disposed", "ObjectID")))
+
+        query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
+                                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
+
+        query_current_object_class = Conjunction(
+                                Compound("current_object",      "Obj_to_Dispose"), #Of the current object
+                                Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
+
+        query_dropoff_loc = Conjunction(
+                                Compound("current_object",      "Obj_to_Dispose"), #Of the current object
+                                Compound("instance_of",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
+                                Compound("storage_class",       "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
+                                Compound("instance_of",                "Dispose_to_object",  "Disposal_type"), #Find objects of that are of type trashbin
+                                Compound("point_of_interest",  "Dispose_to_object", Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
+
+        query_dropoff_loc_backup = Conjunction( Compound("type", "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
+                                                    Compound("point_of_interest",  "Dispose_to_object",  Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
+
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
@@ -85,24 +125,10 @@ class Cleanup(smach.StateMachine):
                                                         "This ended before I could get started, because my first waypoint is unreachable."]),
                                     transitions={   'spoken':'Aborted'})
 
-
-            # smach.StateMachine.add('ASK_CLEANUP', 
-            #                         states.Timedout_QuestionMachine(
-            #                                 robot=robot,
-            #                                 default_option = "cleanupthelivingroom", 
-            #                                 sentence = "Where do you want me to go", 
-            #                                 options = { "cleanupthelivingroom":Compound("goal", Compound("clean_up", "living_room")),
-            #                                             "cleanupthekitchen":Compound("goal", Compound("clean_up", "kitchen")),
-            #                                             "cleanupthelobby":Compound("goal", Compound("clean_up", "lobby")),
-            #                                             "cleanupthebedroom":Compound("goal", Compound("clean_up", "bedroom"))}),
-            #                         transitions={   'answered':'DRIVE_TO_ROOM',
-            #                                         'not_answered':'ASK_CLEANUP'})
-
             smach.StateMachine.add("ASK_CLEANUP",
                                 Ask_cleanup(robot),
                                 transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
-
-            query_room = Conjunction(Compound("goal", Compound("clean_up", "Room")), Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi")))        
+       
             smach.StateMachine.add( 'DRIVE_TO_ROOM',
                                     states.Navigate_to_queryoutcome(robot, query_room, X="X", Y="Y", Phi="Phi"),
                                     transitions={   "arrived":"SAY_ARRIVED_IN_ROOM",
@@ -125,14 +151,8 @@ class Cleanup(smach.StateMachine):
                 # Ask the reaoner for an exploration target that is:
                 #  - in the room that needs cleaning up
                 #  - not yet explored
-                query_exploration_target = Conjunction( Compound("goal", Compound("clean_up", "Room")),
-                                                        Compound("exploration_target", "Room", "Target"),
-                                                        Compound("not", Compound("explored", "Target")),
-                                                        Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi"))
-                                                       )
-
-                answers = robot.reasoner.query(query_exploration_target)
-                rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target, answers))
+                answers = robot.reasoner.query(query_exploration_target_in_room)
+                rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target_in_room, answers))
                 # First time: 
                 # [   {'Y': 1.351, 'X': 4.952, 'Phi': 1.57, 'Room': living_room, 'Target': cabinet_expedit_1}, 
                 #     {'Y': -1.598, 'X': 6.058, 'Phi': 3.113, 'Room': living_room, 'Target': bed_1}]
@@ -175,10 +195,6 @@ class Cleanup(smach.StateMachine):
                                                     'done':'SAY_ALL_EXPLORED'})
 
             ################################################################
-
-            query_exploration_target = Conjunction( Compound("current_exploration_target", "Target"),
-                                                    Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi")))
-
             smach.StateMachine.add( 'DRIVE_TO_EXPLORATION_TARGET',
                                     states.Navigate_to_queryoutcome(robot, query_exploration_target, X="X", Y="Y", Phi="Phi"),
                                     transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
@@ -189,16 +205,6 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     states.Say(robot, ["Lets see what I can find here."]),
                                     transitions={   'spoken':'LOOK'})
-
-            query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
-                                        Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
-
-            query_object = Conjunction(
-                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
-                            #Make sure the object we're dealing with isn't already disposed (i.e. handled for cleanup)
-                            #After cleaning the object up/disposing it, 
-                            #MARK_DISPOSED asserts disposed(current_objectID)
-                            Compound("not", Compound("disposed", "ObjectID")))
 
             #query_dropoff_loc = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
             # 
@@ -215,12 +221,6 @@ class Cleanup(smach.StateMachine):
             # This finally returns a list of (all the same) XYZ-coords.
             # If you enter query_dropoff_loc below into the amigo-console, 
             #   you can verify that it returns the same coords, but with more variables of course.
-            query_dropoff_loc = Conjunction(Compound("current_object",      "Obj_to_Dispose"), #Of the current object
-                                            Compound("instance_of",                "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-                                            Compound("storage_class",       "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
-                                            Compound("instance_of",                "Dispose_to_object",  "Disposal_type"), #Find objects of that are of type trashbin
-                                            Compound("point_of_interest",  "Dispose_to_object",  \
-                                                        Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
             smach.StateMachine.add('LOOK',
                                     states.LookForObjectsAtROI(robot, query_lookat, query_object),
@@ -235,13 +235,11 @@ class Cleanup(smach.StateMachine):
                     dropoff = answers[0]["Disposal_type"]
                     return "I have found a {0}. I'll' dispose it to a {1}".format(_type, dropoff)
                 except:
-                    return "I have found something"
+                    return "I have found something, but I'm not sure what it is."
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     states.Say_generated(robot, sentence_creator=generate_object_sentence),
                                     transitions={ 'spoken':'GRAB' })
 
-            query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
-                                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
             smach.StateMachine.add('GRAB',
                                     states.GrabMachine(robot.leftArm, robot, query_grabpoint),
                                     transitions={   'succeeded':'DROPOFF_OBJECT',
@@ -270,9 +268,6 @@ class Cleanup(smach.StateMachine):
                                     states.Say(robot, "Now that I fetched this, I'm not sure where to put it. I'll just toss it in a trashbin. Lets hope its not fragile."),
                                     transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
 
-            query_dropoff_loc_backup = Conjunction( Compound("type",                "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
-                                                    Compound("point_of_interest",  "Dispose_to_object",  \
-                                                        Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
                                     states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),
                                     transitions={   'succeeded':'DROP_OBJECT',
