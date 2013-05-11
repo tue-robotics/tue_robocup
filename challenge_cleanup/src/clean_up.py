@@ -108,7 +108,7 @@ class Cleanup(smach.StateMachine):
                                 Compound("instance_of",                "Dispose_to_object",  "Disposal_type"), #Find objects of that are of type trashbin
                                 Compound("point_of_interest",  "Dispose_to_object", Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
-        query_dropoff_loc_backup = Conjunction( Compound("type", "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
+        query_dropoff_loc_backup = Conjunction( Compound("instance_of", "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
                                                     Compound("point_of_interest",  "Dispose_to_object",  Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
         with self:
