@@ -368,9 +368,12 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
     end_goal.pose.position.y = pos_exp(1) * reduced_distance / full_distance;
     end_goal.pose.position.z = 0;
 
-    planner_->MoveToGoal(end_goal);
-
-    ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
+    if (t_no_meas_ < 1.0) {
+		planner_->MoveToGoal(end_goal);
+		ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
+	} else {
+		ROS_INFO("No guide position update: robot will not move");
+	}
 
 }
 
