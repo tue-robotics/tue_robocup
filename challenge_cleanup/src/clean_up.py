@@ -131,17 +131,6 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add("ASK_CLEANUP",
                                 Ask_cleanup(robot),
                                 transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
-       
-            smach.StateMachine.add( 'DRIVE_TO_ROOM',
-                                    states.NavigateGeneric(robot, goal_query=query_room),
-                                    transitions={   "arrived":"SAY_ARRIVED_IN_ROOM",
-                                                    "unreachable":'SAY_ARRIVED_IN_ROOM',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'Aborted'})
-
-            smach.StateMachine.add('SAY_ARRIVED_IN_ROOM',
-                                    states.Say(robot, ["So, i have arrived, lets do some cleaning", "Allright, lets clean this mess up.", "Lets find some stuff to clean up here."]),
-                                    transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
             
             ################################################################
             #                  DETERMINE_EXPLORATION_TARGET
