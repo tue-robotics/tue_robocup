@@ -221,8 +221,8 @@ if __name__ == "__main__":
     left_close = lambda: amigo.leftArm.send_gripper_goal_close()
     right_open = lambda: amigo.rightArm.send_gripper_goal_open()
     left_open = lambda: amigo.leftArm.send_gripper_goal_open()
-    speak = lambda sentence: amigo.speech.speak(sentence)
-    praat = lambda sentence: amigo.speech.speak(sentence, language='nl')
+    speak = lambda sentence: amigo.speech.speak(sentence, block=False)
+    praat = lambda sentence: amigo.speech.speak(sentence, language='nl', block=False)
     look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/base_link")
     
     mapgo = amigo.base.go
