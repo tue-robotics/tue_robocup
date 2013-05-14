@@ -5,6 +5,8 @@ from text_to_speech_philips.srv import amigo_speakup_advanced
 from std_msgs.msg import String
 from math import sqrt
 
+import thread
+
 from speech_interpreter.srv import GetAction, GetInfo # for speech_to_text only
 
 class Speech(object):
@@ -37,12 +39,16 @@ class Speech(object):
     def close(self):
         pass
 
-    def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited"):
+    def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited", block=True):
         """
         Send a sentence to amigo's tts
         """
-        ret = self.tts(sentence, language, personality, voice, mood)
-        return ret
+        if block:
+            ret = self.tts(sentence, language, personality, voice, mood)
+            return ret
+        else:
+            thread.start_new_thread(self.tts, (sentence, language, personality, voice, mood))
+            return True
 
     def _amigo_speak(self, sentence, wait_time=1.0):
         self.amigo_speak_up.publish(sentence)
