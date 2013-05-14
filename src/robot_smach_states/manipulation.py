@@ -204,7 +204,7 @@ class Grab(smach.State):
         '''grasp_offset at between grippoint and object'''
         if self.side == self.robot.leftArm:
             go_x = 0.08
-            go_y = -0.05 #0.025 #An offset of 7cm was obvserved...?
+            go_y = -0.02 # Was -0.05 until May 14
             go_z = 0.06
             end_effector_frame_id = "/grippoint_left"
             ar_frame_id = "/hand_marker_left"
