@@ -149,7 +149,7 @@ class StartChallengeRobust(smach.StateMachine):
 
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, "Door is open, so I will start my task"),
+                                    human_interaction.Say(robot, ["Door is open!", "Lets start!"]),
                                     transitions={   "spoken":"ENTER_ROOM"}) 
 
             # Enter the arena with force drive as back-up
@@ -195,7 +195,7 @@ class EnterArena(smach.StateMachine):
             # for now, take the first goal found
             goal_answer = reachable_goal_answers[0]
 
-            self.robot.speech.speak("I am about to enter the arena!")
+            self.robot.speech.speak("I am about to enter the arena!", block=False)
 
             goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
             waypoint_name = goal_answer["Waypoint"]
@@ -211,7 +211,7 @@ class EnterArena(smach.StateMachine):
             elif nav_result == "preempted":
                 return "not_found"
             elif nav_result == "arrived":
-                self.robot.speech.speak("I am in the arena")
+                self.robot.speech.speak("I am in the arena", block=False)
                 self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
                 return "found"
             else: #goal not defined
@@ -224,7 +224,7 @@ class EnterArena(smach.StateMachine):
             self.robot = robot
 
         def execute(self, userdata=None):
-            self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.")
+            self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)
             self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
             return "done"
 
@@ -276,7 +276,7 @@ class GotoMeetingPoint(smach.State):
         # for now, take the first goal found
         goal_answer = reachable_goal_answers[0]
 
-        self.robot.speech.speak("I'm coming to the meeting point!")
+        self.robot.speech.speak("I'm coming to the meeting point!", block=False)
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
@@ -292,7 +292,7 @@ class GotoMeetingPoint(smach.State):
         elif nav_result == "preempted":
             return "not_found"
         elif nav_result == "arrived":
-            self.robot.speech.speak("I reached a meeting point")
+            #self.robot.speech.speak("I reached a meeting point", block=False)
             self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
             return "found"
         else: #goal not defined

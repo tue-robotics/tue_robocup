@@ -971,7 +971,7 @@ class Get_plan(smach.State):
         
         # New additions are encouraged!
         sentences = ["Jetst gate lowes","Lets roll","Here we go","Hey ho, lets go","Consider it done","Moving out","On the move"]#,"Yeehah","Vamos","On iee va","Iemer geraade aus"]
-        self.robot.speech.speak(random.choice(sentences), block=False)
+        #self.robot.speech.speak(random.choice(sentences), block=False)
 
         return 'succeeded'
 
@@ -995,7 +995,7 @@ class Execute_path(smach.State):
 
             if goal_status == actionlib.GoalStatus.SUCCEEDED:
                 sentences = ["I have arrived","Here i am","I have reached my goal","I have arrived at my destination"]
-                self.robot.speech.speak(random.choice(sentences))
+                #self.robot.speech.speak(random.choice(sentences))
                 return 'arrived'
 
             if self.robot.base.replan_timeout != 0.0:
