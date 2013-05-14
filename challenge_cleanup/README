@@ -26,5 +26,9 @@ amigo3:
 
     rosrun challenge_cleanup clean_up.py
 
+TIP of the day: use 
+$ rostopic pub /speech_cleanup/output std_msgs/String 'livingroom' --once; rostopic pub /speech_yesno/output std_msgs/String '!!str yes' --once
+to test the exec
+
 ---------------------------------------
 BUGS: Remove bug if fixed:
