@@ -328,13 +328,13 @@ def grab_item(robot):
     rospy.loginfo("Setting up state machine")
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
-    sm.userdata.target = object_msgs.msg.ExecutionTarget() #drink is a global var
-    sm.userdata.known_object_list = rospy.get_param("known_object_list")
-    sm.userdata.desired_objects = [obj for obj in sm.userdata.known_object_list]# if obj["class_label"]=="soup_pack"] #drink is a global var
-    sm.userdata.operator_name = "my operator"
-    sm.userdata.rate = 10 #first used in LOOK_FOR_DRINK. TODO:refactor this parameter out
-    sm.userdata.command = "" #First used in LOOK_FOR_DRINK
-    sm.userdata.dropoff_location = object_msgs.msg.ExecutionTarget(name=sm.userdata.target.category,class_label="location",ID=-2) #Also used in LOOK_FOR_DRINK.
+    #sm.userdata.target = object_msgs.msg.ExecutionTarget() #drink is a global var
+    #sm.userdata.known_object_list = rospy.get_param("known_object_list")
+    #sm.userdata.desired_objects = [obj for obj in sm.userdata.known_object_list]# if obj["class_label"]=="soup_pack"] #drink is a global var
+    #sm.userdata.operator_name = "my operator"
+    #sm.userdata.rate = 10 #first used in LOOK_FOR_DRINK. TODO:refactor this parameter out
+    #sm.userdata.command = "" #First used in LOOK_FOR_DRINK
+    #sm.userdata.dropoff_location = object_msgs.msg.ExecutionTarget(name=sm.userdata.target.category,class_label="location",ID=-2) #Also used in LOOK_FOR_DRINK.
     rospy.loginfo("Userdata set")
 
     robot.reasoner.reset()
