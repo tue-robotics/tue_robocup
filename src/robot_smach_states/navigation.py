@@ -1005,8 +1005,8 @@ class Execute_path(smach.State):
                 self.previous_poses_to_goal = 0
                 return 'waiting'
 
-            # Significant re-plan
-            if (self.robot.base.poses_to_goal > (self.previous_poses_to_goal + 5) and self.previous_poses_to_goal != 0):
+            # Significant re-plan (20 pct longer)
+            if (float(self.robot.base.poses_to_goal) > (float(self.previous_poses_to_goal) * 1.2) and self.previous_poses_to_goal != 0):
                 self.robot.speech.speak("Lets take a different path", block=False)
             self.previous_poses_to_goal = self.robot.base.poses_to_goal
             
@@ -1029,7 +1029,8 @@ class Execute_path(smach.State):
                         self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
                             min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
                     else:
-                        #self.robot.head.reset_position(timeout=0.0)
+                        # reset head position to look down
+                        rospy.logwarn("Reset head to look down")
                         self.robot.head.look_down()
                 else:
                     rospy.logwarn("nr of poses to goal is not set (equals {0})".format(self.robot.base.poses_to_goal))
