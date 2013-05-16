@@ -207,7 +207,7 @@ class Amigo(object):
 if __name__ == "__main__":
     import atexit
     import util.msg_constructors as msgs
-    from reasoner import Compound, Conjunction
+    from reasoner import Compound, Conjunction, Sequence
 
     rospy.init_node("amigo_executioner", anonymous=True)
     amigo = Amigo(wait_services=False)
