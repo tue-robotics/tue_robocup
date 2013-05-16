@@ -32,3 +32,5 @@ to test the exec
 
 ---------------------------------------
 BUGS: Remove bug if fixed:
+
+- No meetingpoints defined for tue_testlab-environment. --> code DONE, test needed.
