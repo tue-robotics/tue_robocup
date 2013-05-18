@@ -337,8 +337,8 @@ def grab_item(robot):
     #sm.userdata.dropoff_location = object_msgs.msg.ExecutionTarget(name=sm.userdata.target.category,class_label="location",ID=-2) #Also used in LOOK_FOR_DRINK.
     rospy.loginfo("Userdata set")
 
-	robot.leftArm.reset_arm()
-	robot.rightArm.reset_arm()
+    robot.leftArm.reset_arm()
+    robot.rightArm.reset_arm()
     robot.reasoner.reset()
     robot.reasoner.detach_all_from_gripper("/grippoint_left")
     robot.reasoner.detach_all_from_gripper("/grippoint_right")
