@@ -401,12 +401,12 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             look_point.point = self.robot.base.point(x,y)
             pose = util.msg_constructors.Quaternion(z=1.0)
 
-            base_pose_for_point = self.robot.base.get_base_pose(look_point, self.x_offset, self.y_offset)
-            if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y ==0:
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, self.x_offset, self.y_offset)
+            if base_poses_for_point[0].pose.position.x == 0 and base_poses_for_point[0].pose.position.y ==0:
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
 
-            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
+            return base_poses_for_point[0].pose.position, base_poses_for_point[0].pose.orientation
 
 class Look_at_obstacle(smach.State):
     @util.deprecated_replace_with("NavigateGeneric")
@@ -862,29 +862,30 @@ class Determine_goal(smach.State):
             # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
             # is a mapping of variable to a constant, like a string or number
             rospy.logdebug("Query = {0}".format(self.lookat_query))
-            answers = self.robot.reasoner.query(self.lookat_query)
-            rospy.logdebug("Query answers = {0}".format(answers))
-            if not answers:
-                rospy.logerr("No answers found for query {query}".format(query=self.lookat_query))                                
-            else:
-                rospy.logerr("Answers found for query {query}: {answers}".format(query=self.lookat_query, answers=answers))
-                #From the summarized answer, 
-                possible_ROIs = [(   float(answer["X"]), 
-                                      float(answer["Y"]), 
-                                      float(answer["Z"])) for answer in answers]
+            # answers = self.robot.reasoner.query(self.lookat_query)
+            # rospy.logdebug("Query answers = {0}".format(answers))
+            # if not answers:
+            #     rospy.logerr("No answers found for query {query}".format(query=self.lookat_query))                                
+            # else:
+            #     rospy.logerr("Answers found for query {query}: {answers}".format(query=self.lookat_query, answers=answers))
+            #     #From the summarized answer, 
+            #     possible_ROIs = [(   float(answer["X"]), 
+            #                           float(answer["Y"]), 
+            #                           float(answer["Z"])) for answer in answers]
 
-                # Get base poses for every query outcome and put these in possible locations
-                for ROI in possible_ROIs:
-                    look_point = self.robot.base.point(ROI[0],ROI[1],stamped=True)
-                    # ToDo: Parameterize offsets
-                    base_pose_for_point = self.robot.base.get_base_pose(look_point,0.7,0.0)
-                    if not (base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0):
-                        # Convert to x, y, phi
-                        phi = util.transformations.euler_z_from_quaternion(base_pose_for_point.pose.orientation)
-                        # Add to possible locations
-                        possible_locations += [(base_pose_for_point.pose.position.x,
-                                                base_pose_for_point.pose.position.y,
-                                                phi)]
+            #     # Get base poses for every query outcome and put these in possible locations
+            #     for ROI in possible_ROIs:
+            look_point = self.robot.base.point(1,0,stamped=True)
+            # ToDo: Parameterize offsets
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, 0.5, 0.2)
+            if base_poses_for_point:
+                for base_goal_pose in base_poses_for_point:
+                    # Convert to x, y, phi
+                    phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
+                    # Add to possible locations
+                    possible_locations += [(base_goal_pose.pose.position.x,
+                                            base_goal_pose.pose.position.y,
+                                            phi)]
 
         if not possible_locations:
             rospy.logerr("No goal could be defined in {state}".format(state=self))

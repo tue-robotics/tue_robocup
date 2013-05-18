@@ -97,18 +97,18 @@ class Prepare_orientation(smach.State):
             # desired_base_pose_BASE_LINK.pose.orientation.z = quat[2]
             # desired_base_pose_BASE_LINK.pose.orientation.w = quat[3]
 
-            # desired_base_pose_MAP = self.robot.tf_transform_pose(desired_base_pose_BASE_LINK, "/map")
+            # desired_base_poses_MAP = self.robot.tf_transform_pose(desired_base_pose_BASE_LINK, "/map")
             
-            desired_base_pose_MAP = self.robot.base.get_base_pose(grasp_point, self.grasp_distance_x, self.grasp_distance_y)
+            desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, 0.2, self.grasp_distance_x, self.grasp_distance_y)
             
             ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
-            if (desired_base_pose_MAP.pose.orientation.x == 0 and desired_base_pose_MAP.pose.orientation.y == 0 and desired_base_pose_MAP.pose.orientation.z == 0 and desired_base_pose_MAP.pose.orientation.w == 0):
+            if not desired_base_poses_MAP:
                 self.robot.speech.speak("I am very sorry but this object is out of my reach",mood="sad")
                 return 'orientation_failed'
             
-            rospy.loginfo("[robot_smach_states] Desired target position: x = %f, y = %f",desired_base_pose_MAP.pose.position.x, desired_base_pose_MAP.pose.position.y)
+            rospy.loginfo("[robot_smach_states] Desired target position: x = %f, y = %f",desired_base_poses_MAP[0].pose.position.x, desired_base_poses_MAP[0].pose.position.y)
 
-            if self.robot.base.send_goal(desired_base_pose_MAP.pose.position, desired_base_pose_MAP.pose.orientation, time=60):
+            if self.robot.base.send_goal(desired_base_poses_MAP[0].pose.position, desired_base_poses_MAP[0].pose.orientation, time=60):
                 '''wait for base goal to succeed for orientation'''
                 #self.robot.base.wait(wait_time=60)
                 rospy.loginfo("Moved the base to desired pose")  
