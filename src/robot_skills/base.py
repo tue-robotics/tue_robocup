@@ -64,7 +64,6 @@ class Base(object):
             self.unknown_to_free_service  = rospy.ServiceProxy('/move_base_3d/set_unknown_to_free_bbx',  octomap_msgs.srv.BoundingBoxQuery)
             self.reset_costmap_service = rospy.ServiceProxy('/move_base_3d/reset', std_srvs.srv.Empty)
 
-
         #Get plan
         if use_2d:
             self._get_plan_service      = rospy.ServiceProxy('/move_base/get_plan',         tue_move_base_msgs.srv.GetPath)
@@ -77,8 +76,7 @@ class Base(object):
         else:
             self._query_costmap = rospy.ServiceProxy('/move_base_3d/query_costmap',    tue_costmap_msgs.srv.PointQuery)
 
-        self._get_base_pose = rospy.ServiceProxy('/inverse_reachability/inverse_reachability', amigo_inverse_reachability.srv.GetBaseGoal)
-        # ToDo: change name of service
+        self._get_base_goal_poses = rospy.ServiceProxy('/inverse_reachability/inverse_reachability', amigo_inverse_reachability.srv.GetBaseGoalPoses)
         
         if use_2d:
             self.ac_move_base   = actionlib.SimpleActionClient('/move_base',        tue_move_base_msgs.msg.MoveBaseAction)
@@ -339,6 +337,9 @@ class Base(object):
     
     def orient(self, phi):
         return transformations.euler_z_to_quaternion(phi)
+
+    def phi(self, orient):
+        return transformations.euler_z_from_quaternion(orient)
     
     def go(self, x, y, phi, frame="/map", time=0):
         return self.send_goal(self.point(x,y), self.orient(phi), frame, time)
@@ -408,26 +409,39 @@ class Base(object):
             return True
 
         
-    def get_base_pose(self, target_point_stamped, x_offset, y_offset):
-        # ToDo: get_goal_pose would be a much better name
-        request = amigo_inverse_reachability.srv.GetBaseGoalRequest()
-        request.target_pose.position = target_point_stamped.point
+    def get_base_goal_poses(self, target_point_stamped, cost_threshold_norm, x_offset, y_offset):
 
+        request = amigo_inverse_reachability.srv.GetBaseGoalPosesRequest()
+        
+        [position, orientation] = self.get_location()
+        robot_pose = geometry_msgs.msg.Pose()
+        robot_pose.position = position
+        robot_pose.orientation = orientation
+        request.robot_pose = robot_pose
+
+        request.target_pose.position = target_point_stamped.point
         request.target_pose.orientation.x = 0
         request.target_pose.orientation.y = 0
         request.target_pose.orientation.z = 0
         request.target_pose.orientation.w = 1
+
+        request.cost_threshold_norm = cost_threshold_norm
         
         request.x_offset = x_offset
         request.y_offset = y_offset
         rospy.loginfo("Inverse reachability request = {0}".format(request).replace("\n", " ").replace("\t", " "))
-        response = self._get_base_pose(request)
+        response = self._get_base_goal_poses(request)
         rospy.loginfo("Inverse reachability response = {0}".format(response).replace("\n", " ").replace("\t", " "))
-        base_pose = geometry_msgs.msg.PoseStamped()
-        base_pose.header.frame_id = "/map"
-        base_pose.header.stamp = rospy.Time()
-        base_pose.pose = response.base_goal_pose
-        return base_pose
+        
+        base_goal_poses = []
+
+        for base_goal_pose in response.base_goal_poses:
+            base_goal_poses.append(geometry_msgs.msg.PoseStamped())
+            base_goal_poses[-1].header.frame_id = "/map"
+            base_goal_poses[-1].header.stamp = rospy.Time()
+            base_goal_poses[-1].pose = base_goal_pose
+
+        return base_goal_poses
 
     def set_initial_pose(self, x, y, phi):
 
