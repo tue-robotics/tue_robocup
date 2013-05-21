@@ -31,9 +31,10 @@ class Ask_cleanup(smach.State):
         self.get_cleanup_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata):
+        self.robot.head.look_up()
 
         self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
-        room = "kitchen"
+        room = "livingroom"
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             room = "kitchen"
         elif self.response.answer == "livingroom":
@@ -42,6 +43,11 @@ class Ask_cleanup(smach.State):
             room = "dining_room"
         elif self.response.answer == "kitchen":
             room = "kitchen"
+        elif self.response.answer == "bedroom":
+            room = "bedroom"
+        else:
+            self.robot.speech.speak("I'll clean the livingroom, humans always tend to make a mess of that.")
+            room = "living_room"
 
         self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("clean_up", room))))
             
@@ -228,7 +234,14 @@ class Cleanup(smach.StateMachine):
                     _type = answers[0]["ObjectType"]
                     dropoff = answers[0]["Disposal_type"]
                     return "I have found a {0}. I'll' dispose it to a {1}".format(_type, dropoff)
-                except:
+                except Exception, e:
+                    rospy.logerr(e)
+                    try:
+                        type_only = robot.reasoner.query(query_current_object_class)[0]["ObjectType"]
+                        return "I found something called {0}.".format(type_only)
+                    except Exception, e:
+                        rospy.logerr(e)
+                        pass
                     return "I have found something, but I'm not sure what it is."
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     states.Say_generated(robot, sentence_creator=generate_object_sentence),
@@ -293,9 +306,11 @@ class Cleanup(smach.StateMachine):
             # smach.StateMachine.add( 'PLACE_OBJECT', states.Place_Object(robot.leftArm,robot),
             #                         transitions={   'object_placed':'CARR_POS2'})
             smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
-                                    transitions={   'state_set':'CLOSE_AFTER_DROP'})
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed'   :'CLOSE_AFTER_DROP'})
             smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1), #close
-                                    transitions={   'state_set':'RESET_ARM'})
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed'   :'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 
                                     states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
                                     transitions={   'done':'MARK_DISPOSED',
