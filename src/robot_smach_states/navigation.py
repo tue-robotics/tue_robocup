@@ -1050,7 +1050,7 @@ class Waiting_to_execute(smach.State):
 
     def execute(self, userdata):
 
-        while (self.robot.base.path_blocked and not rospy.is_shutdown() ):
+        while (self.robot.base.path_blocked and not rospy.is_shutdown() ): #TODO Bas: add a timeout here and a fail-state
             
             if self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.PREEMPTED or self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.RECALLED:
                 return 'preempted'

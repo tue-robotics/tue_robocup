@@ -685,7 +685,8 @@ class LookForObjectsAtROI(smach.State):
         result = self.robot.perception.toggle_recognition(objects=True)
 
         # Let the object recognition run for a certain period
-        rospy.sleep(4.0)
+        # ToDo: replace until new objects have appeared
+        rospy.sleep(2.5)
 
         rospy.loginfo("Stop object recognition")
 
@@ -693,6 +694,7 @@ class LookForObjectsAtROI(smach.State):
 
         # Query reasoner for objects
         try:
+            rospy.loginfo("Querying reasoner")
             object_answers = self.robot.reasoner.query(self.object_query)
             #Sort by distance to lookat_point
             #import ipdb; ipdb.set_trace()
@@ -701,7 +703,7 @@ class LookForObjectsAtROI(smach.State):
             #                                                                                     float(ans["Z"]))))
 
             # object_id = closest_QA["ObjectID"]
-
+            rospy.loginfo("Selecting closest answer")
             closest_QA = urh.select_answer(object_answers, 
                                                 lambda answer: urh.xyz_dist(answer, (rx,ry,rz)), 
                                                 minmax=min,
@@ -713,7 +715,7 @@ class LookForObjectsAtROI(smach.State):
             r = self.robot.reasoner
 
             r.query(Compound("retractall", Compound("current_object", "X")))
-
+            rospy.loginfo("Asserting new ID")
             # assert new object id
             object_id = closest_QA["ObjectID"]
             r.assertz(Compound("current_object", object_id))

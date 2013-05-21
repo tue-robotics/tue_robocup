@@ -19,6 +19,17 @@ def euler_z_to_quaternion(angle):
     
     return orientation_goal
 
+def euler_z_from_quaternion(quaternion):
+    
+    try:
+        [rx,ry,rz] = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
+        
+    except TypeError, te:
+        rospy.logerr("Quaternion {0} cannot be transformed to Euler".format(te))
+        return None
+
+    return rz
+
 def compute_relative_angle(absolute_angle, robot_orientation):
     
     robot_rotation=[robot_orientation.x,robot_orientation.y,robot_orientation.z,robot_orientation.w]
@@ -81,6 +92,7 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
 
 
 def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
+    # Should probably be called transform_point
     if not tf_listener: 
         tf_listener = tf.TransformListener()
     
@@ -96,6 +108,12 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
         ps = geometry_msgs.msg.PointStamped(point=coordinates) 
         ps.header.frame_id = inputframe
         ps.header.stamp = rospy.Time()
-        
-    output_coordinates = tf_listener.transformPoint(outputframe, ps)
+    
+    try:
+        tf_listener.waitForTransform(inputframe, outputframe, rospy.Time.now(), rospy.Duration(1.5))
+        output_coordinates = tf_listener.transformPoint(outputframe, ps)
+    except (tf.Exception, tf.LookupException, tf.ConnectivityException):
+        rospy.logerr("Transformation between {0} and {1} failed".format(inputframe,outputframe))
+        return None
+
     return output_coordinates.point
