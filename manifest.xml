@@ -56,6 +56,8 @@
   <depend package="pein_template_matching"/>
   <depend package="gazebo_perception"/>
   <depend package="obj_in_gripper"/>
+  <depend package="object_detector_2d"/> 
+  <depend package="pein_ar_pose"/>
 
   <!-- for speech recognition -->
   <depend package="create_speech_files"/>

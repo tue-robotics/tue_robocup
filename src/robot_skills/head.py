@@ -256,12 +256,12 @@ class Head(object):
                     (tx - cube_size, ty - cube_size, tz),
                     (tx, ty, tz) ]
 
-        for p in points:
+        for index, p in enumerate(points):
             search_head_goal.x = p[0]
             search_head_goal.y = p[1]
             search_head_goal.z = p[2]
 
-            print "Search movement: looking at " + str(p[0]) + ", " + str(p[1]) + ", " + str(p[2])
+            print "Search movement step {0}: looking at ".format(index) + str(p[0]) + ", " + str(p[1]) + ", " + str(p[2])
 
             self.send_goal(search_head_goal, keep_tracking=False, timeout=step_time, min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 

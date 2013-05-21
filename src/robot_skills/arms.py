@@ -84,6 +84,15 @@ class ArmActionClients(object):
 ##intialize as a static class
 actionClients = ArmActionClients()
 
+class Offset(object):
+    def __init__(self, x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0):
+        self.x=x
+        self.y=y
+        self.z=z
+        self.roll=roll
+        self.pitch=pitch
+        self.yaw=yaw
+
 class Arms(object):
     """
     An interface to amigo arms, you can access both sides when specifying a side
@@ -111,9 +120,11 @@ class Arms(object):
         
         self.left_twist_publisher = rospy.Publisher("/arm_left_controller/cartesian_velocity_reference", TwistStamped)
         self.right_twist_publisher = rospy.Publisher("/arm_right_controller/cartesian_velocity_reference", TwistStamped)
-        
-        self.leftOffset = [0.08,-0.05,0.06,0,0,0]
-        self.rightOffset = [0.06,0.025,0.05,0,0,0]
+
+        self.leftOffset = Offset(x=0.08, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02
+        self.rightOffset = Offset(x=0.06, y=0.025, z=0.06)
+
+        self.markerToGrippointOffset = Offset(x=-0.08, y=0.0, z=0.02)
         
         self.tf_listener = tf_listener
         
@@ -129,6 +140,15 @@ class Arms(object):
         Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to base_link """
         if side == None:
             raise Exception("Send_arm_goal: No side was specified..")
+
+        ''' Correct offset '''
+        if side == Side.LEFT:
+            offset = self.leftOffset
+        elif side == Side.RIGHT:
+            offset = self.rightOffset
+        else:
+            rospy.logerr("Side undefined")
+            return False
         
         # create goal:
         grasp_precompute_goal = grasp_precomputeGoal()
@@ -138,13 +158,13 @@ class Arms(object):
         grasp_precompute_goal.PERFORM_PRE_GRASP = pre_grasp
         grasp_precompute_goal.FIRST_JOINT_POS_ONLY = first_joint_pos_only
         
-        grasp_precompute_goal.goal.x = px
-        grasp_precompute_goal.goal.y = py
-        grasp_precompute_goal.goal.z = pz
+        grasp_precompute_goal.goal.x = px + offset.x
+        grasp_precompute_goal.goal.y = py + offset.y
+        grasp_precompute_goal.goal.z = pz + offset.z
         
-        grasp_precompute_goal.goal.roll = roll
-        grasp_precompute_goal.goal.pitch = pitch
-        grasp_precompute_goal.goal.yaw = yaw
+        grasp_precompute_goal.goal.roll = roll + offset.roll
+        grasp_precompute_goal.goal.pitch = pitch + offset.pitch
+        grasp_precompute_goal.goal.yaw = yaw + offset.yaw
         
         #rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
         
@@ -419,37 +439,40 @@ class Arms(object):
 
     
     def update_correction(self, side=None):
+
+        rospy.logerr("Function currently not implemented")
+        return False
         
-        if side == Side.LEFT:
-            root_frame = "/hand_left"
-            target_frame = "/hand_marker_left"
-        elif side == Side.RIGHT:
-            root_frame = "/hand_right"
-            target_frame = "/hand_marker_right"
+        # if side == Side.LEFT:
+        #     root_frame = "/hand_left"
+        #     target_frame = "/hand_marker_left"
+        # elif side == Side.RIGHT:
+        #     root_frame = "/hand_right"
+        #     target_frame = "/hand_marker_right"
         
-        # Look up transform
-        try:
-            (trans,rot) = self.tf_listener.lookupTransform(root_frame, target_frame, rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException):
-            rospy.logwarn("Cannot find transform, not updating")
-            return False
-        angles = euler_from_quaternion(rot)
+        # # Look up transform
+        # try:
+        #     (trans,rot) = self.tf_listener.lookupTransform(root_frame, target_frame, rospy.Time(0))
+        # except (tf.LookupException, tf.ConnectivityException):
+        #     rospy.logwarn("Cannot find transform, not updating")
+        #     return False
+        # angles = euler_from_quaternion(rot)
         
-        # Check whether the update is realistic
-        # If so, update parameters
-        trans_threshold = 0.1
-        rot_threshold = 3.14/4
-        if (trans[0] < trans_threshold and trans[1] < trans_threshold and trans[2] < trans_threshold and angles[0] < rot_threshold and angles[1] < rot_threshold and angles[2] < rot_threshold ):
-            if side == Side.LEFT:
-                self.leftOffset = [trans[0],trans[1],trans[2],angles[0],angles[1],angles[2]]
-                rospy.loginfo("Updated correction parameters left: {0}".format(self.leftOffset))
-            elif side == Side.RIGHT:
-                self.rightOffset = [trans[0],trans[1],trans[2],angles[0],angles[1],angles[2]]
-                rospy.loginfo("Updated correction parameters right: {0}".format(self.rightOffset))
-        else:
-            rospy.logwarn("Parameters not updated, correction does not seem sensible")
+        # # Check whether the update is realistic
+        # # If so, update parameters
+        # trans_threshold = 0.1
+        # rot_threshold = 3.14/4
+        # if (trans[0] < trans_threshold and trans[1] < trans_threshold and trans[2] < trans_threshold and angles[0] < rot_threshold and angles[1] < rot_threshold and angles[2] < rot_threshold ):
+        #     if side == Side.LEFT:
+        #         self.leftOffset = [trans[0],trans[1],trans[2],angles[0],angles[1],angles[2]]
+        #         rospy.loginfo("Updated correction parameters left: {0}".format(self.leftOffset))
+        #     elif side == Side.RIGHT:
+        #         self.rightOffset = [trans[0],trans[1],trans[2],angles[0],angles[1],angles[2]]
+        #         rospy.loginfo("Updated correction parameters right: {0}".format(self.rightOffset))
+        # else:
+        #     rospy.logwarn("Parameters not updated, correction does not seem sensible")
         
-        return True
+        # return True
 
     def get_pose(self, root_frame_id, side=None):
         """ Get the pose of the end-effector with respect to the specified frame_id"""

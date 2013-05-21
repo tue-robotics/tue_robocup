@@ -33,7 +33,7 @@ class Reasoner(object):
             
         #self.query              = rospy.ServiceProxy('/reasoner/query', tue_reasoner_msgs.srv.Query)
         #self.assert_knowledge   = rospy.ServiceProxy('/reasoner/assert', tue_reasoner_msgs.srv.Assert)
-        self.reset              = rospy.ServiceProxy('/wire/reset', std_srvs.srv.Empty)
+        self.sv_reset            = rospy.ServiceProxy('/wire/reset', std_srvs.srv.Empty)
 
         #self.q = self.QueryConstructor()
         
@@ -164,17 +164,21 @@ class Reasoner(object):
         rospy.loginfo("Detaching all objects from gripper. Attached IDs are: {0}".format(self.attached_IDs))
         
         #import ipdb; ipdb.set_trace()
-        try:
-            IDs_at_frame = [ID for ID,frame in self.attached_IDs.iteritems() if frame == frame_id]
-            for ID in IDs_at_frame:
-                request = ObjectInGripperRequest()
-                request.ID = ID
-                request.frame = frame_id
-                request.grasp = False
-            
-                result = self.sv_object_in_gripper(request)
-        except:
-            pass
+        #try:
+        #    IDs_at_frame = [ID for ID,frame in self.attached_IDs.iteritems() if frame == frame_id]
+        #    for ID in IDs_at_frame:
+        #        request = ObjectInGripperRequest()
+        #        request.ID = ID
+        #        request.frame = frame_id
+        #        request.grasp = False
+        #    
+        #        result = self.sv_object_in_gripper(request)
+        #except:
+        #    rospy.loginfo("Passing")
+        request = ObjectInGripperRequest()
+        request.frame = frame_id
+        request.grasp = False
+        result = self.sv_object_in_gripper(request)
 
     def set_time_marker(self, name):
         self.query(Compound("retractall", Compound("time_marker", name, "X")))
@@ -188,7 +192,13 @@ class Reasoner(object):
             return None
         
         t_secs = float(res[0]["Time"])
-        return rospy.Time.now() - rospy.Time(t_secs)            
+        return rospy.Time.now() - rospy.Time(t_secs)
+
+    def reset(self):
+        self.detach_all_from_gripper("/grippoint_left")
+        self.detach_all_from_gripper("/grippoint_right")
+        self.sv_reset()
+
 
 # class QueryBuilder(type):
 #     """The QueryBuilder provides and easy interface for defining predicates for thr reasoner. 

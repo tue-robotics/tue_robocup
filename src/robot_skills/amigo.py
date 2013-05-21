@@ -262,6 +262,7 @@ if __name__ == "__main__":
     def hear(text):
         pub = rospy.Publisher('/speech/output', std_msgs.msg.String)
         rospy.loginfo("Telling Amigo '{0}'".format(text))
+        rospy.logwarn("Publishing on this topic is hardly ever used throughout the executive and will probably not work")
         pub.publish(std_msgs.msg.String(text))
 
     def save_sentence(sentence):

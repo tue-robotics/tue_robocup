@@ -7,6 +7,7 @@ import actionlib
 # Perception
 from perception_srvs.srv import StartPerception
 from pein_msgs.msg import LearnAction, LearnGoal # for face learning
+import object_detector_2d.srv
 
 import collections
 
@@ -31,6 +32,17 @@ class Perception(object):
         self.ac_face_learning = actionlib.SimpleActionClient("/face_learning/action_server", LearnAction)
         # self.ac_face_learning = actionlib.SimpleActionClient("/face_learning/pein_action_server", LearnAction)
 
+        '''Laser service'''
+        self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", object_detector_2d.srv.FindObjInRoi)
+
+        ''' Temporarily included to test toggle_perception_2d '''
+        import geometry_msgs
+        self.testpoint = geometry_msgs.msg.PointStamped()
+        self.testpoint.header.frame_id = '/map'
+        self.testpoint.point.x = 0.66
+        self.testpoint.point.y = 0.73
+        self.testpoint.point.z = 0.83
+
     def close(self):
         pass
 
@@ -54,6 +66,38 @@ class Perception(object):
             rospy.loginfo("Perception.stop: Both faces and objects not recognized anymore")
             result = self.sv_recognition([])
         return result
+
+    def toggle_perception_2d(self, pointstamped, length_x=0.5, length_y=0.5, length_z=0.5):
+        # ToDo: does this work as we hope?
+        # ToDo: what is a suitable length/width?
+        # ToDo: what is status?
+        ''' Switch on object detector 2d '''
+        result = self.sv_recognition(["object_detector_2d"])
+        if not result:
+            rospy.logerr("Service call object_detector_2d not succeeded")
+            return False
+
+        ''' Set region of interest '''
+        #from object_detector_2d.srv import FindObjInRoi
+        request = object_detector_2d.srv.FindObjInRoiRequest()
+        request.x = pointstamped.point.x
+        request.y = pointstamped.point.y
+        request.z = pointstamped.point.z
+        request.length_x = length_x
+        request.length_y = length_y
+        request.length_z = length_z
+        request.frame = pointstamped.header.frame_id
+
+        ''' Wait for service '''
+        try:
+            rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
+            self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", object_detector_2d.srv.FindObjInRoi)
+            response = self.sv_laser_detector(request)
+        except rospy.ServiceException, e:
+            rospy.logerr("Laser service not available: {0}".format(e))
+            return False
+
+        return response
 
     '''Face learning'''
     def learn_person(self, name, n_models = 20, view = 'front', publish_while_learning = False):
