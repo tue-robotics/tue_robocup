@@ -661,9 +661,11 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'DROP_OBJECT'})
 
             smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0),         #open
-                                    transitions={   'state_set':'CLOSE_AFTER_DROP'})
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed'   :'CLOSE_AFTER_DROP'})
             smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
-                                    transitions={   'state_set':'RESET_ARM'})
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed'   :'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 
                                     states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
                                     transitions={   'done':'MARK_DISPOSED',
@@ -807,9 +809,11 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0),         #open
-                                    transitions={   'state_set':'CLOSE_AFTER_DROP'})
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed'   :'CLOSE_AFTER_DROP'})
             smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
-                                    transitions={   'state_set':'RESET_ARM'})
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed'   :'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 
                                     states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
                                     transitions={   'done':'SAY_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT',
@@ -886,9 +890,11 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'DROP_OBJECT_FAILURE'})
 
             smach.StateMachine.add( 'DROP_OBJECT_FAILURE', states.SetGripper(robot, robot.leftArm, gripperstate=0),    #open
-                                    transitions={   'state_set':'CLOSE_AFTER_FAILURE'})
+                                    transitions={   'succeeded':'CLOSE_AFTER_FAILURE',
+                                                    'failed'   :'CLOSE_AFTER_FAILURE'})
             smach.StateMachine.add( 'CLOSE_AFTER_FAILURE', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
-                                    transitions={   'state_set':'RESET_ARM_FAILURE'})
+                                    transitions={   'succeeded':'RESET_ARM_FAILURE',
+                                                    'failed'   :'RESET_ARM_FAILURE'})
             smach.StateMachine.add('RESET_ARM_FAILURE', 
                                     states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
                                     transitions={   'done':'MARK_DISPOSED',

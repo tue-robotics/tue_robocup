@@ -443,7 +443,8 @@ class HandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
                                     SetGripper(robot, robot.leftArm, gripperstate=0, drop_from_frame="/grippoint_left"),
-                                    transitions={'state_set':'SAY_ENJOY'})
+                                    transitions={'succeeded':'SAY_ENJOY',
+                                                 'failed'   :'SAY_ENJOY'})
             
             smach.StateMachine.add( 'SAY_ENJOY',
                                     Say(robot, ["Enjoy your drink!"]),

@@ -296,7 +296,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('OPEN_RIGHT_GRIPPER',
                                 states.SetGripper(robot, robot.rightArm, gripperstate=states.ArmState.OPEN),
-                                transitions={ 'state_set':"SAY_FAKE_OPEN"})
+                                transitions={ 'succeeded':"SAY_FAKE_OPEN",
+                                              'failed'   :"SAY_FAKE_OPEN"})
 
         # ToDo: do we need to reposition AMIGO?
         # ToDo: define decent query
@@ -320,7 +321,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('CLOSE_RIGHT_GRIPPER',
                                 states.SetGripper(robot, robot.rightArm, gripperstate=states.ArmState.CLOSE),
-                                transitions={ 'state_set':"SAY_ABORT"})
+                                transitions={ 'succeeded':"SAY_ABORT",
+                                              'failed'   :"SAY_ABORT"})
 
         smach.StateMachine.add('OPEN_DRAWER',
                                 states.ArmToUserPose(robot.rightArm, -0.15, 0, 0, frame_id="/grippoint_right", delta=True),
@@ -331,11 +333,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('OPEN_LEFT_GRIPPER_FOR_DROP',
                                 states.SetGripper(robot, robot.leftArm, gripperstate=states.ArmState.OPEN, drop_from_frame=True),
-                                transitions={ 'state_set':"CLOSE_LEFT_GRIPPER_AFTER_DROP"})
+                                transitions={ 'succeeded':"CLOSE_LEFT_GRIPPER_AFTER_DROP",
+                                              'failed'   :"CLOSE_LEFT_GRIPPER_AFTER_DROP"})
 
         smach.StateMachine.add('CLOSE_LEFT_GRIPPER_AFTER_DROP',
                                 states.SetGripper(robot, robot.leftArm, gripperstate=states.ArmState.CLOSE),
-                                transitions={ 'state_set':"CLEAR_LEFT_ARM"})
+                                transitions={ 'succeeded':"CLEAR_LEFT_ARM",
+                                              'failed'   :"CLEAR_LEFT_ARM"})
 
         smach.StateMachine.add('CLEAR_LEFT_ARM',
                                 states.ArmToUserPose(robot.leftArm, 0.0, 0.2, 0, frame_id="/base_link", delta=True),
@@ -355,7 +359,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('OPEN_RIGHT_GRIPPER_FOR_RELEASE',
                                 states.SetGripper(robot, robot.rightArm, gripperstate=states.ArmState.OPEN, drop_from_frame=True),
-                                transitions={ 'state_set':"RETRACT_RIGHT_ARM"})
+                                transitions={ 'succeeded':"RETRACT_RIGHT_ARM",
+                                              'failed'   :"RETRACT_RIGHT_ARM"})
 
         smach.StateMachine.add('RETRACT_RIGHT_ARM',
                                 states.ArmToUserPose(robot.rightArm, -0.15, 0, 0, frame_id="/grippoint_left", delta=True),
@@ -364,7 +369,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('CLOSE_RIGHT_GRIPPER_AFTER_RELEASE',
                                 states.SetGripper(robot, robot.rightArm, gripperstate=states.ArmState.CLOSE),
-                                transitions={ 'state_set':"RESET_RIGHT_ARM_AFTER_RELEASE"})
+                                transitions={ 'succeeded':"RESET_RIGHT_ARM_AFTER_RELEASE",
+                                              'failed'   :"RESET_RIGHT_ARM_AFTER_RELEASE"})
 
         smach.StateMachine.add("RESET_RIGHT_ARM_AFTER_RELEASE",
                                 states.ArmToUserPose(robot.rightArm, x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0,

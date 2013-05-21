@@ -559,9 +559,11 @@ def grab_demo(robot):
                                                 'failed':'Failed',
                                                 'target_lost':'Failed'})
         smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0), #open
-                                transitions={   'state_set':'CLOSE_AFTER_DROP'})
+                                transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                'failed'   :'CLOSE_AFTER_DROP'})
         smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1), #close
-                                transitions={   'state_set':'RESET_ARM'})
+                                transitions={   'succeeded':'RESET_ARM',
+                                                'failed'   :'RESET_ARM'})
         smach.StateMachine.add('RESET_ARM',
                                 states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
                                 transitions={   'done':'GET_OBJECT',
