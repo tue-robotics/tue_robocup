@@ -1,19 +1,23 @@
-#include "wire_interface/Client.h"
-
+// ROS
 #include <ros/ros.h>
+
+// Messages
+#include <std_msgs/String.h>
+#include <std_srvs/Empty.h>
+#include <amigo_msgs/head_ref.h>
+#include <pein_msgs/LearnAction.h>
+#include <sensor_msgs/LaserScan.h>
 #include <tue_move_base_msgs/MoveBaseAction.h>
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
 
-#include <pein_msgs/LearnAction.h>
-#include <std_msgs/String.h>
-#include <std_srvs/Empty.h>
-
+// WIRE
+#include "wire_interface/Client.h"
 #include "problib/conversions.h"
 
+// Carrot planner
 #include "tue_carrot_planner/carrot_planner.h"
-#include <amigo_msgs/head_ref.h>
 
 using namespace std;
 
@@ -23,15 +27,14 @@ const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates
 const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const int N_MODELS = 5;                         // Number of models used for recognition of the operator
+const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
-const double FOLLOW_RATE = 10;                   // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-double RESOLUTION_PATH = 0.1;                   // Resolution of the move base path
+const double T_LEAVE_ELEVATOR = 8.0;            // Time after which robot is assumed to be outside the elevator.
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
-
-// QUESTION: Do we want to follow the operator into the elevator and wait with moving out (risk enter too soon)
+// TODO: Check/test if confimation is needed: please leave the elevator
 
 
 //! Globals
@@ -39,12 +42,15 @@ CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
 double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
-bool itp2_ = false;                                                                // Bookkeeping: at elevator yes or no
-bool itp3_ = false;                                                                // Bookkeeping: passed elevator yes or no
+bool itp2_ = false;                                                               // Bookkeeping: at elevator yes or no
+bool itp3_ = false;                                                               // Bookkeeping: passed elevator yes or no
+bool new_laser_data_ = false;                                                     // Bookkeeping: new laser data or not
+sensor_msgs::LaserScan laser_scan_;                                               // Storage: most recent laser data
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
+ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
 
 
 /**
@@ -302,6 +308,8 @@ void speechCallback(std_msgs::String res) {
     if (res.data.find("pleaseleavethelevator") != std::string::npos) {
         ROS_WARN("Received command: %s", res.data.c_str());
         itp2_ = true;
+        ros::NodeHandle nh;
+        sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
     } else {
         ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
     }
@@ -345,32 +353,92 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 }
 
 
-void findAndEnterElevator(wire::Client& client) {
 
-    amigoSpeak("Okay, I will enter the elevator. Please step aside");
-    ros::Duration delta(5.0);
-    delta.sleep();
+void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
 
-    // TODO: implement detection algorithm/service
+    //! Store data
+    new_laser_data_ = true;
+    laser_scan_ = *laser_scan_msg;
+
+}
+
+
+
+
+bool leftElevator(pbl::Gaussian& pos)
+{
+
+    //! Only proceed if new laser data is available
+    if (!new_laser_data_)
+    {
+        ROS_WARN("Trying to leave the elevator but no new laser data available");
+        return false;
+    }
+
+    //! Administration
+    new_laser_data_ = false;
     pbl::Matrix cov(3,3);
     cov.zeros();
-    pbl::PDF el_pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+    pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
 
-    //! Enter elevator
-    moveTowardsPosition(el_pos, 0.2);
-    pbl::PDF el_pos_far = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
-    moveTowardsPosition(el_pos_far, 0.5);// perhaps drive for an extra meter to be sure the robot is inside the elevator?
+    //! Settings
+    unsigned int step_n_beams = 10;
+    double width_robot = 0.75;
+    double min_distance_to_exit = 2.0;
 
-    //! Turn at position (face entrance elevator
-    pbl::PDF turn_pos = pbl::Gaussian(pbl::Vector3(-0.1, 0, 0), cov);
-    moveTowardsPosition(turn_pos, 0);
-    amigoSpeak("Operator, you can join me now");
+    //! Derived properties
+    double angle = atan2(width_robot/2, min_distance_to_exit);
+    unsigned int n_beams_region = angle/laser_scan_.angle_increment;
 
-    //! Find operator
-    findOperator(client, false);
+    //! Administration
+    unsigned int i_exit = 0;
+    double distance_exit = 0.0;
+
+    //! Loop over laser data
+    for (unsigned int i_start = 0; i_start < laser_scan_.ranges.size() - n_beams_region - 1; i_start += step_n_beams)
+    {
+        //! Determine distance to first point of the current region
+        float shortest_distance = laser_scan_.ranges[i_start];
+        unsigned int j = i_start;
+
+        //! Determine shortest distance in current region (must be at least min_distance_to_exit)
+        while (shortest_distance >= min_distance_to_exit && j < i_start + n_beams_region)
+        {
+            //! Shortest distance in region
+            shortest_distance = std::min(laser_scan_.ranges[j], shortest_distance);
+            ++j;
+        }
+
+        //! Store most promising exit
+        if (shortest_distance > min_distance_to_exit) {
+            i_exit = i_start + n_beams_region/2;
+            distance_exit = shortest_distance;
+        }
+
+        //! Next region
+    }
+
+    // Now the angle towards the exit is found
+    // TODO: check if beams more or less perpendicular to robot measure a short distance (inside elevator)
+    //        or
+    //       drive for a fixed time interval (in seconds), risk: path blocked, robot stays within elevator
+
+    //! If an exit is found, return the exit
+    if (distance_exit > 0.0)
+    {
+        double angle_exit = laser_scan_.angle_min + i_exit * laser_scan_.angle_increment;
+        pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_exit, sin(angle_exit)*distance_exit, 0), cov);
+        return false;
+
+    }
+
+    //! No exit
+    ROS_WARN("No free area with width %f [m] and minimal free distance of %f [m] found", width_robot, min_distance_to_exit);
+    return false;
 
 
 }
+
 
 
 
@@ -380,7 +448,9 @@ int main(int argc, char **argv) {
     
     ROS_INFO("Started Follow me");
     
-    /// Head ref
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Head ref
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
     
     /// set the head to look down in front of AMIGO
@@ -395,31 +465,37 @@ int main(int argc, char **argv) {
     goal.head_tilt = -0.2;
     head_ref_pub.publish(goal);
     
-
-    //! Planner
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Carrot planner
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     planner_ = new CarrotPlanner("follow_me_carrot_planner");
     ROS_INFO("Carrot planner instantiated");
 
-    //! Query WIRE for objects
-    wire::Client client;
-    ROS_INFO("Wire client instantiated");
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Laser data
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
+    sub_laser_.shutdown();
 
-    //! Client that allows reseting WIRE
-    reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
-
-    //! Subscribe to the speech recognition topic
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Speech-to-text and text-to-speech
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
-    itp2_ = false;
-
-    //! Topic that makes AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
 
-    //! Action client for learning faces
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Face learning
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);
     learn_face_ac_->waitForServer();
     ROS_INFO("Learn face client connected to the learn face server");
     
-    //! Always clear the world model
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// WIRE
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    wire::Client client;
+    ROS_INFO("Wire client instantiated");
+    reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     std_srvs::Empty srv;
     if (reset_wire_client_.call(srv)) {
         ROS_INFO("Cleared world model");
@@ -427,10 +503,18 @@ int main(int argc, char **argv) {
         ROS_ERROR("Failed to clear world model");
     }
 
-    //! Administration
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Administration variables
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     pbl::PDF operator_pos;
+    itp2_ = false;
+    bool itp2_new = true;
+    itp3_ = false;
+    unsigned int n_checks_left_elevator = 0;
 
-    //! Create a model for identifying the operator later
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Start challenge: find and learn the operator
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     if (!memorizeOperator()) {
 
         ROS_ERROR("Learning operator failed: AMIGO will not be able to recognize the operator");
@@ -469,7 +553,9 @@ int main(int argc, char **argv) {
     ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
     amigoSpeak("I will now start following you");
 
-    //! Follow operator
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// START MAIN LOOP
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ros::Rate follow_rate(FOLLOW_RATE);
     while(ros::ok()) {
         ros::spinOnce();
@@ -489,30 +575,61 @@ int main(int argc, char **argv) {
             //! Robot is asked to leave the elevator
             amigoSpeak("I will leave the elevator now");
 
-            //! First turn, leave and turn again
-
-            ////
-            // TODO: Find exit function
-            //   start with beam in the middle and check distance, move to neighboring beams until exit is found
-            // or
-            //   more advanced: detect wall with opening (not really needed I guess)
-            ////
-
+            double time_rotation = 1.0;
 
             pbl::Matrix cov(3,3);
             cov.zeros();
-            pbl::PDF pos = pbl::Gaussian(pbl::Vector3(-2.5, 0, 0), cov);
-            moveTowardsPosition(pos, 0);
-            ROS_INFO("Left the elevator");
-            pos = pbl::Gaussian(pbl::Vector3(0.5, 0, 0), cov);
-            moveTowardsPosition(pos, 0);
-            ROS_INFO("Turned around");
+            pbl::Gaussian pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
 
-            //! Operator is the man standing in front of the robot (resets world model)
-            findOperator(client, false);
+            // First time here, rotate towards exit
+            if (itp2_new) {
 
-            itp2_ = false;
-            itp3_ = true;
+                //! Rotate for 180 deg
+                pos = pbl::Gaussian(pbl::Vector3(-2, 0, 0), cov);
+                moveTowardsPosition(pos, 2);
+                ros::Duration pause(time_rotation);
+                pause.sleep();
+
+                //! Stand still
+                pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+                moveTowardsPosition(pos, 0);
+
+                itp2_new = false;
+
+            }
+
+            //! Always maker sure laser data is available
+            if (sub_laser_.getTopic().empty())
+            {
+                ROS_WARN("ITP2: Subscriber not registered.");
+                sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
+            }
+
+            //! Leave elevator (TODO: now function always returns false)
+            if (leftElevator(pos) || n_checks_left_elevator > T_LEAVE_ELEVATOR*FOLLOW_RATE)
+            {
+                //! Rotate 90 deg
+                pos = pbl::Gaussian(pbl::Vector3(-2, 0, 0), cov);
+                moveTowardsPosition(pos, 2);
+                ros::Duration pause_short(time_rotation/2);
+                pause_short.sleep();
+
+                //! Stand still and find operator
+                pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+                moveTowardsPosition(pos, 0);
+                findOperator(client,false);
+
+                //! Next state
+                itp2_ = false;
+                itp3_ = true;
+            }
+            else
+            {
+                //! Continue driving towards free direction
+                moveTowardsPosition(pos, 0);
+                ++n_checks_left_elevator;
+            }
+
 
         } else if (itp3_) {
 
@@ -522,6 +639,7 @@ int main(int argc, char **argv) {
 
             //! Operator will pass through a small crowd of people (4-5) and calls the robot from behind the group
 
+            /*
             if (detectCrowd(objects)) {
 
                 ////
@@ -557,46 +675,64 @@ int main(int argc, char **argv) {
 
                 }
 
-            }
+            }*/
 
-            /*
 
-            //! Association will fail, hence this can be skipped. Check for the (updated) operator position
+            //! Still the operator position is desired
             if (getPositionOperator(objects, operator_pos)) {
 
                 //! Move towards operator
                 moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
 
 
-            } else {
+                //! If distance towards operator is smaller than this value, crowd is assumed
+                pbl::Vector pos_exp = operator_pos.getExpectedValue().getVector();
+                if (pos_exp[0] < 0.9)
+                {
 
-                //! If the operator is lost, move around a crowd croud (wild guess)
-                pbl::Matrix cov(3,3);
-                cov.zeros();
+                    // Drive fixed path and hope for the best
+                    pbl::Matrix cov(3,3);
+                    cov.zeros();
 
-                // Forward
-                pbl::PDF pos = pbl::Gaussian(pbl::Vector3(1, 0, 0), cov);
-                moveTowardsPosition(pos, 0);
+                    // Sidewards
+                    pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 2, 0), cov);
+                    moveTowardsPosition(pos, 0);
+                    ros::Duration delta1(3.0);
+                    delta1.sleep();
 
-                // Side
-                pos = pbl::Gaussian(pbl::Vector3(0, 3, 0), cov);
-                moveTowardsPosition(pos, 0);
+                    // Freeze
+                    pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+                    moveTowardsPosition(pos, 0);
 
-                // Forward
-                pos = pbl::Gaussian(pbl::Vector3(5, 0, 0), cov);
-                moveTowardsPosition(pos, 0);
+                    // Forward
+                    pos = pbl::Gaussian(pbl::Vector3(2, 0, 0), cov);
+                    moveTowardsPosition(pos, 0);
+                    ros::Duration delta2(4.0);
+                    delta2.sleep();
 
-                // Back
-                pos = pbl::Gaussian(pbl::Vector3(0, -3, 0), cov);
-                moveTowardsPosition(pos, 0);
+                    // Freeze
+                    pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+                    moveTowardsPosition(pos, 0);
 
-                // Wild guess for operator
-                findOperator(client, false);
+                    // Sidewards (back)
+                    pos = pbl::Gaussian(pbl::Vector3(0, -2, 0), cov);
+                    moveTowardsPosition(pos, 0);
+                    ros::Duration delta3(3.0);
+                    delta3.sleep();
 
-                itp3_ = false;
+                    // Freeze
+                    pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+                    moveTowardsPosition(pos, 0);
+
+                    // Wild guess for operator
+                    findOperator(client, false);
+
+                    itp3_ = false;
+
+                }
+
+
             }
-            */
-
 
 
         } else {
