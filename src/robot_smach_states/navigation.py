@@ -999,6 +999,9 @@ class Execute_path(smach.State):
                 #self.robot.speech.speak(random.choice(sentences))
                 return 'arrived'
 
+            if goal_status == actionlib.GoalStatus.ABORTED:
+                return 'aborted'
+
             if self.robot.base.replan_timeout != 0.0:
                 wait_time = int(self.robot.base.replan_timeout)
                 self.robot.speech.speak("I found a new path but this is much longer, I will wait for another {0} seconds before i will take it".format(wait_time), block=False)
@@ -1010,9 +1013,6 @@ class Execute_path(smach.State):
             if (float(self.robot.base.poses_to_goal) > (float(self.previous_poses_to_goal) * 1.2) and self.previous_poses_to_goal != 0):
                 self.robot.speech.speak("Lets take a different path", block=False)
             self.previous_poses_to_goal = self.robot.base.poses_to_goal
-            
-            if goal_status == actionlib.GoalStatus.ABORTED:
-                return 'aborted'
 
             if self.look_at_path_distance > 0:
                 robot_pos, robot_orient = self.robot.base.get_location()
@@ -1047,29 +1047,35 @@ class Waiting_to_execute(smach.State):
         self.previous_replan_timeout = 0
         self.z_offset_direction = -1
         self.z_offset_timer = 0
+        self.timeout = 20
 
     def execute(self, userdata):
 
-        while (self.robot.base.path_blocked and not rospy.is_shutdown() ): #TODO Bas: add a timeout here and a fail-state
+        start_execute = rospy.Time.now() 
+
+        while (self.robot.base.path_blocked and not rospy.is_shutdown()): 
             
             if self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.PREEMPTED or self.robot.base.ac_move_base.get_state() == actionlib.GoalStatus.RECALLED:
                 return 'preempted'
 
+            if (rospy.Time.now() - start_execute) > rospy.Duration(self.timeout):
+                return 'done'
+
             # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
             #    cube_size: the size of the cube around the obstacle
             #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
-            #self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=1.0, step_time=1.5, min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
+            self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=1.0, step_time=2.0, min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
 
             #self.previous_replan_timeout = self.robot.base.replan_timeout
             # Wait 0.5 seconds to avoid looping too fast
             rospy.sleep(rospy.Duration(0.5))
 
         if self.robot.base.reached_blocked_timeout:
-            self.robot.speech.speak("This is not going to work, i will take the other route", block=False)
+            self.robot.speech.speak("This is not going to work, i will take the other route", block=True)
             #self.previous_replan_timeout = 0.0
             return 'done'
         else:
-            self.robot.speech.speak("My original path is clear again so i can take that anyway", block=False)         
+            self.robot.speech.speak("My original path is clear again so i can take that anyway", block=True)         
             
         return 'done'
 
