@@ -7,7 +7,7 @@ import actionlib
 # Perception
 from perception_srvs.srv import StartPerception
 from pein_msgs.msg import LearnAction, LearnGoal # for face learning
-import object_detector_2d.srv
+import pein_srvs.srv
 
 import collections
 
