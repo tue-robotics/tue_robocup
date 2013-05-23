@@ -186,9 +186,7 @@ class Base(object):
         self.replan_timeout         = feedback.nr_sec_till_replan_execution
 
         if self.replan_timeout < 0:
-            self.replan_timeout = 0  # Move_base sometimes returns negative times; this should be fixed, but before
-                                     # that time, we can simply deal with it this way    
-
+            self.replan_timeout = 0  
 
         if self.replan_timeout > 0:
             self.path_blocked = True
