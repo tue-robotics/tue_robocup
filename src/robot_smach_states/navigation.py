@@ -807,7 +807,7 @@ class ResetCostmap(smach.State):
 
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, goal_sorter=None):
         smach.State.__init__(self,outcomes=['succeeded','failed'],
                             input_keys=['goal'],
                             output_keys=['goal'])                    
@@ -817,6 +817,7 @@ class Determine_goal(smach.State):
         self.goal_pose_2d = goal_pose_2d
         self.goal_name = goal_name
         self.goal_query = goal_query
+        self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
         self.goal_sorter = goal_sorter
         rospy.logwarn("Goal name = {0}".format(self.goal_name))
@@ -878,6 +879,28 @@ class Determine_goal(smach.State):
             look_point = self.robot.base.point(1,0,stamped=True)
             # ToDo: Parameterize offsets
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, 0.5, 0.2)
+            if base_poses_for_point:
+                for base_goal_pose in base_poses_for_point:
+                    # Convert to x, y, phi
+                    phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
+                    # Add to possible locations
+                    possible_locations += [(base_goal_pose.pose.position.x,
+                                            base_goal_pose.pose.position.y,
+                                            phi)]
+
+        if self.lookat_point_3d:
+            rospy.logwarn("Lookat_point_3d")
+            
+            x,y,z = self.lookat_point_3d
+
+            look_point = self.robot.base.point(1,0,stamped=True)
+            #rospy.loginfo("look_point = {0}".format(look_point))
+            look_point.point.x = x
+            look_point.point.y = y
+            look_point.point.z = z
+
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, 0.5, 0.2)
+
             if base_poses_for_point:
                 for base_goal_pose in base_poses_for_point:
                     # Convert to x, y, phi
@@ -1115,13 +1138,14 @@ class Recover(smach.State):
                 return 'new_goal_required'
 
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_query=None, goal_sorter=None, look_at_path_distance=2.7, goal_area_radius=0.1):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, goal_sorter=None, look_at_path_distance=2.7, goal_area_radius=0.1):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
         self.goal_pose_2d = goal_pose_2d
         self.goal_name = goal_name
         self.goal_query = goal_query
+        self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
         self.goal_sorter = goal_sorter
         self.look_at_path_distance = look_at_path_distance
@@ -1138,7 +1162,8 @@ class NavigateGeneric(smach.StateMachine):
             smach.StateMachine.add('DETERMINE_GOAL', Determine_goal(self.robot, 
                 goal_pose_2d = self.goal_pose_2d, 
                 goal_name = self.goal_name, 
-                goal_query = self.goal_query, 
+                goal_query = self.goal_query,
+                lookat_point_3d = self.lookat_point_3d, 
                 lookat_query = self.lookat_query,
                 goal_sorter = self.goal_sorter),
                 transitions={'failed'           : 'goal_not_defined',
