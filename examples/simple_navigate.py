@@ -26,4 +26,5 @@ if __name__ == "__main__":
     nav_state3 = navigation.NavigateGeneric(robot, goal_pose_2d=(1, 1, 3.14), look_at_path_distance=2.7)
     nav_state3.execute()
     
-
+    # nav_state = navigation.NavigateGeneric(robot, lookat_point_3d=(3,0.5,0), look_at_path_distance=2.7)
+    # nav_state.execute()
