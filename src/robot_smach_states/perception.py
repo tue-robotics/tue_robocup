@@ -665,7 +665,7 @@ class LookForObjectsAtROI(smach.State):
             # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
             # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
             # ToDo: do we need to incorporate wait functions?
-            spindle_target = min(0.2,max(lookat_point.z - 0.41,0.15))
+            spindle_target = max(0.15, min(lookat_point.z - 0.41, self.robot.spindle.upper_limit))
             rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.z, spindle_target))
 
             self.robot.head.send_goal(lookat_point, keep_tracking=True)
@@ -746,7 +746,8 @@ class LookForObjectsAtPoint(smach.State):
         # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
         # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
         # ToDo: do we need to incorporate wait functions?
-        spindle_target = min(0.4,max(self.point_stamped.point.z - 0.41,0.15))
+        spindle_target = max(0.15, min(self.point_stamped.point.z.z - 0.41, self.robot.spindle.upper_limit))
+
         rospy.loginfo("Target height: {0}, spindle_target: {1}".format(self.point_stamped.point.z, spindle_target))
         self.robot.spindle.send_goal(spindle_target)
         self.robot.head.send_goal(self.point_stamped.point, frame_id=self.point_stamped.header.frame_id) #TODO Loy: Make all methods that take xyz and a frame_id take a PointStamped instead and define that convenience somewhere else
