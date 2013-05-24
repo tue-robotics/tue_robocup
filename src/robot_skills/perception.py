@@ -33,7 +33,7 @@ class Perception(object):
         # self.ac_face_learning = actionlib.SimpleActionClient("/face_learning/pein_action_server", LearnAction)
 
         '''Laser service'''
-        self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", object_detector_2d.srv.FindObjInRoi)
+        self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
 
         ''' Temporarily included to test toggle_perception_2d '''
         import geometry_msgs
@@ -78,8 +78,8 @@ class Perception(object):
             return False
 
         ''' Set region of interest '''
-        #from object_detector_2d.srv import FindObjInRoi
-        request = object_detector_2d.srv.FindObjInRoiRequest()
+        #from pein_srvs.srv import FindObjInRoi
+        request = pein_srvs.srv.FindObjInRoiRequest()
         request.x = pointstamped.point.x
         request.y = pointstamped.point.y
         request.z = pointstamped.point.z
@@ -91,7 +91,7 @@ class Perception(object):
         ''' Wait for service '''
         try:
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
-            self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", object_detector_2d.srv.FindObjInRoi)
+            self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
             response = self.sv_laser_detector(request)
         except rospy.ServiceException, e:
             rospy.logerr("Laser service not available: {0}".format(e))
