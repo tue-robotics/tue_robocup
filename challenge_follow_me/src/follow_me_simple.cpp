@@ -24,14 +24,14 @@ using namespace std;
 
 //! Settings
 const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_OPERATOR = 2.0;           // Distance AMIGO keeps towards operator
+const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
-const double FOLLOW_RATE = 10;                  // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-const double T_LEAVE_ELEVATOR = 8.0;            // Time after which robot is assumed to be outside the elevator.
+const double T_LEAVE_ELEVATOR = 4.0;            // Time after which robot is assumed to be outside the elevator.
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
 // TODO: Check/test if confimation is needed: please leave the elevator
@@ -305,13 +305,13 @@ bool memorizeOperator() {
 void speechCallback(std_msgs::String res) {
 
     //amigoSpeak(res.data);
-    if (res.data.find("pleaseleavethelevator") != std::string::npos) {
+    if (!itp2_ && res.data.find("please leave the elevator") != std::string::npos) {
         ROS_WARN("Received command: %s", res.data.c_str());
         itp2_ = true;
         ros::NodeHandle nh;
         sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
     } else {
-        ROS_WARN("Received unknown command \'%s\'", res.data.c_str());
+        ROS_WARN("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
     }
 }
 
@@ -384,15 +384,17 @@ bool leftElevator(pbl::Gaussian& pos)
     //! Settings
     unsigned int step_n_beams = 10;
     double width_robot = 0.75;
-    double min_distance_to_exit = 2.0;
+    double min_distance_to_exit = 1.0;
 
     //! Derived properties
-    double angle = atan2(width_robot/2, min_distance_to_exit);
+    double angle = 2.0*atan2(width_robot/2, min_distance_to_exit);
     unsigned int n_beams_region = angle/laser_scan_.angle_increment;
 
     //! Administration
     unsigned int i_exit = 0;
     double distance_exit = 0.0;
+    
+    ROS_INFO("Find exit elevator, n_beams_region is %u", n_beams_region);
 
     //! Loop over laser data
     for (unsigned int i_start = 0; i_start < laser_scan_.ranges.size() - n_beams_region - 1; i_start += step_n_beams)
@@ -409,14 +411,20 @@ bool leftElevator(pbl::Gaussian& pos)
             ++j;
         }
 
+		if (j == i_start + n_beams_region) {
+			ROS_INFO("Beam starting at %d has shortest distance %f", i_start, shortest_distance);
+		}
+
         //! Store most promising exit
-        if (shortest_distance > min_distance_to_exit) {
+        if (shortest_distance > min_distance_to_exit && j == i_start + n_beams_region) {
             i_exit = i_start + n_beams_region/2;
-            distance_exit = shortest_distance;
+            min_distance_to_exit = shortest_distance;
         }
 
         //! Next region
     }
+    
+    ROS_INFO("Index exit is beam %u/%zu", i_exit, laser_scan_.ranges.size());
 
     // Now the angle towards the exit is found
     // TODO: check if beams more or less perpendicular to robot measure a short distance (inside elevator)
@@ -424,10 +432,14 @@ bool leftElevator(pbl::Gaussian& pos)
     //       drive for a fixed time interval (in seconds), risk: path blocked, robot stays within elevator
 
     //! If an exit is found, return the exit
-    if (distance_exit > 0.0)
+    if (min_distance_to_exit > 1.0)
     {
         double angle_exit = laser_scan_.angle_min + i_exit * laser_scan_.angle_increment;
-        pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_exit, sin(angle_exit)*distance_exit, 0), cov);
+        
+        // To keep the velocity low
+        double distance_drive = 0.1; // TODO: Update this distance
+        pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
+        ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, distance_exit);
         return false;
 
     }
@@ -572,10 +584,7 @@ int main(int argc, char **argv) {
             // * * * * * * * * * * * * * * * * * * * * * * * * * * * ITP 2 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *//
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            //! Robot is asked to leave the elevator
-            amigoSpeak("I will leave the elevator now");
-
-            double time_rotation = 1.0;
+            double time_rotation = 5.0;
 
             pbl::Matrix cov(3,3);
             cov.zeros();
@@ -583,13 +592,28 @@ int main(int argc, char **argv) {
 
             // First time here, rotate towards exit
             if (itp2_new) {
+				
+				//! Robot is asked to leave the elevator
+                amigoSpeak("I will leave the elevator now");
+                
+                sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
+                ROS_INFO("Subscribed to laser data");
 
-                //! Rotate for 180 deg
-                pos = pbl::Gaussian(pbl::Vector3(-2, 0, 0), cov);
-                moveTowardsPosition(pos, 2);
-                ros::Duration pause(time_rotation);
-                pause.sleep();
-
+                //! Rotate for 180 deg (in steps since only small angles allowed)
+                pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
+                unsigned int n_sleeps = 0;
+                unsigned int freq = 20;
+                unsigned int N_SLEEPS_TOTAL = time_rotation*freq;
+                ROS_INFO("Pause time is %f", 1.0/(double)freq);
+                ros::Duration pause(1.0/(double)freq);
+                
+                while (n_sleeps < N_SLEEPS_TOTAL) {
+					moveTowardsPosition(pos, 2);
+					pause.sleep();
+					++n_sleeps;
+					//ROS_INFO("n_sleeps = %u, N_SLEEPS_TOTAL = %u, freq = %u", n_sleeps, N_SLEEPS_TOTAL, freq);
+			    }
+			    
                 //! Stand still
                 pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
                 moveTowardsPosition(pos, 0);
@@ -601,8 +625,8 @@ int main(int argc, char **argv) {
             //! Always maker sure laser data is available
             if (sub_laser_.getTopic().empty())
             {
-                ROS_WARN("ITP2: Subscriber not registered.");
-                sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
+                ROS_WARN("ITP2: Subscriber not registered, subscribing now.");
+                sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
             }
 
             //! Leave elevator (TODO: now function always returns false)
@@ -627,6 +651,7 @@ int main(int argc, char **argv) {
             {
                 //! Continue driving towards free direction
                 moveTowardsPosition(pos, 0);
+                ROS_INFO("n_checks_left_elevator = %u/%f", n_checks_left_elevator, T_LEAVE_ELEVATOR*FOLLOW_RATE);
                 ++n_checks_left_elevator;
             }
 
