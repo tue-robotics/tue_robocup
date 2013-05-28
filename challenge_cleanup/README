@@ -6,11 +6,11 @@ amigo1:
 
 amigo3:
 
-    roslaunch run_speech_files speech_magdeburg2013.launch
+    roslaunch run_speech_files speech_tue_test_lab.launch
 
 amigo3:
 
-    roslaunch speech_interpreter start_magdeburg2013.launch
+    roslaunch speech_interpreter start_tue_test_lab.launch 
 
 amigo3:
 
