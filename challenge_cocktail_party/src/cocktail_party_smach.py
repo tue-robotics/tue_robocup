@@ -7,6 +7,7 @@ import smach_ros
 from speech_interpreter.srv import GetInfo
 
 from robot_skills.amigo import Amigo
+from robot_skills.arms import State as ArmState
 
 from robot_smach_states import *
 
@@ -442,7 +443,7 @@ class HandoverToHuman(smach.StateMachine):
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
-                                    SetGripper(robot, robot.leftArm, gripperstate=0, drop_from_frame="/grippoint_left"),
+                                    SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN),
                                     transitions={'succeeded':'SAY_ENJOY',
                                                  'failed'   :'SAY_ENJOY'})
             

@@ -8,6 +8,7 @@ from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
 from robot_skills.reasoner  import Conjunction, Compound
+from robot_skills.arms import State as ArmState
 from robot_smach_states.util.startup import startup
 
 from speech_interpreter.srv import GetInfo
@@ -266,7 +267,9 @@ class Cleanup(smach.StateMachine):
                         transitions={"done":"DROPOFF_OBJECT"})
 
             smach.StateMachine.add("DROPOFF_OBJECT",
-                                    states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
+                                    #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
+                                    #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
+                                    states.PlaceObject(robot.leftArm, robot, query_dropoff_loc),
                                     transitions={   'succeeded':'DROP_OBJECT',
                                                     'failed':'DROP_OBJECT',
                                                     'target_lost':'DONT_KNOW_DROP'})
@@ -305,10 +308,10 @@ class Cleanup(smach.StateMachine):
             
             # smach.StateMachine.add( 'PLACE_OBJECT', states.Place_Object(robot.leftArm,robot),
             #                         transitions={   'object_placed':'CARR_POS2'})
-            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN), #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
                                                     'failed'   :'CLOSE_AFTER_DROP'})
-            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1), #close
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.CLOSE), #close
                                     transitions={   'succeeded':'RESET_ARM',
                                                     'failed'   :'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 

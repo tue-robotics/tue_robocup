@@ -332,7 +332,7 @@ def setup_statemachine(robot):
         # ToDo: move left arm above drawer: how do we do this?
 
         smach.StateMachine.add('OPEN_LEFT_GRIPPER_FOR_DROP',
-                                states.SetGripper(robot, robot.leftArm, gripperstate=states.ArmState.OPEN, drop_from_frame=True),
+                                states.SetGripper(robot, robot.leftArm, gripperstate=states.ArmState.OPEN),
                                 transitions={ 'succeeded':"CLOSE_LEFT_GRIPPER_AFTER_DROP",
                                               'failed'   :"CLOSE_LEFT_GRIPPER_AFTER_DROP"})
 
@@ -358,7 +358,7 @@ def setup_statemachine(robot):
                                                 "failed":"SAY_ABORT"})
 
         smach.StateMachine.add('OPEN_RIGHT_GRIPPER_FOR_RELEASE',
-                                states.SetGripper(robot, robot.rightArm, gripperstate=states.ArmState.OPEN, drop_from_frame=True),
+                                states.SetGripper(robot, robot.rightArm, gripperstate=states.ArmState.OPEN),
                                 transitions={ 'succeeded':"RETRACT_RIGHT_ARM",
                                               'failed'   :"RETRACT_RIGHT_ARM"})
 
