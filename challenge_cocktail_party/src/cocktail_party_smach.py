@@ -7,7 +7,6 @@ import smach_ros
 from speech_interpreter.srv import GetInfo
 
 from robot_skills.amigo import Amigo
-from robot_skills.arms import State as ArmState
 
 from robot_smach_states import *
 
@@ -72,13 +71,14 @@ class StartChallengeRobust(smach.StateMachine):
             # If the door is still closed after certain number of iterations, defined in Ask_query_true 
             # in perception.py, amigo will speak and check again if the door is open
             smach.StateMachine.add( "DOOR_CLOSED",
-                                    human_interaction.Say(robot, "Door is closed, please open the door"),
+                                    human_interaction.Say(robot,[   "Door is closed, please open the door",
+                                                                    "Could someone please open the door"]),
                                     transitions={   "spoken":"ASSESS_DOOR"}) 
 
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, "Door is open, so I will start my task"),
-                                    transitions={   "spoken":"ENTER_ROOM"}) 
+                                    human_interaction.Say(robot, "Door is open, so I will enter the party room"),
+                                    transitions={   "spoken":"Done"})  ## transitions={   "spoken":"ENTER_ROOM"}) 
 
             smach.StateMachine.add('ENTER_ROOM',
                                     LookForMeetingpoint(robot),
@@ -88,17 +88,28 @@ class StartChallengeRobust(smach.StateMachine):
 
 class WaitForPerson(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["waiting" , "unknown_person", "known_person"])
+        smach.State.__init__(self, outcomes=["waiting", "unknown_person", "known_person"])
         self.robot = robot
 
     def execute(self, userdata=None):
-        self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drinks.")
+        self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
 
-        query_detect_person = Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))
-                                          )
-	self.robot.head.set_pan_tilt(tilt=-0.2)
-        self.robot.perception.toggle(["face_segmentation"])
+        query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+        self.robot.head.set_pan_tilt(tilt=-0.2)
+        ## STARTUP FACE_SEGMENTATION, MADE MORE ROBUST FOR DEBUGGING!
+        ##self.robot.perception.toggle(["face_segmentation"])
+        ## TODO now infinitely looping make it quit after n tries?!
+        self.response_start = self.robot.perception.toggle(['face_segmentation'])
+        rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
+        rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
+
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Face segmentation has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.loginfo("Face segmentation failed to start")
+            self.robot.speech.speak("I was not able to start face segmentation.")
+            return "waiting"
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
         wait_result = wait_machine.execute()
@@ -106,7 +117,7 @@ class WaitForPerson(smach.State):
         self.robot.perception.toggle([])
 
         if wait_result == "timed_out":
-            self.robot.speech.speak("Please, don't keep me waiting.")
+            self.robot.speech.speak(   "Please, don't keep me waiting.")
             return "waiting"
         elif wait_result == "preempted":
             self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!")
@@ -158,11 +169,11 @@ class LearnPersonName(smach.State):
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
-        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))        
+        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))      
 
-        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
 
-        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
+        if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             if self.person_learn_failed == 2:
                 self.robot.speech.speak("I will call you William")
                 self.response = "william"
@@ -230,9 +241,8 @@ class LearnPersonCustom(smach.State):
 
         learn_machine = Learn_Person(self.robot, serving_person)
         learn_result = learn_machine.execute()
-        
         self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # make sure we're not left with a goal from last time
-
+        ## TO CHECK IF OUTCOME IS face_learned or learn_failed and ACT adequatly!
         return learn_result
 
 class LookForMeetingpoint(smach.State):
@@ -246,6 +256,7 @@ class LookForMeetingpoint(smach.State):
         goal_answers = self.robot.reasoner.query(Conjunction(Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                                  Compound("not", Compound("unreachable", "Waypoint"))))
 
+        ### TODO THIS DOES NOT MAKE SENSE, outcomes and query
         if not goal_answers:
             self.robot.speech.speak("I want to go to a meeting point, but I don't know where to go... I'm sorry!")
             return "not_found"
@@ -439,16 +450,25 @@ class HandoverToHuman(smach.StateMachine):
                                                     'failed':'PLEASE_TAKE'})
             
             smach.StateMachine.add( 'PLEASE_TAKE',
-                                    Say(robot, ["Please hold the drink, i'm gonna let it to.", "Please take the drink, i'll let it go"]),
+                                    Say(robot, ["Please hold the drink, i'm going let it to.", "Please take the drink, i'll let it go"]),
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
-                                    SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN),
-                                    transitions={'succeeded':'SAY_ENJOY',
-                                                 'failed'   :'SAY_ENJOY'})
+                                    SetGripper(robot, robot.leftArm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed':'CLOSE_AFTER_DROP'})
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP',
+                                    SetGripper(robot, robot.leftArm, gripperstate=1), #close
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed':'RESET_ARM'})
+            smach.StateMachine.add('RESET_ARM', 
+                                    ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    transitions={   'done':'SAY_ENJOY',
+                                                    'failed':'SAY_ENJOY'})
+
             
             smach.StateMachine.add( 'SAY_ENJOY',
-                                    Say(robot, ["Enjoy your drink!"]),
+                                    Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
                                     transitions={"spoken":"done"})
 
 class CocktailParty(smach.StateMachine):
@@ -533,6 +553,18 @@ class CocktailParty(smach.StateMachine):
                                             GrabMachine(robot.leftArm, robot, query_grabpoint),
                                             transitions={   "succeeded":"RETRACT_VISITED_2",
                                                             "failed":'PICKUP_DRINK' }) 
+                    # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
+                    smach.StateMachine.add( 'HUMAN_HANDOVER',
+                                            Human_handover(robot.leftArm,robot),
+                                            transitions={   'succeeded':'RESET_HEAD',
+                                                            'failed':'RESET_HEAD' })
+                    @smach.cb_interface(outcomes=["done"])
+                    def reset_head(*args, **kwargs):
+                        robot.head.reset_position()
+                        return "done"   
+                    smach.StateMachine.add( "RESET_HEAD", 
+                            smach.CBState(reset_head),
+                            transitions={"done":"RETRACT_VISITED_2"})
 
                     smach.StateMachine.add( "RETRACT_VISITED_2",
                                             Retract_facts(robot, [Compound("visited", "X")]),
@@ -547,7 +579,7 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you. Please take the drink from my hand", 
                                                         "I can't find you. I really don't like fluids, so please take the drink from my hand.",
-                                                        "I could not find you. Please just take the drink from my hand"]),
+                                                        "I could not find you. The drink is getting heavy, take it please!"]),
                                             transitions={   'spoken':'GOTO_INITIAL_FAIL' })
 
                     smach.StateMachine.add( 'HANDOVER_DRINK',
