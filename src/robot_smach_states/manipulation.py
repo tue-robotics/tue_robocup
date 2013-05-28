@@ -524,7 +524,6 @@ class SetGripper(smach.State):
         self.side = side
         self.robot = robot
         self.gripperstate = gripperstate
-        self.drop_from_frame = drop_from_frame
         self.grabpoint_query = grabpoint_query
         if self.side == self.robot.leftArm:
             self.end_effector_frame_id = "/grippoint_left"
@@ -549,9 +548,8 @@ class SetGripper(smach.State):
             result = False
 
         # ToDo: make sure things can get attached to the gripper in this state. Use userdata?
-        if self.drop_from_frame:
-            rospy.logwarn("drop_from_frame argument will become obsolete")
-            self.robot.reasoner.detach_all_from_gripper(self.drop_from_frame)
+        if self.gripperstate == ArmState.OPEN:
+            self.robot.reasoner.detach_all_from_gripper(self.end_effector_frame_id)
 
         # ToDo: check for failed in other states
         if result:

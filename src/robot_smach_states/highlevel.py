@@ -276,7 +276,7 @@ class GotoMeetingPoint(smach.State):
         # for now, take the first goal found
         goal_answer = reachable_goal_answers[0]
 
-        self.robot.speech.speak("I'm coming to the meeting point!", block=False)
+        self.robot.speech.speak("I'm coming to the meeting point!")
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
