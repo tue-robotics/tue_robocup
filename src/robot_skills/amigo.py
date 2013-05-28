@@ -234,6 +234,8 @@ if __name__ == "__main__":
 	amigo.head.send_goal(amigo.head.point(x,y,z))
     
     r = amigo.reasoner
+    q = amigo.reasoner.query
+    
     open_door   = lambda: r.assertz(r.state("door1", "open"))
     close_door  = lambda: r.assertz(r.state("door1", "close"))
     def insert_object(x,y,z):
