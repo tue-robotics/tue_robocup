@@ -252,7 +252,7 @@ class GrabMachine(smach.StateMachine):
                                      'failed'       :   'failed'})
         
             smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.grabpoint_query),
-                        transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'PREPARE_ORIENTATION','abort':'failed','target_lost':'failed'})
+                        transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
 
             smach.StateMachine.add('OPEN_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
                         transitions={'succeeded'    :   'UPDATE_OBJECT_POSE',
