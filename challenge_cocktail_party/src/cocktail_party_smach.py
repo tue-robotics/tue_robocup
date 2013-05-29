@@ -110,6 +110,7 @@ class WaitForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return "waiting"
+        rospy.sleep(3)
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
         wait_result = wait_machine.execute()
@@ -169,6 +170,7 @@ class LearnPersonName(smach.State):
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
+        rospy.loginfo("GOT HERE\n\n")
         self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))      
 
         self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
@@ -209,8 +211,8 @@ class Ask_drink(smach.State):
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
-        
-        self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        rospy.loginfo("GOT HERE")
+        self.response = self.get_drink_service("drink", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             self.robot.speech.speak("I just bring you a coke")
