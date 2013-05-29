@@ -102,7 +102,7 @@ class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
     def __init__(self, robot, initial_pose):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"]) 
         assert hasattr(robot, "base")
         assert hasattr(robot, "reasoner")
         assert hasattr(robot, "speech")
@@ -110,14 +110,8 @@ class StartChallengeRobust(smach.StateMachine):
         with self:
             smach.StateMachine.add( "INITIALIZE", 
                                     utility_states.Initialize(robot), 
-                                    transitions={   "initialized"   :"INIT_POSE",
+                                    transitions={   "initialized"   :"INSTRUCT_WAIT_FOR_DOOR",
                                                     "abort"         :"Aborted"})
-
-            smach.StateMachine.add('INIT_POSE',
-                                utility_states.Set_initial_pose(robot, initial_pose),
-                                transitions={   'done':'INSTRUCT_WAIT_FOR_DOOR',
-                                                'preempted':'Aborted',
-                                                'error':'Aborted'})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                     human_interaction.Say(robot, [  "I will now wait until the door is opened", 
@@ -137,7 +131,7 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add( "WAIT_FOR_DOOR", 
                                     reasoning.Ask_query_true(robot, dooropen_query),
                                     transitions={   "query_false":"ASSESS_DOOR",
-                                                    "query_true":"THROUGH_DOOR",
+                                                    "query_true":"INIT_POSE",
                                                     "waiting":"DOOR_CLOSED",
                                                     "preempted":"Aborted"})
 
@@ -147,10 +141,13 @@ class StartChallengeRobust(smach.StateMachine):
                                     human_interaction.Say(robot, "Door is closed, please open the door"),
                                     transitions={   "spoken":"ASSESS_DOOR"}) 
 
-            # If the door is open, amigo will say that it goes to the registration table
-            smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, ["Door is open!", "Lets start!"]),
-                                    transitions={   "spoken":"ENTER_ROOM"}) 
+            # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
+            # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
+            smach.StateMachine.add('INIT_POSE',
+                                utility_states.Set_initial_pose(robot, initial_pose),
+                                transitions={   'done':'ENTER_ROOM',
+                                                'preempted':'Aborted',
+                                                'error':'Aborted'})
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
@@ -200,7 +197,7 @@ class EnterArena(smach.StateMachine):
             goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
             waypoint_name = goal_answer["Waypoint"]
 
-            nav = navigation.NavigateGeneric(self.robot, goal_pose_2d=goal)
+            nav = navigation.NavigateGeneric(self.robot, goal_pose_2d=goal)  #, goal_area_radius=0.5)
             nav_result = nav.execute()
 
             #import ipdb; ipdb.set_trace()
