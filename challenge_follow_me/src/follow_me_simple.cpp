@@ -19,6 +19,8 @@
 // Carrot planner
 #include "tue_carrot_planner/carrot_planner.h"
 
+#include <map>
+
 using namespace std;
 
 
@@ -75,11 +77,11 @@ void findOperator(wire::Client& client, bool lost = true) {
     //! It is allowed to call the operator once per section (points for the section will be lost)
     if (lost) {
         amigoSpeak("I have lost my operator, can you please stand in front of me");
-    }
 
-    //! Give the operator some time to move to the robot
-    ros::Duration wait_for_operator(7.0);
-    wait_for_operator.sleep();
+        //! Give the operator some time to move to the robot
+        ros::Duration wait_for_operator(7.0);
+        wait_for_operator.sleep();
+    }
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
@@ -304,8 +306,10 @@ bool memorizeOperator() {
  */
 void speechCallback(std_msgs::String res) {
 
+    // TODO: If this becomes problematic, add distance to operator check
+
     //amigoSpeak(res.data);
-    if (!itp2_ && res.data.find("please leave the elevator") != std::string::npos) {
+    if (!itp2_ && !itp3_ && res.data.find("please leave the elevator") != std::string::npos) {
         ROS_WARN("Received command: %s", res.data.c_str());
         itp2_ = true;
         ros::NodeHandle nh;
@@ -381,6 +385,99 @@ bool leftElevator(pbl::Gaussian& pos)
     cov.zeros();
     pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
 
+
+    //! Settings
+    double min_dist_exit = 1.5;
+    double wdt_robot = 0.75;
+    unsigned int min_n_beams = 2.0*atan2(wdt_robot/2, min_dist_exit) / laser_scan_.angle_increment;
+
+
+    //! Administration
+    unsigned int i = 0;
+    map<unsigned int, double> beam_exit_distance_map;
+
+    //! Get candidate exits
+    ROS_INFO("Start looking for an elevator exit...");
+    while (i < laser_scan_.ranges.size()-1)
+    {
+        unsigned int i_first = i;
+        unsigned int i_current = i;
+        double min_distance_segment = 0.0;
+
+        //! Determine size of segment to possible exit
+        while (laser_scan_.ranges[i_current] > min_dist_exit)
+        {
+            if (i_current == i_first || laser_scan_.ranges[i_current] < min_distance_segment)
+            {
+                min_distance_segment = laser_scan_.ranges[i_current];
+            }
+            ++i_current;
+        }
+
+        //! Store most promosing segment
+        if (i_current-i_first > min_n_beams)
+        {
+            beam_exit_distance_map[(i_first+i_current)/2] = min_distance_segment;
+        }
+
+        i = ++i_current;
+
+    }
+
+    //! Determine most likely candidate
+    ROS_INFO("Finished iterating over laser data");
+
+    // Limited distance to keep the velocity low
+    double distance_drive = 0.1;
+    if (beam_exit_distance_map.size() == 1)
+    {
+
+        ROS_INFO("One possible exit");
+        double angle_exit = laser_scan_.angle_min + beam_exit_distance_map.begin()->first * laser_scan_.angle_increment;
+        ROS_INFO(" angle towards exit is %f", angle_exit);
+
+        pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
+        ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, beam_exit_distance_map.begin()->second);
+    } else if (beam_exit_distance_map.size() > 1)
+    {
+
+        ROS_INFO("%zu candidate exits", beam_exit_distance_map.size());
+
+        //! Iterate over map and get segment with maximum distance
+        double max_distance = 0.0;
+        map<unsigned int, double>::const_iterator it_best = beam_exit_distance_map.begin();
+        map<unsigned int, double>::const_iterator it = beam_exit_distance_map.begin();
+        for (; it != beam_exit_distance_map.end(); ++it)
+        {
+            if (it->second > max_distance)
+            {
+                it_best = it;
+                max_distance = it->second;
+            }
+        }
+
+        ROS_INFO(" found most probable exit");
+        double angle_exit = laser_scan_.angle_min + it_best->first * laser_scan_.angle_increment;
+        ROS_INFO(" angle towards exit is %f", angle_exit);
+
+        pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
+        ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, it_best->second);
+
+    } else
+    {
+        ROS_INFO("No candidate exits found, just turn");
+        pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
+        moveTowardsPosition(pos, 1);
+        return false;
+
+    }
+
+    //! Let robot drive the right direction
+    moveTowardsPosition(pos, 0);
+    return false;
+
+    /*
+
     //! Settings
     unsigned int step_n_beams = 10;
     double width_robot = 0.75;
@@ -447,6 +544,8 @@ bool leftElevator(pbl::Gaussian& pos)
     //! No exit
     ROS_WARN("No free area with width %f [m] and minimal free distance of %f [m] found", width_robot, min_distance_to_exit);
     return false;
+
+    */
 
 
 }
@@ -530,6 +629,8 @@ int main(int argc, char **argv) {
     if (!memorizeOperator()) {
 
         ROS_ERROR("Learning operator failed: AMIGO will not be able to recognize the operator");
+        ros::Duration wait_for_operator(3.0);
+        wait_for_operator.sleep();
         findOperator(client, false);
 
     } else {
@@ -604,7 +705,6 @@ int main(int argc, char **argv) {
                 unsigned int n_sleeps = 0;
                 unsigned int freq = 20;
                 unsigned int N_SLEEPS_TOTAL = time_rotation*freq;
-                ROS_INFO("Pause time is %f", 1.0/(double)freq);
                 ros::Duration pause(1.0/(double)freq);
                 
                 while (n_sleeps < N_SLEEPS_TOTAL) {
@@ -629,19 +729,27 @@ int main(int argc, char **argv) {
                 sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
             }
 
-            //! Leave elevator (TODO: now function always returns false)
+            //! Leave elevator (FUNCTION DOES DRIVING)
             if (leftElevator(pos) || n_checks_left_elevator > T_LEAVE_ELEVATOR*FOLLOW_RATE)
             {
-                //! Rotate 90 deg
-                pos = pbl::Gaussian(pbl::Vector3(-2, 0, 0), cov);
-                moveTowardsPosition(pos, 2);
-                ros::Duration pause_short(time_rotation/2);
-                pause_short.sleep();
+
+                //! Rotate for 90 deg (in steps since only small angles allowed)
+                pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
+                unsigned int n_sleeps = 0;
+                unsigned int freq = 20;
+                unsigned int N_SLEEPS_TOTAL = time_rotation/2*freq;
+                ros::Duration pause(1.0/(double)freq);
+
+                while (n_sleeps < N_SLEEPS_TOTAL) {
+                    moveTowardsPosition(pos, 2);
+                    pause.sleep();
+                    ++n_sleeps;
+                }
 
                 //! Stand still and find operator
                 pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
                 moveTowardsPosition(pos, 0);
-                findOperator(client,false);
+                findOperator(client, false);
 
                 //! Next state
                 itp2_ = false;
@@ -649,8 +757,6 @@ int main(int argc, char **argv) {
             }
             else
             {
-                //! Continue driving towards free direction
-                moveTowardsPosition(pos, 0);
                 ROS_INFO("n_checks_left_elevator = %u/%f", n_checks_left_elevator, T_LEAVE_ELEVATOR*FOLLOW_RATE);
                 ++n_checks_left_elevator;
             }
