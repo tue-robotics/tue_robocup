@@ -408,7 +408,7 @@ class Base(object):
             return True
 
         
-    def get_base_goal_poses(self, target_point_stamped, cost_threshold_norm, x_offset, y_offset):
+    def get_base_goal_poses(self, target_point_stamped, x_offset, y_offset, cost_threshold_norm=0.2):
 
         request = amigo_inverse_reachability.srv.GetBaseGoalPosesRequest()
         

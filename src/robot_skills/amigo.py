@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
     def airgo(x,y,z, xoffset=0.5, yoffset=0.1):
         target = amigo.base.point(x,y,z, stamped=True)
-        ik_poses = amigo.base.get_base_goal_poses(target, 0.2, xoffset, yoffset)
+        ik_poses = amigo.base.get_base_goal_poses(target, xoffset, yoffset)
         amigo.base.send_goal(ik_poses[0].pose.position, ik_poses[0].pose.orientation)
 	amigo.head.send_goal(amigo.head.point(x,y,z))
     
