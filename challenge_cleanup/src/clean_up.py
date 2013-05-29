@@ -127,15 +127,22 @@ class Cleanup(smach.StateMachine):
 
             smach.StateMachine.add( "START_CHALLENGE",
                                     states.StartChallengeRobust(robot, "initial"), 
-                                    transitions={   "Done":"ASK_CLEANUP", 
+                                    transitions={   "Done":"GOTO_MEETING_POINT", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"CANNOT_GOTO_MEETINGPOINT"})
+
+            smach.StateMachine.add('GOTO_MEETING_POINT',
+                                    states.GotoMeetingPoint(robot),
+                                    transitions={   "found":"ASK_CLEANUP", 
+                                                    "not_found":"ASK_CLEANUP", 
+                                                    "no_goal":"ASK_CLEANUP",  # We are in the arena, so the current location is fine
+                                                    "all_unreachable":"ASK_CLEANUP"})    # We are in the arena, so the current location is fine
 
             smach.StateMachine.add("CANNOT_GOTO_MEETINGPOINT", 
                                     states.Say(robot, [ "I can't find a way to the meeting point. Please teach me the correct position and clear the path to it", 
                                                         "I couldn't even get to my first waypoint. May I try again?", 
                                                         "This ended before I could get started, because my first waypoint is unreachable."]),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'ASK_CLEANUP'})
 
             smach.StateMachine.add("ASK_CLEANUP",
                                 Ask_cleanup(robot),
