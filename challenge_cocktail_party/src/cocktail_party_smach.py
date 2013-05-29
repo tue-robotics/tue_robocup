@@ -343,6 +343,7 @@ class LookForDrink(smach.State):
             return "found"
         else:
             # have not found the drink, so let's keep looking
+            self.robot.speech.speak("Did not find anything, keep looking")
             return "looking"
 
 class LookForPerson(smach.State):
