@@ -401,7 +401,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             look_point.point = self.robot.base.point(x,y)
             pose = util.msg_constructors.Quaternion(z=1.0)
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, self.x_offset, self.y_offset)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
             if base_poses_for_point[0].pose.position.x == 0 and base_poses_for_point[0].pose.position.y ==0:
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
@@ -878,7 +878,7 @@ class Determine_goal(smach.State):
             #     for ROI in possible_ROIs:
             look_point = self.robot.base.point(1,0,stamped=True)
             # ToDo: Parameterize offsets
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, 0.5, 0.2)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
             if base_poses_for_point:
                 for base_goal_pose in base_poses_for_point:
                     # Convert to x, y, phi
@@ -899,7 +899,7 @@ class Determine_goal(smach.State):
             look_point.point.y = y
             look_point.point.z = z
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.2, 0.5, 0.2)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
 
             if base_poses_for_point:
                 for base_goal_pose in base_poses_for_point:

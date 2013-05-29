@@ -82,7 +82,7 @@ class Prepare_orientation(smach.State):
             
             grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)
             
-            desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, 0.2, self.grasp_distance_x, self.grasp_distance_y)
+            desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, self.grasp_distance_x, self.grasp_distance_y)
             
             ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
             if not desired_base_poses_MAP:
