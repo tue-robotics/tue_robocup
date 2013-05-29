@@ -117,9 +117,8 @@ class Cleanup(smach.StateMachine):
                                 Compound("instance_of",         "Dispose_to_object","Disposal_type"), #Find objects of that are of type trashbin
                                 Compound("point_of_interest",   "Dispose_to_object", Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
-        #Instead of dumping in a trashbin in possibly breaking something, handover to a human at a meeting point.
-        # query_dropoff_loc_backup = Conjunction( Compound("instance_of", "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
-        #                                             Compound("point_of_interest",  "Dispose_to_object",  Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
+        query_dropoff_loc_backup = Conjunction( Compound("instance_of", "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
+                                                    Compound("point_of_interest",  "Dispose_to_object",  Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
 
         meeting_point = Conjunction(    Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
@@ -283,18 +282,18 @@ class Cleanup(smach.StateMachine):
                                                     'target_lost':'DONT_KNOW_DROP'})
             
             smach.StateMachine.add("DONT_KNOW_DROP", 
-                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. I'll just give it to a human, they'll know what to do!"),
-                                    transitions={   'spoken':'GOTO_HUMAN_DROPOFF'}) #TODO: Dont abort, do something smart!
+                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trashbin."),
+                                    transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
 
-            # smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
-            #                         states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),
-            #                         transitions={   'succeeded':'DROP_OBJECT',
-            #                                         'failed':'DROP_OBJECT',
-            #                                         'target_lost':'DONT_KNOW_DROP_BACKUP'})
+            smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
+                                    states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),
+                                    transitions={   'succeeded':'DROP_OBJECT',
+                                                    'failed':'DROP_OBJECT',
+                                                    'target_lost':'DONT_KNOW_DROP_BACKUP'})
 
-            # smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
-            #                         states.Say(robot, "Now that I fetched this, I don't know where to put it. Silly me!"),
-            #                         transitions={   'spoken':'GOTO_HUMAN_DROPOFF'})
+            smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
+                                    states.Say(robot, "Now that I fetched this, I don't know where to put it. Silly me!"),
+                                    transitions={   'spoken':'GOTO_HUMAN_DROPOFF'})
 
             smach.StateMachine.add( 'GOTO_HUMAN_DROPOFF', states.NavigateGeneric(robot, goal_query=meeting_point),
                                     transitions={   "arrived":"SAY_PLEASE_TAKE",

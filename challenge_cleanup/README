@@ -26,11 +26,25 @@ amigo3:
 
     rosrun challenge_cleanup clean_up.py
 
+WHAT IF IT DOESN'T WORK?
+The clean-up challenge is dependent some knowledge. 
+First of all, the knowledbe base (KB) must know where every type/class of object should be cleaned up to. 
+This is done via the 'storage_class'-predicate: 
+ 'storage_class(can, trashbin)'. to state  that something of the can class should be stored at something of the class 'trashbin'.
+
+The fact that some object objXXX in the worldmodel is an instance of class is asserted to the worldmodel via perception. 
+It can be queried via the 'instance_of'-predicate.
+Classes of objects can also be subclasses of another class, so you can state 'storage_class' for a general class like 'stuff': 'storage_class(stuff, desk)', 
+and also state that, say, a 'rubiks'-cube is a subclass of 'stuff'. 
+This way, the reasoner deduces that the 'storage_class' of 'rubiks' is 'desk'. 
+
+Then, the KB also has to know where to find a 'desk' or 'trashbin'. 
+The KB holds dozens of 'point_of_interest'-predicates, e.g. 'point_of_interest(robotics_testlab_A, _, trashbin1,         point_3d(6.22,   0.78,   0.8)).'
+here, 'trashbin1' is the name of the point_of_interest. 
+The KB also holds knowledge like 'instance_of(robotics_testlab_A, _, trashbin1, trashbin).', which states that trashbin1 is an instance of trashbin. 
+
+The clean-up challenge python file defines all of its queries near the top of the file. 
+
 TIP of the day: use 
 $ rostopic pub /speech_cleanup/output std_msgs/String 'livingroom' --once; rostopic pub /speech_yesno/output std_msgs/String '!!str yes' --once
 to test the exec
-
----------------------------------------
-BUGS: Remove bug if fixed:
-
-- No meetingpoints defined for tue_testlab-environment. --> code DONE, test needed.
