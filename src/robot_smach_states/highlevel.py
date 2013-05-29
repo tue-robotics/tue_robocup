@@ -152,16 +152,8 @@ class StartChallengeRobust(smach.StateMachine):
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
                                     EnterArena(robot),
-                                    transitions={   "done":"GOTO_MEETING_POINT" })
-
-            # TODO: Get this out of here and move it to the challenge itself. All challenges need a robust start, 
-            # but not all challenges need to go to a meeting point (e.g. the emergency challenge)
-            smach.StateMachine.add('GOTO_MEETING_POINT',
-                                    GotoMeetingPoint(robot),
-                                    transitions={   "found":"Done", 
-                                                    "not_found":"ENTER_ROOM", 
-                                                    "no_goal":"Done",  # We are in the arena, so the current location is fine
-                                                    "all_unreachable":"Done"})    # We are in the arena, so the current location is fine
+                                    transitions={   "done":"Done" })
+            
 
 # Enter the arena with force drive as back-up
 class EnterArena(smach.StateMachine):
