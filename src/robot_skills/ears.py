@@ -6,6 +6,8 @@ import amigo_msgs.msg
 import actionlib
 from std_msgs.msg import String
 
+from speech_interpreter.srv import *
+
 import threading #used for locking fields edited by the subscriber of Ears
 
 #maybe put this in utils
@@ -40,8 +42,33 @@ class Ears:
                                          String, 
                                          self._listen)
 
+        #rospy.wait_for_service('/interpreter/ask_user', timeout = 2)
+        self.ask_user_service = rospy.ServiceProxy('/interpreter/ask_user', AskUser)
+
     def close(self):
         pass
+
+    def ask_user(self, type, max_num_tries = 3, time_out = rospy.Duration(10)):
+        req = AskUserRequest()
+        req.info_type = type
+        req.num_tries = max_num_tries
+        req.time_out = time_out
+
+        try:
+            resp = self.ask_user_service(req)
+
+            if not resp.values:
+                return None
+            elif len(resp.values) == 1:
+                return resp.values[0]
+            else:
+                answer = {}
+                for i in range(len(resp.keys)):
+                    answer[resp.keys[i]] = resp.values[i]
+                return answer
+        except rospy.ServiceException as e:
+            rospy.logerr("Could not connect to speech_interpreter: " + str(e))
+            return None
     
     @synchronized(_lock)    
     def _listen(self, s):
