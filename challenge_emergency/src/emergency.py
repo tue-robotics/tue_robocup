@@ -415,7 +415,12 @@ class Navigate_to_queryoutcome_point_emergency(states.Navigate_abstract):
             pose = states.util.msg_constructors.Quaternion(z=1.0)
 
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.7, 0.0)
-            base_pose_for_point = base_poses_for_point[0]
+            if base_pose_for_point:
+                base_pose_for_point = base_poses_for_point[0]
+            else:
+                rospy.logerr("IK returned empty pose.")
+                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
@@ -473,6 +478,26 @@ class Register(smach.State):
         self.get_picture = rospy.ServiceProxy('virtual_cam/cheese', cheese)
 
     def execute(self, userdata=None):    
+
+        #First move head to look at person where face is detected
+        person_query = Conjunction( 
+                            Compound("current_person","ObjectID"),
+                            Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
+
+        answers = self.robot.reasoner.query(person_query)
+
+        if not answers:            
+            rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
+            pos, rot = self.robot.base.get_location()
+            x = pos.x
+            y = pos.y
+        else:
+            possible_locations = [( float(answer["X"]), 
+                                    float(answer["Y"]), 
+                                    float(answer["Z"])) for answer in answers]
+
+            x,y,z = possible_locations[0]
+        return 'finished'
 
         # #First move head to look at person where face is detected
         # person_query = Conjunction( 
