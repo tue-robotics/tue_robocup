@@ -100,7 +100,7 @@ class Perception(object):
         return response
 
     '''Face learning'''
-    def learn_person(self, name, n_models = 20, view = 'front', publish_while_learning = False):
+    def learn_person(self, name, n_models = 10, view = 'front', publish_while_learning = False):
         '''
         Maintainer: ziyang,
 
