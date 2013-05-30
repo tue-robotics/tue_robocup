@@ -49,6 +49,7 @@ class Learn_Person(smach.State):
                             'Now please look at my face, till I say done one more time.']
 
         # learn left face
+        self.robot.speech.speak('Please be patient, while I try to learn your face.')
         self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
