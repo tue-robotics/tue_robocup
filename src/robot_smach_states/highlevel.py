@@ -36,68 +36,6 @@ class Check_object_found_before(smach.State):
             return 'object_found'     
 
 
-
-# class StartChallenge(smach.StateMachine):
-#     """Initialize, wait for the door to be opened and drive inside"""
-
-#     def __init__(self, robot, initial_pose, goto_query):
-#         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
-#         assert hasattr(robot, "base")
-#         assert hasattr(robot, "reasoner")
-#         assert hasattr(robot, "speech")
-
-#         with self:
-#             smach.StateMachine.add( "INITIALIZE", 
-#                                     utility_states.Initialize(robot), 
-#                                     transitions={   "initialized"   :"INIT_POSE",
-#                                                     "abort"         :"Aborted"})
-
-#             smach.StateMachine.add('INIT_POSE',
-#                                 utility_states.Set_initial_pose(robot, initial_pose),
-#                                 transitions={   'done':'INSTRUCT_WAIT_FOR_DOOR',
-#                                                 'preempted':'Aborted',
-#                                                 'error':'Aborted'})
-
-#             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
-#                                     human_interaction.Say(robot, [  "I will now wait until the door is opened", 
-#                                                                     "Knockknock, may I please come in?"]),
-#                                     transitions={   "spoken":"ASSESS_DOOR"})
-
-
-#              # Start laser sensor that may change the state of the door if the door is open:
-#             smach.StateMachine.add( "ASSESS_DOOR", 
-#                                     perception.Read_laser(robot, "entrance_door"),
-#                                     transitions={   "laser_read":"WAIT_FOR_DOOR"})       
-            
-#             # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-#             dooropen_query = robot.reasoner.state("entrance_door","open")
-        
-#             # Query if the door is open:
-#             smach.StateMachine.add( "WAIT_FOR_DOOR", 
-#                                     reasoning.Ask_query_true(robot, dooropen_query),
-#                                     transitions={   "query_false":"ASSESS_DOOR",
-#                                                     "query_true":"THROUGH_DOOR",
-#                                                     "waiting":"DOOR_CLOSED",
-#                                                     "preempted":"Aborted"})
-
-#             # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-#             # in perception.py, amigo will speak and check again if the door is open
-#             smach.StateMachine.add( "DOOR_CLOSED",
-#                                     human_interaction.Say(robot, "Door is closed, please open the door"),
-#                                     transitions={   "spoken":"ASSESS_DOOR"}) 
-
-#             # If the door is open, amigo will say that it goes to the registration table
-#             smach.StateMachine.add( "THROUGH_DOOR",
-#                                     human_interaction.Say(robot, "Door is open, so I will start my task"),
-#                                     transitions={   "spoken":"ENTER_ROOM"}) 
-
-#             smach.StateMachine.add('ENTER_ROOM',
-#                                     navigation.Navigate_to_queryoutcome(robot, goto_query, X="X", Y="Y", Phi="Phi"),
-#                                     transitions={   "arrived":"Done", 
-#                                                     "preempted":"Aborted", 
-#                                                     "unreachable":"Failed", 
-#                                                     "goal_not_defined":"Failed"})
-
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
@@ -131,7 +69,7 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add( "WAIT_FOR_DOOR", 
                                     reasoning.Ask_query_true(robot, dooropen_query),
                                     transitions={   "query_false":"ASSESS_DOOR",
-                                                    "query_true":"INIT_POSE",
+                                                    "query_true":"DOOR_OPEN",
                                                     "waiting":"DOOR_CLOSED",
                                                     "preempted":"Aborted"})
 
@@ -140,6 +78,10 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add( "DOOR_CLOSED",
                                     human_interaction.Say(robot, "Door is closed, please open the door"),
                                     transitions={   "spoken":"ASSESS_DOOR"}) 
+
+            smach.StateMachine.add( "DOOR_OPEN",
+                                    human_interaction.Say(robot, "Door is open!"),
+                                    transitions={   "spoken":"INIT_POSE"}) 
 
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
             # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
@@ -222,12 +164,8 @@ class EnterArena(smach.StateMachine):
         with self:
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, "Door is open, so I will start my task"),
-                                    transitions={   "spoken":"SAY_ENTER_ROOM"}) 
-
-            smach.StateMachine.add("SAY_ENTER_ROOM",
-                                    human_interaction.Say(robot, "I am about to enter the arena!", block=False),
-                                    transitions={   "spoken":"ENTER_ROOM"})
+                                    human_interaction.Say(robot, "I will start my task now", block=True),
+                                    transitions={   "spoken":"ENTER_ROOM"}) 
 
             smach.StateMachine.add('ENTER_ROOM',
                                     self.GotoEntryPoint(robot),
