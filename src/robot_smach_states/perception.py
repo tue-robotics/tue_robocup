@@ -44,8 +44,8 @@ class Learn_Person(smach.State):
 
         rospy.loginfo('Get user name {0}'.format(name_to_learn))
 
-        speech_sentence = [ 'Please look at my left arm, until I say done',
-                            'Now look at my right arm, please wait until I say done',
+        speech_sentence = [ 'Please look at my left arm, until I am finished learning.',
+                            'Now look at my right arm, please wait I am finished learning',
                             'Now please look at my face, till I say done one more time.']
 
         # learn left face
@@ -56,7 +56,7 @@ class Learn_Person(smach.State):
         result = self.robot.perception.learn_person(name_to_learn, view = 'left')
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
-        self.robot.speech.speak("Done!")
+        self.robot.speech.speak("Finished learning your right side")
 
         # learn right face
         self.robot.leftArm.reset_arm()
@@ -66,7 +66,7 @@ class Learn_Person(smach.State):
         result = self.robot.perception.learn_person(name_to_learn, view = 'right')
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "right")))
-        self.robot.speech.speak("Done!")
+        self.robot.speech.speak("Finished learning your left features")
 
         # learn front face
         self.robot.rightArm.reset_arm()
@@ -74,9 +74,9 @@ class Learn_Person(smach.State):
         result = self.robot.perception.learn_person(name_to_learn, view = 'front')
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
-        self.robot.speech.speak("Done!")
-
         self.robot.speech.speak("Learning succeeded. I know how you look already.")
+        self.robot.speech.speak("Now I should recognize you, next time!")
+        
         return 'face_learned'
 
 # @util.deprecated
