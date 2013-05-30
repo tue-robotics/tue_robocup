@@ -474,26 +474,26 @@ class Register(smach.State):
 
     def execute(self, userdata=None):    
 
-        #First move head to look at person where face is detected
-        person_query = Conjunction( 
-                            Compound("current_person","ObjectID"),
-                            Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
+        # #First move head to look at person where face is detected
+        # person_query = Conjunction( 
+        #                     Compound("current_person","ObjectID"),
+        #                     Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
 
-        answers = self.robot.reasoner.query(person_query)
+        # answers = self.robot.reasoner.query(person_query)
 
-        if not answers:            
-            rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
-            pos, rot = self.robot.base.get_location()
-            x = pos.x
-            y = pos.y
-        else:
-            possible_locations = [( float(answer[self.X]), 
-                                    float(answer[self.Y]), 
-                                    float(answer[self.Z])) for answer in answers]
+        # if not answers:            
+        #     rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
+        #     pos, rot = self.robot.base.get_location()
+        #     x = pos.x
+        #     y = pos.y
+        # else:
+        #     possible_locations = [( float(answer["X"]), 
+        #                             float(answer["Y"]), 
+        #                             float(answer["Z"])) for answer in answers]
 
-            x,y,z = possible_locations[0]
-            lookat_point = self.head.point(x,y,z)
-            self.head.send_goal(lookat_point)
+        #     x,y,z = possible_locations[0]
+        #     lookat_point = self.robot.head.point(x,y,z)
+        #     self.head.send_goal(lookat_point)
 
         # Register person
         rospy.loginfo("Register person in file ....")
@@ -569,6 +569,37 @@ class Run_pdf_creator(smach.State):
         rospy.loginfo("PDF is created on usb-stick")
         
         return "done"
+
+
+class Look_at_person(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['finished'])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):    
+
+        #First move head to look at person where face is detected
+        person_query = Conjunction( 
+                            Compound("current_person","ObjectID"),
+                            Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
+
+        answers = self.robot.reasoner.query(person_query)
+
+        if not answers:            
+            rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
+            pos, rot = self.robot.base.get_location()
+            x = pos.x
+            y = pos.y
+        else:
+            possible_locations = [( float(answer["X"]), 
+                                    float(answer["Y"]), 
+                                    float(answer["Z"])) for answer in answers]
+
+            x,y,z = possible_locations[0]
+            lookat_point = self.robot.head.point(x,y,z)
+            self.robot.head.send_goal(lookat_point)
+        return 'finished'
 
 
 def setup_statemachine(robot):
@@ -759,7 +790,7 @@ def setup_statemachine(robot):
                                 Check_persons_found(robot),
                                 transitions={'no_person_found':'NO_PERSON_FOUND',
                                              'person_unreachable':'SAY_PERSON_UNREACHABLE',
-                                             'person_found':'DETECT_PEOPLE'})
+                                             'person_found':'LOOK_AT_PERSON'})
 
         smach.StateMachine.add("NO_PERSON_FOUND",
                                 states.Say(robot,"I do not see people over here, I will try the next location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
@@ -769,13 +800,18 @@ def setup_statemachine(robot):
                                 Check_persons_found(robot),
                                 transitions={'no_person_found':'SAY_FIND_PEOPLE',
                                              'person_unreachable':'SAY_PERSON_UNREACHABLE',
-                                             'person_found':'DETECT_PEOPLE'})
+                                             'person_found':'LOOK_AT_PERSON'})
 
         smach.StateMachine.add("SAY_PERSON_UNREACHABLE",
                                 states.Say(robot,["I failed going to the desired person, I will ask my questions from here.", "Although I was not able to reach the person I want to speak, I will still ask you some questions."]),
-                                transitions={'spoken':'DETECT_PEOPLE'})
+                                transitions={'spoken':'LOOK_AT_PERSON'})
 
         ############### GET INFO STATUS PERSON ###############
+
+        # Look at person
+        smach.StateMachine.add('LOOK_AT_PERSON',
+                                    Look_at_person(robot),                          
+                                    transitions={'finished':'DETECT_PEOPLE'})   
 
         # People detection
         smach.StateMachine.add('DETECT_PEOPLE',
