@@ -41,9 +41,7 @@ from psi import *
 
 # Implement
 #   - Detect smoke
-#   - Detect people
-#   - Guiding person to exit
-#   - ..
+#   - Fix easy switching to environment (box around map)
 
 ##########################################
 ############## What to run: ##############
@@ -58,12 +56,11 @@ from psi import *
 # - roslaunch challenge_emergency start.launch    (launches parameter files of map with pdf_creator.cpp, waits for service call)
 # - rosrun challenge_emergency emergency.py
 
-
-
 #############################################################
 ## Locations that must be defined in database on forehand: ##
 #############################################################
 # - initial
+# - entry_point
 # - meeting_point
 # - other_side_room
 # - exit
@@ -221,8 +218,8 @@ class Looking_for_people(smach.State):
         
         rospy.loginfo("Starting face segmentation")
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
-        rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
-        rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
+        #rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
+        #rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
         if self.response_start.error_code == 0:
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
@@ -583,79 +580,33 @@ def setup_statemachine(robot):
     with sm:
 
         ######################################################
-        ##################### INITIALIZE #####################             
+        ##################### ENTER ROOM #####################
         ######################################################
 
-        smach.StateMachine.add('INITIALIZE',
-                                    states.Initialize(robot),
-                                    transitions={   'initialized' : 'AT_FRONT_OF_DOOR',  ##'AT_FRONT_OF_DOOR','DETECT_PEOPLE'
-                                                    'abort'       : 'Aborted'})
-        
-        smach.StateMachine.add('AT_FRONT_OF_DOOR',
-                                    states.Say(robot, 'I will now check if the door is open or not'),
-                                    transitions={   'spoken':'STATE_DOOR'}) 
-
-        # Start laser sensor that may change the state of the door if the door is open:
-        smach.StateMachine.add('STATE_DOOR', 
-                                    states.Read_laser(robot, "entrance_door"),
-                                    transitions={'laser_read':'WAIT_FOR_DOOR'})       
-        
-        # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-        dooropen_query = Compound("state", "entrance_door", "open")
-        
-        # Query if the door is open:
-        smach.StateMachine.add('WAIT_FOR_DOOR', 
-                                    states.Ask_query_true(robot, dooropen_query),
-                                    transitions={   'query_false':'STATE_DOOR',
-                                                    'query_true':'INIT_POSE',
-                                                    'waiting':'DOOR_CLOSED',
-                                                    'preempted':'INIT_POSE'})
-
-        # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-        # in perception.py, amigo will speak and check again if the door is open
-        smach.StateMachine.add('DOOR_CLOSED',
-                                    states.Say(robot, 'Door is closed, please open the door'),
-                                    transitions={'spoken':'STATE_DOOR'}) 
-
-        ######################################################
-        ############ ENTER ROOM AND GO TO KITCHEN ############
-        ######################################################
-
-        # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
-        smach.StateMachine.add('INIT_POSE',
-                                    states.Set_initial_pose(robot, 'initial'),
-                                    transitions={   'done':'ENTER_ROOM',
-                                                    'preempted':'WAIT_FOR_DOOR',
-                                                    'error':'WAIT_FOR_DOOR'})
-
-        # # If the door is open, amigo will say that it goes to the registration table
-        # smach.StateMachine.add('THROUGH_DOOR',
-        #                             states.Say(robot, 'Door is open, so I will enter the room.'),
-        #                             transitions={'spoken':'ENTER_ROOM'}) 
-
-        # Enter the arena with force drive as back-up
-        smach.StateMachine.add('ENTER_ROOM',
-                                    states.EnterArena(robot),
-                                    transitions={   "done":"ENTERED_ROOM" })
-
+        # Start challenge via StartChallengeRobust
+        smach.StateMachine.add( "START_CHALLENGE",
+                                    states.StartChallengeRobust(robot, "initial"), 
+                                    transitions={   "Done":"ENTERED_ROOM", 
+                                                    "Aborted":"Aborted", 
+                                                    "Failed":"ENTERED_ROOM"})   # There is no transition to Failed in StartChallengeRobust (28 May)
+ 
         # If the door is open, amigo will say that it goes to the registration table
         smach.StateMachine.add('ENTERED_ROOM',
                                     states.Say(robot, 'Now I will go to the kitchen'),
                                     transitions={'spoken':'GO_TO_KITCHEN'}) 
+
+        ######################################################
+        #################### GO TO KITCHEN ###################
+        ######################################################
 
         query_kitchen_1 = Compound("waypoint", "kitchen_1", Compound("pose_2d", "X", "Y", "Phi"))
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_KITCHEN', 
                                     states.Navigate_to_queryoutcome(robot, query_kitchen_1, X="X", Y="Y", Phi="Phi"),
                                     transitions={   'arrived':'SAY_IS_THERE_SOMETHING_BURNING', 
-                                                    'preempted':'CLEAR_PATH_TO_KITCHEN', 
-                                                    'unreachable':'CLEAR_PATH_TO_KITCHEN', 
-                                                    'goal_not_defined':'CLEAR_PATH_TO_KITCHEN'})
-
-        # Amigo will say that it arrives at the registration table
-        smach.StateMachine.add('CLEAR_PATH_TO_KITCHEN',
-                                    states.Say(robot, "At my first attempt I could not go to the kitchen. Please clear the path, I will give it another try."),
-                                    transitions={'spoken':'GO_TO_KITCHEN_SECOND_TRY'}) 
+                                                    'preempted':'GO_TO_KITCHEN_SECOND_TRY', 
+                                                    'unreachable':'GO_TO_KITCHEN_SECOND_TRY', 
+                                                    'goal_not_defined':'GO_TO_KITCHEN_SECOND_TRY'})
 
         query_kitchen_2 = Compound("waypoint", "kitchen_2", Compound("pose_2d", "X", "Y", "Phi"))
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
@@ -666,7 +617,6 @@ def setup_statemachine(robot):
                                                     'unreachable':'FAIL_BUT_START_SEARCH', 
                                                     'goal_not_defined':'FAIL_BUT_START_SEARCH'})
 
-
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('FAIL_BUT_START_SEARCH',
                                     states.Say(robot, "I was still not able to go to the kitchen, but I sense that there is something burning. I will try to look for people."),
@@ -676,6 +626,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('SAY_IS_THERE_SOMETHING_BURNING',
                                     states.Say(robot, 'Is something burning?'),
                                     transitions={'spoken':'SAY_NO_FIRE'}) 
+
 
         ######################################################
         ################# DETECT FIRE/SMOKE ##################
