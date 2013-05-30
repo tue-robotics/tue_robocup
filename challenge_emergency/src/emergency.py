@@ -138,7 +138,7 @@ class Look_for_people_emergency(smach.State):
 
         if nav_result == "unreachable" or nav_result == "preempted":
 
-            self.robot.speech.speak("My first attempt to reach a location failed, I'll give it another try.")
+            self.robot.base.reset_costmap()
             nav_result2 = nav.execute()
 
             if nav_result2 == "unreachable" or nav_result2 == "preempted":
@@ -206,7 +206,7 @@ class Navigate_to_queryoutcome_emergency(states.Navigate_abstract):
 
 
 class Looking_for_people(smach.State):
-    def __init__(self, robot, tracking=True, rate=2):
+    def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "failed"])
 
         self.robot = robot
@@ -226,7 +226,7 @@ class Looking_for_people(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return "failed"
-        rospy.sleep(3)
+        rospy.sleep(2)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -343,7 +343,7 @@ class Check_persons_found(smach.State):
         nav_result = nav.execute()
 
         if nav_result == "unreachable" or nav_result == "preempted":
-            self.robot.speech.speak("My first attempt to reach a location failed, I'll give it another try.")
+            self.robot.base.reset_costmap()
             nav_result2 = nav.execute()
 
             if nav_result2 == "unreachable" or nav_result2 == "preempted":
@@ -472,7 +472,30 @@ class Register(smach.State):
 
         self.get_picture = rospy.ServiceProxy('virtual_cam/cheese', cheese)
 
-    def execute(self, userdata=None):      
+    def execute(self, userdata=None):    
+
+        #First move head to look at person where face is detected
+        person_query = Conjunction( 
+                            Compound("current_person","ObjectID"),
+                            Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
+
+        answers = self.robot.reasoner.query(person_query)
+
+        if not answers:            
+            rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
+            pos, rot = self.robot.base.get_location()
+            x = pos.x
+            y = pos.y
+        else:
+            possible_locations = [( float(answer[self.X]), 
+                                    float(answer[self.Y]), 
+                                    float(answer[self.Z])) for answer in answers]
+
+            x,y,z = possible_locations[0]
+            lookat_point = self.head.point(x,y,z)
+            self.head.send_goal(lookat_point)
+
+        # Register person
         rospy.loginfo("Register person in file ....")
         if self.person_no == 1:
             f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','w')  # 'a' means append
@@ -482,22 +505,19 @@ class Register(smach.State):
         #f = open('status.txt','a')
         if self.status == 0:
             f.write('person_%d;0;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
-            pos, rot = self.robot.base.get_location()
-            f.write('%.2f;%.2f \n' % (pos.x, pos.y))
+            f.write('%.2f;%.2f \n' % (x,y))
             f.close()
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % self.person_no
 
         elif self.status == 1:
             f.write('person_%d;1;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
-            pos, rot = self.robot.base.get_location()
-            f.write('%.2f;%.2f \n' % (pos.x, pos.y))
+            f.write('%.2f;%.2f \n' % (x, y))
             f.close()
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % self.person_no
 
         elif self.status == 2:
             f.write('fire_1;2;')  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
-            pos, rot = self.robot.base.get_location()
-            f.write('%.2f;%.2f \n' % (pos.x, pos.y))  # TODO ERIK exact location stove
+            f.write('%.2f;%.2f \n' % (x, y))  # TODO ERIK exact location stove
             f.close()
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/fire.png"
         
@@ -533,7 +553,7 @@ class MoveArmInitial(smach.State):
 
 
 class Run_pdf_creator(smach.State):
-    def __init__(self, robot, tracking=True, rate=2):
+    def __init__(self, robot):
         smach.State.__init__(self, outcomes=['done', 'failed'])
 
         self.robot = robot
@@ -587,15 +607,14 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE",
                                     states.StartChallengeRobust(robot, "initial"), 
-                                    transitions={   "Done":"ENTERED_ROOM", 
-                                                    "Aborted":"Aborted", 
-                                                    "Failed":"ENTERED_ROOM"})   # There is no transition to Failed in StartChallengeRobust (28 May)
- 
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('ENTERED_ROOM',
-                                    states.Say(robot, 'Now I will go to the kitchen'),
-                                    transitions={'spoken':'GO_TO_KITCHEN'}) 
+                                    transitions={   "Done":"SAY_GO_TO_KITCHEN", 
+                                                    "Aborted":"SAY_GO_TO_KITCHEN", 
+                                                    "Failed":"SAY_GO_TO_KITCHEN"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
+        smach.StateMachine.add("SAY_GO_TO_KITCHEN",
+                                    states.Say(robot, "I will go to the kitchen", block=False),
+                                    transitions={   "spoken":"GO_TO_KITCHEN"})
+        
         ######################################################
         #################### GO TO KITCHEN ###################
         ######################################################
@@ -620,7 +639,7 @@ def setup_statemachine(robot):
 
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('FAIL_BUT_START_SEARCH',
-                                    states.Say(robot, "I was still not able to go to the kitchen, but I sense that there is something burning. I will try to look for people."),
+                                    states.Say(robot, "I was still not able to go to the kitchen, but I sense that there is something burning. I will try to look for people.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                     transitions={'spoken':'FIND_PEOPLE'}) 
 
         # Say that something is burning
@@ -715,15 +734,14 @@ def setup_statemachine(robot):
 
         # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
         smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
-                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location."),
+                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
 
         ############ DRIVE TO PREDEFINED LOCATIONS ###########
-        
 
         # Start people detection
         smach.StateMachine.add("SAY_START_PEOPLE_DETECTION",
-                                states.Say(robot,"I will start my perception"),
+                                states.Say(robot,"I will start my perception", block=False),
                                 transitions={'spoken':'START_PEOPLE_DETECTION'})
 
         smach.StateMachine.add("START_PEOPLE_DETECTION",
@@ -733,7 +751,7 @@ def setup_statemachine(robot):
 
         # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
         smach.StateMachine.add("FAILED_PERCEPTION",
-                                states.Say(robot,"I failed starting perception, maybe more luck at the next location."),
+                                states.Say(robot,"I failed starting perception, maybe more luck at the next location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
 
 
@@ -744,7 +762,7 @@ def setup_statemachine(robot):
                                              'person_found':'DETECT_PEOPLE'})
 
         smach.StateMachine.add("NO_PERSON_FOUND",
-                                states.Say(robot,"I do not see people over here, I will try the next location."),
+                                states.Say(robot,"I do not see people over here, I will try the next location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
 
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_MORE_UNREGISTERED_PEOPLE",
@@ -787,7 +805,7 @@ def setup_statemachine(robot):
 
         # Person is not okay:
         smach.StateMachine.add('SAY_REGISTER_NOT_OKAY',
-                                    states.Say(robot, 'Okay, I will register your position and take a picture so the fire department is able to find you.'),
+                                    states.Say(robot, 'Okay, I will register your position and take a picture so the fire department is able to find you.', block=False),
                                     transitions={'spoken':'REGISTER_PERSON_NOT_OKAY'})     
 
         smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
@@ -805,7 +823,7 @@ def setup_statemachine(robot):
 
         # Person is ok and needs no assistance to exit
         smach.StateMachine.add('SAY_REGISTER_OKAY_EXIT_BY_THEMSELVES',
-                                    states.Say(robot, 'I will register your position and take a picture.'),
+                                    states.Say(robot, 'I will register your position and take a picture.', block=False),
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES',
@@ -823,7 +841,7 @@ def setup_statemachine(robot):
 
         # Person is ok and needs assistance to exit
         smach.StateMachine.add('SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES',
-                                    states.Say(robot, 'Before escorting you to the exit, I will first register your position and take a picture.'),
+                                    states.Say(robot, 'Before escorting you to the exit, I will first register your position and take a picture.', block=False),
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
@@ -838,7 +856,7 @@ def setup_statemachine(robot):
         ################### GUIDE TO EXIT ####################
 
         smach.StateMachine.add('MOVE_ARM_BACK_SAY',
-                                    states.Say(robot, 'I will turn around and move my arms to the back, so that you can hold on to them'),
+                                    states.Say(robot, 'I will turn around and move my arms to the back, so that you can hold on to them', block=False),
                                     transitions={'spoken':'MOVE_ARM_BACK_TURN'})
 
         # Turn 360 degrees (will be 3/4 of a round)
@@ -931,7 +949,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add('SUCCEED_GO_TO_EXIT',
-                                    states.Say(robot, 'I will now save all the information I gathered in a PDFsvn file on a USB stick.'),
+                                    states.Say(robot, 'I will now save all the information I gathered in a PDF file on a USB stick.'),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK',
