@@ -115,7 +115,7 @@ class StartChallengeRobust(smach.StateMachine):
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                     human_interaction.Say(robot, [  "I will now wait until the door is opened", 
-                                                                    "Knockknock, may I please come in?"]),
+                                                                    "Knock knock, may I please come in?"]),
                                     transitions={   "spoken":"ASSESS_DOOR"})
 
 
@@ -131,7 +131,7 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add( "WAIT_FOR_DOOR", 
                                     reasoning.Ask_query_true(robot, dooropen_query),
                                     transitions={   "query_false":"ASSESS_DOOR",
-                                                    "query_true":"INIT_POSE",
+                                                    "query_true":"ENTER_ROOM",#"INIT_POSE",
                                                     "waiting":"DOOR_CLOSED",
                                                     "preempted":"Aborted"})
 
@@ -184,8 +184,6 @@ class EnterArena(smach.StateMachine):
             # for now, take the first goal found
             goal_answer = reachable_goal_answers[0]
 
-            self.robot.speech.speak("I am about to enter the arena!", block=False)
-
             goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
             waypoint_name = goal_answer["Waypoint"]
 
@@ -200,7 +198,7 @@ class EnterArena(smach.StateMachine):
             elif nav_result == "preempted":
                 return "not_found"
             elif nav_result == "arrived":
-                self.robot.speech.speak("I am in the arena", block=False)
+                rospy.logdebug("AMIGO should be in the arena")
                 self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
                 return "found"
             else: #goal not defined
@@ -225,7 +223,11 @@ class EnterArena(smach.StateMachine):
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add( "THROUGH_DOOR",
                                     human_interaction.Say(robot, "Door is open, so I will start my task"),
-                                    transitions={   "spoken":"ENTER_ROOM"}) 
+                                    transitions={   "spoken":"SAY_ENTER_ROOM"}) 
+
+            smach.StateMachine.add("SAY_ENTER_ROOM",
+                                    human_interaction.Say(robot, "I am about to enter the arena!", block=False),
+                                    transitions={   "spoken":"ENTER_ROOM"})
 
             smach.StateMachine.add('ENTER_ROOM',
                                     self.GotoEntryPoint(robot),
