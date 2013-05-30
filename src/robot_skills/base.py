@@ -395,6 +395,8 @@ class Base(object):
         if self.use_2d:
             try:
                 self.clear_service()
+                # Sleep for a while to ensure the map is cleared and obstacles are inserted again
+                rospy.sleep(rospy.Duration(2.0))
             except:
                 rospy.logerr("Clear costmap service does not return correctly")
             return True
