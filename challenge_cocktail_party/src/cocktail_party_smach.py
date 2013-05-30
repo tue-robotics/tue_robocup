@@ -170,8 +170,7 @@ class LearnPersonName(smach.State):
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
-        rospy.loginfo("GOT HERE\n\n")
-        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))      
+        self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))    
 
         self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
 
@@ -194,7 +193,7 @@ class LearnPersonName(smach.State):
 
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
-            self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
+            self.robot.speech.speak("That's horrible, did not get a name!")
             return "failed"
 
         serving_person = str(return_result[0]["Person"])
@@ -211,7 +210,6 @@ class Ask_drink(smach.State):
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
-        rospy.loginfo("GOT HERE")
         self.response = self.get_drink_service("drink", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
@@ -425,7 +423,7 @@ class LookForPerson(smach.State):
                 name_prob = prob
 
         if not name:
-            self.robot.speech.speak("Mmmmm, I don't know who you are. Moving on!")
+            self.robot.speech.speak("I don't know who you are. Moving on!")
             return "looking"        
 
         if name != serving_person:
