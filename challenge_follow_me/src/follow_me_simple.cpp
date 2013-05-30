@@ -33,7 +33,7 @@ const int N_MODELS = 2;                         // Number of models used for rec
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-const double T_LEAVE_ELEVATOR = 4.0;            // Time after which robot is assumed to be outside the elevator.
+const double T_LEAVE_ELEVATOR = 8.0;            // Time after which robot is assumed to be outside the elevator.
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
 // TODO: Check/test if confimation is needed: please leave the elevator
@@ -309,7 +309,7 @@ void speechCallback(std_msgs::String res) {
     // TODO: If this becomes problematic, add distance to operator check
 
     //amigoSpeak(res.data);
-    if (!itp2_ && !itp3_ && res.data.find("please leave the elevator") != std::string::npos) {
+    if (!itp2_ && !itp3_ && res.data == "elevator") { //res.data.find("elevator") != std::string::npos) {
         ROS_WARN("Received command: %s", res.data.c_str());
         itp2_ = true;
         ros::NodeHandle nh;
@@ -418,6 +418,7 @@ bool leftElevator(pbl::Gaussian& pos)
         if (i_current-i_first > min_n_beams)
         {
             beam_exit_distance_map[(i_first+i_current)/2] = min_distance_segment;
+            ROS_INFO("Found possible exit, %u beams", i_current-i_first);
         }
 
         i = ++i_current;
@@ -428,13 +429,13 @@ bool leftElevator(pbl::Gaussian& pos)
     ROS_INFO("Finished iterating over laser data");
 
     // Limited distance to keep the velocity low
-    double distance_drive = 0.1;
+    double distance_drive = 0.15; // TODO: Must be much larger
     if (beam_exit_distance_map.size() == 1)
     {
 
         ROS_INFO("One possible exit");
         double angle_exit = laser_scan_.angle_min + beam_exit_distance_map.begin()->first * laser_scan_.angle_increment;
-        ROS_INFO(" angle towards exit is %f", angle_exit);
+        ROS_INFO(" angle towards exit is %f, beam %u", angle_exit, beam_exit_distance_map.begin()->first);
 
         pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
         ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, beam_exit_distance_map.begin()->second);
@@ -591,7 +592,7 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Speech-to-text and text-to-speech
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
+    //ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
     pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -665,6 +666,9 @@ int main(int argc, char **argv) {
 
     ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
     amigoSpeak("I will now start following you");
+    
+    // Speech recognition
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// START MAIN LOOP
@@ -685,7 +689,7 @@ int main(int argc, char **argv) {
             // * * * * * * * * * * * * * * * * * * * * * * * * * * * ITP 2 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *//
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            double time_rotation = 5.0;
+            double time_rotation = 6.5;
 
             pbl::Matrix cov(3,3);
             cov.zeros();
@@ -737,7 +741,7 @@ int main(int argc, char **argv) {
                 pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
                 unsigned int n_sleeps = 0;
                 unsigned int freq = 20;
-                unsigned int N_SLEEPS_TOTAL = time_rotation/2*freq;
+                unsigned int N_SLEEPS_TOTAL = 2.0*time_rotation/3.0*freq;
                 ros::Duration pause(1.0/(double)freq);
 
                 while (n_sleeps < N_SLEEPS_TOTAL) {
