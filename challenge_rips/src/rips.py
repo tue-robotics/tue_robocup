@@ -141,8 +141,8 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-                
-        smach.StateMachine.add('INITIALIZE',
+
+        smach.StateMachine.add('INITIALIZE_FIRST',
                                 states.Initialize(robot),
                                 transitions={   'initialized':'OPENING_GRIPPER',
                                                 'abort':'Aborted'})
@@ -162,49 +162,20 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('CLOSE_GRIPPER',
                                     states.SetGripper(robot, robot.leftArm, gripperstate=1),
-                                    transitions={'succeeded':'AT_FRONT_OF_DOOR',
-                                                 'failed':'AT_FRONT_OF_DOOR'})
+                                    transitions={'succeeded':'START_ACTUAL_CHALLENGE',
+                                                 'failed':'START_ACTUAL_CHALLENGE'})
 
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('AT_FRONT_OF_DOOR',
-                                    states.Say(robot, 'I will now check if it is open or not'),
-                                    transitions={'spoken':'STATE_DOOR'})
+        # Start challenge via StartChallengeRobust
+        smach.StateMachine.add( "START_ACTUAL_CHALLENGE",
+                                    states.StartChallengeRobust(robot, "initial"), 
+                                    transitions={   "Done":"SAY_GO_TO_MEETING_POINT", 
+                                                    "Aborted":"SAY_GO_TO_MEETING_POINT", 
+                                                    "Failed":"SAY_GO_TO_MEETING_POINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
-        # Start laser sensor that may change the state of the door if the door is open:
-        smach.StateMachine.add('STATE_DOOR', 
-                                    states.Read_laser(robot, "entrance_door"),
-                                    transitions={'laser_read':'WAIT_FOR_DOOR'})       
-        
-        # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-        dooropen_query = Compound("state", "entrance_door", "open")
-        
-        # Query if the door is open:
-        smach.StateMachine.add('WAIT_FOR_DOOR', 
-                                    states.Ask_query_true(robot, dooropen_query),
-                                    transitions={   'query_false':'STATE_DOOR',
-                                                    'query_true':'THROUGH_DOOR',
-                                                    'waiting':'DOOR_CLOSED',
-                                                    'preempted':'FAIL_BUT_INTRODUCE'})
+        smach.StateMachine.add("SAY_GO_TO_MEETING_POINT",
+                                    states.Say(robot, "I will go to the meeting point"),
+                                    transitions={   "spoken":"GO_TO_REGISTRATION_TABLE"})
 
-        # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-        # in perception.py, amigo will speak and check again if the door is open
-        smach.StateMachine.add('DOOR_CLOSED',
-                                    states.Say(robot, 'Door is closed, please open the door'),
-                                    transitions={'spoken':'STATE_DOOR'}) 
-
-        # If the door is open, amigo will say that it goes to the registration table
-        smach.StateMachine.add('THROUGH_DOOR',
-                                    states.Say(robot, 'Door is open, so I will go to the registration table'),
-                                    transitions={'spoken':'INIT_POSE'}) 
-
-        # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set.
-        smach.StateMachine.add('INIT_POSE',
-                                states.Set_initial_pose(robot, 'initial'),
-                                transitions={   'done':'GO_TO_REGISTRATION_TABLE',
-                                                'preempted':'WAIT_FOR_DOOR',
-                                                'error':'WAIT_FOR_DOOR'})
-
-        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE', 
                                     states.Navigate_named(robot, "registration_table"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
