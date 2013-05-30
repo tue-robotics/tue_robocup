@@ -46,14 +46,14 @@ class Learn_Person(smach.State):
 
         speech_sentence = [ 'Please look at my left arm, until I am finished learning.',
                             'Now look at my right arm, please wait I am finished learning',
-                            'Now please look at my face, till I say done one more time.']
+                            'Now please look at my face, till I am finally finished.']
 
         # learn left face
         self.robot.speech.speak('Please be patient, while I try to learn your face.')
         self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
-        result = self.robot.perception.learn_person(name_to_learn, view = 'left')
+        result = self.robot.perception.learn_person(name_to_learn, view = 'left', publish_while_learning = True)
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
         self.robot.speech.speak("Finished learning your right side")
