@@ -78,6 +78,7 @@ class AmigoIntroductionRIPS(smach.State):
     def execute(self, userdata):      
         rospy.loginfo("Introducing AMIGO")
         
+        self.robot.head.reset_position()
         self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
         self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
         
