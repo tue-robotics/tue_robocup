@@ -468,8 +468,7 @@ class MoveArmBack(smach.State):
 class Register(smach.State):
     def __init__(self, robot=None, status=1):
         smach.State.__init__(self, outcomes=['finished'])
-        # TODO ERIK register person and assert him as visited and registered.
-        # TODO Location of person / fire should be inserted.
+        
         self.person_no = 1
         self.robot = robot
 
@@ -497,28 +496,6 @@ class Register(smach.State):
                                     float(answer["Z"])) for answer in answers]
 
             x,y,z = possible_locations[0]
-        return 'finished'
-
-        # #First move head to look at person where face is detected
-        # person_query = Conjunction( 
-        #                     Compound("current_person","ObjectID"),
-        #                     Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
-
-        # answers = self.robot.reasoner.query(person_query)
-
-        # if not answers:            
-        #     rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
-        #     pos, rot = self.robot.base.get_location()
-        #     x = pos.x
-        #     y = pos.y
-        # else:
-        #     possible_locations = [( float(answer["X"]), 
-        #                             float(answer["Y"]), 
-        #                             float(answer["Z"])) for answer in answers]
-
-        #     x,y,z = possible_locations[0]
-        #     lookat_point = self.robot.head.point(x,y,z)
-        #     self.head.send_goal(lookat_point)
 
         # Register person
         rospy.loginfo("Register person in file ....")
@@ -788,9 +765,9 @@ def setup_statemachine(robot):
                                                 'unreachable':'FAILED_DRIVING_TO_LOCATION',
                                                 'all_matches_tried':'SAY_GO_TO_EXIT'})
 
-        # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
+        # Could not reach ROI     
         smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
-                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location.", block=True),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
 
         ############ DRIVE TO PREDEFINED LOCATIONS ###########
@@ -805,7 +782,7 @@ def setup_statemachine(robot):
                                 transitions={'done':'CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE',
                                              'failed':'FAILED_PERCEPTION'})
 
-        # Could not reach ROI     TODO: Test if unreachable location will not be driven to again.
+        # Could not reach ROI    
         smach.StateMachine.add("FAILED_PERCEPTION",
                                 states.Say(robot,"I failed starting perception, maybe more luck at the next location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
@@ -923,7 +900,7 @@ def setup_statemachine(robot):
         # Turn 360 degrees (will be 3/4 of a round)
         smach.StateMachine.add('MOVE_ARM_BACK_TURN',
                                     turn_Around_z_axis(robot, 10),
-                                    transitions={   'done':'MOVE_ARM_BACK',    ###### 
+                                    transitions={   'done':'MOVE_ARM_BACK', 
                                                     'abort':'MOVE_ARM_BACK'})
         
 
@@ -940,7 +917,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_FRONT_OF_EXIT', 
-                                    states.Navigate_named(robot, "front_of_exit"),   # TODO ERIK: create location 1 meter before exit and indicate that the exit is in front of amigo.
+                                    states.Navigate_named(robot, "front_of_exit"),  
                                     transitions={   'arrived':'SAY_GO_THROUGH_EXIT', 
                                                     'preempted':'CLEAR_PATH_TO_FRONT_OF_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_FRONT_OF_EXIT', 
@@ -954,7 +931,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_FRONT_OF_EXIT_SECOND_TRY', 
-                                    states.Navigate_named(robot, "front_of_exit"),   # TODO ERIK: create location 1 meter before exit and indicate that the exit is in front of amigo.
+                                    states.Navigate_named(robot, "front_of_exit"),   
                                     transitions={   'arrived':'SAY_GO_THROUGH_EXIT', 
                                                     'preempted':'FAILED_GO_TO_FRONT_OF_EXIT', 
                                                     'unreachable':'FAILED_GO_TO_FRONT_OF_EXIT', 
