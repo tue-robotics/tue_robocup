@@ -342,8 +342,8 @@ class LookForDrink(smach.State):
             self.robot.speech.speak("Hey, I found the drink!")
             return "found"
         else:
-            # have not found the drink, so let's keep looking
-            self.robot.speech.speak("Did not find anything, keep looking")
+            self.robot.speech.speak("Did not find the drink!")
+            #self.robot.speech.speak("Did not find anything, keep looking")
             return "looking"
 
 class LookForPerson(smach.State):
@@ -479,7 +479,7 @@ class CocktailParty(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
 
         # Queries:
-        query_meeting_point = Compound("waypoint", Compound("meeting_point", "Object"), Compound("pose_2d", "X", "Y", "Phi"))
+        #query_meeting_point = Compound("waypoint", Compound("meeting_point", "Object"), Compound("pose_2d", "X", "Y", "Phi"))
         query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
         query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
@@ -489,7 +489,7 @@ class CocktailParty(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    StartChallengeRobust(robot, "initial", query_meeting_point), 
+                                    StartChallengeRobust(robot, "initial"), #query_meeting_point
                                     transitions={   "Done":"GOTO_MEETING_POINT", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"SAY_FAILED"})
