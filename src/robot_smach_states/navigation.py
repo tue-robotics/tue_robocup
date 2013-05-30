@@ -1054,7 +1054,7 @@ class Execute_path(smach.State):
                             min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
                     else:
                         # reset head position to look down
-                        rospy.logwarn("Reset head to look down")
+                        #rospy.logwarn("Reset head to look down")
                         self.robot.head.look_down()
                 else:
                     rospy.logwarn("nr of poses to goal is not set (equals {0})".format(self.robot.base.poses_to_goal))
