@@ -97,9 +97,6 @@ class WaitForPerson(smach.State):
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
         self.robot.head.set_pan_tilt(tilt=-0.2)
-        ## STARTUP FACE_SEGMENTATION, MADE MORE ROBUST FOR DEBUGGING!
-        ##self.robot.perception.toggle(["face_segmentation"])
-        ## TODO now infinitely looping make it quit after n tries?!
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
         rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
         rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
@@ -118,7 +115,7 @@ class WaitForPerson(smach.State):
         self.robot.perception.toggle([])
 
         if wait_result == "timed_out":
-            self.robot.speech.speak(   "Please, don't keep me waiting.")
+            self.robot.speech.speak("Please, don't keep me waiting.")
             return "waiting"
         elif wait_result == "preempted":
             self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!")
@@ -390,6 +387,8 @@ class LookForPerson(smach.State):
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
         self.robot.speech.speak("Let me see who I can find here...")
+        self.robot.head.reset_position()
+        self.robot.head.set_pan_tilt(tilt=-0.2)
 
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
         rospy.sleep(5.0)
