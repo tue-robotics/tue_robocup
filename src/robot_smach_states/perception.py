@@ -53,7 +53,7 @@ class Learn_Person(smach.State):
         self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
-        result = self.robot.perception.learn_person(name_to_learn, view = 'left', publish_while_learning = True)
+        result = self.robot.perception.learn_person(name_to_learn, view = 'left', publish_while_learning = False)
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
         self.robot.speech.speak("Finished learning your right side")
