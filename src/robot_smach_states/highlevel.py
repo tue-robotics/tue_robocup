@@ -131,7 +131,7 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add( "WAIT_FOR_DOOR", 
                                     reasoning.Ask_query_true(robot, dooropen_query),
                                     transitions={   "query_false":"ASSESS_DOOR",
-                                                    "query_true":"ENTER_ROOM",#"INIT_POSE",
+                                                    "query_true":"INIT_POSE",
                                                     "waiting":"DOOR_CLOSED",
                                                     "preempted":"Aborted"})
 
@@ -267,7 +267,7 @@ class GotoMeetingPoint(smach.State):
         # for now, take the first goal found
         goal_answer = reachable_goal_answers[0]
 
-        self.robot.speech.speak("I'm coming to the meeting point!")
+        self.robot.speech.speak("I'm coming to the meeting point!", block=False)
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
