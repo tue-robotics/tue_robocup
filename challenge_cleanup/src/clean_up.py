@@ -34,10 +34,11 @@ class Ask_cleanup(smach.State):
     def execute(self, userdata):
         self.robot.head.look_up()
 
+        # ToDo: don't hardcode this!
         self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         room = "livingroom"
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-            room = "kitchen"
+            room = "bedroom"
         elif self.response.answer == "livingroom":
             room = "living_room"
         elif self.response.answer == "diningroom":
@@ -76,7 +77,6 @@ class Cleanup(smach.StateMachine):
 	    #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
         robot.reasoner.assertz(Compound("challenge", "clean_up"))
-
 
         query_meeting_point = Compound("waypoint", 
                                 Compound("meeting_point", "Waypoint"), 
@@ -276,9 +276,9 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add("DROPOFF_OBJECT",
                                     #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
                                     #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
-                                    states.PlaceObject(robot.leftArm, robot, query_dropoff_loc),
-                                    transitions={   'succeeded':'DROP_OBJECT',
-                                                    'failed':'DROP_OBJECT',
+                                    states.DropObject(robot.leftArm, robot, query_dropoff_loc),
+                                    transitions={   'succeeded':'MARK_DISPOSED',
+                                                    'failed':'MARK_DISPOSED',
                                                     'target_lost':'DONT_KNOW_DROP'})
             
             smach.StateMachine.add("DONT_KNOW_DROP", 
@@ -286,10 +286,14 @@ class Cleanup(smach.StateMachine):
                                     transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
 
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
-                                    states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),
-                                    transitions={   'succeeded':'DROP_OBJECT',
-                                                    'failed':'DROP_OBJECT',
+                                    states.DropObject(robot.leftArm, robot, query_dropoff_loc_backup),
+                                    transitions={   'succeeded':'MARK_DISPOSED',
+                                                    'failed':'MARK_DISPOSED',
                                                     'target_lost':'DONT_KNOW_DROP_BACKUP'})
+                                    #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),
+                                    #transitions={   'succeeded':'MARK_DISPOSED',
+                                    #                'failed':'MARK_DISPOSED',
+                                    #                'target_lost':'DONT_KNOW_DROP_BACKUP'})
 
             smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
                                     states.Say(robot, "Now that I fetched this, I don't know where to put it. Silly me!"),
@@ -305,26 +309,16 @@ class Cleanup(smach.StateMachine):
                                     states.Say(robot, "Please take this thing from my hand. I don't know where to put it"),
                                     transitions={   'spoken':'DETERMINE_EXPLORATION_TARGET'})
 
-
-            # smach.StateMachine.add( 'DRIVE_TO_DROPOFF',
-            #                         states.Navigate_to_queryoutcome(robot, query_dropoff_loc, X="X", Y="Y", Phi="Phi"),
-            #                         transitions={   "arrived":"PLACE_OBJECT",
-            #                                         "unreachable":'RETURN',
-            #                                         "preempted":'Aborted',
-            #                                         "goal_not_defined":'Aborted'})                
-            
-            # smach.StateMachine.add( 'PLACE_OBJECT', states.Place_Object(robot.leftArm,robot),
-            #                         transitions={   'object_placed':'CARR_POS2'})
-            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN), #open
-                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
-                                                    'failed'   :'CLOSE_AFTER_DROP'})
-            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.CLOSE), #close
-                                    transitions={   'succeeded':'RESET_ARM',
-                                                    'failed'   :'RESET_ARM'})
-            smach.StateMachine.add('RESET_ARM', 
-                                    states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
-                                    transitions={   'done':'MARK_DISPOSED',
-                                                    'failed':'MARK_DISPOSED'})
+            #smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN), #open
+            #                        transitions={   'succeeded':'CLOSE_AFTER_DROP',
+            #                                        'failed'   :'CLOSE_AFTER_DROP'})
+            #smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.CLOSE), #close
+            #                        transitions={   'succeeded':'RESET_ARM',
+            #                                        'failed'   :'RESET_ARM'})
+            #smach.StateMachine.add('RESET_ARM', 
+            #                        states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
+            #                        transitions={   'done':'MARK_DISPOSED',
+            #                                        'failed':'MARK_DISPOSED'})
 
             #Mark the current_object as disposed
             @smach.cb_interface(outcomes=['done'])
