@@ -633,7 +633,7 @@ class Await_Text_Ears(smach.State):
         return 'timed_out'    
 
 class Say(smach.State):
-    def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited"):
+    def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         smach.State.__init__(self,
                        outcomes=["spoken"])
         self.robot = robot
@@ -642,13 +642,14 @@ class Say(smach.State):
         self.personality = personality
         self.voice = voice
         self.mood = mood
+        self.block = block
         
     def execute(self, userdata):
         if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
             sentence = random.choice(self.sentence)
         else:
             sentence = self.sentence
-        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood)
+        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
         return "spoken"
 
 @util.deprecated_replace_with("Say_generated")
