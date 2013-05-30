@@ -414,7 +414,8 @@ class Navigate_to_queryoutcome_point_emergency(states.Navigate_abstract):
             look_point.point = self.robot.base.point(x,y)
             pose = states.util.msg_constructors.Quaternion(z=1.0)
 
-            base_pose_for_point = self.robot.base.get_base_pose(look_point, 0.7, 0.0001)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.7, 0.0)
+            base_pose_for_point = base_poses_for_point[0]
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
