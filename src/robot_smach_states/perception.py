@@ -49,7 +49,7 @@ class Learn_Person(smach.State):
                             'Now please look at my face, till I say done one more time.']
 
         # learn left face
-        self.robot.leftArm.send_goal(0.365, 0.399, 1.600, 0, 30, 0, 60)
+        self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
         result = self.robot.perception.learn_person(name_to_learn, view = 'left')
@@ -59,7 +59,8 @@ class Learn_Person(smach.State):
 
         # learn right face
         self.robot.leftArm.reset_arm()
-        self.robot.rightArm.send_goal(0.365, -0.399, 1.600, 0, 30, 0, 60)
+        #self.robot.rightArm.send_goal(0.365, -0.399, 1.600, 0, 30, 0, 60)
+        self.robot.rightArm.send_goal(0.32, -0.43, 1.50, 0, 30, 0, 60)
         self.robot.speech.speak(speech_sentence[1])
         result = self.robot.perception.learn_person(name_to_learn, view = 'right')
         if result == True:
