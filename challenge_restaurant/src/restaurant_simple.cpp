@@ -136,7 +136,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
                     }
 
                     //! Check if the person stands in front of the robot
-                    if (pos_gauss.getMean()(0) < 2.5 && pos_gauss.getMean()(0) > 0.4 && pos_gauss.getMean()(1) > -0.4 && pos_gauss.getMean()(1) < 0.4) {
+                    if (pos_gauss.getMean()(0) < 2.5 && pos_gauss.getMean()(0) > 0.3 && pos_gauss.getMean()(1) > -0.4 && pos_gauss.getMean()(1) < 0.4) {
                         vector_possible_guides.push_back(pos_gauss);
                         ROS_INFO("Found candidate guide at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
@@ -153,16 +153,20 @@ bool findGuide(wire::Client& client, bool lost = true) {
             //! Position candidate guide
             pbl::Gaussian pos_guide(3);
 
-            //! Find person that has smallest y-distance to robot
+            //! Find person that has smallest Eucledian distance to robot
             if (vector_possible_guides.size() > 1) {
 
-                double y_min = 0.0;
+                double dist_min = 0.0;
                 int i_best = 0;
 
-                for (unsigned int i = 0; i < vector_possible_guides.size(); ++i) {
-                    double dy = fabs(vector_possible_guides[0].getMean()(1));
-                    if (i == 0 || y_min < dy) {
-                        y_min = dy;
+                for (unsigned int i = 0; i < vector_possible_guides.size(); ++i)
+                {
+                    double dx = vector_possible_guides[i].getMean()(1);
+                    double dy = vector_possible_guides[i].getMean()(0);
+                    double dist = sqrt(dx*dx+dy*dy);
+                    if (i == 0 || dist_min > dist)
+                    {
+                        dist_min = dist;
                         i_best = i;
                     }
                 }
@@ -370,9 +374,9 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
     if (t_no_meas_ < 1.0) {
 		planner_->MoveToGoal(end_goal);
-		ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
+        ROS_DEBUG("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
 	} else {
-		ROS_INFO("No guide position update: robot will not move");
+        ROS_DEBUG("No guide position update: robot will not move");
 	}
 
 }
@@ -467,7 +471,7 @@ int main(int argc, char **argv) {
         if (freeze_amigo_) {
 			
 			
-			
+            // TODO: Check if this function is needed
 			bool no_use = getPositionGuide(objects, guide_pos);
 
             //! Robot is waiting for the name and will then continue following
