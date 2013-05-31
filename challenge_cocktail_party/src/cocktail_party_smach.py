@@ -190,6 +190,12 @@ class LookForDrink(smach.State):
     def execute(self, userdata=None):
         # Move to the next waypoint in the storage room
         # ToDo Location are drink specific, only look at one location or return TEUN
+        # At this point reasonar is queried to find the "Drink", has to be associated in knowledge, but current Waypoint determination will be enough probably
+        return_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
+        serving_drink = str(return_result[0]["Drink"])       
+        if not return_result:
+            self.robot.speech.speak("I forgot which drink you wanted")
+
 
         goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("storage_room", "W")),
                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
@@ -199,6 +205,7 @@ class LookForDrink(smach.State):
             self.robot.speech.speak("I want to find the drink, but I don't know where to go... I'm sorry!")
             return "not_found"
 
+        self.robot.speech.speak("I think I know the location of your " + serving_drink)
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
@@ -548,7 +555,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
 
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
-    amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
+    #amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
