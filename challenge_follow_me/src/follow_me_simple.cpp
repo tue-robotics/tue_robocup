@@ -662,7 +662,7 @@ int main(int argc, char **argv) {
     //// Speech-to-text and text-to-speech
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
-    pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
+    pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Face learning

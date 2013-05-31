@@ -425,7 +425,7 @@ int main(int argc, char **argv) {
     ROS_INFO("Communication with speech recognition started");
 
     //! Topic/srv that make AMIGO speak
-    pub_speech_ = nh.advertise<std_msgs::String>("/amigo_speak_up", 10);
+    pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
     srv_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
     ROS_INFO("Publisher/service client for text to speech started");
     
