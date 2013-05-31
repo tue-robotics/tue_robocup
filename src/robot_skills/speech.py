@@ -13,7 +13,7 @@ class Speech(object):
     """Interface to Amigo's tts-module"""
 
     def __init__(self, wait_service=True):
-        self.amigo_speak_up = rospy.Publisher("/amigo_speak_up", String)
+        self.amigo_speak_up = rospy.Publisher("/text_to_speech/input", String)
         self.amigo_speak_up_info = rospy.Publisher("/amigo_speak_up_info", String)
         self.pub_amigo_speech_sim = rospy.Publisher("/amigo_speech_sim", String)    # For using amigo's speech in simulation
 
