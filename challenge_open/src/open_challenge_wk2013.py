@@ -14,9 +14,10 @@ import robot_smach_states.util.reasoning_helpers as urh
 from speech_interpreter.srv import GetOpenChallenge
 from speech_interpreter.srv import GetYesNo
 
-from robot_skills.reasoner import Conjunction, Compound
+from robot_skills.reasoner import Conjunction, Compound, Sequence
 
 from robot_skills.arms import State as ArmState
+import geometry_msgs
 
 class AskForTask(smach.State):
     def __init__(self, robot):
@@ -44,7 +45,7 @@ class AskForTask(smach.State):
         '''
 
         #self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("open_challenge", location))))
-        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("bring", location))))
+        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("bringTo", location))))
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", obj))))
 
             
@@ -56,16 +57,18 @@ class ScanTables(smach.State):
         smach.State.__init__(self, outcomes=['succeeded'])
         #self.kwerie = 
         self.robot = robot
+        self.timeout_duration = timeout_duration
 
     def execute(self, gl):
 
         rospy.loginfo("Trying to detect objects on tables")
 
-        ''' Remember current spindle position '''
-        answers = self.robot.reasoner.query(self.grabpoint_query)
-
-        answers = robot.reasoner.query(Compound())
+        answers = self.robot.reasoner.query(Compound('region_of_interest', 
+            'tables', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
+        
+        ''' Remember current spindle position '''      
         spindle_pos = self.robot.spindle.get_position()
+
 
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
@@ -76,55 +79,43 @@ class ScanTables(smach.State):
             target_point.point.y = float(answer["Y"])
             target_point.point.z = float(answer["Z"])
 
-        ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
-        rospy.logwarn("Spindle timeout temporarily increased to 30 seconds")
-        if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=timeout_duration):
-            self.robot.perception.toggle_perception_2d(target_point, answer["length_x"], answer["length_y"], answer["length_z"])
-            rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-            rospy.logwarn("Waiting for 2.0 seconds for laser update")
-            rospy.sleep(rospy.Duration(2.0))
-        else:
-            rospy.logerror("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
-
-        ''' Reset head and stop all perception stuff '''
-        self.robot.perception.toggle([])
-        self.robot.spindle.send_goal(spindle_pos,waittime=timeout_duration)
+            ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
+            rospy.logwarn("Spindle timeout temporarily increased to 30 seconds")
+            if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
+                self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
+                rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+                rospy.logwarn("Waiting for 2.0 seconds for laser update")
+                rospy.sleep(rospy.Duration(2.0))
+            else:
+                rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
+            
+            ''' Reset head and stop all perception stuff '''
+            self.robot.perception.toggle([])
+            self.robot.spindle.send_goal(spindle_pos, waittime=self.timeout_duration)
 
         return 'succeeded'
 
-'''class ScanTables(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
-        self.robot = robot
-        self.preempted = False
-
-    def execute(self, userdata):
-        
-        # get table rois from reasoner
-        # use existing state to turn on object_detector_2d
-        # pause for 0.5 [s]
-        # use existing state to turn off object_detector_2d
-            
-        return "done"'''
-
 class DetermineGoal(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
+        smach.State.__init__(self, outcomes=["done"], input_keys=['object_locations'], output_keys=['object_locations'])
         self.robot = robot
         self.preempted = False
 
     def execute(self, userdata):
 
-        object_locations = self.robot.reasoner.query( Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
-                                                    Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")))
-        robot.reasoner.query(object_locations)
-        userdata.object_locations = []
-        userdata.object_locations.append({})
-        # get table rois from reasoner
-        # use existing state to turn on object_detector_2d
-        # pause for 0.5 [s]
-        # use existing state to turn off object_detector_2d
-            
+        query = Conjunction(
+                 Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
+                 Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class"))
+                 )
+
+        answers = self.robot.reasoner.query(query)
+
+        print "DETERMINE_GOAL"
+        print answers
+        print "DETERMINE_GOAL"
+        for answer in answers:
+            self.robot.reasoner.assertz(Compound("goal_location", Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
+        
         return "done"
 
 class ScanForPersons(smach.State):
@@ -149,19 +140,92 @@ class LookForServeObject(smach.State):
         self.side = robot.leftArm
 
     def execute(self, userdata=None):
+        look_at_query = Compound("base_grasp_point", Compound("point_3d", answer["X"], answer["Y"], answer["Z"]))
+        answers = self.robot.reasoner.query(look_at_query)
 
-        #Find object in wm, look for correct classlabel
-        # if true: return found
-        # else: return not_found
-            
-        return "found"
+        lookat_point = geometry_msgs.msg.Point()
+        if answers:
+            lookat_point.x  = answers[0]["X"]
+            lookat_point.y  = answers[0]["Y"]
+            lookat_point.z  = answers[0]["Z"]
+        else:
+            rospy.logerr("World model is empty, while at grasp location")
+            return 'not_found'
 
-class MoveToTable(smach.State):
+        spindle_target = max(0.15, min(lookat_point.z - 0.41, self.robot.spindle.upper_limit))
+        rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.z, spindle_target))
+
+        self.robot.head.send_goal(lookat_point, keep_tracking=True)
+        self.robot.spindle.send_goal(spindle_target,waittime=5.0)
+
+        rospy.loginfo("Start object recognition")
+        self.robot.perception.toggle_recognition(objects=True)
+        rospy.sleep(2.5)
+        rospy.loginfo("Stop object recognition")
+
+        self.robot.perception.toggle_recognition(objects=False)
+
+        #Select object we are looking for
+        serve_object = Compound("goal", Compound("serve", "Object"))
+        answers = self.robot.query(serve_object)
+
+        object_class = ""
+        if answers:
+            object_class = answers[0]["Object"]
+        else:
+            rospy.logerr("I Forgot what I have been looking for")
+            return 'not_found'
+
+        is_object_there = Conjunction(   Compound("instance_of", "ObjectID", object_class),
+                                        Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        if is_object_there:
+            self.robot.retractall(Compound("base_grasp_point", "_"))
+            self.robot.assertz(Compound("base_grasp_point", Compound("point_3d", is_object_there[0]["X"], is_object_there[0]["Y"], is_object_there[0]["Z"])))
+            return "found"
+        else:
+            return "not_found"
+
+
+class GetNextLocation(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done", "failed_navigate", "no_tables_left"])
-        pass
-    def execute(self, userdata=None):
-        pass
+        smach.State.__init__(self, outcomes=["done", "no_locations"])
+        self.robot = robot
+
+    def execute(self, userdata):
+        answers = self.robot.reasoner.query(Compound("goal_location", Compound("point_3d",  "X", "Y", "Z")))
+
+        print ""
+        print answers
+        print ""
+        if(answers):
+            answer = answers[0]
+            self.robot.reasoner.retractall(Compound("base_grasp_point", "_"))
+            self.robot.reasoner.assertz(Compound("base_grasp_point", Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
+            return 'done'
+        else:
+            return 'no_locations'
+
+class MoveToTable(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=["done", "failed_navigate", "no_tables_left"])
+        self.robot = robot
+
+        with self:
+            smach.StateMachine.add("GET_LOCATION", 
+                GetNextLocation(self.robot),
+                transitions={'done':'NAVIGATE_TO', 'no_locations':'no_tables_left'})
+
+            smach.StateMachine.add("NAVIGATE_TO", states.NavigateGeneric(robot, 
+                lookat_query=Compound("base_grasp_point", Compound("point_3d", "X", "Y", "Z"))), 
+                transitions={'unreachable' : 'failed_navigate', 'preempted' : 'NAVIGATE_TO', 
+                'arrived' : 'done', 'goal_not_defined' : 'failed_navigate'})
+
+
+
+
+
+
 
 class MoveToGoal(smach.State):
     def __init__(self, robot):
@@ -180,6 +244,7 @@ def setup_statemachine(robot):
     
     #Assert the current challenge.
     robot.reasoner.assertz(Compound("challenge", "open_challenge"))
+    robot.reasoner.retractall(Compound("goal_location", "_"))
 
 #    query_pose = robot.reasoner.base_pose(Compound("initial_open_challenge", robot.reasoner.pose_2d("X", "Y", "Phi")))
 #    print query_pose
@@ -189,10 +254,13 @@ def setup_statemachine(robot):
 #    initial_pose = (answers[0]["X"], answers[0]["Y"], answers[0]["Phi"])
 
     query = Compound('region_of_interest', 'tables') #region_of_interest(rgo2013, open_challenge, tables, point_3d(0, 0, 0), point_3d(2, 2, 2))
-    print "THE QUEERRRRYYY  :::: :: :: : :  "  + str(robot.reasoner.query(query))
+    robot.reasoner.query(query)
 
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
+
+    sm.userdata.object_locations = []
+    sm.userdata.current_location = None
 
     with sm:
         smach.StateMachine.add('INITIALIZE',
@@ -223,7 +291,12 @@ def setup_statemachine(robot):
         # After this state: persons might be in the world model
         smach.StateMachine.add("SCAN_FOR_PERSONS", 
                         ScanForPersons(robot),
-                        transitions={   'done':'Done', 'failed':'Done'})
+                        transitions={   'done':'DETERMINE_GOAL', 'failed': 'DETERMINE_GOAL'})
+        
+        # After this state: persons might be in the world model
+        smach.StateMachine.add("DETERMINE_GOAL", 
+                        DetermineGoal(robot),
+                        transitions={   'done':'MOVE_TO_TABLE'})
 
         #Scan for persons at the prior location
         smach.StateMachine.add("SCAN_FOR_PERSONS_AT_PRIOR", 
@@ -241,7 +314,7 @@ def setup_statemachine(robot):
         # STATE RECOGNIZE_OBJECTS: recognize objects on the table
 
         smach.StateMachine.add("RECOGNIZE_OBJECTS", 
-                states.LookForObjectsAtROI(robot, None, None), # En andere dingen
+                LookForServeObject(robot), # En andere dingen
                 transitions={  'no_object_found':'MOVE_TO_TABLE', 'object_found': 'LOOK_FOR_SERVE_OBJECT', 'looking' : 'NEVER_REACHED', 'abort' : 'NEVER_REACHED'})
         
 
@@ -329,6 +402,6 @@ def setup_statemachine(robot):
 
 
 if __name__ == "__main__":
-    rospy.init_node('open_challenge_executive', log_level=rospy.DEBUG)
+    rospy.init_node('open_challenge_executive')
     startup(setup_statemachine)
 

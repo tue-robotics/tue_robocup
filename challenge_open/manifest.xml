@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/challenge_open</url>
   <depend package="robot_smach_states"/>
+  <depend package="geometry_msgs"/>
 
 </package>
 
