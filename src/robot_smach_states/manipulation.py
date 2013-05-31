@@ -5,7 +5,9 @@ import smach
 import smach_ros
 import time
 import copy
+import navigation
 from util import transformations
+from psi import Term, Compound, Conjunction
 
 ''' For siren demo challenge '''
 import thread
@@ -198,14 +200,24 @@ class UpdateObjectPose(smach.State):
             rospy.logwarn("Waiting for 2.0 seconds for laser update")
             rospy.sleep(rospy.Duration(2.0))
         else:
-            self.robot.head.send_goal(target_point, keep_tracking=False, timeout=2.0)
-            self.robot.speech.speak("Now I need Simons stuff because the height of the object is {0:.2f}".format(target_point.point.z))
-            rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-            rospy.sleep(rospy.Duration(1.0))
+            #self.robot.head.send_goal(target_point, keep_tracking=False, timeout=2.0)
+            #self.robot.perception.toggle(["tabletop_segmentation"])
+            #self.robot.perception.set_perception_roi(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+            #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+            #rospy.logwarn("Waiting for 10.0 seconds for tabletop segmentation update")
+            #rospy.sleep(rospy.Duration(10.0))
+            self.robot.speech.speak("Now I need Simons stuff because the height of the object is {0:.2f}".format(target_point.point.z),block=False)
 
         ''' Reset head and stop all perception stuff '''
-        self.robot.head.reset_position(timeout=0)
         self.robot.perception.toggle([])
+        
+        # ToDo: don't do this here this way:
+        #self.robot.head.reset_position(timeout=0)
+        if self.arm == self.robot.leftArm:
+            self.robot.head.look_at_hand("left")
+        elif self.arm == self.robot.rightArm:
+            self.robot.look_at_hand("right")
+        
         rospy.logwarn("Sending spindle to top for safety")
         spindle_pos = 0.4
         self.robot.spindle.send_goal(spindle_pos,waittime=40.0)
@@ -336,11 +348,11 @@ class Grab(smach.State):
         target_position_delta = geometry_msgs.msg.Point()
         
         ''' First check to see if visual servoing is possible '''
-        #self.robot.perception.toggle(['ar_pose'])
-        rospy.logwarn("ar marker check disabled")
+        self.robot.perception.toggle(['ar_pose'])
+        #rospy.logwarn("ar marker check disabled")
         ar_marker_available = False
         
-        target_position_delta = transformations.tf_transform(target_position, "/map", self.ar_frame_id, tf_listener=self.robot.tf_listener)
+        target_position_delta = transformations.tf_transform(target_position, self.end_effector_frame_id, self.ar_frame_id, tf_listener=self.robot.tf_listener)
         if target_position_delta == None:
             ar_marker_available = False
         else:
@@ -352,15 +364,32 @@ class Grab(smach.State):
         if not ar_marker_available:
             self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, time_out=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
-            self.robot.speech.speak("What's that on my hand?")
+            self.robot.speech.speak("Let me have a closer look", block=False)
             rospy.sleep(2.0)
-            
-        target_position_delta = transformations.tf_transform(target_position, "/map", self.ar_frame_id, tf_listener=self.robot.tf_listener)
-        if target_position_delta == None:
-            ar_marker_available = False
-        else:
+        
+        ''' New ar marker detection stuff ''' 
+        ar_point = geometry_msgs.msg.PointStamped()
+        ar_point.header.frame_id = self.ar_frame_id
+        ar_point.header.stamp = rospy.Time()
+        ar_point.point.x = 0
+        ar_point.point.y = 0
+        ar_point.point.z = 0
+        ''' Transform point(0,0,0) in ar marker frame to grippoint frame '''
+        ar_point_grippoint = transformations.tf_transform(ar_point, self.ar_frame_id, self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
+        ''' Transform target position to grippoint frame '''
+        target_position_grippoint = transformations.tf_transform(target_position, "/map", self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
+        ''' Compute difference = delta (only when both transformations have succeeded) and correct for offset ar_marker and grippoint '''
+        if not (ar_point_grippoint == None or target_position_grippoint == None):
+            target_position_delta = geometry_msgs.msg.Point()
+            target_position_delta.x = target_position_grippoint.x - ar_point_grippoint.x + self.side.markerToGrippointOffset.x
+            target_position_delta.y = target_position_grippoint.y - ar_point_grippoint.y + self.side.markerToGrippointOffset.y
+            target_position_delta.z = target_position_grippoint.z - ar_point_grippoint.z + self.side.markerToGrippointOffset.z
+            rospy.loginfo("Delta target = {0}".format(target_position_delta))
             ar_marker_available = True
-
+        else:
+            ar_marker_available = False
+        ''' End '''
+        
         rospy.logwarn("ar_marker_available (2) = {0}".format(ar_marker_available))
             
         ''' Sanity check '''
@@ -378,7 +407,7 @@ class Grab(smach.State):
         
         ''' Original, pregrasp is performed by the compute_pre_grasp node '''
         if not ar_marker_available:
-            self.robot.speech.speak("No visual feedback, let's see if I can grasp with my eyes closed")                
+            self.robot.speech.speak("No visual feedback, let's see if I can grasp with my eyes closed", block=False)                
             if self.side.send_goal(target_position_bl.x, target_position_bl.y, target_position_bl.z, 0, 0, 0, 120, pre_grasp = True):
                 rospy.loginfo("arm at object")                    
             else:
@@ -396,23 +425,12 @@ class Grab(smach.State):
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 
         else:
-            self.robot.speech.speak("I can see both my hand and the object, now I shouldn't miss")
+            self.robot.speech.speak("I can see both my hand and the object, now I shouldn't miss", block=False)
             #import ipdb;ipdb.set_trace()
-            if self.side.send_delta_goal(target_position_delta.x + self.side.markerToGrippointOffset.x, 
-                                        target_position_delta.y + self.side.markerToGrippointOffset.y, 
-                                        target_position_delta.z + self.side.markerToGrippointOffset.z, 
+            if self.side.send_delta_goal(target_position_delta.x, target_position_delta.y, target_position_delta.z,
                                         0, 0, 0, 120, frame_id=self.end_effector_frame_id, pre_grasp = True):                    
                 rospy.loginfo("arm at object")                    
             else:
-                #if self.side.send_gripper_goal_close(10):
-                #    try:
-                #        #import ipdb;ipdb.set_trace()
-                #        self.robot.reasoner.attach_object_to_gripper(answer["ObjectID"], self.end_effector_frame_id, True)
-                #    except KeyError, ke:
-                #        rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
-                #    rospy.loginfo("Gripper closed")
-                #else:
-                #    rospy.loginfo("opening gripper failed, good luck")
                 rospy.logerr("failed to go to the arm position")
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 return 'grab_failed'
@@ -446,7 +464,113 @@ class Human_handover(smach.StateMachine):
             smach.StateMachine.add( 'CLOSE_AFTER_INSERT', SetGripper(robot, robot.leftArm, gripperstate=1), #close
                                 transitions={'succeeded'    :   'succeeded',
                                              'failed'       :   'failed'})
-                        
+
+class PlaceObject(smach.StateMachine):
+    def __init__(self, side, robot, placement_query, dropoff_height_offset=0.1):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed','target_lost'])
+        self.side = side
+        self.robot = robot
+        self.placement_query = placement_query
+        self.dropoff_height_offset = dropoff_height_offset
+
+        with self:
+            smach.StateMachine.add('PREPARE_PLACEMENT', PrepareGrasp(self.side, self.robot, self.placement_query),
+                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
+                                     'failed'       :   'failed'})
+        
+            smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.placement_query),
+                        transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PREPARE_ORIENTATION','abort':'failed','target_lost':'target_lost'})
+            
+            smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
+                        transitions={'succeeded'    :   'POSITION',
+                                     'failed'       :   'failed'})
+            # When pre-position fails, there is no use in dropping the object
+            smach.StateMachine.add('POSITION', ArmToUserPose(   self.side, 0.0, 0.0, -self.dropoff_height_offset, 0.0, 0.0 , 0.0, 
+                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                        transitions={'succeeded':'OPEN_GRIPPER','failed':'OPEN_GRIPPER'})
+            # When position fails, it might be tried 
+            smach.StateMachine.add('OPEN_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
+                        transitions={'succeeded'    :   'LIFT',
+                                     'failed'       :   'LIFT'})
+
+            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, self.dropoff_height_offset, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                        transitions={'succeeded':'RETRACT','failed':'RETRACT'})
+
+            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                        transitions={'succeeded':'CARR_POS','failed':'CARR_POS'})
+        
+            smach.StateMachine.add('CARR_POS', Carrying_pose(self.side, self.robot),
+                        transitions={'succeeded':'succeeded','failed':'CLOSE_GRIPPER'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
+                        transitions={'succeeded'    :   'RESET_ARM',
+                                     'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add('RESET_ARM', 
+                        ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
+                        transitions={   'done':'RESET_TORSO',
+                                      'failed':'RESET_TORSO'    })
+
+            smach.StateMachine.add('RESET_TORSO',
+                        ResetTorso(self.robot),
+                        transitions={'succeeded':'succeeded',
+                                     'failed'   :'succeeded'})
+
+class HandoverToHuman(smach.StateMachine):
+    def __init__(self, side, robot=None):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+        self.side = side
+        self.robot = robot
+
+        with self:
+            smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.4, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=False),
+                        transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
+
+            smach.StateMachine.add("SAY_OPEN_GRIPPER", 
+                        states.Say(robot, [ "Be careful, I will open my gripper now"]),
+                        transitions={   'spoken':'OPEN_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
+                        transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                     'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
+                        transitions={'succeeded'    :   'RESET_ARM',
+                                     'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add('RESET_ARM', 
+                        ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
+                        transitions={   'done':'RESET_TORSO',
+                                      'failed':'RESET_TORSO'    })
+
+            smach.StateMachine.add('RESET_TORSO',
+                        ResetTorso(self.robot),
+                        transitions={'succeeded':'succeeded',
+                                     'failed'   :'succeeded'})
+
+class DropObject(smach.StateMachine):
+    def __init__(self, side, robot, placement_query, dropoff_height_offset=0.1):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'target_lost'])
+        self.side = side
+        self.robot = robot
+        self.placement_query = placement_query
+        self.dropoff_height_offset = dropoff_height_offset
+
+        with self:
+            smach.StateMachine.add('PLACE_OBJECT', states.PlaceObject(self.side, self.robot, self.placement_query, self.dropoff_height_offset),
+                        transitions={'succeeded'    : 'succeeded',
+                                     'failed'       : 'SAY_HUMAN_HANDOVER',
+                                     'target_lost'  : 'target_lost' })
+
+            smach.StateMachine.add('SAY_HUMAN_HANDOVER', 
+                        states.Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
+                                            "My apologies, but i cannot place the object. Would you be so kind to take it from me"]),
+                         transitions={   'spoken':'Aborted'})
+
+            smach.StateMachine.add('HANDOVER_TO_HUMAN', states.HandoverToHuman(self.sid, self.robot),
+                        transitions={'succeeded'    : 'succeeded',
+                                     'failed'       : 'failed'})
+
 class Place_Object(smach.State):
     def __init__(self, side, robot=None):
         smach.State.__init__(self, outcomes=['object_placed'],
@@ -692,6 +816,30 @@ class ArmToQueryPoint(smach.State):
             return 'succeeded'
         else:
             rospy.loginfo("Sending goal to {0}".format(goal_bl))
+            return 'failed'
+
+class TorsoToUserPos(smach.State):
+    def __init__(self, robot, torso_pos, time_out=0.0):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.torso_pos = torso_pos
+        self.time_out = time_out
+
+    def execute(self, userdata):
+        if self.robot.spindle.send_goal(self.torso_pos,waittime=self.time_out):
+            return 'succeeded'
+        else:
+            return 'failed'
+
+class ResetTorso(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        if self.robot.spindle.reset():
+            return 'succeeded'
+        else:
             return 'failed'
 
 ########################################### State Point ###############################################
