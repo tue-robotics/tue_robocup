@@ -6,21 +6,14 @@ amigo1:
 
 amigo3:
 
-    roslaunch run_speech_files speech_tue_test_lab.launch
-
-amigo3:
-
-    roslaunch speech_interpreter start_tue_test_lab.launch 
-
-amigo3:
-
     alsamixer
         Mic Boost -> 100
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
         
-    rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
+    amigo-console        
+        amigo.ears.ask_user("continue")    
 
     say continue
 
@@ -46,5 +39,5 @@ The KB also holds knowledge like 'instance_of(robotics_testlab_A, _, trashbin1, 
 The clean-up challenge python file defines all of its queries near the top of the file. 
 
 TIP of the day: use 
-$ rostopic pub /speech_cleanup/output std_msgs/String 'livingroom' --once; rostopic pub /speech_yesno/output std_msgs/String '!!str yes' --once
+$ rostopic pub /pocketsphinx/output std_msgs/String 'livingroom' --once; rostopic pub /pocketsphinx/output std_msgs/String '!!str yes' --once
 to test the exec
