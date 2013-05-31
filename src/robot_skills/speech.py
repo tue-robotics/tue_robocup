@@ -39,7 +39,7 @@ class Speech(object):
     def close(self):
         pass
 
-    def speak(self, sentence, language="us", personality="kyle", character="default", mood="excited", block=True):
+    def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited", block=True):
         """
         Send a sentence to amigo's text to speech module
         """
@@ -51,7 +51,7 @@ class Speech(object):
             # Also send the sentence over a topic (for simulation purposes)
             self.pub_amigo_speech_sim.publish(sentence)
 
-            resp1 = self.speech_service(language, personality, character, mood, sentence, block)
+            resp1 = self.speech_service(language, personality, voice, mood, sentence, block)
             return resp1.error_msg == ""
 
         except rospy.ServiceException, e:
