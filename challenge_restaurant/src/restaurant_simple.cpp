@@ -15,7 +15,7 @@
 #include "tue_carrot_planner/carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
 
-#include <text_to_speech_philips/amigo_speakup_advanced.h>
+#include <text_to_speech_philips/Speak.h>
 
 using namespace std;
 
@@ -67,12 +67,14 @@ void amigoSpeak(string sentence) {
     }
     
     //! Call speech service
-	text_to_speech_philips::amigo_speakup_advanced speak;
+	text_to_speech_philips::Speak speak;
 	speak.request.sentence = sentence;
     speak.request.language = "us";
     speak.request.character = "kyle";
     speak.request.voice = "default";
     speak.request.emotion = "excited";
+    speak.request.blocking_call = true;
+
     if (!srv_speech_.call(speak)) {
 		std_msgs::String sentence_msgs;
 		sentence_msgs.data = sentence;
@@ -426,7 +428,7 @@ int main(int argc, char **argv) {
 
     //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
-    srv_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
+    srv_speech_ =  nh.serviceClient<text_to_speech_philips::Speak>("/text_to_speech/speak");
     ROS_INFO("Publisher/service client for text to speech started");
     
     //! Always clear the world model
