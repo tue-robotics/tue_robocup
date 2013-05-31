@@ -31,236 +31,24 @@ class Initialize(smach.State):
         #self.robot.rightArm.send_gripper_goal_close()
         self.robot.reasoner.reset()
         self.robot.spindle.reset()
+        self.robot.base.reset_costmap()
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
         rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
         self.robot.base.get_location()
 
+        ''' Load template matching config '''
+        query_template_config = Compound("template_matching_config", "Config")
+        answers = self.robot.reasoner.query(query_template_config)
+        rospy.loginfo("Linemod config answers: {0}".format(answers))
+        if answers:
+            self.robot.perception.load_template_matching_config(str(answers[0]["Config"]))
+        else:
+            rospy.logerr("No linemod config file loaded")
+            # Sleep to emphasize the error above
+            rospy.sleep(1.0)
+
         return 'initialized'
-
-# class InitializeOld(smach.State):
-#     def __init__(self, robot=None):
-#         smach.State.__init__(self,
-#                                    outcomes=['initializing','initialized','abort'],
-#                                    input_keys=['rate','command','challenge','world_info','target','locations','key_cmd','initial_pose','emergency_switch','start_time'],
-#                                    output_keys=['target','start_time','no_people_to_be_learned','global_end_time'])
-#         self.no_of_initializations = 0
-#         self.robot = robot
-        
-#     def set_home_location(self):
-#         home = geometry_msgs.msg.Point()
-#         try:
-#             self.robot.tf_listener.waitForTransform("/map", "/base_link", rospy.Time(), rospy.Duration(2.0))
-#             (ro_trans, ro_rot) = self.robot.tf_listener.lookupTransform("/map", "/base_link", rospy.Time())
-            
-#             home.x = ro_trans[0]
-#             home.y = ro_trans[1]
-            
-#             return home
-#         except (tf.LookupException, tf.ConnectivityException):
-#             rospy.logwarn("home location not retrieved!!")
-#             return home
-
-#     def execute(self, gl):
-        
-#         loop_rate(gl.rate)
-        
-#         self.robot.head.reset_position()
-#         self.robot.leftArm.reset_arm()
-#         self.robot.rightArm.reset_arm()
-#         self.robot.worldmodel.reset()
-#         # no_persons: number of persons that have to be learned
-#         print "Starting to execute", gl.challenge
-#         # Clean up
-#         if gl.challenge == "clean_up":
-            
-#             ''' test if  the target.name is used, if not, delete these lines'''
-#             # gl.target.name = "bottle_1"
-#             # gl.target.class_label = "Bottle"
-            
-            
-#             ''' Comment this line for integral testing ''' 
-#             #rospy.logwarn("No inital pose set, should be enabled before real challenge!!!")
-#             set_initial_pose(gl.initial_pose)
-#             return 'initialized'
-        
-#         # Go get it       
-#         if gl.challenge == "go_get_it":
-#             gl.target.name = "bottle_1"
-#             gl.target.class_label = "Bottle"
-            
-#             # Commented to test manipulation
-#             #rospy.logwarn("No inital pose set, should be enabled before real challenge!!!")
-#             set_initial_pose(gl.initial_pose)
-#             return 'initialized'
-            
-#         # Registration
-#         elif gl.challenge == "registration":
-#             gl.target.name = "desk"
-#             gl.target.class_label = "location"
-            
-#             set_initial_pose(gl.initial_pose)
-            
-#             #send_arm_left_goal(0.4,0.2,0.17,0.0,0.67,0.0,10)
-            
-#             #self.robot.spindle.send_spindle_goal(0.8)
-            
-#             self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
-#             self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
-            
-#             return 'initialized'
-        
-#         # Follow me
-#         elif gl.challenge == "follow_me":
-#             gl.target.class_label = "person"
-#             gl.target.ID = -1
-#             rospy.loginfo("target.ID = {0}".format(gl.target.ID))
-#             #Do it once more, disable if this causes problems
-#             self.robot.leftArm.reset_arm()
-#             self.robot.rightArm.reset_arm()
-#             return 'initialized'
-            
-#         # Who is who
-#         elif gl.challenge == "who_is_who":
-#             gl.no_people_to_be_learned = 2
-#             gl.target.name = ""
-#             gl.target.class_label = "person"
-#             return 'initialized'
-        
-#         # Who is who
-#         elif gl.challenge == "who_is_who_2012":
-#             gl.no_people_to_be_learned = 3
-#             gl.target.name = "learn_person_pos"
-#             gl.target.class_label = "exploration"
-#             return 'initialized'
-
-#         # Who is who enhanced
-#         elif gl.challenge == "who_is_who_enhanced":
-#             gl.no_people_to_be_learned = 3
-#             gl.target.name = ""
-#             gl.target.class_label = "person"
-#             gl.home = self.set_home_location()
-#             return 'initialized'
-        
-#         # Cups
-#         elif gl.challenge == "cups":
-            
-#             gl.target.class_label = "cup"
-#             gl.target.name = "cup_with_ball"
-            
-#             self.robot.head.reset_position()
-            
-#             if gl.command == "cups" or gl.key_cmd == "z":
-#                 self.robot.speech.speak("Yeah sure!")
-#                 self.robot.speech.speak("I like to play cups")
-                
-                
-                
-#                 gl.command = " "
-#                 gl.key_cmd = " "
-                
-#                 return 'initialized'
-            
-#             return 'initializing'
-        
-#         elif gl.challenge == "restaurant":
-#             self.robot.head.reset_position()
-#             self.robot.leftArm.reset_arm()
-#             self.robot.rightArm.reset_arm()
-            
-#             while gl.emergency_switch == True:
-#                 rospy.loginfo("Release emergency button to start")
-#                 rospy.sleep(0.1)
-            
-#             return 'initialized'
-        
-#         elif (gl.challenge == "open_challenge_2012" or gl.challenge == "demo_challenge_2012"):
-            
-#             #rospy.logwarn("No initial pose set")
-#             set_initial_pose(gl.initial_pose)
-#             self.robot.spindle.send_goal(0.35)
-#             self.robot.leftArm.reset_arm()
-#             self.robot.rightArm.reset_arm()
-#             ''' Wait until the ebutton is released '''
-#             while self.robot.ebutton.read_ebutton() == True:
-#                 rospy.loginfo("Release emergency button to start")
-#                 rospy.sleep(1)
-                
-#             ''' When the ebutton is released '''
-#             gl.start_time = set_start_time()
-            
-#             thread.start_new_thread(os.system,('sleep 5; aplay /home/amigo/Music/siren1.wav',))
-            
-#             return 'initialized'
-                
-#                 # Final Challenge
-#         elif gl.challenge == "rdo_finale":
-#             self.robot.head.reset_position()
-#             self.robot.leftArm.reset_arm()
-#             self.robot.rightArm.reset_arm()
-            
-#             return 'initialized'
-            
-#         elif gl.command == "abort":
-#             return 'abort'
-        
-#         else:
-#             return 'initializing'
-
-# class Introduction_follow_me(smach.State):
-#     def __init__(self, robot=None):
-#         smach.State.__init__(self,
-#                                    outcomes=['introducing','introduced','abort'],
-#                                 input_keys=['rate','command','world_info','target'],
-#                                 output_keys=['rate', 'target'])
-#         self.no_of_introductions = 0
-#         self.robot = robot
-        
-#     def execute(self, gl):
-        
-#         loop_rate(gl.rate)
-        
-#         # only introduce when iterating for the first time
-#         if self.no_of_introductions == 0:
-#             self.robot.speech.speak("Before I start following you, let me take a look at you so I can follow you better")
-#             self.robot.speech.speak("Please stand in front of me and look into my eyes")
-                
-#         i = 0
-#         j = 0
-#         # check if a person is found
-#         rospy.loginfo("Check for person")
-#         while not self.robot.target_closer_than(2, class_label="person") and i < 100 and not rospy.is_shutdown():
-#             rospy.logdebug("Waiting for target '{0}' to be available".format(gl.target))
-#             rospy.sleep(0.05)
-#             i = i + 1
-                        
-#             if i == 100:
-#                 self.robot.speech.speak("I cannot see you properly. Please stand in front of me")
-                       
-#                 i = 0
-#                 j = j + 1
-                
-#                 if j > 6:
-#                     rospy.loginfo("No person available in LabeledDetectionsArray")
-#                     self.robot.speech.speak("I am terribly sorry")
-#                     self.robot.speech.speak("I cannot see any people")
-#                     self.robot.speech.speak("I give up on the follow me challenge")
-#                     return 'abort'
-                
-#         # Determine which ID from the SeenObjectsArray is to be tracked
-#         # Hereto, the robots own position should be known
-#         (robot_position, robot_orientation) = self.robot.base.get_location()
-#         tempID = self.robot.worldmodel.assign_ID(gl.target, robot_position, robot_orientation)
-#         if tempID == -1:
-#             return 'introducing'
-#         else:
-#             gl.target.ID = tempID
-                    
-#         # determine position
-#         target_position = self.robot.worldmodel.determine_target_position(gl.target)
-#         gl.target.name = 'operator'
-#         return 'introduced'
-
 
 class Set_initial_pose(smach.State):
     ## To call upon this state:
