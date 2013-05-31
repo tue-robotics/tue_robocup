@@ -422,7 +422,7 @@ class GetObject(smach.StateMachine):
                                                     'all_matches_tried':'Failed'})    # End State
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
-                                    human_interaction.Say(robot, ["Lets see what I can find here."]),
+                                    human_interaction.Say(robot, ["Lets see what I can find here."],block=False),
                                     transitions={   'spoken':'LOOK'})
 
             smach.StateMachine.add('LOOK',
@@ -438,11 +438,11 @@ class GetObject(smach.StateMachine):
                                                     'timeout':'Timeout' })   # End State
                                                     
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
-                                    human_interaction.Say(robot, ["I have found something"]),
+                                    human_interaction.Say(robot, ["I have found something"],block=False),
                                     transitions={ 'spoken':'GRAB' })
 
             smach.StateMachine.add('SAY_FOUND_SOMETHING_BEFORE',
-                                    human_interaction.Say(robot, ["I have seen the desired object before!"]),
+                                    human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
                                     transitions={ 'spoken':'GRAB' })
 
             query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
