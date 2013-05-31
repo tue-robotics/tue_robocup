@@ -22,7 +22,7 @@ amigo3:
         
     rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
 
-    say test
+    say continue
 
     rosrun challenge_cleanup clean_up.py
 
