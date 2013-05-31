@@ -515,8 +515,8 @@ class Say_and_Navigate(smach.StateMachine):
                                     cc)
 
 class PointObject(smach.StateMachine):
-    def __init__(self, robot, roi_query, object_query, object_identifier="Object"):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+    def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
         self.roi_query = roi_query
@@ -528,6 +528,15 @@ class PointObject(smach.StateMachine):
 
         with self:
             #import ipdb; ipdb.set_trace()
+            smach.StateMachine.add('SET_TIME_MARKER',
+                                    utility_states.SetTimeMarker(robot, "get_object_start"),
+                                    transitions={   'done':'CHECK_OBJECT_QUERY' })
+
+            smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            # TODO ERIK: Test this state. Not yet done
+                                    Check_object_found_before(robot, self.object_query),
+                                    transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
+                                                    'no_object_found':'DRIVE_TO_SEARCHPOS' })
+
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
                                     navigation.Visit_query_outcome_3d(self.robot, 
                                                                       self.roi_query, 
@@ -540,22 +549,32 @@ class PointObject(smach.StateMachine):
                                                     'all_matches_tried':'Failed'})
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
-                                    human_interaction.Say(robot, ["Lets see if I can find the object."]),
+                                    human_interaction.Say(robot, ["Lets see if I can find the object."],block=False),
                                     transitions={   'spoken':'LOOK'})
 
             smach.StateMachine.add('LOOK',
                                     perception.LookForObjectsAtROI(robot, self.roi_query, self.object_query),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
-                                                    'no_object_found':'DRIVE_TO_SEARCHPOS',
+                                                    'no_object_found':'CHECK_TIME',
                                                     'abort':'Aborted'})
+
+            smach.StateMachine.add('CHECK_TIME',
+                                    utility_states.CheckTime(robot, "get_object_start", max_duration),
+                                    transitions={   'ok':'DRIVE_TO_SEARCHPOS',
+                                                    'timeout':'Timeout' })   # End State
                                                     
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
-                                    human_interaction.Say(robot, ["I have found what you are looking for and I will try to point at it!"]),
+                                    human_interaction.Say(robot, ["I have found what you are looking for and I will try to point at it!"],block=False),
+                                    transitions={ 'spoken':'POINT' })
+
+            smach.StateMachine.add('SAY_FOUND_SOMETHING_BEFORE',
+                                    human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
                                     transitions={ 'spoken':'POINT' })
 
             query_point = Conjunction(  Compound("current_object", "ObjectID"),
                                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
+
             smach.StateMachine.add('POINT',
                                     manipulation.PointMachine(robot.leftArm, robot, query_point),
                                     transitions={   'succeeded':'Done',
