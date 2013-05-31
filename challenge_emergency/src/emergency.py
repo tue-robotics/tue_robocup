@@ -415,7 +415,7 @@ class Navigate_to_queryoutcome_point_emergency(states.Navigate_abstract):
             pose = states.util.msg_constructors.Quaternion(z=1.0)
 
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.7, 0.0)
-            if base_pose_for_point:
+            if base_poses_for_point:
                 base_pose_for_point = base_poses_for_point[0]
             else:
                 rospy.logerr("IK returned empty pose.")
@@ -525,6 +525,8 @@ class Register(smach.State):
         
         
         rospy.loginfo("pathname = %s".format(pathname))
+
+        ### TODO/IDEA: play sound of taking picture
 
         if self.get_picture(pathname):  # bool terug. (filename met hele pad.png)
             rospy.loginfo("picture taken!!")
