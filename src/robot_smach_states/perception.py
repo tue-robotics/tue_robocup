@@ -45,12 +45,13 @@ class Learn_Person(smach.State):
         rospy.loginfo('Get user name {0}'.format(name_to_learn))
 
         speech_sentence = [ 'Please look at my left arm, until I am finished learning.',
-                            'Now look at my right arm, please wait I am finished learning',
+                            'Now look at my right arm, please wait until I am finished learning',
                             'Now please look at my face, till I am finally finished.']
 
         # learn left face
         self.robot.speech.speak('Please be patient, while I try to learn your face.')
-        self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
+        #self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
+        self.robot.leftArm.send_joint_goal(-1.439, 0.696, -0.967, 1.202, -0.9489, 0.5272, 0.0367)
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
         result = self.robot.perception.learn_person(name_to_learn, view = 'left', publish_while_learning = False)
@@ -61,7 +62,8 @@ class Learn_Person(smach.State):
         # learn right face
         self.robot.leftArm.reset_arm()
         #self.robot.rightArm.send_goal(0.365, -0.399, 1.600, 0, 30, 0, 60)
-        self.robot.rightArm.send_goal(0.32, -0.43, 1.50, 0, 30, 0, 60)
+        #self.robot.rightArm.send_goal(0.32, -0.43, 1.50, 0, 30, 0, 60)
+        self.robot.rightArm.send_joint_goal(-1.159, 0.911, -1.021, 1.469, -0.603, 0.255, 0.0206)
         self.robot.speech.speak(speech_sentence[1])
         result = self.robot.perception.learn_person(name_to_learn, view = 'right')
         if result == True:
