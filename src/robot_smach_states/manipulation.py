@@ -527,7 +527,7 @@ class HandoverToHuman(smach.StateMachine):
                         transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
 
             smach.StateMachine.add("SAY_OPEN_GRIPPER", 
-                        states.Say(robot, [ "Be careful, I will open my gripper now"]),
+                        Say(robot, [ "Be careful, I will open my gripper now"]),
                         transitions={   'spoken':'OPEN_GRIPPER_HANDOVER'})
 
             smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
@@ -557,19 +557,21 @@ class DropObject(smach.StateMachine):
         self.dropoff_height_offset = dropoff_height_offset
 
         with self:
-            smach.StateMachine.add('PLACE_OBJECT', states.PlaceObject(self.side, self.robot, self.placement_query, self.dropoff_height_offset),
-                        transitions={'succeeded'    : 'succeeded',
-                                     'failed'       : 'SAY_HUMAN_HANDOVER',
-                                     'target_lost'  : 'target_lost' })
+            smach.StateMachine.add( 'PLACE_OBJECT', 
+                                    PlaceObject(self.side, self.robot, self.placement_query, self.dropoff_height_offset),
+                                    transitions={'succeeded'    : 'succeeded',
+                                                 'failed'       : 'SAY_HUMAN_HANDOVER',
+                                                 'target_lost'  : 'target_lost' })
 
-            smach.StateMachine.add('SAY_HUMAN_HANDOVER', 
-                        states.Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
-                                            "My apologies, but i cannot place the object. Would you be so kind to take it from me"]),
-                         transitions={   'spoken':'Aborted'})
+            smach.StateMachine.add( 'SAY_HUMAN_HANDOVER', 
+                                    Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
+                                                        "My apologies, but i cannot place the object. Would you be so kind to take it from me"]),
+                                     transitions={   'spoken':'Aborted'})
 
-            smach.StateMachine.add('HANDOVER_TO_HUMAN', states.HandoverToHuman(self.sid, self.robot),
-                        transitions={'succeeded'    : 'succeeded',
-                                     'failed'       : 'failed'})
+            smach.StateMachine.add( 'HANDOVER_TO_HUMAN', 
+                                    HandoverToHuman(self.side, self.robot),
+                                    transitions={'succeeded'    : 'succeeded',
+                                                 'failed'       : 'failed'})
 
 class Place_Object(smach.State):
     def __init__(self, side, robot=None):
