@@ -814,6 +814,13 @@ int main(int argc, char **argv) {
                 //! Stand still and find operator
                 pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
                 moveTowardsPosition(pos, 0);
+
+                //! Clear world model and find a person nearby
+                if (reset_wire_client_.call(srv)) {
+                    ROS_INFO("Cleared world model");
+                } else {
+                    ROS_ERROR("Failed to clear world model");
+                }
                 findOperator(client, false);
 
                 //! Next state
