@@ -835,7 +835,7 @@ class Determine_goal(smach.State):
 
         if self.goal_name:
             query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
-            answers = self.robot.reasoner.query(query)
+            answers = self.robot.reasoner.query(query)  
 
             if not answers:
                 rospy.logerr("No answers found for query {query}".format(query=query))
@@ -879,6 +879,7 @@ class Determine_goal(smach.State):
             look_point = self.robot.base.point(1,0,stamped=True)
             # ToDo: Parameterize offsets
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
+
             if base_poses_for_point:
                 for base_goal_pose in base_poses_for_point:
                     # Convert to x, y, phi
@@ -963,7 +964,7 @@ class Get_plan(smach.State):
 
         rospy.loginfo("Looking for a path")
         rospy.loginfo("Get_plan, goal = {0}".format(userdata.goal))
-
+        
         self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
         #rospy.logdebug("Path found = {0}".format(self.robot.base.path))
@@ -982,14 +983,16 @@ class Get_plan(smach.State):
 
         # Ultimate fallback: reset entire map
         if (not self.robot.base.path and (rospy.Time.now() - self.last_reset) > rospy.Duration(10.0) ):
-            self.robot.speech.speak("I cannot seem to figure it out, i am going to reset my entire costmap", block=False)
+            #self.robot.speech.speak("I cannot seem to figure it out, i am going to reset my entire costmap", block=False)
+            rospy.loginfo("I cannot seem to figure it out, i am going to reset my entire costmap")
             self.robot.base.reset_costmap()
 
         if not self.robot.base.path:
             rospy.loginfo("Could not find a path to goal")
             # ToDo: get next pose
             # ToDo: clear with bigger window? reset map?
-            self.robot.speech.speak("I could not find a path to the goal")
+            #self.robot.speech.speak("I could not find a path to the goal")
+            rospy.loginfo("I could not find a path to the goal")
             #self.robot.speech.speak("I am going to the next goal")
             return "unreachable"
         
@@ -1027,14 +1030,16 @@ class Execute_path(smach.State):
 
             if self.robot.base.replan_timeout != 0.0:
                 wait_time = int(self.robot.base.replan_timeout)
-                self.robot.speech.speak("I found a new path but this is much longer, I will wait for another {0} seconds before i will take it".format(wait_time), block=False)
+                #self.robot.speech.speak("I found a new path but this is much longer, I will wait for another {0} seconds before i will take it".format(wait_time), block=False)
+                rospy.loginfo("I found a new path but this is much longer, I will wait for another {0} seconds before i will take it".format(wait_time))
                 # Set previous pose to goal to zero to dismiss the "different path" statement
                 self.previous_poses_to_goal = 0
                 return 'waiting'
 
             # Significant re-plan (20 pct longer)
             if (float(self.robot.base.poses_to_goal) > (float(self.previous_poses_to_goal) * 1.2) and self.previous_poses_to_goal != 0):
-                self.robot.speech.speak("Lets take a different path", block=False)
+                #self.robot.speech.speak("Lets take a different path", block=False)
+                rospy.loginfo("Lets take a different path")
             self.previous_poses_to_goal = self.robot.base.poses_to_goal
 
             if self.look_at_path_distance > 0:
@@ -1094,12 +1099,14 @@ class Waiting_to_execute(smach.State):
             rospy.sleep(rospy.Duration(0.5))
 
         if self.robot.base.reached_blocked_timeout:
-            self.robot.speech.speak("This is not going to work, i will take the other route", block=True)
+            #self.robot.speech.speak("This is not going to work, i will take the other route", block=True)
+            rospy.loginfo("This is not going to work, i will take the other route")
             #self.previous_replan_timeout = 0.0
             return 'done'
         else:
-            self.robot.speech.speak("My original path is clear again so i can take that anyway", block=True)         
-            
+            #self.robot.speech.speak("My original path is clear again so i can take that anyway", block=True)         
+            rospy.loginfo("My original path is clear again so i can take that anyway")
+
         return 'done'
 
 class Recover(smach.State):
@@ -1117,7 +1124,7 @@ class Recover(smach.State):
         # the local planner is probably in unknown space, so clear this
         if (self.robot.base.obstacle_position.point.x == -1 and self.robot.base.obstacle_position.point.y == -1 and self.robot.base.obstacle_position.point.z == -1):
             # size must be large enough to clear unknown space around the robot
-            self.robot.speech.speak("I am not sure if the space in front of me is clear. Watch out, I am going to clear it", block=False)
+            #self.robot.speech.speak("I am not sure if the space in front of me is clear. Watch out, I am going to clear it", block=False)
             rospy.logdebug("Freeing unknown space and clearing costmap around robot")
             self.robot.base.free_unknown_space(2.0)
             self.robot.base.clear_costmap(1.2)
@@ -1130,11 +1137,13 @@ class Recover(smach.State):
             distance = math.sqrt(dx*dx+dy*dy)
             rospy.logwarn("Distance = {0}".format(distance))
             if distance < 0.1:
-                self.robot.speech.speak("I have the funny feeling that I am inside an obstacle. I am going to clear the map around myself", block=False)
+                #self.robot.speech.speak("I have the funny feeling that I am inside an obstacle. I am going to clear the map around myself", block=False)
+                rospy.loginfo("I have the funny feeling that I am inside an obstacle. I am going to clear the map around myself")
                 self.robot.base.clear_costmap(1.2)
                 return 'new_path_required'
             else:
-                self.robot.speech.speak("Oh no, I can not reach my precious goal", block=False)
+                #self.robot.speech.speak("Oh no, I can not reach my precious goal", block=False)
+                rospy.loginfo("Oh no, I can not reach my precious goal")
                 return 'new_goal_required'
 
 class NavigateGeneric(smach.StateMachine):
