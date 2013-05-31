@@ -10,21 +10,14 @@ amigo1:
 
 amigo3:
 
-    roslaunch create_speech_files speech.launch  # (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-
-amigo3: (wait for speech.launch)
-
-    roslaunch speech_interpreter start.launch    # (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-
-amigo3:
-
     alsamixer
         Mic Boost -> 100
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
 
-    rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
+    amigo-console        
+        amigo.ears.ask_user("continue")    
 
     say test
 
