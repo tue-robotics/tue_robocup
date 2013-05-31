@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
-from text_to_speech_philips.srv import amigo_speakup_advanced
+from text_to_speech_philips.srv import Speak
 from std_msgs.msg import String
 from math import sqrt
 
@@ -19,8 +19,8 @@ class Speech(object):
 
         if wait_service:
             rospy.loginfo("Waiting for service amigo_speakup_advanced")
-            rospy.wait_for_service('amigo_speakup_advanced', timeout=2)
-        self.speech_service = rospy.ServiceProxy('amigo_speakup_advanced', amigo_speakup_advanced)
+            rospy.wait_for_service('/text_to_speech/speak', timeout=2)
+        self.speech_service = rospy.ServiceProxy('/text_to_speech/speak', Speak)
 
         """Interface to Amigo's stt-module
            To do: better integration with other Speech code"""
@@ -39,16 +39,24 @@ class Speech(object):
     def close(self):
         pass
 
-    def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited", block=True):
+    def speak(self, sentence, language="us", personality="kyle", character="default", mood="excited", block=True):
         """
-        Send a sentence to amigo's tts
+        Send a sentence to amigo's text to speech module
         """
-        if block:
-            ret = self.tts(sentence, language, personality, voice, mood)
-            return ret
-        else:
-            thread.start_new_thread(self.tts, (sentence, language, personality, voice, mood))
-            return True
+        try:
+            if language == 'nl' and not (personality in ['david', 'marjolein']):
+                personality = 'david' #kyle doesn't work for NL
+            rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
+            
+            # Also send the sentence over a topic (for simulation purposes)
+            self.pub_amigo_speech_sim.publish(sentence)
+
+            resp1 = self.speech_service(language, personality, character, mood, sentence, block)
+            return resp1.error_msg == ""
+
+        except rospy.ServiceException, e:
+            rospy.logerr("Service call failed: {0}".format(e))
+            return False
 
     def _amigo_speak(self, sentence, wait_time=1.0):
         self.amigo_speak_up.publish(sentence)
@@ -60,22 +68,6 @@ class Speech(object):
         else:
             rospy.sleep(wait_time)
         return True
-
-    def tts(self, sentence, language="us", personality="kyle", character="default", mood="excited"):
-        try:
-            if language == 'nl' and not (personality in ['david', 'marjolein']):
-                personality = 'david' #kyle doesn't work for NL
-            rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
-            
-            # Also send the sentence over a topic (for simulation purposes)
-            self.pub_amigo_speech_sim.publish(sentence)
-
-            resp1 = self.speech_service(language, personality, character, mood, sentence)
-            return resp1.result
-
-        except rospy.ServiceException, e:
-            rospy.logerr("Service call failed: {0}".format(e))
-            return False
 
     def speak_info(self, sentence):
 
