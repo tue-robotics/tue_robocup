@@ -93,6 +93,14 @@ void findOperator(wire::Client& client, bool lost = true) {
         ros::Duration wait_for_operator(7.0);
         wait_for_operator.sleep();
     }
+    
+    //! Reset world model
+    std_srvs::Empty srv;
+    if (reset_wire_client_.call(srv)) {
+        ROS_INFO("Cleared world model");
+    } else {
+        ROS_ERROR("Failed to clear world model");
+    }
 
     //! Always some time before operator is there
     ros::Duration waiting_time(1.0);
@@ -133,7 +141,7 @@ void findOperator(wire::Client& client, bool lost = true) {
                     //! Check if the person stands in front of the robot
                     if (pos_gauss.getMean()(0) < distance_max &&
                             pos_gauss.getMean()(0) > distance_min &&
-                            pos_gauss.getMean()(1) > -distance_left_right_min &&
+                            pos_gauss.getMean()(1) > distance_left_right_min &&
                             pos_gauss.getMean()(1) < distance_left_right_max) {
                         vector_possible_operators.push_back(pos_gauss);
                         ROS_INFO("Found candidate operator at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
@@ -280,7 +288,7 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
                     
-                    ROS_INFO("Operator has variance %f, last variance is %f", cov(0,0), last_var_operator_pos_);
+                    ROS_DEBUG("Operator has variance %f, last variance is %f", cov(0,0), last_var_operator_pos_);
 
 
                     //! Check if operator position is updated (initially negative)
@@ -293,7 +301,7 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                         //! Uncertainty increased: operator out of side
                         last_var_operator_pos_ = cov(0,0);
                         t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
-                        ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
+                        if (t_no_meas_ > 1) ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
 
                         //! Position uncertainty increased too long: operator lost
                         if (t_no_meas_ > TIME_OUT_OPERATOR_LOST) {
@@ -373,7 +381,7 @@ void speechCallback(std_msgs::String res) {
         ros::NodeHandle nh;
         sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
     } else {
-        ROS_WARN("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
+        ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
     }
 }
 
@@ -490,7 +498,7 @@ bool leftElevator(pbl::Gaussian& pos)
     ROS_INFO("Finished iterating over laser data");
 
     // Limited distance to keep the velocity low
-    double distance_drive = 0.15; // TODO: Must be much larger
+    double distance_drive = 0.75; // TODO: Must be much larger
     if (beam_exit_distance_map.size() == 1)
     {
 
