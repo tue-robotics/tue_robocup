@@ -113,15 +113,15 @@ class LearnPersonName(smach.State):
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             if self.person_learn_failed == 2:
                 self.robot.speech.speak("I will call you William")
-                self.response = "william"
+                self.response.answer = "william"
                 self.person_learn_failed = 3
             if self.person_learn_failed == 1:
                 self.robot.speech.speak("I will call you Michael")
-                self.response = "michael"
+                self.response.answer = "michael"
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
                 self.robot.speech.speak("I will call you John")
-                self.response = "john"
+                self.response.answer = "john"
                 self.person_learn_failed = 1
 
         self.robot.reasoner.query(Compound("assert", Compound("current_person", self.response.answer)))
@@ -150,7 +150,7 @@ class Ask_drink(smach.State):
 
         # Check available options from rulebook!
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
-            self.robot.speech.speak("I just bring you a coke")
+            self.robot.speech.speak("I will just bring you a coke")
             self.response.answer = "coke"
         
         rospy.loginfo("self.response = {0}".format(self.response.answer))
@@ -217,10 +217,11 @@ class LookForDrink(smach.State):
         nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
 
+        ## If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
         if nav_result == "unreachable":                    
-            return "not_found"
+            return "looking"
         elif nav_result == "preempted":
-            return "not_found"
+            return "looking"
 
         # we made it to the new goal. Let's have a look to see whether we can find the object here
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
@@ -259,6 +260,9 @@ class LookForPerson(smach.State):
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
             self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
+            return_drink_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
+            serving_drink = str(return_drink_result[0]["Drink"])  
+            self.robot.speech.speak("Can the person who ordered the " + str(serving_drink) + " please step in front of me?")
             return "not_found"
 
         serving_person = str(return_result[0]["Person"])
@@ -286,10 +290,11 @@ class LookForPerson(smach.State):
         nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
 
+        ## If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
         if nav_result == "unreachable":                    
-            return "not_found"
+            return "looking"
         elif nav_result == "preempted":
-            return "not_found"
+            return "looking"
 
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
@@ -297,6 +302,7 @@ class LookForPerson(smach.State):
         self.robot.speech.speak("Let me see who I can find here...")
         self.robot.head.reset_position()
         self.robot.head.set_pan_tilt(tilt=-0.2)
+        self.robot.spindle.reset()
 
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
         rospy.sleep(5.0)
@@ -343,11 +349,18 @@ class LookForPerson(smach.State):
 
         return "not_found"
 
+## Class not build in yet, this will be used when person can not be found but drink is still in gripper
 class HandoverToHuman(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
         with self:
+            smach.StateMachine.add('GOTO_MEETING_POINT',
+                                    GotoMeetingPoint(robot),
+                                    transitions={   "found":"PRESENT_DRINK", 
+                                                    "not_found":"PRESENT_DRINK", 
+                                                    "no_goal":"PRESENT_DRINK",  
+                                                    "all_unreachable":"PRESENT_DRINK"})
             smach.StateMachine.add( 'PRESENT_DRINK',
                                     Say(robot, ["Here's your drink", "Here you go!"]),
                                     transitions={"spoken":"POSE"})
@@ -471,8 +484,8 @@ class CocktailParty(smach.StateMachine):
                     # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
                                             Human_handover(robot.leftArm,robot),
-                                            transitions={   'succeeded':'RESET_HEAD',
-                                                            'failed':'RESET_HEAD' })
+                                            transitions={   'succeeded':'GOTO_INITIAL_FAIL',
+                                                            'failed':'GOTO_INITIAL_FAIL' })
                     @smach.cb_interface(outcomes=["done"])
                     def reset_head(*args, **kwargs):
                         robot.head.reset_position()
@@ -495,7 +508,7 @@ class CocktailParty(smach.StateMachine):
                                             Say(robot, ["I could not find you. Please take the drink from my hand", 
                                                         "I can't find you. I really don't like fluids, so please take the drink from my hand.",
                                                         "I could not find you. The drink is getting heavy, take it please!"]),
-                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' })
+                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' }) #GOTO_INITIAL_FAIL
 
                     smach.StateMachine.add( 'HANDOVER_DRINK',
                                             HandoverToHuman(robot),
