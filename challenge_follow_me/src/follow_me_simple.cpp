@@ -74,6 +74,17 @@ void amigoSpeak(string sentence) {
  */
 void findOperator(wire::Client& client, bool lost = true) {
 
+    //! Region in front of robot in which operator is allowed to stand
+    double distance_left_right_min = -0.5;
+    double distance_left_right_max = 0.5;
+    double distance_min = 0.25;
+    double distance_max = 2.0;
+    if (lost)
+    {
+        distance_left_right_min = -1.0;
+        distance_left_right_max = 1.0;
+    }
+
     //! It is allowed to call the operator once per section (points for the section will be lost)
     if (lost) {
         amigoSpeak("I have lost my operator, can you please stand in front of me");
@@ -82,6 +93,13 @@ void findOperator(wire::Client& client, bool lost = true) {
         ros::Duration wait_for_operator(7.0);
         wait_for_operator.sleep();
     }
+
+    //! Always some time before operator is there
+    ros::Duration waiting_time(1.0);
+    waiting_time.sleep();
+
+    //! Vector with candidate operators
+    vector<pbl::Gaussian> vector_possible_operators;
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
@@ -112,39 +130,14 @@ void findOperator(wire::Client& client, bool lost = true) {
                         ROS_INFO("follow_me_simple (findOperator): Position person is not a Gaussian");
                     }
 
-                    //! If operator, set name in world model
-                    if (pos_gauss.getMean()(0) < 2.0 && pos_gauss.getMean()(1) > -0.75 && pos_gauss.getMean()(1) < 0.75) {
+                    //! Check if the person stands in front of the robot
+                    if (pos_gauss.getMean()(0) < distance_max &&
+                            pos_gauss.getMean()(0) > distance_min &&
+                            pos_gauss.getMean()(1) > -distance_left_right_min &&
+                            pos_gauss.getMean()(1) < distance_left_right_max) {
+                        vector_possible_operators.push_back(pos_gauss);
+                        ROS_INFO("Found candidate operator at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
-                        amigoSpeak("I found my operator");
-
-                        //! Reset
-                        last_var_operator_pos_ = -1;
-                        t_last_check_ = ros::Time::now().toSec();
-
-                        //! Evidence
-                        wire::Evidence ev(ros::Time::now().toSec());
-
-                        //! Set the position
-                        ev.addProperty("position", pos_gauss, NAVIGATION_FRAME);
-
-                        //! Name must be operator
-                        pbl::PMF name_pmf;
-                        name_pmf.setProbability("operator", 1.0);
-                        ev.addProperty("name", name_pmf);
-
-                        //! Reset the world model
-                        std_srvs::Empty srv;
-                        if (reset_wire_client_.call(srv)) {
-                            ROS_INFO("Cleared world model");
-                        } else {
-                            ROS_ERROR("Failed to clear world model");
-                        }
-
-                        //! Assert evidence to WIRE
-                        client.assertEvidence(ev);
-
-                        no_operator_found = false;
-                        break;
                     }
                 }
 
@@ -152,18 +145,83 @@ void findOperator(wire::Client& client, bool lost = true) {
 
         }
 
+        //! Found at least one candidate operator
+        if (!vector_possible_operators.empty()) {
+
+            //! Position candidate operator
+            pbl::Gaussian pos_operator(3);
+
+            //! Find person that has smallest Eucledian distance to robot
+            if (vector_possible_operators.size() > 1) {
+
+                double dist_min = 0.0;
+                int i_best = 0;
+
+                for (unsigned int i = 0; i < vector_possible_operators.size(); ++i)
+                {
+                    double dx = vector_possible_operators[i].getMean()(1);
+                    double dy = vector_possible_operators[i].getMean()(0);
+                    double dist = sqrt(dx*dx+dy*dy);
+                    if (i == 0 || dist_min > dist)
+                    {
+                        dist_min = dist;
+                        i_best = i;
+                    }
+                }
+
+                pos_operator = vector_possible_operators[i_best];
+
+            } else {
+                pos_operator = vector_possible_operators[0];
+            }
+
+            ROS_INFO("Found operator at (x,y) = (%f,%f)", pos_operator.getMean()(0), pos_operator.getMean()(1));
+
+            //! Reset
+            last_var_operator_pos_ = -1;
+            t_last_check_ = ros::Time::now().toSec();
+
+            //! Evidence
+            wire::Evidence ev(t_last_check_);
+
+            //! Set the position
+            ev.addProperty("position", pos_operator, NAVIGATION_FRAME);
+
+            //! Name must be operator
+            pbl::PMF name_pmf;
+            name_pmf.setProbability("operator", 1.0);
+            ev.addProperty("name", name_pmf);
+
+            //! Reset the world model
+            std_srvs::Empty srv;
+            if (reset_wire_client_.call(srv)) {
+                ROS_INFO("Cleared world model");
+            } else {
+                ROS_ERROR("Failed to clear world model");
+            }
+
+            //! Assert evidence to WIRE
+            client.assertEvidence(ev);
+
+            no_operator_found = false;
+
+            amigoSpeak("I found my operator.");
+
+            ros::Duration safety_delta(1.0);
+            safety_delta.sleep();
+            return;
+
+        }
+
         dt.sleep();
     }
-    
-    ros::Duration safety_delta(1.0);
-    safety_delta.sleep();
-    
-    
-    //! Reset
-    last_var_operator_pos_ = -1;
-    t_last_check_ = ros::Time::now().toSec();
+
+    amigoSpeak("I did not find my operator yet");
+    return;
 
 }
+
+
 
 
 
@@ -350,9 +408,12 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
     end_goal.pose.position.y = pos_exp(1) * reduced_distance / full_distance;
     end_goal.pose.position.z = 0;
 
-    planner_->MoveToGoal(end_goal);
-
-    ROS_INFO("Executive: Move base goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
+    if (t_no_meas_ < 1.0) {
+        planner_->MoveToGoal(end_goal);
+        ROS_DEBUG("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
+    } else {
+        ROS_INFO("No operator position update: robot will not move");
+    }
 
 }
 
@@ -643,7 +704,7 @@ int main(int argc, char **argv) {
             ros::spinOnce();
 
             //! Avoid too much delay due to some failure in perception
-            if (n_tries > 10) {
+            if (n_tries > 5) {
                 findOperator(client);
                 ROS_ERROR("Learning OK but no operator in world model, person in front of the robot is assumed to be the operator");
                 break;
@@ -689,8 +750,6 @@ int main(int argc, char **argv) {
             // * * * * * * * * * * * * * * * * * * * * * * * * * * * ITP 2 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *//
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-            double time_rotation = 6.5;
-
             pbl::Matrix cov(3,3);
             cov.zeros();
             pbl::Gaussian pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
@@ -706,10 +765,11 @@ int main(int argc, char **argv) {
 
                 //! Rotate for 180 deg (in steps since only small angles allowed)
                 pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
-                unsigned int n_sleeps = 0;
-                unsigned int freq = 20;
+                const double time_rotation = 7.0;
+                const unsigned int freq = 20;
                 unsigned int N_SLEEPS_TOTAL = time_rotation*freq;
                 ros::Duration pause(1.0/(double)freq);
+                unsigned int n_sleeps = 0;
                 
                 while (n_sleeps < N_SLEEPS_TOTAL) {
 					moveTowardsPosition(pos, 2);
@@ -738,11 +798,12 @@ int main(int argc, char **argv) {
             {
 
                 //! Rotate for 90 deg (in steps since only small angles allowed)
-                pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
-                unsigned int n_sleeps = 0;
-                unsigned int freq = 20;
-                unsigned int N_SLEEPS_TOTAL = 2.0*time_rotation/3.0*freq;
+                pos = pbl::Gaussian(pbl::Vector3(-2, 0, 0), cov);
+                const double time_rotation = 6.0;
+                const unsigned int freq = 20;
+                unsigned int N_SLEEPS_TOTAL = time_rotation*freq;
                 ros::Duration pause(1.0/(double)freq);
+                unsigned int n_sleeps = 0;
 
                 while (n_sleeps < N_SLEEPS_TOTAL) {
                     moveTowardsPosition(pos, 2);
