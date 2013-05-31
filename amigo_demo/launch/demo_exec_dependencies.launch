@@ -13,7 +13,7 @@
 	<group if="$(optenv ROBOT_REAL false)">
 		<!-- REAL ROBOT -->
 
-		<include file="$(find tue_speech_recognition)/demo/demo_speech.launch" />
+		<!--<include file="$(find tue_speech_recognition)/demo/demo_speech.launch" />-->
 		
 		<!-- teleop (amigo1) -->
 		<node name="teleop" pkg="teleop" type="teleop.py" respawn="false" launch-prefix="xterm -e">
