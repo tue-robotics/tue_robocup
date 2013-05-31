@@ -35,6 +35,9 @@ class Perception(object):
         '''Laser service'''
         self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
 
+        ''' Service to load template matching configuration '''
+        self.sv_template_config = rospy.ServiceProxy("/template_matching/srv_input", pein_srvs.srv.StartStop)
+
         ''' Temporarily included to test toggle_perception_2d '''
         import geometry_msgs
         self.testpoint = geometry_msgs.msg.PointStamped()
@@ -68,6 +71,8 @@ class Perception(object):
         return result
 
     def toggle_perception_2d(self, pointstamped, length_x=0.5, length_y=0.5, length_z=0.5):
+
+        rospy.logwarn("This function is deprecated, toggle object_detector_2d separately and use set_perception_roi to set the roi")
         # ToDo: does this work as we hope?
         # ToDo: what is a suitable length/width?
         # ToDo: what is status?
@@ -98,6 +103,43 @@ class Perception(object):
             return False
 
         return response
+
+    def set_perception_roi(self, pointstamped, length_x=0.5, length_y=0.5, length_z=0.5):
+        ''' Sets region of interest for object_detector_2d and tabletop_segmentation'''
+        #from pein_srvs.srv import FindObjInRoi
+        request = pein_srvs.srv.FindObjInRoiRequest()
+        request.x = pointstamped.point.x
+        request.y = pointstamped.point.y
+        request.z = pointstamped.point.z
+        request.length_x = length_x
+        request.length_y = length_y
+        request.length_z = length_z
+        request.frame = pointstamped.header.frame_id
+
+        ''' Wait for service '''
+        try:
+            rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
+            self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
+            response = self.sv_laser_detector(request)
+        except rospy.ServiceException, e:
+            rospy.logerr("Laser service not available: {0}".format(e))
+            return False
+
+        return response
+
+    def load_template_matching_config(self, config_name, status='inactive'):
+        ''' Loads configuration for pein template_matching, does not start it by default '''
+        request = pein_srvs.srv.StartStopRequest()
+        request.key.append('status')
+        request.key.append('configuration')
+        request.value.append(status)
+        request.value.append(config_name)
+        try:
+            response = self.sv_template_config(request)
+            return response
+        except rospy.ServiceException, e:
+            rospy.logerr("Load template config not available: {0}".format(e))
+            return False
 
     '''Face learning'''
     def learn_person(self, name, n_models = 10, view = 'front', publish_while_learning = False):
