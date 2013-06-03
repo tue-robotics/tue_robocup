@@ -1,5 +1,9 @@
 # Responsible: Erik
 
+amigo2:
+
+    hardware: base, spindle, left-arm, head
+
 amigo1:
 
     astart # (if not already running)
@@ -19,6 +23,6 @@ amigo3:
     amigo-console        
         amigo.ears.ask_user("continue")    
 
-    say test
+    say test        (to test if speaker works)
 
     rosrun challenge_rips rips.py
