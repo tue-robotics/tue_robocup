@@ -9,26 +9,17 @@ amigo1:
     amiddle-egpsr
 
 amigo3:
-
-    roslaunch challenge_egpsr egpsr_dependencies.launch
-
-amigo3: (wait for egpsr_dependencies.launch)
     
-    roslaunch speech_interpreter start_magdeburg2013.launch
-    
-    or in tue_test_lab:
-    
-    roslaunch speech_interpreter start_tue_test_lab.launch
-
     alsamixer
         Mic Boost -> 100
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
 
-    rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
+    amigo-console        
+        amigo.ears.ask_user("continue")    
 
-    say test
+    say test        (to test if speaker works)
 
     rosrun challenge_egpsr egpsr.py
 
