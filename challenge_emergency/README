@@ -2,30 +2,35 @@
 
 !!! PUT USB STICK IN AMIGO3 !!!
 
+amigo2:
+
+    hardware: base, spindle, left-arm, head
+    
 amigo1:
     
     amiddle-emergency
 
 amigo3:
 
-     pumount --yes-I-really-want-lazy-unmount /media/usb-stick/
-     pmount /dev/sdc1 usb-stick
-    
+    ***** TIM / JOS: CHECK UNDERSTANDING MOUNTING USB *****
+
+    pumount --yes-I-really-want-lazy-unmount /media/usb-stick/
+    pmount /dev/sdc1 usb-stick
+
     roslaunch challenge_emergency emergency_dependencies.launch
 
-amigo3: (wait for emergency_dependencies.launch)
+amigo3:
     
-    roslaunch speech_interpreter start_magdeburg2013.launch
-
     alsamixer
         Mic Boost -> 100
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
 
-    rosservice call /interpreter/get_continue "n_tries_max: 10 time_out: 100.0"
+    amigo-console        
+        amigo.ears.ask_user("continue")    
 
-    say test
+    say test        (to test if speaker works)
 
     rosrun challenge_emergency emergency.py
 
