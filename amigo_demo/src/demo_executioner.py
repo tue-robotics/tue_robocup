@@ -138,6 +138,7 @@ special_keys[' '] = "Quit"
 special_keys[chr(27)] = "Cancel current movement"
 special_keys['?'] = "SHOW_KEYMAP" #Doubly defined, also in special keys
 special_keys["%"] = "HI5"
+special_keys[":"] = "LEARN_FACE"
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -582,6 +583,44 @@ def grab_demo(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+def learn_face(robot):
+    import smach
+    import robot_smach_states as states
+    from speech_interpreter.srv import GetInfo
+    
+    name = "mr. X"
+
+    try:
+        get_learn_person_name_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        response = get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
+        name = response.answer
+
+        if name == "no_answer" or name == "wrong_answer":
+            name = "mr. X"
+    except Exception, e:
+        rospy.logerr(e)
+
+    robot.speech.speak("Hi {0}".format(name))
+
+    rospy.loginfo("Setting up state machine")
+    sm = smach.StateMachine(outcomes=['Done', "Failed", "Aborted"])
+
+    with sm:
+        smach.StateMachine.add('LEARN_FACE',
+                                states.Learn_Person(robot, name),
+                                transitions={   'face_learned':'Done',
+                                                'learn_failed':'Failed'})
+
+    rospy.loginfo("State machine set up, start execution...")
+    #import pdb; pdb.set_trace()
+    import smach_ros
+    introserver = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT_PRIMARY')
+    introserver.start()
+    result = sm.execute()
+    introserver.stop()
+
+    rospy.loginfo("State machine result: {0}".format(result))
+
 def cancel_actions(robot):
     global actions_canceled
     actions_canceled = True
@@ -717,6 +756,9 @@ def process_key(key):
                 if key == "+":
                     print "Head straight"
                     robot.head.reset_position()
+                if key == ":":
+                    print "Learn a face"
+                    learn_face(robot)
                 if key == "L":
                     #print "Next language:",
                     next_language()
