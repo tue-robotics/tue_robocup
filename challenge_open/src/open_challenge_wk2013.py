@@ -315,7 +315,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("RECOGNIZE_OBJECTS", 
                 LookForServeObject(robot), # En andere dingen
-                transitions={  'no_object_found':'MOVE_TO_TABLE', 'object_found': 'LOOK_FOR_SERVE_OBJECT', 'looking' : 'NEVER_REACHED', 'abort' : 'NEVER_REACHED'})
+                transitions={  'not_found':'MOVE_TO_TABLE', 'found': 'LOOK_FOR_SERVE_OBJECT'})
         
 
 

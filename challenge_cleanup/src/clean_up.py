@@ -16,13 +16,7 @@ from speech_interpreter.srv import GetInfo
 ##########################################
 ############## What to run: ##############
 ##########################################
-# - astart
-# - amiddle
-# - roslaunch create_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - !! Wait for speech.launch to finish before !!
-#   !!   launching speech interpreter          !!
-#   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - rosrun challenge_cleanup clean_up.py
+# CHECK the README!
 
 class Ask_cleanup(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
@@ -35,21 +29,25 @@ class Ask_cleanup(smach.State):
         self.robot.head.look_up()
 
         # ToDo: don't hardcode this!
-        self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         room = "livingroom"
-        if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-            room = "bedroom"
-        elif self.response.answer == "livingroom":
-            room = "living_room"
-        elif self.response.answer == "diningroom":
-            room = "dining_room"
-        elif self.response.answer == "kitchen":
-            room = "kitchen"
-        elif self.response.answer == "bedroom":
-            room = "bedroom"
-        else:
-            self.robot.speech.speak("I'll clean the livingroom, humans always tend to make a mess of that.")
-            room = "living_room"
+
+        try:
+            self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+            if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+                room = "bedroom"
+            elif self.response.answer == "livingroom":
+                room = "living_room"
+            elif self.response.answer == "diningroom":
+                room = "dining_room"
+            elif self.response.answer == "kitchen":
+                room = "kitchen"
+            elif self.response.answer == "bedroom":
+                room = "bedroom"
+            else:
+                self.robot.speech.speak("I'll clean the livingroom, humans always tend to make a mess of that.")
+                room = "living_room"
+        except Exception, e:
+            rospy.logerr("Could not get_cleanup_service: {0}. Defaulting to {1}".format(e, room))
 
         self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("clean_up", room))))
             
@@ -150,6 +148,7 @@ class Cleanup(smach.StateMachine):
             
             ################################################################
             #                  DETERMINE_EXPLORATION_TARGET
+            # TODO: What if there are multiple objects at the same exploration_target? 
             ################################################################
 
             @smach.cb_interface(outcomes=['found_exploration_target', 'done'], 

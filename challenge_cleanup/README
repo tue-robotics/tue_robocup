@@ -2,7 +2,7 @@
 
 amigo1:
 
-    amiddle-cleanup
+    amiddle 3dnav:=true
 
 amigo3:
 
