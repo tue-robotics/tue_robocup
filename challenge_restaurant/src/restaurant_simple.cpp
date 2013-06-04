@@ -9,6 +9,7 @@
 #include <pein_msgs/LearnAction.h>
 #include <std_msgs/String.h>
 #include <std_srvs/Empty.h>
+#include "perception_srvs/StartPerception.h"
 
 #include "problib/conversions.h"
 
@@ -409,6 +410,26 @@ int main(int argc, char **argv) {
     //! Planner
     planner_ = new CarrotPlanner("restaurant_carrot_planner");
     ROS_INFO("Carrot planner instantiated");
+
+    //! Switch on perception
+    ros::ServiceClient ppl_det_client = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
+    perception_srvs::StartPerception pein_srv;
+    pein_srv.request.modules.push_back("ppl_detection");
+    if (ppl_det_client.call(pein_srv))
+    {
+        ROS_INFO("Switched on laser_ppl_detection");
+    }
+    else
+    {
+        ROS_ERROR("Failed to switch on perception");
+        ros::Duration wait(1.0);
+        wait.sleep();
+        if (!ppl_det_client.call(pein_srv))
+        {
+            ROS_ERROR("No ppl detection possible, end of challenge");
+            return 1;
+        }
+    }
 
     //! Query WIRE for objects
     wire::Client client;
