@@ -630,6 +630,7 @@ class Learn_Person(smach.State):
 
 class LookForObjectsAtROI(smach.State):
     def __init__(self, robot, lookat_query, object_query, maxdist=0.8):
+        #TODO: Remove 'looking' outcome, it is never given.
             smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
                                     input_keys=[],
                                     output_keys=[])
