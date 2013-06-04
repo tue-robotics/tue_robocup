@@ -8,6 +8,7 @@
 #include <pein_msgs/LearnAction.h>
 #include <sensor_msgs/LaserScan.h>
 #include <tue_move_base_msgs/MoveBaseAction.h>
+#include "perception_srvs/StartPerception.h"
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
@@ -599,11 +600,29 @@ int main(int argc, char **argv) {
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Face learning
+    //// Face learning and perception
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);
     learn_face_ac_->waitForServer();
     ROS_INFO("Learn face client connected to the learn face server");
+    ros::ServiceClient ppl_det_client = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
+    perception_srvs::StartPerception pein_srv;
+    pein_srv.request.modules.push_back("ppl_detection");
+    if (ppl_det_client.call(pein_srv))
+    {
+        ROS_INFO("Switched on laser_ppl_detection");
+    }
+    else
+    {
+        ROS_ERROR("Failed to switch on perception");
+        ros::Duration wait(1.0);
+        wait.sleep();
+        if (!ppl_det_client.call(pein_srv))
+        {
+            ROS_ERROR("No ppl detection possible, end of challenge");
+            return 1;
+        }
+    }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// WIRE
@@ -611,8 +630,8 @@ int main(int argc, char **argv) {
     wire::Client client;
     ROS_INFO("Wire client instantiated");
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
-    std_srvs::Empty srv;
-    if (reset_wire_client_.call(srv)) {
+    std_srvs::Empty wire_srv;
+    if (reset_wire_client_.call(wire_srv)) {
         ROS_INFO("Cleared world model");
     } else {
         ROS_ERROR("Failed to clear world model");
@@ -758,7 +777,7 @@ int main(int argc, char **argv) {
                 moveTowardsPosition(pos, 0);
 
                 //! Clear world model and find a person nearby
-                if (reset_wire_client_.call(srv)) {
+                if (reset_wire_client_.call(wire_srv)) {
                     ROS_INFO("Cleared world model");
                 } else {
                     ROS_ERROR("Failed to clear world model");
