@@ -51,7 +51,7 @@ from psi import *
 
 class Ask_continue(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
-        smach.State.__init__(self, outcomes=["done", "preempted", "no_continue"])
+        smach.State.__init__(self, outcomes=["done", "no_continue"])
 
         self.robot = robot
         self.preempted = False
@@ -215,7 +215,6 @@ def setup_statemachine(robot):
         smach.StateMachine.add("ASK_CONTINUE",
                                 Ask_continue(robot),
                                 transitions={'done':'TEXT_HEARD',
-                                             'preempted':'AT_END',                         ##### Should there still be a preempted in it?
                                              'no_continue':'TEXT_NOT_HEARD'})
 
         # If heard, then amigo says that it will leave the room
