@@ -33,6 +33,124 @@ class StandardPoses:
     SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
     RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 
+#class GrabMachine(smach.StateMachine):
+#    def __init__(self, side, robot, grabpoint_query):
+#        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+#        self.side = side
+#        self.robot = robot
+#       self.grabpoint_query = grabpoint_query
+#        '''check check input and output keys'''
+#        with self:
+#            smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
+#                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
+#                                     'failed'       :   'failed'})
+
+class DetermineBaseGraspPose(smach.State):
+    def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
+        smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
+        self.side = side
+        self.robot = robot
+        self.grabpoint_query = grabpoint_query
+        if x_offset == None:
+            rospy.logwarn("x_offset not specified, defaulting to 0.5 for arms.")
+            self.x_offset = 0.5
+        else:
+            self.x_offset = x_offset
+
+        if y_offset == None:
+            rospy.logwarn("y_offset not specified, defaulting to (-)0.2 for ... arm.")
+            if self.side == self.robot.leftArm:
+                self.y_offset = 0.2
+            elif self.side == self.robot.rightArm:
+                self.y_offset = -0.2
+        else:
+            self.y_offset = y_offset
+
+        self.nr_inverse_reachability_calls = 0
+        self.max_nr_inverse_reachability_calls = 2
+        self.desired_base_poses_MAP = []
+
+    def execute(self, userdata):
+
+        ''' Do a new inverse reachability request if nr < max_nr.
+            This way, the grasp pose will be optimal (and the first few tries the change of new information is the highest)
+            If nr == max_nr: check all entries of the latest call to increase robustness'''
+        if self.nr_inverse_reachability_calls < self.max_nr_inverse_reachability_calls:
+            self.nr_inverse_reachability_calls += 1
+
+            answers = self.robot.reasoner.query(self.grabpoint_query)
+        
+            if answers:
+                answer = answers[0]
+                grasp_point = geometry_msgs.msg.PointStamped()
+                grasp_point.header.frame_id = "/map"
+                grasp_point.header.stamp = rospy.Time()
+                grasp_point.point.x = float(answer["X"])
+                grasp_point.point.y = float(answer["Y"])
+                grasp_point.point.z = float(answer["Z"])
+                
+                grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)
+                
+                self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, self.x_offset, self.y_offset)
+                
+            else:
+                rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
+                return 'target_lost'
+
+        ''' Assert the goal to the reasoner such that navigate generic can use it '''
+
+        ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
+        if not self.desired_base_poses_MAP:
+            self.robot.speech.speak("I am very sorry but this object is out of my reach",mood="sad")
+            return 'failed'
+        
+        x   = self.desired_base_poses_MAP[0].pose.position.x
+        y   = self.desired_base_poses_MAP[0].pose.position.y
+        phi = transformations.euler_z_from_quaternion(self.desired_base_poses_MAP[0].pose.orientation)
+        self.desired_base_poses_MAP.pop(0)
+
+        self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))))
+        self.robot.reasoner.assertz(Compound("base_grasp_pose", Compound("pose_2d", x, y, phi)))
+
+        return 'succeeded'
+
+
+class PrepareOrientation(smach.StateMachine):
+    def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
+        smach.StateMachine.__init__(self, outcomes=['orientation_succeeded','orientation_failed','abort','target_lost'])
+        self.side = side
+        self.robot = robot
+        self.grabpoint_query = grabpoint_query
+        if x_offset == None:
+            rospy.logwarn("x_offset not specified, defaulting to 0.5 for arms.")
+            self.x_offset = 0.5
+        else:
+            self.x_offset = x_offset
+
+        if y_offset == None:
+            rospy.logwarn("y_offset not specified, defaulting to (-)0.2 for ... arm.")
+            if self.side == self.robot.leftArm:
+                self.y_offset = 0.2
+            elif self.side == self.robot.rightArm:
+                self.y_offset = -0.2
+        else:
+            self.y_offset = y_offset
+
+        with self:
+            smach.StateMachine.add('DETERMINE_GRASP_POSE', 
+                DetermineBaseGraspPose(self.side, self.robot, self.grabpoint_query, self.x_offset, self.y_offset),
+                transitions={'succeeded'    :'DRIVE_TO_GRASP_POSE',
+                             'failed'       :'orientation_failed',
+                             'target_lost'  :'target_lost'})
+
+            smach.StateMachine.add('DRIVE_TO_GRASP_POSE',
+                navigation.NavigateGeneric(robot=self.robot, goal_query=Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))),
+                transitions={'arrived'          :'orientation_succeeded',
+                             'unreachable'      :'DETERMINE_GRASP_POSE',
+                             'preempted'        :'abort',
+                             'goal_not_defined' :'DETERMINE_GRASP_POSE'})
+
+
 class Prepare_orientation(smach.State):
     def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
         smach.State.__init__(self, outcomes=['orientation_succeeded','orientation_failed','abort','target_lost'])
@@ -195,7 +313,9 @@ class UpdateObjectPose(smach.State):
         ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
         rospy.logwarn("Spindle timeout temporarily increased to 30 seconds")
         if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=30.0):
-            self.robot.perception.toggle_perception_2d(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+            #self.robot.perception.toggle_perception_2d(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+            self.robot.perception.toggle(["object_detector_2d"])
+            self.robot.perception.set_perception_roi(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
             rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
             rospy.logwarn("Waiting for 2.0 seconds for laser update")
             rospy.sleep(rospy.Duration(2.0))
@@ -263,7 +383,12 @@ class GrabMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'failed'})
         
-            smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.grabpoint_query),
+            # Uses old Prepare_orientation
+            #smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.grabpoint_query),
+            #            transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
+
+            # Uses new Prepare Orientation
+            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grabpoint_query),
                         transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
 
             smach.StateMachine.add('OPEN_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
@@ -479,7 +604,7 @@ class PlaceObject(smach.StateMachine):
                                      'failed'       :   'failed'})
         
             smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.placement_query),
-                        transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PREPARE_ORIENTATION','abort':'failed','target_lost':'target_lost'})
+                        transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
             
             smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
                         transitions={'succeeded'    :   'POSITION',
@@ -500,7 +625,7 @@ class PlaceObject(smach.StateMachine):
                         transitions={'succeeded':'CARR_POS','failed':'CARR_POS'})
         
             smach.StateMachine.add('CARR_POS', Carrying_pose(self.side, self.robot),
-                        transitions={'succeeded':'succeeded','failed':'CLOSE_GRIPPER'})
+                        transitions={'succeeded':'CLOSE_GRIPPER','failed':'CLOSE_GRIPPER'})
 
             smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
                         transitions={'succeeded'    :   'RESET_ARM',
@@ -566,7 +691,7 @@ class DropObject(smach.StateMachine):
             smach.StateMachine.add( 'SAY_HUMAN_HANDOVER', 
                                     Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
                                                         "My apologies, but i cannot place the object. Would you be so kind to take it from me"]),
-                                     transitions={   'spoken':'Aborted'})
+                                     transitions={   'spoken':'HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add( 'HANDOVER_TO_HUMAN', 
                                     HandoverToHuman(self.side, self.robot),
@@ -761,7 +886,7 @@ class ArmToUserPose(smach.State):
     def execute(self, userdata):
         if not self.delta:
             rospy.logwarn("Transforming to baselink, should become obsolete but this is not yet the case")
-            target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
+            #target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
             if self.side.send_goal(self.x, self.y, self.z, self.roll, self.pitch, self.yaw,
                 time_out=self.time_out,
                 pre_grasp=self.pre_grasp,
