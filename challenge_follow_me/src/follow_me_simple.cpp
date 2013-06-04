@@ -33,7 +33,7 @@ const int N_MODELS = 2;                         // Number of models used for rec
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-const double T_LEAVE_ELEVATOR = 8.0;            // Time after which robot is assumed to be outside the elevator.
+const double T_LEAVE_ELEVATOR = 9.0;            // Time after which robot is assumed to be outside the elevator.
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
 // TODO: Check/test if confimation is needed: please leave the elevator
@@ -487,7 +487,7 @@ bool leftElevator(pbl::Gaussian& pos)
         if (i_current-i_first > min_n_beams)
         {
             beam_exit_distance_map[(i_first+i_current)/2] = min_distance_segment;
-            ROS_INFO("Found possible exit, %u beams", i_current-i_first);
+            ROS_DEBUG("Found possible exit, %u beams", i_current-i_first);
         }
 
         i = ++i_current;
@@ -495,14 +495,13 @@ bool leftElevator(pbl::Gaussian& pos)
     }
 
     //! Determine most likely candidate
-    ROS_INFO("Finished iterating over laser data");
+    ROS_DEBUG("Finished iterating over laser data");
 
     // Limited distance to keep the velocity low
     double distance_drive = 0.75; // TODO: Must be much larger
     if (beam_exit_distance_map.size() == 1)
     {
 
-        ROS_INFO("One possible exit");
         double angle_exit = laser_scan_.angle_min + beam_exit_distance_map.begin()->first * laser_scan_.angle_increment;
         ROS_INFO(" angle towards exit is %f, beam %u", angle_exit, beam_exit_distance_map.begin()->first);
 
@@ -526,14 +525,21 @@ bool leftElevator(pbl::Gaussian& pos)
             }
         }
 
-        ROS_INFO(" found most probable exit");
+        ROS_DEBUG(" found most probable exit");
         double angle_exit = laser_scan_.angle_min + it_best->first * laser_scan_.angle_increment;
         ROS_INFO(" angle towards exit is %f", angle_exit);
+
+        //! Check if the robot left the elevator
+        if (angle_exit > 3.141592)
+        {
+            return true;
+        }
 
         pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
         ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, it_best->second);
 
-    } else
+    }
+    else
     {
         ROS_INFO("No candidate exits found, just turn");
         pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
@@ -545,78 +551,6 @@ bool leftElevator(pbl::Gaussian& pos)
     //! Let robot drive the right direction
     moveTowardsPosition(pos, 0);
     return false;
-
-    /*
-
-    //! Settings
-    unsigned int step_n_beams = 10;
-    double width_robot = 0.75;
-    double min_distance_to_exit = 1.0;
-
-    //! Derived properties
-    double angle = 2.0*atan2(width_robot/2, min_distance_to_exit);
-    unsigned int n_beams_region = angle/laser_scan_.angle_increment;
-
-    //! Administration
-    unsigned int i_exit = 0;
-    double distance_exit = 0.0;
-    
-    ROS_INFO("Find exit elevator, n_beams_region is %u", n_beams_region);
-
-    //! Loop over laser data
-    for (unsigned int i_start = 0; i_start < laser_scan_.ranges.size() - n_beams_region - 1; i_start += step_n_beams)
-    {
-        //! Determine distance to first point of the current region
-        float shortest_distance = laser_scan_.ranges[i_start];
-        unsigned int j = i_start;
-
-        //! Determine shortest distance in current region (must be at least min_distance_to_exit)
-        while (shortest_distance >= min_distance_to_exit && j < i_start + n_beams_region)
-        {
-            //! Shortest distance in region
-            shortest_distance = std::min(laser_scan_.ranges[j], shortest_distance);
-            ++j;
-        }
-
-		if (j == i_start + n_beams_region) {
-			ROS_INFO("Beam starting at %d has shortest distance %f", i_start, shortest_distance);
-		}
-
-        //! Store most promising exit
-        if (shortest_distance > min_distance_to_exit && j == i_start + n_beams_region) {
-            i_exit = i_start + n_beams_region/2;
-            min_distance_to_exit = shortest_distance;
-        }
-
-        //! Next region
-    }
-    
-    ROS_INFO("Index exit is beam %u/%zu", i_exit, laser_scan_.ranges.size());
-
-    // Now the angle towards the exit is found
-    // TODO: check if beams more or less perpendicular to robot measure a short distance (inside elevator)
-    //        or
-    //       drive for a fixed time interval (in seconds), risk: path blocked, robot stays within elevator
-
-    //! If an exit is found, return the exit
-    if (min_distance_to_exit > 1.0)
-    {
-        double angle_exit = laser_scan_.angle_min + i_exit * laser_scan_.angle_increment;
-        
-        // To keep the velocity low
-        double distance_drive = 0.1; // TODO: Update this distance
-        pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
-        ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, distance_exit);
-        return false;
-
-    }
-
-    //! No exit
-    ROS_WARN("No free area with width %f [m] and minimal free distance of %f [m] found", width_robot, min_distance_to_exit);
-    return false;
-
-    */
-
 
 }
 
@@ -766,7 +700,7 @@ int main(int argc, char **argv) {
             if (itp2_new) {
 				
 				//! Robot is asked to leave the elevator
-                amigoSpeak("I will leave the elevator now");
+                amigoSpeak("I will leave the elevator now. I will call you when I'm done");
                 
                 sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
                 ROS_INFO("Subscribed to laser data");
@@ -830,6 +764,7 @@ int main(int argc, char **argv) {
                     ROS_ERROR("Failed to clear world model");
                 }
                 findOperator(client, false);
+                amigoSpeak("I am done, please go ahead and I will follow you.");
 
                 //! Next state
                 itp2_ = false;

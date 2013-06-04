@@ -1,0 +1,23 @@
+# Responsible: Jos
+
+amigo1:
+
+    amiddle-follow-me
+
+amigo2:
+
+    roslaunch challenge_follow_me start.launch
+
+amigo3:
+
+    TODO: As a result of the restructering of the speech stuff, this does not work anymore
+    roslaunch tue_speech_recognition follow_me.launch
+
+And now to start the challenge:
+
+amigo2:
+    rosrun challenge_follow_me follow_me_simple
+
+INSTRUCTIONS:
+- If you want the robot to do part two, say: 'elevator', AMIGO should now leave the elevator
+- If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
