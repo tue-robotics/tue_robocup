@@ -15,7 +15,14 @@ amigo3:
     ***** TIM / JOS: CHECK UNDERSTANDING MOUNTING USB *****
 
     pumount --yes-I-really-want-lazy-unmount /media/usb-stick/
+    (Don't worry if this gives errors)
+
+    # Check the drive letter of the usb device (the highest letter/number combi)
+    ls /dev/sd*
+ 
+    # Mount the usb stick (for example: /dev/sdc1)
     pmount /dev/sdc1 usb-stick
+
 
     roslaunch challenge_emergency emergency_dependencies.launch
 
