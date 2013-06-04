@@ -2,20 +2,14 @@
 
 amigo1:
 
+    astart
+
+amigo1:
+
     amiddle-follow-me
 
 amigo2:
 
-    roslaunch challenge_follow_me start.launch
-
-amigo3:
-
-    TODO: As a result of the restructering of the speech stuff, this does not work anymore
-    roslaunch tue_speech_recognition follow_me.launch
-
-And now to start the challenge:
-
-amigo2:
     rosrun challenge_follow_me follow_me_simple
 
 INSTRUCTIONS:
