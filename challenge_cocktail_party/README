@@ -1,0 +1,16 @@
+# Responsible: Teun
+
+amigo1:
+
+    astart
+
+amigo1:
+
+    amiddle
+
+amigo3:
+
+    rosrun challenge_cocktail_party cocktail_party_smach.py
+
+INSTRUCTIONS:
+- 
