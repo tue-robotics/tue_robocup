@@ -495,9 +495,9 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, 'initial_egpsr_1'),
-                                transitions={   'done':'GIVE_ACTION_WITHOUT_MIC',
-                                                'preempted':'GIVE_ACTION_WITHOUT_MIC',
-                                                'error':'GIVE_ACTION_WITHOUT_MIC'})
+                                transitions={   'done':'ASK_ACTION',
+                                                'preempted':'ASK_ACTION',
+                                                'error':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
@@ -1034,28 +1034,28 @@ def setup_statemachine(robot):
         ## maybe a reset head and reset spindle / arms over here?
 
 
-        ## In case goal is given via speech interpreter:
-        # smach.StateMachine.add("FAILED_TASK",
-        #                         Failed_goal(robot),
-        #                         transitions={'new_task':'ASK_ACTION'})
-
-
-        # smach.StateMachine.add("FINISHED_TASK",
-        #                         Finished_goal(robot),
-        #                         transitions={'new_task':'ASK_ACTION',
-        #                                       'tasks_completed':'FINISH'})
-
-
-        # In case goal is given via amigo-console:
+        # In case goal is given via speech interpreter:
         smach.StateMachine.add("FAILED_TASK",
                                 Failed_goal(robot),
-                                transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
+                                transitions={'new_task':'ASK_ACTION'})
 
 
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
-                                transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
+                                transitions={'new_task':'ASK_ACTION',
                                               'tasks_completed':'FINISH'})
+
+
+        # # In case goal is given via amigo-console:
+        # smach.StateMachine.add("FAILED_TASK",
+        #                         Failed_goal(robot),
+        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
+
+
+        # smach.StateMachine.add("FINISHED_TASK",
+        #                         Finished_goal(robot),
+        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
+        #                                       'tasks_completed':'FINISH'})
         
 
         ######################################################
