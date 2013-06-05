@@ -347,6 +347,9 @@ class Check_persons_found(smach.State):
             nav_result2 = nav.execute()
 
             if nav_result2 == "unreachable" or nav_result2 == "preempted":
+
+                # TODO DRIVE TO current_exploration_target !! (in case people has been leaded to exit, drive back to current exploration target.)
+
                 self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
                                                       Compound("assert", Compound("registered", "ObjectID"))))
                 return "person_unreachable"
@@ -769,7 +772,7 @@ def setup_statemachine(robot):
 
         # Could not reach ROI     
         smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
-                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location.", block=True),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                states.Say(robot,"I was not able to reach the desired location to detect people. I will try another location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
 
         ############ DRIVE TO PREDEFINED LOCATIONS ###########
@@ -960,7 +963,7 @@ def setup_statemachine(robot):
         
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('SAY_GO_TO_EXIT',
-                                    states.Say(robot, "I have searched the whole apartment for people. Therefore I will go to the exit. If people are still here and can hear me, go to the exit!!"),
+                                    states.Say(robot, "I have searched the whole apartment for people. Therefore I will go to the exit. If people are still here and can hear me, go to the exit!!", block=False),
                                     transitions={'spoken':'GO_TO_EXIT'}) 
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
@@ -985,11 +988,11 @@ def setup_statemachine(robot):
                                                     'goal_not_defined':'FAILED_GO_TO_EXIT'})
 
         smach.StateMachine.add('FAILED_GO_TO_EXIT',
-                                    states.Say(robot, 'I was not able to go to the exit. I will stop here and save all the information I gathered in a PDF file on a USB stick.'),
+                                    states.Say(robot, 'I was not able to go to the exit. I will stop here and save all the information I gathered in a PDF file on a USB stick.', block=False),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add('SUCCEED_GO_TO_EXIT',
-                                    states.Say(robot, 'I will now save all the information I gathered in a PDF file on a USB stick.'),
+                                    states.Say(robot, 'I will now save all the information I gathered in a PDF file on a USB stick.', block=False),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK',
