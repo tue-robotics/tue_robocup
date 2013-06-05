@@ -88,8 +88,8 @@ class StartChallengeRobust(smach.StateMachine):
             smach.StateMachine.add('INIT_POSE',
                                 utility_states.Set_initial_pose(robot, initial_pose),
                                 transitions={   'done':'ENTER_ROOM',
-                                                'preempted':'Aborted',
-                                                'error':'Aborted'})
+                                                'preempted':'Aborted',  # This transition will never happen at the moment.
+                                                'error':'ENTER_ROOM'})  # It should never go to aborted.
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
@@ -384,7 +384,7 @@ class PointObject(smach.StateMachine):
                                                                       x_offset=0.7, y_offset=0.0001,
                                                                       identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
                                     transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
-                                                    'unreachable':'Failed',
+                                                    'unreachable':'DRIVE_TO_SEARCHPOS',
                                                     'preempted':'Aborted',
                                                     'goal_not_defined':'Failed',
                                                     'all_matches_tried':'Failed'})
