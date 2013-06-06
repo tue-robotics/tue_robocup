@@ -336,7 +336,7 @@ class UpdateObjectPose(smach.State):
         if self.arm == self.robot.leftArm:
             self.robot.head.look_at_hand("left")
         elif self.arm == self.robot.rightArm:
-            self.robot.look_at_hand("right")
+            self.robot.head.look_at_hand("right")
         
         rospy.logwarn("Sending spindle to top for safety")
         spindle_pos = 0.4
