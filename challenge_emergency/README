@@ -23,7 +23,6 @@ amigo3:
     # Mount the usb stick (for example: /dev/sdc1)
     pmount /dev/sdc1 usb-stick
 
-
     roslaunch challenge_emergency emergency_dependencies.launch
 
 amigo3:
@@ -33,11 +32,14 @@ amigo3:
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
-
+        
     amigo-console        
-        amigo.ears.ask_user("continue")    
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+        (lights should become green -> say 'continue')
+        (if response is 'true', amigo heard you and lights become blue)
 
-    say test        (to test if speaker works)
+    say test  
+        (to test speaker is working) 
 
     rosrun challenge_emergency emergency.py
 
