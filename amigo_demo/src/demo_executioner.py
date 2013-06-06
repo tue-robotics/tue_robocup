@@ -139,6 +139,7 @@ special_keys[chr(27)] = "Cancel current movement"
 special_keys['?'] = "SHOW_KEYMAP" #Doubly defined, also in special keys
 special_keys["%"] = "HI5"
 special_keys[":"] = "LEARN_FACE"
+special_keys[";"] = "RECOGNIZE_FACE"
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -621,6 +622,75 @@ def learn_face(robot):
 
     rospy.loginfo("State machine result: {0}".format(result))
 
+def recognize_face(robot):
+    #import smach
+
+    robot.speech.speak("Let me see who I can find here...")
+    robot.head.reset_position()
+    robot.head.set_pan_tilt(tilt=-0.2)
+    robot.spindle.reset()
+
+    robot.perception.toggle(["face_recognition", "face_segmentation"])
+    rospy.sleep(5.0)
+    robot.perception.toggle([])
+
+    person_result = robot.reasoner.query(
+                                        Conjunction(  
+                                            Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+    if not person_result:
+        robot.speech.speak("No one here. Face segmentation did not find a person here")
+        return False
+
+    robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")  
+    person_result = robot.reasoner.query(
+                                        Conjunction(  
+                                            Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                            Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
+
+        # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
+    name_pmf = person_result[0]["NamePMF"]
+    name=None
+    name_prob=0
+    for name_possibility in name_pmf:
+        print name_possibility
+        prob = float(name_possibility[0])
+    if prob > 0.1 and prob > name_prob:
+        name = str(name_possibility[1][0])
+        name_prob = prob
+
+    if not name:
+        robot.speech.speak("I don't know who you are.")
+        #return "looking"        
+
+    if name:
+        robot.speech.speak("Hello " + str(name))        
+        #return "found"
+
+    #return "not_found"
+
+
+    # rospy.loginfo("Setting up state machine")
+    # sm = smach.StateMachine(outcomes=['Done', "Failed", "Aborted"])
+
+    # with sm:
+    #     smach.StateMachine.add('RECOGNIZE_FACE',
+    #                             recognize_face(robot),
+    #                             transitions={   'looking':'Failed',
+    #                                             'found':'Done',
+    #                                             'not_found':'Failed'})
+
+    # rospy.loginfo("State machine set up, start execution...")
+    # #import pdb; pdb.set_trace()
+    # import smach_ros
+    # introserver = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT_PRIMARY')
+    # introserver.start()
+    # result = sm.execute()
+    # introserver.stop()
+
+    # rospy.loginfo("State machine result: {0}".format(result))
+
 def cancel_actions(robot):
     global actions_canceled
     actions_canceled = True
@@ -759,6 +829,9 @@ def process_key(key):
                 if key == ":":
                     print "Learn a face"
                     learn_face(robot)
+                if key == ";":
+                    print "Recognize face"
+                    recognize_face(robot)
                 if key == "L":
                     #print "Next language:",
                     next_language()
