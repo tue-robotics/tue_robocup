@@ -862,12 +862,12 @@ class Determine_goal(smach.State):
 
             if self.lookat_query:
                 rospy.logwarn("lookat_query")
-		        '''
-		        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		        !!! lookat_query IS MODIFIED FOR JOS AND TIM FOR OPEN CHALLENGE !!!
-		        !!!!!!!!!!!!!! DO NOT CHANGE UNTIL AFTER ROBOCUP 2013 !!!!!!!!!!!!!
-		        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		        '''
+                '''
+                !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                !!! lookat_query IS MODIFIED FOR JOS AND TIM FOR OPEN CHALLENGE !!!
+                !!!!!!!!!!!!!! DO NOT CHANGE UNTIL AFTER ROBOCUP 2013 !!!!!!!!!!!!!
+                !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                '''
                 # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
                 # is a mapping of variable to a constant, like a string or number
                 rospy.logdebug("Query = {0}".format(self.lookat_query))
