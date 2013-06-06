@@ -807,8 +807,8 @@ class ResetCostmap(smach.State):
 
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, goal_sorter=None):
-        smach.State.__init__(self,outcomes=['succeeded','failed'],
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None):
+        smach.State.__init__(self,outcomes=['succeeded','failed','aborted'],
                             input_keys=['goal'],
                             output_keys=['goal'])                    
         #!!!! location should be named: loc_from, loc_to or object_action        
@@ -819,141 +819,177 @@ class Determine_goal(smach.State):
         self.goal_query = goal_query
         self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
-        self.goal_sorter = goal_sorter
         rospy.logwarn("Goal name = {0}".format(self.goal_name))
         rospy.logwarn("Goal query = {0}".format(self.goal_query))
         rospy.logwarn("Lookat query = {0}".format(self.lookat_query))
 
+        self.possible_locations_initialized = False
+        self.possible_locations = []
+
     def execute(self, userdata):
 
-        possible_locations = []
+        if self.possible_locations_initialized == False:
 
-        if self.goal_pose_2d:
-            rospy.logwarn("Goalpose2d")
-            x, y, phi = self.goal_pose_2d
-            possible_locations += [(x, y, phi)]
+            if self.goal_pose_2d:
+                rospy.logwarn("Goalpose2d")
+                x, y, phi = self.goal_pose_2d
+                self.possible_locations += [(x, y, phi)]
 
-        if self.goal_name:
-            query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
-            answers = self.robot.reasoner.query(query)  
+            if self.goal_name:
+                query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
+                answers = self.robot.reasoner.query(query)  
 
-            if not answers:
-                rospy.logerr("No answers found for query {query}".format(query=query))
-            else:
-                rospy.loginfo("Determined possible goals for name {0}: {1}".format(self.goal_name, answers))
-                possible_locations += [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
+                if not answers:
+                    rospy.logerr("No answers found for query {query}".format(query=query))
+                else:
+                    rospy.loginfo("Determined possible goals for name {0}: {1}".format(self.goal_name, answers))
+                    self.possible_locations += [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
 
-        if self.goal_query:
-            rospy.logwarn("Goalquery")
-            # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-            # is a mapping of variable to a constant, like a string or number
-            answers = self.robot.reasoner.query(self.goal_query)
+            if self.goal_query:
+                rospy.logwarn("Goalquery")
+                # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+                # is a mapping of variable to a constant, like a string or number
+                answers = self.robot.reasoner.query(self.goal_query)
 
-            if not answers:
-                rospy.logerr("No answers found for query {query}".format(query=self.goal_query))                                
-            else:
-                rospy.loginfo("Determined possible goals for query {0}: {1}".format(self.goal_query, answers))
-                #From the summarized answer, 
-                possible_locations += [(   float(answer["X"]), 
-                                           float(answer["Y"]), 
-                                           float(answer["Phi"])) for answer in answers]
+                if not answers:
+                    rospy.logerr("No answers found for query {query}".format(query=self.goal_query))                                
+                else:
+                    rospy.loginfo("Determined possible goals for query {0}: {1}".format(self.goal_query, answers))
+                    #From the summarized answer, 
+                    self.possible_locations += [(   float(answer["X"]), 
+                                               float(answer["Y"]), 
+                                               float(answer["Phi"])) for answer in answers]
 
-        if self.lookat_query:
-            '''
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            !!! lookat_query IS MODIFIED FOR JOS AND TIM FOR OPEN CHALLENGE !!!
-            !!!!!!!!!!!!!! DO NOT CHANGE UNTIL AFTER ROBOCUP 2013 !!!!!!!!!!!!!
-            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            '''
-            rospy.logwarn("lookat_query")
-            # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-            # is a mapping of variable to a constant, like a string or number
-            rospy.logdebug("Query = {0}".format(self.lookat_query))
-            # answers = self.robot.reasoner.query(self.lookat_query)
-            # rospy.logdebug("Query answers = {0}".format(answers))
-            # if not answers:
-            #     rospy.logerr("No answers found for query {query}".format(query=self.lookat_query))                                
-            # else:
-            #     rospy.logerr("Answers found for query {query}: {answers}".format(query=self.lookat_query, answers=answers))
-            #     #From the summarized answer, 
-            #     possible_ROIs = [(   float(answer["X"]), 
-            #                           float(answer["Y"]), 
-            #                           float(answer["Z"])) for answer in answers]
+            if self.lookat_query:
+                rospy.logwarn("lookat_query")
+		        '''
+		        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		        !!! lookat_query IS MODIFIED FOR JOS AND TIM FOR OPEN CHALLENGE !!!
+		        !!!!!!!!!!!!!! DO NOT CHANGE UNTIL AFTER ROBOCUP 2013 !!!!!!!!!!!!!
+		        !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		        '''
+                # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
+                # is a mapping of variable to a constant, like a string or number
+                rospy.logdebug("Query = {0}".format(self.lookat_query))
+                # answers = self.robot.reasoner.query(self.lookat_query)
+                # rospy.logdebug("Query answers = {0}".format(answers))
+                # if not answers:
+                #     rospy.logerr("No answers found for query {query}".format(query=self.lookat_query))                                
+                # else:
+                #     rospy.logerr("Answers found for query {query}: {answers}".format(query=self.lookat_query, answers=answers))
+                #     #From the summarized answer, 
+                #     possible_ROIs = [(   float(answer["X"]), 
+                #                           float(answer["Y"]), 
+                #                           float(answer["Z"])) for answer in answers]
 
-            #     # Get base poses for every query outcome and put these in possible locations
-            #     for ROI in possible_ROIs:
-            look_point = self.robot.base.point(1,0,stamped=True)
-            # ToDo: Parameterize offsets
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
+                #     # Get base poses for every query outcome and put these in possible locations
+                #     for ROI in possible_ROIs:
+                look_point = self.robot.base.point(1,0,stamped=True)
+                # ToDo: Parameterize offsets
+                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
 
-            if base_poses_for_point:
-                for base_goal_pose in base_poses_for_point:
-                    # Convert to x, y, phi
-                    phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
-                    # Add to possible locations
-                    possible_locations += [(base_goal_pose.pose.position.x,
-                                            base_goal_pose.pose.position.y,
-                                            phi)]
+                if base_poses_for_point:
+                    for base_goal_pose in base_poses_for_point:
+                        # Convert to x, y, phi
+                        phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
+                        # Add to possible locations
+                        self.possible_locations += [(base_goal_pose.pose.position.x,
+                                                base_goal_pose.pose.position.y,
+                                                phi)]
 
-        if self.lookat_point_3d:
-            rospy.logwarn("Lookat_point_3d")
-            
-            x,y,z = self.lookat_point_3d
+            if self.lookat_point_3d:
+                rospy.logwarn("Lookat_point_3d")
+                
+                x,y,z = self.lookat_point_3d
 
-            look_point = self.robot.base.point(1,0,stamped=True)
-            #rospy.loginfo("look_point = {0}".format(look_point))
-            look_point.point.x = x
-            look_point.point.y = y
-            look_point.point.z = z
+                look_point = self.robot.base.point(1,0,stamped=True)
+                #rospy.loginfo("look_point = {0}".format(look_point))
+                look_point.point.x = x
+                look_point.point.y = y
+                look_point.point.z = z
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.0)
+                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.0)
 
-            if base_poses_for_point:
-                for base_goal_pose in base_poses_for_point:
-                    # Convert to x, y, phi
-                    phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
-                    # Add to possible locations
-                    possible_locations += [(base_goal_pose.pose.position.x,
-                                            base_goal_pose.pose.position.y,
-                                            phi)]
+                if base_poses_for_point:
+                    for base_goal_pose in base_poses_for_point:
+                        # Convert to x, y, phi
+                        phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
+                        # Add to possible locations
+                        self.possible_locations += [(base_goal_pose.pose.position.x,
+                                                base_goal_pose.pose.position.y,
+                                                phi)]
 
-        if not possible_locations:
-            rospy.logerr("No goal could be defined in {state}".format(state=self))
-            self.robot.speech.speak("I don't know where to go. I'm very sorry.")
-            return 'failed'
+            # set init to true such that the possible locations array won't be filled a second time when this state is called
+            self.possible_locations_initialized = True
 
-        ''' New stuff '''
-        # Main idea: check all possible locations for feasibility
-        # If no feasible locations: reset_costmap
-        # Else: pick best feasible location as below
+            # if the list is not filled it failed to add a possible location
+            if not self.possible_locations:
+                rospy.logerr("No goal could be defined in {state}".format(state=self))
+                self.robot.speech.speak("I don't know where to go. I'm very sorry.")
+                return 'failed'
 
-        # feasible_locations = []
-        # #def query_costmap(self, points, frame_id="/map"):
-        # #if isinstance(points, geometry_msgs.msg.Point):
-        # for (possible_location in possible_locations):
-        #     self.robot.base.query_costmap
-        ''' End new stuff '''
+        # abort if there are no poses left to go to
+        if not self.possible_locations:
+            self.possible_locations_initialized = False
+            return 'aborted'
+        
+        #import ipdb; ipdb.set_trace() 
 
+        # get the info of the poses by querying the costmap
+        query_result_tuples = self.robot.base.query_costmap([geometry_msgs.msg.Point(x=xyphi[0],y=xyphi[1],z=0.0) for xyphi in self.possible_locations])
 
-        # Get the best possible location according to self.goal_sorter, or get the first one if sorter not specified
-        # ToDo: include costmap query
-        if not self.goal_sorter == None:
-            x,y,phi = min(possible_locations, key=self.goal_sorter)
+        # merge the poses with their queried info
+        possible_locations_with_info = [{'x':xyphi[0], 'y':xyphi[1], 'phi':xyphi[2], 'info':point_info} for xyphi, point_info in zip(self.possible_locations, query_result_tuples)]
+        
+        # filter out unfeasible poses
+        if self.robot.base.use_2d:
+            possible_locations_with_info = [d for d in possible_locations_with_info if d['info'].cost < 253]
         else:
-            x,y,phi = possible_locations[0]
+            possible_locations_with_info = [d for d in possible_locations_with_info if d['info'].cost < 1]
 
-        #return self.robot.base.point(x,y), self.robot.base.orient(phi)
-        #pos = self.robot.base.point(x,y)
-        #orient = self.robot.base.orient(phi)
-        #goal = geometry_msgs.msg.Pose()
-        #goal.position = pos
-        #goal.orientation = orient
-        #userdata.goal = goal
-        ###
+        # if no feasible poses are left, abort immediately
+        if not possible_locations_with_info:
+            self.possible_locations_initialized = False
+            return 'aborted'
+
+        # get the normalized cost factor   
+        max_cost = max([d['info'].cost for d in possible_locations_with_info])
+        # make sure that we don't divide by zero!
+        if max_cost == 0:
+            max_cost = 1     
+
+        # let's see if the cost is under or above the normalized cost threshold
+        under_cost_threshold = [d for d in possible_locations_with_info if d['info'].cost/max_cost <= 0.2]
+        above_cost_threshold = [d for d in possible_locations_with_info if d['info'].cost/max_cost > 0.2]
+
+        def distance(p1x,p1y,p2x,p2y):
+            sq1 = (p1x-p2x)**2
+            sq2 = (p1y-p2y)**2
+            return math.sqrt(sq1 + sq2)
+        
+        robot_position, robot_orient = self.robot.base.location
+        robot_x = robot_position.x
+        robot_y = robot_position.y
+        # sort those poses under the threshold on distance to get the closest pose first
+        under_cost_threshold = sorted(under_cost_threshold, key=lambda d: distance(d['x'], d['y'], robot_x, robot_y))
+        # the other ones can be sorted on their cost
+        above_cost_threshold = sorted(above_cost_threshold, key=lambda d: d['info'].cost)
+
+        # merge both lists
+        self.possible_locations = under_cost_threshold + above_cost_threshold
+
+        # detach the point infos and make it a tuple again
+        self.possible_locations = [(d['x'],d['y'],d['phi']) for d in self.possible_locations]
+
+        # execute the best pose
+        x,y,phi = self.possible_locations[0]
+
         userdata.goal = geometry_msgs.msg.Pose()
         userdata.goal.position = self.robot.base.point(x,y)
         userdata.goal.orientation = self.robot.base.orient(phi)
         rospy.loginfo("Determine_goal, goal = {0}".format(userdata.goal))
+
+        self.possible_locations.pop(0)
 
         return 'succeeded'
 
@@ -1153,7 +1189,7 @@ class Recover(smach.State):
                 return 'new_goal_required'
 
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, goal_sorter=None, look_at_path_distance=1.5, goal_area_radius=0.1):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
@@ -1162,7 +1198,6 @@ class NavigateGeneric(smach.StateMachine):
         self.goal_query = goal_query
         self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
-        self.goal_sorter = goal_sorter
         self.look_at_path_distance = look_at_path_distance
         self.goal_area_radius = goal_area_radius
         self.clearance_window_size = 0.7
@@ -1179,13 +1214,13 @@ class NavigateGeneric(smach.StateMachine):
                 goal_name = self.goal_name, 
                 goal_query = self.goal_query,
                 lookat_point_3d = self.lookat_point_3d, 
-                lookat_query = self.lookat_query,
-                goal_sorter = self.goal_sorter),
+                lookat_query = self.lookat_query),
                 transitions={'failed'           : 'goal_not_defined',
+                             'aborted'          : 'DETERMINE_GOAL_TRY_AGAIN',
                              'succeeded'        : 'GET_PLAN'})
 
             smach.StateMachine.add('GET_PLAN', Get_plan(self.robot, self.goal_area_radius),
-                transitions={'unreachable'      : 'unreachable',
+                transitions={'unreachable'      : 'DETERMINE_GOAL',
                              'succeeded'        : 'EXECUTE'})
 
             smach.StateMachine.add('EXECUTE', Execute_path(self.robot, self.look_at_path_distance),
@@ -1201,3 +1236,31 @@ class NavigateGeneric(smach.StateMachine):
             smach.StateMachine.add('RECOVER', Recover(self.robot),
                 transitions={'new_path_required': 'GET_PLAN',
                              'new_goal_required': 'DETERMINE_GOAL'})
+
+            smach.StateMachine.add('DETERMINE_GOAL_TRY_AGAIN', Determine_goal(self.robot, 
+                goal_pose_2d = self.goal_pose_2d, 
+                goal_name = self.goal_name, 
+                goal_query = self.goal_query,
+                lookat_point_3d = self.lookat_point_3d, 
+                lookat_query = self.lookat_query),
+                transitions={'failed'           : 'goal_not_defined',
+                             'aborted'          : 'unreachable',
+                             'succeeded'        : 'GET_PLAN_TRY_AGAIN'})
+
+            smach.StateMachine.add('GET_PLAN_TRY_AGAIN', Get_plan(self.robot, self.goal_area_radius),
+                transitions={'unreachable'      : 'DETERMINE_GOAL_TRY_AGAIN',
+                             'succeeded'        : 'EXECUTE_TRY_AGAIN'})
+
+            smach.StateMachine.add('EXECUTE_TRY_AGAIN', Execute_path(self.robot, self.look_at_path_distance),
+                transitions={'arrived'          : 'arrived',
+                             'preempted'        : 'preempted',
+                             'waiting'          : 'WAITING_TRY_AGAIN',
+                             'aborted'          : 'RECOVER_TRY_AGAIN'})
+
+            smach.StateMachine.add('WAITING_TRY_AGAIN', Waiting_to_execute(self.robot),
+                transitions={'done'             : 'EXECUTE_TRY_AGAIN',
+                             'preempted'        : 'preempted'})
+
+            smach.StateMachine.add('RECOVER_TRY_AGAIN', Recover(self.robot),
+                transitions={'new_path_required': 'GET_PLAN_TRY_AGAIN',
+                             'new_goal_required': 'DETERMINE_GOAL_TRY_AGAIN'})
