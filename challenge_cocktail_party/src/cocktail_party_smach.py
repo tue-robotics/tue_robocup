@@ -13,6 +13,9 @@ from robot_smach_states import *
 names = ["john", "richard", "nancy", "alice", "bob"]
 name_index = 0
 
+grasp_arm = "left"
+#grasp_arm = "right"
+
 #===============================TODOs===========================================
 # - head goal and base goal must correspond
 #===============================================================================
@@ -354,6 +357,11 @@ class HandoverToHuman(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
+        if grasp_arm == "left":
+            arm = robot.leftArm
+        if grasp_arm == "right"
+            arm = robot.rightArm
+
         with self:
             smach.StateMachine.add('GOTO_MEETING_POINT',
                                     GotoMeetingPoint(robot),
@@ -366,7 +374,7 @@ class HandoverToHuman(smach.StateMachine):
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
-                                    Handover_pose(robot.leftArm, robot),
+                                    Handover_pose(arm, robot),
                                     transitions={   'succeeded':'PLEASE_TAKE',
                                                     'failed':'PLEASE_TAKE'})
             
@@ -375,15 +383,15 @@ class HandoverToHuman(smach.StateMachine):
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
-                                    SetGripper(robot, robot.leftArm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+                                    SetGripper(robot, arm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
                                                     'failed':'CLOSE_AFTER_DROP'})
             smach.StateMachine.add( 'CLOSE_AFTER_DROP',
-                                    SetGripper(robot, robot.leftArm, gripperstate=1), #close
+                                    SetGripper(robot, arm, gripperstate=1), #close
                                     transitions={   'succeeded':'RESET_ARM',
                                                     'failed':'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 
-                                    ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    ArmToPose(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
                                     transitions={   'done':'SAY_ENJOY',
                                                     'failed':'SAY_ENJOY'})
 
@@ -403,6 +411,11 @@ class CocktailParty(smach.StateMachine):
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                            Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        if grasp_arm == "left":
+            arm = robot.leftArm
+        if grasp_arm == "right"
+            arm = robot.rightArm
 
         with self:
 
@@ -478,12 +491,12 @@ class CocktailParty(smach.StateMachine):
                                             transitions={   'spoken':'GOTO_INITIAL_FAIL' }) 
 
                     smach.StateMachine.add( 'PICKUP_DRINK',
-                                            GrabMachine(robot.leftArm, robot, query_grabpoint),
+                                            GrabMachine(arm, robot, query_grabpoint),
                                             transitions={   "succeeded":"RETRACT_VISITED_2",
                                                             "failed":'PICKUP_DRINK' }) 
                     # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
-                                            Human_handover(robot.leftArm,robot),
+                                            Human_handover(arm,robot),
                                             transitions={   'succeeded':'GOTO_INITIAL_FAIL',
                                                             'failed':'GOTO_INITIAL_FAIL' })
                     @smach.cb_interface(outcomes=["done"])
