@@ -13,6 +13,9 @@ from robot_smach_states.util.startup import startup
 
 from speech_interpreter.srv import GetInfo
 
+grasp_arm = "left"
+#grasp_arm = "right"
+
 ##########################################
 ############## What to run: ##############
 ##########################################
@@ -57,6 +60,11 @@ class Cleanup(smach.StateMachine):
 
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+
+        if grasp_arm == "right": 
+            arm = robot.rightArm
+        else:            
+            arm = robot.leftArm
 
         #retract old facts
         robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
@@ -255,12 +263,12 @@ class Cleanup(smach.StateMachine):
                                     transitions={ 'spoken':'GRAB' })
 
             smach.StateMachine.add('GRAB',
-                                    states.GrabMachine(robot.leftArm, robot, query_grabpoint),
+                                    states.GrabMachine(arm, robot, query_grabpoint),
                                     transitions={   'succeeded':'DROPOFF_OBJECT',
                                                     'failed':'HUMAN_HANDOVER' })
             
             smach.StateMachine.add('HUMAN_HANDOVER',
-                                    states.Human_handover(robot.leftArm,robot),
+                                    states.Human_handover(arm,robot),
                                     transitions={   'succeeded':'RESET_HEAD',
                                                     'failed':'DETERMINE_EXPLORATION_TARGET'})
         
@@ -275,7 +283,7 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add("DROPOFF_OBJECT",
                                     #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
                                     #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
-                                    states.DropObject(robot.leftArm, robot, query_dropoff_loc),
+                                    states.DropObject(arm, robot, query_dropoff_loc),
                                     transitions={   'succeeded':'MARK_DISPOSED',
                                                     'failed':'MARK_DISPOSED',
                                                     'target_lost':'DONT_KNOW_DROP'})
@@ -285,7 +293,7 @@ class Cleanup(smach.StateMachine):
                                     transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
 
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
-                                    states.DropObject(robot.leftArm, robot, query_dropoff_loc_backup),
+                                    states.DropObject(arm, robot, query_dropoff_loc_backup),
                                     transitions={   'succeeded':'MARK_DISPOSED',
                                                     'failed':'MARK_DISPOSED',
                                                     'target_lost':'DONT_KNOW_DROP_BACKUP'})
