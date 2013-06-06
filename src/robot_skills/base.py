@@ -210,24 +210,26 @@ class Base(object):
             print result
 
     def query_costmap(self, points, frame_id="/map"):
-        if isinstance(points, geometry_msgs.msg.Point):
-            stamped_point = geometry_msgs.msg.PointStamped()
-            stamped_point.header.frame_id = frame_id
-            stamped_point.point = points
+        query_points = []
+        for p in points:
+            if isinstance(p, geometry_msgs.msg.Point):
+                stamped_point = geometry_msgs.msg.PointStamped()
+                stamped_point.header.frame_id = frame_id
+                stamped_point.point = p
 
-            points = [stamped_point]
+                query_points += [stamped_point]
 
-        if isinstance(points, geometry_msgs.msg.PointStamped):
-            points = [points]
+            if isinstance(p, geometry_msgs.msg.PointStamped):
+                query_points += [p]
 
-        querypoints = tue_costmap_msgs.srv.PointQueryRequest()
-        querypoints.points = points
-        points_info = self._query_costmap(querypoints)
+        query = tue_costmap_msgs.srv.PointQueryRequest()
+        query.points = query_points
+        points_info = self._query_costmap(query)
 
         #import ipdb; ipdb.set_trace()
-        distance_map = dict([(pointinfo.point, pointinfo.distance_to_closest_obstacle) for pointinfo in points_info.points_info])
+        query_result_tuples = [pointinfo for pointinfo in points_info.points_info]
 
-        return distance_map
+        return query_result_tuples
 
     def send_goal(self, position, orientation_quaternion, frame_id ='/map', time=0, block=True, goal_area_radius=0.1):
         path_result = self.get_plan(position, orientation_quaternion, frame_id, goal_area_radius)
@@ -347,6 +349,7 @@ class Base(object):
     def clear_costmap(self, window_size=1.0):
         if self.use_2d:
             self.clear_service()
+            rospy.sleep(rospy.Duration(2.0))
         else:
             if self.base_pose == None:
                 # If no path request has been given yet, self.base_pose equals None, but we might get the base pose from tf
@@ -431,9 +434,9 @@ class Base(object):
         
         request.x_offset = x_offset
         request.y_offset = y_offset
-        rospy.loginfo("Inverse reachability request = {0}".format(request).replace("\n", " ").replace("\t", " "))
+        rospy.logdebug("Inverse reachability request = {0}".format(request).replace("\n", " ").replace("\t", " "))
         response = self._get_base_goal_poses(request)
-        rospy.loginfo("Inverse reachability response = {0}".format(response).replace("\n", " ").replace("\t", " "))
+        rospy.logdebug("Inverse reachability response = {0}".format(response).replace("\n", " ").replace("\t", " "))
         
         base_goal_poses = []
 
