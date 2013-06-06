@@ -1153,7 +1153,7 @@ class Recover(smach.State):
                 return 'new_goal_required'
 
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, goal_sorter=None, look_at_path_distance=2.7, goal_area_radius=0.1):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, goal_sorter=None, look_at_path_distance=1.5, goal_area_radius=0.1):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
