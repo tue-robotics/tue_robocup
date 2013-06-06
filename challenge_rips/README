@@ -19,10 +19,13 @@ amigo3:
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
-
+        
     amigo-console        
-        amigo.ears.ask_user("continue")    
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+        (lights should become green -> say 'continue')
+        (if response is 'true', amigo heard you and lights become blue)
 
-    say test        (to test if speaker works)
+    say test  
+        (to test speaker is working) 
 
     rosrun challenge_rips rips.py
