@@ -859,6 +859,12 @@ class Determine_goal(smach.State):
                                            float(answer["Phi"])) for answer in answers]
 
         if self.lookat_query:
+            '''
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            !!! lookat_query IS MODIFIED FOR JOS AND TIM FOR OPEN CHALLENGE !!!
+            !!!!!!!!!!!!!! DO NOT CHANGE UNTIL AFTER ROBOCUP 2013 !!!!!!!!!!!!!
+            !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            '''
             rospy.logwarn("lookat_query")
             # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
             # is a mapping of variable to a constant, like a string or number
@@ -900,7 +906,7 @@ class Determine_goal(smach.State):
             look_point.point.y = y
             look_point.point.z = z
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.0)
 
             if base_poses_for_point:
                 for base_goal_pose in base_poses_for_point:
