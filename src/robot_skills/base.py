@@ -294,8 +294,9 @@ class Base(object):
     def get_location(self):
         try:
             #tf_listener = tf.TransformListener() 
-            self.tf_listener.waitForTransform("/map", "/base_link", rospy.Time(), rospy.Duration(20.0))
-            (ro_trans, ro_rot) = self.tf_listener.lookupTransform("/map", "/base_link", rospy.Time())
+            time = rospy.Time.now()
+            self.tf_listener.waitForTransform("/map", "/base_link", time, rospy.Duration(20.0))
+            (ro_trans, ro_rot) = self.tf_listener.lookupTransform("/map", "/base_link", time)
             
             position = geometry_msgs.msg.Point()
             orientation = geometry_msgs.msg.Quaternion()
