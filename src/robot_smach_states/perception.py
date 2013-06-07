@@ -68,7 +68,7 @@ class Learn_Person(smach.State):
         result = self.robot.perception.learn_person(name_to_learn, view = 'right')
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "right")))
-        self.robot.speech.speak("Finished learning your left features")
+        self.robot.speech.speak("Finished learning your left side")
 
         # learn front face
         self.robot.rightArm.reset_arm()
