@@ -630,7 +630,7 @@ def recognize_face(robot):
     robot.head.set_pan_tilt(tilt=-0.2)
     robot.spindle.reset()
 
-    robot.perception.toggle(["face_recognition", "face_segmentation"])
+    robot.perception.toggle(["face_segmentation"])
     rospy.sleep(5.0)
     robot.perception.toggle([])
 
@@ -643,6 +643,10 @@ def recognize_face(robot):
         return False
 
     robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")  
+    
+    robot.perception.toggle(["face_recognition"])
+    rospy.sleep(5.0)
+    robot.perception.toggle([])
     person_result = robot.reasoner.query(
                                         Conjunction(  
                                             Compound( "property_expected", "ObjectID", "class_label", "face"),
@@ -657,7 +661,8 @@ def recognize_face(robot):
         print name_possibility
         prob = float(name_possibility[0])
     if prob > 0.1 and prob > name_prob:
-        name = str(name_possibility[1][0])
+        name = str(name_possibility[1])
+        #name = str(name_possibility[1][0])
         name_prob = prob
 
     if not name:
