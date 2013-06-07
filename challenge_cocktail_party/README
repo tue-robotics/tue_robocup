@@ -27,4 +27,35 @@ amigo3:
     rosrun challenge_cocktail_party cocktail_party_smach.py
 
 INSTRUCTIONS:
-- 
+- Possible names are :
+Barbara
+Charles
+David
+Dorothy
+Elizabeth
+James
+Jennifer
+John
+Joseph
+Linda
+Margareth
+Maria
+Mary
+Michael
+Patricia
+Richards
+Robert
+Susan
+Thomas
+William
+
+- Possible drinks for speech recognition are, though template matching only has (coke, cif, teapack and wire):
+coke
+sevenup
+lemontea
+pepsi
+mineralwater
+gatorade
+orangejuice
+applejuice
+
