@@ -35,6 +35,10 @@ const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the f
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const double T_LEAVE_ELEVATOR = 9.0;            // Time after which robot is assumed to be outside the elevator.
+const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;  // Maximum distance of robot to wall in elevator (used to detect elevator)
+const double ELEVATOR_INLIER_RATIO = 0.75;      // % of laser points that should at least be within bounds for elevator to be detected
+
+const double PI = 3.1415;
 
 // NOTE: At this stage recognition is never performed, hence number of models can be small
 // TODO: Check/test if confimation is needed: please leave the elevator
@@ -54,7 +58,7 @@ actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;          
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
-
+bool in_elevator_ = false;                                                        // Is robot in elevator?
 
 /**
  * @brief amigoSpeak let AMIGO say a sentence
@@ -376,10 +380,12 @@ void speechCallback(std_msgs::String res) {
     // TODO: If this becomes problematic, add distance to operator check
 
     //amigoSpeak(res.data);
-    if (!itp2_ && !itp3_ && res.data == "elevator") { //res.data.find("elevator") != std::string::npos) {
+    if (!itp2_ && !itp3_ && res.data == "elevator" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
         ROS_WARN("Received command: %s", res.data.c_str());
         itp2_ = true;
         ros::NodeHandle nh;
+
+        // Sjoerd: what does this do?
         sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
     } else {
         ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
@@ -434,6 +440,50 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
     new_laser_data_ = true;
     laser_scan_ = *laser_scan_msg;
 
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    //   ELEVATOR DETECTOR
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    vector<int> num_total_points(3, 0);
+    vector<int> num_points_in_bounds(3, 0);
+
+    double angle = laser_scan_msg->angle_min;
+    for(unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i) {
+        double range = laser_scan_msg->ranges[i];
+
+        // check left of robot
+        if (angle > -0.5 * PI && angle < -0.25 * PI) {
+            num_total_points[0]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE) {
+                num_points_in_bounds[0]++;
+            }
+
+        // check in front of robot
+        } else if (angle > -0.25 * PI && angle < 0.25 * PI) {
+            num_total_points[1]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE) {
+                num_points_in_bounds[1]++;
+            }
+
+        // check right of robot
+        } else if (angle > 0.25 * PI && angle < 0.5 * PI) {
+            num_total_points[2]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE) {
+                num_points_in_bounds[2]++;
+            }
+        }
+
+        angle += laser_scan_msg->angle_increment;
+    }
+
+    // check if all parts have enough 'inliers'
+    in_elevator_ = true;
+    for(unsigned int i = 0; i < num_total_points.size(); ++i) {
+        if ((double)num_points_in_bounds[i] / num_total_points[i] < ELEVATOR_INLIER_RATIO) {
+            in_elevator_ = false;
+            break;
+        }
+    }
 }
 
 
