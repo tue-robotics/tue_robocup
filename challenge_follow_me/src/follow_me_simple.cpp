@@ -35,6 +35,8 @@ const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the f
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const double T_LEAVE_ELEVATOR = 9.0;            // Time after which robot is assumed to be outside the elevator.
+const double TYPICAL_OPERATOR_X = 1.0;          // Expected x-position operator, needed when looking for operator
+const double TYPICAL_OPERATOR_Y = 0;            // Expected y-position operator, needed when looking for operator
 const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;  // Maximum distance of robot to wall in elevator (used to detect elevator)
 const double ELEVATOR_INLIER_RATIO = 0.75;      // % of laser points that should at least be within bounds for elevator to be detected
 
@@ -98,7 +100,7 @@ void findOperator(wire::Client& client, bool lost = true) {
         ros::Duration wait_for_operator(7.0);
         wait_for_operator.sleep();
     }
-    
+
     //! Reset world model
     std_srvs::Empty srv;
     if (reset_wire_client_.call(srv)) {
@@ -172,10 +174,10 @@ void findOperator(wire::Client& client, bool lost = true) {
 
                 for (unsigned int i = 0; i < vector_possible_operators.size(); ++i)
                 {
-                    double dx = vector_possible_operators[i].getMean()(1);
-                    double dy = vector_possible_operators[i].getMean()(0);
+                    double dx = TYPICAL_OPERATOR_X - vector_possible_operators[i].getMean()(0);
+                    double dy = TYPICAL_OPERATOR_Y - vector_possible_operators[i].getMean()(1);
                     double dist = sqrt(dx*dx+dy*dy);
-                    if (i == 0 || dist_min > dist)
+                    if (i == 0 || dist < dist_min)
                     {
                         dist_min = dist;
                         i_best = i;
@@ -292,7 +294,7 @@ bool getPositionOperator(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                         }
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
-                    
+
                     ROS_DEBUG("Operator has variance %f, last variance is %f", cov(0,0), last_var_operator_pos_);
 
 
@@ -458,14 +460,14 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
                 num_points_in_bounds[0]++;
             }
 
-        // check in front of robot
+            // check in front of robot
         } else if (angle > -0.25 * PI && angle < 0.25 * PI) {
             num_total_points[1]++;
             if (range < MAX_ELEVATOR_WALL_DISTANCE) {
                 num_points_in_bounds[1]++;
             }
 
-        // check right of robot
+            // check right of robot
         } else if (angle > 0.25 * PI && angle < 0.5 * PI) {
             num_total_points[2]++;
             if (range < MAX_ELEVATOR_WALL_DISTANCE) {
@@ -611,14 +613,14 @@ bool leftElevator(pbl::Gaussian& pos)
 int main(int argc, char **argv) {
     ros::init(argc, argv, "follow_me_simple");
     ros::NodeHandle nh;
-    
+
     ROS_INFO("Started Follow me");
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
-    
+
     /// set the head to look down in front of AMIGO
     ros::Rate poll_rate(100);
     while (head_ref_pub.getNumSubscribers() == 0) {
@@ -630,7 +632,7 @@ int main(int argc, char **argv) {
     goal.head_pan = 0.0;
     goal.head_tilt = -0.2;
     head_ref_pub.publish(goal);
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -673,7 +675,7 @@ int main(int argc, char **argv) {
             return 1;
         }
     }
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// WIRE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -738,7 +740,7 @@ int main(int argc, char **argv) {
 
     ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
     amigoSpeak("I will now start following you");
-    
+
     // Speech recognition
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
 
@@ -767,10 +769,10 @@ int main(int argc, char **argv) {
 
             // First time here, rotate towards exit
             if (itp2_new) {
-				
-				//! Robot is asked to leave the elevator
+
+                //! Robot is asked to leave the elevator
                 amigoSpeak("I will leave the elevator now. I will call you when I'm done");
-                
+
                 sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
                 ROS_INFO("Subscribed to laser data");
 
@@ -781,14 +783,14 @@ int main(int argc, char **argv) {
                 unsigned int N_SLEEPS_TOTAL = time_rotation*freq;
                 ros::Duration pause(1.0/(double)freq);
                 unsigned int n_sleeps = 0;
-                
+
                 while (n_sleeps < N_SLEEPS_TOTAL) {
-					moveTowardsPosition(pos, 2);
-					pause.sleep();
-					++n_sleeps;
-					//ROS_INFO("n_sleeps = %u, N_SLEEPS_TOTAL = %u, freq = %u", n_sleeps, N_SLEEPS_TOTAL, freq);
-			    }
-			    
+                    moveTowardsPosition(pos, 2);
+                    pause.sleep();
+                    ++n_sleeps;
+                    //ROS_INFO("n_sleeps = %u, N_SLEEPS_TOTAL = %u, freq = %u", n_sleeps, N_SLEEPS_TOTAL, freq);
+                }
+
                 //! Stand still
                 pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
                 moveTowardsPosition(pos, 0);
