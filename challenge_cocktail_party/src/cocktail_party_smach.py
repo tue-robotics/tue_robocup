@@ -359,7 +359,7 @@ class HandoverToHuman(smach.StateMachine):
 
         if grasp_arm == "left":
             arm = robot.leftArm
-        if grasp_arm == "right"
+        if grasp_arm == "right":
             arm = robot.rightArm
 
         with self:
@@ -414,7 +414,7 @@ class CocktailParty(smach.StateMachine):
 
         if grasp_arm == "left":
             arm = robot.leftArm
-        if grasp_arm == "right"
+        if grasp_arm == "right":
             arm = robot.rightArm
 
         with self:
