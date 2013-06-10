@@ -1,5 +1,6 @@
 // ROS
 #include <ros/ros.h>
+#include <ros/package.h>
 
 // Messages
 #include <std_msgs/String.h>
@@ -20,6 +21,9 @@
 
 // Carrot planner
 #include "tue_carrot_planner/carrot_planner.h"
+
+// Speech recognition
+#include "tue_pocketsphinx/Switch.h"
 
 #include <map>
 
@@ -55,13 +59,15 @@ double last_var_operator_pos_ = -1;                                             
 bool itp2_ = false;                                                               // Bookkeeping: at elevator yes or no
 bool itp3_ = false;                                                               // Bookkeeping: passed elevator yes or no
 bool new_laser_data_ = false;                                                     // Bookkeeping: new laser data or not
+bool in_elevator_ = false;                                                        // Bookkeeping: Is robot in elevator?
 sensor_msgs::LaserScan laser_scan_;                                               // Storage: most recent laser data
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
+ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
-bool in_elevator_ = false;                                                        // Is robot in elevator?
+
 
 ros::Publisher pub_in_elevator; // publisher for debugging
 
@@ -415,6 +421,77 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 }
 
 
+bool startSpeechRecognition() {
+    std::string knowledge_path = ros::package::getPath("tue_knowledge");
+    if (knowledge_path == "") {
+        return false;
+    }
+
+    std::string follow_me_speech_path = knowledge_path + "/speech_recognition/follow_me/";
+
+    tue_pocketsphinx::Switch::Request req;
+    req.action = tue_pocketsphinx::Switch::Request::START;
+    req.hidden_markov_model = "/usr/share/pocketsphinx/model/hmm/wsj1";
+    req.dictionary = follow_me_speech_path + "follow_me.dic";
+    req.language_model = follow_me_speech_path + "follow_me.lm";
+
+    tue_pocketsphinx::Switch::Response resp;
+    if (speech_recognition_client_.call(req, resp)) {
+        if (resp.error_msg == "") {
+            ROS_INFO("Switched on speech recognition");
+        } else {
+            ROS_WARN("Unable to turn on speech recognition: %s", resp.error_msg.c_str());
+            return false;
+        }
+    } else {
+        ROS_WARN("Service call for turning on speech recognition failed");
+        return false;
+    }
+
+    return true;
+}
+
+bool stopSpeechRecognition() {
+    // Turn off speech recognition
+    tue_pocketsphinx::Switch::Request req;
+    req.action = tue_pocketsphinx::Switch::Request::STOP;
+
+    tue_pocketsphinx::Switch::Response resp;
+    if (speech_recognition_client_.call(req, resp)) {
+        if (resp.error_msg == "") {
+            ROS_INFO("Switched off speech recognition");
+        } else {
+            ROS_WARN("Unable to turn off speech recognition: %s", resp.error_msg.c_str());
+            return false;
+        }
+    } else {
+        ROS_WARN("Unable to turn off speech recognition");
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * @brief speechCallback
+ * @param res
+ */
+void speechCallback(std_msgs::String res) {
+
+    // TODO: If this becomes problematic, add distance to operator check
+
+    //amigoSpeak(res.data);
+    if (!itp2_ && !itp3_ && res.data == "elevator" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
+        ROS_WARN("Received command: %s", res.data.c_str());
+        itp2_ = true;
+    } else {
+        ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
+    }
+
+    // always immediately start listening again
+    startSpeechRecognition();
+}
+
 
 void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
 
@@ -473,25 +550,6 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
     pub_in_elevator.publish(msg_in_elevator);
 }
 
-/**
- * @brief speechCallback
- * @param res
- */
-void speechCallback(std_msgs::String res) {
-
-    // TODO: If this becomes problematic, add distance to operator check
-
-    //amigoSpeak(res.data);
-    if (!itp2_ && !itp3_ && res.data == "elevator" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
-        ROS_WARN("Received command: %s", res.data.c_str());
-        itp2_ = true;
-        ros::NodeHandle nh;
-
-        sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
-    } else {
-        ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
-    }
-}
 
 
 bool leftElevator(pbl::Gaussian& pos)
@@ -649,10 +707,18 @@ int main(int argc, char **argv) {
     //sub_laser_.shutdown();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Speech-to-text and text-to-speech
+    ////  Text-to-speech
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
+
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Speech-to-text
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // connect to pocketsphinx
+    speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
+    speech_recognition_client_.waitForExistence();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Face learning and perception
@@ -750,8 +816,9 @@ int main(int argc, char **argv) {
     ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
     amigoSpeak("I will now start following you");
 
-    // Speech recognition
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
+    // Start speech recognition
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback);
+    startSpeechRecognition();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// START MAIN LOOP
