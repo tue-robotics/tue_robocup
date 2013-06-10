@@ -3,6 +3,7 @@
 
 // Messages
 #include <std_msgs/String.h>
+#include <std_msgs/Bool.h>
 #include <std_srvs/Empty.h>
 #include <amigo_msgs/head_ref.h>
 #include <pein_msgs/LearnAction.h>
@@ -61,6 +62,8 @@ ros::Publisher pub_speech_;                                                     
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
 bool in_elevator_ = false;                                                        // Is robot in elevator?
+
+ros::Publisher pub_in_elevator; // publisher for debugging
 
 /**
  * @brief amigoSpeak let AMIGO say a sentence
@@ -486,6 +489,11 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
             break;
         }
     }
+
+    // publish for debugging purposes
+    std_msgs::Bool msg_in_elevator;
+    msg_in_elevator.data = in_elevator_;
+    pub_in_elevator.publish(msg_in_elevator);
 }
 
 
@@ -697,6 +705,12 @@ int main(int argc, char **argv) {
     bool itp2_new = true;
     itp3_ = false;
     unsigned int n_checks_left_elevator = 0;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Debugging
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    pub_in_elevator = nh.advertise<std_msgs::Bool>("/is_in_elevator", 10);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Start challenge: find and learn the operator
