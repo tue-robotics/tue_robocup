@@ -375,29 +375,6 @@ bool memorizeOperator() {
 
 }
 
-
-/**
- * @brief speechCallback
- * @param res
- */
-void speechCallback(std_msgs::String res) {
-
-    // TODO: If this becomes problematic, add distance to operator check
-
-    //amigoSpeak(res.data);
-    if (!itp2_ && !itp3_ && res.data == "elevator" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
-        ROS_WARN("Received command: %s", res.data.c_str());
-        itp2_ = true;
-        ros::NodeHandle nh;
-
-        // Sjoerd: what does this do?
-        sub_laser_ = nh.subscribe<std_msgs::String>("/speech_recognition_follow_me/output", 10, speechCallback);
-    } else {
-        ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
-    }
-}
-
-
 /**
  * @brief moveTowardsPosition Let AMIGO move from its current position towards the given position
  * @param pos target position
@@ -496,7 +473,25 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
     pub_in_elevator.publish(msg_in_elevator);
 }
 
+/**
+ * @brief speechCallback
+ * @param res
+ */
+void speechCallback(std_msgs::String res) {
 
+    // TODO: If this becomes problematic, add distance to operator check
+
+    //amigoSpeak(res.data);
+    if (!itp2_ && !itp3_ && res.data == "elevator" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
+        ROS_WARN("Received command: %s", res.data.c_str());
+        itp2_ = true;
+        ros::NodeHandle nh;
+
+        sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
+    } else {
+        ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
+    }
+}
 
 
 bool leftElevator(pbl::Gaussian& pos)
@@ -651,7 +646,7 @@ int main(int argc, char **argv) {
     //// Laser data
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
-    sub_laser_.shutdown();
+    //sub_laser_.shutdown();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Speech-to-text and text-to-speech
