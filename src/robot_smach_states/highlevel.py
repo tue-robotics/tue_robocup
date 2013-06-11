@@ -228,6 +228,19 @@ class GotoMeetingPoint(smach.State):
             self.robot.speech.speak("I really don't know where to go, oops.")
             return "no_goal"
 
+
+class ResetHeadAndSpindle(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+
+        self.robot.head.reset_position(timeout=0.0)
+        self.robot.spindle.reset()
+        return "done"
+
+
 class GetObject(smach.StateMachine):
     def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
@@ -246,7 +259,7 @@ class GetObject(smach.StateMachine):
                                     utility_states.SetTimeMarker(robot, "get_object_start"),
                                     transitions={   'done':'CHECK_OBJECT_QUERY' })
  
-            smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            # TODO ERIK: Test this state. Not yet done
+            smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            
                                     Check_object_found_before(robot, self.object_query),
                                     transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
                                                     'no_object_found':'DRIVE_TO_SEARCHPOS' })
@@ -254,7 +267,7 @@ class GetObject(smach.StateMachine):
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
                                     navigation.Visit_query_outcome_3d(self.robot, 
                                                                       self.roi_query, 
-                                                                      x_offset=0.7, y_offset=0.0001,
+                                                                      x_offset=0.7, y_offset=0.0,
                                                                       identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
                                     transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable':'DRIVE_TO_SEARCHPOS',
@@ -270,8 +283,12 @@ class GetObject(smach.StateMachine):
                                     perception.LookForObjectsAtROI(robot, self.roi_query, self.object_query),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
-                                                    'no_object_found':'CHECK_TIME',
+                                                    'no_object_found':'RESET_HEAD_AND_SPINDLE',
                                                     'abort':'Aborted'})      # End State
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE',
+                                    ResetHeadAndSpindle(robot),
+                                    transitions={   'done':'CHECK_TIME'})   # End State
 
             smach.StateMachine.add('CHECK_TIME',
                                     utility_states.CheckTime(robot, "get_object_start", max_duration),
