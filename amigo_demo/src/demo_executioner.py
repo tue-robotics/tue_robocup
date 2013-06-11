@@ -697,23 +697,30 @@ def recognize_face(robot):
                                             Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
 
         # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
-    name_pmf = person_result[0]["NamePMF"]
-    name=None
-    name_prob=0
-    for name_possibility in name_pmf:
-        print name_possibility
-        prob = float(name_possibility[0])
-    if prob > 0.1 and prob > name_prob:
-        #name = str(name_possibility[1])
-        name = str(name_possibility[1][0])
-        name_prob = prob
+    if len(person_result) > 0:
+        name_pmf = person_result[0]["NamePMF"]
 
-    if not name:
-        robot.speech.speak("I don't know who you are.")
-        #return "looking"        
+        if len(person_result) > 1:
+            rospy.logwarn("Multiple faces detected, only checking the first one!")
 
-    if name:
-        robot.speech.speak("Hello " + str(name))        
+        name=None
+        name_prob=0
+        for name_possibility in name_pmf:
+            print name_possibility
+            prob = float(name_possibility[0])
+            if prob > 0.1 and prob > name_prob:
+                name = str(name_possibility[1][0])
+                #print "Updated most probable name to " + str(name)
+                name_prob = prob
+
+        if not name:
+            robot.speech.speak("I don't know who you are.")
+            #return "looking"        
+
+        if name:
+            robot.speech.speak("Hello " + str(name))        
+    else:
+        rospy.warn("No person names received from world model")    
         #return "found"
 
     #return "not_found"
