@@ -38,6 +38,10 @@ class Initialize(smach.State):
         self.robot.base.get_location()
 
         ''' Load template matching config '''
+
+        # load template config data into reasoner
+        self.robot.reasoner.query(Compound("load_database", "prolog/template_matching.pl"))
+
         query_template_config = Compound("template_matching_config", "Config")
         answers = self.robot.reasoner.query(query_template_config)
         rospy.loginfo("Linemod config answers: {0}".format(answers))
