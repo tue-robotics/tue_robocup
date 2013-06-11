@@ -12,8 +12,6 @@ amigo1:
 
 amigo3:
 
-    ***** TIM / JOS: CHECK UNDERSTANDING MOUNTING USB *****
-
     pumount --yes-I-really-want-lazy-unmount /media/usb-stick/
     (Don't worry if this gives errors)
 
