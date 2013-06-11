@@ -605,6 +605,7 @@ class Look_at_person(smach.State):
 
             x,y,z = possible_locations[0]
             lookat_point = self.robot.head.point(x,y,z)
+            rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
             self.robot.head.send_goal(lookat_point)
         return 'finished'
 
