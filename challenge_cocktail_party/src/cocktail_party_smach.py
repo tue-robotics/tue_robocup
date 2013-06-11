@@ -525,9 +525,14 @@ class CocktailParty(smach.StateMachine):
                                                         "I could not find you. The drink is getting heavy, take it please!"]),
                                             transitions={   'spoken':'GOTO_INITIAL_FAIL' }) #GOTO_INITIAL_FAIL
 
+                    smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
+                                            HandoverToHuman(robot),
+                                            transitions={"done":"GOTO_INITIAL_FAIL"})
+
                     smach.StateMachine.add( 'HANDOVER_DRINK',
                                             HandoverToHuman(robot),
-                                            transitions={"done":"GOTO_INITIAL_SUCCESS"})
+                                            transitions={"succeeded":"GOTO_INITIAL_SUCCESS",
+                                                         "failed":"GOTO_INITIAL_SUCCESS"})
 
                     smach.StateMachine.add( "GOTO_INITIAL_SUCCESS",
                                             NavigateGeneric(robot, goal_query=query_party_room),
