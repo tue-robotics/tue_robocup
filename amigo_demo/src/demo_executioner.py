@@ -688,7 +688,7 @@ def recognize_face(robot):
 
     robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")  
     
-    robot.perception.toggle(["face_recognition"])
+    robot.perception.toggle(["face_recognition", "face_segmentation"])
     rospy.sleep(5.0)
     robot.perception.toggle([])
     person_result = robot.reasoner.query(
