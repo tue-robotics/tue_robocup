@@ -220,6 +220,9 @@ class LookForDrink(smach.State):
         nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
 
+        # we tried to make it to the new goal. Let's have a look to see whether we can find the object here
+        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+
         ## If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
         if nav_result == "unreachable":                    
             return "looking"
@@ -227,7 +230,7 @@ class LookForDrink(smach.State):
             return "looking"
 
         # we made it to the new goal. Let's have a look to see whether we can find the object here
-        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+        #self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
         # look to ROI
         roi_answers = self.robot.reasoner.query(Compound("point_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
@@ -303,7 +306,6 @@ class LookForPerson(smach.State):
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
         self.robot.speech.speak("Let me see who I can find here...")
-        self.robot.head.reset_position()
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
