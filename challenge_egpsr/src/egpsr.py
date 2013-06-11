@@ -73,6 +73,8 @@ class Ask_action(smach.State):
 
     def execute(self, userdata):
 
+        self.robot.head.look_up()
+
         try:
             self.response = self.get_action_service(3600.0)  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
 
@@ -85,7 +87,9 @@ class Ask_action(smach.State):
             rospy.logdebug("start_location = {0}".format(self.response.start_location))
             rospy.logdebug("end_location = {0}".format(self.response.end_location))
             rospy.logdebug("object = {0}".format(self.response.object))
-            
+            rospy.logdebug("object_room = {0}".format(self.response.object_room))
+            rospy.logdebug("object_location = {0}".format(self.response.object_location))
+
             return "done"
 
         except rospy.ServiceException, e:
