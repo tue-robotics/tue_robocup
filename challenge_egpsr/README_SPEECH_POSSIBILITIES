@@ -1,0 +1,184 @@
+***************
+**** EGPSR ****
+***************
+
+It is not possible to say every sentence. All the possibilities are defined here.
+---------------------------------------------------------------------------------
+
+<transportCmd> = 	 <transportAction> <article> <objectCategory> to   <article> <locationCategory>;
+<transportplusCmd> = <transportAction> <article> <objectCategory> from <article> <locationCategory> to <article> <locationCategory>;
+
+<getCmd> = 		<getAction> me <article> <objectCategory>;
+<getPlusCmd> =  <getAction> me <article> <objectCategory> from <article> <locationCategory>;
+
+<pointCmd> = 		 <pointAction> at <article> <objectCategory>;
+<pointPlusCmd> = 	 <pointAction> at <article> <objectCategory> from <article> <locationCategory>;
+<pointLocationCmd> = <pointAction> at <article> <locationCategory>;
+<pointExitCmd> = 	 <pointAction> at an exit;
+
+<findCmd> = 		<findAction> <article> <objectCategory>;
+<findPlusCmd> = 	<findAction> <article> <objectCategory> from <article> <locationCategory>;
+<findLocationCmd> = <findAction> <article> <locationCategory>;
+<findExitCmd> = 	<findAction> an exit;
+
+<navigateLocationCmd> = <navigateAction> to <article> <locationCategory>;
+<navigateExitCmd> = 	<navigateAction> to an exit;
+
+<transportAction> = transport | bring | carry;
+<getAction> = 		bring | get | give;
+<pointAction> = 	point | look;
+<findAction> = 		detect | find;
+<navigateAction> = 	go | move | navigate;
+
+******************
+robotics_testlab_A
+******************
+
+Object and location categories for robotics_testlab_A
+-----------------------------------------------------
+
+<objectCategory> = 	 drink | bathroomstuff;
+<locationCategory> = seat | table | shelf | bin;
+
+<article> = a | an | some;
+
+Drink:
+coke
+icetea
+teapack
+
+Bathroomstuff:
+cif
+
+Seat:
+couchtable
+loungechair
+
+Table:
+couchtable
+dinnertable
+
+Shelf:
+desk
+cabinet
+bedcabinet
+
+Bin:
+bin
+
+Rooms:
+livingroom
+bedroom
+
+Locations in bedroom:
+cabinet
+bed
+bedcabinet
+bin
+
+Locations in livingroom:
+dinnertable
+desk
+couchtable
+loungechair
+
+
+*****************
+**** rgo2013 ****
+*****************
+
+Object and location categories for rgo2013
+------------------------------------------
+
+<objectCategory> = drink | medicine | stuff | food;
+<locationCategory> = seat | table | storage | decoration | appliance;
+
+<article> = a | an | some;
+
+Drink:
+redbull
+coke
+juice
+beer
+water
+wine
+
+Medicine:
+bandaids
+creme
+kleenex
+
+Stuff:
+matches
+cards
+flowers
+soap
+sponge
+bag
+headphone
+cube
+tape
+microphone
+cup
+
+Food:
+cookies
+peanuts
+chocolade
+hazelnuts
+noodles
+
+Seat:
+bar
+armchair
+lounge
+couch
+bed
+
+Table:
+desk
+dinnertable
+sidetable
+couchtable
+
+Storage:
+shelf
+hanger
+
+Decoration:
+plant
+poster
+
+Appliance:
+fridge
+tv
+sink
+waste
+
+Rooms:
+diningroom
+livingroom
+kitchen
+
+Locations in diningroom:
+desk
+hanger
+dinnertable
+
+Locations in livingroom:
+plant
+sidetable
+bed
+couch
+couchtable
+
+Locations in kitchen:
+bar
+waste
+shelf
+tv
+fridge
+sink
+armchair
+lounge
+poster
