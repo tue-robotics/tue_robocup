@@ -53,7 +53,7 @@ poses["SHOULDER_TRAINING2"]     = [ -1.3700 , -0.0138 , -0.1565 , 0.4830 , 0.103
 poses["SHOULDER_TRAINING3"]     = [ -0.0600 , 0.0302 , -0.1560 , 0.4870 , 0.5210 , 0.3158 , 0.1000 ]
 poses["SQUEEZE"]                = [ 0.0680 , 0.4437 , 0.3035 , 0.7000 , 1.3170 , -0.1642 , -0.3000 ]
 poses["FRONT_GRASP_OLD"]        = [ 0.0770 , 1.4192 , 1.2236 , 0.2970 , -1.2040 , 0.1948 , 0.1570 ]
-poses["FRONT_GRASP"]     	= [ -0.3053 , 1.07292 , 0.366618 , 0.6427728 , -0.617385 , 0.04477456 , -0.07338288 ]
+poses["FRONT_GRASP"]     	    = [ -0.3053 , 1.07292 , 0.366618 , 0.6427728 , -0.617385 , 0.04477456 , -0.07338288 ]
 poses["FRONT_GRASP_CLOSE"]      = [ -0.22288 , -0.09266 , 0.172507 , 1.42479 , -0.145511 , 0.285575 , -0.001989]
 poses["FLOOR_GRASP1"]           = [ -0.0480 , -0.0431 , -1.7130 , 0.4010 , 0.2620 , 0.5938 , -0.0090 ]
 poses["FLOOR_GRASP2"]           = [ -0.2230 , -0.0108 , -0.0078 , 0.0600 , 0.0000 , -0.0572 , -0.1190 ]
@@ -140,6 +140,7 @@ special_keys['?'] = "SHOW_KEYMAP" #Doubly defined, also in special keys
 special_keys["%"] = "HI5"
 special_keys[":"] = "LEARN_FACE"
 special_keys[";"] = "RECOGNIZE_FACE"
+special_keys["D"] = "Drop off an object at a predefined location. Can be edited via python! See the dropoff_demo-function"
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -584,6 +585,49 @@ def grab_demo(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
+    import smach
+    import robot_smach_states as states
+
+    r = robot.reasoner
+    r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
+    r.query(r.load_database("tue_knowledge", 'prolog/objects.pl'))
+    r.assertz(r.challenge("clean_up"))
+
+    rospy.loginfo("Setting up state machine")
+    sm = smach.StateMachine(outcomes=['Done', "Failed", "Aborted"])
+
+    if not query_dropoff_loc:
+        query_dropoff_loc = Conjunction(
+                                    Compound("instance_of",         "Dispose_to_object", "desk"), #Find a desk
+                                    Compound("point_of_interest",   "Dispose_to_object", Compound("point_3d", "X", "Y", "Z")))
+        # query_dropoff_loc = Conjunction(
+        #                             Compound("is", "X", 2.0),
+        #                             Compound("is", "Y", 2.2),
+        #                             Compound("is", "Z", 0.8))
+
+    with sm:
+        smach.StateMachine.add("DROPOFF_OBJECT",
+                        #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
+                        #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
+                        states.DropObject(selectedArm, robot, query_dropoff_loc),
+                        transitions={   'succeeded':'Done',
+                                        'failed':'Failed',
+                                        'target_lost':'Failed'})
+
+    rospy.loginfo("State machine set up, start execution...")
+    #import pdb; pdb.set_trace()
+    import smach_ros
+    introserver = smach_ros.IntrospectionServer('server_name', sm, '/SM_ROOT_PRIMARY')
+    introserver.start()
+    result = sm.execute()
+    introserver.stop()
+
+    # if not via_reasoner:
+    #     r.query(r.retractall(Compound("demo_dropoff_point",   Compound("point_3d", "X", "Y", "Z"))))
+
+    rospy.loginfo("State machine executed. Result: {0}".format(result))
+
 def learn_face(robot):
     import smach
     import robot_smach_states as states
@@ -837,6 +881,13 @@ def process_key(key):
                 if key == ";":
                     print "Recognize face"
                     recognize_face(robot)
+                if key == "D":
+                    print "Drop an Object"
+                    # query_dropoff_loc = Conjunction(
+                    #                             Compound("is", "X", 2.0),
+                    #                             Compound("is", "Y", 2.2),
+                    #                             Compound("is", "Z", 0.8))
+                    dropoff_demo(robot, arms[arm_selection], query_dropoff_loc=None) #Optionally provide your own query here, None defaults to placing on a desk
                 if key == "L":
                     #print "Next language:",
                     next_language()
