@@ -848,7 +848,7 @@ def setup_statemachine(robot):
 
         # Person is not okay:
         smach.StateMachine.add('SAY_REGISTER_NOT_OKAY',
-                                    states.Say(robot, 'Okay, I will register your position and take a picture so the fire department is able to find you.', block=False),
+                                    states.Say(robot, 'Okay, I will register your position and take a picture so the fire department is able to find you.', block=True),
                                     transitions={'spoken':'REGISTER_PERSON_NOT_OKAY'})     
 
         smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
@@ -866,7 +866,7 @@ def setup_statemachine(robot):
 
         # Person is ok and needs no assistance to exit
         smach.StateMachine.add('SAY_REGISTER_OKAY_EXIT_BY_THEMSELVES',
-                                    states.Say(robot, 'I will register your position and take a picture.', block=False),
+                                    states.Say(robot, 'I will register your position and take a picture.', block=True),
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES',
@@ -884,7 +884,7 @@ def setup_statemachine(robot):
 
         # Person is ok and needs assistance to exit
         smach.StateMachine.add('SAY_REGISTER_OKAY_EXIT_NOT_BY_THEMSELVES',
-                                    states.Say(robot, 'Before escorting you to the exit, I will first register your position and take a picture.', block=False),
+                                    states.Say(robot, 'Before escorting you to the exit, I will first register your position and take a picture.', block=True),
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
