@@ -670,7 +670,6 @@ def recognize_face(robot):
     #import smach
 
     robot.speech.speak("Let me see who I can find here...")
-    robot.head.reset_position()
     robot.head.set_pan_tilt(tilt=-0.2)
     robot.spindle.reset()
 
@@ -705,8 +704,8 @@ def recognize_face(robot):
         print name_possibility
         prob = float(name_possibility[0])
     if prob > 0.1 and prob > name_prob:
-        name = str(name_possibility[1])
-        #name = str(name_possibility[1][0])
+        #name = str(name_possibility[1])
+        name = str(name_possibility[1][0])
         name_prob = prob
 
     if not name:
