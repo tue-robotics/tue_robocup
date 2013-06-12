@@ -37,7 +37,8 @@ class Ask_cleanup(smach.State):
         try:
             self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
             if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-                room = "bedroom"
+                self.robot.speech.speak("I was not able to understand you but I'll clean the livingroom, humans always tend to make a mess of that.")
+                room = "living_room"
             elif self.response.answer == "livingroom":
                 room = "living_room"
             elif self.response.answer == "diningroom":
