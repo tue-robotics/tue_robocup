@@ -673,8 +673,8 @@ class LookForObjectsAtROI(smach.State):
             spindle_target = max(0.15, min(lookat_point.z - 0.41, self.robot.spindle.upper_limit))
             rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.z, spindle_target))
 
-            self.robot.head.send_goal(lookat_point, keep_tracking=True)
             self.robot.spindle.send_goal(spindle_target,waittime=5.0)
+            self.robot.head.send_goal(lookat_point, keep_tracking=False)
             
         except ValueError, ve:
             rospy.loginfo("lookat_answers = {0}".format(lookat_answers))
@@ -684,7 +684,7 @@ class LookForObjectsAtROI(smach.State):
             
         # Toggle perception on
 
-        rospy.sleep(3.0)
+        #rospy.sleep(3.0)
 
         rospy.loginfo("Start object recognition")
         result = self.robot.perception.toggle_recognition(objects=True)
