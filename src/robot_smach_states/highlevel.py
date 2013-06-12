@@ -271,9 +271,9 @@ class GetObject(smach.StateMachine):
                                                                       identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
                                     transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable':'DRIVE_TO_SEARCHPOS',
-                                                    'preempted':'Aborted',
-                                                    'goal_not_defined':'Failed',      # End State
-                                                    'all_matches_tried':'Failed'})    # End State
+                                                    'preempted':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+                                                    'goal_not_defined':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE',      # End State
+                                                    'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})    # End State
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     human_interaction.Say(robot, ["Lets see what I can find here."],block=False),
@@ -284,7 +284,7 @@ class GetObject(smach.StateMachine):
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'RESET_HEAD_AND_SPINDLE',
-                                                    'abort':'Aborted'})      # End State
+                                                    'abort':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED'})      # End State
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE',
                                     ResetHeadAndSpindle(robot),
@@ -293,7 +293,7 @@ class GetObject(smach.StateMachine):
             smach.StateMachine.add('CHECK_TIME',
                                     utility_states.CheckTime(robot, "get_object_start", max_duration),
                                     transitions={   'ok':'DRIVE_TO_SEARCHPOS',
-                                                    'timeout':'Timeout' })   # End State
+                                                    'timeout':'RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT' })   # End State
                                                     
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     human_interaction.Say(robot, ["I have found something"],block=False),
@@ -307,8 +307,24 @@ class GetObject(smach.StateMachine):
                                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
             smach.StateMachine.add('GRAB',
                                     manipulation.GrabMachine(robot.leftArm, robot, query_grabpoint),
-                                    transitions={   'succeeded':'Done',
-                                                    'failed':'Failed' })   # End State
+                                    transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
+                                                    'failed':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE' })  
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+                                    ResetHeadAndSpindle(robot),
+                                    transitions={   'done':'Aborted'})   # End State
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
+                                    ResetHeadAndSpindle(robot),
+                                    transitions={   'done':'Failed'})   # End State
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT',
+                                    ResetHeadAndSpindle(robot),
+                                    transitions={   'done':'Timeout'})   # End State            
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
+                                    ResetHeadAndSpindle(robot),
+                                    transitions={   'done':'Done'})   # End State
 
 class Say_and_Navigate(smach.StateMachine):
     ## This class gives the ability to say something and at the same time start to navigate to the desired location.

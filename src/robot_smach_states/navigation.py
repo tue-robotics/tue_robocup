@@ -54,12 +54,17 @@ class Navigate_abstract(smach.State):
             if outcome:
                 return "arrived"
             else:
-                if not self.preempted:
-                    return "unreachable"
+                self.robot.base.reset_costmap()
+                outcome2 = self.robot.base.send_goal(pos, orient, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
+                if outcome2:
+                    return "arrived"
                 else:
-                    self.service_preempt()
-                    self.preempted = False
-                    return "preempted"
+                    if not self.preempted:
+                        return "unreachable"
+                    else:
+                        self.service_preempt()
+                        self.preempted = False
+                        return "preempted"
         else:
             rospy.loginfo("Navigating in Dynamic mode")
             unreachable = False
@@ -319,12 +324,12 @@ class Visit_query_outcome(Navigate_to_queryoutcome):
 
                 rospy.loginfo("outcome=arrived, the following fact should be retracted = not_visited({0})".format(self.current_identifier))
 
-            elif outcome == "failed":
+            elif outcome == "unreachable":
                 visited_assertion = Compound("retractall", Compound("not_unreachable", self.current_identifier))
                 self.robot.reasoner.query(visited_assertion)
                 self.current_identifier = None
 
-                rospy.loginfo("outcome=failed, the following fact should be retreacted = not_unreachable({0})".format(self.current_identifier))
+                rospy.loginfo("outcome=unreachable, the following fact should be retreacted = not_unreachable({0})".format(self.current_identifier))
 
         else:
             rospy.logerr("current_identifier was None, should not happen.")
