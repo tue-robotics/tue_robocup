@@ -402,11 +402,18 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             pose = util.msg_constructors.Quaternion(z=1.0)
 
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
-            if base_poses_for_point[0].pose.position.x == 0 and base_poses_for_point[0].pose.position.y ==0:
+
+            if base_poses_for_point:
+                base_pose_for_point = base_poses_for_point[0]
+            else:
+                rospy.logerr("IK returned empty pose.")
+                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+            
+            if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y ==0:
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
 
-            return base_poses_for_point[0].pose.position, base_poses_for_point[0].pose.orientation
+            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
 
 class Look_at_obstacle(smach.State):
     @util.deprecated_replace_with("NavigateGeneric")
