@@ -167,8 +167,9 @@ int createPDF()
         return EXIT_FAILURE;
     }
     
+    // Overwrite the above: possible since usb-stick at fixed location
     if (!found_file_in_media) {
-		ROS_WARN("No files/directories found in /media/ -> no USB stick to write to");
+		ROS_INFO("No files/directories found in /media/ -> using default path");
 		usb_dir = "/media/usb-stick/emergency_paper.pdf";
 		//usb_dir = ros::package::getPath("challenge_emergency")+"/emergency_paper.pdf";
 		img_path = "/media/usb-stick/";
