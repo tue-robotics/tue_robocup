@@ -40,7 +40,7 @@ class Initialize(smach.State):
         ''' Load template matching config '''
 
         # load template config data into reasoner
-        self.robot.reasoner.query(Compound("load_database", "prolog/template_matching.pl"))
+        self.robot.reasoner.query(Compound("load_database", "tue_knowledge", "prolog/template_matching.pl"))
 
         query_template_config = Compound("template_matching_config", "Config")
         answers = self.robot.reasoner.query(query_template_config)
