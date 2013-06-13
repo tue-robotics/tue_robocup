@@ -111,7 +111,7 @@ class LearnPersonName(smach.State):
     def execute(self, userdata=None):
         self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))    
 
-        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
+        self.response = self.get_learn_person_name_service("name_maxima", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
 
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             if self.person_learn_failed == 2:
@@ -123,8 +123,8 @@ class LearnPersonName(smach.State):
                 self.response.answer = "michael"
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
-                self.robot.speech.speak("I will call you John")
-                self.response.answer = "john"
+                self.robot.speech.speak("I will call you Maxima")
+                self.response.answer = "Maxima"
                 self.person_learn_failed = 1
 
         self.robot.reasoner.query(Compound("assert", Compound("current_person", self.response.answer)))
@@ -596,7 +596,7 @@ if __name__ == '__main__':
 
     if initial_state == "LOOK_FOR_DRINK":
         amigo.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
-        amigo.reasoner.query(Compound("assert", Compound("current_person", "john")))
+        amigo.reasoner.query(Compound("assert", Compound("current_person", "maxima")))
 
     machine = CocktailParty(amigo)
     
