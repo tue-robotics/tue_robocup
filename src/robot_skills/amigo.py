@@ -159,7 +159,8 @@ class Amigo(object):
         (pos, quat) = self.base.get_location()
         phi = self.base.phi(quat)
 
-        print "base_pose(" + str(env_name) + ", _, " + label + ", pose_2d(" + str(pos.x) + ", " + str(pos.y) + ", " + str(phi) + "))"
+        base_pose = Compound("base_pose", env_name, "Challenge", label, Compound("pose_2d", pos.x, pos.y, phi))
+        print base_pose
 
         # Determine lookat point (point of interest)
 
@@ -175,7 +176,13 @@ class Amigo(object):
         self.tf_listener.waitForTransform("/map", ps.header.frame_id, time, rospy.Duration(2.0))
         ps_MAP = self.tf_listener.transformPoint("/map", ps)
 
-        print "point_of_interest(" + str(env_name) + ", _, " + label + ", point_3d(" + str(ps_MAP.point.x) + ", " + str(ps_MAP.point.y) + ", " + str(ps_MAP.point.z) + "))"
+        poi = Compound("point_of_interest", env_name, "Challenge", label, Compound("point_3d", ps_MAP.point.x, ps_MAP.point.y, ps_MAP.point.z))
+
+        print poi
+
+        # assert the facts to the reasoner
+        self.reasoner.query(Compound("assert", base_pose))
+        self.reasoner.query(Compound("assert", poi))
 
     def close(self):
         try:
