@@ -309,6 +309,27 @@ class LookForPerson(smach.State):
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
+        robot.perception.toggle(["face_segmentation"])
+        rospy.sleep(5.0)
+        robot.perception.toggle([])
+
+        person_result = robot.reasoner.query(
+                                        Conjunction(  
+                                            Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+        if not person_result:
+            robot.speech.speak("No one here. Face segmentation did not find a person here")
+            return "looking"
+        robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
+
+
+
+
+
+
+
+
+
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
         rospy.sleep(5.0)
         self.robot.perception.toggle([])
@@ -316,41 +337,38 @@ class LookForPerson(smach.State):
         person_result = self.robot.reasoner.query(
                                             Conjunction(  
                                                 Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
-
-        if not person_result:
-            self.robot.speech.speak("No one here. Moving on!")
-            return "looking"
-
-        self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")  
-        person_result = self.robot.reasoner.query(
-                                            Conjunction(  
-                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
                                                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                                 Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
 
-        # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
-        name_pmf = person_result[0]["NamePMF"]
-        name=None
-        name_prob=0
-        for name_possibility in name_pmf:
-            print name_possibility
-            prob = float(name_possibility[0])
-            if prob > 0.6 and prob > name_prob:
-                name = str(name_possibility[1][0])
-                name_prob = prob
+        if len(person_result) > 0:
+            name_pmf = person_result[0]["NamePMF"]
 
-        if not name:
-            self.robot.speech.speak("I don't know who you are. Moving on!")
-            return "looking"        
+            if len(person_result) > 1:
+                rospy.logwarn("Multiple faces detected, only checking the first one!")
 
-        if name != serving_person:
-            self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
-            return "looking"
+            name=None
+            name_prob=0
+            for name_possibility in name_pmf:
+                print name_possibility
+                prob = float(name_possibility[0])
+                if prob > 0.1 and prob > name_prob:
+                    name = str(name_possibility[1][0])
+                    #print "Updated most probable name to " + str(name)
+                    name_prob = prob
 
-        if name:
-            self.robot.speech.speak("Hello " + str(name))        
-            return "found"
+            if not name:
+                robot.speech.speak("I don't know who you are.")
+                return "looking"  
+
+            if name != serving_person:
+                self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
+                return "looking"      
+
+            if name:
+                robot.speech.speak("Hello " + str(name)) 
+                return "found"       
+        else:
+            rospy.warn("No person names received from world model") 
 
         return "not_found"
 
@@ -435,7 +453,7 @@ class CocktailParty(smach.StateMachine):
                                                     "all_unreachable":"ITERATE_PERSONS"})
 
             persons_iterator = smach.Iterator(  outcomes=['served', 'not_served'], 
-                                                it=lambda: range(3),
+                                                it=lambda: range(1),
                                                 it_label="person_index",
                                                 input_keys=[],
                                                 output_keys=[],
