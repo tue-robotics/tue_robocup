@@ -500,10 +500,16 @@ class Register(smach.State):
 
             x,y,z = possible_locations[0]
 
+        ROS_INFO("[EG] status of person is {0} (1 = not oke, 0 is oke)".format(self.status))
+        ROS_INFO("[EG] self.person_no = {0}".format(self.person_no))
+        ROS_INFO("[EG] x value person = {0}".format(x))
+        ROS_INFO("[EG] y value person = {0}".format(y))
+
         # Register person
         rospy.loginfo("Register person in file ....")
         if self.person_no == 1:
-            f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','w')  # 'a' means append
+            f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','w')  # 'w' means write
+            f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
         else:
             f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
 
@@ -536,7 +542,11 @@ class Register(smach.State):
         else:
             rospy.loginfo("no picture taken, i'm sorry")
 
-        self.person_no = self.person_no + 1
+        rospy.loginfo("[EG] Check status.txt")
+        rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
+        rospy.sleep(60)        
+
+        self.person_no += 1
         return 'finished'
 
 # Class to move arm to initial pose
@@ -575,6 +585,9 @@ class Run_pdf_creator(smach.State):
             return "failed"
         rospy.loginfo("PDF is created on usb-stick")
         
+        rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
+        rospy.sleep(60)
+        
         return "done"
 
 
@@ -607,6 +620,8 @@ class Look_at_person(smach.State):
             lookat_point = self.robot.head.point(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
             self.robot.head.send_goal(lookat_point)
+            rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
+            rospy.sleep(60)
         return 'finished'
 
 
@@ -853,7 +868,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'REGISTER_PERSON_NOT_OKAY'})     
 
         smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
-                                    Register(robot, 1),                             #input 1 (person is not oke)
+                                    Register(robot, status=1),                             #input 1 (person is not oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_NOT_OKAY'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_NOT_OKAY',
@@ -871,7 +886,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES',
-                                    Register(robot, 0),                            #input 0 (person is oke)
+                                    Register(robot, status=0),                            #input 0 (person is oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_BY_THEMSELVES'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_BY_THEMSELVES',
@@ -889,7 +904,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
-                                    Register(robot, 0),                            #input 0 (person is oke)
+                                    Register(robot, status=0),                            #input 0 (person is oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
