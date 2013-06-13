@@ -442,7 +442,7 @@ class Ask_yes_no(smach.State):
 
     def execute(self, userdata=None):
 
-        self.response = self.get_yes_no_service(3 , 10) # 3 tries, each max 10 seconds
+        self.response = self.get_yes_no_service(3 , 8) # 3 tries, each max 10 seconds
 
         if self.response.answer == "true":
             return "yes"
@@ -500,10 +500,10 @@ class Register(smach.State):
 
             x,y,z = possible_locations[0]
 
-        ROS_INFO("[EG] status of person is {0} (1 = not oke, 0 is oke)".format(self.status))
-        ROS_INFO("[EG] self.person_no = {0}".format(self.person_no))
-        ROS_INFO("[EG] x value person = {0}".format(x))
-        ROS_INFO("[EG] y value person = {0}".format(y))
+        rospy.loginfo("[EG] status of person is {0} (1 = not oke, 0 is oke)".format(self.status))
+        rospy.loginfo("[EG] self.person_no = {0}".format(self.person_no))
+        rospy.loginfo("[EG] x value person = {0}".format(x))
+        rospy.loginfo("[EG] y value person = {0}".format(y))
 
         # Register person
         rospy.loginfo("Register person in file ....")
@@ -617,9 +617,12 @@ class Look_at_person(smach.State):
                                     float(answer["Z"])) for answer in answers]
 
             x,y,z = possible_locations[0]
+            roi_answer = answers[0]
+
             lookat_point = self.robot.head.point(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-            self.robot.head.send_goal(lookat_point)
+            #self.robot.head.send_goal(lookat_point)
+            self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
             rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
             rospy.sleep(60)
         return 'finished'
