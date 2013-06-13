@@ -309,25 +309,18 @@ class LookForPerson(smach.State):
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
-        robot.perception.toggle(["face_segmentation"])
+        self.robot.perception.toggle(["face_segmentation"])
         rospy.sleep(5.0)
-        robot.perception.toggle([])
+        self.robot.perception.toggle([])
 
-        person_result = robot.reasoner.query(
+        person_result = self.robot.reasoner.query(
                                         Conjunction(  
                                             Compound( "property_expected", "ObjectID", "class_label", "face"),
                                             Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
         if not person_result:
-            robot.speech.speak("No one here. Face segmentation did not find a person here")
+            self.robot.speech.speak("No one here. Face segmentation did not find a person here")
             return "looking"
-        robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
-
-
-
-
-
-
-
+        self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
 
 
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
@@ -357,7 +350,7 @@ class LookForPerson(smach.State):
                     name_prob = prob
 
             if not name:
-                robot.speech.speak("I don't know who you are.")
+                self.robot.speech.speak("I don't know who you are.")
                 return "looking"  
 
             if name != serving_person:
@@ -365,7 +358,7 @@ class LookForPerson(smach.State):
                 return "looking"      
 
             if name:
-                robot.speech.speak("Hello " + str(name)) 
+                self.robot.speech.speak("Hello " + str(name)) 
                 return "found"       
         else:
             rospy.warn("No person names received from world model") 
