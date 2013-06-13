@@ -144,6 +144,39 @@ class Amigo(object):
         output_pose = self.tf_listener.transformPose(frame, ps) 
         return output_pose
 
+    def store_position_knowledge(self, label, dx=1.0, z=0.8, file='/tmp/locations.pl'):
+
+        # Query reasoner for environment name
+        ans_env = self.reasoner.query(Compound("environment", "Env"))
+
+        if not ans_env:
+            rospy.logerr("Could not get environment name from reasoner.")
+            return
+
+        env_name = ans_env[0]["Env"]
+        
+        # Determine base position as (x, y, phi)
+        (pos, quat) = self.base.get_location()
+        phi = self.base.phi(quat)
+
+        print "base_pose(" + str(env_name) + ", _, " + label + ", pose_2d(" + str(pos.x) + ", " + str(pos.y) + ", " + str(phi) + "))"
+
+        # Determine lookat point (point of interest)
+
+        time = rospy.Time.now()
+
+        ps = geometry_msgs.msg.PointStamped()
+        ps.header.stamp = time
+        ps.header.frame_id = "/base_link"
+        ps.point.x = dx # dx meter in front of robot
+        ps.point.y = 0.0
+        ps.point.z = z
+
+        self.tf_listener.waitForTransform("/map", ps.header.frame_id, time, rospy.Duration(2.0))
+        ps_MAP = self.tf_listener.transformPoint("/map", ps)
+
+        print "point_of_interest(" + str(env_name) + ", _, " + label + ", point_3d(" + str(ps_MAP.point.x) + ", " + str(ps_MAP.point.y) + ", " + str(ps_MAP.point.z) + "))"
+
     def close(self):
         try:
             self.head.close()
