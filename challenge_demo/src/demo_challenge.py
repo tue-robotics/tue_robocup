@@ -26,6 +26,7 @@ from tf.transformations import euler_from_quaternion
 HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
 SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
 RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
+HOLD_CAN_POSE = [-0.1 -0.3 0 1.87 0.1 0.0 0.0]
 
 class TurnAround(smach.State):
     def __init__(self, robot, angle):
@@ -116,6 +117,20 @@ class EscortToBreakfast(smach.StateMachine):
                                                     "preempted":"Aborted",
                                                     "goal_not_defined":"Aborted",})
 
+class ResetRobot(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.spindle.reset()
+        self.robot.leftArm.send_gripper_goal_close()
+        self.robot.rightArm.send_gripper_goal_close()
+        self.robot.leftArm.reset_arm()
+        self.robot.rightArm.reset_arm()
+        self.robot.head.reset_position()
+        return 'done'
+
 class Part1(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -123,63 +138,82 @@ class Part1(smach.StateMachine):
         with self:
             smach.StateMachine.add( 'GOTO_BREAKFAST_TABLE', 
                                     states.NavigateGeneric(robot, goal_name="desk"), 
-                                    transitions={   "arrived":"GOTO_KITCHEN",
-                                                    "unreachable":"SAY_CANNOT_REACH_BREAKFAST_TABLE",
-                                                    "preempted":"failed",
-                                                    "goal_not_defined":"SAY_CANNOT_REACH_BREAKFAST_TABLE"})
+                                    transitions={   "arrived"           : "GOTO_KITCHEN",
+                                                    "unreachable"       : "SAY_CANNOT_REACH_BREAKFAST_TABLE",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  :"SAY_CANNOT_REACH_BREAKFAST_TABLE"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
-                                    transitions={   "arrived":"SAY_KITCHEN_BACKUP",
-                                                    "unreachable":"SAY_KITCHEN_BACKUP",
-                                                    "preempted":"failed",
-                                                    "goal_not_defined":"SAY_KITCHEN_BACKUP"})
+                                    transitions={   "arrived"           : "SAY_KITCHEN_BACKUP",
+                                                    "unreachable"       : "SAY_KITCHEN_BACKUP",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "SAY_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'SAY_CANNOT_REACH_BREAKFAST_TABLE',
                                     states.Say(robot, ["I better go to the cook straight away"]), 
-                                    transitions={   'spoken':"GOTO_KITCHEN_BACKUP"})
+                                    transitions={   'spoken'            : "GOTO_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN_BACKUP', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
-                                    transitions={   "arrived":"SAY_KITCHEN_BACKUP",
-                                                    "unreachable":"SAY_KITCHEN_BACKUP",
-                                                    "preempted":"failed",
-                                                    "goal_not_defined":"SAY_KITCHEN_BACKUP"})
+                                    transitions={   "arrived"           : "SAY_KITCHEN_BACKUP",
+                                                    "unreachable"       : "SAY_KITCHEN_BACKUP",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "SAY_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'SAY_KITCHEN_BACKUP',
                                     states.Say(robot, ["Can you please handover the tray so i can take it to the patients"]), 
-                                    transitions={   'spoken':"HOLDUP_ARMS_FOR_TRAY_LEFT"})
+                                    transitions={   'spoken'            : "HOLDUP_ARMS_FOR_TRAY_LEFT"})
 
             smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_LEFT', 
                                     states.ArmToJointPos(robot, robot.leftArm, HOLD_TRAY_POSE),
-                                    transitions={   'done':"HOLDUP_ARMS_FOR_TRAY_RIGHT",
-                                                    'failed':"RESET_LEFT_ARM"})
+                                    transitions={   'done'              : "HOLDUP_ARMS_FOR_TRAY_RIGHT",
+                                                    'failed'            : "RESET_ROBOT_NO_ARMS"})
 
             smach.StateMachine.add( 'HOLDUP_ARMS_FOR_TRAY_RIGHT', 
                                     states.ArmToJointPos(robot, robot.rightArm, HOLD_TRAY_POSE),
-                                    transitions={   'done':"GO_BACK_TO_BREAKFAST_TABLE",
-                                                    'failed':"RESET_LEFT_ARM"})
+                                    transitions={   'done'              : "GO_BACK_TO_BREAKFAST_TABLE",
+                                                    'failed'            : "RESET_ROBOT_NO_ARMS"})
 
-            smach.StateMachine.add( 'RESET_LEFT_ARM', 
-                                    states.ArmToJointPos(robot, robot.rightArm, RESET_POSE),
-                                    transitions={   'done':"RESET_RIGHT_ARM",
-                                                    'failed':"RESET_RIGHT_ARM"})
-
-            smach.StateMachine.add( 'RESET_RIGHT_ARM', 
-                                    states.ArmToJointPos(robot, robot.rightArm, RESET_POSE),
-                                    transitions={   'done':"SAY_NO_ARMS",
-                                                    'failed':"SAY_NO_ARMS"})
+            smach.StateMachine.add( 'RESET_ROBOT_NO_ARMS',
+                                    ResetRobot(robot),
+                                    transitions={   'done'              : 'SAY_NOT_ARMS'})
 
             smach.StateMachine.add( 'SAY_NO_ARMS',
                                     states.Say(robot, ["I am terribly sorry but my arms hurt, can you please bring it yourself"]), 
-                                    transitions={   'spoken':"GO_BACK_TO_BREAKFAST_TABLE"})
+                                    transitions={   'spoken'            : "failed"})
 
             smach.StateMachine.add( 'GO_BACK_TO_BREAKFAST_TABLE', 
-                        states.NavigateGeneric(robot, goal_name="desk"), 
-                        transitions={   "arrived":"succeeded",
-                                        "unreachable":"failed",
-                                        "preempted":"failed",
-                                        "goal_not_defined":"failed"})
+                                    states.NavigateGeneric(robot, goal_name="desk"), 
+                                    transitions={   "arrived"           : "succeeded",
+                                                    "unreachable"       : "failed",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "failed"})
+
+            smach.StateMachine.add( 'SAY_HERES_BREAKFAST',
+                                    states.Say(robot, ["Here is your breakfast, please take it from my tray"]),
+                                    transitions={   'spoken'            : 'RETURN_TRAY'})
+
+            smach.StateMachine.add( 'RETURN_TRAY', 
+                                    states.NavigateGeneric(robot, goal_name="kitchen"), 
+                                    transitions={   "arrived"           : "SAY_TAKE_TRAY",
+                                                    "unreachable"       : "SAY_FAIL_RETURN_TRAY",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "SAY_FAIL_RETURN_TRAY"})
+
+            smach.StateMachine.add( 'SAY_FAIL_RETURN_TRAY',
+                                    states.Say(robot, ["Dear cook, I have trouble reaching you, can you please help me"]),
+                                    transitions={   'spoken'            : 'SAY_TAKE_TRAY'})
+
+            smach.StateMachine.add( 'SAY_TAKE_TRAY',
+                                    states.Say(robot, ["I have delivered the breakfast, please take the tray from my arms"]),
+                                    transitions={   'spoken'            : 'RESET_ROBOT'})
+
+            smach.StateMachine.add( 'RESET_ROBOT',
+                                    ResetRobot(robot),
+                                    transitions={   'done'              : 'succeeded'})
+
+
 
 class Part2(smach.StateMachine):
     def __init__(self, robot):
@@ -188,17 +222,90 @@ class Part2(smach.StateMachine):
         with self:
             smach.StateMachine.add( 'GOTO_BREAKFAST_TABLE', 
                                     states.NavigateGeneric(robot, goal_name="desk"), 
-                                    transitions={   "arrived":"GOTO_KITCHEN",
-                                                    "unreachable":"GOTO_KITCHEN",
-                                                    "preempted":"Aborted",
-                                                    "goal_not_defined":"GOTO_KITCHEN"})
+                                    transitions={   "arrived"           : "GOTO_KITCHEN",
+                                                    "unreachable"       : "SAY_CANNOT_REACH_BREAKFAST_TABLE",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "SAY_CANNOT_REACH_BREAKFAST_TABLE"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
-                                    transitions={   "arrived":"succeeded",
-                                                    "unreachable":"failed",
-                                                    "preempted":"Aborted",
-                                                    "goal_not_defined":"failed"})
+                                    transitions={   "arrived"           : "HOLDUP_ARM_FOR_CAN_LEFT",
+                                                    "unreachable"       : "HOLDUP_ARM_FOR_CAN_LEFT",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "HOLDUP_ARM_FOR_CAN_LEFT"})
+
+            smach.StateMachine.add( 'SAY_CANNOT_REACH_BREAKFAST_TABLE',
+                                    states.Say(robot, ["I better go to the cook straight away"]), 
+                                    transitions={   'spoken'            : "GOTO_KITCHEN_BACKUP"})
+
+            smach.StateMachine.add( 'GOTO_KITCHEN_BACKUP', 
+                                    states.NavigateGeneric(robot, goal_name="kitchen"), 
+                                    transitions={   "arrived"           : "HOLDUP_ARM_FOR_CAN_LEFT",
+                                                    "unreachable"       : "HOLDUP_ARM_FOR_CAN_LEFT",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "HOLDUP_ARM_FOR_CAN_LEFT"})
+
+            smach.StateMachine.add( 'SAY_KITCHEN_BACKUP',
+                                    states.Say(robot, ["Can you please handover the can so i can take it to the patients"]), 
+                                    transitions={   'spoken'            : "HOLDUP_ARM_FOR_CAN_LEFT"})
+
+            smach.StateMachine.add( 'HOLDUP_ARM_FOR_CAN_LEFT', 
+                                    states.ArmToJointPos(robot, robot.leftArm, HOLD_CAN_POSE),
+                                    transitions={   'done'              : "OPEN_LEFT_GRIPPER",
+                                                    'failed'            : "HOLDUP_ARM_FOR_CAN_RIGHT"})
+
+            smach.StateMachine.add('OPEN_LEFT_GRIPPER', 
+                                    SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN),
+                                    transitions={   'succeeded'         : 'CLOSE_LEFT_GRIPPER',
+                                                    'failed'            : 'CLOSE_LEFT_GRIPPER'})
+
+            smach.StateMachine.add('CLOSE_LEFT_GRIPPER', 
+                                    SetGripper(robot, robot.leftArm, gripperstate=ArmState.CLOSE),
+                                    transitions={   'succeeded'         : 'GO_BACK_TO_BREAKFAST_TABLE',
+                                                    'failed'            : 'GO_BACK_TO_BREAKFAST_TABLE'})
+
+            smach.StateMachine.add( 'HOLDUP_ARM_FOR_CAN_RIGHT', 
+                                    states.ArmToJointPos(robot, robot.rightArm, HOLD_CAN_POSE),
+                                    transitions={   'done'              : "OPEN_RIGHT_GRIPPER",
+                                                    'failed'            : "SAY_NO_ARMS"})
+
+            smach.StateMachine.add('OPEN_RIGHT_GRIPPER', 
+                                    SetGripper(robot, robot.rightArm, gripperstate=ArmState.OPEN),
+                                    transitions={   'succeeded'         : 'CLOSE_RIGHT_GRIPPER',
+                                                    'failed'            : 'CLOSE_RIGHT_GRIPPER'})
+
+            smach.StateMachine.add('CLOSE_RIGHT_GRIPPER', 
+                                    SetGripper(robot, robot.rightArm, gripperstate=ArmState.CLOSE),
+                                    transitions={   'succeeded'         : 'GO_BACK_TO_BREAKFAST_TABLE',
+                                                    'failed'            : 'GO_BACK_TO_BREAKFAST_TABLE'})
+
+            smach.StateMachine.add( 'SAY_NO_ARMS',
+                                    states.Say(robot, ["I am terribly sorry but my arms hurt, can you please bring it yourself"]), 
+                                    transitions={   'spoken'            : "failed"})
+
+            smach.StateMachine.add( 'GO_BACK_TO_BREAKFAST_TABLE', 
+                                    states.NavigateGeneric(robot, goal_name="desk"), 
+                                    transitions={   "arrived"           : "SAY_HERES_BREAKFAST",
+                                                    "unreachable"       : "failed",
+                                                    "preempted"         : "failed",
+                                                    "goal_not_defined"  : "failed"})
+
+            smach.StateMachine.add( 'SAY_HERES_BREAKFAST',
+                                    states.Say(robot, ["Here is your breakfast, please take it from my gripper"]),
+                                    transitions={   'spoken'            : 'SAY_DISPOSE_CAN'})
+
+            smach.StateMachine.add( 'SAY_DISPOSE_CAN',
+                                    states.Say(robot, ["I will throw the can right in the thrashbin"]),
+                                    transitions={   'spoken'            : 'DISPOSE_CAN'})
+
+            # ToDo: what if we carry with the right arm? Guess this needs to be asserted for the pooring motion anyway
+            disposal_query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
+            smach.StateMachine.add( 'DISPOSE_CAN',
+                                    states.DropObject(robot.leftArm, robot, disposal_query),
+                                    transitions={   "succeeded"         : "succeeded",
+                                                    "failed"            : "succeeded",
+                                                    "target_lost"       : "succeeded"})
+
 
 class DemoChallenge(smach.StateMachine):
     def __init__(self, robot):
