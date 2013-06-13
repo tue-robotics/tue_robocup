@@ -542,9 +542,9 @@ class Register(smach.State):
         else:
             rospy.loginfo("no picture taken, i'm sorry")
 
-        rospy.loginfo("[EG] Check status.txt")
-        rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
-        rospy.sleep(60)        
+        #rospy.loginfo("[EG] Check status.txt")
+        #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
+        #rospy.sleep(60)        
 
         self.person_no += 1
         return 'finished'
@@ -585,8 +585,8 @@ class Run_pdf_creator(smach.State):
             return "failed"
         rospy.loginfo("PDF is created on usb-stick")
         
-        rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
-        rospy.sleep(60)
+        #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
+        #rospy.sleep(60)
         
         return "done"
 
@@ -617,14 +617,12 @@ class Look_at_person(smach.State):
                                     float(answer["Z"])) for answer in answers]
 
             x,y,z = possible_locations[0]
-            roi_answer = answers[0]
 
             lookat_point = self.robot.head.point(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-            #self.robot.head.send_goal(lookat_point)
-            self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
-            rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
-            rospy.sleep(60)
+            self.robot.head.send_goal(lookat_point)
+            #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
+            #rospy.sleep(60)
         return 'finished'
 
 
