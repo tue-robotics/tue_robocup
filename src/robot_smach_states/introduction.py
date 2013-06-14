@@ -139,4 +139,66 @@ class AmigoIntroductionDutch(smach.State):
         self.robot.speech.speak("Waar zou ik jullie nog meer mee kunnen helpen",language='nl',personality='marjolijn')
         
         return "finished_introduction"
-    
+
+''' Additions for the reception of the queen during RoboCup 2013 '''
+class PrepareWelcomeMaxima(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, gl):
+        self.robot.spindle.reset()
+        self.robot.head.reset_position()
+        self.robot.leftArm.reset_arm()
+        self.robot.rightArm.send_joint_goal(-0.15, -0.22, 0.70, 1.77, -0.08, 0.09, -0.11)
+        self.robot.lights.set_color(1,0.25,0)
+        return "done"
+
+class WelcomeMaxima1(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, gl):
+        ''' Intro talk '''
+        self.robot.head.send_goal(self.robot.head.point(1.0,0,1.6),"/base_link",0)
+        self.robot.speech.speak("Welkom majesteit","nl","marjolijn","default","neutral",block=True)
+        self.robot.speech.speak("Mijn naam is amigo, de zorgrobot van de Technische Universiteit Eindhoven","nl","marjolijn","default","neutral",block=True)
+        self.robot.speech.speak("Namens de organisatie heet ik u van harte welkom op RoboCup twee duizend dertien","nl","marjolijn","default","neutral",block=True)
+        self.robot.head.look_up()
+        return "done"
+        
+class WelcomeMaxima2(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, gl):
+        ''' Overhandigen bloemen '''
+        self.robot.speech.speak("En bied ik u graag dit boeket aan","nl","marjolijn","default","neutral",block=False)
+        self.robot.spindle.high()
+        self.robot.head.send_goal(self.robot.head.point(0.0,0,0.0),"/grippoint_right",0)
+        self.robot.rightArm.send_joint_goal(-0.1, 0.58, 0.49, 1.62, -0.21, 0.09, -0.11, timeout=2.0)
+        self.robot.head.send_goal(self.robot.head.point(1.0,0,1.6),"/base_link",0)
+        self.robot.rightArm.send_joint_goal(-0.1, 0.58, 0.49, 1.62, -0.41, -0.51, 0.1, timeout=1.5)
+        self.robot.rightArm.send_joint_goal(-0.1, 0.88, 0.49, 1.32, -0.41, -0.51, 0.1)
+        #self.robot.rightArm.send_joint_goal(-0.02744625, 0.11145711, 0.15037341, 2.214187105, -0.108680065, 0.08952796, 0.05084748)
+        #self.robot.rightArm.send_joint_goal(-0.1, 0.73425897, 0.17566431, 0.53222897, -0.14837615, 0.25673428, 0.00852748)
+        #rospy.sleep(rospy.Duration(2.0))
+
+        return "done"
+
+class WelcomeMaxima3(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, gl):
+        ''' Reset robot '''
+        #self.robot.head.reset_position()
+        self.robot.speech.speak("Tenslotte wens ik u veel plezier tijdens uw bezoek","nl","marjolijn","default","neutral",block=False)
+        self.robot.spindle.reset()
+        self.robot.leftArm.reset_arm()
+        self.robot.rightArm.reset_arm()
+        return "done"
+
