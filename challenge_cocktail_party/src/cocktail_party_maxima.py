@@ -368,7 +368,7 @@ class LookForPerson(smach.State):
                 self.robot.speech.speak("Hello " + str(name)) 
                 return "found"       
         else:
-            rospy.warn("No person names received from world model") 
+            rospy.logwarn("No person names received from world model") 
 
         return "not_found"
 
@@ -411,6 +411,7 @@ class HandoverToKnownHuman(smach.StateMachine):
             smach.StateMachine.add( 'SAY_ENJOY',
                                     Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
                                     transitions={"spoken":"done"})
+                                    
 class HandoverToUnknownHuman(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["done"])
@@ -565,7 +566,7 @@ class CocktailParty(smach.StateMachine):
                                             LookForPerson(robot),
                                             transitions={   "looking":"LOOK_FOR_PERSON",
                                                             "found":'HANDOVER_DRINK',
-                                                            "not_found":'SAY_PERSON_NOT_FOUND'})
+                                                            "not_found":'HANDOVER_DRINK_UNKNOWN_PERSON'})
 
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you. Going to the meeting point", 
@@ -601,9 +602,9 @@ class CocktailParty(smach.StateMachine):
 
             smach.StateMachine.add( 'ITERATE_PERSONS', 
                                     persons_iterator, 
-                                    transitions={'served':'FINISH',
-                                                'not_served':'FINISH',
-                                                'Done':"FINISH"})
+                                    transitions={'served':'EXIT',
+                                                'not_served':'EXIT',
+                                                'Done':"EXIT"})
 
             smach.StateMachine.add( "EXIT",
                                     NavigateGeneric(robot, goal_name="initial"),
