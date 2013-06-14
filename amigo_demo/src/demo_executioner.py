@@ -720,7 +720,7 @@ def recognize_face(robot):
         if name:
             robot.speech.speak("Hello " + str(name))        
     else:
-        rospy.warn("No person names received from world model")    
+        rospy.logwarn("No person names received from world model")    
         #return "found"
 
     #return "not_found"
