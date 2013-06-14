@@ -17,6 +17,7 @@
 #include "hpdf.h"
 #include <ros/ros.h>
 #include <ros/package.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -29,6 +30,11 @@
 #include <cstdlib>
 #include <dirent.h>
 
+using namespace std;
+
+/*
+ * PDF Library stuff
+ */
 #ifndef HPDF_NOPNGLIB
 jmp_buf env;
 
@@ -47,17 +53,118 @@ error_handler  (HPDF_STATUS   error_no,
 }
 
 
-using namespace std;
+
+
+/// Service for starting
 ros::ServiceServer startupSrv_;
 
+
+/// Scaling parameters for map stuff
 const double scaledWidth = 1/0.025;
 const double scaledHeight = 1/0.025;
 const int originOffsetX = 41;
 const int originOffsetY = 100;
 
-int createPDF()
+/// Safe string formatting
+std::string string_format(const std::string fmt, ...) {
+    int size = 100;
+    std::string str;
+    va_list ap;
+    while (1) {
+        str.resize(size);
+        va_start(ap, fmt);
+        int n = vsnprintf((char *)str.c_str(), size, fmt.c_str(), ap);
+        va_end(ap);
+        if (n > -1 && n < size) {
+            str.resize(n);
+            return str;
+        }
+        if (n > -1)
+            size = n + 1;
+        else
+            size *= 2;
+    }
+    return str;
+}
+
+/// Find the USB directorty
+void findUSBDir(std::string& usb_dir, std::string& img_path)
 {
-    ros::NodeHandle nh("~");
+    //! Find USB name
+    bool found_file_in_media = false;
+    DIR *dir;
+    struct dirent *ent;
+    //string usb_dir, img_path;
+    if ((dir = opendir ("/media/")) != NULL) {
+        /* print all the files and directories within directory */
+        while ((ent = readdir (dir)) != NULL) {
+            ROS_INFO("file or directory in /media/: %s", string(ent->d_name).c_str());
+            if (false) // TODO: hack for ubuntu server strlen(ent->d_name)>3)
+            {
+                printf("%s\n", ent->d_name);
+                usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
+                img_path = "/media/" + string(ent->d_name) + "/";
+                found_file_in_media = true;
+
+            }
+        }
+        closedir (dir);
+    } else {
+        /* could not open directory */
+        perror ("");
+        exit(EXIT_FAILURE);
+    }
+
+    if (!found_file_in_media) {
+        ROS_WARN("No files/directories found in /media/ -> no USB stick to write to");
+        //usb_dir = "~";
+        usb_dir = ros::package::getPath("challenge_emergency")+"/emergency_paper.pdf";
+        //img_path = "~";
+        img_path = ros::package::getPath("challenge_emergency")+"/";
+    }
+
+    // save location
+    ROS_INFO("usb_dir = %s", usb_dir.c_str());
+    //ROS_INFO("pdf will be stored as %s", fname);
+}
+
+
+
+/// Initialize the PDF object
+void initializePDFObject(HPDF_Doc& pdf, HPDF_Font& font)
+{
+    pdf = HPDF_New (error_handler, NULL);
+    if (!pdf) {
+        printf ("error: cannot create PdfDoc object\n");
+        exit(1);
+    }
+
+    //! Error Handler
+    if (setjmp(env)) {
+        HPDF_Free (pdf);
+        exit(1);
+    }
+
+    HPDF_SetCompressionMode (pdf, HPDF_COMP_ALL);
+
+    //! Create default font
+    font = HPDF_GetFont (pdf, "Helvetica", NULL);
+}
+
+/// Struct for storing status information
+struct StatusFileInfo
+{
+    int number_fires, number_people, number_wounded;
+};
+
+/// Read the status file
+StatusFileInfo readStatusFile(int** statusArray, float*** coordinatesArray)
+{
+    StatusFileInfo statusInfo;
+    statusInfo.number_fires = 0;
+    statusInfo.number_people = 0;
+    statusInfo.number_wounded = 0;
+
     //! Define string to pull out each line
     string STRING;
     ifstream myfile;
@@ -71,15 +178,13 @@ int createPDF()
     }
     myfile.close();
 
-    //! Store number of peoples and fires for header
-    int number_fires = 0; int number_people = 0; int number_wounded = 0;
-
     //! Reopen to fill arrays status and coordinates
-    int status[number_lines];
-    float coordinates[number_lines][2];
+    *statusArray = new int[number_lines];
+    *coordinatesArray = new float*[number_lines];
+    for(int i = 0; i < number_lines; i++)
+        (*coordinatesArray)[i] = new float[2];
+
     myfile.open((ros::package::getPath("challenge_emergency")+"/output/status.txt").c_str());
-
-
 
     //! Actual filling
     for (int ii = 0; ii < number_lines; ii++)
@@ -99,25 +204,82 @@ int createPDF()
         string y = STRING.substr(found+1);  //length unknown (float)
 
         //! Save 'status' information to array
-        status[ii] = atoi(statuss.c_str());
-        if (status[ii] == 2)
+        (*statusArray)[ii] = atoi(statuss.c_str());
+        if ((*statusArray)[ii] == 2)
         {
-            number_fires++;
+            statusInfo.number_fires++;
         }
-        else if (status[ii]==0)
+        else if ((*statusArray)[ii]==0)
         {
-            number_wounded++;
-            number_people++;
+            statusInfo.number_wounded++;
+            statusInfo.number_people++;
         }
         else
         {
-            number_people++;
+            statusInfo.number_people++;
         }
+
+
         //! Save coordinates of object (fire/person)  in 'x' and 'y'
-        coordinates[ii][0] = atof(x.c_str());
-        coordinates[ii][1] = atof(y.c_str());
+        (*coordinatesArray)[ii][0] = atof(x.c_str());
+        (*coordinatesArray)[ii][1] = atof(y.c_str());
     }
+
     myfile.close();
+
+    return statusInfo;
+}
+
+
+/// Read parametrs from parameter server
+void readParameters(double& x_null, double& y_null, double& length_map, double& height_map)
+{
+    ros::NodeHandle nh("~");
+    //get namespace
+    string ns = ros::this_node::getName();
+    ROS_INFO("ns = %s",ns.c_str());
+    //! Starting location of the map
+    if (nh.getParam(ns+"/x_null", x_null))
+    {
+        ROS_INFO("Got param x_null: %f", x_null);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'x_null'.");
+    }
+    if (nh.getParam(ns+"/y_null", y_null))
+    {
+        ROS_INFO("Got param y_null: %f", y_null);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'x_null'.");
+    }
+
+    //! Scaling between image and actual  map
+    if (nh.getParam(ns+"/length_map", length_map))
+    {
+        ROS_INFO("Got param length_map: %f", length_map);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'length_map'.");
+    }
+    if (nh.getParam(ns+"/height_map", height_map))
+    {
+        ROS_INFO("Got param height_map: %f", height_map);
+    }
+    else
+    {
+        ROS_ERROR("Failed to get param 'height_mapl'.");
+    }
+
+}
+
+
+int createPDF()
+{
+    ros::NodeHandle nh("~");
 
     HPDF_Doc  pdf;
     HPDF_Font font;
@@ -129,78 +291,50 @@ int createPDF()
     HPDF_Image image_person;
     HPDF_Image image_symbolic_fire;
 
-
-
     //! Position of map
     double x_map;
     double y_map;
-
     //! Number of page
     int n_page = 0;
-
     //! Image width and height
     double iw;
     double ih;
 
-    //! Find USB name
-    bool found_file_in_media = false;
-    DIR *dir;
-    struct dirent *ent;
-    string usb_dir, img_path;
-    if ((dir = opendir ("/media/")) != NULL) {
-        /* print all the files and directories within directory */
-        while ((ent = readdir (dir)) != NULL) {
-            ROS_INFO("file or directory in /media/: %s", string(ent->d_name).c_str());
-            if (false) // TODO: hack for ubuntu server strlen(ent->d_name)>3)
-            {
-                printf("%s\n", ent->d_name);
-                usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
-                img_path = "/media/" + string(ent->d_name) + "/";
-                found_file_in_media = true;
+    std::string usb_dir, img_path;
 
-            }
-        }
-        closedir (dir);
-    } else {
-        /* could not open directory */
-        perror ("");
-        return EXIT_FAILURE;
-    }
-    
-    // Overwrite the above: possible since usb-stick at fixed location
-    if (!found_file_in_media) {
-		ROS_INFO("No files/directories found in /media/ -> using default path");
-		usb_dir = "/media/usb-stick/emergency_paper.pdf";
-		//usb_dir = ros::package::getPath("challenge_emergency")+"/emergency_paper.pdf";
-		img_path = "/media/usb-stick/";
-		//img_path = ros::package::getPath("challenge_emergency")+"/";
-	}
+    //Status arrays
+    int* status = NULL;
+    float** coordinates = NULL;
 
-    cout << usb_dir << endl;
+    // Map [0,0]
+    double x_null;// = (450/2)-x_map;
+    double y_null;// = y_map;
+
+    // Map size
+    double length_map;
+    double height_map;
+
+    /*
+     * Begin intializing
+     */
+
+    //Read the status file
+    StatusFileInfo statusInfo = readStatusFile(&status, &coordinates);
+
+    //Find correct usb dir
+    findUSBDir(usb_dir, img_path);
 
     fname = usb_dir.c_str();
-    // save location
-    ROS_INFO("usb_dir = %s", usb_dir.c_str());
-    ROS_INFO("pdf will be stored as %s", fname);
-    //strcpy (fname, "/media/2856-DCA4/emergency_paper");
-    //strcat (fname, ".pdf");
 
-    pdf = HPDF_New (error_handler, NULL);
-    if (!pdf) {
-        printf ("error: cannot create PdfDoc object\n");
-        return 1;
-    }
+    //Initialize the PDF object
+    initializePDFObject(pdf, font);
 
-    //! Error Handler
-    if (setjmp(env)) {
-        HPDF_Free (pdf);
-        return 1;
-    }
+    //Read parameters from server
+    readParameters(x_null, y_null, length_map, height_map);
 
-    HPDF_SetCompressionMode (pdf, HPDF_COMP_ALL);
-
-    //! Create default font
-    font = HPDF_GetFont (pdf, "Helvetica", NULL);
+    /*
+     * End initialization
+     */
 
     //! Add a new page object
     page[n_page] = HPDF_AddPage (pdf);
@@ -239,7 +373,7 @@ int createPDF()
 
     y = y -14;
     stringstream ss_number_fires;
-    ss_number_fires<< "Number of fires: " << number_fires << ".";
+    ss_number_fires<< "Number of fires: " << statusInfo.number_fires << ".";
     // SS to char
     std::string s = ss_number_fires.str();
     const char* string_number_fires = s.c_str();
@@ -251,7 +385,8 @@ int createPDF()
 
     y = y -14;
     stringstream ss_number_people;
-    ss_number_people<< "Number of people: " << number_people <<", require assistance: " << number_wounded << ".";
+    ss_number_people<< "Number of people: " << statusInfo.number_people <<", require assistance: " << statusInfo.number_wounded << ".";
+
     // SS to char
     std::string s2 = ss_number_people.str();
     const char* string_number_people = s2.c_str();
@@ -289,92 +424,47 @@ int createPDF()
     //y = y - (ih+50);
     y_map = y;
 
-    // Need to be given
-    double x_null;// = (450/2)-x_map;
-    double y_null;// = y_map;
-
-    //get namespace
-    string ns = ros::this_node::getName();
-    ROS_INFO("ns = %s",ns.c_str());
-    //! Starting location of the map
-    if (nh.getParam(ns+"/x_null", x_null))
-    {
-        ROS_INFO("Got param x_null: %f", x_null);
-    }
-    else
-    {
-        ROS_ERROR("Failed to get param 'x_null'.");
-    }
-    if (nh.getParam(ns+"/y_null", y_null))
-    {
-        ROS_INFO("Got param y_null: %f", y_null);
-    }
-    else
-    {
-        ROS_ERROR("Failed to get param 'x_null'.");
-    }
-
-
-    double length_map;
-    double height_map;
-    //! Scaling between image and actual  map
-    if (nh.getParam(ns+"/length_map", length_map))
-    {
-        ROS_INFO("Got param length_map: %f", length_map);
-    }
-    else
-    {
-        ROS_ERROR("Failed to get param 'length_map'.");
-    }
-    if (nh.getParam(ns+"/height_map", height_map))
-    {
-        ROS_INFO("Got param height_map: %f", height_map);
-    }
-    else
-    {
-        ROS_ERROR("Failed to get param 'height_mapl'.");
-    }
-
 
     //! Read map into OpenCV
     cv::Mat image_map_cv = cv::imread(ros::package::getPath("challenge_emergency") + "/output/map.png");
     ROS_INFO("Loaded map image");
 
     //! Calculate tranformation ratio between pixels/meters
-    double ratios [2] = {iw/length_map, ih/height_map};
-    cout<<ratios[0]<<ratios[1]<<endl;
-    //double ratios [2] = {3,3};
+    double ratios [2] = { iw/length_map, ih/height_map };
+    ROS_INFO("Ratio: (iw / length_map) %f, (ih / height_map) %f", ratios[0], ratios[1]);
 
     //! Initialize strings to display person (number, status, coordinates and image)
-    char person_num[20];
-    char * person_stat;
-    char person_coords[50];
-    char person_image[50];
-    char * new_str ;
+    std::string person_num;
+    std::string person_stat;
+    std::string person_coords;
+    std::string person_image;
+    std::string new_str ;
     float r = 0; //print red or black depends on status
 
 
     //! Find the number of persons (= status-'fire')
-    int n_person = sizeof(status)/sizeof(int);
+    //int n_person = sizeof(status)/sizeof(int);
 
     //! Loop over persons and fire!
     int person_index = 1;
-    ROS_INFO("Start looping over %d persons (and fire)", n_person);
-    for (int i = 0; i < n_person; i++){
+    ROS_INFO("Start looping over %d persons (and fire)", statusInfo.number_people + statusInfo.number_fires);
+
+    for (int i = 0; i < statusInfo.number_people + statusInfo.number_fires; i++){
 
         //! Position person/fire
         int pos_x = coordinates[i][0] * scaledWidth+originOffsetX;
         int pos_y = image_map_cv.size().height - coordinates[i][1] * scaledHeight-originOffsetY;
 
         //! Give number to person
-        sprintf(person_num, "Person %d, ", i);
+
+        person_num = string_format("Person %d, ", i);
 
         //! Give status to person
         if (status[i]==0)
         {
+            ROS_INFO("Status HELP");
             person_stat = "\n Status: Need Assistance!";
             r = 1;
-
 
             //! Draw a picture of 'fire' with subscript
             stringstream ss;
@@ -387,6 +477,7 @@ int createPDF()
         }
         else if (status[i]==1)
         {
+            ROS_INFO("Status OK");
             person_stat = "\n Status: Ok!";
             r = 0;
 
@@ -405,8 +496,7 @@ int createPDF()
 
         //! 'status'==2 then 'fire' location immediatly print
         else
-        {
-			
+        {			
 			ROS_INFO("Found fire");
 			
             //! Image size of fire
@@ -431,52 +521,11 @@ int createPDF()
             
             ROS_INFO("Added fire icon to image");
 
-
-            /*
-            sprintf(person_coords, "FIRE location(x,y): x = %f, y = %f", coordinates[i][0], coordinates[i][1]);
-            HPDF_Page_DrawImage (page[n_page], image_fire, x, y, iw, ih);
-            HPDF_Page_BeginText (page[n_page]);
-            HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-            HPDF_Page_MoveTextPos (page[n_page], x, y-12.5);
-            HPDF_Page_ShowText (page[n_page], person_coords);
-            HPDF_Page_EndText (page[n_page]);
-            y = y - 130;
-
-            //! Draw the fire in the map
-            //! Add symbolic fire to map at CORRECT LOCATION
-            stringstream ss_symbolic_fire;
-            ss_symbolic_fire << "x = " << coordinates[i][0] << ",\n y = " << coordinates[i][1];
-            // SS to char
-            std::string s = ss_symbolic_fire.str();
-            const char* string_symbolic_fire = s.c_str();
-            */
-
-            /*
-            HPDF_Page_DrawImage (page[0], image_symbolic_fire, x_map+ratios[0]*(x_null+coordinates[i][0]), y_map+ratios[1]*(y_null+coordinates[i][1]), 20, 20);
-            HPDF_Page_BeginText (page[0]);
-            HPDF_Page_SetFontAndSize (page[0], font, 8);
-            HPDF_Page_MoveTextPos (page[0], x_map+ratios[0]*(x_null+coordinates[i][0])-5, y_map+ratios[1]*(y_null+coordinates[i][1])-10);
-            HPDF_Page_ShowText (page[0], string_symbolic_fire);
-            HPDF_Page_EndText (page[0]);
-            */
-
             continue;
         }
 
 
-
-        // y = y - ih;
-
-        /*
-            HPDF_Page_DrawImage (page[n_page], image_map, x, y, iw, ih);
-            HPDF_Page_BeginText (page[n_page]);
-            HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-            HPDF_Page_MoveTextPos (page[n_page], x, y-25.5);
-            HPDF_Page_ShowText (page[n_page], "Apartment: red coordinates present person(s) in need of assistance");
-            HPDF_Page_EndText (page[n_page]);
-        */
         //! New page if y is below treshold
-
         if (y < 300)
         {
             ROS_INFO("y = %f, new page needed", y);
@@ -513,11 +562,13 @@ int createPDF()
 
 
         //! Give location to person
-        sprintf(person_coords, "\t Location(x,y): x = %f, y = %f,", coordinates[i][0], coordinates[i][1]);
+        person_coords = string_format("\t Location(x,y): x = %f, y = %f",  coordinates[i][0], coordinates[i][1]);
         
 
+
+        new_str = person_num + person_stat + person_coords;
         //! Merge person and status and location
-        if((new_str = (char*) malloc(strlen(person_num)+strlen(person_stat)+strlen(person_coords))+1) != NULL){
+        /*if((new_str = (char*) malloc(strlen(person_num)+strlen(person_stat)+strlen(person_coords))+1) != NULL){
             new_str[0] = '\0';   // ensures the memory is an empty string
             strcat(new_str,person_num);
             strcat(new_str,person_coords);
@@ -525,14 +576,12 @@ int createPDF()
         }
         else {
             printf("malloc failed!\n");
-        }
+        }*/
+
         //! Load image of person
-#ifndef __WIN32__
-        sprintf(person_image, "/output/person_%d.png",i+1);
+        person_image = string_format("/output/person_%d.png", i+1);
         string string_person_image = ros::package::getPath("challenge_emergency")+person_image;
-#else
-        //sprintf(person_image, "pngsuite\\person_%d.png",i);
-#endif
+
 		ROS_INFO("Trying to load %s", string_person_image.c_str());
         image_person = HPDF_LoadPngImageFromFile (pdf, string_person_image.c_str());
         ROS_INFO("Loaded image person");
@@ -544,57 +593,14 @@ int createPDF()
         HPDF_Page_SetRGBFill (page[n_page], r, 0, 0);
         HPDF_Page_SetFontAndSize (page[n_page], font, 10);
         HPDF_Page_MoveTextPos (page[n_page], x, y-10);
-        HPDF_Page_ShowText (page[n_page], new_str);
+        HPDF_Page_ShowText (page[n_page], new_str.c_str());
         HPDF_Page_EndText (page[n_page]);
         
         ROS_INFO("Added image person");
 
-        //! Draw person in the map
-        /*
-        stringstream ss_symbolic_person;
-        ss_symbolic_person << "x = " << coordinates[i][0] << ",\n y = " << coordinates[i][1];
-        // SS to char
-        std::string s = ss_symbolic_person.str();
-        const char* string_symbolic_person = s.c_str();
-
-        //sprintf(string_symbolic_person, "x = %f, y = %f", ratio*coordinates[i][0], ratio*coordinates[i][1]);
-        HPDF_Page_DrawImage (page[0], image_person, x_map+ratios[0]*(x_null+coordinates[i][0]), y_map+ratios[1]*(y_null+coordinates[i][1]), 20, 20);
-        HPDF_Page_BeginText (page[0]);
-        HPDF_Page_SetRGBFill (page[0], r, 0, 0);
-        HPDF_Page_SetFontAndSize (page[0], font, 8);
-        HPDF_Page_MoveTextPos (page[0], x_map+ratios[0]*(x_null+coordinates[i][0])-5, y_map+ratios[1]*(y_null+coordinates[i][1])-10);
-        HPDF_Page_ShowText (page[0], string_symbolic_person);
-        HPDF_Page_EndText (page[0]);
-        */
-
         y = y - 120;
-/*
-        //! New page if y is below treshold
-        if (y < 100)
-        {
-            n_page = n_page + 1;
-
-            //! Add a new page object
-            page[n_page] = HPDF_AddPage (pdf);
-
-            HPDF_Page_SetWidth (page[n_page], 550);
-            HPDF_Page_SetHeight (page[n_page], 650);
-
-            dst = HPDF_Page_CreateDestination (page[n_page]);
-            HPDF_Destination_SetXYZ (dst, 0, HPDF_Page_GetHeight (page[n_page]), 1);
-            HPDF_SetOpenAction(pdf, dst);
-
-            HPDF_Page_BeginText (page[n_page]);
-            HPDF_Page_SetFontAndSize (page[n_page], font, 12);
-            HPDF_Page_MoveTextPos (page[n_page], x, HPDF_Page_GetHeight (page[n_page]) - 50);
-            HPDF_Page_ShowText (page[n_page], "Emergency Report, Tech United Eindhoven");
-            HPDF_Page_EndText (page[n_page]);
-            y = HPDF_Page_GetHeight (page[n_page]) - 170;
-        }*/
     }
 
-    //cv::imshow("nice_map", image_map_cv);
-    //cv::waitKey(0);
 
     //! Store generated image on disk
     ROS_INFO("Storing image on disk...");
@@ -651,6 +657,8 @@ int createPDF()
 
     //! Clean up
     HPDF_Free (pdf);
+
+    return 0;
 }
 
 
