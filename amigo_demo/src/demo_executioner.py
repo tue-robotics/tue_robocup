@@ -81,8 +81,6 @@ poses["HI5_pre"]				= [-0.0, 1.577, 0.0, 1.577, -0.0, 0.000, 0]
 poses["HI5_post"]				= [0.0, 1.57, 0.000, 1.07928, -0.00, 0.00, 0.00]
 
 pose_keymap = dict()
-pose_keymap['1'] = "INIT"
-#pose_keymap['3'] = "BEND_ELBOW" Not defined
 pose_keymap['4'] = "HANDSHAKEUP"
 pose_keymap['5'] = "HANDSHAKEDOWN"
 pose_keymap['6'] = "PICTURE"
@@ -141,6 +139,10 @@ special_keys["%"] = "HI5"
 special_keys[":"] = "LEARN_FACE"
 special_keys[";"] = "RECOGNIZE_FACE"
 special_keys["D"] = "Drop off an object at a predefined location. Can be edited via python! See the dropoff_demo-function"
+special_keys["`"] = "Prepare Welcome Maxima"
+special_keys["1"] = "Welcome Maxima1"
+special_keys["2"] = "Welcome Maxima2"
+special_keys["3"] = "Welcome Maxima3"
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -348,7 +350,7 @@ def grab_item(robot):
 
     with sm:
         smach.StateMachine.add('ANNOUNCE_LOOK_FOR_DRINK',
-                                states.Say(robot, "I wonder what objects I can see here!"),
+                                states.Say(robot, "I wonder what objects I can see here!", block=False),
                                 transitions={'spoken':'LOOK'})
 
         
@@ -534,6 +536,59 @@ def amigo_introduction_dutch(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+def prepare_welcome_maxima(robot):
+    import smach
+    import robot_smach_states as states
+    rospy.loginfo("Setting up state machine")
+    sm = smach.StateMachine(outcomes=["Done"])
+    with sm:
+        smach.StateMachine.add('PREPARE_WELCOME_MAXIMA',
+            states.PrepareWelcomeMaxima(robot),
+            transitions={'done':'Done'})
+    rospy.loginfo("State machine set up, start execution...")
+    result = sm.execute()
+    rospy.loginfo("State machine executed. Result: {0}".format(result))
+
+
+def welcome_maxima1(robot):
+    import smach
+    import robot_smach_states as states
+    rospy.loginfo("Setting up state machine")
+    sm = smach.StateMachine(outcomes=["Done"])
+    with sm:
+        smach.StateMachine.add('WELCOME_MAXIMA',
+            states.WelcomeMaxima1(robot),
+            transitions={'done':'Done'})
+    rospy.loginfo("State machine set up, start execution...")
+    result = sm.execute()
+    rospy.loginfo("State machine executed. Result: {0}".format(result))
+    
+def welcome_maxima2(robot):
+    import smach
+    import robot_smach_states as states
+    rospy.loginfo("Setting up state machine")
+    sm = smach.StateMachine(outcomes=["Done"])
+    with sm:
+        smach.StateMachine.add('WELCOME_MAXIMA',
+            states.WelcomeMaxima2(robot),
+            transitions={'done':'Done'})
+    rospy.loginfo("State machine set up, start execution...")
+    result = sm.execute()
+    rospy.loginfo("State machine executed. Result: {0}".format(result))
+    
+def welcome_maxima3(robot):
+    import smach
+    import robot_smach_states as states
+    rospy.loginfo("Setting up state machine")
+    sm = smach.StateMachine(outcomes=["Done"])
+    with sm:
+        smach.StateMachine.add('WELCOME_MAXIMA',
+            states.WelcomeMaxima3(robot),
+            transitions={'done':'Done'})
+    rospy.loginfo("State machine set up, start execution...")
+    result = sm.execute()
+    rospy.loginfo("State machine executed. Result: {0}".format(result))
+
 def grab_demo(robot):
     import smach
     import robot_smach_states as states
@@ -599,7 +654,7 @@ def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
 
     if not query_dropoff_loc:
         query_dropoff_loc = Conjunction(
-                                    Compound("instance_of",         "Dispose_to_object", "desk"), #Find a desk
+                                    Compound("instance_of",         "Dispose_to_object", "bed"), #Find a desk
                                     Compound("point_of_interest",   "Dispose_to_object", Compound("point_3d", "X", "Y", "Z")))
         # query_dropoff_loc = Conjunction(
         #                             Compound("is", "X", 2.0),
@@ -865,6 +920,14 @@ def process_key(key):
                     amigo_introduction_dutch(robot)
                 if key == 'O':
                     amigo_introduction_english(robot)
+                if key == "`":
+                    prepare_welcome_maxima(robot)
+                if key == "1":
+                    welcome_maxima1(robot)
+                if key == "2":
+                    welcome_maxima2(robot)
+                if key == "3":
+                    welcome_maxima3(robot)
                 if key == 'F':
                     print "Holding flowers"
                     robot.rightArm.send_joint_goal(*poses["FLOWERS_RIGHT"])
