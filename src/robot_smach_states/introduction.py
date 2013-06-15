@@ -165,7 +165,7 @@ class WelcomeMaxima1(smach.State):
         self.robot.speech.speak("Welkom majesteit","nl","marjolijn","default","neutral",block=True)
         self.robot.speech.speak("Mijn naam is amigo, de zorgrobot van de Technische Universiteit Eindhoven","nl","marjolijn","default","neutral",block=True)
         self.robot.speech.speak("Namens de organisatie heet ik u van harte welkom op RoboCup twee duizend dertien","nl","marjolijn","default","neutral",block=True)
-        self.robot.head.look_up()
+        #self.robot.head.look_up()
         return "done"
         
 class WelcomeMaxima2(smach.State):
