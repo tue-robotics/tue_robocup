@@ -1,6 +1,7 @@
 #include "wire_interface/Client.h"
 
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <tue_move_base_msgs/MoveBaseAction.h>
 
 // Action client
@@ -17,6 +18,9 @@
 #include <amigo_msgs/head_ref.h>
 
 #include <text_to_speech_philips/Speak.h>
+
+// Speech recognition
+#include "tue_pocketsphinx/Switch.h"
 
 using namespace std;
 
@@ -49,8 +53,7 @@ bool freeze_amigo_ = false;                                                     
 bool candidate_freeze_amigo_ = false;                                             // Bookkeeping: true if robot is asked to stop
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
-ros::ServiceClient srv_start_speech_;                                             // Communication: start speech
-ros::ServiceClient srv_stop_speech_;                                              // Communication: stop speech
+ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 double t_freeze_ = 0;
 
 
@@ -62,10 +65,6 @@ void amigoSpeak(string sentence) {
 	
 	ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
 
-    std_srvs::Empty srv;
-    if (!srv_stop_speech_.call(srv)) {
-        ROS_WARN("Unable to turn off speech recognition");
-    }
     
     //! Call speech service
 	text_to_speech_philips::Speak speak;
@@ -73,7 +72,7 @@ void amigoSpeak(string sentence) {
     speak.request.language = "us";
     speak.request.character = "kyle";
     speak.request.voice = "default";
-    speak.request.emotion = "excited";
+    speak.request.emotion = "normal";
     speak.request.blocking_call = true;
 
     if (!srv_speech_.call(speak)) {
@@ -82,11 +81,6 @@ void amigoSpeak(string sentence) {
 		pub_speech_.publish(sentence_msgs);
 	}
 
-    if (!srv_start_speech_.call(srv)) {
-        ROS_WARN("Unable to turn on speech recognition");
-    } else {
-        ROS_INFO("Started speech recognition");
-    }
 }
 
 
@@ -226,6 +220,57 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
 }
 
+bool startSpeechRecognition() {
+    std::string knowledge_path = ros::package::getPath("tue_knowledge");
+    if (knowledge_path == "") {
+        return false;
+    }
+
+    std::string follow_me_speech_path = knowledge_path + "/speech_recognition/restaurant/";
+
+    tue_pocketsphinx::Switch::Request req;
+    req.action = tue_pocketsphinx::Switch::Request::START;
+    req.hidden_markov_model = "/usr/share/pocketsphinx/model/hmm/wsj1";
+    req.dictionary = follow_me_speech_path + "restaurant.dic";
+    req.language_model = follow_me_speech_path + "restaurant.lm";
+
+    tue_pocketsphinx::Switch::Response resp;
+    if (speech_recognition_client_.call(req, resp)) {
+        if (resp.error_msg == "") {
+            ROS_INFO("Switched on speech recognition");
+        } else {
+            ROS_WARN("Unable to turn on speech recognition: %s", resp.error_msg.c_str());
+            return false;
+        }
+    } else {
+        ROS_WARN("Service call for turning on speech recognition failed");
+        return false;
+    }
+
+    return true;
+}
+
+bool stopSpeechRecognition() {
+    // Turn off speech recognition
+    tue_pocketsphinx::Switch::Request req;
+    req.action = tue_pocketsphinx::Switch::Request::STOP;
+
+    tue_pocketsphinx::Switch::Response resp;
+    if (speech_recognition_client_.call(req, resp)) {
+        if (resp.error_msg == "") {
+            ROS_INFO("Switched off speech recognition");
+        } else {
+            ROS_WARN("Unable to turn off speech recognition: %s", resp.error_msg.c_str());
+            return false;
+        }
+    } else {
+        ROS_WARN("Unable to turn off speech recognition");
+        return false;
+    }
+
+    return true;
+}
+
 
 /**
 * @brief getPositionGuide
@@ -331,13 +376,16 @@ void speechCallback(std_msgs::String res) {
 		candidate_freeze_amigo_ = false;
 		amigoSpeak("Sorry. I misunderstood. I will follow you");	
 	//} else if (freeze_amigo_ && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
-	} else if (res.data.find("thislocationisnamed") != std::string::npos || res.data.find("thislocationiscalleds") != std::string::npos) {
+    } else if (res.data.find("thislocationisnamed") != std::string::npos || res.data.find("thislocationiscalled") != std::string::npos) {
         freeze_amigo_ = false;
         ros::Duration delta(2.0);
         delta.sleep();
         amigoSpeak("Thank you. I will now continue to follow you");
         ++n_locations_learned_;
     }
+
+    // always immediately start listening again
+    startSpeechRecognition();
 }
 
 
@@ -408,7 +456,10 @@ int main(int argc, char **argv) {
     head_ref_pub_.publish(goal);
     
     //! Planner
-    planner_ = new CarrotPlanner("restaurant_carrot_planner");
+    double max_vel_lin = 0.4;   // Default: 0.50
+    double max_vel_ang = 0.3;   // Default: 0.40
+    double dist_to_wall = 0.45; // Default: 0.65
+    planner_ = new CarrotPlanner("restaurant_carrot_planner", max_vel_lin, max_vel_ang, dist_to_wall);
     ROS_INFO("Carrot planner instantiated");
 
     //! Switch on perception
@@ -439,13 +490,10 @@ int main(int argc, char **argv) {
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     ROS_INFO("Service /wire/reset");
 
-    //! Subscribe to the speech recognition topic
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/speech_recognition_restaurant/output", 10, speechCallback);
+    // Start speech recognition
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback);
+    startSpeechRecognition();
 
-    //! Service clients that start/stop speech recognition
-    srv_start_speech_ = nh.serviceClient<std_srvs::Empty>("/speech_recognition_restaurant/start");
-    srv_stop_speech_ = nh.serviceClient<std_srvs::Empty>("/speech_recognition_restaurant/stop");
-    ROS_INFO("Communication with speech recognition started");
 
     //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);

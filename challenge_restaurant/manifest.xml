@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/challenge_restaurant</url>
   <depend package="roscpp"/>
+  <depend package="roslib"/>
   <depend package="wire_interface"/>
   <depend package="actionlib"/>
   <depend package="pein_msgs"/>
@@ -17,6 +18,7 @@
   <depend package="perception_srvs"/>
   <depend package="text_to_speech_philips"/>
   <depend package="tue_carrot_planner"/>
+  <depend package="tue_pocketsphinx"/>
 
 </package>
 
