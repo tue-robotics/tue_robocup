@@ -467,12 +467,12 @@ class MoveArmBack(smach.State):
         
         return 'finished'
 
- # Class for registering person
+# Class for registering person
 class Register(smach.State):
     def __init__(self, robot=None, status=1):
         smach.State.__init__(self, outcomes=['finished'])
         
-        self.person_no = 1
+        #self.person_no = 1
         self.robot = robot
 
         self.status = status
@@ -480,6 +480,9 @@ class Register(smach.State):
         self.get_picture = rospy.ServiceProxy('virtual_cam/cheese', cheese)
 
     def execute(self, userdata=None):    
+
+        return_result = self.robot.reasoner.query(Compound("register_person_no", "X"))
+        person_no = float(return_result[0]["X"])  
 
         #First move head to look at person where face is detected
         person_query = Conjunction( 
@@ -501,30 +504,30 @@ class Register(smach.State):
             x,y,z = possible_locations[0]
 
         rospy.loginfo("[EG] status of person is {0} (1 = not oke, 0 is oke)".format(self.status))
-        rospy.loginfo("[EG] self.person_no = {0}".format(self.person_no))
+        rospy.loginfo("[EG] person_no = {0}".format(person_no))
         rospy.loginfo("[EG] x value person = {0}".format(x))
         rospy.loginfo("[EG] y value person = {0}".format(y))
 
         # Register person
         rospy.loginfo("Register person in file ....")
-        if self.person_no == 1:
+        if person_no == 1:
             f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','w')  # 'w' means write
-            f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
+            #f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
         else:
             f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
 
         #f = open('status.txt','a')
         if self.status == 0:
-            f.write('person_%d;0;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            f.write('person_%d;0;' % person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
             f.write('%.2f;%.2f \n' % (x,y))
             f.close()
-            pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % self.person_no
+            pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % person_no
 
         elif self.status == 1:
-            f.write('person_%d;1;' % self.person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            f.write('person_%d;1;' % person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
             f.write('%.2f;%.2f \n' % (x, y))
             f.close()
-            pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % self.person_no
+            pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % person_no
 
         elif self.status == 2:
             f.write('fire_1;2;')  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
@@ -533,7 +536,7 @@ class Register(smach.State):
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/fire.png"
         
         
-        rospy.loginfo("pathname = %s".format(pathname))
+        rospy.loginfo("pathname = {0}".format(pathname))
 
         ### TODO/IDEA: play sound of taking picture
 
@@ -546,7 +549,10 @@ class Register(smach.State):
         #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
         #rospy.sleep(60)        
 
-        self.person_no += 1
+        person_no += 1
+        self.robot.reasoner.query(Compound("retractall", Compound("register_person_no", "X")))
+        self.robot.reasoner.query(Compound("assertz",Compound("register_person_no", person_no)))
+        
         return 'finished'
 
 # Class to move arm to initial pose
@@ -639,6 +645,11 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("retractall", Compound("registered", "X")))
     robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
     robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
+
+    # Emergency parameters
+    robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))
+    robot.reasoner.query(Compound("retractall", Compound("register_person_no", "X")))
+    robot.reasoner.query(Compound("assert",Compound("register_person_no", "1")))
 
     # Load database
     robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
