@@ -119,6 +119,10 @@ class Look_for_people_emergency(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
+        
+        self.robot.spindle.reset()
+        self.robot.head.reset_position()
+
         # Move to the next waypoint in the storage room
         self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
 
@@ -212,7 +216,8 @@ class Looking_for_people(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        rospy.loginfo("reset_head")
+        rospy.loginfo("reset_head and spindle")
+        self.robot.spindle.reset()
         self.robot.head.reset_position()
         rospy.sleep(1.5)
         
@@ -417,7 +422,7 @@ class Navigate_to_queryoutcome_point_emergency(states.Navigate_abstract):
             look_point.point = self.robot.base.point(x,y)
             pose = states.util.msg_constructors.Quaternion(z=1.0)
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.7, 0.0)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.8, 0.0)
             if base_poses_for_point:
                 base_pose_for_point = base_poses_for_point[0]
             else:
@@ -442,7 +447,7 @@ class Ask_yes_no(smach.State):
 
     def execute(self, userdata=None):
 
-        self.response = self.get_yes_no_service(3 , 8) # 3 tries, each max 10 seconds
+        self.response = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
 
         if self.response.answer == "true":
             return "yes"
@@ -542,11 +547,7 @@ class Register(smach.State):
         if self.get_picture(pathname):  # bool terug. (filename met hele pad.png)
             rospy.logdebug("picture taken!!")
         else:
-            rospy.logdebug("no picture taken, i'm sorry")
-
-        #rospy.loginfo("[EG] Check status.txt")
-        #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
-        #rospy.sleep(60)        
+            rospy.logdebug("no picture taken, i'm sorry")       
 
         person_no += 1
         self.robot.reasoner.query(Compound("retractall", Compound("register_person_no", "X")))
@@ -622,6 +623,10 @@ class Look_at_person(smach.State):
                                     float(answer["Z"])) for answer in answers]
 
             x,y,z = possible_locations[0]
+
+            if z > 1.5:
+                self.robot.spindle.high()
+                rospy.logdebug("Spindle should come up now!")
 
             lookat_point = self.robot.head.point(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
@@ -849,7 +854,7 @@ def setup_statemachine(robot):
 
         # People detection
         smach.StateMachine.add('DETECT_PEOPLE',
-                                    states.Say(robot, [ "Hello, are you okay?",
+                                    states.Say(robot, [ "Hello, are you able to walk?",
                                                         "Hi, are you able to move?"]),
                                     transitions={'spoken':'ANSWER_ARE_YOU_OKAY'})
         # Await anser of question 1
@@ -875,7 +880,7 @@ def setup_statemachine(robot):
 
         # Person is not okay:
         smach.StateMachine.add('SAY_REGISTER_NOT_OKAY',
-                                    states.Say(robot, 'Okay, I will register your position and take a picture so the fire department is able to find you.', block=True),
+                                    states.Say(robot, 'I will just register your position and take a picture so the fire department is able to find you.', block=True),
                                     transitions={'spoken':'REGISTER_PERSON_NOT_OKAY'})     
 
         smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
