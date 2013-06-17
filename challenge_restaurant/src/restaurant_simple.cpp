@@ -37,8 +37,6 @@ const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goa
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 5;                           // Rate check for guide at start of the challenge
 
-// NOTE: At this stage recognition is never performed, hence number of models can be small
-
 
 //! Globals
 CarrotPlanner* planner_;
@@ -226,13 +224,13 @@ bool startSpeechRecognition() {
         return false;
     }
 
-    std::string follow_me_speech_path = knowledge_path + "/speech_recognition/restaurant/";
+    std::string restaurant_speech_path = knowledge_path + "/speech_recognition/restaurant/";
 
     tue_pocketsphinx::Switch::Request req;
     req.action = tue_pocketsphinx::Switch::Request::START;
     req.hidden_markov_model = "/usr/share/pocketsphinx/model/hmm/wsj1";
-    req.dictionary = follow_me_speech_path + "restaurant.dic";
-    req.language_model = follow_me_speech_path + "restaurant.lm";
+    req.dictionary = restaurant_speech_path + "restaurant.dic";
+    req.language_model = restaurant_speech_path + "restaurant.lm";
 
     tue_pocketsphinx::Switch::Response resp;
     if (speech_recognition_client_.call(req, resp)) {
@@ -490,9 +488,12 @@ int main(int argc, char **argv) {
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     ROS_INFO("Service /wire/reset");
 
-    // Start speech recognition
+    //! Start speech recognition
+    speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
+    speech_recognition_client_.waitForExistence();
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback);
     startSpeechRecognition();
+    ROS_INFO("Started speech recognition");
 
 
     //! Topic/srv that make AMIGO speak
