@@ -50,27 +50,29 @@ class TurnAround(smach.State):
         else:
             return "failed"
 
+
 class AskHowFeel(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
-        # ToDo speech: fill
-        #self.question_service = rospy.ServiceProxy('', )
+        self.get_status_person_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
-        # ToDo speech: fill
-        #self.response = self.question_service()
 
-        # ToDo speech: replace answers
-        if self.response.answer == "good":
-            self.robot.speech.speak("Maybe I can make it even better by serving some breakfast", mood="excited")
-        elif self.response.answer == "bad":
-            self.robot.speech.speak("Maybe I can make it a little better by serving some breakfast", mood="sad")
-        else:
-            self.robot.speech.speak("I will serve you some breakfast", mood="neutral")
+        try:
+            self.response = self.get_status_person_service("demo_challenge_status_person", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+            if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+                self.robot.speech.speak("I will just service you some breakfast", mood="neutral")
+            elif self.response.answer == "fine" or self.response.answer == "good":
+                self.robot.speech.speak("Maybe I can make it even better by serving some breakfast", mood="excited")
+            elif self.response.answer == "bad" or self.response.answer == "mwah" or self.response.answer == "sick" or self.response.answer == "ill":
+                self.robot.speech.speak("Maybe I can make it a little better by serving some breakfast", mood="sad")
+        except Exception, e:
+            rospy.logerr("Could not get_status_person_service: {0}.".format(e))
+            
+        return "done"
 
-        return 'done'
 
 class AskBreakfast(smach.State):
     def __init__(self, robot):
@@ -81,7 +83,7 @@ class AskBreakfast(smach.State):
         self.person_breakfast = 0
 
     def execute(self, userdata=None):     
-        self.response = self.get_breakfast_question_service("demo_challenge", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.get_breakfast_question_service("demo_challenge_breakfast", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             if self.ask_breakfast_failed == 1:
@@ -106,31 +108,40 @@ class AskBreakfast(smach.State):
             return "failed"
         return "done"
 
+
 class AskAnythingElse(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
-        # ToDo speech: fill
-        # Question: Is there anything else I can do for you?
-        # Answers: Can you tell me what time it is? - Can you remind me that for [tv-show] in 3 minutes?
-        # Have multiple well-known options for tv-shows
-        #self.question_service = rospy.ServiceProxy('', )
+        self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
-        # ToDo speech: fill
-        #self.response = self.question_service()
 
-        # ToDo speech: replace answers
-        if self.response.answer == "time":
-            import time, random
-            timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
-            self.robot.speech.speak("It is now {0}".format(timestr))
-        elif self.response.answer == "remind":
-            rospy.logerr("Remind info not yet fixed")
-            # ToDo: implement reminder
+        try:
+            self.response = self.get_anything_else_service("demo_challenge_anything_else", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+            if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+                
+                ## WHAT TO DO IF FAILURE TODO JANNO
 
-        return 'done'
+                import time, random
+                timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
+                self.robot.speech.speak("It is now {0}".format(timestr))
+
+            elif self.response.answer == "Can you tell me what time it is?":
+                import time, random
+                timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
+                self.robot.speech.speak("It is now {0}".format(timestr))
+            elif (self.response.answer == "Can you remind me in three minutes that my favorite tv program friends will \
+                start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program dallas \
+                start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program the \
+                bold and the beautiful start?"):
+                rospy.logerr("Remind info not yet fixed")
+                self.robot.speech.speak("I should set a reminder for a tv program, but this is not build in yet")
+        except Exception, e:
+            rospy.logerr("Could not get_status_person_service: {0}.".format(e))
+            
+        return "done"
 
 
 class TalkToCook(smach.StateMachine):
@@ -186,6 +197,10 @@ class InteractionPart(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done'])
 
         with self:
+            smach.StateMachine.add( "SAY_HOW_FEEL",
+                                    states.Say(robot, "How are you today?"),
+                                    transitions={   'spoken'            : "ASK_HOW_FEEL"})
+           
             smach.StateMachine.add('ASK_HOW_FEEL',
                                     AskHowFeel(robot),
                                     transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
@@ -196,8 +211,12 @@ class InteractionPart(smach.StateMachine):
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
                                     AskBreakfast(robot),
-                                    transitions={   'done'              : 'ASK_ANYTHING_ELSE',
-                                                    'failed'            : 'ASK_ANYTHING_ELSE'})
+                                    transitions={   'done'              : 'SAY_ANYTHING_ELSE',
+                                                    'failed'            : 'SAY_ANYTHING_ELSE'})
+
+            smach.StateMachine.add( "SAY_ANYTHING_ELSE",
+                                    states.Say(robot, "Is there anything else I can do for you?"),
+                                    transitions={   'spoken'            : "ASK_ANYTHING_ELSE"})
 
             smach.StateMachine.add( 'ASK_ANYTHING_ELSE',
                                     AskAnythingElse(robot),
