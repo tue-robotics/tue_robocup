@@ -471,8 +471,7 @@ class MoveArmBack(smach.State):
 class Register(smach.State):
     def __init__(self, robot=None, status=1):
         smach.State.__init__(self, outcomes=['finished'])
-        
-        #self.person_no = 1
+    
         self.robot = robot
 
         self.status = status
@@ -503,47 +502,47 @@ class Register(smach.State):
 
             x,y,z = possible_locations[0]
 
-        rospy.loginfo("[EG] status of person is {0} (1 = not oke, 0 is oke)".format(self.status))
-        rospy.loginfo("[EG] person_no = {0}".format(person_no))
-        rospy.loginfo("[EG] x value person = {0}".format(x))
-        rospy.loginfo("[EG] y value person = {0}".format(y))
+        rospy.logdebug("[EG] status of person is {0} (1 = not oke, 0 is oke)".format(self.status))
+        rospy.logdebug("[EG] person_no = {0}".format(person_no))
+        rospy.logdebug("[EG] x value person = {0}".format(x))
+        rospy.logdebug("[EG] y value person = {0}".format(y))
 
         # Register person
-        rospy.loginfo("Register person in file ....")
+        rospy.logdebug("Register person in file ....")
         if person_no == 1:
             f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','w')  # 'w' means write
-            #f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
+            
         else:
             f = open(p.get_pkg_dir('challenge_emergency')+'/output/status.txt','a')  # 'a' means append
 
         #f = open('status.txt','a')
         if self.status == 0:
-            f.write('person_%d;0;' % person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            f.write('person_%d;0;' % person_no)  # 0 is not oke; 1 is ok and ;2 fire
             f.write('%.2f;%.2f \n' % (x,y))
             f.close()
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % person_no
 
         elif self.status == 1:
-            f.write('person_%d;1;' % person_no)  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            f.write('person_%d;1;' % person_no)  # 0 is not oke; 1 is ok and ;2 fire
             f.write('%.2f;%.2f \n' % (x, y))
             f.close()
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/person_%d.png" % person_no
 
         elif self.status == 2:
-            f.write('fire_1;2;')  # ;1 will say that person is not okay. ;0 is oke and ;2 vuur
+            f.write('fire_1;2;')                # 0 is not oke; 1 is ok and ;2 fire
             f.write('%.2f;%.2f \n' % (x, y))  # TODO ERIK exact location stove
             f.close()
             pathname = "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_emergency/output/fire.png"
         
         
-        rospy.loginfo("pathname = {0}".format(pathname))
+        rospy.logdebug("pathname = {0}".format(pathname))
 
         ### TODO/IDEA: play sound of taking picture
 
         if self.get_picture(pathname):  # bool terug. (filename met hele pad.png)
-            rospy.loginfo("picture taken!!")
+            rospy.logdebug("picture taken!!")
         else:
-            rospy.loginfo("no picture taken, i'm sorry")
+            rospy.logdebug("no picture taken, i'm sorry")
 
         #rospy.loginfo("[EG] Check status.txt")
         #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
@@ -880,7 +879,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'REGISTER_PERSON_NOT_OKAY'})     
 
         smach.StateMachine.add('REGISTER_PERSON_NOT_OKAY',
-                                    Register(robot, status=1),                             #input 1 (person is not oke)
+                                    Register(robot, status=0),                             #input 0 (person is not oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_NOT_OKAY'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_NOT_OKAY',
@@ -898,7 +897,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_BY_THEMSELVES',
-                                    Register(robot, status=0),                            #input 0 (person is oke)
+                                    Register(robot, status=1),                            #input 1 (person is oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_BY_THEMSELVES'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_BY_THEMSELVES',
@@ -916,7 +915,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})     
 
         smach.StateMachine.add('REGISTER_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
-                                    Register(robot, status=0),                            #input 0 (person is oke)
+                                    Register(robot, status=1),                            #input 1 (person is oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_PERSON_OKAY_EXIT_NOT_BY_THEMSELVES',
