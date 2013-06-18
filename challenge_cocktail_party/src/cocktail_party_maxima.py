@@ -181,6 +181,7 @@ class LearnPersonCustom(smach.State):
 
         learn_machine = Learn_Person(self.robot, serving_person)
         learn_result = learn_machine.execute()
+      
         self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # make sure we're not left with a goal from last time // what does this do?!
         ## TO CHECK IF OUTCOME IS face_learned or learn_failed and ACT adequatly!
         return learn_result
@@ -317,7 +318,7 @@ class LookForPerson(smach.State):
         elif self.response_start.error_code == 1:
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
-        rospy.sleep(5.0)
+        rospy.sleep(25.0)
         self.robot.perception.toggle([])
 
         person_result = self.robot.reasoner.query(
@@ -568,9 +569,9 @@ class CocktailParty(smach.StateMachine):
                                                             "not_found":'SAY_PERSON_NOT_FOUND'})
 
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
-                                            Say(robot, ["I could not find you. Going to the meeting point", 
-                                                        "I can't find you. I really don't like fluids, so I'm coming to the meeting point.",
-                                                        "I could not find you. Going to the meeting point"]),
+                                            Say(robot, ["I could not find you.", 
+                                                        "I can't find you. I really don't like fluids.",
+                                                        "I could not find you."]),
                                             transitions={   'spoken':'HANDOVER_DRINK_UNKNOWN_PERSON' }) #GOTO_INITIAL_FAIL
 
                     smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
@@ -601,9 +602,9 @@ class CocktailParty(smach.StateMachine):
 
             smach.StateMachine.add( 'ITERATE_PERSONS', 
                                     persons_iterator, 
-                                    transitions={'served':'FINISH',
-                                                'not_served':'FINISH',
-                                                'Done':"FINISH"})
+                                    transitions={'served':'Done',
+                                                'not_served':'Done',
+                                                'Done':"Done"})
 
             smach.StateMachine.add( "EXIT",
                                     NavigateGeneric(robot, goal_name="initial"),
@@ -635,7 +636,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
 
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
-    #amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
+    amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 

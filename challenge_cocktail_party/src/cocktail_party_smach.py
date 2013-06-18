@@ -617,6 +617,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
 
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+    amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
     #amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
