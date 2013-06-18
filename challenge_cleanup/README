@@ -45,3 +45,8 @@ The clean-up challenge python file defines all of its queries near the top of th
 TIP of the day: use 
 $ rostopic pub /pocketsphinx/output std_msgs/String 'livingroom' --once; rostopic pub /pocketsphinx/output std_msgs/String '!!str yes' --once
 to test the exec
+
+BUGS: 
+- Before navigating, set spindle to high, because otherwise, the grippers are in range of the laserscanner. The nice solution is to filter out self-points
+- Say something when nothing is found.
+- Say something when an object is unreachable.
