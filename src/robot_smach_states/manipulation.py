@@ -130,13 +130,13 @@ class PrepareOrientation(smach.StateMachine):
         self.robot = robot
         self.grabpoint_query = grabpoint_query
         if x_offset == None:
-            rospy.logwarn("x_offset not specified, defaulting to 0.5 for arms.")
+            rospy.logdebug("x_offset not specified, defaulting to 0.5 for arms.")
             self.x_offset = 0.5
         else:
             self.x_offset = x_offset
 
         if y_offset == None:
-            rospy.logwarn("y_offset not specified, defaulting to (-)0.2 for ... arm.")
+            rospy.logdebug("y_offset not specified, defaulting to (-)0.2 for ... arm.")
             if self.side == self.robot.leftArm:
                 self.y_offset = 0.2
             elif self.side == self.robot.rightArm:
@@ -171,14 +171,14 @@ class Prepare_orientation(smach.State):
         self.grasp_angle = -0.0 #1.0472
         if x_offset == None:
             #import ipdb; ipdb.set_trace()
-            rospy.logwarn("x_offset not specified, defaulting to 0.5 for arms.")
+            rospy.logdebug("x_offset not specified, defaulting to 0.5 for arms.")
             self.grasp_distance_x = 0.5
         else:
             self.grasp_distance_x = x_offset
 
         if y_offset == None:
             #import ipdb; ipdb.set_trace()
-            rospy.logwarn("y_offset not specified, defaulting to (-)0.2 for ... arm.")
+            rospy.logdebug("y_offset not specified, defaulting to (-)0.2 for ... arm.")
             if self.side == self.robot.leftArm:
                 self.grasp_distance_y = 0.2
             elif self.side == self.robot.rightArm:
