@@ -114,7 +114,7 @@ class WaitForPerson(smach.State):
             # TEST
             return "unknown_person"
             # TEST
-            
+
             res = self.robot.reasoner.query(Compound("property_expected", "ObjectID", "name", "Name"))
             if not res:
                 return "unknown_person"
@@ -326,18 +326,14 @@ class LookForPerson(smach.State):
 
     def execute(self, userdata=None):
         # find out who we need to return the drink to
-        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
+        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))       
         if not return_result:
             self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
-            return_drink_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
-            if return_drink_result:
-                serving_drink = str(return_drink_result[0]["Drink"])  
-                self.robot.speech.speak("I'm coming to the meeting point to hand over the " + str(serving_drink))
             return "not_found"
 
         serving_person = str(return_result[0]["Person"])
-
-
+        
+        
         # Move to the next waypoint in the party room
         goal_answers = self.robot.reasoner.query(Conjunction(  
                                                     Compound("=", "Waypoint", Compound("party_room", "W")),
@@ -346,7 +342,12 @@ class LookForPerson(smach.State):
                                                             ))
 
         if not goal_answers:
-            self.robot.speech.speak(str(serving_person) +", I have been looking everywhere.")
+            return_drink_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
+            if return_drink_result:
+                serving_drink = str(return_drink_result[0]["Drink"])  
+                self.robot.speech.speak(str(serving_person) +", I have been looking everywhere. To hand over your " + str(serving_drink))
+            else:
+                self.robot.speech.speak(str(serving_person) +", I have been looking everywhere.")
             return "not_found"
 
         # for now, take the first goal found
