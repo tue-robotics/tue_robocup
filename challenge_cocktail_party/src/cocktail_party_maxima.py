@@ -325,14 +325,12 @@ class LookForPerson(smach.State):
         self.robot.spindle.reset()
 
         self.response_start = self.robot.perception.toggle(["face_segmentation"])
-        rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
-        rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
         if self.response_start.error_code == 0:
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
-        rospy.sleep(25.0)
+        rospy.sleep(5.0)
         self.robot.perception.toggle([])
 
         person_result = self.robot.reasoner.query(
@@ -366,9 +364,8 @@ class LookForPerson(smach.State):
             for name_possibility in name_pmf:
                 print name_possibility
                 prob = float(name_possibility[0])
-                if prob > 0.1 and prob > name_prob:
+                if prob > 0.175 and prob > name_prob:
                     name = str(name_possibility[1][0])
-                    #print "Updated most probable name to " + str(name)
                     name_prob = prob
 
             if not name:
