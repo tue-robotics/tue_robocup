@@ -662,6 +662,7 @@ class LookForObjectsAtROI(smach.State):
                                                 lambda answer: urh.xyz_dist(answer, basepos), 
                                                 minmax=min)
             rx,ry,rz = urh.answer_to_tuple(selected_roi_answer)
+            rospy.loginfo("[TEST ERIK] LOOKING AT (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
             lookat_point = self.robot.head.point(rx,ry,rz)
             print lookat_point
 
