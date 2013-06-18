@@ -763,7 +763,7 @@ def recognize_face(robot):
         for name_possibility in name_pmf:
             print name_possibility
             prob = float(name_possibility[0])
-            if prob > 0.1 and prob > name_prob:
+            if prob > 0.175 and prob > name_prob:
                 name = str(name_possibility[1][0])
                 #print "Updated most probable name to " + str(name)
                 name_prob = prob
