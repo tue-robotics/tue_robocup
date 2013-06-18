@@ -83,12 +83,12 @@ class Ask_action(smach.State):
             if self.response.object == "no_answer" or self.response.object == "wrong_answer":
                 return "no_action"
             # Show values for action/start_location/end_location/object      
-            rospy.logdebug("action = {0}".format(self.response.action))
-            rospy.logdebug("start_location = {0}".format(self.response.start_location))
-            rospy.logdebug("end_location = {0}".format(self.response.end_location))
-            rospy.logdebug("object = {0}".format(self.response.object))
-            rospy.logdebug("object_room = {0}".format(self.response.object_room))
-            rospy.logdebug("object_location = {0}".format(self.response.object_location))
+            rospy.loginfo("action = {0}".format(self.response.action))
+            rospy.loginfo("start_location = {0}".format(self.response.start_location))
+            rospy.loginfo("end_location = {0}".format(self.response.end_location))
+            rospy.loginfo("object = {0}".format(self.response.object))
+            rospy.loginfo("object_room = {0}".format(self.response.object_room))
+            rospy.loginfo("object_location = {0}".format(self.response.object_location))
 
             return "done"
 
@@ -452,8 +452,8 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
     robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
     robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
-    robot.reasoner.query(Compound("retractall", Compound("not_visited", "X")))
-    robot.reasoner.query(Compound("retractall", Compound("not_unreachable", "X")))
+    robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
+    robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
     robot.reasoner.query(Compound("retractall", Compound("disposed", "X")))
     robot.reasoner.query(Compound("retractall", Compound("point_roi_tried", "X")))   
 
@@ -469,9 +469,6 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("assertz",Compound("challenge", "egpsr")))
     robot.reasoner.query(Compound("assertz",Compound("tasks_done", "0.0")))
     robot.reasoner.query(Compound("assertz",Compound("tasks_max", "10.0")))  # Define how many tasks you want to perform
-
-    #Assert not_visited locations
-    robot.reasoner.query(Compound("init_not_roi","Location"))
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -515,6 +512,14 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("RETRACT_POINT_ROI",
                                 states.Retract_facts(robot, [Compound("point_roi_tried", "X")]),
+                                transitions={'retracted':'RETRACT_VISITED'})
+
+        smach.StateMachine.add("RETRACT_VISITED",
+                                states.Retract_facts(robot, [Compound("visited", "X")]),
+                                transitions={'retracted':'RETRACT_UNREACHABLE'})
+
+        smach.StateMachine.add("RETRACT_UNREACHABLE",
+                                states.Retract_facts(robot, [Compound("unreachable", "X")]),
                                 transitions={'retracted':'QUERY_SPECIFIC_ACTION'})
 
 
@@ -545,7 +550,7 @@ def setup_statemachine(robot):
                                    states.Say(robot,"I will get it right away!"),
                                    transitions={'spoken':'GET_OBJECT'})
 
-            search_query            = Compound("search_query","ROI_Location",Compound("point_3d","X","Y","Z"))
+            search_query            = Compound("search_query_manipulation","ROI_Location",Compound("point_3d","X","Y","Z"))
             object_identifier_query = "ROI_Location"
             object_query            = Conjunction( 
                                          Compound("object_query","ObjectID", Sequence("X","Y","Z")),
@@ -651,7 +656,7 @@ def setup_statemachine(robot):
                                    states.Say(robot,"I will get it right away!"),
                                    transitions={'spoken':'GET_OBJECT'})
 
-            search_query            = Compound("search_query","ROI_Location",Compound("point_3d","X","Y","Z"))
+            search_query            = Compound("search_query_manipulation","ROI_Location",Compound("point_3d","X","Y","Z"))
             object_identifier_query = "ROI_Location"
             object_query            = Conjunction( 
                                          Compound("object_query","ObjectID", Sequence("X","Y","Z")),
@@ -883,7 +888,7 @@ def setup_statemachine(robot):
                                    states.Say(robot,"I will find it right away!"),
                                    transitions={'spoken':'POINT_OBJECT'})
 
-            search_query            = Compound("search_query","ROI_Location",Compound("point_3d","X","Y","Z"))
+            search_query            = Compound("search_query_manipulation","ROI_Location",Compound("point_3d","X","Y","Z"))
             object_identifier_query = "ROI_Location"
             object_query            = Conjunction( 
                                          Compound("object_query","ObjectID", Sequence("X","Y","Z")),
