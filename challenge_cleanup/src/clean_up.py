@@ -202,7 +202,9 @@ class Cleanup(smach.StateMachine):
                     robot.reasoner.assertz(Compound("current_exploration_target", target))
 
                     # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
-                    robot.reasoner.assertz(Compound("explored", target))                
+                    robot.reasoner.assertz(Compound("explored", target))
+
+                    robot.speech.speak("Lets go look at {0}".format(target).replace("_", " "))
 
                     return 'found_exploration_target'
             
@@ -214,9 +216,21 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add( 'DRIVE_TO_EXPLORATION_TARGET',
                                     states.NavigateGeneric(robot, goal_query=query_exploration_target),
                                     transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
-                                                    "unreachable":'DETERMINE_EXPLORATION_TARGET',
+                                                    "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'DETERMINE_EXPLORATION_TARGET'})
+
+            def generate_unreachable_sentence(*args,**kwargs):
+                try:
+                    answers = robot.reasoner.query(query_exploration_target)
+                    name = answers[0]["Target"] #Should only have 1 answer
+                    return "{0} is unreachable, where else can I go?".format(name).replace("_", " ")
+                except Exception, e:
+                    rospy.logerr(e)
+                    return "Something went terribly wrong, I don't know where to go and it's unreachable too"
+            smach.StateMachine.add('SAY_GOAL_UNREACHABLE',
+                                    states.Say_generated(robot, sentence_creator=generate_unreachable_sentence),
+                                    transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     states.Say(robot, ["Lets see what I can find here."]),
@@ -244,7 +258,7 @@ class Cleanup(smach.StateMachine):
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'SAY_FOUND_NOTHING',
                                                     'abort':'Aborted'})
-            
+
             smach.StateMachine.add('SAY_FOUND_NOTHING',
                                     states.Say(robot, ["I didn't find anything here", "No objects to clean here", "There are no objects here"]),
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
