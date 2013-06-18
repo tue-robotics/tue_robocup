@@ -55,6 +55,7 @@ class Navigate_abstract(smach.State):
                 return "arrived"
             else:
                 self.robot.base.reset_costmap()
+                rospy.loginfo("Resetting costmap")
                 outcome2 = self.robot.base.send_goal(pos, orient, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
                 if outcome2:
                     return "arrived"
@@ -398,6 +399,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
                                                 minmax=min, 
                                                 criteria=[lambda answer: urh.xyz_dist(answer, basepos) < self.maxdist])
             x,y,z = urh.answer_to_tuple(selected_answer)
+            rospy.loginfo("[navigation.py] NAVIGATING TO (X = {0}, Y = {1}, Z = {2}".format(x,y,z))
             location = selected_answer[self.ROI_Location]
 
             self.current_identifier = location
@@ -831,9 +833,9 @@ class Determine_goal(smach.State):
         self.goal_query = goal_query
         self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
-        rospy.logwarn("Goal name = {0}".format(self.goal_name))
-        rospy.logwarn("Goal query = {0}".format(self.goal_query))
-        rospy.logwarn("Lookat query = {0}".format(self.lookat_query))
+        rospy.logdebug("Goal name = {0}".format(self.goal_name))
+        rospy.logdebug("Goal query = {0}".format(self.goal_query))
+        rospy.logdebug("Lookat query = {0}".format(self.lookat_query))
 
         self.possible_locations_initialized = False
         self.possible_locations = []
