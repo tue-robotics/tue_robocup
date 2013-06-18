@@ -355,7 +355,46 @@ class LookForPerson(smach.State):
         return "not_found"
 
 ## Class not build in yet, this will be used when person can not be found but drink is still in gripper
-class HandoverToHuman(smach.StateMachine):
+class HandoverToKnownHuman(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=["done"])
+
+        if grasp_arm == "left":
+            arm = robot.leftArm
+        if grasp_arm == "right":
+            arm = robot.rightArm
+
+        with self:
+            smach.StateMachine.add( 'PRESENT_DRINK',
+                                    Say(robot, ["Here's your drink", "Here you go!"]),
+                                    transitions={"spoken":"POSE"})
+
+            smach.StateMachine.add( 'POSE',
+                                    Handover_pose(arm, robot),
+                                    transitions={   'succeeded':'PLEASE_TAKE',
+                                                    'failed':'PLEASE_TAKE'})
+            
+            smach.StateMachine.add( 'PLEASE_TAKE',
+                                    Say(robot, ["Please hold the drink, I'm going to let it go.", "Please take the drink, i'll let it go"]),
+                                    transitions={"spoken":"OPEN_GRIPPER"})
+
+            smach.StateMachine.add( "OPEN_GRIPPER", 
+                                    SetGripper(robot, arm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed':'CLOSE_AFTER_DROP'})
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP',
+                                    SetGripper(robot, arm, gripperstate=1), #close
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed':'RESET_ARM'})
+            smach.StateMachine.add('RESET_ARM', 
+                                    ArmToPose(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    transitions={   'done':'SAY_ENJOY',
+                                                    'failed':'SAY_ENJOY'})
+            smach.StateMachine.add( 'SAY_ENJOY',
+                                    Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
+                                    transitions={"spoken":"done"})
+
+class HandoverToUnknownHuman(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["done"])
 
@@ -396,8 +435,6 @@ class HandoverToHuman(smach.StateMachine):
                                     ArmToPose(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
                                     transitions={   'done':'SAY_ENJOY',
                                                     'failed':'SAY_ENJOY'})
-
-            
             smach.StateMachine.add( 'SAY_ENJOY',
                                     Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
                                     transitions={"spoken":"done"})
@@ -501,13 +538,6 @@ class CocktailParty(smach.StateMachine):
                                             Human_handover(arm,robot),
                                             transitions={   'succeeded':'GOTO_INITIAL_FAIL',
                                                             'failed':'GOTO_INITIAL_FAIL' })
-                    @smach.cb_interface(outcomes=["done"])
-                    def reset_head(*args, **kwargs):
-                        robot.head.reset_position()
-                        return "done"   
-                    smach.StateMachine.add( "RESET_HEAD", 
-                            smach.CBState(reset_head),
-                            transitions={"done":"RETRACT_VISITED_2"})
 
                     smach.StateMachine.add( "RETRACT_VISITED_2",
                                             Retract_facts(robot, [Compound("visited", "X")]),
@@ -526,11 +556,11 @@ class CocktailParty(smach.StateMachine):
                                             transitions={   'spoken':'HANDOVER_DRINK_UNKNOWN_PERSON' }) #GOTO_INITIAL_FAIL
 
                     smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
-                                            HandoverToHuman(robot),
+                                            HandoverToUnknownHuman(robot),
                                             transitions={"done":"GOTO_INITIAL_FAIL"})
 
                     smach.StateMachine.add( 'HANDOVER_DRINK',
-                                            HandoverToHuman(robot),
+                                            HandoverToKnownHuman(robot),
                                             transitions={"done":"GOTO_INITIAL_SUCCESS"})
 
                     smach.StateMachine.add( "GOTO_INITIAL_SUCCESS",
