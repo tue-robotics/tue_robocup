@@ -242,8 +242,13 @@ class Cleanup(smach.StateMachine):
                                     states.LookForObjectsAtROI(robot, query_lookat, query_object),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
-                                                    'no_object_found':'DETERMINE_EXPLORATION_TARGET',
+                                                    'no_object_found':'SAY_FOUND_NOTHING',
                                                     'abort':'Aborted'})
+            
+            smach.StateMachine.add('SAY_FOUND_NOTHING',
+                                    states.Say(robot, ["I didn't find anything here", "No objects to clean here", "There are no objects here"]),
+                                    transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
+
             def generate_object_sentence(*args,**kwargs):
                 try:
                     answers = robot.reasoner.query(query_dropoff_loc)
