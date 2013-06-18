@@ -69,33 +69,41 @@ class DetermineBaseGraspPose(smach.State):
         self.nr_inverse_reachability_calls = 0
         self.max_nr_inverse_reachability_calls = 2
         self.desired_base_poses_MAP = []
+        self.grasp_point = geometry_msgs.msg.PointStamped()
 
     def execute(self, userdata):
+
+        ''' Only query the reasoner once (grasp position will not be updated anyway so there is no use in doing this more often)'''
+        if self.nr_inverse_reachability_calls == 0:
+            answers = self.robot.reasoner.query(self.grabpoint_query)
+            #rospy.loginfo('Answers = {0}'.format(answers))
+            #import ipdb
+            #ipdb.set_trace()
+
+            if answers:
+                answer = answers[0]
+                rospy.loginfo("Answer(0) = {0}".format(answer))
+                #grasp_point = geometry_msgs.msg.PointStamped()
+                self.grasp_point.header.frame_id = "/map"
+                self.grasp_point.header.stamp = rospy.Time()
+                self.grasp_point.point.x = float(answer["X"])
+                self.grasp_point.point.y = float(answer["Y"])
+                self.grasp_point.point.z = float(answer["Z"])
+                #rospy.loginfo("Grasp_point = {0}".format(self.grasp_point))
+            else:
+                #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
+                return 'target_lost'
 
         ''' Do a new inverse reachability request if nr < max_nr.
             This way, the grasp pose will be optimal (and the first few tries the change of new information is the highest)
             If nr == max_nr: check all entries of the latest call to increase robustness'''
+        #rospy.loginfo('Nr of calls = {0} of {1}'.format(self.nr_inverse_reachability_calls,self.max_nr_inverse_reachability_calls))
         if self.nr_inverse_reachability_calls < self.max_nr_inverse_reachability_calls:
             self.nr_inverse_reachability_calls += 1
-
-            answers = self.robot.reasoner.query(self.grabpoint_query)
-        
-            if answers:
-                answer = answers[0]
-                grasp_point = geometry_msgs.msg.PointStamped()
-                grasp_point.header.frame_id = "/map"
-                grasp_point.header.stamp = rospy.Time()
-                grasp_point.point.x = float(answer["X"])
-                grasp_point.point.y = float(answer["Y"])
-                grasp_point.point.z = float(answer["Z"])
-                
-                grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)
-                
-                self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, self.x_offset, self.y_offset)
-                
-            else:
-                rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
-                return 'target_lost'
+            #grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)               
+            #rospy.loginfo('Grasp point base link = {0}'.format(grasp_point_BASE_LINK))
+            self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
+            #rospy.loginfo('Grasp poses base in map = {0}'.format(self.desired_base_poses_MAP))
 
         ''' Assert the goal to the reasoner such that navigate generic can use it '''
 
@@ -276,7 +284,7 @@ class PrepareGrasp(smach.State):
 
             # ToDo: parameterize
             if (spindle_target > self.robot.spindle.lower_limit):
-                self.robot.spindle.send_goal(spindle_target)
+                self.robot.spindle.send_goal(spindle_target,waittime=5.0)
             # Else: there's no point in doing it any other way
 
         return 'succeeded'
@@ -312,21 +320,24 @@ class UpdateObjectPose(smach.State):
 
         ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
         rospy.logwarn("Spindle timeout temporarily increased to 30 seconds")
-        if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=30.0):
-            #self.robot.perception.toggle_perception_2d(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+        #if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=30.0):
+        ''' Hack to disable laser !!! '''
+        nolaser = False
+        if nolaser:
             self.robot.perception.toggle(["object_detector_2d"])
-            self.robot.perception.set_perception_roi(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+            self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.2)
             rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
             rospy.logwarn("Waiting for 2.0 seconds for laser update")
             rospy.sleep(rospy.Duration(2.0))
         else:
-            #self.robot.head.send_goal(target_point, keep_tracking=False, timeout=2.0)
-            #self.robot.perception.toggle(["tabletop_segmentation"])
-            #self.robot.perception.set_perception_roi(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
-            #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-            #rospy.logwarn("Waiting for 10.0 seconds for tabletop segmentation update")
-            #rospy.sleep(rospy.Duration(10.0))
-            self.robot.speech.speak("Now I need Simons stuff because the height of the object is {0:.2f}".format(target_point.point.z),block=False)
+            self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
+            self.robot.perception.toggle(["tabletop_segmentation"])
+            self.robot.perception.set_perception_roi(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+            rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+            waittime = 5.0
+            rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(waittime))
+            rospy.sleep(rospy.Duration(waittime))
+            #self.robot.speech.speak("Now I need Simons stuff because the height of the object is {0:.2f}".format(target_point.point.z),block=False)
 
         ''' Reset head and stop all perception stuff '''
         self.robot.perception.toggle([])
@@ -475,6 +486,10 @@ class Grab(smach.State):
         ''' First check to see if visual servoing is possible '''
         self.robot.perception.toggle(['ar_pose'])
         #rospy.logwarn("ar marker check disabled")
+        try:
+            self.robot.tf_listener.waitForTransform(self.end_effector_frame_id, self.ar_frame_id, rospy.Time(), rospy.Duration(2.5))
+        except:
+            rospy.logerr("Transformation between {0} and {1} failed".format(self.end_effector_frame_id,self.ar_frame_id))
         ar_marker_available = False
         
         target_position_delta = transformations.tf_transform(target_position, self.end_effector_frame_id, self.ar_frame_id, tf_listener=self.robot.tf_listener)
@@ -490,7 +505,6 @@ class Grab(smach.State):
             self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, time_out=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("Let me have a closer look", block=False)
-            rospy.sleep(2.0)
         
         ''' New ar marker detection stuff ''' 
         ar_point = geometry_msgs.msg.PointStamped()
@@ -499,10 +513,13 @@ class Grab(smach.State):
         ar_point.point.x = 0
         ar_point.point.y = 0
         ar_point.point.z = 0
+        #import ipdb; ipdb.set_trace()
         ''' Transform point(0,0,0) in ar marker frame to grippoint frame '''
         ar_point_grippoint = transformations.tf_transform(ar_point, self.ar_frame_id, self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
+        rospy.loginfo("AR marker in end-effector frame = {0}".format(ar_point_grippoint))
         ''' Transform target position to grippoint frame '''
         target_position_grippoint = transformations.tf_transform(target_position, "/map", self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
+        rospy.loginfo("Target position in end-effector frame = {0}".format(target_position_grippoint))
         ''' Compute difference = delta (only when both transformations have succeeded) and correct for offset ar_marker and grippoint '''
         if not (ar_point_grippoint == None or target_position_grippoint == None):
             target_position_delta = geometry_msgs.msg.Point()
@@ -519,7 +536,7 @@ class Grab(smach.State):
             
         ''' Sanity check '''
         if ar_marker_available:
-            rospy.loginfo("Delta target = {0}".format(target_position_delta))
+            #rospy.loginfo("Delta target = {0}".format(target_position_delta))
             if (target_position_delta.x < 0 or target_position_delta.x > 0.6 or target_position_delta.y < -0.3 or target_position_delta.y > 0.3 or target_position_delta.z < -0.3 or target_position_delta.z > 0.3):
                 rospy.logwarn("Ar marker detection probably incorrect")
                 self.robot.speech.speak("I guess I cannot see my hand properly")
@@ -546,7 +563,7 @@ class Grab(smach.State):
                 else:
                     rospy.loginfo("opening gripper failed, good luck")
                     return 'grab_failed'
-                rospy.logerr("failed to go to the arm position")
+                rospy.logerr("Goal unreachable: {0}".format(target_position_bl))
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 
         else:
@@ -556,7 +573,7 @@ class Grab(smach.State):
                                         0, 0, 0, 120, frame_id=self.end_effector_frame_id, pre_grasp = True):                    
                 rospy.loginfo("arm at object")                    
             else:
-                rospy.logerr("failed to go to the arm position")
+                rospy.logerr("Goal unreachable: {0}".format(target_position_bl))
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 return 'grab_failed'
             
@@ -597,7 +614,12 @@ class PlaceObject(smach.StateMachine):
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'failed'})
         
-            smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.placement_query),
+            # Old implementation
+            #smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.placement_query),
+            #            transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
+
+            # New implementation with NavigateGeneric
+            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.placement_query),
                         transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
             
             smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
@@ -936,7 +958,7 @@ class ArmToQueryPoint(smach.State):
             first_joint_pos_only=self.first_joint_pos_only):
             return 'succeeded'
         else:
-            rospy.loginfo("Sending goal to {0}".format(goal_bl))
+            rospy.logwarn("Goal unreachable: {0}".format(goal_bl))
             return 'failed'
 
 class TorsoToUserPos(smach.State):

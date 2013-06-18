@@ -763,7 +763,7 @@ class LookForObjectsAtPoint(smach.State):
         result = self.robot.perception.toggle_recognition(objects=True)
 
         # Let the object recognition run for a certain period
-        rospy.sleep(10.0)
+        rospy.sleep(2.5)
 
         rospy.loginfo("Stop object recognition")
 

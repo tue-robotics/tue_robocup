@@ -91,15 +91,12 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
       
 
 
-def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
+def tf_transform(coordinates, inputframe, outputframe, tf_listener):
     # Should probably be called transform_point
-    if not tf_listener: 
-        tf_listener = tf.TransformListener()
     
     if isinstance(coordinates, geometry_msgs.msg.Point):
         ps = geometry_msgs.msg.PointStamped(point=coordinates) 
         ps.header.frame_id = inputframe
-        ps.header.stamp = rospy.Time()
     elif isinstance(coordinates, geometry_msgs.msg.PointStamped):
         #If coordinates is already a PointStamped, dont make one.
         ps = coordinates
@@ -107,10 +104,11 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
         rospy.logerr("coordinates is neither a Point nor a PointStamped? Trying my best, but might crash or work due to duck-typing")
         ps = geometry_msgs.msg.PointStamped(point=coordinates) 
         ps.header.frame_id = inputframe
-        ps.header.stamp = rospy.Time()
-    
+    #rospy.loginfo("Transforming in robot_smach_states")
     try:
-        tf_listener.waitForTransform(inputframe, outputframe, rospy.Time.now(), rospy.Duration(1.5))
+        time = rospy.Time.now()
+        ps.header.stamp = time
+        tf_listener.waitForTransform(inputframe, outputframe, time, rospy.Duration(1.5))
         output_coordinates = tf_listener.transformPoint(outputframe, ps)
     except (tf.Exception, tf.LookupException, tf.ConnectivityException):
         rospy.logerr("Transformation between {0} and {1} failed".format(inputframe,outputframe))
