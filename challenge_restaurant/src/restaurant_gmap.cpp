@@ -54,7 +54,7 @@ ros::Publisher head_ref_pub_;                                                   
 unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 double t_freeze_ = 0;
-tf::TransformListener listener;													  // Tf listenter to obtain tf information to store locations
+tf::TransformListener* listener;													  // Tf listenter to obtain tf information to store locations
 tf::StampedTransform tf_ordering;
 tf::StampedTransform tf_location;
 tf::StampedTransform tf_place;
@@ -387,40 +387,40 @@ void speechCallback(std_msgs::String res) {
         freeze_amigo_ = false;
         ros::Duration delta(2.0);
         delta.sleep();
-        if (++n_locations_learned_ == 0) {
+        if (n_locations_learned_ == 0) {
 			amigoSpeak("Ok, I will remember this location as the ordering location"); // To Do find better names for locations
 			ROS_INFO("Learned ordering location called ordering location");
-			listener.lookupTransform("/base_link", "/base_link", ros::Time(0), tf_ordering);		
+			listener->lookupTransform("/base_link", "/map", ros::Time(0), tf_ordering);		
 			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_ordering.getOrigin().y(), tf_ordering.getOrigin().x() );	
 		}        
-        else if (++n_locations_learned_ == 1) {
+        else if (n_locations_learned_ == 1) {
 			amigoSpeak("Ok, I will remember this location as location"); // To Do find better names for locations
 			ROS_INFO("Learned first location called location");
-			listener.lookupTransform("/base_link", "/base_link", ros::Time(0), tf_location);
+			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_location);
 			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_location.getOrigin().y(), tf_location.getOrigin().x() );	
 		}
-		else if (++n_locations_learned_ == 2) {
+		else if (n_locations_learned_ == 2) {
 			amigoSpeak("Alright, I will remember this location as place");
 			ROS_INFO("Learned second location called place");
-			listener.lookupTransform("/base_link", "/base_link", ros::Time(0), tf_place);
+			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_place);
 			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_place.getOrigin().y(), tf_place.getOrigin().x() );	
 		}
-		else if (++n_locations_learned_ == 3) {
+		else if (n_locations_learned_ == 3) {
 			amigoSpeak("Ok, I will remember this location as dropoff");
 			ROS_INFO("Learned third location called dropoff");
-			listener.lookupTransform("/base_link", "/base_link", ros::Time(0), tf_dropoff);
+			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_dropoff);
 			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_dropoff.getOrigin().y(), tf_dropoff.getOrigin().x() );		
 		}
-		else if (++n_locations_learned_ == 4) {
+		else if (n_locations_learned_ == 4) {
 			amigoSpeak("Definitely, I will remember this location as spot");
 			ROS_INFO("Learned fourth location called spot");
-			listener.lookupTransform("/base_link", "/base_link", ros::Time(0), tf_spot);
+			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_spot);
 			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_spot.getOrigin().y(), tf_spot.getOrigin().x() );	
 		}
-		else if (++n_locations_learned_ == 5) {
+		else if (n_locations_learned_ == 5) {
 			amigoSpeak("Alright, I will remember this location as room");
 			ROS_INFO("Learned fifth location called room");
-			listener.lookupTransform("/base_link", "/base_link", ros::Time(0), tf_room);
+			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_room);
 			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_room.getOrigin().y(), tf_room.getOrigin().x() );	
 		}		
 		
@@ -483,6 +483,9 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     
      ROS_INFO("Started Restaurant");
+     
+     /// Tf listener
+     listener = new tf::TransformListener();
     
     /// Head ref
     head_ref_pub_ = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
