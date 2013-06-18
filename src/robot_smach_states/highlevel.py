@@ -279,8 +279,10 @@ class GetObject(smach.StateMachine):
                                     human_interaction.Say(robot, ["Lets see what I can find here."],block=False),
                                     transitions={   'spoken':'LOOK'})
 
+            lookatquery = Compound("current_poi","POI", Compound("point_3d","X","Y","Z"))
+
             smach.StateMachine.add('LOOK',
-                                    perception.LookForObjectsAtROI(robot, self.roi_query, self.object_query),
+                                    perception.LookForObjectsAtROI(robot, lookatquery, self.object_query),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'RESET_HEAD_AND_SPINDLE',
@@ -308,7 +310,12 @@ class GetObject(smach.StateMachine):
             smach.StateMachine.add('GRAB',
                                     manipulation.GrabMachine(robot.leftArm, robot, query_grabpoint),
                                     transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
-                                                    'failed':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE' })  
+                                                    'failed':'CHECK_TIME_AFTER_FAILED_GRAB' })  
+
+            smach.StateMachine.add('CHECK_TIME_AFTER_FAILED_GRAB',
+                                    utility_states.CheckTime(robot, "get_object_start", max_duration),
+                                    transitions={   'ok':'DRIVE_TO_SEARCHPOS',
+                                                    'timeout':'RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT' })   # End State
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
                                     ResetHeadAndSpindle(robot),
