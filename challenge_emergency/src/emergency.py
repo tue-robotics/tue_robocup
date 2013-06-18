@@ -94,6 +94,7 @@ class turn_Around_z_axis(smach.State):
         """ 
         @return
         """
+        self.robot.head.reset_position()
         ##rospy.logger('Emergency.py:turnAmigo.Execute: {0} degrees.'.format((self.rotation)))
 
         rospy.loginfo("Executing: {0} radians".format(self.rotation))
@@ -936,7 +937,7 @@ def setup_statemachine(robot):
 
         # Turn 360 degrees (will be 3/4 of a round)
         smach.StateMachine.add('MOVE_ARM_BACK_TURN',
-                                    turn_Around_z_axis(robot, 10),
+                                    turn_Around_z_axis(robot, 20),
                                     transitions={   'done':'MOVE_ARM_BACK', 
                                                     'abort':'MOVE_ARM_BACK'})
         
