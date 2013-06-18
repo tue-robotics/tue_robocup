@@ -662,9 +662,6 @@ def setup_statemachine(robot):
     # Assert the current challenge.
     robot.reasoner.query(Compound("assertz",Compound("challenge", "emergency")))
 
-    #Assert not_visited locations
-    robot.reasoner.query(Compound("init_not_roi","Location"))
-
     # create state machine for searching smoke
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
