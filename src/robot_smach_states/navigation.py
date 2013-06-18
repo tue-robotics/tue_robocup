@@ -319,18 +319,18 @@ class Visit_query_outcome(Navigate_to_queryoutcome):
 
         if self.current_identifier:
             if outcome == "arrived":
-                visited_assertion = Compound("retractall", Compound("not_visited", self.current_identifier))
+                visited_assertion = Compound("assert", Compound("visited", self.current_identifier))
                 self.robot.reasoner.query(visited_assertion)
                 self.current_identifier = None
 
-                rospy.loginfo("outcome=arrived, the following fact should be retracted = not_visited({0})".format(self.current_identifier))
+                rospy.loginfo("outcome=arrived, the following fact should be asserted = visited({0})".format(self.current_identifier))
 
             elif outcome == "unreachable":
-                visited_assertion = Compound("retractall", Compound("not_unreachable", self.current_identifier))
+                visited_assertion = Compound("assert", Compound("unreachable", self.current_identifier))
                 self.robot.reasoner.query(visited_assertion)
                 self.current_identifier = None
 
-                rospy.loginfo("outcome=unreachable, the following fact should be retreacted = not_unreachable({0})".format(self.current_identifier))
+                rospy.loginfo("outcome=unreachable, the following fact should be asserted = unreachable({0})".format(self.current_identifier))
 
         else:
             rospy.logerr("current_identifier was None, should not happen.")
@@ -382,8 +382,8 @@ class Visit_query_outcome_3d(Visit_query_outcome):
         rospy.loginfo("Trying to find answers for query {query} with identifier = {identifier}".format(query=self.queryTerm, identifier=self.identifier))
 
         self.decorated_query = Conjunction(self.queryTerm, 
-                                Compound("not_visited",     self.identifier),
-                                Compound("not_unreachable",   self.identifier))
+                                Compound("not", Compound("visited",     self.identifier)),
+                                Compound("not", Compound("unreachable", self.identifier)))
 
     
         answers = self.robot.reasoner.query(self.decorated_query)
@@ -400,10 +400,14 @@ class Visit_query_outcome_3d(Visit_query_outcome):
                                                 criteria=[lambda answer: urh.xyz_dist(answer, basepos) < self.maxdist])
             x,y,z = urh.answer_to_tuple(selected_answer)
             rospy.loginfo("[navigation.py] NAVIGATING TO (X = {0}, Y = {1}, Z = {2}".format(x,y,z))
+
             location = selected_answer[self.ROI_Location]
 
             self.current_identifier = location
-           
+            
+            self.robot.reasoner.query(Compound("retractall", (Compound("current_poi","POI", Compound("point_3d","X","Y","Z")))))
+            self.robot.reasoner.query(Compound("assert", (Compound("current_poi",self.current_identifier, Compound("point_3d",x,y,z)))))
+            
             look_point = geometry_msgs.msg.PointStamped()
             look_point.point = self.robot.base.point(x,y)
             pose = util.msg_constructors.Quaternion(z=1.0)
