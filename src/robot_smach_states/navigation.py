@@ -104,7 +104,7 @@ class Navigate_abstract(smach.State):
 
         #import ipdb; ipdb.set_trace()
 
-        query = Compound("base_pose", name, Compound("pose_2d", "X", "Y", "Phi"))
+        query = Compound("waypoint", name, Compound("pose_2d", "X", "Y", "Phi"))
 
         # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
         # is a mapping of variable to a constant, like a string or number
@@ -609,7 +609,7 @@ class NavigateGenericOld(smach.State):
             possible_locations += [(x, y, phi)]
 
         if self.goal_name:
-            query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
+            query = Compound("waypoint", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
             answers = self.robot.reasoner.query(query)
 
             if not answers:
@@ -848,7 +848,7 @@ class Determine_goal(smach.State):
                 self.possible_locations += [(x, y, phi)]
 
             if self.goal_name:
-                query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
+                query = Compound("waypoint", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
                 answers = self.robot.reasoner.query(query)  
 
                 if not answers:

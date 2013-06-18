@@ -68,7 +68,8 @@ class Set_initial_pose(smach.State):
         self.initial_position = init_position
     
     def location_2d(self, location):
-        query_location = self.robot.reasoner.base_pose(location, self.robot.reasoner.pose_2d("X", "Y", "Phi"))
+        #query_location = self.robot.reasoner.base_pose(location, self.robot.reasoner.pose_2d("X", "Y", "Phi"))
+        query_location = Compound("waypoint", location, Compound("pose_2d", "X", "Y", "Phi"))
         
         answers = self.robot.reasoner.query(query_location)
         
