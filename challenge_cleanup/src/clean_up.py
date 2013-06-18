@@ -92,13 +92,13 @@ class Cleanup(smach.StateMachine):
         query_exploration_target_in_room = Conjunction( Compound("goal", Compound("clean_up", "Room")),
                                                         Compound("exploration_target", "Room", "Target"),
                                                         Compound("not", Compound("explored", "Target")),
-                                                        Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi"))
+                                                        Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
                                                        )
         query_room = Conjunction(   Compound("goal", Compound("clean_up", "Room")), 
                                     Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi"))) 
 
         query_exploration_target = Conjunction( Compound("current_exploration_target", "Target"),
-                                                Compound("base_pose", "Target", Compound("pose_2d", "X", "Y", "Phi")))
+                                                Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi")))
 
         query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
                                     Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
