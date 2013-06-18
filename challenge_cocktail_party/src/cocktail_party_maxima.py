@@ -33,6 +33,17 @@ class WaitForPerson(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
+
+        # Use reasoner to iterate over no of waited times (if face seg won't work we will continue to asking names/serving drinks!)
+        return_result = self.robot.reasoner.query(Compound("waited_times_no", "X"))
+        waited_no = float(return_result[0]["X"])  
+        if waited_no == 2:
+            waited_no = 0;
+            self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+            self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
+            self.robot.speech.speak("I was not able to detect you, assuming someone is in front of me!")
+            return("unknown_person")
+
         self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
@@ -47,7 +58,7 @@ class WaitForPerson(smach.State):
         elif self.response_start.error_code == 1:
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
-            return "waiting"
+            return "unknown_person"
         rospy.sleep(3)
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
@@ -57,6 +68,10 @@ class WaitForPerson(smach.State):
 
         if wait_result == "timed_out":
             self.robot.speech.speak("Please, don't keep me waiting.")
+            waited_no += 1
+            rospy.loginfo("Waited {0} time(s).".format(waited_no))
+            self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+            self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
             return "waiting"
         elif wait_result == "preempted":
             self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!")
@@ -137,7 +152,7 @@ class LearnPersonName(smach.State):
 
         serving_person = str(return_result[0]["Person"])
 
-        self.robot.speech.speak("Hello " + serving_person + "!")
+        self.robot.speech.speak("Hello, her Majesty " + serving_person + "!")
         return "learned"
 
 
@@ -250,11 +265,10 @@ class LookForDrink(smach.State):
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
 
         if object_answers:
-            self.robot.speech.speak("Hey, I found the drink!")
+            self.robot.speech.speak("Hey, I found your" + serving_drink)
             return "found"
         else:
             self.robot.speech.speak("Did not find the drink!")
-            #self.robot.speech.speak("Did not find anything, keep looking")
             return "looking"
 
 class LookForPerson(smach.State):
@@ -384,7 +398,7 @@ class HandoverToKnownHuman(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["Here's your drink", "Here you go!"]),
+                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"]),
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
@@ -430,7 +444,7 @@ class HandoverToUnknownHuman(smach.StateMachine):
                                                     "all_unreachable":"PRESENT_DRINK"})
 
             smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["Here's your drink", "Here you go!"]),
+                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"]),
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
@@ -576,11 +590,11 @@ class CocktailParty(smach.StateMachine):
 
                     smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
                                             HandoverToUnknownHuman(robot),
-                                            transitions={"done":"GOTO_INITIAL_FAIL"})
+                                            transitions={"done":"served"})
 
                     smach.StateMachine.add( 'HANDOVER_DRINK',
                                             HandoverToKnownHuman(robot),
-                                            transitions={"done":"GOTO_INITIAL_SUCCESS"})
+                                            transitions={"done":"served"})
 
                     smach.StateMachine.add( "GOTO_INITIAL_SUCCESS",
                                             NavigateGeneric(robot, goal_query=query_party_room),
@@ -637,6 +651,11 @@ if __name__ == '__main__':
 
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+
+    # Use reasoner for max iter in WaitForPerson (failsafe)
+    amigo.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+    amigo.reasoner.query(Compound("assert",Compound("waited_times_no", "0")))
+
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
