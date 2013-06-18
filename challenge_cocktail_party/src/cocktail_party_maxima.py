@@ -124,7 +124,7 @@ class LearnPersonName(smach.State):
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
                 self.robot.speech.speak("I will call you Maxima")
-                self.response.answer = "Maxima"
+                self.response.answer = "maxima"
                 self.person_learn_failed = 1
 
         self.robot.reasoner.query(Compound("assert", Compound("current_person", self.response.answer)))

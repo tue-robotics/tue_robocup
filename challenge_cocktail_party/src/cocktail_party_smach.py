@@ -33,6 +33,17 @@ class WaitForPerson(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
+
+        # Use reasoner to iterate over no of waited times (if face seg won't work we will continue to asking names/serving drinks!)
+        return_result = self.robot.reasoner.query(Compound("waited_times_no", "X"))
+        waited_no = float(return_result[0]["X"])  
+        if waited_no == 5:
+            waited_no = 0;
+            self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+            self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
+            self.robot.speech.speak("I was not able to detect a person, assuming someone is in front of me!")
+            return("unknown_person")
+
         self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
@@ -47,6 +58,10 @@ class WaitForPerson(smach.State):
         elif self.response_start.error_code == 1:
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
+            waited_no += 1
+            rospy.loginfo("Waited {0} time(s).".format(waited_no))
+            self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+            self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
             return "waiting"
         rospy.sleep(3)
 
@@ -57,6 +72,10 @@ class WaitForPerson(smach.State):
 
         if wait_result == "timed_out":
             self.robot.speech.speak("Please, don't keep me waiting.")
+            waited_no += 1
+            rospy.loginfo("Waited {0} time(s).".format(waited_no))
+            self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+            self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
             return "waiting"
         elif wait_result == "preempted":
             self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!")
@@ -336,7 +355,7 @@ class LookForPerson(smach.State):
         for name_possibility in name_pmf:
             print name_possibility
             prob = float(name_possibility[0])
-            if prob > 0.6 and prob > name_prob:
+            if prob > 0.1 and prob > name_prob:
                 name = str(name_possibility[1][0])
                 name_prob = prob
 
@@ -550,9 +569,9 @@ class CocktailParty(smach.StateMachine):
                                                             "not_found":'SAY_PERSON_NOT_FOUND'})
 
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
-                                            Say(robot, ["I could not find you. Going to the meeting point", 
-                                                        "I can't find you. I really don't like fluids, so I'm coming to the meeting point.",
-                                                        "I could not find you. Going to the meeting point"]),
+                                            Say(robot, ["I could not find you.", 
+                                                        "I can't find you. I really don't like fluids.",
+                                                        "I could not find you."]),
                                             transitions={   'spoken':'HANDOVER_DRINK_UNKNOWN_PERSON' }) #GOTO_INITIAL_FAIL
 
                     smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
@@ -619,6 +638,10 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
     #amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
+
+    # Use reasoner for max iter in WaitForPerson (failsafe)
+    amigo.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
+    amigo.reasoner.query(Compound("assert",Compound("waited_times_no", "0")))
 
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
