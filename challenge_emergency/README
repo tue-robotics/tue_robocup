@@ -26,7 +26,7 @@ amigo3:
 amigo3:
     
     alsamixer
-        Mic Boost -> 100
+        Mic Boost -> 22
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
