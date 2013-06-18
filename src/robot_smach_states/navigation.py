@@ -1067,7 +1067,6 @@ class Execute_path(smach.State):
     def execute(self, userdate):
 
         while not rospy.is_shutdown():
-
             goal_status = self.robot.base.ac_move_base.get_state()
             rospy.logdebug("GoalStatus = {0}".format(goal_status))
 
@@ -1120,6 +1119,7 @@ class Execute_path(smach.State):
 
             # Wait 0.5 seconds to avoid looping to fast
             rospy.sleep(0.5)
+        return 'preempted'
 
 class Waiting_to_execute(smach.State):
     def __init__(self, robot):
