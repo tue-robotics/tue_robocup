@@ -294,8 +294,20 @@ class Navigate_to_queryoutcome_point_location(states.Navigate_abstract):
             look_point.point = self.robot.base.point(x,y)
             pose = states.util.msg_constructors.Quaternion(z=1.0)
 
-            base_pose_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
-            base_pose_for_point = base_pose_for_point[0]
+            rospy.loginfo("[EGPSR] look_point = {0}".format(look_point))
+            rospy.loginfo("[EGPSR] look point x = {0}".format(x))
+            rospy.loginfo("[EGPSR] look point y = {0}".format(y))
+            rospy.loginfo("[EGPSR] self.x_offset = {0}".format(self.x_offset))
+            rospy.loginfo("[EGPSR] self.y_offset = {0}".format(self.y_offset))
+
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
+
+            if base_poses_for_point:
+                base_pose_for_point = base_poses_for_point[0]
+            else:
+                rospy.logerr("IK returned empty pose.")
+                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
@@ -1065,7 +1077,7 @@ def setup_statemachine(robot):
         ## maybe a reset head and reset spindle / arms over here?
 
 
-        # In case goal is given via speech interpreter:
+        #In case goal is given via speech interpreter:
         smach.StateMachine.add("FAILED_TASK",
                                 Failed_goal(robot),
                                 transitions={'new_task':'ASK_ACTION'})
