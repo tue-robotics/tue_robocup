@@ -1,7 +1,9 @@
 # Responsible: Teun
 
 amigo1:
-
+    roscd pein_face_recognition/
+    rm -rf models/
+    svn up	
     astart
 
 amigo1:
@@ -27,7 +29,6 @@ amigo3:
     rosrun challenge_cocktail_party cocktail_party_smach.py
 
 INSTRUCTIONS:
-If you want to restart the challenge you have to restart middleware. Names can still be loaded inside face-rec or face-seg.
 
 - Possible names are :
 Barbara
@@ -53,11 +54,6 @@ William
 
 - Possible drinks for speech recognition are, though template matching only has (coke, rubiks, teapack and wire):
 coke
-sevenup
-lemontea
-pepsi
-mineralwater
-gatorade
-orangejuice
-applejuice
+icetea
+teapack
 
