@@ -39,7 +39,7 @@ const int N_MODELS = 2;                         // Number of models used for rec
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
-const double T_LEAVE_ELEVATOR = 9.0;            // Time after which robot is assumed to be outside the elevator.
+const double T_LEAVE_ELEVATOR = 15.0;            // Time after which robot is assumed to be outside the elevator.
 const double TYPICAL_OPERATOR_X = 1.0;          // Expected x-position operator, needed when looking for operator
 const double TYPICAL_OPERATOR_Y = 0;            // Expected y-position operator, needed when looking for operator
 const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;  // Maximum distance of robot to wall in elevator (used to detect elevator)
@@ -483,7 +483,7 @@ void speechCallback(std_msgs::String res) {
     // TODO: If this becomes problematic, add distance to operator check
 
     //amigoSpeak(res.data);
-    if (!itp2_ && !itp3_ && res.data == "elevator" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
+    if (!itp2_ && !itp3_ && res.data == "amigoleave" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
         ROS_WARN("Received command: %s", res.data.c_str());
         itp2_ = true;
     } else {
@@ -582,7 +582,8 @@ bool leftElevator(pbl::Gaussian& pos)
     map<unsigned int, double> beam_exit_distance_map;
 
     //! Get candidate exits
-    ROS_INFO("Start looking for an elevator exit...");
+    ROS_DEBUG("Start looking for an elevator exit...");
+    double distance_left = 0, distance_right = 0;
     while (i < laser_scan_.ranges.size()-1)
     {
         unsigned int i_first = i;
@@ -596,6 +597,14 @@ bool leftElevator(pbl::Gaussian& pos)
             {
                 min_distance_segment = laser_scan_.ranges[i_current];
             }
+
+            //! Check distance on left/right of AMIGO
+            if (std::fabs(laser_scan_.angle_min + i_current*laser_scan_.angle_increment + PI/2) < laser_scan_.angle_increment) {
+                distance_left = laser_scan_.ranges[i_current];
+            } else if (std::fabs(laser_scan_.angle_min + i_current*laser_scan_.angle_increment - PI/2) < laser_scan_.angle_increment) {
+                distance_right = laser_scan_.ranges[i_current];
+            }
+
             ++i_current;
         }
 
@@ -609,6 +618,13 @@ bool leftElevator(pbl::Gaussian& pos)
         i = ++i_current;
 
     }
+
+    //! Check if AMIGO already left the elevator
+    if (distance_left > 2.5 && distance_right > 2.5) {
+        ROS_WARN("AMIGO is outside the elevator: distances left and right are %f and %f", distance_left, distance_right);
+        return true;
+    }
+
 
     //! Determine most likely candidate
     ROS_DEBUG("Finished iterating over laser data");
@@ -849,7 +865,7 @@ int main(int argc, char **argv) {
             if (itp2_new) {
 
                 //! Robot is asked to leave the elevator
-                amigoSpeak("I will leave the elevator now. I will call you when I'm done");
+                amigoSpeak("I will leave the elevator now. Can you wait until I call you?");
 
                 sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
                 ROS_INFO("Subscribed to laser data");
@@ -902,6 +918,8 @@ int main(int argc, char **argv) {
                     ++n_sleeps;
                 }
 
+                amigoSpeak("I left the elevator, you can leave the elevator now");
+
                 //! Stand still and find operator
                 pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
                 moveTowardsPosition(pos, 0);
@@ -913,7 +931,7 @@ int main(int argc, char **argv) {
                     ROS_ERROR("Failed to clear world model");
                 }
                 findOperator(client, false);
-                amigoSpeak("I am done, please go ahead and I will follow you.");
+                amigoSpeak("I will now continue following you.");
 
                 //! Next state
                 itp2_ = false;
