@@ -109,7 +109,7 @@ class DetermineBaseGraspPose(smach.State):
 
         ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
         if not self.desired_base_poses_MAP:
-            self.robot.speech.speak("I am very sorry but this object is out of my reach",mood="sad")
+            self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad")
             return 'failed'
         
         x   = self.desired_base_poses_MAP[0].pose.position.x
@@ -214,7 +214,7 @@ class Prepare_orientation(smach.State):
             
             ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
             if not desired_base_poses_MAP:
-                self.robot.speech.speak("I am very sorry but this object is out of my reach",mood="sad")
+                self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad")
                 return 'orientation_failed'
             
             rospy.loginfo("[robot_smach_states] Desired target position: x = %f, y = %f",desired_base_poses_MAP[0].pose.position.x, desired_base_poses_MAP[0].pose.position.y)
@@ -664,7 +664,7 @@ class HandoverToHuman(smach.StateMachine):
         self.robot = robot
 
         with self:
-            smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.4, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=False),
+            smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=False),
                         transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
 
             smach.StateMachine.add("SAY_OPEN_GRIPPER", 
