@@ -209,7 +209,7 @@ class Ask_drink(smach.State):
         # Check if tea_pack or teapack mix up in speech and template matching compatibility
         if self.response.answer == "teapack":
             self.response.answer = "tea_pack"
-            rospy.loginfo("Changed tea_pack to teapack!")        
+            rospy.logwarn("Changed teapack to tea_pack!")        
         rospy.loginfo("self.response = {0}".format(self.response.answer))
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", self.response.answer))))
@@ -239,7 +239,7 @@ class LearnPersonCustom(smach.State):
         if learn_result == 'face_learned':
             rospy.loginfo("Face learning succeeded")
         elif learn_result == 'learn_failed':
-            rospy.loginfo("Failed learning face, WHAT TO DO!? Just continue to the next state and ask drink.")
+            rospy.logogwarn("Failed learning face, WHAT TO DO!? Just continue to the next state and ask drink.")
         return learn_result
 
 class LookForDrink(smach.State):
@@ -308,7 +308,7 @@ class LookForDrink(smach.State):
             self.robot.speech.speak("I was not able to start template matching.")
             return "not_found"
 
-        rospy.sleep(3.0)
+        rospy.sleep(4.5)
 
         rospy.loginfo("Template matching will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -378,11 +378,12 @@ class LookForPerson(smach.State):
             return "looking"
 
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
-        rospy.sleep(5.0)
         # we made it to the new goal. Let's have a look to see whether we can find the person here
         self.robot.speech.speak("Let me see who I can find here...")
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
+
+        rospy.sleep(5.0)
 
         self.response_start = self.robot.perception.toggle(["face_segmentation"])
         if self.response_start.error_code == 0:
@@ -391,7 +392,7 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(5.0)
+        rospy.sleep(4.0)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -448,7 +449,7 @@ class LookForPerson(smach.State):
                 return "found"
 
         else:
-            rospy.loginfo("No person names received from world model") 
+            rospy.logwarn("No person names received from world model") 
         return "not_found"
 
 ## Class not build in yet, this will be used when person can not be found but drink is still in gripper
@@ -632,7 +633,12 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'PICKUP_DRINK',
                                             GrabMachine(arm, robot, query_grabpoint),
                                             transitions={   "succeeded":"RETRACT_VISITED_2",
-                                                            "failed":'LOOK_FOR_DRINK' }) 
+                                                            "failed":'SAY_DRINK_NOT_GRASPED' }) 
+
+                    smach.StateMachine.add( 'SAY_DRINK_NOT_GRASPED',
+                                            Say(robot, ["I could not pick up the drink you wanted", 
+                                                        "I failed to grab the object you wanted."]),
+                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' }) 
                     # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
                                             Human_handover(arm,robot),

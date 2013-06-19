@@ -265,7 +265,7 @@ class LookForDrink(smach.State):
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
 
         if object_answers:
-            self.robot.speech.speak("Hey, I found your" + serving_drink)
+            self.robot.speech.speak("Hey, I found your " + serving_drink)
             return "found"
         else:
             self.robot.speech.speak("Did not find the drink!")
