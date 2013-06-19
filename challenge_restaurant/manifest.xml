@@ -19,6 +19,8 @@
   <depend package="text_to_speech_philips"/>
   <depend package="tue_carrot_planner"/>
   <depend package="tue_pocketsphinx"/>
+  <depend package="tue_move_base_msgs"/>
+  <depend package="speech_interpreter"/>
 
 </package>
 

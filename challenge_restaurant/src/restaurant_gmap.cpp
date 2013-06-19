@@ -12,6 +12,7 @@
 #include <std_msgs/String.h>
 #include <std_srvs/Empty.h>
 #include "perception_srvs/StartPerception.h"
+#include "speech_interpreter/GetInfo.h"
 
 #include "problib/conversions.h"
 
@@ -59,15 +60,67 @@ bool stored_location = false;                                                   
 bool finished = false;                                                            // Bookkeeping: true if robot must go to ordering location
 int state = 0;                                                                    // Bookkeeping: state
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
-unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
+unsigned int n_locations_deliver_ = 0;                                            // Bookkeeping: number of locations learned
+unsigned int n_shelves_ = 0;
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 double t_freeze_ = 0;
 tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
-tf::StampedTransform tf_;
 
 map<string, tf::StampedTransform> location_map_;
-//typedef vector<double> doubles;
-//doubles loc_list;
+map<int, pair<string, string> > order_map_;
+
+
+bool startSpeechRecognition() {
+    std::string knowledge_path = ros::package::getPath("tue_knowledge");
+    if (knowledge_path == "") {
+        return false;
+    }
+
+    std::string restaurant_speech_path = knowledge_path + "/speech_recognition/restaurant/";
+
+    tue_pocketsphinx::Switch::Request req;
+    req.action = tue_pocketsphinx::Switch::Request::START;
+    req.hidden_markov_model = "/usr/share/pocketsphinx/model/hmm/wsj1";
+    req.dictionary = restaurant_speech_path + "restaurant.dic";
+    req.language_model = restaurant_speech_path + "restaurant.lm";
+
+    tue_pocketsphinx::Switch::Response resp;
+    if (speech_recognition_client_.call(req, resp)) {
+        if (resp.error_msg == "") {
+            ROS_INFO("Switched on speech recognition");
+        } else {
+            ROS_WARN("Unable to turn on speech recognition: %s", resp.error_msg.c_str());
+            return false;
+        }
+    } else {
+        ROS_WARN("Service call for turning on speech recognition failed");
+        return false;
+    }
+
+    return true;
+}
+
+bool stopSpeechRecognition() {
+    // Turn off speech recognition
+    tue_pocketsphinx::Switch::Request req;
+    req.action = tue_pocketsphinx::Switch::Request::STOP;
+
+    tue_pocketsphinx::Switch::Response resp;
+    if (speech_recognition_client_.call(req, resp)) {
+        if (resp.error_msg == "") {
+            ROS_INFO("Switched off speech recognition");
+        } else {
+            ROS_WARN("Unable to turn off speech recognition: %s", resp.error_msg.c_str());
+            return false;
+        }
+    } else {
+        ROS_WARN("Unable to turn off speech recognition");
+        return false;
+    }
+
+    return true;
+}
+
 
 
 /**
@@ -75,6 +128,8 @@ map<string, tf::StampedTransform> location_map_;
  * @param sentence
  */
 void amigoSpeak(string sentence) {
+
+    stopSpeechRecognition();
 
     ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
 
@@ -93,6 +148,8 @@ void amigoSpeak(string sentence) {
         sentence_msgs.data = sentence;
         pub_speech_.publish(sentence_msgs);
     }
+
+    startSpeechRecognition();
 
 }
 
@@ -233,57 +290,6 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
 }
 
-bool startSpeechRecognition() {
-    std::string knowledge_path = ros::package::getPath("tue_knowledge");
-    if (knowledge_path == "") {
-        return false;
-    }
-
-    std::string restaurant_speech_path = knowledge_path + "/speech_recognition/restaurant/";
-
-    tue_pocketsphinx::Switch::Request req;
-    req.action = tue_pocketsphinx::Switch::Request::START;
-    req.hidden_markov_model = "/usr/share/pocketsphinx/model/hmm/wsj1";
-    req.dictionary = restaurant_speech_path + "restaurant.dic";
-    req.language_model = restaurant_speech_path + "restaurant.lm";
-
-    tue_pocketsphinx::Switch::Response resp;
-    if (speech_recognition_client_.call(req, resp)) {
-        if (resp.error_msg == "") {
-            ROS_INFO("Switched on speech recognition");
-        } else {
-            ROS_WARN("Unable to turn on speech recognition: %s", resp.error_msg.c_str());
-            return false;
-        }
-    } else {
-        ROS_WARN("Service call for turning on speech recognition failed");
-        return false;
-    }
-
-    return true;
-}
-
-bool stopSpeechRecognition() {
-    // Turn off speech recognition
-    tue_pocketsphinx::Switch::Request req;
-    req.action = tue_pocketsphinx::Switch::Request::STOP;
-
-    tue_pocketsphinx::Switch::Response resp;
-    if (speech_recognition_client_.call(req, resp)) {
-        if (resp.error_msg == "") {
-            ROS_INFO("Switched off speech recognition");
-        } else {
-            ROS_WARN("Unable to turn off speech recognition: %s", resp.error_msg.c_str());
-            return false;
-        }
-    } else {
-        ROS_WARN("Unable to turn off speech recognition");
-        return false;
-    }
-
-    return true;
-}
-
 
 /**
 * @brief getPositionGuide
@@ -336,14 +342,14 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                     if (cov(0,0) < last_var_guide_pos_ || last_var_guide_pos_ < 0) {
                         last_var_guide_pos_ = cov(0,0);
                         t_no_meas_ = 0;
-                        ROS_INFO("Time since last update was %f", ros::Time::now().toSec()-t_last_check_);
+                        ROS_DEBUG("Time since last update was %f", ros::Time::now().toSec()-t_last_check_);
                         t_last_check_ = ros::Time::now().toSec();
                     } else {
 
                         //! Uncertainty increased: guide out of side
                         last_var_guide_pos_ = cov(0,0);
                         t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
-                        ROS_INFO("%f [s] without position update guide: ", t_no_meas_);
+                        if (t_no_meas_ > 2.5) ROS_INFO("%f [s] without position update guide: ", t_no_meas_);
 
                         //! Position uncertainty increased too long: guide lost
                         if (t_no_meas_ > TIME_OUT_GUIDE_LOST) {
@@ -388,7 +394,7 @@ void speechCallback(std_msgs::String res) {
     else if (candidate_freeze_amigo_ &&  res.data == "yes" && !finished) {
         freeze_amigo_ = true;
         candidate_freeze_amigo_ = false;
-        amigoSpeak("I will remember this location. Is it a pickup location?");
+        amigoSpeak("I will remember this location. Is it a shelf?");
     }
     // All locations are learned and Amigo is at ordering location
     else if (candidate_freeze_amigo_ &&  res.data == "yes" && finished) {
@@ -396,9 +402,10 @@ void speechCallback(std_msgs::String res) {
         amigoSpeak("I will remember this location as ordering location");
 
         // Save location
-        listener->lookupTransform("/base_link", "/map", ros::Time(0), tf_);
-        location_map_["ordering location"] = tf_;
-        ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",tf_.getOrigin().y(), tf_.getOrigin().x() );
+        tf::StampedTransform tf;
+        listener->lookupTransform("/base_link", "/map", ros::Time(0), tf);
+        location_map_["ordering location"] = tf;
+        ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",tf.getOrigin().y(), tf.getOrigin().x() );
 
         freeze_amigo_ = false;
         state = 1;
@@ -415,20 +422,22 @@ void speechCallback(std_msgs::String res) {
 
         std::stringstream location_name;
 
-        // Answer is yes: indeed a pickup location
+        // Answer is yes: indeed a shelf
         if (res.data == "yes") {
-            location_name << "pickup" << n_locations_learned_;
+            ++n_shelves_;
+            location_name << "shelf" << n_shelves_;
         }
-        // Answer is no: not a pickup location
+        // Answer is no: not a shelf, but a delivery location
         else {
-            location_name << "shelf" << n_locations_learned_;
+            ++n_locations_deliver_;
+            location_name << "delivery location" << n_locations_deliver_;
         }
 
         // Get position
-        listener->lookupTransform("/base_link", "/map", ros::Time(0), tf_);
-        location_map_[location_name.str()] = tf_;
-        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",location_name.str().c_str() ,tf_.getOrigin().y(), tf_.getOrigin().x() );
-        ++n_locations_learned_;
+        tf::StampedTransform tf;
+        listener->lookupTransform("/base_link", "/map", ros::Time(0), tf);
+        location_map_[location_name.str()] = tf;
+        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",location_name.str().c_str() ,tf.getOrigin().y(), tf.getOrigin().x() );
 
         string sentence = "Ok, I will remember this location as " + location_name.str();
         amigoSpeak(sentence);
@@ -459,10 +468,6 @@ void speechCallback(std_msgs::String res) {
 }
 
 
-
-void speechCallback_order(std_msgs::String res) {
-    // take order
-}
 
 
 
@@ -512,12 +517,42 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
 
 
+
+bool moveTowardsPositionMap(tf::StampedTransform pos) {
+
+
+    geometry_msgs::PoseStamped base_pose;
+    base_pose.pose.position.x = pos.getOrigin().getX();
+    base_pose.pose.position.y = pos.getOrigin().getY();
+    base_pose.header.frame_id = "/map";
+
+    //! Transform quaternion to message
+    tf::Quaternion q1 = pos.getRotation();
+    tf::quaternionTFToMsg(q1, base_pose.pose.orientation);
+
+    //! Add to base goal
+    tue_move_base_msgs::MoveBaseGoal base_goal;
+    base_goal.path.push_back(base_pose);
+    move_base_ac_->sendGoal(base_goal);
+    move_base_ac_->waitForResult(ros::Duration(60.0));
+
+    if(move_base_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+        ROS_WARN("Could not reach target position");
+        return false;
+    }
+
+    return true;
+
+}
+
+
+
+
 int main(int argc, char **argv) {
     ros::init(argc, argv, "restaurant_simple");
     ros::NodeHandle nh;
     
     ROS_INFO("Started Restaurant");
-
 
     /// Tf listener
     listener = new tf::TransformListener();
@@ -618,12 +653,6 @@ int main(int argc, char **argv) {
         //! Get objects from the world state
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
-        if (n_locations_learned_ == 6) {
-            ROS_WARN("I think I know all locations");
-            amigoSpeak("I learned five locations, Now I will go to the ordering spot");
-        }
-
-
         //! Check if the robot has to move
         if (freeze_amigo_) {
 
@@ -676,18 +705,132 @@ int main(int argc, char **argv) {
         follow_rate.sleep();
     }
 
-    // Use another callback
-    sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback_order);
+    // PART II: Get orders
+    amigoSpeak("Done learning locations, now it is time to take an order");
+
+    ros::ServiceClient speech_client = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_user_info");
 
     // Take order
+    unsigned int n_orders = 3;
     while(ros::ok() && state  == 1) {
         ros::spinOnce();
 
-        // do stuff
-        ROS_INFO("Done learning, time to take an order");
+        speech_interpreter::GetInfo srv;
+        srv.request.type = "object_classes";
+        srv.request.n_tries = 3;
+        srv.request.time_out = 40;
+        for (unsigned int order_index = 0; order_index < n_orders; ++order_index) {
+
+            // Ask for a object class
+            bool right_answer = false;
+            string desired_object = "coke";
+
+            // Ask for object class
+            if (speech_client.call(srv)) {
+                string obj_class = srv.response.answer;
+
+                // Check answer object class
+                if (obj_class != "no_answer" && obj_class != "wrong_answer") {
+                    srv.request.type = obj_class;
+                    amigoSpeak("Which object would you like from this class?");
+
+                    // Ask which object from class
+                    if (speech_client.call(srv)) {
+                        if (obj_class != "no_answer" && obj_class != "wrong_answer") {
+                            desired_object = srv.response.answer;
+                            right_answer = true;
+                        }
+
+                    }
+                }
+            }
+
+            if (!right_answer) {
+                amigoSpeak("I don't know which object you want me to transport, I will bring a coke");
+            }
+
+            // Ask for a delivery location number
+            srv.request.type = "numbers";
+            right_answer = false;
+            string desired_location = "one";
+            amigoSpeak("Which delivery location do you want me to bring the object to?");
+
+            // Ask for object class
+            if (speech_client.call(srv)) {
+                string given_loc = srv.response.answer;
+
+                // Check answer object class
+                if (given_loc != "no_answer" && given_loc != "wrong_answer") {
+                    desired_location = given_loc;
+                    right_answer = true;
+                }
+            }
+
+            if (!right_answer) {
+                amigoSpeak("I don't know to which delivery location you want me to transport the object to, I will bring it to delivery location one");
+            }
+
+
+            // finished learning this task
+            amigoSpeak("I will bring the " + desired_object + " to delivery location " + desired_location);
+
+            // Mapping from string to int ("one" -> "1")
+            map<string, string> number_map;
+            number_map["one"] = "1";
+            number_map["two"] = "2";
+            number_map["three"] = "3";
+
+            // Check if delivery location exists (in location_map_)
+            if (number_map.find(desired_location) != number_map.end()) {
+                desired_location = number_map[desired_location];
+            }
+            else {
+                amigoSpeak("I do not understand the number you gave me, I will bring it to delivery location one");
+                desired_location =  "1";
+            }
+
+            // Add order to the map
+            order_map_[order_index] = make_pair<string, string>(desired_object, desired_location);
+
+        }
+
+        state = 2;
+
 
         follow_rate.sleep();
 
+    }
+
+    // Switch to move_base
+    delete planner_;
+    move_base_ac_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base", true);
+    move_base_ac_->waitForServer();
+    ROS_INFO("Connected to move_base server");
+
+    // Do tasks
+    while(ros::ok() && state  == 2) {
+        ros::spinOnce();
+
+        map<string, tf::StampedTransform>::const_iterator it = location_map_.begin();
+        for (; it != location_map_.end(); ++it) {
+
+            // If the current location is a shelf
+            if (it->first.find("shelf") != std::string::npos) {
+
+                // Go find the object
+                moveTowardsPositionMap(it->second);
+            }
+
+        }
+
+        // Then go back to order location
+        if (location_map_.find("ordering_location") != location_map_.end()) {
+            moveTowardsPositionMap(location_map_["ordering location"]);
+        } else {
+            ROS_WARN("No ordering location stored");
+        }
+
+        follow_rate.sleep();
     }
 
     //! When node is shut down, cancel goal by sending zero
