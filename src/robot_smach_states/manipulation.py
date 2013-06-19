@@ -144,12 +144,22 @@ class PrepareOrientation(smach.StateMachine):
         else:
             self.y_offset = y_offset
 
+        self.determine_grasp_pose = DetermineBaseGraspPose(self.side, self.robot, self.grabpoint_query, self.x_offset, self.y_offset)
+
+        @smach.cb_interface(outcomes=['done'])
+        def init_prepare_orientation(userdata):
+            self.determine_grasp_pose.nr_inverse_reachability_calls = 0
+            return "done"
+
         with self:
-            smach.StateMachine.add('DETERMINE_GRASP_POSE', 
-                DetermineBaseGraspPose(self.side, self.robot, self.grabpoint_query, self.x_offset, self.y_offset),
+
+            smach.StateMachine.add('INITIALIZE_PREPARE_ORIENTATION', smach.CBState(init_prepare_orientation),
+                                    transitions={   'done':'DETERMINE_GRASP_POSE'})
+
+            smach.StateMachine.add('DETERMINE_GRASP_POSE', self.determine_grasp_pose,
                 transitions={'succeeded'    :'DRIVE_TO_GRASP_POSE',
                              'failed'       :'orientation_failed',
-                             'target_lost'  :'target_lost'})
+                             'target_lost'  :'target_lost'})            
 
             smach.StateMachine.add('DRIVE_TO_GRASP_POSE',
                 navigation.NavigateGeneric(robot=self.robot, goal_query=Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))),
@@ -332,7 +342,7 @@ class UpdateObjectPose(smach.State):
         else:
             self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
             self.robot.perception.toggle(["tabletop_segmentation"])
-            self.robot.perception.set_perception_roi(target_point, length_x=0.5, length_y=0.5, length_z=0.3)
+            self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.2)
             rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
             waittime = 5.0
             rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(waittime))
