@@ -102,7 +102,9 @@ void findOperator(wire::Client& client, bool lost = true) {
     }
 
     //! It is allowed to call the operator once per section (points for the section will be lost)
-    if (lost) {
+    if (lost && !in_elevator_) {
+
+        //! If the robot is in the elevator, informing costs points
         amigoSpeak("I have lost my operator, can you please stand in front of me");
 
         //! Give the operator some time to move to the robot
