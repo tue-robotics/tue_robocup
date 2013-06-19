@@ -368,7 +368,7 @@ class LookForPerson(smach.State):
             return "looking"
 
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
-
+        rospy.sleep(5.0)
         # we made it to the new goal. Let's have a look to see whether we can find the person here
         self.robot.speech.speak("Let me see who I can find here...")
         self.robot.head.set_pan_tilt(tilt=-0.2)
@@ -431,7 +431,7 @@ class LookForPerson(smach.State):
                 return "found"
 
         else:
-            rospy.warn("No person names received from world model") 
+            #rospy.warn("No person names received from world model") 
         return "not_found"
 
 ## Class not build in yet, this will be used when person can not be found but drink is still in gripper
