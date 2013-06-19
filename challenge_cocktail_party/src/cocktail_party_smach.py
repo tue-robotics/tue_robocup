@@ -205,7 +205,11 @@ class Ask_drink(smach.State):
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             self.robot.speech.speak("I will just bring you a coke")
             self.response.answer = "coke"
-        
+
+        # Check if tea_pack or teapack mix up in speech and template matching compatibility
+        if self.response.answer == "teapack":
+            self.response.answer = "tea_pack"
+            rospy.loginfo("Changed tea_pack to teapack!")        
         rospy.loginfo("self.response = {0}".format(self.response.answer))
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", self.response.answer))))
