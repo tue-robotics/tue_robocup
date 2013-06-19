@@ -51,7 +51,9 @@ class Learn_Person(smach.State):
         # learn left face
         self.robot.speech.speak('Please be patient, while I try to learn your face.')
         #self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
-        self.robot.leftArm.send_joint_goal(-1.439, 0.696, -0.967, 1.202, -0.9489, 0.5272, 0.0367)
+        #self.robot.leftArm.send_joint_goal(-1.439, 0.696, -0.967, 1.202, -0.9489, 0.5272, 0.0367)
+        self.robot.leftArm.send_joint_goal(-1.439, 0.496, -0.967, 1.352, -0.9489, 0.5272, 0.0367)
+
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
         result = self.robot.perception.learn_person(name_to_learn, view = 'left', publish_while_learning = False)
@@ -63,7 +65,9 @@ class Learn_Person(smach.State):
         self.robot.leftArm.reset_arm()
         #self.robot.rightArm.send_goal(0.365, -0.399, 1.600, 0, 30, 0, 60)
         #self.robot.rightArm.send_goal(0.32, -0.43, 1.50, 0, 30, 0, 60)
-        self.robot.rightArm.send_joint_goal(-1.159, 0.911, -1.021, 1.469, -0.603, 0.255, 0.0206)
+        #self.robot.rightArm.send_joint_goal(-1.159, 0.911, -1.021, 1.469, -0.603, 0.255, 0.0206)
+        self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206)
+
         self.robot.speech.speak(speech_sentence[1])
         result = self.robot.perception.learn_person(name_to_learn, view = 'right')
         if result == True:
@@ -76,8 +80,7 @@ class Learn_Person(smach.State):
         result = self.robot.perception.learn_person(name_to_learn, view = 'front')
         if result == True:
             self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
-        self.robot.speech.speak("Learning succeeded. I know how you look already.")
-        self.robot.speech.speak("Now I should recognize you, next time!")
+        self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!")
         
         return 'face_learned'
 
