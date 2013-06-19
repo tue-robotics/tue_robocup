@@ -380,7 +380,7 @@ class LookForPerson(smach.State):
                 self.robot.speech.speak("Hello " + str(name)) 
                 return "found"       
         else:
-            #rospy.warn("No person names received from world model") 
+            rospy.loginfo("No person names received from world model") 
 
         return "not_found"
 

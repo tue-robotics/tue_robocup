@@ -304,9 +304,15 @@ class LookForDrink(smach.State):
             self.robot.speech.speak("I was not able to start template matching.")
             return "not_found"
 
-        #self.robot.perception.toggle(["template_matching"])
         rospy.sleep(3.0)
-        self.robot.perception.toggle([])
+
+        rospy.loginfo("Template matching will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Template matching is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping template matching ")
 
         object_answers = self.robot.reasoner.query(Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
@@ -382,7 +388,14 @@ class LookForPerson(smach.State):
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
         rospy.sleep(5.0)
-        self.robot.perception.toggle([])
+
+        rospy.loginfo("Face segmentation will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Face segmentation is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping face segmentation")
 
         person_result = self.robot.reasoner.query(
                                             Conjunction(  
@@ -431,7 +444,7 @@ class LookForPerson(smach.State):
                 return "found"
 
         else:
-            #rospy.warn("No person names received from world model") 
+            rospy.loginfo("No person names received from world model") 
         return "not_found"
 
 ## Class not build in yet, this will be used when person can not be found but drink is still in gripper
