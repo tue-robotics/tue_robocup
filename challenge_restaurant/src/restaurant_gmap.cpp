@@ -25,6 +25,11 @@
 
 using namespace std;
 
+#include <iostream>
+#include <vector>
+#include <cstring>
+#include <fstream>
+
 // Possible speech commands
 // amigostop
 // thislocationisnamed
@@ -50,17 +55,19 @@ ros::ServiceClient srv_speech_;                                                 
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 bool freeze_amigo_ = false;                                                       // Bookkeeping: true if stop command is confirmed
 bool candidate_freeze_amigo_ = false;                                             // Bookkeeping: true if robot is asked to stop
+bool stored_location = false;                                                     // Bookkeeping: true if robot another location must be learned
+bool finished = false;                                                            // Bookkeeping: true if robot must go to ordering location
+int state = 0;                                                                    // Bookkeeping: state
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 unsigned int n_locations_learned_ = 0;                                            // Bookkeeping: number of locations learned
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 double t_freeze_ = 0;
-tf::TransformListener* listener;													  // Tf listenter to obtain tf information to store locations
-tf::StampedTransform tf_ordering;
-tf::StampedTransform tf_location;
-tf::StampedTransform tf_place;
-tf::StampedTransform tf_dropoff;
-tf::StampedTransform tf_spot;
-tf::StampedTransform tf_room;
+tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
+tf::StampedTransform tf_;
+
+map<string, tf::StampedTransform> location_map_;
+//typedef vector<double> doubles;
+//doubles loc_list;
 
 
 /**
@@ -68,13 +75,13 @@ tf::StampedTransform tf_room;
  * @param sentence
  */
 void amigoSpeak(string sentence) {
-	
-	ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
+
+    ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
 
     
     //! Call speech service
-	text_to_speech_philips::Speak speak;
-	speak.request.sentence = sentence;
+    text_to_speech_philips::Speak speak;
+    speak.request.sentence = sentence;
     speak.request.language = "us";
     speak.request.character = "kyle";
     speak.request.voice = "default";
@@ -82,10 +89,10 @@ void amigoSpeak(string sentence) {
     speak.request.blocking_call = true;
 
     if (!srv_speech_.call(speak)) {
-		std_msgs::String sentence_msgs;
-		sentence_msgs.data = sentence;
-		pub_speech_.publish(sentence_msgs);
-	}
+        std_msgs::String sentence_msgs;
+        sentence_msgs.data = sentence;
+        pub_speech_.publish(sentence_msgs);
+    }
 
 }
 
@@ -370,67 +377,94 @@ void speechCallback(std_msgs::String res) {
 
     ROS_INFO("Received command: %s", res.data.c_str());
 
+    //// AMIGO STOP
     if (res.data == "amigostop") {
         candidate_freeze_amigo_ = true;
         amigoSpeak("Do you want me to stop?");
         t_freeze_ = ros::Time::now().toSec();
-    } else if (candidate_freeze_amigo_ &&  res.data == "yes") {
-		freeze_amigo_ = true;
-		candidate_freeze_amigo_ = false;
-		amigoSpeak("I will remember this location. How is it called?");
-    } else if (candidate_freeze_amigo_ && res.data != "yes" && res.data != "") {
-		candidate_freeze_amigo_ = false;
-		amigoSpeak("Sorry. I misunderstood. I will follow you");	
-	//} else if (freeze_amigo_ && (res.data == "thislocationisnamed" || res.data == "thislocationiscalled")) {
-    } else if (res.data.find("thislocationisnamed") != std::string::npos || res.data.find("thislocationiscalled") != std::string::npos) {
-		
+    }
+    //// AMIGO STOP: YES
+    // Amigo heard amigostop and answer is confirmed
+    else if (candidate_freeze_amigo_ &&  res.data == "yes" && !finished) {
+        freeze_amigo_ = true;
+        candidate_freeze_amigo_ = false;
+        amigoSpeak("I will remember this location. Is it a pickup location?");
+    }
+    // All locations are learned and Amigo is at ordering location
+    else if (candidate_freeze_amigo_ &&  res.data == "yes" && finished) {
+        candidate_freeze_amigo_ = false;
+        amigoSpeak("I will remember this location as ordering location");
+
+        // Save location
+        listener->lookupTransform("/base_link", "/map", ros::Time(0), tf_);
+        location_map_["ordering location"] = tf_;
+        ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",tf_.getOrigin().y(), tf_.getOrigin().x() );
+
         freeze_amigo_ = false;
+        state = 1;
+    }
+    //// AMIGO STOP: NO
+    // All locations are learned and Amigo is at ordering location
+    else if (candidate_freeze_amigo_ &&  res.data != "yes" && res.data != "") {
+        candidate_freeze_amigo_ = false;
+        amigoSpeak("I misunderstood, I will follow you");
+    }
+
+    //// AMIGO ASKED: PICKUP LOCATION
+    else if (freeze_amigo_) {
+
+        std::stringstream location_name;
+
+        // Answer is yes: indeed a pickup location
+        if (res.data == "yes") {
+            location_name << "pickup" << n_locations_learned_;
+        }
+        // Answer is no: not a pickup location
+        else {
+            location_name << "shelf" << n_locations_learned_;
+        }
+
+        // Get position
+        listener->lookupTransform("/base_link", "/map", ros::Time(0), tf_);
+        location_map_[location_name.str()] = tf_;
+        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",location_name.str().c_str() ,tf_.getOrigin().y(), tf_.getOrigin().x() );
+        ++n_locations_learned_;
+
+        string sentence = "Ok, I will remember this location as " + location_name.str();
+        amigoSpeak(sentence);
+        amigoSpeak("Do you want to learn another location?");
+
         ros::Duration delta(2.0);
         delta.sleep();
-        if (n_locations_learned_ == 0) {
-			amigoSpeak("Ok, I will remember this location as the ordering location"); // To Do find better names for locations
-			ROS_INFO("Learned ordering location called ordering location");
-			listener->lookupTransform("/base_link", "/map", ros::Time(0), tf_ordering);		
-			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_ordering.getOrigin().y(), tf_ordering.getOrigin().x() );	
-		}        
-        else if (n_locations_learned_ == 1) {
-			amigoSpeak("Ok, I will remember this location as location"); // To Do find better names for locations
-			ROS_INFO("Learned first location called location");
-			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_location);
-			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_location.getOrigin().y(), tf_location.getOrigin().x() );	
-		}
-		else if (n_locations_learned_ == 2) {
-			amigoSpeak("Alright, I will remember this location as place");
-			ROS_INFO("Learned second location called place");
-			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_place);
-			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_place.getOrigin().y(), tf_place.getOrigin().x() );	
-		}
-		else if (n_locations_learned_ == 3) {
-			amigoSpeak("Ok, I will remember this location as dropoff");
-			ROS_INFO("Learned third location called dropoff");
-			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_dropoff);
-			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_dropoff.getOrigin().y(), tf_dropoff.getOrigin().x() );		
-		}
-		else if (n_locations_learned_ == 4) {
-			amigoSpeak("Definitely, I will remember this location as spot");
-			ROS_INFO("Learned fourth location called spot");
-			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_spot);
-			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_spot.getOrigin().y(), tf_spot.getOrigin().x() );	
-		}
-		else if (n_locations_learned_ == 5) {
-			amigoSpeak("Alright, I will remember this location as room");
-			ROS_INFO("Learned fifth location called room");
-			listener->lookupTransform("/base_link", "/base_link", ros::Time(0), tf_room);
-			ROS_INFO("Saved this location with transform parameters : [%f,%f]", tf_room.getOrigin().y(), tf_room.getOrigin().x() );	
-		}		
-		
-        ++n_locations_learned_;
-        amigoSpeak("Thank you. I will now continue to follow you");
+
+        // Administration
+        freeze_amigo_ = false;
+        stored_location = true;
+
     }
+    //// AMIGO MUST LEARN ANOTHER LOCATION
+    else if (stored_location &&  res.data == "yes") {
+        finished = false;
+        stored_location = false;
+    }
+    //// AMIGO WILL GO TO OREDERING LOCATION
+    else if (stored_location &&  res.data != "yes" && res.data != "") {
+        finished = true;
+        stored_location = false;
+    }
+    /////
 
     // always immediately start listening again
     startSpeechRecognition();
 }
+
+
+
+void speechCallback_order(std_msgs::String res) {
+    // take order
+}
+
+
 
 
 /**
@@ -441,7 +475,7 @@ void speechCallback(std_msgs::String res) {
 void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
- 
+
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
     end_goal.header.frame_id = NAVIGATION_FRAME;
@@ -468,11 +502,11 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
     end_goal.pose.position.z = 0;
 
     if (t_no_meas_ < 1.0) {
-		planner_->MoveToGoal(end_goal);
+        planner_->MoveToGoal(end_goal);
         ROS_DEBUG("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
-	} else {
+    } else {
         ROS_DEBUG("No guide position update: robot will not move");
-	}
+    }
 
 }
 
@@ -482,10 +516,11 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "restaurant_simple");
     ros::NodeHandle nh;
     
-     ROS_INFO("Started Restaurant");
-     
-     /// Tf listener
-     listener = new tf::TransformListener();
+    ROS_INFO("Started Restaurant");
+
+
+    /// Tf listener
+    listener = new tf::TransformListener();
     
     /// Head ref
     head_ref_pub_ = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
@@ -577,7 +612,7 @@ int main(int argc, char **argv) {
     //! Follow guide
     freeze_amigo_ = false;
     ros::Rate follow_rate(FOLLOW_RATE);
-    while(ros::ok()) {
+    while(ros::ok() && state  == 0) {
         ros::spinOnce();
 
         //! Get objects from the world state
@@ -591,10 +626,10 @@ int main(int argc, char **argv) {
 
         //! Check if the robot has to move
         if (freeze_amigo_) {
-			
-			
+
+
             // TODO: Check if this function is needed
-			bool no_use = getPositionGuide(objects, guide_pos);
+            bool no_use = getPositionGuide(objects, guide_pos);
 
             //! Robot is waiting for the name and will then continue following
             pbl::Matrix cov(3,3);
@@ -607,12 +642,12 @@ int main(int argc, char **argv) {
 
             // Just follow
             if (candidate_freeze_amigo_) {
-	            ROS_INFO("Time out is %f", ros::Time::now().toSec() - t_freeze_);
-	            if (ros::Time::now().toSec() - t_freeze_ > 4) {
-					ROS_WARN("Time out");
-					candidate_freeze_amigo_ = false;
-				}
-			}
+                ROS_INFO("Time out is %f", ros::Time::now().toSec() - t_freeze_);
+                if (ros::Time::now().toSec() - t_freeze_ > 4) {
+                    ROS_WARN("Time out");
+                    candidate_freeze_amigo_ = false;
+                }
+            }
 
             //! Check for the (updated) guide position
             if (getPositionGuide(objects, guide_pos)) {
@@ -623,8 +658,8 @@ int main(int argc, char **argv) {
                 //       can't be updated either, the executive keeps sending a goal. Robot reacts, but
                 //       if the robot doesn't observe the guide, it keeps on driving the wrong way
                 if (t_no_meas_ < 1.5) { // makes driving less accurate, but avoids continuously sending a goal
-					moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
-				}
+                    moveTowardsPosition(guide_pos, DISTANCE_GUIDE);
+                }
 
 
             } else {
@@ -639,6 +674,20 @@ int main(int argc, char **argv) {
         }
 
         follow_rate.sleep();
+    }
+
+    // Use another callback
+    sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback_order);
+
+    // Take order
+    while(ros::ok() && state  == 1) {
+        ros::spinOnce();
+
+        // do stuff
+        ROS_INFO("Done learning, time to take an order");
+
+        follow_rate.sleep();
+
     }
 
     //! When node is shut down, cancel goal by sending zero
