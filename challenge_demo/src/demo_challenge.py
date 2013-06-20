@@ -209,8 +209,9 @@ class InteractionPart(smach.StateMachine):
            
             smach.StateMachine.add('ASK_HOW_FEEL',
                                     AskHowFeel(robot),
-                                    transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
+                                    transitions={   "done"              : "ASK_WHAT_FOR_BREAKFAST"})
 
+            # OBSOLETE
             smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
                                     states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
                                     transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
@@ -252,7 +253,7 @@ class PoorChocolateNuts(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "LOOK_FOR_BOWL",
-                                    states.LookForObjectsAtROI(robot, lookat_query, bowl_query, modules=["tabletop_segmentation"], waittime=5.0),
+                                    states.LookForObjectsAtROI(robot, lookat_query, bowl_query, modules=["template_matching"], waittime=5.0),
                                     transitions={   'object_found'          : 'PREPARE_GRAB',
                                                     'looking'               : 'failed',
                                                     'no_object_found'       : 'failed',
@@ -272,20 +273,56 @@ class PoorChocolateNuts(smach.StateMachine):
 
             smach.StateMachine.add( "PRE_POOR_POS", 
                                     states.ArmToQueryPoint(robot, robot.leftArm, grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
-                                    transitions={   'succeeded'             : 'POOR_POS',
+                                    transitions={   'succeeded'             : 'POOR_POS1',
                                                     'failed'                : 'CARRY_POSE_FAIL'})
 
-            smach.StateMachine.add( "POOR_POS", 
-                                    states.ArmToUserPose(robot.leftArm, 0.2, -0.1, 0.15, 0.0, 0.0 , 0.0, 
+            smach.StateMachine.add( "POOR_POS1", 
+                                    states.ArmToUserPose(robot.leftArm, 0.1, 0.1, 0.25, 0.0, 0.0 , 0.0, 
                                                                 time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'succeeded',
+                                    transitions={   'succeeded'             : 'POOR_POS2',
                                                     'failed'                : 'CARRY_POSE_FAIL'})
 
-            smach.StateMachine.add( "POOR",
-                                    states.ArmToUserPose(robot.leftArm, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 
-                                        time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'RETRACT',
+            smach.StateMachine.add( "POOR_POS2", 
+                                    states.ArmToUserPose(robot.leftArm, 0.1, 0.0, 0.0, 0.0, 0.0 , 0.0, 
+                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'POOR1',
                                                     'failed'                : 'CARRY_POSE_FAIL'})
+
+            #smach.StateMachine.add( "POOR",
+            #                       states.ArmToUserPose(robot.leftArm, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 
+            #                            time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            #                        transitions={   'succeeded'             : 'RETRACT',
+            #                                       'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR1",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR2',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR2",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR3',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR3",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR4',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR4",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR5',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR5",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR6',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR6",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'RETRACT',
+                                                    'failed'                : 'RETRACT'})
 
             smach.StateMachine.add('RETRACT', 
                                     states.ArmToUserPose(robot.leftArm, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
@@ -397,7 +434,7 @@ class Part1(smach.StateMachine):
 
             smach.StateMachine.add( 'GO_BACK_TO_BREAKFAST_TABLE', 
                                     states.NavigateGeneric(robot, goal_name="breakfast_1"), 
-                                    transitions={   "arrived"           : "succeeded",
+                                    transitions={   "arrived"           : "SAY_HERES_BREAKFAST",
                                                     "unreachable"       : "failed",
                                                     "preempted"         : "failed",
                                                     "goal_not_defined"  : "failed"})
@@ -432,6 +469,7 @@ class Part2(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
+            '''
             smach.StateMachine.add( 'GOTO_BREAKFAST_TABLE', 
                                     states.NavigateGeneric(robot, goal_name="breakfast_2"), 
                                     transitions={   "arrived"           : "INTERACTION",
@@ -471,9 +509,9 @@ class Part2(smach.StateMachine):
                     #patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
                     breakfast   = breakfasts[0]["Breakfast"]
                     #patient     = patients[0]["Patient"]
-                    return "Can you please give me some {0} so I can serve that for breakfast".format(patient, breakfast)
+                    return "Can you please give me some {0} so I can serve that for breakfast".format(breakfast)
                 except:
-                    return "I forgot I should bring for breakfast"
+                    return "I forgot what I should bring for breakfast"
             smach.StateMachine.add('REPORT_BREAKFAST',
                                     states.Say_generated(robot, sentence_creator=generate_report_sentence),
                                     transitions={ 'spoken':'HOLDUP_ARM_FOR_CAN_LEFT' })
@@ -493,21 +531,6 @@ class Part2(smach.StateMachine):
                                     transitions={   'succeeded'         : 'GO_BACK_TO_BREAKFAST_TABLE',
                                                     'failed'            : 'GO_BACK_TO_BREAKFAST_TABLE'})
 
-            smach.StateMachine.add( 'HOLDUP_ARM_FOR_CAN_RIGHT', 
-                                    states.ArmToJointPos(robot, robot.rightArm, HOLD_CAN_POSE, timeout=4.0),
-                                    transitions={   'done'              : "OPEN_RIGHT_GRIPPER",
-                                                    'failed'            : "SAY_NO_ARMS"})
-
-            smach.StateMachine.add('OPEN_RIGHT_GRIPPER', 
-                                    states.SetGripper(robot, robot.rightArm, gripperstate=ArmState.OPEN),
-                                    transitions={   'succeeded'         : 'CLOSE_RIGHT_GRIPPER',
-                                                    'failed'            : 'CLOSE_RIGHT_GRIPPER'})
-
-            smach.StateMachine.add('CLOSE_RIGHT_GRIPPER', 
-                                    states.SetGripper(robot, robot.rightArm, gripperstate=ArmState.CLOSE),
-                                    transitions={   'succeeded'         : 'WAIT_FOR_LOAD',
-                                                    'failed'            : 'WAIT_FOR_LOAD'})
-
             smach.StateMachine.add( 'WAIT_FOR_LOAD',
                                     states.Wait_time(robot, waittime=10),
                                     transitions={   'waited':'GO_BACK_TO_BREAKFAST_TABLE',
@@ -516,7 +539,7 @@ class Part2(smach.StateMachine):
             smach.StateMachine.add( 'SAY_NO_ARMS',
                                     states.Say(robot, ["I am terribly sorry but my arms hurt, can you please bring it yourself"]), 
                                     transitions={   'spoken'            : "failed"})
-
+            '''
             smach.StateMachine.add( 'GO_BACK_TO_BREAKFAST_TABLE', 
                                     states.NavigateGeneric(robot, goal_name="breakfast_2"), 
                                     transitions={   "arrived"           : "SAY_HERES_BREAKFAST",
@@ -556,7 +579,7 @@ class Part2(smach.StateMachine):
                                                     "target_lost"       : "GO_TO_BREAKFAST_TABLE_FINAL"})
 
             smach.StateMachine.add( 'GO_TO_BREAKFAST_TABLE_FINAL', 
-                                    states.NavigateGeneric(robot, goal_name="breakfast_2"), 
+                                    states.NavigateGeneric(robot, goal_name="singpos"), 
                                     transitions={   "arrived"           : "SING_A_SONG",
                                                     "unreachable"       : "SING_A_SONG",
                                                     "preempted"         : "SING_A_SONG",
@@ -643,6 +666,11 @@ class DemoChallenge(smach.StateMachine):
                                 Part2(robot),
                                 transitions={   'succeeded' : 'Done',
                                                 'failed'    : 'Done'})
+
+            # For testing purposes
+            smach.StateMachine.add( 'SING_A_SONG',
+                                    SingSong(),
+                                    transitions={   'done'              : "Done"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
                                     states.NavigateGeneric(robot, goal_name="kitchen"), 
