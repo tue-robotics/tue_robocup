@@ -385,12 +385,12 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 }
 
 
-visualization_msgs::Marker createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, double g, double b) {
+void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, double g, double b, visualization_msgs::MarkerArray& array) {
     
     // Geometric marker
     visualization_msgs::Marker marker;
     marker.ns = "restaurant/location_markers";
-    marker.type = visualization_msgs::Marker::SPHERE;
+    marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
     marker.color.a = 1;
     marker.scale.x = 0.05;
@@ -403,9 +403,21 @@ visualization_msgs::Marker createMarkerWithLabel(string label, tf::StampedTransf
     marker.color.b = b;
     marker.pose.position.x = pose.getOrigin().x();
     marker.pose.position.y = pose.getOrigin().y();
-    //marker.pose.orientation = pose.getRotation();
-    //marker_array.markers.push_back(marker);
-    //location_marker_pub_.publish(marker_array);
+    marker.pose.orientation.w = pose.getRotation().getW();
+    marker.pose.orientation.x = pose.getRotation().getX();
+    marker.pose.orientation.y = pose.getRotation().getY();
+    marker.pose.orientation.z = pose.getRotation().getZ();
+    array.markers.push_back(marker);
+
+    // Text label
+    visualization_msgs::Marker marker_txt = marker;
+    marker_txt.scale.z = 0.1;
+    marker_txt.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker_txt.text = label;
+    marker_txt.id = location_map_.size()*10;
+    marker_txt.pose.position.z *= 1.5;
+    array.markers.push_back(marker_txt);
+
         
 }
 
@@ -437,14 +449,19 @@ void speechCallback(std_msgs::String res) {
         amigoSpeak("I will remember the ordering location");
         
         // Save location
-        tf::StampedTransform tf;
-        listener->lookupTransform("/map", "/base_link", ros::Time(0), tf);
+        tf::StampedTransform trans;
+        listener->lookupTransform("/map", "/base_link", ros::Time(0), trans);
         
-        location_map_["ordering_location"] = tf;
-        ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",tf.getOrigin().x(), tf.getOrigin().y() );
+        location_map_["ordering_location"] = trans;
+        ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",
+                 trans.getOrigin().x(), trans.getOrigin().y() );
                
-        // Create marker
+        // Publish marker
         visualization_msgs::MarkerArray marker_array;
+        createMarkerWithLabel("Ord. loc.",trans, 0, 0, 1, marker_array);
+        location_marker_pub_.publish(marker_array);
+
+        /*
         visualization_msgs::Marker marker;
         marker.ns = "restaurant/location_markers";
         marker.type = visualization_msgs::Marker::SPHERE;
@@ -467,17 +484,7 @@ void speechCallback(std_msgs::String res) {
         marker2.id = location_map_.size()*10;
         marker2.pose.position.z += 0.5;
         marker_array.markers.push_back(marker2);
-        location_marker_pub_.publish(marker_array);
-        
-        
-
-        
-        
-        marker_array.markers.push_back(marker2);
-        
-        
-        
-
+        location_marker_pub_.publish(marker_array);*/
 
         freeze_amigo_ = false;
         state = 1;
@@ -492,10 +499,15 @@ void speechCallback(std_msgs::String res) {
     //// AMIGO ASKED: PICKUP LOCATION
     else if (freeze_amigo_) {
 
-        std::stringstream location_name;
-        
+
+        // Get position
+        tf::StampedTransform trans;
+        listener->lookupTransform("/map", "/base_link", ros::Time(0), trans);
+
         // Create marker
         visualization_msgs::MarkerArray marker_array;
+
+        /*
         visualization_msgs::Marker marker;
         marker.type = visualization_msgs::Marker::SPHERE;
         marker.action = visualization_msgs::Marker::ADD;
@@ -505,29 +517,35 @@ void speechCallback(std_msgs::String res) {
         marker.scale.y = 0.3;
         marker.scale.z = 0.3;
         marker.header.frame_id = "/map";
-        marker.id = location_map_.size();
-        
-        
+        marker.id = location_map_.size();*/
+
+        // Get location:
+        std::stringstream location_name;
 
         // Answer is yes: indeed a shelf
         if (res.data == "yes") {
             ++n_shelves_;
             location_name << "shelf" << n_shelves_;
-            marker.color.r = 1;
+            //marker.color.r = 1;
+            createMarkerWithLabel(location_name.str(), trans, 1, 0, 0, marker_array);
         }
         // Answer is no: not a shelf, but a delivery location
         else {
             ++n_locations_deliver_;
             location_name << "delivery location" << n_locations_deliver_;
-            marker.color.r = 1;
-            
+            //marker.color.r = 1;
+            createMarkerWithLabel("location_name.str()", trans, 0, 1, 0, marker_array);
         }
 
-        // Get position
-        tf::StampedTransform tf;
-        listener->lookupTransform("/map", "/base_link", ros::Time(0), tf);
-        location_map_[location_name.str()] = tf;
-        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",location_name.str().c_str() ,tf.getOrigin().x(), tf.getOrigin().y() );
+        // Store location
+        location_map_[location_name.str()] = trans;
+        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",
+                 location_name.str().c_str() ,trans.getOrigin().x(), trans.getOrigin().y() );
+
+        // Publish marker
+        location_marker_pub_.publish(marker_array);
+
+        /*
         marker.pose.position.x = tf.getOrigin().x();
         marker.pose.position.y = tf.getOrigin().y();
         visualization_msgs::Marker marker2;
@@ -539,15 +557,15 @@ void speechCallback(std_msgs::String res) {
         marker2.text = location_name.str();
         marker_array.markers.push_back(marker);
         marker_array.markers.push_back(marker2);
-        location_marker_pub_.publish(marker_array);
-        
+        location_marker_pub_.publish(marker_array);*/
 
+        //! Inform user
         string sentence = "I will call this location " + location_name.str();
         amigoSpeak(sentence);
         amigoSpeak("Do you want to learn another location?");
 
-        ros::Duration delta(2.0);
-        delta.sleep();
+        //ros::Duration delta(2.0);
+        //delta.sleep();
 
         // Administration
         freeze_amigo_ = false;
@@ -675,10 +693,10 @@ int main(int argc, char **argv) {
         poll_rate.sleep();
     }
     ROS_INFO("Sending head ref goal");
-    amigo_msgs::head_ref goal;
-    goal.head_pan = 0.0;
-    goal.head_tilt = 0.0;
-    head_ref_pub_.publish(goal);
+    amigo_msgs::head_ref head_goal;
+    head_goal.head_pan = 0.0;
+    head_goal.head_tilt = 0.0;
+    head_ref_pub_.publish(head_goal);
     
     //! Planner
     double max_vel_lin = 0.3;                 // Default: 0.50
@@ -961,7 +979,40 @@ int main(int argc, char **argv) {
                 }
                 
                 if (at_loc) {
-                    amigoSpeak("I am at " + it->first + " but I cannot find any of the objects");
+                    amigoSpeak("I am at " + it->first + ". I will now see if I can find objects");
+
+                    //! Look down
+                    amigo_msgs::head_ref head_down;
+                    head_down.head_pan = 0.0;
+                    head_down.head_tilt = 0.2;
+                    head_ref_pub_.publish(head_down);
+
+                    //! Switch on perception
+                    bool temp_matching_on = true;
+                    perception_srvs::StartPerception pein_srv_temp_on;
+                    pein_srv_temp_on.request.modules.push_back("template_matching");
+                    if (!ppl_det_client.call(pein_srv_temp_on))
+                    {
+                        amigoSpeak("I could not switch on template matching");
+                        temp_matching_on = false;
+                    }
+
+                    if (temp_matching_on)
+                    {
+                        ros::Duration wait(6.0);
+                        wait.sleep();
+                        perception_srvs::StartPerception pein_srv_temp_off;
+                        pein_srv_temp_off.request.modules.push_back("");
+                        if (!ppl_det_client.call(pein_srv_temp_off))
+                        {
+                            amigoSpeak("I could not switch off template matching");
+                        }
+
+                    }
+
+                    // Todo: check world model for ordered objects
+
+
                 }
             }
 
