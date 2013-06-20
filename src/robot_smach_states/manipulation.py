@@ -104,9 +104,12 @@ class DetermineBaseGraspPose(smach.State):
             #rospy.loginfo('Grasp point base link = {0}'.format(grasp_point_BASE_LINK))
             self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
             #rospy.loginfo('Grasp poses base in map = {0}'.format(self.desired_base_poses_MAP))
-
-        ''' Assert the goal to the reasoner such that navigate generic can use it '''
-
+            
+            ''' If there are no base poses, reset costmap and retry '''
+            if not self.desired_base_poses_MAP:
+                self.robot.base.reset_costmap()
+                self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
+        
         ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
         if not self.desired_base_poses_MAP:
             self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad")
@@ -117,6 +120,7 @@ class DetermineBaseGraspPose(smach.State):
         phi = transformations.euler_z_from_quaternion(self.desired_base_poses_MAP[0].pose.orientation)
         self.desired_base_poses_MAP.pop(0)
 
+        ''' Assert the goal to the reasoner such that navigate generic can use it '''
         self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))))
         self.robot.reasoner.assertz(Compound("base_grasp_pose", Compound("pose_2d", x, y, phi)))
 
@@ -501,7 +505,7 @@ class Grab(smach.State):
         except:
             rospy.logerr("Transformation between {0} and {1} failed".format(self.end_effector_frame_id,self.ar_frame_id))
         ar_marker_available = False
-        
+        rospy.sleep(2.5)
         target_position_delta = transformations.tf_transform(target_position, self.end_effector_frame_id, self.ar_frame_id, tf_listener=self.robot.tf_listener)
         if target_position_delta == None:
             ar_marker_available = False
@@ -879,15 +883,19 @@ class Gripper_to_query_position(smach.StateMachine):
 
 # ToDo Loy: ArmToJointPos is a much better name, this is confusing
 class ArmToJointPos(smach.State):
-    def __init__(self, robot, side, jointgoal, timeout=0):
+    def __init__(self, robot, side, jointgoal, timeout=0, delta=False):
         smach.State.__init__(self, outcomes=['done', "failed"])
         self.side = side
         self.robot = robot
         self.jointgoal = jointgoal
         self.timeout = timeout
+        self.delta = delta
 
     def execute(self, userdata):
-        result = self.side.send_joint_goal(*self.jointgoal,timeout=self.timeout)
+        if not self.delta:
+            result = self.side.send_joint_goal(*self.jointgoal,timeout=self.timeout)
+        if self.delta:
+            result = self.side.send_delta_joint_goal(*self.jointgoal,timeout=self.timeout)
         if result:
             return "done"
         else:
