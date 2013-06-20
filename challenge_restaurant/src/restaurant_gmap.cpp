@@ -392,15 +392,15 @@ void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, d
     marker.ns = "restaurant/location_markers";
     marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.color.a = 1;
-    marker.scale.x = 0.05;
-    marker.scale.y = 0.3;
-    marker.scale.z = 0.05;
+    marker.scale.x = 0.12;
+    marker.scale.y = 0.08;
+    marker.scale.z = 0.25;
     marker.header.frame_id = "/map";
     marker.id = location_map_.size();
     marker.color.r = r;
     marker.color.g = g;
     marker.color.b = b;
+    marker.color.a = 1;
     marker.pose.position.x = pose.getOrigin().x();
     marker.pose.position.y = pose.getOrigin().y();
     marker.pose.orientation.w = pose.getRotation().getW();
@@ -852,7 +852,7 @@ int main(int argc, char **argv) {
     // Take order
     unsigned int n_orders = 3;
     stringstream sentence;
-    sentence << "I would like to take " << n_orders << " order.";
+    sentence << "I would like to take " << n_orders << " orders.";
     amigoSpeak(sentence.str());
     
     while(ros::ok() && state  == 1) {
