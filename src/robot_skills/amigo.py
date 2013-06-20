@@ -268,7 +268,6 @@ if __name__ == "__main__":
     mapgo = amigo.base.go
 
     def airgo(x,y,z, xoffset=0.5, yoffset=0.1):
-        """Go to the given point using Amigo Inverse Reachability"""
         target = amigo.base.point(x,y,z, stamped=True)
         ik_poses = amigo.base.get_base_goal_poses(target, xoffset, yoffset)
         amigo.base.send_goal(ik_poses[0].pose.position, ik_poses[0].pose.orientation)
@@ -303,10 +302,8 @@ if __name__ == "__main__":
        return (loc.x, loc.y, rot3[0]) 
 
     def hear(text):
-        """Publishes the text on /speech/output"""
-        pub = rospy.Publisher('/speech/output', std_msgs.msg.String)
-        rospy.loginfo("Telling Amigo '{0}'".format(text))
-        rospy.logwarn("Publishing on this topic is hardly ever used throughout the executive and will probably not work")
+        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String)
+        rospy.logdebug("Telling Amigo '{0}'".format(text))
         pub.publish(std_msgs.msg.String(text))
 
     def save_sentence(sentence):
@@ -318,21 +315,12 @@ if __name__ == "__main__":
         os.system("mv /tmp/speech.wav /tmp/{0}".format(path))
 
 
-    print """\033[1;33m You can now command amigo from the IPython REPL. 
+    print """\033[1;33m You can now command amigo from the python REPL. 
     Type e.g. help(amigo) for help on objects and functions, 
-    or type 'see(amigo)' to see what methods are available. 
-    Press ctrl-D to exit. This cancels ALL arm and base goals. \n
-    
-    Some shortcuts: mapgo/basego/airgo(x,y,phi), speak/praat(sentence), 
+    or type 'amigo.' <TAB> to see what methods are available. 
+    Press ctrl-D or type 'exit()' to exit the awesome amigo-console.
+    WARNING: When the console exits, it cancels ALL arm and base goals. \n
+    There are handy shortcuts, such as: mapgo/basego(x,y,phi), speak(sentence), 
     head_down, head_reset, left/right_close/open, look_at_point(x,y,z), \n
     get_pose_2d() etc. Also, try 'dir()'.\n 
-    You can use both robot.foo or amigo.foo for easy copypasting.
-    You may also omit the parentesis () for functions, 
-        like 'speak "Look ma, no parenteses!"'\033[1;m \n"""
-
-    try:
-        from see import see
-        print "These functions are available:" 
-        print see()
-    except ImportError:
-        print "Run 'sudo pip install see' to 'see' the available functions nicer" 
+    You can use both robot.foo or amigo.foo for easy copypasting.\033[1;m \n"""
