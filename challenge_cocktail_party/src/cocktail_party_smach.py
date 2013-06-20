@@ -82,7 +82,7 @@ class WaitForPerson(smach.State):
             self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
             self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
             return "waiting"
-        rospy.sleep(3)
+        #rospy.sleep(3)
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
         wait_result = wait_machine.execute()
@@ -294,7 +294,15 @@ class LookForDrink(smach.State):
             roi_answer = roi_answers[0]
             self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
 
+
+        # query to detect object, finishes when something found or timeout!
+        query_detect_object = Conjunction(Compound("goal", Compound("serve", "Drink")),
+                                          Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+                                          Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+
         self.robot.speech.speak("Let's see what I can find here")
+
+        # start template matching
         self.response_start = self.robot.perception.toggle(['template_matching'])
         rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
         rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
@@ -306,8 +314,12 @@ class LookForDrink(smach.State):
             self.robot.speech.speak("I was not able to start template matching.")
             return "not_found"
 
-        rospy.sleep(4.5)
+        #rospy.sleep(4.5)
+        # instead of sleep wait for query to be true!
+        wait_machine = Wait_query_true(self.robot, query_detect_object, 10)
+        wait_result = wait_machine.execute()
 
+        # stop template matching
         rospy.loginfo("Template matching will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
         
@@ -316,16 +328,27 @@ class LookForDrink(smach.State):
         elif self.response_stop.error_code == 1:
             rospy.loginfo("Failed stopping template matching ")
 
-        object_answers = self.robot.reasoner.query(Conjunction(  Compound("goal", Compound("serve", "Drink")),
-                                           Compound( "property_expected", "ObjectID", "class_label", "Drink"),
-                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
-
-        if object_answers:
-            self.robot.speech.speak("Hey, I found your " + serving_drink)
-            return "found"
-        else:
+        # interp results wait machine
+        if wait_result == "timed_out":
             self.robot.speech.speak("Did not find your " + serving_drink)
             return "looking"
+        elif wait_result == "preempted":
+            self.robot.speech.speak("Finding drink was preemted... I don't even know what that means!")
+            return "looking"
+        elif wait_result == "query_true":
+            self.robot.speech.speak("Hey, I found your " + serving_drink)
+            return "found"
+
+
+        # object_answers = self.robot.reasoner.query(Conjunction(  Compound("goal", Compound("serve", "Drink")),
+        #                                    Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+        #                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+        # if object_answers:
+        #     self.robot.speech.speak("Hey, I found your " + serving_drink)
+        #     return "found"
+        # else:
+        #     self.robot.speech.speak("Did not find your " + serving_drink)
+        #     return "looking"
 
 class LookForPerson(smach.State):
     def __init__(self, robot):

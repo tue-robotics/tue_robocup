@@ -48,6 +48,7 @@ class WaitForPerson(smach.State):
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+        
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
         rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
