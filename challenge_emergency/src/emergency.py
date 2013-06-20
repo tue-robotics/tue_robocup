@@ -587,7 +587,9 @@ class Run_pdf_creator(smach.State):
 
         try:
             self.response = self.startup_pdf_creator()  # starts pdf creator
-        except KeyError, ke:
+        except Exception, e:
+        #except KeyError, ke:
+            print e
             rospy.loginfo("FAILED creating pdf on usb-stick")
             return "failed"
         rospy.loginfo("PDF is created on usb-stick")
@@ -679,7 +681,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_GO_TO_KITCHEN",
                                     states.Say(robot, "I will go to the kitchen", block=False),
-                                    transitions={   "spoken":"GO_TO_KITCHEN"})
+                                    transitions={   "spoken":"SAVE_PDF_ON_STICK"})
         
         ######################################################
         #################### GO TO KITCHEN ###################
