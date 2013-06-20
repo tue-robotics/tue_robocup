@@ -124,7 +124,7 @@ class Arms(object):
         self.leftOffset = Offset(x=0.08, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02
         self.rightOffset = Offset(x=0.06, y=0.025, z=0.06)
 
-        self.markerToGrippointOffset = Offset(x=-0.05, y=0.0, z=0.02)
+        self.markerToGrippointOffset = Offset(x=-0.05, y=0.0, z=0.03)
         
         self.tf_listener = tf_listener
         
