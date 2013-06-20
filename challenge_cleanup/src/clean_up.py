@@ -79,7 +79,6 @@ class Cleanup(smach.StateMachine):
         
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
-        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'magdeburg2013_knowledge.pl'))
 	
 	    #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
@@ -118,14 +117,12 @@ class Cleanup(smach.StateMachine):
                                 Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
 
         query_dropoff_loc = Conjunction(
-                                Compound("current_object",      "Obj_to_Dispose"), #Of the current object
-                                Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-                                Compound("storage_class",       "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
-                                Compound("instance_of",         "Dispose_to_object","Disposal_type"), #Find objects of that are of type trashbin
-                                Compound("point_of_interest",   "Dispose_to_object", Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
+                                Compound("current_object", "Obj_to_Dispose"), #Of the current object
+                                Compound("instance_of",    "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
+                                Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
+                                Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
-        query_dropoff_loc_backup = Conjunction( Compound("instance_of", "Dispose_to_object",  "trashbin"), #Find objects of that are of type trashbin
-                                                    Compound("point_of_interest",  "Dispose_to_object",  Compound("point_3d", "X", "Y", "Z"))) #Get locations of those things
+        query_dropoff_loc_backup = Compound("dropoff_point", "trashbin", Compound("point_3d", "X", "Y", "Z"))
 
         meeting_point = Conjunction(    Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
