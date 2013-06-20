@@ -121,23 +121,29 @@ class AskAnythingElse(smach.State):
         try:
             self.response = self.get_anything_else_service("demo_challenge_anything_else", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
             if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-                
+                rospy.logwarn("No answer or wrong answer not yet implemented")
                 ## WHAT TO DO IF FAILURE TODO JANNO
 
-                import time, random
-                timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
-                self.robot.speech.speak("It is now {0}".format(timestr))
+                #import time, random
+                #timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
+                #self.robot.speech.speak("It is now {0}".format(timestr))
 
-            elif self.response.answer == "Can you tell me what time it is?":
+            #elif self.response.answer == "Can you tell me what time it is?":
+            elif "what time" in self.response.answer:
                 import time, random
-                timestr = time.strftime( "it's %M past %H", time.localtime(time.time()))
+                timestr = time.strftime( "%M past %H", time.localtime(time.time()))
                 self.robot.speech.speak("It is now {0}".format(timestr))
-            elif (self.response.answer == "Can you remind me in three minutes that my favorite tv program friends will \
-                start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program dallas \
-                start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program the \
-                bold and the beautiful start?"):
+            #elif (self.response.answer == "Can you remind me in three minutes that my favorite tv program friends will \
+            #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program dallas \
+            #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program the \
+            #    bold and the beautiful start?"):
+            elif "remind me" in self.response.answer:
                 rospy.logerr("Remind info not yet fixed")
                 self.robot.speech.speak("I should set a reminder for a tv program, but this is not build in yet")
+            else:
+                rospy.logwarn("Answer not understood")
+                self.robot.speech.speak("I am terribly sorry but I do not know what you mean", mood="sad", block=False)
+                self.robot.speech.speak("I better go and get your breakfast", mood="neutral", block=False)
         except Exception, e:
             rospy.logerr("Could not get_status_person_service: {0}.".format(e))
             
@@ -206,7 +212,7 @@ class InteractionPart(smach.StateMachine):
                                     transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
 
             smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
-                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolade. Which do you want?"),
+                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
                                     transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
@@ -278,10 +284,11 @@ class Part1(smach.StateMachine):
             def generate_report_sentence(*args,**kwargs):
                 try:
                     breakfasts  = robot.reasoner.query(Compound("breakfast", "Breakfast"))
-                    patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
+                    #patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
                     breakfast   = breakfasts[0]["Breakfast"]
-                    patient     = patients[0]["Patient"]
-                    return "{0} wants {1} for breakfast. If you give it to me, i'll bring it to {0}. I'll wait here for a second so you can give it to me".format(patient, breakfast)
+                    #patient     = patients[0]["Patient"]
+                    #return "{0} wants {1} for breakfast. If you give it to me, i'll bring it to {0}. I'll wait here for a second so you can give it to me".format(patient, breakfast)
+                    return "Can you please put some {0} on a tray so I can serve that for breakfast".format(breakfast)
                 except:
                     return "I forgot what I should get for breakfast"
             smach.StateMachine.add('REPORT_BREAKFAST',
@@ -312,7 +319,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'spoken'            : "failed"})
 
             smach.StateMachine.add( 'GO_BACK_TO_BREAKFAST_TABLE', 
-                                    states.NavigateGeneric(robot, goal_name="desk"), 
+                                    states.NavigateGeneric(robot, goal_name="breakfast_1"), 
                                     transitions={   "arrived"           : "succeeded",
                                                     "unreachable"       : "failed",
                                                     "preempted"         : "failed",
@@ -384,10 +391,10 @@ class Part2(smach.StateMachine):
             def generate_report_sentence(*args,**kwargs):
                 try:
                     breakfasts  = robot.reasoner.query(Compound("breakfast", "Breakfast"))
-                    patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
+                    #patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
                     breakfast   = breakfasts[0]["Breakfast"]
-                    patient     = patients[0]["Patient"]
-                    return "{0} wants {1} for breakfast. If you give it to me, i'll bring it to {0}. I'll wait here for a second so you can give it to me".format(patient, breakfast)
+                    #patient     = patients[0]["Patient"]
+                    return "Can you please give me some {0} so I can serve that for breakfast".format(patient, breakfast)
                 except:
                     return "I forgot I should bring for breakfast"
             smach.StateMachine.add('REPORT_BREAKFAST',
@@ -434,7 +441,7 @@ class Part2(smach.StateMachine):
                                     transitions={   'spoken'            : "failed"})
 
             smach.StateMachine.add( 'GO_BACK_TO_BREAKFAST_TABLE', 
-                                    states.NavigateGeneric(robot, goal_name="desk"), 
+                                    states.NavigateGeneric(robot, goal_name="breakfast_2"), 
                                     transitions={   "arrived"           : "SAY_HERES_BREAKFAST",
                                                     "unreachable"       : "failed",
                                                     "preempted"         : "failed",
@@ -460,11 +467,11 @@ class Part2(smach.StateMachine):
                                                     "target_lost"       : "GO_TO_BREAKFAST_TABLE_FINAL"})
 
             smach.StateMachine.add( 'GO_TO_BREAKFAST_TABLE_FINAL', 
-                                    states.NavigateGeneric(robot, goal_name="desk"), 
-                                    transitions={   "arrived"           : "succeeded",
-                                                    "unreachable"       : "succeeded",
-                                                    "preempted"         : "succeeded",
-                                                    "goal_not_defined"  : "succeeded"})
+                                    states.NavigateGeneric(robot, goal_name="breakfast_2"), 
+                                    transitions={   "arrived"           : "SING_A_SONG",
+                                                    "unreachable"       : "SING_A_SONG",
+                                                    "preempted"         : "SING_A_SONG",
+                                                    "goal_not_defined"  : "SING_A_SONG"})
 
             smach.StateMachine.add( 'SING_A_SONG',
                                     SingSong(),
@@ -530,9 +537,13 @@ class DemoChallenge(smach.StateMachine):
 
             smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, "initial"),
-                                transitions={   'done':'PART1',
-                                                'preempted':'PART1',
-                                                'error':'PART1'})
+                                transitions={   'done':'SAY_START',
+                                                'preempted':'SAY_START',
+                                                'error':'SAY_START'})
+
+            smach.StateMachine.add( 'SAY_START',
+                                    states.Say(robot, ["Good morning everyone, lets see what i can do today"], block=False),
+                                    transitions={   'spoken'            : 'PART1'})
 
             smach.StateMachine.add('PART1',
                                 Part1(robot),
