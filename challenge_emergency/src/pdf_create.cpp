@@ -457,7 +457,7 @@ int createPDF()
 
         //! Give number to person
 
-        person_num = string_format("Person %d, ", i);
+        person_num = string_format("Person %d, ", person_index);
 
         //! Give status to person
         if (status[i]==0)
