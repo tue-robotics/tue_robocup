@@ -21,6 +21,7 @@
   <depend package="tue_pocketsphinx"/>
   <depend package="tue_move_base_msgs"/>
   <depend package="speech_interpreter"/>
+  <depend package="visualization_msgs"/>
 
 </package>
 
