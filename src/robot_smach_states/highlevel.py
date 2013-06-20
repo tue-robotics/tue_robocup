@@ -229,18 +229,6 @@ class GotoMeetingPoint(smach.State):
             return "no_goal"
 
 
-class ResetHeadAndSpindle(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-
-        self.robot.head.reset_position(timeout=0.0)
-        self.robot.spindle.reset()
-        return "done"
-
-
 class GetObject(smach.StateMachine):
     def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
@@ -289,7 +277,7 @@ class GetObject(smach.StateMachine):
                                                     'abort':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED'})      # End State
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE',
-                                    ResetHeadAndSpindle(robot),
+                                    utility_states.ResetHeadSpindle(robot),
                                     transitions={   'done':'CHECK_TIME'})   # End State
 
             smach.StateMachine.add('CHECK_TIME',
@@ -318,19 +306,19 @@ class GetObject(smach.StateMachine):
                                                     'timeout':'RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT' })   # End State
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
-                                    ResetHeadAndSpindle(robot),
+                                    utility_states.ResetHeadSpindle(robot),
                                     transitions={   'done':'Aborted'})   # End State
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
-                                    ResetHeadAndSpindle(robot),
+                                    utility_states.ResetHeadSpindle(robot),
                                     transitions={   'done':'Failed'})   # End State
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT',
-                                    ResetHeadAndSpindle(robot),
+                                    utility_states.ResetHeadSpindle(robot),
                                     transitions={   'done':'Timeout'})   # End State            
 
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
-                                    ResetHeadAndSpindle(robot),
+                                    utility_states.ResetHeadSpindle(robot),
                                     transitions={   'done':'Done'})   # End State
 
 class Say_and_Navigate(smach.StateMachine):
