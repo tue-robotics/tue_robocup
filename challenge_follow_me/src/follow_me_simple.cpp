@@ -60,6 +60,7 @@ bool itp2_ = false;                                                             
 bool itp3_ = false;                                                               // Bookkeeping: passed elevator yes or no
 bool new_laser_data_ = false;                                                     // Bookkeeping: new laser data or not
 bool in_elevator_ = false;                                                        // Bookkeeping: Is robot in elevator?
+pbl::Gaussian last_driving_dir_elevator_(3);                                      // Bookkeeping: remember driving direction when leaving elevator
 sensor_msgs::LaserScan laser_scan_;                                               // Storage: most recent laser data
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
@@ -129,7 +130,7 @@ void findOperator(wire::Client& client, bool lost = true) {
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
-    ros::Duration dt(1.0);
+    ros::Duration dt(0.5);
     bool no_operator_found = true;
     while (ros::Time::now().toSec() - t_start < WAIT_TIME_OPERATOR_MAX && no_operator_found) {
 
@@ -231,7 +232,8 @@ void findOperator(wire::Client& client, bool lost = true) {
 
             no_operator_found = false;
 
-            amigoSpeak("I found my operator.");
+            if (!lost) amigoSpeak("I found my operator.");
+            else amigoSpeak("I will continue following you");
 
             ros::Duration safety_delta(1.0);
             safety_delta.sleep();
@@ -622,6 +624,18 @@ bool leftElevator(pbl::Gaussian& pos)
     //! Check if AMIGO already left the elevator
     if (distance_left > 2.5 && distance_right > 2.5) {
         ROS_WARN("AMIGO is outside the elevator: distances left and right are %f and %f", distance_left, distance_right);
+        
+        const double time_wait = 1.5;
+        const unsigned int freq = 20;
+        unsigned int N_SLEEPS_TOTAL = time_wait*freq;
+        ros::Duration pause(1.0/(double)freq);
+        unsigned int n_sleeps = 0;
+        while (n_sleeps < N_SLEEPS_TOTAL) {
+            moveTowardsPosition(last_driving_dir_elevator_, 0);
+            pause.sleep();
+            ++n_sleeps;
+        }
+;
         return true;
     }
 
@@ -681,6 +695,7 @@ bool leftElevator(pbl::Gaussian& pos)
     }
 
     //! Let robot drive the right direction
+    last_driving_dir_elevator_ = pos;
     moveTowardsPosition(pos, 0);
     return false;
 
@@ -906,7 +921,7 @@ int main(int argc, char **argv) {
 
                 //! Rotate for 90 deg (in steps since only small angles allowed)
                 pos = pbl::Gaussian(pbl::Vector3(-2, 0, 0), cov);
-                const double time_rotation = 6.0;
+                const double time_rotation = 7.0;
                 const unsigned int freq = 20;
                 unsigned int N_SLEEPS_TOTAL = time_rotation*freq;
                 ros::Duration pause(1.0/(double)freq);
