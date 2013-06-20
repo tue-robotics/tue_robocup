@@ -840,7 +840,23 @@ def setup_statemachine(robot):
                                              'person_found':'LOOK_AT_PERSON'})
 
         smach.StateMachine.add("SAY_PERSON_UNREACHABLE",
-                                states.Say(robot,["I failed going to the desired person, I will ask my questions from here.", "Although I was not able to reach the person I want to speak, I will still ask you some questions."]),
+                                states.Say(robot,["I failed going to the desired person", "I am not able to reach the person I want to speak"], block=False),
+                                transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT'})
+
+        ## hier state toevoegen, terugrijden naar lookat point.
+
+        query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Location"),
+                                                      Compound("pose_2d", "X", "Y", "Phi"))
+
+        smach.StateMachine.add('GO_TO_LAST_EXPLORATION_POINT', 
+                                    states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
+                                    transitions={   'arrived':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
+                                                    'preempted':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
+                                                    'unreachable':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
+                                                    'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+
+        smach.StateMachine.add("SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
+                                states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
                                 transitions={'spoken':'LOOK_AT_PERSON'})
 
         ############### GET INFO STATUS PERSON ###############
@@ -1034,8 +1050,6 @@ def setup_statemachine(robot):
         smach.StateMachine.add('AT_END',
                                 states.Say(robot, "Goodbye"),
                                 transitions={'spoken':'Done'})
-
-
 
     return sm
 
