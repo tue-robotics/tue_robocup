@@ -228,6 +228,83 @@ class InteractionPart(smach.StateMachine):
                                     AskAnythingElse(robot),
                                     transitions={   'done'              : 'done'})
 
+#class PoorChocolateNuts(smach.State):
+#    def __init__(self, robot):
+#        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+#        self.robot = robot
+#
+#    def execute(self, userdata=None):
+#
+#        #poor_poi_query = 
+#        answers = self.robot.reasoner.query(poor_poi_query)
+#        if not answers:
+#            rospy.logerr("Point of interest for pooring not defined, aborting pooring")
+#            return 'failed'
+
+class PoorChocolateNuts(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        lookat_query = Compound("point_of_interest", "bowl_prior", Compound("point_3d", "X", "Y", "Z"))
+        bowl_query = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
+        grabpoint_query = Conjunction(  Compound("current_object", "ObjectID"),
+                                        Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
+
+        with self:
+            smach.StateMachine.add( "LOOK_FOR_BOWL",
+                                    states.LookForObjectsAtROI(robot, lookat_query, bowl_query, modules=["tabletop_segmentation"], waittime=5.0),
+                                    transitions={   'object_found'          : 'PREPARE_GRAB',
+                                                    'looking'               : 'failed',
+                                                    'no_object_found'       : 'failed',
+                                                    'abort'                 : 'failed'})
+#'looking','object_found','no_object_found','abort'
+            smach.StateMachine.add('PREPARE_GRAB', 
+                                    states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
+                                    transitions={   'succeeded'             :   'PREPARE_ORIENTATION',
+                                                    'failed'                :   'failed'})
+
+            smach.StateMachine.add( "PREPARE_ORIENTATION", 
+                                    states.PrepareOrientation(robot.leftArm, robot, grabpoint_query),
+                                    transitions={   'orientation_succeeded' : 'PRE_POOR_POS',
+                                                    'orientation_failed'    : 'failed',
+                                                    'abort'                 : 'failed',
+                                                    'target_lost'           : 'failed'})
+
+            smach.StateMachine.add( "PRE_POOR_POS", 
+                                    states.ArmToQueryPoint(robot, robot.leftArm, grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+                                    transitions={   'succeeded'             : 'POOR_POS',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR_POS", 
+                                    states.ArmToUserPose(robot.leftArm, 0.2, -0.1, 0.15, 0.0, 0.0 , 0.0, 
+                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'succeeded',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add( "POOR",
+                                    states.ArmToUserPose(robot.leftArm, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 
+                                        time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'RETRACT',
+                                                    'failed'                : 'CARRY_POSE_FAIL'})
+
+            smach.StateMachine.add('RETRACT', 
+                                    states.ArmToUserPose(robot.leftArm, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'CARRY_POSE_SUCCEEDED',
+                                                    'failed'                : 'CARRY_POSE_SUCCEEDED'})
+
+            smach.StateMachine.add( "CARRY_POSE_SUCCEEDED",
+                                    states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
+                                    transitions={   'succeeded'             :   'succeeded',
+                                                    'failed'                :   'succeeded'})
+
+            smach.StateMachine.add( "CARRY_POSE_FAIL",
+                                    states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
+                                    transitions={   'succeeded'             :   'failed',
+                                                    'failed'                :   'failed'})
+
+            #target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
+
+
 class SingSong(smach.State):
     def __init__(self):
         smach.State.__init__(self, outcomes=['done'])
@@ -447,10 +524,23 @@ class Part2(smach.StateMachine):
                                                     "preempted"         : "failed",
                                                     "goal_not_defined"  : "failed"})
 
-            # ToDo: pouring motion
             smach.StateMachine.add( 'SAY_HERES_BREAKFAST',
-                                    states.Say(robot, ["Here is your breakfast, please take it from my gripper"]),
-                                    transitions={   'spoken'            : 'SAY_DISPOSE_CAN'})
+                                    states.Say(robot, ["Here is your breakfast"]),
+                                    transitions={   'spoken'            : 'POOR_CHOCOLATE_NUTS'})
+
+            smach.StateMachine.add( 'POOR_CHOCOLATE_NUTS',
+                                    PoorChocolateNuts(robot),
+                                    transitions={   'succeeded'         : 'SAY_DISPOSE_CAN',
+                                                    'failed'            : 'SAY_CANT_POOR'})
+
+            smach.StateMachine.add( 'SAY_CANT_POOR',
+                                    states.Say(robot, ["I am terribly sorry but i cannot poor the chocolate nuts, can you please take them from my gripper"]),
+                                    transitions={   'spoken'            : 'HAND_OVER_CHOCOLATE_NUTS'})
+
+            smach.StateMachine.add( 'HAND_OVER_CHOCOLATE_NUTS',
+                                    states.HandoverToHuman(robot.leftArm, robot),
+                                    transitions={    'succeeded'         : 'SAY_DISPOSE_CAN',
+                                                    'failed'            : 'SAY_DISPOSE_CAN'})
 
             smach.StateMachine.add( 'SAY_DISPOSE_CAN',
                                     states.Say(robot, ["I will throw the can right in the thrashbin"]),
@@ -458,8 +548,7 @@ class Part2(smach.StateMachine):
 
             # ToDo: what if we carry with the right arm? Guess this needs to be asserted for the pooring motion anyway
             # ToDo: fix query?
-            #disposal_query = Compound("base_pose", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
-            disposal_query = Compound("base_pose", "thrashbin", Compound("pose_2d", "X", "Y", "Phi"))
+            disposal_query = Compound("dropoff_point", "trashbin", Compound("point_3d", "X", "Y", "Z"))
             smach.StateMachine.add( 'DISPOSE_CAN',
                                     states.DropObject(robot.leftArm, robot, disposal_query),
                                     transitions={   "succeeded"         : "GO_TO_BREAKFAST_TABLE_FINAL",
