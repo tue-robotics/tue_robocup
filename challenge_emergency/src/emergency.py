@@ -681,7 +681,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_GO_TO_KITCHEN",
                                     states.Say(robot, "I will go to the kitchen", block=False),
-                                    transitions={   "spoken":"SAVE_PDF_ON_STICK"})
+                                    transitions={   "spoken":"GO_TO_KITCHEN"})
         
         ######################################################
         #################### GO TO KITCHEN ###################
