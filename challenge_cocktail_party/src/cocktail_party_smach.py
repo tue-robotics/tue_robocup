@@ -237,7 +237,7 @@ class LearnPersonCustom(smach.State):
         if learn_result == 'face_learned':
             rospy.loginfo("Face learning succeeded")
         elif learn_result == 'learn_failed':
-            rospy.logogwarn("Failed learning face, WHAT TO DO!? Just continue to the next state and ask drink.")
+            rospy.logwarn("Failed learning face, WHAT TO DO!? Just continue to the next state and ask drink.")
         return learn_result
 
 class LookForDrink(smach.State):
@@ -304,9 +304,7 @@ class LookForDrink(smach.State):
 
         # start template matching
         self.response_start = self.robot.perception.toggle(['template_matching'])
-        rospy.loginfo("error_code = {0}".format(self.response_start.error_code))
-        rospy.loginfo("error_msg = {0}".format(self.response_start.error_msg))
-
+ 
         if self.response_start.error_code == 0:
             rospy.loginfo("Template matching has started correctly")
         elif self.response_start.error_code == 1:
@@ -316,7 +314,7 @@ class LookForDrink(smach.State):
 
         #rospy.sleep(4.5)
         # instead of sleep wait for query to be true!
-        wait_machine = Wait_query_true(self.robot, query_detect_object, 10)
+        wait_machine = Wait_query_true(self.robot, query_detect_object, 7)
         wait_result = wait_machine.execute()
 
         # stop template matching
@@ -328,7 +326,7 @@ class LookForDrink(smach.State):
         elif self.response_stop.error_code == 1:
             rospy.loginfo("Failed stopping template matching ")
 
-        # interp results wait machine
+        # interpret results wait machine
         if wait_result == "timed_out":
             self.robot.speech.speak("Did not find your " + serving_drink)
             return "looking"
@@ -404,6 +402,7 @@ class LookForPerson(smach.State):
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
+        # Object in gripper sleeep, needs to be REMOVED
         rospy.sleep(5.0)
 
         self.response_start = self.robot.perception.toggle(["face_segmentation"])
@@ -413,7 +412,7 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(4.5)
+        rospy.sleep(6)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -438,7 +437,7 @@ class LookForPerson(smach.State):
                 rospy.loginfo("Face segmentation failed to start")
                 self.robot.speech.speak("I was not able to start face segmentation.")
                 return 'looking'
-            rospy.sleep(4.5)
+            rospy.sleep(6)
 
             rospy.loginfo("Face segmentation will be stopped now")
             self.response_stop = self.robot.perception.toggle([])
@@ -457,45 +456,113 @@ class LookForPerson(smach.State):
                 return "looking"
 
         self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
-        self.robot.perception.toggle(["face_recognition"])
-        rospy.sleep(5.0)
-        self.robot.perception.toggle([])  
-        person_result = self.robot.reasoner.query(
+
+        # query to recognize a person
+        query_recognize_person = Conjunction( Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                              Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                              Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF")))
+        # Start face recognition
+        self.response_start = self.robot.perception.toggle(["face_recognition"])
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Face recognition has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.loginfo("Face recognition failed to start")
+            self.robot.speech.speak("I was not able to start face recognition.")
+            return "not_found"
+
+        wait_machine = Wait_query_true(self.robot, query_recognize_person, 10)
+        wait_result = wait_machine.execute()    
+        #rospy.sleep(5.0)
+
+        rospy.loginfo("Face recognition will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Face recognition is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping face recognition")
+
+        if wait_result == "timed_out":
+            self.robot.speech.speak("Did not get a result from face recognition")
+            return "not_found"
+        elif wait_result == "preempted":
+            self.robot.speech.speak("Recognizing person was preemted... I don't even know what that means!")
+            return "not_found"
+        elif wait_result == "query_true":
+            person_result = self.robot.reasoner.query(
                                             Conjunction(  
                                                 Compound( "property_expected", "ObjectID", "class_label", "face"),
                                                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                                 Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
+            # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
+            if len(person_result) > 0:
+                name_pmf = person_result[0]["NamePMF"]
 
-        # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
-        if len(person_result) > 0:
-            name_pmf = person_result[0]["NamePMF"]
+                if len(person_result) > 1:
+                    rospy.logwarn("Multiple faces detected, only checking the first one!")
+                name=None
+                name_prob=0
+                for name_possibility in name_pmf:
+                    print name_possibility
+                    prob = float(name_possibility[0])
+                    if prob > 0.175 and prob > name_prob:
+                        name = str(name_possibility[1][0])
+                        name_prob = prob
 
-            if len(person_result) > 1:
-                rospy.logwarn("Multiple faces detected, only checking the first one!")
-            name=None
-            name_prob=0
-            for name_possibility in name_pmf:
-                print name_possibility
-                prob = float(name_possibility[0])
-                if prob > 0.175 and prob > name_prob:
-                    name = str(name_possibility[1][0])
-                    name_prob = prob
+                if not name:
+                    self.robot.speech.speak("I don't know who you are. Moving on!")
+                    return "looking"        
 
-            if not name:
-                self.robot.speech.speak("I don't know who you are. Moving on!")
-                return "looking"        
+                if name != serving_person:
+                    self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
+                    return "looking"
 
-            if name != serving_person:
-                self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
-                return "looking"
+                if name:
+                    self.robot.speech.speak("Hello " + str(name))        
+                    return "found"
 
-            if name:
-                self.robot.speech.speak("Hello " + str(name))        
-                return "found"
+            else:
+                rospy.logwarn("No person names received from world model") 
+            return "not_found"
 
-        else:
-            rospy.logwarn("No person names received from world model") 
-        return "not_found"
+
+        # self.robot.perception.toggle([])  
+        # person_result = self.robot.reasoner.query(
+        #                                     Conjunction(  
+        #                                         Compound( "property_expected", "ObjectID", "class_label", "face"),
+        #                                         Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+        #                                         Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
+
+        # # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
+        # if len(person_result) > 0:
+        #     name_pmf = person_result[0]["NamePMF"]
+
+        #     if len(person_result) > 1:
+        #         rospy.logwarn("Multiple faces detected, only checking the first one!")
+        #     name=None
+        #     name_prob=0
+        #     for name_possibility in name_pmf:
+        #         print name_possibility
+        #         prob = float(name_possibility[0])
+        #         if prob > 0.175 and prob > name_prob:
+        #             name = str(name_possibility[1][0])
+        #             name_prob = prob
+
+        #     if not name:
+        #         self.robot.speech.speak("I don't know who you are. Moving on!")
+        #         return "looking"        
+
+        #     if name != serving_person:
+        #         self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
+        #         return "looking"
+
+        #     if name:
+        #         self.robot.speech.speak("Hello " + str(name))        
+        #         return "found"
+
+        # else:
+        #     rospy.logwarn("No person names received from world model") 
+        # return "not_found"
 
 ## Class not build in yet, this will be used when person can not be found but drink is still in gripper
 class HandoverToKnownHuman(smach.StateMachine):
@@ -652,18 +719,7 @@ class CocktailParty(smach.StateMachine):
                                             Ask_drink(robot),
                                             transitions={   "done":"LOOK_FOR_DRINK",
                                                             "failed":"TAKE_ORDER"})
-                    
-                    # smach.StateMachine.add('TAKE_ORDER', 
-                    #                         Timedout_QuestionMachine(
-                    #                                 robot=robot,
-                    #                                 default_option = "coke", 
-                    #                                 sentence = "What would you like to drink?", 
-                    #                                 options = { "coke":Compound("goal", Compound("serve", "coke")),
-                    #                                             "fanta":Compound("goal", Compound("serve", "fanta"))
-                    #                                           }),
-                    #                         transitions={   'answered':'LOOK_FOR_DRINK',
-                    #                                         'not_answered':'TAKE_ORDER'})
-                       
+                                          
                     smach.StateMachine.add( 'LOOK_FOR_DRINK',
                                             LookForDrink(robot),
                                             transitions={   "looking":"LOOK_FOR_DRINK",
@@ -683,11 +739,11 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'SAY_DRINK_NOT_GRASPED',
                                             Say(robot, ["I could not pick up the drink you wanted", 
                                                         "I failed to grab the object you wanted."]),
-                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' }) 
+                                            transitions={   'spoken':'HUMAN_HANDOVER' }) 
                     # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
                                             Human_handover(arm,robot),
-                                            transitions={   'succeeded':'GOTO_INITIAL_FAIL',
+                                            transitions={   'succeeded':'RETRACT_VISITED_2',
                                                             'failed':'GOTO_INITIAL_FAIL' })
 
                     smach.StateMachine.add( "RETRACT_VISITED_2",
