@@ -662,8 +662,6 @@ def setup_statemachine(robot):
     # Assert the current challenge.
     robot.reasoner.query(Compound("assertz",Compound("challenge", "emergency")))
 
-    # create state machine for searching smoke
-
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
@@ -1041,4 +1039,8 @@ def setup_statemachine(robot):
 
 if __name__ == "__main__":
     rospy.init_node('emergency_exec')  #, log_level=rospy.DEBUG)
+    rospy.loginfo("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    rospy.loginfo("!!!!!!!!!!!!!!!!!EMERGENCY CHALLENGE!!!!!!!!!!!!!!!!!")
+    rospy.loginfo("!!! MAKE SURE DEPENDENCIES LAUNCH FILE IS RUNNING !!!")
+    rospy.loginfo("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     startup(setup_statemachine)
