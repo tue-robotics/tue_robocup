@@ -24,16 +24,23 @@ With GMAPPING:
 
 amigo1:
 
-    amiddle-follow-me nav:=true localization:=true gmapping:=true wire_frame:=base_link
+    amiddle-restaurant
     
 amigo3:
     rosrun challenge_restaurant restaurant_gmap
     
 INSTRUCTIONS:
+
+GUIDING:
 - Make sure the operator is standing in front of the robot. After saying 'Can you please show me the locations', AMIGO starts following
-- If you want the robot to stop, say: 'Amigo stop', confirm and answer with 'This location is called <some name>' (see below), AMIGO confirms and continues following
+- If you want the robot to stop, say: 'Amigo stop', confirm and answer yes if the location is a shelf or no if the location is a delivery location
+- AMIGO asks if you want to learn more locations. If you answer with no, AMIGO expects you to bring him to the ordering location
+
+ORDERS (three times):
+- AMIGO firsts asks for an object class (drink or bathroomstuff), then for an instance from the class (coke, icetea, sif, ...) and then for a delivery location (1, 2 or 3)
+- After taking orders, AMIGO will go look for objects
+
+LOST:
 - If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
 
-It will be hardcoded that Amigo will call the first location the ordering location, and the next five locations, he will call : Location, Place, Dropoff, Spot and Room. And in that sequence.
-So it does not matter what you say to the robot as long as you will say This Location is named or This location is called after you stopped amigo with amigo-stop.
 
