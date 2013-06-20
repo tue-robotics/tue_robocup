@@ -403,3 +403,4 @@ class ResetArmsSpindleHead(smach.State):
         self.robot.spindle.reset()
 
         return "done"
+
