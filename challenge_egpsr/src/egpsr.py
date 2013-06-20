@@ -462,6 +462,9 @@ class GotoMeetingPointRobustEGPSR(smach.StateMachine):
                                                     'unreachable':'not_at_loc', 
                                                     'goal_not_defined':'not_at_loc'})
 
+
+
+
 ########################
 ##### STATEMACHINE #####
 ########################
@@ -516,7 +519,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("INTRODUCE_SHORT",
                                states.Say(robot,"Hi! I will just wait here and wonder if I can do something for you", block=False),
-                               transitions={'spoken':'INIT_POSE'})
+                               transitions={'spoken':'RESET_HEAD_SPINDLE'})
 
         smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, 'initial_egpsr_1'),
@@ -544,9 +547,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("RETRACT_UNREACHABLE",
                                 states.Retract_facts(robot, [Compound("unreachable", "X")]),
-                                transitions={'retracted':'QUERY_SPECIFIC_ACTION'})
+                                transitions={'retracted':'RESET_HEAD_SPINDLE'})
 
+        smach.StateMachine.add("RESET_HEAD_SPINDLE",
+                                states.ResetHead(robot),
+                                transitions={'done':'QUERY_SPECIFIC_ACTION'})
 
+    
         ######################################################
         ################### EXECUTE ACTION ###################
         ######################################################
@@ -1080,35 +1087,38 @@ def setup_statemachine(robot):
         #In case goal is given via speech interpreter:
         smach.StateMachine.add("FAILED_TASK",
                                 Failed_goal(robot),
-                                transitions={'new_task':'ASK_ACTION'})
+                                transitions={'new_task':'RESET_ARMS_SPINDLE_HEAD'})
 
 
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
-                                transitions={'new_task':'ASK_ACTION',
+                                transitions={'new_task':'RESET_ARMS_SPINDLE_HEAD',
                                               'tasks_completed':'FINISH'})
 
-
-        # # In case goal is given via amigo-console:
-        # smach.StateMachine.add("FAILED_TASK",
-        #                         Failed_goal(robot),
-        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC'})
-
-
-        # smach.StateMachine.add("FINISHED_TASK",
-        #                         Finished_goal(robot),
-        #                         transitions={'new_task':'GIVE_ACTION_WITHOUT_MIC',
-        #                                       'tasks_completed':'FINISH'})
+        smach.StateMachine.add("RESET_ARMS_SPINDLE_HEAD",
+                                states.ResetArmsSpindleHead(robot),
+                                transitions={'done':'ASK_ACTION'})
         
-
+        # smach.StateMachine.add("RESET_ARMS_SPINDLE_HEAD",
+        #                         ResetArmsSpindleHead(robot),
+        #                         transitions={'done':'GIVE_ACTION_WITHOUT_MIC'})
+        
         ######################################################
         ###################### FINISHED ######################
         ######################################################
 
         smach.StateMachine.add('FINISH', states.Finish(robot),
-                                        transitions={'stop':'Done'})
+                                        transitions={'stop':'RESET_ARMS_SPINDLE_HEAD_AFTER_FINISHED'})
+
+        smach.StateMachine.add("RESET_ARMS_SPINDLE_HEAD_AFTER_FINISHED",
+                                states.ResetArmsSpindleHead(robot),
+                                transitions={'done':'Done'})
+
     return sm
 
 if __name__ == "__main__":
     rospy.init_node('gpsr_exec')
+    rospy.loginfo("------------------------- EGPSR --------------------------")
+    rospy.loginfo("- See README_SPEECH_POSSIBILITIES for input possibilities -")
+    rospy.loginfo("----------------------------------------------------------")
     startup(setup_statemachine)
