@@ -879,14 +879,15 @@ class Gripper_to_query_position(smach.StateMachine):
 
 # ToDo Loy: ArmToJointPos is a much better name, this is confusing
 class ArmToJointPos(smach.State):
-    def __init__(self, robot, side, jointgoal):
+    def __init__(self, robot, side, jointgoal, timeout=0):
         smach.State.__init__(self, outcomes=['done', "failed"])
         self.side = side
         self.robot = robot
         self.jointgoal = jointgoal
+        self.timeout = timeout
 
     def execute(self, userdata):
-        result = self.side.send_joint_goal(*self.jointgoal)
+        result = self.side.send_joint_goal(*self.jointgoal,timeout=self.timeout)
         if result:
             return "done"
         else:
