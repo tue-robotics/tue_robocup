@@ -269,7 +269,7 @@ class LookForDrink(smach.State):
             return "found"
         else:
             self.robot.speech.speak("Did not find the drink!")
-            return "looking"
+            return "not_found"
 
 class LookForPerson(smach.State):
     def __init__(self, robot):
@@ -331,7 +331,14 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
         rospy.sleep(5.0)
-        self.robot.perception.toggle([])
+
+        rospy.loginfo("Face segmentation will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Face segmentation is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping face segmentation")
 
         person_result = self.robot.reasoner.query(
                                             Conjunction(  
@@ -370,11 +377,11 @@ class LookForPerson(smach.State):
 
             if not name:
                 self.robot.speech.speak("I don't know who you are.")
-                return "looking"  
+                return "not_found"  
 
             if name != serving_person:
-                self.robot.speech.speak("Hello " + str(name) + "! You are not the one I should return this drink to. Moving on!")
-                return "looking"      
+                self.robot.speech.speak("Hello " + str(serving_person))
+                return "found"      
 
             if name:
                 self.robot.speech.speak("Hello " + str(name)) 

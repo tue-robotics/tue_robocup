@@ -11,8 +11,6 @@ from robot_skills.amigo import Amigo
 
 from robot_smach_states import *
 
-#names = ["john", "richard", "nancy", "alice", "bob"]
-#name_index = 0
 
 grasp_arm = "left"
 #grasp_arm = "right"
@@ -111,16 +109,16 @@ class WaitForPerson(smach.State):
             # check if we already know the person (the ID then already has a name in the world model)
             # PERSON UNKNOWN IS ASSERTED
 
-            # TEST
-            return "unknown_person"
-            # TEST
 
-            res = self.robot.reasoner.query(Compound("property_expected", "ObjectID", "name", "Name"))
-            if not res:
-                return "unknown_person"
-            else:
-                self.robot.speech.speak("Hello " + str(res[0]["Name"]) + "!")
-                return "known_person"
+            return "unknown_person"
+         
+
+            # res = self.robot.reasoner.query(Compound("property_expected", "ObjectID", "name", "Name"))
+            # if not res:
+            #     return "unknown_person"
+            # else:
+            #     self.robot.speech.speak("Hello " + str(res[0]["Name"]) + "!")
+            #     return "known_person"
 
 # class LearnPersonName(smach.State):
 #     def __init__(self, robot):
@@ -162,7 +160,7 @@ class LearnPersonName(smach.State):
     def execute(self, userdata=None):
         self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))    
 
-        self.response = self.get_learn_person_name_service("name", 2 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
+        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
 
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             if self.person_learn_failed == 2:
@@ -230,7 +228,7 @@ class LearnPersonCustom(smach.State):
 
         serving_person = str(return_result[0]["Person"])
 
-        self.robot.speech.speak("Now " + serving_person + ", let me have a look at you, such that I can remember you later.")
+        self.robot.speech.speak("Now, " + serving_person + ", let me have a look at you, such that I can remember you later.")
 
         learn_machine = Learn_Person(self.robot, serving_person)
         learn_result = learn_machine.execute()
@@ -392,7 +390,7 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(4.0)
+        rospy.sleep(4.5)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -408,11 +406,35 @@ class LookForPerson(smach.State):
                                                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
 
         if not person_result:
-            self.robot.speech.speak("No one here. Face segmentation did not find a person here")
-            return "looking"
+            self.robot.speech.speak("No one here. Checking for sitting persons!")
+            self.robot.head.set_pan_tilt(tilt=0.2)
+            self.response_start = self.robot.perception.toggle(["face_segmentation"])
+            if self.response_start.error_code == 0:
+                rospy.loginfo("Face segmentation has started correctly")
+            elif self.response_start.error_code == 1:
+                rospy.loginfo("Face segmentation failed to start")
+                self.robot.speech.speak("I was not able to start face segmentation.")
+                return 'looking'
+            rospy.sleep(4.5)
+
+            rospy.loginfo("Face segmentation will be stopped now")
+            self.response_stop = self.robot.perception.toggle([])
+        
+            if self.response_stop.error_code == 0:
+                rospy.loginfo("Face segmentation is stopped")
+            elif self.response_stop.error_code == 1:
+                rospy.loginfo("Failed stopping face segmentation")
+
+            person_result = self.robot.reasoner.query(
+                                            Conjunction(  
+                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+            if not person_result:
+                self.robot.speech.speak("No one here.")
+                return "looking"
 
         self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
-        self.robot.perception.toggle(["face_recognition", "face_segmentation"])
+        self.robot.perception.toggle(["face_recognition"])
         rospy.sleep(5.0)
         self.robot.perception.toggle([])  
         person_result = self.robot.reasoner.query(
@@ -733,7 +755,7 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
     initial_state = None
-    #initial_state= "LOOK_FOR_DRINK"
+
 
     if initial_state == "LOOK_FOR_DRINK":
         amigo.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
