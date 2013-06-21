@@ -9,8 +9,8 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    table_x = 3
-    table_y = -0.5
+    table_x = 1.80
+    table_y = -1.0
 
     table = W.add_object("table-1", "table", table_x, table_y, 0)
     table = W.add_object("coke-1",  "coke",  table_x, table_y, 0.85)
