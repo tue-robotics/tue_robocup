@@ -2,11 +2,11 @@
 
 #include <ros/ros.h>
 #include <ros/package.h>
-#include <tue_move_base_msgs/MoveBaseAction.h>
 #include <tf/transform_listener.h>
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
+#include <tue_move_base_msgs/MoveBaseAction.h>
 
 #include "visualization_msgs/MarkerArray.h"
 #include <pein_msgs/LearnAction.h>
@@ -17,11 +17,13 @@
 #include "speech_interpreter/GetInfo.h"
 #include "amigo_msgs/RGBLightCommand.h"
 #include "geometry_msgs/Point.h"
+#include <std_msgs/Float64.h>
+#include "amigo_msgs/arm_joints.h"
+#include <amigo_msgs/head_ref.h>
 
 #include "problib/conversions.h"
 
 #include "tue_carrot_planner/carrot_planner.h"
-#include <amigo_msgs/head_ref.h>
 
 #include <text_to_speech_philips/Speak.h>
 
@@ -75,7 +77,9 @@ ros::ServiceClient reset_wire_client_;                                          
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Publisher location_marker_pub_;                                              // Communication: Marker publisher
-ros::Publisher rgb_pub_;
+ros::Publisher rgb_pub_;                                                          // Communication: Publisher rgb lights
+ros::Publisher lpera_joint_pub_;                                                  // Communication: left arm
+ros::Publisher rpera_joint_pub_;                                                  // Communication: right arm
 
 tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
 
@@ -111,29 +115,49 @@ void setRGBLights(string color) {
 
 }
 
-/*void moveArm(string arm, string pose) {
+void moveArm(string arm, string pose) {
     
-    std_msgs::Float64 arm_msg;
+    amigo_msgs::arm_joints arm_msg;
 
     if (pose == "drive") {
-        arm_msg.pos = [-0.1;-0.2;0.2;0.8;0.0;0.0;0.0];
-    } else if (color == "carry") {
-        arm_msg.pos = [-0.3;-0.2;0.2;1.4;0.0;0.0;0.0];
-    } else if (color == "give") {
-        arm_msg.pos = [-0.3;0.4;0.2;1.4;0.0;0.0;0.0];
+        std_msgs::Float64 fl;
+        fl.data = -0.1; arm_msg.pos[0] = fl;
+        fl.data = -0.2; arm_msg.pos[1] = fl;
+        fl.data = 0.2; arm_msg.pos[2] = fl;
+        fl.data = 0.8; arm_msg.pos[3] = fl;
+        fl.data = 0; arm_msg.pos[4] = fl;
+        fl.data = 0; arm_msg.pos[5] = fl;
+        fl.data = 0; arm_msg.pos[6] = fl;
+    } else if (pose == "carry") {
+       std_msgs::Float64 fl;
+        fl.data = -0.3; arm_msg.pos[0] = fl;
+        fl.data = -0.2; arm_msg.pos[1] = fl;
+        fl.data = 0.2; arm_msg.pos[2] = fl;
+        fl.data = 1.4; arm_msg.pos[3] = fl;
+        fl.data = 0; arm_msg.pos[4] = fl;
+        fl.data = 0; arm_msg.pos[5] = fl;
+        fl.data = 0; arm_msg.pos[6] = fl;
+    } else if (pose == "give") {
+        std_msgs::Float64 fl;
+        fl.data = -0.3; arm_msg.pos[0] = fl;
+        fl.data = 0.4; arm_msg.pos[1] = fl;
+        fl.data = 0.2; arm_msg.pos[2] = fl;
+        fl.data = 1.4; arm_msg.pos[3] = fl;
+        fl.data = 0; arm_msg.pos[4] = fl;
+        fl.data = 0; arm_msg.pos[5] = fl;
+        fl.data = 0; arm_msg.pos[6] = fl;
     } else {
-        ROS_INFO("I don't understand which pose you sent to the arm: \'%s\'", pose);
+        ROS_INFO("I don't understand which pose you sent to the arm: \'%s\'", pose.c_str());
         return;
     }
-
-    //! Send arm command
-    amigo_msgs::arm_joints joint_cmd;
-    joint_cmd.pos = clr_msg;
     
-    if (arm == "lpera") lpera_joint_pub_.publish(joint_cmd);
-    else if (arm == "rpera") rpera_joint_pub_.publish(joint_cmd);
+    //[-0.1;-0.2;0.2;0.8;0.0;0.0;0.0]  [-0.3;-0.2;0.2;1.4;0.0;0.0;0.0] [-0.3;0.4;0.2;1.4;0.0;0.0;0.0]
 
-} */
+    //! Send arm command   
+    if (arm == "lpera") lpera_joint_pub_.publish(arm_msg);
+    else if (arm == "rpera") rpera_joint_pub_.publish(arm_msg);
+
+}
 
 
 void resetRGBLights() {
@@ -895,6 +919,14 @@ int main(int argc, char **argv) {
     
     /// Head ref
     head_ref_pub_ = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
+    
+    //! Publish joint goals to arms
+    rpera_joint_pub_ = nh.advertise<amigo_msgs::arm_joints >("/arm_right_controller/joint_references", 1);
+    lpera_joint_pub_ = nh.advertise<amigo_msgs::arm_joints >("/arm_left_controller/joint_references", 1);
+    
+    //! Arms in drive position
+    moveArm("lpera", "drive");
+    moveArm("rpera", "drive");
     
     /// set the head to look down in front of AMIGO
     ros::Rate poll_rate(100);
