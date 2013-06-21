@@ -15,6 +15,7 @@
   <depend package="pein_msgs"/>
   <depend package="std_srvs"/>
   <depend package="std_msgs"/>
+  <depend package="geometry_msgs"/>
   <depend package="amigo_msgs"/>
   <depend package="perception_srvs"/>
   <depend package="text_to_speech_philips"/>

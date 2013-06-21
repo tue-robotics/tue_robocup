@@ -16,6 +16,7 @@
 #include "perception_srvs/StartPerception.h"
 #include "speech_interpreter/GetInfo.h"
 #include "amigo_msgs/RGBLightCommand.h"
+#include "geometry_msgs/Point.h"
 
 #include "problib/conversions.h"
 
@@ -40,7 +41,7 @@ using namespace std;
 
 
 //! Settings
-unsigned int N_ORDERS = 3;                      // Number of orders robot needs to take
+unsigned int N_ORDERS = 1;                      // Number of orders robot needs to take
 const int TIME_OUT_GUIDE_LOST = 2.5;            // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_GUIDE = 0.7;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
@@ -109,6 +110,30 @@ void setRGBLights(string color) {
     rgb_pub_.publish(rgb_cmd);
 
 }
+
+/*void moveArm(string arm, string pose) {
+    
+    std_msgs::Float64 arm_msg;
+
+    if (pose == "drive") {
+        arm_msg.pos = [-0.1;-0.2;0.2;0.8;0.0;0.0;0.0];
+    } else if (color == "carry") {
+        arm_msg.pos = [-0.3;-0.2;0.2;1.4;0.0;0.0;0.0];
+    } else if (color == "give") {
+        arm_msg.pos = [-0.3;0.4;0.2;1.4;0.0;0.0;0.0];
+    } else {
+        ROS_INFO("I don't understand which pose you sent to the arm: \'%s\'", pose);
+        return;
+    }
+
+    //! Send arm command
+    amigo_msgs::arm_joints joint_cmd;
+    joint_cmd.pos = clr_msg;
+    
+    if (arm == "lpera") lpera_joint_pub_.publish(joint_cmd);
+    else if (arm == "rpera") rpera_joint_pub_.publish(joint_cmd);
+
+} */
 
 
 void resetRGBLights() {
@@ -206,6 +231,7 @@ void amigoSpeak(string sentence) {
     setRGBLights("red");
     
     bool toggle_speech = speech_recognition_on;
+    if (toggle_speech) stopSpeechRecognition();
     if (toggle_speech) stopSpeechRecognition();
 
     ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
@@ -458,6 +484,67 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 }
 
 
+
+
+/**
+* @brief getPositionGuide
+* @param objects input objects received from WIRE
+* @param pos position of the guide (output)
+* @return bool indicating whether or not the guide was found
+*/
+map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wire::PropertySet>& objects) {
+
+    map<string, pair<geometry_msgs::Point, double> > world_model_copy;
+
+    //! Iterate over all world model objects
+    for(vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
+        wire::PropertySet& obj = *it_obj;
+        const wire::Property& prop_label = obj.getProperty("class_label");
+        if (prop_label.isValid()) {
+            
+            string class_label = prop_label.getValue().getExpectedValue().toString();
+            double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());   
+            
+            ROS_INFO("Found %s!", class_label.c_str());
+
+            const wire::Property& prop_pos = obj.getProperty("position");
+            if (prop_pos.isValid()) {
+
+                //! Get the position
+                pbl::PDF pos = prop_pos.getValue();
+                pbl::Vector pos_obj = pos.getExpectedValue().getVector();
+                ROS_INFO("Position of %s is (%f,%f,%f)", class_label.c_str(),  pos_obj(0), pos_obj(1), pos_obj(2));
+                
+                geometry_msgs::Point pos_store;
+                pos_store.x = pos_obj(0);
+                pos_store.y = pos_obj(1);
+                pos_store.z = pos_obj(2);
+                
+                
+                //! Store object in world model
+                if (world_model_copy.find(class_label) == world_model_copy.end()) {
+                    
+                    // If class is not yet in world model, store
+                    world_model_copy[class_label] = make_pair(pos_store, prob);
+                    
+                } else {
+                    
+                    // If class is present but with lower probability, store
+                    if (world_model_copy[class_label].second < prob) {
+                        world_model_copy[class_label] = make_pair(pos_store, prob);
+                    }
+                }
+            }
+
+            
+        }
+    }
+    
+    return world_model_copy;
+
+}
+
+
 void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, double g, double b, visualization_msgs::MarkerArray& array) {
     
     // Geometric marker
@@ -465,8 +552,8 @@ void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, d
     marker.ns = "restaurant/location_markers";
     marker.type = visualization_msgs::Marker::ARROW;
     marker.action = visualization_msgs::Marker::ADD;
-    marker.scale.x = 0.12;
-    marker.scale.y = 0.08;
+    marker.scale.x = 0.25;
+    marker.scale.y = 0.25;
     marker.scale.z = 0.25;
     marker.header.frame_id = "/map";
     marker.id = location_map_.size();
@@ -536,31 +623,6 @@ void speechCallback(std_msgs::String res) {
         createMarkerWithLabel("Ord. loc.",trans, 0, 0, 1, marker_array);
         location_marker_pub_.publish(marker_array);
 
-        /*
-        visualization_msgs::Marker marker;
-        marker.ns = "restaurant/location_markers";
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.action = visualization_msgs::Marker::ADD;
-        marker.color.a = 1;
-        marker.scale.x = 0.3;
-        marker.scale.y = 0.3;
-        marker.scale.z = 0.3;
-        marker.header.frame_id = "/map";
-        marker.id = location_map_.size();
-        marker.color.b = 1;
-        marker.pose.position.x = tf.getOrigin().x();
-        marker.pose.position.y = tf.getOrigin().y();
-        marker_array.markers.push_back(marker);
-        visualization_msgs::Marker marker2;
-        marker2 = marker;
-        marker2.scale.z = 0.1;
-        marker2.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        marker2.text = "Ord Loc";
-        marker2.id = location_map_.size()*10;
-        marker2.pose.position.z += 0.5;
-        marker_array.markers.push_back(marker2);
-        location_marker_pub_.publish(marker_array);*/
-
         freeze_amigo_ = false;
         state = 1;
     }
@@ -582,18 +644,6 @@ void speechCallback(std_msgs::String res) {
         // Create marker
         visualization_msgs::MarkerArray marker_array;
 
-        /*
-        visualization_msgs::Marker marker;
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.action = visualization_msgs::Marker::ADD;
-        marker.ns = "restaurant/location_markers";
-        marker.color.a = 1;
-        marker.scale.x = 0.3;
-        marker.scale.y = 0.3;
-        marker.scale.z = 0.3;
-        marker.header.frame_id = "/map";
-        marker.id = location_map_.size();*/
-
         // Get location:
         std::stringstream location_name;
 
@@ -609,7 +659,7 @@ void speechCallback(std_msgs::String res) {
             ++n_locations_deliver_;
             location_name << "delivery location" << n_locations_deliver_;
             //marker.color.r = 1;
-            createMarkerWithLabel("location_name.str()", trans, 0, 1, 0, marker_array);
+            createMarkerWithLabel(location_name.str(), trans, 0, 1, 0, marker_array);
         }
 
         // Store location
@@ -653,7 +703,7 @@ void speechCallback(std_msgs::String res) {
         stored_location = false;
 
         // Rotate to clear guide from the map
-        amigoRotate(1.5);
+        //amigoRotate(1.5);
     }
     //// AMIGO WILL GO TO ORDERING LOCATION
     else if (stored_location &&  res.data != "yes" && res.data != "") {
@@ -662,7 +712,7 @@ void speechCallback(std_msgs::String res) {
         amigoSpeak("Certainly, I finished learning. Please guide me to the ordering location?");
 
         // Rotate to clear guide from the map
-        amigoRotate(1.5);
+        //amigoRotate(1.5);
     }
     /////
 
@@ -750,6 +800,34 @@ bool moveTowardsPositionMap(tf::StampedTransform pos) {
 
     return true;
 
+}
+
+
+void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& world_model_copy) {
+    
+    map<string, pair<geometry_msgs::Point, double> >::iterator it = world_model_copy.begin();
+    
+    // Iterate over world model objects
+    for (; it != world_model_copy.end(); ++it) {
+        
+        // Check current object
+        map<int, pair<string, string> >::iterator it_order = order_map_.begin();
+        for (; it_order != order_map_.end(); ++it_order) {
+            
+            if (it_order->second.first == it->first) {
+                
+                ROS_INFO("Found the object for order %d!", it_order->first);
+                amigoSpeak("I found " + it->first);
+                amigoSpeak("I will bring it to delivery location " + it_order->second.first);
+                
+            }
+            
+        }
+        
+        // TODO: do something more
+
+    }
+    
 }
 
 
@@ -925,8 +1003,6 @@ int main(int argc, char **argv) {
     ros::Rate follow_rate(FOLLOW_RATE);
     while(ros::ok() && state  == 0) {
 
-        setRGBLights("blue");
-
         ros::spinOnce();
 
         //! Get objects from the world state
@@ -962,6 +1038,8 @@ int main(int argc, char **argv) {
             
 
         } else {
+            
+            setRGBLights("blue");
 
             //! Check for the (updated) guide position
             if (getPositionGuide(objects, guide_pos)) {
@@ -1115,6 +1193,7 @@ int main(int argc, char **argv) {
 
     // Do tasks
     setRGBLights("blue");
+    amigoRotate(7.5);
     while(ros::ok() && state  == 2) {
         ros::spinOnce();
 
@@ -1144,10 +1223,11 @@ int main(int argc, char **argv) {
                     //! Look down
                     amigo_msgs::head_ref head_down;
                     head_down.head_pan = 0.0;
-                    head_down.head_tilt = 0.2;
+                    head_down.head_tilt = 0.35;
                     head_ref_pub_.publish(head_down);
 
-                    //! Switch on perception
+                    //! Clear world model and switch on perception
+                    reset_wire_client_.call(srv);
                     modules.clear();
                     modules.push_back("template_matching");
                     perception_srvs::StartPerception pein_srv_temp_on;
@@ -1161,8 +1241,15 @@ int main(int argc, char **argv) {
                         // Template matching needs some time
                         ros::Duration wait(6.0);
                         wait.sleep();
-
-                        // TODO: Check world model
+                        
+                        // Check world model
+                        vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
+                        
+                        // Save world model in map frame (if not all tasks can be done)
+                        map<string, pair<geometry_msgs::Point, double> > world_model_copy = getWorldModelObjects(objects);                        
+                        
+                        // Check for ordered objects
+                        checkOrderWithWorldModel(world_model_copy);
 
                         modules.clear();
                         if (!togglePein(modules))
