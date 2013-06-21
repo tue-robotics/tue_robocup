@@ -491,6 +491,8 @@ void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, d
     marker_txt.pose.position.z *= 1.5;
     array.markers.push_back(marker_txt);
 
+    ROS_INFO("Added marker with color (%f,%f,%f), size (%f,%f,%f) and label %s",
+             marker.color.r, marker.color.g, marker.color.b, marker.scale.x, marker.scale.y, marker.scale.z, marker_txt.text.c_str());
 
 }
 
