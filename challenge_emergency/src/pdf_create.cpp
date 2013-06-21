@@ -99,7 +99,7 @@ void findUSBDir(std::string& usb_dir, std::string& img_path)
         /* print all the files and directories within directory */
         while ((ent = readdir (dir)) != NULL) {
             ROS_INFO("file or directory in /media/: %s", string(ent->d_name).c_str());
-            if (false) // TODO: hack for ubuntu server strlen(ent->d_name)>3)
+            if (strlen(ent->d_name)>3) // TODO: hack for ubuntu server strlen(ent->d_name)>3)
             {
                 printf("%s\n", ent->d_name);
                 usb_dir = "/media/" + string(ent->d_name) + "/emergency_paper.pdf";
