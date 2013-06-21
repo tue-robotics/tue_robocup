@@ -383,7 +383,7 @@ class Handover_pose(smach.State):
             y_home = -0.2
         
         rospy.loginfo("start moving to handover pose")        
-        if self.arm.send_goal(0.6, y_home, 0.816, 0, 0, 0, 30):
+        if self.arm.send_goal(0.6, y_home, 0.966, 0, 0, 0, 30):
             rospy.loginfo("arm at handover pose")   
             return 'succeeded'                 
         else:
