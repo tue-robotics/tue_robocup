@@ -61,7 +61,6 @@ from psi import *
 #############################################################
 # - initial
 # - entry_point
-# - meeting_point
 # - other_side_room
 # - exit
 
@@ -947,7 +946,7 @@ def setup_statemachine(robot):
 
         # Turn 360 degrees (will be 3/4 of a round)
         smach.StateMachine.add('MOVE_ARM_BACK_TURN',
-                                    turn_Around_z_axis(robot, 30),
+                                    turn_Around_z_axis(robot, 1),
                                     transitions={   'done':'MOVE_ARM_BACK', 
                                                     'abort':'MOVE_ARM_BACK'})
         
@@ -1011,7 +1010,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.Navigate_named(robot, "exit"),
+                                    states.Navigate_named(robot, "exit_1"),
                                     transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
                                                     'preempted':'CLEAR_PATH_TO_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_EXIT', 
@@ -1024,7 +1023,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
-                                    states.Navigate_named(robot, "exit_1"),
+                                    states.Navigate_named(robot, "exit_2"),
                                     transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
                                                     'preempted':'FAILED_GO_TO_EXIT', 
                                                     'unreachable':'FAILED_GO_TO_EXIT', 
