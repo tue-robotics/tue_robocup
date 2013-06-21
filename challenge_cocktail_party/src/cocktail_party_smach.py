@@ -63,6 +63,8 @@ class WaitForPerson(smach.State):
             return("unknown_person")
 
         self.robot.spindle.reset()
+        self.robot.reasoner.reset()
+        
         self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
 
 
@@ -389,6 +391,7 @@ class LookForPerson(smach.State):
 
         nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
+        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
         ## If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
         if nav_result == "unreachable":                    
@@ -396,14 +399,14 @@ class LookForPerson(smach.State):
         elif nav_result == "preempted":
             return "looking"
 
-        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+        
         # we made it to the new goal. Let's have a look to see whether we can find the person here
         self.robot.speech.speak("Let me see who I can find here...")
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
         # Object in gripper sleeep, needs to be REMOVED
-        rospy.sleep(5.0)
+        # rospy.sleep(5.0)
 
         self.response_start = self.robot.perception.toggle(["face_segmentation"])
         if self.response_start.error_code == 0:
@@ -412,7 +415,7 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(6)
+        rospy.sleep(3)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -437,7 +440,7 @@ class LookForPerson(smach.State):
                 rospy.loginfo("Face segmentation failed to start")
                 self.robot.speech.speak("I was not able to start face segmentation.")
                 return 'looking'
-            rospy.sleep(6)
+            rospy.sleep(3)
 
             rospy.loginfo("Face segmentation will be stopped now")
             self.response_stop = self.robot.perception.toggle([])
