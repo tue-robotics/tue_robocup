@@ -64,6 +64,7 @@ class WaitForPerson(smach.State):
 
         self.robot.spindle.reset()
         self.robot.reasoner.reset()
+        self.robot.head.set_pan_tilt(tilt=-0.2)
         
         self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
 
@@ -71,7 +72,6 @@ class WaitForPerson(smach.State):
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
 
-        self.robot.head.set_pan_tilt(tilt=-0.2)
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
 
         if self.response_start.error_code == 0:
@@ -399,11 +399,11 @@ class LookForPerson(smach.State):
         elif nav_result == "preempted":
             return "looking"
 
-        
-        # we made it to the new goal. Let's have a look to see whether we can find the person here
-        self.robot.speech.speak("Let me see who I can find here...")
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
+        # we made it to the new goal. Let's have a look to see whether we can find the person here
+        self.robot.speech.speak("Let me see who I can find here...")
+        
 
         # Object in gripper sleeep, needs to be REMOVED
         # rospy.sleep(5.0)
@@ -431,8 +431,8 @@ class LookForPerson(smach.State):
                                                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
 
         if not person_result:
-            self.robot.speech.speak("No one here. Checking for sitting persons!")
             self.robot.head.set_pan_tilt(tilt=0.2)
+            self.robot.speech.speak("No one here. Checking for sitting persons!")
             self.response_start = self.robot.perception.toggle(["face_segmentation"])
             if self.response_start.error_code == 0:
                 rospy.loginfo("Face segmentation has started correctly")

@@ -85,6 +85,7 @@ class WaitForPerson(smach.State):
                 return "unknown_person"
             else:
                 self.robot.speech.speak("Hello " + str(res[0]["Name"]) + "!")
+                #self.robot.reasoner.query(Compound("assert", Compound("current_person", res[0]["Name"])))
                 return "known_person"
 
 # class LearnPersonName(smach.State):
@@ -342,13 +343,15 @@ class LookForPerson(smach.State):
             rospy.loginfo("Failed stopping face segmentation")
 
         person_result = self.robot.reasoner.query(
-                                            Conjunction(  
-                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+                                                Conjunction(  
+                                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+        if len(person_result) == 0:
+            rospy.logwarn("No faces detected by face segmentation")
         if not person_result:
             self.robot.speech.speak("No one here. Face segmentation did not find a person here")
             return "not_found"
-        self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
+        self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you")
 
 
         self.robot.perception.toggle(["face_recognition", "face_segmentation"])
