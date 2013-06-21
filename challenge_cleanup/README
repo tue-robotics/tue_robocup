@@ -1,5 +1,4 @@
 # Responsible: Loy
-NOTE: please use rviz-3dnav when using 3d navigation
 
 amigo1:
 
@@ -23,30 +22,33 @@ amigo3:
 
     rosrun challenge_cleanup clean_up.py
 
-WHAT IF IT DOESN'T WORK?
-The clean-up challenge is dependent some knowledge. 
-First of all, the knowledbe base (KB) must know where every type/class of object should be cleaned up to. 
-This is done via the 'storage_class'-predicate: 
- 'storage_class(can, trashbin)'. to state  that something of the can class should be stored at something of the class 'trashbin'.
 
-The fact that some object objXXX in the worldmodel is an instance of class is asserted to the worldmodel via perception. 
-It can be queried via the 'instance_of'-predicate.
-Classes of objects can also be subclasses of another class, so you can state 'storage_class' for a general class like 'stuff': 'storage_class(stuff, desk)', 
-and also state that, say, a 'rubiks'-cube is a subclass of 'stuff'. 
-This way, the reasoner deduces that the 'storage_class' of 'rubiks' is 'desk'. 
-
-Then, the KB also has to know where to find a 'desk' or 'trashbin'. 
-The KB holds dozens of 'point_of_interest'-predicates, e.g. 'point_of_interest(robotics_testlab_A, _, trashbin1,         point_3d(6.22,   0.78,   0.8)).'
-here, 'trashbin1' is the name of the point_of_interest. 
-The KB also holds knowledge like 'instance_of(robotics_testlab_A, _, trashbin1, trashbin).', which states that trashbin1 is an instance of trashbin. 
-
-The clean-up challenge python file defines all of its queries near the top of the file. 
+== TEST THE EXECUTIVE ==
 
 TIP of the day: use 
-$ rostopic pub /pocketsphinx/output std_msgs/String 'livingroom' --once; rostopic pub /pocketsphinx/output std_msgs/String '!!str yes' --once
-to test the exec
 
-BUGS: 
-- Before navigating, set spindle to high, because otherwise, the grippers are in range of the laserscanner. The nice solution is to filter out self-points
-- Say something when nothing is found.
-- Say something when an object is unreachable.
+    rostopic pub /pocketsphinx/output std_msgs/String 'livingroom' --once; rostopic pub /pocketsphinx/output std_msgs/String '!!str yes' --once
+
+to test the executive.
+
+
+== WHAT IF IT DOESN'T WORK? ==
+
+The clean-up challenge depends on some knowledge. 
+
+First of all, the knowledbe base (KB) must know where every type/class of object should be cleaned up to. This is done via the 'storage_class'-predicate. For example: 
+
+    'storage_class(can, trashbin)'.
+
+states that something of the can class should be stored at something of the class 'trashbin'.
+
+The fact that some object objXXX in the worldmodel is an instance of class is asserted to the worldmodel via perception. It can be queried via the 'instance_of'-predicate.
+Classes of objects can also be subclasses of another class, so you can state 'storage_class' for a general class like 'stuff': 'storage_class(stuff, desk)', and also state that, say, a 'rubiks'-cube is a subclass of 'stuff'. This way, the reasoner deduces that the 'storage_class' of 'rubiks' is 'desk'. 
+
+Furthermore, the KB also needs to hold information on which drop-off locations can be used. For example:
+
+    dropoff_point(robotics_testlab_A, _, trashbin, point_3d(6.22,   0.78,   0.8)).
+
+states that the drop-off location 'trashbin' has point (6.22, 0.78, 0.8) (in the robotics_testlab_A environment). The 3rd argument ('trashbin' in this case) should correspond to the 2nd argument of the storage_class/2 facts.
+
+The clean-up challenge python file defines all of its queries near the top of the file. 
