@@ -842,7 +842,18 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
                 
                 ROS_INFO("Found the object for order %d!", it_order->first);
                 amigoSpeak("I found " + it->first);
-                amigoSpeak("I will bring it to delivery location " + it_order->second.first);
+                amigoSpeak("I will bring it to delivery location :" + it_order->second.first);
+                
+                // Print information
+                stringstream location_name;
+                location_name << "delivery location" << it_order->second.first;
+                tf::StampedTransform tf_loc = location_map_[location_name.str()];
+                ROS_INFO("Bring %s to location %s: (%f,%f)", 
+                    it->first.c_str(), it_order->second.first.c_str(), tf_loc.getOrigin().x(), tf_loc.getOrigin().y());
+                
+                // TODO: continue
+                
+                
                 
             }
             
