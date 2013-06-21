@@ -175,7 +175,7 @@ class WelcomeMaxima2(smach.State):
         
     def execute(self, gl):
         ''' Overhandigen bloemen '''
-        self.robot.speech.speak("En bied ik u graag dit boeket aan","nl","marjolijn","default","neutral",block=False)
+        self.robot.speech.speak("Graag bied ik u dit boeket aan!","nl","marjolijn","default","neutral",block=False)
         self.robot.spindle.high()
         self.robot.head.send_goal(self.robot.head.point(0.0,0,0.0),"/grippoint_right",0)
         self.robot.rightArm.send_joint_goal(-0.1, 0.58, 0.49, 1.62, -0.21, 0.09, -0.11, timeout=2.0)
@@ -196,7 +196,7 @@ class WelcomeMaxima3(smach.State):
     def execute(self, gl):
         ''' Reset robot '''
         #self.robot.head.reset_position()
-        self.robot.speech.speak("Tenslotte wens ik u veel plezier tijdens uw bezoek","nl","marjolijn","default","neutral",block=False)
+        self.robot.speech.speak("Tot slot wens ik u veel plezier tijdens uw bezoek","nl","marjolijn","default","neutral",block=False)
         self.robot.spindle.reset()
         self.robot.leftArm.reset_arm()
         self.robot.rightArm.reset_arm()
