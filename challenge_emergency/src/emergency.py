@@ -202,8 +202,6 @@ class Navigate_to_queryoutcome_emergency(states.Navigate_abstract):
             goal = possible_locations[0]
             rospy.loginfo("goal = {0}".format(goal))
             waypoint_name = chosen_answer["Waypoint"]
-            rospy.loginfo("[EMERGENCY TEST] WAYPOINT NAME = {0}".format(waypoint_name))
-
             
             self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", waypoint_name))) 
 
@@ -634,9 +632,7 @@ class Look_at_person(smach.State):
 
             lookat_point = self.robot.head.point(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-            self.robot.head.send_goal(lookat_point)
-            #rospy.loginfo("[EG] DELETE SLEEP AFTER TESTING")
-            #rospy.sleep(60)
+            self.robot.head.send_goal(lookat_point,timeout=0)
         return 'finished'
 
 
@@ -847,7 +843,7 @@ def setup_statemachine(robot):
         ## hier state toevoegen, terugrijden naar lookat point.
 
         query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Location"),
-                                                      Compound("pose_2d", "X", "Y", "Phi"))
+                                                      Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))
 
         smach.StateMachine.add('GO_TO_LAST_EXPLORATION_POINT', 
                                     states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
