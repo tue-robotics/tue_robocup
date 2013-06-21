@@ -202,6 +202,7 @@ class Navigate_to_queryoutcome_emergency(states.Navigate_abstract):
             goal = possible_locations[0]
             rospy.loginfo("goal = {0}".format(goal))
             waypoint_name = chosen_answer["Waypoint"]
+            rospy.loginfo("[EMERGENCY TEST] WAYPOINT NAME = {0}".format(waypoint_name))
 
             
             self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", waypoint_name))) 
@@ -950,7 +951,7 @@ def setup_statemachine(robot):
 
         # Turn 360 degrees (will be 3/4 of a round)
         smach.StateMachine.add('MOVE_ARM_BACK_TURN',
-                                    turn_Around_z_axis(robot, 20),
+                                    turn_Around_z_axis(robot, 30),
                                     transitions={   'done':'MOVE_ARM_BACK', 
                                                     'abort':'MOVE_ARM_BACK'})
         
