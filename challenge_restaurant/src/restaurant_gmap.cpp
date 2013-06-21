@@ -11,9 +11,11 @@
 #include "visualization_msgs/MarkerArray.h"
 #include <pein_msgs/LearnAction.h>
 #include <std_msgs/String.h>
+#include <std_msgs/ColorRGBA.h>
 #include <std_srvs/Empty.h>
 #include "perception_srvs/StartPerception.h"
 #include "speech_interpreter/GetInfo.h"
+#include "amigo_msgs/RGBLightCommand.h"
 
 #include "problib/conversions.h"
 
@@ -38,12 +40,15 @@ using namespace std;
 
 
 //! Settings
-const int TIME_OUT_GUIDE_LOST = 2.5;             // Time interval without updates after which operator is considered to be lost
+unsigned int N_ORDERS = 3;                      // Number of orders robot needs to take
+const int TIME_OUT_GUIDE_LOST = 2.5;            // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_GUIDE = 0.7;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 5;                           // Rate check for guide at start of the challenge
+const double TYPICAL_GUIDE_X = 1.0;          // Expected x-position operator, needed when looking for operator
+const double TYPICAL_GUIDE_Y = 0;            // Expected y-position operator, needed when looking for operator
 
 
 //! Globals
@@ -51,26 +56,90 @@ CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long guide is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time guide position was checked
 double last_var_guide_pos_ = -1;                                                  // Bookkeeping: last variance in x-position guide
-actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
-ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
-ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
-ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 bool freeze_amigo_ = false;                                                       // Bookkeeping: true if stop command is confirmed
 bool candidate_freeze_amigo_ = false;                                             // Bookkeeping: true if robot is asked to stop
 bool stored_location = false;                                                     // Bookkeeping: true if robot another location must be learned
 bool finished = false;                                                            // Bookkeeping: true if robot must go to ordering location
 int state = 0;                                                                    // Bookkeeping: state
-ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 unsigned int n_locations_deliver_ = 0;                                            // Bookkeeping: number of locations learned
-unsigned int n_shelves_ = 0;
-ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
-double t_freeze_ = 0;
-tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
-bool speech_recognition_on = false;
-ros::Publisher location_marker_pub_;
+unsigned int n_shelves_ = 0;                                                      // Bookkeeping: number of shelves learned
+double t_freeze_ = 0;                                                             // Bookkeeping: time the robot is frozen
+bool speech_recognition_on = false;                                               // Bookkeeping: speech switched on/off
 
+actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
+ros::ServiceClient pein_client_;                                                  // Communication: Toggle perception
+ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
+ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
+ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
+ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
+ros::Publisher location_marker_pub_;                                              // Communication: Marker publisher
+ros::Publisher rgb_pub_;
+
+tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
+
+// Maps storing orders
 map<string, tf::StampedTransform> location_map_;
 map<int, pair<string, string> > order_map_;
+
+// Declare function prototypes
+void moveTowardsPosition(pbl::PDF& pos, double offset);
+
+
+void setRGBLights(string color) {
+
+    std_msgs::ColorRGBA clr_msg;
+
+    if (color == "red") {
+        clr_msg.r = 255;
+    } else if (color == "green") {
+        clr_msg.g = 255;
+    } else if (color == "blue") {
+        clr_msg.g = 255;
+    } else {
+        ROS_INFO("Requested color \'%s\' for RGB lights unknown", color.c_str());
+        return;
+    }
+
+    //! Send color command
+    amigo_msgs::RGBLightCommand rgb_cmd;
+    rgb_cmd.color = clr_msg;
+    rgb_cmd.show_color.data = true;
+
+    rgb_pub_.publish(rgb_cmd);
+
+}
+
+
+void resetRGBLights() {
+    //! Send color command
+    amigo_msgs::RGBLightCommand rgb_cmd;
+    rgb_cmd.show_color.data = false;
+    rgb_pub_.publish(rgb_cmd);
+}
+
+
+// TODO: optional: rotate back and forward
+void amigoRotate(double delta) {
+
+    ROS_INFO("Rotate for %f [s]...", delta);
+
+    pbl::Matrix cov(3,3);
+    cov.zeros();
+    pbl::Gaussian pos = pbl::Gaussian(pbl::Vector3(-1, 0, 0), cov);
+    const unsigned int freq = 20;
+    unsigned int n_sleeps_total = delta*freq;
+    ros::Duration pause(1.0/(double)freq);
+    unsigned int n_sleeps = 0;
+
+    while (n_sleeps < n_sleeps_total) {
+        moveTowardsPosition(pos, 2);
+        pause.sleep();
+        ++n_sleeps;
+    }
+
+    ROS_INFO("Done rotating");
+}
 
 
 bool startSpeechRecognition() {
@@ -133,6 +202,8 @@ bool stopSpeechRecognition() {
  * @param sentence
  */
 void amigoSpeak(string sentence) {
+
+    setRGBLights("red");
     
     bool toggle_speech = speech_recognition_on;
     if (toggle_speech) stopSpeechRecognition();
@@ -156,6 +227,8 @@ void amigoSpeak(string sentence) {
     }
 
     if (toggle_speech) startSpeechRecognition();
+
+    setRGBLights("green");
 
 }
 
@@ -234,8 +307,8 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
                 for (unsigned int i = 0; i < vector_possible_guides.size(); ++i)
                 {
-                    double dx = vector_possible_guides[i].getMean()(1);
-                    double dy = vector_possible_guides[i].getMean()(0);
+                    double dx = TYPICAL_GUIDE_X - vector_possible_guides[i].getMean()(0);
+                    double dy = TYPICAL_GUIDE_Y - vector_possible_guides[i].getMean()(1);
                     double dist = sqrt(dx*dx+dy*dy);
                     if (i == 0 || dist_min > dist)
                     {
@@ -418,7 +491,7 @@ void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, d
     marker_txt.pose.position.z *= 1.5;
     array.markers.push_back(marker_txt);
 
-        
+
 }
 
 
@@ -455,7 +528,7 @@ void speechCallback(std_msgs::String res) {
         location_map_["ordering_location"] = trans;
         ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",
                  trans.getOrigin().x(), trans.getOrigin().y() );
-               
+
         // Publish marker
         visualization_msgs::MarkerArray marker_array;
         createMarkerWithLabel("Ord. loc.",trans, 0, 0, 1, marker_array);
@@ -480,7 +553,7 @@ void speechCallback(std_msgs::String res) {
         marker2 = marker;
         marker2.scale.z = 0.1;
         marker2.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        marker2.text = "Ord Loc";  
+        marker2.text = "Ord Loc";
         marker2.id = location_map_.size()*10;
         marker2.pose.position.z += 0.5;
         marker_array.markers.push_back(marker2);
@@ -576,12 +649,18 @@ void speechCallback(std_msgs::String res) {
     else if (stored_location &&  res.data == "yes") {
         finished = false;
         stored_location = false;
+
+        // Rotate to clear guide from the map
+        amigoRotate(1.5);
     }
     //// AMIGO WILL GO TO ORDERING LOCATION
     else if (stored_location &&  res.data != "yes" && res.data != "") {
         finished = true;
         stored_location = false;
         amigoSpeak("Certainly, I finished learning. Please guide me to the ordering location?");
+
+        // Rotate to clear guide from the map
+        amigoRotate(1.5);
     }
     /////
 
@@ -673,6 +752,51 @@ bool moveTowardsPositionMap(tf::StampedTransform pos) {
 
 
 
+bool togglePein(vector<string> modules) {
+
+    perception_srvs::StartPerception pein_srv;
+
+    if (modules.empty())
+    {
+        pein_srv.request.modules.push_back("");
+    }
+    else {
+        vector<string>::const_iterator it = modules.begin();
+        for (; it != modules.end(); ++it)
+        {
+            pein_srv.request.modules.push_back(*it);
+        }
+    }
+
+    if (pein_client_.call(pein_srv))
+    {
+        ROS_INFO("Switched on pein_modules:");
+        vector<string>::const_iterator it = modules.begin();
+        for (; it != modules.end(); ++it)
+        {
+            ROS_INFO("\t%s", it->c_str());
+        }
+
+        return true;
+
+    }
+    else
+    {
+        ROS_WARN("Could not switch on pein_modules:");
+        vector<string>::const_iterator it = modules.begin();
+        for (; it != modules.end(); ++it)
+        {
+            ROS_WARN("\t%s", it->c_str());
+        }
+    }
+
+    return false;
+
+}
+
+
+
+
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "restaurant_simple");
@@ -680,8 +804,14 @@ int main(int argc, char **argv) {
     
     ROS_INFO("Started Restaurant");
 
+    //! Location markers
+    location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/restaurant/location_markers", 10);
+
     /// Tf listener
     listener = new tf::TransformListener();
+
+    //! RGB lights
+    rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
     
     /// Head ref
     head_ref_pub_ = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
@@ -709,10 +839,24 @@ int main(int argc, char **argv) {
     location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/restaurant/location_markers", 10);
 
     //! Switch on perception
-    ros::ServiceClient ppl_det_client = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
+    pein_client_ = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
+    vector<string> modules;
+    modules.push_back("ppl_detection");
+    if (!togglePein(modules))
+    {
+        ros::Duration wait(1.0);
+        wait.sleep();
+        if (!togglePein(modules))
+        {
+            ROS_ERROR("No ppl detection possible, end of challenge");
+            return 1;
+        }
+    }
+
+    /*
     perception_srvs::StartPerception pein_srv;
     pein_srv.request.modules.push_back("ppl_detection");
-    if (ppl_det_client.call(pein_srv))
+    if (pein_client_.call(pein_srv))
     {
         ROS_INFO("Switched on laser_ppl_detection");
     }
@@ -721,12 +865,13 @@ int main(int argc, char **argv) {
         ROS_ERROR("Failed to switch on perception");
         ros::Duration wait(1.0);
         wait.sleep();
-        if (!ppl_det_client.call(pein_srv))
+        if (!pein_client_.call(pein_srv))
         {
             ROS_ERROR("No ppl detection possible, end of challenge");
             return 1;
         }
     }
+    */
 
     //! Query WIRE for objects
     wire::Client client;
@@ -777,6 +922,9 @@ int main(int argc, char **argv) {
     freeze_amigo_ = false;
     ros::Rate follow_rate(FOLLOW_RATE);
     while(ros::ok() && state  == 0) {
+
+        setRGBLights("blue");
+
         ros::spinOnce();
 
         //! Get objects from the world state
@@ -784,6 +932,8 @@ int main(int argc, char **argv) {
 
         //! Check if the robot has to move
         if (candidate_freeze_amigo_ || freeze_amigo_) {
+
+            setRGBLights("green");
             
             // Robot will not move, this avoids lost operator after conversation
             t_last_check_ = ros::Time::now().toSec();
@@ -798,6 +948,7 @@ int main(int argc, char **argv) {
                     ROS_WARN("Time out");
                     candidate_freeze_amigo_ = false;
                     amigoSpeak("I will follow you");
+                    setRGBLights("blue");
                 }
             }
             
@@ -838,7 +989,7 @@ int main(int argc, char **argv) {
     }
 
     // PART II: Get orders
-        
+
     // Switch off previous speech recognition, connect to interpreter
     stopSpeechRecognition();
     ros::ServiceClient speech_client = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
@@ -847,12 +998,15 @@ int main(int argc, char **argv) {
     reset_wire_client_.call(srv);
     
     // Switch off perception
-    // TODO
+    modules.clear();
+    if (!togglePein(modules))
+    {
+        ROS_WARN("Perception not switched off");
+    }
 
     // Take order
-    unsigned int n_orders = 3;
     stringstream sentence;
-    sentence << "I would like to take " << n_orders << " orders.";
+    sentence << "I would like to take " << N_ORDERS << " orders.";
     amigoSpeak(sentence.str());
     
     while(ros::ok() && state  == 1) {
@@ -862,7 +1016,7 @@ int main(int argc, char **argv) {
         srv.request.n_tries = 3;
         srv.request.time_out = 40;
         
-        for (unsigned int order_index = 0; order_index < n_orders; ++order_index) {
+        for (unsigned int order_index = 0; order_index < N_ORDERS; ++order_index) {
             
             // Ask for a object class
             srv.request.type = "object_classes";
@@ -870,6 +1024,7 @@ int main(int argc, char **argv) {
             string desired_object = "coke";
 
             // Ask for object class
+            resetRGBLights();
             if (speech_client.call(srv)) {
                 string obj_class = srv.response.answer;
 
@@ -879,6 +1034,7 @@ int main(int argc, char **argv) {
                     //amigoSpeak("Which object would you like from this class?");
 
                     // Ask which object from class
+                    resetRGBLights();
                     if (speech_client.call(srv)) {
                         string obj_instance = srv.response.answer;
                         if (obj_instance != "no_answer" && obj_instance != "wrong_answer") {
@@ -901,6 +1057,7 @@ int main(int argc, char **argv) {
             amigoSpeak("To which delivery location should I bring the object?");
 
             // Ask for object class
+            resetRGBLights();
             if (speech_client.call(srv)) {
                 string given_loc = srv.response.answer;
 
@@ -955,6 +1112,7 @@ int main(int argc, char **argv) {
     ROS_INFO("Connected to move_base server");
 
     // Do tasks
+    setRGBLights("blue");
     while(ros::ok() && state  == 2) {
         ros::spinOnce();
 
@@ -988,30 +1146,29 @@ int main(int argc, char **argv) {
                     head_ref_pub_.publish(head_down);
 
                     //! Switch on perception
-                    bool temp_matching_on = true;
+                    modules.clear();
+                    modules.push_back("template_matching");
                     perception_srvs::StartPerception pein_srv_temp_on;
                     pein_srv_temp_on.request.modules.push_back("template_matching");
-                    if (!ppl_det_client.call(pein_srv_temp_on))
+                    if (!togglePein(modules))
                     {
                         amigoSpeak("I could not switch on template matching");
-                        temp_matching_on = false;
                     }
-
-                    if (temp_matching_on)
+                    else
                     {
+                        // Template matching needs some time
                         ros::Duration wait(6.0);
                         wait.sleep();
-                        perception_srvs::StartPerception pein_srv_temp_off;
-                        pein_srv_temp_off.request.modules.push_back("");
-                        if (!ppl_det_client.call(pein_srv_temp_off))
+
+                        // TODO: Check world model
+
+                        modules.clear();
+                        if (!togglePein(modules))
                         {
                             amigoSpeak("I could not switch off template matching");
                         }
 
                     }
-
-                    // Todo: check world model for ordered objects
-
 
                 }
             }
@@ -1021,8 +1178,8 @@ int main(int argc, char **argv) {
         // Then go back to order location
         if (location_map_.find("ordering_location") != location_map_.end()) {
             
-            ROS_DEBUG("Ordering location is (%f,%f)", 
-            location_map_["ordering_location"].getOrigin().x(), location_map_["ordering_location"].getOrigin().x());
+            ROS_DEBUG("Ordering location is (%f,%f)",
+                      location_map_["ordering_location"].getOrigin().x(), location_map_["ordering_location"].getOrigin().x());
             
             if (!moveTowardsPositionMap(location_map_["ordering_location"])) {
                 ROS_WARN("Could not go back to ordering location");
