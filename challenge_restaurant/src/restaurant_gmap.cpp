@@ -88,7 +88,7 @@ map<string, tf::StampedTransform> location_map_;
 map<int, pair<string, string> > order_map_;
 
 // Declare function prototypes
-void moveTowardsPosition(pbl::PDF& pos, double offset);
+void moveTowardsPosition(pbl::PDF& pos, double offset); // To Do obsolete??
 
 
 void setRGBLights(string color) {
@@ -725,6 +725,7 @@ void speechCallback(std_msgs::String res) {
     else if (stored_location &&  res.data == "yes") {
         finished = false;
         stored_location = false;
+        amigoSpeak("Alright");
 
         // Rotate to clear guide from the map
         //amigoRotate(1.5);
@@ -842,22 +843,47 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
                 
                 ROS_INFO("Found the object for order %d!", it_order->first);
                 amigoSpeak("I found " + it->first);
-                amigoSpeak("I will bring it to delivery location :" + it_order->second.first);
-                
+                amigoSpeak("I will bring it to delivery location :" + it_order->second.second);
+                      
                 // Print information
                 stringstream location_name;
-                location_name << "delivery location" << it_order->second.first;
+                location_name << "delivery location" << it_order->second.second;
                 tf::StampedTransform tf_loc = location_map_[location_name.str()];
                 ROS_INFO("Bring %s to location %s: (%f,%f)", 
-                    it->first.c_str(), it_order->second.first.c_str(), tf_loc.getOrigin().x(), tf_loc.getOrigin().y());
+                    it->first.c_str(), it_order->second.second.c_str(), tf_loc.getOrigin().x(), tf_loc.getOrigin().y());
+				
+				
+				// ToDo: call service
+				
+				amigoSpeak("Please handover the object, I am not able to grasp");
+				moveArm("rpera", "give"); // To Do, open gripper and add delay			
+				
+				amigoSpeak("Thank you");
+				moveArm("rpera", "carry");
+						
+				// Go find the object
+				bool at_loc = true;				
+				
+                if (!moveTowardsPositionMap(tf_loc)) {
+                    ROS_WARN("Could not reach the delivery location");
+                    amigoSpeak("I cannot reach the delivery location, can you let me pass?");
+                    ros::Duration d(2.0);
+                    d.sleep();
+                    if (!moveTowardsPositionMap(tf_loc)) {
+                        ROS_WARN("Failed second attempt to reach the delivery location too");
+                        at_loc = false;
+                    }
+                } 
                 
-                // TODO: continue
-                
-                
-                
-            }
-            
-        }
+                if (at_loc) {
+                    amigoSpeak("I am at location: " + it_order->second.second + ". Please take the " + it->first + " out of my gripper");
+                    ROS_INFO("I finished Task: %d!", it_order->first);
+                    
+                    order_map_[it_order->first] = make_pair<string, string>("Finished", "Finished");                                        
+				}
+				
+			}
+        }        
         
         // TODO: do something more
 
@@ -934,10 +960,6 @@ int main(int argc, char **argv) {
     //! Publish joint goals to arms
     rpera_joint_pub_ = nh.advertise<amigo_msgs::arm_joints >("/arm_right_controller/joint_references", 1);
     lpera_joint_pub_ = nh.advertise<amigo_msgs::arm_joints >("/arm_left_controller/joint_references", 1);
-    
-    //! Arms in drive position
-    moveArm("lpera", "drive");
-    moveArm("rpera", "drive");
     
     /// set the head to look down in front of AMIGO
     ros::Rate poll_rate(100);
@@ -1040,6 +1062,10 @@ int main(int argc, char **argv) {
 
     ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
     amigoSpeak("Can you please show me the locations");
+    
+    //! Arms in drive position
+    moveArm("lpera", "drive");
+    moveArm("rpera", "drive");
 
     //! Follow guide
     freeze_amigo_ = false;
