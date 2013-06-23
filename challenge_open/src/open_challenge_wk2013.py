@@ -33,7 +33,7 @@ class AskForTask(smach.State):
         #self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
 
         # Default values
-        obj = "coke"
+        obj = "tea_pack"
         location = "dinner_table"
         '''
         if self.response.answer == "bringacoketothekitchen":
@@ -198,14 +198,14 @@ class GetNextLocation(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
+        self.robot.speech.speak("I will determine the next goal location")
         answers = self.robot.reasoner.query(Compound("goal_location", "Counter" , Compound("point_3d", "X", "Y", "Z")))
-
         print ""
         print answers
         print ""
         if(answers):
             answer = answers[0]
-            self.robot.reasoner.query(Compound("retract", answer["Counter"], "A"))
+            self.robot.reasoner.query(Compound("retract", Compound("goal_location", answer["Counter"], "A")))
             self.robot.reasoner.retractall(Compound("base_grasp_point", "A"))
             self.robot.reasoner.assertz(Compound("base_grasp_point", Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
             return 'done'
@@ -246,7 +246,9 @@ def setup_statemachine(robot):
     
     #Assert the current challenge.
     robot.reasoner.assertz(Compound("challenge", "open_challenge"))
-    robot.reasoner.query(Compound("retractall", Compound("goal_location", "A")))
+    robot.reasoner.query(Compound("retractall", Compound("goal_location", "X", "Y")))
+    robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "X"))))
+    robot.reasoner.query(Compound("retractall", Compound("goal", Compound("bringTo", "X"))))
 
 #    query_pose = robot.reasoner.base_pose(Compound("initial_open_challenge", robot.reasoner.pose_2d("X", "Y", "Phi")))
 #    print query_pose
