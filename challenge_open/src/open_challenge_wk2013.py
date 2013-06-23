@@ -260,6 +260,8 @@ def setup_statemachine(robot):
     query = Compound('region_of_interest', 'tables') #region_of_interest(rgo2013, open_challenge, tables, point_3d(0, 0, 0), point_3d(2, 2, 2))
     robot.reasoner.query(query)
 
+    answers = robot.reasoner.query(Compound("template_matching_config", "Config")
+    robot.perception.load_template_config(answers[0]["Config"])
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
