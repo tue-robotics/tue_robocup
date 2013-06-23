@@ -909,9 +909,15 @@ class Determine_goal(smach.State):
 
                 #     # Get base poses for every query outcome and put these in possible locations
                 #     for ROI in possible_ROIs:
-                look_point = self.robot.base.point(1,0,stamped=True)
+                answers = self.robot.reasoner.query(self.lookat_query)
+
+                look_point = self.robot.base.point(1, 0, stamped=True)
+                look_point.point.x = float(answers[0]["X"])
+                look_point.point.y = float(answers[0]["Y"])
+                look_point.point.z = float(answers[0]["Z"])
+
                 # ToDo: Parameterize offsets
-                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.2)
+                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.0)
 
                 if base_poses_for_point:
                     for base_goal_pose in base_poses_for_point:

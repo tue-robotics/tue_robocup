@@ -44,7 +44,7 @@ class Learn_Person(smach.State):
                 name_to_learn = "unknown"
 
         rospy.loginfo('Get user name {0}'.format(name_to_learn))
-
+        self.robot.speak("This may take a while, please be patient while I try to learn your face.")
         speech_sentence = [ 'Please look at my left arm, until I am finished learning.',
                             'Now look at my right arm, please wait until I am finished learning',
                             'Now please look at my face, till I am finally finished.']
