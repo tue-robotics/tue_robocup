@@ -17,6 +17,9 @@
   
   <!-- WIRE ->
   <include file="$(find wire_core)/launch/start.launch" /-->
+  
+  <!-- Smach State server -->
+  <node pkg="challenge_restaurant" type="smach_states.py" name="smach_states_server"/>
 
 </launch>
 
