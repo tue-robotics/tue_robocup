@@ -37,13 +37,8 @@ using namespace std;
 #include <cstring>
 #include <fstream>
 
-// Possible speech commands
-// amigostop
-// thislocationisnamed
-
-
 //! Settings
-unsigned int N_ORDERS = 1;                      // Number of orders robot needs to take
+unsigned int N_ORDERS = 3;                      // Number of orders robot needs to take
 const int TIME_OUT_GUIDE_LOST = 2.5;            // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_GUIDE = 0.7;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
