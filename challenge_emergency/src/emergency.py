@@ -141,17 +141,9 @@ class Look_for_people_emergency(smach.State):
         nav_result = nav.execute()
 
         if nav_result == "unreachable" or nav_result == "preempted":
-
-            self.robot.base.reset_costmap()
-            nav_result2 = nav.execute()
-
-            if nav_result2 == "unreachable" or nav_result2 == "preempted":
-                self.robot.reasoner.query(Conjunction(Compound("current_exploration_target", "Waypoint_name"),
+            self.robot.reasoner.query(Conjunction(Compound("current_exploration_target", "Waypoint_name"),
                                                       Compound("assert", Compound("unreachable", "Waypoint_name"))))
-                return "unreachable"
-            elif nav_result2 == "goal_not_defined":
-                rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
-                return "unreachable"
+            return "unreachable"
 
         elif nav_result == "goal_not_defined":
             rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
@@ -347,19 +339,9 @@ class Check_persons_found(smach.State):
         nav_result = nav.execute()
 
         if nav_result == "unreachable" or nav_result == "preempted":
-            self.robot.base.reset_costmap()
-            nav_result2 = nav.execute()
-
-            if nav_result2 == "unreachable" or nav_result2 == "preempted":
-
-                # TODO DRIVE TO current_exploration_target !! (in case people has been leaded to exit, drive back to current exploration target.)
-
-                self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
-                                                      Compound("assert", Compound("registered", "ObjectID"))))
-                return "person_unreachable"
-            elif nav_result2 == "goal_not_defined":
-                rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
-                return "no_person_found"
+            self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
+                                                      Compound("assert", Compound("regist  ered", "ObjectID"))))
+            return "person_unreachable"
 
         elif nav_result == "goal_not_defined":
             rospy.loginfo("Goal not defined received by NavigateGeneric. Should never happen, since this check has done before calling upon NavigateGeneric.")
@@ -950,7 +932,6 @@ def setup_statemachine(robot):
                                     transitions={   'done':'MOVE_ARM_BACK', 
                                                     'abort':'MOVE_ARM_BACK'})
         
-
         # Move arm back when person needs guidance
         smach.StateMachine.add('MOVE_ARM_BACK',
                                     MoveArmBack(robot),
@@ -969,7 +950,6 @@ def setup_statemachine(robot):
                                                     'preempted':'CLEAR_PATH_TO_FRONT_OF_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_FRONT_OF_EXIT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_FRONT_OF_EXIT'})
-
 
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('CLEAR_PATH_TO_FRONT_OF_EXIT',
