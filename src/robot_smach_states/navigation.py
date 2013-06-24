@@ -1018,7 +1018,7 @@ class Determine_goal(smach.State):
         userdata.goal = geometry_msgs.msg.Pose()
         userdata.goal.position = self.robot.base.point(x,y)
         userdata.goal.orientation = self.robot.base.orient(phi)
-        rospy.loginfo("Determine_goal, goal = {0}".format(userdata.goal))
+        rospy.loginfo("Determine_goal, goal = {0}".format(userdata.goal).replace("\n", " "))
 
         self.possible_locations.pop(0)
 
@@ -1036,7 +1036,7 @@ class Get_plan(smach.State):
     def execute(self, userdata):
 
         rospy.loginfo("Looking for a path")
-        rospy.loginfo("Get_plan, goal = {0}".format(userdata.goal))
+        rospy.loginfo("Get_plan, goal = {0}".format(userdata.goal).replace("\n", " "))
         
         self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
