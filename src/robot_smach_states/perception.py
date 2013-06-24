@@ -50,7 +50,7 @@ class Learn_Person(smach.State):
                             'Now please look at my face, till I am finally finished.']
 
         # learn left face
-        self.robot.speech.speak('Please be patient, while I try to learn your face.')
+        #self.robot.speech.speak('Please be patient, while I try to learn your face.')
         #self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         #self.robot.leftArm.send_joint_goal(-1.439, 0.696, -0.967, 1.202, -0.9489, 0.5272, 0.0367)
         self.robot.leftArm.send_joint_goal(-1.439, 0.496, -0.967, 1.352, -0.9489, 0.5272, 0.0367)
