@@ -6,29 +6,36 @@
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
-#include <tue_move_base_msgs/MoveBaseAction.h>
 
-#include "visualization_msgs/MarkerArray.h"
-#include <pein_msgs/LearnAction.h>
+// Actions
+#include <tue_move_base_msgs/MoveBaseAction.h>
+#include <amigo_head_ref/HeadRefAction.h>
+#include "control_msgs/FollowJointTrajectoryAction.h"
+#include "amigo_actions/AmigoGripperCommandAction.h"
+
+// Messages
+#include "amigo_msgs/arm_joints.h"
+#include "amigo_msgs/RGBLightCommand.h"
 #include <std_msgs/String.h>
+#include <std_msgs/Float64.h>
 #include <std_msgs/ColorRGBA.h>
+#include "geometry_msgs/Point.h"
+#include "visualization_msgs/MarkerArray.h"
+#include "trajectory_msgs/JointTrajectoryPoint.h"
+#include <text_to_speech_philips/Speak.h>
+#include "tue_pocketsphinx/Switch.h"
+
+// Services
 #include <std_srvs/Empty.h>
 #include "perception_srvs/StartPerception.h"
 #include "speech_interpreter/GetInfo.h"
-#include "amigo_msgs/RGBLightCommand.h"
-#include "geometry_msgs/Point.h"
-#include <std_msgs/Float64.h>
-#include "amigo_msgs/arm_joints.h"
-#include <amigo_msgs/head_ref.h>
 
+// Problib conversions
 #include "problib/conversions.h"
 
+// Simple path planner
 #include "tue_carrot_planner/carrot_planner.h"
 
-#include <text_to_speech_philips/Speak.h>
-
-// Speech recognition
-#include "tue_pocketsphinx/Switch.h"
 
 using namespace std;
 
@@ -45,8 +52,8 @@ const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guid
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 5;                           // Rate check for guide at start of the challenge
-const double TYPICAL_GUIDE_X = 1.0;          // Expected x-position operator, needed when looking for operator
-const double TYPICAL_GUIDE_Y = 0;            // Expected y-position operator, needed when looking for operator
+const double TYPICAL_GUIDE_X = 1.0;             // Expected x-position operator, needed when looking for operator
+const double TYPICAL_GUIDE_Y = 0;               // Expected y-position operator, needed when looking for operator
 
 
 //! Globals
@@ -64,26 +71,38 @@ unsigned int n_shelves_ = 0;                                                    
 double t_freeze_ = 0;                                                             // Bookkeeping: time the robot is frozen
 bool speech_recognition_on = false;                                               // Bookkeeping: speech switched on/off
 
-actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
+//! Action clients
+actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_;           // Communication: Move base action client
+actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* head_ref_ac_;                 // Communication: Head ref action client
+actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>* left_arm_ac_;     // Communication: Left arm action client
+actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>* right_arm_ac_;    // Communication: Right arm action client
+actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>* gripper_left_ac_;  // Communication: left gripper action client
+actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>* gripper_right_ac_; // Communication: Right gripper action client
+
+//! Service clients
 ros::ServiceClient pein_client_;                                                  // Communication: Toggle perception
-ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
-ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
+
+//! Publishers
+ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 ros::Publisher location_marker_pub_;                                              // Communication: Marker publisher
 ros::Publisher rgb_pub_;                                                          // Communication: Publisher rgb lights
 ros::Publisher lpera_joint_pub_;                                                  // Communication: left arm
 ros::Publisher rpera_joint_pub_;                                                  // Communication: right arm
 
+//! Tf
 tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
 
-// Maps storing orders
+//! Maps storing orders and locations
 map<string, tf::StampedTransform> location_map_;
 map<int, pair<string, string> > order_map_;
 
-// Declare function prototypes
-void moveTowardsPosition(pbl::PDF& pos, double offset); // To Do obsolete??
+//! Function prototypes to avoid errors
+void moveTowardsPosition(pbl::PDF& pos, double offset);
+bool moveHead(double pan, double tilt);
 
 
 void setRGBLights(string color) {
@@ -96,7 +115,10 @@ void setRGBLights(string color) {
         clr_msg.g = 255;
     } else if (color == "blue") {
         clr_msg.g = 255;
-    } else {
+    } else if (color == "yellow") {
+        clr_msg.r = 255;
+        clr_msg.g = 255;
+    }else {
         ROS_INFO("Requested color \'%s\' for RGB lights unknown", color.c_str());
         return;
     }
@@ -110,47 +132,123 @@ void setRGBLights(string color) {
 
 }
 
-void moveArm(string arm, string pose) {
-    
-    amigo_msgs::arm_joints arm_msg;
 
+trajectory_msgs::JointTrajectoryPoint setArmReference(double r0, double r1, double r2, double r3, double r4, double r5, double r6) {
+
+    trajectory_msgs::JointTrajectoryPoint arm_msg;
+    arm_msg.positions.push_back(r0);
+    arm_msg.positions.push_back(r1);
+    arm_msg.positions.push_back(r2);
+    arm_msg.positions.push_back(r3);
+    arm_msg.positions.push_back(r4);
+    arm_msg.positions.push_back(r5);
+    arm_msg.positions.push_back(r6);
+
+    return arm_msg;
+}
+
+
+
+bool moveArm(string arm, string pose) {
+
+
+    control_msgs::FollowJointTrajectoryGoal arm_ref;
+
+    // Check input pose
     if (pose == "drive") {
-        std_msgs::Float64 fl;
-        fl.data = -0.1; arm_msg.pos[0] = fl;
-        fl.data = -0.2; arm_msg.pos[1] = fl;
-        fl.data = 0.2; arm_msg.pos[2] = fl;
-        fl.data = 0.8; arm_msg.pos[3] = fl;
-        fl.data = 0; arm_msg.pos[4] = fl;
-        fl.data = 0; arm_msg.pos[5] = fl;
-        fl.data = 0; arm_msg.pos[6] = fl;
+        arm_ref.trajectory.points.push_back(setArmReference(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0));
     } else if (pose == "carry") {
-       std_msgs::Float64 fl;
-        fl.data = -0.3; arm_msg.pos[0] = fl;
-        fl.data = -0.2; arm_msg.pos[1] = fl;
-        fl.data = 0.2; arm_msg.pos[2] = fl;
-        fl.data = 1.4; arm_msg.pos[3] = fl;
-        fl.data = 0; arm_msg.pos[4] = fl;
-        fl.data = 0; arm_msg.pos[5] = fl;
-        fl.data = 0; arm_msg.pos[6] = fl;
+        arm_ref.trajectory.points.push_back(setArmReference(-0.3, -0.2, 0.2, 1.4, 0.0, 0.0, 0.0));
     } else if (pose == "give") {
-        std_msgs::Float64 fl;
-        fl.data = -0.3; arm_msg.pos[0] = fl;
-        fl.data = 0.4; arm_msg.pos[1] = fl;
-        fl.data = 0.2; arm_msg.pos[2] = fl;
-        fl.data = 1.4; arm_msg.pos[3] = fl;
-        fl.data = 0; arm_msg.pos[4] = fl;
-        fl.data = 0; arm_msg.pos[5] = fl;
-        fl.data = 0; arm_msg.pos[6] = fl;
+        arm_ref.trajectory.points.push_back(setArmReference(-0.3, 0.4, 0.2, 1.4, 0.0, 0.0, 0.0));
     } else {
-        ROS_INFO("I don't understand which pose you sent to the arm: \'%s\'", pose.c_str());
-        return;
+        ROS_INFO("Arm pose for %s arm unknown: \'%s\'", arm.c_str(), pose.c_str());
+        return false;
     }
-    
-    //[-0.1;-0.2;0.2;0.8;0.0;0.0;0.0]  [-0.3;-0.2;0.2;1.4;0.0;0.0;0.0] [-0.3;0.4;0.2;1.4;0.0;0.0;0.0]
 
-    //! Send arm command   
-    if (arm == "lpera") lpera_joint_pub_.publish(arm_msg);
-    else if (arm == "rpera") rpera_joint_pub_.publish(arm_msg);
+    // Send goal(s)
+    if (arm == "left" || arm == "both") {
+        left_arm_ac_->sendGoal(arm_ref);
+        left_arm_ac_->waitForResult(ros::Duration(10.0));
+    }
+
+    if (arm == "right" || arm == "both") {
+        right_arm_ac_->sendGoal(arm_ref);
+        right_arm_ac_->waitForResult(ros::Duration(10.0));
+    }
+
+
+    // Get feedback
+
+    // Left arm
+    if(arm == "lpera" && left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+        ROS_WARN("Left arm could not reach target position");
+        return false;
+    }
+    // Right arm
+    else if(arm == "lpera" && left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+        ROS_WARN("Left arm could not reach target position");
+        return false;
+    }
+    // Both arms
+    else if(arm == "both") {
+        bool both_ok = true;
+
+        // Left
+        if (left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+            ROS_WARN("Left arm could not reach target position");
+            both_ok = false;
+        }
+
+        // Right
+        if (right_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+            ROS_WARN("Right arm could not reach target position");
+            both_ok = false;
+        }
+
+        return both_ok;
+
+    }
+
+    return true;
+
+}
+
+bool moveGripper(string side, string direction) {
+
+    //! Set action
+    amigo_actions::AmigoGripperCommandGoal gripper_ref;
+    if (direction == "open") {
+        gripper_ref.command.direction = -1;
+    }
+    else if (direction == "close") {
+        gripper_ref.command.direction = 1;
+    }
+    else {
+        ROS_WARN("Received unknown gripper command \'%s\'", direction.c_str());
+        return false;
+    }
+
+    //! Send goal
+    gripper_ref.command.max_torque = 50.0;
+    if (side == "left") {
+        gripper_left_ac_->sendGoal(gripper_ref);
+        gripper_left_ac_->waitForResult(ros::Duration(5.0));
+    } else if (side == "right") {
+        gripper_right_ac_->sendGoal(gripper_ref);
+        gripper_right_ac_->waitForResult(ros::Duration(5.0));
+    } else {
+        ROS_WARN("Gripper side \'%s\' unknown, must be either left or right", side.c_str());
+    }
+
+    if ((side == "left" && gripper_left_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) ||
+            (side == "right" && gripper_right_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)) {
+        ROS_WARN("Gripper (%s) could not reach target position", side.c_str());
+        return false;
+    }
+
+    return true;
+
 
 }
 
@@ -163,7 +261,7 @@ void resetRGBLights() {
 }
 
 
-// TODO: optional: rotate back and forward
+
 void amigoRotate(double delta) {
 
     ROS_INFO("Rotate for %f [s]...", delta);
@@ -247,15 +345,14 @@ bool stopSpeechRecognition() {
  */
 void amigoSpeak(string sentence) {
 
+    ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
+
     setRGBLights("red");
-    
+
     bool toggle_speech = speech_recognition_on;
     if (toggle_speech) stopSpeechRecognition();
     if (toggle_speech) stopSpeechRecognition();
 
-    ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
-
-    
     //! Call speech service
     text_to_speech_philips::Speak speak;
     speak.request.sentence = sentence;
@@ -287,7 +384,9 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
     //! It is allowed to call the guide once per section (points for the section will be lost)
     if (lost) {
+        setRGBLights("yellow");
         amigoSpeak("I have lost my guide, can you please stand in front of me");
+        setRGBLights("yellow");
     }
 
     //! Give the guide some time to move to the robot
@@ -408,7 +507,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
         dt.sleep();
     }
-    
+
     amigoSpeak("I did not find my guide yet");
     return false;
 
@@ -458,7 +557,7 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
                         }
                     }
                     pbl::Matrix cov = pos_gauss.getCovariance();
-                    
+
                     //ROS_INFO("Guide has variance %f, last variance is %f", cov(0,0), last_var_guide_pos_);
 
 
@@ -520,10 +619,10 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
         wire::PropertySet& obj = *it_obj;
         const wire::Property& prop_label = obj.getProperty("class_label");
         if (prop_label.isValid()) {
-            
+
             string class_label = prop_label.getValue().getExpectedValue().toString();
-            double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());   
-            
+            double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
+
             ROS_INFO("Found %s!", class_label.c_str());
 
             const wire::Property& prop_pos = obj.getProperty("position");
@@ -533,21 +632,21 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
                 pbl::PDF pos = prop_pos.getValue();
                 pbl::Vector pos_obj = pos.getExpectedValue().getVector();
                 ROS_INFO("Position of %s is (%f,%f,%f)", class_label.c_str(),  pos_obj(0), pos_obj(1), pos_obj(2));
-                
+
                 geometry_msgs::Point pos_store;
                 pos_store.x = pos_obj(0);
                 pos_store.y = pos_obj(1);
                 pos_store.z = pos_obj(2);
-                
-                
+
+
                 //! Store object in world model
                 if (world_model_copy.find(class_label) == world_model_copy.end()) {
-                    
+
                     // If class is not yet in world model, store
                     world_model_copy[class_label] = make_pair(pos_store, prob);
-                    
+
                 } else {
-                    
+
                     // If class is present but with lower probability, store
                     if (world_model_copy[class_label].second < prob) {
                         world_model_copy[class_label] = make_pair(pos_store, prob);
@@ -555,17 +654,17 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
                 }
             }
 
-            
+
         }
     }
-    
+
     return world_model_copy;
 
 }
 
 
 void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, double g, double b, visualization_msgs::MarkerArray& array) {
-    
+
     // Geometric marker
     visualization_msgs::Marker marker;
     marker.ns = "restaurant/location_markers";
@@ -628,11 +727,11 @@ void speechCallback(std_msgs::String res) {
     else if (candidate_freeze_amigo_ &&  res.data == "yes" && finished) {
         candidate_freeze_amigo_ = false;
         amigoSpeak("I will remember the ordering location");
-        
-        // Save location
+
+        // Save ordering location
         tf::StampedTransform trans;
         listener->lookupTransform("/map", "/base_link", ros::Time(0), trans);
-        
+
         location_map_["ordering_location"] = trans;
         ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",
                  trans.getOrigin().x(), trans.getOrigin().y() );
@@ -666,42 +765,56 @@ void speechCallback(std_msgs::String res) {
         // Get location:
         std::stringstream location_name;
 
+        // Marker color
+        double r = 0, g = 0, b = 0;
+
         // Answer is yes: indeed a shelf
         if (res.data == "yes") {
+
+            // Ask for a side
+            amigoSpeak("Where do I find the shelf?");
+
+            // Administration
+            r = 1;
             ++n_shelves_;
             location_name << "shelf" << n_shelves_;
-            //marker.color.r = 1;
-            createMarkerWithLabel(location_name.str(), trans, 1, 0, 0, marker_array);
         }
         // Answer is no: not a shelf, but a delivery location
         else {
+
+            // Ask for a side
+            amigoSpeak("Where do I find the delivery location?");
+
+            // Administration
+            g = 1;
             ++n_locations_deliver_;
             location_name << "delivery location" << n_locations_deliver_;
-            //marker.color.r = 1;
-            createMarkerWithLabel(location_name.str(), trans, 0, 1, 0, marker_array);
         }
+
+        // Determine corresponding theta
+        // TODO: use speech interpreter - left/right/front
+        string answer = "";
+        double theta = 0;
+        if (answer == "left") theta = 1.57;
+        else if (answer == "right") theta = -1.57;
+
+        // Set updated orientation
+        tf::Quaternion q = trans.getRotation();
+        tf::Quaternion offset;
+        offset.setRPY(0, 0, theta);
+        q += offset;
+        trans.setRotation(q);
+
 
         // Store location
         location_map_[location_name.str()] = trans;
         ROS_INFO("Saved the %s with transform parameters : [%f,%f]",
-                 location_name.str().c_str() ,trans.getOrigin().x(), trans.getOrigin().y() );
+                 location_name.str().c_str() ,trans.getOrigin().x(), trans.getOrigin().y());
 
         // Publish marker
+        createMarkerWithLabel(location_name.str(), trans, r, g, b, marker_array);
         location_marker_pub_.publish(marker_array);
 
-        /*
-        marker.pose.position.x = tf.getOrigin().x();
-        marker.pose.position.y = tf.getOrigin().y();
-        visualization_msgs::Marker marker2;
-        marker2 = marker;
-        marker2.scale.z = 0.1;
-        marker2.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-        marker2.id = location_map_.size()*10;
-        marker2.pose.position.z += 0.5;
-        marker2.text = location_name.str();
-        marker_array.markers.push_back(marker);
-        marker_array.markers.push_back(marker2);
-        location_marker_pub_.publish(marker_array);*/
 
         //! Inform user
         string sentence = "I will call this location " + location_name.str();
@@ -729,7 +842,7 @@ void speechCallback(std_msgs::String res) {
     else if (stored_location &&  res.data != "yes" && res.data != "") {
         finished = true;
         stored_location = false;
-        amigoSpeak("Certainly, I finished learning. Please guide me to the ordering location?");
+        amigoSpeak("Certainly. Please guide me to the ordering location?");
 
         // Rotate to clear guide from the map
         //amigoRotate(1.5);
@@ -738,7 +851,7 @@ void speechCallback(std_msgs::String res) {
 
     // always immediately start listening again
     startSpeechRecognition();
-    
+
     // Robot will not move, this avoids lost operator after conversation
     t_last_check_ = ros::Time::now().toSec();
 
@@ -765,10 +878,10 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
     tf::Quaternion q;
     q.setRPY(0, 0, theta);
 
-    amigo_msgs::head_ref goal;
-    goal.head_pan = theta;
-    goal.head_tilt = 0.0;
-    head_ref_pub_.publish(goal);
+    //amigo_msgs::head_ref goal;
+    //goal.head_pan = theta;
+    //goal.head_tilt = 0.0;
+    //head_ref_pub_.publish(goal);
 
     //! Set orientation
     end_goal.pose.orientation.x = q.getX();
@@ -823,67 +936,122 @@ bool moveTowardsPositionMap(tf::StampedTransform pos) {
 }
 
 
-void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& world_model_copy) {
-    
-    map<string, pair<geometry_msgs::Point, double> >::iterator it = world_model_copy.begin();
-    
+void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& world_model_copy, tf::StampedTransform tf_loc_shelf) {
+
+    map<string, pair<geometry_msgs::Point, double> >::iterator it_world_model = world_model_copy.begin();
+
     // Iterate over world model objects
-    for (; it != world_model_copy.end(); ++it) {
-        
+    for (; it_world_model != world_model_copy.end(); ++it_world_model) {
+
         // Check current object
         map<int, pair<string, string> >::iterator it_order = order_map_.begin();
         for (; it_order != order_map_.end(); ++it_order) {
-            
-            if (it_order->second.first == it->first) {
-                
+
+            if (it_order->second.first == it_world_model->first) {
+
+                // Make sure AMIGO moves towards the shelf
+                if (!moveTowardsPositionMap(tf_loc_shelf)) {
+                    ROS_WARN("Could not reach the shelf");
+                    amigoSpeak("I cannot reach the shelf, can you let me pass?");
+                    ros::Duration d(2.0);
+                    d.sleep();
+                    if (!moveTowardsPositionMap(tf_loc_shelf)) {
+                        ROS_WARN("Failed second attempt to reach shelf too");
+                        //at_loc = false;
+                    }
+                }
+
                 ROS_INFO("Found the object for order %d!", it_order->first);
-                amigoSpeak("I found " + it->first);
+                amigoSpeak("I found " + it_world_model->first);
                 amigoSpeak("I will bring it to delivery location :" + it_order->second.second);
-                      
+
+                // Reset head
+                moveHead(0.0, 0.0);
+
                 // Print information
                 stringstream location_name;
                 location_name << "delivery location" << it_order->second.second;
-                tf::StampedTransform tf_loc = location_map_[location_name.str()];
-                ROS_INFO("Bring %s to location %s: (%f,%f)", 
-                    it->first.c_str(), it_order->second.second.c_str(), tf_loc.getOrigin().x(), tf_loc.getOrigin().y());
-				
-				
-				// ToDo: call service
-				
-				amigoSpeak("Please handover the object, I am not able to grasp");
-				moveArm("rpera", "give"); // To Do, open gripper and add delay			
-				
-				amigoSpeak("Thank you");
-				moveArm("rpera", "carry");
-						
-				// Go find the object
-				bool at_loc = true;				
-				
-                if (!moveTowardsPositionMap(tf_loc)) {
+                tf::StampedTransform tf_loc_object = location_map_[location_name.str()];
+                ROS_INFO("Bring %s to location %s: (%f,%f)",
+                         it_world_model->first.c_str(), it_order->second.second.c_str(), tf_loc_object.getOrigin().x(), tf_loc_object.getOrigin().y());
+
+
+                // ToDo: call service to python grab machine
+
+                // Temporary solution
+                string arm_used;
+                amigoSpeak("Please handover the object, I am not able to grasp");
+                if (!moveArm("rpera", "give")) {
+                    if (!moveArm("lpera", "give")) {
+                        amigoSpeak("I am sorry but I cannot move my arms");
+                        amigoSpeak("I will drive to the delivery location without the object");
+                    } else {
+                        arm_used = "left";
+                    }
+                } else {
+                    arm_used = "right";
+                    amigoSpeak("Thank you");
+                }
+
+                if (!moveArm("both", "carry")) {
+                    amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
+                }
+
+                // Open gripper
+                if (!arm_used.empty()) {
+                    if (!moveGripper(arm_used, "open")) {
+                        amigoSpeak("I am sorry but I cannot open my gripper");
+                        amigoSpeak("I will drive to the delivery location without the object");
+                    } else {
+                        ros::Duration wait_for_object(5.0);
+                        wait_for_object.sleep();
+                        amigoSpeak("I will close my gripper now");
+                        if (!moveGripper(arm_used, "close")) {
+                            amigoSpeak("I am sorry but I cannot close my gripper");
+                            amigoSpeak("I will drive to the delivery location without the object");
+                        }
+                    }
+                }
+
+                // Move to delivery location
+                bool at_loc = true;
+
+                if (!moveTowardsPositionMap(tf_loc_object)) {
                     ROS_WARN("Could not reach the delivery location");
                     amigoSpeak("I cannot reach the delivery location, can you let me pass?");
                     ros::Duration d(2.0);
                     d.sleep();
-                    if (!moveTowardsPositionMap(tf_loc)) {
+                    if (!moveTowardsPositionMap(tf_loc_object)) {
                         ROS_WARN("Failed second attempt to reach the delivery location too");
                         at_loc = false;
                     }
-                } 
-                
+                }
+
                 if (at_loc) {
-                    amigoSpeak("I am at location: " + it_order->second.second + ". Please take the " + it->first + " out of my gripper");
-                    ROS_INFO("I finished Task: %d!", it_order->first);
-                    
-                    order_map_[it_order->first] = make_pair<string, string>("Finished", "Finished");                                        
-				}
-				
-			}
-        }        
-        
-        // TODO: do something more
+
+                    // Arrived at delivery location
+                    ROS_INFO("I finished task: %d!", it_order->first);
+                    amigoSpeak("I am at delivery location: " + it_order->second.second);
+
+                    // Deliver the object by opening the gripper
+                    if (!arm_used.empty()) {
+                        amigoSpeak("I will open my gripper, can you please take the " + it_world_model->first);
+                        ros::Duration sleep_to_be_sure(1.5);
+                        sleep_to_be_sure.sleep();
+                        if (!moveGripper(arm_used, "open")) {
+                            amigoSpeak("I am sorry but I cannot open my gripper");
+                        }
+                    }
+
+                    // Update the map
+                    order_map_[it_order->first] = make_pair<string, string>("Finished", "Finished");
+                }
+
+            }
+        }
 
     }
-    
+
 }
 
 
@@ -932,12 +1100,31 @@ bool togglePein(vector<string> modules) {
 
 
 
+bool moveHead(double pan, double tilt) {
+
+    //! Add head reference action
+    amigo_head_ref::HeadRefGoal head_ref;
+    head_ref.goal_type = 1; // 1: pan tilt, 0 keep tracking
+    head_ref.pan = pan;
+    head_ref.tilt = tilt;
+    head_ref_ac_->sendGoal(head_ref);
+    head_ref_ac_->waitForResult(ros::Duration(5.0));
+
+    if(head_ref_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+        ROS_WARN("Head could not reach target position");
+        return false;
+    }
+
+    return true;
+
+}
+
 
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "restaurant_simple");
     ros::NodeHandle nh;
-    
+
     ROS_INFO("Started Restaurant");
 
     //! Location markers
@@ -948,33 +1135,49 @@ int main(int argc, char **argv) {
 
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
-    
-    /// Head ref
-    head_ref_pub_ = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
-    
-    //! Publish joint goals to arms
-    rpera_joint_pub_ = nh.advertise<amigo_msgs::arm_joints >("/arm_right_controller/joint_references", 1);
-    lpera_joint_pub_ = nh.advertise<amigo_msgs::arm_joints >("/arm_left_controller/joint_references", 1);
-    
+
+    //! Topic/srv that make AMIGO speak
+    pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
+    srv_speech_ =  nh.serviceClient<text_to_speech_philips::Speak>("/text_to_speech/speak");
+    ROS_INFO("Publisher/service client for text to speech started");
+
+    //! Head ref action client
+    ROS_INFO("Connecting to head ref action server...");
+    head_ref_ac_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
+    head_ref_ac_->waitForServer();
+    ROS_INFO("Connected!");
+
     /// set the head to look down in front of AMIGO
-    ros::Rate poll_rate(100);
-    while (head_ref_pub_.getNumSubscribers() == 0) {
-        ROS_INFO_THROTTLE(1, "Waiting to connect to head ref topic...");
-        poll_rate.sleep();
-    }
-    ROS_INFO("Sending head ref goal");
-    amigo_msgs::head_ref head_goal;
-    head_goal.head_pan = 0.0;
-    head_goal.head_tilt = 0.0;
-    head_ref_pub_.publish(head_goal);
-    
+    moveHead(0.1, 0.0);
+
+    //! Arm action clients
+    ROS_INFO("Connecting to joint trajectory action servers...");
+    left_arm_ac_ = new actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>("joint_trajectory_action_left", true);
+    right_arm_ac_ = new actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>("joint_trajectory_action_right", true);
+    left_arm_ac_->waitForServer();
+    right_arm_ac_->waitForServer();
+    ROS_INFO("Connected!");
+
+    /// Reset arms
+     if (moveArm("both", "carry")) {
+         amigoSpeak("I am not able to move my arms to the drive position");
+     }
+
+     //! Gripper action client
+     ROS_INFO("Connecting to gripper action servers...");
+     gripper_left_ac_ = new actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>("gripper_server_left", true);
+     gripper_right_ac_ = new actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>("gripper_server_right", true);
+     gripper_left_ac_->waitForServer();
+     gripper_right_ac_->waitForServer();
+     ROS_INFO("Connected!");
+
     //! Planner
     double max_vel_lin = 0.3;                 // Default: 0.50
     double max_vel_ang = 0.3;                 // Default: 0.40
     double dist_to_wall = DISTANCE_GUIDE-0.1; // Default: 0.65
     planner_ = new CarrotPlanner("restaurant_carrot_planner", max_vel_lin, max_vel_ang, dist_to_wall);
     ROS_INFO("Carrot planner instantiated");
-    
+
     //! Location markers
     location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/restaurant/location_markers", 10);
 
@@ -993,26 +1196,6 @@ int main(int argc, char **argv) {
         }
     }
 
-    /*
-    perception_srvs::StartPerception pein_srv;
-    pein_srv.request.modules.push_back("ppl_detection");
-    if (pein_client_.call(pein_srv))
-    {
-        ROS_INFO("Switched on laser_ppl_detection");
-    }
-    else
-    {
-        ROS_ERROR("Failed to switch on perception");
-        ros::Duration wait(1.0);
-        wait.sleep();
-        if (!pein_client_.call(pein_srv))
-        {
-            ROS_ERROR("No ppl detection possible, end of challenge");
-            return 1;
-        }
-    }
-    */
-
     //! Query WIRE for objects
     wire::Client client;
     ROS_INFO("Wire client instantiated");
@@ -1028,12 +1211,6 @@ int main(int argc, char **argv) {
     startSpeechRecognition();
     ROS_INFO("Started speech recognition");
 
-
-    //! Topic/srv that make AMIGO speak
-    pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
-    srv_speech_ =  nh.serviceClient<text_to_speech_philips::Speak>("/text_to_speech/speak");
-    ROS_INFO("Publisher/service client for text to speech started");
-    
     //! Always clear the world model
     std_srvs::Empty srv;
     if (reset_wire_client_.call(srv)) {
@@ -1057,10 +1234,6 @@ int main(int argc, char **argv) {
 
     ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
     amigoSpeak("Can you please show me the locations");
-    
-    //! Arms in drive position
-    moveArm("lpera", "drive");
-    moveArm("rpera", "drive");
 
     //! Follow guide
     freeze_amigo_ = false;
@@ -1076,12 +1249,9 @@ int main(int argc, char **argv) {
         if (candidate_freeze_amigo_ || freeze_amigo_) {
 
             setRGBLights("green");
-            
+
             // Robot will not move, this avoids lost operator after conversation
             t_last_check_ = ros::Time::now().toSec();
-
-            // TODO: Check if this function is needed
-            //bool no_use = getPositionGuide(objects, guide_pos);
 
             // Just follow
             if (candidate_freeze_amigo_) {
@@ -1093,16 +1263,19 @@ int main(int argc, char **argv) {
                     setRGBLights("blue");
                 }
             }
-            
+
             //! Robot is waiting for the name and will then continue following
             pbl::Matrix cov(3,3);
             cov.zeros();
             pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
             moveTowardsPosition(pos, 0);
-            
+
+            //! Reset head
+            moveHead(0.0, 0.0);
+
 
         } else {
-            
+
             setRGBLights("blue");
 
             //! Check for the (updated) guide position
@@ -1137,10 +1310,10 @@ int main(int argc, char **argv) {
     // Switch off previous speech recognition, connect to interpreter
     stopSpeechRecognition();
     ros::ServiceClient speech_client = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
-    
+
     // Reset world model
     reset_wire_client_.call(srv);
-    
+
     // Switch off perception
     modules.clear();
     if (!togglePein(modules))
@@ -1152,16 +1325,16 @@ int main(int argc, char **argv) {
     stringstream sentence;
     sentence << "I would like to take " << N_ORDERS << " orders.";
     amigoSpeak(sentence.str());
-    
+
     while(ros::ok() && state  == 1) {
         ros::spinOnce();
 
         speech_interpreter::GetInfo srv;
         srv.request.n_tries = 3;
         srv.request.time_out = 40;
-        
+
         for (unsigned int order_index = 0; order_index < N_ORDERS; ++order_index) {
-            
+
             // Ask for a object class
             srv.request.type = "object_classes";
             bool right_answer = false;
@@ -1258,37 +1431,34 @@ int main(int argc, char **argv) {
     // Do tasks
     setRGBLights("blue");
     amigoRotate(7.5);
-    while(ros::ok() && state  == 2) {
+    while(state  == 2) {
         ros::spinOnce();
 
-        map<string, tf::StampedTransform>::const_iterator it = location_map_.begin();
-        for (; it != location_map_.end(); ++it) {
+        map<string, tf::StampedTransform>::const_iterator it_locations = location_map_.begin();
+        for (; it_locations != location_map_.end(); ++it_locations) {
 
             // If the current location is a shelf
-            if (it->first.find("shelf") != std::string::npos) {
+            if (it_locations->first.find("shelf") != std::string::npos) {
 
                 bool at_loc = true;
-                
+
                 // Go find the object
-                if (!moveTowardsPositionMap(it->second)) {
+                if (!moveTowardsPositionMap(it_locations->second)) {
                     ROS_WARN("Could not reach the shelf");
                     amigoSpeak("I cannot reach the shelf, can you let me pass?");
                     ros::Duration d(2.0);
                     d.sleep();
-                    if (!moveTowardsPositionMap(it->second)) {
+                    if (!moveTowardsPositionMap(it_locations->second)) {
                         ROS_WARN("Failed second attempt to reach shelf too");
                         at_loc = false;
                     }
                 }
-                
+
                 if (at_loc) {
-                    amigoSpeak("I am at " + it->first + ". I will now see if I can find objects");
+                    amigoSpeak("I am at " + it_locations->first + ". I will now see if I can find objects");
 
                     //! Look down
-                    amigo_msgs::head_ref head_down;
-                    head_down.head_pan = 0.0;
-                    head_down.head_tilt = 0.35;
-                    head_ref_pub_.publish(head_down);
+                    moveHead(0.0, 0.35);
 
                     //! Clear world model and switch on perception
                     reset_wire_client_.call(srv);
@@ -1302,38 +1472,51 @@ int main(int argc, char **argv) {
                     }
                     else
                     {
-                        // Template matching needs some time
-                        ros::Duration wait(6.0);
-                        wait.sleep();
-                        
-                        // Check world model
-                        vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
-                        
-                        // Save world model in map frame (if not all tasks can be done)
-                        map<string, pair<geometry_msgs::Point, double> > world_model_copy = getWorldModelObjects(objects);                        
-                        
-                        // Check for ordered objects
-                        checkOrderWithWorldModel(world_model_copy);
+                        // TODO: Consider different pan angles (look left/middle/right)
 
+                        // Template matching needs some time
+                        ros::Duration wait(5.0);
+                        wait.sleep();
+
+                        // Switch off perception
                         modules.clear();
                         if (!togglePein(modules))
                         {
                             amigoSpeak("I could not switch off template matching");
                         }
 
+                        // Check world model
+                        vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
+
+                        // Save world model in map frame (if not all tasks can be done)
+                        map<string, pair<geometry_msgs::Point, double> > world_model_copy = getWorldModelObjects(objects);
+
+                        // Check for ordered objects
+                        checkOrderWithWorldModel(world_model_copy, it_locations->second);
+
                     }
+
+                    //! Reset head
+                    moveHead(0.0, 0.0);
 
                 }
             }
 
         }
 
+        state = 3;
+
+        follow_rate.sleep();
+    }
+
+    while (state == 3) {
+
         // Then go back to order location
         if (location_map_.find("ordering_location") != location_map_.end()) {
-            
+
             ROS_DEBUG("Ordering location is (%f,%f)",
                       location_map_["ordering_location"].getOrigin().x(), location_map_["ordering_location"].getOrigin().x());
-            
+
             if (!moveTowardsPositionMap(location_map_["ordering_location"])) {
                 ROS_WARN("Could not go back to ordering location");
                 ros::Duration d(2.0);
@@ -1348,12 +1531,12 @@ int main(int argc, char **argv) {
         } else {
             ROS_WARN("No ordering location stored");
         }
-        
-        state = 3;
 
         follow_rate.sleep();
+        state = 4;
+
     }
-    
+
     amigoSpeak("I finished all my tasks so I am done with the challenge!");
 
     //! When node is shut down, cancel goal by sending zero

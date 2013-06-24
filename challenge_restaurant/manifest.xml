@@ -11,19 +11,28 @@
   <depend package="roscpp"/>
   <depend package="roslib"/>
   <depend package="wire_interface"/>
+  
+  <depend package="amigo_actions"/>
   <depend package="actionlib"/>
+  
   <depend package="pein_msgs"/>
-  <depend package="std_srvs"/>
   <depend package="std_msgs"/>
   <depend package="geometry_msgs"/>
+  <depend package="trajectory_msgs"/>
+  <depend package="control_msgs"/>
+  <depend package="tue_move_base_msgs"/>
+  <depend package="visualization_msgs"/>
   <depend package="amigo_msgs"/>
+  
+  <depend package="std_srvs"/>
   <depend package="perception_srvs"/>
+  
   <depend package="text_to_speech_philips"/>
   <depend package="tue_carrot_planner"/>
   <depend package="tue_pocketsphinx"/>
-  <depend package="tue_move_base_msgs"/>
+  
   <depend package="speech_interpreter"/>
-  <depend package="visualization_msgs"/>
+  <depend package="amigo_head_ref"/>
 
 </package>
 
