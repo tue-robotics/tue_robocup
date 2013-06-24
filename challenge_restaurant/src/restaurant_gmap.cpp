@@ -96,6 +96,8 @@ ros::Publisher rpera_joint_pub_;                                                
 //! Tf
 tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
 
+psi::Client* reasoner_client;
+
 //! Maps storing orders and locations
 map<string, tf::StampedTransform> location_map_;
 map<int, pair<string, string> > order_map_;
@@ -612,7 +614,11 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 */
 map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wire::PropertySet>& objects) {
 
+    // Map storing the copy of the world model
     map<string, pair<geometry_msgs::Point, double> > world_model_copy;
+
+    // Needed to determine instance with highest probability if multiple instances of same class
+    map<string, double> class_prob_map;
 
     //! Iterate over all world model objects
     for(vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
@@ -647,9 +653,16 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
 
                 } else {
 
-                    // If class is present but with lower probability, store
-                    if (world_model_copy[class_label].second < prob) {
+                    // If class is present in copy already, store instance with highest probability
+                    if (class_prob_map.find(class_label) == class_prob_map.end()) {
+                        ROS_WARN("Something went wrong in the administration");
+                        class_prob_map[class_label] = 0;
+                    }
+
+                    if (class_prob_map[class_label] < prob) {
+                        // TODO store ID instead of probability
                         world_model_copy[class_label] = make_pair(pos_store, prob);
+                        class_prob_map[class_label] = prob;
                     }
                 }
             }
@@ -657,6 +670,16 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
 
         }
     }
+
+    /*
+    string object_id = "123";
+
+    // retract all current_object/1 facts from reasoner (prolog call: retractall(current_object(X)) )
+    reasoner_client->query(psi::Compound("retractall", psi::Compound("current_object", psi::Variable("X"))));
+
+    // assert current object id to reasoner (prolog call: assert(current_object(ID)) )
+    reasoner_client->query(psi::Compound("assert", psi::Compound("current_object", psi::Constant(object_id))));
+    */
 
     return world_model_copy;
 
@@ -1156,6 +1179,10 @@ int main(int argc, char **argv) {
     right_arm_ac_ = new actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction>("joint_trajectory_action_right", true);
     left_arm_ac_->waitForServer();
     right_arm_ac_->waitForServer();
+    ROS_INFO("Connected!");
+
+    ROS_INFO("Connecting to reasoner...");
+    reasoner_client = new psi::Client("reasoner");
     ROS_INFO("Connected!");
 
     /// Reset arms
