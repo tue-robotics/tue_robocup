@@ -239,7 +239,7 @@ class PersonOrPrior(smach.State):
             self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", answers[0]['X'], answers[0]['Y'], answers[0]['Z'])))
             return 'at_person'
         else:
-            query_prior = Compound("waypoint", "kitchen_table_1",  Compound("pose_2d", "X", "Y", "Phi"))
+            query_prior = Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))
             answers_prior = self.robot.reasoner.query(query_prior)
             if answers_prior:
                 self.robot.speech.speak("I have not found a person yet, but I will try at a prior location")
@@ -266,6 +266,16 @@ class MoveToGoal(smach.StateMachine):
                 goal_query=Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))), 
                 transitions={'unreachable' : 'failed', 'preempted' : 'NAVIGATE_TO_PERSON', 
                 'arrived' : 'succeeded_prior', 'goal_not_defined' : 'failed'})
+class AskGraspObject(smach.StateMachine):
+    def __init__(self, side, robot):
+        smach.StateMachine.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.side = side
+        with self:
+            smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp please insert the object into the gripper"]), # En andere dingen
+                transitions={   'spoken':'OPEN_GRIPPER'})
+            smach.StateMachine.add(states.SetGripper("OPEN_GRIPPER", robot, side, gripperstate=ArmState.OPEN), # En andere dingen
+                transitions={   'succeeded':'done', 'failed': 'done'})
 
 
 class DecideAction(smach.State):
@@ -382,7 +392,11 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("GRAB", 
             states.GrabMachine(side, robot, Compound("base_grasp_point", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
-            transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'GO_HOME'})  
+            transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'ASK_GRASP_OBJECT'})  
+
+        smach.StateMachine.add("ASK_GRASP_OBJECT",
+            AskGraspObject(robot, side),
+            transitions={'done': 'MOVE_TO_GOAL'})
 
         # WITH OBJECT
         # STATE: arrive at a person: hand over object and go back to starting position
