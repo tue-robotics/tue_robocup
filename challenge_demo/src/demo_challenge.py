@@ -24,8 +24,11 @@ from psi import Conjunction, Compound
 
 from tf.transformations import euler_from_quaternion
 
-from maluuba_ros.msg import Interpretation
+from interpret_email import MailInterpreter
 from maluuba_ros.srv import Interpret
+
+import datetime
+
 
 HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
 SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
@@ -124,7 +127,8 @@ class AskAnythingElse(smach.State):
         self.robot = robot
 
         self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
-        #self.maluuba = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.maluubasrv = rospy.ServiceProxy('maluuba/interpret', Interpret)
+        self.mail_interpreter = MailInterpreter(open("/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_demo/config/mailconfig.yaml"))
 
     def execute(self, userdata=None):
 
@@ -140,7 +144,7 @@ class AskAnythingElse(smach.State):
 
             #elif self.response.answer == "Can you tell me what time it is?":
             elif "what time" in self.response.answer:
-                import time, random
+                import time
                 timestr = time.strftime( "%M past %H", time.localtime(time.time()))
                 self.robot.speech.speak("It is now {0}".format(timestr))
             #elif (self.response.answer == "Can you remind me in three minutes that my favorite tv program friends will \
@@ -148,8 +152,13 @@ class AskAnythingElse(smach.State):
             #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program the \
             #    bold and the beautiful start?"):
             elif "remind me" in self.response.answer:
-                rospy.logerr("Remind info not yet fixed")
-                self.robot.speech.speak("I should set a reminder for a tv program, but this is not build in yet")
+                rospy.logwarn("Remind info not yet done")
+                response = self.maluubasrv(self.response.answer)
+                interpretation = response.interpretation
+                start, end = self.mail_interpreter.extract_times(interpretation.entities)
+                self.mail_interpreter.process_interpretation(interpretation)
+                start = self.mail_interpreter.datetime_as_sentence(start)
+                self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
             else:
                 rospy.logwarn("Answer not understood")
                 self.robot.speech.speak("I am terribly sorry but I do not know what you mean", mood="sad", block=False)
