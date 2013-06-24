@@ -519,7 +519,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("INTRODUCE_SHORT",
                                states.Say(robot,"Hi! I will just wait here and wonder if I can do something for you", block=False),
-                               transitions={'spoken':'RESET_HEAD_SPINDLE'})
+                               transitions={'spoken':'INIT_POSE'})
 
         smach.StateMachine.add('INIT_POSE',
                                 states.Set_initial_pose(robot, 'initial_egpsr_1'),
