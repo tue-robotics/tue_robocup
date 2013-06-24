@@ -84,6 +84,7 @@ ros::ServiceClient pein_client_;                                                
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
+ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
 
 //! Publishers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
@@ -814,9 +815,18 @@ void speechCallback(std_msgs::String res) {
             location_name << "delivery location" << n_locations_deliver_;
         }
 
-        // Determine corresponding theta
-        // TODO: use speech interpreter - left/right/front
+        // Ask The side (left/right/front)
+        resetRGBLights();
         string answer = "";
+        speech_interpreter::GetInfo srv;
+        srv.request.n_tries = 2;
+        srv.request.time_out = 20;
+        srv.request.type = "side";
+        if (speech_client_.call(srv)) {
+            answer = srv.response.answer;
+        }
+
+        // Determine corresponding theta
         double theta = 0;
         if (answer == "left") theta = 1.57;
         else if (answer == "right") theta = -1.57;
@@ -1336,7 +1346,7 @@ int main(int argc, char **argv) {
 
     // Switch off previous speech recognition, connect to interpreter
     stopSpeechRecognition();
-    ros::ServiceClient speech_client = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
+    speech_client_ = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
 
     // Reset world model
     reset_wire_client_.call(srv);
@@ -1369,7 +1379,7 @@ int main(int argc, char **argv) {
 
             // Ask for object class
             resetRGBLights();
-            if (speech_client.call(srv)) {
+            if (speech_client_.call(srv)) {
                 string obj_class = srv.response.answer;
 
                 // Check answer object class
@@ -1379,7 +1389,7 @@ int main(int argc, char **argv) {
 
                     // Ask which object from class
                     resetRGBLights();
-                    if (speech_client.call(srv)) {
+                    if (speech_client_.call(srv)) {
                         string obj_instance = srv.response.answer;
                         if (obj_instance != "no_answer" && obj_instance != "wrong_answer") {
                             desired_object = obj_instance;
@@ -1402,7 +1412,7 @@ int main(int argc, char **argv) {
 
             // Ask for object class
             resetRGBLights();
-            if (speech_client.call(srv)) {
+            if (speech_client_.call(srv)) {
                 string given_loc = srv.response.answer;
 
                 // Check answer object class
