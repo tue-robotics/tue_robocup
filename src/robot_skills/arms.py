@@ -325,10 +325,10 @@ class Arms(object):
             
         gripper_goal.command.max_torque = 50.0
         
-        rospy.loginfo("Sending gripper target {0}".format(gripper_goal))
+        rospy.logdebug("Sending gripper target {0}".format(gripper_goal).replace('\n', ' '))
         if side == Side.LEFT:
             actionClients._ac_gripper_left.send_goal_and_wait(gripper_goal, rospy.Duration(time_out))
-            rospy.loginfo("Gripper result: {0}".format(actionClients._ac_gripper_left.get_result()))
+            rospy.logdebug("Gripper result: {0}".format(actionClients._ac_gripper_left.get_result()).replace("\n", " "))
             if actionClients._ac_gripper_left.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Gripper target reached")
                 return True

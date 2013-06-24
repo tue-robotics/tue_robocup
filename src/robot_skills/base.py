@@ -236,7 +236,7 @@ class Base(object):
 
         self.path = path_result.path
 
-        rospy.loginfo("Sending goal to {0}".format(position))
+        rospy.loginfo("Sending goal to {0}".format(position).replace('\n', ' '))
 
         if not self.path:
             rospy.loginfo("No feasible plan to ({0.x},{0.y})".format(position))
