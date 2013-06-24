@@ -166,7 +166,7 @@ class Ask_drink(smach.State):
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
-        self.response = self.get_drink_service("drink", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         # Check available options from rulebook!
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
@@ -198,7 +198,7 @@ class LearnPersonCustom(smach.State):
 
         learn_machine = Learn_Person(self.robot, serving_person)
         learn_result = learn_machine.execute()
-      
+        
         self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # make sure we're not left with a goal from last time // what does this do?!
         ## TO CHECK IF OUTCOME IS face_learned or learn_failed and ACT adequatly!
         return learn_result
