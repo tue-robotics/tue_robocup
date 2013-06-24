@@ -265,12 +265,12 @@ class Cleanup(smach.StateMachine):
                     answers = robot.reasoner.query(query_dropoff_loc)
                     _type = answers[0]["ObjectType"]
                     dropoff = answers[0]["Disposal_type"]
-                    return "I have found a {0}. I'll' dispose it to a {1}".format(_type, dropoff)
+                    return "I have found a {0}. I'll' dispose it to a {1}".format(_type, dropoff).replace("_", " ")
                 except Exception, e:
                     rospy.logerr(e)
                     try:
                         type_only = robot.reasoner.query(query_current_object_class)[0]["ObjectType"]
-                        return "I found something called {0}.".format(type_only)
+                        return "I found something called {0}.".format(type_only).replace("_", " ")
                     except Exception, e:
                         rospy.logerr(e)
                         pass
@@ -320,7 +320,7 @@ class Cleanup(smach.StateMachine):
                                     #                'target_lost':'DONT_KNOW_DROP_BACKUP'})
 
             smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
-                                    states.Say(robot, "I can't even find the trashbin! Then I'll just give it to a human. They'll know what to do."),
+                                    states.Say(robot, "I can't even find the trashbin! Then I'll just give it to a human. They'll know what to do.", mood="sad"),
                                     transitions={   'spoken':'GOTO_HUMAN_DROPOFF'})
 
             smach.StateMachine.add( 'GOTO_HUMAN_DROPOFF', states.NavigateGeneric(robot, goal_query=meeting_point),
