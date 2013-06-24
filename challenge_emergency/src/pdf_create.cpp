@@ -59,11 +59,18 @@ error_handler  (HPDF_STATUS   error_no,
 ros::ServiceServer startupSrv_;
 
 
-/// Scaling parameters for map stuff
+/// Scaling parameters for robotics_labA
+//const double scaledWidth = 1/0.025;
+//const double scaledHeight = 1/0.025;
+//const int originOffsetX = 41;
+//const int originOffsetY = 100;
+
+/// Scaling parameters for rwc2013 -> EINDHOVEN WK
 const double scaledWidth = 1/0.025;
 const double scaledHeight = 1/0.025;
-const int originOffsetX = 41;
-const int originOffsetY = 100;
+const int originOffsetX = -6;
+const int originOffsetY = 375;
+
 
 /// Safe string formatting
 std::string string_format(const std::string fmt, ...) {
