@@ -1022,14 +1022,14 @@ class PointMachine(smach.StateMachine):
                         transitions={'orientation_succeeded':'CLOSE_GRIPPER','orientation_failed':'CLOSE_GRIPPER','abort':'failed','target_lost':'failed'})
 
             smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
-                        transitions={'succeeded'    :   'UPDATE_OBJECT_POSE',
-                                     'failed'       :   'UPDATE_OBJECT_POSE'})
-
-            # Even if the update state fails, try to grasp anyway
-            smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grabpoint_query),
                         transitions={'succeeded'    :   'PRE_POINT',
-                                     'failed'       :   'PRE_POINT',
-                                     'target_lost'  :   'RESET_ARM_FAILED'})
+                                     'failed'       :   'PRE_POINT'})
+
+            # # Even if the update state fails, try to grasp anyway
+            # smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grabpoint_query),
+            #             transitions={'succeeded'    :   'PRE_POINT',
+            #                          'failed'       :   'PRE_POINT',
+            #                          'target_lost'  :   'RESET_ARM_FAILED'})
             
             smach.StateMachine.add('PRE_POINT', ArmToQueryPoint(self.robot, self.side, self.grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
                         transitions={'succeeded'    :   'POINT',
