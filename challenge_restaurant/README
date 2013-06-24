@@ -44,3 +44,16 @@ LOST:
 - If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
 
 
+#############################################################################
+Separately testing the grabmachine:
+
+Startup fast simulator
+Middleware
+rviz-amigo
+amigo-console
+
+rosrun challenge_cleanup testenv_rwc2013.py
+
+amigo.perception.toggle_recognition(objects=True)
+
+rosservice call 
