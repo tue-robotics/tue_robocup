@@ -375,7 +375,7 @@ class LookForPerson(smach.State):
             for name_possibility in name_pmf:
                 print name_possibility
                 prob = float(name_possibility[0])
-                if prob > 0.175 and prob > name_prob:
+                if prob > 0.08 and prob > name_prob:
                     name = str(name_possibility[1][0])
                     name_prob = prob
 
