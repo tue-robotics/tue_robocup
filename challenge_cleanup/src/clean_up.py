@@ -257,7 +257,7 @@ class Cleanup(smach.StateMachine):
                                                     'abort':'Aborted'})
 
             smach.StateMachine.add('SAY_FOUND_NOTHING',
-                                    states.Say(robot, ["I didn't find anything here", "No objects to clean here", "There are no objects here"]),
+                                    states.Say(robot, ["I didn't find anything to clean up here", "No objects to clean here", "There are no objects to clean here"]),
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             def generate_object_sentence(*args,**kwargs):
