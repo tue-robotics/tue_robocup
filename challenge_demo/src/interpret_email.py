@@ -176,7 +176,7 @@ class MailInterpreter(object):
             self.sendmail(subject, message, list(receivers))
 
         elif msg.action == "REMINDER_SET":
-            receivers = [self.mailadress]
+            receivers = ["loy.vanbeek@gmail.com"]
             
             import re
             words = re.findall(r"[\w']+", msg.phrase)
@@ -189,7 +189,7 @@ class MailInterpreter(object):
 
             make_ical(start, message, filename='reminder.ics', enddate=end)
             rospy.loginfo("Made iCAL with ({0} --> {3}), {1}. Sending to {2}".format(start, message, list(receivers), end))
-            #self.sendmail("Reminder", message, list(receivers),{'reminder.ics':("text", "calendar")})
+            self.sendmail("Reminder", message, list(receivers),{'reminder.ics':("text", "calendar")})
 
 
 if __name__ == "__main__":

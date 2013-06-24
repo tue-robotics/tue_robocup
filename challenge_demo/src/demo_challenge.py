@@ -26,6 +26,7 @@ from tf.transformations import euler_from_quaternion
 
 from interpret_email import MailInterpreter
 from maluuba_ros.srv import Interpret
+from speech_interpreter.srv import GetYesNo
 
 import datetime
 
@@ -129,6 +130,7 @@ class AskAnythingElse(smach.State):
         self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
         self.maluubasrv = rospy.ServiceProxy('maluuba/interpret', Interpret)
         self.mail_interpreter = MailInterpreter(open("/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_demo/config/mailconfig.yaml"))
+        self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
 
     def execute(self, userdata=None):
 
@@ -153,12 +155,19 @@ class AskAnythingElse(smach.State):
             #    bold and the beautiful start?"):
             elif "remind me" in self.response.answer:
                 rospy.logwarn("Remind info not yet done")
+                
                 response = self.maluubasrv(self.response.answer)
                 interpretation = response.interpretation
                 start, end = self.mail_interpreter.extract_times(interpretation.entities)
-                self.mail_interpreter.process_interpretation(interpretation)
                 start = self.mail_interpreter.datetime_as_sentence(start)
+                
                 self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
+                
+                resp = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
+                if resp.answer == "true":
+                    self.mail_interpreter.process_interpretation(interpretation)
+                else:
+                    self.robot.speech.speak("Then you'll have to remember that yourself.")
             else:
                 rospy.logwarn("Answer not understood")
                 self.robot.speech.speak("I am terribly sorry but I do not know what you mean", mood="sad", block=False)
