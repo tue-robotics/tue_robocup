@@ -247,7 +247,7 @@ class Amigo(object):
 if __name__ == "__main__":
     import atexit
     import util.msg_constructors as msgs
-    from reasoner import Compound, Conjunction, Sequence
+    from reasoner import Compound, Conjunction, Sequence, Variable
 
     rospy.init_node("amigo_executioner", anonymous=True)
     amigo = Amigo(wait_services=False)
@@ -264,18 +264,30 @@ if __name__ == "__main__":
     speak = lambda sentence: amigo.speech.speak(sentence, block=False)
     praat = lambda sentence: amigo.speech.speak(sentence, language='nl', block=False)
     look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/base_link")
-    
+        
+    r = amigo.reasoner
+    q = amigo.reasoner.query
+
     mapgo = amigo.base.go
 
     def airgo(x,y,z, xoffset=0.5, yoffset=0.1):
         target = amigo.base.point(x,y,z, stamped=True)
         ik_poses = amigo.base.get_base_goal_poses(target, xoffset, yoffset)
         amigo.base.send_goal(ik_poses[0].pose.position, ik_poses[0].pose.orientation)
-	amigo.head.send_goal(amigo.head.point(x,y,z))
+        amigo.head.send_goal(amigo.head.point(x,y,z))
+
+    def namego(name):
+        """Go to the waypoint with the given name. 
+        When there re multiple locations with the samen name, shame on you for having messed up locations, and Amigo will go to the first query result"""
+        query = Compound("waypoint", name, Compound("pose_2d", "X", "Y", "Phi"))
+        answers = amigo.reasoner.query(query)
+        selected = answers[0]
+        x,y,phi = float(selected["X"]), float(selected["Y"]), float(selected["Phi"])
+        amigo.base.go(x,y,phi)
     
-    r = amigo.reasoner
-    q = amigo.reasoner.query
-    
+    def basego(x,y,phi):
+        return amigo.base.go(x,y,phi,frame="/base_link")
+
     open_door   = lambda: r.assertz(r.state("door1", "open"))
     close_door  = lambda: r.assertz(r.state("door1", "close"))
     def insert_object(x,y,z):
@@ -283,22 +295,12 @@ if __name__ == "__main__":
         wf = WorldFaker()
         wf.insert({"position":(x,y,z)})
 
-    def basego(x,y,phi):
-        return amigo.base.go(x,y,phi,frame="/base_link")
-
     #Useful for making location-files
     def get_pose_2d():
        loc,rot = amigo.base.location
        rot_array = [rot.w, rot.x, rot.y, rot.z]
        rot3 = tf.transformations.euler_from_quaternion(rot_array)
-       print '''    - frame_id: "/map"
-      name: "INSERT"
-      class_label: "location"
-      x: {0}
-      y: {1}
-      phi: {2}
-      
-    '''.format(loc.x, loc.y, rot3[0])
+       print 'x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0])
        return (loc.x, loc.y, rot3[0]) 
 
     def hear(text):
@@ -318,9 +320,15 @@ if __name__ == "__main__":
     print """\033[1;33m You can now command amigo from the python REPL. 
     Type e.g. help(amigo) for help on objects and functions, 
     or type 'amigo.' <TAB> to see what methods are available. 
+    Also, try 'dir()'
+    You can use both robot.foo or amigo.foo for easy copypasting.
     Press ctrl-D or type 'exit()' to exit the awesome amigo-console.
-    WARNING: When the console exits, it cancels ALL arm and base goals. \n
-    There are handy shortcuts, such as: mapgo/basego(x,y,phi), speak(sentence), 
-    head_down, head_reset, left/right_close/open, look_at_point(x,y,z), \n
-    get_pose_2d() etc. Also, try 'dir()'.\n 
-    You can use both robot.foo or amigo.foo for easy copypasting.\033[1;m \n"""
+    WARNING: When the console exits, it cancels ALL arm and base goals.
+    There are handy shortcuts, such as: 
+        - mapgo/basego(x,y,phi), 
+        - airgo(x,y,z) for AmigoInverseReachability, 
+        - namego(<waypoint name>)
+        - speak/praat/(sentence), save_sentence(sentence) saves the .wav file to /tmp/<sentence_you_typed>.wav
+        - head_down, head_reset, left/right_close/open, look_at_point(x,y,z), 
+        - get_pose_2d()
+    Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m"""
