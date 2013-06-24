@@ -245,12 +245,12 @@ class GetObject(smach.StateMachine):
 
             smach.StateMachine.add('SET_TIME_MARKER',
                                     utility_states.SetTimeMarker(robot, "get_object_start"),
-                                    transitions={   'done':'CHECK_OBJECT_QUERY' })
+                                    transitions={   'done':'DRIVE_TO_SEARCHPOS' })
  
-            smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            
-                                    Check_object_found_before(robot, self.object_query),
-                                    transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
-                                                    'no_object_found':'DRIVE_TO_SEARCHPOS' })
+            # smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            
+            #                         Check_object_found_before(robot, self.object_query),
+            #                         transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
+            #                                         'no_object_found':'DRIVE_TO_SEARCHPOS' })
             #import ipdb; ipdb.set_trace()
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
                                     navigation.Visit_query_outcome_3d(self.robot, 
@@ -289,16 +289,38 @@ class GetObject(smach.StateMachine):
                                     human_interaction.Say(robot, ["I have found something"],block=False),
                                     transitions={ 'spoken':'GRAB' })
 
-            smach.StateMachine.add('SAY_FOUND_SOMETHING_BEFORE',
-                                    human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
-                                    transitions={ 'spoken':'GRAB' })
+            # smach.StateMachine.add('SAY_FOUND_SOMETHING_BEFORE',
+            #                         human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
+            #                         transitions={ 'spoken':'GRAB' })
 
             query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
                                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
             smach.StateMachine.add('GRAB',
                                     manipulation.GrabMachine(robot.leftArm, robot, query_grabpoint),
                                     transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
-                                                    'failed':'CHECK_TIME_AFTER_FAILED_GRAB' })  
+                                                    'failed':'MARK_DISPOSED' })  
+
+            #Mark the current_object as disposed
+            @smach.cb_interface(outcomes=['done'])
+            def deactivate_current_object(userdata):
+                try:
+                    #robot.speech.speak("I need some debugging in cleanup, please think with me here.")
+                    #import ipdb; ipdb.set_trace()
+                    objectID = robot.reasoner.query(Compound("current_object", "Disposed_ObjectID"))[0]["Disposed_ObjectID"]
+                    robot.reasoner.query(Compound("assertz", Compound("disposed", objectID)))
+                    rospy.loginfo("objectID = {0} is DISPOSED".format(objectID))
+
+                    try:
+                        robot.reasoner.detach_all_from_gripper("/grippoint_left")
+                    except KeyError, ke:
+                        rospy.loginfo("Could not detach object from gripper, do not know which ID: {0}".format(ke))
+                    rospy.loginfo("object should be detached from gripper!")
+
+                except:
+                    pass #Just continue
+                return 'done'
+            smach.StateMachine.add('MARK_DISPOSED', smach.CBState(deactivate_current_object),
+                                    transitions={'done':'CHECK_TIME_AFTER_FAILED_GRAB'}) 
 
             smach.StateMachine.add('CHECK_TIME_AFTER_FAILED_GRAB',
                                     utility_states.CheckTime(robot, "get_object_start", max_duration),
@@ -399,12 +421,12 @@ class PointObject(smach.StateMachine):
             #import ipdb; ipdb.set_trace()
             smach.StateMachine.add('SET_TIME_MARKER',
                                     utility_states.SetTimeMarker(robot, "get_object_start"),
-                                    transitions={   'done':'CHECK_OBJECT_QUERY' })
+                                    transitions={   'done':'DRIVE_TO_SEARCHPOS' })
 
-            smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            # TODO ERIK: Test this state. Not yet done
-                                    Check_object_found_before(robot, self.object_query),
-                                    transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
-                                                    'no_object_found':'DRIVE_TO_SEARCHPOS' })
+            # smach.StateMachine.add('CHECK_OBJECT_QUERY',                                            
+            #                         Check_object_found_before(robot, self.object_query),
+            #                         transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
+            #                                         'no_object_found':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE' })
 
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
                                     navigation.Visit_query_outcome_3d(self.robot, 
@@ -413,45 +435,96 @@ class PointObject(smach.StateMachine):
                                                                       identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
                                     transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable':'DRIVE_TO_SEARCHPOS',
-                                                    'preempted':'Aborted',
-                                                    'goal_not_defined':'Failed',
-                                                    'all_matches_tried':'Failed'})
+                                                    'preempted':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+                                                    'goal_not_defined':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
+                                                    'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     human_interaction.Say(robot, ["Lets see if I can find the object."],block=False),
                                     transitions={   'spoken':'LOOK'})
 
+            lookatquery = Compound("current_poi","POI", Compound("point_3d","X","Y","Z"))
+
             smach.StateMachine.add('LOOK',
-                                    perception.LookForObjectsAtROI(robot, self.roi_query, self.object_query),
+                                    perception.LookForObjectsAtROI(robot, lookatquery, self.object_query),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
-                                                    'no_object_found':'CHECK_TIME',
-                                                    'abort':'Aborted'})
+                                                    'no_object_found':'RESET_HEAD_AND_SPINDLE',
+                                                    'abort':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED'})
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE',
+                                    utility_states.ResetHeadSpindle(robot),
+                                    transitions={   'done':'CHECK_TIME'})   # End State
 
             smach.StateMachine.add('CHECK_TIME',
                                     utility_states.CheckTime(robot, "get_object_start", max_duration),
                                     transitions={   'ok':'DRIVE_TO_SEARCHPOS',
-                                                    'timeout':'Timeout' })   # End State
+                                                    'timeout':'RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT' })   # End State
                                                     
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     human_interaction.Say(robot, ["I have found what you are looking for and I will try to point at it!"],block=False),
                                     transitions={ 'spoken':'POINT' })
 
-            smach.StateMachine.add('SAY_FOUND_SOMETHING_BEFORE',
-                                    human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
-                                    transitions={ 'spoken':'POINT' })
+            # smach.StateMachine.add('SAY_FOUND_SOMETHING_BEFORE',
+            #                         human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
+            #                         transitions={ 'spoken':'POINT' })
 
             query_point = Conjunction(  Compound("current_object", "ObjectID"),
                                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
             smach.StateMachine.add('POINT',
                                     manipulation.PointMachine(robot.leftArm, robot, query_point),
-                                    transitions={   'succeeded':'Done',
+                                    transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
                                                     'failed':'SAY_FAILED_POINTING' }) 
 
             smach.StateMachine.add('SAY_FAILED_POINTING',
-                                    human_interaction.Say(robot, ["Although I was not able to point at the object, you can find it in front of me!"]),
-                                    transitions={ 'spoken':'Done' })
+                                    human_interaction.Say(robot, ["Although I was not able to point at the object, you should be able to find it in \
+                                                                   front of me! I will continue to find another one for as long as I have the time."], block=False),
+                                    transitions={ 'spoken':'MARK_DISPOSED' })
+
+            #Mark the current_object as disposed
+            @smach.cb_interface(outcomes=['done'])
+            def deactivate_current_object(userdata):
+                try:
+                    #robot.speech.speak("I need some debugging in cleanup, please think with me here.")
+                    #import ipdb; ipdb.set_trace()
+                    objectID = robot.reasoner.query(Compound("current_object", "Disposed_ObjectID"))[0]["Disposed_ObjectID"]
+                    robot.reasoner.query(Compound("assertz", Compound("disposed", objectID)))
+                    rospy.loginfo("objectID = {0} is DISPOSED".format(objectID))
+
+                    try:
+                        robot.reasoner.detach_all_from_gripper("/grippoint_left")
+                    except KeyError, ke:
+                        rospy.loginfo("Could not detach object from gripper, do not know which ID: {0}".format(ke))
+                    rospy.loginfo("object should be detached from gripper!")
+
+                except:
+                    pass #Just continue
+                return 'done'
+            smach.StateMachine.add('MARK_DISPOSED', smach.CBState(deactivate_current_object),
+                                    transitions={'done':'CHECK_TIME_AFTER_FAILED_POINT'}) 
+
+            smach.StateMachine.add('CHECK_TIME_AFTER_FAILED_POINT',
+                                    utility_states.CheckTime(robot, "get_object_start", max_duration),
+                                    transitions={   'ok':'DRIVE_TO_SEARCHPOS',
+                                                    'timeout':'RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT' })   # End State
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+                                    utility_states.ResetHeadSpindle(robot),
+                                    transitions={   'done':'Aborted'})   # End State
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
+                                    utility_states.ResetHeadSpindle(robot),
+                                    transitions={   'done':'Failed'})   # End State
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_TIMEOUT',
+                                    utility_states.ResetHeadSpindle(robot),
+                                    transitions={   'done':'Timeout'})   # End State            
+
+            smach.StateMachine.add('RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
+                                    utility_states.ResetHeadSpindle(robot),
+                                    transitions={   'done':'Done'})   # End State
+
 
 class Say_and_point_location(smach.StateMachine):
     def __init__(self, 
