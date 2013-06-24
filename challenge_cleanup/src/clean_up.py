@@ -320,7 +320,7 @@ class Cleanup(smach.StateMachine):
                                     #                'target_lost':'DONT_KNOW_DROP_BACKUP'})
 
             smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
-                                    states.Say(robot, "Now that I fetched this, I don't know where to put it. Silly me!"),
+                                    states.Say(robot, "I can't even find the trashbin! Then I'll just give it to a human. They'll know what to do."),
                                     transitions={   'spoken':'GOTO_HUMAN_DROPOFF'})
 
             smach.StateMachine.add( 'GOTO_HUMAN_DROPOFF', states.NavigateGeneric(robot, goal_query=meeting_point),
