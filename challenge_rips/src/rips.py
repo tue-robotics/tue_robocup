@@ -169,12 +169,12 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_ACTUAL_CHALLENGE",
                                     states.StartChallengeRobust(robot, "initial"), 
-                                    transitions={   "Done":"SAY_GO_TO_MEETING_POINT", 
-                                                    "Aborted":"SAY_GO_TO_MEETING_POINT", 
-                                                    "Failed":"SAY_GO_TO_MEETING_POINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
+                                    transitions={   "Done":"SAY_GO_TO_REGISTRATION_TABLE", 
+                                                    "Aborted":"SAY_GO_TO_REGISTRATION_TABLE", 
+                                                    "Failed":"SAY_GO_TO_REGISTRATION_TABLE"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
-        smach.StateMachine.add("SAY_GO_TO_MEETING_POINT",
-                                    states.Say(robot, "I will go to the meeting point"),
+        smach.StateMachine.add("SAY_GO_TO_REGISTRATION_TABLE",
+                                    states.Say(robot, "I will go to the registration table"),
                                     transitions={   "spoken":"GO_TO_REGISTRATION_TABLE"})
 
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE', 
