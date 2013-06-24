@@ -91,8 +91,6 @@ ros::Publisher pub_speech_;                                                     
 ros::Publisher head_ref_pub_;                                                     // Communication: Look to intended driving direction
 ros::Publisher location_marker_pub_;                                              // Communication: Marker publisher
 ros::Publisher rgb_pub_;                                                          // Communication: Publisher rgb lights
-ros::Publisher lpera_joint_pub_;                                                  // Communication: left arm
-ros::Publisher rpera_joint_pub_;                                                  // Communication: right arm
 
 //! Tf
 tf::TransformListener* listener;												  // Tf listenter to obtain tf information to store locations
@@ -145,7 +143,7 @@ trajectory_msgs::JointTrajectoryPoint setArmReference(double r0, double r1, doub
     arm_msg.positions.push_back(r3);
     arm_msg.positions.push_back(r4);
     arm_msg.positions.push_back(r5);
-    arm_msg.positions.push_back(r6);
+    //arm_msg.positions.push_back(r6);
 
     return arm_msg;
 }
@@ -161,36 +159,48 @@ bool moveArm(string arm, string pose) {
     if (pose == "drive") {
         arm_ref.trajectory.points.push_back(setArmReference(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0));
     } else if (pose == "carry") {
-        arm_ref.trajectory.points.push_back(setArmReference(-0.3, -0.2, 0.2, 1.4, 0.0, 0.0, 0.0));
+        if (arm == "left") {
+            arm_ref.trajectory.points.push_back(setArmReference(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0));
+        } else if (arm == "right") {
+            arm_ref.trajectory.points.push_back(setArmReference(-0.14, -0.46, 0.13, 1.56, -0.09, 0.48, -0.07));
+        }
     } else if (pose == "give") {
-        arm_ref.trajectory.points.push_back(setArmReference(-0.3, 0.4, 0.2, 1.4, 0.0, 0.0, 0.0));
+        arm_ref.trajectory.points.push_back(setArmReference(-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800));
     } else {
         ROS_INFO("Arm pose for %s arm unknown: \'%s\'", arm.c_str(), pose.c_str());
+        ROS_INFO("return false 1");
         return false;
     }
 
     // Send goal(s)
-    if (arm == "left" || arm == "both") {
+    if (arm == "left") {
         left_arm_ac_->sendGoal(arm_ref);
-        left_arm_ac_->waitForResult(ros::Duration(10.0));
+        left_arm_ac_->waitForResult(ros::Duration(20.0));
     }
-
-    if (arm == "right" || arm == "both") {
+    else if (arm == "right") {
         right_arm_ac_->sendGoal(arm_ref);
-        right_arm_ac_->waitForResult(ros::Duration(10.0));
+        right_arm_ac_->waitForResult(ros::Duration(20.0));
+    }
+    else if (arm == "both") {
+        left_arm_ac_->sendGoal(arm_ref);
+        right_arm_ac_->sendGoal(arm_ref);
+        left_arm_ac_->waitForResult(ros::Duration(20.0));
+        right_arm_ac_->waitForResult(ros::Duration(20.0));
     }
 
 
     // Get feedback
 
     // Left arm
-    if(arm == "lpera" && left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+    if(arm == "left" && left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
         ROS_WARN("Left arm could not reach target position");
+        ROS_INFO("return false 2");
         return false;
     }
     // Right arm
-    else if(arm == "lpera" && left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
+    else if(arm == "right" && left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
         ROS_WARN("Left arm could not reach target position");
+        ROS_INFO("return false 3");
         return false;
     }
     // Both arms
@@ -200,12 +210,14 @@ bool moveArm(string arm, string pose) {
         // Left
         if (left_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
             ROS_WARN("Left arm could not reach target position");
+            ROS_INFO("return false 4");
             both_ok = false;
         }
 
         // Right
         if (right_arm_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
             ROS_WARN("Right arm could not reach target position");
+            ROS_INFO("return false 5");
             both_ok = false;
         }
 
@@ -1015,7 +1027,7 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
                 string arm_used;
                 amigoSpeak("Please handover the object, I am not able to grasp");
                 if (!moveArm("rpera", "give")) {
-                    if (!moveArm("lpera", "give")) {
+                    if (!moveArm("left", "give")) {
                         amigoSpeak("I am sorry but I cannot move my arms");
                         amigoSpeak("I will drive to the delivery location without the object");
                     } else {
@@ -1024,10 +1036,6 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
                 } else {
                     arm_used = "right";
                     amigoSpeak("Thank you");
-                }
-
-                if (!moveArm("both", "carry")) {
-                    amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
                 }
 
                 // Open gripper
@@ -1044,6 +1052,10 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
                             amigoSpeak("I will drive to the delivery location without the object");
                         }
                     }
+                }
+
+                if (!moveArm(arm_used, "carry")) {
+                    amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
                 }
 
                 // Move to delivery location
@@ -1068,11 +1080,20 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
 
                     // Deliver the object by opening the gripper
                     if (!arm_used.empty()) {
+
+                        if (!moveArm(arm_used, "give")) {
+                            amigoSpeak("I cannot move my arms the way I want it");
+                        }
+
                         amigoSpeak("I will open my gripper, can you please take the " + it_world_model->first);
                         ros::Duration sleep_to_be_sure(1.5);
                         sleep_to_be_sure.sleep();
                         if (!moveGripper(arm_used, "open")) {
                             amigoSpeak("I am sorry but I cannot open my gripper");
+                        }
+
+                        if (!moveArm(arm_used, "drive")) {
+                            amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
                         }
                     }
 
@@ -1191,22 +1212,45 @@ int main(int argc, char **argv) {
     right_arm_ac_->waitForServer();
     ROS_INFO("Connected!");
 
+    /// Reset arms
+
+    if (!moveArm("both", "drive")) {
+        amigoSpeak("I am not able to move my arms to the drive position");
+    }
+
+    ROS_INFO("This is how I drive");
+/*
+    ros::Duration gaap(3.0);
+    gaap.sleep();
+
+    if (!moveArm("both", "give")) {
+        amigoSpeak("I am not able to move my arms to the give position");
+    }
+
+    ROS_INFO("This is how I give");
+
+    gaap.sleep();
+
+    // TODO: why does this crash!?
+
+    /// Reset arms
+    if (!moveArm("both", "carry")) {
+        amigoSpeak("I am not able to move my arms to the carry position");
+    }
+
+    ROS_INFO("This is how I carry");*/
+
     ROS_INFO("Connecting to reasoner...");
     reasoner_client = new psi::Client("reasoner");
     ROS_INFO("Connected!");
 
-    /// Reset arms
-     if (moveArm("both", "carry")) {
-         amigoSpeak("I am not able to move my arms to the drive position");
-     }
-
-     //! Gripper action client
-     ROS_INFO("Connecting to gripper action servers...");
-     gripper_left_ac_ = new actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>("gripper_server_left", true);
-     gripper_right_ac_ = new actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>("gripper_server_right", true);
-     gripper_left_ac_->waitForServer();
-     gripper_right_ac_->waitForServer();
-     ROS_INFO("Connected!");
+    //! Gripper action client
+    ROS_INFO("Connecting to gripper action servers...");
+    gripper_left_ac_ = new actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>("gripper_server_left", true);
+    gripper_right_ac_ = new actionlib::SimpleActionClient<amigo_actions::AmigoGripperCommandAction>("gripper_server_right", true);
+    gripper_left_ac_->waitForServer();
+    gripper_right_ac_->waitForServer();
+    ROS_INFO("Connected!");
 
     //! Planner
     double max_vel_lin = 0.3;                 // Default: 0.50
