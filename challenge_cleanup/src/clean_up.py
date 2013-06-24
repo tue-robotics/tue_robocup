@@ -331,18 +331,12 @@ class Cleanup(smach.StateMachine):
 
             smach.StateMachine.add("SAY_PLEASE_TAKE", 
                                     states.Say(robot, "Please take this thing from my hand. I don't know where to put it"),
-                                    transitions={   'spoken':'DETERMINE_EXPLORATION_TARGET'})
+                                    transitions={   'spoken':'HANDOVER_TO_HUMAN'})
 
-            #smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.OPEN), #open
-            #                        transitions={   'succeeded':'CLOSE_AFTER_DROP',
-            #                                        'failed'   :'CLOSE_AFTER_DROP'})
-            #smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=ArmState.CLOSE), #close
-            #                        transitions={   'succeeded':'RESET_ARM',
-            #                                        'failed'   :'RESET_ARM'})
-            #smach.StateMachine.add('RESET_ARM', 
-            #                        states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
-            #                        transitions={   'done':'MARK_DISPOSED',
-            #                                        'failed':'MARK_DISPOSED'})
+            smach.StateMachine.add("HANDOVER_TO_HUMAN",
+                                    states.HandoverToHuman(arm, robot),
+                                    transitions={   'succeeded':'MARK_DISPOSED',
+                                                    'failed':'MARK_DISPOSED'})
 
             #Mark the current_object as disposed
             @smach.cb_interface(outcomes=['done'])
