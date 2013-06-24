@@ -144,7 +144,7 @@ class Amigo(object):
         output_pose = self.tf_listener.transformPose(frame, ps) 
         return output_pose
 
-    def store_position_knowledge(self, label, dx=1.0, z=0.8, file='/tmp/locations.pl'):
+    def store_position_knowledge(self, label, dx=1.0, z=0.8, filename='/tmp/locations.pl'):
 
         # Query reasoner for environment name
         ans_env = self.reasoner.query(Compound("environment", "Env"))
@@ -159,7 +159,7 @@ class Amigo(object):
         (pos, quat) = self.base.get_location()
         phi = self.base.phi(quat)
 
-        base_pose = Compound("base_pose", env_name, "Challenge", label, Compound("pose_2d", pos.x, pos.y, phi))
+        base_pose = Compound("waypoint", env_name, "Challenge", label, Compound("pose_2d", round(pos.x, 3), round(pos.y, 3), round(phi, 3)))
         print base_pose
 
         # Determine lookat point (point of interest)
@@ -176,13 +176,17 @@ class Amigo(object):
         self.tf_listener.waitForTransform("/map", ps.header.frame_id, time, rospy.Duration(2.0))
         ps_MAP = self.tf_listener.transformPoint("/map", ps)
 
-        poi = Compound("point_of_interest", env_name, "Challenge", label, Compound("point_3d", ps_MAP.point.x, ps_MAP.point.y, ps_MAP.point.z))
+        poi = Compound("point_of_interest", env_name, "Challenge", label, Compound("point_3d", round(ps_MAP.point.x, 3), round(ps_MAP.point.y, 3), round(ps_MAP.point.z, 3)))
 
         print poi
 
+        with open(filename, "a") as myfile:
+            myfile.write(str(base_pose) + "\n")
+            myfile.write(str(poi) + "\n")
+
         # assert the facts to the reasoner
-        self.reasoner.query(Compound("assert", base_pose))
-        self.reasoner.query(Compound("assert", poi))
+        #self.reasoner.query(Compound("assert", base_pose))
+        #self.reasoner.query(Compound("assert", poi))
 
     def close(self):
         try:
