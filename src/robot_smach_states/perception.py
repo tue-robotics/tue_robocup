@@ -1036,7 +1036,7 @@ class Read_laser(smach.State):
                                    #output_keys=['start_time','global_end_time'])
         self.rate = 10
         self.min_threshold = 0.02   # Minimum distance to exclude dirt on the laser
-        self.door_threshold = 2.0   # Maximum allowed distance to door: anything bigger than this means that the door is open
+        self.door_threshold = 1.2   # Maximum allowed distance to door: anything bigger than this means that the door is open
         self.door_open = 0
         self.robot = robot
         self.laser_value = 0.0
