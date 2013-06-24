@@ -32,7 +32,7 @@ class Ask_cleanup(smach.State):
         self.robot.head.look_up()
 
         # ToDo: don't hardcode this!
-        room = "livingroom"
+        room = "living_room"
 
         try:
             self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
