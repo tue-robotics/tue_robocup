@@ -31,27 +31,14 @@ class Ask_cleanup(smach.State):
     def execute(self, userdata):
         self.robot.head.look_up()
 
-        # ToDo: don't hardcode this!
-        room = "living_room"
-
         try:
             self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
             if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-                self.robot.speech.speak("I was not able to understand you but I'll clean the livingroom, humans always tend to make a mess of that.")
+                self.robot.speech.speak("I was not able to understand you but I'll clean the living room, humans always tend to make a mess of that.")
+                 # ToDo: don't hardcode this!                
                 room = "living_room"
-            elif self.response.answer == "livingroom":
-                room = "living_room"
-            elif self.response.answer == "diningroom":
-                room = "dining_room"
-            elif self.response.answer == "kitchen":
-                room = "kitchen"
-            elif self.response.answer == "bedroom":
-                room = "bedroom"
-            elif self.response.answer == "hallway":
-                room = "hallway"
             else:
-                self.robot.speech.speak("I'll clean the livingroom, humans always tend to make a mess of that.")
-                room = "living_room"
+                room = self.response.answer
         except Exception, e:
             rospy.logerr("Could not get_cleanup_service: {0}. Defaulting to {1}".format(e, room))
 
@@ -121,10 +108,10 @@ class Cleanup(smach.StateMachine):
         query_dropoff_loc = Conjunction(
                                 Compound("current_object", "Obj_to_Dispose"), #Of the current object
                                 Compound("instance_of",    "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-                                Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trashbin
+                                Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
                                 Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
-        query_dropoff_loc_backup = Compound("dropoff_point", "trashbin", Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc_backup = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
 
         meeting_point = Conjunction(    Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
@@ -235,7 +222,7 @@ class Cleanup(smach.StateMachine):
                                     states.Say(robot, ["Lets see what I can find here."]),
                                     transitions={   'spoken':'LOOK'})
 
-            #query_dropoff_loc = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
+            #query_dropoff_loc = Compound("point_of_interest", "trash_bin_1", Compound("point_3d", "X", "Y", "Z"))
             # 
             # Test this by: 
             # console 1: $ rosrun tue_reasoner_core reasoner
@@ -308,7 +295,7 @@ class Cleanup(smach.StateMachine):
                                                     'target_lost':'DONT_KNOW_DROP'})
             
             smach.StateMachine.add("DONT_KNOW_DROP", 
-                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trashbin."),
+                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trash bin."),
                                     transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
 
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
@@ -322,7 +309,7 @@ class Cleanup(smach.StateMachine):
                                     #                'target_lost':'DONT_KNOW_DROP_BACKUP'})
 
             smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
-                                    states.Say(robot, "I can't even find the trashbin! Then I'll just give it to a human. They'll know what to do.", mood="sad"),
+                                    states.Say(robot, "I can't even find the trash bin! Then I'll just give it to a human. They'll know what to do.", mood="sad"),
                                     transitions={   'spoken':'GOTO_HUMAN_DROPOFF'})
 
             smach.StateMachine.add( 'GOTO_HUMAN_DROPOFF', states.NavigateGeneric(robot, goal_query=meeting_point),
