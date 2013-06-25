@@ -658,6 +658,7 @@ def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
         #                             Compound("is", "X", 2.0),
         #                             Compound("is", "Y", 2.2),
         #                             Compound("is", "Z", 0.8))
+    rospy.loginfo("Dropping to {0}".format(query_dropoff_loc))
 
     with sm:
         smach.StateMachine.add("DROPOFF_OBJECT",
