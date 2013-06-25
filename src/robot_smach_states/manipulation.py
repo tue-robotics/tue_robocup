@@ -346,7 +346,7 @@ class UpdateObjectPose(smach.State):
         else:
             self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
             self.robot.perception.toggle(["tabletop_segmentation"])
-            self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.2)
+            self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
             rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
             waittime = 5.0
             rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(waittime))
