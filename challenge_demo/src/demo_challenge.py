@@ -383,9 +383,9 @@ class SingSong(smach.State):
         TTS_EXE_FILE = "~/ros/fuerte/tue/trunk/tue_human_machine_interfacing/text_to_speech_philips/exec/ptts_v911.exe"
         filename = "/tmp/speech.wav"
         os.system("rm {0}".format(filename))
-        command = TTS_EXE_FILE+" -i ../singing_US.txt -k xcyst4l363x6c5j40tzz-v4d6kgt0tr0c7hj1l3lq-cmsn39tskyz9cvwv4z -o {0}".format(filename)
+        command = TTS_EXE_FILE+" -i ~/ros/fuerte/tue/trunk/tue_human_machine_interfacing/text_to_speech_philips/singing_US.txt -k xcyst4l363x6c5j40tzz-v4d6kgt0tr0c7hj1l3lq-cmsn39tskyz9cvwv4z -o {0}".format(filename)
         os.system(command)
-        os.system("gst-launch-0.10 filesrc location='{0}' ! wavparse ! audioconvert ! audioresample ! osssink".format(filename))
+        os.system("aplay {0}".format(filename))
 
         return 'done'
 
