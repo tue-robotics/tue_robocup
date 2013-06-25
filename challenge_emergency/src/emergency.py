@@ -100,8 +100,13 @@ class turn_Around_z_axis(smach.State):
         # get current position and rotation
         pos, rot = self.robot.base.get_location()
 
+        rospy.loginfo("[EMERGENCY TEST] Current rotation value: rot.z = {0}".format(rot.z))
+        rospy.loginfo("[EMERGENCY TEST] Rotation wanted value: self.rotation = {0}".format(self.rotation))
         # set rotation
         rot.z = rot.z - self.rotation
+
+        rospy.loginfo("[EMERGENCY TEST] New rotation value: rot.z = {0}".format(rot.z))
+
 
         # create new path
         path = self.robot.base.get_plan(pos,rot)
@@ -608,12 +613,12 @@ class Look_at_person(smach.State):
             x,y,z = possible_locations[0]
 
             if z > 1.5:
-                self.robot.spindle.high()
+                self.robot.spindle.send_goal(0.4,waittime=5.0)  
                 rospy.logdebug("Spindle should come up now!")
 
             lookat_point = self.robot.head.point(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-            self.robot.head.send_goal(lookat_point,timeout=0)
+            self.robot.head.send_goal(lookat_point, timeout=0, keep_tracking=True)
         return 'finished'
 
 
