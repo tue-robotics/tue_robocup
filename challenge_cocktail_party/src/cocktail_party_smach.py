@@ -65,7 +65,7 @@ class WaitForPerson(smach.State):
 
         self.robot.spindle.reset()
         self.robot.reasoner.reset()
-        self.robot.head.set_pan_tilt(tilt=-0.2,timeout=0)
+        self.robot.head.set_pan_tilt(tilt=-0.2)
         
         self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
 
@@ -86,7 +86,6 @@ class WaitForPerson(smach.State):
             self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
             self.robot.reasoner.query(Compound("assertz",Compound("waited_times_no", waited_no)))
             return "waiting"
-        #rospy.sleep(3)
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
         wait_result = wait_machine.execute()
@@ -182,16 +181,16 @@ class LearnPersonName(smach.State):
 
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             if self.person_learn_failed == 2:
-                self.robot.speech.speak("I will call you William")
-                self.response.answer = "william"
+                self.robot.speech.speak("I will call you David")
+                self.response.answer = "david"
                 self.person_learn_failed = 3
             if self.person_learn_failed == 1:
                 self.robot.speech.speak("I will call you Michael")
                 self.response.answer = "michael"
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
-                self.robot.speech.speak("I will call you John")
-                self.response.answer = "john"
+                self.robot.speech.speak("I will call you Joseph")
+                self.response.answer = "joseph"
                 self.person_learn_failed = 1
 
         self.robot.reasoner.query(Compound("assert", Compound("current_person", self.response.answer)))
@@ -213,16 +212,29 @@ class Ask_drink(smach.State):
         self.robot = robot
         self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
         self.person_learn_failed = 0
+        self.drink_learn_failed = 0
 
     def execute(self, userdata=None):
         self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
 
         # Check available options from rulebook!
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
-            self.robot.speech.speak("I will just bring you a coke")
-            self.response.answer = "coke"
+            if self.drink_learn_failed == 2:
+                self.robot.speech.speak("I will just bring you a seven up")
+                self.response.answer = "seven_up"
+                self.drink_learn_failed = 3
+            if self.drink_learn_failed == 1:
+                self.robot.speech.speak("I will just bring you a milk")
+                self.response.answer = "milk"
+                self.drink_learn_failed = 2
+            if self.drink_learn_failed == 0:
+                self.robot.speech.speak("I will just bring you a coke")
+                self.response.answer = "coke"
+                self.drink_learn_failed = 1
+            else:
+                self.robot.speech.speak("I will just bring you a coke")
+                self.response.answer = "coke"
 
-        # Check if tea_pack or teapack mix up in speech and template matching compatibility
         if self.response.answer == "teapack":
             self.response.answer = "tea_pack"
             rospy.logwarn("Changed teapack to tea_pack!")        
@@ -418,7 +430,7 @@ class LookForPerson(smach.State):
         elif nav_result == "preempted":
             return "looking"
 
-        self.robot.head.set_pan_tilt(tilt=-0.2,timeout=0)
+        self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
@@ -449,7 +461,7 @@ class LookForPerson(smach.State):
         person_result = self.robot.reasoner.query(person_query)
  
         if not person_result:
-            self.robot.head.set_pan_tilt(tilt=0.2,timeout=0)
+            self.robot.head.set_pan_tilt(tilt=0.2)
             self.robot.speech.speak("No one here. Checking for sitting persons!")
 
             self.response_start = self.robot.perception.toggle(["face_segmentation"])
@@ -485,7 +497,7 @@ class LookForPerson(smach.State):
 
 class PersonFound(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["correct" , "unknown", "persons_unchecked","not_correct"])
+        smach.State.__init__(self, outcomes=["correct", "unknown", "persons_unchecked", "not_correct"])
         self.robot = robot
 
     def execute(self, userdata=None):
@@ -505,18 +517,17 @@ class PersonFound(smach.State):
         possible_locations = [( float(answer["X"]), 
                                     float(answer["Y"]), 
                                     float(answer["Z"])) for answer in person_detection_result]
+        if len(possible_locations) > 0:
+            x,y,z = possible_locations[0]
+            if z > 1.5:
+                self.robot.spindle.high()
+                rospy.logdebug("Spindle should come up now!")
 
-        x,y,z = possible_locations[0]
-
-        if z > 1.5:
-            self.robot.spindle.high()
-            rospy.logdebug("Spindle should come up now!")
-
-        lookat_point = self.robot.head.point(x,y,z)
-        rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-        self.robot.head.send_goal(lookat_point,timeout=0)
+            lookat_point = self.robot.head.point(x,y,z)
+            rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
+            self.robot.head.send_goal(lookat_point,timeout=0)
         self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
-                                                      Compound("assert", Compound("registered", "ObjectID"))))
+                                              Compound("assert", Compound("registered", "ObjectID"))))
 
 
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))       
@@ -560,7 +571,7 @@ class PersonFound(smach.State):
             for name_possibility in name_pmf:
                 print name_possibility
                 prob = float(name_possibility[0])
-                if prob > 0.1756 and prob > name_prob:
+                if prob > 0.1856 and prob > name_prob:
                     name = str(name_possibility[1][0])
                     name_prob = prob
 
@@ -662,7 +673,7 @@ class HandoverToKnownHuman(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"]),
+                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"],block=False),
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
@@ -703,16 +714,17 @@ class HandoverToUnknownHuman(smach.StateMachine):
             arm = robot.leftArm
         if grasp_arm == "right":
             arm = robot.rightArm
+        query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))    
 
         with self:
-            smach.StateMachine.add('GOTO_MEETING_POINT',
-                                    GotoMeetingPoint(robot),
-                                    transitions={   "found":"PRESENT_DRINK", 
-                                                    "not_found":"PRESENT_DRINK", 
-                                                    "no_goal":"PRESENT_DRINK",  
-                                                    "all_unreachable":"PRESENT_DRINK"})
+            smach.StateMachine.add('GOTO_PARTY_ROOM',
+                                    NavigateGeneric(robot, goal_query=query_party_room),
+                                    transitions={   "arrived":"PRESENT_DRINK", 
+                                                    "unreachable":"PRESENT_DRINK", 
+                                                    "preempted":"PRESENT_DRINK", 
+                                                    "goal_not_defined":"PRESENT_DRINK"})
             smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"]),
+                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"],block=False),
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
@@ -771,14 +783,18 @@ class CocktailParty(smach.StateMachine):
                                                     "Failed":"DELETE_MODELS"})
             smach.StateMachine.add( "DELETE_MODELS",
                                     DeleteModels(robot), 
-                                    transitions={   "done":"GOTO_MEETING_POINT"})
+                                    transitions={   "done":"SAY_GOTO_PARTY_ROOM"})
 
-            smach.StateMachine.add('GOTO_MEETING_POINT',
-                                    GotoMeetingPoint(robot),
-                                    transitions={   "found":"ITERATE_PERSONS", 
-                                                    "not_found":"ITERATE_PERSONS", 
-                                                    "no_goal":"ITERATE_PERSONS",  
-                                                    "all_unreachable":"ITERATE_PERSONS"})
+            smach.StateMachine.add( "SAY_GOTO_PARTY_ROOM",
+                                    Say(robot, "I'm going to the party room."),
+                                    transitions={   "spoken":"GOTO_PARTY_ROOM"})
+
+            smach.StateMachine.add('GOTO_PARTY_ROOM',
+                                    NavigateGeneric(robot, goal_query=query_party_room),
+                                    transitions={   "arrived":"ITERATE_PERSONS", 
+                                                    "unreachable":"ITERATE_PERSONS", 
+                                                    "preempted":"ITERATE_PERSONS", 
+                                                    "goal_not_defined":"ITERATE_PERSONS"})
 
             persons_iterator = smach.Iterator(  outcomes=['served', 'not_served'], 
                                                 it=lambda: range(3),
@@ -895,13 +911,26 @@ class CocktailParty(smach.StateMachine):
                                     transitions={'served':'EXIT',
                                                 'not_served':'SAY_FAILED',
                                                 'Done':"EXIT"})
+            # Amigo goes to the exit (waypoint stated in knowledge base)
+            smach.StateMachine.add('EXIT', 
+                                    Navigate_named(robot, "exit_1"),
+                                    transitions={   'arrived':'FINISH', 
+                                                    'preempted':'CLEAR_PATH_TO_EXIT', 
+                                                    'unreachable':'CLEAR_PATH_TO_EXIT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
 
-            smach.StateMachine.add( "EXIT",
-                                    NavigateGeneric(robot, goal_name="initial"),
-                                    transitions={"arrived":"FINISH", 
-                                                 "unreachable":"FINISH", 
-                                                 "preempted":"FINISH", 
-                                                 "goal_not_defined":"FINISH"})
+            # Amigo will say that it arrives at the registration table
+            smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
+                                    Say(robot, "I couldn't go to the exit. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_EXIT_SECOND_TRY'}) 
+
+            # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+            smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
+                                    Navigate_named(robot, "exit_2"),
+                                    transitions={   'arrived':'FINISH', 
+                                                    'preempted':'FINISH', 
+                                                    'unreachable':'FINISH', 
+                                                    'goal_not_defined':'FINISH'})
 
             smach.StateMachine.add( 'FINISH', Finish(robot),
                                     transitions={'stop':'Done'})

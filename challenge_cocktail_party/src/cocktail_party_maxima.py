@@ -271,6 +271,8 @@ class LookForDrink(smach.State):
             return "found"
         else:
             self.robot.speech.speak("Did not find the drink!")
+            if str(object_answers[0]["Drink"]) == "coke":
+                rospy.loginfo('Did find a coke though')
             return "not_found"
 
 class LookForPerson(smach.State):
@@ -290,13 +292,17 @@ class LookForPerson(smach.State):
 
         serving_person = str(return_result[0]["Person"])
 
-
+        # Move to the next waypoint in the party room
+    
+       
+                                    
+        
         # Move to the next waypoint in the party room
         goal_answers = self.robot.reasoner.query(Conjunction(  
-                                                    Compound("=", "Waypoint", Compound("party_room", "W")),
-                                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
-                                                    Compound("not", Compound("visited", "Waypoint"))
-                                                            ))
+                                                     Compound("=", "Waypoint", Compound("maxima_initial")),
+                                                     Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+                                                     Compound("not", Compound("visited", "Waypoint"))
+                                                             ))
 
         if not goal_answers:
             self.robot.speech.speak(str(serving_person) +", I have been looking everywhere but I cannot find you.")
@@ -486,7 +492,7 @@ class CocktailParty(smach.StateMachine):
 
         # Queries:
         #query_meeting_point = Compound("waypoint", Compound("meeting_point", "Object"), Compound("pose_2d", "X", "Y", "Phi"))
-        query_party_room = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))
+        query_party_room = Compound("waypoint", "maxima_initial", Compound("pose_2d", "X", "Y", "Phi"))
         query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
@@ -498,19 +504,21 @@ class CocktailParty(smach.StateMachine):
             arm = robot.rightArm
 
         with self:
+            smach.StateMachine.add('INITIALIZE',
+                        Initialize(robot),
+                        transitions={'initialized':'INIT_POSE',
+                                     'abort':'INIT_POSE'})
+        
+            smach.StateMachine.add('INIT_POSE',
+                        Set_initial_pose(robot, "maxima_initial"),
+                        transitions={   'done':'SAY_START',
+                                        'preempted':'SAY_START',
+                                        'error':'SAY_START'})
 
-            smach.StateMachine.add( "START_CHALLENGE",
-                                    StartChallengeRobust(robot, "initial"), #query_meeting_point
-                                    transitions={   "Done":"GOTO_MEETING_POINT", 
-                                                    "Aborted":"Aborted", 
-                                                    "Failed":"SAY_FAILED"})
+            smach.StateMachine.add("SAY_START", 
+                        Say(robot, ["Hi, my name is Amigo, I'm going to serve a drink for you."]),
+                        transitions={   'spoken':'ITERATE_PERSONS'})
 
-            smach.StateMachine.add('GOTO_MEETING_POINT',
-                                    GotoMeetingPoint(robot),
-                                    transitions={   "found":"ITERATE_PERSONS", 
-                                                    "not_found":"ITERATE_PERSONS", 
-                                                    "no_goal":"ITERATE_PERSONS",  
-                                                    "all_unreachable":"ITERATE_PERSONS"})
 
             persons_iterator = smach.Iterator(  outcomes=['served', 'not_served'], 
                                                 it=lambda: range(1),
@@ -573,13 +581,18 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'PICKUP_DRINK',
                                             GrabMachine(arm, robot, query_grabpoint),
                                             transitions={   "succeeded":"RETRACT_VISITED_2",
-                                                            "failed":'LOOK_FOR_DRINK' }) 
+                                                            "failed":'SAY_DRINK_NOT_GRASPED' }) 
+
+                    smach.StateMachine.add( 'SAY_DRINK_NOT_GRASPED',
+                                            Say(robot, ["I could not pick up the drink you wanted", 
+                                                        "I failed to grab the object you wanted."]),
+                                            transitions={   'spoken':'HUMAN_HANDOVER' }) 
                     # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
                                             Human_handover(arm,robot),
-                                            transitions={   'succeeded':'GOTO_INITIAL_FAIL',
+                                            transitions={   'succeeded':'RETRACT_VISITED_2',
                                                             'failed':'GOTO_INITIAL_FAIL' })
-
+                
                     smach.StateMachine.add( "RETRACT_VISITED_2",
                                             Retract_facts(robot, [Compound("visited", "X")]),
                                             transitions={"retracted":"LOOK_FOR_PERSON"})           
