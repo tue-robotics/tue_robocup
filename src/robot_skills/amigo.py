@@ -181,8 +181,8 @@ class Amigo(object):
         print poi
 
         with open(filename, "a") as myfile:
-            myfile.write(str(base_pose) + "\n")
-            myfile.write(str(poi) + "\n")
+            myfile.write(str(base_pose) + ".\n")
+            myfile.write(str(poi) + ".\n")
 
         # assert the facts to the reasoner
         #self.reasoner.query(Compound("assert", base_pose))
