@@ -36,11 +36,11 @@ SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
 RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 HOLD_CAN_POSE = [-0.1, -0.3, 0.0, 1.87, 0.1, 0.0, 0.0]
 
-KITCHEN_LOC = "sink_1"
-BREAKFAST_1 = "dinner_table_2"
-BREAKFAST_2 = "dinner_table_1"
-SINGPOS = "dinner_table_1"
-BOWL_POS = "dinner_table_1"
+KITCHEN_LOC = Compound("sink", "a")
+BREAKFAST_1 = Compound("dinner_table", "b")
+BREAKFAST_2 = Compound("dinner_table", "a")
+SINGPOS = Compound("dinner_table", "a")
+BOWL_POS = Compound("dinner_table", "a")
 
 class TurnAround(smach.State):
     def __init__(self, robot, angle):
@@ -129,7 +129,7 @@ class AskAnythingElse(smach.State):
 
         self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
         self.maluubasrv = rospy.ServiceProxy('maluuba/interpret', Interpret)
-        self.mail_interpreter = MailInterpreter(open("/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_demo/config/mailconfig.yaml"))
+        self.mail_interpreter = MailInterpreter(open(roslib.packages.get_pkg_dir("challenge_demo") + "/config/mailconfig.yaml"))
         self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
 
     def execute(self, userdata=None):
