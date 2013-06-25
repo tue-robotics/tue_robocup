@@ -190,7 +190,7 @@ class Navigate_to_queryoutcome_emergency(states.Navigate_abstract):
         else:
             chosen_answer = answers[0]
             #From the summarized answer, 
-            possible_locations = [( float(answer[self.X]), 
+            possible_locations = [( float(answer[self.X]),
                                     float(answer[self.Y]), 
                                     float(answer[self.Phi])) for answer in answers]
 
@@ -291,6 +291,7 @@ class Check_persons_found(smach.State):
     def execute(self, userdata=None):
 
         self.robot.head.reset_position()
+        self.robot.spindle.reset()
 
         person_query = Conjunction( 
                             Compound("property_expected","ObjectID", "class_label", "face"),
@@ -456,8 +457,8 @@ class MoveArmBack(smach.State):
         self.robot.leftArm.send_joint_goal(0.0,-1.57,0.0,1.57,0.0,0.0,0.0)
         self.robot.rightArm.send_joint_goal(0.0,-1.57,0.0,1.57,0.0,0.0,0.0)
         rospy.sleep(1.5)
-        self.robot.leftArm.send_gripper_goal_open(10)
-        self.robot.rightArm.send_gripper_goal_open(10)
+        self.robot.leftArm.send_gripper_goal_close(10)
+        self.robot.rightArm.send_gripper_goal_close(10)
         
         return 'finished'
 
@@ -816,7 +817,7 @@ def setup_statemachine(robot):
 
         # Start people detection
         smach.StateMachine.add("SAY_START_PEOPLE_DETECTION",
-                                states.Say(robot,"I will start my perception", block=False),
+                                states.Say(robot,"Please look into my eyes. I will start my perception now.", block=False),
                                 transitions={'spoken':'START_PEOPLE_DETECTION'})
 
         smach.StateMachine.add("START_PEOPLE_DETECTION",
@@ -924,7 +925,7 @@ def setup_statemachine(robot):
                                                  'failed':'SAY_REGISTER_NOT_OKAY_CALM'})
 
         smach.StateMachine.add('SAY_REGISTER_NOT_OKAY_CALM',
-                                    states.Say(robot, 'Please stay calm and help will arrive very soon.'),
+                                    states.Say(robot, 'Please stay calm and help will arrive very soon.'), 
                                     transitions={'spoken':'CHECK_WORLD_MODEL_FOR_MORE_UNREGISTERED_PEOPLE'})     
 
         # Person is ok and needs no assistance to exit
