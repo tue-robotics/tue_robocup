@@ -33,13 +33,14 @@ if __name__ == "__main__":
     coke4 = W.add_object("coke-8", "coke", 6.155, -6.470, 0.5)    
     coke5 = W.add_object("coke-9", "coke", 6.039, -7.215, 0.5)    
 
-    #W.wait_for_amigo_speech(["What can I do for you?"])
-    #W.speak("cleanupthelivingroom")
-    ##W.wait_for_amigo_speech(["Is that corect?","Is that OK?", "Is that okay?", "Am I right?", "Is that alright?"])
-    #W.wait_for_amigo_speech([lambda txt: "Is that" in txt and "?" in txt])
-    #W.speak("yes")
+    W.wait_for_amigo_speech(["What can I do for you?"])
+    W.speak("cleanupthekitchen")
+    #W.wait_for_amigo_speech(["Is that corect?","Is that OK?", "Is that okay?", "Am I right?", "Is that alright?"])
+    W.wait_for_amigo_speech([lambda txt: "?" in txt])
+    rospy.sleep(3.0)
+    W.speak("yes")
 
-    #W.wait_for_amigo_speech([lambda txt: "done" in txt]) 
-    #["I cleaned up everything I could find, so my work here is done. Have a nice day!", "I'm done, everything I could find is cleaned up."]
+    W.wait_for_amigo_speech([lambda txt: "done" in txt]) 
+    ["I cleaned up everything I could find, so my work here is done. Have a nice day!", "I'm done, everything I could find is cleaned up."]
 
-    #rospy.loginfo("Done")
+    rospy.loginfo("Done")
