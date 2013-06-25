@@ -29,6 +29,7 @@
 #include <std_srvs/Empty.h>
 #include "perception_srvs/StartPerception.h"
 #include "speech_interpreter/GetInfo.h"
+#include "challenge_restaurant/SmachStates.h"
 
 // Problib conversions
 #include "problib/conversions.h"
@@ -85,6 +86,7 @@ ros::ServiceClient srv_speech_;                                                 
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
+ros::ServiceClient grab_machine_client_;                                          // Communication: Connection with (python) grab machine
 
 //! Publishers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
@@ -621,10 +623,10 @@ bool getPositionGuide(vector<wire::PropertySet>& objects, pbl::PDF& pos) {
 * @param pos position of the guide (output)
 * @return bool indicating whether or not the guide was found
 */
-map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wire::PropertySet>& objects) {
+map<string, pair<geometry_msgs::Point, string> > getWorldModelObjects(vector<wire::PropertySet>& objects) {
 
     // Map storing the copy of the world model
-    map<string, pair<geometry_msgs::Point, double> > world_model_copy;
+    map<string, pair<geometry_msgs::Point, string> > world_model_copy;
 
     // Needed to determine instance with highest probability if multiple instances of same class
     map<string, double> class_prob_map;
@@ -658,19 +660,24 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
                 if (world_model_copy.find(class_label) == world_model_copy.end()) {
 
                     // If class is not yet in world model, store
-                    world_model_copy[class_label] = make_pair(pos_store, prob);
+                    world_model_copy[class_label] = make_pair(pos_store, obj.getID());
 
-                } else {
+                }
+                // If class is present in copy already, store instance with highest probability
+                else {
 
-                    // If class is present in copy already, store instance with highest probability
+                    amigoSpeak("I see multiple instances of " + class_label + ", I will remember the most probable one.");
+
+                    // Check/correct administration
                     if (class_prob_map.find(class_label) == class_prob_map.end()) {
                         ROS_WARN("Something went wrong in the administration");
                         class_prob_map[class_label] = 0;
                     }
 
-                    if (class_prob_map[class_label] < prob) {
-                        // TODO store ID instead of probability
-                        world_model_copy[class_label] = make_pair(pos_store, prob);
+
+                    if (class_prob_map[class_label] >= prob) {
+
+                        world_model_copy[class_label] = make_pair(pos_store, obj.getID());
                         class_prob_map[class_label] = prob;
                     }
                 }
@@ -679,16 +686,6 @@ map<string, pair<geometry_msgs::Point, double> > getWorldModelObjects(vector<wir
 
         }
     }
-
-    /*
-    string object_id = "123";
-
-    // retract all current_object/1 facts from reasoner (prolog call: retractall(current_object(X)) )
-    reasoner_client->query(psi::Compound("retractall", psi::Compound("current_object", psi::Variable("X"))));
-
-    // assert current object id to reasoner (prolog call: assert(current_object(ID)) )
-    reasoner_client->query(psi::Compound("assert", psi::Compound("current_object", psi::Constant(object_id))));
-    */
 
     return world_model_copy;
 
@@ -977,9 +974,9 @@ bool moveTowardsPositionMap(tf::StampedTransform pos) {
 }
 
 
-void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& world_model_copy, tf::StampedTransform tf_loc_shelf) {
+void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, string> >& world_model_copy, tf::StampedTransform tf_loc_shelf) {
 
-    map<string, pair<geometry_msgs::Point, double> >::iterator it_world_model = world_model_copy.begin();
+    map<string, pair<geometry_msgs::Point, string> >::iterator it_world_model = world_model_copy.begin();
 
     // Iterate over world model objects
     for (; it_world_model != world_model_copy.end(); ++it_world_model) {
@@ -988,7 +985,8 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
         map<int, pair<string, string> >::iterator it_order = order_map_.begin();
         for (; it_order != order_map_.end(); ++it_order) {
 
-            if (it_order->second.first == it_world_model->first) {
+            // Check if class labels are the same and the ID is not equal to object_delivered
+            if (it_order->second.first == it_world_model->first && it_world_model->second.second != "object_delivered") {
 
                 // Make sure AMIGO moves towards the shelf
                 if (!moveTowardsPositionMap(tf_loc_shelf)) {
@@ -1017,46 +1015,66 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
                          it_world_model->first.c_str(), it_order->second.second.c_str(), tf_loc_object.getOrigin().x(), tf_loc_object.getOrigin().y());
 
 
-                // ToDo: call service to python grab machine
+                // retract all current_object/1 facts from reasoner (prolog call: retractall(current_object(X)) )
+                reasoner_client->query(psi::Compound("retractall", psi::Compound("current_object", psi::Variable("X"))));
 
-                // Temporary solution
+                // assert current object id to reasoner (prolog call: assert(current_object(ID)) )
+                reasoner_client->query(psi::Compound("assert", psi::Compound("current_object", psi::Constant(it_world_model->second.second))));
+
+                // Call service to python grab machine
                 string arm_used;
-                amigoSpeak("Please handover the object, I am not able to grasp");
-                if (!moveArm("rpera", "give")) {
-                    if (!moveArm("left", "give")) {
-                        amigoSpeak("I am sorry but I cannot move my arms");
-                        amigoSpeak("I will drive to the delivery location without the object");
-                    } else {
-                        arm_used = "left";
-                    }
+                challenge_restaurant::SmachStates ss_srv;
+                ss_srv.request.state = "grasp";
+                bool suc = false;
+                if (!grab_machine_client_.call(ss_srv)) {
+                    ROS_WARN("Service call to grab_machine failed");
+                } else if (ss_srv.response.outcome != "Succeeded") {
+                    ROS_WARN("Service call returned %s", ss_srv.response.outcome.c_str());
                 } else {
-                    arm_used = "right";
-                    amigoSpeak("Thank you");
+                    arm_used = "left";
+                    suc = true;
                 }
 
-                // Open gripper
-                if (!arm_used.empty()) {
-                    if (!moveGripper(arm_used, "open")) {
-                        amigoSpeak("I am sorry but I cannot open my gripper");
-                        amigoSpeak("I will drive to the delivery location without the object");
-                    } else {
-                        ros::Duration wait_for_object(5.0);
-                        wait_for_object.sleep();
-                        amigoSpeak("I will close my gripper now");
-                        if (!moveGripper(arm_used, "close")) {
-                            amigoSpeak("I am sorry but I cannot close my gripper");
+                // If grabbing the object did not succeed, ask user to hand over
+                if (!suc) {
+
+                    amigoSpeak("Please handover the object, I am not able to grasp");
+                    if (!moveArm("right", "give")) {
+                        if (!moveArm("left", "give")) {
+                            amigoSpeak("I am sorry but I cannot move my arms");
                             amigoSpeak("I will drive to the delivery location without the object");
+                        } else {
+                            arm_used = "left";
+                        }
+                    } else {
+                        arm_used = "right";
+                    }
+
+                    // Open gripper
+                    if (!arm_used.empty()) {
+                        if (!moveGripper(arm_used, "open")) {
+                            amigoSpeak("I am sorry but I cannot open my gripper");
+                            amigoSpeak("I will drive to the delivery location without the object");
+                        } else {
+                            ros::Duration wait_for_object(3.0);
+                            wait_for_object.sleep();
+                            amigoSpeak("I will close my gripper now");
+                            if (!moveGripper(arm_used, "close")) {
+                                amigoSpeak("I am sorry but I cannot close my gripper");
+                                amigoSpeak("I will drive to the delivery location without the object");
+                            }
                         }
                     }
+
                 }
 
+                // To make sure the arm is in a carrying position
                 if (!moveArm(arm_used, "carry")) {
                     amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
                 }
 
                 // Move to delivery location
                 bool at_loc = true;
-
                 if (!moveTowardsPositionMap(tf_loc_object)) {
                     ROS_WARN("Could not reach the delivery location");
                     amigoSpeak("I cannot reach the delivery location, can you let me pass?");
@@ -1072,34 +1090,47 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, double> >& 
 
                     // Arrived at delivery location
                     ROS_INFO("I finished task: %d!", it_order->first);
-                    amigoSpeak("I am at delivery location: " + it_order->second.second);
-
-                    // Deliver the object by opening the gripper
-                    if (!arm_used.empty()) {
-
-                        if (!moveArm(arm_used, "give")) {
-                            amigoSpeak("I cannot move my arms the way I want it");
-                        }
-
-                        amigoSpeak("I will open my gripper, can you please take the " + it_world_model->first);
-                        ros::Duration sleep_to_be_sure(1.5);
-                        sleep_to_be_sure.sleep();
-                        if (!moveGripper(arm_used, "open")) {
-                            amigoSpeak("I am sorry but I cannot open my gripper");
-                        }
-
-                        if (!moveArm(arm_used, "drive")) {
-                            amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
-                        }
-                    }
-
-                    // Update the map
-                    order_map_[it_order->first] = make_pair<string, string>("Finished", "Finished");
+                    amigoSpeak("I am at delivery location " + it_order->second.second);
+                }
+                else {
+                    amigoSpeak("I cannot get to the delivery location");
                 }
 
-            }
-        }
+                // Deliver the object by opening the gripper
+                if (!arm_used.empty()) {
 
+                    if (!moveArm(arm_used, "give")) {
+                        amigoSpeak("I cannot move my arms the way I want it");
+                    }
+
+                    amigoSpeak("I will open my gripper, can you please take the " + it_world_model->first);
+                    ros::Duration sleep_to_be_sure(2.0);
+                    sleep_to_be_sure.sleep();
+                    if (!moveGripper(arm_used, "open")) {
+                        amigoSpeak("I am sorry but I cannot open my gripper");
+                    }
+
+                    if (!moveArm(arm_used, "drive")) {
+                        amigoSpeak("I cannot move my arms the way I want it");
+                    }
+                }
+
+                // Update the maps
+                order_map_[it_order->first] = make_pair<string, string>("Finished", "Finished");
+                it_world_model->second.second = "object_delivered";
+
+            }
+
+        }
+    }
+
+    // Reset world model (since it is in base_link) and its copy
+    world_model_copy.clear();
+    std_srvs::Empty srv;
+    if (reset_wire_client_.call(srv)) {
+        ROS_INFO("Cleared world model");
+    } else {
+        ROS_ERROR("Failed to clear world model");
     }
 
 }
@@ -1273,6 +1304,8 @@ int main(int argc, char **argv) {
     } else {
         ROS_ERROR("Failed to clear world model");
     }
+
+    grab_machine_client_ = nh.serviceClient<challenge_restaurant::SmachStates>("/smach_states");
 
     //! Administration
     pbl::PDF guide_pos;
@@ -1544,7 +1577,7 @@ int main(int argc, char **argv) {
                         vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
 
                         // Save world model in map frame (if not all tasks can be done)
-                        map<string, pair<geometry_msgs::Point, double> > world_model_copy = getWorldModelObjects(objects);
+                        map<string, pair<geometry_msgs::Point, string> > world_model_copy = getWorldModelObjects(objects);
 
                         // Check for ordered objects
                         checkOrderWithWorldModel(world_model_copy, it_locations->second);
@@ -1574,10 +1607,12 @@ int main(int argc, char **argv) {
 
             if (!moveTowardsPositionMap(location_map_["ordering_location"])) {
                 ROS_WARN("Could not go back to ordering location");
+                amigoSpeak("I can not reach the ordering location, can you make room for me?");
                 ros::Duration d(2.0);
                 d.sleep();
                 if (!moveTowardsPositionMap(location_map_["ordering_location"])) {
-                    ROS_WARN("Failed second attempt to reach ordering location too");
+                    ROS_WARN("I still can not reach the ordering location");
+
                 }
             }
             else {
@@ -1594,12 +1629,20 @@ int main(int argc, char **argv) {
 
     amigoSpeak("I finished all my tasks so I am done with the challenge!");
 
-    //! When node is shut down, cancel goal by sending zero
+    //! When node is shut down, cancel goal by sending zero goal
     pbl::Matrix cov(3,3);
     cov.zeros();
     pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
     moveTowardsPosition(pos, 0);
+
     delete planner_;
+    delete listener;
+    delete head_ref_ac_;
+    delete left_arm_ac_;
+    delete right_arm_ac_;
+    delete reasoner_client;
+    delete gripper_left_ac_;
+    delete gripper_right_ac_;
 
     return 0;
 }
