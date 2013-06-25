@@ -53,7 +53,7 @@ class Learn_Person(smach.State):
         #self.robot.speech.speak('Please be patient, while I try to learn your face.')
         #self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         #self.robot.leftArm.send_joint_goal(-1.439, 0.696, -0.967, 1.202, -0.9489, 0.5272, 0.0367)
-        self.robot.leftArm.send_joint_goal(-1.439, 0.496, -0.967, 1.352, -0.9489, 0.5272, 0.0367)
+        self.robot.leftArm.send_joint_goal(-1.439, 0.496, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
 
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
@@ -63,11 +63,13 @@ class Learn_Person(smach.State):
         self.robot.speech.speak("Finished learning your left side")
 
         # learn right face
+        self.robot.leftArm.send_joint_goal(-1.39, 1.096, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
+        rospy.sleep(1)
         self.robot.leftArm.reset_arm()
         #self.robot.rightArm.send_goal(0.365, -0.399, 1.600, 0, 30, 0, 60)
         #self.robot.rightArm.send_goal(0.32, -0.43, 1.50, 0, 30, 0, 60)
         #self.robot.rightArm.send_joint_goal(-1.159, 0.911, -1.021, 1.469, -0.603, 0.255, 0.0206)
-        self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206)
+        self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
         self.robot.speech.speak(speech_sentence[1])
         result = self.robot.perception.learn_person(name_to_learn, view = 'right')
@@ -76,6 +78,8 @@ class Learn_Person(smach.State):
         self.robot.speech.speak("Finished learning your right side")
 
         # learn front face
+        self.robot.rightArm.send_joint_goal(-1.159, 1.096, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
+        rospy.sleep(1)
         self.robot.rightArm.reset_arm()
         self.robot.speech.speak(speech_sentence[2])
         result = self.robot.perception.learn_person(name_to_learn, view = 'front')
