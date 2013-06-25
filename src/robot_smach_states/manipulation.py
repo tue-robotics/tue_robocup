@@ -711,7 +711,16 @@ class DropObject(smach.StateMachine):
         self.placement_query = placement_query
         self.dropoff_height_offset = dropoff_height_offset
 
+        otherarm = self.robot.rightArm
+        if otherarm == side:
+            otherarm = self.robot.leftArm
+
         with self:
+            smach.StateMachine.add( "RESET_OTHER_ARM",
+                                    ArmToJointPos(robot, otherarm, StandardPoses.RESET_POSE, timeout=1.0),
+                                    transitions={   'done'                  : 'PLACE_OBJECT',
+                                                    'failed'                : 'PLACE_OBJECT'}) #This is risky, but try anyways
+
             smach.StateMachine.add( 'PLACE_OBJECT', 
                                     PlaceObject(self.side, self.robot, self.placement_query, self.dropoff_height_offset),
                                     transitions={'succeeded'    : 'succeeded',
