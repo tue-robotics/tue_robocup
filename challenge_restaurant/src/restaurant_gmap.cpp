@@ -159,13 +159,9 @@ bool moveArm(string arm, string pose) {
     if (pose == "drive") {
         arm_ref.trajectory.points.push_back(setArmReference(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0));
     } else if (pose == "carry") {
-        if (arm == "left") {
-            arm_ref.trajectory.points.push_back(setArmReference(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0));
-        } else if (arm == "right") {
-            arm_ref.trajectory.points.push_back(setArmReference(-0.14, -0.46, 0.13, 1.56, -0.09, 0.48, -0.07));
-        }
+        arm_ref.trajectory.points.push_back(setArmReference(-0.4, -0.38, 0.51, 1.56, -0.2, 0.52, -0.38));
     } else if (pose == "give") {
-        arm_ref.trajectory.points.push_back(setArmReference(-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800));
+        arm_ref.trajectory.points.push_back(setArmReference(-0.93 , 1.06 , 0.07 , 0.91 , -1.02 , -0.19 , -0.36));
     } else {
         ROS_INFO("Arm pose for %s arm unknown: \'%s\'", arm.c_str(), pose.c_str());
         ROS_INFO("return false 1");
@@ -1217,28 +1213,6 @@ int main(int argc, char **argv) {
     if (!moveArm("both", "drive")) {
         amigoSpeak("I am not able to move my arms to the drive position");
     }
-
-    ROS_INFO("This is how I drive");
-/*
-    ros::Duration gaap(3.0);
-    gaap.sleep();
-
-    if (!moveArm("both", "give")) {
-        amigoSpeak("I am not able to move my arms to the give position");
-    }
-
-    ROS_INFO("This is how I give");
-
-    gaap.sleep();
-
-    // TODO: why does this crash!?
-
-    /// Reset arms
-    if (!moveArm("both", "carry")) {
-        amigoSpeak("I am not able to move my arms to the carry position");
-    }
-
-    ROS_INFO("This is how I carry");*/
 
     ROS_INFO("Connecting to reasoner...");
     reasoner_client = new psi::Client("reasoner");
