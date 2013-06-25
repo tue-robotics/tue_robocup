@@ -6,6 +6,10 @@ import random
 
 from robot_skills.amigo import Amigo
 from robot_skills.reasoner import Conjunction, Compound
+
+import smach
+import robot_smach_states as states
+
 from std_msgs.msg import String
 import challenge_restaurant.srv
 
@@ -27,8 +31,7 @@ spacebar to quit.
 
 def grab_item(robot):
     rospy.loginfo("Starting to grab an item")
-    import smach
-    import robot_smach_states as states
+    
     import object_msgs.msg
 
     #Copied from RDO finale
@@ -69,14 +72,55 @@ def grab_item(robot):
 
     return result
 
+def lookat_objects_roi(robot):
+    rospy.loginfo("Starting to look at an ROI")
+    
+    rospy.loginfo("Test (smach_states): robot.spindle.upper_limit = {0}".format(robot.spindle.upper_limit))
+
+    robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+    robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+
+    robot.reasoner.assertz(Compound("challenge", "smach_state_server"))
+
+    sm = smach.StateMachine(outcomes=['Succeeded','Failed','Aborted'])
+
+    with sm:
+        query_lookat = Compound("point_of_interest", "large_table_1", Compound("point_3d", "X", "Y", "Z"))
+
+        #Make sure the object we're dealing with isn't already disposed (i.e. handled for cleanup)
+        #After cleaning the object up/disposing it, 
+        #MARK_DISPOSED asserts disposed(current_objectID)
+        query_object = Conjunction(
+                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
+                            Compound("not", Compound("disposed", "ObjectID")))
+
+        smach.StateMachine.add("LOOK_AT_OBJECT_ROI",
+                                states.LookForObjectsAtROI(robot, query_lookat, query_object, maxdist=0.9, modules=["template_matching"], waittime=2.5),
+                                transitions={   'looking'           : 'LOOK_AT_OBJECT_ROI',
+                                                'object_found'      : 'Succeeded',
+                                                'no_object_found'   : 'Failed',
+                                                'abort'             : 'Aborted'})
+
+    rospy.loginfo("State machine set up, start execution...")
+    #import pdb; pdb.set_trace()
+    result = sm.execute()
+    rospy.loginfo("State machine executed. Result: {0}".format(result))
+
+    return result
+
+
 def process_request(request):
     response = challenge_restaurant.srv.SmachStatesResponse()
     if request.state == "grasp":
         response.outcome = grab_item(robot)
+    elif request.state == "lookatroi":
+        response.outcome = lookat_objects_roi(robot)
     else:
         rospy.logerr("The requested state is not (yet) implemented")
-        
         response.outcome = "Aborted"
+
+    rospy.loginfo("Response = {0}".format(response))
+    return response
 
 def main():
     
