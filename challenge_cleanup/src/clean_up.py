@@ -47,6 +47,8 @@ class Ask_cleanup(smach.State):
                 room = "kitchen"
             elif self.response.answer == "bedroom":
                 room = "bedroom"
+            elif self.response.answer == "hallway":
+                room = "hallway"
             else:
                 self.robot.speech.speak("I'll clean the livingroom, humans always tend to make a mess of that.")
                 room = "living_room"
