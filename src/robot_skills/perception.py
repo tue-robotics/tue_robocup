@@ -52,7 +52,7 @@ class Perception(object):
     def toggle(self, modules):
         return self.sv_recognition(modules)
 
-    def toggle_recognition(self, faces=False, objects=False):
+    def toggle_recognition(self, faces=False, objects=False, people=False):
         #TODO: Everything related to faces is not yet tested and is not yet supposed to actually work. These methods are for testing the execs only!
         if faces and objects:
             rospy.loginfo("Perception.start: Both categories (Faces and Objects) specified for recognition, CPU hogging initiated")
@@ -68,6 +68,9 @@ class Perception(object):
         if not faces and not objects:
             rospy.loginfo("Perception.stop: Both faces and objects not recognized anymore")
             result = self.sv_recognition([])
+        #Get rid of stupid multiple if clauses later
+        if people:
+            result = self.sv_recognition(["ppl_detection"])
         return result
 
     def toggle_perception_2d(self, pointstamped, length_x=0.5, length_y=0.5, length_z=0.5):
