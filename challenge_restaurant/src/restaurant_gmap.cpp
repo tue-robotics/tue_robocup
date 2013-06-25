@@ -47,7 +47,7 @@ using namespace std;
 
 //! Settings
 unsigned int N_ORDERS = 3;                      // Number of orders robot needs to take
-const int TIME_OUT_GUIDE_LOST = 2.5;            // Time interval without updates after which operator is considered to be lost
+const int TIME_OUT_GUIDE_LOST = 3.5;            // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_GUIDE = 0.7;              // Distance AMIGO keeps towards guide
 const double WAIT_TIME_GUIDE_MAX = 15.0;        // Maximum waiting time for guide to return
 const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
@@ -106,6 +106,7 @@ map<int, pair<string, string> > order_map_;
 //! Function prototypes to avoid errors
 void moveTowardsPosition(pbl::PDF& pos, double offset);
 bool moveHead(double pan, double tilt);
+bool callInterpreter(string type, string& answer);
 
 
 void setRGBLights(string color) {
@@ -398,7 +399,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
     //! It is allowed to call the guide once per section (points for the section will be lost)
     if (lost) {
         setRGBLights("yellow");
-        amigoSpeak("I have lost my guide, can you please stand in front of me");
+        amigoSpeak("Wait for me guide");
         setRGBLights("yellow");
     }
 
@@ -456,7 +457,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
             //! Position candidate guide
             pbl::Gaussian pos_guide(3);
 
-            //! Find person that has smallest Eucledian distance to robot
+            //! Find person that has smallest Eucledian distance to point in front of the robot
             if (vector_possible_guides.size() > 1) {
 
                 double dist_min = 0.0;
@@ -467,7 +468,7 @@ bool findGuide(wire::Client& client, bool lost = true) {
                     double dx = TYPICAL_GUIDE_X - vector_possible_guides[i].getMean()(0);
                     double dy = TYPICAL_GUIDE_Y - vector_possible_guides[i].getMean()(1);
                     double dist = sqrt(dx*dx+dy*dy);
-                    if (i == 0 || dist_min > dist)
+                    if (i == 0 || dist < dist_min)
                     {
                         dist_min = dist;
                         i_best = i;
@@ -505,14 +506,16 @@ bool findGuide(wire::Client& client, bool lost = true) {
                 ROS_ERROR("Failed to clear world model");
             }
 
-            //! Assert evidence to WIRE
-            client.assertEvidence(ev);
+            //! Assert evidence to WIRE: multiple times (just to be sure)
+            for (unsigned int dummy = 0; dummy < 3; ++dummy) {
+                client.assertEvidence(ev);
+            }
 
             no_guide_found = false;
 
             amigoSpeak("I found my guide.");
 
-            ros::Duration safety_delta(1.0);
+            ros::Duration safety_delta(0.5);
             safety_delta.sleep();
             return true;
 
@@ -800,35 +803,32 @@ void speechCallback(std_msgs::String res) {
         // Answer is yes: indeed a shelf
         if (res.data == "yes") {
 
-            // Ask for a side
-            amigoSpeak("Where do I find the shelf?");
-
             // Administration
             r = 1;
             ++n_shelves_;
             location_name << "shelf" << n_shelves_;
+
+            // Ask for a side
+            amigoSpeak("Where do I find the shelf?");
+
         }
         // Answer is no: not a shelf, but a delivery location
         else {
-
-            // Ask for a side
-            amigoSpeak("Where do I find the delivery location?");
 
             // Administration
             g = 1;
             ++n_locations_deliver_;
             location_name << "delivery location" << n_locations_deliver_;
+
+            // Ask for a side
+            amigoSpeak("Where do I find the delivery location?");
         }
 
-        // Ask The side (left/right/front)
+        // Get side from speech interpreter (left/right/front)
         resetRGBLights();
         string answer = "";
-        speech_interpreter::GetInfo srv;
-        srv.request.n_tries = 2;
-        srv.request.time_out = 20;
-        srv.request.type = "side";
-        if (speech_client_.call(srv)) {
-            answer = srv.response.answer;
+        if (callInterpreter("side", answer)) {
+            ROS_WARN("Service call to speech interpreter fail: no side available");
         }
 
         // Determine corresponding theta
@@ -836,12 +836,14 @@ void speechCallback(std_msgs::String res) {
         if (answer == "left") theta = 1.57;
         else if (answer == "right") theta = -1.57;
 
-        // Set updated orientation
+        // Set updated orientation: adding angles corresponds to multiplying the quaternions
         tf::Quaternion q = trans.getRotation();
+        ROS_INFO("Before update orientation is (%f,%f,%f,%f)", q.getW(), q.getX(), q.getY(), q.getZ());
         tf::Quaternion offset;
         offset.setRPY(0, 0, theta);
-        q += offset;
+        q *= offset;
         trans.setRotation(q);
+        ROS_INFO("After update orientation is (%f,%f,%f,%f)", q.getW(), q.getX(), q.getY(), q.getZ());
 
 
         // Store location
@@ -1200,6 +1202,32 @@ bool moveHead(double pan, double tilt) {
 
 }
 
+bool callInterpreter(string type, string& answer) {
+
+    // Stop challenge specific speech recognition
+    stopSpeechRecognition();
+
+    // Feedback
+    bool succeeded = false;
+
+    // Cal speech interpreter
+    answer = "";
+    speech_interpreter::GetInfo srv_test;
+    srv_test.request.n_tries = 2;
+    srv_test.request.time_out = 20;
+    srv_test.request.type = type;
+    if (speech_client_.call(srv_test)) {
+        answer = srv_test.response.answer;
+        succeeded = true;
+    }
+
+    // Start speech recognition again
+    startSpeechRecognition();
+
+    return succeeded;
+
+}
+
 
 
 int main(int argc, char **argv) {
@@ -1213,6 +1241,9 @@ int main(int argc, char **argv) {
 
     /// Tf listener
     listener = new tf::TransformListener();
+
+    //! Connect to interpreter
+    speech_client_ = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
 
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
@@ -1305,6 +1336,7 @@ int main(int argc, char **argv) {
         ROS_ERROR("Failed to clear world model");
     }
 
+    //! Connect to grab machine
     grab_machine_client_ = nh.serviceClient<challenge_restaurant::SmachStates>("/smach_states");
 
     //! Administration
@@ -1395,10 +1427,6 @@ int main(int argc, char **argv) {
 
     // PART II: Get orders
 
-    // Switch off previous speech recognition, connect to interpreter
-    stopSpeechRecognition();
-    speech_client_ = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
-
     // Reset world model
     reset_wire_client_.call(srv);
 
@@ -1424,24 +1452,22 @@ int main(int argc, char **argv) {
         for (unsigned int order_index = 0; order_index < N_ORDERS; ++order_index) {
 
             // Ask for a object class
-            srv.request.type = "object_classes";
+            string obj_class = "";
             bool right_answer = false;
             string desired_object = "coke";
 
             // Ask for object class
             resetRGBLights();
-            if (speech_client_.call(srv)) {
-                string obj_class = srv.response.answer;
+            if (callInterpreter("object_classes", obj_class)) {
 
                 // Check answer object class
                 if (obj_class != "no_answer" && obj_class != "wrong_answer") {
-                    srv.request.type = obj_class;
                     //amigoSpeak("Which object would you like from this class?");
 
                     // Ask which object from class
                     resetRGBLights();
-                    if (speech_client_.call(srv)) {
-                        string obj_instance = srv.response.answer;
+                    string obj_instance = "";
+                    if (callInterpreter(obj_class, obj_instance)) {
                         if (obj_instance != "no_answer" && obj_instance != "wrong_answer") {
                             desired_object = obj_instance;
                             right_answer = true;
@@ -1456,15 +1482,14 @@ int main(int argc, char **argv) {
             }
 
             // Ask for a delivery location number
-            srv.request.type = "numbers";
             right_answer = false;
             string desired_location = "one";
             amigoSpeak("To which delivery location should I bring the object?");
 
             // Ask for object class
             resetRGBLights();
-            if (speech_client_.call(srv)) {
-                string given_loc = srv.response.answer;
+            string given_loc = "";
+            if (callInterpreter("numbers", given_loc)) {
 
                 // Check answer object class
                 if (given_loc != "no_answer" && given_loc != "wrong_answer") {
