@@ -80,7 +80,7 @@ class ScanTables(smach.State):
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
             if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
-				self.robot.speech.speak("I will scan the tables now")
+                self.robot.speech.speak("I will scan the tables now")
                 self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
                 rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.logwarn("Waiting for 2.0 seconds for laser update")
@@ -364,7 +364,7 @@ def setup_statemachine(robot):
 
         # After this state: objects might be in the world model
         smach.StateMachine.add("SCAN_TABLES", 
-                        ScanTables(robot, 2.0),
+                        ScanTables(robot, 10.0),
                         transitions={   'succeeded':'SCAN_FOR_PERSONS'})
 
         # After this state: persons might be in the world model
