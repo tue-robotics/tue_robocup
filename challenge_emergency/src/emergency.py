@@ -622,6 +622,27 @@ class Look_at_person(smach.State):
             self.robot.head.send_goal(lookat_point, timeout=0, keep_tracking=True)
         return 'finished'
 
+class Check_waypoints_available(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['available','not_available'])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):    
+
+        navigate_apartment = Conjunction(  Compound("=", "Waypoint", Compound("apartment", "W")),
+                                                 Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+                                                 Compound("not", Compound("visited", "Waypoint")),
+                                                 Compound("not", Compound("unreachable", "Waypoint")))
+
+        goal_answers = self.robot.reasoner.query(navigate_apartment)             # I do not use not_visited and not_unreachable since these are no roi's
+
+        if not goal_answers:
+            return "not_available"     
+        else:
+            return "available"
+
+
 
 def setup_statemachine(robot):
 
@@ -809,12 +830,22 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_UNREGISTERED_PEOPLE",
                                 Check_persons_found(robot),
-                                transitions={'no_person_found':'NO_PERSON_FOUND',
+                                transitions={'no_person_found':'SAY_NO_PERSON_FOUND',
                                              'person_unreachable':'SAY_PERSON_UNREACHABLE',
                                              'person_found':'LOOK_AT_PERSON'})
 
+        smach.StateMachine.add("SAY_NO_PERSON_FOUND",
+                                states.Say(robot,"I do not see people over here", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                transitions={'spoken':'NO_PERSON_FOUND'})
+
+        Check_waypoints_available
         smach.StateMachine.add("NO_PERSON_FOUND",
-                                states.Say(robot,"I do not see people over here, I will try the next location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                Check_waypoints_available(robot),
+                                transitions={'available':'SAY_NEXT_LOCATION',
+                                             'not_available':'SAY_GO_TO_EXIT'})
+
+        smach.StateMachine.add("SAY_NEXT_LOCATION",
+                                states.Say(robot,"I will try the next location.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
                                 transitions={'spoken':'FIND_PEOPLE'})
 
         smach.StateMachine.add("CHECK_WORLD_MODEL_FOR_MORE_UNREGISTERED_PEOPLE",
