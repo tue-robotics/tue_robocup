@@ -33,7 +33,7 @@ class AskForTask(smach.State):
         #self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
 
         # Default values
-        obj = "tea_pack"
+        obj = "seven_up"
         obj2 = "coke"
         location = "desk_1"
         '''
