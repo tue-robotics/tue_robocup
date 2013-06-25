@@ -9,12 +9,15 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
+    # pantry
+    obj1 = W.add_object("cif-1", "cif", 4.529, -4.078, 0.85)
+
     # couch table
     coke1 = W.add_object("coke-1", "coke", 8.664, -1.166, 0.5)    
 
     # large table
     coke2 = W.add_object("cif-2", "cif", 5.703, -0.732, 0.8)    
-    coke3 = W.add_object("tea_pack-3", "tea_pack", 5.605, -2.709, 0.8)  
+    coke3 = W.add_object("tea_pack-3", "tea_pack", 5.605, -2.709, 0.85)  
 
     # bed_cabinet_1
     coke4 = W.add_object("coke-4", "coke", 10.229, -5.404, 0.5)    
@@ -30,13 +33,13 @@ if __name__ == "__main__":
     coke4 = W.add_object("coke-8", "coke", 6.155, -6.470, 0.5)    
     coke5 = W.add_object("coke-9", "coke", 6.039, -7.215, 0.5)    
 
-    W.wait_for_amigo_speech(["What can I do for you?"])
-    W.speak("cleanupthekitchen")
-    #W.wait_for_amigo_speech(["Is that corect?","Is that OK?", "Is that okay?", "Am I right?", "Is that alright?"])
-    W.wait_for_amigo_speech([lambda txt: "Is that" in txt and "?" in txt])
-    W.speak("yes")
+    #W.wait_for_amigo_speech(["What can I do for you?"])
+    #W.speak("cleanupthelivingroom")
+    ##W.wait_for_amigo_speech(["Is that corect?","Is that OK?", "Is that okay?", "Am I right?", "Is that alright?"])
+    #W.wait_for_amigo_speech([lambda txt: "Is that" in txt and "?" in txt])
+    #W.speak("yes")
 
-    W.wait_for_amigo_speech([lambda txt: "done" in txt]) 
+    #W.wait_for_amigo_speech([lambda txt: "done" in txt]) 
     #["I cleaned up everything I could find, so my work here is done. Have a nice day!", "I'm done, everything I could find is cleaned up."]
 
-    rospy.loginfo("Done")
+    #rospy.loginfo("Done")
