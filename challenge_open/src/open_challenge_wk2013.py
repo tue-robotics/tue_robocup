@@ -266,6 +266,7 @@ class MoveToGoal(smach.StateMachine):
                 goal_query=Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))), 
                 transitions={'unreachable' : 'failed', 'preempted' : 'NAVIGATE_TO_PERSON', 
                 'arrived' : 'succeeded_prior', 'goal_not_defined' : 'failed'})
+
 class AskGraspObject(smach.StateMachine):
     def __init__(self, side, robot):
         smach.StateMachine.__init__(self, outcomes=["done"])
@@ -273,9 +274,9 @@ class AskGraspObject(smach.StateMachine):
         self.side = side
         with self:
             smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp please insert the object into the gripper"]), # En andere dingen
-                transitions={   'spoken':'OPEN_GRIPPER'})
-            smach.StateMachine.add(states.SetGripper("OPEN_GRIPPER", robot, side, gripperstate=ArmState.OPEN), # En andere dingen
-                transitions={   'succeeded':'done', 'failed': 'done'})
+                transitions={   'spoken':'done'})
+            #smach.StateMachine.add("OPEN_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN), # En andere dingen
+            #    transitions={   'succeeded':'done', 'failed': 'done'})
 
 
 class DecideAction(smach.State):
