@@ -653,7 +653,7 @@ def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
     sm = smach.StateMachine(outcomes=['Done', "Failed", "Aborted"])
 
     if not query_dropoff_loc:
-        query_dropoff_loc = Compound("dropoff_point",   "couch_table", Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc = Compound("dropoff_point",   "hallway_table", Compound("point_3d", "X", "Y", "Z"))
         # query_dropoff_loc = Conjunction(
         #                             Compound("is", "X", 2.0),
         #                             Compound("is", "Y", 2.2),
