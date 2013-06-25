@@ -174,7 +174,7 @@ def setup_statemachine(robot):
                                                     "Failed":"SAY_GO_TO_REGISTRATION_TABLE"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
         smach.StateMachine.add("SAY_GO_TO_REGISTRATION_TABLE",
-                                    states.Say(robot, "I will go to the registration table"),
+                                    states.Say(robot, "I will go to the registration table", block=False),
                                     transitions={   "spoken":"GO_TO_REGISTRATION_TABLE"})
 
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE', 
