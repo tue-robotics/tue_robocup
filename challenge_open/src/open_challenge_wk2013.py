@@ -355,7 +355,11 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_START", 
                         states.Say(robot, ["Hi I am Amigo, what do you want me to do?"]),
-                        transitions={   'spoken':'ASK_FOR_TASK'})
+                        transitions={   'spoken':'MOVE_TO_SCAN_POS'})
+
+        smach.StateMachine.add("MOVE_TO_SCAN_POS", 
+                        states.NavigateGeneric(robot, goal_pose_2d=(3.5, 0, 0)),
+                        transitions={  'unreachable' : 'SAY_ERROR', 'preempted' : 'MOVE_TO_SCAN_POS', 'arrived' : 'SCAN_TABLES', 'goal_not_defined' : 'SAY_ERROR'})
 
         # After this state: an object and location are guaranteed to be defined
         smach.StateMachine.add("ASK_FOR_TASK", 
