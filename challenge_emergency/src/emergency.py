@@ -13,6 +13,7 @@ import roslib.packages as p
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
+import robot_smach_states.util.transformations as transformations
 
 from std_msgs.msg import String
 from speech_interpreter.srv import GetContinue
@@ -99,15 +100,15 @@ class turn_Around_z_axis(smach.State):
         rospy.loginfo("Executing: {0} radians".format(self.rotation))
         # get current position and rotation
         pos, rot = self.robot.base.get_location()
-
-        rospy.loginfo("[EMERGENCY TEST] Current rotation value: rot.z = {0}".format(rot.z))
-        rospy.loginfo("[EMERGENCY TEST] Rotation wanted value: self.rotation = {0}".format(self.rotation))
+      
         # set rotation
-        rot.z = rot.z - self.rotation
-
-        rospy.loginfo("[EMERGENCY TEST] New rotation value: rot.z = {0}".format(rot.z))
-
-
+        rotation = transformations.euler_z_from_quaternion(rot)
+        rospy.loginfo("[EMERGENCY TEST] Current rotation value: rotation = {0}".format(rotation))
+        rospy.loginfo("[EMERGENCY TEST] Rotation wanted value: rotation = {0}".format(self.rotation))
+        rotation = rotation - self.rotation
+        rospy.loginfo("[EMERGENCY TEST] New rotation value: rotation = {0}".format(rotation))
+        rot = transformations.euler_z_to_quaternion(rotation)
+        
         # create new path
         path = self.robot.base.get_plan(pos,rot)
 
@@ -933,7 +934,7 @@ def setup_statemachine(robot):
 
         # Turn 360 degrees (will be 3/4 of a round)
         smach.StateMachine.add('MOVE_ARM_BACK_TURN',
-                                    turn_Around_z_axis(robot, 1),
+                                    turn_Around_z_axis(robot, 3.14),
                                     transitions={   'done':'MOVE_ARM_BACK', 
                                                     'abort':'MOVE_ARM_BACK'})
         
