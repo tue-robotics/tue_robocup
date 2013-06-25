@@ -290,6 +290,8 @@ class Check_persons_found(smach.State):
 
     def execute(self, userdata=None):
 
+        self.robot.head.reset_position()
+
         person_query = Conjunction( 
                             Compound("property_expected","ObjectID", "class_label", "face"),
                             Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")),
@@ -346,7 +348,7 @@ class Check_persons_found(smach.State):
 
         if nav_result == "unreachable" or nav_result == "preempted":
             self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
-                                                      Compound("assert", Compound("regist  ered", "ObjectID"))))
+                                                      Compound("assert", Compound("registered", "ObjectID"))))
             return "person_unreachable"
 
         elif nav_result == "goal_not_defined":
