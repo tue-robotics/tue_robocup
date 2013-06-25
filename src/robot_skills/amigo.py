@@ -285,9 +285,13 @@ if __name__ == "__main__":
         When there re multiple locations with the samen name, shame on you for having messed up locations, and Amigo will go to the first query result"""
         query = Compound("waypoint", name, Compound("pose_2d", "X", "Y", "Phi"))
         answers = amigo.reasoner.query(query)
-        selected = answers[0]
+        try:
+            selected = answers[0]
+        except IndexError:
+            rospy.logerr("No named location {0} (name = {1})".format(query, name))
+            return None
         x,y,phi = float(selected["X"]), float(selected["Y"]), float(selected["Phi"])
-        amigo.base.go(x,y,phi)
+        return amigo.base.go(x,y,phi)
     
     def basego(x,y,phi):
         return amigo.base.go(x,y,phi,frame="/base_link")
