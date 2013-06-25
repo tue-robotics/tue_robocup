@@ -58,6 +58,8 @@
   <depend package="obj_in_gripper"/>
   <depend package="object_detector_2d"/> 
   <depend package="pein_ar_pose"/>
+  <depend package="pein_tabletop_segmentation"/>
+  <depend package="laser_ppl_detection"/>
 
   <!-- for speech recognition -->
   <depend package="create_speech_files"/>
