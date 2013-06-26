@@ -2,6 +2,8 @@
 import roslib; roslib.load_manifest('fast_simulator')
 import rospy
 
+import sys
+
 from fast_simulator import client
 
 if __name__ == "__main__":
@@ -34,7 +36,13 @@ if __name__ == "__main__":
     coke5 = W.add_object("marmalade-10", "marmalade", 6.039, -7.215, 0.5)    
 
     W.wait_for_amigo_speech(["What can I do for you?"])
-    W.speak("cleanupthekitchen")
+
+    try:
+        room = sys.argv[1]
+    except IndexError:
+        room = "livingroom"
+
+    W.speak("cleanupthe{0}".format(room))
     #W.wait_for_amigo_speech(["Is that corect?","Is that OK?", "Is that okay?", "Am I right?", "Is that alright?"])
     W.wait_for_amigo_speech([lambda txt: "?" in txt])
     rospy.sleep(3.0)

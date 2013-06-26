@@ -30,7 +30,8 @@ class Ask_cleanup(smach.State):
 
     def execute(self, userdata):
         self.robot.head.look_up()
-
+                
+        room = "living_room"
         try:
             self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
             if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
@@ -41,6 +42,7 @@ class Ask_cleanup(smach.State):
                 room = self.response.answer
         except Exception, e:
             rospy.logerr("Could not get_cleanup_service: {0}. Defaulting to {1}".format(e, room))
+            self.robot.speech.speak("There is something wrong with my ears, I will cleanup the {1}, humans always tend to make a mess of that".format(e, room))
 
         self.robot.reasoner.query(Compound("assertz", Compound("goal", Compound("clean_up", room))))
             
