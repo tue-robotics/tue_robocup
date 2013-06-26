@@ -120,8 +120,12 @@ class DetermineGoal(smach.State):
         self.robot.speech.speak("I have found {0} possible object locations".format(len(answers)))
 
         counter = 0
+        location_list = []
         for answer in answers:
-            self.robot.reasoner.assertz(Compound("goal_location", ("a" + str(counter)), Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
+            location_list.append({'X' : answer['X'], 'Y' : answer['Y'], 'Z': answer['Z']})
+            location_list = sorted(location_list, key=lambda p: abs(float(p['Y'])))
+        for point in location_list:
+            self.robot.reasoner.assertz(Compound("goal_location", ("a" + str(counter)), Compound("point_3d", point["X"], point["Y"], point["Z"])))
             counter += 1
         
         return "done"
