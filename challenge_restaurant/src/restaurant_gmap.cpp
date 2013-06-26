@@ -862,8 +862,9 @@ void speechCallback(std_msgs::String res) {
         amigoSpeak(sentence);
         amigoSpeak("Do you want to learn another location?");
 
-        //ros::Duration delta(2.0);
-        //delta.sleep();
+        //! Sleep (amigoSpeak is not blocking)
+        ros::Duration delta(2.0);
+        delta.sleep();
 
         // Administration
         freeze_amigo_ = false;
@@ -1043,13 +1044,7 @@ void checkOrderWithWorldModelAtShelf(map<string, pair<geometry_msgs::Point, stri
 
                     amigoSpeak("Please handover the object, I am not able to grasp");
                     if (!moveArm("right", "give")) {
-                        if (!moveArm("left", "give")) {
-                            amigoSpeak("I am sorry but I cannot move my arms");
-                            amigoSpeak("I will drive to the delivery location without the object");
-                        } else {
-                            arm_used = "left";
-                        }
-                    } else {
+                        amigoSpeak("I can not move my right arm the way I want it");
                         arm_used = "right";
                     }
 
@@ -1074,6 +1069,16 @@ void checkOrderWithWorldModelAtShelf(map<string, pair<geometry_msgs::Point, stri
                 // To make sure the arm is in a carrying position
                 if (!moveArm(arm_used, "carry")) {
                     amigoSpeak("I cannot move my arms the way I want it, I will drive with my arm like this");
+                }
+
+                // Make sure other arm is in drive position
+                if (arm_used == "left")
+                {
+                    moveArm("right", "drive");
+                }
+                else if (arm_used == "right")
+                {
+                    moveArm("right", "drive");
                 }
 
                 // Move to delivery location
@@ -1279,11 +1284,9 @@ int main(int argc, char **argv) {
 
     if (!moveArm("both", "drive")) {
         amigoSpeak("I am not able to move my arms to the drive position");
+    } else {
+        ROS_INFO("Arms in driving position");
     }
-
-    ROS_INFO("Connecting to reasoner...");
-    reasoner_client = new psi::Client("reasoner");
-    ROS_INFO("Connected!");
 
     //! Gripper action client
     ROS_INFO("Connecting to gripper action servers...");
@@ -1318,9 +1321,14 @@ int main(int argc, char **argv) {
         }
     }
 
-    //! Query WIRE for objects
+    //! Clients for reasoner and WIRE for objects
+    ROS_INFO("Connecting to WIRE...");
     wire::Client client;
-    ROS_INFO("Wire client instantiated");
+    ROS_INFO("Connected!");
+    ROS_INFO("Connecting to reasoner...");
+    reasoner_client = new psi::Client("reasoner");
+    ROS_INFO("Connected!");
+
 
     //! Client that allows reseting WIRE
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
