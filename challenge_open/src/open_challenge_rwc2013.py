@@ -35,9 +35,10 @@ class AskForTask(smach.State):
         #self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
         self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
-            self.robot.speech.speak("I heared seven up")
+            self.robot.speech.speak("I heard seven up")
             self.response.answer = "seven_up"
 
+        self.robot.head.reset_position()
         rospy.loginfo("Speech output = {0}".format(self.response.answer))
         #import ipdb; ipdb.set_trace()
     

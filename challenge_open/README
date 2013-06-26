@@ -29,7 +29,7 @@ amigo3:
  
 
 amigo3:
-    rosrun challenge_open open_challenge_wk2013.py (if this keeps waiting for a transform, please restart)
+    rosrun challenge_open open_challenge_rwc2013.py (if this keeps waiting for a transform, please restart)
 
 Sentences:
     objects:

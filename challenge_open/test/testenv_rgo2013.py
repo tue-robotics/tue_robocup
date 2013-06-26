@@ -18,3 +18,11 @@ if __name__ == "__main__":
     #W.add_object("person-1", "person", 6.309, -1.0, 0)
     W.add_object("person-1", "person", 8.309, -3.0, 0)
 #    table = W.add_object("cif-1",  "cif",  table_x + 0.4, table_y + 0.1, 0.92)
+
+
+#    W.speak("coke")
+    #W.wait_for_amigo_speech(["Is that corect?","Is that OK?", "Is that okay?", "Am I right?", "Is that alright?"])
+#    W.wait_for_amigo_speech([lambda txt: "?" in txt])
+#    rospy.sleep(3.0)
+#    W.speak("yes")
+
