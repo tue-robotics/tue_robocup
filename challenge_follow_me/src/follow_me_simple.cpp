@@ -252,9 +252,10 @@ void findOperator(wire::Client& client, bool lost = true) {
         }
 
         dt.sleep();
+
+        amigoSpeak("I did not find my operator yet");
     }
 
-    amigoSpeak("I did not find my operator yet");
     return;
 
 }
@@ -591,7 +592,7 @@ bool leftElevator(pbl::Gaussian& pos)
 
     //! Administration
     unsigned int i = 0;
-    map<unsigned int, double> beam_exit_distance_map;
+    map<unsigned int, int> beam_n_beams_map;
 
     //! Get candidate exits
     ROS_DEBUG("Start looking for an elevator exit...");
@@ -620,10 +621,10 @@ bool leftElevator(pbl::Gaussian& pos)
             ++i_current;
         }
 
-        //! Store most promosing segment
+        //! Store most promosing segment: allows for providing feedback on various options later
         if (i_current-i_first > min_n_beams)
         {
-            beam_exit_distance_map[(i_first+i_current)/2] = min_distance_segment;
+            beam_n_beams_map[(i_first+i_current)/2] = i_current-i_first;
             ROS_DEBUG("Found possible exit, %u beams", i_current-i_first);
         }
 
@@ -635,7 +636,7 @@ bool leftElevator(pbl::Gaussian& pos)
     if (distance_left > 2.5 && distance_right > 2.5) {
         ROS_WARN("AMIGO is outside the elevator: distances left and right are %f and %f", distance_left, distance_right);
         
-        const double time_wait = 1.5;
+        const double time_wait = 2.0;
         const unsigned int freq = 20;
         unsigned int N_SLEEPS_TOTAL = time_wait*freq;
         ros::Duration pause(1.0/(double)freq);
@@ -654,45 +655,45 @@ bool leftElevator(pbl::Gaussian& pos)
     ROS_DEBUG("Finished iterating over laser data");
 
     // Limited distance to keep the velocity low
-    double distance_drive = 0.75; // TODO: Must be much larger
-    if (beam_exit_distance_map.size() == 1)
+    double distance_drive = 0.6; // TODO: Must be larger?
+    if (beam_n_beams_map.size() == 1)
     {
 
-        double angle_exit = laser_scan_.angle_min + beam_exit_distance_map.begin()->first * laser_scan_.angle_increment;
-        ROS_INFO(" angle towards exit is %f, beam %u", angle_exit, beam_exit_distance_map.begin()->first);
+        double angle_exit = laser_scan_.angle_min + beam_n_beams_map.begin()->first * laser_scan_.angle_increment;
+        ROS_INFO(" angle towards exit is %f, beam %u", angle_exit, beam_n_beams_map.begin()->first);
 
         pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
-        ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, beam_exit_distance_map.begin()->second);
-    } else if (beam_exit_distance_map.size() > 1)
+        ROS_INFO("Relative angle to exit is %f, corresponding number of beams is %d", angle_exit, beam_n_beams_map.begin()->second);
+    } else if (beam_n_beams_map.size() > 1)
     {
 
-        ROS_INFO("%zu candidate exits", beam_exit_distance_map.size());
+        ROS_INFO("%zu candidate exits", beam_n_beams_map.size());
 
-        //! Iterate over map and get segment with maximum distance
-        double max_distance = 0.0;
-        map<unsigned int, double>::const_iterator it_best = beam_exit_distance_map.begin();
-        map<unsigned int, double>::const_iterator it = beam_exit_distance_map.begin();
-        for (; it != beam_exit_distance_map.end(); ++it)
+        //! Iterate over map and get segment with largest number of beams
+        int n_beams_max = 0;
+        map<unsigned int, int>::const_iterator it_best = beam_n_beams_map.begin();
+        map<unsigned int, int>::const_iterator it = beam_n_beams_map.begin();
+        for (; it != beam_n_beams_map.end(); ++it)
         {
-            if (it->second > max_distance)
+            if (it->second > n_beams_max)
             {
                 it_best = it;
-                max_distance = it->second;
+                n_beams_max = it->second;
             }
         }
 
-        ROS_DEBUG(" found most probable exit");
+        ROS_DEBUG("\tfound most probable exit");
         double angle_exit = laser_scan_.angle_min + it_best->first * laser_scan_.angle_increment;
-        ROS_INFO(" angle towards exit is %f", angle_exit);
+        ROS_INFO("\tangle towards exit is %f", angle_exit);
 
         //! Check if the robot left the elevator
-        if (angle_exit > 3.141592)
-        {
-            return true;
-        }
+        //if (angle_exit > PI)
+        //{
+        //    return true;
+        //}
 
         pos = pbl::Gaussian(pbl::Vector3(cos(angle_exit)*distance_drive, sin(angle_exit)*distance_drive, 0), cov);
-        ROS_INFO("Relative angle to exit is %f, corresponding distance is %f", angle_exit, it_best->second);
+        ROS_INFO("\tRelative angle to exit is %f", angle_exit);
 
     }
     else
@@ -947,7 +948,7 @@ int main(int argc, char **argv) {
                 sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
             }
 
-            //! Leave elevator (FUNCTION DOES DRIVING)
+            //! If left elevator (function does driving!)
             if (leftElevator(pos) || n_checks_left_elevator > T_LEAVE_ELEVATOR*FOLLOW_RATE)
             {
 
@@ -965,18 +966,19 @@ int main(int argc, char **argv) {
                     ++n_sleeps;
                 }
 
-                amigoSpeak("I left the elevator, you can leave the elevator now");
-
-                //! Stand still and find operator
-                pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
-                moveTowardsPosition(pos, 0);
-
                 //! Clear world model and find a person nearby
                 if (reset_wire_client_.call(wire_srv)) {
                     ROS_INFO("Cleared world model");
                 } else {
                     ROS_ERROR("Failed to clear world model");
                 }
+                amigoSpeak("I left the elevator, you can leave the elevator now");
+
+                //! Stand still and find operator
+                pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+                moveTowardsPosition(pos, 0);
+
+                //! Find the operator (blocks until the operator is found)
                 findOperator(client, false);
                 amigoSpeak("I will now continue following you.");
 
