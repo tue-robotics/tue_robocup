@@ -577,7 +577,7 @@ class Grab(smach.State):
                 else:
                     rospy.loginfo("opening gripper failed, good luck")
                     return 'grab_failed'
-                rospy.logerr("Goal unreachable: {0}".format(target_position_bl))
+                rospy.logerr("Goal unreachable: {0}".format(target_position_bl).replace("\n", " "))
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 
         else:
@@ -587,7 +587,7 @@ class Grab(smach.State):
                                         0, 0, 0, 120, frame_id=self.end_effector_frame_id, pre_grasp = True):                    
                 rospy.loginfo("arm at object")                    
             else:
-                rospy.logerr("Goal unreachable: {0}".format(target_position_bl))
+                rospy.logerr("Goal unreachable: {0}".format(target_position_bl).replace("\n", " "))
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 return 'grab_failed'
             
@@ -986,7 +986,7 @@ class ArmToQueryPoint(smach.State):
             first_joint_pos_only=self.first_joint_pos_only):
             return 'succeeded'
         else:
-            rospy.logwarn("Goal unreachable: {0}".format(goal_bl))
+            rospy.logwarn("Goal unreachable: {0}".format(goal_bl).replace("\n", " "))
             return 'failed'
 
 class TorsoToUserPos(smach.State):
