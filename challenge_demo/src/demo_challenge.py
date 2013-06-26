@@ -134,8 +134,52 @@ class AskAnythingElse(smach.State):
         self.mail_interpreter = MailInterpreter(open(roslib.packages.get_pkg_dir("challenge_demo") + "/config/mailconfig.yaml"))
         self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
 
-    def execute(self, userdata=None):
 
+    def tell_time(self):
+        import time
+        timestr = time.strftime( "%M past %I", time.localtime(time.time())) #%I is hour in 12-hour format
+        self.robot.speech.speak("It is now {0}".format(timestr), replace={" 0":" "})
+
+    def remind(self):
+        response = self.maluubasrv(self.response.answer)
+        interpretation = response.interpretation
+        start, end = self.mail_interpreter.extract_times(interpretation.entities)
+        start = self.mail_interpreter.datetime_as_sentence(start)
+        
+        self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
+        
+        resp = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
+        if resp.answer == "true":
+
+            self.robot.speech.speak("Please look at me, so I can recognize you and send the reminder to your phone")
+            self.response_start = self.robot.perception.toggle(["face_recognition"])
+            rospy.sleep(6.0)
+            rospy.loginfo("Face recognition will be stopped now")
+            self.response_stop = self.robot.perception.toggle([])
+            person_result = self.robot.reasoner.query(
+                                            Conjunction(  
+                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                                Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
+            # Interpret face regnition results
+            name = "loy"
+            rospy.loginfo(person_result)
+            import ipdb; ipdb.set_trace()
+            if person_result:
+                try:
+                    name_possibility = person_result[0]["NamePMF"]
+                    name = str(name_possibility[0][1][0])
+                except IndexError:
+                    self.robot.speech.speak("Not sure about your name, but Loy always forgets everything, so I'll remind him!".format(name))
+            else:
+                self.robot.speech.speak("Not sure about your name, but Loy always forgets everything, so I'll remind him!".format(name))
+            
+            self.robot.speech.speak("Allright {0}, check your phone in a minute for the reminder.".format(name), block=False)
+            self.mail_interpreter.process_interpretation(interpretation)
+        else:
+            self.robot.speech.speak("Then you'll have to remember that yourself.")
+
+    def execute(self, userdata=None):
         try:
             self.response = self.get_anything_else_service("demo_challenge_anything_else", 4 , 60)  
             # This means that within 4 tries and within 60 seconds an answer is received. 
@@ -153,26 +197,9 @@ class AskAnythingElse(smach.State):
 
             #elif self.response.answer == "Can you tell me what time it is?":
             elif "time" in self.response.answer:
-                import time
-                timestr = time.strftime( "%M past %I", time.localtime(time.time())) #%I is hour in 12-hour format
-                self.robot.speech.speak("It is now {0}".format(timestr), replace={" 0":" "})
-            #elif (self.response.answer == "Can you remind me in three minutes that my favorite tv program friends will \
-            #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program dallas \
-            #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program the \
-            #    bold and the beautiful start?"):
+                self.tell_time()
             elif "remind me" in self.response.answer.lower():                
-                response = self.maluubasrv(self.response.answer)
-                interpretation = response.interpretation
-                start, end = self.mail_interpreter.extract_times(interpretation.entities)
-                start = self.mail_interpreter.datetime_as_sentence(start)
-                
-                self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
-                
-                resp = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
-                if resp.answer == "true":
-                    self.mail_interpreter.process_interpretation(interpretation)
-                else:
-                    self.robot.speech.speak("Then you'll have to remember that yourself.")
+                self.remind()
             else:
                 rospy.logwarn("Answer not understood")
                 self.robot.speech.speak("I am terribly sorry but I do not know what you mean", mood="sad", block=False)
@@ -181,7 +208,6 @@ class AskAnythingElse(smach.State):
             rospy.logerr("Could not get_status_person_service: {0}.".format(e))
             self.robot.speech.speak("I'm not sure what to do, sorry about that.")
             self.robot.speech.speak("I better go and get your breakfast", mood="neutral", block=False)
-            
         return "done"
 
 

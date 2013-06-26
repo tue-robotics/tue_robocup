@@ -166,7 +166,7 @@ class MailInterpreter(object):
 
 
 
-    def process_interpretation(self, msg):
+    def process_interpretation(self, msg, receiver="loy"):
         if msg.action == "EMAIL_SEND":
             subject = msg.entities.subject if msg.entities.subject else ""
             message = msg.entities.message if msg.entities.message else ""
@@ -178,9 +178,9 @@ class MailInterpreter(object):
         elif msg.action == "REMINDER_SET":
             receivers = ["loy.vanbeek@gmail.com"]
             
-            import re
-            words = re.findall(r"[\w']+", msg.phrase)
-            names = filter(lambda word: self.address_book.has_key(word.lower()), words) #Find names in the phrase that oalso occur in the adress book
+            #import re
+            #words = re.findall(r"[\w']+", msg.phrase)
+            names = [receiver]#filter(lambda word: self.address_book.has_key(word.lower()), words) #Find names in the phrase that oalso occur in the adress book
             receivers += list(set([self.address_book.get(name.lower(), self.mailadress) for name in names]))
 
             message = msg.entities.message if msg.entities.message else "reminder"
