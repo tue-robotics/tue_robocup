@@ -15,5 +15,6 @@ if __name__ == "__main__":
     person = W.add_object("person-4", "person", 10.07, -0.1, 0)   
     person = W.add_object("person-5", "person", 7.54, -0.7, 0)   
 
-    coke = W.add_object("coke-1", "coke", 0.829, -5.958, 1.05)
-    tea_pack = W.add_object("tea_pack-1", "tea_pack",0.848, -6.992, 1.05)     
+    coke = W.add_object("coke-1", "seven_up", 5.385, -7.455, 0.82)
+    milk = W.add_object("milk-1", "milk", 5.385, -6.831, 0.84)     
+    apple_juice = W.add_object("apple_juice-1", "apple_juice", 5.385, -7.1, 0.84)  

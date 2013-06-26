@@ -216,18 +216,17 @@ class Ask_drink(smach.State):
 
     def execute(self, userdata=None):
         self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
-
         # Check available options from rulebook!
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             if self.drink_learn_failed == 2:
                 self.robot.speech.speak("I will just bring you a seven up")
                 self.response.answer = "seven_up"
                 self.drink_learn_failed = 3
-            if self.drink_learn_failed == 1:
+            elif self.drink_learn_failed == 1:
                 self.robot.speech.speak("I will just bring you a milk")
                 self.response.answer = "milk"
                 self.drink_learn_failed = 2
-            if self.drink_learn_failed == 0:
+            elif self.drink_learn_failed == 0:
                 self.robot.speech.speak("I will just bring you a coke")
                 self.response.answer = "coke"
                 self.drink_learn_failed = 1
@@ -290,7 +289,7 @@ class LookForDrink(smach.State):
                                                  Compound("not", Compound("visited", "Waypoint"))))
 
         if not goal_answers:
-            self.robot.speech.speak("I want to find the drink, but I don't know where to go... I'm sorry!")
+            self.robot.speech.speak("I want to find the " + serving_drink + ", but I don't know where to go... I'm sorry!")
             looked_no = 0;
             self.robot.reasoner.query(Compound("retractall", Compound("looked_drink_no", "X")))
             self.robot.reasoner.query(Compound("assertz",Compound("looked_drink_no", looked_no)))
@@ -443,7 +442,7 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(3)
+        rospy.sleep(2)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -471,7 +470,7 @@ class LookForPerson(smach.State):
                 rospy.loginfo("Face segmentation failed to start")
                 self.robot.speech.speak("I was not able to start face segmentation.")
                 return 'looking'
-            rospy.sleep(3)
+            rospy.sleep(2)
 
             rospy.loginfo("Face segmentation will be stopped now")
             self.response_stop = self.robot.perception.toggle([])
@@ -593,7 +592,7 @@ class PersonFound(smach.State):
                 self.robot.speech.speak("Hello " + str(name)) 
                 return "correct"       
         else:
-            self.robot.speech.speak("I don't know who you are.")
+            self.robot.speech.speak("I thought there was someone standing here, but I'm mistaken.")
             if len(person_detection_result) > 1:
                 return 'persons_unchecked'
             rospy.loginfo("No person names received from world model") 
@@ -649,7 +648,7 @@ class Navigate_to_queryoutcome_point_cocktail(Navigate_abstract):
             look_point.point = self.robot.base.point(x,y)
             pose = util.msg_constructors.Quaternion(z=1.0)
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.8, 0.0)
+            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 1.0, 0.0)
             if base_poses_for_point:
                 base_pose_for_point = base_poses_for_point[0]
             else:
@@ -790,7 +789,7 @@ class CocktailParty(smach.StateMachine):
                                     transitions={   "spoken":"GOTO_PARTY_ROOM"})
 
             smach.StateMachine.add('GOTO_PARTY_ROOM',
-                                    NavigateGeneric(robot, goal_query=query_party_room),
+                                    NavigateGeneric(robot, goal_query = query_party_room),
                                     transitions={   "arrived":"ITERATE_PERSONS", 
                                                     "unreachable":"ITERATE_PERSONS", 
                                                     "preempted":"ITERATE_PERSONS", 
@@ -852,7 +851,7 @@ class CocktailParty(smach.StateMachine):
                                             Say(robot, ["I could not pick up the drink you wanted", 
                                                         "I failed to grab the object you wanted."]),
                                             transitions={   'spoken':'HUMAN_HANDOVER' }) 
-                    # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
+
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
                                             Human_handover(arm,robot),
                                             transitions={   'succeeded':'RETRACT_VISITED_2',
