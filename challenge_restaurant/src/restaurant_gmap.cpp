@@ -164,6 +164,7 @@ bool moveArm(string arm, string pose) {
     } else if (pose == "carry") {
         arm_ref.trajectory.points.push_back(setArmReference(-0.4, -0.38, 0.51, 1.56, -0.2, 0.52, -0.38));
     } else if (pose == "give") {
+        moveArm(arm, "carry");
         arm_ref.trajectory.points.push_back(setArmReference(-0.93 , 1.06 , 0.07 , 0.91 , -1.02 , -0.19 , -0.36));
     } else {
         ROS_INFO("Arm pose for %s arm unknown: \'%s\'", arm.c_str(), pose.c_str());
@@ -357,7 +358,7 @@ bool stopSpeechRecognition() {
  * @brief amigoSpeak let AMIGO say a sentence
  * @param sentence
  */
-void amigoSpeak(string sentence) {
+void amigoSpeak(string sentence, bool block = true) {
 
     ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
 
@@ -374,7 +375,7 @@ void amigoSpeak(string sentence) {
     speak.request.character = "kyle";
     speak.request.voice = "default";
     speak.request.emotion = "normal";
-    speak.request.blocking_call = true;
+    speak.request.blocking_call = block;
 
     if (!srv_speech_.call(speak)) {
         std_msgs::String sentence_msgs;
@@ -976,7 +977,7 @@ bool moveTowardsPositionMap(tf::StampedTransform pos) {
 }
 
 
-void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, string> >& world_model_copy, tf::StampedTransform tf_loc_shelf) {
+void checkOrderWithWorldModelAtShelf(map<string, pair<geometry_msgs::Point, string> >& world_model_copy, tf::StampedTransform tf_loc_shelf) {
 
     map<string, pair<geometry_msgs::Point, string> >::iterator it_world_model = world_model_copy.begin();
 
@@ -1004,7 +1005,7 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, string> >& 
 
                 ROS_INFO("Found the object for order %d!", it_order->first);
                 amigoSpeak("I found " + it_world_model->first);
-                amigoSpeak("I will bring it to delivery location :" + it_order->second.second);
+                amigoSpeak("I will bring it to delivery location " + it_order->second.second);
 
                 // Reset head
                 moveHead(0.0, 0.0);
@@ -1112,7 +1113,9 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, string> >& 
                         amigoSpeak("I am sorry but I cannot open my gripper");
                     }
 
-                    if (!moveArm(arm_used, "drive")) {
+                    // First go back to carry to make movement a bit safer
+                    if (!moveArm(arm_used, "carry")) {
+                        moveArm(arm_used, "drive");
                         amigoSpeak("I cannot move my arms the way I want it");
                     }
                 }
@@ -1125,6 +1128,8 @@ void checkOrderWithWorldModel(map<string, pair<geometry_msgs::Point, string> >& 
 
         }
     }
+
+    // Done with checking at current shelf
 
     // Reset world model (since it is in base_link) and its copy
     world_model_copy.clear();
@@ -1542,6 +1547,7 @@ int main(int argc, char **argv) {
     ROS_INFO("Connected to move_base server");
 
     // Do tasks
+    unsigned int n_loops = 0;
     setRGBLights("blue");
     amigoRotate(7.5);
     while(state  == 2) {
@@ -1558,11 +1564,12 @@ int main(int argc, char **argv) {
                 // Go find the object
                 if (!moveTowardsPositionMap(it_locations->second)) {
                     ROS_WARN("Could not reach the shelf");
-                    amigoSpeak("I cannot reach the shelf, can you let me pass?");
-                    ros::Duration d(2.0);
-                    d.sleep();
+                    amigoSpeak("I can not find my way to the shelf yet", false);
+                    amigoRotate(3.5);
+
                     if (!moveTowardsPositionMap(it_locations->second)) {
                         ROS_WARN("Failed second attempt to reach shelf too");
+                        amigoSpeak("I can not reach " + it_locations->first);
                         at_loc = false;
                     }
                 }
@@ -1585,7 +1592,6 @@ int main(int argc, char **argv) {
                     }
                     else
                     {
-                        // TODO: Consider different pan angles (look left/middle/right)
 
                         // Template matching needs some time
                         ros::Duration wait(5.0);
@@ -1601,11 +1607,11 @@ int main(int argc, char **argv) {
                         // Check world model
                         vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
 
-                        // Save world model in map frame (if not all tasks can be done)
+                        // Save world model in map frame (needed in case multiple oredered objects are found)
                         map<string, pair<geometry_msgs::Point, string> > world_model_copy = getWorldModelObjects(objects);
 
                         // Check for ordered objects
-                        checkOrderWithWorldModel(world_model_copy, it_locations->second);
+                        checkOrderWithWorldModelAtShelf(world_model_copy, it_locations->second);
 
                     }
 
@@ -1617,8 +1623,23 @@ int main(int argc, char **argv) {
 
         }
 
-        state = 3;
+        // Check if all orders are finished
+        bool done = true;
+        map<int, pair<string, string> >::iterator it_orders = order_map_.begin();
+        for (; it_orders != order_map_.end(); ++it_orders) {
+            if (it_orders->second.first != "Finished")
+            {
+                done = false;
+            }
+        }
 
+        // Check if the Amigo is done
+        if (done || n_loops > 3)
+        {
+            state = 3;
+        }
+
+        ++n_loops;
         follow_rate.sleep();
     }
 
@@ -1632,11 +1653,11 @@ int main(int argc, char **argv) {
 
             if (!moveTowardsPositionMap(location_map_["ordering_location"])) {
                 ROS_WARN("Could not go back to ordering location");
-                amigoSpeak("I can not reach the ordering location, can you make room for me?");
-                ros::Duration d(2.0);
-                d.sleep();
+                amigoSpeak("I can not find my way to the ordering location yet", false);
+                amigoRotate(3.0);
                 if (!moveTowardsPositionMap(location_map_["ordering_location"])) {
                     ROS_WARN("I still can not reach the ordering location");
+                    amigoSpeak("I can not reach the ordering location");
 
                 }
             }
