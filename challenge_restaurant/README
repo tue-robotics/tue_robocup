@@ -6,12 +6,12 @@ amigo1:
 
 amigo1:
 
-    amiddle-follow-me
+    amiddle-restaurant
 
 Then, start the challenge:
 
 amigo3:
-    rosrun challenge_restaurant restaurant_simple
+    roslaunch challenge_restaurant start.launch
 
 INSTRUCTIONS:
 - Make sure the operator is standing in front of the robot. After saying 'Can you please show me the locations', AMIGO starts following
