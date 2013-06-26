@@ -1217,6 +1217,9 @@ bool callInterpreter(string type, string& answer) {
     // Stop challenge specific speech recognition
     stopSpeechRecognition();
 
+    // Point mic towards guide
+    moveHead(0.1, 0.0);
+
     // Feedback
     bool succeeded = false;
 
@@ -1233,6 +1236,9 @@ bool callInterpreter(string type, string& answer) {
 
     // Start speech recognition again
     startSpeechRecognition();
+
+    // Reset head
+    moveHead(0.0, 0.0);
 
     return succeeded;
 
