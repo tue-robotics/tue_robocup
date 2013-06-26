@@ -323,11 +323,10 @@ def ask_drinks(robot):
     global drink
     drink = sm.userdata.sentence
 
-def grab_item(robot):
+def grab_item(robot, selectedArm):
     rospy.loginfo("Starting to grab an item")
     import smach
     import robot_smach_states as states
-    import object_msgs.msg
 
     #Copied from RDO finale
     rospy.loginfo("Setting up state machine")
@@ -378,18 +377,18 @@ def grab_item(robot):
 
 
         #smach.StateMachine.add('GRAB',
-        #                       states.GrabMachine(robot.leftArm,robot),
+        #                       states.GrabMachine(selectedArm,robot),
         #                       transitions={'succeeded':'CARRYING_POSE',
         #                                    'failed':'REPORT_FAILED'})
 
         query_grabpoint = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
         smach.StateMachine.add('GRAB',
-                        states.GrabMachine(robot.leftArm, robot, query_grabpoint),
+                        states.GrabMachine(selectedArm, robot, query_grabpoint),
                         transitions={   'succeeded':'CARRYING_POSE',
                                         'failed':'REPORT_FAILED' })
 
         smach.StateMachine.add('CARRYING_POSE',
-                               states.Carrying_pose(robot.leftArm, robot),
+                               states.Carrying_pose(selectedArm, robot),
                                transitions={'succeeded':'SAY_SUCCEEDED',
                                             'failed':'Done'})
 
@@ -910,7 +909,7 @@ def process_key(key):
                 if key == 'Q':
                     ask_drinks(robot)
                 if key == 'G':
-                    grab_item(robot)
+                    grab_item(robot, arms[arm_selection])
                 if key == 'S':
                     grab_demo(robot)
                 if key == 'B':
