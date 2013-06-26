@@ -248,6 +248,7 @@ class LearnPersonCustom(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
+
         # find out who we need to return the drink to
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
@@ -906,7 +907,11 @@ class CocktailParty(smach.StateMachine):
                                     persons_iterator, 
                                     transitions={'served':'EXIT',
                                                 'not_served':'SAY_FAILED',
-                                                'Done':"EXIT"})
+                                                'Done':"SAY_FINISHED_SERVING"})
+
+            smach.StateMachine.add('SAY_FINISHED_SERVING',
+                                    Say(robot, "I finished my task, enjoy your drinks",block = False),
+                                    transitions={'spoken':'EXIT'}) 
 
             smach.StateMachine.add('EXIT', 
                                     Navigate_named(robot, "exit_1"),
