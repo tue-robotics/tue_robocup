@@ -187,7 +187,7 @@ class LookForServeObject(smach.State):
                                         Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
             object_query_answers = self.robot.reasoner.query(is_object_there)
             if object_query_answers:
-                self.robot.speech.speak("I have found what I was looking for, a " + str(object_class))
+                self.robot.speech.speak("I have found what I have been looking for, a " + str(object_class))
                 self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "A")))
                 self.robot.reasoner.assertz(Compound("base_grasp_point", object_query_answers[0]['ObjectID'], Compound("point_3d", object_query_answers[0]["X"], object_query_answers[0]["Y"], object_query_answers[0]["Z"])))
                 return "found"
@@ -307,15 +307,17 @@ class MoveToGoal(smach.StateMachine):
                 'arrived' : 'succeeded_prior', 'goal_not_defined' : 'failed'})
 
 class AskGraspObject(smach.StateMachine):
-    def __init__(self, side, robot):
+    def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["done"])
         self.robot = robot
         self.side = side
         with self:
-            smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp please insert the object into the gripper"]), # En andere dingen
+            smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp please insert the object into the gripper"]),
                 transitions={   'spoken':'done'})
-            #smach.StateMachine.add("OPEN_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN), # En andere dingen
-            #    transitions={   'succeeded':'done', 'failed': 'done'})
+            smach.StateMachine.add("OPEN_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
+                transitions={   'succeeded':'CLOSE_GRIPPER', 'failed': 'done'})
+            smach.StateMachine.add("CLOSE_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
+                transitions={   'succeeded':'CLOSE_GRIPPER', 'failed': 'done'})
 
 
 class DecideAction(smach.State):
@@ -346,7 +348,45 @@ class DecideAction(smach.State):
             self.robot.speech.speak("I am finished with my task, let's go home")
             return 'finished'
 
+class HandoverToKnownHuman(smach.StateMachine):
+    def __init__(self, robot, side):
+        smach.StateMachine.__init__(self, outcomes=["done"])
+        self.arm = side
+        self.robot = robot
+        with self:
+            smach.StateMachine.add( 'PRESENT_DRINK',
+                                    states.Say(self.robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"],block=False),
+                                    transitions={"spoken":"POSE"})
 
+            smach.StateMachine.add( 'POSE',
+                                    states.Handover_pose(self.arm, self.robot),
+                                    transitions={   'succeeded':'PLEASE_TAKE',
+                                                    'failed':'PLEASE_TAKE'})
+            
+            smach.StateMachine.add( 'PLEASE_TAKE',
+                                    states.Say(self.robot, ["Please hold the drink, I'm going to let it go.", "Please take the drink, I'll let it go"]),
+                                    transitions={"spoken":"OPEN_GRIPPER"})
+
+            smach.StateMachine.add( "OPEN_GRIPPER", 
+                                    states.SetGripper(self.robot, self.arm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed':'CLOSE_AFTER_DROP'})
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP',
+                                    states.SetGripper(self.robot, self.arm, gripperstate=1), #close
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed':'RESET_ARM'})
+            smach.StateMachine.add('RESET_ARM', 
+                                    states.ArmToPose(self.robot, self.arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    transitions={   'done':'RESET_TORSO',
+                                                    'failed':'RESET_TORSO'})
+            smach.StateMachine.add('RESET_TORSO',
+                                    states.ResetTorso(self.robot),
+                                    transitions={   'succeeded':'SAY_ENJOY',
+                                                    'failed'   :'SAY_ENJOY'})
+
+            smach.StateMachine.add( 'SAY_ENJOY',
+                                    states.Say(self.robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
+                                    transitions={"spoken":"done"})
 
 def setup_statemachine(robot):
     side = robot.leftArm
@@ -395,7 +435,7 @@ def setup_statemachine(robot):
                                         'error':'Aborted'})
 
         smach.StateMachine.add("SAY_START", 
-                        states.Say(robot, ["Hi I am Amigo, lets go!"]),
+                        states.Say(robot, ["Hi I am Amigo, I will get you two drinks!"]),
                         transitions={   'spoken':'MOVE_TO_SCAN_POS'})
 
         smach.StateMachine.add("MOVE_TO_SCAN_POS", 
@@ -458,14 +498,14 @@ def setup_statemachine(robot):
                             'succeeded_prior':'HANDOVER_PRIOR', 'failed':'ASK_GET_OBJECT'})
 
         #Handover the object
-        smach.StateMachine.add("HANDOVER", 
-            states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
-            transitions={   'spoken':'OPEN_GRIPPER' })
+        #smach.StateMachine.add("HANDOVER", 
+        #    states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
+        #    transitions={   'spoken':'OPEN_GRIPPER' })
 
 
         smach.StateMachine.add("HANDOVER_PRIOR", 
             states.Say(robot, ["I am unable to find a person. However, I know you are there somewhere. Please take the item from my gripper"]), # En andere dingen
-            transitions={   'spoken':'OPEN_GRIPPER' })
+            transitions={   'spoken':'HANDOVER' })
 
         #Open gripper to release object
         smach.StateMachine.add("OPEN_GRIPPER", 
@@ -485,6 +525,9 @@ def setup_statemachine(robot):
             states.Say(robot, ["Cannot reach my goal, end of challenge!"]), # En andere dingen
             transitions={   'spoken':'Done' })
 
+        smach.StateMachine.add("HANDOVER", 
+            HandoverToKnownHuman(robot, side), # En andere dingen
+            transitions={   'done':'DECIDE_ACTION' })
 
         #Failed to deliver ask call for help
         smach.StateMachine.add("ASK_GET_OBJECT", 
