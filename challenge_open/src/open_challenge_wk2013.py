@@ -52,15 +52,6 @@ class AskForTask(smach.State):
         #obj = "seven_up"
         # obj2 = "coke"
         location = "desk_1"
-        '''
-        if self.response.answer == "bringacoketothekitchen":
-            location = "dinner_table"
-            obj = "coke"
-        elif self.response.answer == "bringaspritetothekitchen":
-            location = "dinner_table"
-            obj = "sprite"
-        '''
-
         #self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("open_challenge", location))))
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("bringTo", location))))
         self.robot.reasoner.assertz(Compound("goal", Compound("serve", "a0", obj)))
@@ -96,7 +87,7 @@ class ScanTables(smach.State):
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
             if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
-                self.robot.speech.speak("I will scan the tables for objects")
+                self.robot.speech.speak("I will scan the tables for objects", block=False)
                 self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
                 rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.logwarn("Waiting for 2.0 seconds for laser update")
@@ -142,7 +133,7 @@ class ScanForPersons(smach.State):
         self.preempted = False
 
     def execute(self, userdata):
-        self.robot.speech.speak("My torso laser will also find the operator")
+        self.robot.speech.speak("My torso laser will also find the operator", block=False)
         self.robot.perception.toggle_recognition(people=True)
         rospy.sleep(2)
         self.robot.perception.toggle_recognition()
@@ -313,7 +304,7 @@ class DecideAction(smach.State):
             if is_object_there:
                 self.robot.speech.speak("I know where the {0}, is located".format(str(answers[0]['Class'])))
                 self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
-                self.robot.reasoner.assertz(Compound("base_grasp_point", answers[0]['ObjectID'], Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
+                self.robot.reasoner.assertz(Compound("base_grasp_point", is_object_there[0]['ObjectID'], Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
 
                 #Retract grasped object
                 self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "Class"))))
@@ -374,7 +365,7 @@ def setup_statemachine(robot):
                                         'error':'Aborted'})
 
         smach.StateMachine.add("SAY_START", 
-                        states.Say(robot, ["Hi I am Amigo, what do you want me to do?"]),
+                        states.Say(robot, ["Hi I am Amigo, lets go!"]),
                         transitions={   'spoken':'MOVE_TO_SCAN_POS'})
 
         smach.StateMachine.add("MOVE_TO_SCAN_POS", 
@@ -404,7 +395,7 @@ def setup_statemachine(robot):
         #Scan for persons at the prior location
         smach.StateMachine.add("SCAN_FOR_PERSONS_AT_PRIOR", 
                         ScanForPersons(robot),
-                        transitions={ 'done':'MOVE_TO_GOAL', 'failed':'ASK_GET_OBJECT'})
+                        transitions={ 'done':'MOVE_TO_GOAL_AFTER_PRIOR', 'failed':'ASK_GET_OBJECT'})
 
         smach.StateMachine.add("MOVE_TO_TABLE", 
                 MoveToTable(robot),
@@ -431,11 +422,20 @@ def setup_statemachine(robot):
             transitions={   'succeeded_person':'HANDOVER', 
                             'succeeded_prior':'SCAN_FOR_PERSONS_AT_PRIOR', 'failed':'ASK_GET_OBJECT'})
 
+        smach.StateMachine.add("MOVE_TO_GOAL_AFTER_PRIOR", 
+            MoveToGoal(robot), # En andere dingen
+            transitions={   'succeeded_person':'HANDOVER', 
+                            'succeeded_prior':'HANDOVER_PRIOR', 'failed':'ASK_GET_OBJECT'})
+
         #Handover the object
         smach.StateMachine.add("HANDOVER", 
             states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
             transitions={   'spoken':'OPEN_GRIPPER' })
 
+
+        smach.StateMachine.add("HANDOVER_PRIOR", 
+            states.Say(robot, ["I am unable to find a person. However, I know you are there somewhere. Please take the item from my gripper"]), # En andere dingen
+            transitions={   'spoken':'OPEN_GRIPPER' })
 
         #Open gripper to release object
         smach.StateMachine.add("OPEN_GRIPPER", 
