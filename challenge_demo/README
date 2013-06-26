@@ -11,6 +11,7 @@ amigo3:
 amigo3:
 
     roslaunch speech_interpreter start_magdeburg2013.launch
+    roslaunch maluuba_ros start.launch (Get this by running: 'rosmake tue-rosdep; trunk; tue-rosdep install .')
 
 amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
