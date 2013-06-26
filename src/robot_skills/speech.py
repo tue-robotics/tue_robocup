@@ -39,10 +39,17 @@ class Speech(object):
     def close(self):
         pass
 
-    def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited", block=True):
+    def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited", block=True, replace={"_":" "}):
         """
-        Send a sentence to amigo's text to speech module
+        Send a sentence to amigo's text to speech module. 
+        You can set language, personality, voice and mood for the Phiips TTS.
+        When block=False, this method returns immediatly.
+        With the replace-dictionary, you can specify which characters to replace with what. By default, it replace underscores with spaces.
         """
+
+        for orig, replacement in replace.iteritems():
+            sentence = sentence.replace(orig, replacement)
+
         try:
             if language == 'nl' and not (personality in ['david', 'marjolein']):
                 personality = 'david' #kyle doesn't work for NL
