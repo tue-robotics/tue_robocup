@@ -258,14 +258,15 @@ class PersonOrPrior(smach.State):
             rx,ry,rz = float(roi[0]["X"]),  float(roi[0]["Y"]), float(roi[0]["Z"])
             rlx, rly, rlz = float(roi[0]["Length_x"]),  float(roi[0]["Length_y"]),  float(roi[0]["Length_z"])
 
-            x_ok = rx < hx < rx+rlx
-            y_ok = ry < hy < ry+rly
-            z_ok = rz < hz < rz+rlz
+            x_ok = rx-(rlx/2) < hx < rx+(rlx/2)
+            y_ok = ry-(rly/2) < hy < ry+(rly/2)
 
-            return x_ok and y_ok and z_ok
+            ok = x_ok and y_ok
+            rospy.loginfo("{0} is {1}".format(answerdict, ok))
+            return ok
 
         #import ipdb; ipdb.set_trace()
-        #for debugging: humans = [{'ID':'477', 'X':'9.065', 'Y':'-2.9', 'Z':'0.89'}]
+        #for debugging: humans = [{'Y': '-2.78225655853', 'X': '8.38399997379', 'Z': '1.02274683455', 'ID': '0a73f86d5e4a99b18910fb86f20a8149'}]
         try:
             humans_in_roi = filter(in_roi, humans)
         except IndexError:
