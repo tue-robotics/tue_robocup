@@ -96,11 +96,11 @@ class ScanTables(smach.State):
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
             if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
-                self.robot.speech.speak("I will scan the tables now")
+                self.robot.speech.speak("I will scan the tables for objects")
                 self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
                 rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.logwarn("Waiting for 2.0 seconds for laser update")
-                rospy.sleep(rospy.Duration(5.0))
+                rospy.sleep(rospy.Duration(2.0))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
             
@@ -142,6 +142,7 @@ class ScanForPersons(smach.State):
         self.preempted = False
 
     def execute(self, userdata):
+        self.robot.speech.speak("My torso laser will also find the operator")
         self.robot.perception.toggle_recognition(people=True)
         rospy.sleep(2)
         self.robot.perception.toggle_recognition()
@@ -155,7 +156,7 @@ class LookForServeObject(smach.State):
         self.side = robot.leftArm
 
     def execute(self, userdata=None):
-        look_at_query = Compound("base_grasp_point", Compound("point_3d", "X", "Y", "Z"))
+        look_at_query = Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))
         answers = self.robot.reasoner.query(look_at_query)
 
         lookat_point = geometry_msgs.msg.Point()
@@ -192,8 +193,8 @@ class LookForServeObject(smach.State):
             object_query_answers = self.robot.reasoner.query(is_object_there)
             if object_query_answers:
                 self.robot.speech.speak("I have found what I was looking for, a " + str(object_class))
-                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "A")))
-                self.robot.reasoner.assertz(Compound("base_grasp_point", Compound("point_3d", object_query_answers[0]["X"], object_query_answers[0]["Y"], object_query_answers[0]["Z"])))
+                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "A")))
+                self.robot.reasoner.assertz(Compound("base_grasp_point", object_query_answers[0]['ObjectID'], Compound("point_3d", object_query_answers[0]["X"], object_query_answers[0]["Y"], object_query_answers[0]["Z"])))
                 return "found"
             else:
                 self.robot.speech.speak("I have not yet found what I am looking for")
@@ -218,8 +219,8 @@ class GetNextLocation(smach.State):
         if(answers):
             answer = answers[0]
             self.robot.reasoner.query(Compound("retract", Compound("goal_location", answer["Counter"], "A")))
-            self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "A")))
-            self.robot.reasoner.assertz(Compound("base_grasp_point", Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
+            self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "A")))
+            self.robot.reasoner.assertz(Compound("base_grasp_point", "unkown", Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
             return 'done'
         else:
             self.robot.speech.speak("Ah, there are no more locations to explore")
@@ -236,7 +237,7 @@ class MoveToTable(smach.StateMachine):
                 transitions={'done':'NAVIGATE_TO', 'no_locations':'no_tables_left'})
 
             smach.StateMachine.add("NAVIGATE_TO", states.NavigateGeneric(robot, 
-                lookat_query=Compound("base_grasp_point", Compound("point_3d", "X", "Y", "Z"))), 
+                lookat_query=Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), 
                 transitions={'unreachable' : 'failed_navigate', 'preempted' : 'NAVIGATE_TO', 
                 'arrived' : 'done', 'goal_not_defined' : 'failed_navigate'})
 
@@ -300,17 +301,20 @@ class DecideAction(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['known_object', 'unkown_object', 'finished'])
         self.robot = robot
+        self.second_run = False
     def execute(self, userdata=None):
         #Check if finished
         answers = self.robot.reasoner.query(Compound("goal", Compound("serve", "a1", "Class")))
+        #Second run
         if answers:
             #Check if already known
             is_object_there = self.robot.reasoner.query(Conjunction(Compound("instance_of", "ObjectID", answers[0]['Class']),
                                         Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))))
             if is_object_there:
                 self.robot.speech.speak("I know where the {0}, is located".format(str(answers[0]['Class'])))
-                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "X")))
-                self.robot.reasoner.assertz(Compound("base_grasp_point", Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
+                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
+                self.robot.reasoner.assertz(Compound("base_grasp_point", answers[0]['ObjectID'], Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
+
                 #Retract grasped object
                 self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "Class"))))
                 return 'known_object'
@@ -334,7 +338,7 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("retractall", Compound("goal_location", "X", "Y")))
     robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "X"))))
     robot.reasoner.query(Compound("retractall", Compound("goal", Compound("bringTo", "X"))))
-    robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "X")))
+    robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
     robot.reasoner.query(Compound("retractall", Compound("deliver_pose", "A")))
     robot.reasoner.query(Compound("retractall", Compound("deliver_goal", "A")))
 
@@ -413,7 +417,7 @@ def setup_statemachine(robot):
                 transitions={  'not_found':'MOVE_TO_TABLE', 'found': 'GRAB'})
 
         smach.StateMachine.add("GRAB", 
-            states.GrabMachine(side, robot, Compound("base_grasp_point", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
+            states.GrabMachine(side, robot, Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
             transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'ASK_GRASP_OBJECT'})  
 
         smach.StateMachine.add("ASK_GRASP_OBJECT",
