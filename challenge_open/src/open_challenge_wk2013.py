@@ -243,13 +243,38 @@ class PersonOrPrior(smach.State):
         self.robot = robot
         self.query_human = Conjunction(Compound("instance_of", "ID", "person"), 
             Compound("property_expected", "ID", "position", Sequence("X", "Y", "Z")))
+        self.query_roi = Compound('region_of_interest', 'people_area', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z'))
+
     def execute(self, userdata=None):
         #Check if person is available, else scan at prior
-        answers = self.robot.reasoner.query(self.query_human)
-        if answers:
+        humans = self.robot.reasoner.query(self.query_human)
+        roi = self.robot.reasoner.query(self.query_roi)
+        
+        def in_roi(answerdict):
+            """answerdict is a dict with answrs to Compound("property_expected", "ID", "position", Sequence("X", "Y", "Z")) 
+            rx etc are the corner of the ROI and rlx are the dimensions"""
+            #import ipdb; ipdb.set_trace()
+            hx,hy,hz = float(answerdict["X"]), float(answerdict["Y"]),  float(answerdict["Z"])
+            rx,ry,rz = float(roi[0]["X"]),  float(roi[0]["Y"]), float(roi[0]["Z"])
+            rlx, rly, rlz = float(roi[0]["Length_x"]),  float(roi[0]["Length_y"]),  float(roi[0]["Length_z"])
+
+            x_ok = rx < hx < rx+rlx
+            y_ok = ry < hy < ry+rly
+            z_ok = rz < hz < rz+rlz
+
+            return x_ok and y_ok and z_ok
+
+        #import ipdb; ipdb.set_trace()
+        #for debugging: humans = [{'ID':'477', 'X':'9.065', 'Y':'-2.9', 'Z':'0.89'}]
+        try:
+            humans_in_roi = filter(in_roi, humans)
+        except IndexError:
+            humans_in_roi = []
+
+        if humans_in_roi:
             self.robot.speech.speak("I am going to return the object to a person!")
             self.robot.reasoner.query(Compound("retractall", Compound("deliver_goal", "A")))
-            self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", answers[0]['X'], answers[0]['Y'], answers[0]['Z'])))
+            self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", humans_in_roi[0]['X'], humans_in_roi[0]['Y'], humans_in_roi[0]['Z'])))
             return 'at_person'
         else:
             query_prior = Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))
