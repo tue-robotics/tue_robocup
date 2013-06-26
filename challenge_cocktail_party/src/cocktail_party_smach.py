@@ -234,9 +234,9 @@ class Ask_drink(smach.State):
                 self.robot.speech.speak("I will just bring you a coke")
                 self.response.answer = "coke"
 
-        if self.response.answer == "teapack":
-            self.response.answer = "tea_pack"
-            rospy.logwarn("Changed teapack to tea_pack!")        
+        if self.response.answer == "beer_can":
+            self.response.answer = "coke"
+            rospy.logwarn("Changed beer_can to coke!")        
         rospy.loginfo("self.response = {0}".format(self.response.answer))
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", self.response.answer))))
@@ -489,10 +489,7 @@ class LookForPerson(smach.State):
             self.robot.speech.speak("I see some people!")
         else:
             self.robot.speech.speak("I found someone!")
-        return "found"
-        
-
-        
+        return "found"     
 
 class PersonFound(smach.State):
     def __init__(self, robot):
@@ -910,20 +907,18 @@ class CocktailParty(smach.StateMachine):
                                     transitions={'served':'EXIT',
                                                 'not_served':'SAY_FAILED',
                                                 'Done':"EXIT"})
-            # Amigo goes to the exit (waypoint stated in knowledge base)
+
             smach.StateMachine.add('EXIT', 
                                     Navigate_named(robot, "exit_1"),
                                     transitions={   'arrived':'FINISH', 
                                                     'preempted':'CLEAR_PATH_TO_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_EXIT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
-
-            # Amigo will say that it arrives at the registration table
+        
             smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
                                     Say(robot, "I couldn't go to the exit. Please clear the path, I will give it another try."),
                                     transitions={'spoken':'GO_TO_EXIT_SECOND_TRY'}) 
 
-            # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
             smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
                                     Navigate_named(robot, "exit_2"),
                                     transitions={   'arrived':'FINISH', 
@@ -943,6 +938,7 @@ if __name__ == '__main__':
  
     amigo = Amigo(wait_services=True)
 
+    # Retract all old facts
     amigo.reasoner.query(Compound("retractall", Compound("challenge", "X")))
     amigo.reasoner.query(Compound("retractall", Compound("goal", "X")))
     amigo.reasoner.query(Compound("retractall", Compound("explored", "X")))
@@ -954,9 +950,9 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("retractall", Compound("registered", "X")))
     amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
 
+    # Load locations and objects from knowledge files
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
     amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
-    #amigo.reasoner.query(Compound("load_database", "challenge_cocktail_party", 'prolog/objects.pl'))
 
     # Use reasoner for max iter in LookForPerson 
     amigo.reasoner.query(Compound("retractall", Compound("looked_person_no", "X")))
@@ -970,6 +966,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
     amigo.reasoner.query(Compound("assert",Compound("waited_times_no", "0")))
 
+    # Assert current challenge
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
     initial_state = None
