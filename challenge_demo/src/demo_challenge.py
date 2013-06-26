@@ -42,6 +42,8 @@ BREAKFAST_2 = Compound("dinner_table", "a")
 SINGPOS = Compound("dinner_table", "a")
 BOWL_POS = Compound("dinner_table", "a")
 
+query_dropoff_loc = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+
 class TurnAround(smach.State):
     def __init__(self, robot, angle):
         smach.State.__init__(self, outcomes=["done" , "failed"])
@@ -137,7 +139,7 @@ class AskAnythingElse(smach.State):
         try:
             self.response = self.get_anything_else_service("demo_challenge_anything_else", 4 , 60)  
             # This means that within 4 tries and within 60 seconds an answer is received. 
-            
+            #import ipdb; ipdb.set_trace()
             if not self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
                 self.response.answer = self.response.answer.replace("_", " ")
 
@@ -150,17 +152,15 @@ class AskAnythingElse(smach.State):
                 #self.robot.speech.speak("It is now {0}".format(timestr))
 
             #elif self.response.answer == "Can you tell me what time it is?":
-            elif "what time" in self.response.answer:
+            elif "time" in self.response.answer:
                 import time
-                timestr = time.strftime( "%M past %H", time.localtime(time.time()))
-                self.robot.speech.speak("It is now {0}".format(timestr))
+                timestr = time.strftime( "%M past %I", time.localtime(time.time())) #%I is hour in 12-hour format
+                self.robot.speech.speak("It is now {0}".format(timestr), replace={" 0":" "})
             #elif (self.response.answer == "Can you remind me in three minutes that my favorite tv program friends will \
             #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program dallas \
             #    start?" or self.response.answer == "Can you remind me in three minutes that my favorite tv program the \
             #    bold and the beautiful start?"):
-            elif "remind me" in self.response.answer.lower():
-                rospy.logwarn("Remind info not yet done")
-                
+            elif "remind me" in self.response.answer.lower():                
                 response = self.maluubasrv(self.response.answer)
                 interpretation = response.interpretation
                 start, end = self.mail_interpreter.extract_times(interpretation.entities)
@@ -179,6 +179,8 @@ class AskAnythingElse(smach.State):
                 self.robot.speech.speak("I better go and get your breakfast", mood="neutral", block=False)
         except Exception, e:
             rospy.logerr("Could not get_status_person_service: {0}.".format(e))
+            self.robot.speech.speak("I'm not sure what to do, sorry about that.")
+            self.robot.speech.speak("I better go and get your breakfast", mood="neutral", block=False)
             
         return "done"
 
@@ -389,6 +391,7 @@ class SingSong(smach.State):
 
         return 'done'
 
+
 class Part1(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -493,7 +496,6 @@ class Part1(smach.StateMachine):
             smach.StateMachine.add( 'RESET_ROBOT',
                                     ResetRobot(robot),
                                     transitions={   'done'              : 'succeeded'})
-
 
 
 class Part2(smach.StateMachine):
@@ -634,7 +636,15 @@ class Part2(smach.StateMachine):
 
             smach.StateMachine.add( 'SING_A_SONG',
                                     SingSong(),
-                                    transitions={   'done'              : "succeeded"})
+                                    transitions={   'done'              : "DROPOFF_OBJECT"})
+            
+            smach.StateMachine.add("DROPOFF_OBJECT",
+                                    #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
+                                    #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
+                                    states.DropObject(robot.leftArm, robot, query_dropoff_loc),
+                                    transitions={   'succeeded':'succeeded',
+                                                    'failed':'succeeded',
+                                                    'target_lost':'succeeded'})
 
 
 class DemoChallenge(smach.StateMachine):
@@ -716,7 +726,11 @@ class DemoChallenge(smach.StateMachine):
 
             smach.StateMachine.add( 'RESET_ROBOT',
                                 ResetRobot(robot),
-                                transitions={   'done'      : 'Done'})
+                                transitions={   'done'      : 'SAY_DONE'})            
+
+            smach.StateMachine.add( 'SAY_DONE',
+                                    states.Say(robot, ["This was my demonstration, I'm done, thank you for your attention!"], block=False),
+                                    transitions={   'spoken'            : 'Done'})
 
 if __name__ == "__main__":
     rospy.init_node('demo_chalenge_exec')
