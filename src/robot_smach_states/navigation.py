@@ -1239,13 +1239,35 @@ class NavigateGeneric(smach.StateMachine):
 
         assert hasattr(robot, 'base')
 
-        with self:
-            smach.StateMachine.add('DETERMINE_GOAL', Determine_goal(self.robot, 
+        self.determine_goal = Determine_goal(self.robot, 
                 goal_pose_2d = self.goal_pose_2d, 
                 goal_name = self.goal_name, 
                 goal_query = self.goal_query,
                 lookat_point_3d = self.lookat_point_3d, 
-                lookat_query = self.lookat_query),
+                lookat_query = self.lookat_query)
+
+        @smach.cb_interface(outcomes=['done'])
+        def init_navigate_generic(userdata):
+            self.determine_goal.robot = robot
+            self.determine_goal.goal_pose_2d = goal_pose_2d
+            self.determine_goal.goal_name = goal_name
+            self.determine_goal.goal_query = goal_query
+            self.determine_goal.lookat_point_3d = lookat_point_3d
+            self.determine_goal.lookat_query = lookat_query
+            rospy.logdebug("Goal name = {0}".format(self.goal_name))
+            rospy.logdebug("Goal query = {0}".format(self.goal_query))
+            rospy.logdebug("Lookat query = {0}".format(self.lookat_query))
+
+            self.determine_goal.possible_locations_initialized = False
+            self.determine_goal.possible_locations = []
+            return "done"
+
+        with self:
+
+            smach.StateMachine.add('INITIALIZE_NAVIGATE_GENERIC', smach.CBState(init_navigate_generic),
+                                    transitions={   'done':'DETERMINE_GOAL'})
+        
+            smach.StateMachine.add('DETERMINE_GOAL', self.determine_goal,
                 transitions={'failed'           : 'goal_not_defined',
                              'aborted'          : 'DETERMINE_GOAL_TRY_AGAIN',
                              'succeeded'        : 'GET_PLAN'})
