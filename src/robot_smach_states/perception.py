@@ -53,7 +53,8 @@ class Learn_Person(smach.State):
         #self.robot.speech.speak('Please be patient, while I try to learn your face.')
         #self.robot.leftArm.send_goal(0.32, 0.43, 1.50, 0, 30, 0, 60)
         #self.robot.leftArm.send_joint_goal(-1.439, 0.696, -0.967, 1.202, -0.9489, 0.5272, 0.0367)
-        self.robot.leftArm.send_joint_goal(-1.439, 0.496, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
+        self.robot.leftArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
+        #self.robot.leftArm.send_joint_goal(-1.439, 0.496, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
 
         self.robot.speech.speak(speech_sentence[0])
         #import ipdb; ipdb.set_trace()
