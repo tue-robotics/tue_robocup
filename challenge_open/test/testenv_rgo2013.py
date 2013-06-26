@@ -16,5 +16,5 @@ if __name__ == "__main__":
     W.add_object("seven_up-1",  "seven_up",  table_x - 0.5, table_y + 1.0, 0.88)
     W.add_object("coke-1",  "coke",  table_x - 0.5, table_y + .5, 0.88)
     #W.add_object("person-1", "person", 6.309, -1.0, 0)
-    W.add_object("person-1", "person", 7.309, -3.0, 0)
+    W.add_object("person-1", "person", 8.309, -3.0, 0)
 #    table = W.add_object("cif-1",  "cif",  table_x + 0.4, table_y + 0.1, 0.92)
