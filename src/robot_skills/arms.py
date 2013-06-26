@@ -121,10 +121,10 @@ class Arms(object):
         self.left_twist_publisher = rospy.Publisher("/arm_left_controller/cartesian_velocity_reference", TwistStamped)
         self.right_twist_publisher = rospy.Publisher("/arm_right_controller/cartesian_velocity_reference", TwistStamped)
 
-        self.leftOffset = Offset(x=0.08, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02
-        self.rightOffset = Offset(x=0.06, y=0.025, z=0.06)
+        self.leftOffset = Offset(x=0.10, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02, until June 25, x offset was 0.08
+        self.rightOffset = Offset(x=0.08, y=0.025, z=0.06)
 
-        self.markerToGrippointOffset = Offset(x=-0.05, y=0.0, z=0.03)
+        self.markerToGrippointOffset = Offset(x=-0.03, y=0.0, z=0.03)
         
         self.tf_listener = tf_listener
         
