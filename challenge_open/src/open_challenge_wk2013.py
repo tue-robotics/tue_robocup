@@ -13,6 +13,7 @@ import robot_smach_states.util.reasoning_helpers as urh
 #from speech_interpreter.srv import GetCleanup
 from speech_interpreter.srv import GetOpenChallenge
 from speech_interpreter.srv import GetYesNo
+from speech_interpreter.srv import GetInfo
 
 from robot_skills.reasoner import Conjunction, Compound, Sequence
 
@@ -25,16 +26,31 @@ class AskForTask(smach.State):
         self.robot = robot
         self.preempted = False
         #self.get_goto_service = rospy.ServiceProxy('interpreter/get_open_challenge', GetOpenChallenge)
+        self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata):
         self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("open_challenge", "X"))))
 
         # TODO: Here an service that has to be created has to be called
         #self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
+        self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
+            self.robot.speech.speak("I heared seven up")
+            self.response.answer = "seven_up"
+
+        rospy.loginfo("Speech output = {0}".format(self.response.answer))
+        #import ipdb; ipdb.set_trace()
+    
+        if self.response.answer == "coke":
+            obj = "coke"
+            obj2 = "seven_up"
+        else:
+            obj = "seven_up"
+            obj2 = "coke"
 
         # Default values
-        obj = "seven_up"
-        obj2 = "coke"
+        #obj = "seven_up"
+        # obj2 = "coke"
         location = "desk_1"
         '''
         if self.response.answer == "bringacoketothekitchen":
