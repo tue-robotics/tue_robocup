@@ -5,12 +5,17 @@
 // Messages
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
-#include <std_srvs/Empty.h>
 #include <amigo_msgs/head_ref.h>
 #include <pein_msgs/LearnAction.h>
 #include <sensor_msgs/LaserScan.h>
-#include <tue_move_base_msgs/MoveBaseAction.h>
+
+// Services
 #include "perception_srvs/StartPerception.h"
+#include <std_srvs/Empty.h>
+#include "speech_interpreter/AskUser.h"
+
+// Actions
+#include <tue_move_base_msgs/MoveBaseAction.h>
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
@@ -62,15 +67,20 @@ bool new_laser_data_ = false;                                                   
 bool in_elevator_ = false;                                                        // Bookkeeping: Is robot in elevator?
 pbl::Gaussian last_driving_dir_elevator_(3);                                      // Bookkeeping: remember driving direction when leaving elevator
 sensor_msgs::LaserScan laser_scan_;                                               // Storage: most recent laser data
+
+// Actions
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
+
+// Publishers/subscribers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
+ros::Publisher pub_in_elevator;                                                   // Communication: Publisher for debugging
+
+// Services
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
-ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
-
-
-ros::Publisher pub_in_elevator; // publisher for debugging
+ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
 
 /**
  * @brief amigoSpeak let AMIGO say a sentence
@@ -635,7 +645,7 @@ bool leftElevator(pbl::Gaussian& pos)
             pause.sleep();
             ++n_sleeps;
         }
-;
+        ;
         return true;
     }
 
@@ -711,6 +721,35 @@ int main(int argc, char **argv) {
     ROS_INFO("Started Follow me");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////  Text-to-speech
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Speech interpreter
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    speech_client_ = nh.serviceClient<speech_interpreter::AskUser>("interpreter/ask_user");
+
+    double t1 = ros::Time::now().toSec();
+    speech_interpreter::AskUser srv_test;
+    srv_test.request.num_tries = 3;
+    srv_test.request.time_out = ros::Duration(10.0);
+    srv_test.request.info_type = "continue";
+    if (speech_client_.call(srv_test)) {
+        ROS_INFO("Received true");
+    } else {
+        ROS_WARN("I did not hear continue - start anyway");
+    }
+
+    ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
+
+    // Non-blocking
+    amigoSpeak("I will start the challenge");
+    return 0;
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
@@ -737,13 +776,6 @@ int main(int argc, char **argv) {
     //// Laser data
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/base_scan", 10, laserCallback);
-    //sub_laser_.shutdown();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////  Text-to-speech
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Speech-to-text
@@ -826,7 +858,7 @@ int main(int argc, char **argv) {
 
             //! Avoid too much delay due to some failure in perception
             if (n_tries > 5) {
-                findOperator(client);
+                findOperator(client, false);
                 ROS_ERROR("Learning OK but no operator in world model, person in front of the robot is assumed to be the operator");
                 break;
             }

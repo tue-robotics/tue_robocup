@@ -19,6 +19,7 @@
   <depend package="perception_srvs"/>
   <depend package="tue_carrot_planner"/>
   <depend package="tue_pocketsphinx"/>
+  <depend package="speech_interpreter"/>
 
 </package>
 
