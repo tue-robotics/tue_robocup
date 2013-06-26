@@ -742,6 +742,11 @@ void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, d
 void speechCallback(std_msgs::String res) {
 
     ROS_INFO("Received command: %s", res.data.c_str());
+    
+    if (res.data == "left" || res.data == "right" || res.data == "front") {
+        ROS_WARN("Received old command");
+        return;
+    }        
 
     //// AMIGO STOP
     if (res.data == "amigostop") {
@@ -862,9 +867,11 @@ void speechCallback(std_msgs::String res) {
         amigoSpeak(sentence);
         amigoSpeak("Do you want to learn another location?");
 
-        //! Sleep (amigoSpeak is not blocking)
-        ros::Duration delta(2.0);
-        delta.sleep();
+        //! Sleep (amigoSpeak is blocking)
+        //ROS_INFO("I will sleep");
+        //ros::Duration delta(7.0);
+        //delta.sleep();
+        //ROS_INFO("Sleep is over");
 
         // Administration
         freeze_amigo_ = false;
@@ -882,6 +889,7 @@ void speechCallback(std_msgs::String res) {
     }
     //// AMIGO WILL GO TO ORDERING LOCATION
     else if (stored_location &&  res.data != "yes" && res.data != "") {
+        ROS_INFO("I heard %s", res.data.c_str());
         finished = true;
         stored_location = false;
         amigoSpeak("Certainly. Please guide me to the ordering location?");
@@ -1218,7 +1226,7 @@ bool callInterpreter(string type, string& answer) {
     stopSpeechRecognition();
 
     // Point mic towards guide
-    moveHead(0.1, 0.0);
+    //moveHead(0.1, 0.0);
 
     // Feedback
     bool succeeded = false;
@@ -1238,7 +1246,7 @@ bool callInterpreter(string type, string& answer) {
     startSpeechRecognition();
 
     // Reset head
-    moveHead(0.0, 0.0);
+    //moveHead(0.0, 0.0);
 
     return succeeded;
 
@@ -1303,8 +1311,8 @@ int main(int argc, char **argv) {
     ROS_INFO("Connected!");
 
     //! Planner
-    double max_vel_lin = 0.3;                 // Default: 0.50
-    double max_vel_ang = 0.3;                 // Default: 0.40
+    double max_vel_lin = 0.5;                 // Default: 0.50
+    double max_vel_ang = 0.4;                 // Default: 0.40
     double dist_to_wall = DISTANCE_GUIDE-0.1; // Default: 0.65
     planner_ = new CarrotPlanner("restaurant_carrot_planner", max_vel_lin, max_vel_ang, dist_to_wall);
     ROS_INFO("Carrot planner instantiated");
@@ -1343,7 +1351,7 @@ int main(int argc, char **argv) {
     //! Start speech recognition
     speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
     speech_recognition_client_.waitForExistence();
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback);
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallback);
     startSpeechRecognition();
     ROS_INFO("Started speech recognition");
 
