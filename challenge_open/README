@@ -9,12 +9,9 @@ amigo1:
 amigo1:
 
     amiddle
-
+  
 amigo3:
 
-    roslaunch speech_interpreter start_magdeburg2013.launch
-    
-amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
     alsamixer
         Mic Boost -> 22
