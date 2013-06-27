@@ -298,7 +298,12 @@ class GetObject(smach.StateMachine):
             smach.StateMachine.add('GRAB',
                                     manipulation.GrabMachine(robot.leftArm, robot, query_grabpoint),
                                     transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
-                                                    'failed':'MARK_DISPOSED' })  
+                                                    'failed':'SAY_FAILED_GRABBING' })  
+
+            smach.StateMachine.add('SAY_FAILED_GRABBING',
+                                    human_interaction.Say(robot, ["Although I was not able to grab the object, you should be able to find it in \
+                                                                   front of me! I will continue to grab another one for as long as I have the time."], block=False),
+                                    transitions={ 'spoken':'MARK_DISPOSED' })
 
             #Mark the current_object as disposed
             @smach.cb_interface(outcomes=['done'])
