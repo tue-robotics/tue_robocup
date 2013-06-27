@@ -30,7 +30,8 @@ class AskForTask(smach.State):
 
     def execute(self, userdata):
         self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("open_challenge", "X"))))
-
+        
+        self.robot.head.reset_position()
         # TODO: Here an service that has to be created has to be called
         #self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
         self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
@@ -38,7 +39,6 @@ class AskForTask(smach.State):
             self.robot.speech.speak("I heard seven up")
             self.response.answer = "seven_up"
 
-        self.robot.head.reset_position()
         rospy.loginfo("Speech output = {0}".format(self.response.answer))
         #import ipdb; ipdb.set_trace()
     
