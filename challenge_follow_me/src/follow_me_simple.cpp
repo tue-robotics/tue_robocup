@@ -12,7 +12,7 @@
 // Services
 #include "perception_srvs/StartPerception.h"
 #include <std_srvs/Empty.h>
-#include "speech_interpreter/AskUser.h"
+#include "speech_interpreter/GetInfo.h"
 
 // Actions
 #include <tue_move_base_msgs/MoveBaseAction.h>
@@ -102,14 +102,15 @@ void amigoSpeak(string sentence) {
 void findOperator(wire::Client& client, bool lost = true) {
 
     //! Region in front of robot in which operator is allowed to stand
-    double distance_left_right_min = -0.5;
-    double distance_left_right_max = 0.5;
+    double distance_left_right_min = -0.75;
+    double distance_left_right_max = 0.75;
     double distance_min = 0.25;
     double distance_max = 2.0;
-    if (lost)
+
+    if (!lost)
     {
-        distance_left_right_min = -1.0;
-        distance_left_right_max = 1.0;
+        distance_left_right_min = -1.1;
+        distance_left_right_max = 1.1;
     }
 
     //! It is allowed to call the operator once per section (points for the section will be lost)
@@ -119,7 +120,7 @@ void findOperator(wire::Client& client, bool lost = true) {
         amigoSpeak("I have lost my operator, can you please stand in front of me");
 
         //! Give the operator some time to move to the robot
-        ros::Duration wait_for_operator(7.0);
+        ros::Duration wait_for_operator(5.0);
         wait_for_operator.sleep();
     }
 
@@ -128,12 +129,12 @@ void findOperator(wire::Client& client, bool lost = true) {
     if (reset_wire_client_.call(srv)) {
         ROS_INFO("Cleared world model");
     } else {
-        ROS_ERROR("Failed to clear world model");
+        ROS_WARN("Failed to clear world model");
     }
 
     //! Always some time before operator is there
-    ros::Duration waiting_time(1.0);
-    waiting_time.sleep();
+    //ros::Duration waiting_time(1.0);
+    //waiting_time.sleep();
 
     //! Vector with candidate operators
     vector<pbl::Gaussian> vector_possible_operators;
@@ -208,7 +209,9 @@ void findOperator(wire::Client& client, bool lost = true) {
 
                 pos_operator = vector_possible_operators[i_best];
 
-            } else {
+            }
+            //! In case there is only one candidate operator this person is the operator
+            else {
                 pos_operator = vector_possible_operators[0];
             }
 
@@ -237,8 +240,11 @@ void findOperator(wire::Client& client, bool lost = true) {
                 ROS_ERROR("Failed to clear world model");
             }
 
-            //! Assert evidence to WIRE
-            client.assertEvidence(ev);
+            //! Assert evidence to WIRE (multiple times to be sure)
+            for (unsigned int dummy = 0; dummy < 5; ++dummy)
+            {
+                client.assertEvidence(ev);
+            }
 
             no_operator_found = false;
 
@@ -252,9 +258,9 @@ void findOperator(wire::Client& client, bool lost = true) {
         }
 
         dt.sleep();
-
-        amigoSpeak("I did not find my operator yet");
     }
+
+    amigoSpeak("I did not find my operator yet");
 
     return;
 
@@ -720,7 +726,6 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     ROS_INFO("Started Follow me");
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////  Text-to-speech
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -730,23 +735,7 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Speech interpreter
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    speech_client_ = nh.serviceClient<speech_interpreter::AskUser>("interpreter/ask_user");
-
-    double t1 = ros::Time::now().toSec();
-    speech_interpreter::AskUser srv_test;
-    srv_test.request.num_tries = 3;
-    srv_test.request.time_out = ros::Duration(10.0);
-    srv_test.request.info_type = "continue";
-    if (speech_client_.call(srv_test)) {
-        ROS_INFO("Received true");
-    } else {
-        ROS_WARN("I did not hear continue - start anyway");
-    }
-
-    ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
-
-    // Non-blocking
-    amigoSpeak("I will start the challenge");
+    speech_client_ = nh.serviceClient<speech_interpreter::GetInfo>("interpreter/get_info_user");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
@@ -837,14 +826,34 @@ int main(int argc, char **argv) {
 
     pub_in_elevator = nh.advertise<std_msgs::Bool>("/is_in_elevator", 10);
 
+    // Wait for continue to start the challenge
+    speech_client_.waitForExistence(ros::Duration(5.0));
+    amigoSpeak("I will start when you say continue");
+
+    double t1 = ros::Time::now().toSec();
+    speech_interpreter::GetInfo srv_test;
+    srv_test.request.n_tries = 6;
+    srv_test.request.time_out = 60.0;
+    srv_test.request.type = "continue_confirm";
+    if (speech_client_.call(srv_test) && srv_test.response.answer == "continue") {
+        ROS_INFO("Received true");
+    } else {
+        ROS_WARN("I heard %s - start anyway", srv_test.response.answer.c_str());
+    }
+
+    ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
+
+    // Non-blocking
+    amigoSpeak("I will start the challenge");
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Start challenge: find and learn the operator
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     if (!memorizeOperator()) {
 
         ROS_ERROR("Learning operator failed: AMIGO will not be able to recognize the operator");
-        ros::Duration wait_for_operator(3.0);
-        wait_for_operator.sleep();
+        //ros::Duration wait_for_operator(3.0);
+        //wait_for_operator.sleep();
         findOperator(client, false);
 
     } else {
@@ -964,12 +973,14 @@ int main(int argc, char **argv) {
                     ++n_sleeps;
                 }
 
-                //! Clear world model and find a person nearby
+                //! Clear world model (operator lost to avoid incorrect association in base link)
                 if (reset_wire_client_.call(wire_srv)) {
                     ROS_INFO("Cleared world model");
                 } else {
                     ROS_ERROR("Failed to clear world model");
                 }
+
+                //! Ask operator to come
                 amigoSpeak("I left the elevator, you can leave the elevator now");
 
                 //! Stand still and find operator
@@ -978,15 +989,14 @@ int main(int argc, char **argv) {
 
                 //! Find the operator (blocks until the operator is found)
                 findOperator(client, false);
-                amigoSpeak("I will now continue following you.");
 
-                //! Next state
+                //! Next state: not implemented, go back to normal following mode
                 itp2_ = false;
-                itp3_ = true;
+                itp3_ = false;
             }
             else
             {
-                ROS_INFO("n_checks_left_elevator = %u/%f", n_checks_left_elevator, T_LEAVE_ELEVATOR*FOLLOW_RATE);
+                ROS_DEBUG("n_checks_left_elevator = %u/%f", n_checks_left_elevator, T_LEAVE_ELEVATOR*FOLLOW_RATE);
                 ++n_checks_left_elevator;
             }
 
@@ -1037,6 +1047,7 @@ int main(int argc, char **argv) {
 
             }*/
 
+            /*
 
             //! Still the operator position is desired
             if (getPositionOperator(objects, operator_pos)) {
@@ -1092,7 +1103,7 @@ int main(int argc, char **argv) {
                 }
 
 
-            }
+            }*/
 
 
         } else {
