@@ -21,6 +21,9 @@ grasp_arm = "left"
 ##########################################
 # CHECK the README!
 
+# niet op bed pakken
+#
+
 class Ask_cleanup(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
         smach.State.__init__(self, outcomes=["done"])

@@ -1,0 +1,346 @@
+amigo@amigo3:<fuerte><amigo>~$ rosrun challenge_cleanup clean_up.py
+If you want to test an executive, use the --test option and specify what parts you want to mock.
+[INFO] [WallTime: 1372365743.543035] 2d navigation is not running, so I assume 3D *is* running
+[INFO] [WallTime: 1372365745.577692] Done with waiting for TF to become avaiable
+[INFO] [WallTime: 1372365745.625176] waiting for move base server in Base.__init__
+[INFO] [WallTime: 1372365745.919839] waiting for spindle action server
+[INFO] [WallTime: 1372365746.203177] Waiting for service amigo_speakup_advanced
+[INFO] [WallTime: 1372365746.217959] Waiting for service /speech_interpreter/get_info_user and /speech_interpreter/get_action_user.
+True
+True
+[WARN] [WallTime: 1372365746.316593] Currently no face detection/recognition implemented
+[INFO] [WallTime: 1372365746.318025] Wait for service True
+[INFO] [WallTime: 1372365746.319852] Waiting for Perception Service
+[INFO] [WallTime: 1372365746.423257] Initializing ebutton listener
+[INFO] [WallTime: 1372365747.623074] State machine starting in initial state 'START_CHALLENGE' with userdata: 
+	[]
+[INFO] [WallTime: 1372365747.627070] State machine starting in initial state 'INITIALIZE' with userdata: 
+	[]
+[INFO] [WallTime: 1372365749.639078] Send arm to jointcoords [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
+[INFO] [WallTime: 1372365749.650495] Send arm to jointcoords [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
+[INFO] [WallTime: 1372365749.668984] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372365749.754048] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372365749.818785] Send spindle goal 0.35, waittime = 0.0
+[INFO] [WallTime: 1372365752.226562] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1372365752.280200] Linemod config answers: [{'Config': 'rwc2013_cross'}]
+[INFO] [WallTime: 1372365752.412742] State machine transitioning 'INITIALIZE':'initialized'-->'INSTRUCT_WAIT_FOR_DOOR'
+[INFO] [WallTime: 1372365752.414573] 'I will now wait until the door is opened'
+[INFO] [WallTime: 1372365755.148094] State machine transitioning 'INSTRUCT_WAIT_FOR_DOOR':'spoken'-->'ASSESS_DOOR'
+[INFO] [WallTime: 1372365755.284241] State machine transitioning 'ASSESS_DOOR':'laser_read'-->'WAIT_FOR_DOOR'
+[INFO] [WallTime: 1372365755.515864] State machine transitioning 'WAIT_FOR_DOOR':'query_true'-->'DOOR_OPEN'
+[INFO] [WallTime: 1372365755.522845] 'Door is open!'
+[INFO] [WallTime: 1372365756.734515] State machine transitioning 'DOOR_OPEN':'spoken'-->'INIT_POSE'
+[INFO] [WallTime: 1372365756.737181] Set initial pose
+[INFO] [WallTime: 1372365759.598117] State machine transitioning 'INIT_POSE':'done'-->'ENTER_ROOM'
+[INFO] [WallTime: 1372365759.602750] State machine starting in initial state 'THROUGH_DOOR' with userdata: 
+	[]
+[INFO] [WallTime: 1372365759.609997] 'I will start my task now'
+[INFO] [WallTime: 1372365761.661009] State machine transitioning 'THROUGH_DOOR':'spoken'-->'ENTER_ROOM'
+[INFO] [WallTime: 1372365761.675783] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372365761.689112] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[WARN] [WallTime: 1372365761.697380] Goalpose2d
+[INFO] [WallTime: 1372365761.814024] Determine_goal, goal = position:    x: 1.017   y: -0.004   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.00249999739583   w: 0.999996875002
+[INFO] [WallTime: 1372365761.816041] State machine transitioning 'DETERMINE_GOAL':'succeeded'-->'GET_PLAN'
+[INFO] [WallTime: 1372365761.819220] Looking for a path
+[INFO] [WallTime: 1372365761.837017] Get_plan, goal = position:    x: 1.017   y: -0.004   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.00249999739583   w: 0.999996875002
+[INFO] [WallTime: 1372365761.946671] Sending goal to x: 1.017 y: -0.004 z: 0
+[INFO] [WallTime: 1372365761.966716] Waiting 0.5s on  call made to execute plan of length 27 to (1.017, -0.004)
+[INFO] [WallTime: 1372365762.478910] State machine transitioning 'GET_PLAN':'succeeded'-->'EXECUTE'
+[INFO] [WallTime: 1372365769.750272] State machine terminating 'EXECUTE':'arrived':'arrived'
+[INFO] [WallTime: 1372365769.768605] State machine terminating 'ENTER_ROOM':'found':'done'
+[INFO] [WallTime: 1372365769.775900] State machine terminating 'ENTER_ROOM':'done':'Done'
+[INFO] [WallTime: 1372365769.777864] State machine transitioning 'START_CHALLENGE':'Done'-->'GOTO_MEETING_POINT'
+[INFO] [WallTime: 1372365769.802028] 'I'm coming to the meeting point!'
+[INFO] [WallTime: 1372365769.872121] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372365769.887307] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[INFO] [WallTime: 1372365769.896717] Send spindle goal 0.35, waittime = 0.5
+[ERROR] [WallTime: 1372365769.932811] Got a feedback callback when we're not tracking a goal. (id: /clean_up_exec-20-1372365769.907)
+[INFO] [WallTime: 1372365770.138068] Spindle target reached
+[WARN] [WallTime: 1372365770.151459] Goalpose2d
+[INFO] [WallTime: 1372365770.214390] State machine transitioning 'DETERMINE_GOAL':'aborted'-->'DETERMINE_GOAL_TRY_AGAIN'
+[INFO] [WallTime: 1372365770.217582] Send spindle goal 0.35, waittime = 0.5
+[INFO] [WallTime: 1372365770.440777] Spindle target reached
+[WARN] [WallTime: 1372365770.446055] Goalpose2d
+[INFO] [WallTime: 1372365770.494796] State machine terminating 'DETERMINE_GOAL_TRY_AGAIN':'aborted':'unreachable'
+[INFO] [WallTime: 1372365770.500353] State machine transitioning 'GOTO_MEETING_POINT':'not_found'-->'ASK_CLEANUP'
+[INFO] [WallTime: 1372365796.376038] State machine transitioning 'ASK_CLEANUP':'done'-->'DETERMINE_EXPLORATION_TARGET'
+[INFO] [WallTime: 1372365796.419227] Answers for ,(goal(clean_up(Room)), ,(exploration_target(Room, Target), ,(not(explored(Target)), waypoint(Target, pose_2d(X, Y, Phi))))): [{'Y': '-5.915', 'X': '1.681', 'Phi': '-3.059', 'Room': 'kitchen', 'Target': Compound('stove', 'a')}, {'Y': '-7.886', 'X': '1.69', 'Phi': '-3.142', 'Room': 'kitchen', 'Target': Compound('kitchen_counter', 'a')}, {'Y': '-7.007', 'X': '1.664', 'Phi': '-3.136', 'Room': 'kitchen', 'Target': Compound('sink', 'a')}, {'Y': '-6.396', 'X': '1.494', 'Phi': '-0.04', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'a')}, {'Y': '-6.329', 'X': '4.66', 'Phi': '-3.116', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'b')}, {'Y': '-7.344', 'X': '3.98', 'Phi': '-1.528', 'Room': 'kitchen', 'Target': Compound('side_table', 'a')}, {'Y': '-7.099', 'X': '4.857', 'Phi': '-0.053', 'Room': 'kitchen', 'Target': Compound('bar', 'a')}, {'Y': '-6.573', 'X': '4.88', 'Phi': '0.003', 'Room': 'kitchen', 'Target': Compound('bar', 'b')}]
+[INFO] [WallTime: 1372365796.437924] Available targets: [{'Y': '-5.915', 'X': '1.681', 'Phi': '-3.059', 'Room': 'kitchen', 'Target': Compound('stove', 'a')}, {'Y': '-7.886', 'X': '1.69', 'Phi': '-3.142', 'Room': 'kitchen', 'Target': Compound('kitchen_counter', 'a')}, {'Y': '-7.007', 'X': '1.664', 'Phi': '-3.136', 'Room': 'kitchen', 'Target': Compound('sink', 'a')}, {'Y': '-6.396', 'X': '1.494', 'Phi': '-0.04', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'a')}, {'Y': '-6.329', 'X': '4.66', 'Phi': '-3.116', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'b')}, {'Y': '-7.344', 'X': '3.98', 'Phi': '-1.528', 'Room': 'kitchen', 'Target': Compound('side_table', 'a')}, {'Y': '-7.099', 'X': '4.857', 'Phi': '-0.053', 'Room': 'kitchen', 'Target': Compound('bar', 'a')}, {'Y': '-6.573', 'X': '4.88', 'Phi': '0.003', 'Room': 'kitchen', 'Target': Compound('bar', 'b')}]
+[INFO] [WallTime: 1372365796.446129] Selected target: stove(a)
+[INFO] [WallTime: 1372365796.464547] 'Lets go look at stove(a)'
+[INFO] [WallTime: 1372365798.301729] State machine transitioning 'DETERMINE_EXPLORATION_TARGET':'found_exploration_target'-->'DRIVE_TO_EXPLORATION_TARGET'
+[INFO] [WallTime: 1372365798.311859] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372365798.314930] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[INFO] [WallTime: 1372365798.331809] Send spindle goal 0.35, waittime = 0.5
+[INFO] [WallTime: 1372365798.546704] Spindle target reached
+[WARN] [WallTime: 1372365798.549462] Goalquery
+[INFO] [WallTime: 1372365798.561290] Determined possible goals for query ,(current_exploration_target(Target), waypoint(Target, pose_2d(X, Y, Phi))): [{'Y': '-5.915', 'X': '1.681', 'Phi': '-3.059', 'Target': Compound('stove', 'a')}]
+[INFO] [WallTime: 1372365798.609870] Determine_goal, goal = position:    x: 1.681   y: -5.915   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.999147427871   w: 0.0412845900953
+[INFO] [WallTime: 1372365798.631463] State machine transitioning 'DETERMINE_GOAL':'succeeded'-->'GET_PLAN'
+[INFO] [WallTime: 1372365798.652034] Looking for a path
+[INFO] [WallTime: 1372365798.664581] Get_plan, goal = position:    x: 1.681   y: -5.915   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.999147427871   w: 0.0412845900953
+[INFO] [WallTime: 1372365798.737659] Sending goal to x: 1.681 y: -5.915 z: 0
+[INFO] [WallTime: 1372365798.770154] Waiting 0.5s on  call made to execute plan of length 120 to (1.681, -5.915)
+[INFO] [WallTime: 1372365799.282925] State machine transitioning 'GET_PLAN':'succeeded'-->'EXECUTE'
+^C[ERROR] [WallTime: 1372365810.173650] Publishing SMACH introspection structure message failed.
+[ERROR] [WallTime: 1372365810.193975] Publishing SMACH introspection structure message failed.
+[ERROR] [WallTime: 1372365810.199423] Publishing SMACH introspection structure message failed.
+[ERROR] [WallTime: 1372365810.200719] Publishing SMACH introspection structure message failed.
+Exception in thread server_name:status_publisher:
+Traceback (most recent call last):
+  File "/usr/lib/python2.7/threading.py", line 551, in __bootstrap_inner
+    self.run()
+  File "/usr/lib/python2.7/threading.py", line 504, in run
+    self.__target(*self.__args, **self.__kwargs)
+  File "/opt/ros/fuerte/stacks/executive_smach/smach_ros/src/smach_ros/introspection.py", line 160, in _status_pub_loop
+    self._publish_status('HEARTBEAT')
+  File "/opt/ros/fuerte/stacks/executive_smach/smach_ros/src/smach_ros/introspection.py", line 225, in _publish_status
+    self._status_pub.publish(state_msg)
+  File "/opt/ros/fuerte/lib/python2.7/dist-packages/rospy/topics.py", line 792, in publish
+    self.impl.publish(data)
+  File "/opt/ros/fuerte/lib/python2.7/dist-packages/rospy/topics.py", line 943, in publish
+    raise ROSException("publish() to a closed topic")
+ROSException: publish() to a closed topic
+
+[INFO] [WallTime: 1372365810.517024] State machine terminating 'EXECUTE':'preempted':'preempted'
+[INFO] [WallTime: 1372365810.517759] State machine terminating 'DRIVE_TO_EXPLORATION_TARGET':'preempted':'Aborted'
+Final outcome: Aborted
+[INFO] [WallTime: 1372365810.518351] Base cancelling goal on close
+[INFO] [WallTime: 1372365810.518836] Spindle cancelling all goals on close
+[INFO] [WallTime: 1372365810.519292] Arms cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1372365810.520007] Arms cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1372365810.520693] Arms cancelling all goals on all arm-related ACs on close
+amigo@amigo3:<fuerte><amigo>~$ 
+amigo@amigo3:<fuerte><amigo>~$ rosrun challenge_cleanup clean_up.py
+If you want to test an executive, use the --test option and specify what parts you want to mock.
+[INFO] [WallTime: 1372365849.464080] 2d navigation is not running, so I assume 3D *is* running
+[INFO] [WallTime: 1372365851.507581] Done with waiting for TF to become avaiable
+[INFO] [WallTime: 1372365851.539859] waiting for move base server in Base.__init__
+[INFO] [WallTime: 1372365851.853158] waiting for spindle action server
+[INFO] [WallTime: 1372365852.130813] Waiting for service amigo_speakup_advanced
+[INFO] [WallTime: 1372365852.134676] Waiting for service /speech_interpreter/get_info_user and /speech_interpreter/get_action_user.
+True
+True
+[WARN] [WallTime: 1372365852.279245] Currently no face detection/recognition implemented
+[INFO] [WallTime: 1372365852.284335] Wait for service True
+[INFO] [WallTime: 1372365852.298610] Waiting for Perception Service
+[INFO] [WallTime: 1372365852.392643] Initializing ebutton listener
+[INFO] [WallTime: 1372365853.547344] State machine starting in initial state 'START_CHALLENGE' with userdata: 
+	[]
+[INFO] [WallTime: 1372365853.565836] State machine starting in initial state 'INITIALIZE' with userdata: 
+	[]
+[INFO] [WallTime: 1372365855.583684] Send arm to jointcoords [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
+[INFO] [WallTime: 1372365855.591719] Send arm to jointcoords [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
+[INFO] [WallTime: 1372365855.601192] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372365855.700783] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372365855.759095] Send spindle goal 0.35, waittime = 0.0
+[INFO] [WallTime: 1372365858.132603] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+^C^C[ERROR] [WallTime: 1372365879.309486] InvalidUserCodeError: Could not execute state 'INITIALIZE' of type '<robot_smach_states.utility_states.Initialize object at 0x7f35f8087a10>': Traceback (most recent call last):
+  File "/opt/ros/fuerte/stacks/executive_smach/smach/src/smach/state_machine.py", line 241, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_executioner/robot_smach_states/src/robot_smach_states/utility_states.py", line 38, in execute
+    self.robot.base.get_location()
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_executioner/robot_skills/src/robot_skills/base.py", line 300, in get_location
+    self.tf_listener.waitForTransform("/map", "/base_link", time, rospy.Duration(20.0))
+Exception: Lookup would require extrapolation into the past.  Requested time 1372365858.140012980 but the earliest data is at time 1372365868.117038012, when looking up transform from frame [/base_link] to frame [/map]
+
+[ERROR] [WallTime: 1372365879.310276] State 'START_CHALLENGE' failed to execute.
+[ERROR] [WallTime: 1372365879.310927] Amigo exited with smach.exceptions.InvalidUserCodeError,<smach.exceptions.InvalidUserCodeError instance at 0x1fb9fc8>,<traceback object at 0x27b2710>
+[INFO] [WallTime: 1372365879.311328] Base cancelling goal on close
+[INFO] [WallTime: 1372365879.311844] Spindle cancelling all goals on close
+[INFO] [WallTime: 1372365879.312479] Arms cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1372365879.313603] Arms cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1372365879.314200] Arms cancelling all goals on all arm-related ACs on close
+Traceback (most recent call last):
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_cleanup/src/clean_up.py", line 426, in <module>
+    startup(Cleanup)
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_executioner/robot_smach_states/src/robot_smach_states/util/startup.py", line 56, in startup
+    outcome = executioner.execute()
+  File "/opt/ros/fuerte/stacks/executive_smach/smach/src/smach/state_machine.py", line 347, in execute
+    container_outcome = self._update_once()
+  File "/opt/ros/fuerte/stacks/executive_smach/smach/src/smach/state_machine.py", line 244, in _update_once
+    raise ex
+smach.exceptions.InvalidUserCodeError: <smach.exceptions.InvalidUserCodeError instance at 0x1fb9fc8>
+amigo@amigo3:<fuerte><amigo>~$ ^C
+amigo@amigo3:<fuerte><amigo>~$ rosrun challenge_cleanup clean_up.py
+If you want to test an executive, use the --test option and specify what parts you want to mock.
+[INFO] [WallTime: 1372365975.173251] 2d navigation is not running, so I assume 3D *is* running
+[INFO] [WallTime: 1372365977.218425] Done with waiting for TF to become avaiable
+[INFO] [WallTime: 1372365977.271301] waiting for move base server in Base.__init__
+[INFO] [WallTime: 1372365977.538064] waiting for spindle action server
+[INFO] [WallTime: 1372365977.808116] Waiting for service amigo_speakup_advanced
+[INFO] [WallTime: 1372365977.832557] Waiting for service /speech_interpreter/get_info_user and /speech_interpreter/get_action_user.
+True
+True
+[WARN] [WallTime: 1372365977.957482] Currently no face detection/recognition implemented
+[INFO] [WallTime: 1372365977.972213] Wait for service True
+[INFO] [WallTime: 1372365977.976967] Waiting for Perception Service
+[INFO] [WallTime: 1372365978.197183] Initializing ebutton listener
+[INFO] [WallTime: 1372365979.227698] State machine starting in initial state 'START_CHALLENGE' with userdata: 
+	[]
+[INFO] [WallTime: 1372365979.232685] State machine starting in initial state 'INITIALIZE' with userdata: 
+	[]
+[INFO] [WallTime: 1372365981.241645] Send arm to jointcoords [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
+[INFO] [WallTime: 1372365981.246548] Send arm to jointcoords [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]
+[INFO] [WallTime: 1372365981.249566] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372365981.299658] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372365981.362503] Send spindle goal 0.35, waittime = 0.0
+[INFO] [WallTime: 1372365983.687511] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1372365983.711803] Linemod config answers: [{'Config': 'rwc2013_cross'}]
+[INFO] [WallTime: 1372365983.864039] State machine transitioning 'INITIALIZE':'initialized'-->'INSTRUCT_WAIT_FOR_DOOR'
+[INFO] [WallTime: 1372365983.866541] 'I will now wait until the door is opened'
+[INFO] [WallTime: 1372365986.602633] State machine transitioning 'INSTRUCT_WAIT_FOR_DOOR':'spoken'-->'ASSESS_DOOR'
+[INFO] [WallTime: 1372365986.717520] State machine transitioning 'ASSESS_DOOR':'laser_read'-->'WAIT_FOR_DOOR'
+[INFO] [WallTime: 1372365986.929852] State machine transitioning 'WAIT_FOR_DOOR':'query_true'-->'DOOR_OPEN'
+[INFO] [WallTime: 1372365986.940834] 'Door is open!'
+[INFO] [WallTime: 1372365988.177933] State machine transitioning 'DOOR_OPEN':'spoken'-->'INIT_POSE'
+[INFO] [WallTime: 1372365988.178449] Set initial pose
+[INFO] [WallTime: 1372365990.956018] State machine transitioning 'INIT_POSE':'done'-->'ENTER_ROOM'
+[INFO] [WallTime: 1372365990.957078] State machine starting in initial state 'THROUGH_DOOR' with userdata: 
+	[]
+[INFO] [WallTime: 1372365990.957659] 'I will start my task now'
+[INFO] [WallTime: 1372365992.978045] State machine transitioning 'THROUGH_DOOR':'spoken'-->'ENTER_ROOM'
+[INFO] [WallTime: 1372365992.992767] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372365993.006052] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[WARN] [WallTime: 1372365993.032568] Goalpose2d
+[INFO] [WallTime: 1372365993.119059] Determine_goal, goal = position:    x: 1.017   y: -0.004   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.00249999739583   w: 0.999996875002
+[INFO] [WallTime: 1372365993.124275] State machine transitioning 'DETERMINE_GOAL':'succeeded'-->'GET_PLAN'
+[INFO] [WallTime: 1372365993.127325] Looking for a path
+[INFO] [WallTime: 1372365993.141934] Get_plan, goal = position:    x: 1.017   y: -0.004   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.00249999739583   w: 0.999996875002
+[INFO] [WallTime: 1372365993.254057] Sending goal to x: 1.017 y: -0.004 z: 0
+[INFO] [WallTime: 1372365993.263999] Waiting 0.5s on  call made to execute plan of length 27 to (1.017, -0.004)
+[INFO] [WallTime: 1372365993.779024] State machine transitioning 'GET_PLAN':'succeeded'-->'EXECUTE'
+[INFO] [WallTime: 1372366001.571288] State machine terminating 'EXECUTE':'arrived':'arrived'
+[INFO] [WallTime: 1372366001.583330] State machine terminating 'ENTER_ROOM':'found':'done'
+[INFO] [WallTime: 1372366001.590349] State machine terminating 'ENTER_ROOM':'done':'Done'
+[INFO] [WallTime: 1372366001.592081] State machine transitioning 'START_CHALLENGE':'Done'-->'GOTO_MEETING_POINT'
+[INFO] [WallTime: 1372366001.598189] 'I'm coming to the meeting point!'
+[INFO] [WallTime: 1372366001.659060] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372366001.668561] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[WARN] [WallTime: 1372366001.681364] Goalpose2d
+[INFO] [WallTime: 1372366001.765421] Determine_goal, goal = position:    x: 1.302   y: -1.038   z: 0 orientation:    x: 0.0   y: 0.0   z: 0.296952878397   w: 0.954892134228
+[INFO] [WallTime: 1372366001.766466] State machine transitioning 'DETERMINE_GOAL':'succeeded'-->'GET_PLAN'
+[INFO] [WallTime: 1372366001.766886] Looking for a path
+[INFO] [WallTime: 1372366001.767209] Get_plan, goal = position:    x: 1.302   y: -1.038   z: 0 orientation:    x: 0.0   y: 0.0   z: 0.296952878397   w: 0.954892134228
+[INFO] [WallTime: 1372366001.826185] Sending goal to x: 1.302 y: -1.038 z: 0
+[INFO] [WallTime: 1372366001.828827] Waiting 0.5s on  call made to execute plan of length 23 to (1.302, -1.038)
+[INFO] [WallTime: 1372366002.335086] State machine transitioning 'GET_PLAN':'succeeded'-->'EXECUTE'
+[INFO] [WallTime: 1372366012.234370] State machine terminating 'EXECUTE':'arrived':'arrived'
+[INFO] [WallTime: 1372366012.241566] State machine transitioning 'GOTO_MEETING_POINT':'found'-->'ASK_CLEANUP'
+[INFO] [WallTime: 1372366046.970992] State machine transitioning 'ASK_CLEANUP':'done'-->'DETERMINE_EXPLORATION_TARGET'
+[INFO] [WallTime: 1372366047.014481] Answers for ,(goal(clean_up(Room)), ,(exploration_target(Room, Target), ,(not(explored(Target)), waypoint(Target, pose_2d(X, Y, Phi))))): [{'Y': '-5.915', 'X': '1.681', 'Phi': '-3.059', 'Room': 'kitchen', 'Target': Compound('stove', 'a')}, {'Y': '-7.886', 'X': '1.69', 'Phi': '-3.142', 'Room': 'kitchen', 'Target': Compound('kitchen_counter', 'a')}, {'Y': '-7.007', 'X': '1.664', 'Phi': '-3.136', 'Room': 'kitchen', 'Target': Compound('sink', 'a')}, {'Y': '-6.396', 'X': '1.494', 'Phi': '-0.04', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'a')}, {'Y': '-6.329', 'X': '4.66', 'Phi': '-3.116', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'b')}, {'Y': '-7.344', 'X': '3.98', 'Phi': '-1.528', 'Room': 'kitchen', 'Target': Compound('side_table', 'a')}, {'Y': '-7.099', 'X': '4.857', 'Phi': '-0.053', 'Room': 'kitchen', 'Target': Compound('bar', 'a')}, {'Y': '-6.573', 'X': '4.88', 'Phi': '0.003', 'Room': 'kitchen', 'Target': Compound('bar', 'b')}]
+[INFO] [WallTime: 1372366047.032275] Available targets: [{'Y': '-5.915', 'X': '1.681', 'Phi': '-3.059', 'Room': 'kitchen', 'Target': Compound('stove', 'a')}, {'Y': '-7.886', 'X': '1.69', 'Phi': '-3.142', 'Room': 'kitchen', 'Target': Compound('kitchen_counter', 'a')}, {'Y': '-7.007', 'X': '1.664', 'Phi': '-3.136', 'Room': 'kitchen', 'Target': Compound('sink', 'a')}, {'Y': '-6.396', 'X': '1.494', 'Phi': '-0.04', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'a')}, {'Y': '-6.329', 'X': '4.66', 'Phi': '-3.116', 'Room': 'kitchen', 'Target': Compound('kitchen_table', 'b')}, {'Y': '-7.344', 'X': '3.98', 'Phi': '-1.528', 'Room': 'kitchen', 'Target': Compound('side_table', 'a')}, {'Y': '-7.099', 'X': '4.857', 'Phi': '-0.053', 'Room': 'kitchen', 'Target': Compound('bar', 'a')}, {'Y': '-6.573', 'X': '4.88', 'Phi': '0.003', 'Room': 'kitchen', 'Target': Compound('bar', 'b')}]
+[INFO] [WallTime: 1372366047.047027] Selected target: stove(a)
+[INFO] [WallTime: 1372366047.077913] 'Lets go look at stove(a)'
+[INFO] [WallTime: 1372366048.874290] State machine transitioning 'DETERMINE_EXPLORATION_TARGET':'found_exploration_target'-->'DRIVE_TO_EXPLORATION_TARGET'
+[INFO] [WallTime: 1372366048.878297] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372366048.882711] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[WARN] [WallTime: 1372366048.889825] Goalquery
+[INFO] [WallTime: 1372366048.930717] Determined possible goals for query ,(current_exploration_target(Target), waypoint(Target, pose_2d(X, Y, Phi))): [{'Y': '-5.915', 'X': '1.681', 'Phi': '-3.059', 'Target': Compound('stove', 'a')}]
+[INFO] [WallTime: 1372366049.021244] Determine_goal, goal = position:    x: 1.681   y: -5.915   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.999147427871   w: 0.0412845900953
+[INFO] [WallTime: 1372366049.023965] State machine transitioning 'DETERMINE_GOAL':'succeeded'-->'GET_PLAN'
+[INFO] [WallTime: 1372366049.036084] Looking for a path
+[INFO] [WallTime: 1372366049.043234] Get_plan, goal = position:    x: 1.681   y: -5.915   z: 0 orientation:    x: 0.0   y: 0.0   z: -0.999147427871   w: 0.0412845900953
+[INFO] [WallTime: 1372366049.125841] Sending goal to x: 1.681 y: -5.915 z: 0
+[INFO] [WallTime: 1372366049.134142] Waiting 0.5s on  call made to execute plan of length 102 to (1.681, -5.915)
+[INFO] [WallTime: 1372366049.637506] State machine transitioning 'GET_PLAN':'succeeded'-->'EXECUTE'
+[INFO] [WallTime: 1372366073.034442] State machine terminating 'EXECUTE':'arrived':'arrived'
+[INFO] [WallTime: 1372366073.039008] State machine transitioning 'DRIVE_TO_EXPLORATION_TARGET':'arrived'-->'SAY_LOOK_FOR_OBJECTS'
+[INFO] [WallTime: 1372366073.046380] 'Lets see what I can find here.'
+[INFO] [WallTime: 1372366074.920997] State machine transitioning 'SAY_LOOK_FOR_OBJECTS':'spoken'-->'LOOK'
+[INFO] [WallTime: 1372366074.947483] 1 answers before filtering: [{'Target': Compound('stove', 'a'), 'X': '0.983', 'Y': '-5.973', 'Z': '0.95'}]
+[INFO] [WallTime: 1372366074.955010] [TEST ERIK] LOOKING AT (X = 0.983, Y = -5.973, Z = 0.95)
+x: 0.983
+y: -5.973
+z: 0.95
+[INFO] [WallTime: 1372366074.958068] Target height: 0.95, spindle_target: 0.4
+[INFO] [WallTime: 1372366074.983634] Send spindle goal 0.4, waittime = 5.0
+[INFO] [WallTime: 1372366077.025561] Spindle target reached
+[INFO] [WallTime: 1372366078.650615] Start object recognition
+[INFO] [WallTime: 1372366083.753186] Cannot set perception roi for modules ['template_matching']
+[INFO] [WallTime: 1372366083.757754] Error: timeout exceeded while waiting for service /find_obj_in_roi
+[INFO] [WallTime: 1372366086.278382] Stop object recognition
+[INFO] [WallTime: 1372366086.878354] Querying reasoner
+[INFO] [WallTime: 1372366086.892948] Selecting closest answer
+[INFO] [WallTime: 1372366086.897283] 1 answers before filtering: [{'ObjectID': 'cb1a6cfed3c84eed7924d77d742ab297',
+  'X': '0.931065840367',
+  'Y': '-5.92774788366',
+  'Z': '1.02164739293'}]
+[INFO] [WallTime: 1372366086.918326] Criterium <function <lambda> at 0x2f50668> leaves 1 answers: [{'ObjectID': 'cb1a6cfed3c84eed7924d77d742ab297',
+  'X': '0.931065840367',
+  'Y': '-5.92774788366',
+  'Z': '1.02164739293'}]
+[INFO] [WallTime: 1372366086.934288] Criterium <function <lambda> at 0x2f50cf8> leaves 1 answers: [{'ObjectID': 'cb1a6cfed3c84eed7924d77d742ab297',
+  'X': '0.931065840367',
+  'Y': '-5.92774788366',
+  'Z': '1.02164739293'}]
+[INFO] [WallTime: 1372366086.959339] Asserting new ID
+[INFO] [WallTime: 1372366086.973940] State machine transitioning 'LOOK':'object_found'-->'SAY_FOUND_SOMETHING'
+[INFO] [WallTime: 1372366087.009517] 'I have found a chocolate. I'll' bring it to the side table'
+[INFO] [WallTime: 1372366090.742256] State machine transitioning 'SAY_FOUND_SOMETHING':'spoken'-->'GRAB'
+[INFO] [WallTime: 1372366090.754240] State machine starting in initial state 'PREPARE_GRAB' with userdata: 
+	[]
+[INFO] [WallTime: 1372366090.757368] Send arm to jointcoords [-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42]
+[WARN] [WallTime: 1372366090.774808] Temp spindle target
+[INFO] [WallTime: 1372366090.778971] Send spindle goal 0.4, waittime = 5.0
+[INFO] [WallTime: 1372366090.998232] Spindle target reached
+[INFO] [WallTime: 1372366091.002695] State machine transitioning 'PREPARE_GRAB':'succeeded'-->'PREPARE_ORIENTATION'
+[INFO] [WallTime: 1372366091.009299] State machine starting in initial state 'INITIALIZE_PREPARE_ORIENTATION' with userdata: 
+	[]
+[INFO] [WallTime: 1372366091.035886] State machine transitioning 'INITIALIZE_PREPARE_ORIENTATION':'done'-->'DETERMINE_GRASP_POSE'
+[INFO] [WallTime: 1372366091.046314] Answer(0) = {'Y': '-5.92774788366', 'X': '0.931065840367', 'Z': '1.02164739293', 'ObjectID': 'cb1a6cfed3c84eed7924d77d742ab297'}
+[INFO] [WallTime: 1372366091.174226] State machine transitioning 'DETERMINE_GRASP_POSE':'succeeded'-->'DRIVE_TO_GRASP_POSE'
+[INFO] [WallTime: 1372366091.182083] State machine starting in initial state 'INITIALIZE_NAVIGATE_GENERIC' with userdata: 
+	['goal']
+[INFO] [WallTime: 1372366091.189254] State machine transitioning 'INITIALIZE_NAVIGATE_GENERIC':'done'-->'DETERMINE_GOAL'
+[WARN] [WallTime: 1372366091.194775] Goalquery
+[INFO] [WallTime: 1372366091.211008] Determined possible goals for query base_grasp_pose(pose_2d(X, Y, Phi)): [{'Y': '-5.92774788366', 'X': '1.46958232108', 'Phi': '2.76117893007'}]
+[INFO] [WallTime: 1372366091.281520] Determine_goal, goal = position:    x: 1.46958232108   y: -5.92774788366   z: 0 orientation:    x: 0.0   y: 0.0   z: 0.981965146423   w: 0.189062030059
+[INFO] [WallTime: 1372366091.285902] State machine transitioning 'DETERMINE_GOAL':'succeeded'-->'GET_PLAN'
+[INFO] [WallTime: 1372366091.287207] Looking for a path
+[INFO] [WallTime: 1372366091.287539] Get_plan, goal = position:    x: 1.46958232108   y: -5.92774788366   z: 0 orientation:    x: 0.0   y: 0.0   z: 0.981965146423   w: 0.189062030059
+[INFO] [WallTime: 1372366091.325576] Sending goal to x: 1.46958232108 y: -5.92774788366 z: 0
+[INFO] [WallTime: 1372366091.329211] Waiting 0.5s on  call made to execute plan of length 6 to (1.46958232108, -5.92774788366)
+[INFO] [WallTime: 1372366091.830510] State machine transitioning 'GET_PLAN':'succeeded'-->'EXECUTE'
+[INFO] [WallTime: 1372366093.928780] State machine terminating 'EXECUTE':'arrived':'arrived'
+[INFO] [WallTime: 1372366093.934868] State machine terminating 'DRIVE_TO_GRASP_POSE':'arrived':'orientation_succeeded'
+[INFO] [WallTime: 1372366093.942075] State machine transitioning 'PREPARE_ORIENTATION':'orientation_succeeded'-->'OPEN_GRIPPER'
+[INFO] [WallTime: 1372366095.558476] Gripper target reached
+[INFO] [WallTime: 1372366095.567734] Detaching all objects from gripper. Attached IDs are: {}
+[INFO] [WallTime: 1372366095.600877] State machine transitioning 'OPEN_GRIPPER':'succeeded'-->'UPDATE_OBJECT_POSE'
+[INFO] [WallTime: 1372366095.607140] Trying to update object pose
+[WARN] [WallTime: 1372366095.646257] Spindle timeout temporarily increased to 30 seconds
+[ERROR] [WallTime: 1372366102.116290] InvalidUserCodeError: Could not execute state 'UPDATE_OBJECT_POSE' of type '<robot_smach_states.manipulation.UpdateObjectPose object at 0x7f6bbc04d8d0>': Traceback (most recent call last):
+  File "/opt/ros/fuerte/stacks/executive_smach/smach/src/smach/state_machine.py", line 241, in _update_once
+    self._remappings[self._current_label]))
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_executioner/robot_smach_states/src/robot_smach_states/manipulation.py", line 349, in execute
+    self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_executioner/robot_skills/src/robot_skills/perception.py", line 124, in set_perception_roi
+    rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
+  File "/opt/ros/fuerte/lib/python2.7/dist-packages/rospy/impl/tcpros_service.py", line 142, in wait_for_service
+    raise ROSException("timeout exceeded while waiting for service %s"%resolved_name)
+ROSException: timeout exceeded while waiting for service /find_obj_in_roi
+
+[ERROR] [WallTime: 1372366102.119320] State 'GRAB' failed to execute.
+[ERROR] [WallTime: 1372366102.121614] Amigo exited with smach.exceptions.InvalidUserCodeError,<smach.exceptions.InvalidUserCodeError instance at 0x7f6bb4054128>,<traceback object at 0x7f6bb40abbd8>
+[INFO] [WallTime: 1372366102.122786] Base cancelling goal on close
+[INFO] [WallTime: 1372366102.125693] Spindle cancelling all goals on close
+[INFO] [WallTime: 1372366102.126003] Arms cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1372366102.126967] Arms cancelling all goals on all arm-related ACs on close
+[INFO] [WallTime: 1372366102.130277] Arms cancelling all goals on all arm-related ACs on close
+Traceback (most recent call last):
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_robocup/challenge_cleanup/src/clean_up.py", line 426, in <module>
+    startup(Cleanup)
+  File "/home/amigo/ros/fuerte/tue/trunk/tue_executioner/robot_smach_states/src/robot_smach_states/util/startup.py", line 56, in startup
+    outcome = executioner.execute()
+  File "/opt/ros/fuerte/stacks/executive_smach/smach/src/smach/state_machine.py", line 347, in execute
+    container_outcome = self._update_once()
+  File "/opt/ros/fuerte/stacks/executive_smach/smach/src/smach/state_machine.py", line 244, in _update_once
+    raise ex
+smach.exceptions.InvalidUserCodeError: <smach.exceptions.InvalidUserCodeError instance at 0x7f6bb4054128>
