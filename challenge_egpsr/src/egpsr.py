@@ -337,23 +337,35 @@ class Finished_goal(smach.State):
             new_tasks_done = 1.0 + tasks_done[0].get_number()
 
             # Update status tasks_done in reasoner
-            self.robot.reasoner.query(Compound("retract", Compound("tasks_done", tasks_done[0])))
+            self.robot.reasoner.query(Compound("retractall", Compound("tasks_done", tasks_done[0])))
             self.robot.reasoner.query(Compound("assertz", Compound("tasks_done", new_tasks_done)))
 
         raw_goals = self.robot.reasoner.query(Compound("goal", "Action","Loc_from","Loc_to","Object_action","Object_room","Object_location"))
         
-        goals = [(answer["Action"], answer["Loc_from"], answer["Loc_to"], answer["Object_action"],answer["Object_room"],answer["Object_location"]) for answer in raw_goals]       
-        action,loc_from,loc_to,object_action,object_room,object_location = min(goals)
+        if not raw_goals:
+            rospy.logerr("No goals found in database. Should not happen.")
+            return "new_task"
+        else:
+            goals = [(answer["Action"], answer["Loc_from"], answer["Loc_to"], answer["Object_action"],answer["Object_room"],answer["Object_location"]) for answer in raw_goals]       
+            action,loc_from,loc_to,object_action,object_room,object_location = min(goals)
 
-        action = action.get_string()
-        loc_from = loc_from.get_string()
-        loc_to = loc_to.get_string()
-        object_action = object_action.get_string()
-        object_room = object_room.get_string()
-        object_location = object_location.get_string()
+            action = action.get_string()
+            loc_from = loc_from.get_string()
+            loc_to = loc_to.get_string()
+            object_action = object_action.get_string()
+            object_room = object_room.get_string()
+            object_location = object_location.get_string()
 
-        self.robot.reasoner.query(Compound("assertz", Compound("goal_done", new_tasks_done,action,loc_from,loc_to,object_action,object_room,object_location)))
-        self.robot.reasoner.query(Compound("retract", Compound("goal", action,loc_from,loc_to,object_action,object_room,object_location)))
+            self.robot.reasoner.query(Compound("assertz", Compound("goal_done", new_tasks_done,action,loc_from,loc_to,object_action,object_room,object_location)))
+            self.robot.reasoner.query(Compound("retractall", Compound("goal", action,loc_from,loc_to,object_action,object_room,object_location)))
+            rospy.loginfo("[EGPSR TEST] Finished goal retracted")
+
+            goal_after_retract = self.robot.reasoner.query(Compound("goal", "Action","Loc_from","Loc_to","Object_action","Object_room","Object_location"))
+        
+            if not goal_after_retract:
+                rospy.loginfo("[EGPSR TEST]No goals found in database. CORRECT.")
+            else:
+                rospy.loginfo("[EGPSR TEST] Goal is found after retracting goal. SHOULD NOT HAPPEN!!!")
 
 
         # Check if tasks done equals maximum number of tasks that needs to be done
@@ -393,27 +405,39 @@ class Failed_goal(smach.State):
             new_tasks_failed = 1.0 + tasks_failed[0].get_number()
 
             # Update status tasks_done in reasoner
-            self.robot.reasoner.query(Compound("retract", Compound("tasks_failed", tasks_failed[0])))
+            self.robot.reasoner.query(Compound("retractall", Compound("tasks_failed", tasks_failed[0])))
             self.robot.reasoner.query(Compound("assertz", Compound("tasks_failed", new_tasks_failed)))
 
         raw_goals = self.robot.reasoner.query(Compound("goal", "Action","Loc_from","Loc_to","Object_action","Object_room","Object_location"))
         
-        goals = [(answer["Action"], answer["Loc_from"], answer["Loc_to"], answer["Object_action"],answer["Object_room"],answer["Object_location"]) for answer in raw_goals]       
-        action,loc_from,loc_to,object_action,object_room,object_location = min(goals)
+        if not raw_goals:
+            rospy.logerr("No goals found in database. Should not happen.")
+            return "new_task"
+        else:
+            goals = [(answer["Action"], answer["Loc_from"], answer["Loc_to"], answer["Object_action"],answer["Object_room"],answer["Object_location"]) for answer in raw_goals]       
+            action,loc_from,loc_to,object_action,object_room,object_location = min(goals)
 
-        action = action.get_string()
-        loc_from = loc_from.get_string()
-        loc_to = loc_to.get_string()
-        object_action = object_action.get_string()
-        object_room = object_room.get_string()
-        object_location = object_location.get_string()
+            action = action.get_string()
+            loc_from = loc_from.get_string()
+            loc_to = loc_to.get_string()
+            object_action = object_action.get_string()
+            object_room = object_room.get_string()
+            object_location = object_location.get_string()
 
-        self.robot.reasoner.query(Compound("assertz", Compound("goal_failed", new_tasks_failed,action,loc_from,loc_to,object_action,object_room,object_location)))
-        self.robot.reasoner.query(Compound("retract", Compound("goal", action,loc_from,loc_to,object_action,object_room,object_location)))
+            self.robot.reasoner.query(Compound("assertz", Compound("goal_failed", new_tasks_failed,action,loc_from,loc_to,object_action,object_room,object_location)))
+            self.robot.reasoner.query(Compound("retractall", Compound("goal", action,loc_from,loc_to,object_action,object_room,object_location)))
+            rospy.loginfo("[EGPSR] Failed goal = retracted")
 
-        #rospy.loginfo("Number of failed tasks = {0}".format(new_tasks_failed))           
+            goal_after_retract = self.robot.reasoner.query(Compound("goal", "Action","Loc_from","Loc_to","Object_action","Object_room","Object_location"))
+        
+            if not goal_after_retract:
+                rospy.loginfo("[EGPSR TEST]No goals found in database. CORRECT.")
+            else:
+                rospy.loginfo("[EGPSR TEST] Goal is found after retracting goal. SHOULD NOT HAPPEN!!!")
 
-        return "new_task"
+            #rospy.loginfo("Number of failed tasks = {0}".format(new_tasks_failed))           
+
+            return "new_task"
 
 
 # It is important for the EGPSR to get back to the meeting point!! Otherwise restart, therefore understanding solution.
@@ -493,7 +517,7 @@ def setup_statemachine(robot):
     #Assert the current challenge.
     robot.reasoner.query(Compound("assertz",Compound("challenge", "egpsr")))
     robot.reasoner.query(Compound("assertz",Compound("tasks_done", "0.0")))
-    robot.reasoner.query(Compound("assertz",Compound("tasks_max", "10.0")))  # Define how many tasks you want to perform
+    robot.reasoner.query(Compound("assertz",Compound("tasks_max", "20.0")))  # Define how many tasks you want to perform
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -569,6 +593,17 @@ def setup_statemachine(robot):
                                                 'action_navigate':'SUB_SM_NAVIGATE',
                                                 'action_leave':'SUB_SM_LEAVE',
                                                 'error':'FINISHED_TASK'})
+
+        # smach.StateMachine.add("QUERY_SPECIFIC_ACTION",
+        #                         Query_specific_action(robot),
+        #                         transitions={   'action_get':'FAILED_TASK',
+        #                                         'action_transport':'FAILED_TASK',
+        #                                         'action_point':'FAILED_TASK',
+        #                                         'action_find':'FAILED_TASK',
+        #                                         'action_navigate':'FAILED_TASK',
+        #                                         'action_leave':'FAILED_TASK',
+        #                                         'error':'FINISHED_TASK'})
+        
 
         #################### EXECUTE GET #####################
 
