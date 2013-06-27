@@ -60,7 +60,7 @@ class WaitForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return "unknown_person"
-        rospy.sleep(3)
+        #rospy.sleep(3)
 
         wait_machine = Wait_query_true(self.robot, query_detect_person, 10)
         wait_result = wait_machine.execute()
@@ -78,15 +78,16 @@ class WaitForPerson(smach.State):
             self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!")
             return "waiting"
         elif wait_result == "query_true":
+            return "unknown_person"
             # check if we already know the person (the ID then already has a name in the world model)
             # PERSON UNKNOWN IS ASSERTED
-            res = self.robot.reasoner.query(Compound("property_expected", "ObjectID", "name", "Name"))
-            if not res:
-                return "unknown_person"
-            else:
-                self.robot.speech.speak("Hello " + str(res[0]["Name"]) + "!")
-                #self.robot.reasoner.query(Compound("assert", Compound("current_person", res[0]["Name"])))
-                return "known_person"
+            # res = self.robot.reasoner.query(Compound("property_expected", "ObjectID", "name", "Name"))
+            # if not res:
+            #     return "unknown_person"
+            # else:
+            #     self.robot.speech.speak("Hello " + str(res[0]["Name"]) + "!")
+            #     #self.robot.reasoner.query(Compound("assert", Compound("current_person", res[0]["Name"])))
+            #     return "known_person"
 
 # class LearnPersonName(smach.State):
 #     def __init__(self, robot):
@@ -264,12 +265,12 @@ class LookForDrink(smach.State):
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
         if not object_answers:
-            object_answer = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+            object_answer_alternative = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
-            if not object_answer:
+            if not object_answer_alternative:
                 return "not_found"
 
-            grasp_drink = str(object_answer[0]["Drink"])
+            grasp_drink = str(object_answer_alternative[0]["Drink"])
             self.robot.speech.speak("I did not find your object, but will bring you a " + str(grasp_drink))
             self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", grasp_drink))))
             return "found"
@@ -297,11 +298,6 @@ class LookForPerson(smach.State):
 
         serving_person = str(return_result[0]["Person"])
 
-        # Move to the next waypoint in the party room
-    
-       
-                                    
-        
         # Move to the next waypoint in the party room
         goal_answers = self.robot.reasoner.query(Conjunction(  
                                                      Compound("=", "Waypoint", Compound("maxima_initial")),
@@ -365,7 +361,7 @@ class LookForPerson(smach.State):
         self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you")
 
 
-        self.robot.perception.toggle(["face_recognition", "face_segmentation"])
+        self.robot.perception.toggle(["face_recognition"])
         rospy.sleep(5.0)
         self.robot.perception.toggle([])
 
@@ -386,7 +382,7 @@ class LookForPerson(smach.State):
             for name_possibility in name_pmf:
                 print name_possibility
                 prob = float(name_possibility[0])
-                if prob > 0.08 and prob > name_prob:
+                if prob > 0.01 and prob > name_prob:
                     name = str(name_possibility[1][0])
                     name_prob = prob
 
