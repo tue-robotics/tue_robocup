@@ -120,11 +120,12 @@ class DetermineGoal(smach.State):
 
         self.robot.speech.speak("I have found {0} possible object locations".format(len(answers)))
 
+        (position, orientation) = self.robot.base.get_location()
         counter = 0
         location_list = []
         for answer in answers:
             location_list.append({'X' : answer['X'], 'Y' : answer['Y'], 'Z': answer['Z']})
-            location_list = sorted(location_list, key=lambda p: abs(float(p['Y'])))
+            location_list = sorted(location_list, key=lambda p: (position.y - float(p['Y']))**2 + (position.x - float(p['X']))**2)
         for point in location_list:
             self.robot.reasoner.assertz(Compound("goal_location", ("a" + str(counter)), Compound("point_3d", point["X"], point["Y"], point["Z"])))
             counter += 1
@@ -276,7 +277,7 @@ class PersonOrPrior(smach.State):
         if humans_in_roi:
             self.robot.speech.speak("I am going to return the object to a person!")
             self.robot.reasoner.query(Compound("retractall", Compound("deliver_goal", "A")))
-            self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", humans_in_roi[0]['X'], humans_in_roi[0]['Y'], humans_in_roi[0]['Z'])))
+            self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", float(humans_in_roi[0]['X']) - 0.5, humans_in_roi[0]['Y'], humans_in_roi[0]['Z'])))
             return 'at_person'
         else:
             query_prior = Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))
