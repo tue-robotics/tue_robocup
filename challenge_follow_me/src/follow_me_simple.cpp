@@ -832,15 +832,18 @@ int main(int argc, char **argv) {
 
     double t1 = ros::Time::now().toSec();
     speech_interpreter::GetInfo srv_test;
-    srv_test.request.n_tries = 6;
-    srv_test.request.time_out = 60.0;
+    srv_test.request.n_tries = 1;
+    srv_test.request.time_out = 10.0;
     srv_test.request.type = "continue_confirm";
-    if (speech_client_.call(srv_test) && srv_test.response.answer == "continue") {
-        ROS_INFO("Received true");
-    } else {
-        ROS_WARN("I heard %s - start anyway", srv_test.response.answer.c_str());
-    }
+    string answer = "";
+    while (answer != "continue" &&
+           ros::Time::now().toSec() - t1 < 60.0) {
+        if (speech_client_.call(srv_test)) {
+            answer = srv_test.response.answer;
+        }
 
+        ROS_INFO("Currently, answer =  %s", answer.c_str());
+    }
     ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
 
     // Non-blocking
