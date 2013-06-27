@@ -463,8 +463,6 @@ class GotoMeetingPointRobustEGPSR(smach.StateMachine):
                                                     'goal_not_defined':'not_at_loc'})
 
 
-
-
 ########################
 ##### STATEMACHINE #####
 ########################
@@ -547,6 +545,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("RETRACT_UNREACHABLE",
                                 states.Retract_facts(robot, [Compound("unreachable", "X")]),
+                                transitions={'retracted':'RETRACT_DISPOSED'})
+
+        smach.StateMachine.add("RETRACT_DISPOSED",
+                                states.Retract_facts(robot, [Compound("disposed", "X")]),
                                 transitions={'retracted':'RESET_HEAD_SPINDLE'})
 
         smach.StateMachine.add("RESET_HEAD_SPINDLE",
@@ -1100,7 +1102,7 @@ def setup_statemachine(robot):
                                 transitions={'done':'ASK_ACTION'})
         
         # smach.StateMachine.add("RESET_ARMS_SPINDLE_HEAD",
-        #                         ResetArmsSpindleHead(robot),
+        #                         states.ResetArmsSpindleHead(robot),
         #                         transitions={'done':'GIVE_ACTION_WITHOUT_MIC'})
         
         ######################################################
