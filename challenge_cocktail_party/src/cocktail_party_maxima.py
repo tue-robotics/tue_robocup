@@ -140,21 +140,19 @@ class LearnPersonName(smach.State):
                 self.response.answer = "michael"
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
-                self.robot.speech.speak("I will call you Maxima")
+                self.robot.speech.speak("I did not get an answer, I will call you Maxima")
                 self.response.answer = "maxima"
                 self.person_learn_failed = 1
 
         self.robot.reasoner.query(Compound("assert", Compound("current_person", self.response.answer)))
             
-
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
             self.robot.speech.speak("That's horrible, did not get a name!")
             return "failed"
 
         serving_person = str(return_result[0]["Person"])
-
-        self.robot.speech.speak("Hello, her Majesty " + serving_person + "!")
+        self.robot.speech.speak("Hello, your Majesty " + serving_person + "!")
         return "learned"
 
 
@@ -189,7 +187,7 @@ class LearnPersonCustom(smach.State):
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
             self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
-            return "not_found"
+            return "face_learned"
 
         serving_person = str(return_result[0]["Person"])
 
@@ -265,14 +263,21 @@ class LookForDrink(smach.State):
         object_answers = self.robot.reasoner.query(Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+        if not object_answers:
+            object_answer = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+                                                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
+            if not object_answer:
+                return "not_found"
+
+            grasp_drink = str(object_answer[0]["Drink"])
+            self.robot.speech.speak("I did not find your object, but will bring you a " + str(grasp_drink))
+            self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", grasp_drink))))
+            return "found"
 
         if object_answers:
             self.robot.speech.speak("Hey, I found your " + serving_drink)
             return "found"
         else:
-            self.robot.speech.speak("Did not find the drink!")
-            if str(object_answers[0]["Drink"]) == "coke":
-                rospy.loginfo('Did find a coke though')
             return "not_found"
 
 class LookForPerson(smach.State):
@@ -530,7 +535,6 @@ class CocktailParty(smach.StateMachine):
             with persons_iterator:
                 single = smach.StateMachine(outcomes=['served', 'not_served'])
                 with single:
-                    #TODO: Retract visited(X) befor elooking for a person back again.
                     smach.StateMachine.add( "RETRACT_VISITED",
                                             Retract_facts(robot, [Compound("visited", "X")]),
                                             transitions={"retracted":"WAIT_FOR_PERSON"})
@@ -555,17 +559,6 @@ class CocktailParty(smach.StateMachine):
                                             Ask_drink(robot),
                                             transitions={   "done":"LOOK_FOR_DRINK",
                                                             "failed":"TAKE_ORDER"})
-                    
-                    # smach.StateMachine.add('TAKE_ORDER', 
-                    #                         Timedout_QuestionMachine(
-                    #                                 robot=robot,
-                    #                                 default_option = "coke", 
-                    #                                 sentence = "What would you like to drink?", 
-                    #                                 options = { "coke":Compound("goal", Compound("serve", "coke")),
-                    #                                             "fanta":Compound("goal", Compound("serve", "fanta"))
-                    #                                           }),
-                    #                         transitions={   'answered':'LOOK_FOR_DRINK',
-                    #                                         'not_answered':'TAKE_ORDER'})
                        
                     smach.StateMachine.add( 'LOOK_FOR_DRINK',
                                             LookForDrink(robot),
@@ -576,7 +569,7 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
                                             Say(robot, ["I could not find the drink you wanted.", 
                                                         "I looked really hard, but I couldn't find your drink."]),
-                                            transitions={   'spoken':'GOTO_INITIAL_FAIL' }) 
+                                            transitions={   'spoken':'HUMAN_HANDOVER' }) 
 
                     smach.StateMachine.add( 'PICKUP_DRINK',
                                             GrabMachine(arm, robot, query_grabpoint),
@@ -587,7 +580,7 @@ class CocktailParty(smach.StateMachine):
                                             Say(robot, ["I could not pick up the drink you wanted", 
                                                         "I failed to grab the object you wanted."]),
                                             transitions={   'spoken':'HUMAN_HANDOVER' }) 
-                    # NOW IF FAILED, THE ROBOT INFINITLY LOOPS TRYING TO GRAPS
+
                     smach.StateMachine.add( 'HUMAN_HANDOVER',
                                             Human_handover(arm,robot),
                                             transitions={   'succeeded':'RETRACT_VISITED_2',
@@ -607,7 +600,7 @@ class CocktailParty(smach.StateMachine):
                                             Say(robot, ["I could not find you.", 
                                                         "I can't find you. I really don't like fluids.",
                                                         "I could not find you."]),
-                                            transitions={   'spoken':'HANDOVER_DRINK_UNKNOWN_PERSON' }) #GOTO_INITIAL_FAIL
+                                            transitions={   'spoken':'HANDOVER_DRINK' }) #GOTO_INITIAL_FAIL
 
                     smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
                                             HandoverToUnknownHuman(robot),

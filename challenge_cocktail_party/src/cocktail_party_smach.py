@@ -249,7 +249,7 @@ class LearnPersonCustom(smach.State):
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
         if not return_result:
             self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
-            return "not_found"
+            return "face_learned"
 
         serving_person = str(return_result[0]["Person"])
 
