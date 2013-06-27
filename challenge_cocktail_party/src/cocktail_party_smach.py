@@ -234,10 +234,6 @@ class Ask_drink(smach.State):
                 self.robot.speech.speak("I will just bring you a coke")
                 self.response.answer = "coke"
 
-        if self.response.answer == "beer_can":
-            self.response.answer = "coke"
-            rospy.logwarn("Changed beer_can to coke!")        
-        rospy.loginfo("self.response = {0}".format(self.response.answer))
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", self.response.answer))))
         return "done"
@@ -282,7 +278,7 @@ class LookForDrink(smach.State):
         if not return_result:
             self.robot.speech.speak("I forgot which drink you wanted")
             return "not_found"
-        serving_drink = str(return_result[0]["Drink"])    
+        serving_drink = str(return_result[0]["Drink"])  
 
         # navigate to drink location
         goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("storage_room", "W")),
@@ -342,9 +338,11 @@ class LookForDrink(smach.State):
                                           Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
 
+
         self.robot.speech.speak("Let's see what I can find here")
 
         # start template matching
+
         self.response_start = self.robot.perception.toggle(['template_matching'])
  
         if self.response_start.error_code == 0:
@@ -462,7 +460,7 @@ class LookForPerson(smach.State):
  
         if not person_result:
             self.robot.head.set_pan_tilt(tilt=0.2)
-            self.robot.speech.speak("No one here. Checking for sitting persons!")
+            #self.robot.speech.speak("No one here. Checking for sitting persons!")
 
             self.response_start = self.robot.perception.toggle(["face_segmentation"])
             if self.response_start.error_code == 0:
@@ -505,6 +503,7 @@ class PersonFound(smach.State):
                                     Compound( "not", Compound("registered", "ObjectID")))
 
         person_detection_result = self.robot.reasoner.query(person_query)
+        rospy.loginfo("I found {0} peoples". format(len(person_detection_result)))
 
         # Drive to person
         nav = Navigate_to_queryoutcome_point_cocktail(self.robot, person_query, X="X", Y="Y", Z="Z")
@@ -590,7 +589,7 @@ class PersonFound(smach.State):
                 self.robot.speech.speak("Hello " + str(name)) 
                 return "correct"       
         else:
-            self.robot.speech.speak("I thought there was someone standing here, but I'm mistaken.")
+            self.robot.speech.speak("I thought there was someone here, but I'm mistaken.")
             if len(person_detection_result) > 1:
                 return 'persons_unchecked'
             rospy.loginfo("No person names received from world model") 
