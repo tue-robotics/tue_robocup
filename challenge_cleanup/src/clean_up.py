@@ -48,6 +48,46 @@ class Ask_cleanup(smach.State):
             
         return "done"
 
+class StupidHumanDropoff(smach.StateMachine):
+    def __init__(self, arm, robot, dropoff_query):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed', 'target_lost'])
+
+        with self:
+            smach.StateMachine.add( "DROPOFF_OBJECT",
+                                    states.PrepareOrientation(arm, robot, dropoff_query),
+                                    transitions={   'orientation_succeeded':'ASK_TAKE_FROM_HAND',
+                                                    'orientation_failed':'ASK_TAKE_FROM_HAND',
+                                                    'abort':'failed',
+                                                    'target_lost':'target_lost'})
+
+            smach.StateMachine.add("ASK_TAKE_FROM_HAND", 
+                                    states.Say(robot, ["Please take this from my hand, I'm not confident that I can place to object safely"]),
+                                    transitions={   'spoken':'HANDOVER_TO_HUMAN_1'})
+
+            smach.StateMachine.add("HANDOVER_TO_HUMAN_1", 
+                                    states.Say(robot, [ "Be careful, I will open my gripper now"]),
+                                    transitions={   'spoken':'OPEN_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', 
+                                    states.SetGripper(robot, arm, gripperstate=ArmState.OPEN),
+                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                                 'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
+                                    states.SetGripper(robot, arm, gripperstate=ArmState.CLOSE),
+                                    transitions={'succeeded'    :   'RESET_ARM',
+                                                 'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add('RESET_ARM', 
+                                    states.ArmToJointPos(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
+                                    transitions={   'done'      :'RESET_TORSO',
+                                                  'failed'      :'RESET_TORSO'    })
+
+            smach.StateMachine.add('RESET_TORSO',
+                                    states.ResetTorso(robot),
+                                    transitions={'succeeded'    :'succeeded',
+                                                 'failed'       :'failed'})
+
 class Cleanup(smach.StateMachine):
 
     def __init__(self, robot):
@@ -256,7 +296,7 @@ class Cleanup(smach.StateMachine):
                     answers = robot.reasoner.query(query_dropoff_loc)
                     _type = answers[0]["ObjectType"]
                     dropoff = answers[0]["Disposal_type"]
-                    return "I have found a {0}. I'll' dispose it to the {1}".format(_type, dropoff).replace("_", " ")
+                    return "I have found a {0}. I'll' bring it to the {1}".format(_type, dropoff).replace("_", " ")
                 except Exception, e:
                     rospy.logerr(e)
                     try:
@@ -288,17 +328,23 @@ class Cleanup(smach.StateMachine):
                         smach.CBState(reset_head),
                         transitions={"done":"DROPOFF_OBJECT"})
 
+            # smach.StateMachine.add("DROPOFF_OBJECT",
+            #                         #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
+            #                         #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
+            #                         states.DropObject(arm, robot, query_dropoff_loc),
+            #                         transitions={   'succeeded':'MARK_DISPOSED',
+            #                                         'failed':'MARK_DISPOSED',
+            #                                         'target_lost':'DONT_KNOW_DROP'})
+
             smach.StateMachine.add("DROPOFF_OBJECT",
-                                    #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
-                                    #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
-                                    states.DropObject(arm, robot, query_dropoff_loc),
+                                    StupidHumanDropoff(arm, robot, query_dropoff_loc),
                                     transitions={   'succeeded':'MARK_DISPOSED',
                                                     'failed':'MARK_DISPOSED',
                                                     'target_lost':'DONT_KNOW_DROP'})
             
             smach.StateMachine.add("DONT_KNOW_DROP", 
                                     states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trash bin."),
-                                    transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'}) #TODO: Dont abort, do something smart!
+                                    transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'})
 
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
                                     states.DropObject(arm, robot, query_dropoff_loc_backup),
