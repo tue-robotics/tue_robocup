@@ -66,11 +66,16 @@ bool freeze_amigo_ = false;                                                     
 bool candidate_freeze_amigo_ = false;                                             // Bookkeeping: true if robot is asked to stop
 bool stored_location = false;                                                     // Bookkeeping: true if robot another location must be learned
 bool finished = false;                                                            // Bookkeeping: true if robot must go to ordering location
+bool candidate_ask_side = false;                                                  // Bookkeeping: true if robot will ask for a side
+bool ask_side = false;                                                            // Bookkeeping: true if robot wants confirmation for a side
 int state = 0;                                                                    // Bookkeeping: state
 unsigned int n_locations_deliver_ = 0;                                            // Bookkeeping: number of locations learned
 unsigned int n_shelves_ = 0;                                                      // Bookkeeping: number of shelves learned
 double t_freeze_ = 0;                                                             // Bookkeeping: time the robot is frozen
 bool speech_recognition_on = false;                                               // Bookkeeping: speech switched on/off
+string current_side_ = "";                                                        // Bookkeeping: current side
+unsigned int n_fails_side = 0;                                                    // Bookkeeping: avoid infinite 'ask side' loops
+string current_location_name_;                                                    // Bookkeeping: current location name
 
 //! Action clients
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_;           // Communication: Move base action client
@@ -366,7 +371,6 @@ void amigoSpeak(string sentence, bool block = true) {
 
     bool toggle_speech = speech_recognition_on;
     if (toggle_speech) stopSpeechRecognition();
-    if (toggle_speech) stopSpeechRecognition();
 
     //! Call speech service
     text_to_speech_philips::Speak speak;
@@ -384,6 +388,7 @@ void amigoSpeak(string sentence, bool block = true) {
     }
 
     if (toggle_speech) startSpeechRecognition();
+
 
     setRGBLights("green");
 
@@ -749,7 +754,7 @@ void speechCallback(std_msgs::String res) {
     }        
 
     //// AMIGO STOP
-    if (res.data == "amigostop") {
+    if (res.data == "amigostop" && !candidate_ask_side && ! candidate_freeze_amigo_ && !ask_side && !freeze_amigo_) {
         candidate_freeze_amigo_ = true;
         amigoSpeak("Do you want me to stop?");
         t_freeze_ = ros::Time::now().toSec();
@@ -790,29 +795,26 @@ void speechCallback(std_msgs::String res) {
     }
 
     //// AMIGO ASKED: PICKUP LOCATION
-    else if (freeze_amigo_) {
+    else if (freeze_amigo_ && !candidate_ask_side && !ask_side) {
 
 
         // Get position
         tf::StampedTransform trans;
         listener->lookupTransform("/map", "/base_link", ros::Time(0), trans);
 
-        // Create marker
-        visualization_msgs::MarkerArray marker_array;
-
         // Get location:
-        std::stringstream location_name;
+        std::stringstream current_location_stream;
 
         // Marker color
-        double r = 0, g = 0, b = 0;
+        //double r = 0, g = 0, b = 0;
 
         // Answer is yes: indeed a shelf
         if (res.data == "yes") {
 
             // Administration
-            r = 1;
+            //r = 1;
             ++n_shelves_;
-            location_name << "shelf" << n_shelves_;
+            current_location_stream << "shelf" << n_shelves_;
 
             // Ask for a side
             amigoSpeak("Where do I find the shelf?");
@@ -822,20 +824,25 @@ void speechCallback(std_msgs::String res) {
         else {
 
             // Administration
-            g = 1;
+            //g = 1;
             ++n_locations_deliver_;
-            location_name << "delivery location" << n_locations_deliver_;
+            current_location_stream << "delivery location" << n_locations_deliver_;
 
             // Ask for a side
             amigoSpeak("Where do I find the delivery location?");
         }
 
-        // Get side from speech interpreter (left/right/front)
+        current_location_name_ = current_location_stream.str();
+        location_map_[current_location_name_] = trans;
+
+        /*
+        // Ask The side (left/right/front)
         resetRGBLights();
         string answer = "";
         if (callInterpreter("side", answer)) {
             ROS_WARN("Service call to speech interpreter fail: no side available");
         }
+        
 
         // Determine corresponding theta
         double theta = 0;
@@ -850,7 +857,7 @@ void speechCallback(std_msgs::String res) {
         q *= offset;
         trans.setRotation(q);
         ROS_INFO("After update orientation is (%f,%f,%f,%f)", q.getW(), q.getX(), q.getY(), q.getZ());
-
+		
 
         // Store location
         location_map_[location_name.str()] = trans;
@@ -860,29 +867,29 @@ void speechCallback(std_msgs::String res) {
         // Publish marker
         createMarkerWithLabel(location_name.str(), trans, r, g, b, marker_array);
         location_marker_pub_.publish(marker_array);
-
+        
+        */
 
         //! Inform user
-        string sentence = "I will call this location " + location_name.str();
+        string sentence = "I will call this location " + current_location_name_;
         amigoSpeak(sentence);
-        amigoSpeak("Do you want to learn another location?");
+
+        //! Next question
+        amigoSpeak("Which side should I remember?");
+        candidate_ask_side = true;
 
         //! Sleep (amigoSpeak is blocking)
         //ROS_INFO("I will sleep");
-        //ros::Duration delta(7.0);
+        //ros::Duration delta(1.0);
         //delta.sleep();
-        //ROS_INFO("Sleep is over");
 
-        // Administration
-        freeze_amigo_ = false;
-        stored_location = true;
 
     }
     //// AMIGO MUST LEARN ANOTHER LOCATION
     else if (stored_location &&  res.data == "yes") {
         finished = false;
         stored_location = false;
-        amigoSpeak("Alright");
+        amigoSpeak("Let's go on");
 
         // Rotate to clear guide from the map
         //amigoRotate(1.5);
@@ -897,7 +904,84 @@ void speechCallback(std_msgs::String res) {
         // Rotate to clear guide from the map
         //amigoRotate(1.5);
     }
-    /////
+    //// AMIGO MUST ASK FOR A SIDE
+    else if (candidate_ask_side && (res.data == "front" || res.data == "left" || res.data == "right")) {
+
+        current_side_ = res.data;
+        amigoSpeak("I heard " + current_side_ + " is that correct?");
+        ask_side = true;
+        candidate_ask_side = false;
+    }
+    //// SIDE CONFIRMED
+    else if ((ask_side && res.data == "yes") || (ask_side && n_fails_side >= 2)) {
+
+        if (n_fails_side < 2) {
+            amigoSpeak("Thank you. Do you want to learn another location?");
+        }
+        else {
+            amigoSpeak("I don't get the side, I assume you mean front.");
+        }
+
+        // Administration
+        n_fails_side = 0;
+        freeze_amigo_ = false;
+        ask_side = false;
+        stored_location = true;
+
+        // Get transformation that was stored
+        ROS_INFO("Get transformation for %s", current_location_name_.c_str());
+        if (location_map_.find(current_location_name_) == location_map_.end()) {
+            ROS_WARN("Administration error!");
+
+            candidate_freeze_amigo_ = true;
+            amigoSpeak("Administration error. Do you want me to stop?");
+            t_freeze_ = ros::Time::now().toSec();
+            return;
+        }
+
+        tf::StampedTransform trans = location_map_[current_location_name_];
+
+        // Determine corresponding theta
+        double theta = 0;
+        if (current_side_ == "left") theta = 1.57;
+        else if (current_side_ == "right") theta = -1.57;
+
+        // Set updated orientation
+        tf::Quaternion q = trans.getRotation();
+        tf::Quaternion offset;
+        offset.setRPY(0, 0, theta);
+        q += offset;
+        trans.setRotation(q);
+
+
+        // Store location
+        location_map_[current_location_name_] = trans;
+        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",
+                 current_location_name_.c_str() ,trans.getOrigin().x(), trans.getOrigin().y());
+
+        // Publish marker
+        visualization_msgs::MarkerArray marker_array;
+        createMarkerWithLabel(current_location_name_, trans, 1, 0, 0, marker_array);
+        location_marker_pub_.publish(marker_array);
+    }
+    //// SIDE NOT CONFIRMED
+    else if (ask_side && res.data != "yes" && n_fails_side < 2) {
+
+        amigoSpeak("Sorry. Which side should I remember?");
+
+        // Administration
+        candidate_ask_side = true;
+        ask_side = false;
+
+        ++n_fails_side;
+
+    }
+    //// ASK SIDE RESULTED IN UNKNOWN INPUT
+    else if (candidate_ask_side) {
+        amigoSpeak("I misunderstood, which side should I remember?");
+        ++n_fails_side;
+    }
+    //// MISUNDERSTOOD SIDE TOO MANY TIMES
 
     // always immediately start listening again
     startSpeechRecognition();
@@ -1335,6 +1419,13 @@ int main(int argc, char **argv) {
         }
     }
 
+    //! Start speech recognition
+    speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
+    speech_recognition_client_.waitForExistence();
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback);
+    startSpeechRecognition();
+    ROS_INFO("Started speech recognition");
+
     //! Clients for reasoner and WIRE for objects
     ROS_INFO("Connecting to WIRE...");
     wire::Client client;
@@ -1343,17 +1434,9 @@ int main(int argc, char **argv) {
     reasoner_client = new psi::Client("reasoner");
     ROS_INFO("Connected!");
 
-
     //! Client that allows reseting WIRE
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     ROS_INFO("Service /wire/reset");
-
-    //! Start speech recognition
-    speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
-    speech_recognition_client_.waitForExistence();
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallback);
-    startSpeechRecognition();
-    ROS_INFO("Started speech recognition");
 
     //! Always clear the world model
     std_srvs::Empty srv;
