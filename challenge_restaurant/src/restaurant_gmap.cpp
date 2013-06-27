@@ -1463,13 +1463,15 @@ int main(int argc, char **argv) {
     //! Connect to grab machine
     grab_machine_client_ = nh.serviceClient<challenge_restaurant::SmachStates>("/smach_states");
 
-    //! Wait for start signal TODO: srv type is?
+    //! Wait for start signal
+    speech_client_.waitForExistence(ros::Duration(5.0));
+    amigoSpeak("I will start when you say continue");
     double t1 = ros::Time::now().toSec();
     speech_interpreter::GetInfo srv_test;
     srv_test.request.n_tries = 6;
     srv_test.request.time_out = 60.0;
     srv_test.request.type = "continue_confirm";
-    if (speech_client_.call(srv_test) && srv_test.response.answer == "confirm") {
+    if (speech_client_.call(srv_test) && srv_test.response.answer == "continue") {
         ROS_INFO("Received request to start the challenge");
     } else {
         ROS_WARN("I heard %s - start anyway", srv_test.response.answer.c_str());
