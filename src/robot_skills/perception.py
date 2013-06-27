@@ -162,7 +162,7 @@ class Perception(object):
         goal.publish_while_learning = publish_while_learning
         self.ac_face_learning.send_goal(goal)
         rospy.loginfo("Learning person '{0}'...".format(name))
-        return self.ac_face_learning.wait_for_result()
+        return self.ac_face_learning.wait_for_result(rospy.Duration(20))
 
     '''Cancel face learning'''
     def cancel_learn_persons(self):
