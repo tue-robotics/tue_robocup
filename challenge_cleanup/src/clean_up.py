@@ -256,7 +256,7 @@ class Cleanup(smach.StateMachine):
                     answers = robot.reasoner.query(query_dropoff_loc)
                     _type = answers[0]["ObjectType"]
                     dropoff = answers[0]["Disposal_type"]
-                    return "I have found a {0}. I'll' dispose it to a {1}".format(_type, dropoff).replace("_", " ")
+                    return "I have found a {0}. I'll' dispose it to the {1}".format(_type, dropoff).replace("_", " ")
                 except Exception, e:
                     rospy.logerr(e)
                     try:

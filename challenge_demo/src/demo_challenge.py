@@ -146,38 +146,35 @@ class AskAnythingElse(smach.State):
         start, end = self.mail_interpreter.extract_times(interpretation.entities)
         start = self.mail_interpreter.datetime_as_sentence(start)
         
-        self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
+        #self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
         
-        resp = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
-        if resp.answer == "true":
-
-            self.robot.speech.speak("Please look at me, so I can recognize you and send the reminder to your phone")
-            self.response_start = self.robot.perception.toggle(["face_recognition"])
-            rospy.sleep(6.0)
-            rospy.loginfo("Face recognition will be stopped now")
-            self.response_stop = self.robot.perception.toggle([])
-            person_result = self.robot.reasoner.query(
-                                            Conjunction(  
-                                                Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                                Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
-            # Interpret face regnition results
-            name = "loy"
-            rospy.loginfo(person_result)
-            import ipdb; ipdb.set_trace()
-            if person_result:
-                try:
-                    name_possibility = person_result[0]["NamePMF"]
-                    name = str(name_possibility[0][1][0])
-                except IndexError:
-                    self.robot.speech.speak("Not sure about your name, but Loy always forgets everything, so I'll remind him!".format(name))
-            else:
+        #resp = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
+        
+        self.robot.speech.speak("Please look at me, so I can recognize you and send the reminder to your phone")
+        self.response_start = self.robot.perception.toggle(["face_recognition"])
+        rospy.sleep(6.0)
+        rospy.loginfo("Face recognition will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        person_result = self.robot.reasoner.query(
+                                        Conjunction(  
+                                            Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                            Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                            Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
+        # Interpret face regnition results
+        name = "loy"
+        rospy.loginfo(person_result)
+        if person_result:
+            try:
+                name_possibility = person_result[0]["NamePMF"]
+                name = str(name_possibility[0][1][0])
+            except IndexError:
                 self.robot.speech.speak("Not sure about your name, but Loy always forgets everything, so I'll remind him!".format(name))
-            
-            self.robot.speech.speak("Allright {0}, check your phone in a minute for the reminder.".format(name), block=False)
-            self.mail_interpreter.process_interpretation(interpretation)
         else:
-            self.robot.speech.speak("Then you'll have to remember that yourself.")
+            self.robot.speech.speak("Not sure about your name, but Loy always forgets everything, so I'll remind him!".format(name))
+        
+        self.robot.speech.speak("Allright {0}, check your phone in a minute for the reminder.".format(name), block=False)
+        #import ipdb; ipdb.set_trace()
+        self.mail_interpreter.process_interpretation(interpretation, receiver=name)
 
     def execute(self, userdata=None):
         try:
