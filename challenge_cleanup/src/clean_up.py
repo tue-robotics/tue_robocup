@@ -70,8 +70,21 @@ class StupidHumanDropoff(smach.StateMachine):
 
             smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', 
                                     states.SetGripper(robot, arm, gripperstate=ArmState.OPEN),
-                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
-                                                 'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+                                    transitions={'succeeded'    :   'SAY_PLACE_INSTRUCTION',
+                                                 'failed'       :   'SAY_PLACE_INSTRUCTION'})
+
+            def generate_object_sentence(*args,**kwargs):
+                try:
+                    answers = robot.reasoner.query(dropoff_query)
+                    _type = answers[0]["ObjectType"]
+                    dropoff = answers[0]["Disposal_type"]
+                    return "Please put the {0} on the {1}".format(_type, dropoff).replace("_", " ")
+                except Exception, e:
+                    rospy.logerr(e)
+                    return "Please put the object on the surface in front of me"
+            smach.StateMachine.add("SAY_PLACE_INSTRUCTION", 
+                                    states.Say_generated(robot, generate_object_sentence),
+                                    transitions={   'spoken':'CLOSE_GRIPPER_HANDOVER'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
                                     states.SetGripper(robot, arm, gripperstate=ArmState.CLOSE),
@@ -329,8 +342,6 @@ class Cleanup(smach.StateMachine):
                         transitions={"done":"DROPOFF_OBJECT"})
 
             # smach.StateMachine.add("DROPOFF_OBJECT",
-            #                         #PlaceObject(side, robot, placement_query, dropoff_height_offset=0.1):
-            #                         #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc),
             #                         states.DropObject(arm, robot, query_dropoff_loc),
             #                         transitions={   'succeeded':'MARK_DISPOSED',
             #                                         'failed':'MARK_DISPOSED',
