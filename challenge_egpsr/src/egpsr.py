@@ -29,6 +29,16 @@ from psi import *
 
 # - Placing objects on tables/etc at transport.
 
+#######################
+##### TODO LIST!! #####
+#### NA EINDHOVEN  ####
+#######################
+
+# - andere microfoon bekijken
+# - speech -> geen actie in stappen. Direct verstaan.
+# - dropoff points in eindhoven definieren.
+# - Navigate Generic
+# - ..
 
 ##########################################
 ############## What to run: ##############
