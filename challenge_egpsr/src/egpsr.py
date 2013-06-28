@@ -776,10 +776,17 @@ def setup_statemachine(robot):
                                                     'preempted':'AT_GOAL_NAVIGATE_TO_LOC_TO',  # NEXT TRY, OTHER LOCATION IS TAKEN UNTIL ARRIVED OR NO GOALS AVAILABLE
                                                     'unreachable':'AT_GOAL_NAVIGATE_TO_LOC_TO',  # NEXT TRY, OTHER LOCATION IS TAKEN UNTIL ARRIVED OR NO GOALS AVAILABLE
                                                     'goal_not_defined':'SAY_NOT_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT'}) 
+            
 
             smach.StateMachine.add("AT_LOC_TO",
+
+# Uncomment if you want drop-off:
                                    states.Say(robot,"I am at the drop off location, I will try to place it on the desired location.", block=False),
                                    transitions={'spoken':'DROPOFF_OBJECT'})
+
+# Uncomment if you want human hand-over
+#                                  states.Say(robot,"I am at the drop off location, I will open my gripper now so that you are able to get it out of my hands."),
+#                                  transitions={'spoken':'DROP_OBJECT'})
 
             query_dropoff_loc = Conjunction(Compound("dropoff_loc", "Location"),
                                             Compound("dropoff_point","Location",Compound("point_3d","X","Y","Z")))
