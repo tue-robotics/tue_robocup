@@ -44,6 +44,17 @@ from psi import *
 #   - Detect smoke
 #   - Fix easy switching to environment (box around map)
 
+#######################
+##### TODO LIST!! #####
+#### NA EINDHOVEN  ####
+#######################
+
+# - Navigate Generic
+# - smoke detection fixen
+# - vuur in pdf zetten.
+# - mensen checken ook met laserscanner.
+# - 
+
 ##########################################
 ############## What to run: ##############
 ############ updated 15-4-2013 ###########
