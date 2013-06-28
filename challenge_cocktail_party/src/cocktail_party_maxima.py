@@ -44,7 +44,7 @@ class WaitForPerson(smach.State):
             self.robot.speech.speak("I was not able to detect you, assuming someone is in front of me!")
             return("unknown_person")
 
-        self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.")
+        self.robot.speech.speak("Please step in front of me to order your drink.")
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
@@ -68,7 +68,7 @@ class WaitForPerson(smach.State):
         self.robot.perception.toggle([])
 
         if wait_result == "timed_out":
-            self.robot.speech.speak("Please, don't keep me waiting.")
+            self.robot.speech.speak("I will wait patiently, until you step in front of me.")
             waited_no += 1
             rospy.loginfo("Waited {0} time(s).".format(waited_no))
             self.robot.reasoner.query(Compound("retractall", Compound("waited_times_no", "X")))
@@ -133,12 +133,12 @@ class LearnPersonName(smach.State):
 
         if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
             if self.person_learn_failed == 2:
-                self.robot.speech.speak("I will call you William")
-                self.response.answer = "william"
+                self.robot.speech.speak("I did not get an answer, I will call you Maxima")
+                self.response.answer = "maxima"
                 self.person_learn_failed = 3
             if self.person_learn_failed == 1:
-                self.robot.speech.speak("I will call you Michael")
-                self.response.answer = "michael"
+                self.robot.speech.speak("I did not get an answer, I will call you Maxima")
+                self.response.answer = "maxima"
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
                 self.robot.speech.speak("I did not get an answer, I will call you Maxima")
@@ -153,7 +153,7 @@ class LearnPersonName(smach.State):
             return "failed"
 
         serving_person = str(return_result[0]["Person"])
-        self.robot.speech.speak("Hello, your Majesty " + serving_person + "!")
+        self.robot.speech.speak("Hello, your Majesty!")
         return "learned"
 
 
@@ -193,7 +193,7 @@ class LearnPersonCustom(smach.State):
         serving_person = str(return_result[0]["Person"])
 
 
-        self.robot.speech.speak("Now " + serving_person + ", let me have a look at you, such that I can remember you later.")
+        self.robot.speech.speak("Dear majesty, let me have a look at you, such that I can recognize you later.")
 
         learn_machine = Learn_Person(self.robot, serving_person)
         learn_result = learn_machine.execute()
@@ -255,7 +255,7 @@ class LookForDrink(smach.State):
             roi_answer = roi_answers[0]
             self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"])), "/map")
 
-        self.robot.speech.speak("Let's see what I can find here")
+        self.robot.speech.speak("I will now start my perception module, and try to detect your drink")
 
         self.robot.perception.toggle(["template_matching"])
         rospy.sleep(5.0)
@@ -268,18 +268,18 @@ class LookForDrink(smach.State):
             object_answer_alternative = self.robot.reasoner.query(Conjunction(  Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo"))))
             if not object_answer_alternative:
-                return "not_found"
+                return "looking"
 
             grasp_drink = str(object_answer_alternative[0]["Drink"])
-            self.robot.speech.speak("I did not find your object, but will bring you a " + str(grasp_drink))
+            self.robot.speech.speak("I apologize, I could not find your drink. However, I will bring you a " + str(grasp_drink))
             self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", grasp_drink))))
             return "found"
 
         if object_answers:
-            self.robot.speech.speak("Hey, I found your " + serving_drink)
+            self.robot.speech.speak("Here it is! I found the " + serving_drink)
             return "found"
         else:
-            return "not_found"
+            return "looking"
 
 class LookForPerson(smach.State):
     def __init__(self, robot):
@@ -293,7 +293,7 @@ class LookForPerson(smach.State):
             self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
             return_drink_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
             serving_drink = str(return_drink_result[0]["Drink"])  
-            self.robot.speech.speak("I'm coming to the meeting point to hand over the " + str(serving_drink))
+            self.robot.speech.speak("Your majesty, I'm coming back to deliver the " + str(serving_drink))
             return "not_found"
 
         serving_person = str(return_result[0]["Person"])
@@ -306,13 +306,13 @@ class LookForPerson(smach.State):
                                                              ))
 
         if not goal_answers:
-            self.robot.speech.speak(str(serving_person) +", I have been looking everywhere but I cannot find you.")
+            self.robot.speech.speak("Dear majesty, I have been looking everywhere but I cannot find you.")
             return "not_found"
 
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
-        self.robot.speech.speak(str(serving_person) + ", I'm on my way!", language="us", personality="kyle", voice="default", mood="excited")
+        self.robot.speech.speak("I'm on my way!", language="us", personality="kyle", voice="default", mood="excited")
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
@@ -329,7 +329,7 @@ class LookForPerson(smach.State):
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
-        self.robot.speech.speak("Let me see who I can find here...")
+        self.robot.speech.speak("Let me see if I am able to detect you.")
         self.robot.head.set_pan_tilt(tilt=-0.2)
         self.robot.spindle.reset()
 
@@ -356,9 +356,9 @@ class LookForPerson(smach.State):
         if len(person_result) == 0:
             rospy.logwarn("No faces detected by face segmentation")
         if not person_result:
-            self.robot.speech.speak("No one here. Face segmentation did not find a person here")
+            self.robot.speech.speak("No one here. Could not find a person over here.")
             return "not_found"
-        self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you")
+        self.robot.speech.speak("Hi there, Please look into my eyes, so I can try to recognize you")
 
 
         self.robot.perception.toggle(["face_recognition"])
@@ -387,20 +387,21 @@ class LookForPerson(smach.State):
                     name_prob = prob
 
             if not name:
-                self.robot.speech.speak("I don't know who you are.")
+                self.robot.speech.speak("Hello your majesty")
                 return "not_found"  
 
             if name != serving_person:
-                self.robot.speech.speak("Hello " + str(serving_person))
+                self.robot.speech.speak("Hello your majesty")
                 return "found"      
 
             if name:
-                self.robot.speech.speak("Hello " + str(name)) 
+                self.robot.speech.speak("Hello your majesty") 
                 return "found"       
         else:
+            self.robot.speech.speak("Hello your majesty")
             rospy.loginfo("No person names received from world model") 
 
-        return "not_found"
+        return "found"
 
 class HandoverToKnownHuman(smach.StateMachine):
     def __init__(self, robot):
@@ -468,7 +469,7 @@ class HandoverToUnknownHuman(smach.StateMachine):
                                                     'failed':'PLEASE_TAKE'})
             
             smach.StateMachine.add( 'PLEASE_TAKE',
-                                    Say(robot, ["Please hold the drink, I'm going to let it go.", "Please take the drink, i'll let it go"]),
+                                    Say(robot, ["Please hold the drink, I'm going to let it go now.", "Please take the drink, I'll let it go now"]),
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
@@ -484,7 +485,7 @@ class HandoverToUnknownHuman(smach.StateMachine):
                                     transitions={   'done':'SAY_ENJOY',
                                                     'failed':'SAY_ENJOY'})
             smach.StateMachine.add( 'SAY_ENJOY',
-                                    Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
+                                    Say(robot, ["Enjoy your drink!", "I hope you are thirsty, enjoy!"]),
                                     transitions={"spoken":"done"})
 
 class CocktailParty(smach.StateMachine):
@@ -594,7 +595,6 @@ class CocktailParty(smach.StateMachine):
 
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you.", 
-                                                        "I can't find you. I really don't like fluids.",
                                                         "I could not find you."]),
                                             transitions={   'spoken':'HANDOVER_DRINK' }) #GOTO_INITIAL_FAIL
 
