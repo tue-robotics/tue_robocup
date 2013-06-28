@@ -748,10 +748,10 @@ void speechCallback(std_msgs::String res) {
 
     ROS_INFO("Received command: %s", res.data.c_str());
     
-    if (res.data == "left" || res.data == "right" || res.data == "front") {
-        ROS_WARN("Received old command");
-        return;
-    }        
+    //if (res.data == "left" || res.data == "right" || res.data == "front") {
+    //    ROS_WARN("Received old command");
+    //    return;
+    //}        
 
     //// AMIGO STOP
     if (res.data == "amigostop" && !candidate_ask_side && ! candidate_freeze_amigo_ && !ask_side && !freeze_amigo_) {
@@ -817,7 +817,7 @@ void speechCallback(std_msgs::String res) {
             current_location_stream << "shelf" << n_shelves_;
 
             // Ask for a side
-            amigoSpeak("Where do I find the shelf?");
+            //amigoSpeak("Where do I find the shelf?");
 
         }
         // Answer is no: not a shelf, but a delivery location
@@ -829,7 +829,7 @@ void speechCallback(std_msgs::String res) {
             current_location_stream << "delivery location" << n_locations_deliver_;
 
             // Ask for a side
-            amigoSpeak("Where do I find the delivery location?");
+            //amigoSpeak("Where do I find the delivery location?");
         }
 
         current_location_name_ = current_location_stream.str();
@@ -886,7 +886,7 @@ void speechCallback(std_msgs::String res) {
 
     }
     //// AMIGO MUST LEARN ANOTHER LOCATION
-    else if (stored_location &&  res.data == "yes") {
+    else if (!candidate_ask_side && stored_location &&  location_map_.size() != 5) {//(res.data == "yes") {
         finished = false;
         stored_location = false;
         amigoSpeak("Let's go on");
@@ -916,10 +916,11 @@ void speechCallback(std_msgs::String res) {
     else if ((ask_side && res.data == "yes") || (ask_side && n_fails_side >= 2)) {
 
         if (n_fails_side < 2) {
-            amigoSpeak("Thank you. Do you want to learn another location?");
+            amigoSpeak("Thank you.");// Do you want to learn another location?");
         }
         else {
             amigoSpeak("I don't get the side, I assume you mean front.");
+            //amigoSpeak("Do you want to learn another location?");
         }
 
         // Administration
@@ -1407,6 +1408,9 @@ int main(int argc, char **argv) {
     gripper_left_ac_->waitForServer();
     gripper_right_ac_->waitForServer();
     ROS_INFO("Connected!");
+    
+    moveGripper("left", "close");
+    moveGripper("right", "close");
 
     //! Planner
     double max_vel_lin = 0.5;                 // Default: 0.50
@@ -1452,14 +1456,6 @@ int main(int argc, char **argv) {
     reset_wire_client_ = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     ROS_INFO("Service /wire/reset");
 
-    //! Always clear the world model
-    std_srvs::Empty srv;
-    if (reset_wire_client_.call(srv)) {
-        ROS_INFO("Cleared world model");
-    } else {
-        ROS_ERROR("Failed to clear world model");
-    }
-
     //! Connect to grab machine
     grab_machine_client_ = nh.serviceClient<challenge_restaurant::SmachStates>("/smach_states");
 
@@ -1472,18 +1468,26 @@ int main(int argc, char **argv) {
     srv_test.request.time_out = 10.0;
     srv_test.request.type = "continue_confirm";
     string answer = "";
-    while (answer != "continue" &&
-           ros::Time::now().toSec() - t1 < 60.0) {
-        if (speech_client_.call(srv_test)) {
-            answer = srv_test.response.answer;
-        }
-
-        ROS_INFO("Currently, answer =  %s", answer.c_str());
-    }
+    //while (answer != "continue" &&
+    //       ros::Time::now().toSec() - t1 < 60.0) {
+    //    if (speech_client_.call(srv_test)) {
+    //        answer = srv_test.response.answer;
+    //    }
+    //
+    //    ROS_INFO("Currently, answer =  %s", answer.c_str());
+    //}
     ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
 
     //! Administration
     pbl::PDF guide_pos;
+    
+    //! Always clear the world model
+    std_srvs::Empty srv;
+    if (reset_wire_client_.call(srv)) {
+        ROS_INFO("Cleared world model");
+    } else {
+        ROS_ERROR("Failed to clear world model");
+    }
 
     amigoSpeak("I am looking for my guide");
     if (!findGuide(client, false)) {
