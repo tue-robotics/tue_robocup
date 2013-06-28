@@ -344,6 +344,10 @@ class UpdateObjectPose(smach.State):
             rospy.logwarn("Waiting for 2.0 seconds for laser update")
             rospy.sleep(rospy.Duration(2.0))
         else:
+            spindle_target = target_point.point.z + 0.5 -0.98
+            spindle_target = max(self.robot.spindle.lower_limit, spindle_target)
+            spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
+            self.robot.spindle.send_goal(spindle_target, waittime = 5.0)
             self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
             self.robot.perception.toggle(["tabletop_segmentation"])
             self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
