@@ -1,0 +1,54 @@
+# Responsible: Loy
+
+amigo1:
+
+    amiddle 3dnav:=true
+
+amigo3:
+    (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
+    alsamixer
+        Mic Boost -> 22
+        Capture -> 44
+        Digital -> 29
+        Mic on mute!!! (Should be muted already)
+        
+    amigo-console        
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+        (lights should become green -> say 'continue')
+        (if response is 'true', amigo heard you and lights become blue)
+
+    say test  
+        (to test speaker is working) 
+
+    rosrun challenge_cleanup clean_up.py
+
+
+== TEST THE EXECUTIVE ==
+
+TIP of the day: use 
+
+    rostopic pub /pocketsphinx/output std_msgs/String 'livingroom' --once; rostopic pub /pocketsphinx/output std_msgs/String '!!str yes' --once
+
+to test the executive.
+
+
+== WHAT IF IT DOESN'T WORK? ==
+
+The clean-up challenge depends on some knowledge. 
+
+First of all, the knowledbe base (KB) must know where every type/class of object should be cleaned up to. This is done via the 'storage_class'-predicate. For example: 
+
+    'storage_class(can, trashbin)'.
+
+states that something of the can class should be stored at something of the class 'trashbin'.
+
+The fact that some object objXXX in the worldmodel is an instance of class is asserted to the worldmodel via perception. It can be queried via the 'instance_of'-predicate.
+Classes of objects can also be subclasses of another class, so you can state 'storage_class' for a general class like 'stuff': 'storage_class(stuff, desk)', and also state that, say, a 'rubiks'-cube is a subclass of 'stuff'. This way, the reasoner deduces that the 'storage_class' of 'rubiks' is 'desk'. 
+
+Furthermore, the KB also needs to hold information on which drop-off locations can be used. For example:
+
+    dropoff_point(robotics_testlab_A, _, trashbin, point_3d(6.22,   0.78,   0.8)).
+
+states that the drop-off location 'trashbin' has point (6.22, 0.78, 0.8) (in the robotics_testlab_A environment). The 3rd argument ('trashbin' in this case) should correspond to the 2nd argument of the storage_class/2 facts.
+
+The clean-up challenge python file defines all of its queries near the top of the file. 
