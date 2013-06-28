@@ -700,21 +700,17 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SAY_GO_TO_KITCHEN",
                                     states.Say(robot, "I will go to the kitchen, see if I can do something over there.", block=False),
-                                    transitions={   "spoken":"SET_TIME_MARKER"})
+                                    transitions={   "spoken":"GO_TO_KITCHEN"})
         
         ######################################################
         #################### GO TO KITCHEN ###################
         ######################################################
 
-        smach.StateMachine.add('SET_TIME_MARKER',
-                                    states.SetTimeMarker(robot, "find_fire"),
-                                    transitions={   'done':'GO_TO_KITCHEN' })
-
         query_kitchen_1 = Compound("waypoint", "kitchen_1", Compound("pose_2d", "X", "Y", "Phi"))
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_KITCHEN', 
                                     states.Navigate_to_queryoutcome(robot, query_kitchen_1, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   'arrived':'CHECK_TIME', 
+                                    transitions={   'arrived':'RESET_HEAD', 
                                                     'preempted':'GO_TO_KITCHEN_SECOND_TRY', 
                                                     'unreachable':'GO_TO_KITCHEN_SECOND_TRY', 
                                                     'goal_not_defined':'GO_TO_KITCHEN_SECOND_TRY'})
@@ -723,27 +719,35 @@ def setup_statemachine(robot):
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_KITCHEN_SECOND_TRY', 
                                     states.Navigate_to_queryoutcome(robot, query_kitchen_2, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   'arrived':'CHECK_TIME', 
+                                    transitions={   'arrived':'RESET_HEAD', 
                                                     'preempted':'FAIL_BUT_START_SEARCH', 
                                                     'unreachable':'FAIL_BUT_START_SEARCH', 
                                                     'goal_not_defined':'FAIL_BUT_START_SEARCH'})
 
+        smach.StateMachine.add("RESET_HEAD",
+                                states.ResetHead(robot),
+                                transitions={'done':'SET_TIME_MARKER'})
+
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('FAIL_BUT_START_SEARCH',
                                     states.Say(robot, "I was not able to go to the kitchen, I will just wait here.", block=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
-                                    transitions={'spoken':'CHECK_TIME'}) 
+                                    transitions={'spoken':'SET_TIME_MARKER'}) 
+
+        smach.StateMachine.add('SET_TIME_MARKER',
+                                    states.SetTimeMarker(robot, "find_fire"),
+                                    transitions={   'done':'CHECK_TIME' })
 
         smach.StateMachine.add('CHECK_TIME',
-                                    states.CheckTime(robot, "find_fire", rospy.Duration(60)),
+                                    states.CheckTime(robot, "find_fire", rospy.Duration(55)),
                                     transitions={   'ok':'SAY_WEATHER_QUEEN',
                                                     'timeout':'SAY_FIRE_ALARM' })  
 
         smach.StateMachine.add('SAY_WEATHER_QUEEN',
-                                    states.Say(robot, "What a lovely wheater today! I just can't wait to meet the queen in a few hours!", block=False),  
+                                    states.Say(robot, "Although it is a rainy day, it will be lovely! I just can't wait to meet the queen in a few hours!", block=False),  
                                     transitions={'spoken':'CHECK_TIME_2'}) 
 
         smach.StateMachine.add('CHECK_TIME_2',
-                                    states.CheckTime(robot, "find_fire", rospy.Duration(60)),
+                                    states.CheckTime(robot, "find_fire", rospy.Duration(55)),
                                     transitions={   'ok':'SLEEP_1_SEC',
                                                     'timeout':'SAY_FIRE_ALARM' })   
 
