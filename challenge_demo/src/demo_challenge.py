@@ -30,13 +30,20 @@ from speech_interpreter.srv import GetYesNo
 
 import datetime
 
+# TODO : Initial pose TEST
+# DONE : Get breakfast from intermediate pos: 2.24, -3.73, -1.95 TEST
+# TODO : Reset head on start 
+# Aankijken voor vragen 
+# 2x opties TEST
+# Beide posities rivhting personen
+
 
 HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
 SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
 RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 HOLD_CAN_POSE = [-0.1, -0.3, 0.0, 1.87, 0.1, 0.0, 0.0]
 
-KITCHEN_LOC = Compound("sink", "a")
+KITCHEN_LOC = (2.24, -3.73, -1.95)#Compound("sink", "a")
 BREAKFAST_1 = Compound("dinner_table", "b")
 BREAKFAST_2 = Compound("dinner_table", "a")
 SINGPOS = Compound("dinner_table", "a")
@@ -267,11 +274,11 @@ class InteractionPart(smach.StateMachine):
            
             smach.StateMachine.add('ASK_HOW_FEEL',
                                     AskHowFeel(robot),
-                                    transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
+                                    transitions={   "done"              : "ASK_WHAT_FOR_BREAKFAST"})
 
-            smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
-                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
-                                    transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
+            # smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
+            #                         states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
+            #                         transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
                                     AskBreakfast(robot),
@@ -432,7 +439,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'done'              : 'GOTO_KITCHEN'})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
-                                    states.NavigateGeneric(robot, goal_name=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "REPORT_BREAKFAST",
                                                     "unreachable"       : "REPORT_BREAKFAST",
                                                     "preempted"         : "failed",
@@ -443,7 +450,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'spoken'            : "GOTO_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN_BACKUP', 
-                                    states.NavigateGeneric(robot, goal_name=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "SAY_KITCHEN_BACKUP",
                                                     "unreachable"       : "SAY_KITCHEN_BACKUP",
                                                     "preempted"         : "failed",
@@ -502,7 +509,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'spoken'            : 'RETURN_TRAY'})
 
             smach.StateMachine.add( 'RETURN_TRAY', 
-                                    states.NavigateGeneric(robot, goal_name=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "SAY_TAKE_TRAY",
                                                     "unreachable"       : "SAY_FAIL_RETURN_TRAY",
                                                     "preempted"         : "failed",
@@ -539,7 +546,7 @@ class Part2(smach.StateMachine):
                                     transitions={   'done'              : 'GOTO_KITCHEN'})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
-                                    states.NavigateGeneric(robot, goal_name=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "REPORT_BREAKFAST",
                                                     "unreachable"       : "REPORT_BREAKFAST",
                                                     "preempted"         : "failed",
@@ -550,7 +557,7 @@ class Part2(smach.StateMachine):
                                     transitions={   'spoken'            : "GOTO_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN_BACKUP', 
-                                    states.NavigateGeneric(robot, goal_name=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "HOLDUP_ARM_FOR_CAN_LEFT",
                                                     "unreachable"       : "HOLDUP_ARM_FOR_CAN_LEFT",
                                                     "preempted"         : "failed",
@@ -728,7 +735,7 @@ class DemoChallenge(smach.StateMachine):
                                                     'abort':'Aborted'})
 
             smach.StateMachine.add('INIT_POSE',
-                                states.Set_initial_pose(robot, "initial"),
+                                states.Set_initial_pose(robot, "custom_initial"),
                                 transitions={   'done':'SAY_START',
                                                 'preempted':'SAY_START',
                                                 'error':'SAY_START'})
