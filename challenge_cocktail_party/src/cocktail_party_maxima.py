@@ -438,7 +438,7 @@ class HandoverToKnownHuman(smach.StateMachine):
                                     transitions={   'done':'SAY_ENJOY',
                                                     'failed':'SAY_ENJOY'})
             smach.StateMachine.add( 'SAY_ENJOY',
-                                    Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
+                                    Say(robot, "Enjoy your drink and hopefully you'll have a great time at robocup 2013!"),
                                     transitions={"spoken":"done"})
 
 class HandoverToUnknownHuman(smach.StateMachine):
