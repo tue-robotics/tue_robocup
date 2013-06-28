@@ -576,7 +576,7 @@ def setup_statemachine(robot):
                                 transitions={'retracted':'RESET_HEAD_SPINDLE'})
 
         smach.StateMachine.add("RESET_HEAD_SPINDLE",
-                                states.ResetHead(robot),
+                                states.ResetHeadSpindle(robot),
                                 transitions={'done':'QUERY_SPECIFIC_ACTION'})
 
     
