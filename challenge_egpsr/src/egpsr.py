@@ -782,7 +782,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'DROPOFF_OBJECT'})
 
             query_dropoff_loc = Conjunction(Compound("dropoff_loc", "Location"),
-                                            Compound("point_of_interest","Location",Compound("point_3d","X","Y","Z")))
+                                            Compound("dropoff_point","Location",Compound("point_3d","X","Y","Z")))
 
             smach.StateMachine.add("DROPOFF_OBJECT",
                                     states.DropObject(robot.leftArm, robot, query_dropoff_loc),
