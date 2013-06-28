@@ -74,6 +74,7 @@ unsigned int n_shelves_ = 0;                                                    
 double t_freeze_ = 0;                                                             // Bookkeeping: time the robot is frozen
 bool speech_recognition_on = false;                                               // Bookkeeping: speech switched on/off
 string current_side_ = "";                                                        // Bookkeeping: current side
+unsigned int state_speech_ = 0;
 unsigned int n_fails_side = 0;                                                    // Bookkeeping: avoid infinite 'ask side' loops
 string current_location_name_;                                                    // Bookkeeping: current location name
 
@@ -168,9 +169,9 @@ bool moveArm(string arm, string pose) {
         arm_ref.trajectory.points.push_back(setArmReference(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0));
     } else if (pose == "carry") {
         arm_ref.trajectory.points.push_back(setArmReference(-0.4, -0.38, 0.51, 1.56, -0.2, 0.52, -0.38));
-    //} else if (pose == "give") {
-    //    moveArm(arm, "carry");
-    //    arm_ref.trajectory.points.push_back(setArmReference(-0.93 , 1.06 , 0.07 , 0.91 , -1.02 , -0.19 , -0.36));
+        //} else if (pose == "give") {
+        //    moveArm(arm, "carry");
+        //    arm_ref.trajectory.points.push_back(setArmReference(-0.93 , 1.06 , 0.07 , 0.91 , -1.02 , -0.19 , -0.36));
     } else {
         ROS_INFO("Arm pose for %s arm unknown: \'%s\'", arm.c_str(), pose.c_str());
         ROS_INFO("return false 1");
@@ -308,6 +309,24 @@ bool startSpeechRecognition() {
     std::string knowledge_path = ros::package::getPath("tue_knowledge");
     if (knowledge_path == "") {
         return false;
+    }
+
+    if (state_speech_ == 0) {
+        // amigostop (to shelf/delivery location)
+    } else if (state_speech_ == 1) {
+        // yes/no (amigostop)
+    } else if (state_speech_ == 2) {
+        // yes/no (is this a shelf)
+    } else if (state_speech_ == 3) {
+        // left/right/front (which side?)
+    } else if (state_speech_ == 4) {
+        // yes/no (is left/right/front correct?)
+    } else if (state_speech_ == 5) {
+        // yes/no (another location?)
+    } else if (state_speech_ == 6) {
+        // amigostop (but to ordering location)
+    } else if (state_speech_ == 7) {
+        // yes/no (amigostop at ordering location)
     }
 
     std::string restaurant_speech_path = knowledge_path + "/speech_recognition/restaurant/";
@@ -519,7 +538,8 @@ bool findGuide(wire::Client& client, bool lost = true) {
 
             no_guide_found = false;
 
-            amigoSpeak("I found my guide.");
+            //amigoSpeak("I found my guide.");
+            setRGBLights("blue");
 
             ros::Duration safety_delta(0.5);
             safety_delta.sleep();
@@ -530,7 +550,9 @@ bool findGuide(wire::Client& client, bool lost = true) {
         dt.sleep();
     }
 
-    amigoSpeak("I did not find my guide yet");
+    //amigoSpeak("I did not find my guide yet");
+    setRGBLights("yellow");
+
     return false;
 
 }
@@ -744,14 +766,14 @@ void createMarkerWithLabel(string label, tf::StampedTransform& pose, double r, d
  * @brief speechCallback
  * @param res
  */
-void speechCallback(std_msgs::String res) {
+void speechCallback_old(std_msgs::String res) {
 
     ROS_INFO("Received command: %s", res.data.c_str());
     
     //if (res.data == "left" || res.data == "right" || res.data == "front") {
     //    ROS_WARN("Received old command");
     //    return;
-    //}        
+    //}
 
     //// AMIGO STOP
     if (res.data == "amigostop" && !candidate_ask_side && ! candidate_freeze_amigo_ && !ask_side && !freeze_amigo_) {
@@ -857,7 +879,7 @@ void speechCallback(std_msgs::String res) {
         q *= offset;
         trans.setRotation(q);
         ROS_INFO("After update orientation is (%f,%f,%f,%f)", q.getW(), q.getX(), q.getY(), q.getZ());
-		
+
 
         // Store location
         location_map_[location_name.str()] = trans;
@@ -992,6 +1014,216 @@ void speechCallback(std_msgs::String res) {
 
 }
 
+
+
+
+void speechCallback(std_msgs::String res) {
+
+    ROS_INFO("Received command: %s", res.data.c_str());
+
+
+    // Amigo requested to stop on its way to shelf/delivery locatino
+    if (res.data == "amigostop" && state_speech_ == 0) {
+        state_speech_ = 1;
+        amigoSpeak("Do you want me to stop?");
+        t_freeze_ = ros::Time::now().toSec();
+        ROS_INFO("State from 0 to 1");
+    }
+    // Amigo stop shelf/delivery location NOT confirmed
+    else if (res.data != "yes" && state_speech_ == 1) {
+        amigoSpeak("I misunderstood, I will follow you");
+        state_speech_ = 0;
+        ROS_INFO("State from 1 to 0");
+    }
+    // Amigo stop shelf/delivery location IS confirmed
+    else if (res.data == "yes" && state_speech_ == 1) {
+        state_speech_ = 2;
+        amigoSpeak("Is this location a shelf?");
+        ROS_INFO("State from 1 to 2");
+    }
+    // Is this a shelf answered with yes or no
+    else if (state_speech_ == 2 && (res.data == "yes" || res.data == "no")) {
+
+        // Get position
+        tf::StampedTransform trans;
+        try {
+            listener->lookupTransform("/map", "/base_link", ros::Time(0), trans);
+        } catch (tf::TransformException ex) {
+            ROS_ERROR("No tranform /map - /baselink");
+            amigoSpeak("I cannot store this location, I will follow.");
+            state_speech_ = 0;
+        }
+
+        // Get location:
+        std::stringstream current_location_stream;
+
+        // Answer is yes: a shelf
+        if (res.data == "yes") {
+            ++n_shelves_;
+            current_location_stream << "shelf" << n_shelves_;
+        }
+        // Answer is no: a delivery location
+        else {
+            ++n_locations_deliver_;
+            current_location_stream << "delivery location" << n_locations_deliver_;
+        }
+
+        // Determine name current location and store default position
+        current_location_name_ = current_location_stream.str();
+        location_map_[current_location_name_] = trans;
+
+        //! Inform user
+        string sentence = "I will call this location " + current_location_name_;
+        amigoSpeak(sentence);
+
+        //! Next question
+        amigoSpeak("Which side should I remember?");
+        state_speech_ = 3;
+
+        ROS_INFO("State from 2 to 3");
+
+    }
+    // Is this a shelf with an invalid answer
+    else if (state_speech_ == 2) {
+        amigoSpeak("I misunderstood, is this location a shelf?");
+        ROS_INFO("State from 2 to 2");
+    }
+    // Asked for a side: received a side
+    else if (state_speech_ == 3 && (res.data == "front" || res.data == "left" || res.data == "right")) {
+
+        current_side_ = res.data;
+        amigoSpeak("I heard " + current_side_ + " is that correct?");
+        state_speech_ = 4;
+        ROS_INFO("State from 3 to 4");
+    }
+    // Asked for a side: NO side received
+    else if (state_speech_ == 3) {
+        amigoSpeak("I misunderstood, which side should I remember?");
+        ROS_INFO("State is and stays 3");
+    }
+    // Front/left/right side confirmed
+    else if (state_speech_ == 4 && res.data == "yes") {
+
+        // Get transformation that was stored
+        ROS_INFO("Get transformation for %s", current_location_name_.c_str());
+        if (location_map_.find(current_location_name_) == location_map_.end()) {
+            ROS_WARN("Administration error!");
+            amigoSpeak("Administration error. Do you want me to stop?");
+            t_freeze_ = ros::Time::now().toSec();
+            state_speech_ = 1;
+            return;
+        }
+        tf::StampedTransform trans = location_map_[current_location_name_];
+
+        // Determine corresponding theta
+        double theta = 0;
+        if (current_side_ == "left") theta = 1.57;
+        else if (current_side_ == "right") theta = -1.57;
+
+        // Set updated orientation
+        tf::Quaternion q = trans.getRotation();
+        tf::Quaternion offset;
+        offset.setRPY(0, 0, theta);
+        q += offset;
+        trans.setRotation(q);
+
+        // Store updated location
+        location_map_[current_location_name_] = trans;
+        ROS_INFO("Saved the %s with transform parameters : [%f,%f]",
+                 current_location_name_.c_str() ,trans.getOrigin().x(), trans.getOrigin().y());
+        amigoSpeak("Okay.");
+
+        // Publish marker
+        visualization_msgs::MarkerArray marker_array;
+        createMarkerWithLabel(current_location_name_, trans, 1, 0, 0, marker_array);
+        location_marker_pub_.publish(marker_array);
+
+        if (location_map_.size() >= 5) {
+            amigoSpeak("Do you want to learn another location?");
+            state_speech_ = 5;
+            ROS_INFO("State from 4 to 5");
+        } else {
+            // Not enough location: learn another one
+            state_speech_ = 0;
+            amigoSpeak("I will follow you.");
+            ROS_INFO("State from 4 to 0");
+        }
+    }
+    else if (state_speech_ == 4 && res.data != "yes") {
+        amigoSpeak("I misunderstood, which side should I remember");
+        state_speech_ = 3;
+        ROS_INFO("State from 4 to 3");
+    }
+    // Yes I want to learn another location
+    else if (state_speech_ == 5 && res.data == "yes") {
+        amigoSpeak("Okay, please guide me to the next location");
+        state_speech_ = 0;
+        ROS_INFO("State from 5 to 0");
+    }
+    // No new location: go to ordering location
+    else if (state_speech_ == 5 && res.data == "no") {
+        state_speech_ = 6;
+        amigoSpeak("Okay, please guide me to the ordering location.");
+        ROS_INFO("State from 5 to 6");
+    }
+    // Learn another location gave invalid answer: retry
+    else if (state_speech_ == 5) {
+        amigoSpeak("I misunderstood, do you want to learn another location?");
+        ROS_INFO("State from 5 to 5");
+    }
+    // Amigo stop on the way to ordering location
+    if (res.data == "amigostop" && state_speech_ == 6) {
+        state_speech_ = 7;
+        amigoSpeak("Do you want me to stop?");
+        t_freeze_ = ros::Time::now().toSec();
+        ROS_INFO("State from 6 to 7");
+    }
+    // On the way to ordering location and amigo stop is confirmed
+    else if (state_speech_ == 7 &&  res.data == "yes") {
+        amigoSpeak("I will remember the ordering location");
+
+        // Save ordering location
+        tf::StampedTransform trans;
+        try {
+            listener->lookupTransform("/map", "/base_link", ros::Time(0), trans);
+        } catch (tf::TransformException ex) {
+            amigoSpeak("I am not able to store the ordering location.");
+            state_speech_ = 6;
+            ROS_INFO("State from 7 to 6");
+        }
+
+        // Store location
+        location_map_["ordering_location"] = trans;
+        ROS_INFO("Saved the ordering location with transform parameters : [%f,%f]",
+                 trans.getOrigin().x(), trans.getOrigin().y() );
+
+        // Publish marker
+        visualization_msgs::MarkerArray marker_array;
+        createMarkerWithLabel("Ord. loc.",trans, 0, 0, 1, marker_array);
+        location_marker_pub_.publish(marker_array);
+
+        // Reset speech state
+        state_speech_ = 0;
+        ROS_INFO("State from 7 to 0 and ready for orders");
+
+        // Go to ordering state
+        state = 1;
+    }
+    // On the way to ordering location and amigo stop is confirmed
+    else if (state_speech_ == 7 &&  res.data != "yes") {
+        amigoSpeak("I misunderstood, I will follow you");
+        state_speech_ = 6;
+        ROS_INFO("State from 7 to 6");
+    }
+
+
+    // always immediately start listening again
+    startSpeechRecognition();
+
+    // Robot will not move, this avoids lost operator after conversation
+    t_last_check_ = ros::Time::now().toSec();
+
+}
 
 
 
@@ -1500,7 +1732,7 @@ int main(int argc, char **argv) {
     }
 
     ROS_INFO("Found guide with position %s in frame \'%s\'", guide_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
-    amigoSpeak("Can you please show me the locations");
+    amigoSpeak("Hi guide, can you please show me the locations");
 
     //! Follow guide
     freeze_amigo_ = false;
@@ -1513,19 +1745,20 @@ int main(int argc, char **argv) {
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
         //! Check if the robot has to move
-        if (candidate_freeze_amigo_ || freeze_amigo_) {
+        if (state_speech_ > 0) {
 
             setRGBLights("green");
 
             // Robot will not move, this avoids lost operator after conversation
             t_last_check_ = ros::Time::now().toSec();
 
-            // Just follow
-            if (candidate_freeze_amigo_) {
+            // Time out amigoStop (towards shelf/delivery location OR delivery location)
+            if (state_speech_ == 1 || state_speech_ == 7) {
+
                 ROS_DEBUG("Time out is %f", ros::Time::now().toSec() - t_freeze_);
-                if (ros::Time::now().toSec() - t_freeze_ > 5) {
+                if (ros::Time::now().toSec() - t_freeze_ > 6) {
                     ROS_WARN("Time out");
-                    candidate_freeze_amigo_ = false;
+                    --state_speech_;
                     amigoSpeak("I will follow you");
                     setRGBLights("blue");
                 }
