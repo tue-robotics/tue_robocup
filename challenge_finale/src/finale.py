@@ -1,17 +1,18 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_cleanup')
+import roslib; roslib.load_manifest('challenge_finale')
 import rospy
 
 import smach
 
-from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
-from robot_skills.reasoner  import Conjunction, Compound
+from robot_skills.reasoner  import Conjunction, Compound, Sequence
 from robot_skills.arms import State as ArmState
 from robot_smach_states.util.startup import startup
 
 from speech_interpreter.srv import GetInfo
+
+import geometry_msgs.msg
 
 grasp_arm = "left"
 #grasp_arm = "right"
@@ -20,9 +21,6 @@ grasp_arm = "left"
 ############## What to run: ##############
 ##########################################
 # CHECK the README!
-
-# niet op bed pakken
-#
 
 class Ask_cleanup(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
@@ -104,8 +102,79 @@ class StupidHumanDropoff(smach.StateMachine):
                                     transitions={'succeeded'    :'succeeded',
                                                  'failed'       :'failed'})
 
-class Cleanup(smach.StateMachine):
+class ScanTables(smach.State):
+    def __init__(self, robot, timeout_duration):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        self.robot = robot
+        self.timeout_duration = timeout_duration
 
+    def execute(self, gl):
+
+        rospy.loginfo("Trying to detect objects on tables")
+
+        answers = self.robot.reasoner.query(Compound('region_of_interest', 
+            'large_table_1', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
+        
+        ''' Remember current spindle position '''      
+        spindle_pos = self.robot.spindle.get_position()
+
+
+        if answers:
+            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+            target_point = geometry_msgs.msg.PointStamped()
+            target_point.header.frame_id = "/map"
+            target_point.header.stamp = rospy.Time()
+            target_point.point.x = float(answer["X"])
+            target_point.point.y = float(answer["Y"])
+            target_point.point.z = float(answer["Z"])
+
+            ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
+            if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
+                self.robot.speech.speak("I will scan the tables for objects", block=False)
+                self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
+                rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+                rospy.logwarn("Waiting for 2.0 seconds for laser update")
+                rospy.sleep(rospy.Duration(2.0))
+            else:
+                rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
+            
+            ''' Reset head and stop all perception stuff '''
+            self.robot.perception.toggle([])
+            self.robot.spindle.send_goal(spindle_pos, waittime=self.timeout_duration)
+        else:
+            rospy.logerr("No table location found...")
+
+        return 'succeeded'
+
+class DetermineGoal(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"], input_keys=['object_locations'], output_keys=['object_locations'])
+        self.robot = robot
+        self.preempted = False
+
+    def execute(self, userdata):
+
+        query = Conjunction(
+                 Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
+                 Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")))
+
+        answers = self.robot.reasoner.query(query)
+
+        self.robot.speech.speak("I have found {0} possible object locations".format(len(answers)))
+
+        (position, orientation) = self.robot.base.get_location()
+        counter = 0
+        location_list = []
+        for answer in answers:
+            location_list.append({'X' : answer['X'], 'Y' : answer['Y'], 'Z': answer['Z']})
+            location_list = sorted(location_list, key=lambda p: (position.y - float(p['Y']))**2 + (position.x - float(p['X']))**2)
+        for point in location_list:
+            self.robot.reasoner.assertz(Compound("goal_location", ("a" + str(counter)), Compound("point_3d", point["X"], point["Y"], point["Z"])))
+            counter += 1
+        
+        return "done"
+
+class Finale(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
@@ -129,31 +198,29 @@ class Cleanup(smach.StateMachine):
 	
 	    #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
-        robot.reasoner.assertz(Compound("challenge", "clean_up"))
+        robot.reasoner.assertz(Compound("challenge", "finale"))
 
-        query_meeting_point = Compound("waypoint", 
-                                Compound("meeting_point", "Waypoint"), 
-                                Compound("pose_2d", "X", "Y", "Phi"))
+        # query_unkown_object = Conjunction( Compound("goal", Compound("clean_up", "Room")),
+        #                                                 Compound("exploration_target", "Room", "Target"),
+        #                                                 Compound("not", Compound("explored", "Target")),
+        #                                                 Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
+                                                       # )
+        query_unkown_object = Conjunction(
+                 Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
+                 Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")),
+                 Compound( "not", Compound("explored", "ObjectID")))
 
-        query_exploration_target_in_room = Conjunction( Compound("goal", Compound("clean_up", "Room")),
-                                                        Compound("exploration_target", "Room", "Target"),
-                                                        Compound("not", Compound("explored", "Target")),
-                                                        Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
-                                                       )
-        query_room = Conjunction(   Compound("goal", Compound("clean_up", "Room")), 
-                                    Compound("waypoint", "Room", Compound("pose_2d", "X", "Y", "Phi"))) 
-
-        query_exploration_target = Conjunction( Compound("current_exploration_target", "Target"),
-                                                Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi")))
+        query_exploration_target = Conjunction( Compound("current_exploration_target", "Target"), 
+                                                Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
         query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
-                                    Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
         #Make sure the object we're dealing with isn't already disposed (i.e. handled for cleanup)
         #After cleaning the object up/disposing it, 
         #MARK_DISPOSED asserts disposed(current_objectID)
         query_object = Conjunction(
-                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")),
+                            Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
                             Compound("not", Compound("disposed", "ObjectID")))
 
         query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
@@ -163,46 +230,38 @@ class Cleanup(smach.StateMachine):
                                 Compound("current_object",      "Obj_to_Dispose"), #Of the current object
                                 Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
 
-        query_dropoff_loc = Conjunction(
-                                Compound("current_object", "Obj_to_Dispose"), #Of the current object
-                                Compound("instance_of",    "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-                                Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
-                                Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
-
-        query_dropoff_loc_backup = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc = Compound("dropoff_point",  "trash_bin", Compound("point_3d", "X", "Y", "Z"))        
 
         meeting_point = Conjunction(    Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
 
         with self:
+            smach.StateMachine.add('INITIALIZE',
+                            states.Initialize(robot),
+                            transitions={'initialized':'INIT_POSE',
+                                         'abort':'Aborted'})
 
-            smach.StateMachine.add( "START_CHALLENGE",
-                                    states.StartChallengeRobust(robot, "initial"), 
-                                    transitions={   "Done":"GOTO_MEETING_POINT", 
-                                                    "Aborted":"Aborted", 
-                                                    "Failed":"CANNOT_GOTO_MEETINGPOINT"})
+            smach.StateMachine.add('INIT_POSE',
+                            states.Set_initial_pose(robot, "custom_initial"),
+                            transitions={   'done':'SAY_START',
+                                            'preempted':'Aborted',
+                                            'error':'Aborted'})
 
-            smach.StateMachine.add('GOTO_MEETING_POINT',
-                                    states.GotoMeetingPoint(robot),
-                                    transitions={   "found":"ASK_CLEANUP", 
-                                                    "not_found":"ASK_CLEANUP", 
-                                                    "no_goal":"ASK_CLEANUP",  # We are in the arena, so the current location is fine
-                                                    "all_unreachable":"ASK_CLEANUP"})    # We are in the arena, so the current location is fine
+            smach.StateMachine.add("SAY_START", 
+                                    states.Say(robot, ["Lets start with the finale, I'm very excited!"]),
+                                    transitions={   'spoken':'MOVE_TO_SCAN_POS'})
 
-            smach.StateMachine.add("CANNOT_GOTO_MEETINGPOINT", 
-                                    states.Say(robot, [ "I can't find a way to the meeting point. Please teach me the correct position and clear the path to it", 
-                                                        "I couldn't even get to my first waypoint. May I try again?", 
-                                                        "This ended before I could get started, because my first waypoint is unreachable."]),
-                                    transitions={   'spoken':'ASK_CLEANUP'})
+            smach.StateMachine.add("MOVE_TO_SCAN_POS", 
+                        states.NavigateGeneric(robot, goal_pose_2d=(3.5, 0, 0)),
+                        transitions={   'unreachable'       : 'SCAN_TABLES', 
+                                        'preempted'         : 'SCAN_TABLES', 
+                                        'arrived'           : 'SCAN_TABLES', 
+                                        'goal_not_defined'  : 'SCAN_TABLES'})
 
-            smach.StateMachine.add("ASK_CLEANUP",
-                                Ask_cleanup(robot),
-                                transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
-            
-            ################################################################
-            #                  DETERMINE_EXPLORATION_TARGET
-            # TODO: What if there are multiple objects at the same exploration_target? 
-            ################################################################
+            # After this state: objects might be in the world model
+            smach.StateMachine.add("SCAN_TABLES", 
+                                ScanTables(robot, 10.0),
+                                transitions={   'succeeded':'DETERMINE_EXPLORATION_TARGET'})
 
             @smach.cb_interface(outcomes=['found_exploration_target', 'done'], 
                                 input_keys=[], 
@@ -211,8 +270,8 @@ class Cleanup(smach.StateMachine):
                 # Ask the reaoner for an exploration target that is:
                 #  - in the room that needs cleaning up
                 #  - not yet explored
-                answers = robot.reasoner.query(query_exploration_target_in_room)
-                rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target_in_room, answers))
+                answers = robot.reasoner.query(query_unkown_object)
+                rospy.loginfo("Answers for {0}: {1}".format(query_unkown_object, answers))
                 # First time: 
                 # [   {'Y': 1.351, 'X': 4.952, 'Phi': 1.57, 'Room': living_room, 'Target': cabinet_expedit_1}, 
                 #     {'Y': -1.598, 'X': 6.058, 'Phi': 3.113, 'Room': living_room, 'Target': bed_1}]
@@ -234,7 +293,7 @@ class Cleanup(smach.StateMachine):
                     loc = robot.base.location[0]
                     robot_xy = (loc.x, loc.y)
                     closest_QA = min(answers, key=lambda ans: calc_dist(robot_xy, (float(ans["X"]), float(ans["Y"]))))
-                    target = closest_QA["Target"]
+                    target = closest_QA["ObjectID"]
                     rospy.loginfo("Available targets: {0}".format(answers))
                     rospy.loginfo("Selected target: {0}".format(target))
                     #target = answers[0]["Target"]
@@ -248,7 +307,8 @@ class Cleanup(smach.StateMachine):
                     # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
                     robot.reasoner.assertz(Compound("explored", target))
 
-                    robot.speech.speak("Lets go look at {0}".format(target).replace("_", " "))
+                    #robot.speech.speak("Lets go look at the object with ID {0}".format(target))
+                    robot.speech.speak("Lets go look at an object I found!".format(target))
 
                     return 'found_exploration_target'
             
@@ -258,17 +318,17 @@ class Cleanup(smach.StateMachine):
 
             ################################################################
             smach.StateMachine.add( 'DRIVE_TO_EXPLORATION_TARGET',
-                                    states.NavigateGeneric(robot, goal_query=query_exploration_target),
-                                    transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
-                                                    "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'DETERMINE_EXPLORATION_TARGET'})
+                                    states.PrepareOrientation(arm, robot, grabpoint_query=query_exploration_target),
+                                    transitions={   "orientation_succeeded":"SAY_LOOK_FOR_OBJECTS",
+                                                    "orientation_failed":'SAY_GOAL_UNREACHABLE',
+                                                    "abort":'Aborted',
+                                                    "target_lost":'DETERMINE_EXPLORATION_TARGET'})
 
             def generate_unreachable_sentence(*args,**kwargs):
                 try:
                     answers = robot.reasoner.query(query_exploration_target)
                     name = answers[0]["Target"] #Should only have 1 answer
-                    return "{0} is unreachable, where else can I go?".format(name).replace("_", " ")
+                    return "The object is unreachable, where else can I go?".format(name)
                 except Exception, e:
                     rospy.logerr(e)
                     return "Something went terribly wrong, I don't know where to go and it's unreachable too"
@@ -279,22 +339,6 @@ class Cleanup(smach.StateMachine):
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     states.Say(robot, ["Lets see what I can find here."]),
                                     transitions={   'spoken':'LOOK'})
-
-            #query_dropoff_loc = Compound("point_of_interest", "trash_bin_1", Compound("point_3d", "X", "Y", "Z"))
-            # 
-            # Test this by: 
-            # console 1: $ rosrun tue_reasoner_core reasoner
-            # console 2: $ roslaunch wire_core start.launch
-            # console 3: $ amigo-console
-            # r.query(Compound("consult", '~/ros/fuerte/tue/trunk/tue_reasoner/tue_knowledge/prolog/cleanup_test.pl'))
-            # r.query(Compound("consult", '~/ros/fuerte/tue/trunk/tue_reasoner/tue_knowledge/prolog/locations.pl'))
-            # r.query(Compound("consult", '~/ros/fuerte/tue/trunk/tue_reasoner/tue_knowledge/prolog/objects.pl'))
-            # r.assertz(Compound("challenge", "clean_up"))
-            # r.assertz(Compound("environment", "tue_test_lab"))
-            # r.query(r.dispose("X", "Y", "Z"))
-            # This finally returns a list of (all the same) XYZ-coords.
-            # If you enter query_dropoff_loc below into the amigo-console, 
-            #   you can verify that it returns the same coords, but with more variables of course.
 
             smach.StateMachine.add('LOOK',
                                     states.LookForObjectsAtROI(robot, query_lookat, query_object),
@@ -311,17 +355,16 @@ class Cleanup(smach.StateMachine):
                 try:
                     answers = robot.reasoner.query(query_dropoff_loc)
                     _type = answers[0]["ObjectType"]
-                    dropoff = answers[0]["Disposal_type"]
-                    return "I have found a {0}. I'll' bring it to the {1}".format(_type, dropoff).replace("_", " ")
+                    return "I have found a {0}. I'll' dump it in the trash bin".format(_type)
                 except Exception, e:
                     rospy.logerr(e)
                     try:
                         type_only = robot.reasoner.query(query_current_object_class)[0]["ObjectType"]
-                        return "I found something called {0}.".format(type_only).replace("_", " ")
+                        return "I found something called {0}.".format(type_only)
                     except Exception, e:
                         rospy.logerr(e)
                         pass
-                    return "I have found something, but I'm not sure what it is."
+                    return "I have found something, but I'm not sure what it is. I'll toss in in the trash bin"
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     states.Say_generated(robot, sentence_creator=generate_object_sentence),
                                     transitions={ 'spoken':'GRAB' })
@@ -344,35 +387,17 @@ class Cleanup(smach.StateMachine):
                         smach.CBState(reset_head),
                         transitions={"done":"DROPOFF_OBJECT"})
 
+            smach.StateMachine.add("DROPOFF_OBJECT",
+                                    states.DropObject(arm, robot, query_dropoff_loc),
+                                    transitions={   'succeeded':'MARK_DISPOSED',
+                                                    'failed':'MARK_DISPOSED',
+                                                    'target_lost':'GOTO_HUMAN_DROPOFF'})
+
             # smach.StateMachine.add("DROPOFF_OBJECT",
-            #                         states.DropObject(arm, robot, query_dropoff_loc),
+            #                         StupidHumanDropoff(arm, robot, query_dropoff_loc),
             #                         transitions={   'succeeded':'MARK_DISPOSED',
             #                                         'failed':'MARK_DISPOSED',
-            #                                         'target_lost':'DONT_KNOW_DROP'})
-
-            smach.StateMachine.add("DROPOFF_OBJECT",
-                                    StupidHumanDropoff(arm, robot, query_dropoff_loc),
-                                    transitions={   'succeeded':'MARK_DISPOSED',
-                                                    'failed':'MARK_DISPOSED',
-                                                    'target_lost':'DONT_KNOW_DROP'})
-            
-            smach.StateMachine.add("DONT_KNOW_DROP", 
-                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trash bin."),
-                                    transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'})
-
-            smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
-                                    states.DropObject(arm, robot, query_dropoff_loc_backup),
-                                    transitions={   'succeeded':'MARK_DISPOSED',
-                                                    'failed':'MARK_DISPOSED',
-                                                    'target_lost':'DONT_KNOW_DROP_BACKUP'})
-                                    #states.Gripper_to_query_position(robot, robot.leftArm, query_dropoff_loc_backup),
-                                    #transitions={   'succeeded':'MARK_DISPOSED',
-                                    #                'failed':'MARK_DISPOSED',
-                                    #                'target_lost':'DONT_KNOW_DROP_BACKUP'})
-
-            smach.StateMachine.add("DONT_KNOW_DROP_BACKUP", 
-                                    states.Say(robot, "I can't even find the trash bin! Then I'll just give it to a human. They'll know what to do.", mood="sad"),
-                                    transitions={   'spoken':'GOTO_HUMAN_DROPOFF'})
+            #                                         'target_lost':'GOTO_HUMAN_DROPOFF'})
 
             smach.StateMachine.add( 'GOTO_HUMAN_DROPOFF', states.NavigateGeneric(robot, goal_query=meeting_point),
                                     transitions={   "arrived":"SAY_PLEASE_TAKE",
@@ -405,9 +430,9 @@ class Cleanup(smach.StateMachine):
                                     transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
 
             smach.StateMachine.add("SAY_ALL_EXPLORED", 
-                                    states.Say(robot, [ "I searched at all locations I know of, so cleaning is done.", 
-                                                        "All locations I know of are explored, there is nothing I can find anymore", 
-                                                        "All locations I know of are explored, there are no locations to search anymore"]),
+                                    states.Say(robot, [ "I searched at all object locations, so cleaning is done.", 
+                                                        "All object locations I found with my laser are explored, there is nothing I can find anymore", 
+                                                        "All object locations I found with my laser are explored, there are no locations to search anymore"]),
                                     transitions={   'spoken':'RETURN'})
                     
             smach.StateMachine.add( 'RETURN', states.NavigateGeneric(robot, goal_name="exitB"),
@@ -424,6 +449,6 @@ class Cleanup(smach.StateMachine):
                                     transitions={'stop':'Done'})
 
 if __name__ == "__main__":
-    rospy.init_node('clean_up_exec')
+    rospy.init_node('finale_exec')
     
-    startup(Cleanup)
+    startup(Finale)
