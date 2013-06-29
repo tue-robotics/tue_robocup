@@ -119,48 +119,7 @@ class ScanTables(smach.State):
 
         return 'succeeded'
 
-class DetermineGoal(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"], input_keys=['object_locations'], output_keys=['object_locations'])
-        self.robot = robot
-        self.preempted = False
 
-    def execute(self, userdata):
-
-        query = Conjunction(
-                 Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
-                 Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")))
-
-        answers = self.robot.reasoner.query(query)
-
-        self.robot.speech.speak("I have found {0} possible object locations".format(len(answers)))
-
-        (position, orientation) = self.robot.base.get_location()
-        counter = 0
-        location_list = []
-        for answer in answers:
-            location_list.append({'X' : answer['X'], 'Y' : answer['Y'], 'Z': answer['Z']})
-            location_list = sorted(location_list, key=lambda p: (position.y - float(p['Y']))**2 + (position.x - float(p['X']))**2)
-        for point in location_list:
-            self.robot.reasoner.assertz(Compound("goal_location", ("a" + str(counter)), Compound("point_3d", point["X"], point["Y"], point["Z"])))
-            counter += 1
-        
-        return "done"
-
-class MoveToTable(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=["done", "failed_navigate", "no_tables_left"])
-        self.robot = robot
-
-        with self:
-            smach.StateMachine.add("GET_LOCATION", 
-                GetNextLocation(self.robot),
-                transitions={'done':'NAVIGATE_TO', 'no_locations':'no_tables_left'})
-
-            smach.StateMachine.add("NAVIGATE_TO", states.NavigateGeneric(robot, 
-                lookat_query=Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), 
-                transitions={'unreachable' : 'failed_navigate', 'preempted' : 'NAVIGATE_TO', 
-                'arrived' : 'done', 'goal_not_defined' : 'failed_navigate'})
 
 class Finale(smach.StateMachine):
     def __init__(self, robot):
@@ -241,6 +200,13 @@ class Finale(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_TO_SCAN_POS", 
                         states.NavigateGeneric(robot, goal_pose_2d=(2.06, -4.433, -1.13)),
+                        transitions={   'unreachable'       : 'MOVE_TO_SCAN_POS2', 
+                                        'preempted'         : 'MOVE_TO_SCAN_POS2', 
+                                        'arrived'           : 'SCAN_TABLES', 
+                                        'goal_not_defined'  : 'MOVE_TO_SCAN_POS2'})
+
+            smach.StateMachine.add("MOVE_TO_SCAN_POS2", # BACKUP nav goal!
+                        states.NavigateGeneric(robot, goal_pose_2d=(2.512, -4.938, -1.102)),
                         transitions={   'unreachable'       : 'SCAN_TABLES', 
                                         'preempted'         : 'SCAN_TABLES', 
                                         'arrived'           : 'SCAN_TABLES', 
@@ -249,7 +215,19 @@ class Finale(smach.StateMachine):
             # After this state: objects might be in the world model
             smach.StateMachine.add("SCAN_TABLES", 
                                 ScanTables(robot, 10.0),
-                                transitions={   'succeeded':'DETERMINE_EXPLORATION_TARGET'})
+                                transitions={   'succeeded':'SAY_NO_TARGETS'})
+
+            def generate_no_targets_sentence(*args,**kwargs):
+                try:
+                    answers = robot.reasoner.query(query_unkown_object)
+                    return "I have found {0} possible object locations".format(len(answers))
+                except Exception, e:
+                    rospy.logerr(e)
+                    return "I found no objects"
+
+            smach.StateMachine.add('SAY_NO_TARGETS',
+                                    states.Say_generated(robot, sentence_creator=generate_no_targets_sentence),
+                                    transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             @smach.cb_interface(outcomes=['found_exploration_target', 'done'], 
                                 input_keys=[], 
@@ -281,7 +259,6 @@ class Finale(smach.StateMachine):
                     
                     loc = self.robot.base.location[0]
                     
-
                     robot_xy = (loc.x, loc.y)
                     closest_QA = min(answers, key=lambda ans: calc_dist(robot_xy, (float(ans["X"]), float(ans["Y"]))))
                     target = closest_QA["ObjectID"]
@@ -290,7 +267,6 @@ class Finale(smach.StateMachine):
 
                     #rospy.loginfo("Available targets: {0}".format(answers))
                     rospy.loginfo("Selected target: {0}".format(target))
-                    #target = answers[0]["Target"]
 
                     # remove current target
                     robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
@@ -332,15 +308,15 @@ class Finale(smach.StateMachine):
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
-                                    states.Say(robot, ["Lets see what I can find here."]),
+                                    states.Say(robot, ["Let's see what object I can find here."]),
                                     transitions={   'spoken':'LOOK'})
 
             smach.StateMachine.add('LOOK',
-                                    states.LookForObjectsAtROI(robot, query_lookat, query_object),
+                                    states.LookForObjectsAtROI(robot, query_lookat, query_object,waittime=3.0),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'SAY_FOUND_NOTHING',
-                                                    'abort':'Aborted'})
+                                                    'abort':'DETERMINE_EXPLORATION_TARGET'})
 
             smach.StateMachine.add('SAY_FOUND_NOTHING',
                                     states.Say(robot, ["I didn't find anything to clean up here", "No objects to clean here", "There are no objects to clean here"]),
@@ -425,16 +401,14 @@ class Finale(smach.StateMachine):
                                     transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
 
             smach.StateMachine.add("SAY_ALL_EXPLORED", 
-                                    states.Say(robot, [ "I searched at all object locations, so cleaning is done.", 
-                                                        "All object locations I found with my laser are explored, there is nothing I can find anymore", 
-                                                        "All object locations I found with my laser are explored, there are no locations to search anymore"]),
+                                    states.Say(robot, ["All object locations I found with my laser are explored, there are no locations to search anymore"],block=False),
                                     transitions={   'spoken':'RETURN'})
                     
             smach.StateMachine.add( 'RETURN', states.NavigateGeneric(robot, goal_name="exitB"),
                                     transitions={   "arrived":"SAY_DONE",
                                                     "unreachable":'SAY_DONE', #Maybe this should not be "FINISHED?"
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'Aborted'})
+                                                    "preempted":'SAY_DONE',
+                                                    "goal_not_defined":'SAY_DONE'})
 
             smach.StateMachine.add("SAY_DONE", 
                                     states.Say(robot, ["I cleaned up everything I could find, so my work here is done. Have a nice day!", "I'm done, everything I could find is cleaned up."]),
