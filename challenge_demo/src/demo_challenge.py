@@ -319,22 +319,22 @@ class PoorChocolateNuts(smach.StateMachine):
                                         Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
         @smach.cb_interface(outcomes=['succeeded','failed'])
-            def send_laser_goal(userdata, laser_target, timeout):
-                if self.robot.spindle.send_laser_goal(laser_target, timeout=timeout):
-                    return 'succeeded'
-                else:
-                    return 'failed'
+        def send_laser_goal(userdata, laser_target, timeout):
+            if self.robot.spindle.send_laser_goal(laser_target, timeout=timeout):
+                return 'succeeded'
+            else:
+                return 'failed'
 
         @smach.cb_interface(outcomes=['done'])
-            def assert_prior_bowl_pos(userdata):
-                answers = self.robot.reasoner.query(lookat_query)
-                if answers:
-                    answer = answers[0]
-                    self.robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
-                else:
-                    self.robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", 6.0, -0,43, 0.82)))
+        def assert_prior_bowl_pos(userdata):
+            answers = self.robot.reasoner.query(lookat_query)
+            if answers:
+                answer = answers[0]
+                self.robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
+            else:
+                self.robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", 6.0, -0,43, 0.82)))
 
-                self.robot.reasoner.assertz(Compound("current_object", "bowl-fixed"))
+            self.robot.reasoner.assertz(Compound("current_object", "bowl-fixed"))
 
 
         with self:
