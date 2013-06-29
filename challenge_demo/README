@@ -10,7 +10,6 @@ amigo3:
 
 amigo3:
 
-    roslaunch speech_interpreter start_magdeburg2013.launch
     roslaunch maluuba_ros start.launch (Get this by running: 'rosmake tue-rosdep; trunk; tue-rosdep install .')
 
 amigo3:
