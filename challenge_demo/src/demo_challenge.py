@@ -346,7 +346,7 @@ class PoorChocolateNuts(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "LOWER_LASER",
-                                    smach.CBState(send_laser_goal,cb_kwargs={'laser_target':82, 'timeout':4}),
+                                    smach.CBState(send_laser_goal,cb_kwargs={'laser_target':0.82, 'timeout':4}),
                                     transitions={   'succeeded'             : 'LOOK_FOR_BOWL',
                                                     'failed'                : 'ASSERT_PRIOR_BOWL_POS'})
 
