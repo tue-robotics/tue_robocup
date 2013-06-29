@@ -45,7 +45,7 @@ KITCHEN_LOC = (2.24, -3.73, -1.95)#Compound("sink", "a")
 BREAKFAST_1 = "breakfast_1"
 BREAKFAST_2 = "breakfast_2"
 SINGPOS = Compound("dinner_table", "a")
-BOWL_POS = Compound("dinner_table", "a")
+BOWL_POS = "bowl_prior"
 
 query_dropoff_loc = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
 
