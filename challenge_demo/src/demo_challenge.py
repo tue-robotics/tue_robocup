@@ -337,7 +337,7 @@ class PoorChocolateNuts(smach.StateMachine):
                 answer = answers[0]
                 robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
             else:
-                robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", 6.0, -0,43, 0.82)))
+                robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", 6.0, -0.43, 0.82)))
 
             robot.reasoner.assertz(Compound("current_object", "bowl_fixed"))
 
