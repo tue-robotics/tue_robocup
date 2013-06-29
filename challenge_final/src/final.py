@@ -1,18 +1,20 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_finale')
+import roslib; roslib.load_manifest('challenge_final')
 import rospy
 
 import smach
-
+from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
 from robot_skills.reasoner  import Conjunction, Compound, Sequence
 from robot_skills.arms import State as ArmState
 from robot_smach_states.util.startup import startup
-
+from speech_interpreter.srv import GetYesNo
 from speech_interpreter.srv import GetInfo
 
 import geometry_msgs.msg
+
+from psi import *
 
 grasp_arm = "left"
 #grasp_arm = "right"
@@ -121,7 +123,7 @@ class ScanTables(smach.State):
 
 
 
-class Finale(smach.StateMachine):
+class Final(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
         self.robot = robot
@@ -145,13 +147,14 @@ class Finale(smach.StateMachine):
 	
 	    #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
-        robot.reasoner.assertz(Compound("challenge", "finale"))
+        robot.reasoner.assertz(Compound("challenge", "final"))
 
         # query_unkown_object = Conjunction( Compound("goal", Compound("clean_up", "Room")),
         #                                                 Compound("exploration_target", "Room", "Target"),
         #                                                 Compound("not", Compound("explored", "Target")),
         #                                                 Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
                                                        # )
+        query_living_room = Compound("waypoint", "living_room", Compound("pose_2d", "X", "Y", "Phi"))
         query_unkown_object = Conjunction(
                  Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
                  Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")),
@@ -183,35 +186,33 @@ class Finale(smach.StateMachine):
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
 
         with self:
-            smach.StateMachine.add('INITIALIZE',
-                            states.Initialize(robot),
-                            transitions={'initialized':'INIT_POSE',
-                                         'abort':'Aborted'})
+            ######################################################
+            ##################### ENTER ROOM #####################
+            ######################################################
+            # Start challenge via StartChallengeRobust
+            smach.StateMachine.add( "START_CHALLENGE",
+                                    states.StartChallengeRobust(robot, "initial"), 
+                                    transitions={   "Done":"SAY_GOTO_LIVINGROOM", 
+                                                    "Aborted":"SAY_GOTO_LIVINGROOM", 
+                                                    "Failed":"SAY_GOTO_LIVINGROOM"}) 
 
-            smach.StateMachine.add('INIT_POSE',
-                            states.Set_initial_pose(robot, "custom_initial"),
-                            transitions={   'done':'SAY_START',
-                                            'preempted':'Aborted',
-                                            'error':'Aborted'})
+            smach.StateMachine.add("SAY_GOTO_LIVINGROOM",
+                                    states.Say(robot, "I will go to the living room, see if I can do something over there.", block=False),
+                                    transitions={   "spoken":"GOTO_LIVING_ROOM"})
 
-            smach.StateMachine.add("SAY_START", 
-                                    states.Say(robot, ["Lets start with the final demonstration, I'm very excited!"], block=False),
-                                    transitions={   'spoken':'MOVE_TO_SCAN_POS'})
+            smach.StateMachine.add('GOTO_LIVING_ROOM',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room),
+                                    transitions={   "arrived":"SCAN_TABLES", 
+                                                    "unreachable":"GOTO_LIVING_ROOM2", 
+                                                    "preempted":"GOTO_LIVING_ROOM2", 
+                                                    "goal_not_defined":"GOTO_LIVING_ROOM2"})
 
-            smach.StateMachine.add("MOVE_TO_SCAN_POS", 
-                        states.NavigateGeneric(robot, goal_pose_2d=(2.06, -4.433, -1.13)),
-                        transitions={   'unreachable'       : 'MOVE_TO_SCAN_POS2', 
-                                        'preempted'         : 'MOVE_TO_SCAN_POS2', 
-                                        'arrived'           : 'SCAN_TABLES', 
-                                        'goal_not_defined'  : 'MOVE_TO_SCAN_POS2'})
-
-            smach.StateMachine.add("MOVE_TO_SCAN_POS2", # BACKUP nav goal!
-                        states.NavigateGeneric(robot, goal_pose_2d=(2.512, -4.938, -1.102)),
-                        transitions={   'unreachable'       : 'SCAN_TABLES', 
-                                        'preempted'         : 'SCAN_TABLES', 
-                                        'arrived'           : 'SCAN_TABLES', 
-                                        'goal_not_defined'  : 'SCAN_TABLES'})
-
+            smach.StateMachine.add("GOTO_LIVING_ROOM2", # BACKUP nav goal!
+                                    states.NavigateGeneric(robot, goal_pose_2d=(4.091, 0.440, -0.253)),
+                                    transitions={   'unreachable'       : 'SCAN_TABLES', 
+                                                    'preempted'         : 'SCAN_TABLES', 
+                                                    'arrived'           : 'SCAN_TABLES', 
+                                                    'goal_not_defined'  : 'SCAN_TABLES'})
             # After this state: objects might be in the world model
             smach.StateMachine.add("SCAN_TABLES", 
                                 ScanTables(robot, 10.0),
@@ -229,6 +230,9 @@ class Finale(smach.StateMachine):
                                     states.Say_generated(robot, sentence_creator=generate_no_targets_sentence),
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
+            ##### ADD ASK USER DRINK #####
+
+            # Now find the closest object on the table
             @smach.cb_interface(outcomes=['found_exploration_target', 'done'], 
                                 input_keys=[], 
                                 output_keys=[])
@@ -294,17 +298,9 @@ class Finale(smach.StateMachine):
                                                     "orientation_failed":'SAY_GOAL_UNREACHABLE',
                                                     "abort":'Aborted',
                                                     "target_lost":'DETERMINE_EXPLORATION_TARGET'})
-
-            def generate_unreachable_sentence(*args,**kwargs):
-                try:
-                    answers = robot.reasoner.query(query_exploration_target)
-                    name = answers[0]["Target"] #Should only have 1 answer
-                    return "The object is unreachable, where else can I go?".format(name)
-                except Exception, e:
-                    rospy.logerr(e)
-                    return "Something went terribly wrong, I don't know where to go and it's unreachable too"
+          
             smach.StateMachine.add('SAY_GOAL_UNREACHABLE',
-                                    states.Say_generated(robot, sentence_creator=generate_unreachable_sentence),
+                                    states.Say(robot, ["The object is unreachable, where else can I go?"]),
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
@@ -319,7 +315,7 @@ class Finale(smach.StateMachine):
                                                     'abort':'DETERMINE_EXPLORATION_TARGET'})
 
             smach.StateMachine.add('SAY_FOUND_NOTHING',
-                                    states.Say(robot, ["I didn't find anything to clean up here", "No objects to clean here", "There are no objects to clean here"]),
+                                    states.Say(robot, ["I didn't find anything."]),
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             def generate_object_sentence(*args,**kwargs):
@@ -336,6 +332,7 @@ class Finale(smach.StateMachine):
                         rospy.logerr(e)
                         pass
                     return "I have found something, but I'm not sure what it is. I'll toss in in the trash bin"
+
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     states.Say_generated(robot, sentence_creator=generate_object_sentence),
                                     transitions={ 'spoken':'GRAB' })
@@ -418,6 +415,6 @@ class Finale(smach.StateMachine):
                                     transitions={'stop':'Done'})
 
 if __name__ == "__main__":
-    rospy.init_node('finale_exec')
+    rospy.init_node('final_exec')
     
-    startup(Finale)
+    startup(Final)
