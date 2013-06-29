@@ -221,7 +221,7 @@ class LookForServeObject(smach.State):
         self.robot.perception.toggle_recognition(objects=False)
 
         #Select object we are looking for
-        serve_object = Compound("goal", Compound("serve", "Counter", "Object"))
+        serve_object = Compound("goal", Compound("serve", "Object"))
         answers = self.robot.reasoner.query(serve_object)
         print answers
         object_class = ""
