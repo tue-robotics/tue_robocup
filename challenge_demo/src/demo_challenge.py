@@ -278,16 +278,16 @@ class InteractionPart(smach.StateMachine):
             #                         transitions={   'done'              : 'SAY_HOW_FEEL'})
 
 
-            smach.StateMachine.add( "SAY_HOW_FEEL",
-                                    states.Say(robot, "How are you today?"),
-                                    transitions={   'spoken'            : "ASK_HOW_FEEL"})
+#            smach.StateMachine.add( "SAY_HOW_FEEL",
+#                                    states.Say(robot, "How are you today?"),
+#                                    transitions={   'spoken'            : "ASK_HOW_FEEL"})
            
-            smach.StateMachine.add('ASK_HOW_FEEL',
-                                    AskHowFeel(robot),
-                                    transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
+#           smach.StateMachine.add('ASK_HOW_FEEL',
+#                                    AskHowFeel(robot),
+#                                    transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
 
             smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
-                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
+                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece or peanut butter. Which do you want?"),
                                     transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
@@ -339,7 +339,7 @@ class PoorChocolateNuts(smach.StateMachine):
                 answer = answers[0]
                 robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
             else:
-                robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", 6.0, -0.43, 0.82)))
+                robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", 6.052, -2.515, 0.82)))
 
             robot.reasoner.assertz(Compound("current_object", "bowl_fixed"))
 
@@ -496,6 +496,7 @@ class Part1(smach.StateMachine):
                                                     "preempted"         : "failed",
                                                     "goal_not_defined"  : "SAY_KITCHEN_BACKUP"})
 
+
             smach.StateMachine.add( 'SAY_KITCHEN_BACKUP',
                                     states.Say(robot, ["Can you please handover the tray so i can take it to the patients?"]), 
                                     transitions={   'spoken'            : "HOLDUP_ARMS_FOR_TRAY_LEFT"})
@@ -561,7 +562,12 @@ class Part1(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_TAKE_TRAY',
                                     states.Say(robot, ["I have delivered the breakfast, please take the tray from my arms"]),
-                                    transitions={   'spoken'            : 'RESET_ROBOT'})
+                                    transitions={   'spoken'            : 'WAIT_FOR_LOAD'})
+                                    
+            smach.StateMachine.add( 'WAIT_FOR_LOAD',
+                                    states.Wait_time(robot, waittime=5),
+                                    transitions={   'waited':'RESET_ROBOT',
+                                                    'preempted':'RESET_ROBOT'})
 
             smach.StateMachine.add( 'RESET_ROBOT',
                                     ResetRobot(robot),
@@ -587,10 +593,10 @@ class Part2(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
                                     states.NavigateGeneric(robot, goal_pose_2d=KITCHEN_LOC), 
-                                    transitions={   "arrived"           : "REPORT_BREAKFAST",
-                                                    "unreachable"       : "REPORT_BREAKFAST",
+                                    transitions={   "arrived"           : "RESET_ROBOT_FOR_COOK",
+                                                    "unreachable"       : "RESET_ROBOT_FOR_COOK",
                                                     "preempted"         : "failed",
-                                                    "goal_not_defined"  : "REPORT_BREAKFAST"})
+                                                    "goal_not_defined"  : "RESET_ROBOT_FOR_COOK"})
 
             smach.StateMachine.add( 'SAY_CANNOT_REACH_BREAKFAST_TABLE',
                                     states.Say(robot, ["I better go to the cook straight away"]), 
@@ -604,11 +610,16 @@ class Part2(smach.StateMachine):
                                                     "goal_not_defined"  : "HOLDUP_ARM_FOR_CAN_LEFT"})
 
             smach.StateMachine.add( 'SAY_KITCHEN_BACKUP',
-                                    states.Say(robot, ["Can you please handover the can so i can take it to the patients"]), 
+                                    states.Say(robot, ["Can you please handover the can so i can take it to the patients"], block=False), 
                                     transitions={   'spoken'            : "HOLDUP_ARM_FOR_CAN_LEFT"})
+              
+            smach.StateMachine.add( 'RESET_ROBOT_FOR_COOK',
+                                    ResetRobot(robot),
+                                    transitions={   'done'      : 'REPORT_BREAKFAST'})                         
+            
 
             smach.StateMachine.add('REPORT_BREAKFAST',
-                                    states.Say(robot, ["Could you give me some chocolate nuts"]),
+                                    states.Say(robot, ["Could you give me some chocolate nuts"], block=False),
                                     transitions={ 'spoken':'HOLDUP_ARM_FOR_CAN_LEFT' })
 
             smach.StateMachine.add( 'HOLDUP_ARM_FOR_CAN_LEFT', 
