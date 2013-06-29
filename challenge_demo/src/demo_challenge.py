@@ -335,11 +335,11 @@ class PoorChocolateNuts(smach.StateMachine):
             answers = robot.reasoner.query(lookat_query)
             if answers:
                 answer = answers[0]
-                robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
+                robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
             else:
-                robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", 6.0, -0,43, 0.82)))
+                robot.reasoner.assertz(Compound("position_asserted", "bowl_fixed", Compound("point", 6.0, -0,43, 0.82)))
 
-            robot.reasoner.assertz(Compound("current_object", "bowl-fixed"))
+            robot.reasoner.assertz(Compound("current_object", "bowl_fixed"))
 
             return 'done'
 
