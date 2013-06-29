@@ -336,6 +336,8 @@ class PoorChocolateNuts(smach.StateMachine):
 
             robot.reasoner.assertz(Compound("current_object", "bowl-fixed"))
 
+            return 'done'
+
 
         with self:
             smach.StateMachine.add( "LOWER_LASER",
