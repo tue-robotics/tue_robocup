@@ -318,25 +318,53 @@ class PoorChocolateNuts(smach.StateMachine):
         grabpoint_query = Conjunction(  Compound("current_object", "ObjectID"),
                                         Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
-        with self:
-            smach.StateMachine.add( "LOOK_FOR_BOWL",
-                                    states.LookForObjectsAtROI(robot, lookat_query, bowl_query, modules=["template_matching"], waittime=5.0),
-                                    transitions={   'object_found'          : 'PRE_POOR_POS',
-                                                    'looking'               : 'failed',
-                                                    'no_object_found'       : 'failed',
-                                                    'abort'                 : 'failed'})
-            # #'looking','object_found','no_object_found','abort'
-            # smach.StateMachine.add('PREPARE_GRAB', 
-            #                         states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
-            #                         transitions={   'succeeded'             :   'PREPARE_ORIENTATION',
-            #                                         'failed'                :   'failed'})
+        @smach.cb_interface(outcomes=['succeeded','failed'])
+            def send_laser_goal(userdata, laser_target, timeout):
+                if self.robot.spindle.send_laser_goal(laser_target, timeout=timeout):
+                    return 'succeeded'
+                else:
+                    return 'failed'
 
-            # smach.StateMachine.add( "PREPARE_ORIENTATION", 
-            #                         states.PrepareOrientation(robot.leftArm, robot, grabpoint_query),
-            #                         transitions={   'orientation_succeeded' : 'PRE_POOR_POS',
-            #                                         'orientation_failed'    : 'failed',
-            #                                         'abort'                 : 'failed',
-            #                                         'target_lost'           : 'failed'})
+        @smach.cb_interface(outcomes=['done'])
+            def assert_prior_bowl_pos(userdata):
+                answers = self.robot.reasoner.query(lookat_query)
+                if answers:
+                    answer = answers[0]
+                    self.robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", answer["X"], answer["Y"], answer["Z"])))
+                else:
+                    self.robot.reasoner.assertz(Compound("position", "bowl-fixed", Compound("point", 6.0, -0,43, 0.82)))
+
+                self.robot.reasoner.assertz(Compound("current_object", "bowl-fixed"))
+
+
+        with self:
+            smach.StateMachine.add( "LOWER_LASER",
+                                    smach.CBState(send_laser_goal,cb_kwargs={'laser_target':82, 'timeout':4}),
+                                    transitions={   'succeeded'             : 'LOOK_FOR_BOWL',
+                                                    'failed'                : 'ASSERT_PRIOR_BOWL_POS'})
+
+            smach.StateMachine.add( "ASSERT_PRIOR_BOWL_POS",
+                                    smach.CBState(assert_prior_bowl_pos),
+                                    transitions={   'done'                  : 'PREPARE_GRAB'})
+
+            smach.StateMachine.add( "LOOK_FOR_BOWL",
+                                    states.LookForObjectsAtROI(robot, lookat_query, bowl_query, modules=["object_detector_2d"], maxdist=0.3, waittime=5.0),
+                                    transitions={   'object_found'          : 'PRE_POOR_POS',
+                                                    'looking'               : 'ASSERT_PRIOR_BOWL_POS',
+                                                    'no_object_found'       : 'ASSERT_PRIOR_BOWL_POS',
+                                                    'abort'                 : 'ASSERT_PRIOR_BOWL_POS'})
+            # #'looking','object_found','no_object_found','abort'
+            smach.StateMachine.add('PREPARE_GRAB', 
+                                    states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
+                                    transitions={   'succeeded'             :   'PREPARE_ORIENTATION',
+                                                    'failed'                :   'failed'})
+
+            smach.StateMachine.add( "PREPARE_ORIENTATION", 
+                                    states.PrepareOrientation(robot.leftArm, robot, grabpoint_query),
+                                    transitions={   'orientation_succeeded' : 'PRE_POOR_POS',
+                                                    'orientation_failed'    : 'PRE_POOR_POS',
+                                                    'abort'                 : 'failed',
+                                                    'target_lost'           : 'failed'})
 
             smach.StateMachine.add( "PRE_POOR_POS", 
                                     states.ArmToQueryPoint(robot, robot.leftArm, grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
