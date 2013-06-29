@@ -30,6 +30,8 @@ from speech_interpreter.srv import GetYesNo
 
 import datetime
 
+import thread
+
 # DONE : Get breakfast from intermediate pos: 2.24, -3.73, -1.95 TEST
 # Aankijken voor vragen CHECK OF NODIG IS
 # 2x opties moet 1x TEST
@@ -206,7 +208,7 @@ class AskAnythingElse(smach.State):
             elif "time" in self.response.answer:
                 self.tell_time()
             elif "remind me" in self.response.answer.lower():                
-                self.remind()
+                thread.start_new_thread(self.remind, ())
             else:
                 rospy.logwarn("Answer not understood")
                 self.robot.speech.speak("I am terribly sorry but I do not know what you mean", mood="sad", block=False)
