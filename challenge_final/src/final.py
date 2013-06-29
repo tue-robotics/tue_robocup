@@ -442,17 +442,30 @@ class Final(smach.StateMachine):
                                     states.Say(robot, ["All object locations I found with my laser are explored, there are no locations to search anymore"],block=False),
                                     transitions={   'spoken':'RETURN'})
                     
-            smach.StateMachine.add( 'RETURN', states.NavigateGeneric(robot, goal_name="exitB"),
-                                    transitions={   "arrived":"SAY_DONE",
-                                                    "unreachable":'SAY_DONE', #Maybe this should not be "FINISHED?"
-                                                    "preempted":'SAY_DONE',
-                                                    "goal_not_defined":'SAY_DONE'})
+            smach.StateMachine.add('SAY_THANKS',
+                                    states.Say(robot, "Thanks for your time, hope you enjoyed Robocup 2013."),
+                                    transitions={'spoken':'EXIT'}) 
 
-            smach.StateMachine.add("SAY_DONE", 
-                                    states.Say(robot, ["I cleaned up everything I could find, so my work here is done. Have a nice day!", "I'm done, everything I could find is cleaned up."]),
-                                    transitions={   'spoken':'FINISH'})
+            smach.StateMachine.add('EXIT', 
+                                    states.Navigate_named(robot, "exit_1"),
+                                    transitions={   'arrived':'FINISH', 
+                                                    'preempted':'CLEAR_PATH_TO_EXIT', 
+                                                    'unreachable':'CLEAR_PATH_TO_EXIT', 
+                                                    'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
+        
+            smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
+                                    states.Say(robot, "I couldn't go to the exit. Please clear the path, I will give it another try."),
+                                    transitions={'spoken':'GO_TO_EXIT_SECOND_TRY'}) 
 
-            smach.StateMachine.add( 'FINISH', states.Finish(robot),
+            smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
+                                    states.Navigate_named(robot, "exit_2"),
+                                    transitions={   'arrived':'FINISH', 
+                                                    'preempted':'FINISH', 
+                                                    'unreachable':'FINISH', 
+                                                    'goal_not_defined':'FINISH'})
+
+            smach.StateMachine.add( 'FINISH', 
+                                    states.Finish(robot),
                                     transitions={'stop':'Done'})
 
 
