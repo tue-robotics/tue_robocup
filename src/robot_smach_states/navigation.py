@@ -1007,7 +1007,8 @@ class Determine_goal(smach.State):
         # sort those poses under the threshold on distance to get the closest pose first
         under_cost_threshold = sorted(under_cost_threshold, key=lambda d: distance(d['x'], d['y'], robot_x, robot_y))
         # the other ones can be sorted on their cost
-        above_cost_threshold = sorted(above_cost_threshold, key=lambda d: d['info'].cost)
+        #above_cost_threshold = sorted(above_cost_threshold, key=lambda d: d['info'].cost)
+        above_cost_threshold = sorted(above_cost_threshold, key=lambda d: distance(d['x'], d['y'], robot_x, robot_y))
 
         # merge both lists
         self.possible_locations = under_cost_threshold + above_cost_threshold
