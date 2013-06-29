@@ -140,11 +140,55 @@ class ScanTables(smach.State):
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
             if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
-                self.robot.speech.speak("I will scan the tables for objects", block=False)
+                #self.robot.speech.speak("I will scan the tables for objects", block=False)
                 self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
                 rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.logwarn("Waiting for 2.0 seconds for laser update")
                 rospy.sleep(rospy.Duration(2.0))
+            else:
+                rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
+            
+            ''' Reset head and stop all perception stuff '''
+            self.robot.perception.toggle([])
+            self.robot.spindle.send_goal(spindle_pos, waittime=self.timeout_duration)
+        else:
+            rospy.logerr("No table location found...")
+
+        return 'succeeded'
+
+class ScanTablePosition(smach.State):
+    def __init__(self, robot, timeout_duration):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        self.robot = robot
+        self.timeout_duration = timeout_duration
+
+    def execute(self, gl):
+
+        rospy.loginfo("Trying to detect tables")
+
+        answers = self.robot.reasoner.query(Compound('region_of_interest', 
+            'large_table_position', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
+        
+        ''' Remember current spindle position '''      
+        spindle_pos = self.robot.spindle.get_position()
+
+
+        if answers:
+            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+            target_point = geometry_msgs.msg.PointStamped()
+            target_point.header.frame_id = "/map"
+            target_point.header.stamp = rospy.Time()
+            target_point.point.x = float(answer["X"])
+            target_point.point.y = float(answer["Y"])
+            target_point.point.z = float(answer["Z"])
+
+            ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
+            if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
+                self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
+                rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+                rospy.logwarn("Tracking table for {0}".format(self.timeout_duration))
+                self.robot.speech.speak("Hey guys, can I do anything for you.")
+                rospy.sleep(rospy.Duration(self.timeout_duration))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
             
@@ -237,17 +281,21 @@ class Final(smach.StateMachine):
 
             smach.StateMachine.add('GOTO_LIVING_ROOM',
                                     states.NavigateGeneric(robot, goal_query = query_living_room),
-                                    transitions={   "arrived":"TAKE_ORDER", 
+                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
                                                     "unreachable":"GOTO_LIVING_ROOM2", 
                                                     "preempted":"GOTO_LIVING_ROOM2", 
                                                     "goal_not_defined":"GOTO_LIVING_ROOM2"})
 
             smach.StateMachine.add("GOTO_LIVING_ROOM2", # BACKUP nav goal!
                                     states.NavigateGeneric(robot, goal_pose_2d=(4.091, 0.440, -0.253)),
-                                    transitions={   'unreachable'       : 'TAKE_ORDER', 
-                                                    'preempted'         : 'TAKE_ORDER', 
-                                                    'arrived'           : 'TAKE_ORDER', 
-                                                    'goal_not_defined'  : 'TAKE_ORDER'})
+                                    transitions={   'unreachable'       : 'SCAN_TABLE_POSITION', 
+                                                    'preempted'         : 'SCAN_TABLE_POSITION', 
+                                                    'arrived'           : 'SCAN_TABLE_POSITION', 
+                                                    'goal_not_defined'  : 'SCAN_TABLE_POSITION'})
+            
+            smach.StateMachine.add("SCAN_TABLE_POSITION", 
+                                ScanTablePosition(robot, 20.0),
+                                transitions={   'succeeded':'TAKE_ORDER'})
 
             smach.StateMachine.add( "TAKE_ORDER",
                                             Ask_drink(robot),
@@ -440,7 +488,15 @@ class Final(smach.StateMachine):
 
             smach.StateMachine.add("SAY_ALL_EXPLORED", 
                                     states.Say(robot, ["All object locations I found with my laser are explored, there are no locations to search anymore"],block=False),
-                                    transitions={   'spoken':'RETURN'})
+                                    transitions={   'spoken':'RETURN_LIVING_ROOM'})
+
+            # ToDo: replace by something more interesting
+            smach.StateMachine.add('RETURN_LIVING_ROOM',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room),
+                                    transitions={   "arrived":"SAY_THANKS", 
+                                                    "unreachable":"SAY_THANKS", 
+                                                    "preempted":"SAY_THANKS", 
+                                                    "goal_not_defined":"SAY_THANKS"})
                     
             smach.StateMachine.add('SAY_THANKS',
                                     states.Say(robot, "Thanks for your time, hope you enjoyed Robocup 2013."),
