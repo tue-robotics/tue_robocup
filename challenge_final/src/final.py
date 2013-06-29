@@ -19,6 +19,8 @@ from robot_skills.reasoner import Conjunction, Compound, Sequence
 from robot_skills.arms import State as ArmState
 import geometry_msgs
 
+import assert_operator
+
 class Ask_drink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
@@ -507,8 +509,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "TAKE_ORDER",
                                             Ask_drink(robot),
-                                            transitions={   "done":"SCAN_TABLES",
-                                                            "failed":"SCAN_TABLES"})
+                                            transitions={   "done":"ASSERT_CURRENT_OPERATOR",
+                                                            "failed":"ASSERT_CURRENT_OPERATOR"})
+
+        smach.StateMachine.add( "ASSERT_CURRENT_OPERATOR",
+                                assert_operator.AssertCurrentOperator(robot),
+                                transitions={"asserted":"SCAN_TABLES",
+                                             "no_operator":"SCAN_TABLES"})
 
         # After this state: objects might be in the world model
         smach.StateMachine.add("SCAN_TABLES", 

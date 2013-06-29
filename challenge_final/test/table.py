@@ -7,7 +7,7 @@ import sys
 from fast_simulator import client
 
 if __name__ == "__main__":
-    rospy.init_node('fast_simulator_challenge_tester')
+    rospy.init_node('fast_simulator_challenge_tester_table')
 
    
 
