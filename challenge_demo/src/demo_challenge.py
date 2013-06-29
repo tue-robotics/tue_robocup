@@ -136,7 +136,12 @@ class AskAnythingElse(smach.State):
 
         self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
         self.maluubasrv = rospy.ServiceProxy('maluuba/interpret', Interpret)
-        self.mail_interpreter = MailInterpreter(open(roslib.packages.get_pkg_dir("challenge_demo") + "/config/mailconfig.yaml"))
+        
+        try:
+            self.mail_interpreter = MailInterpreter(open(roslib.packages.get_pkg_dir("challenge_demo") + "/config/mailconfig.yaml"))
+        except Exception, e:
+            rospy.logerr("Could not init a MailInterpreter: {0}".format(e))
+
         self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
 
 
@@ -208,7 +213,7 @@ class AskAnythingElse(smach.State):
                 self.robot.speech.speak("I better go and get your breakfast", mood="neutral", block=False)
         except Exception, e:
             rospy.logerr("Could not get_status_person_service: {0}.".format(e))
-            self.robot.speech.speak("I'm not sure what to do, sorry about that.")
+            self.robot.speech.speak("I could not interpret your command, sorry about that.")
             self.robot.speech.speak("I better go and get your breakfast", mood="neutral", block=False)
         return "done"
 
@@ -277,11 +282,11 @@ class InteractionPart(smach.StateMachine):
            
             smach.StateMachine.add('ASK_HOW_FEEL',
                                     AskHowFeel(robot),
-                                    transitions={   "done"              : "ASK_WHAT_FOR_BREAKFAST"})
+                                    transitions={   "done"              : "RECITE_BREAKFAST_OPTIONS"})
 
-            # smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
-            #                         states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
-            #                         transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
+            smach.StateMachine.add( "RECITE_BREAKFAST_OPTIONS",
+                                    states.Say(robot, "On today's breakfast menu, we have sandwiches with jam, salami, cheece, peanut butter or chocolate. Which do you want?"),
+                                    transitions={   'spoken'            : "ASK_WHAT_FOR_BREAKFAST"})
 
             smach.StateMachine.add( 'ASK_WHAT_FOR_BREAKFAST', 
                                     AskBreakfast(robot),
@@ -600,17 +605,8 @@ class Part2(smach.StateMachine):
                                     states.Say(robot, ["Can you please handover the can so i can take it to the patients"]), 
                                     transitions={   'spoken'            : "HOLDUP_ARM_FOR_CAN_LEFT"})
 
-            def generate_report_sentence(*args,**kwargs):
-                try:
-                    breakfasts  = robot.reasoner.query(Compound("breakfast", "Breakfast"))
-                    #patients    = robot.reasoner.query(Compound("current_patient", "Patient"))
-                    breakfast   = breakfasts[0]["Breakfast"]
-                    #patient     = patients[0]["Patient"]
-                    return "Can you please give me a sandwich with {0} so I can serve that for breakfast".format(breakfast).replace('_', ' ')
-                except:
-                    return "I forgot what I should bring for breakfast"
             smach.StateMachine.add('REPORT_BREAKFAST',
-                                    states.Say_generated(robot, sentence_creator=generate_report_sentence),
+                                    states.Say(robot, ["Could you give me some chocolate nuts"]),
                                     transitions={ 'spoken':'HOLDUP_ARM_FOR_CAN_LEFT' })
 
             smach.StateMachine.add( 'HOLDUP_ARM_FOR_CAN_LEFT', 
