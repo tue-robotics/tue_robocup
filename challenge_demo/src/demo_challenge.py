@@ -30,22 +30,20 @@ from speech_interpreter.srv import GetYesNo
 
 import datetime
 
-# TODO : Initial pose TEST
 # DONE : Get breakfast from intermediate pos: 2.24, -3.73, -1.95 TEST
-# TODO : Reset head on start 
-# Aankijken voor vragen 
-# 2x opties TEST
-# Beide posities rivhting personen
+# Aankijken voor vragen CHECK OF NODIG IS
+# 2x opties moet 1x TEST
+# Beide posities richting personen TEST
 
 
-HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
-SUPPORT_PATIENT_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
-RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
-HOLD_CAN_POSE = [-0.1, -0.3, 0.0, 1.87, 0.1, 0.0, 0.0]
+HOLD_TRAY_POSE =        [-0.1,  0.13,   0.4,    1.5,    0,      0.5,    0]
+SUPPORT_PATIENT_POSE =  [-0.1,  -1.57,  0,      1.57,   0,      0,      0]
+RESET_POSE =            [-0.1,  0.13,   0,      0.3,    0,      0.0,    0]
+HOLD_CAN_POSE =         [-0.1, -0.3,    0.0,    1.87,   0.1,    0.0,    0.0]
 
 KITCHEN_LOC = (2.24, -3.73, -1.95)#Compound("sink", "a")
-BREAKFAST_1 = Compound("dinner_table", "b")
-BREAKFAST_2 = Compound("dinner_table", "a")
+BREAKFAST_1 = "breakfast_1"
+BREAKFAST_2 = "breakfast_2"
 SINGPOS = Compound("dinner_table", "a")
 BOWL_POS = Compound("dinner_table", "a")
 
@@ -81,7 +79,7 @@ class AskHowFeel(smach.State):
         self.get_status_person_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
-
+        #TODO:self.robot.head.reset_position(), of look_down. 
         try:
             self.response = self.get_status_person_service("demo_challenge_status_person", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
             if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
@@ -268,6 +266,11 @@ class InteractionPart(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done'])
 
         with self:
+            # smach.StateMachine.add("INITIAL_RESET_ROBOT",
+            #                         ResetRobot(robot),
+            #                         transitions={   'done'              : 'SAY_HOW_FEEL'})
+
+
             smach.StateMachine.add( "SAY_HOW_FEEL",
                                     states.Say(robot, "How are you today?"),
                                     transitions={   'spoken'            : "ASK_HOW_FEEL"})
@@ -318,22 +321,22 @@ class PoorChocolateNuts(smach.StateMachine):
         with self:
             smach.StateMachine.add( "LOOK_FOR_BOWL",
                                     states.LookForObjectsAtROI(robot, lookat_query, bowl_query, modules=["template_matching"], waittime=5.0),
-                                    transitions={   'object_found'          : 'PREPARE_GRAB',
+                                    transitions={   'object_found'          : 'PRE_POOR_POS',
                                                     'looking'               : 'failed',
                                                     'no_object_found'       : 'failed',
                                                     'abort'                 : 'failed'})
-            #'looking','object_found','no_object_found','abort'
-            smach.StateMachine.add('PREPARE_GRAB', 
-                                    states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
-                                    transitions={   'succeeded'             :   'PREPARE_ORIENTATION',
-                                                    'failed'                :   'failed'})
+            # #'looking','object_found','no_object_found','abort'
+            # smach.StateMachine.add('PREPARE_GRAB', 
+            #                         states.PrepareGrasp(robot.leftArm, robot, grabpoint_query),
+            #                         transitions={   'succeeded'             :   'PREPARE_ORIENTATION',
+            #                                         'failed'                :   'failed'})
 
-            smach.StateMachine.add( "PREPARE_ORIENTATION", 
-                                    states.PrepareOrientation(robot.leftArm, robot, grabpoint_query),
-                                    transitions={   'orientation_succeeded' : 'PRE_POOR_POS',
-                                                    'orientation_failed'    : 'failed',
-                                                    'abort'                 : 'failed',
-                                                    'target_lost'           : 'failed'})
+            # smach.StateMachine.add( "PREPARE_ORIENTATION", 
+            #                         states.PrepareOrientation(robot.leftArm, robot, grabpoint_query),
+            #                         transitions={   'orientation_succeeded' : 'PRE_POOR_POS',
+            #                                         'orientation_failed'    : 'failed',
+            #                                         'abort'                 : 'failed',
+            #                                         'target_lost'           : 'failed'})
 
             smach.StateMachine.add( "PRE_POOR_POS", 
                                     states.ArmToQueryPoint(robot, robot.leftArm, grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
@@ -439,7 +442,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'done'              : 'GOTO_KITCHEN'})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
-                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose_2d=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "REPORT_BREAKFAST",
                                                     "unreachable"       : "REPORT_BREAKFAST",
                                                     "preempted"         : "failed",
@@ -450,7 +453,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'spoken'            : "GOTO_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN_BACKUP', 
-                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose_2d=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "SAY_KITCHEN_BACKUP",
                                                     "unreachable"       : "SAY_KITCHEN_BACKUP",
                                                     "preempted"         : "failed",
@@ -509,7 +512,7 @@ class Part1(smach.StateMachine):
                                     transitions={   'spoken'            : 'RETURN_TRAY'})
 
             smach.StateMachine.add( 'RETURN_TRAY', 
-                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose_2d=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "SAY_TAKE_TRAY",
                                                     "unreachable"       : "SAY_FAIL_RETURN_TRAY",
                                                     "preempted"         : "failed",
@@ -546,7 +549,7 @@ class Part2(smach.StateMachine):
                                     transitions={   'done'              : 'GOTO_KITCHEN'})
 
             smach.StateMachine.add( 'GOTO_KITCHEN', 
-                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose_2d=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "REPORT_BREAKFAST",
                                                     "unreachable"       : "REPORT_BREAKFAST",
                                                     "preempted"         : "failed",
@@ -557,7 +560,7 @@ class Part2(smach.StateMachine):
                                     transitions={   'spoken'            : "GOTO_KITCHEN_BACKUP"})
 
             smach.StateMachine.add( 'GOTO_KITCHEN_BACKUP', 
-                                    states.NavigateGeneric(robot, goal_pose=KITCHEN_LOC), 
+                                    states.NavigateGeneric(robot, goal_pose_2d=KITCHEN_LOC), 
                                     transitions={   "arrived"           : "HOLDUP_ARM_FOR_CAN_LEFT",
                                                     "unreachable"       : "HOLDUP_ARM_FOR_CAN_LEFT",
                                                     "preempted"         : "failed",
