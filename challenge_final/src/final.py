@@ -24,6 +24,41 @@ grasp_arm = "left"
 ##########################################
 # CHECK the README!
 
+class Ask_drink(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done" , "failed"])
+        self.robot = robot
+        self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.person_learn_failed = 0
+        self.drink_learn_failed = 0
+
+    def execute(self, userdata=None):
+        self.response = self.get_drink_service("drink_final", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        # Check available options from rulebook!
+        
+        #import ipdb; ipdb.set_trace()
+        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
+        return "done"
+
+class Ask_yes_no(smach.State):
+    def __init__(self, robot, tracking=True):
+        smach.State.__init__(self, outcomes=["yes", "preempted", "no"])
+
+        self.robot = robot
+        self.preempted = False
+        self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
+
+    def execute(self, userdata=None):
+
+        self.response = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
+
+        if self.response.answer == "true":
+            return "yes"
+        else:
+            return "yes" # THIS WAS "no", in this case bring sevenup to trashbin, so yes.
+
+        
+
 class StupidHumanDropoff(smach.StateMachine):
     def __init__(self, arm, robot, dropoff_query):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed', 'target_lost'])
@@ -202,17 +237,23 @@ class Final(smach.StateMachine):
 
             smach.StateMachine.add('GOTO_LIVING_ROOM',
                                     states.NavigateGeneric(robot, goal_query = query_living_room),
-                                    transitions={   "arrived":"SCAN_TABLES", 
+                                    transitions={   "arrived":"TAKE_ORDER", 
                                                     "unreachable":"GOTO_LIVING_ROOM2", 
                                                     "preempted":"GOTO_LIVING_ROOM2", 
                                                     "goal_not_defined":"GOTO_LIVING_ROOM2"})
 
             smach.StateMachine.add("GOTO_LIVING_ROOM2", # BACKUP nav goal!
                                     states.NavigateGeneric(robot, goal_pose_2d=(4.091, 0.440, -0.253)),
-                                    transitions={   'unreachable'       : 'SCAN_TABLES', 
-                                                    'preempted'         : 'SCAN_TABLES', 
-                                                    'arrived'           : 'SCAN_TABLES', 
-                                                    'goal_not_defined'  : 'SCAN_TABLES'})
+                                    transitions={   'unreachable'       : 'TAKE_ORDER', 
+                                                    'preempted'         : 'TAKE_ORDER', 
+                                                    'arrived'           : 'TAKE_ORDER', 
+                                                    'goal_not_defined'  : 'TAKE_ORDER'})
+
+            smach.StateMachine.add( "TAKE_ORDER",
+                                            Ask_drink(robot),
+                                            transitions={   "done":"SCAN_TABLES",
+                                                            "failed":"SCAN_TABLES"})
+
             # After this state: objects might be in the world model
             smach.StateMachine.add("SCAN_TABLES", 
                                 ScanTables(robot, 10.0),
@@ -413,6 +454,24 @@ class Final(smach.StateMachine):
 
             smach.StateMachine.add( 'FINISH', states.Finish(robot),
                                     transitions={'stop':'Done'})
+
+
+
+
+
+
+
+
+
+        # # Await anser of question 1
+        # smach.StateMachine.add('ANSWER_YES_NO',
+        #                             Ask_yes_no(robot),
+        #                             transitions={   'yes':'ASK_IF_KNOWS_DIRECTION',
+        #                                             'preempted':'SAY_REGISTER_NOT_OKAY',
+        #                                             'no':'SAY_REGISTER_NOT_OKAY'})   
+
+
+            
 
 if __name__ == "__main__":
     rospy.init_node('final_exec')
