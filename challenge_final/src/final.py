@@ -1,28 +1,23 @@
-#! /usr/bin/env python
+#!/usr/bin/python
 import roslib; roslib.load_manifest('challenge_final')
 import rospy
-
 import smach
+
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
-from robot_skills.reasoner  import Conjunction, Compound, Sequence
-from robot_skills.arms import State as ArmState
 from robot_smach_states.util.startup import startup
+import robot_smach_states.util.reasoning_helpers as urh
+
+# ToDo: replace GetCleanup
+#from speech_interpreter.srv import GetCleanup
 from speech_interpreter.srv import GetYesNo
 from speech_interpreter.srv import GetInfo
 
-import geometry_msgs.msg
+from robot_skills.reasoner import Conjunction, Compound, Sequence
 
-from psi import *
-
-grasp_arm = "left"
-#grasp_arm = "right"
-
-##########################################
-############## What to run: ##############
-##########################################
-# CHECK the README!
+from robot_skills.arms import State as ArmState
+import geometry_msgs
 
 class Ask_drink(smach.State):
     def __init__(self, robot):
@@ -56,105 +51,6 @@ class Ask_yes_no(smach.State):
             return "yes"
         else:
             return "yes" # THIS WAS "no", in this case bring sevenup to trashbin, so yes.
-
-        
-
-class StupidHumanDropoff(smach.StateMachine):
-    def __init__(self, arm, robot, dropoff_query):
-        smach.StateMachine.__init__(self, outcomes=['succeeded','failed', 'target_lost'])
-
-        with self:
-            smach.StateMachine.add( "DROPOFF_OBJECT",
-                                    states.PrepareOrientation(arm, robot, dropoff_query),
-                                    transitions={   'orientation_succeeded':'ASK_TAKE_FROM_HAND',
-                                                    'orientation_failed':'ASK_TAKE_FROM_HAND',
-                                                    'abort':'failed',
-                                                    'target_lost':'target_lost'})
-
-            smach.StateMachine.add("ASK_TAKE_FROM_HAND", 
-                                    states.Say(robot, ["Please take this from my hand, I'm not confident that I can place to object safely"]),
-                                    transitions={   'spoken':'HANDOVER_TO_HUMAN_1'})
-
-            smach.StateMachine.add("HANDOVER_TO_HUMAN_1", 
-                                    states.Say(robot, [ "Be careful, I will open my gripper now"]),
-                                    transitions={   'spoken':'OPEN_GRIPPER_HANDOVER'})
-
-            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', 
-                                    states.SetGripper(robot, arm, gripperstate=ArmState.OPEN),
-                                    transitions={'succeeded'    :   'SAY_PLACE_INSTRUCTION',
-                                                 'failed'       :   'SAY_PLACE_INSTRUCTION'})
-
-            def generate_object_sentence(*args,**kwargs):
-                try:
-                    answers = robot.reasoner.query(dropoff_query)
-                    _type = answers[0]["ObjectType"]
-                    dropoff = answers[0]["Disposal_type"]
-                    return "Please put the {0} on the {1}".format(_type, dropoff).replace("_", " ")
-                except Exception, e:
-                    rospy.logerr(e)
-                    return "Please put the object on the surface in front of me"
-            smach.StateMachine.add("SAY_PLACE_INSTRUCTION", 
-                                    states.Say_generated(robot, generate_object_sentence),
-                                    transitions={   'spoken':'CLOSE_GRIPPER_HANDOVER'})
-
-            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
-                                    states.SetGripper(robot, arm, gripperstate=ArmState.CLOSE),
-                                    transitions={'succeeded'    :   'RESET_ARM',
-                                                 'failed'       :   'RESET_ARM'})
-
-            smach.StateMachine.add('RESET_ARM', 
-                                    states.ArmToJointPos(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
-                                    transitions={   'done'      :'RESET_TORSO',
-                                                  'failed'      :'RESET_TORSO'    })
-
-            smach.StateMachine.add('RESET_TORSO',
-                                    states.ResetTorso(robot),
-                                    transitions={'succeeded'    :'succeeded',
-                                                 'failed'       :'failed'})
-
-class ScanTables(smach.State):
-    def __init__(self, robot, timeout_duration):
-        smach.State.__init__(self, outcomes=['succeeded'])
-        self.robot = robot
-        self.timeout_duration = timeout_duration
-
-    def execute(self, gl):
-
-        rospy.loginfo("Trying to detect objects on tables")
-
-        answers = self.robot.reasoner.query(Compound('region_of_interest', 
-            'large_table_1', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
-        
-        ''' Remember current spindle position '''      
-        spindle_pos = self.robot.spindle.get_position()
-
-
-        if answers:
-            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            target_point = geometry_msgs.msg.PointStamped()
-            target_point.header.frame_id = "/map"
-            target_point.header.stamp = rospy.Time()
-            target_point.point.x = float(answer["X"])
-            target_point.point.y = float(answer["Y"])
-            target_point.point.z = float(answer["Z"])
-
-            ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
-            if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
-                #self.robot.speech.speak("I will scan the tables for objects", block=False)
-                self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
-                rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-                rospy.logwarn("Waiting for 2.0 seconds for laser update")
-                rospy.sleep(rospy.Duration(2.0))
-            else:
-                rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
-            
-            ''' Reset head and stop all perception stuff '''
-            self.robot.perception.toggle([])
-            self.robot.spindle.send_goal(spindle_pos, waittime=self.timeout_duration)
-        else:
-            rospy.logerr("No table location found...")
-
-        return 'succeeded'
 
 class ScanTablePosition(smach.State):
     def __init__(self, robot, timeout_duration):
@@ -199,6 +95,93 @@ class ScanTablePosition(smach.State):
             rospy.logerr("No table location found...")
 
         return 'succeeded'
+
+
+
+class ScanTables(smach.State):
+    def __init__(self, robot, timeout_duration):
+        smach.State.__init__(self, outcomes=['succeeded'])
+        self.robot = robot
+        self.timeout_duration = timeout_duration
+
+    def execute(self, gl):
+
+        rospy.loginfo("Trying to detect objects on tables")
+
+        answers = self.robot.reasoner.query(Compound('region_of_interest', 
+            'large_table_1', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
+        
+        ''' Remember current spindle position '''      
+        spindle_pos = self.robot.spindle.get_position()
+
+
+        if answers:
+            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+            target_point = geometry_msgs.msg.PointStamped()
+            target_point.header.frame_id = "/map"
+            target_point.header.stamp = rospy.Time()
+            target_point.point.x = float(answer["X"])
+            target_point.point.y = float(answer["Y"])
+            target_point.point.z = float(answer["Z"])
+
+            ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
+            if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
+                self.robot.speech.speak("I will scan the tables for objects", block=False)
+                self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
+                rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+                rospy.logwarn("Waiting for 2.0 seconds for laser update")
+                rospy.sleep(rospy.Duration(2.0))
+            else:
+                rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
+            
+            ''' Reset head and stop all perception stuff '''
+            self.robot.perception.toggle([])
+            self.robot.spindle.send_goal(spindle_pos, waittime=self.timeout_duration)
+        else:
+            rospy.logerr("No table location found...")
+
+        return 'succeeded'
+
+class DetermineGoal(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"], input_keys=['object_locations'], output_keys=['object_locations'])
+        self.robot = robot
+        self.preempted = False
+
+    def execute(self, userdata):
+
+        query = Conjunction(
+                 Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
+                 Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")))
+
+        answers = self.robot.reasoner.query(query)
+
+        self.robot.speech.speak("I have found {0} possible object locations".format(len(answers)))
+
+        (position, orientation) = self.robot.base.get_location()
+        counter = 0
+        location_list = []
+        for answer in answers:
+            location_list.append({'X' : answer['X'], 'Y' : answer['Y'], 'Z': answer['Z']})
+            location_list = sorted(location_list, key=lambda p: (position.y - float(p['Y']))**2 + (position.x - float(p['X']))**2)
+        for point in location_list:
+            self.robot.reasoner.assertz(Compound("goal_location", ("a" + str(counter)), Compound("point_3d", point["X"], point["Y"], point["Z"])))
+            counter += 1
+        
+        return "done"
+
+class ScanForPersons(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done", "failed"])
+        self.robot = robot
+        self.preempted = False
+
+    def execute(self, userdata):
+        self.robot.speech.speak("My torso laser will also find the operator", block=False)
+        self.robot.perception.toggle_recognition(people=True)
+        rospy.sleep(2)
+        self.robot.perception.toggle_recognition()
+        return "done"
 
 class LookForServeObject(smach.State):
     def __init__(self, robot):
@@ -245,7 +228,7 @@ class LookForServeObject(smach.State):
             object_query_answers = self.robot.reasoner.query(is_object_there)
             if object_query_answers:
                 self.robot.speech.speak("I have found what I have been looking for, a " + str(object_class))
-                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "A")))# ToDo: is this what you mean?
+                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "A")))
                 self.robot.reasoner.assertz(Compound("base_grasp_point", object_query_answers[0]['ObjectID'], Compound("point_3d", object_query_answers[0]["X"], object_query_answers[0]["Y"], object_query_answers[0]["Z"])))
                 return "found"
             else:
@@ -255,6 +238,28 @@ class LookForServeObject(smach.State):
         else:
             rospy.logerr("I Forgot what I have been looking for")
             return 'not_found'
+
+
+class GetNextLocation(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done", "no_locations"])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.speech.speak("I will determine the next goal location")
+        answers = self.robot.reasoner.query(Compound("goal_location", "Counter", Compound("point_3d", "X", "Y", "Z")))
+        print ""
+        print answers
+        print ""
+        if(answers):
+            answer = answers[0]
+            self.robot.reasoner.query(Compound("retract", Compound("goal_location", answer["Counter"], "A")))
+            self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "A")))
+            self.robot.reasoner.assertz(Compound("base_grasp_point", "unkown", Compound("point_3d", answer["X"], answer["Y"], answer["Z"])))
+            return 'done'
+        else:
+            self.robot.speech.speak("Ah, there are no more locations to explore")
+            return 'no_locations'
 
 class MoveToTable(smach.StateMachine):
     def __init__(self, robot):
@@ -270,6 +275,59 @@ class MoveToTable(smach.StateMachine):
                 lookat_query=Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), 
                 transitions={'unreachable' : 'failed_navigate', 'preempted' : 'NAVIGATE_TO', 
                 'arrived' : 'done', 'goal_not_defined' : 'failed_navigate'})
+
+
+class PersonOrPrior(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["at_prior", "at_person", "failed"])
+        self.robot = robot
+        self.query_human = Conjunction(Compound("instance_of", "ID", "person"), 
+            Compound("property_expected", "ID", "position", Sequence("X", "Y", "Z")))
+        self.query_roi = Compound('region_of_interest', 'people_area', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z'))
+
+    def execute(self, userdata=None):
+        #Check if person is available, else scan at prior
+        humans = self.robot.reasoner.query(self.query_human)
+        roi = self.robot.reasoner.query(self.query_roi)
+        
+        def in_roi(answerdict):
+            """answerdict is a dict with answrs to Compound("property_expected", "ID", "position", Sequence("X", "Y", "Z")) 
+            rx etc are the corner of the ROI and rlx are the dimensions"""
+            #import ipdb; ipdb.set_trace()
+            hx,hy,hz = float(answerdict["X"]), float(answerdict["Y"]),  float(answerdict["Z"])
+            rx,ry,rz = float(roi[0]["X"]),  float(roi[0]["Y"]), float(roi[0]["Z"])
+            rlx, rly, rlz = float(roi[0]["Length_x"]),  float(roi[0]["Length_y"]),  float(roi[0]["Length_z"])
+
+            x_ok = rx-(rlx/2) < hx < rx+(rlx/2)
+            y_ok = ry-(rly/2) < hy < ry+(rly/2)
+
+            ok = x_ok and y_ok
+            rospy.loginfo("{0} is {1}".format(answerdict, ok))
+            return ok
+
+        #import ipdb; ipdb.set_trace()
+        #for debugging: humans = [{'Y': '-2.78225655853', 'X': '8.38399997379', 'Z': '1.02274683455', 'ID': '0a73f86d5e4a99b18910fb86f20a8149'}]
+        try:
+            humans_in_roi = filter(in_roi, humans)
+        except IndexError:
+            humans_in_roi = []
+
+        if humans_in_roi:
+            self.robot.speech.speak("I am going to return the object to a person!")
+            self.robot.reasoner.query(Compound("retractall", Compound("deliver_goal", "A")))
+            self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", float(humans_in_roi[0]['X']) - 0.5, humans_in_roi[0]['Y'], humans_in_roi[0]['Z'])))
+            return 'at_person'
+        else:
+            query_prior = Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))
+            answers_prior = self.robot.reasoner.query(query_prior)
+            if answers_prior:
+                self.robot.speech.speak("I have not found a person yet, but I will try at a prior location")
+                rospy.loginfo("Prior pose: X: {0}, Y: {1}, Phi: {2}".format(float(answers_prior[0]['X']), float(answers_prior[0]['Y']), float(answers_prior[0]['Phi'])))
+                #self.robot.reasoner.query(Compound("retractall", Compound("deliver_pose", "A")))
+                return 'at_prior'
+            else:
+                self.robot.speech.speak("I don't know of any persons or prior locations")
+                return 'failed'
 
 class MoveToGoal(smach.StateMachine):
     def __init__(self, robot):
@@ -288,334 +346,257 @@ class MoveToGoal(smach.StateMachine):
                 transitions={'unreachable' : 'failed', 'preempted' : 'NAVIGATE_TO_PERSON', 
                 'arrived' : 'succeeded_prior', 'goal_not_defined' : 'failed'})
 
-class Final(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+class AskGraspObject(smach.StateMachine):
+    def __init__(self, robot, side):
+        smach.StateMachine.__init__(self, outcomes=["done"])
         self.robot = robot
-        if grasp_arm == "right": 
-            arm = robot.rightArm
-        else:            
-            arm = robot.leftArm
-
-        #retract old facts
-        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("goal", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("explored", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
-        robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("disposed", "X")))
-        
-        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
-        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
-	
-	    #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
-        #Assert the current challenge.
-        robot.reasoner.assertz(Compound("challenge", "final"))
-
-        # query_unkown_object = Conjunction( Compound("goal", Compound("clean_up", "Room")),
-        #                                                 Compound("exploration_target", "Room", "Target"),
-        #                                                 Compound("not", Compound("explored", "Target")),
-        #                                                 Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
-                                                       # )
-        query_living_room1 = Compound("waypoint", "living_room1", Compound("pose_2d", "X", "Y", "Phi"))
-        query_living_room2 = Compound("waypoint", "living_room2", Compound("pose_2d", "X", "Y", "Phi"))
-        query_living_room3 = Compound("waypoint", "living_room3", Compound("pose_2d", "X", "Y", "Phi"))
-
-        query_unkown_object = Conjunction(
-                 Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
-                 Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")),
-                 Compound( "not", Compound("explored", "ObjectID")))
-
-        query_exploration_target = Conjunction( Compound("current_exploration_target", "ObjectID"), 
-                                                Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-
-        query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-
-        #Make sure the object we're dealing with isn't already disposed (i.e. handled for cleanup)
-        #After cleaning the object up/disposing it, 
-        #MARK_DISPOSED asserts disposed(current_objectID)
-        query_object = Conjunction(
-                            Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
-                            Compound("not", Compound("disposed", "ObjectID")))
-
-        query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
-                                        Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
-
-        query_current_object_class = Conjunction(
-                                Compound("current_object",      "Obj_to_Dispose"), #Of the current object
-                                Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
-
-        query_dropoff_loc = Compound("dropoff_point",  "trash_bin", Compound("point_3d", "X", "Y", "Z"))        
-
-        meeting_point = Conjunction(    Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
-                                        Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
-
+        self.side = side
         with self:
-            ######################################################
-            ##################### ENTER ROOM #####################
-            ######################################################
-            # Start challenge via StartChallengeRobust
-            smach.StateMachine.add( "START_CHALLENGE",
+            smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp please insert the object into the gripper"]),
+                transitions={   'spoken':'done'})
+            smach.StateMachine.add("OPEN_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
+                transitions={   'succeeded':'CLOSE_GRIPPER', 'failed': 'done'})
+            smach.StateMachine.add("CLOSE_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
+                transitions={   'succeeded':'CLOSE_GRIPPER', 'failed': 'done'})
+
+
+class DecideAction(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['known_object', 'unkown_object', 'finished'])
+        self.robot = robot
+        self.second_run = False
+    def execute(self, userdata=None):
+        #Check if finished
+        answers = self.robot.reasoner.query(Compound("goal", Compound("serve", "a1", "Class")))
+        #Second run
+        if answers:
+            #Check if already known
+            is_object_there = self.robot.reasoner.query(Conjunction(Compound("instance_of", "ObjectID", answers[0]['Class']),
+                                        Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))))
+            if is_object_there:
+                self.robot.speech.speak("I know where the {0}, is located".format(str(answers[0]['Class'])))
+                self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
+                self.robot.reasoner.assertz(Compound("base_grasp_point", is_object_there[0]['ObjectID'], Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
+
+                #Retract grasped object
+                self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "Class"))))
+                return 'known_object'
+            else:
+                self.robot.speech.speak("I have not yet found {0}, I will continue searching locations".format(str(answers[0]['Class'])))
+                return 'unkown_object'
+        else:
+            self.robot.speech.speak("I am finished with my task, let's go home")
+            return 'finished'
+
+class HandoverToKnownHuman(smach.StateMachine):
+    def __init__(self, robot, side):
+        smach.StateMachine.__init__(self, outcomes=["done"])
+        self.arm = side
+        self.robot = robot
+        with self:
+            smach.StateMachine.add( 'PRESENT_DRINK',
+                                    states.Say(self.robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"],block=False),
+                                    transitions={"spoken":"POSE"})
+
+            smach.StateMachine.add( 'POSE',
+                                    states.Handover_pose(self.arm, self.robot),
+                                    transitions={   'succeeded':'PLEASE_TAKE',
+                                                    'failed':'PLEASE_TAKE'})
+            
+            smach.StateMachine.add( 'PLEASE_TAKE',
+                                    states.Say(self.robot, ["Please hold the drink, I'm going to let it go.", "Please take the drink, I'll let it go"]),
+                                    transitions={"spoken":"OPEN_GRIPPER"})
+
+            smach.StateMachine.add( "OPEN_GRIPPER", 
+                                    states.SetGripper(self.robot, self.arm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed':'CLOSE_AFTER_DROP'})
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP',
+                                    states.SetGripper(self.robot, self.arm, gripperstate=1), #close
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed':'RESET_ARM'})
+            smach.StateMachine.add('RESET_ARM', 
+                                    states.ArmToPose(self.robot, self.arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    transitions={   'done':'RESET_TORSO',
+                                                    'failed':'RESET_TORSO'})
+            smach.StateMachine.add('RESET_TORSO',
+                                    states.ResetTorso(self.robot),
+                                    transitions={   'succeeded':'SAY_ENJOY',
+                                                    'failed'   :'SAY_ENJOY'})
+
+            smach.StateMachine.add( 'SAY_ENJOY',
+                                    states.Say(self.robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
+                                    transitions={"spoken":"done"})
+
+def setup_statemachine(robot):
+    side = robot.leftArm
+    
+    robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+    robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+    
+    #Assert the current challenge.
+    robot.reasoner.assertz(Compound("challenge", "final"))
+    robot.reasoner.query(Compound("retractall", Compound("goal_location", "X", "Y")))
+    robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "X"))))
+    robot.reasoner.query(Compound("retractall", Compound("goal", Compound("bringTo", "X"))))
+    robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
+    robot.reasoner.query(Compound("retractall", Compound("deliver_pose", "A")))
+    robot.reasoner.query(Compound("retractall", Compound("deliver_goal", "A")))
+   
+
+    query_living_room1 = Compound("waypoint", "living_room1", Compound("pose_2d", "X", "Y", "Phi"))
+    query_living_room2 = Compound("waypoint", "living_room2", Compound("pose_2d", "X", "Y", "Phi"))
+    query_living_room3 = Compound("waypoint", "living_room3", Compound("pose_2d", "X", "Y", "Phi"))
+
+#    query_pose = robot.reasoner.base_pose(Compound("initial_open_challenge", robot.reasoner.pose_2d("X", "Y", "Phi")))
+#    print query_pose
+
+#    answers = robot.reasoner.query(query_pose)
+#    print answers
+#    initial_pose = (answers[0]["X"], answers[0]["Y"], answers[0]["Phi"])
+
+    #query = Compound('region_of_interest', 'tables') #region_of_interest(rgo2013, open_challenge, tables, point_3d(0, 0, 0), point_3d(2, 2, 2))
+    #robot.reasoner.query(query)
+
+    #answers = robot.reasoner.query(Compound("template_matching_config", "Config"))
+    #robot.perception.load_template_matching_config(answers[0]["Config"])
+
+    sm = smach.StateMachine(outcomes=['Done','Aborted'])
+
+    sm.userdata.object_locations = []
+    sm.userdata.current_location = None
+
+    with sm:
+
+        smach.StateMachine.add( "START_CHALLENGE",
                                     states.StartChallengeRobust(robot, "initial"), 
                                     transitions={   "Done":"SAY_GOTO_LIVINGROOM", 
                                                     "Aborted":"SAY_GOTO_LIVINGROOM", 
                                                     "Failed":"SAY_GOTO_LIVINGROOM"}) 
 
-            smach.StateMachine.add("SAY_GOTO_LIVINGROOM",
+        smach.StateMachine.add("SAY_GOTO_LIVINGROOM",
                                     states.Say(robot, "I will go to the living room, see if I can do something over there.", block=False),
                                     transitions={   "spoken":"GOTO_LIVING_ROOM1"})
 
-            smach.StateMachine.add('GOTO_LIVING_ROOM1',
+        smach.StateMachine.add('GOTO_LIVING_ROOM1',
                                     states.NavigateGeneric(robot, goal_query = query_living_room1),
                                     transitions={   "arrived":"SCAN_TABLE_POSITION", 
                                                     "unreachable":"GOTO_LIVING_ROOM2", 
                                                     "preempted":"GOTO_LIVING_ROOM2", 
                                                     "goal_not_defined":"GOTO_LIVING_ROOM2"})
 
-            smach.StateMachine.add('GOTO_LIVING_ROOM2',
+        smach.StateMachine.add('GOTO_LIVING_ROOM2',
                                     states.NavigateGeneric(robot, goal_query = query_living_room2),
                                     transitions={   "arrived":"SCAN_TABLE_POSITION", 
                                                     "unreachable":"GOTO_LIVING_ROOM3", 
                                                     "preempted":"GOTO_LIVING_ROOM3", 
                                                     "goal_not_defined":"GOTO_LIVING_ROOM3"})
 
-            smach.StateMachine.add('GOTO_LIVING_ROOM3',
+        smach.StateMachine.add('GOTO_LIVING_ROOM3',
                                     states.NavigateGeneric(robot, goal_query = query_living_room3),
                                     transitions={   "arrived":"SCAN_TABLE_POSITION", 
                                                     "unreachable":"SCAN_TABLE_POSITION", 
                                                     "preempted":"SCAN_TABLE_POSITION", 
                                                     "goal_not_defined":"SCAN_TABLE_POSITION"})
             
-            smach.StateMachine.add("SCAN_TABLE_POSITION", 
+        smach.StateMachine.add("SCAN_TABLE_POSITION", 
                                 ScanTablePosition(robot, 20.0),
                                 transitions={   'succeeded':'TAKE_ORDER'})
 
-            smach.StateMachine.add( "TAKE_ORDER",
+        smach.StateMachine.add( "TAKE_ORDER",
                                             Ask_drink(robot),
                                             transitions={   "done":"SCAN_TABLES",
                                                             "failed":"SCAN_TABLES"})
 
-            # After this state: objects might be in the world model
-            smach.StateMachine.add("SCAN_TABLES", 
-                                ScanTables(robot, 10.0),
-                                transitions={   'succeeded':'MOVE_TO_TABLE'})
+        # After this state: objects might be in the world model
+        smach.StateMachine.add("SCAN_TABLES", 
+                        ScanTables(robot, 10.0),
+                        transitions={   'succeeded':'DETERMINE_GOAL'})
 
-            smach.StateMachine.add("MOVE_TO_TABLE", 
+        # # After this state: persons might be in the world model
+        # smach.StateMachine.add("SCAN_FOR_PERSONS", 
+        #                 ScanForPersons(robot),
+        #                 transitions={   'done':'DETERMINE_GOAL', 'failed': 'DETERMINE_GOAL'})
+        
+        # After this state: persons might be in the world model
+        smach.StateMachine.add("DETERMINE_GOAL", 
+                        DetermineGoal(robot),
+                        transitions={   'done':'MOVE_TO_TABLE'})
+
+        #Scan for persons at the prior location
+        # smach.StateMachine.add("SCAN_FOR_PERSONS_AT_PRIOR", 
+        #                 ScanForPersons(robot),
+        #                 transitions={ 'done':'MOVE_TO_GOAL_AFTER_PRIOR', 'failed':'ASK_GET_OBJECT'})
+
+        smach.StateMachine.add("MOVE_TO_TABLE", 
                 MoveToTable(robot),
-                transitions={   'done':'SAY_LOOK_FOR_OBJECTS', 'failed_navigate' : 'MOVE_TO_TABLE', 'no_tables_left' : 'EXIT'})
+                transitions={   'done':'RECOGNIZE_OBJECTS', 'failed_navigate' : 'MOVE_TO_TABLE', 'no_tables_left' : 'RETURN_LIVING_ROOM'})
 
-            def generate_no_targets_sentence(*args,**kwargs):
-                try:
-                    answers = robot.reasoner.query(query_unkown_object)
-                    return "I have found {0} possible object locations".format(len(answers))
-                except Exception, e:
-                    rospy.logerr(e)
-                    return "I found no objects"
+        # STATE RECOGNIZE_OBJECTS: recognize objects on the table
 
-            smach.StateMachine.add('SAY_NO_TARGETS',
-                                    states.Say_generated(robot, sentence_creator=generate_no_targets_sentence),
-                                    transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
-
-            ##### ADD ASK USER DRINK #####
-
-            # Now find the closest object on the table
-            @smach.cb_interface(outcomes=['found_exploration_target', 'done'], 
-                                input_keys=[], 
-                                output_keys=[])
-            def determine_exploration_target(userdata):            
-                # Ask the reaoner for an exploration target that is:
-                #  - in the room that needs cleaning up
-                #  - not yet explored
-                answers = robot.reasoner.query(query_unkown_object)
-                for answer in answers:
-                    rospy.loginfo("Answers for {0}: {1} \n\n".format(query_unkown_object, answer))
-                # First time: 
-                # [   {'Y': 1.351, 'X': 4.952, 'Phi': 1.57, 'Room': living_room, 'Target': cabinet_expedit_1}, 
-                #     {'Y': -1.598, 'X': 6.058, 'Phi': 3.113, 'Room': living_room, 'Target': bed_1}]
-                # ----
-                # 2nd:
-                # [{'Y': -1.598, 'X': 6.058, 'Phi': 3.113, 'Room': living_room, 'Target': bed_1}]
-                #
-                #import ipdb; ipdb.set_trace()
-                if not answers:
-                    # no more exporation targets found
-                    return 'done'
-                else:         
-                    # TODO: pick target based on some metric
-                    def calc_dist((xA,yA), (xB,yB)):
-                        import math
-                        dist = math.sqrt(abs(xA-xB)**2 + abs(yA-yB)**2)
-                        return dist
-                    
-                    loc = self.robot.base.location[0]
-                    
-                    robot_xy = (loc.x, loc.y)
-                    closest_QA = min(answers, key=lambda ans: calc_dist(robot_xy, (float(ans["X"]), float(ans["Y"]))))
-                    target = closest_QA["ObjectID"]
-
-                    rospy.loginfo("Minimum distance: {0}".format(closest_QA))
-
-                    #rospy.loginfo("Available targets: {0}".format(answers))
-                    rospy.loginfo("Selected target: {0}".format(target))
-
-                    # remove current target
-                    robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
-
-                    # add new target
-                    robot.reasoner.assertz(Compound("current_exploration_target", target))
-                    answers = robot.reasoner.query(query_exploration_target)
-
-                    # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
-                    robot.reasoner.assertz(Compound("explored", target))
-                    
-                    #robot.speech.speak("Lets go look at the object with ID {0}".format(target))
-                    robot.speech.speak("Let's go look at an object I found!".format(target), block=False)
-
-                    return 'found_exploration_target'
-            
-            smach.StateMachine.add('DETERMINE_EXPLORATION_TARGET', smach.CBState(determine_exploration_target),
-                                    transitions={   'found_exploration_target':'DRIVE_TO_EXPLORATION_TARGET',
-                                                    'done':'SAY_ALL_EXPLORED'})
-
-            ################################################################
-            smach.StateMachine.add( 'DRIVE_TO_EXPLORATION_TARGET',
-                                    states.PrepareOrientation(arm, robot, grabpoint_query=query_exploration_target),
-                                    transitions={   "orientation_succeeded":"SAY_LOOK_FOR_OBJECTS",
-                                                    "orientation_failed":'SAY_GOAL_UNREACHABLE',
-                                                    "abort":'Aborted',
-                                                    "target_lost":'DETERMINE_EXPLORATION_TARGET'})
-          
-            smach.StateMachine.add('SAY_GOAL_UNREACHABLE',
-                                    states.Say(robot, ["The object is unreachable, where else can I go?"]),
-                                    transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
-
-            smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
-                                    states.Say(robot, ["Let's see what object I can find here."]),
-                                    transitions={   'spoken':'RECOGNIZE_OBJECTS'})
-
-            # smach.StateMachine.add('LOOK',
-            #                         states.LookForObjectsAtROI(robot, query_lookat, query_object,waittime=3.0),
-            #                         transitions={   'looking':'LOOK',
-            #                                         'object_found':'SAY_FOUND_SOMETHING',
-            #                                         'no_object_found':'SAY_FOUND_NOTHING',
-            #                                         'abort':'DETERMINE_EXPLORATION_TARGET'})
-
-            # smach.StateMachine.add('SAY_FOUND_NOTHING',
-            #                         states.Say(robot, ["I didn't find anything."]),
-            #                         transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
-
-            # def generate_object_sentence(*args,**kwargs):
-            #     try:
-            #         answers = robot.reasoner.query(query_dropoff_loc)
-            #         _type = answers[0]["ObjectType"]
-            #         return "I have found a {0}. I'll dump it in the trash bin".format(_type)
-            #     except Exception, e:
-            #         rospy.logerr(e)
-            #         try:
-            #             type_only = robot.reasoner.query(query_current_object_class)[0]["ObjectType"]
-            #             return "I found a {0}.".format(type_only)
-            #         except Exception, e:
-            #             rospy.logerr(e)
-            #             pass
-            #         return "I have found something, but I'm not sure what it is. I'll toss in in the trash bin"
-
-            # smach.StateMachine.add('SAY_FOUND_SOMETHING',
-            #                         states.Say_generated(robot, sentence_creator=generate_object_sentence),
-            #                         transitions={ 'spoken':'RECOGNIZE_OBJECTS' })
-
-            smach.StateMachine.add("RECOGNIZE_OBJECTS", 
+        smach.StateMachine.add("RECOGNIZE_OBJECTS", 
                 LookForServeObject(robot), # En andere dingen
                 transitions={  'not_found':'MOVE_TO_TABLE', 'found': 'GRAB'})
 
-            smach.StateMachine.add('GRAB',
-                                    states.GrabMachine(arm, robot, query_grabpoint),
-                                    transitions={   'succeeded':'MOVE_TO_OPERATOR',
-                                                    'failed':'HUMAN_HANDOVER' })
-            
-            smach.StateMachine.add('HUMAN_HANDOVER',
-                                    states.Human_handover(arm,robot),
-                                    transitions={   'succeeded':'MOVE_TO_OPERATOR',
-                                                    'failed':'MOVE_TO_OPERATOR'})
+        smach.StateMachine.add("GRAB", 
+            states.GrabMachine(side, robot, Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
+            transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'ASK_GRASP_OBJECT'})  
 
-            # ToDo: how do we move to operator?
-            smach.StateMachine.add("MOVE_TO_OPERATOR", 
+        smach.StateMachine.add("ASK_GRASP_OBJECT",
+            AskGraspObject(robot, side),
+            transitions={'done': 'MOVE_TO_GOAL'})
+
+        # WITH OBJECT
+        # STATE: arrive at a person: hand over object and go back to starting position
+        smach.StateMachine.add("MOVE_TO_GOAL",                                                              # TODO SJOERD: in person_or_prior set query to person.
             MoveToGoal(robot), # En andere dingen
             transitions={   'succeeded_person':'HANDOVER', 
-                            'succeeded_prior':'SCAN_FOR_PERSONS_AT_PRIOR', 'failed':'ASK_GET_OBJECT'})
-        
-            @smach.cb_interface(outcomes=["done"])
-            def reset_head(*args, **kwargs):
-                robot.head.reset_position()
-                return "done"   
-            smach.StateMachine.add( "RESET_HEAD", 
-                        smach.CBState(reset_head),
-                        transitions={"done":"DROPOFF_OBJECT"})
+                            'succeeded_prior':'HANDOVER', 'failed':'ASK_GET_OBJECT'})
 
-            smach.StateMachine.add("DROPOFF_OBJECT",
-                                    states.DropObject(arm, robot, query_dropoff_loc),
-                                    transitions={   'succeeded':'MARK_DISPOSED',
-                                                    'failed':'MARK_DISPOSED',
-                                                    'target_lost':'GOTO_HUMAN_DROPOFF'})
+        smach.StateMachine.add("MOVE_TO_GOAL_AFTER_PRIOR", 
+            MoveToGoal(robot), # En andere dingen
+            transitions={   'succeeded_person':'HANDOVER', 
+                            'succeeded_prior':'HANDOVER_PRIOR', 'failed':'ASK_GET_OBJECT'})
 
-            # smach.StateMachine.add("DROPOFF_OBJECT",
-            #                         StupidHumanDropoff(arm, robot, query_dropoff_loc),
-            #                         transitions={   'succeeded':'MARK_DISPOSED',
-            #                                         'failed':'MARK_DISPOSED',
-            #                                         'target_lost':'GOTO_HUMAN_DROPOFF'})
+        #Failed to deliver ask call for help
+        smach.StateMachine.add("ASK_GET_OBJECT", 
+            states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
+            transitions={   'spoken':'OPEN_GRIPPER'}) 
 
-            smach.StateMachine.add( 'GOTO_HUMAN_DROPOFF', states.NavigateGeneric(robot, goal_query=meeting_point),
-                                    transitions={   "arrived":"SAY_PLEASE_TAKE",
-                                                    "unreachable":'SAY_PLEASE_TAKE', #Maybe this should not be "FINISHED?"
-                                                    "preempted":'SAY_PLEASE_TAKE',
-                                                    "goal_not_defined":'SAY_PLEASE_TAKE'})
+        #Handover the object
+        smach.StateMachine.add("HANDOVER", 
+           states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
+           transitions={   'spoken':'OPEN_GRIPPER' })
 
-            smach.StateMachine.add("SAY_PLEASE_TAKE", 
-                                    states.Say(robot, "Please take this thing from my hand. I don't know where to put it"),
-                                    transitions={   'spoken':'HANDOVER_TO_HUMAN'})
 
-            smach.StateMachine.add("HANDOVER_TO_HUMAN",
-                                    states.HandoverToHuman(arm, robot),
-                                    transitions={   'succeeded':'MARK_DISPOSED',
-                                                    'failed':'MARK_DISPOSED'})
+        smach.StateMachine.add("HANDOVER_PRIOR", 
+            states.Say(robot, ["I am unable to find a person. However, I know you are there somewhere. Please take the item from my gripper"]), # En andere dingen
+            transitions={   'spoken':'HANDOVER' })
 
-            #Mark the current_object as disposed
-            @smach.cb_interface(outcomes=['done'])
-            def deactivate_current_object(userdata):
-                try:
-                    #robot.speech.speak("I need some debugging in cleanup, please think with me here.")
-                    #import ipdb; ipdb.set_trace()
-                    objectID = robot.reasoner.query(Compound("current_object", "Disposed_ObjectID"))[0]["Disposed_ObjectID"]
-                    disposed = Compound("disposed", objectID)
-                    robot.reasoner.assertz(disposed)
-                except:
-                    pass #Just continue
-                return 'done'
-            smach.StateMachine.add('MARK_DISPOSED', smach.CBState(deactivate_current_object),
-                                    transitions={'done':'DETERMINE_EXPLORATION_TARGET'})
+        #Open gripper to release object
+        smach.StateMachine.add("OPEN_GRIPPER", 
+            states.SetGripper(robot, side, gripperstate=ArmState.OPEN), # En andere dingen
+            transitions={   'succeeded':'DECIDE_ACTION', 'failed': 'DECIDE_ACTION'})
 
-            smach.StateMachine.add("SAY_ALL_EXPLORED", 
-                                    states.Say(robot, ["All object locations I found with my laser are explored, there are no locations to search anymore"],block=False),
-                                    transitions={   'spoken':'RETURN_LIVING_ROOM'})
+        smach.StateMachine.add("DECIDE_ACTION",
+            DecideAction(robot),
+            transitions={'known_object': 'GRAB', 'unkown_object' : 'DETERMINE_GOAL', 'finished' : 'RETURN_LIVING_ROOM'})
 
-            # ToDo: replace by something more interesting
-            smach.StateMachine.add('RETURN_LIVING_ROOM',
+        smach.StateMachine.add('RETURN_LIVING_ROOM',
                                     states.NavigateGeneric(robot, goal_query = query_living_room1),
                                     transitions={   "arrived":"SAY_THANKS", 
                                                     "unreachable":"RETURN_LIVING_ROOM2", 
                                                     "preempted":"RETURN_LIVING_ROOM2", 
                                                     "goal_not_defined":"RETURN_LIVING_ROOM2"})
 
-            smach.StateMachine.add('RETURN_LIVING_ROOM2',
+        smach.StateMachine.add('RETURN_LIVING_ROOM2',
                                     states.NavigateGeneric(robot, goal_query = query_living_room2),
                                     transitions={   "arrived":"SAY_THANKS", 
                                                     "unreachable":"RETURN_LIVING_ROOM3", 
                                                     "preempted":"RETURN_LIVING_ROOM3", 
                                                     "goal_not_defined":"RETURN_LIVING_ROOM3"})
 
-            smach.StateMachine.add('RETURN_LIVING_ROOM3',
+        smach.StateMachine.add('RETURN_LIVING_ROOM3',
                                     states.NavigateGeneric(robot, goal_query = query_living_room3),
                                     transitions={   "arrived":"SAY_THANKS", 
                                                     "unreachable":"SAY_THANKS", 
@@ -630,52 +611,41 @@ class Final(smach.StateMachine):
 
 
 
-            smach.StateMachine.add('SAY_LASER_ERROR',
+        smach.StateMachine.add('SAY_LASER_ERROR',
                                     states.Say(robot, "Something went terribly wrong, can I start again",mood="sad",block=False),
                                     transitions={'spoken':'EXIT'})
 
-            smach.StateMachine.add('SAY_THANKS',
+        smach.StateMachine.add('SAY_THANKS',
                                     states.Say(robot, "Thanks for your time, hope you enjoyed Robocup 2013."),
                                     transitions={'spoken':'EXIT'}) 
 
-            smach.StateMachine.add('EXIT',
+        smach.StateMachine.add('EXIT',
                                     states.NavigateGeneric(robot, goal_query = Compound("waypoint","exit_1",Compound("pose_2d","X","Y","Phi"))),
                                     transitions={   "arrived":"FINISH", 
                                                     "unreachable":"CLEAR_PATH_TO_EXIT", 
                                                     "preempted":"CLEAR_PATH_TO_EXIT", 
                                                     "goal_not_defined":"CLEAR_PATH_TO_EXIT"})
 
-            smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
+        smach.StateMachine.add('CLEAR_PATH_TO_EXIT',
                                     states.Say(robot, "I couldn't go to the exit. Please clear the path, I will give it another try."),
                                     transitions={'spoken':'GO_TO_EXIT_SECOND_TRY'}) 
 
-            smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY',
+        smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY',
                                     states.NavigateGeneric(robot, goal_query = Compound("waypoint","exit_2",Compound("pose_2d","X","Y","Phi"))),
                                     transitions={   "arrived":"FINISH", 
                                                     "unreachable":"FINISH", 
                                                     "preempted":"FINISH", 
                                                     "goal_not_defined":"FINISH"})
 
-            smach.StateMachine.add( 'FINISH', 
+        smach.StateMachine.add( 'FINISH', 
                                     states.Finish(robot),
                                     transitions={'stop':'Done'})
 
 
+    return sm
 
-
-
-
-        # # Await anser of question 1
-        # smach.StateMachine.add('ANSWER_YES_NO',
-        #                             Ask_yes_no(robot),
-        #                             transitions={   'yes':'ASK_IF_KNOWS_DIRECTION',
-        #                                             'preempted':'SAY_REGISTER_NOT_OKAY',
-        #                                             'no':'SAY_REGISTER_NOT_OKAY'})   
-
-
-            
 
 if __name__ == "__main__":
-    rospy.init_node('final_exec')
-    
-    startup(Final)
+    rospy.init_node('final_challenge_executive')
+    startup(setup_statemachine)
+
