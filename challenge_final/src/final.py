@@ -68,6 +68,8 @@ class ScanTablePosition(smach.State):
         ''' Remember current spindle position '''      
         spindle_pos = self.robot.spindle.get_position()
 
+        rospy.loginfo("Timeout = {0}".format(self.timeout_duration))
+        #import ipdb; ipdb.set_trace()
 
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
