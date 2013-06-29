@@ -1082,3 +1082,15 @@ class Read_laser(smach.State):
 
         self.robot.lights.set_color(0,0,1)
         return 'laser_read'
+
+class TogglePeopleDetector(smach.State):
+    """Enables or disables PeopleDetector"""
+    def __init__(self, robot, roi_query, on=True):
+        smach.State.__init__(self, outcomes=["toggled"])
+        self.robot = robot
+        self.roi_query = roi_query
+        self.on = on
+
+    def execute(self, userdata=None):
+        self.robot.perception.toggle_recognition(people=self.on)
+        return "toggled"
