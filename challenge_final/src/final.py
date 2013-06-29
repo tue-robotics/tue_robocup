@@ -233,7 +233,10 @@ class Final(smach.StateMachine):
         #                                                 Compound("not", Compound("explored", "Target")),
         #                                                 Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
                                                        # )
-        query_living_room = Compound("waypoint", "living_room", Compound("pose_2d", "X", "Y", "Phi"))
+        query_living_room1 = Compound("waypoint", "living_room1", Compound("pose_2d", "X", "Y", "Phi"))
+        query_living_room2 = Compound("waypoint", "living_room2", Compound("pose_2d", "X", "Y", "Phi"))
+        query_living_room3 = Compound("waypoint", "living_room3", Compound("pose_2d", "X", "Y", "Phi"))
+
         query_unkown_object = Conjunction(
                  Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")), 
                  Compound( "not", Compound("property_expected", "ObjectID", "class_label", "Class")),
@@ -277,21 +280,28 @@ class Final(smach.StateMachine):
 
             smach.StateMachine.add("SAY_GOTO_LIVINGROOM",
                                     states.Say(robot, "I will go to the living room, see if I can do something over there.", block=False),
-                                    transitions={   "spoken":"GOTO_LIVING_ROOM"})
+                                    transitions={   "spoken":"GOTO_LIVING_ROOM1"})
 
-            smach.StateMachine.add('GOTO_LIVING_ROOM',
-                                    states.NavigateGeneric(robot, goal_query = query_living_room),
+            smach.StateMachine.add('GOTO_LIVING_ROOM1',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room1),
                                     transitions={   "arrived":"SCAN_TABLE_POSITION", 
                                                     "unreachable":"GOTO_LIVING_ROOM2", 
                                                     "preempted":"GOTO_LIVING_ROOM2", 
                                                     "goal_not_defined":"GOTO_LIVING_ROOM2"})
 
-            smach.StateMachine.add("GOTO_LIVING_ROOM2", # BACKUP nav goal!
-                                    states.NavigateGeneric(robot, goal_pose_2d=(4.091, 0.440, -0.253)),
-                                    transitions={   'unreachable'       : 'SCAN_TABLE_POSITION', 
-                                                    'preempted'         : 'SCAN_TABLE_POSITION', 
-                                                    'arrived'           : 'SCAN_TABLE_POSITION', 
-                                                    'goal_not_defined'  : 'SCAN_TABLE_POSITION'})
+            smach.StateMachine.add('GOTO_LIVING_ROOM2',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room2),
+                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
+                                                    "unreachable":"GOTO_LIVING_ROOM3", 
+                                                    "preempted":"GOTO_LIVING_ROOM3", 
+                                                    "goal_not_defined":"GOTO_LIVING_ROOM3"})
+
+            smach.StateMachine.add('GOTO_LIVING_ROOM3',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room3),
+                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
+                                                    "unreachable":"SCAN_TABLE_POSITION", 
+                                                    "preempted":"SCAN_TABLE_POSITION", 
+                                                    "goal_not_defined":"SCAN_TABLE_POSITION"})
             
             smach.StateMachine.add("SCAN_TABLE_POSITION", 
                                 ScanTablePosition(robot, 20.0),
@@ -492,7 +502,21 @@ class Final(smach.StateMachine):
 
             # ToDo: replace by something more interesting
             smach.StateMachine.add('RETURN_LIVING_ROOM',
-                                    states.NavigateGeneric(robot, goal_query = query_living_room),
+                                    states.NavigateGeneric(robot, goal_query = query_living_room1),
+                                    transitions={   "arrived":"SAY_THANKS", 
+                                                    "unreachable":"RETURN_LIVING_ROOM2", 
+                                                    "preempted":"RETURN_LIVING_ROOM2", 
+                                                    "goal_not_defined":"RETURN_LIVING_ROOM2"})
+
+            smach.StateMachine.add('RETURN_LIVING_ROOM2',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room2),
+                                    transitions={   "arrived":"SAY_THANKS", 
+                                                    "unreachable":"RETURN_LIVING_ROOM3", 
+                                                    "preempted":"RETURN_LIVING_ROOM3", 
+                                                    "goal_not_defined":"RETURN_LIVING_ROOM3"})
+
+            smach.StateMachine.add('RETURN_LIVING_ROOM3',
+                                    states.NavigateGeneric(robot, goal_query = query_living_room3),
                                     transitions={   "arrived":"SAY_THANKS", 
                                                     "unreachable":"SAY_THANKS", 
                                                     "preempted":"SAY_THANKS", 
