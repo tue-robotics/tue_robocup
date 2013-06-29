@@ -825,7 +825,7 @@ class ResetCostmap(smach.State):
 
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, refresh_freq=0):
         smach.State.__init__(self,outcomes=['succeeded','failed','aborted'],
                             input_keys=['goal'],
                             output_keys=['goal'])                    
@@ -837,6 +837,7 @@ class Determine_goal(smach.State):
         self.goal_query = goal_query
         self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
+        self.refresh_freq = refresh_freq
         rospy.logdebug("Goal name = {0}".format(self.goal_name))
         rospy.logdebug("Goal query = {0}".format(self.goal_query))
         rospy.logdebug("Lookat query = {0}".format(self.lookat_query))
@@ -853,7 +854,9 @@ class Determine_goal(smach.State):
     def execute(self, userdata):
         self.set_spindle_out_of_laser_reach() #Clear arms out of laser reach
 
-        if self.possible_locations_initialized == False:
+        if self.possible_locations_initialized == False or self.refresh_freq > 0:
+
+            self.possible_locations = []
 
             if self.goal_pose_2d:
                 rospy.logwarn("Goalpose2d")
@@ -1076,14 +1079,17 @@ class Get_plan(smach.State):
         return 'succeeded'
 
 class Execute_path(smach.State):
-    def __init__(self, robot, look_at_path_distance=2.7):
-        smach.State.__init__(self,outcomes=['arrived','aborted','waiting','preempted'])
+    def __init__(self, robot, look_at_path_distance=2.7, refresh_freq=0):
+        smach.State.__init__(self,outcomes=['arrived','aborted','waiting','refresh', 'preempted'])
 
         self.robot = robot
         self.look_at_path_distance = look_at_path_distance
         self.previous_poses_to_goal = 0
+        self.refresh_freq = refresh_freq
 
     def execute(self, userdate):
+
+        print "Executing!"
 
         while not rospy.is_shutdown():
             goal_status = self.robot.base.ac_move_base.get_state()
@@ -1136,8 +1142,14 @@ class Execute_path(smach.State):
                 else:
                     rospy.logwarn("nr of poses to goal is not set (equals {0})".format(self.robot.base.poses_to_goal))
 
-            # Wait 0.5 seconds to avoid looping to fast
+            # Wait 0.5 seconds to avoid looping too fast
+
+            if self.refresh_freq > 0:
+                rospy.sleep(1 / float(self.refresh_freq))
+                return 'refresh'
+
             rospy.sleep(0.5)
+
         return 'preempted'
 
 class Waiting_to_execute(smach.State):
@@ -1219,8 +1231,9 @@ class Recover(smach.State):
                 rospy.loginfo("Oh no, I can not reach my precious goal")
                 return 'new_goal_required'
 
+# refresh_freq      Frequency of re-check of determine_goal (0 means only check at beginning)
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1, refresh_freq=0):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
@@ -1232,6 +1245,7 @@ class NavigateGeneric(smach.StateMachine):
         self.look_at_path_distance = look_at_path_distance
         self.goal_area_radius = goal_area_radius
         self.clearance_window_size = 0.7
+        self.refresh_freq = refresh_freq
 
         self.preempted = False
 
@@ -1244,7 +1258,8 @@ class NavigateGeneric(smach.StateMachine):
                 goal_name = self.goal_name, 
                 goal_query = self.goal_query,
                 lookat_point_3d = self.lookat_point_3d, 
-                lookat_query = self.lookat_query)
+                lookat_query = self.lookat_query,
+                refresh_freq = self.refresh_freq)
 
         @smach.cb_interface(outcomes=['done'])
         def init_navigate_generic(userdata):
@@ -1276,10 +1291,11 @@ class NavigateGeneric(smach.StateMachine):
                 transitions={'unreachable'      : 'DETERMINE_GOAL',
                              'succeeded'        : 'EXECUTE'})
 
-            smach.StateMachine.add('EXECUTE', Execute_path(self.robot, self.look_at_path_distance),
+            smach.StateMachine.add('EXECUTE', Execute_path(self.robot, self.look_at_path_distance, self.refresh_freq),
                 transitions={'arrived'          : 'arrived',
                              'preempted'        : 'preempted',
                              'waiting'          : 'WAITING',
+                             'refresh'          : 'DETERMINE_GOAL',
                              'aborted'          : 'RECOVER'})
 
             smach.StateMachine.add('WAITING', Waiting_to_execute(self.robot),
@@ -1304,10 +1320,11 @@ class NavigateGeneric(smach.StateMachine):
                 transitions={'unreachable'      : 'DETERMINE_GOAL_TRY_AGAIN',
                              'succeeded'        : 'EXECUTE_TRY_AGAIN'})
 
-            smach.StateMachine.add('EXECUTE_TRY_AGAIN', Execute_path(self.robot, self.look_at_path_distance),
+            smach.StateMachine.add('EXECUTE_TRY_AGAIN', Execute_path(self.robot, self.look_at_path_distance, self.refresh_freq),
                 transitions={'arrived'          : 'arrived',
                              'preempted'        : 'preempted',
                              'waiting'          : 'WAITING_TRY_AGAIN',
+                             'refresh'          : 'DETERMINE_GOAL_TRY_AGAIN',
                              'aborted'          : 'RECOVER_TRY_AGAIN'})
 
             smach.StateMachine.add('WAITING_TRY_AGAIN', Waiting_to_execute(self.robot),
