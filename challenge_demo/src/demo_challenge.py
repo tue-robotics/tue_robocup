@@ -27,6 +27,8 @@ from tf.transformations import euler_from_quaternion
 from interpret_email import MailInterpreter
 from maluuba_ros.srv import Interpret
 from speech_interpreter.srv import GetYesNo
+from speech_interpreter.srv import GetAnythingElse
+
 
 import datetime
 
@@ -136,7 +138,7 @@ class AskAnythingElse(smach.State):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
-        self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_anything_else', GetAnythingElse)
         self.maluubasrv = rospy.ServiceProxy('maluuba/interpret', Interpret)
         
         try:
@@ -190,7 +192,7 @@ class AskAnythingElse(smach.State):
 
     def execute(self, userdata=None):
         try:
-            self.response = self.get_anything_else_service("demo_challenge_anything_else", 4 , 60)  
+            self.response = self.get_anything_else_service("anything_else", 3 , 60)  
             # This means that within 4 tries and within 60 seconds an answer is received. 
             #import ipdb; ipdb.set_trace()
             if not self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
@@ -429,6 +431,16 @@ class PoorChocolateNuts(smach.StateMachine):
                                                     'failed'                : 'RETRACT'})
 
             smach.StateMachine.add('RETRACT', 
+                                    states.ArmToUserPose(robot.leftArm, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'RETRACT2',
+                                                    'failed'                : 'RETRACT2'})
+                                                    
+            smach.StateMachine.add('RETRACT2', 
+                                    states.ArmToUserPose(robot.leftArm, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'RETRACT3',
+                                                    'failed'                : 'RETRACT3'})
+                                                    
+            smach.StateMachine.add('RETRACT3', 
                                     states.ArmToUserPose(robot.leftArm, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
                                     transitions={   'succeeded'             : 'CARRY_POSE_SUCCEEDED',
                                                     'failed'                : 'CARRY_POSE_SUCCEEDED'})
