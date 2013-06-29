@@ -424,12 +424,12 @@ bool findGuide(wire::Client& client, bool lost = true) {
     //! It is allowed to call the guide once per section (points for the section will be lost)
     if (lost) {
         setRGBLights("yellow");
-        amigoSpeak("Wait for me guide");
+        //amigoSpeak("Wait for me guide");
         setRGBLights("yellow");
     }
 
     //! Give the guide some time to move to the robot
-    ros::Duration wait_for_guide(1.0);
+    ros::Duration wait_for_guide(0.5);
     wait_for_guide.sleep();
 
     //! Vector with candidate guides
@@ -1031,14 +1031,14 @@ void speechCallback(std_msgs::String res) {
     }
     // Amigo stop shelf/delivery location NOT confirmed
     else if (res.data != "yes" && state_speech_ == 1) {
-        amigoSpeak("I misunderstood, I will follow you");
+        amigoSpeak("I misunderstood, I will follow");
         state_speech_ = 0;
         ROS_INFO("State from 1 to 0");
     }
     // Amigo stop shelf/delivery location IS confirmed
     else if (res.data == "yes" && state_speech_ == 1) {
         state_speech_ = 2;
-        amigoSpeak("Is this location a shelf?");
+        amigoSpeak("Is this a shelf?");
         ROS_INFO("State from 1 to 2");
     }
     // Is this a shelf answered with yes or no
@@ -1077,7 +1077,7 @@ void speechCallback(std_msgs::String res) {
         amigoSpeak(sentence);
 
         //! Next question
-        amigoSpeak("Which side should I remember?");
+        amigoSpeak("Which side?");
         state_speech_ = 3;
 
         ROS_INFO("State from 2 to 3");
@@ -1085,7 +1085,7 @@ void speechCallback(std_msgs::String res) {
     }
     // Is this a shelf with an invalid answer
     else if (state_speech_ == 2) {
-        amigoSpeak("I misunderstood, is this location a shelf?");
+        amigoSpeak("I misunderstood, is this a shelf?");
         ROS_INFO("State from 2 to 2");
     }
     // Asked for a side: received a side
@@ -1098,7 +1098,7 @@ void speechCallback(std_msgs::String res) {
     }
     // Asked for a side: NO side received
     else if (state_speech_ == 3) {
-        amigoSpeak("I misunderstood, which side should I remember?");
+        amigoSpeak("I misunderstood, which side?");
         ROS_INFO("State is and stays 3");
     }
     // Front/left/right side confirmed
@@ -1147,10 +1147,14 @@ void speechCallback(std_msgs::String res) {
             state_speech_ = 0;
             amigoSpeak("I will follow you.");
             ROS_INFO("State from 4 to 0");
+            std_srvs::Empty srv;
+			reset_wire_client_.call(srv);
+			//findGuide();
+            
         }
     }
     else if (state_speech_ == 4 && res.data != "yes") {
-        amigoSpeak("I misunderstood, which side should I remember");
+        amigoSpeak("I misunderstood, which side");
         state_speech_ = 3;
         ROS_INFO("State from 4 to 3");
     }
@@ -1165,6 +1169,9 @@ void speechCallback(std_msgs::String res) {
         state_speech_ = 6;
         amigoSpeak("Okay, please guide me to the ordering location.");
         ROS_INFO("State from 5 to 6");
+        std_srvs::Empty srv;
+        reset_wire_client_.call(srv);
+        
     }
     // Learn another location gave invalid answer: retry
     else if (state_speech_ == 5) {
@@ -1333,7 +1340,7 @@ void checkOrderWithWorldModelAtShelf(map<string, pair<geometry_msgs::Point, stri
                 }
 
                 // Reset head
-                moveHead(0.0, 0.0);
+                //moveHead(0.0, 0.0);
 
                 // Print information
                 stringstream location_name;
@@ -1537,7 +1544,7 @@ bool moveHead(double pan, double tilt) {
     head_ref.pan = pan;
     head_ref.tilt = tilt;
     head_ref_ac_->sendGoal(head_ref);
-    head_ref_ac_->waitForResult(ros::Duration(5.0));
+    head_ref_ac_->waitForResult(ros::Duration(2.0));
 
     if(head_ref_ac_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED) {
         ROS_WARN("Head could not reach target position");
@@ -1555,9 +1562,9 @@ bool callInterpreter(string type, string& answer) {
 
     // Point mic towards guide
     /// set the head to look up in front of AMIGO
-    if (!moveHead(0.0, -0.1)) {
-        amigoSpeak("I could not move my head the way I want it", false);
-    }
+    //if (!moveHead(0.0, -0.1)) {
+    //    amigoSpeak("I could not move my head the way I want it", false);
+    //}
 
     // Feedback
     bool succeeded = false;
@@ -1578,9 +1585,9 @@ bool callInterpreter(string type, string& answer) {
 
     // Reset head
     /// set the head to look up in front of AMIGO
-    if (!moveHead(0.0, 0.0)) {
-        amigoSpeak("I could not move my head the way I want it", false);
-    }
+    //if (!moveHead(0.0, 0.0)) {
+    //    amigoSpeak("I could not move my head the way I want it", false);
+    //}
 
     return succeeded;
 
@@ -1700,14 +1707,14 @@ int main(int argc, char **argv) {
     srv_test.request.time_out = 10.0;
     srv_test.request.type = "continue_confirm";
     string answer = "";
-    //while (answer != "continue" &&
-    //       ros::Time::now().toSec() - t1 < 60.0) {
-    //    if (speech_client_.call(srv_test)) {
-    //        answer = srv_test.response.answer;
-    //    }
-    //
-    //    ROS_INFO("Currently, answer =  %s", answer.c_str());
-    //}
+    while (answer != "continue" &&
+           ros::Time::now().toSec() - t1 < 60.0) {
+        if (speech_client_.call(srv_test)) {
+            answer = srv_test.response.answer;
+        }
+    
+        ROS_INFO("Currently, answer =  %s", answer.c_str());
+    }
     ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
 
     //! Administration
@@ -1745,7 +1752,7 @@ int main(int argc, char **argv) {
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
 
         //! Check if the robot has to move
-        if (state_speech_ > 0) {
+        if (state_speech_ != 0 && state_speech_ != 6) {
 
             setRGBLights("green");
 
@@ -1771,7 +1778,7 @@ int main(int argc, char **argv) {
             moveTowardsPosition(pos, 0);
 
             //! Reset head
-            moveHead(0.0, 0.0);
+            //moveHead(0.0, 0.0);
 
 
         } else {
