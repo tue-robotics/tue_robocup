@@ -144,11 +144,19 @@ class Perception(object):
         request.length_z = length_z
         request.frame = pointstamped.header.frame_id
 
-        try:
-            rospy.wait_for_service("/set_roi_bin_detection", timeout=5.0)
-            self.sv_vin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
+        # try:
+        #     rospy.wait_for_service("/set_roi_bin_detection", timeout=5.0)
+        #     self.sv_bin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
+        #     response = self.sv_bin_detector(request)
+        # except rospy.ServiceException, e:
+        #     rospy.logerr("Laser service not available: {0}".format(e))
+        #     return False
+
+        sv_available = rospy.wait_for_service("/set_roi_bin_detection", timeout=5.0)
+        if sv_available:
+            self.sv_bin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
             response = self.sv_bin_detector(request)
-        except rospy.ServiceException, e:
+        else:
             rospy.logerr("Laser service not available: {0}".format(e))
             return False
 
