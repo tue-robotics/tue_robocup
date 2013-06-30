@@ -691,7 +691,11 @@ def setup_statemachine(robot):
         #Open gripper to release object
         smach.StateMachine.add("OPEN_GRIPPER", 
             states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
-            transitions={   'succeeded':'DECIDE_ACTION', 'failed': 'ASK_ABOUT_SECOND_OBJECT'})
+            transitions={   'succeeded':'RESET_ARM_AFTER_HANDOVER', 'failed': 'ASK_ABOUT_SECOND_OBJECT'})
+
+        smach.StateMachine.add("RESET_ARM_AFTER_HANDOVER",
+            states.ResetArms(robot, timeout=2.0), 
+            transitions={   'done'  : 'DECIDE_ACTION'})
 
         # TODO EERST CHECKEN OF ER WEL EEN 2e Object is gevonden?? of pas na decide action en al die zinnen daar uithalen?
         smach.StateMachine.add( "ASK_ABOUT_SECOND_OBJECT",
