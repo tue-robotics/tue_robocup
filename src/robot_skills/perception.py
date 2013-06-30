@@ -38,6 +38,9 @@ class Perception(object):
         '''Bin detector'''
         self.sv_bin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
 
+        '''Table detector'''
+        self.sv_table_detector = rospy.ServiceProxy("/table_detector_2d/set_region_of_interest_table", pein_srvs.srv.FindObjInRoi)
+
         ''' Service to load template matching configuration '''
         self.sv_template_config = rospy.ServiceProxy("/template_matching/srv_input", pein_srvs.srv.StartStop)
 
@@ -137,6 +140,26 @@ class Perception(object):
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
             self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
             response = self.sv_laser_detector(request)
+        except rospy.ServiceException, e:
+            rospy.logerr("Laser service not available: {0}".format(e))
+            return False
+
+        return response
+
+    def set_table_roi(self, x, y, z, length_x=0.5, length_y=0.5, length_z=0.5, frame="/map"):
+        request = pein_srvs.srv.FindObjInRoiRequest()
+        request.x = x
+        request.y = y
+        request.z = z
+        request.length_x = length_x
+        request.length_y = length_y
+        request.length_z = length_z
+        request.frame = frame
+
+        ''' Wait for service '''
+        try:
+            rospy.wait_for_service("/table_detector_2d/set_region_of_interest_table", timeout=5.0)
+            response = self.sv_table_detector(request)
         except rospy.ServiceException, e:
             rospy.logerr("Laser service not available: {0}".format(e))
             return False
