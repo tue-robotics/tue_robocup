@@ -144,7 +144,7 @@ class ScanTablePosition(smach.State):
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
             if self.robot.spindle.send_laser_goal(float(answer_size["Z"]), timeout=self.timeout_duration):
-                self.robot.speech.speak("I will scan the tables for objects", block=False)
+                
                 self.robot.perception.toggle_perception_2d(target_point, answer_size["Length_x"], answer_size["Length_y"], answer_size["Length_z"])
                 rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.logwarn("Waiting for 2.0 seconds for laser update")
