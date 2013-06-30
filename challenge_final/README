@@ -18,7 +18,12 @@ amigo3:
     say test  
         (to test speaker is working) 
 
-    rosrun challenge_cleanup clean_up.py
+    rosrun challenge_final final.py
+
+== PRACTICAL ISSUES ==
+- AMIGO is started immediately, the arena is modified on the fly
+- Coke and sprite are placed on the table
+- Thrashbin should be placed either in the corner of wall and bar or somewhere along the wall to the living room
 
 
 == TESTING DYNAMIC NAVIGATION ==

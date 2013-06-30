@@ -21,6 +21,8 @@ import geometry_msgs
 
 import assert_operator
 
+grasp_arm = "left"
+
 class Ask_drink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
@@ -371,7 +373,7 @@ class DecideAction(smach.State):
         self.second_run = False
     def execute(self, userdata=None):
         #Check if finished
-        answers = self.robot.reasoner.query(Compound("goal", Compound("serve", "a1", "Class")))
+        answers = self.robot.reasoner.query(Compound("goal", Compound("serve","Class")))
         #Second run
         if answers:
             #Check if already known
@@ -383,13 +385,13 @@ class DecideAction(smach.State):
                 self.robot.reasoner.assertz(Compound("base_grasp_point", is_object_there[0]['ObjectID'], Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
 
                 #Retract grasped object
-                self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "Class"))))
+                self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Class"))))
                 return 'known_object'
             else:
-                self.robot.speech.speak("I have not yet found {0}, I will continue searching locations".format(str(answers[0]['Class'])))
+                self.robot.speech.speak("I do not know what the other object is, but I better go and get it".format(str(answers[0]['Class'])))
                 return 'unkown_object'
         else:
-            self.robot.speech.speak("I am finished with my task, let's go home")
+            self.robot.speech.speak("The table is clean, let's go home")
             return 'finished'
 
 class HandoverToKnownHuman(smach.StateMachine):
@@ -432,6 +434,49 @@ class HandoverToKnownHuman(smach.StateMachine):
                                     states.Say(self.robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"]),
                                     transitions={"spoken":"done"})
 
+class ToggleBinDetector(smach.State):
+    '''Enables or disables bin detector '''
+    def __init__(self, robot, roi_query=None, length_x=3.0, length_y=3.0, length_z=1.0, timeout=2.0):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.roi_query = roi_query
+        self.length_x = length_x
+        self.length_y = length_y
+        self.length_z = length_z
+        self.timeout = timeout
+
+    def execute(self, userdata=None):
+
+        poi = geometry_msgs.msg.PointStamped()
+
+        '''Enabling bin detection '''
+        answers = self.robot.reasoner.query(self.roi_query)
+        #rospy.loginfo('Answers = {0}'.format(answers))
+        #import ipdb
+        #ipdb.set_trace()
+
+        if answers:
+            answer = answers[0]
+            rospy.loginfo("Answer(0) = {0}".format(answer))
+            
+            poi.header.frame_id = "/map"
+            poi.header.stamp = rospy.Time()
+            poi.x = float(answer["X"])
+            poi.point.y = float(answer["Y"])
+            poi.z = float(answer["Z"])
+            #rospy.loginfo("Grasp_point = {0}".format(self.grasp_point))
+            response = self.robot.perception.toggle_bin_detection(poi, length_x=self.length_x, length_y=self.length_y, length_z=self.length_z)
+            if not response.suc:
+                return 'failed'
+        else: 
+            return 'failed'
+
+        rospy.sleep(rospy.Duration(self.timeout))
+
+        '''Disabling bin detection with negative size'''
+        self.robot.perception.toggle_bin_detection(poi, length_x=-1.0, length_y=-1.0, length_z=-1.0)
+        return 'succeeded'
+
 def setup_statemachine(robot):
     side = robot.leftArm
     
@@ -451,6 +496,14 @@ def setup_statemachine(robot):
     query_living_room1 = Compound("waypoint", "living_room1", Compound("pose_2d", "X", "Y", "Phi"))
     query_living_room2 = Compound("waypoint", "living_room2", Compound("pose_2d", "X", "Y", "Phi"))
     query_living_room3 = Compound("waypoint", "living_room3", Compound("pose_2d", "X", "Y", "Phi"))
+    query_kitchen1 = Compound("waypoint", "kitchen1", Compound("pose_2d", "X", "Y", "Phi"))
+    query_kitchen2 = Compound("waypoint", "kitchen2", Compound("pose_2d", "X", "Y", "Phi"))
+    query_trash_bin = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+
+    if grasp_arm == "right": 
+        arm = robot.rightArm
+    else:
+        arm = robot.leftArm
 
 #    query_pose = robot.reasoner.base_pose(Compound("initial_open_challenge", robot.reasoner.pose_2d("X", "Y", "Phi")))
 #    print query_pose
@@ -559,37 +612,58 @@ def setup_statemachine(robot):
         # STATE: arrive at a person: hand over object and go back to starting position
         smach.StateMachine.add("MOVE_TO_GOAL",                                                              # TODO SJOERD: in person_or_prior set query to person.
             MoveToGoal(robot), # En andere dingen
-            transitions={   'succeeded_person':'HANDOVER', 
-                            'succeeded_prior':'HANDOVER', 'failed':'ASK_GET_OBJECT'})
+            transitions={   'succeeded_person':'SAY_HANDOVER', 
+                            'succeeded_prior':'SAY_HANDOVER', 
+                            'failed':'SAY_CANNOT_FIND_OPERATOR'})
 
-        smach.StateMachine.add("MOVE_TO_GOAL_AFTER_PRIOR", 
-            MoveToGoal(robot), # En andere dingen
-            transitions={   'succeeded_person':'HANDOVER', 
-                            'succeeded_prior':'HANDOVER_PRIOR', 'failed':'ASK_GET_OBJECT'})
+        # smach.StateMachine.add("MOVE_TO_GOAL_AFTER_PRIOR", 
+        #     MoveToGoal(robot), # En andere dingen
+        #     transitions={   'succeeded_person':'SAY_HANDOVER', 
+        #                     'succeeded_prior':'HANDOVER_PRIOR', 
+        #                     'failed':'SAY_CANNOT_FIND_OPERATOR'})
 
         #Failed to deliver ask call for help
-        smach.StateMachine.add("ASK_GET_OBJECT", 
-            states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
-            transitions={   'spoken':'OPEN_GRIPPER'}) 
+        smach.StateMachine.add("SAY_CANNOT_FIND_OPERATOR", 
+            states.Say(robot, ["I am terribly sorry but I cannot reach you, can you please come to me?"]), 
+            transitions={   'spoken':'SAY_HANDOVER'}) 
+
+        # ToDo: Make state that waits for operator in front of him
 
         #Handover the object
-        smach.StateMachine.add("HANDOVER", 
-           states.Say(robot, ["Here is your order. Please take it from my gripper"]), # En andere dingen
+        smach.StateMachine.add("SAY_HANDOVER", 
+           states.Say(robot, ["Here is your order. Please take it from my gripper"]), 
            transitions={   'spoken':'OPEN_GRIPPER' })
-
-
-        smach.StateMachine.add("HANDOVER_PRIOR", 
-            states.Say(robot, ["I am unable to find a person. However, I know you are there somewhere. Please take the item from my gripper"]), # En andere dingen
-            transitions={   'spoken':'HANDOVER' })
 
         #Open gripper to release object
         smach.StateMachine.add("OPEN_GRIPPER", 
-            states.SetGripper(robot, side, gripperstate=ArmState.OPEN), # En andere dingen
+            states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
             transitions={   'succeeded':'DECIDE_ACTION', 'failed': 'DECIDE_ACTION'})
 
         smach.StateMachine.add("DECIDE_ACTION",
             DecideAction(robot),
-            transitions={'known_object': 'GRAB', 'unkown_object' : 'DETERMINE_GOAL', 'finished' : 'RETURN_LIVING_ROOM'})
+            transitions={'known_object': 'GRAB_SECOND_ITEM', 'unkown_object' : 'DETERMINE_GOAL', 'finished' : 'RETURN_LIVING_ROOM'})
+
+        smach.StateMachine.add("GRAB_SECOND_ITEM", 
+            states.GrabMachine(side, robot, Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
+            transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'ASK_GRASP_OBJECT'})
+
+        smach.StateMachine.add("SAY_GOTO_KITCHEN",
+                                    states.Say(robot, "Let's throw this in the trashbin", block=False),
+                                    transitions={   "spoken":"GOTO_KITCHEN"})
+
+        smach.StateMachine.add('GOTO_KITCHEN',
+                                    states.NavigateGeneric(robot, goal_query = query_kitchen1),
+                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
+                                                    "unreachable":"GOTO_KITCHEN2", 
+                                                    "preempted":"GOTO_KITCHEN2", 
+                                                    "goal_not_defined":"GOTO_KITCHEN2"})
+
+        smach.StateMachine.add('GOTO_KITCHEN2',
+                                    states.NavigateGeneric(robot, goal_query = query_kitchen2),
+                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
+                                                    "unreachable":"SAY_CANNOT_REACH_KITCHEN", 
+                                                    "preempted":"SAY_CANNOT_REACH_KITCHEN", 
+                                                    "goal_not_defined":"SAY_CANNOT_REACH_KITCHEN"})
 
         smach.StateMachine.add('RETURN_LIVING_ROOM',
                                     states.NavigateGeneric(robot, goal_query = query_living_room1),
@@ -612,13 +686,26 @@ def setup_statemachine(robot):
                                                     "preempted":"SAY_THANKS", 
                                                     "goal_not_defined":"SAY_THANKS"})
 
+        smach.StateMachine.add('SCAN_BIN_POSITION',
+                                    ToggleBinDetector(robot, roi_query=None, length_x=3.0, length_y=3.0, length_z=1.0, timeout=2.0),
+                                    transitions={   "succeeded" : "DROPOFF_BIN",
+                                                    "failed"    : "DROPOFF_BIN"})
 
+        smach.StateMachine.add("DROPOFF_BIN",
+                                    states.DropObject(arm, robot, query_trash_bin),
+                                    transitions={   'succeeded':'RETURN_LIVING_ROOM',
+                                                    'failed':'RETURN_LIVING_ROOM',
+                                                    'target_lost':'SAY_CANNOT_DISPOSE'})
 
-
+        smach.StateMachine.add('SAY_CANNOT_DISPOSE',
+                                    states.Say(robot, "I am sorry, but i cannot throw the object in the trash bin",mood="sad",block=False),
+                                    transitions={'spoken':'RETURN_LIVING_ROOM'})
 
             # TODO DRIVE TO AUDIENCE NEAR COUCH.
 
-
+        smach.StateMachine.add('SAY_CANNOT_REACH_KITCHEN',
+                                    states.Say(robot, "I cannot seem to go to throw this in the thrasbin, i am terribly sorry",mood="sad",block=False),
+                                    transitions={'spoken':'RETURN_LIVING_ROOM'})
 
         smach.StateMachine.add('SAY_LASER_ERROR',
                                     states.Say(robot, "Something went terribly wrong, can I start again",mood="sad",block=False),
