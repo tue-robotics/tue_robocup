@@ -56,6 +56,7 @@ class Perception(object):
         return self.sv_recognition(modules)
 
     def toggle_recognition(self, faces=False, objects=False, people=False):
+        rospy.logwarn("This function is deprecated, please use toggle instead")
         #TODO: Everything related to faces is not yet tested and is not yet supposed to actually work. These methods are for testing the execs only!
         if faces and objects:
             rospy.loginfo("Perception.start: Both categories (Faces and Objects) specified for recognition, CPU hogging initiated")
