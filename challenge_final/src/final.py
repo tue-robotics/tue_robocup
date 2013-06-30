@@ -126,7 +126,7 @@ class ScanTablePosition(smach.State):
         rospy.loginfo("Trying to detect tables")
 
         answers_size = self.robot.reasoner.query(Compound('region_of_interest', 
-            'large_table_1', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
+            'large_table_position', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
         
         ''' Remember current spindle position '''      
         spindle_pos = self.robot.spindle.get_position()
@@ -645,7 +645,7 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":"SCAN_TABLE_POSITION"})
             
         smach.StateMachine.add("SCAN_TABLE_POSITION", 
-                                ScanTablePosition(robot, 2.0),
+                                ScanTablePosition(robot, 20.0),
                                 transitions={   'succeeded':'TAKE_ORDER'})
 
         smach.StateMachine.add( "TAKE_ORDER",
