@@ -34,12 +34,14 @@ class Ask_drink(smach.State):
         self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
+        self.robot.head.look_up()
         self.robot.speech.speak("Hey guys, can I do anything for you.")
         self.response = self.get_drink_service("drink_final", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         # Check available options from rulebook!
         
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
+        self.robot.head.reset_position(timeout=0.0)
         return "done"
 
 class Ask_trashbin(smach.State):
@@ -49,6 +51,7 @@ class Ask_trashbin(smach.State):
         self.get_trashbin_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
+        self.robot.head.look_up()
         query_seven_up = self.robot.reasoner.query(Compound( "property_expected", "ObjectID", "class_label", "seven_up"))
 
         if query_seven_up:
@@ -59,11 +62,11 @@ class Ask_trashbin(smach.State):
         self.response = self.get_trashbin_service("final_trashbin", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
         # SAY 'put it in the trashbin'
         
+        self.robot.head.reset_position(timeout=0.0)
+
         #import ipdb; ipdb.set_trace()
         return "done"
-
-
-            
+           
 
 class Ask_yes_no(smach.State):
     def __init__(self, robot, tracking=True):
