@@ -612,7 +612,7 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":"SCAN_TABLE_POSITION"})
             
         smach.StateMachine.add("SCAN_TABLE_POSITION", 
-                                ScanTablePosition(robot, 20.0),
+                                ScanTablePosition(robot, 2.0),
                                 transitions={   'succeeded':'TAKE_ORDER'})
 
         smach.StateMachine.add( "TAKE_ORDER",

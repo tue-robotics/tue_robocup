@@ -18,8 +18,8 @@ if __name__ == "__main__":
     coke1 = W.add_object("marmalade-2", "marmalade", 8.664, -1.166, 0.5)    
 
     # large table
-    W.add_object("tomato-soup-3", "coke", 5.703, -0.732, 0.8)    
-    W.add_object("cleaner-4", "seven_up", 5.605, -2.709, 0.85)  
+    W.add_object("coke-3", "coke", 5.703, -0.732, 0.88)    
+    W.add_object("seven-4", "seven_up", 5.605, -2.709, 0.88)  
 
     # bed_cabinet_1
     coke4 = W.add_object("tomato-soup-5", "tomato_soup", 10.229, -5.404, 0.5)    
