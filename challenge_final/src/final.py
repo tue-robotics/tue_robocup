@@ -61,6 +61,9 @@ class Ask_trashbin(smach.State):
 
         self.response = self.get_trashbin_service("final_trashbin", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
         # SAY 'put it in the trashbin'
+        #import ipdb; ipdb.set_trace()
+        self.robot.reasoner.query(Compound("retractall",   Compound("goal", Compound("serve", "X"))))
+        self.robot.reasoner.query(Compound("assert",        Compound("goal", Compound("serve", "seven_up")))) #Reset goal to beseven_up
         
         self.robot.head.reset_position(timeout=0.0)
 
@@ -450,6 +453,7 @@ class DecideAction(smach.State):
     def execute(self, userdata=None):
         #Check if finished
         answers = self.robot.reasoner.query(Compound("goal", Compound("serve","Class")))
+        #import ipdb; ipdb.set_trace()
         #Second run
         if answers:
             #Check if already known
@@ -694,6 +698,7 @@ def setup_statemachine(robot):
         
         @smach.cb_interface(outcomes=['asserted', 'target_lost'])
         def assert_object_disposed(*args, **kwargs):
+            #import ipdb; ipdb.set_trace()
             grasppoints = robot.reasoner.query(query_grasppoint)
             if grasppoints:
                 try:
