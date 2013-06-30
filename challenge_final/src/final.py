@@ -35,7 +35,7 @@ class Ask_drink(smach.State):
         self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
-        self.response = self.get_drink_service("drink_final", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.get_drink_service("drink_final", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         # Check available options from rulebook!
         
         #import ipdb; ipdb.set_trace()
@@ -540,6 +540,7 @@ def setup_statemachine(robot):
     robot.reasoner.assertz(Compound("challenge", "final"))
     robot.reasoner.query(Compound("retractall", Compound("goal_location", "X", "Y")))
     robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Counter", "X"))))
+
     robot.reasoner.query(Compound("retractall", Compound("goal", Compound("bringTo", "X"))))
     robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
     robot.reasoner.query(Compound("retractall", Compound("deliver_pose", "A")))
@@ -704,7 +705,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("GRAB_SECOND_ITEM", 
             states.GrabMachine(side, robot, Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
-            transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'ASK_GRASP_OBJECT'})
+            transitions={   'succeeded':'SAY_GOTO_KITCHEN', 'failed':'ASK_GRASP_OBJECT'})
 
         smach.StateMachine.add("SAY_GOTO_KITCHEN",
                                     states.Say(robot, "Let's throw this in the trashbin", block=False),
@@ -712,14 +713,14 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GOTO_KITCHEN',
                                     states.NavigateGeneric(robot, goal_query = query_kitchen1),
-                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
+                                    transitions={   "arrived":"SCAN_BIN_POSITION", 
                                                     "unreachable":"GOTO_KITCHEN2", 
                                                     "preempted":"GOTO_KITCHEN2", 
                                                     "goal_not_defined":"GOTO_KITCHEN2"})
 
         smach.StateMachine.add('GOTO_KITCHEN2',
                                     states.NavigateGeneric(robot, goal_query = query_kitchen2),
-                                    transitions={   "arrived":"SCAN_TABLE_POSITION", 
+                                    transitions={   "arrived":"SCAN_BIN_POSITION", 
                                                     "unreachable":"SAY_CANNOT_REACH_KITCHEN", 
                                                     "preempted":"SAY_CANNOT_REACH_KITCHEN", 
                                                     "goal_not_defined":"SAY_CANNOT_REACH_KITCHEN"})
