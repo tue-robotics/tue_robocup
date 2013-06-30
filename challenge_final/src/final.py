@@ -35,6 +35,7 @@ class Ask_drink(smach.State):
         self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata=None):
+        self.robot.speech.speak("Hey guys, can I do anything for you.")
         self.response = self.get_drink_service("drink_final", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         # Check available options from rulebook!
         
@@ -142,7 +143,7 @@ class ScanTablePosition(smach.State):
                 self.robot.perception.toggle(["table_detector_2d"])
                 #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.loginfo("Tracking table for {0}".format(self.timeout_duration))
-                self.robot.speech.speak("Hey guys, can I do anything for you.")
+                self.robot.speech.speak("There is some serious reconstruction going on.")
                 rospy.sleep(rospy.Duration(self.timeout_duration))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
