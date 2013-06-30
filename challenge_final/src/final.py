@@ -124,28 +124,27 @@ class ScanTablePosition(smach.State):
 
         answers_size = self.robot.reasoner.query(Compound('region_of_interest', 
             'large_table_1', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
-
-        answers_pos = self.robot.reasoner.query(Compound("lookup_transform", "map", "dinner_table",
-                                                         Compound("transform", Compound("vector", "X", "Y", "Z"), "Q")))
         
         ''' Remember current spindle position '''      
         spindle_pos = self.robot.spindle.get_position()
 
 
-        if answers_pos and answers_size:
-            answer_pos = answers_pos[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            answer_size = answers_size[0]
+        if answers_size:
+            answer_size = answers_size[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
             target_point = geometry_msgs.msg.PointStamped()
             target_point.header.frame_id = "/map"
             target_point.header.stamp = rospy.Time()
-            target_point.point.x = float(answer_pos["X"])
-            target_point.point.y = float(answer_pos["Y"])
+            target_point.point.x = float(answer_size["X"])
+            target_point.point.y = float(answer_size["Y"])
             target_point.point.z = float(answer_size["Z"])
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
             if self.robot.spindle.send_laser_goal(float(answer_size["Z"]), timeout=self.timeout_duration):
-                
+                self.robot.speech.speak("There is some serious reconstruction going on.")
                 self.robot.perception.toggle_perception_2d(target_point, answer_size["Length_x"], answer_size["Length_y"], answer_size["Length_z"])
+
+                self.robot.perception.toggle([ "table_detector_2d"])    
+
                 rospy.sleep(rospy.Duration(self.timeout_duration))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
@@ -169,29 +168,32 @@ class ScanTables(smach.State):
 
         rospy.loginfo("Trying to detect objects on tables")
 
-        answers = self.robot.reasoner.query(Compound('region_of_interest', 
-            'large_table_position', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
-        
+        answers_size = self.robot.reasoner.query(Compound('region_of_interest', 
+            'large_table_1', Compound('point_3d', 'X', 'Y', 'Z'), Compound('point_3d', 'Length_x', 'Length_y', 'Length_z')))
+
+        answers_pos = self.robot.reasoner.query(Compound("lookup_transform", "map", "dinner_table",
+                                                         Compound("transform", Compound("vector", "X", "Y", "Z"), "Q")))        
         ''' Remember current spindle position '''      
         spindle_pos = self.robot.spindle.get_position()
 
         rospy.loginfo("Timeout = {0}".format(self.timeout_duration))
         #import ipdb; ipdb.set_trace()
 
-        if answers:
-            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+        if answers_size and answers_pos:
+            answer_size = answers_size[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+            answer_pos = answers_pos[0]
             target_point = geometry_msgs.msg.PointStamped()
             target_point.header.frame_id = "/map"
             target_point.header.stamp = rospy.Time()
-            target_point.point.x = float(answer["X"])
-            target_point.point.y = float(answer["Y"])
-            target_point.point.z = float(answer["Z"])
+            target_point.point.x = float(answer_pos["X"])
+            target_point.point.y = float(answer_pos["Y"])
+            target_point.point.z = float(answer_size["Z"])
 
             ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
-            if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=self.timeout_duration):
-                self.robot.perception.toggle_perception_2d(target_point, answer["Length_x"], answer["Length_y"], answer["Length_z"])
+            if self.robot.spindle.send_laser_goal(float(answer_size["Z"]), timeout=self.timeout_duration):
+                self.robot.perception.toggle_perception_2d(target_point, answer_size["Length_x"], answer_size["Length_y"], answer_size["Length_z"])
                 #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-                self.robot.speech.speak("There is some serious reconstruction going on.")
+                
                 rospy.sleep(rospy.Duration(2))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
