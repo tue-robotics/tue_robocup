@@ -352,7 +352,7 @@ class Read_laser(smach.State):
 
 class TogglePeopleDetector(smach.State):
     """Enables or disables PeopleDetector"""
-    def __init__(self, robot, roi_query, on=True):
+    def __init__(self, robot, roi_query=None, on=True):
         smach.State.__init__(self, outcomes=["toggled"])
         self.robot = robot
         self.roi_query = roi_query
