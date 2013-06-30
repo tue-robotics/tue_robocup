@@ -534,9 +534,9 @@ class ToggleBinDetector(smach.State):
             
             poi.header.frame_id = "/map"
             poi.header.stamp = rospy.Time()
-            poi.x = float(answer["X"])
+            poi.point.x = float(answer["X"])
             poi.point.y = float(answer["Y"])
-            poi.z = float(answer["Z"])
+            poi.point.z = float(answer["Z"])
             #rospy.loginfo("Grasp_point = {0}".format(self.grasp_point))
             response = self.robot.perception.toggle_bin_detection(poi, length_x=self.length_x, length_y=self.length_y, length_z=self.length_z)
             if not response.suc:
@@ -712,7 +712,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add("MOVE_TO_GOAL",                                                              # TODO SJOERD: in person_or_prior set query to person.
             MoveToGoal(robot), # En andere dingen
             transitions={   'succeeded_person':'SAY_HANDOVER', 
-                            'succeeded_prior':'SAY_HANDOVER', 
+                            'succeeded_prior':'SAY_HANDOVER',
                             'failed':'SAY_CANNOT_FIND_OPERATOR'})
 
         # smach.StateMachine.add("MOVE_TO_GOAL_AFTER_PRIOR", 
@@ -727,7 +727,6 @@ def setup_statemachine(robot):
             transitions={   'spoken':'SAY_HANDOVER'}) 
 
         # ToDo: Make state that waits for operator in front of him
-
         #Handover the object
         smach.StateMachine.add("SAY_HANDOVER", 
            states.Say(robot, ["Here is your order. Please take it from my gripper"]), 
@@ -796,7 +795,7 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":"SAY_THANKS"})
 
         smach.StateMachine.add('SCAN_BIN_POSITION',
-                                    ToggleBinDetector(robot, roi_query=None, length_x=3.0, length_y=3.0, length_z=1.0, timeout=2.0),
+                                    ToggleBinDetector(robot, roi_query=query_trash_bin, length_x=3.0, length_y=3.0, length_z=1.0, timeout=2.0),
                                     transitions={   "succeeded" : "DROPOFF_BIN",
                                                     "failed"    : "DROPOFF_BIN"})
 
