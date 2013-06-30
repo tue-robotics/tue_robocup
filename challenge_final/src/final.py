@@ -761,7 +761,27 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("DECIDE_ACTION",
             DecideAction(robot),
-            transitions={'known_object': 'GRAB_SECOND_ITEM', 'unkown_object' : 'DETERMINE_GOAL', 'finished' : 'RETURN_LIVING_ROOM'})
+            transitions={'known_object': 'GRAB_SECOND_ITEM', 'unkown_object' : 'DETERMINE_GOAL2', 'finished' : 'RETURN_LIVING_ROOM'})
+
+        # After this state: persons might be in the world model
+        smach.StateMachine.add("DETERMINE_GOAL2", 
+                        DetermineGoal(robot),
+                        transitions={   'done':'MOVE_TO_TABLE2'})
+
+        #Scan for persons at the prior location
+        # smach.StateMachine.add("SCAN_FOR_PERSONS_AT_PRIOR", 
+        #                 ScanForPersons(robot),
+        #                 transitions={ 'done':'MOVE_TO_GOAL_AFTER_PRIOR', 'failed':'ASK_GET_OBJECT'})
+
+        smach.StateMachine.add("MOVE_TO_TABLE2", 
+                MoveToTable(robot),
+                transitions={   'done':'RECOGNIZE_OBJECTS2', 'failed_navigate' : 'MOVE_TO_TABLE2', 'no_tables_left' : 'RETURN_LIVING_ROOM'})
+
+        # STATE RECOGNIZE_OBJECTS: recognize objects on the table
+
+        smach.StateMachine.add("RECOGNIZE_OBJECTS2", 
+                LookForServeObject(robot), # En andere dingen
+                transitions={  'not_found':'MOVE_TO_TABLE2', 'found': 'GRAB_SECOND_ITEM'})
 
         smach.StateMachine.add("GRAB_SECOND_ITEM", 
             states.GrabMachine(side, robot, Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
