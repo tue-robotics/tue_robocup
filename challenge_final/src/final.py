@@ -574,8 +574,8 @@ def setup_statemachine(robot):
     query_living_room1 = Compound("waypoint", "living_room1", Compound("pose_2d", "X", "Y", "Phi"))
     query_living_room2 = Compound("waypoint", "living_room2", Compound("pose_2d", "X", "Y", "Phi"))
     query_living_room3 = Compound("waypoint", "living_room3", Compound("pose_2d", "X", "Y", "Phi"))
-    query_kitchen1 = Compound("waypoint", "kitchen1", Compound("pose_2d", "X", "Y", "Phi"))
-    query_kitchen2 = Compound("waypoint", "kitchen2", Compound("pose_2d", "X", "Y", "Phi"))
+    query_kitchen1 = Compound("waypoint", "to_trashbin1", Compound("pose_2d", "X", "Y", "Phi"))
+    query_kitchen2 = Compound("waypoint", "to_trashbin2", Compound("pose_2d", "X", "Y", "Phi"))
     query_trash_bin = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
 
     query_grasppoint = Conjunction(
