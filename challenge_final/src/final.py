@@ -427,7 +427,7 @@ class AskGraspObject(smach.StateMachine):
         self.robot = robot
         self.side = side
         with self:
-            smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp please insert the object into the gripper"]),
+            smach.StateMachine.add("SAY_FAIL", states.Say(robot, ["Unable to grasp. Please insert the object into the gripper"]),
                 transitions={   'spoken':'done'})
             smach.StateMachine.add("OPEN_GRIPPER", states.SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
                 transitions={   'succeeded':'CLOSE_GRIPPER', 'failed': 'done'})
@@ -447,11 +447,13 @@ class DecideAction(smach.State):
         if answers:
             #Check if already known
             is_object_there = self.robot.reasoner.query(Conjunction(Compound("instance_of", "ObjectID", answers[0]['Class']),
-                                        Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))))
+                                                                    Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
+                                                                    Compound("not", Compound("disposed", "ObjectID"))))
             if is_object_there:
                 self.robot.speech.speak("I know where the {0}, is located".format(str(answers[0]['Class'])))
                 self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
-                self.robot.reasoner.assertz(Compound("base_grasp_point", is_object_there[0]['ObjectID'], Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
+                self.robot.reasoner.assertz(Compound("base_grasp_point", is_object_there[0]['ObjectID'], 
+                                            Compound("point_3d", is_object_there[0]['X'], is_object_there[0]['Y'], is_object_there[0]['Z'])))
 
                 #Retract grasped object
                 self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Class"))))
@@ -561,6 +563,7 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("retractall", Compound("base_grasp_point", "ObjectID", "X")))
     robot.reasoner.query(Compound("retractall", Compound("deliver_pose", "A")))
     robot.reasoner.query(Compound("retractall", Compound("deliver_goal", "A")))
+    robot.reasoner.query(Compound("retractall", Compound("disposed", "A")))
    
 
     query_living_room1 = Compound("waypoint", "living_room1", Compound("pose_2d", "X", "Y", "Phi"))
@@ -569,6 +572,10 @@ def setup_statemachine(robot):
     query_kitchen1 = Compound("waypoint", "kitchen1", Compound("pose_2d", "X", "Y", "Phi"))
     query_kitchen2 = Compound("waypoint", "kitchen2", Compound("pose_2d", "X", "Y", "Phi"))
     query_trash_bin = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+
+    query_grasppoint = Conjunction(
+                        Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z")),
+                        Compound("not", Compound("disposed", "ObjectID")))
 
     if grasp_arm == "right": 
         arm = robot.rightArm
@@ -671,12 +678,32 @@ def setup_statemachine(robot):
                 transitions={  'not_found':'MOVE_TO_TABLE', 'found': 'GRAB'})
 
         smach.StateMachine.add("GRAB", 
-            states.GrabMachine(side, robot, Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z"))), # En andere dingen
-            transitions={   'succeeded':'MOVE_TO_GOAL', 'failed':'ASK_GRASP_OBJECT'})  
+            states.GrabMachine(side, robot, query_grasppoint), # En andere dingen
+            transitions={   'succeeded':'MARK_DISPOSED', 'failed':'ASK_GRASP_OBJECT'})  
 
         smach.StateMachine.add("ASK_GRASP_OBJECT",
             AskGraspObject(robot, side),
-            transitions={'done': 'MOVE_TO_GOAL'})
+            transitions={'done': 'MARK_DISPOSED'})
+        
+        @smach.cb_interface(outcomes=['asserted', 'target_lost'])
+        def assert_object_disposed(*args, **kwargs):
+            grasppoints = robot.reasoner.query(query_grasppoint)
+            if grasppoints:
+                try:
+                    objectId = grasppoints[0]["ObjectID"]
+                    robot.reasoner.assertz(Compound("disposed", objectId))
+                    return "asserted"
+                except IndexError, e:
+                    rospy.logerr(e)
+                    return "target_lost"
+            else:
+                return "target_lost"
+            return "target_lost" #This line is unreachable, but anyways
+
+        smach.StateMachine.add("MARK_DISPOSED", 
+            smach.CBState(assert_object_disposed),
+            transitions={       'asserted':"MOVE_TO_GOAL", 
+                                'target_lost':'MOVE_TO_GOAL'})
 
         # WITH OBJECT
         # STATE: arrive at a person: hand over object and go back to starting position
