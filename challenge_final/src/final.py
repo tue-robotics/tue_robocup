@@ -33,8 +33,6 @@ class Ask_drink(smach.State):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
         self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
-        self.person_learn_failed = 0
-        self.drink_learn_failed = 0
 
     def execute(self, userdata=None):
         self.response = self.get_drink_service("drink_final", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
@@ -43,6 +41,29 @@ class Ask_drink(smach.State):
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
         return "done"
+
+class Ask_trashbin(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done" , "failed"])
+        self.robot = robot
+        self.get_trashbin_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+
+    def execute(self, userdata=None):
+        query_seven_up = self.robot.reasoner.query(Compound( "property_expected", "ObjectID", "class_label", "seven_up"))
+
+        if query_seven_up:
+            self.robot.speech.speak("I also found a seven up, what should I do with it?")
+        else:
+            self.robot.speech.speak("I also saw something else on the table, but I do not know yet what it is. What should I do with it?")
+
+        self.response = self.get_trashbin_service("final_trashbin", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        # SAY 'put it in the trashbin'
+        
+        #import ipdb; ipdb.set_trace()
+        return "done"
+
+
+            
 
 class Ask_yes_no(smach.State):
     def __init__(self, robot, tracking=True):
@@ -60,6 +81,33 @@ class Ask_yes_no(smach.State):
             return "yes"
         else:
             return "yes" # THIS WAS "no", in this case bring sevenup to trashbin, so yes.
+
+class DetectOperator(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=["done", "failed"])
+        self.robot = robot
+
+        query_find_person_in_front_of_robot = Conjunction(
+                                                    Compound("instance_of",    "ObjectID",   Compound("exact", "person")),
+                                                    Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+        
+        with self:
+            smach.StateMachine.add("TOGGLE_PEOPLE_DETECTOR", 
+                                    states.TogglePeopleDetector(self.robot,on=True),
+                                    transitions={'toggled':'WAIT_FOR_PERSON'})
+
+            smach.StateMachine.add( "WAIT_FOR_PERSON", 
+                                    states.Ask_query_true(robot, query_find_person_in_front_of_robot),
+                                    transitions={   "query_false":"TOGGLE_PEOPLE_DETECTOR",
+                                                    "query_true":"ASSERT_CURRENT_OPERATOR",
+                                                    "waiting":"failed",
+                                                    "preempted":"failed"})
+
+            smach.StateMachine.add( "ASSERT_CURRENT_OPERATOR",
+                                    assert_operator.AssertCurrentOperator(robot),
+                                    transitions={"asserted":"done",
+                                                 "no_operator":"failed"})
+
 
 class ScanTablePosition(smach.State):
     def __init__(self, robot, timeout_duration):
@@ -94,7 +142,7 @@ class ScanTablePosition(smach.State):
                 self.robot.perception.toggle(["table_detector_2d"])
                 #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.loginfo("Tracking table for {0}".format(self.timeout_duration))
-                self.robot.speech.speak("Hey guys, can I do anything for you?")
+                self.robot.speech.speak("Hey guys, can I do anything for you.")
                 rospy.sleep(rospy.Duration(self.timeout_duration))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
@@ -567,13 +615,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "TAKE_ORDER",
                                             Ask_drink(robot),
-                                            transitions={   "done":"ASSERT_CURRENT_OPERATOR",
-                                                            "failed":"ASSERT_CURRENT_OPERATOR"})
+                                            transitions={   "done":"DETECT_OPERATOR",
+                                                            "failed":"DETECT_OPERATOR"})
 
-        smach.StateMachine.add( "ASSERT_CURRENT_OPERATOR",
-                                assert_operator.AssertCurrentOperator(robot),
-                                transitions={"asserted":"SCAN_TABLES",
-                                             "no_operator":"SCAN_TABLES"})
+        smach.StateMachine.add( "DETECT_OPERATOR",
+                                DetectOperator(robot),
+                                transitions={"done":"SCAN_TABLES",
+                                             "failed":"SCAN_TABLES"})
 
         # After this state: objects might be in the world model
         smach.StateMachine.add("SCAN_TABLES", 
@@ -642,7 +690,13 @@ def setup_statemachine(robot):
         #Open gripper to release object
         smach.StateMachine.add("OPEN_GRIPPER", 
             states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
-            transitions={   'succeeded':'DECIDE_ACTION', 'failed': 'DECIDE_ACTION'})
+            transitions={   'succeeded':'DECIDE_ACTION', 'failed': 'ASK_ABOUT_SECOND_OBJECT'})
+
+        # TODO EERST CHECKEN OF ER WEL EEN 2e Object is gevonden?? of pas na decide action en al die zinnen daar uithalen?
+        smach.StateMachine.add( "ASK_ABOUT_SECOND_OBJECT",
+                                            Ask_trashbin(robot),
+                                            transitions={   "done":"DECIDE_ACTION",
+                                                            "failed":"DECIDE_ACTION"})
 
         smach.StateMachine.add("DECIDE_ACTION",
             DecideAction(robot),
