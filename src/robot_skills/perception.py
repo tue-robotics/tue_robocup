@@ -53,6 +53,15 @@ class Perception(object):
         pass
 
     def toggle(self, modules):
+        ''' HUGE HACK TO KEEP PPL DETECTION ON BY DEFAULT '''
+        if modules:
+            if modules[0] == "ppl_detection_off":
+                modules = []
+            elif (not ("ppl_detection" in modules)):
+                modules.append("ppl_detection")
+        else:
+            modules = ["ppl_detection"]
+        rospy.loginfo("modules are {0}".format(modules))
         return self.sv_recognition(modules)
 
     def toggle_recognition(self, faces=False, objects=False, people=False):
