@@ -40,6 +40,8 @@ if __name__ == "__main__":
     coke4 = W.add_object("drops-9", "drops", 6.155, -6.470, 0.5)    
     coke5 = W.add_object("marmalade-10", "marmalade", 6.039, -7.215, 0.5)    
 
+
+    person1 = W.add_object("person-1", "person", 4, -0.2, 0)
     # W.wait_for_amigo_speech(["What can I do for you?"])
 
     # try:
