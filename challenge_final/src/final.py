@@ -89,7 +89,7 @@ class ScanTablePosition(smach.State):
                 self.robot.perception.toggle(["table_detector_2d"])
                 #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
                 rospy.loginfo("Tracking table for {0}".format(self.timeout_duration))
-                self.robot.speech.speak("Hey guys, can I do anything for you.")
+                self.robot.speech.speak("Hey guys, can I do anything for you?")
                 rospy.sleep(rospy.Duration(self.timeout_duration))
             else:
                 rospy.logerr("Can't scan on spindle height, either the spindle timeout exceeded or ROI too low. Will have to move to prior location")
