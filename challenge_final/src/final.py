@@ -21,6 +21,11 @@ import geometry_msgs
 
 import assert_operator
 
+#TODO: als coke niet vinde, iets anders graspen.
+#Zegt niet voordat om coke vraagt?
+#na opakken, kan niet nnaar prior location
+#Mark disposed objects and exclude in query
+
 grasp_arm = "left"
 
 class Ask_drink(smach.State):
