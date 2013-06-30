@@ -17,9 +17,9 @@ if __name__ == "__main__":
 
     table_x = 5.7805
     table_y = -1.4685
-    table_vy = 0.03
+    table_vy = 0 #0.03
     table_angle = 0
-    table_angle_v = 0.03   
+    table_angle_v = 0#.03   
 
     table = W.add_object("dinner_table", "dinner_table", table_x, table_y, 0)        
 

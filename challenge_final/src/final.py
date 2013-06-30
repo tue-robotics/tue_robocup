@@ -439,7 +439,10 @@ class MoveToGoal(smach.StateMachine):
                 PersonOrPrior(self.robot),
                 transitions={'at_prior': 'NAVIGATE_TO_PRIOR', 'at_person' : 'NAVIGATE_TO_PERSON', 'failed': 'failed'})
             smach.StateMachine.add("NAVIGATE_TO_PERSON", states.NavigateGeneric(robot, 
-                lookat_query=Compound("deliver_goal", Compound("point_3d", "X", "Y", "Z"))), 
+                    goal_query = Conjunction(Compound("current_operator", "ObjectID"),
+                                             Compound("property_expected", "ObjectID", "position", Sequence("MX", "MY", "MZ")),
+                                             Compound("get_circle_points", "MX", "MY", 1, Sequence("X", "Y", "Phi"))),
+                    refresh_freq = 1),
                 transitions={'unreachable' : 'failed', 'preempted' : 'NAVIGATE_TO_PRIOR', 
                 'arrived' : 'succeeded_person', 'goal_not_defined' : 'failed'})
             smach.StateMachine.add("NAVIGATE_TO_PRIOR", states.NavigateGeneric(robot, 
