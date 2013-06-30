@@ -378,7 +378,7 @@ class PersonOrPrior(smach.State):
             self.robot.reasoner.assertz(Compound("deliver_goal", Compound("point_3d", float(humans_in_roi[0]['X']) - 0.5, humans_in_roi[0]['Y'], humans_in_roi[0]['Z'])))
             return 'at_person'
         else:
-            query_prior = Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))
+            query_prior = Compound("waypoint", "prior1",  Compound("pose_2d", "X", "Y", "Phi"))
             answers_prior = self.robot.reasoner.query(query_prior)
             if answers_prior:
                 self.robot.speech.speak("I have not found a person yet, but I will try at a prior location")
@@ -402,9 +402,24 @@ class MoveToGoal(smach.StateMachine):
                 transitions={'unreachable' : 'failed', 'preempted' : 'NAVIGATE_TO_PRIOR', 
                 'arrived' : 'succeeded_person', 'goal_not_defined' : 'failed'})
             smach.StateMachine.add("NAVIGATE_TO_PRIOR", states.NavigateGeneric(robot, 
-                goal_query=Compound("waypoint", "prior",  Compound("pose_2d", "X", "Y", "Phi"))), 
-                transitions={'unreachable' : 'failed', 'preempted' : 'NAVIGATE_TO_PERSON', 
-                'arrived' : 'succeeded_prior', 'goal_not_defined' : 'failed'})
+                goal_query=Compound("waypoint", "prior1",  Compound("pose_2d", "X", "Y", "Phi"))), 
+                transitions={   'unreachable' : 'NAVIGATE_TO_PRIOR2', 
+                                'preempted' : 'NAVIGATE_TO_PRIOR2', 
+                                'arrived' : 'succeeded_prior', 
+                                'goal_not_defined' : 'NAVIGATE_TO_PRIOR2'})
+            smach.StateMachine.add("NAVIGATE_TO_PRIOR2", states.NavigateGeneric(robot, 
+                goal_query=Compound("waypoint", "prior2",  Compound("pose_2d", "X", "Y", "Phi"))), 
+                transitions={   'unreachable' : 'NAVIGATE_TO_PRIOR3', 
+                                'preempted' : 'NAVIGATE_TO_PRIOR3', 
+                                'arrived' : 'succeeded_prior', 
+                                'goal_not_defined' : 'NAVIGATE_TO_PRIOR3'})
+            smach.StateMachine.add("NAVIGATE_TO_PRIOR3", states.NavigateGeneric(robot, 
+                goal_query=Compound("waypoint", "prior3",  Compound("pose_2d", "X", "Y", "Phi"))), 
+                transitions={   'unreachable' : 'failed', 
+                                'preempted' : 'NAVIGATE_TO_PERSON', 
+                                'arrived' : 'succeeded_prior', 
+                                'goal_not_defined' : 'failed'})
+            
 
 class AskGraspObject(smach.StateMachine):
     def __init__(self, robot, side):
