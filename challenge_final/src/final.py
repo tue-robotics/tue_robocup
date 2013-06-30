@@ -588,6 +588,8 @@ def setup_statemachine(robot):
                         Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z")),
                         Compound("not", Compound("disposed", "ObjectID")))
 
+    robot.perception.set_table_roi(6.132, -1.455, 0.76, 2, 3, 1)
+
     if grasp_arm == "right": 
         arm = robot.rightArm
     else:
