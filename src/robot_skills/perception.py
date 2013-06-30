@@ -35,6 +35,9 @@ class Perception(object):
         '''Laser service'''
         self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
 
+        '''Bin detector'''
+        self.sv_bin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
+
         ''' Service to load template matching configuration '''
         self.sv_template_config = rospy.ServiceProxy("/template_matching/srv_input", pein_srvs.srv.StartStop)
 
@@ -124,6 +127,27 @@ class Perception(object):
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
             self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
             response = self.sv_laser_detector(request)
+        except rospy.ServiceException, e:
+            rospy.logerr("Laser service not available: {0}".format(e))
+            return False
+
+        return response
+
+    def toggle_bin_detection(self, pointstamped, length_x=3.0, length_y=3.0, length_z=1.0):
+        ''' Starts bin detection '''
+        request = pein_srvs.srv.FindObjInRoiRequest()
+        request.x = pointstamped.point.x
+        request.y = pointstamped.point.y
+        request.z = pointstamped.point.z
+        request.length_x = length_x
+        request.length_y = length_y
+        request.length_z = length_z
+        request.frame = pointstamped.header.frame_id
+
+        try:
+            rospy.wait_for_service("/set_roi_bin_detection", timeout=5.0)
+            self.sv_vin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
+            response = self.sv_bin_detector(request)
         except rospy.ServiceException, e:
             rospy.logerr("Laser service not available: {0}".format(e))
             return False
