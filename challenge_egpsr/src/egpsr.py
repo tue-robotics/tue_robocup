@@ -38,7 +38,7 @@ from psi import *
 # - speech -> geen actie in stappen. Direct verstaan.
 # - dropoff points in eindhoven definieren.
 # - Navigate Generic
-# - ..
+# - remove timeout of 5 minutes -> DID YOU SAY SOMETHING, IN ANY CASE, I DID NOT HEAR YOU!
 
 ##########################################
 ############## What to run: ##############
