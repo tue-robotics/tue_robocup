@@ -53,7 +53,7 @@ from psi import *
 # - smoke detection fixen
 # - vuur in pdf zetten.
 # - mensen checken ook met laserscanner.
-# - 
+# -  pdf: naam pers1 pers2 veranderen. Kleiner maken.
 
 ##########################################
 ############## What to run: ##############
