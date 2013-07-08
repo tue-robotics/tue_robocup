@@ -942,7 +942,7 @@ class Determine_goal(smach.State):
                 look_point.point.y = y
                 look_point.point.z = z
 
-                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.0)
+                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.7, 0.0)
 
                 if base_poses_for_point:
                     for base_goal_pose in base_poses_for_point:
