@@ -173,7 +173,7 @@ class LookForServeObject(smach.State):
 
         rospy.loginfo("Start object recognition")
         self.robot.perception.toggle_recognition(objects=True)
-        rospy.sleep(2.5)
+        rospy.sleep(3.5)
         rospy.loginfo("Stop object recognition")
 
         self.robot.perception.toggle_recognition(objects=False)
