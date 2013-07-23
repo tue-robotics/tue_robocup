@@ -1,10 +1,8 @@
 <package>
   <description brief="amigo_demo">
-
-     amigo_demo
-
+    Functions, state machines, motion sequences and other stuff to demonstrate our Amigo robot.
   </description>
-  <author>Loy</author>
+  <author>Loy van Beek</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/amigo_demo</url>
