@@ -13,15 +13,18 @@ if __name__ == "__main__":
     robot = Amigo()
 
     rospy.sleep(2) # wait for tf cache to be filled
-
-    nav_state = navigation.NavigateGeneric(robot, goal_pose_2d=(6, -1, 0), look_at_path_distance=2.7)
-    nav_state.execute()
-
-    nav_state1 = navigation.NavigateGeneric(robot, goal_pose_2d=(7, -7, 0), look_at_path_distance=2.7)
-    nav_state1.execute()
     
-    nav_state2 = navigation.NavigateGeneric(robot, goal_pose_2d=(1.5, -7.5, -1.57), look_at_path_distance=2.7)
-    nav_state2.execute()
+    nav_state_end_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(-0.5, -11, 1.57), look_at_path_distance=2.7)
+    nav_state_end_corridor.execute()
     
-    nav_state3 = navigation.NavigateGeneric(robot, goal_pose_2d=(2, 0, 3.14), look_at_path_distance=2.7)
-    nav_state3.execute()
+    nav_state_door = navigation.NavigateGeneric(robot, goal_pose_2d=(1, 0, 0), look_at_path_distance=2.7)
+    nav_state_door.execute()    
+    
+    nav_state_living_room = navigation.NavigateGeneric(robot, goal_pose_2d=(7.8, 0.7, 0), look_at_path_distance=2.7)
+    nav_state_living_room.execute()
+    
+    nav_state_bedroom = navigation.NavigateGeneric(robot, goal_pose_2d=(7, -6.5, 1.57), look_at_path_distance=2.7)
+    nav_state_bedroom.execute() 
+        
+    nav_state_begin_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(-0.5, 2.5, 1.57), look_at_path_distance=2.7)
+    nav_state_begin_corridor.execute()
