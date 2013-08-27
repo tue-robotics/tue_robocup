@@ -1,16 +1,16 @@
 # Responsible: Erik
 
-amigo2:
-
-    hardware: base, spindle, left-arm, head
-
 amigo1:
 
     astart # (if not already running)
 
+amigo2:
+
+    hardware: base, spindle, arms (left-arm is used) head
+
 amigo1:
 
-    amiddle-rips
+    amiddle
 
 amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
