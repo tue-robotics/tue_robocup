@@ -84,7 +84,7 @@ class AmigoIntroductionRIPS(smach.State):
         
         self.robot.speech.speak("Hello, my name is amigo")
         rospy.sleep(1.0)
-        self.robot.speech.speak("I am participating in robocup 2013 on behalf of Tech United Eindhoven")
+        self.robot.speech.speak("I am participating in robocup 2014 on behalf of Tech United Eindhoven")
         
         rospy.loginfo("Hand over registration form...")
         
@@ -98,11 +98,14 @@ class AmigoIntroductionRIPS(smach.State):
             head_goal.z = 0.0
             self.robot.head.send_goal_topic(head_goal,"/grippoint_left")
             #self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
+            self.robot.leftArm.send_goal(0.4,0.3,1.1,1.5,0.0,0.0,10.0)              #TODO ERIK: TEST THIS joint goal
+            rospy.sleep(1.5)                                                          #TODO ERIK: TEST THIS SLEEP
             self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
             #rospy.sleep(0.5)
             self.robot.leftArm.send_gripper_goal_open(10)
             
-            #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
+            self.robot.leftArm.send_joint_goal(-0.1,-0.5,0.2,1.9,0.0,0.0,0.0)       #TODO ERIK: TEST THIS joint goal
+            rospy.sleep(2.5)                                                        #TODO ERIK: TEST THIS SLEEP
             self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
             self.robot.leftArm.send_gripper_goal_close(5)
         else:
@@ -116,7 +119,8 @@ class AmigoIntroductionRIPS(smach.State):
             #rospy.sleep(0.5)
             self.robot.rightArm.send_gripper_goal_open(10)
             
-            #self.robot.leftArm.send_goal(0.3,0.3,0.8,1.5,0.0,0.0,10.0)
+            self.robot.rightArm.send_joint_goal(-0.1,-0.5,0.2,1.9,0.0,0.0,0.0)
+            rospy.sleep(3)
             self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
             self.robot.rightArm.send_gripper_goal_close(5)
         
