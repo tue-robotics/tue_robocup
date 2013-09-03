@@ -2,14 +2,9 @@
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import geometry_msgs.msg
-import amigo_msgs.msg
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 from amigo_head_ref.msg import HeadRefAction, HeadRefGoal
-from math import sqrt
-from math import sin
-from math import cos
-from components import message_helper
 import random
 from sensor_msgs.msg import JointState
 
@@ -44,7 +39,7 @@ class Head(object):
         self._search_movement_random_offsets = [0,0,0]
         self._measurement_subscriber = rospy.Subscriber("/amigo/head/measurements", JointState, self._measurement_listener)
 
-        self._position = JointState()
+        self._position = (0, 0)
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()

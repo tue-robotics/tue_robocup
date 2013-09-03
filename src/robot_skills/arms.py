@@ -8,11 +8,11 @@ from actionlib_msgs.msg._GoalStatus import GoalStatus
 import amigo_actions
 import amigo_actions.msg
 from amigo_arm_navigation.msg._grasp_precomputeAction import grasp_precomputeAction
-from amigo_msgs.msg import arm_joints
 from geometry_msgs.msg import TwistStamped, Twist
 
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from trajectory_msgs.msg import JointTrajectoryPoint
+from sensor_msgs.msg import JointState
 
 import threading
 import util.concurrent_util
@@ -33,6 +33,7 @@ class Side:
     """Specifies a Side, either LEFT or RIGHT"""
     LEFT = 0
     RIGHT = 1
+    name = {RIGHT:"right", LEFT:"left"}
     
 class State:
     """Specifies a State either OPEN or CLOSE"""
@@ -101,7 +102,24 @@ class Arms(object):
     
     Important to remember commands are similar, however a side which is a python-like
     enum has to be specified: Side.LEFT or Side.RIGHT
+
+    /amigo/X_arm/measurements
+    /amigo/X_arm/references
+
+    name: ['shoulder_yaw_joint_X', 'shoulder_pitch_joint_X', 'shoulder_roll_joint_X', 'elbow_pitch_joint_X', 'elbow_roll_joint_X', 'wrist_pitch_joint_X', 'wrist_yaw_joint_X']
     """
+
+    joint_names = ['shoulder_yaw_joint_{side}', 'shoulder_pitch_joint_{side}', 'shoulder_roll_joint_{side}', 'elbow_pitch_joint_{side}', 'elbow_roll_joint_{side}', 'wrist_pitch_joint_{side}', 'wrist_yaw_joint_{side}']
+
+    SHOULDER_YAW = 0
+    SHOULDER_PITCH =1 
+    SHOULDER_ROLL = 2
+    ELBOW_PITCH = 3
+    ELBOW_ROLL = 4
+    WRIST_PITCH = 5
+    WRIST_YAW = 6
+
+
     def __init__(self, tf_listener):
         #Easy access to sides
         self.leftSide = Side.LEFT
@@ -110,13 +128,13 @@ class Arms(object):
         self.openState = State.OPEN
         self.closeState = State.CLOSE
         
-        self._joint_pos = {Side.LEFT:[None, None, None, None, None, None, None], Side.RIGHT: [None, None, None, None, None, None, None]}
+        self._joint_pos = {Side.LEFT:(None, None, None, None, None, None, None), Side.RIGHT: (None, None, None, None, None, None, None)}
         
-        self.arm_left_reference_pub = rospy.Publisher("/arm_left_controller/joint_references", arm_joints)
-        self.arm_right_reference_pub = rospy.Publisher("/arm_right_controller/joint_references", arm_joints)
+        self.arm_left_reference_pub = rospy.Publisher("/amigo/left_arm/references", JointState)
+        self.arm_right_reference_pub = rospy.Publisher("/amigo/right_arm/references", JointState)
 
-        self.arm_left_measurement_sub = rospy.Subscriber("/arm_left_controller/joint_measurements", arm_joints, self._receive_arm_left_joints)
-        self.arm_right_measurement_sub = rospy.Subscriber("/arm_right_controller/joint_measurements", arm_joints, self._receive_arm_right_joints)
+        self.arm_left_measurement_sub = rospy.Subscriber("/amigo/left_arm/measurements", JointState, self._receive_arm_left_joints)
+        self.arm_right_measurement_sub = rospy.Subscriber("/amigo/right_arm/measurements", JointState, self._receive_arm_right_joints)
         
         self.left_twist_publisher = rospy.Publisher("/arm_left_controller/cartesian_velocity_reference", TwistStamped)
         self.right_twist_publisher = rospy.Publisher("/arm_right_controller/cartesian_velocity_reference", TwistStamped)
@@ -249,21 +267,21 @@ class Arms(object):
     def send_joint_goal_old(self,q1,q2,q3,q4,q5,q6,q7,side=None):
         """Send a goal to the arms in joint coordinates"""
         
-        jointReference = arm_joints()
-        jointReference.pos[0].data = q1
-        jointReference.pos[1].data = q2
-        jointReference.pos[2].data = q3
-        jointReference.pos[3].data = q4
-        jointReference.pos[4].data = q5
-        jointReference.pos[5].data = q6
-        jointReference.pos[6].data = q7
+        jointstate = JointState()
+        jointstate.position[Arms.SHOULDER_YAW] = q1
+        jointstate.position[Arms.SHOULDER_PITCH] = q2
+        jointstate.position[Arms.SHOULDER_ROLL] = q3
+        jointstate.position[Arms.ELBOW_PITCH] = q4
+        jointstate.position[Arms.ELBOW_ROLL] = q5
+        jointstate.position[Arms.WRIST_PITCH] = q6
+        jointstate.position[Arms.WRIST_YAW] = q7
         
         if side == None:
             raise Exception("Cancel joint goal: No side specified")
         elif side == Side.RIGHT:
-            self.arm_right_reference_pub.publish(jointReference)
+            self.arm_right_reference_pub.publish(jointstate)
         elif side == Side.LEFT:
-            self.arm_left_reference_pub.publish(jointReference)
+            self.arm_left_reference_pub.publish(jointstate)
             
         return True
     
@@ -517,12 +535,12 @@ class Arms(object):
     _lock = threading.RLock()
 
     @util.concurrent_util.synchronized(_lock)
-    def _receive_arm_left_joints(self, jointref):
-        self._joint_pos[Side.LEFT] = jointref.pos
+    def _receive_arm_left_joints(self, jointstate):
+        self._joint_pos[Side.LEFT] = jointstate.position
 
     @util.concurrent_util.synchronized(_lock)
-    def _receive_arm_right_joints(self, jointref):
-        self._joint_pos[Side.RIGHT] = jointref.pos
+    def _receive_arm_right_joints(self, jointstate):
+        self._joint_pos[Side.RIGHT] = jointstate.position
 
 class Arm(Arms):
     """
@@ -546,6 +564,9 @@ class Arm(Arms):
             pass
         else:
             raise Exception("Side should be either: Side.LEFT or Side.RIGHT")
+
+        side_name = Side.name[self.side]
+        self.joint_names = [joint_name.format(side=side_name) for joint_name in self.joint_names] #The Arms-class provides a format, which we fill in here
     
     def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, pre_grasp = False, frame_id = '/base_link', first_joint_pos_only=False):
         """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
@@ -610,6 +631,7 @@ class Arm(Arms):
 
     @property
     def joint_pos(self):
+        """The joint positions for all joints. Index individual joints via Arms.SHOULDER_..., ELBOW_.. and WRIST_..."""
         return self._joint_pos[self.side]
         
 
