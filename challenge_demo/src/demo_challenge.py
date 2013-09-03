@@ -26,8 +26,9 @@ from tf.transformations import euler_from_quaternion
 
 from interpret_email import MailInterpreter
 from maluuba_ros.srv import Interpret
+
 from speech_interpreter.srv import GetYesNo
-from speech_interpreter.srv import GetAnythingElse
+from speech_interpreter.srv import AskUser
 
 
 import datetime
@@ -138,11 +139,12 @@ class AskAnythingElse(smach.State):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
-        self.get_anything_else_service = rospy.ServiceProxy('interpreter/get_anything_else', GetAnythingElse)
+        self.ask_user_service_anything_else = rospy.ServiceProxy('interpreter/ask_user', AskUser)
         self.maluubasrv = rospy.ServiceProxy('maluuba/interpret', Interpret)
         
         try:
             self.mail_interpreter = MailInterpreter(open(roslib.packages.get_pkg_dir("challenge_demo") + "/config/mailconfig.yaml"))
+            #IN CASE YOU WANT TO TEST ON COMPUTER self.mail_interpreter = MailInterpreter(open(roslib.packages.get_pkg_dir("maluuba_ros") + "/config/mailconfig.yaml"))
         except Exception, e:
             rospy.logerr("Could not init a MailInterpreter: {0}".format(e))
 
@@ -192,13 +194,21 @@ class AskAnythingElse(smach.State):
 
     def execute(self, userdata=None):
         try:
-            self.response = self.get_anything_else_service("anything_else", 3 , 60)  
+            self.response = self.ask_user_service_anything_else("anything_else", 3 , rospy.Duration(60))
+            
+            for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+            if not response_answer:
+                response_answer = "no_answer"
+
             # This means that within 4 tries and within 60 seconds an answer is received. 
             #import ipdb; ipdb.set_trace()
-            if not self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
-                self.response.answer = self.response.answer.replace("_", " ")
+            if not response_answer == "no_answer" or response_answer == "wrong_answer":
+                response_answer = response_answer.replace("_", " ")
 
-            if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+            if response_answer == "no_answer" or response_answer == "wrong_answer":
                 rospy.logwarn("No answer or wrong answer not yet implemented")
                 ## WHAT TO DO IF FAILURE TODO JANNO
 
@@ -207,9 +217,9 @@ class AskAnythingElse(smach.State):
                 #self.robot.speech.speak("It is now {0}".format(timestr))
 
             #elif self.response.answer == "Can you tell me what time it is?":
-            elif "time" in self.response.answer:
+            elif "time" in response_answer:
                 self.tell_time()
-            elif "remind me" in self.response.answer.lower():                
+            elif "remind me" in response_answer.lower():                
                 thread.start_new_thread(self.remind, ())
             else:
                 rospy.logwarn("Answer not understood")
@@ -574,9 +584,9 @@ class Part1(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_TAKE_TRAY',
                                     states.Say(robot, ["I have delivered the breakfast, please take the tray from my arms"]),
-                                    transitions={   'spoken'            : 'WAIT_FOR_LOAD'})
+                                    transitions={   'spoken'            : 'WAIT_FOR_LOAD2'})
                                     
-            smach.StateMachine.add( 'WAIT_FOR_LOAD',
+            smach.StateMachine.add( 'WAIT_FOR_LOAD2',
                                     states.Wait_time(robot, waittime=5),
                                     transitions={   'waited':'RESET_ROBOT',
                                                     'preempted':'RESET_ROBOT'})
