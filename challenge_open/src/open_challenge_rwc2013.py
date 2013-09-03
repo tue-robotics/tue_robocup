@@ -9,10 +9,6 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.reasoning_helpers as urh
 
-# ToDo: replace GetCleanup
-#from speech_interpreter.srv import GetCleanup
-from speech_interpreter.srv import GetOpenChallenge
-from speech_interpreter.srv import GetYesNo
 from speech_interpreter.srv import GetInfo
 
 from robot_skills.reasoner import Conjunction, Compound, Sequence
@@ -25,7 +21,6 @@ class AskForTask(smach.State):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
         self.preempted = False
-        #self.get_goto_service = rospy.ServiceProxy('interpreter/get_open_challenge', GetOpenChallenge)
         self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
 
     def execute(self, userdata):
@@ -33,7 +28,6 @@ class AskForTask(smach.State):
         
         self.robot.head.reset_position()
         # TODO: Here an service that has to be created has to be called
-        #self.response = self.get_goto_service(4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
         self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
         if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
             self.robot.speech.speak("I heard seven up")
