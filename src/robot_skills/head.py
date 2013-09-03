@@ -11,6 +11,7 @@ from math import sin
 from math import cos
 from components import message_helper
 import random
+from sensor_msgs.msg import JointState
 
 class Head(object):
     """
@@ -25,13 +26,25 @@ class Head(object):
 
     #Reset head
     >>> head.reset_position()
+
+    Topics and message setup:
+    /amigo/head/controller/measurements
+    /amigo/head/controller/references
+
+    name: ['neck_pan_joint', 'neck_tilt_joint']
     """
+    joint_names = ['neck_pan_joint', 'neck_tilt_joint'] 
+    #This way, we have some sort of link between the stringily typed message and strongly, dynamically typed Python
+    NECK_PAN_JOINT = 0
+    NECK_TILT_JOINT = 1
 
     def __init__(self):
         self._ac_head_ref_action = actionlib.SimpleActionClient("head_ref_action",  HeadRefAction)
-        self._head_topic = rospy.Publisher("/head_target", geometry_msgs.msg.PointStamped)
         self._search_movement_random_timer = rospy.Time.now()
         self._search_movement_random_offsets = [0,0,0]
+        self._measurement_subscriber = rospy.Subscriber("/amigo/head/controller/measurements", JointState, self._measurement_listener)
+
+        self.position = JointState()
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
@@ -88,10 +101,6 @@ class Head(object):
          """
          Send goal on a topic, does not use the action client and therefore does not
          wait on return
-         """
-         """
-         ps = message_helper.stamp_point(position, frame_id)
-         self._head_topic.publish(ps.header, ps.point)
          """
          rospy.logwarn("head.send_goal_topic will become deprecated soon!")
          self.send_goal(position, frame_id, timeout=0, keep_tracking=True)
@@ -280,6 +289,11 @@ class Head(object):
         else:
             rospy.logerr("No side specified for look_at_hand")
             return False
+
+    def _measurement_listener(self, jointstate):
+        self.position = jointstate.position
+
+
 
 if __name__ == "__main__":
     rospy.init_node('amigo_head_executioner', anonymous=True)
