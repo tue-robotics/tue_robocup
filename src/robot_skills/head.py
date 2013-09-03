@@ -28,8 +28,8 @@ class Head(object):
     >>> head.reset_position()
 
     Topics and message setup:
-    /amigo/head/controller/measurements
-    /amigo/head/controller/references
+    /amigo/head/measurements
+    /amigo/head/references
 
     name: ['neck_pan_joint', 'neck_tilt_joint']
     """
@@ -42,9 +42,9 @@ class Head(object):
         self._ac_head_ref_action = actionlib.SimpleActionClient("head_ref_action",  HeadRefAction)
         self._search_movement_random_timer = rospy.Time.now()
         self._search_movement_random_offsets = [0,0,0]
-        self._measurement_subscriber = rospy.Subscriber("/amigo/head/controller/measurements", JointState, self._measurement_listener)
+        self._measurement_subscriber = rospy.Subscriber("/amigo/head/measurements", JointState, self._measurement_listener)
 
-        self.position = JointState()
+        self._position = JointState()
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
@@ -291,7 +291,11 @@ class Head(object):
             return False
 
     def _measurement_listener(self, jointstate):
-        self.position = jointstate.position
+        self._position = jointstate.position
+
+    @property
+    def position(self):
+        return self._position
 
 
 
