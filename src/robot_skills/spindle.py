@@ -19,7 +19,7 @@ class Spindle(object):
             self.ac_move_spindle.wait_for_server(timeout=rospy.Duration(2.0))
 
         ''' Keeps track of the current spindle position '''
-        self.spindle_sub = rospy.Subscriber("/amigo/torso/controller/measurements", JointState, self._receive_spindle_measurement)
+        self.spindle_sub = rospy.Subscriber("/amigo/torso/measurements", JointState, self._receive_spindle_measurement)
         self.current_position = 0.35
 
         # Offset parameter to send the laser to a specific height
