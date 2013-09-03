@@ -8,7 +8,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import Point
 
-from speech_interpreter.srv import GetContinue # for speech_to_text only
+from speech_interpreter.srv import AskUser # for speech_to_text only
 
 from psi import *
 
@@ -19,15 +19,8 @@ from psi import *
 
 ##########################################
 ############## What to run: ##############
-############ updated 16-4-2013 ###########
 ##########################################
-# - astart
-# - amiddle
-# - roslaunch create_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - !! Wait for speech.launch to finish before !!
-#   !!   launching speech interpreter          !!
-#   roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - rosrun challenge_egpsr egpsr.py
+# - see README file
 
 #############################################################
 ## Locations that must be defined in database on forehand: ##
@@ -56,16 +49,24 @@ class Ask_continue(smach.State):
         self.robot = robot
         self.preempted = False
         self.rate = rate
-        self.get_continue_service = rospy.ServiceProxy('interpreter/get_continue', GetContinue)
+        self.ask_user_service_continue = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata):
 
-        self.response = self.get_continue_service(2 , 15)
+        self.response = self.ask_user_service_continue("continue", 2 , rospy.Duration(15))
 
-        if self.response.answer == "true":
-            return "done"
-        else:
-            return "no_continue"
+        print self.response
+
+        for x in range(0,len(self.response.keys)):
+            if self.response.keys[x] == "answer":
+                print x
+                if self.response.values[x] == "true":
+                    return "done"
+                else: 
+                    return "no_continue"
+
+        rospy.loginfo("answer was not found in response of interpreter. Should not happen!!")
+        return "no_continue"
 
 
 class AmigoIntroductionRIPS(smach.State):
