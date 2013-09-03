@@ -1,29 +1,25 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
-import geometry_msgs.msg
-import amigo_msgs.msg
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 import amigo_actions.msg
-import std_msgs.msg
 import threading
 import util.concurrent_util
+from sensor_msgs.msg import JointState
 
 class Spindle(object):
     """Interface to Amigo's spindle or spine"""
+    joint_name = 'torso_joint'
     
     def __init__(self, wait_service=True):
-        #TODO: Make use of the action client for the spindle
-        self.spindle_setpoint = rospy.Publisher("/spindle_controller/spindle_coordinates",amigo_msgs.msg.spindle_setpoint)
-        
         self.ac_move_spindle = actionlib.SimpleActionClient('/spindle_server', amigo_actions.msg.AmigoSpindleCommandAction)
         if wait_service:
             rospy.loginfo("waiting for spindle action server")
             self.ac_move_spindle.wait_for_server(timeout=rospy.Duration(2.0))
 
         ''' Keeps track of the current spindle position '''
-        self.spindle_sub = rospy.Subscriber("/spindle_position", std_msgs.msg.Float64, self._receive_spindle_measurement)
+        self.spindle_sub = rospy.Subscriber("/amigo/torso/controller/measurements", JointState, self._receive_spindle_measurement)
         self.current_position = 0.35
 
         # Offset parameter to send the laser to a specific height
@@ -84,8 +80,9 @@ class Spindle(object):
     _lock = threading.RLock()
 
     @util.concurrent_util.synchronized(_lock)
-    def _receive_spindle_measurement(self, spindle_pos):
-        self.current_position = spindle_pos.data
+    def _receive_spindle_measurement(self, jointstate):
+        """jointstate is of type JointState"""
+        self.current_position = jointstate.position[0]
 
     def get_position(self):
         return self.current_position
