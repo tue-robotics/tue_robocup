@@ -8,7 +8,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import Point
 
-from speech_interpreter.srv import AskUser # for speech_to_text only
+from speech_interpreter.srv import AskUser
 
 from psi import *
 
@@ -55,11 +55,8 @@ class Ask_continue(smach.State):
 
         self.response = self.ask_user_service_continue("continue", 2 , rospy.Duration(15))
 
-        print self.response
-
         for x in range(0,len(self.response.keys)):
             if self.response.keys[x] == "answer":
-                print x
                 if self.response.values[x] == "true":
                     return "done"
                 else: 
