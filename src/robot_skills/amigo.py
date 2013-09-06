@@ -168,7 +168,7 @@ class Amigo(object):
 
         ps = geometry_msgs.msg.PointStamped()
         ps.header.stamp = time
-        ps.header.frame_id = "/base_link"
+        ps.header.frame_id = "/amigo/base_link"
         ps.point.x = dx # dx meter in front of robot
         ps.point.y = 0.0
         ps.point.z = z
@@ -267,7 +267,7 @@ if __name__ == "__main__":
     left_open = lambda: amigo.leftArm.send_gripper_goal_open()
     speak = lambda sentence: amigo.speech.speak(sentence, block=False)
     praat = lambda sentence: amigo.speech.speak(sentence, language='nl', block=False)
-    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/base_link")
+    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/amigo/base_link")
         
     r = amigo.reasoner
     q = amigo.reasoner.query
@@ -294,7 +294,7 @@ if __name__ == "__main__":
         return amigo.base.go(x,y,phi)
     
     def basego(x,y,phi):
-        return amigo.base.go(x,y,phi,frame="/base_link")
+        return amigo.base.go(x,y,phi,frame="/amigo/base_link")
 
     open_door   = lambda: r.assertz(r.state("door1", "open"))
     close_door  = lambda: r.assertz(r.state("door1", "close"))

@@ -151,7 +151,7 @@ class Arms(object):
     def close(self):
         actionClients.close()
         
-    def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, side=None, pre_grasp = False, frame_id = '/base_link', use_offset = False, first_joint_pos_only=False):
+    def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
         """Send a arm to a goal: 
         Using a position px,py,pz. An orientation roll,pitch,yaw. A time out time_out. And a side Side.LEFT or Side.RIGHT
         
@@ -212,7 +212,7 @@ class Arms(object):
             rospy.logerr("side undefined")
             return False
     
-    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, side=None, pre_grasp = False, frame_id = '/base_link', use_offset = False, first_joint_pos_only=False):
+    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
         """Send arm to an offset with respect to current position: 
         Using a position px,py,pz. An orientation roll,pitch,yaw. A time out time_out. And a side Side.LEFT or Side.RIGHT
         
@@ -391,7 +391,7 @@ class Arms(object):
     def send_twist(self, twist, duration, side):
         if isinstance(twist, Twist):
             twist_stamped = TwistStamped(twist=twist)
-            twist_stamped.frame_id = "/base_link"
+            twist_stamped.frame_id = "/amigo/base_link"
             
             #replace the unstamped twist with a stamped one, which has the original as a field
             twist = twist_stamped
@@ -405,7 +405,7 @@ class Arms(object):
             rospy.sleep(0.01)
         
         zero = TwistStamped()
-        zero.header.frame_id = "/base_link"
+        zero.header.frame_id = "/amigo/base_link"
         if side == Side.LEFT:
             self.left_twist_publisher.publish(zero)
         elif side == Side.RIGHT:
@@ -550,7 +550,7 @@ class Arm(Arms):
     Examples:
     >>> left.send_goal(0.265, 1, 0.816, 0, 0, 0, 60)
     or Equivalently:
-    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/base_link')
+    >>> left.send_goal(px=0.265, py=1, pz=0.816, yaw=0, pitch=0, roll=0, time_out=60, pre_grasp=False, frame_id='/amigo/base_link')
     
     #To open left gripper
     >>> left.send_gripper_goal_open(10)
@@ -568,14 +568,14 @@ class Arm(Arms):
         side_name = Side.name[self.side]
         self.joint_names = [joint_name.format(side=side_name) for joint_name in self.joint_names] #The Arms-class provides a format, which we fill in here
     
-    def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, pre_grasp = False, frame_id = '/base_link', first_joint_pos_only=False):
+    def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
         """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
-        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /base_link """
+        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
         return super(Arm, self).send_goal(px, py, pz, roll, pitch, yaw, time_out, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
     
-    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, time_out = 30, pre_grasp = False, frame_id = '/base_link', first_joint_pos_only=False):
+    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, time_out = 30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
         """Send arm to an offset with respect to current position: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
-        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /base_link """
+        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
         return super(Arm, self).send_delta_goal(px, py, pz, roll, pitch, yaw, time_out, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
         
     def send_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
@@ -651,7 +651,7 @@ if __name__ == "__main__":
     right = Arm(rightSide, tf_listener)
     
     test_twist = TwistStamped()
-    test_twist.header.frame_id = "/base_link"
+    test_twist.header.frame_id = "/amigo/base_link"
     test_twist.twist.linear.z = 0.1
     
     

@@ -14,10 +14,10 @@ class Head(object):
 
     Example:
     #Send head to position with a 10 second time out
-    >>> head.send_goal(message_helper.point(0.65, 0.0, 0.9,), '/base_link')
+    >>> head.send_goal(message_helper.point(0.65, 0.0, 0.9,), '/amigo/base_link')
 
     #Equivalent
-    >>> head.set_position(0.65, 0.0, 0.9, '/base_link')
+    >>> head.set_position(0.65, 0.0, 0.9, '/amigo/base_link')
 
     #Reset head
     >>> head.reset_position()
@@ -137,7 +137,7 @@ class Head(object):
         Amigo looks down at a predefined position
         """
         # previous implementation
-        # head_goal = self.point_stamped(1.0, 0.0, 0.8, '/base_link')
+        # head_goal = self.point_stamped(1.0, 0.0, 0.8, '/amigo/base_link')
         # return self.send_goal(head_goal.point, head_goal.header.frame_id, keep_tracking=False)
 
         return self.set_pan_tilt(0.0, 0.4)
@@ -211,7 +211,7 @@ class Head(object):
         '''
         search_head_goal = geometry_msgs.msg.PointStamped()
 
-        search_head_goal.header.frame_id = "/base_link"
+        search_head_goal.header.frame_id = "/amigo/base_link"
 
         time = rospy.Time.now()
         sec = time.secs

@@ -52,7 +52,7 @@ class Base(object):
         self.initial_pose_publisher = rospy.Publisher('/initialpose',geometry_msgs.msg.PoseWithCovarianceStamped)
 
         self.tf_listener    = tf_listener
-        # WORKAROUND for missing transform between /map and /base_link frame, to make sure that TF is correctly initialised
+        # WORKAROUND for missing transform between /map and /amigo/base_link frame, to make sure that TF is correctly initialised
         rospy.sleep(2)
         rospy.loginfo("Done with waiting for TF to become avaiable")
 
@@ -297,8 +297,8 @@ class Base(object):
         try:
             #tf_listener = tf.TransformListener() 
             time = rospy.Time.now()
-            self.tf_listener.waitForTransform("/map", "/base_link", time, rospy.Duration(20.0))
-            (ro_trans, ro_rot) = self.tf_listener.lookupTransform("/map", "/base_link", time)
+            self.tf_listener.waitForTransform("/map", "/amigo/base_link", time, rospy.Duration(20.0))
+            (ro_trans, ro_rot) = self.tf_listener.lookupTransform("/map", "/amigo/base_link", time)
             
             position = geometry_msgs.msg.Point()
             orientation = geometry_msgs.msg.Quaternion()

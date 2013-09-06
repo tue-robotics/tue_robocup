@@ -79,6 +79,6 @@ if __name__ == "__main__":
     right_open = lambda: amigo.rightArm.send_gripper_goal_open()
     left_open = lambda: amigo.leftArm.send_gripper_goal_open()
     speak = lambda sentence: amigo.speech.speak(sentence)
-    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/base_link")
+    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/amigo/base_link")
     go = amigo.base.go'''
     
