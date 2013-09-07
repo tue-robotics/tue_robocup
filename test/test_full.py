@@ -125,6 +125,16 @@ def test_grippers(amigo):
     amigo.rightArm.send_gripper_goal_close(time_out=10)
     show_test("right gripper close", right_gripper_meas.direction == amigo_msgs.msg.AmigoGripperMeasurement.CLOSE)
 
+
+def test_torso(amigo):
+    global joint_positions
+
+    amigo.spindle.send_goal(0.4, waittime=10)
+    show_test("torso up", in_bounds(joint_positions['torso_joint'], 0.4, 0.01))
+
+    amigo.spindle.send_goal(0.1, waittime=10)
+    show_test("torso down", in_bounds(joint_positions['torso_joint'], 0.1, 0.01))
+
 if __name__ == "__main__":
     rospy.init_node('amigo_skills_test_full')
 
@@ -132,11 +142,13 @@ if __name__ == "__main__":
     joint_positions = {}
 
     rospy.Subscriber("/amigo/neck/measurements", sensor_msgs.msg.JointState, joint_state_callback)
+    rospy.Subscriber("/amigo/torso/measurements", sensor_msgs.msg.JointState, joint_state_callback)    
     rospy.Subscriber("/amigo/left_gripper/measurements", amigo_msgs.msg.AmigoGripperMeasurement, left_gripper_callback)
     rospy.Subscriber("/amigo/right_gripper/measurements", amigo_msgs.msg.AmigoGripperMeasurement, right_gripper_callback)
 
     amigo = robot_skills.amigo.Amigo(wait_services=True)    
 
+    test_torso(amigo)
     test_grippers(amigo)
     test_head(amigo)
 
