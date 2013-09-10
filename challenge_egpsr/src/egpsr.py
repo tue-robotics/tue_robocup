@@ -11,7 +11,7 @@ import robot_smach_states as states
 
 from robot_smach_states.util.startup import startup
 
-from speech_interpreter.srv import GetAction # for speech_to_text only
+from speech_interpreter.srv import AskUser # for speech_to_text only
 
 from psi import *
 
@@ -79,26 +79,40 @@ class Ask_action(smach.State):
         smach.State.__init__(self, outcomes=["done", "no_action"])
 
         self.robot = robot
-        self.get_action_service = rospy.ServiceProxy('interpreter/get_action_user', GetAction)
+        self.ask_user_service_get_action = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata):
 
         self.robot.head.look_up()
 
         try:
-            self.response = self.get_action_service(3600.0)  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
-
-            self.robot.reasoner.query(Compound("assertz", Compound("goal", self.response.action, self.response.start_location, self.response.end_location, self.response.object, self.response.object_room, self.response.object_location)))
+            self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(3600))  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
             
-            if self.response.object == "no_answer" or self.response.object == "wrong_answer":
+            for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "action":
+                    response_action = self.response.values[x]
+                elif self.response.keys[x] == "start_location":
+                    response_start_location = self.response.values[x]
+                elif self.response.keys[x] == "end_location":
+                    response_end_location = self.response.values[x]
+                elif self.response.keys[x] == "object":
+                    response_object = self.response.values[x]
+                elif self.response.keys[x] == "object_room":
+                    response_object_room = self.response.values[x]
+                elif self.response.keys[x] == "object_location":
+                    response_object_location = self.response.values[x]
+
+            self.robot.reasoner.query(Compound("assertz", Compound("goal", response_action, response_start_location, response_end_location, response_object, response_object_room, response_object_location)))
+            
+            if response_object == "no_answer" or response_object == "wrong_answer":
                 return "no_action"
             # Show values for action/start_location/end_location/object      
-            rospy.loginfo("action = {0}".format(self.response.action))
-            rospy.loginfo("start_location = {0}".format(self.response.start_location))
-            rospy.loginfo("end_location = {0}".format(self.response.end_location))
-            rospy.loginfo("object = {0}".format(self.response.object))
-            rospy.loginfo("object_room = {0}".format(self.response.object_room))
-            rospy.loginfo("object_location = {0}".format(self.response.object_location))
+            rospy.loginfo("action = {0}".format(response_action))
+            rospy.loginfo("start_location = {0}".format(response_start_location))
+            rospy.loginfo("end_location = {0}".format(response_end_location))
+            rospy.loginfo("object = {0}".format(response_object))
+            rospy.loginfo("object_room = {0}".format(response_object_room))
+            rospy.loginfo("object_location = {0}".format(response_object_location))
 
             return "done"
 
