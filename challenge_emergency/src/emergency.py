@@ -449,7 +449,11 @@ class Ask_yes_no(smach.State):
 
         self.response = self.ask_user_service_get_yes_no("yesno", 2 , rospy.Duration(8))
 
-        if self.response.answer == "true":
+        for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+        if response_answer == "true":
             return "yes"
         else:
             return "no"
