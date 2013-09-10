@@ -11,7 +11,7 @@ import robot_smach_states.util.reasoning_helpers as urh
 
 # ToDo: replace GetCleanup
 #from speech_interpreter.srv import GetCleanup
-from speech_interpreter.srv import GetYesNo
+from speech_interpreter.srv import AskUser
 from speech_interpreter.srv import GetInfo
 
 from robot_skills.reasoner import Conjunction, Compound, Sequence
@@ -77,11 +77,11 @@ class Ask_yes_no(smach.State):
 
         self.robot = robot
         self.preempted = False
-        self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
+        self.ask_user_service_get_yes_no = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
 
-        self.response = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
+        self.response = self.ask_user_service_get_yes_no("yesno", 2 , rospy.Duration(8))
 
         if self.response.answer == "true":
             return "yes"
