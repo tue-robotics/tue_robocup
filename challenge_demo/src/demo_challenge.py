@@ -164,6 +164,9 @@ class AskAnythingElse(smach.State):
         #self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
         
         #resp = self.ask_user_service_get_yes_no("yesno", 2 , rospy.Duration(8))
+        # for x in range(0,len(resp.keys)):
+        #         if self.response.keys[x] == "answer":
+        #             response_answer = resp.values[x]
         
         self.robot.speech.speak("Please look at me, so I can recognize you and send the reminder to your phone")
         self.response_start = self.robot.perception.toggle(["face_recognition"])
