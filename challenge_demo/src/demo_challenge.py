@@ -27,7 +27,6 @@ from tf.transformations import euler_from_quaternion
 from interpret_email import MailInterpreter
 from maluuba_ros.srv import Interpret
 
-from speech_interpreter.srv import GetYesNo
 from speech_interpreter.srv import AskUser
 
 
@@ -148,7 +147,7 @@ class AskAnythingElse(smach.State):
         except Exception, e:
             rospy.logerr("Could not init a MailInterpreter: {0}".format(e))
 
-        self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
+        self.ask_user_service_get_yes_no = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
 
     def tell_time(self):
@@ -164,7 +163,7 @@ class AskAnythingElse(smach.State):
         
         #self.robot.speech.speak("Do you want a reminder to {0}, {1}?".format(interpretation.entities.message, start))
         
-        #resp = self.get_yes_no_service(2 , 8) # 3 tries, each max 10 seconds
+        #resp = self.ask_user_service_get_yes_no("yesno", 2 , rospy.Duration(8))
         
         self.robot.speech.speak("Please look at me, so I can recognize you and send the reminder to your phone")
         self.response_start = self.robot.perception.toggle(["face_recognition"])
