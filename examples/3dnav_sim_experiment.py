@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     rospy.sleep(2) # wait for tf cache to be filled
 
-    while not rospy.shutdown():    
-        random_goal = navigation.NavigateGeneric(robot, goal_pose_2d=(random.randrange(-0.9,10.0,0.1),random.randrange(1,8,0.1),random.randrange(-3.14,3.14,0.1)), look_at_path_distance=2.7)
+    while not rospy.is_shutdown():    
+        random_goal = navigation.NavigateGeneric(robot, goal_pose_2d=(random.uniform(-0.9,10.0),random.uniform(1.0,-8.0),random.uniform(-3.14,3.14)), look_at_path_distance=2.7)
         random_goal.execute()
     
