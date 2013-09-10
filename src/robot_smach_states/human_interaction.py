@@ -8,7 +8,7 @@ import util
 from std_msgs.msg import String
 import threading
 
-from speech_interpreter.srv import GetYesNo
+from speech_interpreter.srv import AskUser
 
 from utility_states import Wait_time, PlaySound
 
@@ -718,13 +718,17 @@ class Ask_yes_no(smach.State):
 
         self.robot = robot
         self.preempted = False
-        self.get_yes_no_service = rospy.ServiceProxy('interpreter/get_yes_no', GetYesNo)
+        self.ask_user_service_get_yes_no = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
 
-        self.response = self.get_yes_no_service(3 , 10) # 3 tries, each max 10 seconds
+        self.response = self.ask_user_service_get_yes_no("yesno", 3 , rospy.Duration(10))  # 3 tries, each max 10 seconds
 
-        if self.response.answer == "true":
+        for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+        if response_answer == "true":
             return "yes"
         else:
             return "no"
