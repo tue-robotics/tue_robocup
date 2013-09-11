@@ -1135,7 +1135,7 @@ class Execute_path(smach.State):
                     if lookat_point:
                         rospy.logdebug("Look at {0}".format(lookat_point))
                         self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
-                            min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
+                            min_pan=-0.9,max_pan=0.9,min_tilt=0.0,max_tilt=0.8)
                     else:
                         # reset head position to look down
                         #rospy.logwarn("Reset head to look down")
