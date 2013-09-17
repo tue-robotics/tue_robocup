@@ -684,14 +684,19 @@ def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
 def learn_face(robot):
     import smach
     import robot_smach_states as states
-    from speech_interpreter.srv import GetInfo
+    from speech_interpreter.srv import AskUser
     
     name = "mr. X"
 
     try:
-        get_learn_person_name_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
-        response = get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
-        name = response.answer
+        ask_user_service_get_learn_person_name = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+        response = ask_user_service_get_learn_person_name("name", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received.
+        
+        for x in range(0,len(response.keys)):
+                if response.keys[x] == "answer":
+                    response_answer = response.values[x]
+
+        name = response_answer
 
         if name == "no_answer" or name == "wrong_answer":
             name = "mr. X"
