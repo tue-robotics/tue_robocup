@@ -7,7 +7,8 @@ from math import sqrt
 
 import thread
 
-from speech_interpreter.srv import GetAction, GetInfo # for speech_to_text only
+from speech_interpreter.srv import AskUser # for speech_to_text only
+
 
 class Speech(object):
     """Interface to Amigo's tts-module"""
@@ -33,8 +34,8 @@ class Speech(object):
             except rospy.ROSException:
                 rospy.logwarn("Please roslaunch create_speech_files speech.launch \& rosrun speech_interpreter interpreter to start the speech recognizer and speech interpretr.")
 
-        self.get_info_service = rospy.ServiceProxy('speech_interpreter/get_info_user', GetInfo)
-        self.get_action_service = rospy.ServiceProxy('speech_interpreter/get_action_user', GetAction)
+        self.ask_user_service_get_info = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+        self.ask_user_service_get_action = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def close(self):
         pass
@@ -82,41 +83,58 @@ class Speech(object):
         rospy.loginfo("AMIGO says: '{0}'".format(sentence))
         return True
 
-    def get_info(self, info_type = 'name', n_tries = 1, time_out = 10.0):
+    def get_info(self, info_type = 'name', n_tries = 1, time_out = rospy.Duration(10.0)):
         """ function to get info from the user, info_type could be name or object categories or location categories """
 
         if info_type not in ['name', 'drink', 'snack', 'food', 'bathroomstuff', 'seat', 'table', 'shelf', 'appliance', 'bin']:
             rospy.logerr("Wrong info_type!")
             return False
         else:
-            resp = self.get_info_service(info_type, n_tries, time_out)
+            self.response = self.ask_user_service_get_info(info_type, n_tries, time_out)
 
-        if resp.answer == 'no_answer':
+            for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+        if response_answer == 'no_answer':
             rospy.logwarn("Time out before the answer is given.")
 
-        return resp.answer
+        return response_answer
 
     def get_action(self, time_out = 100.0):
         """ function to get the goal of the task - does not work yet
             To do: make it work """
-        resp = self.get_action_service(time_out)
+        self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(time_out))  
+
+        for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "action":
+                    response_action = self.response.values[x]
+                elif self.response.keys[x] == "start_location":
+                    response_start_location = self.response.values[x]
+                elif self.response.keys[x] == "end_location":
+                    response_end_location = self.response.values[x]
+                elif self.response.keys[x] == "object":
+                    response_object = self.response.values[x]
+                elif self.response.keys[x] == "object_room":
+                    response_object_room = self.response.values[x]
+                elif self.response.keys[x] == "object_location":
+                    response_object_location = self.response.values[x]
 
         # can find the actions from speech_interpreter/src/Interpreter.cpp
-        if resp.action == 'transport':
-            rospy.loginfo("The goal is to tranport the '{0}' to '{1}'.".format(resp.object, resp.end_location))
-        elif resp.action == 'get':
-            rospy.loginfo("The goal is to get the '{0}' from the '{1}'".format(resp.object, resp.start_location))
-        elif resp.action == 'point':
-            rospy.loginfo("The goal is to point at '{0}'".format(resp.object))
-        elif resp.action == 'find':
-            rospy.loginfo("The goal is to find the '{0}'".format(resp.object))
-        elif resp.action == 'leave':
-            rospy.loginfo("The goal is to go to '{0}'".format(resp.end_location))
+        if response_action == 'transport':
+            rospy.loginfo("The goal is to tranport the '{0}' to '{1}'.".format(response_object, response_end_location))
+        elif response_action == 'get':
+            rospy.loginfo("The goal is to get the '{0}' from the '{1}'".format(response_object, response_start_location))
+        elif response_action == 'point':
+            rospy.loginfo("The goal is to point at '{0}'".format(response_object))
+        elif response_action == 'find':
+            rospy.loginfo("The goal is to find the '{0}'".format(response_object))
+        elif response_action == 'leave':
+            rospy.loginfo("The goal is to go to '{0}'".format(response_end_location))
         else:
             rospy.logwarn("Action is not defined")
 
-        goal = resp
-        return goal
+        return self.response
 
     @staticmethod
     def buildList(items, joinLast='and'): #other options are "or"
