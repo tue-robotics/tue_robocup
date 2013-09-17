@@ -9,34 +9,40 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.reasoning_helpers as urh
 
-from speech_interpreter.srv import GetInfo
+from speech_interpreter.srv import AskUser
 
 from robot_skills.reasoner import Conjunction, Compound, Sequence
 
 from robot_skills.arms import State as ArmState
 import geometry_msgs
 
+
 class AskForTask(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
         self.preempted = False
-        self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_drink = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata):
         self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("open_challenge", "X"))))
         
         self.robot.head.reset_position()
         # TODO: Here an service that has to be created has to be called
-        self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
-        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
-            self.robot.speech.speak("I heard seven up")
-            self.response.answer = "seven_up"
+        self.response = self.ask_user_service_get_drink("drink_cocktail", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
 
-        rospy.loginfo("Speech output = {0}".format(self.response.answer))
+        for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+        if response_answer == "no_answer" or  response_answer == "wrong_answer":
+            self.robot.speech.speak("I heard seven up")
+            response_answer = "seven_up"
+
+        rospy.loginfo("Speech output = {0}".format(response_answer))
         #import ipdb; ipdb.set_trace()
     
-        if self.response.answer == "coke":
+        if response_answer == "coke":
             obj = "coke"
             obj2 = "seven_up"
         else:
