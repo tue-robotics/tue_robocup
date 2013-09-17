@@ -9,10 +9,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.reasoning_helpers as urh
 
-# ToDo: replace GetCleanup
-#from speech_interpreter.srv import GetCleanup
 from speech_interpreter.srv import AskUser
-from speech_interpreter.srv import GetInfo
 
 from robot_skills.reasoner import Conjunction, Compound, Sequence
 
@@ -31,14 +28,19 @@ class Ask_drink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
-        self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_drink = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
         self.robot.head.look_up()
         self.robot.speech.speak("Hey guys, can I do anything for you.")
-        self.response = self.get_drink_service("drink_final", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.ask_user_service_get_drink("drink_final", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
         # Check available options from rulebook!
         
+        ## answer of self.response is not used, if used, uncomment understanding lines:
+        # for x in range(0,len(self.response.keys)):
+        #         if self.response.keys[x] == "answer":
+        #             response_answer = self.response.values[x]
+
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", "coke"))))
         self.robot.head.reset_position(timeout=0.0)
@@ -48,7 +50,7 @@ class Ask_trashbin(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
-        self.get_trashbin_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_trashbin = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
         self.robot.head.look_up()
@@ -59,7 +61,13 @@ class Ask_trashbin(smach.State):
         else:
             self.robot.speech.speak("I also saw something else on the table, but I do not know yet what it is. What should I do with it?")
 
-        self.response = self.get_trashbin_service("final_trashbin", 3 , 120)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.ask_user_service_get_trashbin("final_trashbin", 3 , rospy.Duration(120))  # This means that within 3 tries and within 120 seconds an answer is received. 
+
+        ## answer of self.response is not used, if used, uncomment understanding lines:
+        # for x in range(0,len(self.response.keys)):
+        #         if self.response.keys[x] == "answer":
+        #             response_answer = self.response.values[x]
+
         # SAY 'put it in the trashbin'
         #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("retractall",   Compound("goal", Compound("serve", "X"))))
