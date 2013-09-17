@@ -13,7 +13,7 @@ import rospy
 
 import smach
 
-from speech_interpreter.srv import GetInfo
+from speech_interpreter.srv import AskUser
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
@@ -52,28 +52,34 @@ class AskBreakfast(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
-        self.get_breakfast_question_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_breakfast_question = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+
+
         self.ask_breakfast_failed = 0
         self.person_breakfast = 0
 
-    def execute(self, userdata=None):     
-        self.response = self.get_breakfast_question_service("demo_challenge", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+    def execute(self, userdata=None):
+        self.response = self.ask_user_service_get_breakfast_question("demo_challenge", 3 , rospy.Duration(60))  # This means that within 4 tries and within 60 seconds an answer is received.      
 
-        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
+        for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+        if response_answer == "no_answer" or  response_answer == "wrong_answer":
             if self.ask_breakfast_failed == 1:
                 self.robot.speech.speak("I will just give you a sandwich with peanutbutter")
-                self.response.answer = "peanutbutter"
+                response_answer = "peanutbutter"
             if self.ask_breakfast_failed == 0:
                 self.robot.speech.speak("I will just give you a sandwich with cheese")
-                self.response.answer = "cheese"
+                response_answer = "cheese"
                 self.ask_breakfast_failed = 1
         else:
-            self.robot.speech.speak("I will bring you a sandwich with " + self.response.answer)
+            self.robot.speech.speak("I will bring you a sandwich with " + response_answer)
 
         if self.person_breakfast == 1:
-            self.robot.reasoner.query(Compound("assert", Compound("breakfast", self.response.answer)))
+            self.robot.reasoner.query(Compound("assert", Compound("breakfast", response_answer)))
         if self.person_breakfast == 0:
-            self.robot.reasoner.query(Compound("assert", Compound("breakfast", self.response.answer)))
+            self.robot.reasoner.query(Compound("assert", Compound("breakfast", response_answer)))
             self.person_breakfast = 1          
 
         return_result = self.robot.reasoner.query(Compound("breakfast", "Breakfast"))        

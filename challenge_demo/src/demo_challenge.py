@@ -13,7 +13,6 @@ import rospy
 
 import smach
 
-from speech_interpreter.srv import GetInfo
 from robot_skills.amigo import Amigo
 from robot_skills.arms import State as ArmState
 import robot_smach_states as states
@@ -80,17 +79,22 @@ class AskHowFeel(smach.State):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
-        self.get_status_person_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_status_person = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
         #TODO:self.robot.head.reset_position(), of look_down. 
         try:
-            self.response = self.get_status_person_service("demo_challenge_status_person", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
-            if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+            self.response = self.ask_user_service_get_status_person("demo_challenge_status_person", 4 , rospy.Duration(60))  # This means that within 4 tries and within 60 seconds an answer is received. 
+            
+            for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+            if response_answer == "no_answer" or response_answer == "wrong_answer":
                 self.robot.speech.speak("I will just service you some breakfast", mood="neutral")
-            elif self.response.answer == "fine" or self.response.answer == "good":
+            elif response_answer == "fine" or response_answer == "good":
                 self.robot.speech.speak("Maybe I can make it even better by serving some breakfast", mood="excited")
-            elif self.response.answer == "bad" or self.response.answer == "mwah" or self.response.answer == "sick" or self.response.answer == "ill":
+            elif response_answer == "bad" or response_answer == "mwah" or response_answer == "sick" or response_answer == "ill":
                 self.robot.speech.speak("Maybe I can make it a little better by serving some breakfast", mood="sad")
         except Exception, e:
             rospy.logerr("Could not get_status_person_service: {0}.".format(e))
@@ -102,28 +106,32 @@ class AskBreakfast(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
-        self.get_breakfast_question_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_breakfast_question = rospy.ServiceProxy('interpreter/ask_user', AskUser)
         self.ask_breakfast_failed = 0
         self.person_breakfast = 0
 
     def execute(self, userdata=None):     
-        self.response = self.get_breakfast_question_service("demo_challenge_breakfast", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.ask_user_service_get_status_person("demo_challenge_breakfast", 3 , rospy.Duration(60))  # This means that within 4 tries and within 60 seconds an answer is received. 
 
-        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
+        for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+        if response_answer == "no_answer" or  response_answer == "wrong_answer":
             if self.ask_breakfast_failed == 1:
                 self.robot.speech.speak("I will just give you a sandwich with peanutbutter")
-                self.response.answer = "peanutbutter"
+                response_answer = "peanutbutter"
             if self.ask_breakfast_failed == 0:
                 self.robot.speech.speak("I will just give you a sandwich with cheese")
-                self.response.answer = "cheese"
+                response_answer = "cheese"
                 self.ask_breakfast_failed = 1
         else:
-            self.robot.speech.speak("I will bring you a sandwich with {0}".format(self.response.answer).replace('_', ' '))
+            self.robot.speech.speak("I will bring you a sandwich with {0}".format(response_answer).replace('_', ' '))
 
         if self.person_breakfast == 1:
-            self.robot.reasoner.query(Compound("assert", Compound("breakfast", self.response.answer)))
+            self.robot.reasoner.query(Compound("assert", Compound("breakfast", response_answer)))
         if self.person_breakfast == 0:
-            self.robot.reasoner.query(Compound("assert", Compound("breakfast", self.response.answer)))
+            self.robot.reasoner.query(Compound("assert", Compound("breakfast", response_answer)))
             self.person_breakfast = 1          
 
         return_result = self.robot.reasoner.query(Compound("breakfast", "Breakfast"))        
