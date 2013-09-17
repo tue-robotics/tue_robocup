@@ -11,7 +11,7 @@ from robot_skills.reasoner  import Conjunction, Compound
 from robot_skills.arms import State as ArmState
 from robot_smach_states.util.startup import startup
 
-from speech_interpreter.srv import GetInfo
+from speech_interpreter.srv import AskUser
 
 grasp_arm = "left"
 #grasp_arm = "right"
@@ -29,20 +29,25 @@ class Ask_cleanup(smach.State):
         smach.State.__init__(self, outcomes=["done"])
 
         self.robot = robot
-        self.get_cleanup_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_cleanup = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata):
         self.robot.head.look_up()
                 
         room = "living_room"
         try:
-            self.response = self.get_cleanup_service("room_cleanup", 4 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
-            if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+            self.response = self.ask_user_service_get_cleanup("room_cleanup", 4 , rospy.Duration(60))  # This means that within 4 tries and within 60 seconds an answer is received. 
+            
+            for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "answer":
+                    response_answer = self.response.values[x]
+
+            if response_answer == "no_answer" or response_answer == "wrong_answer":
                 self.robot.speech.speak("I was not able to understand you but I'll clean the living room, humans always tend to make a mess of that.")
                  # ToDo: don't hardcode this!                
                 room = "living_room"
             else:
-                room = self.response.answer
+                room = response_answer
         except Exception, e:
             rospy.logerr("Could not get_cleanup_service: {0}. Defaulting to {1}".format(e, room))
             self.robot.speech.speak("There is something wrong with my ears, I will cleanup the {1}, humans always tend to make a mess of that".format(e, room))
