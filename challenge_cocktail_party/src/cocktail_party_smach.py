@@ -5,7 +5,7 @@ import os
 import roslib.packages as p
 import smach_ros
 
-from speech_interpreter.srv import GetInfo
+from speech_interpreter.srv import AskUser
 
 from robot_skills.amigo import Amigo
 
@@ -171,29 +171,34 @@ class LearnPersonName(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["learned" , "failed"])
         self.robot = robot
-        self.get_learn_person_name_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_learn_person_name = rospy.ServiceProxy('interpreter/ask_user', AskUser)
         self.person_learn_failed = 0
 
     def execute(self, userdata=None):
+
         self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))    
 
-        self.response = self.get_learn_person_name_service("name", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received.
+        self.response = self.ask_user_service_get_learn_person_name("name", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
+            
+        for x in range(0,len(self.response.keys)):
+            if self.response.keys[x] == "answer":
+                response_answer = self.response.values[x]
 
-        if self.response.answer == "no_answer" or self.response.answer == "wrong_answer":
+        if response_answer == "no_answer" or response_answer == "wrong_answer":
             if self.person_learn_failed == 2:
                 self.robot.speech.speak("I will call you David")
-                self.response.answer = "david"
+                response_answer = "david"
                 self.person_learn_failed = 3
             if self.person_learn_failed == 1:
                 self.robot.speech.speak("I will call you Michael")
-                self.response.answer = "michael"
+                response_answer = "michael"
                 self.person_learn_failed = 2
             if self.person_learn_failed == 0:
                 self.robot.speech.speak("I will call you Joseph")
-                self.response.answer = "joseph"
+                response_answer = "joseph"
                 self.person_learn_failed = 1
 
-        self.robot.reasoner.query(Compound("assert", Compound("current_person", self.response.answer)))
+        self.robot.reasoner.query(Compound("assert", Compound("current_person", response_answer)))
             
 
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))        
@@ -210,32 +215,37 @@ class Ask_drink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done" , "failed"])
         self.robot = robot
-        self.get_drink_service = rospy.ServiceProxy('interpreter/get_info_user', GetInfo)
+        self.ask_user_service_get_drink = rospy.ServiceProxy('interpreter/ask_user', AskUser)
         self.person_learn_failed = 0
         self.drink_learn_failed = 0
 
     def execute(self, userdata=None):
-        self.response = self.get_drink_service("drink_cocktail", 3 , 60)  # This means that within 4 tries and within 60 seconds an answer is received. 
+        self.response = self.ask_user_service_get_drink("drink_cocktail", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
+            
+        for x in range(0,len(self.response.keys)):
+            if self.response.keys[x] == "answer":
+                response_answer = self.response.values[x]
+
         # Check available options from rulebook!
-        if self.response.answer == "no_answer" or  self.response.answer == "wrong_answer":
+        if response_answer == "no_answer" or  response_answer == "wrong_answer":
             if self.drink_learn_failed == 2:
                 self.robot.speech.speak("I will just bring you a seven up")
-                self.response.answer = "seven_up"
+                response_answer = "seven_up"
                 self.drink_learn_failed = 3
             elif self.drink_learn_failed == 1:
                 self.robot.speech.speak("I will just bring you a milk")
-                self.response.answer = "milk"
+                response_answer = "milk"
                 self.drink_learn_failed = 2
             elif self.drink_learn_failed == 0:
                 self.robot.speech.speak("I will just bring you a coke")
-                self.response.answer = "coke"
+                response_answer = "coke"
                 self.drink_learn_failed = 1
             else:
                 self.robot.speech.speak("I will just bring you a coke")
-                self.response.answer = "coke"
+                response_answer = "coke"
 
         #import ipdb; ipdb.set_trace()
-        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", self.response.answer))))
+        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
         return "done"
 
 class LearnPersonCustom(smach.State):
