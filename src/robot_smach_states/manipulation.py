@@ -777,7 +777,7 @@ class Place_Object(smach.State):
         elif self.side == self.robot.rightArm:
             #y_drop = -0.3
             y_drop = -0.4
-            self.robot.head.send_goal(head_goal,"/grippoint_left")
+            self.robot.head.send_goal(head_goal,"/grippoint_left") #REVIEW(Loy): Is this correct?
         
         # Pose (left arm) Position: 0.24 0.43 0.15 Orientation: 0.12 0.58 0.09 0.80 
         if self.side.send_goal(0.5, y_drop, z_drop, 0.0 ,0.0 ,0.0 , time_out = 60, pre_grasp = False, frame_id = '/base_link'):
