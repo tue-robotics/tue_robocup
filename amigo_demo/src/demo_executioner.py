@@ -185,7 +185,7 @@ def grasp(robot):
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
 
     #One option is to let Amigo look to his hands directly using a point relative to it:
-    robot.head.send_goal(robot.head.point(0,0,0), frame_id="/finger1_right")
+    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(4.0))
 
@@ -195,7 +195,7 @@ def grasp(robot):
     robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"])
 
     #Look at finger again
-    robot.head.send_goal(robot.head.point(0,0,0), frame_id="/finger1_right")
+    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
 
 def pickup(robot):
     print "joints = PICK_UP"
@@ -203,11 +203,11 @@ def pickup(robot):
     #rospy.sleep(rospy.Duration(2.0))
 
     robot.rightArm.send_joint_goal(*poses["PICK_UP"])
-    robot.head.send_goal(robot.head.point(0,0,0), frame_id="/finger1_right")
+    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
-    robot.head.send_goal(robot.head.point(0,0,0), frame_id="/finger1_right")
+    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
 
@@ -232,9 +232,9 @@ def home(robot):
 def tip(robot):
     print "joints = TIPPING"
     robot.rightArm.send_joint_goal(*poses["TIP1"])
-    robot.head.send_goal(robot.head.point(0,0,0), frame_id="/finger1_right")
+    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
     #rospy.sleep(rospy.Duration(4.0))
-    robot.head.send_goal(robot.head.point(0,0,0), frame_id="/finger1_right")
+    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
     #robot.rightArm.send_joint_goal(*poses["TIP2"])
     rospy.sleep(rospy.Duration(1.0))
 
