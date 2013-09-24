@@ -49,20 +49,7 @@ class Amigo(object):
         self.leftSide = arms.Side.LEFT
         self.rightSide = arms.Side.RIGHT
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
-'''
-    def tf_transform(self, coordinates, inputframe, outputframe):
-        ps = geometry_msgs.msg.PointStamped(point= coordinates) 
-        ps.header.frame_id = inputframe
-        ps.header.stamp = rospy.Time()
-        output_coordinates = self.tf_listener.transformPoint(outputframe, ps)
-        return output_coordinates.point
-        
-    def tf_transform_pose(self, ps,frame):
-        output_pose = geometry_msgs.msg.PointStamped
-        self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
-        output_pose = self.tf_listener.transformPose(frame, ps) 
-        return output_pose
-'''
+
 if __name__ == "__main__":
     rospy.init_node("amigo_stopper", anonymous=True)
     amigo = Amigo(wait_services=True)
@@ -70,15 +57,4 @@ if __name__ == "__main__":
     amigo.leftArm.cancel_goal()
     amigo.rightArm.cancel_goal()
     amigo.head.reset_position()
-    
-    '''head_reset = lambda: amigo.head.reset_position()
-    head_down  = lambda: amigo.head.look_down()
-    look_at = lambda id: amigo.look_at_id(id)
-    right_close = lambda: amigo.rightArm.send_gripper_goal_close()
-    left_close = lambda: amigo.leftArm.send_gripper_goal_close()
-    right_open = lambda: amigo.rightArm.send_gripper_goal_open()
-    left_open = lambda: amigo.leftArm.send_gripper_goal_open()
-    speak = lambda sentence: amigo.speech.speak(sentence)
-    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/amigo/base_link")
-    go = amigo.base.go'''
     

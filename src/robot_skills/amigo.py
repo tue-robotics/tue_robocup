@@ -73,70 +73,9 @@ class Amigo(object):
         self.leftSide = arms.Side.LEFT
         self.rightSide = arms.Side.RIGHT
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
- 
- #These are deprecated       
-    # def look_at(self, worldmodel_target, _timeout=10.0):
-    #     """
-    #     Look at a specific target from the worldmodel
-    #     Expects a worldmodel_target. Optional time_out
-        
-    #     Example:
-    #     >>> import roslib; roslib.load_manifest('robot_skills')
-    #     >>> import object_msgs
-    #     >>> o = object_msgs.msg.ExecutionTarget(ID=1, class_label='MarkEnSimon')
-    #     >>> amigo.look_at(o) 
-    #     """
-    #     target_position = self.worldmodel.determine_target_position(worldmodel_target)
-    #     if target_position:
-    #         rospy.loginfo("Looking at worldmodel_target {0}".format(worldmodel_target))
-    #         return self.head.send_goal(target_position, timeout=_timeout)
-    #     else:
-    #         return False
-        
-    # def look_at_id(self, id, _timeout=10):
-    #     """
-    #     Look at a specific ID from the worldmodel.
-    #     Expects an ID and optional _time_out
-        
-    #     Example:
-    #     # Over 9000?
-    #     >>> amigo.look_at_id(9001)
-    #     """
-    #     target_position = self.worldmodel.determine_target_position_by_ID(id)
-    #     if target_position:
-    #         rospy.loginfo("Looking at worldmodel_target ID {0}".format(id))
-    #         return self.head.send_goal(target_position, timeout=_timeout)
-    #     else:
-    #         return False
-        
-    # def closest_target(self, ID=None, class_label=None, name=None):
-    #     matches = self.worldmodel.search_target(ID, class_label, name)
-        
-    #     if matches:
-    #         base_loc = self.base.location[0]
-    #         #select the one whose .pose.position is closest to self.base.location[0]
-    #         closest = min(matches, key=lambda obj: transformations.compute_distance(obj.pose.position, base_loc))
-    #         return closest
-    #     else:
-    #         return None
-        
-    # def target_closer_than(self, distance, ID=None, class_label=None, name=None):
-    #     target = self.closest_target(ID, class_label, name)
-    #     if target == None:
-    #         return False
-    #     d = transformations.compute_distance(target.pose.position, self.base.location[0])
-    #     rospy.logdebug("[target_closer_than] Distance {0} and max {1} is {2}".format(d, distance, d < distance))
-    #     return d < distance
     
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
-
-    # def tf_transform(self, coordinates, inputframe, outputframe):
-    #     ps = geometry_msgs.msg.PointStamped(point= coordinates) 
-    #     ps.header.frame_id = inputframe
-    #     ps.header.stamp = rospy.Time()
-    #     output_coordinates = self.tf_listener.transformPoint(outputframe, ps)
-    #     return output_coordinates.point
         
     def tf_transform_pose(self, ps,frame):
         output_pose = geometry_msgs.msg.PointStamped
@@ -267,7 +206,7 @@ if __name__ == "__main__":
     left_open = lambda: amigo.leftArm.send_gripper_goal_open()
     speak = lambda sentence: amigo.speech.speak(sentence, block=False)
     praat = lambda sentence: amigo.speech.speak(sentence, language='nl', block=False)
-    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point(x, y, z), frame_id="/amigo/base_link")
+    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point_stamped(x, y, z, frame_id="/amigo/base_link"))
         
     r = amigo.reasoner
     q = amigo.reasoner.query
