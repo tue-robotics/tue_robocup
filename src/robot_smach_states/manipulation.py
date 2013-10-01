@@ -493,8 +493,6 @@ class Grab(smach.State):
         
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
-        (robot_position, robot_orientation) = self.robot.base.location
-        
         target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
         
         rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
@@ -1105,8 +1103,6 @@ class Point_at_object(smach.State):
         self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
         
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
-        
-        (robot_position, robot_orientation) = self.robot.base.location
         
         target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
         

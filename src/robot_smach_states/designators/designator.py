@@ -127,7 +127,7 @@ class ReasonedPoseDesignator(ReasonedDesignator):
         # is a mapping of variable to a constant, like a string or number
         answers = self.robot.reasoner.query(self.decorated_query)
 
-        basepos = self.robot.base.location[0]
+        basepos = self.robot.base.location.pose.point
         basepos = (basepos.x, basepos.y, 0) #Just set phi to 0 for a sec
 
         self.current_answer = urh.select_answer(answers, 
@@ -162,7 +162,7 @@ class ReasonedRoiDesignator(ReasonedDesignator):
         # is a mapping of variable to a constant, like a string or number
         answers = self.robot.reasoner.query(self.decorated_query)
 
-        basepos = self.robot.base.location[0]
+        basepos = self.robot.base.location.pose.point
         basepos = (basepos.x, basepos.y, 0) #Base is always at Z=0
 
         self.current_answer = urh.select_answer(answers, 

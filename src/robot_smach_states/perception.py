@@ -114,7 +114,7 @@ class LookForObjectsAtROI(smach.State):
 
         try:
             lookat_answers = self.robot.reasoner.query(self.lookat_query)
-            basepos = self.robot.base.location[0]
+            basepos = self.robot.base.location.pose.point
             basepos = (basepos.x, basepos.y, basepos.z)
             selected_roi_answer = urh.select_answer(lookat_answers, 
                                                 lambda answer: urh.xyz_dist(answer, basepos), 

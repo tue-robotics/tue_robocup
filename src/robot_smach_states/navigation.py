@@ -32,7 +32,7 @@ class Navigate_abstract(smach.State):
     
     def calc_dist(self, (xg,yg,phig)):
             #TODO: Take rotation into account as well
-            loc = self.robot.base.location[0]
+            loc = self.robot.base.location.pose.point
             xr,yr,zr = loc.x, loc.y, loc.z
             dist = math.sqrt(abs(xr-xg)**2 + abs(yr-yg)**2)
             return dist
@@ -347,7 +347,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
         self.maxdist = maxdist
 
     def calc_dist_3d(self, (xg,yg,zg)):            
-            loc = self.robot.base.location[0]
+            loc = self.robot.base.location.pose.point
             xr,yr,zr = loc.x, loc.y, loc.z
             dist = math.sqrt(abs(xr-xg)**2 + abs(yr-yg)**2)
             return dist
@@ -368,7 +368,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             rospy.logwarn("No answers found for query {query} that are not visited and are not unreachable.".format(query=self.decorated_query))
             return None
         else:
-            basepos = self.robot.base.location[0]
+            basepos = self.robot.base.location.pose.point
             basepos = (basepos.x, basepos.y, basepos.z)
             selected_answer = urh.select_answer(answers, 
                                                 lambda answer: urh.xyz_dist(answer, basepos), 
@@ -757,7 +757,7 @@ class Determine_goal(smach.State):
             sq2 = (p1y-p2y)**2
             return math.sqrt(sq1 + sq2)
         
-        robot_position, robot_orient = self.robot.base.location
+        robot_position = self.robot.base.location.pose.point
         robot_x = robot_position.x
         robot_y = robot_position.y
         # sort those poses under the threshold on distance to get the closest pose first
@@ -799,7 +799,7 @@ class Get_plan(smach.State):
         rospy.loginfo("Get_plan, goal = {0}".format(userdata.goal).replace("\n", " "))
         
 
-        target_pose =  geometry_msgs.msg.PoseStamped(pose=goal)
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=userdata.goal)
         target_pose.header.frame_id = "/map"
         self.robot.base.send_goal(target_pose, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
