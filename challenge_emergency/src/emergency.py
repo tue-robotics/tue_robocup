@@ -611,7 +611,7 @@ class Look_at_person(smach.State):
 
         if not answers:            
             rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
-            pos, rot = self.robot.base.get_location()
+            pos = self.robot.base.location.pose.position
             x = pos.x
             y = pos.y
         else:
