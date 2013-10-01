@@ -236,7 +236,7 @@ class Cleanup(smach.StateMachine):
                         dist = math.sqrt(abs(xA-xB)**2 + abs(yA-yB)**2)
                         return dist
                     
-                    loc = robot.base.location[0]
+                    loc = robot.base.location.pose.position
                     robot_xy = (loc.x, loc.y)
                     closest_QA = min(answers, key=lambda ans: calc_dist(robot_xy, (float(ans["X"]), float(ans["Y"]))))
                     target = closest_QA["Target"]

@@ -237,7 +237,7 @@ class DetermineGoal(smach.State):
 
         self.robot.speech.speak("I have found {0} possible object locations".format(len(answers)))
 
-        (position, orientation) = self.robot.base.get_location()
+        position = self.robot.base.location.pose.position
         counter = 0
         location_list = []
         for answer in answers:

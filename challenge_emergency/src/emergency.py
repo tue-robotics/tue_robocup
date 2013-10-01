@@ -108,8 +108,9 @@ class turn_Around_z_axis(smach.State):
         ##rospy.logger('Emergency.py:turnAmigo.Execute: {0} degrees.'.format((self.rotation)))
 
         rospy.loginfo("Executing: {0} radians".format(self.rotation))
-        # get current position and rotation
-        pos, rot = self.robot.base.get_location()
+        # get current position and rotation        
+        pose = self.base.location
+        pos, rot = pose.pose.position, pose.pose.orientation
       
         # set rotation
         rotation = transformations.euler_z_from_quaternion(rot)
@@ -318,16 +319,6 @@ class Check_persons_found(smach.State):
         else:
             self.robot.speech.speak("I found someone!")
 
-        # def distance_to_base(xyphi_tup):
-        #         x = float(xyphi_tup[0])
-        #         y = float(xyphi_tup[1])
-
-        #         origX = self.robot.base.location[0].x
-        #         origY = self.robot.base.location[0].y
-
-        #         dist = math.sqrt(abs(origX-x)**2 + abs(origY-y)**2)
-        #         return dist
-
         #####################################################################################
         # TODO Loy: 
         # - from answers of person_query, get the x,y,z value with shortest distance.
@@ -501,7 +492,7 @@ class Register(smach.State):
 
         if not answers:            
             rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
-            pos, rot = self.robot.base.get_location()
+            pos = self.robot.base.location.pose.position
             x = pos.x
             y = pos.y
         else:

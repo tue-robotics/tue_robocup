@@ -33,16 +33,17 @@ class TurnAround(smach.State):
         self.robot = robot
         self.angle = angle
 
-    def execute(self, userdata):
-        orig = self.robot.base.location
-        orig_pos = orig[0]
-        orig_orient = orig[1]
+    def execute(self, userdata): 
+        orig_orient = self.robot.base.location
         orig_orient = [orig_orient.x, orig_orient.y, orig_orient.z, orig_orient.w]
         angle = list(euler_from_quaternion(orig_orient))
         angle[2] += self.angle
         new_orient = self.robot.base.orient(angle[2])
 
-        result = self.robot.base.send_goal(orig_pos, new_orient)
+        target_pose =  self.robot.base.location
+        target_pose.pose.orienation = new_orient
+
+        result = self.robot.base.send_goal(target_pose)
         if result:
             return "done"
         else:
