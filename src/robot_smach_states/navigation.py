@@ -38,6 +38,7 @@ class Navigate_abstract(smach.State):
             return dist
 
     def get_goal(self, userdata):
+        """Must return a PoseStamped"""
         raise NotImplementedError("Navigate_abstract does not implement get_goal, use a subclass instead.")    
 
     def execute(self, userdata=None):
@@ -50,13 +51,13 @@ class Navigate_abstract(smach.State):
                 #self.robot.speech.speak("I don't know where to go. I'm very sorry.")
                 return "goal_not_defined"
 
-            outcome = self.robot.base.send_goal(pos, orient, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
+            outcome = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
             if outcome:
                 return "arrived"
             else:
                 self.robot.base.reset_costmap()
                 rospy.loginfo("Resetting costmap")
-                outcome2 = self.robot.base.send_goal(pos, orient, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
+                outcome2 = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
                 if outcome2:
                     return "arrived"
                 else:
@@ -79,8 +80,11 @@ class Navigate_abstract(smach.State):
                     rospy.logerr("No goal could be defined in {state} with userdata {ud}".format(state=self, ud=userdata))
                     self.robot.speech.speak("I don't know where to go. I'm very sorry.", block=False)
                     return "goal_not_defined"
-
-                outcome = self.robot.base.send_goal(pos, orient, time=0.5, block=False)
+    
+                target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=pos, 
+                                                                                         orientation=orient))
+                target_pose.header.frame_id = "/map"
+                outcome = self.robot.base.send_goal(target_pose, time=0.5, block=False)
                 if outcome:
                     pass #Keep tracking until told otherwise
                 else:
@@ -119,17 +123,14 @@ class Navigate_abstract(smach.State):
 
             x,y,phi = min(possible_locations, key=self.calc_dist)
             rospy.logdebug("Found location for '{0}': {1}".format(name, (x,y,phi)))
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+            
+            point = self.robot.base.point(x,y)
+            orient = self.robot.base.orient(phi)
 
-class Navigate_predefined(Navigate_abstract):
-    @util.deprecated_replace_with("NavigateGeneric")
-    def __init__(self, robot, goal):
-        Navigate_abstract.__init__(robot)
-
-        self.goal = goal
-
-    def get_goal(self, userdata):
-        return self.goal
+            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=point, 
+                                                                                     orientation=orient))
+            target_pose.header.frame_id = "/map"
+            return target_pose
 
 class Navigate_exact(Navigate_abstract):
     """ Navigate to an exact x,y,phi location in /map.
@@ -145,7 +146,10 @@ class Navigate_exact(Navigate_abstract):
         self.preempted = False
         
     def get_goal(self, userdata):
-        return self.point, self.orient
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=self.point, 
+                                                                                     orientation=self.orient))
+        target_pose.header.frame_id = "/map"
+        return target_pose 
         
 class Navigate_named(Navigate_abstract):
     """Navigate to a location from a list of locations, indexed by name
@@ -178,41 +182,6 @@ class Navigate_generated_name(Navigate_abstract):
         
     def get_goal(self, userdata):
         name = self.callback(userdata)
-        
-        return self.get_loc_via_reasoner(name)
-
-class Navigate_generated_coords(Navigate_abstract):
-    """Move to a named location from the locations_list, with the name specified by the callback"""
-    @util.deprecated_replace_with("NavigateGeneric")
-    def __init__(self, robot, 
-                       callback):
-        Navigate_abstract.__init__(self, robot)
-        
-        self.robot = robot
-
-        assert hasattr(robot, 'reasoner')
-
-        assert callable(callback)
-        self.callback = callback
-        
-    def get_goal(self, userdata):
-        goal = self.callback(userdata)
-        if goal:
-            return goal
-        else:
-            return None
-
-class Navigate_userdata_loc(Navigate_abstract):
-    """Move to a named location from the locations_list, with the name specified by userdata.location_name"""
-    @util.deprecated_replace_with("NavigateGeneric")
-    def __init__(self, robot):
-        Navigate_abstract.__init__(self, robot)
-        self.register_input_keys(['goallocation_name'])
-        
-        self.robot = robot
-        
-    def get_goal(self, userdata):
-        name = userdata.goallocation_name
         
         return self.get_loc_via_reasoner(name)
 
@@ -253,7 +222,11 @@ class Navigate_to_queryoutcome(Navigate_abstract):
 
             x,y,phi = min(possible_locations, key=self.sorter)
             rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+
+            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=self.robot.base.point(x,y), 
+                                                                                     orientation=self.robot.base.orient(phi)))
+            target_pose.header.frame_id = "/map"
+            return target_pose
 
 class Visit_query_outcome(Navigate_to_queryoutcome):
     def __init__(self, robot, query, 
@@ -304,8 +277,11 @@ class Visit_query_outcome(Navigate_to_queryoutcome):
             answer_identifier = selected_answer[self.identifier]
 
             self.current_identifier = answer_identifier
-            
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+                        
+            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=self.robot.base.point(x,y), 
+                                                                                     orientation=self.robot.base.orient(phi)))
+            target_pose.header.frame_id = "/map"
+            return target_pose
 
     def execute(self, userdata):
         outcome = super(Visit_query_outcome, self).execute(userdata)
@@ -424,7 +400,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
                 rospy.logerr("IK returned empty pose.")
                 return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
 
-            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
+            return base_pose_for_point
 
 class Look_at_obstacle(smach.State):
     @util.deprecated_replace_with("NavigateGeneric")
@@ -521,6 +497,9 @@ class Navigate_Designator(smach.State):
             try:
                 goal = self.designator.next()
                 pos, orient = goal #unpack tuple
+                target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=pos, 
+                                                                                     orientation=orient))
+                target_pose.header.frame_id = "/map"
             except NoAnswerException:
                 rospy.logerr("No goal could be defined in state {0} using designator {1}".format(self, self.designator))
                 return "goal_not_defined"
@@ -528,7 +507,7 @@ class Navigate_Designator(smach.State):
                 rospy.loginfo(si)
                 return "all_matches_tried"
 
-            outcome = self.robot.base.send_goal(pos, orient, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
+            outcome = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
             if outcome:
                 self.designator.finish_current()
                 return "arrived"
@@ -550,6 +529,9 @@ class Navigate_Designator(smach.State):
                     if goal:
                         rospy.loginfo("Goal: ({0.x}, {0.y})".format(goal[0]))
                         pos, orient = goal #unpack tuple
+                        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=pos, 
+                                                                                             orientation=orient))
+                        target_pose.header.frame_id = "/map"
                 except NoAnswerException:
                     rospy.logerr("No goal could be defined in state {0} using designator {1}".format(self, self.designator))
                     return "goal_not_defined"
@@ -557,7 +539,7 @@ class Navigate_Designator(smach.State):
                     rospy.loginfo(si)
                     return "all_matches_tried"
 
-                outcome = self.robot.base.send_goal(pos, orient, time=0.5, block=False)
+                outcome = self.robot.base.send_goal(target_pose, time=0.5, block=False)
                 if outcome:
                     pass #Keep tracking until told otherwise
                 else:
@@ -584,232 +566,6 @@ class Navigate_Designator(smach.State):
 #                                        NEW GENERIC STATE (SJOERD)
 #
 #############################################################################################################
-
-class NavigateGenericOld(smach.State):
-    @util.deprecated_replace_with("NavigateGeneric")
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, goal_sorter=None, look_at_path_distance=1.5):
-        smach.State.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined"])
-
-        self.robot = robot
-        self.goal_pose_2d = goal_pose_2d
-        self.goal_name = goal_name
-        self.goal_query = goal_query
-        self.goal_sorter = goal_sorter
-        self.look_at_path_distance = look_at_path_distance
-        self.clearance_window_size = 0.6
-
-        self.preempted = False
-    
-        assert hasattr(robot, 'base')
-
-    def get_goal(self):
-
-        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-        #                                 DETERMINE GOAL
-        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
-
-        possible_locations = []
-
-        if self.goal_pose_2d:
-            x, y, phi = self.goal_pose_2d
-            possible_locations += [(x, y, phi)]
-
-        if self.goal_name:
-            query = Compound("waypoint", self.goal_name, Compound("pose_2d", "X", "Y", "Phi"))
-            answers = self.robot.reasoner.query(query)
-
-            if not answers:
-                rospy.logerr("No answers found for query {query}".format(query=query))
-            else:
-                possible_locations += [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
-
-        if self.goal_query:
-            # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-            # is a mapping of variable to a constant, like a string or number
-            answers = self.robot.reasoner.query(self.goal_query)
-
-            if not answers:
-                rospy.logerr("No answers found for query {query}".format(query=self.goal_query))                                
-            else:
-                #From the summarized answer, 
-                possible_locations += [(   float(answer["X"]), 
-                                           float(answer["Y"]), 
-                                           float(answer["Phi"])) for answer in answers]       
-
-        if not possible_locations:
-            rospy.logerr("No goal could be defined in {state}".format(state=self))
-            self.robot.speech.speak("I don't know where to go. I'm very sorry.")
-            return None
-
-        # Get the best possible location according to self.goal_sorter, or get the first one if sorter not specified
-        # ToDo: include costmap query
-        if not self.goal_sorter == None:
-            x,y,phi = min(possible_locations, key=self.goal_sorter)
-        else:
-            x,y,phi = possible_locations[0]
-
-        return self.robot.base.point(x,y), self.robot.base.orient(phi)
-
-
-    def execute(self, userdata=None):
-
-        # # # # # # # # # # # # # # # # # START NAVIGATING # # # # # # # # # # # # # # # # 
-
-        # Before navigating, we first have to determine the goal. 
-        # This must be checked for feasibility by querying the costmap
-        # This way, we know later on that if move_base does not return a feasible path, the path is blocked
-        
-        # If the query to the costmap is not feasible, the next possible location must be queried.
-        # The current goal can be inserted at the back of the queue.
-
-        # If a query is feasible, the path that is returned can be executed. 
-        
-        # If a path becomes unfeasible during execution the move base interface will give feedback on this
-        # 
-
-        self.new_goal_required = True # Auxiliary variable to know if it's a new goal or a replan
-        self.new_path_required = True
-        previous_poses_to_goal = 0
-        previous_replan_timeout = 0
-        goal_status = 0
-
-        # ToDo: timeout needed, rethink anyway
-        # ToDo: increase clearance radius when stuck?
-        while ((not self.preempted and not goal_status == actionlib.GoalStatus.SUCCEEDED) or self.new_goal_required):
-
-            # Significant re-plan
-            if (self.robot.base.poses_to_goal > (previous_poses_to_goal + 5) and not previous_poses_to_goal == 0 and self.new_path_required):
-                self.robot.speech.speak("Lets take a different path", block=False)
-            previous_poses_to_goal = self.robot.base.poses_to_goal
-
-            # Waiting to execute a re-plan, speak when robot starts waiting
-            rospy.loginfo("Replan timeout = {0}".format(self.robot.base.replan_timeout))
-            if (self.robot.base.replan_timeout > previous_replan_timeout):
-                wait_time = int(self.robot.base.replan_timeout)
-                self.robot.speech.speak("I found a new path but this is much longer, I will wait for another {0} seconds before i will take it".format(wait_time), block=False)
-            # If waittime suddenly becomes zero this means that the old path has been cleared
-            elif (self.robot.base.replan_timeout == 0 and previous_replan_timeout > 1.0):
-                self.robot.speech.speak("My original path is clear again so i can take that anyway", block=False)
-            previous_replan_timeout = self.robot.base.replan_timeout
-
-            if self.new_goal_required:
-                rospy.loginfo("Looking for a goal")
-                self.new_goal_required = False
-                goal = self.get_goal()
-                if goal:
-                    rospy.loginfo("Goal: ({0.x}, {0.y})".format(goal[0]))
-                    pos, orient = goal #unpack tuple
-                else:
-                    return "goal_not_defined"
-
-            if self.new_path_required:
-                rospy.loginfo("Looking for a path")
-                self.new_path_required = False
-                self.robot.base.send_goal(pos, orient, time=0.5, block=False)
-                #rospy.logdebug("Path found = {0}".format(self.robot.base.path))
-
-                if not self.robot.base.path:
-                    # Clear costmap and try once more
-                    rospy.logwarn("Clearing costmap around robot")
-                    self.robot.speech.speak("I am going to clear the map around myself", block=False)
-                    self.robot.base.clear_costmap(1.2)
-                    rospy.logwarn("Setting unknown space to free around robot")
-                    self.robot.base.free_unknown_space(2.0)
-                    self.robot.base.send_goal(pos, orient, time=0.5, block=False)
-
-                if not self.robot.base.path:
-                    print "Could not find a path to goal"
-                    # ToDo: get next pose
-                    # ToDo: clear with bigger window? reset map?
-                    self.robot.speech.speak("I could not find a path to the goal")
-                    #self.robot.speech.speak("I am going to the next goal")
-                    return "unreachable"
-                
-                # New additions are encouraged!
-                sentences = ["Jetst gate lowes","Lets roll","Here we go","Hey ho, lets go"]
-                self.robot.speech.speak(random.choice(sentences), block=False)
-
-            # If not preempted and goalstatus active, only keep looking at path
-            if goal_status == actionlib.GoalStatus.ACTIVE:
-
-                #import ipdb; ipdb.set_trace()        
-                if self.preempted:
-                    self.preempted = False
-                    self.service_preempt()
-                    print 'preempted'
-                    return "preempted"
-
-                if self.look_at_path_distance > 0:
-                    robot_pos, robot_orient = self.robot.base.get_location()
-                    # if the nr of poses to goal is not set, there is something wrong
-                    if self.robot.base.poses_to_goal != -1:
-                        lookat_point = None
-                        for i in range(len(self.robot.base.path) - self.robot.base.poses_to_goal, len(self.robot.base.path)):                    
-                            dx = robot_pos.x - self.robot.base.path[i].pose.position.x
-                            dy = robot_pos.y - self.robot.base.path[i].pose.position.y
-                            if dx*dx + dy*dy > self.look_at_path_distance*self.look_at_path_distance and not lookat_point:
-                                lookat_point = self.robot.base.path[i].pose.position.x, self.robot.base.path[i].pose.position.y
-
-                        if lookat_point:
-                            rospy.logdebug("look at: " + str(lookat_point))
-                            self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=True, timeout=0.0)
-                        else:
-                            self.robot.head.reset_position(timeout=0.0)
-                    else:
-                        rospy.logwarn("nr of poses to goal is not set (equals {0})".format(self.robot.base.poses_to_goal))
-
-
-            if goal_status == actionlib.GoalStatus.ABORTED:
-
-                rospy.logwarn("Move base goal aborted, obstacle at {0}".format(self.robot.base.obstacle_position))
-
-                # if there is no obstacle on the global path while the robot is not able to reach its goal
-                # the local planner is probably in unknown space, so clear this
-                if (self.robot.base.obstacle_position.point.x == -1 and self.robot.base.obstacle_position.point.y == -1 and self.robot.base.obstacle_position.point.z == -1):
-                    # size must be large enough to clear unknown space around the robot
-                    self.robot.speech.speak("I am not sure if the space in front of me is clear. Watch out, I am going to clear it", block=False)
-                    self.robot.base.free_unknown_space(2.0)
-                    self.new_path_required = True
-                # otherwise the goal is unreachable or base is in obstacle, needs clearing
-                else:    
-                    # Compute distance to determine whether the base is in/near an obstacle or the goal is unreachable
-                    dx = self.robot.base.base_pose.pose.position.x - self.robot.base.obstacle_position.point.x
-                    dy = self.robot.base.base_pose.pose.position.y - self.robot.base.obstacle_position.point.y
-                    distance = math.sqrt(dx*dx+dy*dy)
-                    rospy.logwarn("Distance = {0}".format(distance))
-                    if distance < 0.1:
-                        self.robot.speech.speak("I have the funny feeling that I am inside an obstacle")
-                        # Size must be at least the diameter of the robot
-                        self.robot.speech.speak("I am going to clear the map around myself")
-                        self.robot.base.clear_costmap(1.2)
-                        self.new_path_required = True
-                    else:
-                        self.robot.speech.speak("Oh no, I can not reach my precious goal")
-                        self.new_goal_required = True
-                        self.new_path_required = True
-                       
-            goal_status = self.robot.base.ac_move_base.get_state()
-            rospy.logdebug("GoalStatus = {0}".format(goal_status))
-            rospy.sleep(0.5)
-
-        
-        rospy.logwarn("new_goal_required = {0}".format(self.new_goal_required))
-        rospy.logwarn("Exit status while loop = {0}".format(((not self.preempted and not actionlib.GoalStatus.SUCCEEDED) or self.new_goal_required)))
-        rospy.logwarn("not self.preempted = {0}".format(not self.preempted))
-        rospy.logwarn("not SUCCEEDED = {0}".format(not actionlib.GoalStatus.SUCCEEDED))
-        
-        if goal_status == actionlib.GoalStatus.SUCCEEDED:
-		    self.robot.speech.speak("I have reached my goal")
-        
-        self.robot.head.reset_position(timeout=0.0)
-        return "arrived"
-
-    def request_preempt(self):
-        """Quit navigating"""
-        #self.request_preempt(self)
-        rospy.logwarn("Preempting NavigateGeneric...")
-        self.preempted = True
-        self.robot.base.cancel_goal()
 
 class ResetCostmap(smach.State):
     def __init__(self, robot):
@@ -1042,7 +798,10 @@ class Get_plan(smach.State):
         rospy.loginfo("Looking for a path")
         rospy.loginfo("Get_plan, goal = {0}".format(userdata.goal).replace("\n", " "))
         
-        self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
+
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=goal)
+        target_pose.header.frame_id = "/map"
+        self.robot.base.send_goal(target_pose, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
         #rospy.logdebug("Path found = {0}".format(self.robot.base.path))
 

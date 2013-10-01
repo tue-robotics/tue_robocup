@@ -233,7 +233,7 @@ class Prepare_orientation(smach.State):
             
             rospy.loginfo("[robot_smach_states] Desired target position: x = %f, y = %f",desired_base_poses_MAP[0].pose.position.x, desired_base_poses_MAP[0].pose.position.y)
 
-            if self.robot.base.send_goal(desired_base_poses_MAP[0].pose.position, desired_base_poses_MAP[0].pose.orientation, time=60):
+            if self.robot.base.send_goal(desired_base_poses_MAP[0], time=60):
                 '''wait for base goal to succeed for orientation'''
                 #self.robot.base.wait(wait_time=60)
                 rospy.loginfo("Moved the base to desired pose")  
