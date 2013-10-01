@@ -109,30 +109,6 @@ class Base(object):
 
         return self.__get_plan(target_pose)
 
-    def get_plan_OLD(self, position, orientation, frame_id="/map", goal_area_radius=0.1):
-        path_request = tue_move_base_msgs.srv.GetPathRequest()
-
-        path_request.target_pose.header.frame_id = frame_id
-        path_request.target_pose.header.stamp = rospy.Time.now()
-        path_request.target_pose.pose.position.x = position.x
-        path_request.target_pose.pose.position.y = position.y 
-        path_request.target_pose.pose.orientation = orientation
-
-        try:
-            #path_request.path_resolution = 1
-            #path_request.goal_area_size = 0
-            #path_request.nr_area_samples = 1
-            path_request.goal_area_radius = goal_area_radius
-        except AttributeError, ae:
-            rospy.logerr("Attribute could not be set, please update to correct to move_base_msgs: {0}".format(ae))
-            
-        path = self._get_plan_service(path_request)
-
-        if not path:
-            rospy.logwarn("No path could be found to get to target pose {0}".format(path_request.target_pose))
-
-        return path
-
     def __get_plan(self, target_pose, goal_area_radius=0.1):
         path_request = tue_move_base_msgs.srv.GetPathRequest()
 
@@ -231,15 +207,20 @@ class Base(object):
 
         return query_result_tuples
 
-    def send_goal(self, position, orientation_quaternion, frame_id ='/map', time=0, block=True, goal_area_radius=0.1):
-        path_result = self.get_plan(position, orientation_quaternion, frame_id, goal_area_radius)
+    def send_goal(self, target_pose, time=0, block=True, goal_area_radius=0.1):
+        assert isinstance(target_pose, geometry_msgs.msg.PoseStamped)
+        # target_pose =  geometry_msgs.msg.PoseStamped(   frame_id=frame_id, 
+        #                                                 pose=geometry_msgs.msg.Pose(position=position, 
+        #                                                                             orientation=orientation))
+        
+        path_result = self.__get_plan(target_pose, goal_area_radius)
 
         self.path = path_result.path
 
-        rospy.loginfo("Sending goal to {0}".format(position).replace('\n', ' '))
+        rospy.loginfo("Sending goal to {0}".format(target_pose.pose.position).replace('\n', ' '))
 
         if not self.path:
-            rospy.loginfo("No feasible plan to ({0.x},{0.y})".format(position))
+            rospy.loginfo("No feasible plan to ({0.x},{0.y})".format(target_pose.pose.position))
             return False
         else:
             result = self.execute_plan(path_result, time, block)
@@ -344,7 +325,10 @@ class Base(object):
         return transformations.euler_z_from_quaternion(orient)
     
     def go(self, x, y, phi, frame="/map", time=0):
-        return self.send_goal(self.point(x,y), self.orient(phi), frame, time)
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=self.point(x,y), 
+                                                                                 orientation=self.orient(phi)))
+        target_pose.header.frame_id = frame
+        return self.send_goal(target_pose, time)
     
     def clear_costmap(self, window_size=1.0):
         if self.use_2d:
