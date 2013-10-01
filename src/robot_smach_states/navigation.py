@@ -881,7 +881,7 @@ class Execute_path(smach.State):
             self.previous_poses_to_goal = self.robot.base.poses_to_goal
 
             if self.look_at_path_distance > 0:
-                robot_pos, robot_orient = self.robot.base.get_location()
+                robot_pos = self.robot.base.location.pose.position
                 # if the nr of poses to goal is not set, there is something wrong
                 if self.robot.base.poses_to_goal != -1:
                     lookat_point = None
