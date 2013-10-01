@@ -225,15 +225,6 @@ class Base(object):
         else:
             result = self.execute_plan(path_result, time, block)
             return result
-
-    def send_goal_topic(self, pos, orientation_quaternion, frame_id='/map'):
-        pos.z = 0
-        header = std_msgs.msg.Header()
-        header.stamp = rospy.Time.now()
-        header.frame_id = frame_id = frame_id
-        base_goal = geometry_msgs.msg.PoseStamped(header,geometry_msgs.msg.Pose(position=pos, orientation=orientation_quaternion))
-        self.running = True
-        self.move_simple_base.publish(base_goal)
         
     def cancel_goal(self):
         self.ac_move_base.cancel_all_goals() #Does not return anything
@@ -290,11 +281,17 @@ class Base(object):
             orientation.y = ro_rot[1]
             orientation.z = ro_rot[2]
             orientation.w = ro_rot[3]
-            return position, orientation
+
+            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+            target_pose.header.frame_id = "/map"
+            target_pose.header.stamp = time
+            return target_pose
         
         except (tf.LookupException, tf.ConnectivityException):
-            rospy.logerr("tf request failed!!!")
-            return position, orientation
+            rospy.logerr("tf request failed!!!")        
+            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+            target_pose.header.frame_id = frame_id
+            return target_pose
         
     location = property(get_location)
     

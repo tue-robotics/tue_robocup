@@ -244,7 +244,8 @@ if __name__ == "__main__":
 
     #Useful for making location-files
     def get_pose_2d():
-       loc,rot = amigo.base.location
+       posestamped = amigo.base.location
+       loc,rot = posestamped.pose.point, posestamped.pose.orientation
        rot_array = [rot.w, rot.x, rot.y, rot.z]
        rot3 = tf.transformations.euler_from_quaternion(rot_array)
        print 'x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0])
