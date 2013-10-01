@@ -32,7 +32,7 @@ class Navigate_abstract(smach.State):
     
     def calc_dist(self, (xg,yg,phig)):
             #TODO: Take rotation into account as well
-            loc = self.robot.base.location.pose.point
+            loc = self.robot.base.location.pose.position
             xr,yr,zr = loc.x, loc.y, loc.z
             dist = math.sqrt(abs(xr-xg)**2 + abs(yr-yg)**2)
             return dist
@@ -347,7 +347,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
         self.maxdist = maxdist
 
     def calc_dist_3d(self, (xg,yg,zg)):            
-            loc = self.robot.base.location.pose.point
+            loc = self.robot.base.location.pose.position
             xr,yr,zr = loc.x, loc.y, loc.z
             dist = math.sqrt(abs(xr-xg)**2 + abs(yr-yg)**2)
             return dist
@@ -368,7 +368,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             rospy.logwarn("No answers found for query {query} that are not visited and are not unreachable.".format(query=self.decorated_query))
             return None
         else:
-            basepos = self.robot.base.location.pose.point
+            basepos = self.robot.base.location.pose.position
             basepos = (basepos.x, basepos.y, basepos.z)
             selected_answer = urh.select_answer(answers, 
                                                 lambda answer: urh.xyz_dist(answer, basepos), 
@@ -757,7 +757,7 @@ class Determine_goal(smach.State):
             sq2 = (p1y-p2y)**2
             return math.sqrt(sq1 + sq2)
         
-        robot_position = self.robot.base.location.pose.point
+        robot_position = self.robot.base.location.pose.position
         robot_x = robot_position.x
         robot_y = robot_position.y
         # sort those poses under the threshold on distance to get the closest pose first
