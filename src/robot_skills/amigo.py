@@ -95,7 +95,8 @@ class Amigo(object):
         env_name = ans_env[0]["Env"]
         
         # Determine base position as (x, y, phi)
-        (pos, quat) = self.base.get_location()
+        pose = self.base.location
+        (pos, quat) = pose.pose.position, pose.pose.orientation
         phi = self.base.phi(quat)
 
         base_pose = Compound("waypoint", env_name, "Challenge", label, Compound("pose_2d", round(pos.x, 3), round(pos.y, 3), round(phi, 3)))
