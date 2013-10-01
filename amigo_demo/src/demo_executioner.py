@@ -1063,7 +1063,7 @@ def main():
         #~ robot = build_amigo(fake=['base','arms','perception','head', 'worldmodel'])
     #~ else:
     robot = Amigo() #dontInclude=['perception'] is needed for grabbing items
-    robot.lights.set_color(0.5, 1, 0)
+    robot.lights.set_color(0, 0, 1)
     #import pdb; pdb.set_trace()
     rospy.spin()
 
