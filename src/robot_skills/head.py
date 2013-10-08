@@ -152,13 +152,13 @@ class Head(object):
         """
         Reset head position
         """
-        """reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/torso')
+        """reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/amigo/torso')
         # Added 3 second timeout instead of standard 10
         self.send_goal(reset_head_goal.point,
                        reset_head_goal.header.frame_id, 3.0)
 
         return True"""
-        reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/torso')
+        reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/amigo/torso')
 
         return self.send_goal(reset_head_goal.point, reset_head_goal.header.frame_id, keep_tracking=False, timeout=timeout)
 
