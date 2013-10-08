@@ -207,7 +207,7 @@ if __name__ == "__main__":
     left_open = lambda: amigo.leftArm.send_gripper_goal_open()
     speak = lambda sentence: amigo.speech.speak(sentence, block=False)
     praat = lambda sentence: amigo.speech.speak(sentence, language='nl', block=False)
-    look_at_point = lambda x, y, z: amigo.head.send_goal(amigo.head.point_stamped(x, y, z, frame_id="/amigo/base_link"))
+    look_at_point = lambda x, y, z: amigo.head.send_goal(msgs.PointStamped(x, y, z, frame_id="/amigo/base_link"))
         
     r = amigo.reasoner
     q = amigo.reasoner.query

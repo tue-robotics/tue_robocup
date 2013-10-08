@@ -47,7 +47,7 @@ class Head(object):
     def send_goal(self, position, frame_id='/map', timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
         Send a goal for the head, Executes a HeadRefAction
-        Expects a position which is a geometry_msgs.msg.Point().
+        Expects a position which is a geometry_msgs.msg.Point(). Should become geometry_msgs.msg.PointStamped, so we don't need the frame_id-param anymore
         And optional frame_id and timeout, frame_id defaults to /map
         By default, it does not keep tracking
         """
