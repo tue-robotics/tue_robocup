@@ -17,6 +17,7 @@ from robot_skills.arms import State as ArmState
 import geometry_msgs
 
 import assert_operator
+import robot_skills.util.msg_constructors as msgs
 
 #TODO: als coke niet vinde, iets anders graspen.
 #Zegt niet voordat om coke vraagt?
@@ -600,7 +601,7 @@ def setup_statemachine(robot):
                         Compound("base_grasp_point", "ObjectID", Compound("point_3d", "X", "Y", "Z")),
                         Compound("not", Compound("disposed", "ObjectID")))
 
-    robot.perception.set_table_roi(6.132, -1.455, 0.76, 2, 3, 1)
+    robot.perception.set_table_roi(msgs.PointStamped(6.132, -1.455, 0.76), 2, 3, 1)
 
     if grasp_arm == "right": 
         arm = robot.rightArm
