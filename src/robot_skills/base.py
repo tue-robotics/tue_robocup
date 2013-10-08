@@ -102,12 +102,7 @@ class Base(object):
     def __planner_callback(self, msg):
         with self._lock:
             self.plan_possible = msg.data
-    
-    def get_plan(self, position, orientation, frame_id="/map", goal_area_radius=0.1):
-        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-        target_pose.header.frame_id = frame_id
 
-        return self.__get_plan(target_pose)
 
     def __get_plan(self, target_pose, goal_area_radius=0.1):
         path_request = tue_move_base_msgs.srv.GetPathRequest()
