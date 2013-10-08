@@ -2,24 +2,16 @@
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
-import smach_ros
-import time
-import copy
 import navigation
 from util import transformations
-from psi import Term, Compound, Conjunction
+from psi import Compound
 
-''' For siren demo challenge '''
-import thread
-import os
-
-import threading #For monitoring the ROS topic while waiting on the answer
-from std_msgs.msg import String
 import geometry_msgs
 
 from robot_skills.arms import State as ArmState
 
 from human_interaction import Say
+import robot_skills.util.msg_constructors as msgs
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
 #TODO: Make Place_Object also use a query 
@@ -322,12 +314,7 @@ class UpdateObjectPose(smach.State):
         
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            target_point = geometry_msgs.msg.PointStamped()
-            target_point.header.frame_id = "/map"
-            target_point.header.stamp = rospy.Time()
-            target_point.point.x = float(answer["X"])
-            target_point.point.y = float(answer["Y"])
-            target_point.point.z = float(answer["Z"])
+            target_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map")
             self.robot.head.send_goal(target_point, keep_tracking=True)
         else:
             return 'target_lost'
@@ -764,18 +751,15 @@ class Place_Object(smach.State):
         ''' Move arm '''
         rospy.loginfo("Move arm to dropoff pose")
         # TODO: Make real difference between left and right arm
-        head_goal = geometry_msgs.msg.Point()
-        head_goal.x = 0.0
-        head_goal.y = 0.0
-        head_goal.z = 0.0
+
         if self.side == self.robot.leftArm:
             #y_drop = 0.3
             y_drop = 0.4
-            self.robot.head.send_goal(head_goal,"/amigo/grippoint_left")
+            self.robot.head.send_goal(msgs.PointStamped(frame_id="/amigo/grippoint_left"))
         elif self.side == self.robot.rightArm:
             #y_drop = -0.3
             y_drop = -0.4
-            self.robot.head.send_goal(head_goal,"/amigo/grippoint_left") #REVIEW(Loy): Is this correct?
+            self.robot.head.send_goal(msgs.PointStamped(frame_id="/amigo/grippoint_right")) #This was grippoint_left as well somehow?
         
         # Pose (left arm) Position: 0.24 0.43 0.15 Orientation: 0.12 0.58 0.09 0.80 
         if self.side.send_goal(0.5, y_drop, z_drop, 0.0 ,0.0 ,0.0 , time_out = 60, pre_grasp = False, frame_id = '/base_link'):

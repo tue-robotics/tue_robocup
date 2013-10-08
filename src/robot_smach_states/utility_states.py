@@ -2,18 +2,12 @@
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
-import smach_ros
-import time
-import copy
 
 ''' For siren demo challenge '''
 import thread
-import os
 
-import threading #For monitoring the ROS topic while waiting on the answer
-from std_msgs.msg import String
-
-from psi import *
+from psi import Compound
+import robot_skills.util.msg_constructors as msgs
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -151,35 +145,6 @@ class Wait_time(smach.State):
                 self.service_preempt()
                 return 'preempted'
         return 'waited'
-
-# class Wait(smach.State):
-#     def __init__(self, robot=None, waittime=10):
-#         smach.State.__init__(self,
-#                                    outcomes=['waiting_finished'],
-#                                 input_keys=['rate','world_info','target'])
-#         self.robot = robot
-#         self.waittime = waittime
-                                
-#     def execute(self, gl):
-        
-#         i = 0
-#         self.robot.speech.speak("I will wait here for {0} seconds".format(self.waittime))
-
-#         wait_time = self.waittime
-#         start_time = rospy.Time.now()
-#         while (not rospy.is_shutdown()) and (rospy.Time.now() - start_time) < rospy.Duration(wait_time):
-
-#             rospy.sleep(0.2)
-            
-#             if self.robot.worldmodel.target_is_available(gl.target):
-                
-#                 target_position = self.robot.worldmodel.determine_target_position(gl.target)
-                
-#                 self.robot.head.send_goal(target_position, "/map")
-#             i = i + 1
-            
-#         self.robot.speech.speak("I am done waiting")
-#         return 'waiting_finished'
 
 class Wait_Condition(smach.State):
     '''Wait until a condition is satisfied, possible on a robot. 

@@ -5,18 +5,13 @@ import smach
 #import object_msgs.msg
 import math
 
-import std_msgs.msg
-
-import util
-
 from sensor_msgs.msg import LaserScan
 import geometry_msgs
 
-from human_interaction import Say, Timedout_QuestionMachine, Say_generated, QuestionMachine
-from reasoning import Wait_query_true, Retract_facts
-from psi import Conjunction, Compound
+from psi import Compound
 
 import util.reasoning_helpers as urh
+import robot_skills.util.msg_constructors as msgs
 
 class Learn_Person(smach.State):
     '''
@@ -121,7 +116,7 @@ class LookForObjectsAtROI(smach.State):
                                                 minmax=min)
             rx,ry,rz = urh.answer_to_tuple(selected_roi_answer)
             rospy.loginfo("[TEST ERIK] LOOKING AT (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
-            lookat_point = self.robot.head.point(rx,ry,rz)
+            lookat_point = msgs.PointStamped(rx,ry,rz)
             print lookat_point
 
             # Send spindle goal to bring head to a suitable location
@@ -129,8 +124,8 @@ class LookForObjectsAtROI(smach.State):
             # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
             # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
             # ToDo: do we need to incorporate wait functions?
-            spindle_target = max(0.15, min(lookat_point.z - 0.41, self.robot.spindle.upper_limit))
-            rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.z, spindle_target))
+            spindle_target = max(0.15, min(lookat_point.point.z - 0.41, self.robot.spindle.upper_limit))
+            rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.point.z, spindle_target))
 
             self.robot.spindle.send_goal(spindle_target,waittime=5.0)
             self.robot.head.send_goal(lookat_point, keep_tracking=False)
@@ -153,9 +148,9 @@ class LookForObjectsAtROI(smach.State):
         target_point = geometry_msgs.msg.PointStamped()
         target_point.header.frame_id = "/map"
         target_point.header.stamp = rospy.Time()
-        target_point.point.x = lookat_point.x
-        target_point.point.y = lookat_point.y
-        target_point.point.z = lookat_point.z
+        target_point.point.x = lookat_point.point.x
+        target_point.point.y = lookat_point.point.y
+        target_point.point.z = lookat_point.point.z
         try:
             self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
         except Exception as e:
@@ -194,7 +189,7 @@ class LookForObjectsAtROI(smach.State):
                                                 criteria=[  lambda answer: urh.xyz_dist(answer, (rx,ry,rz)) < self.maxdist,
                                                             lambda answer: answer["Z"] > 0.4]) #The object is above 0.4m
             ox,oy,oz = urh.answer_to_tuple(closest_QA)
-            lookat_point = self.robot.head.point(ox,oy,oz)
+            lookat_point = msgs.PointStamped(ox,oy,oz)
             # retract current object id
             r = self.robot.reasoner
 
@@ -236,7 +231,7 @@ class LookForObjectsAtPoint(smach.State):
 
         rospy.loginfo("Target height: {0}, spindle_target: {1}".format(self.point_stamped.point.z, spindle_target))
         self.robot.spindle.send_goal(spindle_target)
-        self.robot.head.send_goal(self.point_stamped.point, frame_id=self.point_stamped.header.frame_id) #TODO Loy: Make all methods that take xyz and a frame_id take a PointStamped instead and define that convenience somewhere else
+        self.robot.head.send_goal(self.point_stamped)
 
         # Toggle perception on
 

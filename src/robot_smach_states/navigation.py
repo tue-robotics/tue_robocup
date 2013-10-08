@@ -4,12 +4,10 @@ import rospy
 import smach
 import geometry_msgs.msg
 import util
-import util.msg_constructors
+import robot_skills.util.msg_constructors as msgs
 import util.transformations
 import util.reasoning_helpers as urh
 
-import random
-import copy
 import math
 
 from psi import Term, Compound, Conjunction
@@ -418,7 +416,7 @@ class Look_at_obstacle(smach.State):
                 obstaclepoint = self.robot.base.obstacle_position #is a PointStamped
                 if obstaclepoint:
                     rospy.loginfo("Obstaclepoint"+str(obstaclepoint.point).replace('\n', ' '))
-                    self.robot.head.send_goal(obstaclepoint.point) #get the point of the PointStamped
+                    self.robot.head.send_goal(obstaclepoint) #get the point of the PointStamped
                 elif obstaclepoint and obstaclepoint.point.x == -1 and obstaclepoint.point.y == -1 and obstaclepoint.point.z == -1:
                     #reset head
                     self.robot.head.reset_position()
@@ -889,7 +887,7 @@ class Execute_path(smach.State):
 
                     if lookat_point:
                         rospy.logdebug("Look at {0}".format(lookat_point))
-                        self.robot.head.send_goal(self.robot.head.point(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
+                        self.robot.head.send_goal(msgs.PointStamped(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
                             min_pan=-0.9,max_pan=0.9,min_tilt=0.0,max_tilt=0.8)
                     else:
                         # reset head position to look down

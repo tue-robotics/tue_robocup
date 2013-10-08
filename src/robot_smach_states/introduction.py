@@ -3,17 +3,8 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import smach_ros
-#from object_msgs.msg import ExecutionTarget
-#from exc_to_ros import *
-#from ros_to_exc import *
-#from exc_functions import *
-#from ros_functions import *
-#import time
-#import copy
 
-#import components
-
-#from human_interaction import Say
+import robot_skills.util.msg_constructors as msgs
 
 ############################## State Introduce ######################################
 class AmigoIntroductionEnglish(smach.State):
@@ -161,7 +152,7 @@ class WelcomeMaxima1(smach.State):
         
     def execute(self, gl):
         ''' Intro talk '''
-        self.robot.head.send_goal(self.robot.head.point_stamped(1.0, 0, 1.6, "/base_link"), 0)
+        self.robot.head.send_goal(msgs.PointStamped(1.0, 0, 1.6, "/base_link"), 0)
         self.robot.speech.speak("Welkom majesteit","nl","marjolijn","default","neutral",block=True)
         self.robot.speech.speak("Mijn naam is amigo, de zorgrobot van de Technische Universiteit Eindhoven","nl","marjolijn","default","neutral",block=True)
         self.robot.speech.speak("Namens de organisatie heet ik u van harte welkom op RoboCup twee duizend dertien","nl","marjolijn","default","neutral",block=True)
@@ -177,9 +168,9 @@ class WelcomeMaxima2(smach.State):
         ''' Overhandigen bloemen '''
         self.robot.speech.speak("Graag bied ik u dit boeket aan!","nl","marjolijn","default","neutral",block=False)
         self.robot.spindle.high()
-        self.robot.head.send_goal(self.robot.head.point_stamped(0.0,0,0.0, "/amigo/grippoint_right"),0)
+        self.robot.head.send_goal(msgs.PointStamped(0.0,0,0.0, "/amigo/grippoint_right"),0)
         self.robot.rightArm.send_joint_goal(-0.1, 0.58, 0.49, 1.62, -0.21, 0.09, -0.11, timeout=2.0)
-        self.robot.head.send_goal(self.robot.head.point_stamped(1.0,0,1.6,"/base_link"),0)
+        self.robot.head.send_goal(msgs.PointStamped(1.0,0,1.6,"/base_link"),0)
         self.robot.rightArm.send_joint_goal(-0.1, 0.58, 0.49, 1.62, -0.41, -0.51, 0.1, timeout=1.5)
         self.robot.rightArm.send_joint_goal(-0.1, 0.88, 0.49, 1.32, -0.41, -0.51, 0.1)
         #self.robot.rightArm.send_joint_goal(-0.02744625, 0.11145711, 0.15037341, 2.214187105, -0.108680065, 0.08952796, 0.05084748)
