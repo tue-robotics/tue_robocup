@@ -4,16 +4,9 @@ import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import threading
 
-import object_msgs.msg
-from exc_functions import *
-from ros_functions import *
-from exc_to_ros import *
-from util import transformations
-
 import util
 from std_srvs.srv import Empty 
 import geometry_msgs.msg
-
 
 def synchronized(L): 
          def lock_around(f): 
