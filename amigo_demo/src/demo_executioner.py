@@ -344,8 +344,8 @@ def grab_item(robot, selectedArm):
     robot.leftArm.reset_arm()
     robot.rightArm.reset_arm()
     robot.reasoner.reset()
-    robot.reasoner.detach_all_from_gripper("/grippoint_left")
-    robot.reasoner.detach_all_from_gripper("/grippoint_right")
+    robot.reasoner.detach_all_from_gripper("/amigo/grippoint_left")
+    robot.reasoner.detach_all_from_gripper("/amigo/grippoint_right")
 
     with sm:
         smach.StateMachine.add('ANNOUNCE_LOOK_FOR_DRINK',

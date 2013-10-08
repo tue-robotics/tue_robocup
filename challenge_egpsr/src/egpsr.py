@@ -717,7 +717,7 @@ def setup_statemachine(robot):
                     rospy.loginfo("objectID = {0} is DISPOSED".format(objectID))
 
                     try:
-                        robot.reasoner.detach_all_from_gripper("/grippoint_left")
+                        robot.reasoner.detach_all_from_gripper("/amigo/grippoint_left")
                     except KeyError, ke:
                         rospy.loginfo("Could not detach object from gripper, do not know which ID: {0}".format(ke))
                     rospy.loginfo("object should be detached from gripper!")
@@ -901,7 +901,7 @@ def setup_statemachine(robot):
                     rospy.loginfo("objectID = {0} is DISPOSED".format(objectID))
 
                     try:
-                        robot.reasoner.detach_all_from_gripper("/grippoint_left")
+                        robot.reasoner.detach_all_from_gripper("/amigo/grippoint_left")
                     except KeyError, ke:
                         rospy.loginfo("Could not detach object from gripper, do not know which ID: {0}".format(ke))
                     rospy.loginfo("object should be detached from gripper!")

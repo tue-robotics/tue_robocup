@@ -370,7 +370,7 @@ class HandoverToKnownHuman(smach.StateMachine):
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
-                                    states.SetGripper(self.robot, self.arm, gripperstate=0, drop_from_frame="/grippoint_left"), #open
+                                    states.SetGripper(self.robot, self.arm, gripperstate=0, drop_from_frame="/amigo/grippoint_left"), #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
                                                     'failed':'CLOSE_AFTER_DROP'})
             smach.StateMachine.add( 'CLOSE_AFTER_DROP',
