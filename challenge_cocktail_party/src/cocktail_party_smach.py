@@ -10,6 +10,7 @@ from speech_interpreter.srv import AskUser
 from robot_skills.amigo import Amigo
 
 from robot_smach_states import *
+from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
 
 
