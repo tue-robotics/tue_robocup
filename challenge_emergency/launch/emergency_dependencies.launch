@@ -6,6 +6,6 @@
   <node pkg="challenge_emergency" type="emergency_paper" respawn="false" name="emergency_paper" output="screen">
   </node>
 
-  <node pkg="virtual_cam" type="save" args="SERVICE" name="virtual_cam" /> 
+  <node pkg="virtual_cam" type="save" args="SERVICE /amigo/top_kinect/rgb/image_color /amigo/top_kinect/depth_registered/image /amigo/top_kinect/rgb/camera_info" name="virtual_cam" /> 
   
 </launch>	
