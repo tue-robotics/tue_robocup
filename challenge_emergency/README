@@ -8,7 +8,7 @@ amigo2:
     
 amigo1:
     
-    amiddle-emergency
+    amiddle
 
 amigo3:
 
@@ -46,4 +46,4 @@ amigo3:
 
 Dependency launch file includes:
 - including paramaters.yaml in emergency package
-- running virtual_cam for starting service
+- running virtual_cam for starting service to get picture
