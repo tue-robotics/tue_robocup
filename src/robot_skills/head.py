@@ -278,9 +278,9 @@ class Head(object):
         Optionally, keep tracking can be disabled (keep_tracking=False)
         """
         if (side == "left"):
-            return self.set_position(0,0,0,frame_id="/grippoint_left",keep_tracking=keep_tracking)
+            return self.set_position(0,0,0,frame_id="/amigo/grippoint_left",keep_tracking=keep_tracking)
         elif (side == "right"):
-            return self.set_position(0,0,0,frame_id="/grippoint_right",keep_tracking=keep_tracking)
+            return self.set_position(0,0,0,frame_id="/amigo/grippoint_right",keep_tracking=keep_tracking)
         else:
             rospy.logerr("No side specified for look_at_hand")
             return False

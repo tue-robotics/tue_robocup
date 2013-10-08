@@ -195,8 +195,8 @@ class Reasoner(object):
         return rospy.Time.now() - rospy.Time(t_secs)
 
     def reset(self):
-        self.detach_all_from_gripper("/grippoint_left")
-        self.detach_all_from_gripper("/grippoint_right")
+        self.detach_all_from_gripper("/amigo/grippoint_left")
+        self.detach_all_from_gripper("/amigo/grippoint_right")
         self.sv_reset()
 
 

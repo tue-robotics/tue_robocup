@@ -495,9 +495,9 @@ class Arms(object):
     def get_pose(self, root_frame_id, side=None):
         """ Get the pose of the end-effector with respect to the specified frame_id"""
         if side == Side.LEFT:
-            target_frame = "/grippoint_left"
+            target_frame = "/amigo/grippoint_left"
         elif side == Side.RIGHT:
-            target_frame = "/grippoint_right"
+            target_frame = "/amigo/grippoint_right"
         root_frame = root_frame_id
         try:
             (trans,rot) = self.tf_listener.lookupTransform(root_frame, target_frame, rospy.Time(0))
