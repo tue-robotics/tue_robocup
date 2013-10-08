@@ -42,7 +42,6 @@
   <depend package="tue_costmap_msgs"/>
   <depend package="amigo_inverse_reachability"/>
 
-  <depend package="amigo_marker_detection"/>
   <depend package="amigo_velocity_kinematics"/>
   
   <depend package="wire_msgs"/>
