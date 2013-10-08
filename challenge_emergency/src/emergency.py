@@ -183,7 +183,11 @@ class Navigate_to_queryoutcome_emergency(states.Navigate_abstract):
             self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", waypoint_name))) 
 
             rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,phi)))
-            return self.robot.base.point(x,y), self.robot.base.orient(phi)
+
+            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=self.robot.base.point(x,y), 
+                                                                                     orientation=self.robot.base.orient(phi)))
+            target_pose.header.frame_id = "/map"
+            return target_pose
 
 
 class Looking_for_people(smach.State):
@@ -712,7 +716,7 @@ def setup_statemachine(robot):
                                     transitions={   'done':'CHECK_TIME' })
 
         smach.StateMachine.add('CHECK_TIME',
-                                    states.CheckTime(robot, "find_fire", rospy.Duration(55)),
+                                    states.CheckTime(robot, "find_fire", rospy.Duration(5)),
                                     transitions={   'ok':'SAY_WEATHER_QUEEN',
                                                     'timeout':'SAY_FIRE_ALARM' })  
 
@@ -721,7 +725,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'CHECK_TIME_2'}) 
 
         smach.StateMachine.add('CHECK_TIME_2',
-                                    states.CheckTime(robot, "find_fire", rospy.Duration(55)),
+                                    states.CheckTime(robot, "find_fire", rospy.Duration(5)),
                                     transitions={   'ok':'SLEEP_1_SEC',
                                                     'timeout':'SAY_FIRE_ALARM' })   
 
