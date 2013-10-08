@@ -90,10 +90,10 @@ class turn_Around_z_axis(smach.State):
         rot = transformations.euler_z_to_quaternion(rotation)
         
         # create new path
-        path = self.robot.base.get_plan(pos,rot)
-
-        # execute new path
-        if self.robot.base.execute_plan(path):
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=pos, orientation=rot))
+        target_pose.header.frame_id = "/map"
+        
+        if self.robot.base.send_goal(target_pose):
             return "done"
         else:
             return "abort"
