@@ -449,7 +449,7 @@ class Register(smach.State):
 
         self.status = status
 
-        self.get_picture = rospy.ServiceProxy('virtual_cam/cheese', cheese)
+        self.get_picture = rospy.ServiceProxy('virtual_cam_saver/cheese', cheese)
 
     def execute(self, userdata=None):    
 
