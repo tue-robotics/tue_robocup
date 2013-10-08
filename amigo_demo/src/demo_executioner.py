@@ -6,6 +6,7 @@ import random
 
 from robot_skills.amigo import Amigo
 from robot_skills.reasoner import Conjunction, Compound
+import robot_skills.util.msg_constructors as msgs
 from std_msgs.msg import String
 
 from math import sin
@@ -185,7 +186,7 @@ def grasp(robot):
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
 
     #One option is to let Amigo look to his hands directly using a point relative to it:
-    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(4.0))
 
@@ -195,7 +196,7 @@ def grasp(robot):
     robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"])
 
     #Look at finger again
-    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
 def pickup(robot):
     print "joints = PICK_UP"
@@ -203,11 +204,11 @@ def pickup(robot):
     #rospy.sleep(rospy.Duration(2.0))
 
     robot.rightArm.send_joint_goal(*poses["PICK_UP"])
-    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
-    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
 
@@ -232,9 +233,9 @@ def home(robot):
 def tip(robot):
     print "joints = TIPPING"
     robot.rightArm.send_joint_goal(*poses["TIP1"])
-    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
     #rospy.sleep(rospy.Duration(4.0))
-    robot.head.send_goal(robot.head.point_stamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
     #robot.rightArm.send_joint_goal(*poses["TIP2"])
     rospy.sleep(rospy.Duration(1.0))
 
@@ -369,7 +370,7 @@ def grab_item(robot, selectedArm):
         query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
 
         smach.StateMachine.add('LOOK',
-                                states.LookForObjectsAtPoint(robot, query_object, robot.base.point(0.75,0,0.65,frame_id="/base_link",stamped=True)),
+                                states.LookForObjectsAtPoint(robot, query_object, msgs.PointStamped(0.75, 0, 0.65, frame_id="/base_link")),
                                 transitions={   'looking':'LOOK',
                                                 'object_found':'GRAB',
                                                 'no_object_found':'SAY_NO_DRINK',

@@ -2,32 +2,23 @@
 import roslib; roslib.load_manifest('challenge_emergency')
 import rospy
 import smach
-import math
-import cv
-import roslib
 import geometry_msgs.msg
 
 #import sys
 import roslib.packages as p
 
-from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.transformations as transformations
 
-from std_msgs.msg import String
 from speech_interpreter.srv import AskUser
 from virtual_cam.srv import cheese
 from challenge_emergency.srv import Start
 
-from perception_srvs.srv import StartPerception
-
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-
 
 #import states_new as states 
-from psi import *
+from psi import Compound, Sequence, Conjunction, Term
+import robot_skills.util.msg_constructors as msgs
 
 
 
@@ -598,7 +589,7 @@ class Look_at_person(smach.State):
                 self.robot.spindle.send_goal(0.4,waittime=5.0)  
                 rospy.logdebug("Spindle should come up now!")
 
-            lookat_point = self.robot.head.point(x,y,z)
+            lookat_point = msgs.PointStamped(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
             self.robot.head.send_goal(lookat_point, timeout=0, keep_tracking=True)
         return 'finished'

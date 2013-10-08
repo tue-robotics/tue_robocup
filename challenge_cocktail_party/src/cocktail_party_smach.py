@@ -10,6 +10,7 @@ from speech_interpreter.srv import AskUser
 from robot_skills.amigo import Amigo
 
 from robot_smach_states import *
+import robot_skills.util.msg_constructors as msgs
 
 
 grasp_arm = "left"
@@ -119,7 +120,7 @@ class WaitForPerson(smach.State):
                 self.robot.spindle.high()
                 rospy.logdebug("Spindle should come up now!")
 
-            lookat_point = self.robot.head.point(x,y,z)
+            lookat_point = msgs.PointStamped(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
             self.robot.head.send_goal(lookat_point,timeout=0)
 
@@ -340,7 +341,7 @@ class LookForDrink(smach.State):
         roi_answers = self.robot.reasoner.query(Compound("point_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
         if roi_answers:
             roi_answer = roi_answers[0]
-            self.robot.head.send_goal(self.robot.head.point(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
+            self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
 
 
         # query to detect object, finishes when something found or timeout!
@@ -529,7 +530,7 @@ class PersonFound(smach.State):
                 self.robot.spindle.high()
                 rospy.logdebug("Spindle should come up now!")
 
-            lookat_point = self.robot.head.point(x,y,z)
+            lookat_point = msgs.PointStamped(x,y,z)
             rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
             self.robot.head.send_goal(lookat_point,timeout=0)
         self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),

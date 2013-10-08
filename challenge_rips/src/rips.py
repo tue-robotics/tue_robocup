@@ -3,7 +3,6 @@ import roslib; roslib.load_manifest('challenge_rips')
 import rospy
 import smach
 
-from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import Point
@@ -11,6 +10,7 @@ from geometry_msgs.msg import Point
 from speech_interpreter.srv import AskUser
 
 from psi import *
+import robot_skills.util.msg_constructors as msgs
 
 
 ###########################
@@ -90,11 +90,7 @@ class AmigoIntroductionRIPS(smach.State):
         
         if self.gripper == "left":
             ''' Left arm '''
-            head_goal = Point()
-            head_goal.x = 0.0
-            head_goal.y = 0.0
-            head_goal.z = 0.0
-            self.robot.head.send_goal_topic(head_goal,"/amigo/grippoint_left")
+            self.robot.head.send_goal_topic(msgs.PointStamped(frame_id="/amigo/grippoint_left"))
             #self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
             self.robot.leftArm.send_goal(0.4,0.3,1.1,1.5,0.0,0.0,10.0)              #TODO ERIK: TEST THIS joint goal
             rospy.sleep(1.5)                                                          #TODO ERIK: TEST THIS SLEEP
@@ -108,11 +104,7 @@ class AmigoIntroductionRIPS(smach.State):
             self.robot.leftArm.send_gripper_goal_close(5)
         else:
             ''' Right arm '''
-            head_goal = Point()
-            head_goal.x = 0.0
-            head_goal.y = 0.0
-            head_goal.z = 0.0
-            self.robot.head.send_goal_topic(head_goal,"/amigo/grippoint_right")
+            self.robot.head.send_goal_topic(msgs.PointStamped(frame_id="/amigo/grippoint_right"))
             self.robot.rightArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
             #rospy.sleep(0.5)
             self.robot.rightArm.send_gripper_goal_open(10)

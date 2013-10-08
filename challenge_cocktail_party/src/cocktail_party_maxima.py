@@ -9,6 +9,7 @@ from speech_interpreter.srv import AskUser
 from robot_skills.amigo import Amigo
 
 from robot_smach_states import *
+import util.msg_constructors as msgs
 
 names = ["john", "richard", "nancy", "alice", "bob"]
 name_index = 0
@@ -261,7 +262,7 @@ class LookForDrink(smach.State):
         roi_answers = self.robot.reasoner.query(Compound("point_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
         if roi_answers:
             roi_answer = roi_answers[0]
-            self.robot.head.send_goal(self.robot.head.point_stamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
+            self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
 
         self.robot.speech.speak("I will now start my perception module, and try to detect your drink")
 
