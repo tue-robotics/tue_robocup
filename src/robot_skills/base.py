@@ -394,11 +394,7 @@ class Base(object):
 
         request = amigo_inverse_reachability.srv.GetBaseGoalPosesRequest()
         
-        [position, orientation] = self.get_location()
-        robot_pose = geometry_msgs.msg.Pose()
-        robot_pose.position = position
-        robot_pose.orientation = orientation
-        request.robot_pose = robot_pose
+        request.robot_pose = self.location.pose
 
         request.target_pose.position = target_point_stamped.point
         request.target_pose.orientation.x = 0
