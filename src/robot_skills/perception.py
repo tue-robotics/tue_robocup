@@ -146,15 +146,15 @@ class Perception(object):
 
         return response
 
-    def set_table_roi(self, x, y, z, length_x=0.5, length_y=0.5, length_z=0.5, frame="/map"):
+    def set_table_roi(self, pointstamped, length_x=0.5, length_y=0.5, length_z=0.5):
         request = pein_srvs.srv.FindObjInRoiRequest()
-        request.x = x
-        request.y = y
-        request.z = z
+        request.x = pointstamped.point.x
+        request.y = pointstamped.point.y
+        request.z = pointstamped.point.z
         request.length_x = length_x
         request.length_y = length_y
         request.length_z = length_z
-        request.frame = frame
+        request.frame = pointstamped.header.frame
 
         ''' Wait for service '''
         try:
