@@ -54,40 +54,9 @@ from psi import *
 # - mensen checken ook met laserscanner.
 # -  pdf: naam pers1 pers2 veranderen. Kleiner maken.
 
-##########################################
-############## What to run: ##############
-############ updated 15-4-2013 ###########
-##########################################
-# - astart
-# - amiddle
-# - roslaunch create_speech_files speech.launch   (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - !! Wait for speech.launch to finish before !!
-#   !!   launching speech interpreter          !!
-# - roslaunch speech_interpreter start.launch     (in tue_test_lab the launch file is: speech_tue_test_lab.launch)
-# - roslaunch challenge_emergency start.launch    (launches parameter files of map with pdf_creator.cpp, waits for service call)
-# - rosrun challenge_emergency emergency.py
-
-#############################################################
-## Locations that must be defined in database on forehand: ##
-#############################################################
-# - initial
-# - entry_point
-# - other_side_room
-# - exit
-
-#################
-### Questions ###
-#################
-# -
-
-
 ########################
 ##### STATEMACHINE #####
 ########################
-
-
-
-
 
 
 class turn_Around_z_axis(smach.State):
