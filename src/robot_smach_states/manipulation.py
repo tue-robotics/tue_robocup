@@ -466,10 +466,10 @@ class Grab(smach.State):
         self.grabpoint_query = grabpoint_query
 
         if self.side == self.robot.leftArm:
-            self.end_effector_frame_id = "/grippoint_left"
+            self.end_effector_frame_id = "/amigo/grippoint_left"
             self.ar_frame_id = "/hand_marker_left"
         elif self.side == self.robot.rightArm:
-            self.end_effector_frame_id = "/grippoint_right"
+            self.end_effector_frame_id = "/amigo/grippoint_right"
             self.ar_frame_id = "/hand_marker_right"
         
     def execute(self, gl):
@@ -771,11 +771,11 @@ class Place_Object(smach.State):
         if self.side == self.robot.leftArm:
             #y_drop = 0.3
             y_drop = 0.4
-            self.robot.head.send_goal(head_goal,"/grippoint_left")
+            self.robot.head.send_goal(head_goal,"/amigo/grippoint_left")
         elif self.side == self.robot.rightArm:
             #y_drop = -0.3
             y_drop = -0.4
-            self.robot.head.send_goal(head_goal,"/grippoint_left") #REVIEW(Loy): Is this correct?
+            self.robot.head.send_goal(head_goal,"/amigo/grippoint_left") #REVIEW(Loy): Is this correct?
         
         # Pose (left arm) Position: 0.24 0.43 0.15 Orientation: 0.12 0.58 0.09 0.80 
         if self.side.send_goal(0.5, y_drop, z_drop, 0.0 ,0.0 ,0.0 , time_out = 60, pre_grasp = False, frame_id = '/base_link'):
@@ -818,9 +818,9 @@ class SetGripper(smach.State):
         self.gripperstate = gripperstate
         self.grabpoint_query = grabpoint_query
         if self.side == self.robot.leftArm:
-            self.end_effector_frame_id = "/grippoint_left"
+            self.end_effector_frame_id = "/amigo/grippoint_left"
         elif self.side == self.robot.rightArm:
-            self.end_effector_frame_id = "/grippoint_right"
+            self.end_effector_frame_id = "/amigo/grippoint_right"
 
     def execute(self, userdata):
         ''' If needs attaching to gripper, the grabpoint_query is used '''
@@ -1077,10 +1077,10 @@ class Point_at_object(smach.State):
         self.grabpoint_query = grabpoint_query
 
         if self.side == self.robot.leftArm:
-            self.end_effector_frame_id = "/grippoint_left"
+            self.end_effector_frame_id = "/amigo/grippoint_left"
             self.ar_frame_id = "/hand_marker_left"
         elif self.side == self.robot.rightArm:
-            self.end_effector_frame_id = "/grippoint_right"
+            self.end_effector_frame_id = "/amigo/grippoint_right"
             self.ar_frame_id = "/hand_marker_right"
         
     def execute(self, gl):
