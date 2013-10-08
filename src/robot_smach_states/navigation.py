@@ -43,10 +43,8 @@ class Navigate_abstract(smach.State):
 
     def execute(self, userdata=None):
         if not self.dynamic:
-            goal = self.get_goal(userdata)
-            if goal:
-                pos, orient = goal #unpack tuple
-            else:
+            target_pose = self.get_goal(userdata)
+            if not target_pose:
                 rospy.logerr("No goal could be defined in {state} with userdata {ud}".format(state=self, ud=userdata))
                 #self.robot.speech.speak("I don't know where to go. I'm very sorry.")
                 return "goal_not_defined"
@@ -72,17 +70,15 @@ class Navigate_abstract(smach.State):
             unreachable = False
             while not self.preempted and not unreachable:
                 #import ipdb; ipdb.set_trace()
-                goal = self.get_goal(userdata)
-                if goal:
-                    rospy.loginfo("Goal: ({0.x}, {0.y})".format(goal[0]))
-                    pos, orient = goal #unpack tuple
+                target_pose = self.get_goal(userdata)
+                if target_pose:
+                    rospy.loginfo("Goal: ({0.x}, {0.y})".format(target_pose.pose.position))
+                    pos, orient = target_pose #unpack tuple
                 else:
                     rospy.logerr("No goal could be defined in {state} with userdata {ud}".format(state=self, ud=userdata))
                     self.robot.speech.speak("I don't know where to go. I'm very sorry.", block=False)
                     return "goal_not_defined"
     
-                target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=pos, 
-                                                                                         orientation=orient))
                 target_pose.header.frame_id = "/map"
                 outcome = self.robot.base.send_goal(target_pose, time=0.5, block=False)
                 if outcome:
