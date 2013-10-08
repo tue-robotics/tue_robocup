@@ -44,7 +44,7 @@ class Head(object):
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
 
-    def send_goal(self, position, frame_id='/map', timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
+    def send_goal(self, point_stamped, timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
         Send a goal for the head, Executes a HeadRefAction
         Expects a position which is a geometry_msgs.msg.Point(). Should become geometry_msgs.msg.PointStamped, so we don't need the frame_id-param anymore
@@ -60,12 +60,12 @@ class Head(object):
         head_goal.goal_type = 0
         head_goal.keep_tracking = keep_tracking
 
-        if isinstance(position, geometry_msgs.msg.PointStamped):
-            head_goal.target_point = position
-        elif isinstance(position, geometry_msgs.msg.Point):
+        if isinstance(point_stamped, geometry_msgs.msg.PointStamped):
+            head_goal.target_point = point_stamped
+        elif isinstance(point_stamped, geometry_msgs.msg.Point):
             head_goal.target_point.header.stamp = rospy.get_rostime()
-            head_goal.target_point.header.frame_id = frame_id
-            head_goal.target_point.point = position #This goes wrong when position is a raw geometry_msgs.Point, which has no header.
+            head_goal.target_point.header.frame_id = "/map"
+            head_goal.target_point.point = point_stamped #This goes wrong when position is a raw geometry_msgs.Point, which has no header.
 
         head_goal.min_pan  = min_pan
         head_goal.max_pan  = max_pan
@@ -92,13 +92,13 @@ class Head(object):
                 return False
 
 
-    def send_goal_topic(self, position, frame_id='/map'):
+    def send_goal_topic(self, point_stamped):
          """
          Send goal on a topic, does not use the action client and therefore does not
          wait on return
          """
          rospy.logwarn("head.send_goal_topic will become deprecated soon!")
-         self.send_goal(position, frame_id, timeout=0, keep_tracking=True)
+         self.send_goal(point_stamped, timeout=0, keep_tracking=True)
 
          return True
 
@@ -160,7 +160,7 @@ class Head(object):
         return True"""
         reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/amigo/torso')
 
-        return self.send_goal(reset_head_goal.point, reset_head_goal.header.frame_id, keep_tracking=False, timeout=timeout)
+        return self.send_goal(reset_head_goal, keep_tracking=False, timeout=timeout)
 
     def set_position(self, x, y, z, frame_id='/map', keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
@@ -175,8 +175,7 @@ class Head(object):
         manual_head_goal.point.y = y
         manual_head_goal.point.z = z
 
-        return self.send_goal(manual_head_goal.point,
-                       manual_head_goal.header.frame_id,
+        return self.send_goal(manual_head_goal,
                        keep_tracking=keep_tracking, 
                        min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 
@@ -197,8 +196,7 @@ class Head(object):
 
         rospy.logwarn("head.set_position_topic will become deprecated soon!")
 
-        self.send_goal(manual_head_goal.point,
-                       manual_head_goal.header.frame_id,
+        self.send_goal(manual_head_goal,
                        timeout=0,
                        keep_tracking=True)
 

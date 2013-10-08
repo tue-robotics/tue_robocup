@@ -10,9 +10,20 @@ import geometry_msgs.msg as gm
 import transformations
 
 def Point(x=0, y=0, z=0):
+    """Make a Point
+    >>> Point(1.1, 2.2, 3.3)
+    x: 1.1
+    y: 2.2
+    z: 3.3
+    """
     return gm.Point(x,y,z)
 
 def Header(frame_id="/map", stamp=None):
+    """Make a Header
+    >>> h = Header("/base_link")
+    >>> assert h.stamp.secs > 0
+    >>> assert h.stamp.nsecs > 0
+    """
     if not stamp:
         _time = rospy.Time.now()
     else:
@@ -22,6 +33,9 @@ def Header(frame_id="/map", stamp=None):
     return header
 
 def PointStamped(x=0, y=0, z=0, frame_id="/map", stamp=None):
+    if not stamp:
+        stamp = rospy.get_rostime()
+
     return gm.PointStamped(header=Header(frame_id, stamp), point=Point(x,y,z))
 
 def Quaternion(x=0, y=0, z=0, w=0):
@@ -46,3 +60,9 @@ def PoseStamped2D(x=0, y=0, z=0, phi=0, frame_id="/map", stamp=None, pointstampe
     elif isinstance(x, number) and isinstance(y, number) and isinstance(z, number):
         return gm.PoseStamped(header=Header(frame_id, stamp), 
                               pose=Pose(x, y, z, phi))
+
+if __name__ == "__main__":
+    rospy.init_node("msg_constructors_tester")
+
+    import doctest
+    doctest.testmod()

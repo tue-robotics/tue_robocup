@@ -218,7 +218,7 @@ if __name__ == "__main__":
         target = amigo.base.point(x,y,z, stamped=True)
         ik_poses = amigo.base.get_base_goal_poses(target, xoffset, yoffset)
         amigo.base.send_goal(ik_poses[0])
-        amigo.head.send_goal(amigo.head.point(x,y,z))
+        amigo.head.send_goal(msgs.PointStamped(x,y,z))
 
     def namego(name):
         """Go to the waypoint with the given name. 
