@@ -309,7 +309,7 @@ class Read_laser(smach.State):
 
         self.door = door
 
-        self.laser_listener = rospy.Subscriber("/base_scan",LaserScan,self.callback_laser)
+        self.laser_listener = rospy.Subscriber("/amigo/base_front_laser",LaserScan,self.callback_laser)
         try:
             assert hasattr(self.robot, "perception")
         except AssertionError:
@@ -321,7 +321,7 @@ class Read_laser(smach.State):
         laser_range = data.ranges
         index = len(laser_range)/2
         
-        if data.header.frame_id == "/front_laser":
+        if data.header.frame_id == "/amigo/base_laser":
             self.laser_value = laser_range[index]
         else:
             self.laser_value = 0.0
