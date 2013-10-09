@@ -907,7 +907,7 @@ class Execute_path(smach.State):
         return 'preempted'
 
 class Waiting_to_execute(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, look_at_path_distance):
         smach.State.__init__(self,outcomes=['done','preempted'])
 
         self.robot = robot
@@ -915,6 +915,7 @@ class Waiting_to_execute(smach.State):
         self.z_offset_direction = -1
         self.z_offset_timer = 0
         self.timeout = 20
+        self.look_at_path_distance = look_at_path_distance
 
     def execute(self, userdata):
 
@@ -931,7 +932,8 @@ class Waiting_to_execute(smach.State):
             # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
             #    cube_size: the size of the cube around the obstacle
             #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
-            self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=1.0, step_time=2.0, min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
+            if self.look_at_path_distance > 0            
+                self.robot.head.search_movement(self.robot.base.obstacle_position, cube_size=1.0, step_time=2.0, min_pan=-1.57,max_pan=1.57,min_tilt=0.0,max_tilt=0.8)
 
             #self.previous_replan_timeout = self.robot.base.replan_timeout
             # Wait 0.5 seconds to avoid looping too fast
@@ -1052,7 +1054,7 @@ class NavigateGeneric(smach.StateMachine):
                              'refresh'          : 'DETERMINE_GOAL',
                              'aborted'          : 'RECOVER'})
 
-            smach.StateMachine.add('WAITING', Waiting_to_execute(self.robot),
+            smach.StateMachine.add('WAITING', Waiting_to_execute(self.robot, self.look_at_path_distance),
                 transitions={'done'             : 'EXECUTE',
                              'preempted'        : 'preempted'})
 
