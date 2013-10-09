@@ -951,15 +951,17 @@ class Waiting_to_execute(smach.State):
         return 'done'
 
 class Recover(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, look_at_path_distance):
         smach.State.__init__(self,outcomes=['new_path_required','new_goal_required'])
 
         self.robot = robot
+        self.look_at_path_distance = look_at_path_distance
 
     def execute(self, userdata):
 
         rospy.logwarn("Move base goal aborted, obstacle at {0}".format(self.robot.base.obstacle_position))
-        self.robot.head.send_goal(self.robot.base.obstacle_position)
+        if self.look_at_path_distance > 0:        
+            self.robot.head.send_goal(self.robot.base.obstacle_position)
 
         # if there is no obstacle on the global path while the robot is not able to reach its goal
         # the local planner is probably in unknown space, so clear this
@@ -1058,7 +1060,7 @@ class NavigateGeneric(smach.StateMachine):
                 transitions={'done'             : 'EXECUTE',
                              'preempted'        : 'preempted'})
 
-            smach.StateMachine.add('RECOVER', Recover(self.robot),
+            smach.StateMachine.add('RECOVER', Recover(self.robot, self.look_at_path_distance),
                 transitions={'new_path_required': 'GET_PLAN',
                              'new_goal_required': 'DETERMINE_GOAL'})
 
@@ -1087,6 +1089,6 @@ class NavigateGeneric(smach.StateMachine):
                 transitions={'done'             : 'EXECUTE_TRY_AGAIN',
                              'preempted'        : 'preempted'})
 
-            smach.StateMachine.add('RECOVER_TRY_AGAIN', Recover(self.robot),
+            smach.StateMachine.add('RECOVER_TRY_AGAIN', Recover(self.robot, self.look_at_path_distance),
                 transitions={'new_path_required': 'GET_PLAN_TRY_AGAIN',
                              'new_goal_required': 'DETERMINE_GOAL_TRY_AGAIN'})
