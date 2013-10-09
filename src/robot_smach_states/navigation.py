@@ -1083,7 +1083,7 @@ class NavigateGeneric(smach.StateMachine):
                              'refresh'          : 'DETERMINE_GOAL_TRY_AGAIN',
                              'aborted'          : 'RECOVER_TRY_AGAIN'})
 
-            smach.StateMachine.add('WAITING_TRY_AGAIN', Waiting_to_execute(self.robot),
+            smach.StateMachine.add('WAITING_TRY_AGAIN', Waiting_to_execute(self.robot, self.look_at_path_distance),
                 transitions={'done'             : 'EXECUTE_TRY_AGAIN',
                              'preempted'        : 'preempted'})
 
