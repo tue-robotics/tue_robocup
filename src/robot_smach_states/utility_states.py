@@ -265,7 +265,7 @@ class ResetLeftArm(smach.State):
     def execute(self, userdata=None):
 
         self.robot.leftArm.reset_arm()
-        self.robot.leftArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
         return "done"
 
 class ResetRightArm(smach.State):
@@ -277,7 +277,7 @@ class ResetRightArm(smach.State):
     def execute(self, userdata=None):
 
         self.robot.rightArm.reset_arm()
-        self.robot.rightArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         return "done"
 
 class ResetArms(smach.State):
@@ -289,9 +289,9 @@ class ResetArms(smach.State):
     def execute(self, userdata=None):
 
         self.robot.leftArm.reset_arm()
-        self.robot.leftArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.rightArm.reset_arm()
-        self.robot.rightArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         return "done"
 
 class ResetSpindle(smach.State):
@@ -316,9 +316,9 @@ class ResetArmsSpindle(smach.State):
     def execute(self, userdata=None):
 
         self.robot.leftArm.reset_arm()
-        self.robot.leftArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.rightArm.reset_arm()
-        self.robot.rightArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.spindle.reset()
         return "done"
 
@@ -331,9 +331,9 @@ class ResetArmsHead(smach.State):
     def execute(self, userdata=None):
 
         self.robot.leftArm.reset_arm()
-        self.robot.leftArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.rightArm.reset_arm()
-        self.robot.rightArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.head.reset_position(timeout=self.timeout)
         return "done"
 
@@ -361,9 +361,9 @@ class ResetArmsSpindleHead(smach.State):
     def execute(self, userdata):
 
         self.robot.leftArm.reset_arm()
-        self.robot.leftArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.rightArm.reset_arm()
-        self.robot.rightArm.send_gripper_goal_close(time_out=self.timeout)
+        self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.head.reset_position(timeout=self.timeout)
         self.robot.spindle.reset()
 

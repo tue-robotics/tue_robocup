@@ -78,7 +78,7 @@ class Navigate_abstract(smach.State):
                     return "goal_not_defined"
     
                 target_pose.header.frame_id = "/map"
-                outcome = self.robot.base.send_goal(target_pose, time=0.5, block=False)
+                outcome = self.robot.base.send_goal(target_pose, timeout=0.5, block=False)
                 if outcome:
                     pass #Keep tracking until told otherwise
                 else:
@@ -533,7 +533,7 @@ class Navigate_Designator(smach.State):
                     rospy.loginfo(si)
                     return "all_matches_tried"
 
-                outcome = self.robot.base.send_goal(target_pose, time=0.5, block=False)
+                outcome = self.robot.base.send_goal(target_pose, timeout=0.5, block=False)
                 if outcome:
                     pass #Keep tracking until told otherwise
                 else:
@@ -795,7 +795,7 @@ class Get_plan(smach.State):
 
         target_pose =  geometry_msgs.msg.PoseStamped(pose=userdata.goal)
         target_pose.header.frame_id = "/map"
-        self.robot.base.send_goal(target_pose, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
+        self.robot.base.send_goal(target_pose, timeout=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
         #rospy.logdebug("Path found = {0}".format(self.robot.base.path))
 
@@ -809,7 +809,7 @@ class Get_plan(smach.State):
         #     rospy.logwarn("Setting unknown space to free around robot")
         #     self.robot.base.free_unknown_space(0.2)
         #     rospy.sleep(rospy.Duration(1.0))
-        #     self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, time=0.5, block=False, goal_area_radius=self.goal_area_radius)
+        #     self.robot.base.send_goal(userdata.goal.position, userdata.goal.orientation, timeout=0.5, block=False, goal_area_radius=self.goal_area_radius)
 
         # Ultimate fallback: reset entire map
         if (not self.robot.base.path and (rospy.Time.now() - self.last_reset) > rospy.Duration(10.0) ):
