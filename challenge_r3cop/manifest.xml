@@ -20,6 +20,9 @@
   <depend package="tue_carrot_planner"/>
   <depend package="tue_pocketsphinx"/>
   <depend package="speech_interpreter"/>
+  <depend package="challenge_restaurant"/>
+  <depend package="robot_skills"/>
+  <depend package="robot_smach_states"/>
 
 </package>
 
