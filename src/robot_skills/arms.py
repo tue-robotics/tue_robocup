@@ -521,6 +521,13 @@ class Arms(object):
     def _receive_arm_right_joints(self, jointstate):
         self._joint_pos[Side.RIGHT] = jointstate.position
 
+def add_side_argument(ArmMethod):
+    def wrapper(self, *args, **kwargs):
+        print "add_side_argument.wrapper"
+        kwargs["side"] = self.side
+        return ArmMethod(self, *args, **kwargs)
+    return wrapper
+
 class Arm(Arms):
     """
     A single arm can be either left or right, extends Arms:
@@ -547,15 +554,17 @@ class Arm(Arms):
         side_name = Side.name[self.side]
         self.joint_names = [joint_name.format(side=side_name) for joint_name in self.joint_names] #The Arms-class provides a format, which we fill in here
     
-    def send_goal(self, px, py, pz, roll, pitch, yaw, timeout=30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
-        """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
+    @add_side_argument
+    def send_goal(self, *args, **kwargs):
+        """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a timeout
         Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
-        return super(Arm, self).send_goal(px, py, pz, roll, pitch, yaw, timeout, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
+        return super(Arm, self).send_goal(*args, **kwargs)
     
-    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, timeout = 30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
+    @add_side_argument
+    def send_delta_goal(self, *args, **kwargs):
         """Send arm to an offset with respect to current position: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
-        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
-        return super(Arm, self).send_delta_goal(px, py, pz, roll, pitch, yaw, timeout, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
+        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """        
+        return super(Arm, self).send_delta_goal(*args, **kwargs)
         
     def send_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
         """Send a goal to the arms in joint coordinates"""
