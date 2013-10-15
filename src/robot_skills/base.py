@@ -202,7 +202,7 @@ class Base(object):
 
         return query_result_tuples
 
-    def send_goal(self, target_pose, time=0, block=True, goal_area_radius=0.1):
+    def send_goal(self, target_pose, timeout=0, block=True, goal_area_radius=0.1):
         assert isinstance(target_pose, geometry_msgs.msg.PoseStamped)
         # target_pose =  geometry_msgs.msg.PoseStamped(   frame_id=frame_id, 
         #                                                 pose=geometry_msgs.msg.Pose(position=position, 
@@ -218,15 +218,15 @@ class Base(object):
             rospy.loginfo("No feasible plan to ({0.x},{0.y})".format(target_pose.pose.position))
             return False
         else:
-            result = self.execute_plan(path_result, time, block)
+            result = self.execute_plan(path_result, timeout, block)
             return result
         
     def cancel_goal(self):
         self.ac_move_base.cancel_all_goals() #Does not return anything
         return True
     
-    def wait(self, wait_time=10):
-        self.ac_move_base.wait_for_result(rospy.Duration(wait_time))
+    def wait(self, timeout=10):
+        self.ac_move_base.wait_for_result(rospy.Duration(timeout))
         
         if self.ac_move_base.get_state() == GoalStatus.SUCCEEDED:
             rospy.loginfo("Base target reached")
@@ -235,7 +235,7 @@ class Base(object):
             rospy.loginfo("Reaching base target failed")
             return False
     
-    def force_drive(self, vx,vy,vthe,time):
+    def force_drive(self, vx,vy,vthe,timeout):
         
         # Cancel base goal to prevent interference between 
         # move_base and force_drive
@@ -248,7 +248,7 @@ class Base(object):
         velocity.linear.x = vx
         velocity.linear.y = vy
         velocity.angular.z= vthe
-        while (rospy.Time.now() - start_time) < rospy.Duration(time):
+        while (rospy.Time.now() - start_time) < rospy.Duration(timeout):
             self.cmd_vel.publish(velocity)
             rospy.sleep(0.1)
         
@@ -285,7 +285,7 @@ class Base(object):
         except (tf.LookupException, tf.ConnectivityException):
             rospy.logerr("tf request failed!!!")        
             target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-            target_pose.header.frame_id = frame_id
+            target_pose.header.frame_id = "/map"
             return target_pose
         
     location = property(get_location)
@@ -316,11 +316,11 @@ class Base(object):
     def phi(self, orient):
         return transformations.euler_z_from_quaternion(orient)
     
-    def go(self, x, y, phi, frame="/map", time=0):
+    def go(self, x, y, phi, frame="/map", timeout=0):
         target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=self.point(x,y), 
                                                                                  orientation=self.orient(phi)))
         target_pose.header.frame_id = frame
-        return self.send_goal(target_pose, time)
+        return self.send_goal(target_pose, timeout)
     
     def clear_costmap(self, window_size=1.0):
         if self.use_2d:

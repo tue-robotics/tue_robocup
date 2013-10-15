@@ -27,6 +27,7 @@ import visualization_msgs.msg
 from math import degrees, radians
 
 ## TODO: Reset arm position
+#TODO : (Arm.send_[a-zA-Z_]*[(]*) replace time_out
 
 #Side en state enums
 class Side:
@@ -151,7 +152,7 @@ class Arms(object):
     def close(self):
         actionClients.close()
         
-    def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
+    def send_goal(self, px, py, pz, roll, pitch, yaw, timeout=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
         """Send a arm to a goal: 
         Using a position px,py,pz. An orientation roll,pitch,yaw. A time out time_out. And a side Side.LEFT or Side.RIGHT
         
@@ -190,7 +191,7 @@ class Arms(object):
     
         # send goal:
         if side == Side.LEFT:
-            actionClients._ac_grasp_precompute_left.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(time_out))
+            actionClients._ac_grasp_precompute_left.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(timeout))
             if actionClients._ac_grasp_precompute_left.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Arm target reached")
                 return True
@@ -200,7 +201,7 @@ class Arms(object):
                 return False
             
         elif side == Side.RIGHT:
-            actionClients._ac_grasp_precompute_right.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(time_out))
+            actionClients._ac_grasp_precompute_right.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(timeout))
             if actionClients._ac_grasp_precompute_right.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Arm target reached")
                 return True
@@ -212,7 +213,7 @@ class Arms(object):
             rospy.logerr("side undefined")
             return False
     
-    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
+    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, timeout=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
         """Send arm to an offset with respect to current position: 
         Using a position px,py,pz. An orientation roll,pitch,yaw. A time out time_out. And a side Side.LEFT or Side.RIGHT
         
@@ -242,7 +243,7 @@ class Arms(object):
     
         # send goal:
         if side == Side.LEFT:
-            actionClients._ac_grasp_precompute_left.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(time_out))
+            actionClients._ac_grasp_precompute_left.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(timeout))
             if actionClients._ac_grasp_precompute_left.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Arm target reached")
                 return True
@@ -252,7 +253,7 @@ class Arms(object):
                 return False
             
         elif side == Side.RIGHT:
-            actionClients._ac_grasp_precompute_right.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(time_out))
+            actionClients._ac_grasp_precompute_right.send_goal_and_wait(grasp_precompute_goal, rospy.Duration(timeout))
             if actionClients._ac_grasp_precompute_right.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Arm target reached")
                 return True
@@ -310,21 +311,21 @@ class Arms(object):
     
     ################################# function send gripper goal ############################
     
-    def send_gripper_goal_open(self, side, time_out=10):
+    def send_gripper_goal_open(self, side, timeout=10):
         """
         Open gripper.
         Specify side and time_out
         """
-        return self.send_gripper_goal(State.OPEN, side, time_out)
+        return self.send_gripper_goal(State.OPEN, side, timeout)
         
-    def send_gripper_goal_close(self, side, time_out=10):
+    def send_gripper_goal_close(self, side, timeout=10):
         """
         Close gripper
         Specify side and time_out.
         """
-        return self.send_gripper_goal(State.CLOSE, side, time_out)
+        return self.send_gripper_goal(State.CLOSE, side, timeout)
     
-    def send_gripper_goal(self, state, side, time_out=10):
+    def send_gripper_goal(self, state, side, timeout=10):
         """
         Send open or close goal to gripper.
         Specify side, state and time_out
@@ -345,7 +346,7 @@ class Arms(object):
         
         rospy.logdebug("Sending gripper target {0}".format(gripper_goal).replace('\n', ' '))
         if side == Side.LEFT:
-            actionClients._ac_gripper_left.send_goal_and_wait(gripper_goal, rospy.Duration(time_out))
+            actionClients._ac_gripper_left.send_goal_and_wait(gripper_goal, rospy.Duration(timeout))
             rospy.logdebug("Gripper result: {0}".format(actionClients._ac_gripper_left.get_result()).replace("\n", " "))
             if actionClients._ac_gripper_left.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Gripper target reached")
@@ -355,7 +356,7 @@ class Arms(object):
                 return False
         
         elif side == Side.RIGHT:
-            actionClients._ac_gripper_right.send_goal_and_wait(gripper_goal, rospy.Duration(time_out))
+            actionClients._ac_gripper_right.send_goal_and_wait(gripper_goal, rospy.Duration(timeout))
             rospy.loginfo("Gripper result: {0}".format(actionClients._ac_gripper_right.get_result()))
             if actionClients._ac_gripper_right.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Gripper target reached")
@@ -568,15 +569,15 @@ class Arm(Arms):
         side_name = Side.name[self.side]
         self.joint_names = [joint_name.format(side=side_name) for joint_name in self.joint_names] #The Arms-class provides a format, which we fill in here
     
-    def send_goal(self, px, py, pz, roll, pitch, yaw, time_out=30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
+    def send_goal(self, px, py, pz, roll, pitch, yaw, timeout=30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
         """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
         Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
-        return super(Arm, self).send_goal(px, py, pz, roll, pitch, yaw, time_out, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
+        return super(Arm, self).send_goal(px, py, pz, roll, pitch, yaw, timeout, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
     
-    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, time_out = 30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
+    def send_delta_goal(self, px, py, pz, roll, pitch, yaw, timeout = 30, pre_grasp = False, frame_id = '/amigo/base_link', first_joint_pos_only=False):
         """Send arm to an offset with respect to current position: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
         Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
-        return super(Arm, self).send_delta_goal(px, py, pz, roll, pitch, yaw, time_out, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
+        return super(Arm, self).send_delta_goal(px, py, pz, roll, pitch, yaw, timeout, self.side, pre_grasp, frame_id, first_joint_pos_only=first_joint_pos_only)
         
     def send_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
         """Send a goal to the arms in joint coordinates"""
@@ -600,18 +601,18 @@ class Arm(Arms):
          """Cancel arm goal """
          return super(Arm, self).cancel_goal(self.side)
     
-    def send_gripper_goal(self, state, time_out=10):
+    def send_gripper_goal(self, state, timeout=10):
         """Generic open or close gripper goal method. Expects a state: State.OPEN or State.CLOSE and a time_out"""
         #import ipdb; ipdb.set_trace()
-        return super(Arm, self).send_gripper_goal(state, self.side, time_out)
+        return super(Arm, self).send_gripper_goal(state, self.side, timeout)
     
-    def send_gripper_goal_open(self, time_out=10):
+    def send_gripper_goal_open(self, timeout=10):
          """ Open gripper, expects a time_out parameter"""
-         return self.send_gripper_goal(State.OPEN, time_out)
+         return self.send_gripper_goal(State.OPEN, timeout)
     
-    def send_gripper_goal_close(self,  time_out=10):
+    def send_gripper_goal_close(self,  timeout=10):
          """ Close gripper, expects a time_out parameter"""
-         return self.send_gripper_goal(State.CLOSE, time_out)
+         return self.send_gripper_goal(State.CLOSE, timeout)
      
     def check_gripper_content(self):
         """ Check if the gripper has successfully grasped something """
