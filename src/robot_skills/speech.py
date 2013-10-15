@@ -66,15 +66,15 @@ class Speech(object):
             rospy.logerr("Service call failed: {0}".format(e))
             return False
 
-    def _amigo_speak(self, sentence, wait_time=1.0):
+    def _amigo_speak(self, sentence, timeout=1.0):
         self.amigo_speak_up.publish(sentence)
         rospy.loginfo("AMIGO says: '{0}'".format(sentence))
         # wait for a certain amount of time, based on the length of the spoken sentence
-        if wait_time == "auto" or wait_time == None:
+        if timeout == "auto" or timeout == None:
             delay = sqrt(len(sentence))
             rospy.sleep(delay)
         else:
-            rospy.sleep(wait_time)
+            rospy.sleep(timeout)
         return True
 
     def speak_info(self, sentence):
@@ -83,14 +83,14 @@ class Speech(object):
         rospy.loginfo("AMIGO says: '{0}'".format(sentence))
         return True
 
-    def get_info(self, info_type = 'name', n_tries = 1, time_out = rospy.Duration(10.0)):
+    def get_info(self, info_type = 'name', n_tries = 1, timeout = rospy.Duration(10.0)):
         """ function to get info from the user, info_type could be name or object categories or location categories """
 
         if info_type not in ['name', 'drink', 'snack', 'food', 'bathroomstuff', 'seat', 'table', 'shelf', 'appliance', 'bin']:
             rospy.logerr("Wrong info_type!")
             return False
         else:
-            self.response = self.ask_user_service_get_info(info_type, n_tries, time_out)
+            self.response = self.ask_user_service_get_info(info_type, n_tries, timeout)
 
             for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "answer":
@@ -101,10 +101,10 @@ class Speech(object):
 
         return response_answer
 
-    def get_action(self, time_out = 100.0):
+    def get_action(self, timeout = 100.0):
         """ function to get the goal of the task - does not work yet
             To do: make it work """
-        self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(time_out))  
+        self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(timeout))  
 
         for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "action":
