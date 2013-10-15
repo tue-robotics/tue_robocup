@@ -264,29 +264,7 @@ class Arms(object):
         else: 
             rospy.logerr("side undefined")
             return False
-            
-    def send_joint_goal_old(self,q1,q2,q3,q4,q5,q6,q7,side=None):
-        """Send a goal to the arms in joint coordinates"""
-        
-        jointstate = JointState()
-        jointstate.position[Arms.SHOULDER_YAW] = q1
-        jointstate.position[Arms.SHOULDER_PITCH] = q2
-        jointstate.position[Arms.SHOULDER_ROLL] = q3
-        jointstate.position[Arms.ELBOW_PITCH] = q4
-        jointstate.position[Arms.ELBOW_ROLL] = q5
-        jointstate.position[Arms.WRIST_PITCH] = q6
-        jointstate.position[Arms.WRIST_YAW] = q7
-        
-        if side == None:
-            raise Exception("Cancel joint goal: No side specified")
-        elif side == Side.RIGHT:
-            self.arm_right_reference_pub.publish(jointstate)
-        elif side == Side.LEFT:
-            self.arm_left_reference_pub.publish(jointstate)
-            
-        return True
-    
-    
+     
     ################################# function cancel arm right goal ############################
     def cancel_goal(self, side=None):
         """Cancel arm goal. Specifiy side, Side.LEFT or Side.RIGHT """
@@ -588,10 +566,6 @@ class Arm(Arms):
         >>> from math import radians
         >>> some_arm.send_delta_joint_goal(q1=radians(-20)) #e.g. amigo.leftArm.send_delta_joint_goal(q1=radians(-20))"""
         return super(Arm, self).send_delta_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
-        
-    def send_joint_goal_old(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
-        """Send a goal to the arms in joint coordinates"""
-        return super(Arm, self).send_joint_goal_old(q1,q2,q3,q4,q5,q6,q7,self.side)
         
     def reset_arm(self):
         """Send the arm to a suitable (natural looking) (driving) position"""

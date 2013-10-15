@@ -261,6 +261,16 @@ class Head(object):
     def position(self):
         return self._position
 
+    def wait(self, timeout=10):
+        self._ac_head_ref_action.wait_for_result(rospy.Duration(timeout))
+        
+        if self._ac_head_ref_action.get_state() == GoalStatus.SUCCEEDED:
+            rospy.loginfo("Head target reached")
+            return True
+        else:
+            rospy.loginfo("Reaching head target failed")
+            return False
+
 
 
 if __name__ == "__main__":
