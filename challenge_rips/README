@@ -29,3 +29,11 @@ amigo3:
         (to test speaker is working) 
 
     rosrun challenge_rips rips.py
+    
+    
+    
+    
+ if tue_pocket_sphinx crashes (as in this happens every time you start amiddle)
+    then launch on amigo1
+
+	roslaunch amigo_launch_files speech_recognition.launch
