@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import roslib; roslib.load_manifest('amigo_demo')
+import roslib; roslib.load_manifest('challenge_r3cop')
 import rospy
 import os
 import random
@@ -42,15 +42,52 @@ def grab_item(robot):
         query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
                                         Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
         #query_grabpoint = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
-        smach.StateMachine.add('GRAB',
-                        states.GrabMachine(robot.leftArm, robot, query_grabpoint),
-                        transitions={   'succeeded':'CARRYING_POSE',
-                                        'failed':'REPORT_FAILED' })
+        
+        ### Old implementation
+        #smach.StateMachine.add('GRAB',
+        #                states.GrabMachine(robot.leftArm, robot, query_grabpoint),
+        #                transitions={   'succeeded':'CARRYING_POSE',
+        #                                'failed':'REPORT_FAILED' })
+        smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(selectedArm, robot, query_grabpoint),
+                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
+                                     'failed'       :   'failed'})
 
-        smach.StateMachine.add('CARRYING_POSE',
-                               states.Carrying_pose(robot.leftArm, robot),
-                               transitions={'succeeded':'SAY_SUCCEEDED',
-                                            'failed':'Failed'})
+        # Uses new Prepare Orientation
+        smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(selectedArm, robot, query_grabpoint),
+                    transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
+
+        smach.StateMachine.add('OPEN_GRIPPER', SetGripper(robot, selectedArm, gripperstate=ArmState.OPEN),
+                    transitions={'succeeded'    :   'UPDATE_OBJECT_POSE',
+                                 'failed'       :   'UPDATE_OBJECT_POSE'})
+
+        # Even if the update state fails, try to grasp anyway
+        smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(selectedArm, robot, query_grabpoint),
+                    transitions={'succeeded'    :   'PRE_GRASP',
+                                 'failed'       :   'PRE_GRASP',
+                                 'target_lost'  :   'CLOSE_GRIPPER_UPON_FAIL'})
+        
+        smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(robot, selectedArm, query_grabpoint, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+                    transitions={'succeeded'    :   'GRAB',
+                                 'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
+    
+        smach.StateMachine.add('GRAB', Grab(selectedArm, robot, query_grabpoint),
+                    transitions={'grab_succeeded':  'CLOSE_GRIPPER',
+                                 'grab_failed'   :  'CLOSE_GRIPPER',
+                                 'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
+
+        smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(robot, selectedArm, gripperstate=ArmState.CLOSE, grabpoint_query=query_grabpoint),
+                    transitions={'succeeded'    :   'PUSHING_POSE',
+                                 'failed'       :   'PUSHING_POSE'})
+
+        #smach.StateMachine.add('CARRYING_POSE',
+        #                       states.Carrying_pose(robot.leftArm, robot),
+        #                       transitions={'succeeded':'SAY_SUCCEEDED',
+        #                                    'failed':'Failed'})
+
+        smach.StateMachine.add('PUSHING_POSE',
+                                states.ArmToJointPos(robot, selectedArm, [-1.5, 0.0, 0.0, 0.9, -0.9, 0.0, 0.0],timout=5.0),
+                                transitions={'done'  :'SAY_SUCCEEDED',
+                                            'failed':'REPORT_FAILED'})
 
 
         smach.StateMachine.add('REPORT_FAILED',
@@ -129,11 +166,14 @@ def main():
     rospy.init_node('robot_smach_states')
 
     global robot
+    global selectedArm 
+
     #~ if len(sys.argv) > 1:
         #~ from test_tools.build_amigo import build_amigo
         #~ robot = build_amigo(fake=['base','arms','perception','head', 'worldmodel'])
     #~ else:
     robot = Amigo() #dontInclude=['perception'] is needed for grabbing items
+    selectedArm = robot.rightArm
     #import pdb; pdb.set_trace()
     rospy.spin()
 
