@@ -46,26 +46,6 @@ class Reasoner(object):
 
     def query(self, term):
         return self.client.query(term)
-    
-    # def query_Term(self, term):
-    #     query = term_to_msg(term)
-    #     return self.query(query)
-
-    # def simple_query(self, querystring):
-    #     """Pose a query to the reasoner, using Prolog-syntax: 'predicate1(const, Var), pred2(Var2,const2).'"""
-    #     return self.summarize_answer(self.query(self.str_to_Query(querystring)))
-            
-    # def constructed_query(self, term_impl):
-    #     reasoning_query = tue_reasoner_msgs.srv.QueryRequest()
-    #     reasoning_query.term = tue_reasoner_msgs.msg.Term()
-
-    #     reasoning_query.term.root = term_impl
-
-    #     rospy.logdebug(reasoning_query)
-    #     return self.query(reasoning_query)
-
-    # def summarized_query(self, query):
-    #     return self.summarize_answer(self.constructed_query(query))
 
     def assertz(self, *facts):
         for fact in facts:
@@ -87,40 +67,6 @@ class Reasoner(object):
 
     def exists_predicate(self, predicatename):
         raise NotImplementedError()
-
-    # @staticmethod
-    # def summarize_answer(answer):
-    #     answer_list = []
-    #     for bindingset in answer.binding_sets:
-    #         answerdict = {}
-    #         for binding in bindingset.bindings:
-    #             if binding.value.root.type == tue_reasoner_msgs.msg.TermImpl.CONSTANT:
-    #                 if binding.value.root.constant.str:
-    #                     answerdict[binding.variable] = binding.value.root.constant.str
-    #                 elif binding.value.root.constant.num_array: 
-    #                     answerdict[binding.variable] = binding.value.root.constant.num_array
-    #                 elif binding.value.root.constant.pdf.type: 
-    #                     answerdict[binding.variable] = binding.value.root.constant.pdf
-    #                 else:
-    #                     answerdict[binding.variable] = binding.value.root.constant.num
-    #             elif binding.value.root.type == tue_reasoner_msgs.msg.TermImpl.COMPOUND:
-    #                 #TODO Loy/Sjoerd: parse compound. For now, just write out whole query into direct subterms:
-    #                 #So, NOT:
-    #                 #term3 = Compound("object_at_coordinates", "obj1", "Coords")
-    #                 #BUT:
-    #                 #term4 = Compound("object_at_coordinates", "obj2", Compound("pose", "X", "Y", "Phi"))
-    #                 subterms = binding.value.root.sub_term_ptrs
-    #                 #print subterms
-    #                 rospy.logerr("Compounds cannot yet be parsed: {0}".format(None))
-    #                 print binding
-    #                 # import ipdb; ipdb.set_trace()
-    #                 # for subterm_index in subterms:
-    #                 #     print binding.value.sub_terms[subterm_index]
-    #             else:
-    #                 #This shouldnt happen, we should get back bindings
-    #                 pass
-    #         answer_list += [answerdict]
-    #     return answer_list
 
     def __getattr__(self, name):
         """The __getattr__-magic method of objects overrides the . operator, like the . in someobject.do_something.
@@ -199,31 +145,6 @@ class Reasoner(object):
         self.detach_all_from_gripper("/amigo/grippoint_right")
         self.sv_reset()
 
-
-# class QueryBuilder(type):
-#     """The QueryBuilder provides and easy interface for defining predicates for thr reasoner. 
-#     It is supposed to be a static class, so that queries can be built even without a reference to a reasoner,
-#     even before runtime possibly.
-
-#     Built with hints from http://stackoverflow.com/questions/3155436/getattr-for-static-class-variables-in-python
-#     in order to be able to do __getattr__ on a static class"""
-
-#     # def __getattr__(self, name):
-#     #     replacers = {"_class":"class", "_not":"not"}
-#     #     if replacers.has_key(name):
-#     #         name = replacers[name]
-
-#     #     def term(*args, **kwargs):
-#     #         return Compound(name, *args)
-#     #     return term
-
-#     def __getattr__(cls, key):
-#         print cls, key
-#         return key
-    
-#     def __getattribute__(*args):
-#         print args
-#         return args
 
 if __name__ == "__main__":
     rospy.init_node("amigo_reasoner_executioner", log_level=rospy.DEBUG)
