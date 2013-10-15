@@ -1,0 +1,18 @@
+# Responsible: Jos
+
+amigo1:
+
+    astart
+
+amigo1:
+
+    amiddle-follow-me
+
+amigo2:
+
+    rosrun challenge_follow_me follow_me_simple
+
+INSTRUCTIONS:
+- Say 'continue' to start the challenge
+- If you want the robot to leave the elevator, say: 'amigo leave', AMIGO should now leave the elevator. Leave the elevator when AMIGO calls you.
+- If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.

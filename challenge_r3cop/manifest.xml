@@ -1,0 +1,26 @@
+<package>
+  <description brief="challenge_follow_me">
+
+     challenge_follow_me
+
+  </description>
+  <author>Jos Elfring</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_follow_me</url>
+  <depend package="roscpp"/>
+  <depend package="roslib"/>
+  <depend package="wire_interface"/>
+  <depend package="actionlib"/>
+  <depend package="pein_msgs"/>
+  <depend package="std_srvs"/>
+  <depend package="amigo_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="perception_srvs"/>
+  <depend package="tue_carrot_planner"/>
+  <depend package="tue_pocketsphinx"/>
+  <depend package="speech_interpreter"/>
+
+</package>
+
+
