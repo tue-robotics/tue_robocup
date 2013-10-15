@@ -57,7 +57,7 @@ class AmigoIntroductionEnglish(smach.State):
         self.robot.speech.speak("With my laser I can see where I am")
         self.robot.speech.speak("And with my second camera I make sure I don't bump into tables")
         
-        self.robot.spindle.send_goal(0.35, waittime = 10.0)
+        self.robot.spindle.send_goal(0.35, timeout = 10.0)
         self.robot.leftArm.reset_arm()
         self.robot.rightArm.reset_arm()
         self.robot.head.reset_position()
@@ -117,7 +117,7 @@ class AmigoIntroductionDutch(smach.State):
         self.robot.speech.speak("Met mijn laser kan ik zien waar ik ben",language='nl',personality='marjolijn')
         self.robot.speech.speak("En met mijn tweede camera zorg ik ervoor dat ik niet tegen tafels aan rijdt",language='nl',personality='marjolijn')
         
-        self.robot.spindle.send_goal(0.35,waittime = 10.0)
+        self.robot.spindle.send_goal(0.35,timeout = 10.0)
         self.robot.leftArm.reset_arm()
         self.robot.rightArm.reset_arm()
         self.robot.head.reset_position()

@@ -290,7 +290,7 @@ class PrepareGrasp(smach.State):
 
             # ToDo: parameterize
             if (spindle_target > self.robot.spindle.lower_limit):
-                self.robot.spindle.send_goal(spindle_target,waittime=5.0)
+                self.robot.spindle.send_goal(spindle_target,timeout=5.0)
             # Else: there's no point in doing it any other way
 
         return 'succeeded'
@@ -334,14 +334,14 @@ class UpdateObjectPose(smach.State):
             spindle_target = target_point.point.z + 0.5 -0.98
             spindle_target = max(self.robot.spindle.lower_limit, spindle_target)
             spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
-            self.robot.spindle.send_goal(spindle_target, waittime = 5.0)
+            self.robot.spindle.send_goal(spindle_target, timeout = 5.0)
             self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
             self.robot.perception.toggle(["tabletop_segmentation"])
             self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
             rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-            waittime = 5.0
-            rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(waittime))
-            rospy.sleep(rospy.Duration(waittime))
+            timeout = 5.0
+            rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(timeout))
+            rospy.sleep(rospy.Duration(timeout))
             #self.robot.speech.speak("Now I need Simons stuff because the height of the object is {0:.2f}".format(target_point.point.z),block=False)
 
         ''' Reset head and stop all perception stuff '''
@@ -356,7 +356,7 @@ class UpdateObjectPose(smach.State):
         
         rospy.logwarn("Sending spindle to top for safety")
         spindle_pos = 0.4
-        self.robot.spindle.send_goal(spindle_pos,waittime=40.0)
+        self.robot.spindle.send_goal(spindle_pos,timeout=40.0)
 
         return 'succeeded'
         
@@ -983,7 +983,7 @@ class TorsoToUserPos(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
-        if self.robot.spindle.send_goal(self.torso_pos,waittime=self.time_out):
+        if self.robot.spindle.send_goal(self.torso_pos,timeout=self.time_out):
             return 'succeeded'
         else:
             return 'failed'

@@ -598,7 +598,7 @@ class Determine_goal(smach.State):
     def set_spindle_out_of_laser_reach(self):
         """Reset the spindle when it could be position such that the arms might hang in the laser range. This should be cleared out by s self-filter"""
         if self.robot.spindle.current_position < 0.35: #TODO: Hardcoded threshold, should read from spindle or something
-            return self.robot.spindle.send_goal(0.35, waittime=0.5)
+            return self.robot.spindle.send_goal(0.35, timeout=0.5)
         return True
 
     def execute(self, userdata):

@@ -127,7 +127,7 @@ class LookForObjectsAtROI(smach.State):
             spindle_target = max(0.15, min(lookat_point.point.z - 0.41, self.robot.spindle.upper_limit))
             rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.point.z, spindle_target))
 
-            self.robot.spindle.send_goal(spindle_target,waittime=5.0)
+            self.robot.spindle.send_goal(spindle_target,timeout=5.0)
             self.robot.head.send_goal(lookat_point, keep_tracking=False)
             
         except ValueError, ve:
