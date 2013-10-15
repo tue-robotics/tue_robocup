@@ -32,8 +32,8 @@ class Spindle(object):
         rospy.loginfo("Spindle cancelling all goals on close")
         self.ac_move_spindle.cancel_all_goals()
     
-    def send_goal(self, spindle_pos,spindle_vel=0.0,spindle_acc=0.0,spindle_stop=0.0,waittime=0.0):
-        rospy.loginfo("Send spindle goal {0}, waittime = {1}".format(spindle_pos, waittime))
+    def send_goal(self, spindle_pos,spindle_vel=0.0,spindle_acc=0.0,spindle_stop=0.0,timeout=0.0):
+        rospy.loginfo("Send spindle goal {0}, timeout = {1}".format(spindle_pos, timeout))
         
         ''' Using actionlib interface '''
         spindle_goal = amigo_actions.msg.AmigoSpindleCommandGoal()
@@ -44,10 +44,10 @@ class Spindle(object):
 
         self.ac_move_spindle.send_goal(spindle_goal)
         
-        if waittime == 0.0:
+        if timeout == 0.0:
             return True
         else:
-            return self.wait(waittime)
+            return self.wait(timeout)
             
     def high(self):
         return self.send_goal(self.upper_limit)
@@ -71,7 +71,7 @@ class Spindle(object):
             return False
 
     def send_laser_goal(self, laser_height, timeout=0.0):
-        return self.send_goal(laser_height - self.laser_offset,waittime=timeout)
+        return self.send_goal(laser_height - self.laser_offset,timeout=timeout)
             
     def cancel_goal(self):
         self.ac_move_spindle.cancel_all_goals()
