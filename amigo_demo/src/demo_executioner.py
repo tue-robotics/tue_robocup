@@ -251,9 +251,9 @@ def wave2(robot):
 
     while ((rospy.Time.now() - start_time) < rospy.Duration(10.0)) and not actions_canceled:
         joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
-        robot.leftArm.send_joint_goal_old(*joints)
+        robot.leftArm.send_joint_goal(*joints)
         joints[2] = -joints[2] # q3 of left and right arm should be mirrorred
-        robot.rightArm.send_joint_goal_old(*joints)
+        robot.rightArm.send_joint_goal(*joints)
         #rospy.sleep(rospy.Duration(0.05))
     rospy.loginfo("Waving done")
     robot.rightArm.send_joint_goal(*poses["DRIVE"])
@@ -268,7 +268,7 @@ def wave1(robot, arm):
 
     while ((rospy.Time.now() - start_time) < rospy.Duration(10.0)) and not actions_canceled:
         joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
-        arm.send_joint_goal_old(*joints)
+        arm.send_joint_goal(*joints)
     rospy.loginfo("Waving done")
     arm.send_joint_goal(*poses["DRIVE"])
 
@@ -287,9 +287,9 @@ def wave_lights(robot):
 
     while ((rospy.Time.now() - start_time) < rospy.Duration(10.0)) and not actions_canceled:
         joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
-        robot.leftArm.send_joint_goal_old(*joints)
+        robot.leftArm.send_joint_goal(*joints)
         joints[2] = -joints[2] # q3 of left and right arm should be mirrorred
-        robot.rightArm.send_joint_goal_old(*joints)
+        robot.rightArm.send_joint_goal(*joints)
         #rospy.sleep(rospy.Duration(0.05))
         robot.lights.set_color( random.random(),
                                 random.random(),

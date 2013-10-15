@@ -98,7 +98,7 @@ class ScanTables(smach.State):
             
             ''' Reset head and stop all perception stuff '''
             self.robot.perception.toggle([])
-            self.robot.spindle.send_goal(spindle_pos, waittime=self.timeout_duration)
+            self.robot.spindle.send_goal(spindle_pos, timeout=self.timeout_duration)
         else:
             rospy.logerr("No table location found...")
 
@@ -169,7 +169,7 @@ class LookForServeObject(smach.State):
         rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.z, spindle_target))
 
         self.robot.head.send_goal(lookat_point, keep_tracking=True)
-        self.robot.spindle.send_goal(spindle_target,waittime=5.0)
+        self.robot.spindle.send_goal(spindle_target,timeout=5.0)
 
         rospy.loginfo("Start object recognition")
         self.robot.perception.toggle_recognition(objects=True)

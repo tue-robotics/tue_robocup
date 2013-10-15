@@ -586,7 +586,7 @@ class Look_at_person(smach.State):
             x,y,z = possible_locations[0]
 
             if z > 1.5:
-                self.robot.spindle.send_goal(0.4,waittime=5.0)  
+                self.robot.spindle.send_goal(0.4,timeout=5.0)  
                 rospy.logdebug("Spindle should come up now!")
 
             lookat_point = msgs.PointStamped(x,y,z)
