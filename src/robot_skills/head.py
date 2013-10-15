@@ -173,29 +173,6 @@ class Head(object):
                        keep_tracking=keep_tracking, 
                        min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 
-    def set_position_topic(self, x, y, z, frame_id="/map"):
-        """
-        Set head goal on specified position, uses topic does not use
-        action client. Expects x,y,z coordinates and optional frame_id
-        """
-        """
-        self.send_goal_topic(message_helper.head_ref_action(message_helper.point(x, y, z), frame_id))
-        """
-        manual_head_goal = geometry_msgs.msg.PointStamped()
-
-        manual_head_goal.header.frame_id = frame_id
-        manual_head_goal.point.x = x
-        manual_head_goal.point.y = y
-        manual_head_goal.point.z = z
-
-        rospy.logwarn("head.set_position_topic will become deprecated soon!")
-
-        self.send_goal(manual_head_goal,
-                       timeout=0,
-                       keep_tracking=True)
-
-        return True
-
     def search_movement_old(self, target_point, updatetime, x_min=0, y_min=0, z_min=0, x_max=0, y_max=0, z_max=0):
         """
         Look around and search for movement
