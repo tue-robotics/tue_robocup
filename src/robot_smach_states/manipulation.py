@@ -476,7 +476,7 @@ class Grab(smach.State):
             return "target_lost"
             
         ''' Keep looking at end-effector for ar marker detection '''
-        self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
+        self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id),keep_tracking=True)
         
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
@@ -505,7 +505,7 @@ class Grab(smach.State):
             
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
-            self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
+            self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, time_out=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("Let me have a closer look", block=False)
         
@@ -1084,7 +1084,7 @@ class Point_at_object(smach.State):
             return "target_lost"
             
         ''' Keep looking at end-effector for ar marker detection '''
-        self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
+        self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id),keep_tracking=True)
         
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
@@ -1109,7 +1109,7 @@ class Point_at_object(smach.State):
             
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
-            self.robot.head.set_position(0,0,0,frame_id=self.end_effector_frame_id,keep_tracking=True)
+            self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, time_out=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("What's that on my hand?")
             rospy.sleep(2.0)

@@ -39,13 +39,10 @@ class AmigoIntroductionEnglish(smach.State):
         self.robot.base.force_drive(-0.25,0.0,0.0,0.75)
         
         self.robot.speech.speak("Furthermore, I have got two human like robotic arms")
-        self.robot.head.set_position(0,0,0,frame_id="/amigo/grippoint_left",keep_tracking=True)
+        self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id="/amigo/grippoint_left"),keep_tracking=True)
         self.robot.leftArm.send_joint_goal(-1.4,1.4,-0.8,1.2,-0.6,-0.4,-0.4)
         
         self.robot.speech.speak("With these, I can reach both high and low")
-        #TODO Loy: check if arm is working, also in Dutch
-        #self.robot.head.set_position(0,0,0,frame_id="/amigo/grippoint_right",keep_tracking=True)
-        #self.robot.rightArm.send_goal(0.3,-0.3,0.4,0,0,0)
         
         self.robot.spindle.send_goal(0.35)
         self.robot.leftArm.reset_arm()
@@ -102,12 +99,10 @@ class AmigoIntroductionDutch(smach.State):
         self.robot.base.force_drive(-0.25,0.0,0.0,0.75)
         
         self.robot.speech.speak("Verder heb ik twee mensachtige armen",language='nl',personality='marjolijn')
-        self.robot.head.set_position(0,0,0,frame_id="/amigo/grippoint_left",keep_tracking=True)
+        self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id="/amigo/grippoint_left"), keep_tracking=True)
         self.robot.leftArm.send_joint_goal(-1.4,1.4,-0.8,1.2,-0.6,-0.4,-0.4)
         
         self.robot.speech.speak("Hiermee kan ik zowel hoog als laag iets oppakken",language='nl',personality='marjolijn')
-        #self.robot.head.set_position(0,0,0,frame_id="/amigo/grippoint_right",keep_tracking=True)
-        #self.robot.rightArm.send_goal(0.3,-0.3,0.4,0,0,0)
         
         self.robot.spindle.send_goal(0.35)
         self.robot.leftArm.reset_arm()
