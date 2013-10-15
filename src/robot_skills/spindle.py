@@ -61,8 +61,8 @@ class Spindle(object):
     def reset(self):
         return self.send_goal(0.35)
     
-    def wait(self, wait_time=10):
-        self.ac_move_spindle.wait_for_result(rospy.Duration(wait_time))
+    def wait(self, timeout=10):
+        self.ac_move_spindle.wait_for_result(rospy.Duration(timeout))
         if self.ac_move_spindle.get_state() == GoalStatus.SUCCEEDED:
             rospy.loginfo("Spindle target reached")
             return True
