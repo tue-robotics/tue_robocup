@@ -126,7 +126,7 @@ class Base(object):
 
 
     @util.concurrent_util.synchronized(_lock)
-    def execute_plan(self, path, time=0, block=True):
+    def execute_plan(self, path, timeout=0, block=True):
         base_goal = tue_move_base_msgs.msg.MoveBaseGoal()
         base_goal.path = path.path
 
@@ -136,16 +136,16 @@ class Base(object):
 
         #TODO Loy & Bas: Use percent_complete from feedback to monitor the plan. Somehow. opercent_complete is not yet implemented in tue_move_base
 
-        if time == 0 and not block:
+        if timeout == 0 and not block:
             rospy.loginfo("Nonblocking" + goalformat)
             return True
-        elif time == 0 and block:
+        elif timeout == 0 and block:
             rospy.loginfo("Blocking " + goalformat)
             self.ac_move_base.wait_for_result()
             return (self.ac_move_base.get_state() == 3)
         else:
-            rospy.loginfo("Waiting {0}s on ".format(time) + goalformat)
-            result = self.ac_move_base.wait_for_result(rospy.Duration(time))
+            rospy.loginfo("Waiting {0}s on ".format(timeout) + goalformat)
+            result = self.ac_move_base.wait_for_result(rospy.Duration(timeout))
             return (self.ac_move_base.get_state() == 3) and result
 
     @util.concurrent_util.synchronized(_lock)
