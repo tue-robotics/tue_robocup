@@ -7,6 +7,7 @@ from actionlib_msgs.msg import GoalStatus
 from amigo_head_ref.msg import HeadRefAction, HeadRefGoal
 import random
 from sensor_msgs.msg import JointState
+import robot_skills.util.msg_constructors as msgs
 
 class Head(object):
     """
@@ -14,10 +15,10 @@ class Head(object):
 
     Example:
     #Send head to position with a 10 second time out
-    >>> head.send_goal(message_helper.point(0.65, 0.0, 0.9,), '/amigo/base_link')
+    >>> head.send_goal(msgs.PointStamped(0.65, 0.0, 0.9, '/amigo/base_link'))
 
     #Equivalent
-    >>> head.set_position(0.65, 0.0, 0.9, '/amigo/base_link')
+    >>> head.set_position(msgs.PointStamped(0.65, 0.0, 0.9, '/amigo/base_link'))
 
     #Reset head
     >>> head.reset_position()
@@ -162,20 +163,13 @@ class Head(object):
 
         return self.send_goal(reset_head_goal, keep_tracking=False, timeout=timeout)
 
-    def set_position(self, x, y, z, frame_id='/map', keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
+    def set_position(self, point_stamped, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
         Set head goal at a specified position
-        Expects: x,y,z coordinates, and optional frame_id
+        Expects: a PointStamped
         """
 
-        manual_head_goal = geometry_msgs.msg.PointStamped()
-
-        manual_head_goal.header.frame_id = frame_id
-        manual_head_goal.point.x = x
-        manual_head_goal.point.y = y
-        manual_head_goal.point.z = z
-
-        return self.send_goal(manual_head_goal,
+        return self.send_goal(point_stamped,
                        keep_tracking=keep_tracking, 
                        min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
 
