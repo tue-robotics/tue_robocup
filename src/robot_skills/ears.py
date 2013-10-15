@@ -48,11 +48,11 @@ class Ears:
     def close(self):
         pass
 
-    def ask_user(self, type, max_num_tries = 3, time_out = rospy.Duration(10)):
+    def ask_user(self, type, max_num_tries = 3, timeout = rospy.Duration(10)):
         req = AskUserRequest()
         req.info_type = type
         req.num_tries = max_num_tries
-        req.time_out = time_out
+        req.time_out = timeout
 
         try:
             resp = self.ask_user_service(req)

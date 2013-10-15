@@ -113,16 +113,16 @@ def test_head(amigo):
 def test_grippers(amigo):
     global left_gripper_meas, right_gripper_meas
 
-    amigo.leftArm.send_gripper_goal_open(time_out=10)
+    amigo.leftArm.send_gripper_goal_open(timeout=10)
     show_test("left gripper open", left_gripper_meas.direction == amigo_msgs.msg.AmigoGripperMeasurement.OPEN)
 
-    amigo.leftArm.send_gripper_goal_close(time_out=10)
+    amigo.leftArm.send_gripper_goal_close(timeout=10)
     show_test("left gripper close", left_gripper_meas.direction == amigo_msgs.msg.AmigoGripperMeasurement.CLOSE)
 
-    amigo.rightArm.send_gripper_goal_open(time_out=10)
+    amigo.rightArm.send_gripper_goal_open(timeout=10)
     show_test("right gripper open", right_gripper_meas.direction == amigo_msgs.msg.AmigoGripperMeasurement.OPEN)
 
-    amigo.rightArm.send_gripper_goal_close(time_out=10)
+    amigo.rightArm.send_gripper_goal_close(timeout=10)
     show_test("right gripper close", right_gripper_meas.direction == amigo_msgs.msg.AmigoGripperMeasurement.CLOSE)
 
 
