@@ -846,6 +846,10 @@ class Execute_path(smach.State):
         print "Executing!"
 
         while not rospy.is_shutdown():
+            if self.preempt_requested():
+                self.robot.base.cancel_goal()
+                return 'preempted'
+
             goal_status = self.robot.base.ac_move_base.get_state()
             rospy.logdebug("GoalStatus = {0}".format(goal_status))
 
