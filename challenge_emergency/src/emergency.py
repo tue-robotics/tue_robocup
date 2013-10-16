@@ -712,7 +712,7 @@ def setup_statemachine(robot):
                                                     'timeout':'SAY_FIRE_ALARM' })  
 
         smach.StateMachine.add('SAY_WEATHER_QUEEN',
-                                    states.Say(robot, "Although it is a rainy day, it will be lovely! I just can't wait to meet the queen in a few hours!", block=False),  
+                                    states.Say(robot, "Oh boy, I am really looking forward to that Brazilian barbeque later on!", block=False),  
                                     transitions={'spoken':'CHECK_TIME_2'}) 
 
         smach.StateMachine.add('CHECK_TIME_2',
