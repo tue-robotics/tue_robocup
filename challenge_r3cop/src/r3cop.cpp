@@ -460,10 +460,10 @@ void speechCallback(std_msgs::String res) {
 
 
 int main(int argc, char **argv) {
-    ros::init(argc, argv, "follow_me_simple");
+    ros::init(argc, argv, "r3cop_executive");
     ros::NodeHandle nh;
 
-    ROS_INFO("Started Follow me");
+    ROS_INFO("Started r3cop demo");
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////  Text-to-speech
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -586,7 +586,8 @@ int main(int argc, char **argv) {
     //// Start challenge: find an operator
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ROS_INFO("TODO: Check for dripping device and grasp first");
+    ROS_INFO("TODO: Check for dripping device and grasp first, now only a 2 [s] sleep");
+    ros::Duration(2.0).sleep();
 
     findOperator(client, false);
     ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
