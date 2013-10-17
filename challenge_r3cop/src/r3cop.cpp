@@ -39,13 +39,11 @@ using namespace std;
 const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
-const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const int N_MODELS = 2;                         // Number of models used for recognition of the operator
-const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
+const string NAVIGATION_FRAME = "/amigo/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
-double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const double TYPICAL_OPERATOR_X = 1.0;          // Expected x-position operator, needed when looking for operator
 const double TYPICAL_OPERATOR_Y = 0;            // Expected y-position operator, needed when looking for operator
+bool FIRST_OBSERVATION = false;
 
 const double PI = 3.1415;
 
@@ -62,7 +60,6 @@ sensor_msgs::LaserScan laser_scan_;                                             
 
 // Actions
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
-actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
 
 // Publishers/subscribers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
@@ -122,10 +119,6 @@ void findOperator(wire::Client& client, bool lost = true) {
         ROS_WARN("Failed to clear world model");
     }
 
-    //! Always some time before operator is there
-    //ros::Duration waiting_time(1.0);
-    //waiting_time.sleep();
-
     //! Vector with candidate operators
     vector<pbl::Gaussian> vector_possible_operators;
 
@@ -137,11 +130,13 @@ void findOperator(wire::Client& client, bool lost = true) {
 
         //! Get latest world state estimate
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
+        ROS_INFO("Iterating over %zu objects", objects.size());
 
         //! Iterate over all world model objects and look for a person in front of the robot
         for(vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
             wire::PropertySet& obj = *it_obj;
             const wire::Property& prop_label = obj.getProperty("class_label");
+
             if (prop_label.isValid() && prop_label.getValue().getExpectedValue().toString() == "person") {
 
                 //! Check position
@@ -155,7 +150,7 @@ void findOperator(wire::Client& client, bool lost = true) {
                         pos_gauss = pbl::toGaussian(pos);
 
                     } else {
-                        ROS_INFO("follow_me_simple (findOperator): Position person is not a Gaussian");
+                        ROS_INFO("r3cop (findOperator): Position person is not a Gaussian");
                     }
 
                     //! Check if the person stands in front of the robot
@@ -238,8 +233,7 @@ void findOperator(wire::Client& client, bool lost = true) {
 
             no_operator_found = false;
 
-            if (!lost) amigoSpeak("I found my operator.");
-            else amigoSpeak("I will continue following you");
+            if (lost) amigoSpeak("I will continue following you");
 
             ros::Duration safety_delta(1.0);
             safety_delta.sleep();
@@ -385,79 +379,6 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 }
 
 
-bool startSpeechRecognition() {
-    std::string knowledge_path = ros::package::getPath("tue_knowledge");
-    if (knowledge_path == "") {
-        return false;
-    }
-
-    std::string follow_me_speech_path = knowledge_path + "/speech_recognition/follow_me/";
-
-    tue_pocketsphinx::Switch::Request req;
-    req.action = tue_pocketsphinx::Switch::Request::START;
-    req.hidden_markov_model = "/usr/share/pocketsphinx/model/hmm/wsj1";
-    req.dictionary = follow_me_speech_path + "follow_me.dic";
-    req.language_model = follow_me_speech_path + "follow_me.lm";
-
-    tue_pocketsphinx::Switch::Response resp;
-    if (speech_recognition_client_.call(req, resp)) {
-        if (resp.error_msg == "") {
-            ROS_INFO("Switched on speech recognition");
-        } else {
-            ROS_WARN("Unable to turn on speech recognition: %s", resp.error_msg.c_str());
-            return false;
-        }
-    } else {
-        ROS_WARN("Service call for turning on speech recognition failed");
-        return false;
-    }
-
-    return true;
-}
-
-bool stopSpeechRecognition() {
-    // Turn off speech recognition
-    tue_pocketsphinx::Switch::Request req;
-    req.action = tue_pocketsphinx::Switch::Request::STOP;
-
-    tue_pocketsphinx::Switch::Response resp;
-    if (speech_recognition_client_.call(req, resp)) {
-        if (resp.error_msg == "") {
-            ROS_INFO("Switched off speech recognition");
-        } else {
-            ROS_WARN("Unable to turn off speech recognition: %s", resp.error_msg.c_str());
-            return false;
-        }
-    } else {
-        ROS_WARN("Unable to turn off speech recognition");
-        return false;
-    }
-
-    return true;
-}
-
-/**
- * @brief speechCallback
- * @param res
- */
-void speechCallback(std_msgs::String res) {
-
-    /*
-
-    //amigoSpeak(res.data);
-    if (!itp2_ && !itp3_ && res.data == "amigoleave" && in_elevator_) { //res.data.find("elevator") != std::string::npos) {
-        ROS_WARN("Received command: %s", res.data.c_str());
-        itp2_ = true;
-    } else {
-        ROS_DEBUG("Received unknown command \'%s\' or already leaving the elevator", res.data.c_str());
-    }
-
-    // always immediately start listening again
-    startSpeechRecognition();
-    */
-}
-
-
 
 
 int main(int argc, char **argv) {
@@ -500,25 +421,14 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     double max_vel_lin = 0.5;
     double max_vel_rot = 0.4;
-    double dist_wall = 0.4;
+    double dist_wall = 0.8;
     planner_ = new CarrotPlanner("r3cop_carrot_planner", max_vel_lin, max_vel_rot, dist_wall);
     ROS_INFO("Carrot planner instantiated");
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Speech-to-text
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // connect to pocketsphinx
-    speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
-    speech_recognition_client_.waitForExistence();
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Face learning and perception
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    learn_face_ac_ = new actionlib::SimpleActionClient<pein_msgs::LearnAction>("/face_learning/action_server",true);
-    learn_face_ac_->waitForServer();
-    ROS_INFO("Learn face client connected to the learn face server");
     ros::ServiceClient ppl_det_client = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
     perception_srvs::StartPerception pein_srv;
     pein_srv.request.modules.push_back("ppl_detection");
@@ -560,11 +470,7 @@ int main(int argc, char **argv) {
     //// Debugging
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ROS_INFO("TODO: this should be another command of course");
-
-    // Wait for continue to start the challenge
-    speech_client_.waitForExistence(ros::Duration(5.0));
-    amigoSpeak("I will start when you say continue");
+    amigoSpeak("I will start following when you say continue");
 
     double t1 = ros::Time::now().toSec();
     speech_interpreter::GetInfo srv_test;
@@ -582,23 +488,16 @@ int main(int argc, char **argv) {
     }
     ROS_INFO("Waited %f [s]", ros::Time::now().toSec()-t1);
 
-    // Non-blocking
-    amigoSpeak("I will start the challenge");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Start challenge: find an operator
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    ROS_INFO("TODO: Check for dripping device and grasp first, now only a 2 [s] sleep");
-    ros::Duration(2.0).sleep();
+    amigoSpeak("Let's if I can get your infusion.");
+    ros::Duration(5.0).sleep();
+    bool first = true;
 
-    findOperator(client, false);
-    ROS_INFO("Found operator with position %s in frame \'%s\'", operator_pos.toString().c_str(), NAVIGATION_FRAME.c_str());
-    amigoSpeak("I will now start following you");
-
-    // Start speech recognition
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallback);
-    startSpeechRecognition();
+    amigoSpeak("Let's go.");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// START MAIN LOOP
@@ -620,7 +519,8 @@ int main(int argc, char **argv) {
         } else {
 
             //! Lost operator
-            findOperator(client);
+            findOperator(client, !first);
+            first = false;
         }
 
 
