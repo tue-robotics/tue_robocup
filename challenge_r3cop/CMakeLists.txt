@@ -29,7 +29,5 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(follow_me_simple src/follow_me_simple.cpp)
-#rosbuild_add_library(follow_me_carrot_planner
-rosbuild_add_executable(test_navigate src/test_navigate.cpp)
+rosbuild_add_executable(r3cop src/r3cop.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
