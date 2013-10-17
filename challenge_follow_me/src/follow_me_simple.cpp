@@ -5,7 +5,7 @@
 // Messages
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
-#include <amigo_msgs/head_ref.h>
+#include <sensor_msgs/JointState.h>
 #include <pein_msgs/LearnAction.h>
 #include <sensor_msgs/LaserScan.h>
 
@@ -39,7 +39,7 @@ using namespace std;
 const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
 const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
-const string NAVIGATION_FRAME = "/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
+const string NAVIGATION_FRAME = "/amigo/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
 const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
@@ -740,7 +740,7 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
+    ros::Publisher head_ref_pub = nh.advertise<sensor_msgs::JointState>("/amigo/neck/references", 1);
 
     /// set the head to look down in front of AMIGO
     ros::Rate poll_rate(100);
@@ -749,10 +749,12 @@ int main(int argc, char **argv) {
         poll_rate.sleep();
     }
     ROS_INFO("Sending head ref goal");
-    amigo_msgs::head_ref goal;
-    goal.head_pan = 0.0;
-    goal.head_tilt = -0.2;
-    head_ref_pub.publish(goal);
+    sensor_msgs::JointState head_goal;
+    head_goal.name.push_back("neck_pan_joint");
+    head_goal.position.push_back(0);
+    head_goal.name.push_back("neck_tilt_joint");
+    head_goal.position.push_back(-0.2);
+    head_ref_pub.publish(head_goal);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
