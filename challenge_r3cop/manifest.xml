@@ -23,6 +23,7 @@
   <depend package="challenge_restaurant"/>
   <depend package="robot_skills"/>
   <depend package="robot_smach_states"/>
+  <depend package="qr_detector"/>
 
 </package>
 
