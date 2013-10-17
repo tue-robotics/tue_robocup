@@ -45,7 +45,7 @@ class Base(object):
             self.planner_feedback = rospy.Subscriber('/move_base_3d/AStarPlannerROS/result',std_msgs.msg.Bool, self.__planner_callback)
 
         
-        self.cmd_vel = rospy.Publisher("/cmd_vel", geometry_msgs.msg.Twist)
+        self.cmd_vel = rospy.Publisher("/amigo/base/references", geometry_msgs.msg.Twist)
         
         self.move_simple_base = rospy.Publisher("/move_base_simple/goal", geometry_msgs.msg.PoseStamped)
 
