@@ -5,7 +5,8 @@
 // Messages
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
-#include <amigo_msgs/head_ref.h>
+//#include <amigo_msgs/head_ref.h>
+#include <sensor_msgs/JointState.h>
 #include <pein_msgs/LearnAction.h>
 
 // Services
@@ -478,7 +479,7 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ros::Publisher head_ref_pub = nh.advertise<amigo_msgs::head_ref>("/head_controller/set_Head", 1);
+    ros::Publisher head_ref_pub = nh.advertise<sensor_msgs::JointState>("/amigo/neck/references", 1);
 
     /// set the head to look down in front of AMIGO
     ros::Rate poll_rate(100);
@@ -487,10 +488,12 @@ int main(int argc, char **argv) {
         poll_rate.sleep();
     }
     ROS_INFO("Sending head ref goal");
-    amigo_msgs::head_ref goal;
-    goal.head_pan = 0.0;
-    goal.head_tilt = -0.2;
-    head_ref_pub.publish(goal);
+    sensor_msgs::JointState head_goal;
+    head_goal.name.push_back("neck_pan_joint");
+    head_goal.position.push_back(0);
+    head_goal.name.push_back("neck_tilt_joint");
+    head_goal.position.push_back(-0.2);
+    head_ref_pub.publish(head_goal);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
