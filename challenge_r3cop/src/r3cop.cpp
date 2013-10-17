@@ -520,7 +520,7 @@ int main(int argc, char **argv) {
         // Switch on QR code detection
         perception_srvs::StartPerception pein_srv_qr;
         pein_srv_qr.request.modules.push_back("qr_detector");
-        if (ppl_det_client.call(pein_srv))
+        if (ppl_det_client.call(pein_srv_qr))
         {
             ROS_INFO("Switched on qr_detector");
         }
@@ -531,7 +531,7 @@ int main(int argc, char **argv) {
         // Switch off qr detector (but turn on ppl detection)
         pein_srv_qr.request.modules.clear();
         pein_srv_qr.request.modules.push_back("ppl_detection");
-        if (ppl_det_client.call(pein_srv))
+        if (ppl_det_client.call(pein_srv_qr))
         {
             ROS_INFO("Switched on qr_detector");
         }
