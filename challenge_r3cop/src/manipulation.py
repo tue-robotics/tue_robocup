@@ -507,7 +507,7 @@ class Grab(smach.State):
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
             self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
-            self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, time_out=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
+            self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, timeout=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("Let me have a closer look", block=False)
         
         ''' New ar marker detection stuff ''' 
@@ -949,7 +949,7 @@ class ArmToQueryPoint(smach.State):
         answers = self.robot.reasoner.query(self.query)
             
         if not answers:
-            rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
+            rospy.loginfo("No answers for query {0}".format(self.query))
             return 'failed'
         answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
         rospy.loginfo("ArmToQueryPoint: goal = {0}".format(answer))
@@ -964,7 +964,7 @@ class ArmToQueryPoint(smach.State):
 
         if self.side.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, 
             frame_id="/amigo/base_link",
-            time_out=self.time_out,
+            timeout=self.time_out,
             pre_grasp=self.pre_grasp,
             first_joint_pos_only=self.first_joint_pos_only):
             return 'succeeded'

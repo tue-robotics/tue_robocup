@@ -2,7 +2,7 @@
 
 <launch>
 
-    <include file="$(find qr_detector)/launch/start.launch"/>
+    <!--include file="$(find qr_detector)/launch/start.launch"/-->
  
     <node name="r3cop_executive" pkg="challenge_r3cop" type="r3cop" output="screen"/> 
     
