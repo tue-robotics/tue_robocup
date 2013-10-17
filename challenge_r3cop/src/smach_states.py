@@ -9,7 +9,7 @@ from robot_skills.reasoner import Conjunction, Compound
 
 import smach
 import robot_smach_states as states
-import challenge_r3cop as r3cop_states
+import manipulation as r3cop_states
 
 from std_msgs.msg import String
 import challenge_restaurant.srv

@@ -2,15 +2,14 @@
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
-import navigation
-from util import transformations
+import robot_smach_states.navigation
+from robot_smach_states.util import transformations
+from robot_smach_states.human_interaction import Say
 from psi import Compound
 
 import geometry_msgs
 
 from robot_skills.arms import State as ArmState
-
-from human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
