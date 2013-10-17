@@ -13,6 +13,7 @@
 #include "perception_srvs/StartPerception.h"
 #include <std_srvs/Empty.h>
 #include "speech_interpreter/GetInfo.h"
+#include "challenge_restaurant/SmachStates.h"
 
 // Actions
 #include <tue_move_base_msgs/MoveBaseAction.h>
@@ -68,6 +69,7 @@ ros::Publisher pub_speech_;                                                     
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
+ros::ServiceClient grab_machine_client_;                                          // Communication: Connection with (python) grab machine
 
 /**
  * @brief amigoSpeak let AMIGO say a sentence
@@ -130,7 +132,6 @@ void findOperator(wire::Client& client, bool lost = true) {
 
         //! Get latest world state estimate
         vector<wire::PropertySet> objects = client.queryMAPObjects(NAVIGATION_FRAME);
-        ROS_INFO("Iterating over %zu objects", objects.size());
 
         //! Iterate over all world model objects and look for a person in front of the robot
         for(vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
@@ -427,7 +428,7 @@ int main(int argc, char **argv) {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Face learning and perception
+    //// Perception
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ros::ServiceClient ppl_det_client = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
     perception_srvs::StartPerception pein_srv;
@@ -449,6 +450,11 @@ int main(int argc, char **argv) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Connect to grab maching
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    grab_machine_client_ = nh.serviceClient<challenge_restaurant::SmachStates>("/smach_states");
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// WIRE
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     wire::Client client;
@@ -461,13 +467,14 @@ int main(int argc, char **argv) {
         ROS_ERROR("Failed to clear world model");
     }
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Administration variables
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     pbl::PDF operator_pos;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Debugging
+    //// Wait for the user to say continue
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     amigoSpeak("I will start following when you say continue");
@@ -490,14 +497,67 @@ int main(int argc, char **argv) {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Start challenge: find an operator
+    //// Start challenge: get infusion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    amigoSpeak("Let's if I can get your infusion.");
-    ros::Duration(5.0).sleep();
-    bool first = true;
+    amigoSpeak("Let's if I can find your infusion.");
 
-    amigoSpeak("Let's go.");
+    // Look to the left, then look to the right
+    for (unsigned int i=0; i < 2; ++i)
+    {
+        // Send head goal
+        sensor_msgs::JointState head_goal_qr;
+        head_goal_qr.name.push_back("neck_pan_joint");
+        if (i==0) head_goal_qr.position.push_back(0.7);
+        else head_goal_qr.position.push_back(-0.7);
+        head_goal_qr.name.push_back("neck_tilt_joint");
+        head_goal_qr.position.push_back(0.8);
+        head_ref_pub.publish(head_goal_qr);
+
+        // Give head controller some time to reach the goal position
+        ros::Duration(3.0).sleep();
+
+        // Switch on QR code detection
+        perception_srvs::StartPerception pein_srv_qr;
+        pein_srv_qr.request.modules.push_back("qr_detector");
+        if (ppl_det_client.call(pein_srv))
+        {
+            ROS_INFO("Switched on qr_detector");
+        }
+
+        // Give the QR detector some time to do detections
+        ros::Duration(2.5).sleep();
+
+        // Switch off qr detector (but turn on ppl detection)
+        pein_srv_qr.request.modules.clear();
+        pein_srv_qr.request.modules.push_back("ppl_detection");
+        if (ppl_det_client.call(pein_srv))
+        {
+            ROS_INFO("Switched on qr_detector");
+        }
+
+    }
+
+    // Amigo should look up (again)
+    head_ref_pub.publish(head_goal);
+
+    amigoSpeak("I found your infusion.");
+
+    // Call service to python grab machine
+    challenge_restaurant::SmachStates ss_srv;
+    ss_srv.request.state = "grasp";
+    if (!grab_machine_client_.call(ss_srv)) {
+        ROS_WARN("Service call to grab_machine failed");
+    } else if (ss_srv.response.outcome != "Succeeded") {
+        ROS_WARN("Service call returned %s", ss_srv.response.outcome.c_str());
+        amigoSpeak("I am not able to get the infusion, I will follow you anyway");
+    } else {
+        ROS_INFO("Grab machine succeeded!");
+
+        amigoSpeak("Let's go.");
+    }
+
+    bool first = true;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// START MAIN LOOP
@@ -532,6 +592,7 @@ int main(int argc, char **argv) {
     cov.zeros();
     pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
     moveTowardsPosition(pos, 0);
+
 
     return 0;
 }
