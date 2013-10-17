@@ -9,6 +9,7 @@ from robot_skills.reasoner import Conjunction, Compound
 
 import smach
 import robot_smach_states as states
+import challenge_r3cop as r3cop_states
 
 from std_msgs.msg import String
 import challenge_restaurant.srv
@@ -34,58 +35,46 @@ def grab_item(robot):
     
     import object_msgs.msg
 
-    #Copied from RDO finale
     rospy.loginfo("Setting up state machine")
     sm = smach.StateMachine(outcomes=['Succeeded','Failed','Aborted'])
 
     with sm:
         query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
                                         Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
-        #query_grabpoint = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
         
-        ### Old implementation
-        #smach.StateMachine.add('GRAB',
-        #                states.GrabMachine(robot.leftArm, robot, query_grabpoint),
-        #                transitions={   'succeeded':'CARRYING_POSE',
-        #                                'failed':'REPORT_FAILED' })
-        smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(selectedArm, robot, query_grabpoint),
-                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
+        smach.StateMachine.add('PREPARE_GRAB', r3cop_states.PrepareGrasp(selectedArm, robot, query_grabpoint),
+                        transitions={'succeeded'    :   'OPEN_GRIPPER',
                                      'failed'       :   'failed'})
 
-        # Uses new Prepare Orientation
-        smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(selectedArm, robot, query_grabpoint),
-                    transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
+        # Uses new Prepare Orientation: DOES NOT WORK: INFUSION IS TRACKED IN BASE LINK FRAME
+        #smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(selectedArm, robot, query_grabpoint),
+        #            transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
 
-        smach.StateMachine.add('OPEN_GRIPPER', SetGripper(robot, selectedArm, gripperstate=ArmState.OPEN),
+        smach.StateMachine.add('OPEN_GRIPPER', r3cop_states.SetGripper(robot, selectedArm, gripperstate=ArmState.OPEN),
                     transitions={'succeeded'    :   'UPDATE_OBJECT_POSE',
                                  'failed'       :   'UPDATE_OBJECT_POSE'})
 
         # Even if the update state fails, try to grasp anyway
-        smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(selectedArm, robot, query_grabpoint),
+        smach.StateMachine.add('UPDATE_OBJECT_POSE', r3cop_states.UpdateObjectPose(selectedArm, robot, query_grabpoint),
                     transitions={'succeeded'    :   'PRE_GRASP',
                                  'failed'       :   'PRE_GRASP',
                                  'target_lost'  :   'CLOSE_GRIPPER_UPON_FAIL'})
         
-        smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(robot, selectedArm, query_grabpoint, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+        smach.StateMachine.add('PRE_GRASP', r3cop_states.ArmToQueryPoint(robot, selectedArm, query_grabpoint, time_out=20, pre_grasp=True, first_joint_pos_only=True),
                     transitions={'succeeded'    :   'GRAB',
                                  'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
     
-        smach.StateMachine.add('GRAB', Grab(selectedArm, robot, query_grabpoint),
+        smach.StateMachine.add('GRAB', r3cop_states.Grab(selectedArm, robot, query_grabpoint),
                     transitions={'grab_succeeded':  'CLOSE_GRIPPER',
                                  'grab_failed'   :  'CLOSE_GRIPPER',
                                  'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
 
-        smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(robot, selectedArm, gripperstate=ArmState.CLOSE, grabpoint_query=query_grabpoint),
+        smach.StateMachine.add('CLOSE_GRIPPER', r3cop_states.SetGripper(robot, selectedArm, gripperstate=ArmState.CLOSE, grabpoint_query=query_grabpoint),
                     transitions={'succeeded'    :   'PUSHING_POSE',
                                  'failed'       :   'PUSHING_POSE'})
 
-        #smach.StateMachine.add('CARRYING_POSE',
-        #                       states.Carrying_pose(robot.leftArm, robot),
-        #                       transitions={'succeeded':'SAY_SUCCEEDED',
-        #                                    'failed':'Failed'})
-
         smach.StateMachine.add('PUSHING_POSE',
-                                states.ArmToJointPos(robot, selectedArm, [-1.5, 0.0, 0.0, 0.9, -0.9, 0.0, 0.0],timout=5.0),
+                                r3cop_states.ArmToJointPos(robot, selectedArm, [-0.8, 0.0, 0.0, 0.9, -0.9, 0.0, 0.0],timout=5.0),
                                 transitions={'done'  :'SAY_SUCCEEDED',
                                             'failed':'REPORT_FAILED'})
 
