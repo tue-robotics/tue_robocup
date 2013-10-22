@@ -8,6 +8,7 @@ import smach
 
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
+import robot_skills.util.msg_constructors as msgs
 
 from robot_smach_states.util.startup import startup
 
@@ -313,12 +314,15 @@ class Navigate_to_queryoutcome_point_location(states.Navigate_abstract):
 
                 self.robot.reasoner.query(Compound("retractall", Compound("dropoff_loc", "X"))) 
                 self.robot.reasoner.query(Compound("assert", Compound("dropoff_loc", poi_name))) 
-                
+            
+            look_pose = geometry_msgs.msg.PoseStamped()
+            look_pose.pose.position = self.robot.base.point(x,y)
+            look_pose.pose.orientation = msgs.Quaternion(z=1.0)
+
             look_point = geometry_msgs.msg.PointStamped()
             look_point.point = self.robot.base.point(x,y)
-            pose = states.util.msg_constructors.Quaternion(z=1.0)
 
-            rospy.loginfo("[EGPSR] look_point = {0}".format(look_point))
+            rospy.loginfo("[EGPSR] look_pose = {0}".format(look_pose))
             rospy.loginfo("[EGPSR] look point x = {0}".format(x))
             rospy.loginfo("[EGPSR] look point y = {0}".format(y))
             rospy.loginfo("[EGPSR] self.x_offset = {0}".format(self.x_offset))
@@ -330,13 +334,13 @@ class Navigate_to_queryoutcome_point_location(states.Navigate_abstract):
                 base_pose_for_point = base_poses_for_point[0]
             else:
                 rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return look_pose
 
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
                 rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return look_pose
 
-            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
+            return base_pose_for_point
 
 
 class Finished_goal(smach.State):
@@ -543,6 +547,14 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("assertz",Compound("tasks_done", "0.0")))
     robot.reasoner.query(Compound("assertz",Compound("tasks_max", "20.0")))  # Define how many tasks you want to perform
 
+    # Define arm used.    
+    robot = Amigo()
+    arm = rospy.get_param('~arm', 'left')
+    if arm == 'left':
+        selectedArm = robot.leftArm
+    else:
+        selectedArm = robot.rightArm
+
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
@@ -649,7 +661,7 @@ def setup_statemachine(robot):
                                          Compound("not", Compound("disposed", "ObjectID")))
             
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
+                                    states.GetObject(robot, selectedArm, search_query, object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
@@ -695,14 +707,14 @@ def setup_statemachine(robot):
                                    states.Say(robot,"I could not reach the meeting point the way I wanted. I am sorry. But could someone take the object out of my hands, I will open my gripper now."),
                                    transitions={'spoken':'DROP_OBJECT'})
 
-            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0),         #open
+            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, selectedArm, gripperstate=0),         #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
                                                     'failed'   :'CLOSE_AFTER_DROP'})
-            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, selectedArm, gripperstate=1),    #close
                                     transitions={   'succeeded':'RESET_ARM',
                                                     'failed'   :'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 
-                                    states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    states.ArmToPose(robot, selectedArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
                                     transitions={   'done':'MARK_DISPOSED',
                                                     'failed':'MARK_DISPOSED'})
 
@@ -757,7 +769,7 @@ def setup_statemachine(robot):
             #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
 
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, search_query, object_query, object_identifier=object_identifier_query), 
+                                    states.GetObject(robot, selectedArm, search_query, object_query, object_identifier=object_identifier_query), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
@@ -816,7 +828,7 @@ def setup_statemachine(robot):
                                             Compound("dropoff_point","Location",Compound("point_3d","X","Y","Z")))
 
             smach.StateMachine.add("DROPOFF_OBJECT",
-                                    states.DropObject(robot.leftArm, robot, query_dropoff_loc),
+                                    states.DropObject(selectedArm, robot, query_dropoff_loc),
                                     transitions={   'succeeded':'SAY_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT',
                                                     'failed':'SAY_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT',
                                                     'target_lost':'FAILED_TARGET_LOST'})
@@ -826,14 +838,14 @@ def setup_statemachine(robot):
                                                      able to get the object out of my hands."),
                                    transitions={'spoken':'DROP_OBJECT'})
 
-            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, robot.leftArm, gripperstate=0),         #open
+            smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, selectedArm, gripperstate=0),         #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
                                                     'failed'   :'CLOSE_AFTER_DROP'})
-            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP', states.SetGripper(robot, selectedArm, gripperstate=1),    #close
                                     transitions={   'succeeded':'RESET_ARM',
                                                     'failed'   :'RESET_ARM'})
             smach.StateMachine.add('RESET_ARM', 
-                                    states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
+                                    states.ArmToPose(robot, selectedArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
                                     transitions={   'done':'SAY_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT',
                                                     'failed':'SAY_AT_LOC_TO_NAVIGATE_TO_MEETING_POINT'})
 
@@ -879,14 +891,14 @@ def setup_statemachine(robot):
                                                      please take it out of my hand? I will open my gripper now."),
                                    transitions={'spoken':'DROP_OBJECT_FAILURE'})
 
-            smach.StateMachine.add( 'DROP_OBJECT_FAILURE', states.SetGripper(robot, robot.leftArm, gripperstate=0),    #open
+            smach.StateMachine.add( 'DROP_OBJECT_FAILURE', states.SetGripper(robot, selectedArm, gripperstate=0),    #open
                                     transitions={   'succeeded':'CLOSE_AFTER_FAILURE',
                                                     'failed'   :'CLOSE_AFTER_FAILURE'})
-            smach.StateMachine.add( 'CLOSE_AFTER_FAILURE', states.SetGripper(robot, robot.leftArm, gripperstate=1),    #close
+            smach.StateMachine.add( 'CLOSE_AFTER_FAILURE', states.SetGripper(robot, selectedArm, gripperstate=1),    #close
                                     transitions={   'succeeded':'RESET_ARM_FAILURE',
                                                     'failed'   :'RESET_ARM_FAILURE'})
             smach.StateMachine.add('RESET_ARM_FAILURE', 
-                                    states.ArmToPose(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
+                                    states.ArmToPose(robot, selectedArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),  #Copied from demo_executioner NORMAL
                                     transitions={   'done':'MARK_DISPOSED',
                                                     'failed':'MARK_DISPOSED'})
 
@@ -952,7 +964,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'POINTING_LOCATION_1'}) 
 
             smach.StateMachine.add("POINTING_LOCATION_1",
-                                   states.Point_location_hardcoded(robot, robot.leftArm, 1),
+                                   states.Point_location_hardcoded(robot, selectedArm, 1),
                                    transitions={'pointed':'SAY_AM_I_RIGHT'}) 
 
             smach.StateMachine.add("SAY_AM_I_RIGHT",
@@ -960,7 +972,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'POINTING_LOCATION_2'}) 
 
             smach.StateMachine.add("POINTING_LOCATION_2",
-                                   states.Point_location_hardcoded(robot, robot.leftArm, 1),
+                                   states.Point_location_hardcoded(robot, selectedArm, 1),
                                    transitions={'pointed':'SAY_BACK_TO_MEETING_POINT'}) 
 
             smach.StateMachine.add("SAY_BACK_TO_MEETING_POINT",
@@ -1006,7 +1018,7 @@ def setup_statemachine(robot):
             #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
 
             smach.StateMachine.add('POINT_OBJECT',
-                                    states.PointObject(robot, search_query, object_query, object_identifier=object_identifier_query), 
+                                    states.PointObject(robot, selectedArm, search_query, object_query, object_identifier=object_identifier_query), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
