@@ -390,8 +390,20 @@ def reset_arm(userdata, side):
 class GrabMachine(smach.StateMachine):
     def __init__(self, side, robot, grabpoint_query):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
-        self.side = side
+
         self.robot = robot
+    
+        if isinstance(side, basestring):
+            if side == "left":
+                self.side = self.robot.leftArm
+            elif side == "right":
+                self.side = self.robot.rightArm
+            else:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        else:           
+            self.side = side
+        
         self.grabpoint_query = grabpoint_query
         '''check check input and output keys'''
         with self:
