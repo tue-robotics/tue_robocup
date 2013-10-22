@@ -117,10 +117,13 @@ class EnterArena(smach.StateMachine):
                 # check if there are any entry points (someone may have forgotten to specify them)            
                 all_goal_answers = self.robot.reasoner.query(self.goto_query)
                 if not all_goal_answers:
-                    self.robot.speech.speak("No-one has specified entry_point locations. Please do so in the locations file!")
+                    #self.robot.speech.speak("No-one has specified entry_point locations. Please do so in the locations file!")
+                    rospy.loginfo("There are no entry points defined. Do so in the locations file!")
                     return "all_unreachable"
                 else:
-                    self.robot.speech.speak("There are a couple of entry points, but they are all unreachable. Sorry.")
+                    #self.robot.speech.speak("There are a couple of entry points, but they are all unreachable. Sorry.")
+                    rospy.loginfo("Entry points are all unreachable.")
+
                     return "all_unreachable"
 
             # for now, take the first goal found
@@ -231,10 +234,11 @@ class GotoMeetingPoint(smach.State):
 
 
 class GetObject(smach.StateMachine):
-    def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
+    def __init__(self, robot, side, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
+        self.side = side
         self.roi_query = roi_query
         self.object_query = object_query
 
@@ -297,7 +301,7 @@ class GetObject(smach.StateMachine):
             query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
                                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
             smach.StateMachine.add('GRAB',
-                                    manipulation.GrabMachine(robot.leftArm, robot, query_grabpoint),
+                                    manipulation.GrabMachine(self.side, robot, query_grabpoint),
                                     transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
                                                     'failed':'SAY_FAILED_GRABBING' })  
 
@@ -412,10 +416,11 @@ class Say_and_Navigate(smach.StateMachine):
                                     cc)
 
 class PointObject(smach.StateMachine):
-    def __init__(self, robot, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
+    def __init__(self, robot, side, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
+        self.side = side
         self.roi_query = roi_query
         self.object_query = object_query
 
@@ -479,7 +484,7 @@ class PointObject(smach.StateMachine):
                                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
             smach.StateMachine.add('POINT',
-                                    manipulation.PointMachine(robot.leftArm, robot, query_point),
+                                    manipulation.PointMachine(self.side, robot, query_point),
                                     transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
                                                     'failed':'SAY_FAILED_POINTING' }) 
 
