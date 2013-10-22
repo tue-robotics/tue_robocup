@@ -144,6 +144,7 @@ special_keys["`"] = "Prepare Welcome Maxima"
 special_keys["1"] = "Welcome Maxima1"
 special_keys["2"] = "Welcome Maxima2"
 special_keys["3"] = "Welcome Maxima3"
+special_keys["T"] = "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another"
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -805,6 +806,24 @@ def recognize_face(robot):
 
     # rospy.loginfo("State machine result: {0}".format(result))
 
+def transport(robot):
+    from transporter import Transporter
+
+    tr = Transporter(robot)
+
+    rospy.loginfo("State machine set up, start execution...")
+    
+    #import pdb; pdb.set_trace()
+    import smach_ros
+    introserver = smach_ros.IntrospectionServer('transporter', tr, '/SM_ROOT_PRIMARY')
+    introserver.start()
+
+    result = tr.execute()
+    
+    introserver.stop()
+
+    rospy.loginfo("State machine result: {0}".format(result))
+
 def cancel_actions(robot):
     global actions_canceled
     actions_canceled = True
@@ -968,6 +987,8 @@ def process_key(key):
                     pass
                 if key == '?':
                     print_keys(separate=True)
+                if key == "T":
+                    transport(robot)
                 if key == chr(27): #chr(27) == escape
                     rospy.loginfo("Cancelling current action. In a sequence, each action currently has to be cancelled separately, sorry 'bout that.")
                     cancel_actions(robot)
