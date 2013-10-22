@@ -810,7 +810,7 @@ class DemoChallenge(smach.StateMachine):
                                                     'abort':'Aborted'})
 
             smach.StateMachine.add('INIT_POSE',
-                                states.Set_initial_pose(robot, "custom_initial"),
+                                states.Set_initial_pose(robot, "initial"),
                                 transitions={   'done':'SAY_START',
                                                 'preempted':'SAY_START',
                                                 'error':'SAY_START'})
