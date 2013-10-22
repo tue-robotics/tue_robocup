@@ -605,7 +605,7 @@ def grab_demo(robot):
 
     with sm:
         smach.StateMachine.add('GET_OBJECT',
-                               states.GetObject(robot, search_query, object_query),
+                               states.GetObject(robot, robot.leftArm, search_query, object_query),
                                transitions={'Done':'DROPOFF_OBJECT',
                                             'Failed':'Failed',
                                             'Aborted':'Aborted'})
