@@ -3,6 +3,7 @@ import roslib; roslib.load_manifest('challenge_rips')
 import rospy
 import smach
 
+from robot_skills.amigo import Amigo
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import Point
@@ -67,7 +68,7 @@ class Ask_continue(smach.State):
 
 
 class AmigoIntroductionRIPS(smach.State):
-    def __init__(self, robot=None, gripper="left"):
+    def __init__(self, robot=None, gripper="left"): 
         smach.State.__init__(self, outcomes=['finished'])
         
         self.robot = robot
@@ -92,14 +93,14 @@ class AmigoIntroductionRIPS(smach.State):
             ''' Left arm '''
             self.robot.head.send_goal_topic(msgs.PointStamped(frame_id="/amigo/grippoint_left"))
             #self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            self.robot.leftArm.send_goal(0.4,0.3,1.1,1.5,0.0,0.0,10.0)              #TODO ERIK: TEST THIS joint goal
-            rospy.sleep(1.5)                                                          #TODO ERIK: TEST THIS SLEEP
+            self.robot.leftArm.send_goal(0.4,0.3,1.1,1.5,0.0,0.0,10.0)              
+            rospy.sleep(1.5)                                                          
             self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
             #rospy.sleep(0.5)
             self.robot.leftArm.send_gripper_goal_open(10)
             
-            self.robot.leftArm.send_joint_goal(-0.1,-0.5,0.2,1.9,0.0,0.0,0.0)       #TODO ERIK: TEST THIS joint goal
-            rospy.sleep(2.5)                                                        #TODO ERIK: TEST THIS SLEEP
+            self.robot.leftArm.send_joint_goal(-0.1,-0.5,0.2,1.9,0.0,0.0,0.0)       
+            rospy.sleep(2.5)                                                        
             self.robot.leftArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
             self.robot.leftArm.send_gripper_goal_close(5)
         else:
@@ -133,6 +134,17 @@ def setup_statemachine(robot):
     #Assert the current challenge.
     robot.reasoner.query(Compound("assertz",Compound("challenge", "registration")))
 
+    # Define arm used.    
+    robot = Amigo()
+    arm = rospy.get_param('~arm', 'left')
+    if arm == 'left':
+        gripper = 'left'
+        selectedArm = robot.leftArm
+    else:
+        gripper = 'right'
+        selectedArm = robot.rightArm
+
+
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
@@ -143,11 +155,11 @@ def setup_statemachine(robot):
                                                 'abort':'Aborted'})
 
         smach.StateMachine.add('OPENING_GRIPPER',
-                                    states.Say(robot, 'I will open my left gripper now, so that you can put my registration form in it.'),
+                                    states.Say(robot, 'I will open my gripper now, so that you can put my registration form in it.'),
                                     transitions={'spoken':'OPEN_GRIPPER'}) 
 
         smach.StateMachine.add('OPEN_GRIPPER',
-                                    states.SetGripper(robot, robot.leftArm, gripperstate=0),
+                                    states.SetGripper(robot, selectedArm , gripperstate=0),
                                     transitions={'succeeded':'CLOSING_GRIPPER',
                                                  'failed'   :'CLOSING_GRIPPER'})
 
@@ -156,7 +168,7 @@ def setup_statemachine(robot):
                                     transitions={'spoken':'CLOSE_GRIPPER'}) 
 
         smach.StateMachine.add('CLOSE_GRIPPER',
-                                    states.SetGripper(robot, robot.leftArm, gripperstate=1),
+                                    states.SetGripper(robot, selectedArm, gripperstate=1),
                                     transitions={'succeeded':'START_ACTUAL_CHALLENGE',
                                                  'failed':'START_ACTUAL_CHALLENGE'})
 
@@ -193,7 +205,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE_THIRD_TRY', 
-                                    states.Navigate_named(robot, "registration_table2"),
+                                    states.Navigate_named(robot, "registratiorobot.len_table2"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
                                                     'preempted':'GO_TO_REGISTRATION_TABLE_FORTH_TRY', 
                                                     'unreachable':'GO_TO_REGISTRATION_TABLE_FORTH_TRY', 
@@ -219,7 +231,7 @@ def setup_statemachine(robot):
 
         # It will start the introduction (MAKE SURE THAT THE FULL INTRODUCTION IS PLAYED DURING COMPETITION!!!))
         smach.StateMachine.add('INTRODUCE_AMIGO', 
-                                    AmigoIntroductionRIPS(robot,gripper="left"),
+                                    AmigoIntroductionRIPS(robot,gripper=gripper),
                                     transitions={'finished':'ASK_CONTINUE'})
 
         smach.StateMachine.add("ASK_CONTINUE",
@@ -284,4 +296,5 @@ def setup_statemachine(robot):
 ############################## initializing program ##############################
 if __name__ == '__main__':
     rospy.init_node('executioner')
+
     startup(setup_statemachine)
