@@ -180,7 +180,7 @@ def setup_statemachine(robot):
 
         # Amigo will say that it arrives at the registration table
         smach.StateMachine.add('CLEAR_PATH_TO_REGISTRATION_TABLE',
-                                    states.Say(robot, "At my first attempt I could not go to the meeting point. Please clear the path, I will give it another try."),
+                                    states.Say(robot, "Please clear the path, so that I can find a path."),
                                     transitions={'spoken':'GO_TO_REGISTRATION_TABLE_SECOND_TRY'}) 
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
