@@ -152,8 +152,8 @@ class EnterArena(smach.StateMachine):
             smach.State.__init__(self, outcomes=["done"])
             self.robot = robot
 
-        def execute(self, userdata=None):
-            self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)
+        def execute(self, userdata=None):            
+            #self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)  # Amigo should not say that it uses force drive, looks stupid.
             self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
             return "done"
 
