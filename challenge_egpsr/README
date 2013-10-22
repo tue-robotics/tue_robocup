@@ -29,7 +29,11 @@ amigo3:
         roslaunch tue_pocketsphinx start.launch gdb:=true
     --------------------
 
-    rosrun challenge_egpsr egpsr.py
+    rosrun challenge_egpsr egpsr.py _arm:=left
+
+    or 
+
+    rosrun challenge_egpsr egpsr.py _arm:=right   !!! WATCH CAREFULLY DURING RIGHT ARM MOVEMENTS, needs to be checked !!!
 
 INSTRUCTIONS:
 Amigo will go to the meeting point (0,0,0 in testlab) and ask for a task.
