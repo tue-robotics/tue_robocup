@@ -28,12 +28,15 @@ amigo3:
     say test  
         (to test speaker is working) 
 
-    rosrun challenge_rips rips.py
+    rosrun challenge_rips rips.py _arm:=left
+
+    or 
+
+    rosrun challenge_rips rips.py _arm:=right   !!! WATCH CAREFULLY DURING RIGHT ARM MOVEMENTS AT INTRODUCTION, need to be checked !!!
     
     
     
-    
- if tue_pocket_sphinx crashes (as in this happens every time you start amiddle)
-    then launch on amigo1
+ if tue_pocket_sphinx crashes
+    then launch on amigo3
 
 	roslaunch amigo_launch_files speech_recognition.launch
