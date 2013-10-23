@@ -5,7 +5,6 @@
 // Messages
 #include <std_msgs/String.h>
 #include <std_msgs/Bool.h>
-//#include <amigo_msgs/head_ref.h>
 #include <sensor_msgs/JointState.h>
 #include <pein_msgs/LearnAction.h>
 
@@ -37,19 +36,16 @@ using namespace std;
 
 
 //! Settings
-const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
-const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
-const string NAVIGATION_FRAME = "/amigo/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
-const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
-const double TYPICAL_OPERATOR_X = 1.0;          // Expected x-position operator, needed when looking for operator
-const double TYPICAL_OPERATOR_Y = 0;            // Expected y-position operator, needed when looking for operator
+const int TIME_OUT_OPERATOR_LOST = 10;               // Time interval without updates after which operator is considered to be lost
+const double DISTANCE_OPERATOR = 1.0;                // Distance AMIGO keeps towards operator
+const double WAIT_TIME_OPERATOR_MAX = 10.0;          // Maximum waiting time for operator to return
+const string NAVIGATION_FRAME = "/amigo/base_link";  // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
+const double FOLLOW_RATE = 20;                       // Rate at which the move base goal is updated
+const double TYPICAL_OPERATOR_X = 1.0;               // Expected x-position operator, needed when looking for operator
+const double TYPICAL_OPERATOR_Y = 0;                 // Expected y-position operator, needed when looking for operator
 bool FIRST_OBSERVATION = false;
 
 const double PI = 3.1415;
-
-// NOTE: At this stage recognition is never performed, hence number of models can be small
-// TODO: Check/test if confimation is needed: please leave the elevator
 
 
 //! Globals
@@ -57,7 +53,6 @@ CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
 double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
-sensor_msgs::LaserScan laser_scan_;                                               // Storage: most recent laser data
 
 // Actions
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
@@ -67,7 +62,6 @@ ros::Publisher pub_speech_;                                                     
 
 // Services
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
-ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
 ros::ServiceClient grab_machine_client_;                                          // Communication: Connection with (python) grab machine
 
@@ -533,7 +527,7 @@ int main(int argc, char **argv) {
         pein_srv_qr.request.modules.push_back("ppl_detection");
         if (ppl_det_client.call(pein_srv_qr))
         {
-            ROS_INFO("Switched on qr_detector");
+            ROS_INFO("Switched off qr_detector");
         }
 
     }
@@ -553,7 +547,6 @@ int main(int argc, char **argv) {
         amigoSpeak("I am not able to get the infusion, I will follow you anyway");
     } else {
         ROS_INFO("Grab machine succeeded!");
-
         amigoSpeak("Let's go.");
     }
 
