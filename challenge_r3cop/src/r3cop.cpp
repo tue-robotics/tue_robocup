@@ -408,7 +408,7 @@ int main(int argc, char **argv) {
     head_goal.name.push_back("neck_pan_joint");
     head_goal.position.push_back(0);
     head_goal.name.push_back("neck_tilt_joint");
-    head_goal.position.push_back(-0.2);
+    head_goal.position.push_back(0.2);
     head_ref_pub.publish(head_goal);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -494,7 +494,7 @@ int main(int argc, char **argv) {
     //// Start challenge: get infusion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    amigoSpeak("Let's if I can find your infusion.");
+    amigoSpeak("Let's see if I can find your infusion.");
 
     // Look to the left, then look to the right
     for (unsigned int i=0; i < 2; ++i)
@@ -505,7 +505,7 @@ int main(int argc, char **argv) {
         if (i==0) head_goal_qr.position.push_back(0.7);
         else head_goal_qr.position.push_back(-0.7);
         head_goal_qr.name.push_back("neck_tilt_joint");
-        head_goal_qr.position.push_back(0.8);
+        head_goal_qr.position.push_back(0.4);
         head_ref_pub.publish(head_goal_qr);
 
         // Give head controller some time to reach the goal position
