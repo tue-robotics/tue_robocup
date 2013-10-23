@@ -73,8 +73,8 @@ def grab_item(robot):
                                  'target_lost'   :  'Failed'})
 
         smach.StateMachine.add('CLOSE_GRIPPER', r3cop_states.SetGripper(robot, selectedArm, gripperstate=ArmState.CLOSE, grabpoint_query=query_grabpoint),
-                    transitions={'succeeded'    :   'PUSHING_POSE',
-                                 'failed'       :   'PUSHING_POSE'})
+                    transitions={'succeeded'    :   'Succeeded',
+                                 'failed'       :   'Succeeded'})
 
         smach.StateMachine.add('PUSHING_POSE',
                                 r3cop_states.ArmToJointPos(robot, selectedArm, [-0.8, 0.0, 0.0, 0.9, -0.9, 0.0, 0.0],timeout=5.0),

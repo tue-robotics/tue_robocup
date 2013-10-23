@@ -470,6 +470,10 @@ class Grab(smach.State):
             target_position.point.x = float(answer["X"])
             target_position.point.y = float(answer["Y"])
             target_position.point.z = float(answer["Z"])
+            rospy.loginfo("height (0) = {0}".format(target_position.point.z))
+            # Hack: giving offset to query
+            target_position.point.z -= 0.15
+            rospy.loginfo("height (1) = {0}".format(target_position.point.z))
         else:
             rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
             return "target_lost"
@@ -488,7 +492,7 @@ class Grab(smach.State):
         target_position_delta = geometry_msgs.msg.Point()
         
         ''' First check to see if visual servoing is possible '''
-        self.robot.perception.toggle(['ar_pose'])
+        self.robot.perception.toggle(['ar_pose','ppl_detection'])
         #rospy.logwarn("ar marker check disabled")
         try:
             self.robot.tf_listener.waitForTransform(self.end_effector_frame_id, self.ar_frame_id, rospy.Time(), rospy.Duration(2.5))
@@ -549,12 +553,12 @@ class Grab(smach.State):
         rospy.logwarn("ar_marker_available (3) = {0}".format(ar_marker_available))
 
         ''' Switch off ar marker detection '''
-        self.robot.perception.toggle([])                
+        self.robot.perception.toggle(['ppl_detection'])                
         
         ''' Original, pregrasp is performed by the compute_pre_grasp node '''
         if not ar_marker_available:
             self.robot.speech.speak("No visual feedback, let's see if I can grasp with my eyes closed", block=False)                
-            if self.side.send_goal(target_position_bl.x, target_position_bl.y, target_position_bl.z, 0, 0, 0, 120, pre_grasp = True):
+            if self.side.send_goal(target_position_bl.point.x, target_position_bl.point.y, target_position_bl.point.z, 0, 0, 0, 120, pre_grasp = True):
                 rospy.loginfo("arm at object")                    
             else:
                 if self.side.send_gripper_goal_close(10):
@@ -961,6 +965,7 @@ class ArmToQueryPoint(smach.State):
         goal_bl.x = float(answer["X"])
         goal_bl.y = float(answer["Y"])
         goal_bl.z = float(answer["Z"])
+        goal_bl -= 0.15
 
         if self.side.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, 
             frame_id="/amigo/base_link",
@@ -1130,7 +1135,7 @@ class Point_at_object(smach.State):
         rospy.logwarn("ar_marker_available (3) = {0}".format(ar_marker_available))
 
         ''' Switch off ar marker detection '''
-        self.robot.perception.toggle([])                
+        self.robot.perception.toggle(['ppl_detection'])                
         
         ''' Original, pregrasp is performed by the compute_pre_grasp node '''
         if not ar_marker_available:
