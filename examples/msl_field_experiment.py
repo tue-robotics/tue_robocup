@@ -17,7 +17,7 @@ if __name__ == "__main__":
     nav_state_begin_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(4.8, 4.5, -1.57), look_at_path_distance=2.4)
     nav_state_begin_corridor.execute()
     
-    nav_state_end_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(3.0, -3.4, -3.14), look_at_path_distance=2.4)
+    nav_state_end_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(4.8, -3.4, -3.14), look_at_path_distance=2.4)
     nav_state_end_corridor.execute()
     
     nav_state_living_room = navigation.NavigateGeneric(robot, goal_pose_2d=(-2.0, -3.4, 1.57), look_at_path_distance=2.4)
