@@ -26,9 +26,12 @@ if __name__ == "__main__":
     nav_state_kitchen = navigation.NavigateGeneric(robot, goal_pose_2d=(-2.0, 3.0, 0), look_at_path_distance=2.4)
     nav_state_kitchen.execute() 
         
-    nav_state_kitchen_2 = navigation.NavigateGeneric(robot, goal_pose_2d=(3.0, 3.0, -1.57), look_at_path_distance=2.4)
+    nav_state_kitchen_2 = navigation.NavigateGeneric(robot, goal_pose_2d=(3.0, 3.2, -1.57), look_at_path_distance=2.4)
     nav_state_kitchen_2.execute()
     
-    nav_state_living_room_2 = navigation.NavigateGeneric(robot, goal_pose_2d=(-2.0, -1.5, 0), look_at_path_distance=2.4)
-    nav_state_living_room_2.execute()    
+    nav_state_living_room_2 = navigation.NavigateGeneric(robot, goal_pose_2d=(2.4, 0., -1.57), look_at_path_distance=2.4)
+    nav_state_living_room_2.execute()  
+    
+    nav_state_living_room_3 = navigation.NavigateGeneric(robot, goal_pose_2d=(0.5, -2.2, 0.0), look_at_path_distance=2.4)
+    nav_state_living_room_3.execute()    
        
