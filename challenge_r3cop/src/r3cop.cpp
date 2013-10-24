@@ -16,6 +16,7 @@
 
 // Actions
 #include <tue_move_base_msgs/MoveBaseAction.h>
+#include <amigo_head_ref/HeadRefAction.h>
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
@@ -57,13 +58,15 @@ double last_var_operator_pos_ = -1;                                             
 // Actions
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 
+actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* head_ac_; // Communication: head ref action client
+
 // Publishers/subscribers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 
 // Services
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
-ros::ServiceClient grab_machine_client_;                                          // Communication: Connection with (python) grab machine
+ros::ServiceClient grab_machine_client_;                                          // Communication: Connection with (python) grab machinehead_ac_
 
 /**
  * @brief amigoSpeak let AMIGO say a sentence
@@ -76,7 +79,17 @@ void amigoSpeak(string sentence) {
     pub_speech_.publish(sentence_msgs);
 }
 
+void sendHeadGoal(double pan, double tilt) {
+    amigo_head_ref::HeadRefGoal head_goal;
+    head_goal.goal_type = amigo_head_ref::HeadRefGoal::PAN_TILT;
+    head_goal.pan = pan;
+    head_goal.tilt = tilt;
 
+    ROS_INFO("Sending head goal: pan = %f, tilt = %f", pan, tilt);
+
+    head_ac_->sendGoal(head_goal);
+    head_ac_->waitForResult();
+}
 
 /**
  * @brief findOperator, detects person in front of robot, empties WIRE and adds person as operator
@@ -395,21 +408,11 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ros::Publisher head_ref_pub = nh.advertise<sensor_msgs::JointState>("/amigo/neck/references", 1);
+    head_ac_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("/head_ref_action", true);
+    head_ac_->waitForServer();
 
     /// set the head to look down in front of AMIGO
-    ros::Rate poll_rate(100);
-    while (head_ref_pub.getNumSubscribers() == 0) {
-        ROS_INFO_THROTTLE(1, "Waiting to connect to head ref topic...");
-        poll_rate.sleep();
-    }
-    ROS_INFO("Sending head ref goal");
-    sensor_msgs::JointState head_goal;
-    head_goal.name.push_back("neck_pan_joint");
-    head_goal.position.push_back(0);
-    head_goal.name.push_back("neck_tilt_joint");
-    head_goal.position.push_back(0.2);
-    head_ref_pub.publish(head_goal);
+    sendHeadGoal(0, 0.2);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
@@ -500,16 +503,11 @@ int main(int argc, char **argv) {
     for (unsigned int i=0; i < 2; ++i)
     {
         // Send head goal
-        sensor_msgs::JointState head_goal_qr;
-        head_goal_qr.name.push_back("neck_pan_joint");
-        if (i==0) head_goal_qr.position.push_back(0.7);
-        else head_goal_qr.position.push_back(-0.7);
-        head_goal_qr.name.push_back("neck_tilt_joint");
-        head_goal_qr.position.push_back(0.4);
-        head_ref_pub.publish(head_goal_qr);
-
-        // Give head controller some time to reach the goal position
-        ros::Duration(3.0).sleep();
+        double pan = 0.7;
+        if (i > 0) {
+            pan = -0.7;
+        }
+        sendHeadGoal(pan, 0.4);
 
         // Switch on QR code detection
         perception_srvs::StartPerception pein_srv_qr;
@@ -533,7 +531,7 @@ int main(int argc, char **argv) {
     }
 
     // Amigo should look up (again)
-    head_ref_pub.publish(head_goal);
+    sendHeadGoal(0, -0.2);
 
     amigoSpeak("I found your infusion.");
 
