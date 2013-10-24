@@ -113,7 +113,7 @@ void findOperator(wire::Client& client, bool lost = true) {
     if (lost) {
 
         //! If the robot is in the elevator, informing costs points
-        amigoSpeak("I have lost my operator, can you please stand in front of me");
+        amigoSpeak("I am sorry, you are going too fast. Can you please come back and stand in front of me");
 
         //! Give the operator some time to move to the robot
         ros::Duration wait_for_operator(5.0);
@@ -252,7 +252,7 @@ void findOperator(wire::Client& client, bool lost = true) {
         dt.sleep();
     }
 
-    amigoSpeak("I did not find my operator yet");
+    //amigoSpeak("I did not find my operator yet");
 
     return;
 
@@ -474,7 +474,7 @@ int main(int argc, char **argv) {
     //// Wait for the user to say continue
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    amigoSpeak("I will start following when you say continue");
+    amigoSpeak("Hello! I will accompany you to your seat. Please say continue if you want to go.");
 
     double t1 = ros::Time::now().toSec();
     speech_interpreter::GetInfo srv_test;
@@ -497,7 +497,7 @@ int main(int argc, char **argv) {
     //// Start challenge: get infusion
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    amigoSpeak("Let's see if I can find your infusion.");
+    amigoSpeak("Let's see if I can find your I V pole.");
 
     // Look to the left, then look to the right
     for (unsigned int i=0; i < 2; ++i)
@@ -531,7 +531,7 @@ int main(int argc, char **argv) {
     }
 
     
-    amigoSpeak("I found your infusion.");
+    amigoSpeak("I found your I V pole.");
 
     // Call service to python grab machine
     challenge_restaurant::SmachStates ss_srv;
@@ -540,10 +540,10 @@ int main(int argc, char **argv) {
         ROS_WARN("Service call to grab_machine failed");
     } else if (ss_srv.response.outcome != "Succeeded") {
         ROS_WARN("Service call returned %s", ss_srv.response.outcome.c_str());
-        amigoSpeak("I am not able to get the infusion, I will follow you anyway");
+        amigoSpeak("I am not able to get your I V pole, but I will follow you anyway");
     } else {
         ROS_INFO("Grab machine succeeded!");
-        amigoSpeak("Let's go.");
+        amigoSpeak("OK! I will start following you.");
     }
 
     bool first = true;
