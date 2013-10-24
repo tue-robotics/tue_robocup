@@ -472,7 +472,7 @@ class Grab(smach.State):
             target_position.point.z = float(answer["Z"])
             rospy.loginfo("height (0) = {0}".format(target_position.point.z))
             # Hack: giving offset to query
-            target_position.point.z -= 0.15
+            target_position.point.z -= 0.10
             rospy.loginfo("height (1) = {0}".format(target_position.point.z))
         else:
             rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
@@ -557,7 +557,8 @@ class Grab(smach.State):
         
         ''' Original, pregrasp is performed by the compute_pre_grasp node '''
         if not ar_marker_available:
-            self.robot.speech.speak("No visual feedback, let's see if I can grasp with my eyes closed", block=False)                
+            #self.robot.speech.speak("No visual feedback, let's see if I can grasp with my eyes closed", block=False)                
+            self.robot.speech.speak("Let's see", block=False)                
             if self.side.send_goal(target_position_bl.point.x, target_position_bl.point.y, target_position_bl.point.z, 0, 0, 0, 120, pre_grasp = True):
                 rospy.loginfo("arm at object")                    
             else:
@@ -575,7 +576,8 @@ class Grab(smach.State):
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
                 
         else:
-            self.robot.speech.speak("I can see both my hand and the object, now I shouldn't miss", block=False)
+            #self.robot.speech.speak("I can see both my hand and the object, now I shouldn't miss", block=False)
+            self.robot.speech.speak("Let's grasp", block=False)
             #import ipdb;ipdb.set_trace()
             if self.side.send_delta_goal(target_position_delta.x, target_position_delta.y, target_position_delta.z,
                                         0, 0, 0, 120, frame_id=self.end_effector_frame_id, pre_grasp = True):                    
@@ -959,13 +961,13 @@ class ArmToQueryPoint(smach.State):
         rospy.loginfo("ArmToQueryPoint: goal = {0}".format(answer))
 
         # Note: answers are typically in "map"frame, check whether this works out
-        rospy.logwarn("Transforming to base_link frame for amigo_arm_navigation")
+        #rospy.logwarn("Transforming to base_link frame for amigo_arm_navigation")
 
         goal_bl = geometry_msgs.msg.Point()
         goal_bl.x = float(answer["X"])
         goal_bl.y = float(answer["Y"])
         goal_bl.z = float(answer["Z"])
-        goal_bl -= 0.15
+        goal_bl.z -= 0.10
 
         if self.side.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, 
             frame_id="/amigo/base_link",

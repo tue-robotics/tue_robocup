@@ -88,7 +88,7 @@ void sendHeadGoal(double pan, double tilt) {
     ROS_INFO("Sending head goal: pan = %f, tilt = %f", pan, tilt);
 
     head_ac_->sendGoal(head_goal);
-    head_ac_->waitForResult();
+    head_ac_->waitForResult(ros::Duration(3.0));
 }
 
 /**
@@ -419,7 +419,7 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     double max_vel_lin = 0.5;
     double max_vel_rot = 0.4;
-    double dist_wall = 0.8;
+    double dist_wall = 0.6;
     planner_ = new CarrotPlanner("r3cop_carrot_planner", max_vel_lin, max_vel_rot, dist_wall);
     ROS_INFO("Carrot planner instantiated");
 
@@ -530,9 +530,7 @@ int main(int argc, char **argv) {
 
     }
 
-    // Amigo should look up (again)
-    sendHeadGoal(0, -0.2);
-
+    
     amigoSpeak("I found your infusion.");
 
     // Call service to python grab machine
@@ -549,6 +547,9 @@ int main(int argc, char **argv) {
     }
 
     bool first = true;
+    
+    /// Amigo should look up (again)
+    sendHeadGoal(0, -0.2);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// START MAIN LOOP
