@@ -31,75 +31,57 @@ spacebar to quit.
 
 # [q1 = shoulder: sidewards, q2 = shoulder: front, q3 = upper arm rotation , q4 = elbow, q5 = lower arm rotation, q6 = gripper up down, q7 = gripper left right ]
 poses = dict()
-poses["INIT"]                   = [ 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 ]
-poses["ANGLE"]                  = [ 0.0000 , 0.0000 , 0.0000 , 1.5708 , 0.0000 , 0.0000 , 0.0000 ]
-poses["DRIVE"]                  = [ 0.0000 , -0.1292 , 0.0000 , 0.7100 , 0.0000 , 0.0000 , 0.0000 ]
-poses["HANDSHAKEUP"]            = [ 0.0000 , 0.0000 , 0.0230 , 1.9800 , 1.3900 , 0.2038 , 0.5100 ]
-poses["HANDSHAKEDOWN"]          = [ 0.0000 , -0.0598 , 0.0000 , 1.2380 , 1.6220 , 0.0508 , -0.3400 ]
-poses["PICTURE"]                = [ -1.5700 , -0.4208 , -0.1500 , 0.9000 , 1.8300 , -0.0792 , -0.5500 ]
-poses["TUC"]                    = [ -0.3080 , 0.2312 , 1.6400 , 1.6220 , -0.2350 , -0.0562 , 0.6500 ]
-poses["EGYPTIAN1"]              = [ 0.0000 , 1.0000 , 0.0000 , 1.4000 , 0.0000 , -0.8292 , 0.0000 ]
-poses["EGYPTIAN2"]              = [ 0.0000 , -2.5708 , 0.0000 , 1.0000 , 0.0000 , -0.8292 , 0.0000 ]
-poses["GOAL"]                   = [ 0.0000 , 1.5692 , 0.0000 , 1.5700 , 0.0000 , 0.0008 , 0.0000 ]
-poses["NORMAL"]                 = [ -0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800 ]
-poses["HANDSHAKEUP_NEW"]        = [ -0.3650 , 0.9436 , 0.4707 , 1.0420 , 0.7136 , -0.1692 , 0.2180 ]
-poses["lEFT_HANDSHAKEDOWN_NEW"] = [ -0.2750 , 0.8678 , 0.6077 , 0.8030 , 0.7176 , -0.2852 , 0.1450 ]
-poses["SALUT1"]                 = [ -1.2240 , 0.9271 , -1.0283 , 2.2860 , -0.2499 , -0.1762 , -0.0300 ]
-poses["SALUT2"]                 = [ -1.2810 , 0.9842 , -0.3800 , 1.6190 , -0.0060 , -0.1762 , -0.0300 ]
-poses["BICEPS_UP"]              = [ -0.1170 , 0.1960 , 0.2717 , 1.8920 , -1.2647 , -0.1022 , 0.2000 ]
-poses["BICEPS_DOWN"]            = [ -0.1170 , 0.1960 , 0.2717 , 0.4120 , -1.2647 , -0.1022 , 0.2900 ]
-poses["HIP"]                    = [ -0.8000 , -0.1358 , 1.3590 , 1.6980 , 0.0000 , -0.1072 , -0.0550 ]
-poses["SHOULDER_TRAINING1"]     = [ -0.6930 , 1.3882 , 0.3170 , 0.5800 , 0.5550 , 0.0888 , -0.0200 ]
-poses["SHOULDER_TRAINING2"]     = [ -1.3700 , -0.0138 , -0.1565 , 0.4830 , 0.1030 , 0.2408 , 0.1470 ]
-poses["SHOULDER_TRAINING3"]     = [ -0.0600 , 0.0302 , -0.1560 , 0.4870 , 0.5210 , 0.3158 , 0.1000 ]
-poses["SQUEEZE"]                = [ 0.0680 , 0.4437 , 0.3035 , 0.7000 , 1.3170 , -0.1642 , -0.3000 ]
-poses["FRONT_GRASP_OLD"]        = [ 0.0770 , 1.4192 , 1.2236 , 0.2970 , -1.2040 , 0.1948 , 0.1570 ]
-poses["FRONT_GRASP"]     	    = [ -0.3053 , 1.07292 , 0.366618 , 0.6427728 , -0.617385 , 0.04477456 , -0.07338288 ]
-poses["FRONT_GRASP_CLOSE"]      = [ -0.22288 , -0.09266 , 0.172507 , 1.42479 , -0.145511 , 0.285575 , -0.001989]
-poses["FLOOR_GRASP1"]           = [ -0.0480 , -0.0431 , -1.7130 , 0.4010 , 0.2620 , 0.5938 , -0.0090 ]
-poses["FLOOR_GRASP2"]           = [ -0.2230 , -0.0108 , -0.0078 , 0.0600 , 0.0000 , -0.0572 , -0.1190 ]
-poses["HAT_ON"]                 = [ -0.8500 , 0.8992 , -0.3430 , 2.2000 , -0.4400 , 0.4398 , 0.0020 ]
-poses["HAT_WAVE"]               = [ -0.7320 , 0.7791 , -0.5920 , 1.7550 , -0.0900 , 0.4408 , 0.0020 ]
-poses["SAFE"]                   = [ -0.5230 , 0.4672 , -0.4560 , 0.5860 , -0.3470 , 0.1308 , 0.1500 ]
-poses["RIGHT_ANGLE"]            = [ 0.0000 , 0.0000 , 0.0000 , 1.5708 , 0.0000 , 0.0000 , 0.0000 ]
-poses["RIGHT_DRIVE"]            = [ 0.0000 , 0.2292 , 0.0000 , 0.7100 , 0.0000 , 0.0000 , 0.0000 ]
-poses["RIGHT_HANDSHAKEUP"]      = [ 0.0000 , -1.0000 , -0.1000 , 1.0000 , -1.8300 , 0.0508 , -0.2300 ]
-poses["RIGHT_HANDSHAKEDOWN"]    = [ 0.0000 , -1.0000 , -0.1000 , 0.4300 , -1.8300 , 0.0508 , 0.3400 ]
-poses["RIGHT_PICTURE"]          = [ -1.4600 , -0.4208 , 0.1500 , 0.9000 , -1.8300 , -0.0792 , 0.5500 ]
-poses["RIGHT_TUC"]              = [ -0.4000 , -0.0608 , 0.0000 , 0.6000 , 0.0100 , 0.0008 , 0.0000 ]
-poses["RIGHT_EGYPTIAN1"]        = [ 0.0000 , 1.1292 , 0.0000 , 1.0000 , 0.0000 , -1.2292 , 0.0000 ]
-poses["RIGHT_EGYPTIAN2"]        = [ 0.0000 , -1.0708 , 0.0000 , 1.4000 , 0.0000 , -0.8292 , 0.0000 ]
-poses["RIGHT_GRASP1"]           = [0.0, 0.73425897, 0.17566431, 0.53222897, -0.14837615, 0.25673428, 0.00852748]
-poses["RIGHT_PRE_GRASP1"]       = [-0.2042001, -0.36908028, 0.14210841, 1.8928793, -0.10121332, 0.08952796, 0.05080516]
-poses["RIGHT_PRE_GRASP2"]       = [-0.02744625, 0.11145711, 0.15037341, 2.214187105, -0.108680065, 0.08952796, 0.05084748]
-poses["PICK_UP"]                = [-0.00595091, 0.22645549, 0.29562252, 1.706210675, 0.019163495, -0.26780096, 0.0008464]
-poses["HOME"]                   = [ 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 ]
-poses["TIP1"]                   = [ 0.0, 0.46537017, 0.04879656, 1.138768735, 0.053594125, 0.13434484, 0.06629428]
-poses["TIP2"]                   = [-0.31459877, 0.49708959, 0.4254822, 1.216120685, 1.720162405, -0.0662308, 0.03440616]
-poses["FLOWERS_LEFT"]           = [-0.06670424, -0.30989772, 0.21649341, 1.781292305, 1.349394605, 0.22025444, -0.44696268]
-poses["FLOWERS_RIGHT"]          = [-0.06, 0.27889894, 0.00657894, 1.48349305, 0.52218894, 0.53084092, -0.28932068]
-poses["HI5_pre"]				= [-0.0, 1.577, 0.0, 1.577, -0.0, 0.000, 0]
-poses["HI5_post"]				= [0.0, 1.57, 0.000, 1.07928, -0.00, 0.00, 0.00]
+poses["INIT"]                   = ("",  [ 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 ])
+poses["ANGLE"]                  = ("",  [ 0.0000 , 0.0000 , 0.0000 , 1.5708 , 0.0000 , 0.0000 , 0.0000 ])
+poses["DRIVE"]                  = ("",  [ 0.0000 , -0.1292 , 0.0000 , 0.7100 , 0.0000 , 0.0000 , 0.0000 ])
+poses["HANDSHAKEUP"]            = ("4", [ 0.0000 , 0.0000 , 0.0230 , 1.9800 , 1.3900 , 0.2038 , 0.5100 ])
+poses["HANDSHAKEDOWN"]          = ("5", [ 0.0000 , -0.0598 , 0.0000 , 1.2380 , 1.6220 , 0.0508 , -0.3400 ])
+poses["PICTURE"]                = ("6", [ -1.5700 , -0.4208 , -0.1500 , 0.9000 , 1.8300 , -0.0792 , -0.5500 ])
+poses["TUC"]                    = ("",  [ -0.3080 , 0.2312 , 1.6400 , 1.6220 , -0.2350 , -0.0562 , 0.6500 ])
+poses["EGYPTIAN1"]              = ("",  [ 0.0000 , 1.0000 , 0.0000 , 1.4000 , 0.0000 , -0.8292 , 0.0000 ])
+poses["EGYPTIAN2"]              = ("",  [ 0.0000 , -2.5708 , 0.0000 , 1.0000 , 0.0000 , -0.8292 , 0.0000 ])
+poses["GOAL"]                   = ("",  [ 0.0000 , 1.5692 , 0.0000 , 1.5700 , 0.0000 , 0.0008 , 0.0000 ])
+poses["NORMAL"]                 = ("u", [ -0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800 ])
+poses["HANDSHAKEUP_NEW"]        = ("a", [ -0.3650 , 0.9436 , 0.4707 , 1.0420 , 0.7136 , -0.1692 , 0.2180 ])
+poses["lEFT_HANDSHAKEDOWN_NEW"] = ("",  [ -0.2750 , 0.8678 , 0.6077 , 0.8030 , 0.7176 , -0.2852 , 0.1450 ])
+poses["SALUT1"]                 = ("d", [ -1.2240 , 0.9271 , -1.0283 , 2.2860 , -0.2499 , -0.1762 , -0.0300 ])
+poses["SALUT2"]                 = ("f", [ -1.2810 , 0.9842 , -0.3800 , 1.6190 , -0.0060 , -0.1762 , -0.0300 ])
+poses["BICEPS_UP"]              = ("g", [ -0.1170 , 0.1960 , 0.2717 , 1.8920 , -1.2647 , -0.1022 , 0.2000 ])
+poses["BICEPS_DOWN"]            = ("h", [ -0.1170 , 0.1960 , 0.2717 , 0.4120 , -1.2647 , -0.1022 , 0.2900 ])
+poses["HIP"]                    = ("",  [ -0.8000 , -0.1358 , 1.3590 , 1.6980 , 0.0000 , -0.1072 , -0.0550 ])
+poses["SHOULDER_TRAINING1"]     = ("j", [ -0.6930 , 1.3882 , 0.3170 , 0.5800 , 0.5550 , 0.0888 , -0.0200 ])
+poses["SHOULDER_TRAINING2"]     = ("k", [ -1.3700 , -0.0138 , -0.1565 , 0.4830 , 0.1030 , 0.2408 , 0.1470 ])
+poses["SHOULDER_TRAINING3"]     = ("l", [ -0.0600 , 0.0302 , -0.1560 , 0.4870 , 0.5210 , 0.3158 , 0.1000 ])
+poses["SQUEEZE"]                = ("x", [ 0.0680 , 0.4437 , 0.3035 , 0.7000 , 1.3170 , -0.1642 , -0.3000 ])
+poses["FRONT_GRASP_OLD"]        = ("",  [ 0.0770 , 1.4192 , 1.2236 , 0.2970 , -1.2040 , 0.1948 , 0.1570 ])
+poses["FRONT_GRASP"]     	    = ("c", [ -0.3053 , 1.07292 , 0.366618 , 0.6427728 , -0.617385 , 0.04477456 , -0.07338288 ])
+poses["FRONT_GRASP_CLOSE"]      = ("C", [ -0.22288 , -0.09266 , 0.172507 , 1.42479 , -0.145511 , 0.285575 , -0.001989])
+poses["FLOOR_GRASP1"]           = ("v", [ -0.0480 , -0.0431 , -1.7130 , 0.4010 , 0.2620 , 0.5938 , -0.0090 ])
+poses["FLOOR_GRASP2"]           = ("b", [ -0.2230 , -0.0108 , -0.0078 , 0.0600 , 0.0000 , -0.0572 , -0.1190 ])
+poses["HAT_ON"]                 = ("",  [ -0.8500 , 0.8992 , -0.3430 , 2.2000 , -0.4400 , 0.4398 , 0.0020 ])
+poses["HAT_WAVE"]               = ("",  [ -0.7320 , 0.7791 , -0.5920 , 1.7550 , -0.0900 , 0.4408 , 0.0020 ])
+poses["SAFE"]                   = ("i", [ -0.5230 , 0.4672 , -0.4560 , 0.5860 , -0.3470 , 0.1308 , 0.1500 ])
+poses["RIGHT_ANGLE"]            = ("",  [ 0.0000 , 0.0000 , 0.0000 , 1.5708 , 0.0000 , 0.0000 , 0.0000 ])
+poses["RIGHT_DRIVE"]            = ("",  [ 0.0000 , 0.2292 , 0.0000 , 0.7100 , 0.0000 , 0.0000 , 0.0000 ])
+poses["RIGHT_HANDSHAKEUP"]      = ("",  [ 0.0000 , -1.0000 , -0.1000 , 1.0000 , -1.8300 , 0.0508 , -0.2300 ])
+poses["RIGHT_HANDSHAKEDOWN"]    = ("",  [ 0.0000 , -1.0000 , -0.1000 , 0.4300 , -1.8300 , 0.0508 , 0.3400 ])
+poses["RIGHT_PICTURE"]          = ("",  [ -1.4600 , -0.4208 , 0.1500 , 0.9000 , -1.8300 , -0.0792 , 0.5500 ])
+poses["RIGHT_TUC"]              = ("",  [ -0.4000 , -0.0608 , 0.0000 , 0.6000 , 0.0100 , 0.0008 , 0.0000 ])
+poses["RIGHT_EGYPTIAN1"]        = ("",  [ 0.0000 , 1.1292 , 0.0000 , 1.0000 , 0.0000 , -1.2292 , 0.0000 ])
+poses["RIGHT_EGYPTIAN2"]        = ("",  [ 0.0000 , -1.0708 , 0.0000 , 1.4000 , 0.0000 , -0.8292 , 0.0000 ])
+poses["RIGHT_GRASP1"]           = ("",  [0.0, 0.73425897, 0.17566431, 0.53222897, -0.14837615, 0.25673428, 0.00852748])
+poses["RIGHT_PRE_GRASP1"]       = ("",  [-0.2042001, -0.36908028, 0.14210841, 1.8928793, -0.10121332, 0.08952796, 0.05080516])
+poses["RIGHT_PRE_GRASP2"]       = ("",  [-0.02744625, 0.11145711, 0.15037341, 2.214187105, -0.108680065, 0.08952796, 0.05084748])
+poses["PICK_UP"]                = ("",  [-0.00595091, 0.22645549, 0.29562252, 1.706210675, 0.019163495, -0.26780096, 0.0008464])
+poses["HOME"]                   = ("",  [ 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 , 0.0000 ])
+poses["TIP1"]                   = ("",  [ 0.0, 0.46537017, 0.04879656, 1.138768735, 0.053594125, 0.13434484, 0.06629428])
+poses["TIP2"]                   = ("",  [-0.31459877, 0.49708959, 0.4254822, 1.216120685, 1.720162405, -0.0662308, 0.03440616])
+poses["FLOWERS_LEFT"]           = ("",  [-0.06670424, -0.30989772, 0.21649341, 1.781292305, 1.349394605, 0.22025444, -0.44696268])
+poses["FLOWERS_RIGHT"]          = ("",  [-0.06, 0.27889894, 0.00657894, 1.48349305, 0.52218894, 0.53084092, -0.28932068])
+poses["HI5_pre"]				= ("",  [-0.0, 1.577, 0.0, 1.577, -0.0, 0.000, 0])
+poses["HI5_post"]				= ("",  [0.0, 1.57, 0.000, 1.07928, -0.00, 0.00, 0.00])
 
-pose_keymap = dict()
-pose_keymap['4'] = "HANDSHAKEUP"
-pose_keymap['5'] = "HANDSHAKEDOWN"
-pose_keymap['6'] = "PICTURE"
-pose_keymap['a'] = "HANDSHAKEUP_NEW"
-pose_keymap['d'] = "SALUT1"
-pose_keymap['f'] = "SALUT2"
-pose_keymap['g'] = "BICEPS_UP"
-pose_keymap['h'] = "BICEPS_DOWN"
-pose_keymap['j'] = "SHOULDER_TRAINING1"
-pose_keymap['k'] = "SHOULDER_TRAINING2"
-pose_keymap['l'] = "SHOULDER_TRAINING3"
-pose_keymap['x'] = "SQUEEZE"
-pose_keymap['c'] = "FRONT_GRASP"
-pose_keymap['C'] = "FRONT_GRASP_CLOSE"
-pose_keymap['v'] = "FLOOR_GRASP1"
-pose_keymap['b'] = "FLOOR_GRASP2"
-pose_keymap['i'] = "SAFE"
-pose_keymap['u'] = "NORMAL"
+poses_transposed = {key:(name, joints) for name, (key, joints) in poses.iteritems() if key}
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -137,6 +119,7 @@ sent_keymap['p'] = "PASS"
 
 namings = dict()
 
+#TODO: These could all be shorter or even one, but we somehow we need the number of arguments. Or give every method *args, **kwargs
 mapping = dict()
 def register_key(key, label=None):
     """Call the action given to the decorator """
@@ -183,17 +166,17 @@ def register_robot_arm_key(key, label=None):
 def grasp(robot):
     print "joints = RIGHT_GRASP1"
     robot.rightArm.send_gripper_goal_close()
-    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"][1])
 
     #One option is to let Amigo look to his hands directly using a point relative to it:
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(4.0))
 
-    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP2"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP2"][1])
     #rospy.sleep(rospy.Duration(0.5))
 
-    robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"][1])
 
     #Look at finger again
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
@@ -204,11 +187,11 @@ def pickup(robot):
     robot.rightArm.send_gripper_goal_open()
     #rospy.sleep(rospy.Duration(2.0))
 
-    robot.rightArm.send_joint_goal(*poses["PICK_UP"])
+    robot.rightArm.send_joint_goal(*poses["PICK_UP"][1])
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
-    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"][1])
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
@@ -218,11 +201,11 @@ def pickup(robot):
 @register_robot_key("t")
 def give(robot):
     print "joints = GIVE"
-    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"][1])
     #rospy.sleep(rospy.Duration(4.0))
-    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP2"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP2"][1])
     #rospy.sleep(rospy.Duration(0.5))
-    robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"])
+    robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"][1])
     #rospy.sleep(rospy.Duration(4.0))
     robot.rightArm.send_gripper_goal_close()
 
@@ -236,16 +219,16 @@ def home(robot):
 @register_robot_key("7")
 def tip(robot):
     print "joints = TIPPING"
-    robot.rightArm.send_joint_goal(*poses["TIP1"])
+    robot.rightArm.send_joint_goal(*poses["TIP1"][1])
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
     #rospy.sleep(rospy.Duration(4.0))
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
-    #robot.rightArm.send_joint_goal(*poses["TIP2"])
+    #robot.rightArm.send_joint_goal(*poses["TIP2"][1])
     rospy.sleep(rospy.Duration(1.0))
 
 @register_robot_key("w")
 def wave2(robot):
-    joints = poses["GOAL"]
+    joints = poses["GOAL"][1]
 
     robot.leftArm.send_joint_goal(*joints)
     robot.rightArm.send_joint_goal(*joints)
@@ -261,12 +244,12 @@ def wave2(robot):
         robot.rightArm.send_joint_goal(*joints)
         #rospy.sleep(rospy.Duration(0.05))
     rospy.loginfo("Waving done")
-    robot.rightArm.send_joint_goal(*poses["DRIVE"])
-    robot.leftArm.send_joint_goal(*poses["DRIVE"])
+    robot.rightArm.send_joint_goal(*poses["DRIVE"][1])
+    robot.leftArm.send_joint_goal(*poses["DRIVE"][1])
 
 @register_robot_arm_key("n")
 def wave1(robot, arm):
-    joints = poses["GOAL"]
+    joints = poses["GOAL"][1]
     arm.send_joint_goal(*joints)
 
     start_time = rospy.Time.now()
@@ -275,14 +258,14 @@ def wave1(robot, arm):
         joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
         arm.send_joint_goal(*joints)
     rospy.loginfo("Waving done")
-    arm.send_joint_goal(*poses["DRIVE"])
+    arm.send_joint_goal(*poses["DRIVE"][1])
 
 @register_robot_key("m")
 def wave_lights(robot):
     rospy.loginfo("GOAL, LET'S CHEER")
     os.system("mpg123 -q /home/amigo/Music/Toeter1.mp3 &")
 
-    joints = poses["GOAL"]
+    joints = poses["GOAL"][1]
 
     robot.leftArm.send_joint_goal(*joints)
     robot.rightArm.send_joint_goal(*joints)
@@ -302,8 +285,8 @@ def wave_lights(robot):
                                 random.random())
     rospy.loginfo("Waving done")
 
-    robot.rightArm.send_joint_goal(*poses["DRIVE"])
-    robot.leftArm.send_joint_goal(*poses["DRIVE"])
+    robot.rightArm.send_joint_goal(*poses["DRIVE"][1])
+    robot.leftArm.send_joint_goal(*poses["DRIVE"][1])
     robot.lights.set_color(0, 0, 1)
 
 @register_robot_key("Q")
@@ -875,8 +858,8 @@ def toggle_arm():
 
 @register_robot_key("F", "Hold flowers")
 def hold_flowers(robot):
-    robot.rightArm.send_joint_goal(*poses["FLOWERS_RIGHT"])
-    robot.leftArm.send_joint_goal(*poses["FLOWERS_LEFT"])
+    robot.rightArm.send_joint_goal(*poses["FLOWERS_RIGHT"][1])
+    robot.leftArm.send_joint_goal(*poses["FLOWERS_LEFT"][1])
 
 @register_robot_arm_key("<", "OPEN gripper")
 def open_gripper(robot, arm):
@@ -938,17 +921,12 @@ def process_key(key):
         robot_arm_mapping[key](robot, arms[arm_selection])
 
     try:
-        if key in pose_keymap:
+        if key in poses_transposed:
             global actions_canceled
             actions_canceled = False
-            pose_name = pose_keymap[key]
+            pose_name, joints = poses_transposed[key]
             print "{0} : {1}".format(key, pose_name)
-            if poses.has_key(pose_name):
-                #What happens here? arms is a dictionary, we look up the currently selected arm.
-                #On that arm, a method is called, and as its arguments, the selected pose is unpacked.
-                arms[arm_selection].send_joint_goal(*poses[pose_name])
-            else:
-                print "Pose {0} not defined".format(pose_name)
+            arms[arm_selection].send_joint_goal(*joints)
 
         #~ else:
             #~ rospy.logwarn("Unbound key {0} ({1})".format(key))
@@ -983,7 +961,7 @@ actions_canceled = False
 
 @register_key("/", "print keymap (this)")
 def print_keys(separate=False):
-    commands = ["{0} = {1}".format(k, v) for k, v in pose_keymap.iteritems()]
+    commands = ["{0} = {1}".format(k, name) for name, (k, v) in poses.iteritems() if k]
     command_txt = '\n'.join(commands)
     if not separate:
         print command_txt
