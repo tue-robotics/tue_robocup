@@ -85,9 +85,7 @@ pose_keymap = dict()
 pose_keymap['4'] = "HANDSHAKEUP"
 pose_keymap['5'] = "HANDSHAKEDOWN"
 pose_keymap['6'] = "PICTURE"
-
 pose_keymap['a'] = "HANDSHAKEUP_NEW"
-#pose_keymap['s'] = "HANDSHAKEDOWN_NEW" #Pose not defined
 pose_keymap['d'] = "SALUT1"
 pose_keymap['f'] = "SALUT2"
 pose_keymap['g'] = "BICEPS_UP"
@@ -95,56 +93,13 @@ pose_keymap['h'] = "BICEPS_DOWN"
 pose_keymap['j'] = "SHOULDER_TRAINING1"
 pose_keymap['k'] = "SHOULDER_TRAINING2"
 pose_keymap['l'] = "SHOULDER_TRAINING3"
-#pose_keymap['z'] = "HIP" #Colliding, change joints here #TODO
 pose_keymap['x'] = "SQUEEZE"
 pose_keymap['c'] = "FRONT_GRASP"
 pose_keymap['C'] = "FRONT_GRASP_CLOSE"
 pose_keymap['v'] = "FLOOR_GRASP1"
 pose_keymap['b'] = "FLOOR_GRASP2"
-#pose_keymap['p'] = "HEAD_ON" #Pose not defined
-#pose_keymap['o'] = "HEAD_WAVE" #Pose not defined
 pose_keymap['i'] = "SAFE"
 pose_keymap['u'] = "NORMAL"
-#pose_keymap['q'] = "RIGHT_GRASP1" #Doubly defined, also in special keys
-#pose_keymap['e'] = "PICK_UP" #Doubly defined, also in special keys
-#pose_keymap['t'] = "GIVE" #Doubly defined, also in special keys
-pose_keymap['y'] = "HOME"
-#pose_keymap['7'] = "TIP" #Doubly defined, also in special keys
-
-special_keys = dict()
-special_keys['\t'] = "Toggle Left/Right arm using TAB"
-special_keys['q'] = "Grasp"
-special_keys['e'] = "Pickup"
-special_keys['t'] = "Give"
-special_keys['y'] = "Home"
-special_keys['7'] = "Poor bottle (Tip?)"
-special_keys['w'] = "Wave 2 arms"
-special_keys['n'] = "Wave 1 arm"
-special_keys['<'] = "OPEN  selected gripper"
-special_keys['>'] = "CLOSE selected gripper"
-special_keys['m'] = "Wave 2 arms with lights!"
-special_keys['Q'] = "Ask for drinks"
-special_keys['G'] = "Grab an item"
-special_keys['S'] = "Grab an item and drive too"
-special_keys['B'] = "Grab an item on a fixed position in the map"
-special_keys['o'] = "AMIGO introduction Dutch"
-special_keys['O'] = "AMIGO introduction English"
-special_keys['F'] = "Hold flowers"
-special_keys['L'] = "Next language"
-special_keys['-'] = "Look down"
-special_keys['+'] = "Look straigth"
-special_keys[' '] = "Quit"
-special_keys[chr(27)] = "Cancel current movement"
-special_keys['?'] = "SHOW_KEYMAP" #Doubly defined, also in special keys
-special_keys["%"] = "HI5"
-special_keys[":"] = "LEARN_FACE"
-special_keys[";"] = "RECOGNIZE_FACE"
-special_keys["D"] = "Drop off an object at a predefined location. Can be edited via python! See the dropoff_demo-function"
-special_keys["`"] = "Prepare Welcome Maxima"
-special_keys["1"] = "Welcome Maxima1"
-special_keys["2"] = "Welcome Maxima2"
-special_keys["3"] = "Welcome Maxima3"
-special_keys["T"] = "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another"
 
 #TODO: Make 2 the language to use an argument
 dictionary = dict()
@@ -180,7 +135,51 @@ sent_keymap['!'] = "OUCH"
 sent_keymap['Y'] = "YES"
 sent_keymap['p'] = "PASS"
 
+namings = dict()
+
+mapping = dict()
+def register_key(key, label=None):
+    """Call the action given to the decorator """
+    def decorator(action):
+        mapping[key] = action
+        if label: 
+            namings[key] = label
+        else:
+            namings[key] = action.__name__
+        return action
+    return decorator
+
+robot_mapping = dict()
+def register_robot_key(key, label=None):
+    """Call the action given to the decorator """
+    def decorator(action):
+        robot_mapping[key] = action
+        
+        if label: 
+            namings[key] = label
+        else:
+            namings[key] = action.__name__
+
+        return action
+    return decorator
+
+robot_arm_mapping = dict()
+def register_robot_arm_key(key, label=None):
+    """Call the action given to the decorator """
+    def decorator(action):
+        robot_arm_mapping[key] = action
+        
+        if label: 
+            namings[key] = label
+        else:
+            namings[key] = action.__name__
+
+        return action
+    return decorator
+
+
 #TODO: Looking at finger is not yet tested!!
+@register_robot_key("q", "right grasp")
 def grasp(robot):
     print "joints = RIGHT_GRASP1"
     robot.rightArm.send_gripper_goal_close()
@@ -199,6 +198,7 @@ def grasp(robot):
     #Look at finger again
     robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
+@register_robot_key("e")
 def pickup(robot):
     print "joints = PICK_UP"
     robot.rightArm.send_gripper_goal_open()
@@ -215,6 +215,7 @@ def pickup(robot):
 
     robot.head.reset_position()
 
+@register_robot_key("t")
 def give(robot):
     print "joints = GIVE"
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"])
@@ -225,12 +226,14 @@ def give(robot):
     #rospy.sleep(rospy.Duration(4.0))
     robot.rightArm.send_gripper_goal_close()
 
+@register_robot_key("y")
 def home(robot):
     print "joints = HOME"
     robot.head.reset_position()
     robot.rightArm.send_joint_goal() #defaults to 0, 0....
     robot.rightArm.send_gripper_goal_close()
 
+@register_robot_key("7")
 def tip(robot):
     print "joints = TIPPING"
     robot.rightArm.send_joint_goal(*poses["TIP1"])
@@ -240,6 +243,7 @@ def tip(robot):
     #robot.rightArm.send_joint_goal(*poses["TIP2"])
     rospy.sleep(rospy.Duration(1.0))
 
+@register_robot_key("w")
 def wave2(robot):
     joints = poses["GOAL"]
 
@@ -260,7 +264,7 @@ def wave2(robot):
     robot.rightArm.send_joint_goal(*poses["DRIVE"])
     robot.leftArm.send_joint_goal(*poses["DRIVE"])
 
-    
+@register_robot_arm_key("n")
 def wave1(robot, arm):
     joints = poses["GOAL"]
     arm.send_joint_goal(*joints)
@@ -273,6 +277,7 @@ def wave1(robot, arm):
     rospy.loginfo("Waving done")
     arm.send_joint_goal(*poses["DRIVE"])
 
+@register_robot_key("m")
 def wave_lights(robot):
     rospy.loginfo("GOAL, LET'S CHEER")
     os.system("mpg123 -q /home/amigo/Music/Toeter1.mp3 &")
@@ -301,6 +306,7 @@ def wave_lights(robot):
     robot.leftArm.send_joint_goal(*poses["DRIVE"])
     robot.lights.set_color(0, 0, 1)
 
+@register_robot_key("Q")
 def ask_drinks(robot):
     import smach
     import robot_smach_states as states
@@ -325,6 +331,7 @@ def ask_drinks(robot):
     global drink
     drink = sm.userdata.sentence
 
+@register_robot_arm_key("G")
 def grab_item(robot, selectedArm):
     rospy.loginfo("Starting to grab an item")
     import smach
@@ -416,10 +423,8 @@ def grab_item(robot, selectedArm):
     #import pdb; pdb.set_trace()
     result = sm.execute()
     rospy.loginfo("State machine executed. Result: {0}".format(result))
-# sequences = dict()
-# #An action consists of a pose and a waittime: (POSE, waittime)
-# sequences["WAVE"] = [("GOAL",0)]
 
+@register_robot_key("B")
 def grab_absolute_position(robot):
 
     rospy.logwarn("Temporarily storing the real worldmodel...")
@@ -497,6 +502,7 @@ def grab_absolute_position(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+@register_robot_key("O")
 def amigo_introduction_english(robot):
 
     import smach
@@ -517,6 +523,7 @@ def amigo_introduction_english(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+@register_robot_key("o")
 def amigo_introduction_dutch(robot):
 
     import smach
@@ -537,6 +544,7 @@ def amigo_introduction_dutch(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+@register_robot_key("`")
 def prepare_welcome_maxima(robot):
     import smach
     import robot_smach_states as states
@@ -550,7 +558,7 @@ def prepare_welcome_maxima(robot):
     result = sm.execute()
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
-
+@register_robot_key("1")
 def welcome_maxima1(robot):
     import smach
     import robot_smach_states as states
@@ -563,7 +571,8 @@ def welcome_maxima1(robot):
     rospy.loginfo("State machine set up, start execution...")
     result = sm.execute()
     rospy.loginfo("State machine executed. Result: {0}".format(result))
-    
+
+@register_robot_key("2")    
 def welcome_maxima2(robot):
     import smach
     import robot_smach_states as states
@@ -576,7 +585,8 @@ def welcome_maxima2(robot):
     rospy.loginfo("State machine set up, start execution...")
     result = sm.execute()
     rospy.loginfo("State machine executed. Result: {0}".format(result))
-    
+
+@register_robot_key("3")    
 def welcome_maxima3(robot):
     import smach
     import robot_smach_states as states
@@ -590,6 +600,7 @@ def welcome_maxima3(robot):
     result = sm.execute()
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+@register_robot_key("S")
 def grab_demo(robot):
     import smach
     import robot_smach_states as states
@@ -641,6 +652,7 @@ def grab_demo(robot):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+@register_robot_key("D", "Drop off an object at a predefined location. Can be edited via python! See the dropoff_demo-function")
 def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
     import smach
     import robot_smach_states as states
@@ -683,6 +695,7 @@ def dropoff_demo(robot, selectedArm, query_dropoff_loc=None):
 
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
+@register_robot_key(":")
 def learn_face(robot):
     import smach
     import robot_smach_states as states
@@ -726,6 +739,7 @@ def learn_face(robot):
 
     rospy.loginfo("State machine result: {0}".format(result))
 
+@register_robot_key(";")
 def recognize_face(robot):
     #import smach
 
@@ -806,6 +820,7 @@ def recognize_face(robot):
 
     # rospy.loginfo("State machine result: {0}".format(result))
 
+@register_robot_key("T", "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another")
 def transport(robot):
     from transporter import Transporter
 
@@ -824,6 +839,7 @@ def transport(robot):
 
     rospy.loginfo("State machine result: {0}".format(result))
 
+@register_robot_key(chr(27))
 def cancel_actions(robot):
     global actions_canceled
     actions_canceled = True
@@ -833,6 +849,7 @@ def cancel_actions(robot):
     robot.base.cancel_goal()
     robot.head.cancel_goal()
 
+@register_key("L")
 def next_language():
     global language
 
@@ -846,6 +863,32 @@ def next_language():
     rospy.loginfo("Current language: {0} out of {1}".format(language.upper(), languages))
 
     rospy.set_param("/language", language)
+
+@register_key('\t')
+def toggle_arm():
+    global arm_selection
+    arm_selection = not arm_selection
+    if arm_selection == True:
+        print "Commanding RIGHT arm, press TAB to toggle"
+    else:
+        print "Commanding LEFT arm, press TAB to toggle"
+
+@register_robot_key("F", "Hold flowers")
+def hold_flowers(robot):
+    robot.rightArm.send_joint_goal(*poses["FLOWERS_RIGHT"])
+    robot.leftArm.send_joint_goal(*poses["FLOWERS_LEFT"])
+
+@register_robot_arm_key("<", "OPEN gripper")
+def open_gripper(robot, arm):
+    arm.send_gripper_goal_open()
+
+@register_robot_arm_key(">", "CLOSE gripper")
+def close_gripper(robot, arm):
+    arm.send_gripper_goal_close()
+
+register_key(" ", "exit")(exit)
+register_robot_key("-", "Head down")(lambda robot: robot.head.look_down())
+register_robot_key("+", "Head straight")(lambda robot: robot.head.reset_position())
 
 ############################## callback speech ###################################
 def callback_speech(data):
@@ -882,116 +925,30 @@ def process_key(key):
         global language
         language = rospy.get_param("/language")
 
+    if key in mapping:
+        print namings[key]
+        mapping[key]()
+
+    if key in robot_mapping:
+        print namings[key]
+        robot_mapping[key](robot)
+
+    if key in robot_arm_mapping:
+        print namings[key]
+        robot_arm_mapping[key](robot, arms[arm_selection])
+
     try:
-        if pose_keymap.has_key(key) or special_keys.has_key(key):
+        if key in pose_keymap:
             global actions_canceled
             actions_canceled = False
-            if key not in special_keys:
-                pose_name = pose_keymap[key]
-                print "{0} : {1}".format(key, pose_name)
-                if poses.has_key(pose_name):
-                    #What happens here? arms is a dictionary, we look up the currently selected arm.
-                    #On that arm, a method is called, and as its arguments, the selected pose is unpacked.
-                    arms[arm_selection].send_joint_goal(*poses[pose_name])
-                else:
-                    print "Pose {0} not defined".format(pose_name)
-
-            if key in special_keys:
-                #print "Special key: ",
-                if key == chr(27):
-                    pass
-                if key == '\t':
-                    arm_selection = not arm_selection
-                    if arm_selection == True:
-                        print "Commanding RIGHT arm, press TAB to toggle"
-                    else:
-                        print "Commanding LEFT arm, press TAB to toggle"
-
-                if key == "q":
-                    grasp(robot)
-
-                if key == "e":
-                    pickup(robot)
-
-                if key == "t":
-                    give(robot)
-
-                if key == "y":
-                    home(robot)
-
-                if key == "7":
-                    tip(robot)
-
-                if key == 'w':
-                    wave2(robot)
-
-                if key == 'n':
-                    wave1(robot, arms[arm_selection])
-
-                if key == 'm':
-                    wave_lights(robot)
-
-                if key == 'Q':
-                    ask_drinks(robot)
-                if key == 'G':
-                    grab_item(robot, arms[arm_selection])
-                if key == 'S':
-                    grab_demo(robot)
-                if key == 'B':
-                    grab_absolute_position(robot)
-                if key == 'o':
-                    amigo_introduction_dutch(robot)
-                if key == 'O':
-                    amigo_introduction_english(robot)
-                if key == "`":
-                    prepare_welcome_maxima(robot)
-                if key == "1":
-                    welcome_maxima1(robot)
-                if key == "2":
-                    welcome_maxima2(robot)
-                if key == "3":
-                    welcome_maxima3(robot)
-                if key == 'F':
-                    print "Holding flowers"
-                    robot.rightArm.send_joint_goal(*poses["FLOWERS_RIGHT"])
-                    robot.leftArm.send_joint_goal(*poses["FLOWERS_LEFT"])
-                if key == "<":
-                    print "OPEN gripper"
-                    arms[arm_selection].send_gripper_goal_open()
-                if key == ">":
-                    print "CLOSE gripper"
-                    arms[arm_selection].send_gripper_goal_close()
-                if key == "-":
-                    print "Head down"
-                    robot.head.look_down()
-                if key == "+":
-                    print "Head straight"
-                    robot.head.reset_position()
-                if key == ":":
-                    print "Learn a face"
-                    learn_face(robot)
-                if key == ";":
-                    print "Recognize face"
-                    recognize_face(robot)
-                if key == "D":
-                    print "Drop an Object"
-                    # query_dropoff_loc = Conjunction(
-                    #                             Compound("is", "X", 2.0),
-                    #                             Compound("is", "Y", 2.2),
-                    #                             Compound("is", "Z", 0.8))
-                    dropoff_demo(robot, arms[arm_selection], query_dropoff_loc=None) #Optionally provide your own query here, None defaults to placing on a desk
-                if key == "L":
-                    #print "Next language:",
-                    next_language()
-                if key == ' ':
-                    pass
-                if key == '?':
-                    print_keys(separate=True)
-                if key == "T":
-                    transport(robot)
-                if key == chr(27): #chr(27) == escape
-                    rospy.loginfo("Cancelling current action. In a sequence, each action currently has to be cancelled separately, sorry 'bout that.")
-                    cancel_actions(robot)
+            pose_name = pose_keymap[key]
+            print "{0} : {1}".format(key, pose_name)
+            if poses.has_key(pose_name):
+                #What happens here? arms is a dictionary, we look up the currently selected arm.
+                #On that arm, a method is called, and as its arguments, the selected pose is unpacked.
+                arms[arm_selection].send_joint_goal(*poses[pose_name])
+            else:
+                print "Pose {0} not defined".format(pose_name)
 
         #~ else:
             #~ rospy.logwarn("Unbound key {0} ({1})".format(key))
@@ -1024,23 +981,20 @@ arm_selection = True
 drink = "tea_pack"
 actions_canceled = False
 
+@register_key("/", "print keymap (this)")
 def print_keys(separate=False):
     commands = ["{0} = {1}".format(k, v) for k, v in pose_keymap.iteritems()]
     command_txt = '\n'.join(commands)
     if not separate:
         print command_txt
 
-    special = ["{0} = {1}".format(k, v) for k, v in special_keys.iteritems()]
-    special_txt = '\n'.join(special)
+    mappings = ["{0} = {1}".format(k, v) for k, v in namings.iteritems()]
+    special_txt = '\n'.join(mappings)
     if not separate:
         print "Sequences: "
         print special_txt
 
     speech = ["{0} = {1} - {2}".format(k, dictionary['nl'].get(v, "---"), dictionary['en'].get(v, "---")) for k, v in sent_keymap.iteritems()]
-    # for key, sentence_name in sent_keymap.iteritems():
-    #     mapping = ""
-    #     for lang, langdict in dictionary:
-    #         sentence = langdict.get('sentence_name', '---')
     speech_txt = '\n'.join(speech)
     if not separate:
         print "Speech: "
@@ -1057,6 +1011,8 @@ def print_keys(separate=False):
 
     if separate:
         os.system("geany -i -m -s keymap.txt &") #-i: new instance, -m: Don't show message window at startup, -s: Don't load the previous session's files
+
+register_key("?", "print keymap (this)")(lambda: print_keys(separate=True))
 
 def main():
     keyboard_cmd_listener = rospy.Subscriber("key_commands",String,callback_keyboard_cmd)
