@@ -21,6 +21,8 @@
 // Action client
 #include <actionlib/client/simple_action_client.h>
 
+#include <geometry_msgs/PoseStamped.h>
+
 // WIRE
 #include "wire_interface/Client.h"
 #include "problib/conversions.h"
@@ -28,10 +30,13 @@
 #include "octomap_msgs/BoundingBoxQuery.h"
 
 // Carrot planner
-#include "tue_carrot_planner/carrot_planner.h"
+//#include "tue_carrot_planner/carrot_planner.h"
 
 // Speech recognition
 #include "tue_pocketsphinx/Switch.h"
+
+// TF
+#include <tf/transform_listener.h>
 
 #include <map>
 
@@ -60,7 +65,7 @@ const double PI = 3.1415;
 
 
 //! Globals
-CarrotPlanner* planner_;
+//CarrotPlanner* planner_;
 double t_no_meas_ = 0;                                                            // Bookkeeping: determine how long operator is not observed
 double t_last_check_ = 0;                                                         // Bookkeeping: last time operator position was checked
 double last_var_operator_pos_ = -1;                                               // Bookkeeping: last variance in x-position operator
@@ -80,11 +85,15 @@ actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* head_ac_;         
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
 ros::Publisher pub_in_elevator;                                                   // Communication: Publisher for debugging
+ros::Publisher pub_move_base_;
 
 // Services
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
+
+// TF
+tf::TransformListener* tf_listener_;
 
 /**
  * @brief amigoSpeak let AMIGO say a sentence
@@ -413,12 +422,12 @@ bool memorizeOperator() {
  */
 void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
-
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
 
     //! End point of the path is the given position
     geometry_msgs::PoseStamped end_goal;
     end_goal.header.frame_id = NAVIGATION_FRAME;
+    end_goal.header.stamp = ros::Time();
     double theta = atan2(pos_exp(1), pos_exp(0));
     tf::Quaternion q;
     q.setRPY(0, 0, theta);
@@ -436,13 +445,26 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
     end_goal.pose.position.y = pos_exp(1) * reduced_distance / full_distance;
     end_goal.pose.position.z = 0;
 
+    // transform goal to map frame
+
+    geometry_msgs::PoseStamped end_goal_MAP;
+    try {
+        tf_listener_->transformPose("/map", end_goal, end_goal_MAP);
+    } catch (tf::TransformException& e) {
+        ROS_WARN("Could not transform goal to map frame!");
+        return;
+    }
+
+    pub_move_base_.publish(end_goal_MAP);
+
+    /*
     if (t_no_meas_ < 1.0) {
         planner_->MoveToGoal(end_goal);
         ROS_DEBUG("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
     } else {
         ROS_INFO("No operator position update: robot will not move");
     }
-
+    */
 }
 
 
@@ -785,10 +807,26 @@ int main(int argc, char **argv) {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Move base interface
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    pub_move_base_ = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// TF
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    tf_listener_ = new tf::TransformListener();
+    while (!tf_listener_->waitForTransform("/map", NAVIGATION_FRAME, ros::Time(0), ros::Duration(1))) {
+        ROS_WARN("Waiting for transform between /map and %s", NAVIGATION_FRAME.c_str());
+    }
+    ROS_INFO("Transform between /map and %s found.", NAVIGATION_FRAME.c_str());
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    planner_ = new CarrotPlanner("follow_me_carrot_planner");
-    ROS_INFO("Carrot planner instantiated");
+//    planner_ = new CarrotPlanner("follow_me_carrot_planner");
+//    ROS_INFO("Carrot planner instantiated");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Laser data
