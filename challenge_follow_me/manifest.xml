@@ -20,7 +20,8 @@
   <depend package="tue_carrot_planner"/>
   <depend package="tue_pocketsphinx"/>
   <depend package="speech_interpreter"/>
-
+  <depend package="amigo_head_ref"/>
+  
 </package>
 
 

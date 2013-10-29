@@ -16,6 +16,7 @@
 
 // Actions
 #include <tue_move_base_msgs/MoveBaseAction.h>
+#include <amigo_head_ref/HeadRefAction.h>
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
@@ -71,6 +72,7 @@ sensor_msgs::LaserScan laser_scan_;                                             
 // Actions
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
+actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* head_ac_;           // Communication: head ref action client
 
 // Publishers/subscribers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
@@ -757,8 +759,10 @@ int main(int argc, char **argv) {
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     head_ac_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("/head_ref_action", true);
-    head_ac_->waitForServer(10.0);
+    ROS_INFO("Waiting for head ref server...");
+    head_ac_->waitForServer();
     sendHeadGoal(0, -0.2);
+    ROS_INFO("Head set.");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
