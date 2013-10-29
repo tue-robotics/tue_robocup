@@ -50,13 +50,15 @@ const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for oper
 const string NAVIGATION_FRAME = "/amigo/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
-const double FOLLOW_RATE = 1;                  // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const double T_LEAVE_ELEVATOR = 15.0;            // Time after which robot is assumed to be outside the elevator.
 const double TYPICAL_OPERATOR_X = 1.0;          // Expected x-position operator, needed when looking for operator
 const double TYPICAL_OPERATOR_Y = 0;            // Expected y-position operator, needed when looking for operator
 const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;  // Maximum distance of robot to wall in elevator (used to detect elevator)
 const double ELEVATOR_INLIER_RATIO = 0.75;      // % of laser points that should at least be within bounds for elevator to be detected
+
+const ros::Duration T_UPDATE_GOAL = ros::Duration(1.0);    // seconds
 
 const double PI = 3.1415;
 
@@ -825,12 +827,12 @@ int main(int argc, char **argv) {
     clear_octomap_client.waitForExistence();
 
     octomap_msgs::BoundingBoxQuery srv_octomap;
-    srv_octomap.request.min.x = -1.0;
-    srv_octomap.request.min.y = -1.0;
-    srv_octomap.request.min.z = -1.0;
-    srv_octomap.request.max.x = 1.0;
-    srv_octomap.request.max.y = 1.0;
-    srv_octomap.request.max.z = 2.0;
+    srv_octomap.request.min.x = -10.0;
+    srv_octomap.request.min.y = -10.0;
+    srv_octomap.request.min.z = -10.0;
+    srv_octomap.request.max.x = 10.0;
+    srv_octomap.request.max.y = 10.0;
+    srv_octomap.request.max.z = 10.0;
 
     if (!clear_octomap_client.call(srv_octomap)) {
         ROS_ERROR("Could not clear the octomap!");
@@ -840,6 +842,10 @@ int main(int argc, char **argv) {
     //// Move base interface
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     pub_move_base_ = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
+    
+    actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_ =
+		new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base_3d", true);
+		
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// TF
@@ -944,6 +950,8 @@ int main(int argc, char **argv) {
 
     // Non-blocking
     amigoSpeak("I will start the challenge");
+    
+    ros::Time t_last_send_goal;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Start challenge: find and learn the operator
@@ -1215,11 +1223,17 @@ int main(int argc, char **argv) {
 
             //! Check for the (updated) operator position
             if (getPositionOperator(objects, operator_pos)) {
-
-                //! Move towards operator
-                moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
-
-
+				
+				if ((ros::Time::now() - t_last_send_goal) > T_UPDATE_GOAL) {
+					//! Move towards operator
+					moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);					
+					t_last_send_goal = ros::Time::now();
+				}
+				
+				pbl::Vector pos_exp = operator_pos.getExpectedValue().getVector();
+				double theta = atan2(pos_exp(1), pos_exp(0));
+				sendHeadGoal(theta, 0, false);
+				
             } else {
 
                 //! Lost operator
