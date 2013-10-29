@@ -619,8 +619,21 @@ class Human_handover(smach.StateMachine):
 class PlaceObject(smach.StateMachine):
     def __init__(self, side, robot, placement_query, dropoff_height_offset=0.1):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed','target_lost'])
-        self.side = side
+        
         self.robot = robot
+
+        if isinstance(side, basestring):
+            if side == "left":
+                self.side = self.robot.leftArm
+            elif side == "right":
+                self.side = self.robot.rightArm
+            else:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        else:           
+            self.side = side
+
+
         self.placement_query = placement_query
         self.dropoff_height_offset = dropoff_height_offset
 
