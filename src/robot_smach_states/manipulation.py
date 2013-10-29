@@ -214,7 +214,7 @@ class Prepare_orientation(smach.State):
             grasp_point.point.y = float(answer["Y"])
             grasp_point.point.z = float(answer["Z"])
             
-            grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)
+            grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/amigo/base_link", self.robot.tf_listener)
             
             desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, self.grasp_distance_x, self.grasp_distance_y)
             
@@ -492,7 +492,7 @@ class Grab(smach.State):
         
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
-        target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
+        target_position_bl = transformations.tf_transform(target_position, "/map","/amigo/base_link", tf_listener=self.robot.tf_listener)
         
         rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
 
@@ -973,7 +973,7 @@ class ArmToQueryPoint(smach.State):
         goal_map.y = float(answer["Y"])
         goal_map.z = float(answer["Z"])
         
-        goal_bl = transformations.tf_transform(goal_map, "/map", "/base_link", tf_listener=self.robot.tf_listener)
+        goal_bl = transformations.tf_transform(goal_map, "/map", "/amigo/base_link", tf_listener=self.robot.tf_listener)
         if goal_bl == None:
             return 'failed'
 
@@ -1100,7 +1100,7 @@ class Point_at_object(smach.State):
         
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
-        target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
+        target_position_bl = transformations.tf_transform(target_position, "/map","/amigo/base_link", tf_listener=self.robot.tf_listener)
         
         rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
 
