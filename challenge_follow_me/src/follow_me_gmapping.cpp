@@ -25,6 +25,8 @@
 #include "wire_interface/Client.h"
 #include "problib/conversions.h"
 
+#include "octomap_msgs/BoundingBoxQuery.h"
+
 // Carrot planner
 #include "tue_carrot_planner/carrot_planner.h"
 
@@ -763,6 +765,24 @@ int main(int argc, char **argv) {
     head_ac_->waitForServer();
     sendHeadGoal(0, -0.2);
     ROS_INFO("Head set.");
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //// Clear unknown space below AMIGO
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ros::ServiceClient clear_octomap_client = nh.serviceClient<octomap_msgs::BoundingBoxQuery>("/move_base_3d/set_unknown_to_free_bbx");
+    clear_octomap_client.waitForExistence();
+
+    octomap_msgs::BoundingBoxQuery srv_octomap;
+    srv_octomap.request.min.x = -1.0;
+    srv_octomap.request.min.y = -1.0;
+    srv_octomap.request.min.z = -1.0;
+    srv_octomap.request.max.x = 1.0;
+    srv_octomap.request.max.y = 1.0;
+    srv_octomap.request.max.z = 2.0;
+
+    if (!clear_octomap_client.call(srv_octomap)) {
+        ROS_ERROR("Could not clear the octomap!");
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
