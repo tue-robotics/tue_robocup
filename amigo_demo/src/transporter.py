@@ -30,7 +30,7 @@ class Transporter(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
 
-        arm = robot.leftArm
+        arm = robot.rightArm
 
         robot.reasoner.query(
             Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
@@ -59,6 +59,10 @@ class Transporter(smach.StateMachine):
                             Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
         with self:
+            smach.StateMachine.add("RESET_REASONER",
+                states.Retract_facts(robot, [poi1_query, poi2_query, wp1_query, wp2_query, query_object]),
+                transitions={   "retracted":"SCAN"})
+
             smach.StateMachine.add("SCAN",
                 ScanRoom(robot),
                 transitions={   "done":"DRIVE_TO_WP1"})
