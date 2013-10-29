@@ -129,7 +129,6 @@ class LookForObjectsAtROI(smach.State):
 
             self.robot.spindle.send_goal(spindle_target,timeout=5.0)
             self.robot.head.send_goal(lookat_point, keep_tracking=False)
-            
         except ValueError, ve:
             rospy.loginfo("lookat_answers = {0}".format(lookat_answers))
             rospy.loginfo("Further processing yielded {0}".format(ve))
@@ -153,9 +152,8 @@ class LookForObjectsAtROI(smach.State):
         target_point.point.z = lookat_point.point.z
         try:
             self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
-        except Exception as e:
-            rospy.loginfo("Cannot set perception roi for modules {0}".format(self.modules))
-            rospy.loginfo("Error: {0}".format(e))
+        except rospy.exceptions.ROSException as e:
+            rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
 
         # Let the object recognition run for a certain period
         # ToDo: replace until new objects have appeared

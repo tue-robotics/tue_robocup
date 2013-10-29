@@ -943,7 +943,7 @@ class ArmToUserPose(smach.State):
             rospy.logwarn("Transforming to baselink, should become obsolete but this is not yet the case")
             #target_position_bl = transformations.tf_transform(target_position, "/map","/base_link", tf_listener=self.robot.tf_listener)
             if self.side.send_goal(self.x, self.y, self.z, self.roll, self.pitch, self.yaw,
-                time_out=self.time_out,
+                timeout=self.time_out,
                 pre_grasp=self.pre_grasp,
                 frame_id=self.frame_id):
                 return 'succeeded'
@@ -1135,7 +1135,7 @@ class Point_at_object(smach.State):
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
             self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
-            self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, time_out=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
+            self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, timeout=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("What's that on my hand?")
             rospy.sleep(2.0)
             
