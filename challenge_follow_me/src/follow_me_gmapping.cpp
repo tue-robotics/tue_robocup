@@ -861,8 +861,7 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //    pub_move_base_ = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
     
-    actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_ =
-		new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base_3d", true);
+    move_base_ac_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base_3d", true);
     move_base_ac_->waitForServer();
 
     move_base_plan_client_ = nh.serviceClient<tue_move_base_msgs::GetPath>("/move_base_3d/get_plan");
