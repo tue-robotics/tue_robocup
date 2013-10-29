@@ -45,12 +45,12 @@ using namespace std;
 
 //! Settings
 const int TIME_OUT_OPERATOR_LOST = 10;          // Time interval without updates after which operator is considered to be lost
-const double DISTANCE_OPERATOR = 1.0;           // Distance AMIGO keeps towards operator
+const double DISTANCE_OPERATOR = 0.75;           // Distance AMIGO keeps towards operator
 const double WAIT_TIME_OPERATOR_MAX = 10.0;     // Maximum waiting time for operator to return
 const string NAVIGATION_FRAME = "/amigo/base_link";   // Frame in which navigation goals are given IF NOT BASE LINK, UPDATE PATH IN moveTowardsPosition()
 const int N_MODELS = 2;                         // Number of models used for recognition of the operator
 const double TIME_OUT_LEARN_FACE = 25;          // Time out on learning of the faces
-const double FOLLOW_RATE = 20;                  // Rate at which the move base goal is updated
+const double FOLLOW_RATE = 1;                  // Rate at which the move base goal is updated
 double FIND_RATE = 1;                           // Rate check for operator at start of the challenge
 const double T_LEAVE_ELEVATOR = 15.0;            // Time after which robot is assumed to be outside the elevator.
 const double TYPICAL_OPERATOR_X = 1.0;          // Expected x-position operator, needed when looking for operator
@@ -415,6 +415,46 @@ bool memorizeOperator() {
 
 }
 
+void sendHeadGoal(double pan, double tilt, bool blocking = true) {
+    amigo_head_ref::HeadRefGoal head_goal;
+    head_goal.goal_type = amigo_head_ref::HeadRefGoal::PAN_TILT;
+    head_goal.pan = pan;
+    head_goal.tilt = tilt;
+
+    ROS_INFO("Sending head goal: pan = %f, tilt = %f", pan, tilt);
+
+    head_ac_->sendGoal(head_goal);
+    
+    if (blocking) {
+		head_ac_->waitForResult(ros::Duration(3.0));
+	}
+}
+
+void cancelGoalPose()
+{
+
+    //! End point of the path is the given position
+    geometry_msgs::PoseStamped end_goal;
+    end_goal.header.frame_id = NAVIGATION_FRAME;
+    end_goal.header.stamp = ros::Time();
+
+    //! Set orientation
+    end_goal.pose.orientation.w = 1;
+
+ 
+    // transform goal to map frame
+    geometry_msgs::PoseStamped end_goal_MAP;
+    try {
+        tf_listener_->transformPose("/map", end_goal, end_goal_MAP);
+    } catch (tf::TransformException& e) {
+        ROS_WARN("Could not transform goal to map frame!");
+        return;
+    }
+
+    pub_move_base_.publish(end_goal_MAP);
+    
+}
+
 /**
  * @brief moveTowardsPosition Let AMIGO move from its current position towards the given position
  * @param pos target position
@@ -455,16 +495,15 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
         return;
     }
 
-    pub_move_base_.publish(end_goal_MAP);
-
-    /*
-    if (t_no_meas_ < 1.0) {
-        planner_->MoveToGoal(end_goal);
-        ROS_DEBUG("Executive: Move base goal: (x,y,theta) = (%f,%f,%f) - red. and full distance: %f and %f", end_goal.pose.position.x, end_goal.pose.position.y, theta, reduced_distance, full_distance);
+    if (t_no_meas_ < 2.0) {
+        pub_move_base_.publish(end_goal_MAP);
+        ROS_INFO("Robot move: published new base pose");
     } else {
-        ROS_INFO("No operator position update: robot will not move");
+        ROS_INFO("Robot move: no operator position update, robot will not move");
+        cancelGoalPose();
     }
-    */
+    
+    sendHeadGoal(theta, 0, false);
 }
 
 
@@ -747,17 +786,7 @@ bool leftElevator(pbl::Gaussian& pos)
 
 
 
-void sendHeadGoal(double pan, double tilt) {
-    amigo_head_ref::HeadRefGoal head_goal;
-    head_goal.goal_type = amigo_head_ref::HeadRefGoal::PAN_TILT;
-    head_goal.pan = pan;
-    head_goal.tilt = tilt;
 
-    ROS_INFO("Sending head goal: pan = %f, tilt = %f", pan, tilt);
-
-    head_ac_->sendGoal(head_goal);
-    head_ac_->waitForResult(ros::Duration(3.0));
-}
 
 
 
@@ -768,6 +797,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
 
     ROS_INFO("Started Follow me");
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////  Text-to-speech
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -809,7 +839,6 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Move base interface
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     pub_move_base_ = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -823,10 +852,9 @@ int main(int argc, char **argv) {
     ROS_INFO("Transform between /map and %s found.", NAVIGATION_FRAME.c_str());
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //// Carrot planner
+    //// Cancel old goals
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//    planner_ = new CarrotPlanner("follow_me_carrot_planner");
-//    ROS_INFO("Carrot planner instantiated");
+    cancelGoalPose();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Laser data
@@ -1203,10 +1231,7 @@ int main(int argc, char **argv) {
     }
 
     //! When node is shut down, cancel goal by sending zero
-    pbl::Matrix cov(3,3);
-    cov.zeros();
-    pbl::PDF pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
-    moveTowardsPosition(pos, 0);
+    cancelGoalPose();
 
     return 0;
 }
