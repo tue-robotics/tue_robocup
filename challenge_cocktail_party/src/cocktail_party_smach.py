@@ -14,8 +14,8 @@ from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
 
 
-grasp_arm = "left"
-#grasp_arm = "right"
+#grasp_arm = "left"
+grasp_arm = "right"
 
 #===============================TODOs===========================================
 # - head goal and base goal must correspond
@@ -745,7 +745,7 @@ class HandoverToUnknownHuman(smach.StateMachine):
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
-                                    SetGripper(robot, arm, gripperstate=0, drop_from_frame="/amigo/grippoint_left"), #open
+                                    SetGripper(robot, arm, gripperstate=0, drop_from_frame="/amigo/grippoint_right"), #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
                                                     'failed':'CLOSE_AFTER_DROP'})
             smach.StateMachine.add( 'CLOSE_AFTER_DROP',
