@@ -13,6 +13,7 @@
 #include "perception_srvs/StartPerception.h"
 #include <std_srvs/Empty.h>
 #include "speech_interpreter/GetInfo.h"
+#include <tue_move_base_msgs/GetPath.h>
 
 // Actions
 #include <tue_move_base_msgs/MoveBaseAction.h>
@@ -87,12 +88,13 @@ actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* head_ac_;         
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 ros::Subscriber sub_laser_;                                                       // Communication: Listen to laser data
 ros::Publisher pub_in_elevator;                                                   // Communication: Publisher for debugging
-ros::Publisher pub_move_base_;
+//ros::Publisher pub_move_base_;
 
 // Services
 ros::ServiceClient reset_wire_client_;                                            // Communication: Client that enables reseting WIRE
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::ServiceClient speech_client_;                                                // Communication: Communication with the speech interpreter
+ros::ServiceClient move_base_plan_client_;
 
 // TF
 tf::TransformListener* tf_listener_;
@@ -435,25 +437,27 @@ void sendHeadGoal(double pan, double tilt, bool blocking = true) {
 void cancelGoalPose()
 {
 
-    //! End point of the path is the given position
-    geometry_msgs::PoseStamped end_goal;
-    end_goal.header.frame_id = NAVIGATION_FRAME;
-    end_goal.header.stamp = ros::Time();
+    move_base_ac_->cancelAllGoals();
 
-    //! Set orientation
-    end_goal.pose.orientation.w = 1;
+//    //! End point of the path is the given position
+//    geometry_msgs::PoseStamped end_goal;
+//    end_goal.header.frame_id = NAVIGATION_FRAME;
+//    end_goal.header.stamp = ros::Time();
+
+//    //! Set orientation
+//    end_goal.pose.orientation.w = 1;
 
  
-    // transform goal to map frame
-    geometry_msgs::PoseStamped end_goal_MAP;
-    try {
-        tf_listener_->transformPose("/map", end_goal, end_goal_MAP);
-    } catch (tf::TransformException& e) {
-        ROS_WARN("Could not transform goal to map frame!");
-        return;
-    }
+//    // transform goal to map frame
+//    geometry_msgs::PoseStamped end_goal_MAP;
+//    try {
+//        tf_listener_->transformPose("/map", end_goal, end_goal_MAP);
+//    } catch (tf::TransformException& e) {
+//        ROS_WARN("Could not transform goal to map frame!");
+//        return;
+//    }
 
-    pub_move_base_.publish(end_goal_MAP);
+//    pub_move_base_.publish(end_goal_MAP);
     
 }
 
@@ -489,23 +493,37 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
     // transform goal to map frame
 
-    geometry_msgs::PoseStamped end_goal_MAP;
+    tue_move_base_msgs::GetPath srv_get_path;
     try {
-        tf_listener_->transformPose("/map", end_goal, end_goal_MAP);
+        tf_listener_->transformPose("/map", end_goal, srv_get_path.request.target_pose);
     } catch (tf::TransformException& e) {
         ROS_WARN("Could not transform goal to map frame!");
         return;
     }
 
+    if (move_base_plan_client_.call(srv_get_path)) {
+        if (srv_get_path.response.path.empty()) {
+            ROS_ERROR("No path found.");
+            return;
+        }
+    } else {
+        ROS_ERROR("Path request failed");
+        return;
+    }
+
+
+
     if (t_no_meas_ < 2.0) {
-        pub_move_base_.publish(end_goal_MAP);
+        tue_move_base_msgs::MoveBaseGoal base_goal;
+        base_goal.path = srv_get_path.response.path;
+        move_base_ac_->sendGoal(base_goal);
+
         ROS_INFO("Robot move: published new base pose");
     } else {
         ROS_INFO("Robot move: no operator position update, robot will not move");
         cancelGoalPose();
     }
     
-    sendHeadGoal(theta, 0, false);
 }
 
 
@@ -841,10 +859,14 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Move base interface
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    pub_move_base_ = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
+//    pub_move_base_ = nh.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 1);
     
     actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_ =
 		new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base_3d", true);
+    move_base_ac_->waitForServer();
+
+    move_base_plan_client_ = nh.serviceClient<tue_move_base_msgs::GetPath>("/move_base_3d/get_plan");
+    move_base_plan_client_.waitForExistence();
 		
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
