@@ -4,6 +4,8 @@ import rospy
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 import amigo_actions.msg
+import control_msgs.msg
+import trajectory_msgs.msg
 import threading
 import util.concurrent_util
 from sensor_msgs.msg import JointState
@@ -13,10 +15,18 @@ class Spindle(object):
     joint_name = 'torso_joint'
     
     def __init__(self, wait_service=True):
-        self.ac_move_spindle = actionlib.SimpleActionClient('/spindle_server', amigo_actions.msg.AmigoSpindleCommandAction)
-        if wait_service:
-            rospy.loginfo("waiting for spindle action server")
-            self.ac_move_spindle.wait_for_server(timeout=rospy.Duration(2.0))
+        ac_move_spindle = actionlib.SimpleActionClient('/spindle_server', amigo_actions.msg.AmigoSpindleCommandAction)
+        ac_joint_trajectory_action = actionlib.SimpleActionClient('/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
+        rospy.loginfo("waiting for spindle action server")
+        if ac_move_spindle.wait_for_server(timeout=rospy.Duration(0.5)):
+            self.ac_move_spindle = ac_move_spindle
+            self.wbc = False
+        elif ac_joint_trajectory_action.wait_for_server(timeout=rospy.Duration(0.5)):
+            self.ac_move_spindle = ac_joint_trajectory_action
+            self.wbc = True
+        else:
+            rospy.logwarn("Cannot find spindle action server")
+
 
         ''' Keeps track of the current spindle position '''
         self.spindle_sub = rospy.Subscriber("/amigo/torso/measurements", JointState, self._receive_spindle_measurement)
@@ -36,11 +46,21 @@ class Spindle(object):
         rospy.loginfo("Send spindle goal {0}, timeout = {1}".format(spindle_pos, timeout))
         
         ''' Using actionlib interface '''
-        spindle_goal = amigo_actions.msg.AmigoSpindleCommandGoal()
-        spindle_goal.spindle_height = spindle_pos
         if (spindle_pos < self.lower_limit or spindle_pos > self.upper_limit):
             rospy.logwarn("Spindle target {0} outside spindle range".format(spindle_pos))
             return False
+
+        if not self.wbc:
+            spindle_goal = amigo_actions.msg.AmigoSpindleCommandGoal()
+            spindle_goal.spindle_height = spindle_pos
+        elif self.wbc:
+            spindle_goal = control_msgs.msg.FollowJointTrajectoryGoal()
+            spindle_goal_point = trajectory_msgs.msg.JointTrajectoryPoint()
+            rospy.loginfo("Goal = {0}".format(spindle_goal))
+            rospy.loginfo("Goalpoint = {0}".format(spindle_goal_point))
+            spindle_goal.trajectory.joint_names.append("torso_joint")
+            spindle_goal_point.positions.append(spindle_pos)
+            spindle_goal.trajectory.points.append(spindle_goal_point)
 
         self.ac_move_spindle.send_goal(spindle_goal)
         
