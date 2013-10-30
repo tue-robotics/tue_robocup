@@ -134,14 +134,14 @@ class Arms(object):
                                       "shoulder_pitch_joint_left",
                                       "shoulder_roll_joint_left",
                                       "elbow_pitch_joint_left",
-                                      "elbow_roll_joint_left"
+                                      "elbow_roll_joint_left",
                                       "wrist_pitch_joint_left",
                                       "wrist_yaw_joint_left"], 
                            Side.RIGHT:["shoulder_yaw_joint_right",
                                       "shoulder_pitch_joint_right",
                                       "shoulder_roll_joint_right",
                                       "elbow_pitch_joint_right",
-                                      "elbow_roll_joint_right"
+                                      "elbow_roll_joint_right",
                                       "wrist_pitch_joint_right",
                                       "wrist_yaw_joint_right"]}
         
