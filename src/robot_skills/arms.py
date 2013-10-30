@@ -130,6 +130,20 @@ class Arms(object):
         self.closeState = State.CLOSE
         
         self._joint_pos = {Side.LEFT:(None, None, None, None, None, None, None), Side.RIGHT: (None, None, None, None, None, None, None)}
+        self._joint_names={Side.LEFT:["shoulder_yaw_joint_left",
+                                      "shoulder_pitch_joint_left",
+                                      "shoulder_roll_joint_left",
+                                      "elbow_pitch_joint_left",
+                                      "elbow_roll_joint_left"
+                                      "wrist_pitch_joint_left",
+                                      "wrist_yaw_joint_left"], 
+                           Side.RIGHT:["shoulder_yaw_joint_right",
+                                      "shoulder_pitch_joint_right",
+                                      "shoulder_roll_joint_right",
+                                      "elbow_pitch_joint_right",
+                                      "elbow_roll_joint_right"
+                                      "wrist_pitch_joint_right",
+                                      "wrist_yaw_joint_right"]}
         
         self.arm_left_reference_pub = rospy.Publisher("/amigo/left_arm/references", JointState)
         self.arm_right_reference_pub = rospy.Publisher("/amigo/right_arm/references", JointState)
@@ -398,10 +412,12 @@ class Arms(object):
                 
         traj_goal = FollowJointTrajectoryGoal()
         traj_goal.trajectory.points = [p]
+        traj_goal.trajectory.joint_names = self._joint_names[side]
 
         rospy.loginfo("Send arm to jointcoords {0}".format(p.positions))
         
         result = None
+        
         if timeout:
             if side == Side.LEFT:
                 result = actionClients._ac_joint_traj_left.send_goal(traj_goal)
