@@ -1,14 +1,25 @@
 #!/usr/bin/python
 """Designators are intended to excapsulate the process of selecting goals and 
-of marking them as finished or inachievable"""
+of marking them as finished or inachievable.
+
+TODO:
+Designators can be refined by a user of it. 
+This means that the query for it is extended, for example. 
+Some variables in the query can also be made constants, as to make the query more specific."""
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 from psi  import Conjunction, Compound
 
 import robot_smach_states.util.reasoning_helpers as urh
-import robot_smach_states.util.msg_constructors as msgs
-import robot_smach_states.util
-import math
+import robot_skills.util.msg_constructors as msgs
+
+def iter_children(term):
+    if term.is_variable() or term.is_constant():
+        yield term
+    if term.is_compound() or term.is_sequence():
+        for child in term.arguments:
+            for grandchild in iter_children(child):
+                yield grandchild
 
 class NoAnswerException(Exception):
     def __init__(self, *args, **kwargs):
@@ -27,187 +38,170 @@ class Designator(object):
     def resolve(self):
         """Selects a new goal and sets it as the current goal"""
         self._current = None
-        raise StopIteration("No method for goal selection implemented")
+        raise NotImplementedError("No method for goal selection implemented")
         return self.current
 
-    def update_current(self):
-        """Keep the same _thing_ as a goal, but update it coordinates or other derivative information"""
-        raise NotImplementedError("No method for updating a goal implemented")
-
-    #TODO: Implement current_for_base, current_for_head, current_for_arms?
     @property
     def current(self):
         """The currently selected goal"""
         return self._current
 
-    def finish_current(self):
-        """Mark the current goal as finished. Sets self.current to None"""
-        self._current = None
-        raise NotImplementedError("No method for goal finishing implemented")
-
-    def block_current(self, reason=None):
-        """Marks the current goal as blocked or otherwise inachievable"""
-        raise NotImplementedError("No method for goal blocking implemented")
-
-    def unmark_all(self):
-        """Remove finished and blocked marks from all processed goals"""
-        raise NotImplementedError("No method for unmarking potential goals implemented")
-
 class ReasonedDesignator(Designator):
-    """docstring for ReasonedPoseDesignator"""
-    def __init__(self, robot, query, identifier="Object",
-        finished_marker='visited', blocked_marker='unreachable'):
+    """docstring for ReasonedPose2DDesignator"""
+    def __init__(self, reasoner, query, identifier="Object", sort=min, _filter=lambda x: True):
+        """A ReasonedDesignator can be used to refer to an object in the world model,
+            whose identity, ID, is not yet known. 
+        Each world-model object has an ID: the identifier-variable will be unified with an object's ID
+        
+        Use the reasoner to find answers to the given query.
+        These answers are then filtered and finally sorted by the respective functions.
+        """
         
         super(ReasonedDesignator, self).__init__()
         
         self.query = query
-        self.robot = robot
+        self.reasoner = reasoner
+        self.sort = sort
+        self.filter = _filter
 
         self.identifier = identifier
 
-        self.decorated_query = Conjunction(self.query, 
-                        Compound("not", Compound("visited",     identifier)),
-                        Compound("not", Compound("unreachable", identifier)))
+        self._decorated_query = query #This will be modified by the designator itself
 
         self.processed_identifiers = []
 
-        self.finished_marker = finished_marker
-        self.blocked_marker = blocked_marker
-
-    def update_current(self):
-        x   = float(self.current_answer[self.X]), 
-        y   = float(self.current_answer[self.Y]), 
-        phi = float(self.current_answer[self.Phi])
-        
-        rospy.logdebug("Found a pose for '{0}': {1}".format(self.query, (x,y,phi)))
-        self._current = self.robot.base.point(x,y), self.robot.base.orient(phi)
-
+    def resolve(self):
+        """Pose the query to the reasoner and filter, sort the answers, returning the best answer"""
+        answers = self.reasoner.query(self._decorated_query)
+        if not answers:
+            raise NoAnswerException("No answer for query {0}".format(self._decorated_query))
+        filtered = filter(self.filter, answers)
+        if not filtered:
+            raise NoAnswerException("No answers left for query {0} after filtering".format(self._decorated_query))
+        self._current = self.sort(filtered)
         return self.current
 
-    def mark_current(self, mark_with):
-        self.robot.reasoner.assertz(Compound(mark_with, self.current_answer[self.identifier]))
-        self.processed_identifiers += [self.current_answer[self.identifier]]
-        self.current_answer = {self.X:0.0,self.Y:0.0,self.Phi:0.0,self.identifier:"none"}
-        self._current = None
+    def extend(self, conjunct):
+        """Extend the current query with another conjunct"""
+        self._decorated_query = Conjunction(self._decorated_query, conjunct)
 
-    def finish_current(self):
-        self.mark_current(self.finished_marker)
-    
-    def block_current(self, reason=None):
-        self.mark_current(self.blocked_marker)
+    def refine(self, variable, constant):
+        """Set a variable in the query to a constant.
+        >>> query = Compound("some_predicate", "Object", "B")
+        >>> desig = ReasonedDesignator(None, query, "Object")
+        >>> desig.refine("Object", "specific_object")
+        Compound(',', Compound('some_predicate', Variable('Object'), Variable('B')), Compound('=', Variable('Object'), 'specific_object'))
+        """
+        
+        # for child in iter_children(self._decorated_query):
+        #     if child.is_variable():
+        #         if child.var_name == variable:
+        #             child = constant
+        # return self._decorated_query
+        # should return Compound('some_predicate', 'specific_object', Variable('B'))
+        #But, replacing items in a Term is not that easy.
+        self.extend(Compound("=", variable, constant))
+        return self._decorated_query
 
-    def unmark_all(self):
-        """Retract from the knowledgebase that all poses were tried"""
-        asserts = []
-        for identifier in self.processed_identifiers:
-            finished = Compound("retractall", Compound(self.finished_marker, identifier))
-            blocked = Compound("retractall", Compound(self.blocked_marker, identifier))
-            asserts += [finished, blocked]
-        self.robot.reasoner.query(Conjunction(*asserts))
+    # def loosen(self, constant, variable):
+    #     """Make some constant in the query a variable"""
+    #     pass
 
-class ReasonedPoseDesignator(ReasonedDesignator):
-    """docstring for ReasonedPoseDesignator"""
-    def __init__(self, robot, query,
+
+class ReasonedPose2DDesignator(ReasonedDesignator):
+    """docstring for ReasonedPose2DDesignator"""
+    def __init__(self, reasoner, query,
         X="X", Y="Y", Phi="Phi", identifier="Object",
-        finished_marker='visited', blocked_marker='unreachable'):
+        finished_marker='visited', blocked_marker='unreachable',
+        **kwargs):
         
-        super(ReasonedPoseDesignator, self).__init__(robot, query, 
+        super(ReasonedPose2DDesignator, self).__init__(reasoner, query, 
             identifier=identifier,
-            finished_marker='visited', 
-            blocked_marker='unreachable')
+            **kwargs)
 
-        self.X, self.Y, self.Phi = X, Y, Phi
+        self.X = X
+        self.Y = Y
+        self.Phi = Phi
 
-        self.current_answer = {self.X:0.0,self.Y:0.0,self.Phi:0.0,self.identifier:"none"}
-
-    def resolve(self):
-        """Gets the answer to the query and selects the best one, depending on self.sorter"""
-        
-        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-        # is a mapping of variable to a constant, like a string or number
-        answers = self.robot.reasoner.query(self.decorated_query)
-
-        basepos = self.robot.base.location.pose.position
-        basepos = (basepos.x, basepos.y, 0) #Just set phi to 0 for a sec
-
-        self.current_answer = urh.select_answer(answers, 
-                                            lambda answer: urh.xyphi_dist(answer, basepos), 
-                                            minmax=min)
-        x,y,phi = urh.answer_to_tuple(self.current_answer, variable_ordering=[self.X, self.Y, self.Phi])
-
-        self._current = self.robot.base.point(x,y), self.robot.base.orient(phi)
-
-        return self.current
+    @property
+    def current_as_pose(self):
+        """The current answer interpreted as a PoseStamped"""
+        pose = msgs.PoseStamped(
+                x   = float(self.current[self.X]), 
+                y   = float(self.current[self.Y]), 
+                phi = float(self.current[self.Phi]))
+        return pose
 
 
-class ReasonedRoiDesignator(ReasonedDesignator):
-    """Designator for an ROI. instance.current is of type PointStamped"""
-    def __init__(self, robot, query,
+class ReasonedPointDesignator(ReasonedDesignator):
+    """docstring for ReasonedPointDesignator"""
+    def __init__(self, reasoner, query,
         X="X", Y="Y", Z="Z", identifier="Object",
-        finished_marker='visited', blocked_marker='unreachable'):
+        finished_marker='visited', blocked_marker='unreachable',
+        **kwargs):
         
-        super(ReasonedRoiDesignator, self).__init__(robot, query, 
+        super(ReasonedPointDesignator, self).__init__(reasoner, query, 
             identifier=identifier,
-            finished_marker='visited', 
-            blocked_marker='unreachable')
+            **kwargs)
 
-        self.X, self.Y, self.Z = X, Y, Z
+        self.X = X
+        self.Y = Y
+        self.Z = Z
 
-        self.current_answer = {self.X:0.0,self.Y:0.0,self.Z:0.0,self.identifier:"none"}
-
-    def resolve(self):
-        """Gets the answer to the query and selects the best one, depending on self.sorter"""
-        
-        # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-        # is a mapping of variable to a constant, like a string or number
-        answers = self.robot.reasoner.query(self.decorated_query)
-
-        basepos = self.robot.base.location.pose.position
-        basepos = (basepos.x, basepos.y, 0) #Base is always at Z=0
-
-        self.current_answer = urh.select_answer(answers, 
-                                            lambda answer: urh.xyz_dist(answer, basepos), 
-                                            minmax=min)
-        x,y,z = urh.answer_to_tuple(self.current_answer, variable_ordering=[self.X, self.Y, self.Z])
-
-        self._current = msgs.PointStamped(x, y, z)
-
-        return self.current
+    @property
+    def current_as_pose(self):
+        """The current answer interpreted as a PointStamped"""
+        point = msgs.PointStamped(
+                x = float(self.current[self.X]), 
+                y = float(self.current[self.Y]), 
+                z = float(self.current[self.Z]))
+        return point
 
         
 if __name__ == "__main__":
-    rospy.init_node('Designator_test', log_level=rospy.DEBUG)
+    import doctest
+    doctest.testmod()
+
+    rospy.init_node('Designator_test', log_level=rospy.INFO)
 
     import robot_skills.amigo
     robot = robot_skills.amigo.Amigo(dontInclude=["arms", "head", "perception", "spindle","speech","leftArm","rightArm","ears","ebutton","lights"])
 
     r = robot.reasoner
 
-    r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
-    r.assertz(r.challenge("clean_up"))
+    #r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
+    #r.assertz(r.challenge("clean_up"))
+    import math
 
-    r.assertz(r.base_pose("a", r.pose_2d(1, 2, 1.57)))
-    r.assertz(r.base_pose("b", r.pose_2d(2, 3, 2.25)))
-    r.assertz(r.base_pose("c", r.pose_2d(3, 4, 3.14)))
+    r.assertz(r.waypoint("a", r.pose_2d(1, 2, 1.57)))
+    r.assertz(r.waypoint("b", r.pose_2d(2, 3, 2.25)))
+    r.assertz(r.waypoint("c", r.pose_2d(3, 4, math.pi)))
 
-    pose_query = r.base_pose("Name", r.pose_2d("X", "Y", "Phi"))
+    r.assertz(r.point_of_interest("a", r.point_3d(1, 2, 4)))
+    r.assertz(r.point_of_interest("b", r.point_3d(2, 3, 5)))
+    r.assertz(r.point_of_interest("c", r.point_3d(3, 4, 6)))
+
+    pose_query = r.waypoint("Name", r.pose_2d("X", "Y", "Phi"))
     roi_query = r.point_of_interest("Name", r.point_3d("X", "Y", "Z"))
 
-    rpd = ReasonedPoseDesignator(robot, pose_query, identifier="Name")
-    rrd = ReasonedRoiDesignator(robot, pose_query, identifier="Name")
+    rpd = ReasonedPose2DDesignator(robot.reasoner, pose_query, identifier="Name")
+    rrd = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
 
+    #import ipdb; ipdb.set_trace()
+    answer1 = rpd.resolve()
+    rpd.refine("Name", 'c')
+    answer2 = rpd.resolve()
+    print answer1
+    print answer2
+    assert answer1 != answer2 and len(answer1) == len(answer2)
+    assert str(answer2["Name"]) == 'c'
+
+    print rpd.current_as_pose
+
+    #print "cleaning up..."
     r.query(r.retractall(r.visited("X")))
     r.query(r.retractall(r.unreachable("X")))
 
-    import ipdb; ipdb.set_trace()
-    while True: #Die variable word niet goed gelezen door de variable oid.
-        try:
-            rpd.resolve()
-            rpd.finish_current()
-        except ValueError:
-            break
-    rpd.unmark_all()
-    print "OK"
-
-
-
+    r.query(r.retractall(r.waypoint("X", "Y")))
+    r.query(r.retractall(r.point_of_interest("X", "Y")))
+    #print "Done"
