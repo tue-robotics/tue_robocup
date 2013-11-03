@@ -25,6 +25,7 @@ class NoAnswerException(Exception):
     def __init__(self, *args, **kwargs):
         Exception.__init__(self, *args, **kwargs)
 
+
 class Designator(object):
     """A Designator defines a goal, which can be defined at runtime or at write-time.
     A Designator can hold a set of goals it can choose from and finally selects one, by calling self.next.
@@ -46,15 +47,20 @@ class Designator(object):
         """The currently selected goal"""
         return self._current
 
+
 class ReasonedDesignator(Designator):
     """docstring for ReasonedPose2DDesignator"""
-    def __init__(self, reasoner, query, identifier="Object", sort=min, _filter=lambda x: True):
+    def __init__(self, reasoner, query, identifier="Object", 
+            sort=min, 
+            key=lambda x: x, 
+            _filter=lambda x: True):
         """A ReasonedDesignator can be used to refer to an object in the world model,
             whose identity, ID, is not yet known. 
         Each world-model object has an ID: the identifier-variable will be unified with an object's ID
         
         Use the reasoner to find answers to the given query.
         These answers are then filtered and finally sorted by the respective functions.
+        The sort-function is passed the optional key-function, control the value being sorted with
         """
         
         super(ReasonedDesignator, self).__init__()
@@ -62,6 +68,7 @@ class ReasonedDesignator(Designator):
         self.query = query
         self.reasoner = reasoner
         self.sort = sort
+        self.sortkey = key
         self.filter = _filter
 
         self.identifier = identifier
@@ -78,7 +85,7 @@ class ReasonedDesignator(Designator):
         filtered = filter(self.filter, answers)
         if not filtered:
             raise NoAnswerException("No answers left for query {0} after filtering".format(self._decorated_query))
-        self._current = self.sort(filtered)
+        self._current = self.sort(filtered, key=self.sortkey)
         return self.current
 
     def extend(self, conjunct):
@@ -126,10 +133,13 @@ class ReasonedPose2DDesignator(ReasonedDesignator):
     @property
     def current_as_pose(self):
         """The current answer interpreted as a PoseStamped"""
+        return self.interpret_as_pose(self.current)
+
+    def interpret_as_pose(self, dic):
         pose = msgs.PoseStamped(
-                x   = float(self.current[self.X]), 
-                y   = float(self.current[self.Y]), 
-                phi = float(self.current[self.Phi]))
+                x   = float(dic[self.X]), 
+                y   = float(dic[self.Y]), 
+                phi = float(dic[self.Phi]))
         return pose
 
 
@@ -149,12 +159,15 @@ class ReasonedPointDesignator(ReasonedDesignator):
         self.Z = Z
 
     @property
-    def current_as_pose(self):
-        """The current answer interpreted as a PointStamped"""
+    def current_as_point(self):
+        """The current answer interpreted as a PoseStamped"""
+        return self.interpret_as_point(self.current)
+
+    def interpret_as_point(self, dic):
         point = msgs.PointStamped(
-                x = float(self.current[self.X]), 
-                y = float(self.current[self.Y]), 
-                z = float(self.current[self.Z]))
+                x = float(dic[self.X]), 
+                y = float(dic[self.Y]), 
+                z = float(dic[self.Z]))
         return point
 
         
@@ -181,6 +194,10 @@ if __name__ == "__main__":
     r.assertz(r.point_of_interest("b", r.point_3d(2, 3, 5)))
     r.assertz(r.point_of_interest("c", r.point_3d(3, 4, 6)))
 
+    r.assertz(r.pos("firstObject",      r.point_3d(1.1, 2.1, 4.1))) #closest to poi a
+    r.assertz(r.pos("anotherObject",    r.point_3d(1.2, 2.2, 4.2))) #further to poi a
+    r.assertz(r.pos("someObject",       r.point_3d(1.3, 2.3, 4.3))) #even further to poi a
+
     pose_query = r.waypoint("Name", r.pose_2d("X", "Y", "Phi"))
     roi_query = r.point_of_interest("Name", r.point_3d("X", "Y", "Z"))
 
@@ -198,10 +215,44 @@ if __name__ == "__main__":
 
     print rpd.current_as_pose
 
+    def LookForObjectAtROI(lookat_designator, object_designator):
+        look_at = lookat_designator.resolve()
+        print "Looking at {0}".format(look_at)
+
+        best_found_object = object_designator.resolve()
+        print "I found {0}".format(best_found_object)
+
+        object_designator.refine("Name", best_found_object["Name"])
+
+    def PointStamped_distance(a, b):
+        dx = a.point.x - b.point.x
+        dy = a.point.y - b.point.y
+        dz = a.point.z - b.point.z
+        return math.sqrt(dx**2 + dy**2 + dz**2)
+
+    object_query = r.pos("Name", r.point_3d("X", "Y", "Z"))
+
+    lookat_designator = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
+
+    object_designator = ReasonedPointDesignator(robot.reasoner, object_query, identifier="Name", sort=max)
+
+    def sortkey(dic):
+        as_point = object_designator.interpret_as_point(dic)
+        return PointStamped_distance(lookat_designator.current_as_point, as_point)
+    object_designator.sortkey = sortkey
+
+    LookForObjectAtROI(lookat_designator, object_designator)
+    #object_designator is now linked to a very specific object
+    #import ipdb; ipdb.set_trace()
+    resolution = object_designator.resolve()
+    print resolution
+    assert str(resolution["Name"]) == "someObject"
+
     #print "cleaning up..."
     r.query(r.retractall(r.visited("X")))
     r.query(r.retractall(r.unreachable("X")))
 
     r.query(r.retractall(r.waypoint("X", "Y")))
     r.query(r.retractall(r.point_of_interest("X", "Y")))
+    r.query(r.retractall(r.pos("X", "Y")))
     #print "Done"
