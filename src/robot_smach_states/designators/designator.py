@@ -10,7 +10,6 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 from psi  import Conjunction, Compound
 
-import robot_smach_states.util.reasoning_helpers as urh
 import robot_skills.util.msg_constructors as msgs
 
 def iter_children(term):
@@ -51,9 +50,9 @@ class Designator(object):
 class ReasonedDesignator(Designator):
     """docstring for ReasonedPose2DDesignator"""
     def __init__(self, reasoner, query, identifier="Object", 
-            sort=min, 
-            key=lambda x: x, 
-            _filter=lambda x: True):
+        sort=min, 
+        key=lambda x: x, 
+        _filter=lambda x: True):
         """A ReasonedDesignator can be used to refer to an object in the world model,
             whose identity, ID, is not yet known. 
         Each world-model object has an ID: the identifier-variable will be unified with an object's ID
@@ -88,16 +87,22 @@ class ReasonedDesignator(Designator):
         self._current = self.sort(filtered, key=self.sortkey)
         return self.current
 
-    def extend(self, conjunct):
-        """Extend the current query with another conjunct"""
-        self._decorated_query = Conjunction(self._decorated_query, conjunct)
+    def extend(self, conjunct, add_at_end=True):
+        """Extend the current query with another conjunct.
+        The new conjunct may also be inserted at the beginning of the query, 
+        thereby setting a variable early during resolution thus needed less backtracking"""
+        if add_at_end:
+            self._decorated_query = Conjunction(self._decorated_query, conjunct)
+        else:
+            self._decorated_query = Conjunction(conjunct, self._decorated_query)
 
-    def refine(self, variable, constant):
+
+    def refine(self, **kwargs):
         """Set a variable in the query to a constant.
         >>> query = Compound("some_predicate", "Object", "B")
         >>> desig = ReasonedDesignator(None, query, "Object")
-        >>> desig.refine("Object", "specific_object")
-        Compound(',', Compound('some_predicate', Variable('Object'), Variable('B')), Compound('=', Variable('Object'), 'specific_object'))
+        >>> desig.refine(Object="specific_object")
+        Compound(',', Compound('=', Variable('Object'), 'specific_object'), Compound('some_predicate', Variable('Object'), Variable('B')))
         """
         
         # for child in iter_children(self._decorated_query):
@@ -107,15 +112,25 @@ class ReasonedDesignator(Designator):
         # return self._decorated_query
         # should return Compound('some_predicate', 'specific_object', Variable('B'))
         #But, replacing items in a Term is not that easy.
-        self.extend(Compound("=", variable, constant))
+        for variable, constant in kwargs.iteritems():
+            self.extend(Compound("=", variable, constant), add_at_end=False)
         return self._decorated_query
 
-    # def loosen(self, constant, variable):
-    #     """Make some constant in the query a variable"""
-    #     pass
+
+class LockVariable(ReasonedDesignator):
+    """A Mixin for ReasonedDesignators that allow them to lock a specific (set of) variable(s)"""
+
+    def lock(self, variables):
+        if not isinstance(variables, list): #if its not a list yet
+            variables = [variables] #then make it one
+
+        kwargs = {}
+        for variable in variables:
+            kwargs[variable] = self.current[variable]
+        self.refine(**kwargs)
 
 
-class ReasonedPose2DDesignator(ReasonedDesignator):
+class ReasonedPose2DDesignator(LockVariable, ReasonedDesignator):
     """docstring for ReasonedPose2DDesignator"""
     def __init__(self, reasoner, query,
         X="X", Y="Y", Phi="Phi", identifier="Object",
@@ -143,7 +158,7 @@ class ReasonedPose2DDesignator(ReasonedDesignator):
         return pose
 
 
-class ReasonedPointDesignator(ReasonedDesignator):
+class ReasonedPointDesignator(LockVariable, ReasonedDesignator):
     """docstring for ReasonedPointDesignator"""
     def __init__(self, reasoner, query,
         X="X", Y="Y", Z="Z", identifier="Object",
@@ -205,15 +220,13 @@ if __name__ == "__main__":
     rrd = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
 
     #import ipdb; ipdb.set_trace()
-    answer1 = rpd.resolve()
-    rpd.refine("Name", 'c')
-    answer2 = rpd.resolve()
-    print answer1
-    print answer2
-    assert answer1 != answer2 and len(answer1) == len(answer2)
-    assert str(answer2["Name"]) == 'c'
+    answer1 = rpd.resolve() #This basically just takes one (the first), because the sort key is not defined in any meaningful way
+    rpd.refine(Name='c') #We refine the designator
+    answer2 = rpd.resolve() #And let designator resolve itself to include the refinemen to Name=c
+    assert answer1 != answer2 and len(answer1) == len(answer2) #The answers should not be the same, but they should have the same (amount of) keys
+    assert str(answer2["Name"]) == 'c' #As we refined rpd to have Name=c, the answer after refinement should include this
 
-    print rpd.current_as_pose
+    assert rpd.current_as_pose.pose.position.x == 3.0 and rpd.current_as_pose.pose.position.y == 4.0
 
     def LookForObjectAtROI(lookat_designator, object_designator):
         look_at = lookat_designator.resolve()
@@ -222,7 +235,7 @@ if __name__ == "__main__":
         best_found_object = object_designator.resolve()
         print "I found {0}".format(best_found_object)
 
-        object_designator.refine("Name", best_found_object["Name"])
+        object_designator.lock("Name") #Lock the designator to the current value of Name
 
     def PointStamped_distance(a, b):
         dx = a.point.x - b.point.x
@@ -235,6 +248,7 @@ if __name__ == "__main__":
     lookat_designator = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
 
     object_designator = ReasonedPointDesignator(robot.reasoner, object_query, identifier="Name", sort=max)
+
 
     def sortkey(dic):
         as_point = object_designator.interpret_as_point(dic)
