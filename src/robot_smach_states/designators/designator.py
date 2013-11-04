@@ -154,25 +154,16 @@ def mark_current(self, marking, variable=None):
 
     return self.extend(Compound("not", Compound(marking, variable, current_value)))
 
-def current_as_pointstamped(mapping={'x':'X', 'y':'Y', 'z':'Z'}):
-    def mapper(self):
-        point = msgs.PointStamped(
-                x = float(self.current[mapping['x']]), 
-                y = float(self.current[mapping['y']]), 
-                z = float(self.current[mapping['z']]))
-        return point
-    return mapper
-
-def current_as_posestamped(mapping={'x':'X', 'y':'Y', 'phi':'Phi'}):
-    def mapper(self):
-        pose = msgs.PoseStamped(
-                x = float(self.current[mapping['x']]), 
-                y = float(self.current[mapping['y']]), 
-                phi = float(self.current[mapping['phi']]))
-        return pose
-    return mapper
-
 def map_to_class(klass, mapping):
+    """
+    #Map the Y-key of the dictionary to the y-field of the msgs.PoseStamped etc.
+    >>> mapper = map_to_class(msgs.PoseStamped, {'x':'X', 'y':'Y', 'phi':'Phi'})
+    >>> ReasonedDesignator.current_as_posestamped = property(mapper) #Make a new property of the mapper
+    >>> pose_query = Compound("waypoint", "Name", Compound("pose_2d", "X", "Y", "Phi"))
+    >>> rpd = ReasonedDesignator(None, pose_query, identifier="Name")
+    >>> rpd._current = {'Name':'tester', 'X':'1.1', 'Y':'1.1', 'Phi':'1.1'} #Set a _current value without actually querying
+    >>> rpd.current_as_posestamped.pose.position.x #the mapper is called via the property and returns a PoseStamped
+    1.1"""
     def mapper(self):
         kwargs = {k:float(self.current[v]) for k,v in mapping.iteritems()}
         instance = klass(**kwargs)
@@ -241,10 +232,10 @@ ReasonedDesignator.current_as_pointstamped = property(map_to_class(msgs.PointSta
 ReasonedDesignator.current_as_posestamped = property(map_to_class(msgs.PoseStamped, {'x':'X', 'y':'Y', 'phi':'Phi'}))
         
 if __name__ == "__main__":
+    rospy.init_node('Designator_test', log_level=rospy.INFO)
+
     import doctest
     doctest.testmod()
-
-    rospy.init_node('Designator_test', log_level=rospy.INFO)
 
     import robot_skills.amigo
     robot = robot_skills.amigo.Amigo(dontInclude=["arms", "head", "perception", "spindle","speech","leftArm","rightArm","ears","ebutton","lights"])
