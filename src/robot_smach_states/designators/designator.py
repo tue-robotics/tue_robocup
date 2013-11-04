@@ -8,7 +8,7 @@ This means that the query for it is extended, for example.
 Some variables in the query can also be made constants, as to make the query more specific."""
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
-from psi  import Conjunction, Compound
+from psi  import Conjunction, Compound, Variable
 
 import robot_skills.util.msg_constructors as msgs
 
@@ -95,6 +95,7 @@ class ReasonedDesignator(Designator):
             self._decorated_query = Conjunction(self._decorated_query, conjunct)
         else:
             self._decorated_query = Conjunction(conjunct, self._decorated_query)
+        return self._decorated_query
 
 
     def refine(self, **kwargs):
@@ -117,20 +118,68 @@ class ReasonedDesignator(Designator):
         return self._decorated_query
 
 
-class LockVariable(ReasonedDesignator):
-    """A Mixin for ReasonedDesignators that allow them to lock a specific (set of) variable(s)"""
+def lock(self, variables):
+    """Lock a specific (set of) variable(s) to the current value of the designator
+    >>> query = Compound("some_predicate", "Object", "B")
+    >>> ReasonedDesignator.lock = lock
+    >>> desig = ReasonedDesignator(None, query, "Object")
+    >>> desig._current = {"Object":'b'}
+    >>> desig.lock('Object')
+    Compound(',', Compound('=', Variable('Object'), 'b'), Compound('some_predicate', Variable('Object'), Variable('B')))
+    """
+    if not isinstance(variables, list): #if its not a list yet
+        variables = [variables] #then make it one
 
-    def lock(self, variables):
-        if not isinstance(variables, list): #if its not a list yet
-            variables = [variables] #then make it one
-
-        kwargs = {}
-        for variable in variables:
-            kwargs[variable] = self.current[variable]
-        self.refine(**kwargs)
+    kwargs = {}
+    for variable in variables:
+        kwargs[variable] = self.current[variable]
+    return self.refine(**kwargs)
 
 
-class ReasonedPose2DDesignator(LockVariable, ReasonedDesignator):
+def mark_current(self, marking, variable=None):
+    """Mark (a part of) the current resolution as something 
+    and refine the query to exclude that in the future.
+    >>> query = Compound("some_predicate", "Object", "B")
+    >>> ReasonedDesignator.mark_current = mark_current
+    >>> desig = ReasonedDesignator(None, query, "Object")
+    >>> desig._current = {"Object":'b'}
+    >>> desig.mark_current('marked')
+    Compound(',', Compound('some_predicate', Variable('Object'), Variable('B')), Compound('not', Compound('marked', Variable('Object'), 'b')))
+    """
+
+    if not variable:
+        variable = self.identifier
+
+    current_value = self.current[variable]
+
+    return self.extend(Compound("not", Compound(marking, variable, current_value)))
+
+def current_as_pointstamped(mapping={'x':'X', 'y':'Y', 'z':'Z'}):
+    def mapper(self):
+        point = msgs.PointStamped(
+                x = float(self.current[mapping['x']]), 
+                y = float(self.current[mapping['y']]), 
+                z = float(self.current[mapping['z']]))
+        return point
+    return mapper
+
+def current_as_posestamped(mapping={'x':'X', 'y':'Y', 'phi':'Phi'}):
+    def mapper(self):
+        pose = msgs.PoseStamped(
+                x = float(self.current[mapping['x']]), 
+                y = float(self.current[mapping['y']]), 
+                phi = float(self.current[mapping['phi']]))
+        return pose
+    return mapper
+
+def map_to_class(klass, mapping):
+    def mapper(self):
+        kwargs = {k:float(self.current[v]) for k,v in mapping.iteritems()}
+        instance = klass(**kwargs)
+        return instance
+    return mapper
+
+class ReasonedPose2DDesignator(ReasonedDesignator):
     """docstring for ReasonedPose2DDesignator"""
     def __init__(self, reasoner, query,
         X="X", Y="Y", Phi="Phi", identifier="Object",
@@ -158,7 +207,7 @@ class ReasonedPose2DDesignator(LockVariable, ReasonedDesignator):
         return pose
 
 
-class ReasonedPointDesignator(LockVariable, ReasonedDesignator):
+class ReasonedPointDesignator(ReasonedDesignator):
     """docstring for ReasonedPointDesignator"""
     def __init__(self, reasoner, query,
         X="X", Y="Y", Z="Z", identifier="Object",
@@ -185,6 +234,11 @@ class ReasonedPointDesignator(LockVariable, ReasonedDesignator):
                 z = float(dic[self.Z]))
         return point
 
+#Extend the class with a new method, which may be clearer than Mixins
+ReasonedDesignator.lock = lock
+ReasonedDesignator.mark_current = mark_current
+ReasonedDesignator.current_as_pointstamped = property(map_to_class(msgs.PointStamped, {'x':'X', 'y':'Y', 'z':'Z'}))
+ReasonedDesignator.current_as_posestamped = property(map_to_class(msgs.PoseStamped, {'x':'X', 'y':'Y', 'phi':'Phi'}))
         
 if __name__ == "__main__":
     import doctest
@@ -216,7 +270,7 @@ if __name__ == "__main__":
     pose_query = r.waypoint("Name", r.pose_2d("X", "Y", "Phi"))
     roi_query = r.point_of_interest("Name", r.point_3d("X", "Y", "Z"))
 
-    rpd = ReasonedPose2DDesignator(robot.reasoner, pose_query, identifier="Name")
+    rpd = ReasonedDesignator(robot.reasoner, pose_query, identifier="Name")
     rrd = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
 
     #import ipdb; ipdb.set_trace()
@@ -226,7 +280,7 @@ if __name__ == "__main__":
     assert answer1 != answer2 and len(answer1) == len(answer2) #The answers should not be the same, but they should have the same (amount of) keys
     assert str(answer2["Name"]) == 'c' #As we refined rpd to have Name=c, the answer after refinement should include this
 
-    assert rpd.current_as_pose.pose.position.x == 3.0 and rpd.current_as_pose.pose.position.y == 4.0
+    assert rpd.current_as_posestamped.pose.position.x == 3.0 and rpd.current_as_posestamped.pose.position.y == 4.0
 
     def LookForObjectAtROI(lookat_designator, object_designator):
         look_at = lookat_designator.resolve()
@@ -256,7 +310,7 @@ if __name__ == "__main__":
     object_designator.sortkey = sortkey
 
     LookForObjectAtROI(lookat_designator, object_designator)
-    #object_designator is now linked to a very specific object
+    #object_designator is now locked/linked to a very specific object
     #import ipdb; ipdb.set_trace()
     resolution = object_designator.resolve()
     print resolution
