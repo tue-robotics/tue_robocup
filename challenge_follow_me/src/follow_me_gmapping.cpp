@@ -466,7 +466,7 @@ void cancelGoalPose()
  * @param pos target position
  * @param offset, in case the position represents the operator position AMIGO must keep distance
  */
-void moveTowardsPosition(pbl::PDF& pos, double offset) {
+void moveTowardsPosition(pbl::PDF& pos, double offset, bool wait = false) {
 
     pbl::Vector pos_exp = pos.getExpectedValue().getVector();
 
@@ -513,12 +513,17 @@ void moveTowardsPosition(pbl::PDF& pos, double offset) {
 
 
 
-    if (t_no_meas_ < 2.0) {
+    if (t_no_meas_ < 2.0 || wait) {
         tue_move_base_msgs::MoveBaseGoal base_goal;
         base_goal.path = srv_get_path.response.path;
         move_base_ac_->sendGoal(base_goal);
-
         ROS_INFO("Robot move: published new base pose");
+
+        if (wait && !move_base_ac_->waitForResult(ros::Duration(60.0)))
+        {
+            ROS_WARN("Robot could not reach position before time-out!");
+        }
+
     } else {
         ROS_INFO("Robot move: no operator position update, robot will not move");
         cancelGoalPose();
@@ -939,9 +944,9 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     pbl::PDF operator_pos;
     itp2_ = false;
-    bool itp2_new = true;
+    //bool itp2_new = true;
     itp3_ = false;
-    unsigned int n_checks_left_elevator = 0;
+    //unsigned int n_checks_left_elevator = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Debugging
@@ -1042,7 +1047,16 @@ int main(int argc, char **argv) {
 
             pbl::Matrix cov(3,3);
             cov.zeros();
-            pbl::Gaussian pos = pbl::Gaussian(pbl::Vector3(0, 0, 0), cov);
+
+            // leave the elevator
+            pbl::Gaussian pos = pbl::Gaussian(pbl::Vector3(0, -3, 0), cov);
+            moveTowardsPosition(pos, 0, true);
+
+            // Turn
+            pos = pbl::Gaussian(pbl::Vector3(0, 0.1, 0), cov);
+            moveTowardsPosition(pos, 0, true);
+
+            /*
 
             // First time here, rotate towards exit
             if (itp2_new) {
@@ -1127,6 +1141,7 @@ int main(int argc, char **argv) {
                 ROS_DEBUG("n_checks_left_elevator = %u/%f", n_checks_left_elevator, T_LEAVE_ELEVATOR*FOLLOW_RATE);
                 ++n_checks_left_elevator;
             }
+            */
 
 
         } else if (itp3_) {

@@ -6,11 +6,19 @@ amigo1:
 
 amigo1:
 
-    amiddle-follow-me
+    amiddle-follow-me-gmapping
+    
+  OR
+    
+    amiddle-follow-me (OLD VERSION: not maintained)
 
 amigo2:
 
-    rosrun challenge_follow_me follow_me_simple
+    rosrun challenge_follow_me follow_me_gmapping
+
+  OR
+
+    rosrun challenge_follow_me follow_me_simple  (OLD VERSION: not maintained)
 
 INSTRUCTIONS:
 - Say 'continue' to start the challenge
