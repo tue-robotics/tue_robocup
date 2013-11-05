@@ -219,7 +219,7 @@ class LookForObjectsAtPoint(smach.State):
             self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
         assert hasattr(self.robot, "reasoner")
 
-    def execute(self, userdata):
+    def execute(self, userdata=[]):
         # Send spindle goal to bring head to a suitable location
         # Correction for standard height: with a table heigt of 0.76 a spindle position
         # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
