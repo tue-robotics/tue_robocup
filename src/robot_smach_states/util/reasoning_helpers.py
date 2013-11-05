@@ -70,7 +70,9 @@ def select_answer(answers, keyfunc, minmax=min, criteria=None):
     rospy.loginfo("{0} answers before filtering: {1}".format(len(answers), pprint.pformat(answers)))
     for criterium in criteria:
         answers = filter(criterium, answers)
-        rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(criterium, len(answers), pprint.pformat(answers)))
+        import inspect
+        criterium_code = inspect.getsource(criterium)
+        rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(criterium_code, len(answers), pprint.pformat(answers)))
 
     if not answers:
         raise ValueError("No answers matched the critera.")
