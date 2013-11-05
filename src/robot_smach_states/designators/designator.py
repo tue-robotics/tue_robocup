@@ -135,7 +135,6 @@ def lock(self, variables):
         kwargs[variable] = self.current[variable]
     return self.refine(**kwargs)
 
-
 def mark_current(self, marking, variable=None):
     """Mark (a part of) the current resolution as something 
     and refine the query to exclude that in the future.
@@ -143,16 +142,16 @@ def mark_current(self, marking, variable=None):
     >>> ReasonedDesignator.mark_current = mark_current
     >>> desig = ReasonedDesignator(None, query, "Object")
     >>> desig._current = {"Object":'b'}
-    >>> desig.mark_current('marked')
-    Compound(',', Compound('some_predicate', Variable('Object'), Variable('B')), Compound('not', Compound('marked', Variable('Object'), 'b')))
+    >>> #desig.mark_current('marked') #Cant be tested now because it depends on a real reasoner
     """
 
     if not variable:
         variable = self.identifier
 
     current_value = self.current[variable]
+    to_assert = Compound(marking, current_value)
 
-    return self.extend(Compound("not", Compound(marking, variable, current_value)))
+    return self.reasoner.assertz(to_assert)
 
 def map_to_class(klass, mapping):
     """
@@ -242,7 +241,7 @@ if __name__ == "__main__":
 
     r = robot.reasoner
 
-    #r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
+    r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
     #r.assertz(r.challenge("clean_up"))
     import math
 
@@ -254,12 +253,16 @@ if __name__ == "__main__":
     r.assertz(r.point_of_interest("b", r.point_3d(2, 3, 5)))
     r.assertz(r.point_of_interest("c", r.point_3d(3, 4, 6)))
 
-    r.assertz(r.pos("firstObject",      r.point_3d(1.1, 2.1, 4.1))) #closest to poi a
-    r.assertz(r.pos("anotherObject",    r.point_3d(1.2, 2.2, 4.2))) #further to poi a
-    r.assertz(r.pos("someObject",       r.point_3d(1.3, 2.3, 4.3))) #even further to poi a
+    r.assertz(r.pos("firstObjectA",      r.point_3d(1.1, 2.1, 4.1))) #closest to poi a
+    r.assertz(r.pos("anotherObjectA",    r.point_3d(1.2, 2.2, 4.2))) #further to poi a
+    r.assertz(r.pos("someObjectA",       r.point_3d(1.3, 2.3, 4.3))) #even further to poi a
+
+    r.assertz(r.pos("firstObjectB",      r.point_3d(2.1, 3.1, 5.1))) #closest to poi b
+    r.assertz(r.pos("anotherObjectB",    r.point_3d(2.2, 3.2, 5.2))) #further to poi b
+    r.assertz(r.pos("someObjectB",       r.point_3d(2.3, 3.3, 5.3))) #even further to poi b
 
     pose_query = r.waypoint("Name", r.pose_2d("X", "Y", "Phi"))
-    roi_query = r.point_of_interest("Name", r.point_3d("X", "Y", "Z"))
+    roi_query = Conjunction(r.point_of_interest("Name", r.point_3d("X", "Y", "Z")), r._not(r.unreachable("Name")))
 
     rpd = ReasonedDesignator(robot.reasoner, pose_query, identifier="Name")
     rrd = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
@@ -272,6 +275,17 @@ if __name__ == "__main__":
     assert str(answer2["Name"]) == 'c' #As we refined rpd to have Name=c, the answer after refinement should include this
 
     assert rpd.current_as_posestamped.pose.position.x == 3.0 and rpd.current_as_posestamped.pose.position.y == 4.0
+
+    def NavigateGeneric(navgoal):
+        goal = navgoal.resolve()
+        print "1: Moving to {0}".format(navgoal.current)
+        print "Lets say this failed. Let the designator mark the current resolution as unreachable"
+        #import ipdb; ipdb.set_trace()
+        navgoal.mark_current("unreachable")
+
+        goal = navgoal.resolve()
+        print "2: Moving to {0}".format(navgoal.current)
+
 
     def LookForObjectAtROI(lookat_designator, object_designator):
         look_at = lookat_designator.resolve()
@@ -290,9 +304,9 @@ if __name__ == "__main__":
 
     object_query = r.pos("Name", r.point_3d("X", "Y", "Z"))
 
-    lookat_designator = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name")
+    lookat_designator = ReasonedPointDesignator(robot.reasoner, roi_query, identifier="Name", key=lambda dic: dic["X"], sort=min)
 
-    object_designator = ReasonedPointDesignator(robot.reasoner, object_query, identifier="Name", sort=max)
+    object_designator = ReasonedPointDesignator(robot.reasoner, object_query, identifier="Name", sort=min)
 
 
     def sortkey(dic):
@@ -300,12 +314,18 @@ if __name__ == "__main__":
         return PointStamped_distance(lookat_designator.current_as_point, as_point)
     object_designator.sortkey = sortkey
 
+    NavigateGeneric(lookat_designator)
+    #import ipdb; ipdb.set_trace()
+    print lookat_designator.current
+    assert str(lookat_designator.current["Name"]) == 'b'
     LookForObjectAtROI(lookat_designator, object_designator)
+
+
     #object_designator is now locked/linked to a very specific object
     #import ipdb; ipdb.set_trace()
     resolution = object_designator.resolve()
     print resolution
-    assert str(resolution["Name"]) == "someObject"
+    assert str(resolution["Name"]) == "firstObjectB" #This is the closest to point_of_interest b, to which the lookat_designator resolves
 
     #print "cleaning up..."
     r.query(r.retractall(r.visited("X")))
