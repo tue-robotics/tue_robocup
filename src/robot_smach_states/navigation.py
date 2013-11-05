@@ -378,9 +378,12 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             self.robot.reasoner.query(Compound("retractall", (Compound("current_poi","POI", Compound("point_3d","X","Y","Z")))))
             self.robot.reasoner.query(Compound("assert", (Compound("current_poi",self.current_identifier, Compound("point_3d",x,y,z)))))
             
+            look_pose = geometry_msgs.msg.PoseStamped()
+            look_pose.pose.position = self.robot.base.point(x,y)
+            look_pose.pose.orientation = msgs.Quaternion(z=1.0)
+
             look_point = geometry_msgs.msg.PointStamped()
             look_point.point = self.robot.base.point(x,y)
-            pose = util.msg_constructors.Quaternion(z=1.0)
 
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
 
@@ -388,11 +391,11 @@ class Visit_query_outcome_3d(Visit_query_outcome):
                 base_pose_for_point = base_poses_for_point[0]
             else:
                 rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return look_pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
             
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y ==0:
                 rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return look_pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
 
             return base_pose_for_point
 
