@@ -578,7 +578,7 @@ class ResetCostmap(smach.State):
 
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, refresh_freq=0):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, refresh_freq=0, move_torso=True):
         smach.State.__init__(self,outcomes=['succeeded','failed','aborted'],
                             input_keys=['goal'],
                             output_keys=['goal'])                    
@@ -591,6 +591,7 @@ class Determine_goal(smach.State):
         self.lookat_point_3d = lookat_point_3d
         self.lookat_query = lookat_query
         self.refresh_freq = refresh_freq
+        self.move_torso = move_torso
         rospy.logdebug("Goal name = {0}".format(self.goal_name))
         rospy.logdebug("Goal query = {0}".format(self.goal_query))
         rospy.logdebug("Lookat query = {0}".format(self.lookat_query))
@@ -605,7 +606,8 @@ class Determine_goal(smach.State):
         return True
 
     def execute(self, userdata):
-        self.set_spindle_out_of_laser_reach() #Clear arms out of laser reach
+        if self.move_torso:        
+            self.set_spindle_out_of_laser_reach() #Clear arms out of laser reach
 
         if self.possible_locations_initialized == False or self.refresh_freq > 0:
 
@@ -998,7 +1000,7 @@ class Recover(smach.State):
 
 # refresh_freq      Frequency of re-check of determine_goal (0 means only check at beginning)
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1, refresh_freq=0):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1, refresh_freq=0, move_torso=True):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
@@ -1034,6 +1036,7 @@ class NavigateGeneric(smach.StateMachine):
             self.determine_goal.goal_query = goal_query
             self.determine_goal.lookat_point_3d = lookat_point_3d
             self.determine_goal.lookat_query = lookat_query
+            self.determine_goal.move_torso = move_torso
             rospy.logdebug("Goal name = {0}".format(self.goal_name))
             rospy.logdebug("Goal query = {0}".format(self.goal_query))
             rospy.logdebug("Lookat query = {0}".format(self.lookat_query))
