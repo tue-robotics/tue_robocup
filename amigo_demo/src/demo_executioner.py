@@ -361,7 +361,7 @@ def grab_item(robot, selectedArm):
         query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
 
         smach.StateMachine.add('LOOK',
-                                states.LookForObjectsAtPoint(robot, query_object, msgs.PointStamped(0.75, 0, 0.65, frame_id="/base_link")),
+                                states.LookForObjectsAtPoint(robot, query_object, msgs.PointStamped(0.75, 0, 0.65, frame_id="/amigo/base_link")),
                                 transitions={   'looking':'LOOK',
                                                 'object_found':'GRAB',
                                                 'no_object_found':'SAY_NO_DRINK',
