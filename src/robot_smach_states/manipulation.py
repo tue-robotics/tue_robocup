@@ -442,10 +442,10 @@ class GrabMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'LIFT',
                                      'failed'       :   'LIFT'})
 
-            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, 0.1, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, 0.1, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'RETRACT','failed':'RETRACT'})
 
-            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'CARR_POS','failed':'CARR_POS'})
         
             smach.StateMachine.add('CARR_POS', Carrying_pose(self.side, self.robot),
@@ -655,17 +655,17 @@ class PlaceObject(smach.StateMachine):
                                      'failed'       :   'failed'})
             # When pre-position fails, there is no use in dropping the object
             smach.StateMachine.add('POSITION', ArmToUserPose(   self.side, 0.0, 0.0, -self.dropoff_height_offset, 0.0, 0.0 , 0.0, 
-                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                                                time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'OPEN_GRIPPER','failed':'OPEN_GRIPPER'})
             # When position fails, it might be tried 
             smach.StateMachine.add('OPEN_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
                         transitions={'succeeded'    :   'LIFT',
                                      'failed'       :   'LIFT'})
 
-            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, self.dropoff_height_offset, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, self.dropoff_height_offset, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'RETRACT','failed':'RETRACT'})
 
-            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'CARR_POS','failed':'CARR_POS'})
         
             smach.StateMachine.add('CARR_POS', Carrying_pose(self.side, self.robot),
@@ -692,7 +692,7 @@ class HandoverToHuman(smach.StateMachine):
         self.robot = robot
 
         with self:
-            smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=False),
+            smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
                         transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
 
             smach.StateMachine.add("SAY_OPEN_GRIPPER", 
@@ -787,7 +787,7 @@ class Place_Object(smach.State):
             self.robot.head.send_goal(msgs.PointStamped(frame_id="/amigo/grippoint_right")) #This was grippoint_left as well somehow?
         
         # Pose (left arm) Position: 0.24 0.43 0.15 Orientation: 0.12 0.58 0.09 0.80 
-        if self.side.send_goal(0.5, y_drop, z_drop, 0.0 ,0.0 ,0.0 , time_out = 60, pre_grasp = False, frame_id = '/base_link'):
+        if self.side.send_goal(0.5, y_drop, z_drop, 0.0 ,0.0 ,0.0 , time_out = 60, pre_grasp = False, frame_id = '/amigo/base_link'):
             rospy.loginfo("Arm at dropoff pose")
         else:
             rospy.logerr("Failed to reach dropoff pose")
@@ -924,7 +924,7 @@ class ArmToJointPos(smach.State):
 ArmToPose = ArmToJointPos
 
 class ArmToUserPose(smach.State):
-    def __init__(self, side, x, y, z, roll=0, pitch=0, yaw=0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=False):
+    def __init__(self, side, x, y, z, roll=0, pitch=0, yaw=0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.side = side
         self.x = x
@@ -1064,7 +1064,7 @@ class PointMachine(smach.StateMachine):
                                     Say(robot, "I hope this is the object you were looking for."),
                         transitions={ 'spoken':'RETRACT' })
 
-            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'RESET_ARM_SUCCEEDED','failed':'RESET_ARM_SUCCEEDED'})
 
             smach.StateMachine.add('RESET_ARM_SUCCEEDED', 
