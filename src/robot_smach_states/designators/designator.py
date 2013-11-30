@@ -48,7 +48,7 @@ class Designator(object):
 
 
 class ReasonedDesignator(Designator):
-    """docstring for ReasonedPose2DDesignator"""
+    """docstring for ReasonedDesignator"""
     def __init__(self, reasoner, query, identifier="Object", 
         sort=min, 
         key=lambda x: x, 
@@ -169,6 +169,12 @@ def map_to_class(klass, mapping):
         return instance
     return mapper
 
+#Extend the class with a new method, which may be clearer than Mixins
+ReasonedDesignator.lock = lock
+ReasonedDesignator.mark_current = mark_current
+ReasonedDesignator.current_as_pointstamped = property(map_to_class(msgs.PointStamped, {'x':'X', 'y':'Y', 'z':'Z'}))
+ReasonedDesignator.current_as_posestamped = property(map_to_class(msgs.PoseStamped, {'x':'X', 'y':'Y', 'phi':'Phi'}))
+
 class ReasonedPose2DDesignator(ReasonedDesignator):
     """docstring for ReasonedPose2DDesignator"""
     def __init__(self, reasoner, query,
@@ -224,21 +230,35 @@ class ReasonedPointDesignator(ReasonedDesignator):
                 z = float(dic[self.Z]))
         return point
 
-#Extend the class with a new method, which may be clearer than Mixins
-ReasonedDesignator.lock = lock
-ReasonedDesignator.mark_current = mark_current
-ReasonedDesignator.current_as_pointstamped = property(map_to_class(msgs.PointStamped, {'x':'X', 'y':'Y', 'z':'Z'}))
-ReasonedDesignator.current_as_posestamped = property(map_to_class(msgs.PoseStamped, {'x':'X', 'y':'Y', 'phi':'Phi'}))
-        
-if __name__ == "__main__":
-    rospy.init_node('Designator_test', log_level=rospy.INFO)
 
-    import doctest
-    doctest.testmod()
+class ArmDesignator(ReasonedDesignator):
+    """Designator to determine which arm of the robot to use, depending on whether its available for grasping.
+    If desired, the designator locks to that arm after it has been resolved once.
+    """
 
-    import robot_skills.amigo
-    robot = robot_skills.amigo.Amigo(dontInclude=["arms", "head", "perception", "spindle","speech","leftArm","rightArm","ears","ebutton","lights"])
+    def __init__(self, reasoner, robot, lock_after_resolve=True, **kwargs):
+        r = reasoner
 
+        self.arm_variable = "Arm"
+        #Find an arm that is operational, and which's gripper has some object.
+        query = Compound("gripper_available_for_grasp", self.arm_variable)
+
+        super(ArmDesignator, self).__init__(reasoner, query, 
+            identifier=self.arm_variable, **kwargs)
+
+        self.arm_mapping = {"left":robot.leftArm, "right":robot.rightArm}
+
+    def resolve(self):
+        resolution = super(ArmDesignator, self).resolve()
+        self.lock(self.arm_variable)
+        return resolution
+
+    def current_as_arm(self):
+        armname = self.current[self.arm_variable]
+
+        return self.arm_mapping[str(armname)]
+
+def test_reasoned_designator(robot):
     r = robot.reasoner
 
     r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
@@ -335,3 +355,29 @@ if __name__ == "__main__":
     r.query(r.retractall(r.point_of_interest("X", "Y")))
     r.query(r.retractall(r.pos("X", "Y")))
     #print "Done"
+
+def test_arm_designator(robot):
+    from robot_skills.arms import Side
+    r = robot.reasoner
+    r.query(r.load_database("tue_knowledge", 'prolog/self.pl'))
+
+    arm_desig = ArmDesignator(r, robot)
+
+    import ipdb; ipdb.set_trace()
+    arm_name = arm_desig.resolve()
+    arm = arm_desig.current_as_arm()
+
+    assert arm.side == Side.LEFT
+    arm.reset_arm()
+        
+if __name__ == "__main__":
+    rospy.init_node('Designator_test', log_level=rospy.INFO)
+
+    import doctest
+    doctest.testmod()
+
+    import robot_skills.amigo
+    robot = robot_skills.amigo.Amigo(dontInclude=["head", "perception", "spindle","speech", "ears", "ebutton", "lights"])
+
+    #test_reasoned_designator(robot)
+    test_arm_designator(robot)
