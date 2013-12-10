@@ -1026,7 +1026,8 @@ class NavigateGeneric(smach.StateMachine):
                 goal_query = self.goal_query,
                 lookat_point_3d = self.lookat_point_3d, 
                 lookat_query = self.lookat_query,
-                refresh_freq = self.refresh_freq)
+                refresh_freq = self.refresh_freq,
+		move_torso = move_torso)
 
         @smach.cb_interface(outcomes=['done'])
         def init_navigate_generic(userdata):
