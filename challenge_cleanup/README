@@ -12,7 +12,8 @@ amigo3:
         Digital -> 29
         Mic on mute!!! (Should be muted already)
         
-    amigo-console        
+    amigo-console  
+		(amigo.base.reset_costmap)
         amigo.ears.ask_user("continue",2,rospy.Duration(15))
         (lights should become green -> say 'continue')
         (if response is 'true', amigo heard you and lights become blue)
