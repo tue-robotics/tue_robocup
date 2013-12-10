@@ -655,7 +655,7 @@ class Navigate_to_queryoutcome_point_cocktail(Navigate_abstract):
 
             look_point = geometry_msgs.msg.PointStamped()
             look_point.point = self.robot.base.point(x,y)
-            pose = util.msg_constructors.Quaternion(z=1.0)
+            pose = msgs.Quaternion(z=1.0)
 
             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 1.0, 0.0)
             if base_poses_for_point:
