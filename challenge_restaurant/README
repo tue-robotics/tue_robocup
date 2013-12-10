@@ -43,6 +43,9 @@ ORDERS (three times):
 LOST:
 - If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
 
+BECAUSE OF CONFIG ISSUE:
+RUN FROM AMIGO-CONSOLE:
+amigo.perception.load_template_matching_config("rwc2013_drinks_food")
 
 #############################################################################
 Separately testing the grabmachine:
@@ -57,3 +60,6 @@ rosrun challenge_cleanup testenv_rwc2013.py
 amigo.perception.toggle_recognition(objects=True)
 
 rosservice call 
+
+
+
