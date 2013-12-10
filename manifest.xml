@@ -66,6 +66,9 @@
   <!--3d navigation -->
   <depend package="octomap_msgs"/>
   
+  <!-- Whole-body planner -->
+  <depend package="whole_body_planner"/>
+  
   <depend package="amigo_launch_files"/>
 
 </package>

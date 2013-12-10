@@ -8,11 +8,15 @@ from actionlib_msgs.msg._GoalStatus import GoalStatus
 import amigo_actions
 import amigo_actions.msg
 from amigo_arm_navigation.msg._grasp_precomputeAction import grasp_precomputeAction
-from geometry_msgs.msg import TwistStamped, Twist
+from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from trajectory_msgs.msg import JointTrajectoryPoint
 from sensor_msgs.msg import JointState
+
+# Whole-body control/planning
+from amigo_whole_body_controller.msg._ArmTaskAction import ArmTaskAction
+from amigo_whole_body_controller.msg._ArmTaskGoal import ArmTaskGoal
 
 import threading
 import util.concurrent_util
@@ -64,6 +68,10 @@ class ArmActionClients(object):
         
         self._ac_joint_traj_left = actionlib.SimpleActionClient("/joint_trajectory_action_left",  FollowJointTrajectoryAction)
         self._ac_joint_traj_right = actionlib.SimpleActionClient("/joint_trajectory_action_right",  FollowJointTrajectoryAction)
+
+        #Init whole body control/planner actionlibs
+        self._ac_armtask = actionlib.SimpleActionClient("whole_body_planner/motion_constraint", ArmTaskAction)
+        rospy.loginfo("waiting for whole-body planner server")
     
     def close(self):
         try:
@@ -81,6 +89,8 @@ class ArmActionClients(object):
 
         self._ac_joint_traj_left.cancel_all_goals()
         self._ac_joint_traj_right.cancel_all_goals()
+
+        self._ac_armtask.cancel_all_goals()
     
 
 ##intialize as a static class
@@ -157,6 +167,7 @@ class Arms(object):
         self.leftOffset = Offset(x=0.10, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02, until June 25, x offset was 0.08
         self.rightOffset = Offset(x=0.08, y=0.025, z=0.06)
 
+
         self.markerToGrippointOffset = Offset(x=-0.03, y=0.0, z=0.03)
         
         self.tf_listener = tf_listener
@@ -165,7 +176,92 @@ class Arms(object):
 
     def close(self):
         actionClients.close()
+
+    def send_arm_task(self, px, py, pz, roll, pitch, yaw, timeout=40, link_name="grippoint_right", frame_id='base_link', goal_type="reset"):
+        """ Send a link to a desired pose using the whole-body controller/planner
+            Params: Position and orientation (RPY)
+                    Link_name, for which link is the goal specified, default is grippoint_right
+                    Frame_id, the link_name's goal pose with respect to this frame, default is base_link
+                    Goal_type, semantic description of the goal (pre-grasp, lift, retract etc), default is reset
+        """
+
+        rospy.loginfo("Received whole-body planner goal for {link} with respect to {root} of type: {type} ".format(link=link_name, root=frame_id, type=goal_type))
+
+        # Check which side and add arm specific offset
+        if "right" in link_name: 
+            offset = self.rightOffset
+        elif "left" in link_name: 
+            offset = self.leftOffset
+        else:
+            rospy.loginfo("Specify a correct link name")
+            return False
         
+        # Create goal
+        arm_task_goal = ArmTaskGoal()
+
+        # Assign goal_type
+        arm_task_goal.goal_type = goal_type
+
+        # Assign pose
+        arm_task_goal.position_constraint.header.frame_id = frame_id
+        arm_task_goal.position_constraint.header.stamp = rospy.Time.now()
+        arm_task_goal.position_constraint.link_name = link_name
+        arm_task_goal.position_constraint.position.x = px + offset.x
+        arm_task_goal.position_constraint.position.y = py + offset.y
+        arm_task_goal.position_constraint.position.z = pz + offset.z
+
+        arm_task_goal.orientation_constraint.header.frame_id = frame_id
+        arm_task_goal.orientation_constraint.header.stamp = rospy.Time.now()
+        arm_task_goal.orientation_constraint.link_name = link_name
+        quaternion = Quaternion()
+        quaternion = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
+        arm_task_goal.orientation_constraint.orientation.x = quaternion[0]
+        arm_task_goal.orientation_constraint.orientation.y = quaternion[1]
+        arm_task_goal.orientation_constraint.orientation.z = quaternion[2]
+        arm_task_goal.orientation_constraint.orientation.w = quaternion[3]
+
+        """ 
+            Discuss with Janno, 
+                should this be here? 
+                Should they be added in action request?
+                Or should planners fill these in?
+        """
+
+        # Assign stiffnesses
+        arm_task_goal.stiffness.force.x = 70.0
+        arm_task_goal.stiffness.force.y = 70.0
+        arm_task_goal.stiffness.force.z = 70.0
+
+        arm_task_goal.stiffness.torque.x = 15.0
+        arm_task_goal.stiffness.torque.y = 15.0
+        arm_task_goal.stiffness.torque.z = 15.0
+
+        # Assign tolerances 
+        arm_task_goal.position_constraint.constraint_region_shape.type = arm_task_goal.position_constraint.constraint_region_shape.SPHERE
+        arm_task_goal.position_constraint.constraint_region_shape.dimensions.append(0.03)
+
+        arm_task_goal.orientation_constraint.absolute_roll_tolerance = 0.3
+        arm_task_goal.orientation_constraint.absolute_pitch_tolerance = 0.3
+        arm_task_goal.orientation_constraint.absolute_yaw_tolerance = 0.3
+
+        # Assign target point offset
+        arm_task_goal.position_constraint.target_point_offset.x = 0.0;
+        arm_task_goal.position_constraint.target_point_offset.y = 0.0;
+        arm_task_goal.position_constraint.target_point_offset.z = 0.0;
+
+
+        #rospy.loginfo(arm_task_goal)
+
+        # Send the task
+        actionClients._ac_armtask.send_goal_and_wait(arm_task_goal, rospy.Duration(timeout))
+        if actionClients._ac_armtask.get_state() == GoalStatus.SUCCEEDED:
+            rospy.loginfo("Arm target reached")
+            return True
+        else:
+            rospy.loginfo("Reaching arm target failed")
+            rospy.loginfo(actionClients._ac_armtask.get_state())
+            return False
+
     def send_goal(self, px, py, pz, roll, pitch, yaw, timeout=30, side=None, pre_grasp = False, frame_id = '/amigo/base_link', use_offset = False, first_joint_pos_only=False):
         """Send a arm to a goal: 
         Using a position px,py,pz. An orientation roll,pitch,yaw. A time out time_out. And a side Side.LEFT or Side.RIGHT
@@ -591,7 +687,11 @@ class Arm(Arms):
         >>> from math import radians
         >>> some_arm.send_delta_joint_goal(q1=radians(-20)) #e.g. amigo.leftArm.send_delta_joint_goal(q1=radians(-20))"""
         return super(Arm, self).send_delta_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
-        
+
+    def send_arm_task(self, *args, **kwargs):
+        """Send a goal to the whole-body planner"""
+        return super(Arm, self).send_arm_task(*args, **kwargs)
+
     def reset_arm(self):
         """Send the arm to a suitable (natural looking) (driving) position"""
         return super(Arm, self).send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0,self.side)
