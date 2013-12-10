@@ -67,7 +67,7 @@
   <depend package="octomap_msgs"/>
   
   <!-- Whole-body planner -->
-  <depend package="whole_body_planner"/>
+  <!--<depend package="whole_body_planner"/> CANNOT BE INCLUDED YET, STILL IN JANNO'S USERMAP--> 
   
   <depend package="amigo_launch_files"/>
 
