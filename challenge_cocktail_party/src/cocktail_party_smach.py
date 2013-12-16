@@ -14,8 +14,8 @@ from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
 
 
-#grasp_arm = "left"
-grasp_arm = "right"
+grasp_arm = "left"
+#grasp_arm = "right"
 
 #===============================TODOs===========================================
 # - head goal and base goal must correspond
