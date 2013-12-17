@@ -1103,3 +1103,7 @@ class NavigateGeneric(smach.StateMachine):
             smach.StateMachine.add('RECOVER_TRY_AGAIN', Recover(self.robot, self.look_at_path_distance),
                 transitions={'new_path_required': 'GET_PLAN_TRY_AGAIN',
                              'new_goal_required': 'DETERMINE_GOAL_TRY_AGAIN'})
+
+    def query(self, query):
+        if query == "nr_poses_to_goal":
+            return self.robot.base.poses_to_goal
