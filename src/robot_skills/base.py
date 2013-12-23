@@ -329,9 +329,9 @@ class Base(object):
         else:
             if self.base_pose == None:
                 # If no path request has been given yet, self.base_pose equals None, but we might get the base pose from tf
-                [position, orientation] = self.get_location()
-                pos_x = position.x
-                pos_y = position.y
+                base_pose = self.get_location()
+                pos_x = base_pose.pose.position.x
+                pos_y = base_pose.pose.position.y
             else:
                 pos_x = self.base_pose.pose.position.x
                 pos_y = self.base_pose.pose.position.y
@@ -353,9 +353,9 @@ class Base(object):
         else:
             if self.base_pose == None:
                 # If no path request has been given yet, self.base_pose equals None, but we might get the base pose from tf
-                [position, orientation] = self.get_location()
-                pos_x = position.x
-                pos_y = position.y
+                base.pose = self.get_location()
+                pos_x = base_pose.pose.position.x
+                pos_y = base_pose.pose.position.y
             else:
                 pos_x = self.base_pose.pose.position.x
                 pos_y = self.base_pose.pose.position.y
