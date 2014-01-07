@@ -606,8 +606,8 @@ class Determine_goal(smach.State):
         return True
 
     def execute(self, userdata):
-        if self.move_torso:        
-            self.set_spindle_out_of_laser_reach() #Clear arms out of laser reach
+        #if self.move_torso:        
+        #    self.set_spindle_out_of_laser_reach() #Clear arms out of laser reach
 
         if self.possible_locations_initialized == False or self.refresh_freq > 0:
 
