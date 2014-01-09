@@ -38,7 +38,7 @@ class Head(object):
         self._ac_head_ref_action = actionlib.SimpleActionClient("head_ref_action",  HeadRefAction)
         self._search_movement_random_timer = rospy.Time.now()
         self._search_movement_random_offsets = [0,0,0]
-        self._measurement_subscriber = rospy.Subscriber("/amigo/head/measurements", JointState, self._measurement_listener)
+        self._measurement_subscriber = rospy.Subscriber("/amigo/neck/measurements", JointState, self._measurement_listener)
 
         self._position = (0, 0)
 
