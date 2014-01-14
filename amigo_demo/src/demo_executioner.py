@@ -11,6 +11,8 @@ from std_msgs.msg import String
 
 from math import sin
 
+from transporter import Transporter
+from drive_to_person import DriveToClosestPerson
 
 #This node publishes integer values to the 'key_commands' topic
 
@@ -805,8 +807,6 @@ def recognize_face(robot):
 
 @register_robot_key("T", "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another")
 def transport(robot):
-    from transporter import Transporter
-
     tr = Transporter(robot)
 
     rospy.loginfo("State machine set up, start execution...")
@@ -817,6 +817,23 @@ def transport(robot):
     introserver.start()
 
     result = tr.execute()
+    
+    introserver.stop()
+
+    rospy.loginfo("State machine result: {0}".format(result))
+
+@register_robot_key("P", "go to a Person. Uses the laser scanner to go to a person and say something on arrival")
+def goto_person(robot):
+    goto = DriveToClosestPerson(robot)
+
+    rospy.loginfo("State machine set up, start execution...")
+    
+    #import pdb; pdb.set_trace()
+    import smach_ros
+    introserver = smach_ros.IntrospectionServer('drive_to_person', goto, '/SM_ROOT_PRIMARY')
+    introserver.start()
+
+    result = goto.execute()
     
     introserver.stop()
 
