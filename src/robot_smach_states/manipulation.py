@@ -245,12 +245,15 @@ class Carrying_pose(smach.State):
         
         self.robot = robot
         self.arm = arm
+        rospy.loginfo("arm = {0}".format(arm))
 
     def execute(self, gl):
         if self.arm == self.robot.leftArm:
             y_home = 0.2
         elif self.arm == self.robot.rightArm:
             y_home = -0.2
+
+        rospy.loginfo("y_home = {0}".format(y_home))
         
         rospy.loginfo("start moving to carrying pose")        
         if self.arm.send_goal(0.18, y_home, 0.75, 0, 0, 0, 60):
