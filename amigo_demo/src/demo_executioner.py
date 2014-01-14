@@ -126,6 +126,9 @@ mapping = dict()
 def register_key(key, label=None):
     """Call the action given to the decorator """
     def decorator(action):
+        if key in namings:
+            raise ValueError("key {0} already taken by {1}".format(key, namings[key]))
+
         mapping[key] = action
         if label: 
             namings[key] = label
@@ -138,8 +141,10 @@ robot_mapping = dict()
 def register_robot_key(key, label=None):
     """Call the action given to the decorator """
     def decorator(action):
+        if key in namings:
+            raise ValueError("key {0} already taken by {1}".format(key, namings[key]))
+
         robot_mapping[key] = action
-        
         if label: 
             namings[key] = label
         else:
@@ -152,8 +157,10 @@ robot_arm_mapping = dict()
 def register_robot_arm_key(key, label=None):
     """Call the action given to the decorator """
     def decorator(action):
+        if key in namings:
+            raise ValueError("key {0} already taken by {1}".format(key, namings[key]))
+
         robot_arm_mapping[key] = action
-        
         if label: 
             namings[key] = label
         else:
@@ -805,39 +812,82 @@ def recognize_face(robot):
 
     # rospy.loginfo("State machine result: {0}".format(result))
 
-@register_robot_key("T", "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another")
-def transport(robot):
-    tr = Transporter(robot)
+def run_statemachine(sm_class):
+    """Decorator for StateMachine classes.
+    When applied to a StateMachine class (using the syntax: "
+    >>> @run_statemachine
+    >>> class BlaBla(smach.StateMachine):
+    >>>     ...
+    "
+    it *returns a function* that will run the state machine with introspection.
+    When also stacking the @register_*_key decorator on top, its very clean to add a new state machine to the demo.
+    """
+    def run_sm(robot):
+        """Run a state machine with introspection"""
+        sm = sm_class(robot)
 
-    rospy.loginfo("State machine set up, start execution...")
+        rospy.loginfo("State machine set up, start execution...")
+        
+        #import pdb; pdb.set_trace()
+        import smach_ros
+        introserver = smach_ros.IntrospectionServer(sm_class.__name__, sm, '/SM_ROOT_PRIMARY')
+        introserver.start()
+
+        result = sm.execute()
+        
+        introserver.stop()
+
+        rospy.loginfo("State machine result: {0}".format(result))
+    return run_sm
+
+import smach
+import robot_smach_states as states
+@register_robot_key("=")
+@run_statemachine
+class SayHi(smach.StateMachine):
+    """Scan (with the torso laser) for persons, 
+    go to the closest one and say something nice."""
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
+        with self:
+            smach.StateMachine.add( "SAY_HI",
+                                    states.Say(robot, "Hi "),
+                                    transitions={   "spoken":"Done"})
+# @register_robot_key("T", "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another")
+# def transport(robot):
+#     tr = Transporter(robot)
+
+#     rospy.loginfo("State machine set up, start execution...")
     
-    #import pdb; pdb.set_trace()
-    import smach_ros
-    introserver = smach_ros.IntrospectionServer('transporter', tr, '/SM_ROOT_PRIMARY')
-    introserver.start()
+#     #import pdb; pdb.set_trace()
+#     import smach_ros
+#     introserver = smach_ros.IntrospectionServer('transporter', tr, '/SM_ROOT_PRIMARY')
+#     introserver.start()
 
-    result = tr.execute()
+#     result = tr.execute()
     
-    introserver.stop()
+#     introserver.stop()
 
-    rospy.loginfo("State machine result: {0}".format(result))
+#     rospy.loginfo("State machine result: {0}".format(result))
+register_robot_key("T", "Transporter demo. Place AMIGO in from of the special box and amigo will bring objects from one spot to another")(run_statemachine(Transporter))
+register_robot_key("P", "go to a Person. Uses the laser scanner to go to a person and say something on arrival")(run_statemachine(DriveToClosestPerson))
+# @register_robot_key("P", "go to a Person. Uses the laser scanner to go to a person and say something on arrival")
+# def goto_person(robot):
+#     goto = DriveToClosestPerson(robot)
 
-@register_robot_key("P", "go to a Person. Uses the laser scanner to go to a person and say something on arrival")
-def goto_person(robot):
-    goto = DriveToClosestPerson(robot)
-
-    rospy.loginfo("State machine set up, start execution...")
+#     rospy.loginfo("State machine set up, start execution...")
     
-    #import pdb; pdb.set_trace()
-    import smach_ros
-    introserver = smach_ros.IntrospectionServer('drive_to_person', goto, '/SM_ROOT_PRIMARY')
-    introserver.start()
+#     #import pdb; pdb.set_trace()
+#     import smach_ros
+#     introserver = smach_ros.IntrospectionServer('drive_to_person', goto, '/SM_ROOT_PRIMARY')
+#     introserver.start()
 
-    result = goto.execute()
+#     result = goto.execute()
     
-    introserver.stop()
+#     introserver.stop()
 
-    rospy.loginfo("State machine result: {0}".format(result))
+#     rospy.loginfo("State machine result: {0}".format(result))
 
 @register_robot_key(chr(27))
 def cancel_actions(robot):
@@ -994,6 +1044,11 @@ def print_keys(separate=False):
     if not separate:
         print "Speech: "
         print speech_txt
+
+    all_keys = "`1234567890-=qwertyuiop[]asdfghjkl;'\zxcvbnm,./" + "~!@#$%^&*()_+QWERTYUIOP{}ASDFGHJKL:|ZXCVBNM<>?"
+    used_keys = [k for (k, v) in poses.values() if k] + namings.keys() + sent_keymap.keys()
+    unused_keys = set(all_keys) - set(used_keys)
+    print "Unused keys: {0}".format("".join(sorted(unused_keys)))
 
     keymap_file = file('keymap.txt', 'w+')
     keymap_file.write(command_txt+'\n')
