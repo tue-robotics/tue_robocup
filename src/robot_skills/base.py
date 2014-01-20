@@ -86,15 +86,17 @@ class Base(object):
         if wait_service:
             rospy.loginfo("waiting for move base server in Base.__init__")
             self.ac_move_base.wait_for_server(timeout=rospy.Duration(2.0))
-        
+
+        self.use_2d = use_2d # Necessary to switch between 2D and 3D
+
+        self.__reset()
+
+    def __reset(self):
         self.plan_possible  = None
         self.poses_to_goal = 0
         self.replan_timeout = 0
         self.base_pose = None
         self.obstacle_position = None
-        self.use_2d = use_2d # Necessary to switch between 2D and 3D
-
-        # By Sjoerd, ask him:
         self.path_blocked = False
         self.reached_blocked_timeout = False
         self.last_replan_timeout = 0
@@ -223,6 +225,7 @@ class Base(object):
         
     def cancel_goal(self):
         self.ac_move_base.cancel_all_goals() #Does not return anything
+        self.__reset()
         return True
     
     def wait(self, timeout=10):
