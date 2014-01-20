@@ -117,7 +117,7 @@ class Perception(object):
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
             self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
             response = self.sv_laser_detector(request)
-        except rospy.ServiceException, e:
+        except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("Laser service not available: {0}".format(e))
             return False
 
@@ -140,7 +140,7 @@ class Perception(object):
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
             self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
             response = self.sv_laser_detector(request)
-        except rospy.ServiceException, e:
+        except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("Laser service not available: {0}".format(e))
             return False
 
