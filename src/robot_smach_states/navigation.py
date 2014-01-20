@@ -1104,6 +1104,13 @@ class NavigateGeneric(smach.StateMachine):
                 transitions={'new_path_required': 'GET_PLAN_TRY_AGAIN',
                              'new_goal_required': 'DETERMINE_GOAL_TRY_AGAIN'})
 
+    def request_preempt(self):
+        """Quit navigating"""
+        #self.request_preempt(self)
+        rospy.loginfo("Preempting NavigateGeneric...")
+        self.preempted = True
+        self.robot.base.cancel_goal()
+
     def query(self, query):
         if query == "nr_poses_to_goal":
             return self.robot.base.poses_to_goal
