@@ -23,7 +23,7 @@
   <depend package="tf"/>
   <depend package="amigo_msgs"/>
   <depend package="visualization_msgs"/>
-  <!--<depend package="text_to_speech_philips"/>-->
+
   <depend package="amigo_arm_navigation"/>
   <depend package="amigo_head_ref"/>
   <depend package="amigo_actions"/>
