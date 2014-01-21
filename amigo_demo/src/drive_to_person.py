@@ -22,10 +22,16 @@ class DriveToClosestPerson(smach.StateMachine):
         with self:
             smach.StateMachine.add( "TOGGLE_PEOPLE_DETECTION",
                                     states.TogglePeopleDetector(robot, on=True),
-                                    transitions={   "toggled":"GOTO_PERSON"})
+                                    transitions={   "toggled":"WAIT_FOR_DETECTION"})
+
+            smach.StateMachine.add( "WAIT_FOR_DETECTION",
+                                    states.Wait_query_true(robot, self.human_query, timeout=5),
+                                    transitions={   "query_true":"GOTO_PERSON",
+                                                    "timed_out":"Failed",
+                                                    "preempted":"Aborted"})
 
             smach.StateMachine.add( "GOTO_PERSON",
-                                    states.NavigateGeneric(robot, goal_query=self.human_query),
+                                    states.NavigateGeneric(robot, lookat_query=self.human_query),
                                     transitions={   "arrived":"TOGGLE_OFF_OK",
                                                     "unreachable":'TOGGLE_OFF_UNREACHABLE',
                                                     "preempted":'Aborted',
