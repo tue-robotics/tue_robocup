@@ -355,5 +355,5 @@ class TogglePeopleDetector(smach.State):
         if self.on:
             result = self.robot.perception.toggle(["ppl_detection"])
         else:
-            result = self.robot.perception.toggle(["ppl_detection_off"])
+            result = self.robot.perception.toggle([])
         return "toggled"
