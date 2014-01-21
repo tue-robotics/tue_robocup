@@ -22,7 +22,7 @@
 #include "geometry_msgs/Point.h"
 #include "visualization_msgs/MarkerArray.h"
 #include "trajectory_msgs/JointTrajectoryPoint.h"
-#include <text_to_speech_philips/Speak.h>
+#include <text_to_speech/Speak.h>
 #include "tue_pocketsphinx/Switch.h"
 
 // Services
@@ -392,7 +392,7 @@ void amigoSpeak(string sentence, bool block = true) {
     if (toggle_speech) stopSpeechRecognition();
 
     //! Call speech service
-    text_to_speech_philips::Speak speak;
+    text_to_speech::Speak speak;
     speak.request.sentence = sentence;
     speak.request.language = "us";
     speak.request.character = "kyle";
@@ -1615,7 +1615,7 @@ int main(int argc, char **argv) {
 
     //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
-    srv_speech_ =  nh.serviceClient<text_to_speech_philips::Speak>("/text_to_speech/speak");
+    srv_speech_ =  nh.serviceClient<text_to_speech::Speak>("/text_to_speech/speak");
     ROS_INFO("Publisher/service client for text to speech started");
 
     //! Head ref action client

@@ -17,7 +17,7 @@
 #include "tue_carrot_planner/carrot_planner.h"
 #include <amigo_msgs/head_ref.h>
 
-#include <text_to_speech_philips/Speak.h>
+#include <text_to_speech/Speak.h>
 
 // Speech recognition
 #include "tue_pocketsphinx/Switch.h"
@@ -65,7 +65,7 @@ void amigoSpeak(string sentence) {
 
     
     //! Call speech service
-	text_to_speech_philips::Speak speak;
+	text_to_speech::Speak speak;
 	speak.request.sentence = sentence;
     speak.request.language = "us";
     speak.request.character = "kyle";
@@ -498,7 +498,7 @@ int main(int argc, char **argv) {
 
     //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
-    srv_speech_ =  nh.serviceClient<text_to_speech_philips::Speak>("/text_to_speech/speak");
+    srv_speech_ =  nh.serviceClient<text_to_speech::Speak>("/text_to_speech/speak");
     ROS_INFO("Publisher/service client for text to speech started");
     
     //! Always clear the world model
