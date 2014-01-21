@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
-from text_to_speech_philips.srv import Speak
+from text_to_speech.srv import Speak
 from std_msgs.msg import String
 from math import sqrt
 
