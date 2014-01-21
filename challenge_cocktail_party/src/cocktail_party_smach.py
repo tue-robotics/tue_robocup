@@ -12,6 +12,7 @@ from robot_skills.amigo import Amigo
 from robot_smach_states import *
 from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
+from geometry_msgs.msg import PoseStamped, Pose
 
 
 grasp_arm = "left"
@@ -662,13 +663,14 @@ class Navigate_to_queryoutcome_point_cocktail(Navigate_abstract):
                 base_pose_for_point = base_poses_for_point[0]
             else:
                 rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return PoseStamped(pose=Pose(position=look_point.point, orientation=pose)) #look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
                 
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
                 rospy.logerr("IK returned empty pose.")
-                return look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return PoseStamped(pose=Pose(position=look_point.point, orientation=pose))#look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
 
-            return base_pose_for_point.pose.position, base_pose_for_point.pose.orientation
+            #TODO Teun: this should return a PoseStamped.
+            return PoseStamped(pose=Pose(position=base_pose_for_point.pose.position, orientation=base_pose_for_point.pose.orientation))
 
 class HandoverToKnownHuman(smach.StateMachine):
     def __init__(self, robot):
