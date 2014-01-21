@@ -154,15 +154,9 @@ class Arms(object):
                                       "elbow_roll_joint_right",
                                       "wrist_pitch_joint_right",
                                       "wrist_yaw_joint_right"]}
-        
-        self.arm_left_reference_pub = rospy.Publisher("/amigo/left_arm/references", JointState)
-        self.arm_right_reference_pub = rospy.Publisher("/amigo/right_arm/references", JointState)
 
         self.arm_left_measurement_sub = rospy.Subscriber("/amigo/left_arm/measurements", JointState, self._receive_arm_left_joints)
         self.arm_right_measurement_sub = rospy.Subscriber("/amigo/right_arm/measurements", JointState, self._receive_arm_right_joints)
-        
-        self.left_twist_publisher = rospy.Publisher("/arm_left_controller/cartesian_velocity_reference", TwistStamped)
-        self.right_twist_publisher = rospy.Publisher("/arm_right_controller/cartesian_velocity_reference", TwistStamped)
 
         self.leftOffset = Offset(x=0.10, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02, until June 25, x offset was 0.08
         self.rightOffset = Offset(x=0.08, y=0.025, z=0.06)
@@ -476,30 +470,6 @@ class Arms(object):
                 return True
         else:
                 return False
-    
-    def send_twist(self, twist, duration, side):
-        if isinstance(twist, Twist):
-            twist_stamped = TwistStamped(twist=twist)
-            twist_stamped.frame_id = "/amigo/base_link"
-            
-            #replace the unstamped twist with a stamped one, which has the original as a field
-            twist = twist_stamped
-        
-        end = rospy.Time.now() + rospy.Duration(duration)
-        while rospy.Time.now() <= end:
-            if side == Side.LEFT:
-                self.left_twist_publisher.publish(twist)
-            elif side == Side.RIGHT:
-                self.right_twist_publisher.publish(twist)
-            rospy.sleep(0.01)
-        
-        zero = TwistStamped()
-        zero.header.frame_id = "/amigo/base_link"
-        if side == Side.LEFT:
-            self.left_twist_publisher.publish(zero)
-        elif side == Side.RIGHT:
-            self.right_twist_publisher.publish(zero)
-    
             
     def send_joint_goal(self, q1=None, q2=None, q3=None, q4=None, q5=None, q6=None, q7=None, side=None, timeout=0):
         """Send a goal to the arms in joint coordinates, using an action client"""
@@ -654,7 +624,6 @@ class Arm(Arms):
     >>> left.send_gripper_goal_open(10)
     """
     def __init__(self, side, tf_listener):
-        #import ipdb; ipdb.set_trace()
         super(Arm,self).__init__(tf_listener)
         self.side = side
         print (self.side is Side.LEFT) or (self.side is Side.RIGHT)
@@ -702,7 +671,6 @@ class Arm(Arms):
     
     def send_gripper_goal(self, state, timeout=10):
         """Generic open or close gripper goal method. Expects a state: State.OPEN or State.CLOSE and a time_out"""
-        #import ipdb; ipdb.set_trace()
         return super(Arm, self).send_gripper_goal(state, self.side, timeout)
     
     def send_gripper_goal_open(self, timeout=10):
@@ -749,9 +717,4 @@ if __name__ == "__main__":
     arms = Arms(tf_listener)
     left = Arm(leftSide, tf_listener)
     right = Arm(rightSide, tf_listener)
-    
-    test_twist = TwistStamped()
-    test_twist.header.frame_id = "/amigo/base_link"
-    test_twist.twist.linear.z = 0.1
-    
     
