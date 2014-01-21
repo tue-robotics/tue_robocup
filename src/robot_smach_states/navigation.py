@@ -46,14 +46,16 @@ class Navigate_abstract(smach.State):
                 rospy.logerr("No goal could be defined in {state} with userdata {ud}".format(state=self, ud=userdata))
                 #self.robot.speech.speak("I don't know where to go. I'm very sorry.")
                 return "goal_not_defined"
-                
-            outcome = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
+
+            #import pdb; pdb.set_trace()                
+            outcome = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed: target_pose must be PoseStamped
             if outcome:
                 return "arrived"
             else:
                 self.robot.base.reset_costmap()
                 rospy.loginfo("Resetting costmap")
-                outcome2 = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed
+                #import pdb; pdb.set_trace() 
+                outcome2 = self.robot.base.send_goal(target_pose, block=True) #TODO Loy: in send_goal, assert that the right (duck)types are passed: target_pose must be PoseStamped
                 if outcome2:
                     return "arrived"
                 else:
