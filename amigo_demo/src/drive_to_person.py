@@ -16,8 +16,8 @@ class DriveToClosestPerson(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
 
         self.robot = robot
-        self.human_query = Conjunction( Compound("instance_of", "ID", "person"), 
-                                        Compound("property_expected", "ID", "position", Sequence("X", "Y", "Z")))
+        self.human_query = Conjunction( Compound("instance_of", "ObjectID", "person"), 
+                                        Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
         with self:
             smach.StateMachine.add( "TOGGLE_PEOPLE_DETECTION",
@@ -40,9 +40,17 @@ class DriveToClosestPerson(smach.StateMachine):
             smach.StateMachine.add( "TOGGLE_OFF_OK",
                                     states.TogglePeopleDetector(robot, on=True),
                                     transitions={   "toggled":"SAY_SOMETHING"})
+
             smach.StateMachine.add( "SAY_SOMETHING",
                                   states.Say(robot, ["I found someone!"]),
-                                  transitions={"spoken":"Done"})
+                                  transitions={"spoken":"LOOKAT_PERSON"})
+
+            smach.StateMachine.add( "LOOKAT_PERSON", 
+                        states.LookForObjectsAtROI(robot, lookat_query=self.human_query, object_query=self.human_query),
+                        transitions={   'looking':"Done",
+                                        'object_found':'Done',
+                                        'no_object_found':'Done',
+                                        'abort':'Aborted'})
 
 
             smach.StateMachine.add( "TOGGLE_OFF_UNREACHABLE",
@@ -56,3 +64,8 @@ class DriveToClosestPerson(smach.StateMachine):
             smach.StateMachine.add( "TOGGLE_OFF_NO_FOUND",
                                     states.TogglePeopleDetector(robot, on=True),
                                     transitions={   "toggled":"Failed"})
+
+'looking',
+'object_found',
+'no_object_found',
+'abort'
