@@ -647,37 +647,18 @@ class Determine_goal(smach.State):
 
             if self.lookat_query:
                 rospy.logwarn("lookat_query")
-                '''
-                !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                !!! lookat_query IS MODIFIED FOR JOS AND TIM FOR OPEN CHALLENGE !!!
-                !!!!!!!!!!!!!! DO NOT CHANGE UNTIL AFTER ROBOCUP 2013 !!!!!!!!!!!!!
-                !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                '''
-                # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-                # is a mapping of variable to a constant, like a string or number
-                rospy.logdebug("Query = {0}".format(self.lookat_query))
-                # answers = self.robot.reasoner.query(self.lookat_query)
-                # rospy.logdebug("Query answers = {0}".format(answers))
-                # if not answers:
-                #     rospy.logerr("No answers found for query {query}".format(query=self.lookat_query))                                
-                # else:
-                #     rospy.logerr("Answers found for query {query}: {answers}".format(query=self.lookat_query, answers=answers))
-                #     #From the summarized answer, 
-                #     possible_ROIs = [(   float(answer["X"]), 
-                #                           float(answer["Y"]), 
-                #                           float(answer["Z"])) for answer in answers]
-
-                #     # Get base poses for every query outcome and put these in possible locations
-                #     for ROI in possible_ROIs:
-                answers = self.robot.reasoner.query(self.lookat_query)
-
-                look_point = self.robot.base.point(1, 0, stamped=True)
-                look_point.point.x = float(answers[0]["X"])
-                look_point.point.y = float(answers[0]["Y"])
-                look_point.point.z = float(answers[0]["Z"])
+                lookat_answers = self.robot.reasoner.query(self.lookat_query)
+                basepos = self.robot.base.location.pose.position
+                basepos = (basepos.x, basepos.y, basepos.z)
+                selected_roi_answer = urh.select_answer(lookat_answers, 
+                                                    lambda answer: urh.xyz_dist(answer, basepos), 
+                                                    minmax=min)
+                rx,ry,rz = urh.answer_to_tuple(selected_roi_answer)
+                rospy.loginfo("Going to look at (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
+                lookat_point = msgs.PointStamped(rx,ry,rz)
 
                 # ToDo: Parameterize offsets
-                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.5, 0.0)
+                base_poses_for_point = self.robot.base.get_base_goal_poses(lookat_point, 0.8, 0.0)
 
                 if base_poses_for_point:
                     for base_goal_pose in base_poses_for_point:
