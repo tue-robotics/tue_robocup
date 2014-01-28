@@ -38,7 +38,7 @@ class DriveToClosestPerson(smach.StateMachine):
                                                     "goal_not_defined":'TOGGLE_OFF_NO_FOUND'})
 
             smach.StateMachine.add( "TOGGLE_OFF_OK",
-                                    states.TogglePeopleDetector(robot, on=True),
+                                    states.TogglePeopleDetector(robot, on=False),
                                     transitions={   "toggled":"SAY_SOMETHING"})
 
             smach.StateMachine.add( "SAY_SOMETHING",
@@ -54,7 +54,7 @@ class DriveToClosestPerson(smach.StateMachine):
 
 
             smach.StateMachine.add( "TOGGLE_OFF_UNREACHABLE",
-                                    states.TogglePeopleDetector(robot, on=True),
+                                    states.TogglePeopleDetector(robot, on=False),
                                     transitions={   "toggled":"SAY_GOAL_UNREACHABLE"})
             smach.StateMachine.add( "SAY_GOAL_UNREACHABLE",
                                   states.Say(robot, ["I can't reach the humans I was going to"], mood="sad"),
@@ -62,7 +62,7 @@ class DriveToClosestPerson(smach.StateMachine):
 
 
             smach.StateMachine.add( "TOGGLE_OFF_NO_FOUND",
-                                    states.TogglePeopleDetector(robot, on=True),
+                                    states.TogglePeopleDetector(robot, on=False),
                                     transitions={   "toggled":"Failed"})
 
 'looking',
