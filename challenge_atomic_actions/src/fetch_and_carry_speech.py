@@ -27,12 +27,12 @@ class Ask_fetch_carry(smach.State):
 
         self.robot = robot
         self.preempted = False
-        self.ask_user_service_get_yes_no = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+        self.ask_user_service_fetch_carry = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
-        self.response = self.ask_user_service_get_yes_no("fetch_carry", 10 , rospy.Duration(60))
+        self.response = self.ask_user_service_fetch_carry("fetch_carry", 10 , rospy.Duration(60))
 
         if self.response.keys[0] == "answer":
             response_answer = self.response.values[0]
