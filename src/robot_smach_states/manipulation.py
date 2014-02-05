@@ -25,18 +25,6 @@ class StandardPoses:
     SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
     RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
 
-#class GrabMachine(smach.StateMachine):
-#    def __init__(self, side, robot, grabpoint_query):
-#        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
-#        self.side = side
-#        self.robot = robot
-#       self.grabpoint_query = grabpoint_query
-#        '''check check input and output keys'''
-#        with self:
-#            smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
-#                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
-#                                     'failed'       :   'failed'})
-
 class DetermineBaseGraspPose(smach.State):
     def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
         smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
@@ -68,20 +56,11 @@ class DetermineBaseGraspPose(smach.State):
         ''' Only query the reasoner once (grasp position will not be updated anyway so there is no use in doing this more often)'''
         if self.nr_inverse_reachability_calls == 0:
             answers = self.robot.reasoner.query(self.grabpoint_query)
-            #rospy.loginfo('Answers = {0}'.format(answers))
-            #import ipdb
-            #ipdb.set_trace()
 
             if answers:
                 answer = answers[0]
                 rospy.loginfo("Answer(0) = {0}".format(answer))
-                #grasp_point = geometry_msgs.msg.PointStamped()
-                self.grasp_point.header.frame_id = "/map"
-                self.grasp_point.header.stamp = rospy.Time()
-                self.grasp_point.point.x = float(answer["X"])
-                self.grasp_point.point.y = float(answer["Y"])
-                self.grasp_point.point.z = float(answer["Z"])
-                #rospy.loginfo("Grasp_point = {0}".format(self.grasp_point))
+                self.grasp_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
             else:
                 #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
                 return 'target_lost'
@@ -164,80 +143,6 @@ class PrepareOrientation(smach.StateMachine):
                              'preempted'        :'abort',
                              'goal_not_defined' :'DETERMINE_GRASP_POSE'})
 
-
-class Prepare_orientation(smach.State):
-    def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
-        smach.State.__init__(self, outcomes=['orientation_succeeded','orientation_failed','abort','target_lost'])
-        self.side = side
-        self.robot = robot       
-        self.grabpoint_query = grabpoint_query
-
-        # New 23-03-2012
-        self.nr_turns = -1
-        self.grasp_angle = -0.0 #1.0472
-        if x_offset == None:
-            #import ipdb; ipdb.set_trace()
-            rospy.logdebug("x_offset not specified, defaulting to 0.5 for arms.")
-            self.grasp_distance_x = 0.5
-        else:
-            self.grasp_distance_x = x_offset
-
-        if y_offset == None:
-            #import ipdb; ipdb.set_trace()
-            rospy.logdebug("y_offset not specified, defaulting to (-)0.2 for ... arm.")
-            if self.side == self.robot.leftArm:
-                self.grasp_distance_y = 0.2
-            elif self.side == self.robot.rightArm:
-                self.grasp_distance_y = -0.2
-        else:
-            self.grasp_distance_y = y_offset
-
-    def execute(self, userdata):
-        
-        self.nr_turns = self.nr_turns + 1
-        
-        if self.nr_turns > 5:
-            rospy.logerr('Unable to orientate to the object correctly')
-            self.robot.speech.speak("I am terribly sorry, but I am not able to grasp the object")
-            self.nr_turns = 0
-            return 'orientation_failed'
-
-        #import ipdb; ipdb.set_trace()
-        answers = self.robot.reasoner.query(self.grabpoint_query)
-        
-        if answers:
-            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            grasp_point = geometry_msgs.msg.PointStamped()
-            grasp_point.header.frame_id = "/map"
-            grasp_point.header.stamp = rospy.Time()
-            grasp_point.point.x = float(answer["X"])
-            grasp_point.point.y = float(answer["Y"])
-            grasp_point.point.z = float(answer["Z"])
-            
-            grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/amigo/base_link", self.robot.tf_listener)
-            
-            desired_base_poses_MAP = self.robot.base.get_base_goal_poses(grasp_point, self.grasp_distance_x, self.grasp_distance_y)
-            
-            ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
-            if not desired_base_poses_MAP:
-                self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad")
-                return 'orientation_failed'
-            
-            rospy.loginfo("[robot_smach_states] Desired target position: x = %f, y = %f",desired_base_poses_MAP[0].pose.position.x, desired_base_poses_MAP[0].pose.position.y)
-
-            if self.robot.base.send_goal(desired_base_poses_MAP[0], time=60):
-                '''wait for base goal to succeed for orientation'''
-                #self.robot.base.wait(timeout=60)
-                rospy.loginfo("Moved the base to desired pose")  
-                return 'orientation_succeeded'
-            else:
-                rospy.logerr("Not able to move base to desired pose")
-                return 'orientation_failed'
-
-        else:
-            rospy.logerr("No answers for grabpoint_query {query}.".format(query=repr(self.grabpoint_query)))
-            return 'target_lost'        
-
 ########################################### State Prepare grab###############################################
 class Carrying_pose(smach.State):
     def __init__(self, arm, robot=None):
@@ -245,15 +150,12 @@ class Carrying_pose(smach.State):
         
         self.robot = robot
         self.arm = arm
-        rospy.loginfo("arm = {0}".format(arm))
 
     def execute(self, gl):
         if self.arm == self.robot.leftArm:
             y_home = 0.2
         elif self.arm == self.robot.rightArm:
             y_home = -0.2
-
-        rospy.loginfo("y_home = {0}".format(y_home))
         
         rospy.loginfo("start moving to carrying pose")        
         if self.arm.send_goal(0.18, y_home, 0.75, 0, 0, 0, 60):
@@ -271,13 +173,10 @@ class PrepareGrasp(smach.State):
         self.robot = robot
         self.grabpoint_query = grabpoint_query
 
-
     def execute(self, gl):
 
         # Move arm to desired joint coordinates (no need to wait)
-        # ToDo: determine joint coordinates
-        #self.arm.send_joint_goal(-0.1, -0.3, 0.0, 1.87, 0.0, 0.0, 0.0)
-        #self.arm.send_joint_goal(-0.035, -0.58, 0.2, 2.2, 0.13, 0.12, 0.23)
+        # ToDo: don't hardcode
         self.arm.send_joint_goal(-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42)
 
         # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
@@ -313,8 +212,8 @@ class UpdateObjectPose(smach.State):
         ''' Remember current spindle position '''
         spindle_pos = self.robot.spindle.get_position()
 
+        ''' Query reasoner '''
         answers = self.robot.reasoner.query(self.grabpoint_query)
-        
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
             target_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map")
@@ -322,30 +221,17 @@ class UpdateObjectPose(smach.State):
         else:
             return 'target_lost'
 
-        ''' If height is feasible for LRF, use this. Else: use head and tabletop/clustering '''
-        rospy.logwarn("Spindle timeout temporarily increased to 30 seconds")
-        #if self.robot.spindle.send_laser_goal(float(answer["Z"]), timeout=30.0):
-        ''' Hack to disable laser !!! '''
-        nolaser = False
-        if nolaser:
-            self.robot.perception.toggle(["object_detector_2d"])
-            self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.2)
-            rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-            rospy.logwarn("Waiting for 2.0 seconds for laser update")
-            rospy.sleep(rospy.Duration(2.0))
-        else:
-            spindle_target = target_point.point.z + 0.5 -0.98
-            spindle_target = max(self.robot.spindle.lower_limit, spindle_target)
-            spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
-            self.robot.spindle.send_goal(spindle_target, timeout = 5.0)
-            self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
-            self.robot.perception.toggle(["tabletop_segmentation"])
-            self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
-            #rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
-            timeout = 5.0
-            #rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(timeout))
-            rospy.sleep(rospy.Duration(timeout))
-            #self.robot.speech.speak("Now I need Simons stuff because the height of the object is {0:.2f}".format(target_point.point.z),block=False)
+        spindle_target = target_point.point.z + 0.5 -0.98 #ToDo: don't hardcode
+        spindle_target = max(self.robot.spindle.lower_limit, spindle_target)
+        spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
+        self.robot.spindle.send_goal(spindle_target, timeout = 5.0)
+        self.robot.head.send_goal(target_point, keep_tracking=False, timeout=10.0)
+        self.robot.perception.toggle(["tabletop_segmentation"])
+        self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
+        rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
+        timeout = 5.0
+        rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(timeout))
+        rospy.sleep(rospy.Duration(timeout))
 
         ''' Reset head and stop all perception stuff '''
         self.robot.perception.toggle([])
@@ -357,8 +243,8 @@ class UpdateObjectPose(smach.State):
         elif self.arm == self.robot.rightArm:
             self.robot.head.look_at_hand("right")
         
-        rospy.logwarn("Sending spindle to top for safety")
-        spindle_pos = 0.4
+        rospy.logdebug("Sending spindle to top for safety")
+        spindle_pos = self.robot.spindle.upper_limit
         self.robot.spindle.send_goal(spindle_pos,timeout=40.0)
 
         return 'succeeded'
@@ -413,12 +299,7 @@ class GrabMachine(smach.StateMachine):
             smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'failed'})
-        
-            # Uses old Prepare_orientation
-            #smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.grabpoint_query),
-            #            transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
 
-            # Uses new Prepare Orientation
             smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grabpoint_query),
                         transitions={'orientation_succeeded':'OPEN_GRIPPER','orientation_failed':'OPEN_GRIPPER','abort':'failed','target_lost':'failed'})
 
@@ -480,42 +361,30 @@ class Grab(smach.State):
         
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            target_position = geometry_msgs.msg.PointStamped()
-            target_position.header.frame_id = "/map"
-            target_position.header.stamp = rospy.Time()
-            target_position.point.x = float(answer["X"])
-            target_position.point.y = float(answer["Y"])
-            target_position.point.z = float(answer["Z"])
+            target_position = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
         else:
             rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
             return "target_lost"
             
         ''' Keep looking at end-effector for ar marker detection '''
         self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id),keep_tracking=True)
-        
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
         target_position_bl = transformations.tf_transform(target_position, "/map","/amigo/base_link", tf_listener=self.robot.tf_listener)
-        
         rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
 
         target_position_delta = geometry_msgs.msg.Point()
         
         ''' First check to see if visual servoing is possible '''
         self.robot.perception.toggle(['ar_pose'])
-        #rospy.logwarn("ar marker check disabled")
-        try:
-            self.robot.tf_listener.waitForTransform(self.end_effector_frame_id, self.ar_frame_id, rospy.Time(), rospy.Duration(2.5))
-        except:
-            rospy.logerr("Transformation between {0} and {1} failed".format(self.end_effector_frame_id,self.ar_frame_id))
-        ar_marker_available = False
         rospy.sleep(2.5)
+
+        ''' Check if transform is available '''
         target_position_delta = transformations.tf_transform(target_position, self.end_effector_frame_id, self.ar_frame_id, tf_listener=self.robot.tf_listener)
         if target_position_delta == None:
             ar_marker_available = False
         else:
             ar_marker_available = True
-
         rospy.logwarn("ar_marker_available (1) = {0}".format(ar_marker_available))
             
         ''' If transform is not available, try again, but use head movement as well '''
@@ -523,21 +392,16 @@ class Grab(smach.State):
             self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, timeout=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("Let me have a closer look", block=False)
-        
-        ''' New ar marker detection stuff ''' 
-        ar_point = geometry_msgs.msg.PointStamped()
-        ar_point.header.frame_id = self.ar_frame_id
-        ar_point.header.stamp = rospy.Time()
-        ar_point.point.x = 0
-        ar_point.point.y = 0
-        ar_point.point.z = 0
-        #import ipdb; ipdb.set_trace()
+
         ''' Transform point(0,0,0) in ar marker frame to grippoint frame '''
+        ar_point = msgs.PointStamped(0, 0, 0, frame_id = self.ar_frame_id, stamp = rospy.Time())
         ar_point_grippoint = transformations.tf_transform(ar_point, self.ar_frame_id, self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
         rospy.loginfo("AR marker in end-effector frame = {0}".format(ar_point_grippoint))
+
         ''' Transform target position to grippoint frame '''
         target_position_grippoint = transformations.tf_transform(target_position, "/map", self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
         rospy.loginfo("Target position in end-effector frame = {0}".format(target_position_grippoint))
+
         ''' Compute difference = delta (only when both transformations have succeeded) and correct for offset ar_marker and grippoint '''
         if not (ar_point_grippoint == None or target_position_grippoint == None):
             target_position_delta = geometry_msgs.msg.Point()
@@ -548,8 +412,6 @@ class Grab(smach.State):
             ar_marker_available = True
         else:
             ar_marker_available = False
-        ''' End '''
-        
         rospy.logwarn("ar_marker_available (2) = {0}".format(ar_marker_available))
             
         ''' Sanity check '''
@@ -559,7 +421,6 @@ class Grab(smach.State):
                 rospy.logwarn("Ar marker detection probably incorrect")
                 self.robot.speech.speak("I guess I cannot see my hand properly")
                 ar_marker_available = False
-
         rospy.logwarn("ar_marker_available (3) = {0}".format(ar_marker_available))
 
         ''' Switch off ar marker detection '''
@@ -567,26 +428,15 @@ class Grab(smach.State):
         
         ''' Original, pregrasp is performed by the compute_pre_grasp node '''
         if not ar_marker_available:
-            self.robot.speech.speak("No visual feedback, let's see if I can grasp with my eyes closed", block=False)                
+            self.robot.speech.speak("Let's see", block=False)                
             if self.side.send_goal(target_position_bl.x, target_position_bl.y, target_position_bl.z, 0, 0, 0, 120, pre_grasp = True):
                 rospy.loginfo("arm at object")                    
             else:
-                if self.side.send_gripper_goal_close(10):
-                    try:
-                        #import ipdb;ipdb.set_trace()
-                        self.robot.reasoner.attach_object_to_gripper(answer["ObjectID"], self.end_effector_frame_id, True)
-                    except KeyError, ke:
-                        rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
-                    rospy.loginfo("Gripper closed")
-                else:
-                    rospy.loginfo("opening gripper failed, good luck")
-                    return 'grab_failed'
                 rospy.logerr("Goal unreachable: {0}".format(target_position_bl).replace("\n", " "))
                 self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
-                
+                return 'grab_failed'
         else:
-            self.robot.speech.speak("I can see both my hand and the object, now I shouldn't miss", block=False)
-            #import ipdb;ipdb.set_trace()
+            self.robot.speech.speak("Let's go", block=False)
             if self.side.send_delta_goal(target_position_delta.x, target_position_delta.y, target_position_delta.z,
                                         0, 0, 0, 120, frame_id=self.end_effector_frame_id, pre_grasp = True):                    
                 rospy.loginfo("arm at object")                    
@@ -597,6 +447,7 @@ class Grab(smach.State):
             
         self.robot.head.reset_position()
         return 'grab_succeeded'
+
 
 class Human_handover(smach.StateMachine):
     def __init__(self, side, robot=None):
@@ -645,11 +496,6 @@ class PlaceObject(smach.StateMachine):
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'failed'})
         
-            # Old implementation
-            #smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.placement_query),
-            #            transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
-
-            # New implementation with NavigateGeneric
             smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.placement_query),
                         transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
             
@@ -841,7 +687,6 @@ class SetGripper(smach.State):
             if answers:
                 answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
                 try:
-                #import ipdb;ipdb.set_trace()
                     self.robot.reasoner.attach_object_to_gripper(answer["ObjectID"], self.end_effector_frame_id, True)
                 except KeyError, ke:
                     rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
@@ -870,7 +715,7 @@ class Gripper_to_query_position(smach.StateMachine):
         
         with self:
             smach.StateMachine.add("PREPARE",
-                                    Prepare_orientation(side, robot, point_query),
+                                    PrepareOrientation(side, robot, point_query),
                                     transitions={   'orientation_succeeded':'MOVE_ARM',
                                                     'orientation_failed':'failed',
                                                     'abort':'failed',
@@ -878,7 +723,6 @@ class Gripper_to_query_position(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['succeeded', 'failed', 'target_lost'])
             def move_to_point(userdata):
-                #import ipdb; ipdb.set_trace()
                 answers = self.robot.reasoner.query(self.point_query)
                 
                 if not answers:
@@ -886,12 +730,7 @@ class Gripper_to_query_position(smach.StateMachine):
                     return "target_lost"
                 else:
                     answer = answers[0]
-                    target_position = geometry_msgs.msg.PointStamped()
-                    target_position.header.frame_id = "/map"
-                    target_position.header.stamp = rospy.Time()
-                    target_position.point.x = float(answer["X"])
-                    target_position.point.y = float(answer["Y"])
-                    target_position.point.z = float(answer["Z"])
+                    target_position = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
                     # Question: why is pre_grasp per definition true?
                     if self.side.send_goal(target_position.point.x, target_position.point.y, target_position.point.z, 0, 0, 0, 120, 
                                             pre_grasp=True, 
@@ -904,7 +743,6 @@ class Gripper_to_query_position(smach.StateMachine):
                                                 'failed':'failed', 
                                                 'target_lost':'target_lost'})
 
-# ToDo Loy: ArmToJointPos is a much better name, this is confusing
 class ArmToJointPos(smach.State):
     def __init__(self, robot, side, jointgoal, timeout=0, delta=False):
         smach.State.__init__(self, outcomes=['done', "failed"])
@@ -979,16 +817,11 @@ class ArmToQueryPoint(smach.State):
             rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
             return 'failed'
         answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+        goal_map = msgs.Point(float(answer["X"]), float(answer["Y"]), float(answer["Z"]))
         rospy.loginfo("ArmToQueryPoint: goal = {0}".format(answer))
 
         # Note: answers are typically in "map"frame, check whether this works out
         rospy.logwarn("Transforming to base_link frame for amigo_arm_navigation")
-
-        goal_map = geometry_msgs.msg.Point()
-        goal_map.x = float(answer["X"])
-        goal_map.y = float(answer["Y"])
-        goal_map.z = float(answer["Z"])
-        
         goal_bl = transformations.tf_transform(goal_map, "/map", "/amigo/base_link", tf_listener=self.robot.tf_listener)
         if goal_bl == None:
             return 'failed'
@@ -1041,18 +874,12 @@ class PointMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'failed'})
         
-            smach.StateMachine.add('PREPARE_ORIENTATION', Prepare_orientation(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grabpoint_query),
                         transitions={'orientation_succeeded':'CLOSE_GRIPPER','orientation_failed':'CLOSE_GRIPPER','abort':'failed','target_lost':'failed'})
 
             smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
                         transitions={'succeeded'    :   'PRE_POINT',
                                      'failed'       :   'PRE_POINT'})
-
-            # # Even if the update state fails, try to grasp anyway
-            # smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grabpoint_query),
-            #             transitions={'succeeded'    :   'PRE_POINT',
-            #                          'failed'       :   'PRE_POINT',
-            #                          'target_lost'  :   'RESET_ARM_FAILED'})
             
             smach.StateMachine.add('PRE_POINT', ArmToQueryPoint(self.robot, self.side, self.grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
                         transitions={'succeeded'    :   'POINT',
@@ -1090,10 +917,8 @@ class Point_at_object(smach.State):
 
         if self.side == self.robot.leftArm:
             self.end_effector_frame_id = "/amigo/grippoint_left"
-            self.ar_frame_id = "/hand_marker_left"
         elif self.side == self.robot.rightArm:
             self.end_effector_frame_id = "/amigo/grippoint_right"
-            self.ar_frame_id = "/hand_marker_right"
         
     def execute(self, gl):
         
@@ -1101,12 +926,8 @@ class Point_at_object(smach.State):
         
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            target_position = geometry_msgs.msg.PointStamped()
-            target_position.header.frame_id = "/map"
-            target_position.header.stamp = rospy.Time()
-            target_position.point.x = float(answer["X"])
-            target_position.point.y = float(answer["Y"])
-            target_position.point.z = float(answer["Z"])
+            target_position = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
+            rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         else:
             rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
             return "target_lost"
@@ -1114,82 +935,15 @@ class Point_at_object(smach.State):
         ''' Keep looking at end-effector for ar marker detection '''
         self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id),keep_tracking=True)
         
-        rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
-        
+        ''' Transform to base link '''        
         target_position_bl = transformations.tf_transform(target_position, "/map","/amigo/base_link", tf_listener=self.robot.tf_listener)
-        
         rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
 
-        target_position_delta = geometry_msgs.msg.Point()
-        
-        ''' First check to see if visual servoing is possible '''
-        #self.robot.perception.toggle(['ar_pose'])
-        rospy.logwarn("ar marker check disabled")
-        ar_marker_available = False
-        
-        target_position_delta = transformations.tf_transform(target_position, "/map", self.ar_frame_id, tf_listener=self.robot.tf_listener)
-        if target_position_delta == None:
-            ar_marker_available = False
+        ''' Send goal '''
+        if self.side.send_goal(target_position_bl.x-0.1, target_position_bl.y, target_position_bl.z, 0, 0, 0, 120, pre_grasp = True):
+            rospy.loginfo("arm at object")
         else:
-            ar_marker_available = True
-
-        rospy.logwarn("ar_marker_available (1) = {0}".format(ar_marker_available))
-            
-        ''' If transform is not available, try again, but use head movement as well '''
-        if not ar_marker_available:
-            self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
-            self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, timeout=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
-            self.robot.speech.speak("What's that on my hand?")
-            rospy.sleep(2.0)
-            
-        target_position_delta = transformations.tf_transform(target_position, "/map", self.ar_frame_id, tf_listener=self.robot.tf_listener)
-        if target_position_delta == None:
-            ar_marker_available = False
-        else:
-            ar_marker_available = True
-
-        rospy.logwarn("ar_marker_available (2) = {0}".format(ar_marker_available))
-            
-        ''' Sanity check '''
-        if ar_marker_available:
-            rospy.loginfo("Delta target = {0}".format(target_position_delta))
-            if (target_position_delta.x < 0 or target_position_delta.x > 0.6 or target_position_delta.y < -0.3 or target_position_delta.y > 0.3 or target_position_delta.z < -0.3 or target_position_delta.z > 0.3):
-                rospy.logwarn("Ar marker detection probably incorrect")
-                self.robot.speech.speak("I guess I cannot see my hand properly")
-                ar_marker_available = False
-
-        rospy.logwarn("ar_marker_available (3) = {0}".format(ar_marker_available))
-
-        ''' Switch off ar marker detection '''
-        self.robot.perception.toggle([])                
-        
-        ''' Original, pregrasp is performed by the compute_pre_grasp node '''
-        if not ar_marker_available:
-            self.robot.speech.speak("No visual feedback, let's see if I can point with my eyes closed")                
-            if self.side.send_goal(target_position_bl.x-0.1, target_position_bl.y, target_position_bl.z, 0, 0, 0, 120, pre_grasp = True):
-                rospy.loginfo("arm at object")                    
-                
-        else:
-            self.robot.speech.speak("I can see both my hand and the object, pointing would be no problem.")
-            #import ipdb;ipdb.set_trace()
-            if self.side.send_delta_goal(target_position_delta.x + self.side.markerToGrippointOffset.x - 0.1, 
-                                        target_position_delta.y + self.side.markerToGrippointOffset.y, 
-                                        target_position_delta.z + self.side.markerToGrippointOffset.z, 
-                                        0, 0, 0, 120, frame_id=self.end_effector_frame_id, pre_grasp = True):                    
-                rospy.loginfo("arm at object")                    
-            else:
-                #if self.side.send_gripper_goal_close(10):
-                #    try:
-                #        #import ipdb;ipdb.set_trace()
-                #        self.robot.reasoner.attach_object_to_gripper(answer["ObjectID"], self.end_effector_frame_id, True)
-                #    except KeyError, ke:
-                #        rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
-                #    rospy.loginfo("Gripper closed")
-                #else:
-                #    rospy.loginfo("opening gripper failed, good luck")
-                rospy.logerr("failed to go to the arm position")
-                self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
-                return 'point_failed'
+            rospy.loginfo("Arm cannot reach object")
             
         self.robot.head.reset_position()
         return 'point_succeeded'
