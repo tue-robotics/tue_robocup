@@ -31,7 +31,7 @@ class DriveToClosestPerson(smach.StateMachine):
                                                     "preempted":"Aborted"})
 
             smach.StateMachine.add( "GOTO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=self.human_query),
+                                    states.NavigateGeneric(robot, lookat_query=self.human_query, xy_dist_to_goal_tuple=(1.5,0)),
                                     transitions={   "arrived":"TOGGLE_OFF_OK",
                                                     "unreachable":'TOGGLE_OFF_UNREACHABLE',
                                                     "preempted":'Aborted',
