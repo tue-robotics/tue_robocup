@@ -26,44 +26,36 @@ class DriveToClosestPerson(smach.StateMachine):
 
             smach.StateMachine.add( "WAIT_FOR_DETECTION",
                                     states.Wait_query_true(robot, self.human_query, timeout=5),
-                                    transitions={   "query_true":"GOTO_PERSON",
+                                    transitions={   "query_true":"TOGGLE_OFF_OK",
                                                     "timed_out":"Failed",
                                                     "preempted":"Aborted"})
 
-            smach.StateMachine.add( "GOTO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=self.human_query, xy_dist_to_goal_tuple=(1.5,0)),
-                                    transitions={   "arrived":"TOGGLE_OFF_OK",
-                                                    "unreachable":'TOGGLE_OFF_UNREACHABLE',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'TOGGLE_OFF_NO_FOUND'})
-
             smach.StateMachine.add( "TOGGLE_OFF_OK",
                                     states.TogglePeopleDetector(robot, on=False),
-                                    transitions={   "toggled":"SAY_SOMETHING"})
+                                    transitions={   "toggled":"GOTO_PERSON"})
+
+            smach.StateMachine.add( "GOTO_PERSON",
+                                    states.NavigateGeneric(robot, lookat_query=self.human_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                    transitions={   "arrived":"LOOK_UP_FOR_SAY",
+                                                    "unreachable":'SAY_FAILED',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_FAILED'})
+            
+            smach.StateMachine.add( "LOOK_UP_FOR_SAY",
+                                  states.ResetHead(robot),
+                                  transitions={"done":"SAY_SOMETHING"})
 
             smach.StateMachine.add( "SAY_SOMETHING",
                                   states.Say(robot, ["I found someone!"]),
-                                  transitions={"spoken":"LOOKAT_PERSON"})
+                                  transitions={"spoken":"Done"})
 
-            smach.StateMachine.add( "LOOKAT_PERSON", 
-                        states.LookForObjectsAtROI(robot, lookat_query=self.human_query, object_query=self.human_query),
-                        transitions={   'looking':"Done",
-                                        'object_found':'Done',
-                                        'no_object_found':'Done',
-                                        'abort':'Aborted'})
+            smach.StateMachine.add( "SAY_FAILED",
+                                  states.Say(robot, ["I didn't find anyone"]),
+                                  transitions={"spoken":"LOOK_UP_RESET"})
 
-
-            smach.StateMachine.add( "TOGGLE_OFF_UNREACHABLE",
-                                    states.TogglePeopleDetector(robot, on=False),
-                                    transitions={   "toggled":"SAY_GOAL_UNREACHABLE"})
-            smach.StateMachine.add( "SAY_GOAL_UNREACHABLE",
-                                  states.Say(robot, ["I can't reach the humans I was going to"], mood="sad"),
-                                  transitions={"spoken":"Failed"})
-
-
-            smach.StateMachine.add( "TOGGLE_OFF_NO_FOUND",
-                                    states.TogglePeopleDetector(robot, on=False),
-                                    transitions={   "toggled":"Failed"})
+            smach.StateMachine.add( "LOOK_UP_RESET",
+                                  states.ResetHead(robot),
+                                  transitions={"done":"Failed"})
 
 'looking',
 'object_found',
