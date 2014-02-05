@@ -580,7 +580,8 @@ class ResetCostmap(smach.State):
 
 ''' New implementation: hierarchical state machine '''
 class Determine_goal(smach.State):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, refresh_freq=0, move_torso=True):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, refresh_freq=0, move_torso=True,
+                 xy_dist_to_goal_tuple=(0.8, 0)):
         smach.State.__init__(self,outcomes=['succeeded','failed','aborted'],
                             input_keys=['goal'],
                             output_keys=['goal'])                    
@@ -594,6 +595,8 @@ class Determine_goal(smach.State):
         self.lookat_query = lookat_query
         self.refresh_freq = refresh_freq
         self.move_torso = move_torso
+        self.xy_dist_to_goal_tuple = xy_dist_to_goal_tuple
+
         rospy.logdebug("Goal name = {0}".format(self.goal_name))
         rospy.logdebug("Goal query = {0}".format(self.goal_query))
         rospy.logdebug("Lookat query = {0}".format(self.lookat_query))
@@ -657,8 +660,7 @@ class Determine_goal(smach.State):
                 rospy.loginfo("Going to look at (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
                 lookat_point = msgs.PointStamped(rx,ry,rz)
 
-                # ToDo: Parameterize offsets
-                base_poses_for_point = self.robot.base.get_base_goal_poses(lookat_point, 0.8, 0.0)
+                base_poses_for_point = self.robot.base.get_base_goal_poses(lookat_point, self.xy_dist_to_goal_tuple[0], self.xy_dist_to_goal_tuple[1])
 
                 if base_poses_for_point:
                     for base_goal_pose in base_poses_for_point:
@@ -983,7 +985,8 @@ class Recover(smach.State):
 
 # refresh_freq      Frequency of re-check of determine_goal (0 means only check at beginning)
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1, refresh_freq=0, move_torso=True):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1, refresh_freq=0, move_torso=True,
+        xy_dist_to_goal_tuple=(0.8, 0.0)):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
         self.robot = robot
@@ -1010,7 +1013,8 @@ class NavigateGeneric(smach.StateMachine):
                 lookat_point_3d = self.lookat_point_3d, 
                 lookat_query = self.lookat_query,
                 refresh_freq = self.refresh_freq,
-		move_torso = move_torso)
+		        move_torso = move_torso,
+                xy_dist_to_goal_tuple=xy_dist_to_goal_tuple)
 
         @smach.cb_interface(outcomes=['done'])
         def init_navigate_generic(userdata):
