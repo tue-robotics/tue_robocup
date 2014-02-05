@@ -3,9 +3,10 @@
 of marking them as finished or inachievable.
 
 TODO:
-Designators can be refined by a user of it. 
-This means that the query for it is extended, for example. 
-Some variables in the query can also be made constants, as to make the query more specific."""
+Designators can be refined by a user of it. That can be through a perception routine determining something, the answer to a question etc. 
+This means that the query for it is extended with an extra conjunction, making the answers more specific, for example. 
+Some variables in the query can also be made constants, as to make the query more specific and lock it.
+There is also no reason why designators cannot be cooperation with each other, althoug this would make thing overly complicated"""
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 from psi  import Conjunction, Compound, Variable
