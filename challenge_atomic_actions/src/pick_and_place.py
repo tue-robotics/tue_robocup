@@ -21,8 +21,8 @@ class PickAndPlace(smach.StateMachine):
         elif grasp_arm == "right":
             arm = robot.rightArm
         else:
-        	rospy.logerr("{0} is not a good grasp_arm, defaulting to left".grasp_arm)
-        	arm = robot.leftArm
+            rospy.logerr("{0} is not a good grasp_arm, defaulting to left".grasp_arm)
+            arm = robot.leftArm
 
         #retract old facts
         robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
@@ -37,8 +37,8 @@ class PickAndPlace(smach.StateMachine):
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects_tue.pl'))
         rospy.logwarn("Loading objects_tue, why are there two prolog files???")
-	
-	    #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
+        
+        #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
         robot.reasoner.assertz(Compound("challenge", "pick_and_place"))
 
@@ -63,18 +63,23 @@ class PickAndPlace(smach.StateMachine):
         query_dropoff_loc_backup = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
 
         with self:
-        	smach.StateMachine.add('LOOK',
-                                    states.LookForObjectsAtROI(robot, query_lookat, query_object),
+            smach.StateMachine.add('INIT',
+                                    Initialize(robot),
+                                    transitions={"initialized": "LOOK",
+                                                 "abort":       "Aborted"})
+
+            smach.StateMachine.add('LOOK',
+                                    LookForObjectsAtROI(robot, query_lookat, query_object),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'SAY_FOUND_NOTHING',
                                                     'abort':'Aborted'})
 
-        	smach.StateMachine.add('SAY_FOUND_NOTHING',
-                                    states.Say(robot, ["I didn't find anything here", "No objects here", "There are no objects here", "I do not see anything here"]),
-                                    transitions={ 'spoken':'Failed' })
+            smach.StateMachine.add('SAY_FOUND_NOTHING',
+                                    Say(robot, ["I didn't find anything here", "No objects here", "There are no objects here", "I do not see anything here"]),
+                                    transitions={ 'spoken':'RESET' })
 
-        	def generate_object_sentence(*args,**kwargs):
+            def generate_object_sentence(*args,**kwargs):
                 try:
                     answers = robot.reasoner.query(query_dropoff_loc)
                     _type = answers[0]["ObjectType"]
@@ -90,21 +95,21 @@ class PickAndPlace(smach.StateMachine):
                         pass
                     return "I have found something, but I'm not sure what it is."
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
-                                    states.Say_generated(robot, sentence_creator=generate_object_sentence),
+                                    Say_generated(robot, sentence_creator=generate_object_sentence),
                                     transitions={ 'spoken':'GRAB' })
 
             smach.StateMachine.add('GRAB',
-                                    states.GrabMachine(arm, robot, query_grabpoint),
+                                    GrabMachine(arm, robot, query_grabpoint),
                                     transitions={   'succeeded':'DROPOFF_OBJECT',
                                                     'failed':'HUMAN_HANDOVER' })
 
             smach.StateMachine.add('HUMAN_HANDOVER',
-                                    states.Human_handover(arm,robot),
+                                    Human_handover(arm,robot),
                                     transitions={   'succeeded':'DROPOFF_OBJECT',
-                                                    'failed':'Failed'})
+                                                    'failed':'RESET'})
 
             smach.StateMachine.add("DROPOFF_OBJECT",
-                                    states.DropObject(arm, robot, query_dropoff_loc),
+                                    DropObject(arm, robot, query_dropoff_loc),
                                     transitions={   'succeeded':'Done',
                                                     'failed':'Failed',
                                                     'target_lost':'SAY_HUMAN_HANDOVER'})
@@ -117,9 +122,14 @@ class PickAndPlace(smach.StateMachine):
                                      transitions={   'spoken':'HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add( 'HANDOVER_TO_HUMAN', 
-                                    HandoverToHuman(self.side, self.robot),
-                                    transitions={'succeeded'    : 'Failed',
-                                                 'failed'       : 'Failed'})
+                                    HandoverToHuman(arm, self.robot),
+                                    transitions={'succeeded'    : 'RESET',
+                                                 'failed'       : 'RESET'})
+
+            smach.StateMachine.add('RESET',
+                                    Initialize(robot),
+                                    transitions={"initialized": "Done",
+                                                 "abort":       "Aborted"})
 
 if __name__ == "__main__":
     rospy.init_node('pick_and_place_exec')
