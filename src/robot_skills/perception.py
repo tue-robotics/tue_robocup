@@ -11,7 +11,7 @@ import pein_srvs.srv
 
 import collections
 
-import tue_recorder
+import tue_recorder.msg
 
 class Perception(object):
     """Interface to amigo's perception services"""
