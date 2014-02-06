@@ -80,7 +80,7 @@ class Learn_Person(smach.State):
         return 'face_learned'
 
 class LookForObjectsAtROI(smach.State):
-    def __init__(self, robot, lookat_query, object_query, maxdist=0.8, modules=["template_matching"], waittime=2.5):
+    def __init__(self, robot, lookat_query, object_query, maxdist=0.8, modules=["object_recognition"], waittime=2.5):
         #TODO: Remove 'looking' outcome, it is never given.
             smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
                                     input_keys=[],
@@ -144,16 +144,11 @@ class LookForObjectsAtROI(smach.State):
         result = self.robot.perception.toggle(self.modules)
 
         '''Try to set the region of interest. This is not implemented for every module '''
-        target_point = geometry_msgs.msg.PointStamped()
-        target_point.header.frame_id = "/map"
-        target_point.header.stamp = rospy.Time()
-        target_point.point.x = lookat_point.point.x
-        target_point.point.y = lookat_point.point.y
-        target_point.point.z = lookat_point.point.z
-        #try:
-        #    self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
-        #except rospy.exceptions.ROSException as e:
-        #    rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
+        target_point = PointStamped(lookat_point.point.x, lookat_point.point.y, lookat_point.point.z, "/map", rospy.Time())
+        try:
+            self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
+        except rospy.exceptions.ROSException as e:
+            rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
 
         # Let the object recognition run for a certain period
         # ToDo: replace until new objects have appeared
@@ -202,7 +197,7 @@ class LookForObjectsAtROI(smach.State):
             
 
 class LookForObjectsAtPoint(smach.State):
-    def __init__(self, robot, object_query, point_stamped, modules=["template_matching"], waittime=2.5):
+    def __init__(self, robot, object_query, point_stamped, modules=["object_recognition"], waittime=2.5):
         smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
                                 input_keys=[],
                                 output_keys=[])
@@ -236,18 +231,13 @@ class LookForObjectsAtPoint(smach.State):
         result = self.robot.perception.toggle(self.modules)
 
         # Let the object recognition run for a certain period
-        #'''Try to set the region of interest. This is not implemented for every module '''
-        #target_point = geometry_msgs.msg.PointStamped()
-        #target_point.header.frame_id = "/map"
-        #target_point.header.stamp = rospy.Time()
-        #target_point.point.x = self.point_stamped.point.x
-        #target_point.point.y = self.point_stamped.point.y
-        #target_point.point.z = self.point_stamped.point.z
-        #try:
-        #    self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
-        #except Exception as e:
-        #    rospy.loginfo("Cannot set perception roi for modules {0}".format(self.modules))
-        #    rospy.loginfo("Error: {0}".format(e))
+        '''Try to set the region of interest. This is not implemented for every module '''
+        target_point = PointStamped(self.point_stamped.point.x, self.point_stamped.point.y, self.point_stamped.point.z, "/map", rospy.Time())
+        try:
+            self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
+        except Exception as e:
+            rospy.loginfo("Cannot set perception roi for modules {0}".format(self.modules))
+            rospy.loginfo("Error: {0}".format(e))
         
         rospy.sleep(rospy.Duration(self.waittime))
 
