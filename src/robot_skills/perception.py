@@ -69,11 +69,19 @@ class Perception(object):
         # - "face_segmentation"
         # - "ppl_detection"
         # - ...
+
+        # start recording
+        self.rec_start("amigo_top_kinect", "perception-toggle", 5, 2.0)
+
         rospy.loginfo("modules are {0}".format(modules))
         return self.sv_recognition(modules)
 
     def toggle_recognition(self, faces=False, objects=False, people=False):
         rospy.logwarn("This function is deprecated, please use toggle instead")
+
+        # start recording
+        self.rec_start("amigo_top_kinect", "toggle_recognition", 5, 2.0)
+
         #TODO: Everything related to faces is not yet tested and is not yet supposed to actually work. These methods are for testing the execs only!
         if faces and objects:
             rospy.loginfo("Perception.start: Both categories (Faces and Objects) specified for recognition, CPU hogging initiated")
@@ -97,6 +105,10 @@ class Perception(object):
     def toggle_perception_2d(self, pointstamped, length_x=0.5, length_y=0.5, length_z=0.5):
 
         rospy.logwarn("This function is deprecated, toggle object_detector_2d separately and use set_perception_roi to set the roi")
+
+        # start recording
+        self.rec_start("amigo_top_kinect", "toggle_perception_2d", 5, 2.0)
+
         # ToDo: does this work as we hope?
         # ToDo: what is a suitable length/width?
         # ToDo: what is status?
@@ -172,6 +184,10 @@ class Perception(object):
         return response
 
     def toggle_bin_detection(self, pointstamped, length_x=3.0, length_y=3.0, length_z=1.0):
+
+        # start recording
+        self.rec_start("amigo_top_kinect", "toggle_bin_detection", 5, 2.0)
+
         ''' Starts bin detection '''
         request = pein_srvs.srv.FindObjInRoiRequest()
         request.x = pointstamped.point.x
@@ -224,6 +240,10 @@ class Perception(object):
         roslaunch pein_supervisor start.launch
         roslaunch pein_face_recognition start.launch
         '''
+
+        # start recording
+        self.rec_start("amigo_top_kinect", "learn_person", 5, 2.0)
+
         goal = LearnGoal()
         goal.module = "face_learning"
         goal.n_models = n_models
