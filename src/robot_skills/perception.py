@@ -26,6 +26,9 @@ class Perception(object):
 
         self.sv_recognition = rospy.ServiceProxy("/start_perception", StartPerception)
 
+        '''Default object recognition method'''
+        self.default_object_recognition_method = "object_segmentation"
+
         '''Face stuff'''
         #self.learn_face_feedback = rospy.Subscriber("/face_detections/feedback", std_msgs.msg.Int32, self.__cb_learn_face)
         self.learn_face_counter = collections.deque()
@@ -71,8 +74,11 @@ class Perception(object):
         # - ...
 
         # start recording
-	if modules:
+        if modules:
             self.rec_start("amigo_top_kinect", "perception-toggle", 5, 2.0)
+        
+        # If 'object_recognition' is called, this is replaced by the current default module
+        modules = [module.replace("object_recognition", self.default_object_recognition_method) for module in modules]
 
         rospy.loginfo("modules are {0}".format(modules))
         return self.sv_recognition(modules)
@@ -88,13 +94,13 @@ class Perception(object):
             rospy.loginfo("Perception.start: Both categories (Faces and Objects) specified for recognition, CPU hogging initiated")
             rospy.logwarn("No face recognition")
             #result = self.sv_recognition(["blob_clustering", "face_recognition", "face_detection"])
-            result = self.sv_recognition(["template_matching", "face_recognition", "face_detection"])
+            result = self.sv_recognition([self.default_object_recognition_method, "face_recognition", "face_detection"])
         if faces and not objects:
             rospy.logwarn("No face recognition")
             result = self.sv_recognition(["face_recognition", "face_detection"])
         if not faces and objects:
             #result = self.sv_recognition(["blob_clustering"])
-            result = self.sv_recognition(["template_matching"])
+            result = self.sv_recognition([self.default_object_recognition_method])
         if not faces and not objects:
             rospy.loginfo("Perception.stop: Both faces and objects not recognized anymore")
             result = self.sv_recognition([])
