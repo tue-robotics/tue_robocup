@@ -257,8 +257,8 @@ class FetchAndCarry(smach.StateMachine):
             smach.StateMachine.add( 'PEOPLE_LASER_DETECTION',
                                     DriveToClosestPerson(robot),
                                     transitions={   "Done":"VERIFY_HUMAN",
-                                                    "Aborted":"Done",
-                                                    "Failed":"Done"})
+                                                    "Aborted":"HANDOVER_TO_HUMAN",
+                                                    "Failed":"HANDOVER_TO_HUMAN"})
             smach.StateMachine.add( 'VERIFY_HUMAN',
                                     Say(robot,"Still need to verify if you are a human"),
                                     transitions={   "spoken":"HANDOVER_TO_HUMAN"})
