@@ -27,7 +27,10 @@ class FindMe(smach.StateMachine):
     TogglePeopleDetector
         |
         v
-    LookAtQueryPoint(PossileOperator) {----------------+
+    LookAround
+        |
+        v
+    NavigateGeneric(PossileOperator) {-----------------+
         |                                              |
         v                                              |
     Identify()----->Assert(currentPersonIsNotOperator)-+
