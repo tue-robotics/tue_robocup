@@ -36,16 +36,17 @@ class WaitForFetchCarry(smach.State):
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
         self.response = self.ask_user_service_fetch_carry("fetch_carry", 10, rospy.Duration(10))
-        if self.response.keys[0] == "answer":
+        if self.response:
+            if self.response.keys[0] == "answer":
 
-            response_answer = self.response.values[0]
-            if response_answer == "no_answer" or  response_answer == "wrong_answer":
-                rospy.loginfo("Object to fetch is not understood: {0} ".format(response_answer))
-                return "failed"
+                response_answer = self.response.values[0]
+                if response_answer == "no_answer" or  response_answer == "wrong_answer":
+                    rospy.loginfo("Object to fetch is not understood: {0} ".format(response_answer))
+                    return "failed"
 
-            self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
-            rospy.loginfo("Object to fetch is: {0} ".format(response_answer))
-            return "succeeded"
+                self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
+                rospy.loginfo("Object to fetch is: {0} ".format(response_answer))
+                return "succeeded"
         else:
             return "failed"
 
@@ -231,8 +232,6 @@ class DriveToExpectedPersonLocation(smach.StateMachine):
             smach.StateMachine.add( "LOOK_UP_RESET",
                                   ResetHead(robot),
                                   transitions={"done":"Failed"})
-
-
 
 class GoToStartLocation(smach.State):
     def __init__(self, robot):
