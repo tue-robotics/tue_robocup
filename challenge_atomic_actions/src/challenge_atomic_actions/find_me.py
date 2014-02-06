@@ -8,7 +8,7 @@ import smach
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 
-class FindMe(smach.State):
+class FindMe(smach.StateMachine):
     """The Find me basic functionality. 
     The robot must find a person again after it moves to a different room.
     In that room, the robot has to find the right person from a group of 5 persons.
@@ -79,6 +79,10 @@ class FindMe(smach.State):
                                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         with self:
+            smach.StateMachine.add( 'INITIALIZE',
+                                    states.Initialize(robot),
+                                    transitions={  'initialized': 'LEARN_FACE',
+                                                   'abort':       'LEARN_FACE'})
             smach.StateMachine.add( 'LEARN_FACE',
                                     states.Learn_Person(robot, "operator"),
                                     transitions={   'face_learned':'SAY_WAIT',
@@ -94,7 +98,7 @@ class FindMe(smach.State):
                                                     'preempted':"GOTO_ROOM"})
 
             smach.StateMachine.add('GOTO_ROOM',
-                                    NavigateGeneric(robot, goal_query=self.room_query),
+                                    states.NavigateGeneric(robot, goal_query=self.room_query),
                                     transitions={   "arrived":"DETECT_PERSONS", 
                                                     "unreachable":"DETECT_PERSONS", 
                                                     "preempted":"DETECT_PERSONS", 
@@ -176,4 +180,4 @@ class FindMe(smach.State):
 if __name__ == "__main__":
     rospy.init_node('find_me_exec')
     
-    startup(Cleanup)
+    startup(FindMe)
