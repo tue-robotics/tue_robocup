@@ -58,6 +58,9 @@
   <depend package="pein_ar_pose"/>
   <depend package="pein_tabletop_segmentation"/>
   <depend package="laser_ppl_detection"/>
+  <depend package="pein_wire_interface"/>
+  <depend package="pein_color_matcher"/>
+  <depend package="pein_pcl_matcher"/>
 
   <!-- for speech recognition -->
   <depend package="create_speech_files"/>
