@@ -3,6 +3,7 @@ import rospy
 import geometry_msgs.msg
 import math
 import tf
+import tf_server
 
 def euler_z_to_quaternion(angle):
     
@@ -90,7 +91,7 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
       
 def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
     if not tf_listener: 
-        tf_listener = tf.TransformListener()
+        tf_listener = tf_server.TFClient()
     
     if isinstance(coordinates, geometry_msgs.msg.Point):
         ps = geometry_msgs.msg.PointStamped(point=coordinates) 

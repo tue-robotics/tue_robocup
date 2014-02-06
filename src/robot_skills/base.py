@@ -5,6 +5,7 @@ import geometry_msgs.msg
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 import tf
+import tf_server
 import std_msgs.msg
 import std_srvs.srv
 import threading
@@ -265,7 +266,7 @@ class Base(object):
     
     def get_location(self):
         try:
-            #tf_listener = tf.TransformListener() 
+            #tf_listener = tf_server.TFClient()
             time = rospy.Time.now()
             self.tf_listener.waitForTransform("/map", "/amigo/base_link", time, rospy.Duration(20.0))
             (ro_trans, ro_rot) = self.tf_listener.lookupTransform("/map", "/amigo/base_link", time)
@@ -444,6 +445,6 @@ class Base(object):
 if __name__ == "__main__":
     rospy.init_node("amigo_base_executioner", anonymous=True)
 
-    tf_listener = tf.TransformListener()
+    tf_listener = tf_server.TFClient()
 
     base = Base(tf_listener)

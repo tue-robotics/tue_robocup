@@ -21,6 +21,7 @@
   <!--<depend package="amigo_arm_server"/>-->
   <!--<depend package="amigo_gripper_server"/>-->
   <depend package="tf"/>
+  <depend package="tf_server"/>
   <depend package="amigo_msgs"/>
   <depend package="visualization_msgs"/>
 

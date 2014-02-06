@@ -14,6 +14,7 @@ import lights
 #import reasoner
 
 import tf
+import tf_server
 
 import geometry_msgs
 
@@ -30,7 +31,7 @@ class Amigo(object):
     """
     def __init__(self, dontInclude = [], wait_services=True):
         
-        self.tf_listener = tf.TransformListener()
+        self.tf_listener = tf_server.TFClient()
 
         if 'head' not in dontInclude:
             self.head = head.Head()

@@ -13,6 +13,7 @@ import ebutton
 import lights
 
 import tf
+import tf_server
 
 from util import transformations
 #from components import message_helper
@@ -34,7 +35,7 @@ class Amigo(object):
     """
     def __init__(self, dontInclude = [], wait_services=False):
         
-        self.tf_listener = tf.TransformListener()
+        self.tf_listener = tf_server.TFClient()
 
         if 'head' not in dontInclude:
             self.head = head.Head()

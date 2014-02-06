@@ -24,6 +24,7 @@ import util.concurrent_util
 """TF"""
 import tf
 from tf.transformations import euler_from_quaternion
+import tf_server
 
 """Marker publisher"""
 import visualization_msgs.msg
@@ -716,7 +717,7 @@ if __name__ == "__main__":
     openState = State.OPEN
     closeState = State.CLOSE
     
-    tf_listener = tf.TransformListener()
+    tf_listener = tf_server.TFClient()
 
     arms = Arms(tf_listener)
     left = Arm(leftSide, tf_listener)
