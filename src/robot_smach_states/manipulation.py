@@ -554,12 +554,12 @@ class HandoverToHuman(smach.StateMachine):
                         transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
                                      'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, timeout=0.0),
                         transitions={'succeeded'    :   'RESET_ARM',
                                      'failed'       :   'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM', 
-                        ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
+                        ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800), timeout=0.0), #Copied from demo_executioner NORMAL
                         transitions={   'done':'RESET_TORSO',
                                       'failed':'RESET_TORSO'    })
 
