@@ -217,7 +217,7 @@ class UpdateObjectPose(smach.State):
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
             target_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map")
-            self.robot.head.send_goal(target_point, keep_tracking=True)
+            self.robot.head.send_goal(target_point, keep_tracking=True, pan_vel=3.0, tilt_vel=3.0)
         else:
             return 'target_lost'
 
@@ -226,7 +226,7 @@ class UpdateObjectPose(smach.State):
         spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
         self.robot.spindle.send_goal(spindle_target, timeout = 5.0)
         rospy.loginfo("Sending head goal to {0}".format(target_point))
-        self.robot.head.send_goal(target_point, keep_tracking=False, timeout=5.0)
+        self.robot.head.send_goal(target_point, keep_tracking=False, timeout=5.0, pan_vel=3.0, tilt_vel=3.0)
         rospy.loginfo("head.send_goal returned")
         self.robot.perception.toggle(["tabletop_segmentation"])
         self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
@@ -388,7 +388,6 @@ class Grab(smach.State):
             
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
-            self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id), keep_tracking=True)
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, timeout=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("Let me have a closer look", block=False)
 
