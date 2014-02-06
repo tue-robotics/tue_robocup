@@ -111,7 +111,7 @@ def lookat_objects_roi(robot):
                             Compound("not", Compound("disposed", "ObjectID")))
 
         smach.StateMachine.add("LOOK_AT_OBJECT_ROI",
-                                states.LookForObjectsAtROI(robot, query_lookat, query_object, maxdist=0.9, modules=["template_matching"], waittime=2.5),
+                                states.LookForObjectsAtROI(robot, query_lookat, query_object, maxdist=0.9, modules=["object_recognition"], waittime=2.5),
                                 transitions={   'looking'           : 'LOOK_AT_OBJECT_ROI',
                                                 'object_found'      : 'Succeeded',
                                                 'no_object_found'   : 'Failed',

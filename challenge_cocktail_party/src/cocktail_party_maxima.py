@@ -266,7 +266,7 @@ class LookForDrink(smach.State):
 
         self.robot.speech.speak("I will now start my perception module, and try to detect your drink")
 
-        self.robot.perception.toggle(["template_matching"])
+        self.robot.perception.toggle(["object_recognition"])
         rospy.sleep(5.0)
         self.robot.perception.toggle([])
 

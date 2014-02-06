@@ -303,15 +303,6 @@ def grab_item(robot, selectedArm):
         smach.StateMachine.add('ANNOUNCE_LOOK_FOR_DRINK',
                                 states.Say(robot, "I wonder what objects I can see here!", block=False),
                                 transitions={'spoken':'LOOK'})
-
-        
-        #smach.StateMachine.add('LOOK_FOR_DRINK', 
-        #                               states.Look_for_objects(robot),
-        #                               transitions={'looking':'LOOK_FOR_DRINK',
-        #                                            'object_found':'GRAB',
-        #                                            'no_object_found':'SAY_NO_DRINK',
-        #                                            'abort':'Aborted'})
-
         
         query_lookat = Conjunction( Compound("current_exploration_target", "Target"),
                                     Compound("point_of_interest", "Target", Compound("point_3d", "X", "Y", "Z")))
@@ -326,12 +317,6 @@ def grab_item(robot, selectedArm):
                                                 'object_found':'GRAB',
                                                 'no_object_found':'SAY_NO_DRINK',
                                                 'abort':'Aborted'})
-
-
-        #smach.StateMachine.add('GRAB',
-        #                       states.GrabMachine(selectedArm,robot),
-        #                       transitions={'succeeded':'CARRYING_POSE',
-        #                                    'failed':'REPORT_FAILED'})
 
         query_grabpoint = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
         smach.StateMachine.add('GRAB',

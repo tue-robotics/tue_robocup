@@ -126,15 +126,13 @@ class LookForDrink(smach.State):
 
         self.robot.speech.speak("Let's see what I can find here")
 
-        # start template matching
-
-        self.response_start = self.robot.perception.toggle(['template_matching'])
+        self.response_start = self.robot.perception.toggle(['object_recognition'])
  
         if self.response_start.error_code == 0:
-            rospy.loginfo("Template matching has started correctly")
+            rospy.loginfo("Object recognition has started correctly")
         elif self.response_start.error_code == 1:
-            rospy.loginfo("Template matching failed to start")
-            self.robot.speech.speak("I was not able to start template matching.")
+            rospy.loginfo("Object recognition failed to start")
+            self.robot.speech.speak("I was not able to start object recognition.")
             looked_no = 0;
             self.robot.reasoner.query(Compound("retractall", Compound("looked_drink_no", "X")))
             self.robot.reasoner.query(Compound("assertz",Compound("looked_drink_no", looked_no)))
@@ -143,13 +141,13 @@ class LookForDrink(smach.State):
         wait_machine = Wait_query_true(self.robot, query_detect_object, 7)
         wait_result = wait_machine.execute()
 
-        rospy.loginfo("Template matching will be stopped now")
+        rospy.loginfo("Object recognition will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
         
         if self.response_stop.error_code == 0:
-            rospy.loginfo("Template matching is stopped")
+            rospy.loginfo("Object recognition has stopped")
         elif self.response_stop.error_code == 1:
-            rospy.loginfo("Failed stopping template matching ")
+            rospy.loginfo("Failed stopping object recognition")
 
         # interpret results wait machine
         if wait_result == "timed_out":

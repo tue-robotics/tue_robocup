@@ -1966,9 +1966,9 @@ int main(int argc, char **argv) {
                     //! Clear world model and switch on perception
                     reset_wire_client_.call(srv);
                     modules.clear();
-                    modules.push_back("template_matching");
+                    modules.push_back("object_recognition");
                     perception_srvs::StartPerception pein_srv_temp_on;
-                    pein_srv_temp_on.request.modules.push_back("template_matching");
+                    pein_srv_temp_on.request.modules.push_back("object_recognition");
                     if (!togglePein(modules))
                     {
                         amigoSpeak("I could not switch on template matching");
