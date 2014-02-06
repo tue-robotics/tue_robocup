@@ -4,6 +4,7 @@ import rospy
 
 # 
 from drive_to_person import DriveToClosestPerson
+
 from speech_interpreter.srv import AskUser
 import smach
 
@@ -17,8 +18,6 @@ grasp_arm = "left"
 starting_pose = None
 
 class WaitForFetchCarry(smach.State):
-    
-
     def __init__(self, robot, tracking=True, rate=2):
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
 
@@ -32,9 +31,13 @@ class WaitForFetchCarry(smach.State):
         starting_pose = pose
         rospy.loginfo("Starting pose xyz {0}".format(starting_pose))
 
+        # ToDo assert start pose 
+        #self.robot.reasoner.query(Compound("assertz",Compound("start_location", starting_pose)))
+        #return_result = self.robot.reasoner.query(Compound("start_location", "X"))
 
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
+
         self.response = self.ask_user_service_fetch_carry("fetch_carry", 10, rospy.Duration(10))
         if self.response:
             if self.response.keys[0] == "answer":
@@ -51,19 +54,14 @@ class WaitForFetchCarry(smach.State):
             return "failed"
 
 
-        #response_answer = "no_answer"
-        #for x in range(0,len(self.response.keys)):
-        #    if self.response.keys[x] == "answer":
-        #        response_answer = self.response.values[x]
 
-        # Check available options from rulebook!
-        #if response_answer == "no_answer" or  response_answer == "wrong_answer":
-        #    self.robot.speech.speak("I will just bring you a coke")
-        #    response_answer = "coke"
-
-        #import ipdb; ipdb.set_trace()
-        #self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
-        #return "succeeded"
+        '''
+        response_answer = "coke"
+        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
+        rospy.loginfo("Object to fetch is not understood: {0} ".format(response_answer))
+        return 'succeeded'
+        '''
+        
 
 class LookForDrink(smach.State):
     def __init__(self, robot):
@@ -163,74 +161,6 @@ class LookForDrink(smach.State):
             self.robot.reasoner.query(Compound("assertz",Compound("looked_drink_no", looked_no)))
             return "found"
 
-class CompareWithExpectedPeopleDetector(smach.StateMachine):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["Done","Aborted"])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-        return_result = self.robot.reasoner.query(Compound("person", "X"))
-        rospy.loginfo('Persons found at {0}'.format(return_result))
-
-class DriveToExpectedPersonLocation(smach.StateMachine):
-    """Scan (with the torso laser) for persons, 
-    go to the seed that matches an expected location"""
-
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
-
-        self.robot = robot
-        self.human_query = Conjunction( Compound("instance_of", "ObjectID", "person"), 
-                                        Compound( "position", "ObjectID", Compound("point", "X", "Y", "Z")))
-
-        with self:
-            smach.StateMachine.add( "TOGGLE_PEOPLE_DETECTION",
-                                    TogglePeopleDetector(robot, on=True),
-                                    transitions={   "toggled":"WAIT_FOR_DETECTION"})
-
-            smach.StateMachine.add( "WAIT_FOR_DETECTION",
-                                    Wait_query_true(robot, self.human_query, timeout=5),
-                                    transitions={   "query_true":"TOGGLE_OFF_OK",
-                                                    "timed_out":"Failed",
-                                                    "preempted":"Aborted"})
-
-            smach.StateMachine.add( "TOGGLE_OFF_OK",
-                                    TogglePeopleDetector(robot, on=False),
-                                    transitions={   "toggled":"GOTO_PERSON"})
-
-            #smach.StateMachine.add( "CHECK_PERSON",
-            #                        CompareWithExpectedPeopleDetector(robot),
-            #                        transitions={   "Done":"GOTO_PERSON",
-            #                                        "Aborted":"GOTO_PERSON"})
-
-            ### NOW WE HAVE A LIST OF POSSIBLE PEOPLE
-            # Do Something smart here
-            # And if not go to the next closests one!
-            # or in executive!?
-
-            smach.StateMachine.add( "GOTO_PERSON",
-                                    NavigateGeneric(robot, lookat_query=self.human_query, xy_dist_to_goal_tuple=(1.0,0)),
-                                    transitions={   "arrived":"LOOK_UP_FOR_SAY",
-                                                    "unreachable":'SAY_FAILED',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'SAY_FAILED'})
-            
-            smach.StateMachine.add( "LOOK_UP_FOR_SAY",
-                                  ResetHead(robot),
-                                  transitions={"done":"SAY_SOMETHING"})
-
-            smach.StateMachine.add( "SAY_SOMETHING",
-                                  Say(robot, ["I found someone!"]),
-                                  transitions={"spoken":"Done"})
-
-            smach.StateMachine.add( "SAY_FAILED",
-                                  Say(robot, ["I didn't find anyone"]),
-                                  transitions={"spoken":"LOOK_UP_RESET"})
-
-            smach.StateMachine.add( "LOOK_UP_RESET",
-                                  ResetHead(robot),
-                                  transitions={"done":"Failed"})
-
 class GoToStartLocation(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "failed"])
@@ -243,9 +173,9 @@ class GoToStartLocation(smach.State):
         global starting_pose
         rospy.loginfo("Starting pose xyz {0}".format(starting_pose))
 
-        goal = (float(starting_pose.pose.position.x), float(starting_pose.pose.position.y), float(starting_pose.pose.orientation.z))
-        nav = NavigateGeneric(self.robot, goal_pose_2d=goal,goal_area_radius=1.0)
-        nav_result = nav.execute()
+        goal = (float(starting_pose.pose.position.x), float(starting_pose.pose.position.y), float(1.0))
+        nav = NavigateGeneric(self.robot, lookat_point_3d=goal,xy_dist_to_goal_tuple=(1.0,0.0))
+        nav.execute()
         return 'done'
 
 class FetchAndCarry(smach.StateMachine):
@@ -304,38 +234,43 @@ class FetchAndCarry(smach.StateMachine):
 	                                transitions={   "looking":"LOOK_FOR_DRINK",
 	                                                "found":'PICKUP_DRINK',
 	                                                "not_found":'SAY_DRINK_NOT_FOUND'})
-	        
-            smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
-                                    Say(robot, ["I could not find the drink you wanted.", 
-                                                "I looked really hard, but I couldn't find your drink."]),
-                                    transitions={   'spoken':'Aborted' }) 
 
             smach.StateMachine.add( 'PICKUP_DRINK',
                                     GrabMachine(arm, robot, query_grabpoint),
-                                    transitions={   "succeeded":"NAVIGATE_TO_LOCATION_RADIUS",
-                                                    "failed":'LOOK_FOR_DRINK' }) 
+                                    transitions={   "succeeded":"NAVIGATE_TO_START_LOCATION",
+                                                    "failed":'LOOK_FOR_DRINK' })
+
+            smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
+                                    Say(robot, "I could not find the drink you wanted."),
+                                    transitions={   'spoken':'Aborted' })  
 
             smach.StateMachine.add( 'SAY_DRINK_NOT_GRASPED',
-                                    Say(robot, ["I could not pick up the drink you wanted", 
-                                                "I failed to grab the object you wanted."]),
+                                    Say(robot, "I could not pick up the drink you wanted"),
                                     transitions={   'spoken':'Aborted' }) 
 
 
-            smach.StateMachine.add( 'NAVIGATE_TO_LOCATION_RADIUS',
+            smach.StateMachine.add( 'NAVIGATE_TO_START_LOCATION',
                                     GoToStartLocation(robot),
                                     transitions={   "done":"PEOPLE_LASER_DETECTION",
                                                     "failed":'Aborted'})
 
             smach.StateMachine.add( 'PEOPLE_LASER_DETECTION',
                                     DriveToClosestPerson(robot),
-                                    transitions={   "Done":"HANDOVER_TO_HUMAN",
-                                                    "Aborted":'Done',
+                                    transitions={   "Done":"VERIFY_HUMAN",
+                                                    "Aborted":"Done",
                                                     "Failed":"Done"})
+            smach.StateMachine.add( 'VERIFY_HUMAN',
+                                    Say(robot,"Still need to verify if you are a human"),
+                                    transitions={   "spoken":"HANDOVER_TO_HUMAN"})
 
             smach.StateMachine.add("HANDOVER_TO_HUMAN",
                                     HandoverToHuman(arm, robot),
-                                    transitions={   'succeeded':'Done',
-                                                    'failed':'Done'})
+                                    transitions={   'succeeded':'REINITIALIZE',
+                                                    'failed':'REINITIALIZE'})
+            smach.StateMachine.add('REINITIALIZE',
+                                    Initialize(robot),
+                                    transitions={   'initialized':'Done',    
+                                                    'abort':'Aborted'})
 
 if __name__ == "__main__":
     rospy.init_node('fetch_and_carry_exec')
