@@ -150,10 +150,10 @@ class LookForObjectsAtROI(smach.State):
         target_point.point.x = lookat_point.point.x
         target_point.point.y = lookat_point.point.y
         target_point.point.z = lookat_point.point.z
-        try:
-            self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
-        except rospy.exceptions.ROSException as e:
-            rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
+        #try:
+        #    self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
+        #except rospy.exceptions.ROSException as e:
+        #    rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
 
         # Let the object recognition run for a certain period
         # ToDo: replace until new objects have appeared
