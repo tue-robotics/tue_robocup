@@ -247,7 +247,7 @@ class Perception(object):
         rospy.logwarn("Learning persons currently not implemented, so cannot get counter")
         return self.learn_face_counter
 
-    def rec_start(source, context, duration, freq):
+    def rec_start(self, source, context, duration, freq):
         msg = tue_recorder.msg.Start()
         msg.source = source
         msg.context = context
