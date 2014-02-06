@@ -7,7 +7,7 @@ import smach
 from robot_skills.amigo import Amigo
 from robot_smach_states import *
 
-from robot_skills.reasoner  import Conjunction, Compound
+from robot_skills.reasoner  import Conjunction, Compound, Disjunction
 from robot_smach_states.util.startup import startup
 
 class PickAndPlace(smach.StateMachine):
@@ -55,10 +55,10 @@ class PickAndPlace(smach.StateMachine):
                                 Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
 
         query_dropoff_loc = Conjunction(
-                                Compound("current_object", "Obj_to_Dispose"), #Of the current object
-                                Compound("instance_of",    "Obj_to_Dispose",   Compound("exact", "ObjectType")), #Gets its type
-                                Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
-                                Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
+                                    Compound("current_object", "Obj_to_Dispose"), #Of the current object
+                                    Compound("instance_of",    "Obj_to_Dispose",   "ObjectType"), #Gets its type
+                                    Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
+                                    Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
         query_dropoff_loc_backup = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
 
@@ -92,8 +92,10 @@ class PickAndPlace(smach.StateMachine):
                         return "I found something called {0}.".format(type_only).replace("_", " ")
                     except Exception, e:
                         rospy.logerr(e)
+                        #If we end up here, override the query_dropoff_loc to always go to the trashbin
+                        query_dropoff_loc = query_dropoff_loc_backup 
                         pass
-                    return "I have found something, but I'm not sure what it is."
+                    return "I have found something, but I'm not sure what it is. I'll throw it in the trashbin"
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     Say_generated(robot, sentence_creator=generate_object_sentence),
                                     transitions={ 'spoken':'GRAB' })
