@@ -145,7 +145,6 @@ class Reasoner(object):
         self.detach_all_from_gripper("/amigo/grippoint_right")
         self.sv_reset()
 
-
 if __name__ == "__main__":
     rospy.init_node("amigo_reasoner_executioner", log_level=rospy.DEBUG)
     reasoner = Reasoner()  

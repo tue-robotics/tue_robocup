@@ -426,10 +426,21 @@ class Arms(object):
             
         gripper_goal.command.max_torque = 50.0
         
-        rospy.logdebug("Sending gripper target {0}".format(gripper_goal).replace('\n', ' '))
+        rospy.loginfo("Sending gripper target {0}".format(gripper_goal).replace('\n', ' '))
         if side == Side.LEFT:
-            actionClients._ac_gripper_left.send_goal_and_wait(gripper_goal, rospy.Duration(timeout))
-            rospy.logdebug("Gripper result: {0}".format(actionClients._ac_gripper_left.get_result()).replace("\n", " "))
+            current_ac = actionClients._ac_gripper_left
+        elif side == Side.RIGHT:
+            current_ac = actionClients._ac_gripper_right
+        else: 
+            raise Exception("Send_gripper_goal: Invalid side specified")
+            return False
+
+        current_ac.send_goal(gripper_goal)
+        if timeout == 0.0:
+            return True
+        else:
+            current_ac.wait_for_result(rospy.Duration(timeout))
+            rospy.logdebug("Gripper result: {0}".format(current_ac.get_result()).replace("\n", " "))
             if actionClients._ac_gripper_left.get_state() == GoalStatus.SUCCEEDED:
                 rospy.loginfo("Gripper target reached")
                 return True
@@ -437,19 +448,6 @@ class Arms(object):
                 rospy.loginfo("Reaching gripper target failed")
                 return False
         
-        elif side == Side.RIGHT:
-            actionClients._ac_gripper_right.send_goal_and_wait(gripper_goal, rospy.Duration(timeout))
-            rospy.loginfo("Gripper result: {0}".format(actionClients._ac_gripper_right.get_result()))
-            if actionClients._ac_gripper_right.get_state() == GoalStatus.SUCCEEDED:
-                rospy.loginfo("Gripper target reached")
-                return True
-            else:
-                rospy.loginfo("Reaching gripper target failed")
-                return False
-        
-        else: 
-            raise Exception("Send_gripper_goal: Invalid side specified")
-            return False
         
     def check_gripper_content(self, side):
         
@@ -483,21 +481,27 @@ class Arms(object):
         rospy.loginfo("Send arm to jointcoords {0}".format(p.positions))
         
         result = None
-        
-        if timeout:
-            if side == Side.LEFT:
-                result = actionClients._ac_joint_traj_left.send_goal(traj_goal)
-                result = actionClients._ac_joint_traj_left.wait_for_result(rospy.Duration.from_sec(timeout))
-            elif side == Side.RIGHT:
-                result = actionClients._ac_joint_traj_right.send_goal(traj_goal)
-                result = actionClients._ac_joint_traj_right.wait_for_result(rospy.Duration.from_sec(timeout))
+
+        if side == Side.LEFT:
+            current_ac = actionClients._ac_joint_traj_left
+        elif side == Side.RIGHT:
+            current_ac = actionClients._ac_joint_traj_right
         else:
-            if side == Side.LEFT:
-                result = actionClients._ac_joint_traj_left.send_goal(traj_goal)
-            elif side == Side.RIGHT:
-                result =  actionClients._ac_joint_traj_right.send_goal(traj_goal)
-        
-        return result
+            raise Exception("check_gripper_content: Invalid side specified")
+            return False
+
+        current_ac.send_goal(traj_goal)
+
+        if timeout == 0.0:
+            return True
+        else:
+            current_ac.wait_for_result(rospy.Duration(timeout))
+            if current_ac.get_state() == GoalStatus.SUCCEEDED:
+                return True
+            else:
+                rospy.logwarn("Cannot reach joint goal {0}".format(traj_goal))
+                return False
+
 
     def send_delta_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, side=None, timeout=0):
         """Move joint qX by some angle in radians. """

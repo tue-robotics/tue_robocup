@@ -52,10 +52,8 @@ class Head(object):
         And optional frame_id and timeout, frame_id defaults to /map
         By default, it does not keep tracking
         """
-        # create goal:
-        #rospy.loginfo(position.point)
 
-        head_goal = HeadRefGoal()#geometry_msgs.msg.PointStamped()
+        head_goal = HeadRefGoal()
 
         # goal_type = 0 --> meaning the action wants to "look at"
         head_goal.goal_type = 0
@@ -88,6 +86,7 @@ class Head(object):
             if self._ac_head_ref_action.get_state() == GoalStatus.SUCCEEDED:
                 return True
             else:
+                rospy.logwarn("Cannot reach head target {0}".format(head_goal))
                 ''' Cancel goal to stop publishing reference values '''
                 self.cancel_goal()
                 return False

@@ -32,8 +32,8 @@ class Perception(object):
         self.ac_face_learning = actionlib.SimpleActionClient("/face_learning/action_server", LearnAction)
         # self.ac_face_learning = actionlib.SimpleActionClient("/face_learning/pein_action_server", LearnAction)
 
-        '''Laser service'''
-        self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
+        '''Set ROI service'''
+        self.sv_set_roi = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
 
         '''Bin detector'''
         self.sv_bin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
@@ -115,8 +115,8 @@ class Perception(object):
         ''' Wait for service '''
         try:
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
-            self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
-            response = self.sv_laser_detector(request)
+            self.sv_set_roi = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
+            response = self.sv_set_roi(request)
         except (rospy.ServiceException, rospy.ROSException), e:
             rospy.logerr("Laser service not available: {0}".format(e))
             return False
@@ -138,10 +138,10 @@ class Perception(object):
         ''' Wait for service '''
         try:
             rospy.wait_for_service("/find_obj_in_roi", timeout=5.0)
-            self.sv_laser_detector = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
-            response = self.sv_laser_detector(request)
+            self.sv_set_roi = rospy.ServiceProxy("/find_obj_in_roi", pein_srvs.srv.FindObjInRoi)
+            response = self.sv_set_roi(request)
         except (rospy.ServiceException, rospy.ROSException), e:
-            rospy.logerr("Laser service not available: {0}".format(e))
+            rospy.logerr("Set ROI service not available: {0}".format(e))
             return False
 
         return response
