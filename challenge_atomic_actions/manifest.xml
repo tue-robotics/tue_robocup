@@ -15,7 +15,8 @@
   <depend package="tf"/>
   <depend package="geometry_msgs"/>
   <depend package="speech_interpreter"/>
-
+  <depend package="speech_interpreter"/>
+  <depend package="amigo_demo"/>
 </package>
 
 

@@ -161,7 +161,7 @@ class GoToStartLocation(smach.State):
         rospy.loginfo("Starting pose xyz {0}".format(starting_pose))
 
         goal = (float(starting_pose.pose.position.x), float(starting_pose.pose.position.y), float(starting_pose.pose.orientation.z))
-        nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
+        nav = NavigateGeneric(self.robot, goal_pose_2d=goal,goal_area_radius=1.0)
         nav_result = nav.execute()
         return 'done'
 class FetchAndCarry(smach.StateMachine):
