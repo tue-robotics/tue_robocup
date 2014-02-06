@@ -403,10 +403,6 @@ class Grab(smach.State):
 
         ''' Compute difference = delta (only when both transformations have succeeded) and correct for offset ar_marker and grippoint '''
         if not (ar_point_grippoint == None or target_position_grippoint == None):
-            #target_position_delta = geometry_msgs.msg.Point()
-            #target_position_delta.x = target_position_grippoint.x - ar_point_grippoint.x + self.side.markerToGrippointOffset.x
-            #target_position_delta.y = target_position_grippoint.y - ar_point_grippoint.y + self.side.markerToGrippointOffset.y
-            #target_position_delta.z = target_position_grippoint.z - ar_point_grippoint.z + self.side.markerToGrippointOffset.z
             target_position_delta = msgs.Point(target_position_grippoint.x - ar_point_grippoint.x + self.side.markerToGrippointOffset.x,
                 target_position_grippoint.y - ar_point_grippoint.y + self.side.markerToGrippointOffset.y,
                 target_position_grippoint.z - ar_point_grippoint.z + self.side.markerToGrippointOffset.z)
