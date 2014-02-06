@@ -30,6 +30,19 @@ class Ask_questions(smach.State):
 
     def execute(self, userdata=None):
 
+        rospy.loginfo("----Possible questions for now: -----------------")
+        rospy.loginfo("--- What is the capital of Germany? -------------")
+        rospy.loginfo("--- What is the heaviest animal in the world?----")
+        rospy.loginfo("--- Who is the president of America?-------------")
+        rospy.loginfo("--- Who is your example?-------------------------")
+        rospy.loginfo("--- When do the olympics start?------------------")
+        rospy.loginfo("--- Which football club is the best?-------------")
+        rospy.loginfo("--- Who is the best looking person around here?--")
+        rospy.loginfo("--- Which person is not able to say yes?---------")
+        rospy.loginfo("--- Which town has been bombed?------------------")
+        rospy.loginfo("--- What is your motto?--------------------------")
+
+
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
         self.response = self.ask_user_service_questions("questions", 10 , rospy.Duration(60))
 
