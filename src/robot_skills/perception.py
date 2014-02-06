@@ -11,6 +11,8 @@ import pein_srvs.srv
 
 import collections
 
+import tue_recorder
+
 class Perception(object):
     """Interface to amigo's perception services"""
 
@@ -43,6 +45,9 @@ class Perception(object):
 
         ''' Service to load template matching configuration '''
         self.sv_template_config = rospy.ServiceProxy("/template_matching/srv_input", pein_srvs.srv.StartStop)
+
+        ''' Publisher for signaling image recording '''
+        self.pub_rec = rospy.Publisher('/recorder/start', tue_recorder.msg.Start)
 
         ''' Temporarily included to test toggle_perception_2d '''
         import geometry_msgs
@@ -241,6 +246,15 @@ class Perception(object):
     def get_learn_face_counter(self):
         rospy.logwarn("Learning persons currently not implemented, so cannot get counter")
         return self.learn_face_counter
+
+    def rec_start(source, context, duration, freq):
+        msg = tue_recorder.msg.Start()
+        msg.source = source
+        msg.context = context
+        msg.max_duration = rospy.Duration(duration)
+        msg.frequency = freq
+        
+        self.pub_rec.publish(msg)        
 
 
 if __name__ == "__main__":

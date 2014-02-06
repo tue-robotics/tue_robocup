@@ -65,6 +65,9 @@
 
   <!--3d navigation -->
   <depend package="octomap_msgs"/>
+
+  <!-- recording -->
+  <depend package="tue_recorder"/>
   
   <!-- Whole-body planner -->
   <!--<depend package="whole_body_planner"/> CANNOT BE INCLUDED YET, STILL IN JANNO'S USERMAP--> 
