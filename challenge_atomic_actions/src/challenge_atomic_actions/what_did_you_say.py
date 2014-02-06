@@ -30,6 +30,8 @@ class Ask_questions(smach.State):
 
     def execute(self, userdata=None):
 
+        self.robot.head.look_up()
+
         rospy.loginfo("----Possible questions for now: -----------------")
         rospy.loginfo("--- What is the capital of Germany? -------------")
         rospy.loginfo("--- What is the heaviest animal in the world?----")
@@ -83,7 +85,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'ASK_FIRST_QUESTION',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
+                                transitions={   'initialized':'SAY_FIRST_QUESTION',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
                                                 'abort':'Done'})
 
 
@@ -91,15 +93,27 @@ def setup_statemachine(robot):
         ################### ASK FETCH CARRY ##################            
         ######################################################
 
+        smach.StateMachine.add("SAY_FIRST_QUESTION",
+                                   states.Say(robot,"What is your first question?"),
+                                   transitions={'spoken':'ASK_FIRST_QUESTION'})
+
         smach.StateMachine.add("ASK_FIRST_QUESTION",
                                 Ask_questions(robot),
-                                transitions={'succeeded':'ASK_SECOND_QUESTION',
+                                transitions={'succeeded':'SAY_SECOND_QUESTION',
                                              'failed':'ASK_FIRST_QUESTION'})
+
+        smach.StateMachine.add("SAY_SECOND_QUESTION",
+                                   states.Say(robot,"What is your second question?"),
+                                   transitions={'spoken':'ASK_SECOND_QUESTION'})
 
         smach.StateMachine.add("ASK_SECOND_QUESTION",
                                 Ask_questions(robot),
-                                transitions={'succeeded':'ASK_THIRD_QUESTION',
+                                transitions={'succeeded':'SAY_THIRD_QUESTION',
                                              'failed':'ASK_SECOND_QUESTION'})
+
+        smach.StateMachine.add("SAY_THIRD_QUESTION",
+                                   states.Say(robot,"What is your third question?"),
+                                   transitions={'spoken':'ASK_THIRD_QUESTION'})
 
         smach.StateMachine.add("ASK_THIRD_QUESTION",
                                 Ask_questions(robot),
