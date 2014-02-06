@@ -401,7 +401,6 @@ class ToggleModules(smach.State):
         smach.State.__init__(self, outcomes=["toggled"])
         self.robot = robot
         self.modules = modules
-        self.on = on
 
     def execute(self, userdata=None):
         if self.on:
