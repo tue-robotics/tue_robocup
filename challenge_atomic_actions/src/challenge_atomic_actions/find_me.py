@@ -77,15 +77,39 @@ class FindMe(smach.StateMachine):
                                         Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
                                         Compound("not", Compound("not_operator", "ObjectID"))) 
 
-        query_detect_person = Conjunction(  Compound("property_expected", "ObjectID", "class_label", "person"),
+        self.query_detect_person = Conjunction(  Compound("property_expected", "ObjectID", "class_label", "person"),
                                             Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        self.query_detect_face = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         with self:
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={  'initialized': 'LEARN_FACE',
-                                                   'abort':       'LEARN_FACE'})
+                                    transitions={  'initialized': 'TOGGLE_ON_FACE_SGMENTATION',
+                                                   'abort':       'TOGGLE_ON_FACE_SGMENTATION'})
+
+            #### WAIT FOR A PERSON IN FROM OF THE ROBOT
+            smach.StateMachine.add( "TOGGLE_ON_FACE_SGMENTATION",
+                                    states.ToggleModules(robot, modules=["human_tracking"]),
+                                    transitions={   "toggled":"WAIT_FOR_FACE_IN_FRONT"})
+            
+            smach.StateMachine.add( "WAIT_FOR_FACE_IN_FRONT",
+                                    states.Wait_query_true(robot, self.query_detect_face, timeout=5),
+                                    transitions={   "query_true":"TOGGLE_OFF_FACE_SGMENTATION",
+                                                    "timed_out":"TOGGLE_OFF_FACE_SGMENTATION",
+                                                    "preempted":"TOGGLE_OFF_FACE_SGMENTATION"})
+
+            smach.StateMachine.add( "TOGGLE_OFF_FACE_SGMENTATION",
+                                    states.ToggleModules(robot, modules=[]),
+                                    transitions={   "toggled":"SAY_HI"})
+
+            smach.StateMachine.add( 'SAY_HI',
+                                    states.Say(robot, ["Hi there. Let me learn your face before we play hide and seek."]),
+                                    transitions={"spoken":"LEARN_FACE"})
+
             smach.StateMachine.add( 'LEARN_FACE',
                                     states.Learn_Person(robot, "operator"),
                                     transitions={   'face_learned':'SAY_WAIT',
@@ -153,7 +177,7 @@ class FindMe(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['asserted'])
             def assert_current_not_operator(userdata):
-                answers = self.robot.reasoner.query(query_detect_person)
+                answers = self.robot.reasoner.query(self.query_detect_person)
                 rospy.loginfo("These IDs are in from of me: " +", ".join([ans["ObjectID"] for ans in answers]))
                 if answers:
                     person = answers[0]["ObjectID"]
