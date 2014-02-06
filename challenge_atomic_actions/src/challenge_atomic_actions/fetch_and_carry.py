@@ -35,6 +35,7 @@ class WaitForFetchCarry(smach.State):
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
         self.response = self.ask_user_service_fetch_carry("fetch_carry", 1 , rospy.Duration(10))
 
+        response_answer = "no_answer"
         for x in range(0,len(self.response.keys)):
             if self.response.keys[x] == "answer":
                 response_answer = self.response.values[x]
