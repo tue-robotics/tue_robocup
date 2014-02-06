@@ -55,7 +55,6 @@ class Learn_Person(smach.State):
 
         # learn right face
         self.robot.leftArm.send_joint_goal(-1.39, 1.096, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
-        rospy.sleep(1)
         self.robot.leftArm.reset_arm()
         self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
@@ -67,9 +66,7 @@ class Learn_Person(smach.State):
 
         # learn front face
         self.robot.rightArm.send_joint_goal(-1.159, 1.096, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
-        rospy.sleep(1)
         self.robot.rightArm.reset_arm()
-
 
         self.robot.speech.speak(speech_sentence[2])
         result = self.robot.perception.learn_person(name_to_learn, view = 'front')
@@ -144,11 +141,11 @@ class LookForObjectsAtROI(smach.State):
         result = self.robot.perception.toggle(self.modules)
 
         '''Try to set the region of interest. This is not implemented for every module '''
-        target_point = PointStamped(lookat_point.point.x, lookat_point.point.y, lookat_point.point.z, "/map", rospy.Time())
-        try:
-            self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
-        except rospy.exceptions.ROSException as e:
-            rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
+        #target_point = msgs.PointStamped(lookat_point.point.x, lookat_point.point.y, lookat_point.point.z, "/map", rospy.Time())
+        #try:
+        #    self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
+        #except rospy.exceptions.ROSException as e:
+        #    rospy.logwarn("Cannot set perception roi for modules {0}: {1}. Module may not support ROIs".format(self.modules, e))
 
         # Let the object recognition run for a certain period
         # ToDo: replace until new objects have appeared
@@ -232,12 +229,12 @@ class LookForObjectsAtPoint(smach.State):
 
         # Let the object recognition run for a certain period
         '''Try to set the region of interest. This is not implemented for every module '''
-        target_point = PointStamped(self.point_stamped.point.x, self.point_stamped.point.y, self.point_stamped.point.z, "/map", rospy.Time())
-        try:
-            self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
-        except Exception as e:
-            rospy.loginfo("Cannot set perception roi for modules {0}".format(self.modules))
-            rospy.loginfo("Error: {0}".format(e))
+        #target_point = msgs.PointStamped(self.point_stamped.point.x, self.point_stamped.point.y, self.point_stamped.point.z, "/map", rospy.Time())
+        #try:
+        #    self.robot.perception.set_perception_roi(target_point, length_x=0.6, length_y=0.6, length_z=0.4)
+        #except Exception as e:
+        #    rospy.loginfo("Cannot set perception roi for modules {0}".format(self.modules))
+        #    rospy.loginfo("Error: {0}".format(e))
         
         rospy.sleep(rospy.Duration(self.waittime))
 
