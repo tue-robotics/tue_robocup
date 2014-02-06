@@ -71,7 +71,8 @@ class Perception(object):
         # - ...
 
         # start recording
-        self.rec_start("amigo_top_kinect", "perception-toggle", 5, 2.0)
+	if modules:
+            self.rec_start("amigo_top_kinect", "perception-toggle", 5, 2.0)
 
         rospy.loginfo("modules are {0}".format(modules))
         return self.sv_recognition(modules)
