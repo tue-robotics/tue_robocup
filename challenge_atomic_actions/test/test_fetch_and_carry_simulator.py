@@ -6,14 +6,13 @@ import os
 from fast_simulator import client
 
 if __name__ == "__main__":
-    rospy.init_node('cocktailparty_rgo2013_tester')
+    rospy.init_node('fetch_and_carry_tester')
 
     W = client.SimWorld()
 
     env = os.environ['ROBOT_ENV']
 
     if env == "rwc2013":
-
         person = W.add_object("person-1", "person", 4.35, -0.8, 0)
         person = W.add_object("person-2", "person", 5.19, -2.7, 0)   
         person = W.add_object("person-3", "person", 9.44, -2.8, 0)   
@@ -25,8 +24,9 @@ if __name__ == "__main__":
         apple_juice = W.add_object("apple_juice-1", "apple_juice", 5.385, -7.1, 0.84)  
 
     elif env == "robotics_testlab_A":
-        coke = W.add_object("coke-1", "seven_up", 4.607,  1.902, 1.000)
+        coke = W.add_object("coke-1", "coke", 4.607,  1.902, 1.000)
         milk = W.add_object("milk-1", "milk", 4.857,  1.802, 1.000)    
+        person = W.add_object("person-1", "person", 1.0, 0.0, 0.0)  
 
     else:
         print "No test scenario specified for environment {0}.".format(env)
