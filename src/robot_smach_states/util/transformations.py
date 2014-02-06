@@ -91,7 +91,7 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
       
 
 
-def tf_transform(coordinates, inputframe, outputframe, tf_listener):
+def tf_transform(coordinates, inputframe, outputframe, tf_listener, timeout=1.5):
     # Should probably be called transform_point
     
     if isinstance(coordinates, geometry_msgs.msg.Point):
@@ -108,7 +108,7 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener):
     try:
         time = rospy.Time.now()
         ps.header.stamp = time
-        tf_listener.waitForTransform(inputframe, outputframe, time, rospy.Duration(1.5))
+        tf_listener.waitForTransform(inputframe, outputframe, time, rospy.Duration(timeout))
         output_coordinates = tf_listener.transformPoint(outputframe, ps)
     except (tf.Exception, tf.LookupException, tf.ConnectivityException):
         rospy.logerr("Transformation between {0} and {1} failed".format(inputframe,outputframe))
