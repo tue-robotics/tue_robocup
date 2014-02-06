@@ -20,12 +20,13 @@ class Learn_Person(smach.State):
     Face learning state, learn face from left, right, and front view.
     '''
 
-    def __init__(self, robot, name=None):
+    def __init__(self, robot, name=None, models_per_view={'front':10, 'left':10, 'right':10}):
         smach.State.__init__(self,
                              outcomes = ['face_learned', 'learn_failed'])
         self.robot = robot
         self.name_query = Compound("name_to_learn", "Name")
         self.name = name
+        self.models_per_view = models_per_view
 
     def execute(self, userdate=None):
         if self.name:
@@ -44,35 +45,42 @@ class Learn_Person(smach.State):
                             'Now look at my right arm, please wait until I am finished learning',
                             'Please look at my face, till I am finished.']
 
-        # learn left face
-        self.robot.leftArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
+        if 'left' in self.models_per_view:
+            # learn left face
+            self.robot.leftArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
-        self.robot.speech.speak(speech_sentence[0])
-        result = self.robot.perception.learn_person(name_to_learn, view = 'left', publish_while_learning = False)
-        if result == True:
-            self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
-        self.robot.speech.speak("Finished learning your left side")
+            self.robot.speech.speak(speech_sentence[0])
+            result = self.robot.perception.learn_person(
+                name_to_learn, 
+                view='left', 
+                publish_while_learning=False, 
+                n_models=self.models_per_view['left'])
+            if result == True:
+                self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
+            self.robot.speech.speak("Finished learning your left side")
 
-        # learn right face
-        self.robot.leftArm.send_joint_goal(-1.39, 1.096, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
-        self.robot.leftArm.reset_arm()
-        self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
+        if 'right' in self.models_per_view:
+            # learn right face
+            self.robot.leftArm.send_joint_goal(-1.39, 1.096, -0.967, 1.352, -0.9489, 0.5272, 0.0367,timeout=2)
+            self.robot.leftArm.reset_arm()
+            self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
-        self.robot.speech.speak(speech_sentence[1])
-        result = self.robot.perception.learn_person(name_to_learn, view = 'right')
-        if result == True:
-            self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "right")))
-        self.robot.speech.speak("Finished learning your right side")
+            self.robot.speech.speak(speech_sentence[1])
+            result = self.robot.perception.learn_person(name_to_learn, view = 'right', n_models=self.models_per_view['right'])
+            if result == True:
+                self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "right")))
+            self.robot.speech.speak("Finished learning your right side")
 
-        # learn front face
-        self.robot.rightArm.send_joint_goal(-1.159, 1.096, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
-        self.robot.rightArm.reset_arm()
+        if 'front' in self.models_per_view:
+            # learn front face
+            self.robot.rightArm.send_joint_goal(-1.159, 1.096, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
+            self.robot.rightArm.reset_arm()
 
-        self.robot.speech.speak(speech_sentence[2])
-        result = self.robot.perception.learn_person(name_to_learn, view = 'front')
-        if result == True:
-            self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
-        self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!")
+            self.robot.speech.speak(speech_sentence[2])
+            result = self.robot.perception.learn_person(name_to_learn, view = 'front', n_models=self.models_per_view['front'])
+            if result == True:
+                self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
+            self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!")
         
         return 'face_learned'
 
@@ -192,7 +200,6 @@ class LookForObjectsAtROI(smach.State):
         except ValueError, ve2:
             return 'no_object_found'
             
-
 class LookForObjectsAtPoint(smach.State):
     def __init__(self, robot, object_query, point_stamped, modules=["object_recognition"], waittime=2.5):
         smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
@@ -267,6 +274,56 @@ class LookForObjectsAtPoint(smach.State):
 
             return 'object_found'
 
+class LookAtPoint(smach.State):
+    def __init__(self, robot, lookat_query, maxdist=0.8, modules=["template_matching"], waittime=2.5):
+            smach.State.__init__(self, outcomes=['looking','no_point_found','abort'],
+                                    input_keys=[],
+                                    output_keys=[])
+            self.lookat_query = lookat_query
+            self.robot = robot
+            self.maxdist = maxdist
+            self.modules = modules
+            self.waittime= waittime
+            assert hasattr(self.robot, "reasoner")
+            assert hasattr(self.robot, "head")
+
+    def calc_dist(self, (xA,yA,zA), (xB,yB,zB)):
+            dist = math.sqrt(abs(xA-xB)**2 + abs(yA-yB)**2 + abs(zA-zB)**2)
+            return dist
+
+    def execute(self, userdata):
+
+        # Query reasoner for position to look at
+
+        try:
+            lookat_answers = self.robot.reasoner.query(self.lookat_query)
+            basepos = self.robot.base.location.pose.position
+            basepos = (basepos.x, basepos.y, basepos.z)
+            selected_roi_answer = urh.select_answer(lookat_answers, 
+                                                lambda answer: urh.xyz_dist(answer, basepos), 
+                                                minmax=min)
+            rx,ry,rz = urh.answer_to_tuple(selected_roi_answer)
+            rospy.loginfo("Looking at (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
+            lookat_point = msgs.PointStamped(rx,ry,rz)
+            print lookat_point
+
+            # Send spindle goal to bring head to a suitable location
+            # Correction for standard height: with a table heigt of 0.76 a spindle position
+            # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
+            # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
+            # ToDo: do we need to incorporate wait functions?
+            spindle_target = max(0.15, min(lookat_point.point.z - 0.41, self.robot.spindle.upper_limit))
+            rospy.loginfo("Target height: {0}, spindle_target: {1}".format(lookat_point.point.z, spindle_target))
+
+            self.robot.spindle.send_goal(spindle_target,timeout=5.0)
+            self.robot.head.send_goal(lookat_point, keep_tracking=False)
+            return "looking"
+        except ValueError, ve:
+            rospy.loginfo("lookat_answers = {0}".format(lookat_answers))
+            rospy.loginfo("Further processing yielded {0}".format(ve))
+            self.robot.speech.speak("I did not find an object.")
+            return 'no_point_found'
+
 class Read_laser(smach.State):
     def __init__(self, robot, door):
         smach.State.__init__(self, outcomes=['laser_read'])
@@ -324,6 +381,7 @@ class Read_laser(smach.State):
 
 class TogglePeopleDetector(smach.State):
     """Enables or disables PeopleDetector"""
+    #TODO: If ToggleModules works, make this state a specialization of that
     def __init__(self, robot, roi_query=None, on=True):
         smach.State.__init__(self, outcomes=["toggled"])
         self.robot = robot
@@ -333,6 +391,21 @@ class TogglePeopleDetector(smach.State):
     def execute(self, userdata=None):
         if self.on:
             result = self.robot.perception.toggle(["ppl_detection"])
+        else:
+            result = self.robot.perception.toggle([])
+        return "toggled"
+
+class ToggleModules(smach.State):
+    """Enables or disables PeopleDetector"""
+    def __init__(self, robot, modules):
+        smach.State.__init__(self, outcomes=["toggled"])
+        self.robot = robot
+        self.modules = modules
+        self.on = on
+
+    def execute(self, userdata=None):
+        if self.on:
+            result = self.robot.perception.toggle(self.modules)
         else:
             result = self.robot.perception.toggle([])
         return "toggled"
