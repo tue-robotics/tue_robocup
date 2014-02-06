@@ -45,7 +45,7 @@ class Head(object):
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
 
-    def send_goal(self, point_stamped, timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
+    def send_goal(self, point_stamped, timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0, pan_vel=0, tilt_vel=0):
         """
         Send a goal for the head, Executes a HeadRefAction
         Expects a position which is a geometry_msgs.msg.Point(). Should become geometry_msgs.msg.PointStamped, so we don't need the frame_id-param anymore
@@ -66,6 +66,8 @@ class Head(object):
             head_goal.target_point.header.frame_id = "/map"
             head_goal.target_point.point = point_stamped #This goes wrong when position is a raw geometry_msgs.Point, which has no header.
 
+        head_goal.pan_vel  =pan_vel
+        head_goal.tilt_vel =tilt_vel
         head_goal.min_pan  = min_pan
         head_goal.max_pan  = max_pan
         head_goal.min_tilt = min_tilt
@@ -116,6 +118,7 @@ class Head(object):
         """
         Helper method for creating a geometry_msgs Point
         """
+        rospy.logwarn("Please use generic helper function")
         head_goal = geometry_msgs.msg.PointStamped()
         head_goal.header.frame_id = frame_id
         head_goal.point.x = x
@@ -123,12 +126,14 @@ class Head(object):
         head_goal.point.z = z
         return head_goal
 
-    def set_pan_tilt(self, pan = 0.0, tilt = 0.2):
+    def set_pan_tilt(self, pan = 0.0, tilt = 0.2, pan_vel=0, tilt_vel=0):
         """Amigo rotate head based on pan/tilt, both in radius"""
         head_goal = HeadRefGoal()
         head_goal.goal_type = 1
-        head_goal.pan = pan
-        head_goal.tilt = tilt
+        head_goal.pan       = pan
+        head_goal.tilt      = tilt
+        head_goal.pan_vel   = pan_vel
+        head_goal.tilt_vel  = tilt_vel
 
         return self._ac_head_ref_action.send_goal(head_goal)
 
@@ -167,7 +172,7 @@ class Head(object):
         Set head goal at a specified position
         Expects: a PointStamped
         """
-
+        rospy.logwarn("Obsolete, please replace by send_goal")
         return self.send_goal(point_stamped,
                        keep_tracking=keep_tracking, 
                        min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
