@@ -27,15 +27,14 @@ class WaitForFetchCarry(smach.State):
         self.ask_user_service_fetch_carry = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
-        global starting_pose
-        # get current position and rotation        
+        global starting_pose       
         pose = self.robot.base.location
         starting_pose = pose
         rospy.loginfo("Starting pose xyz {0}".format(starting_pose))
+
+
+
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
-
-
-
         self.response = self.ask_user_service_fetch_carry("fetch_carry", 10, rospy.Duration(10))
         if self.response.keys[0] == "answer":
 
@@ -165,6 +164,76 @@ class LookForDrink(smach.State):
             self.robot.reasoner.query(Compound("assertz",Compound("looked_drink_no", looked_no)))
             return "found"
 
+class CompareWithExpectedPeopleDetector(smach.StateMachine):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["Done","Aborted"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        return_result = self.robot.reasoner.query(Compound("person", "X"))
+        rospy.loginfo('Persons found at {0}'.format(return_result))
+
+class DriveToExpectedPersonLocation(smach.StateMachine):
+    """Scan (with the torso laser) for persons, 
+    go to the seed that matches an expected location"""
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
+
+        self.robot = robot
+        self.human_query = Conjunction( Compound("instance_of", "ObjectID", "person"), 
+                                        Compound( "position", "ObjectID", Compound("point", "X", "Y", "Z")))
+
+        with self:
+            smach.StateMachine.add( "TOGGLE_PEOPLE_DETECTION",
+                                    TogglePeopleDetector(robot, on=True),
+                                    transitions={   "toggled":"WAIT_FOR_DETECTION"})
+
+            smach.StateMachine.add( "WAIT_FOR_DETECTION",
+                                    Wait_query_true(robot, self.human_query, timeout=5),
+                                    transitions={   "query_true":"TOGGLE_OFF_OK",
+                                                    "timed_out":"Failed",
+                                                    "preempted":"Aborted"})
+
+            smach.StateMachine.add( "TOGGLE_OFF_OK",
+                                    TogglePeopleDetector(robot, on=False),
+                                    transitions={   "toggled":"GOTO_PERSON"})
+
+            #smach.StateMachine.add( "CHECK_PERSON",
+            #                        CompareWithExpectedPeopleDetector(robot),
+            #                        transitions={   "Done":"GOTO_PERSON",
+            #                                        "Aborted":"GOTO_PERSON"})
+
+            ### NOW WE HAVE A LIST OF POSSIBLE PEOPLE
+            # Do Something smart here
+            # And if not go to the next closests one!
+            # or in executive!?
+
+            smach.StateMachine.add( "GOTO_PERSON",
+                                    NavigateGeneric(robot, lookat_query=self.human_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                    transitions={   "arrived":"LOOK_UP_FOR_SAY",
+                                                    "unreachable":'SAY_FAILED',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_FAILED'})
+            
+            smach.StateMachine.add( "LOOK_UP_FOR_SAY",
+                                  ResetHead(robot),
+                                  transitions={"done":"SAY_SOMETHING"})
+
+            smach.StateMachine.add( "SAY_SOMETHING",
+                                  Say(robot, ["I found someone!"]),
+                                  transitions={"spoken":"Done"})
+
+            smach.StateMachine.add( "SAY_FAILED",
+                                  Say(robot, ["I didn't find anyone"]),
+                                  transitions={"spoken":"LOOK_UP_RESET"})
+
+            smach.StateMachine.add( "LOOK_UP_RESET",
+                                  ResetHead(robot),
+                                  transitions={"done":"Failed"})
+
+
+
 class GoToStartLocation(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "failed"])
@@ -181,6 +250,7 @@ class GoToStartLocation(smach.State):
         nav = NavigateGeneric(self.robot, goal_pose_2d=goal,goal_area_radius=1.0)
         nav_result = nav.execute()
         return 'done'
+
 class FetchAndCarry(smach.StateMachine):
 
     def __init__(self, robot):
@@ -264,7 +334,7 @@ class FetchAndCarry(smach.StateMachine):
                                     transitions={   "Done":"HANDOVER_TO_HUMAN",
                                                     "Aborted":'Done',
                                                     "Failed":"Done"})
-            
+
             smach.StateMachine.add("HANDOVER_TO_HUMAN",
                                     HandoverToHuman(arm, robot),
                                     transitions={   'succeeded':'Done',
