@@ -87,19 +87,10 @@ class PickAndPlace(smach.StateMachine):
                         dropoff = answers[0]["Disposal_type"]
                         return "I have found a {0}. I'll' bring it to the {1}".format(_type, dropoff).replace("_", " ")
                     else:
-                        query_dropoff_loc = query_dropoff_loc_backup 
                         return "I have found something, but I'm not sure what it is. I'll throw it in the trashbin"
                 except Exception, e:
                     rospy.logerr(e)
-                    try:
-                        type_only = robot.reasoner.query(query_current_object_class)[0]["ObjectType"]
-                        return "I found something called {0}.".format(type_only).replace("_", " ")
-                    except Exception, e:
-                        rospy.logerr(e)
-                        #If we end up here, override the query_dropoff_loc to always go to the trashbin
-                        query_dropoff_loc = query_dropoff_loc_backup 
-                        pass
-                    return "I have found something, but I'm not sure what it is. I'll throw it in the trashbin"
+                    return "I have found something, but I'm not sure what it is. I'll throw it in the trashbin. I don't know what I'm actually doing"
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
                                     Say_generated(robot, sentence_creator=generate_object_sentence),
                                     transitions={ 'spoken':'GRAB' })
@@ -116,11 +107,17 @@ class PickAndPlace(smach.StateMachine):
 
             smach.StateMachine.add("DROPOFF_OBJECT",
                                     DropObject(arm, robot, query_dropoff_loc),
-                                    transitions={   'succeeded':'Done',
+                                    transitions={   'succeeded':'RESET',
                                                     'failed':'Failed',
-                                                    'target_lost':'SAY_HUMAN_HANDOVER'})
+                                                    'target_lost':'DROPOFF_OBJECT_TRASHBIN'})
             ''' In case of failed: the DropObject state has already done a human handover at the dropoff location
                 In case of target_lost, it cannot go to the dropoff location but has to hand over the object anyway in order to proceed to the next task'''
+
+            smach.StateMachine.add("DROPOFF_OBJECT_TRASHBIN",
+                                    DropObject(arm, robot, query_dropoff_loc_backup),
+                                    transitions={   'succeeded':'RESET',
+                                                    'failed':'Failed',
+                                                    'target_lost':'SAY_HUMAN_HANDOVER'})
 
             smach.StateMachine.add( 'SAY_HUMAN_HANDOVER', 
                                     Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
