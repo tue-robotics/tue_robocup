@@ -198,7 +198,7 @@ class FindMe(smach.StateMachine):
             @smach.cb_interface(outcomes=['asserted'])
             def assert_current_not_operator(userdata):
                 answers = self.robot.reasoner.query(self.query_detect_person)
-                rospy.loginfo("These IDs are in from of me: " +", ".join([ans["ObjectID"] for ans in answers]))
+                rospy.loginfo("These IDs are in from of me: " +", ".join([str(ans["ObjectID"]) for ans in answers]))
                 if answers:
                     person = answers[0]["ObjectID"]
                     rospy.loginfo("ObjectID {0} is in front of me but not operator.".format(person))
