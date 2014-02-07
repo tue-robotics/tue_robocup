@@ -7,6 +7,40 @@ from robot_skills.reasoner import Compound, Conjunction, Sequence
 import smach
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
+from drive_to_person import DriveToClosestPerson
+
+class Identify(smach.StateMachine):
+
+    def __init__(self, robot, desired_person=None):
+        smach.StateMachine.__init__(self, outcomes=['name_found', 'name_not_found'])
+        
+        self.robot = robot
+
+        self.desired_person = str(desired_person).lower() if desired_person else "Name" #if we care about the name, use that or else make it variable and don't care.
+
+        self.name_in_front = Conjunction(  Compound("property_expected", "ObjectID", "class_label", "person"),
+                                            Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                            Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
+                                            Compound("property_expected", "ObjectID", "name", self.desired_person))
+
+        with self:
+            smach.StateMachine.add( "TOGGLE_ON_FACE_RECOGNITION",
+                                    states.ToggleModules(robot, modules=["face_recognition"]),
+                                    transitions={   "toggled":"WAIT_FOR_FACE_IN_FRONT"})
+            
+            smach.StateMachine.add( "WAIT_FOR_FACE_IN_FRONT",
+                                    states.Wait_query_true(robot, self.name_in_front, timeout=5), #Wait until we have something with a name in front of us
+                                    transitions={   "query_true":"TOGGLE_OFF_FACE_RECOGNITION",
+                                                    "timed_out":"TOGGLE_OFF_FACE_RECOGNITION_FAILED",
+                                                    "preempted":"TOGGLE_OFF_FACE_RECOGNITION_FAILED"})
+
+            smach.StateMachine.add( "TOGGLE_OFF_FACE_RECOGNITION",
+                                    states.ToggleModules(robot, modules=[]),
+                                    transitions={   "toggled":"name_found"})
+
+            smach.StateMachine.add( "TOGGLE_OFF_FACE_RECOGNITION_FAILED",
+                                    states.ToggleModules(robot, modules=[]),
+                                    transitions={   "toggled":"name_not_found"})
 
 class FindMe(smach.StateMachine):
     """The Find me basic functionality. 
@@ -24,14 +58,18 @@ class FindMe(smach.StateMachine):
         |
     NavigateGeneric(PeopleRoom)
         |
-    TogglePeopleDetector
         |
-        v
-    LookAround
-        |
-        v
-    NavigateGeneric(PossileOperator) {-----------------+
-        |                                              |
+        v   DriveToClosestPerson
+   +---------------------------------------------+
+   |TogglePeopleDetector                         |
+   |    |                                        |
+   |    v                                        |
+   |LookAround                                   |
+   |    |                                        |
+   |    v                                        |
+   |NavigateGeneric(PossileOperator)             |{----+
+   |    |                                        |     |
+   +----+----------------------------------------+     |
         v                                              |
     Identify()----->Assert(currentPersonIsNotOperator)-+
         |
@@ -77,7 +115,7 @@ class FindMe(smach.StateMachine):
                                         Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
                                         Compound("not", Compound("not_operator", "ObjectID"))) 
 
-        self.query_detect_person = Conjunction(  Compound("property_expected", "ObjectID", "class_label", "person"),
+        self.query_detect_person = Conjunction(  Compound("property_expected", "ObjectID", "class_label", "validated_person"),
                                             Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
@@ -97,7 +135,7 @@ class FindMe(smach.StateMachine):
                                     transitions={   "toggled":"WAIT_FOR_FACE_IN_FRONT"})
             
             smach.StateMachine.add( "WAIT_FOR_FACE_IN_FRONT",
-                                    states.Wait_query_true(robot, self.query_detect_face, timeout=5),
+                                    states.Wait_query_true(robot, self.query_detect_person, timeout=5),
                                     transitions={   "query_true":"TOGGLE_OFF_FACE_SEGMENTATION",
                                                     "timed_out":"TOGGLE_OFF_FACE_SEGMENTATION",
                                                     "preempted":"TOGGLE_OFF_FACE_SEGMENTATION"})
@@ -126,36 +164,17 @@ class FindMe(smach.StateMachine):
 
             smach.StateMachine.add('GOTO_ROOM',
                                     states.NavigateGeneric(robot, goal_query=self.room_query),
-                                    transitions={   "arrived":"DETECT_PERSONS", 
-                                                    "unreachable":"DETECT_PERSONS", 
-                                                    "preempted":"DETECT_PERSONS", 
-                                                    "goal_not_defined":"DETECT_PERSONS"})
+                                    transitions={   "arrived":"GOTO_CLOSEST_PERSON", 
+                                                    "unreachable":"GOTO_CLOSEST_PERSON", 
+                                                    "preempted":"GOTO_CLOSEST_PERSON", 
+                                                    "goal_not_defined":"GOTO_CLOSEST_PERSON"})
 
             ########## In the room, find persons and look at them to identify them##########
-            smach.StateMachine.add( "DETECT_PERSONS",
-                                    states.TogglePeopleDetector(robot, on=True),
-                                    transitions={   "toggled":"WAIT_FOR_DETECTION"})
-
-            smach.StateMachine.add( "WAIT_FOR_DETECTION",
-                                    states.Wait_query_true(robot, self.human_query, timeout=5),
-                                    transitions={   "query_true":"TOGGLE_OFF",
-                                                    "timed_out":"SAY_FAILED_NO_PERSONS",
-                                                    "preempted":"Aborted"})
-
-            smach.StateMachine.add( "SAY_FAILED_NO_PERSONS",
-                                  states.Say(robot, ["I couldn't find anyone, sorry"], mood="sad"),
-                                  transitions={"spoken":"Failed"})
-
-            smach.StateMachine.add( "TOGGLE_OFF",
-                                    states.TogglePeopleDetector(robot, on=False),
-                                    transitions={   "toggled":"GOTO_PERSON"})
-
-            smach.StateMachine.add( "GOTO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=self.human_query, xy_dist_to_goal_tuple=(1.5,0)),
-                                    transitions={   "arrived":"SAY_SOMETHING",
-                                                    "unreachable":'SAY_SOMETHING', #TODO: Not sure this is wise to, we could be facing someone OR not...
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'SAY_COULD_NOT_FIND_PERSON'})
+            smach.StateMachine.add( "GOTO_CLOSEST_PERSON",
+                                    DriveToClosestPerson(robot),
+                                    transitions={   'Done':"SAY_SOMETHING",
+                                                    'Aborted':"Aborted",
+                                                    'Failed':"SAY_COULD_NOT_FIND_PERSON"})
 
             smach.StateMachine.add( "SAY_SOMETHING",
                                   states.Say(robot, ["Hi there, let me see if you are my operator"]),
@@ -167,8 +186,9 @@ class FindMe(smach.StateMachine):
                                   transitions={"spoken":"IDENTIFY_OPERATOR"})
 
             smach.StateMachine.add( "IDENTIFY_OPERATOR",
-                                  states.Say(robot, ["Hmm, are you indeed my operator?"]),
-                                  transitions={"spoken":"FOUND_OPERATOR"})
+                                  Identify(robot, desired_person="operator"),
+                                  transitions={ "name_found":"FOUND_OPERATOR",
+                                                "name_not_found":"NOT_OPERATOR"})
                                   #TODO: replace with actual identifcation state. one transition should be NOT_OPERATOR
 
             smach.StateMachine.add( "NOT_OPERATOR", #TODO: Not yet called from anywhere. IDENTIFY_OPERATOR should be a new Identify state
@@ -182,11 +202,12 @@ class FindMe(smach.StateMachine):
                 if answers:
                     person = answers[0]["ObjectID"]
                     rospy.loginfo("ObjectID {0} is in front of me but not operator.".format(person))
-                    self.robot.reasoner.assertz(Compound("not_operator", person))
+                    self.robot.reasoner.assertz(Compound("ignored_person", person))
+                    return "asserted"
                 else:
                     return "asserted"
             smach.StateMachine.add('ASSERT_CURRENT_NOT_OPERATOR', smach.CBState(assert_current_not_operator),
-                                    transitions={   'asserted':'GOTO_PERSON'}) #Yes this is a loop, but is is supposed to tick off all persons one by one. 
+                                    transitions={   'asserted':'GOTO_CLOSEST_PERSON'}) #Yes this is a loop, but is is supposed to tick off all persons one by one. 
 
             #### SUCCESS! ####
             smach.StateMachine.add( "FOUND_OPERATOR",
@@ -198,7 +219,7 @@ class FindMe(smach.StateMachine):
                                   transitions={"spoken":"GOTO_RIGHT"})
 
             smach.StateMachine.add( "GOTO_RIGHT",
-                                    states.NavigateGeneric(robot, lookat_query=self.human_query, goal_area_radius=0.5), #just go left or right, good enough
+                                    states.NavigateGeneric(robot, lookat_query=self.query_detect_person, goal_area_radius=0.5, xy_dist_to_goal_tuple=(0.0,1.0)), #just go left or right, good enough
                                     transitions={   "arrived":"Done",
                                                     "unreachable":'Failed',
                                                     "preempted":'Aborted',
