@@ -13,6 +13,12 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 	def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
+        query_goto_pick   = Compound("waypoint", "pick_loc", Compound("pose_2d", "X", "Y", "Phi"))
+        query_goto_fetch  = Compound("waypoint", "fetch_loc", Compound("pose_2d", "X", "Y", "Phi"))
+        query_goto_find   = Compound("waypoint", "find_loc", Compound("pose_2d", "X", "Y", "Phi"))
+        query_goto_avoid  = Compound("waypoint", "avoid_loc", Compound("pose_2d", "X", "Y", "Phi"))
+        query_goto_what   = Compound("waypoint", "what_loc", Compound("pose_2d", "X", "Y", "Phi"))
+
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
@@ -22,7 +28,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "Failed":"GOTO_PICK_AND_PLACE"})
 
             smach.StateMachine.add( 'GOTO_PICK_AND_PLACE',
-                                    NavigateGeneric(robot, goal_query=query_exploration_target),
+                                    NavigateGeneric(robot, goal_query=query_goto_pick),
                                     transitions={   "arrived":"GOTO_FETCH_AND_CARRY",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
@@ -36,7 +42,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                                    "Failed":	"GOTO_FETCH_AND_CARRY"})
 
             smach.StateMachine.add( 'GOTO_FETCH_AND_CARRY',
-                                    NavigateGeneric(robot, goal_query=query_exploration_target),
+                                    NavigateGeneric(robot, goal_query=query_goto_fetch),
                                     transitions={   "arrived":"GOTO_FIND_ME_AND_GO_OVER_THERE",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
@@ -49,7 +55,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                                    "Failed":	"GOTO_FIND_ME_AND_GO_OVER_THERE"})
 
             smach.StateMachine.add( 'GOTO_FIND_ME_AND_GO_OVER_THERE',
-                                    NavigateGeneric(robot, goal_query=query_exploration_target),
+                                    NavigateGeneric(robot, goal_query=query_goto_find),
                                     transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
@@ -62,7 +68,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                                    "Failed":	"GOTO_AVOID_THAT"})
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
-                                    NavigateGeneric(robot, goal_query=query_exploration_target),
+                                    NavigateGeneric(robot, goal_query=query_goto_avoid),
                                     transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
@@ -74,7 +80,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                                    "Aborted":	"Aborted"})
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
-                                    NavigateGeneric(robot, goal_query=query_exploration_target),
+                                    NavigateGeneric(robot, goal_query=query_goto_what),
                                     transitions={   "arrived":"WHAT_DID_YOU_SAY",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',

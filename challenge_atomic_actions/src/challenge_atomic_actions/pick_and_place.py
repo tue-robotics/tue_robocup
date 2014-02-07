@@ -82,9 +82,13 @@ class PickAndPlace(smach.StateMachine):
             def generate_object_sentence(*args,**kwargs):
                 try:
                     answers = robot.reasoner.query(query_dropoff_loc)
-                    _type = answers[0]["ObjectType"]
-                    dropoff = answers[0]["Disposal_type"]
-                    return "I have found a {0}. I'll' bring it to the {1}".format(_type, dropoff).replace("_", " ")
+                    if answers:
+                        _type = answers[0]["ObjectType"]
+                        dropoff = answers[0]["Disposal_type"]
+                        return "I have found a {0}. I'll' bring it to the {1}".format(_type, dropoff).replace("_", " ")
+                    else:
+                        query_dropoff_loc = query_dropoff_loc_backup 
+                        return "I have found something, but I'm not sure what it is. I'll throw it in the trashbin"
                 except Exception, e:
                     rospy.logerr(e)
                     try:
