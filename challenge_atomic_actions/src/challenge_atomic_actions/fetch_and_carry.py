@@ -181,9 +181,6 @@ class FetchAndCarry(smach.StateMachine):
         query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                            Compound( "position", "ObjectID", Compound("point", "X", "Y", "Z")))
-        query_detect_face = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
-                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                          Compound("property_expected", "ObjectID", "position", Compound("point","X","Y","Z")))
 
         # Retract all old facts
         robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
@@ -253,25 +250,9 @@ class FetchAndCarry(smach.StateMachine):
                                     transitions={   "Done":"VERIFY_HUMAN",
                                                     "Aborted":"HANDOVER_TO_HUMAN",
                                                     "Failed":"HANDOVER_TO_HUMAN"})
-
             smach.StateMachine.add( 'VERIFY_HUMAN',
                                     Say(robot,"Still need to verify if you are a human"),
-                                    transitions={   "spoken":"TOGGLE_ON_FACE_SEGMENTATION"})
-
-                        #### WAIT FOR A PERSON IN FROM OF THE ROBOT
-            smach.StateMachine.add( "TOGGLE_ON_FACE_SEGMENTATION",
-                                    ToggleModules(robot, modules=["face_segmentation"]),
-                                    transitions={   "toggled":"WAIT_FOR_FACE_IN_FRONT"})
-            
-            smach.StateMachine.add( "WAIT_FOR_FACE_IN_FRONT",
-                                    Wait_query_true(robot, query_detect_face, timeout=5),
-                                    transitions={   "query_true":"TOGGLE_OFF_FACE_SEGMENTATION",
-                                                    "timed_out":"TOGGLE_OFF_FACE_SEGMENTATION",
-                                                    "preempted":"TOGGLE_OFF_FACE_SEGMENTATION"})
-
-            smach.StateMachine.add( "TOGGLE_OFF_FACE_SEGMENTATION",
-                                    ToggleModules(robot, modules=[]),
-                                    transitions={   "toggled":"HANDOVER_TO_HUMAN"})
+                                    transitions={   "spoken":"HANDOVER_TO_HUMAN"})
 
             smach.StateMachine.add("HANDOVER_TO_HUMAN",
                                     HandoverToHuman(arm, robot),
