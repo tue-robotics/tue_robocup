@@ -165,7 +165,7 @@ class Head(object):
         return True"""
         reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/amigo/torso')
 
-        return self.send_goal(reset_head_goal, keep_tracking=False, timeout=timeout)
+        return self.send_goal(reset_head_goal, keep_tracking=False, timeout=timeout, pan_vel=1.5, tilt_vel=1.5)
 
     def set_position(self, point_stamped, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
         """
