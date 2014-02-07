@@ -88,21 +88,21 @@ class FindMe(smach.StateMachine):
         with self:
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={  'initialized': 'TOGGLE_ON_FACE_SGMENTATION',
-                                                   'abort':       'TOGGLE_ON_FACE_SGMENTATION'})
+                                    transitions={  'initialized': 'TOGGLE_ON_FACE_SEGMENTATION',
+                                                   'abort':       'TOGGLE_ON_FACE_SEGMENTATION'})
 
             #### WAIT FOR A PERSON IN FROM OF THE ROBOT
-            smach.StateMachine.add( "TOGGLE_ON_FACE_SGMENTATION",
+            smach.StateMachine.add( "TOGGLE_ON_FACE_SEGMENTATION",
                                     states.ToggleModules(robot, modules=["human_tracking"]),
                                     transitions={   "toggled":"WAIT_FOR_FACE_IN_FRONT"})
             
             smach.StateMachine.add( "WAIT_FOR_FACE_IN_FRONT",
                                     states.Wait_query_true(robot, self.query_detect_face, timeout=5),
-                                    transitions={   "query_true":"TOGGLE_OFF_FACE_SGMENTATION",
-                                                    "timed_out":"TOGGLE_OFF_FACE_SGMENTATION",
-                                                    "preempted":"TOGGLE_OFF_FACE_SGMENTATION"})
+                                    transitions={   "query_true":"TOGGLE_OFF_FACE_SEGMENTATION",
+                                                    "timed_out":"TOGGLE_OFF_FACE_SEGMENTATION",
+                                                    "preempted":"TOGGLE_OFF_FACE_SEGMENTATION"})
 
-            smach.StateMachine.add( "TOGGLE_OFF_FACE_SGMENTATION",
+            smach.StateMachine.add( "TOGGLE_OFF_FACE_SEGMENTATION",
                                     states.ToggleModules(robot, modules=[]),
                                     transitions={   "toggled":"SAY_HI"})
 
