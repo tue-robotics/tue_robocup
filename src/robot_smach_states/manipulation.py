@@ -538,8 +538,18 @@ class HandoverToHuman(smach.StateMachine):
         self.robot = robot
 
         with self:
-            smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
-                        transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
+
+            smach.StateMachine.add("SPINDLE_MEDIUM",
+                        ResetTorso(self.robot),
+                        transitions={'succeeded':'MOVE_HUMAN_HANDOVER_JOINT_GOAL',
+                                     'failed'   :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
+
+            smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL",
+                        ArmToJointPos(self.robot, self.side, (-0.2, 0.5, -0.2, 0.8, 0, 0.210, 0.2), timeout=1.0),
+                        transitions={   'done':'SAY_OPEN_GRIPPER',
+                                      'failed':'SAY_OPEN_GRIPPER'})
+            #smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
+            #            transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
 
             smach.StateMachine.add("SAY_OPEN_GRIPPER", 
                         Say(robot, [ "Be careful, I will open my gripper now"]),
@@ -554,7 +564,7 @@ class HandoverToHuman(smach.StateMachine):
                                      'failed'       :   'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM', 
-                        ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800), timeout=0.0), #Copied from demo_executioner NORMAL
+                        ArmToJointPos(self.robot, self.side, StandardPoses.RESET_POSE, timeout=1.0), 
                         transitions={   'done':'RESET_TORSO',
                                       'failed':'RESET_TORSO'    })
 
