@@ -4,10 +4,9 @@ import rospy
 
 # 
 from drive_to_person import DriveToClosestPerson
-
 from speech_interpreter.srv import AskUser
-import smach
 
+import smach
 from robot_skills.amigo import Amigo
 from robot_smach_states import *
 
@@ -15,7 +14,6 @@ from robot_skills.reasoner  import Conjunction, Compound
 from robot_smach_states.util.startup import startup
 
 grasp_arm = "left"
-starting_pose = None
 
 class WaitForFetchCarry(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
@@ -26,18 +24,14 @@ class WaitForFetchCarry(smach.State):
         self.ask_user_service_fetch_carry = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata=None):
-        global starting_pose       
+        #global starting_pose       
         pose = self.robot.base.location
         starting_pose = pose
         rospy.loginfo("Starting pose xyz {0}".format(starting_pose))
-
-        # ToDo assert start pose 
-        #self.robot.reasoner.query(Compound("assertz",Compound("start_location", starting_pose)))
-        #return_result = self.robot.reasoner.query(Compound("start_location", "X"))
-
+        self.robot.reasoner.query(Compound("assertz",Compound("starting_pose", starting_pose.pose.position.x, starting_pose.pose.position.y, starting_pose.pose.orientation.z)))
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
-
+        self.robot.head.set_pan_tilt(tilt=-0.2)
         self.response = self.ask_user_service_fetch_carry("fetch_carry", 10, rospy.Duration(10))
         if self.response:
             if self.response.keys[0] == "answer":
@@ -55,7 +49,7 @@ class WaitForFetchCarry(smach.State):
 
 
 
-        '''
+        ''' Fallback if speech does not work
         response_answer = "coke"
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
         rospy.loginfo("Object to fetch is not understood: {0} ".format(response_answer))
@@ -123,7 +117,7 @@ class LookForDrink(smach.State):
 
 
         self.robot.speech.speak("Let's see what I can find here")
-
+        #self.response_start = self.robot.perception.toggle(['template_matching'])
         self.response_start = self.robot.perception.toggle(['object_recognition'])
  
         if self.response_start.error_code == 0:
@@ -131,9 +125,6 @@ class LookForDrink(smach.State):
         elif self.response_start.error_code == 1:
             rospy.loginfo("Object recognition failed to start")
             self.robot.speech.speak("I was not able to start object recognition.")
-            looked_no = 0;
-            self.robot.reasoner.query(Compound("retractall", Compound("looked_drink_no", "X")))
-            self.robot.reasoner.query(Compound("assertz",Compound("looked_drink_no", looked_no)))
             return "not_found"
 
         wait_machine = Wait_query_true(self.robot, query_detect_object, 7)
@@ -156,9 +147,6 @@ class LookForDrink(smach.State):
             return "looking"
         elif wait_result == "query_true":
             self.robot.speech.speak("Hey, I found your " + serving_drink)
-            looked_no = 0;
-            self.robot.reasoner.query(Compound("retractall", Compound("looked_drink_no", "X")))
-            self.robot.reasoner.query(Compound("assertz",Compound("looked_drink_no", looked_no)))
             return "found"
 
 class GoToStartLocation(smach.State):
@@ -167,28 +155,29 @@ class GoToStartLocation(smach.State):
 
         self.robot = robot
         self.preempted = False
-        
+    
 
     def execute(self, userdata=None):
-        global starting_pose
-        rospy.loginfo("Starting pose xyz {0}".format(starting_pose))
+        
+        return_result = self.robot.reasoner.query(Compound("starting_pose", "X", "Y", "Z"))
+        if return_result:
+            rospy.loginfo("Found starting stuff {0}".format(return_result))
+        
+        
 
-        goal = (float(starting_pose.pose.position.x), float(starting_pose.pose.position.y), float(1.0))
-        nav = NavigateGeneric(self.robot, lookat_point_3d=goal,xy_dist_to_goal_tuple=(1.0,0.0))
-        nav.execute()
-        return 'done'
+            goal = (float(return_result[0]["X"]), float(return_result[0]["Y"]), float(1.0))
+            nav = NavigateGeneric(self.robot, lookat_point_3d=goal,xy_dist_to_goal_tuple=(1.0,0.0))
+            nav.execute()
+            return 'done'
+        else:
+            return 'failed'
 
 class FetchAndCarry(smach.StateMachine):
 
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
-
-        query_fetch_location = Compound("waypoint", "goal", Compound("pose_2d", "X", "Y", "Phi"))
-        query_start_location = Compound("waypoint", "start_location", Compound("pose_2d", "X", "Y", "Phi"))
-        #query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
-        #                               Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
-    
+            
         query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
                                            Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                            Compound( "position", "ObjectID", Compound("point", "X", "Y", "Z")))
@@ -209,6 +198,9 @@ class FetchAndCarry(smach.StateMachine):
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
         robot.reasoner.assertz(Compound("challenge", "fetch_and_carry"))
 
+        # Use reasonar to store start pose
+        robot.reasoner.query(Compound("retractall", Compound("starting_pose", "X", "Y", "Z")))
+
         
 
         if grasp_arm == "left":
@@ -227,8 +219,7 @@ class FetchAndCarry(smach.StateMachine):
                                     WaitForFetchCarry(robot),
                                     transitions={   "succeeded":"LOOK_FOR_DRINK",
                                                  	"failed":"TAKE_ORDER"})
-
-                                          
+                              
             smach.StateMachine.add( 'LOOK_FOR_DRINK',
 	                                LookForDrink(robot),
 	                                transitions={   "looking":"LOOK_FOR_DRINK",
@@ -252,7 +243,7 @@ class FetchAndCarry(smach.StateMachine):
             smach.StateMachine.add( 'NAVIGATE_TO_START_LOCATION',
                                     GoToStartLocation(robot),
                                     transitions={   "done":"PEOPLE_LASER_DETECTION",
-                                                    "failed":'Aborted'})
+                                                    "failed":'PEOPLE_LASER_DETECTION'})
 
             smach.StateMachine.add( 'PEOPLE_LASER_DETECTION',
                                     DriveToClosestPerson(robot),

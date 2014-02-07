@@ -24,8 +24,9 @@ if __name__ == "__main__":
         apple_juice = W.add_object("apple_juice-1", "apple_juice", 5.385, -7.1, 0.84)  
 
     elif env == "robotics_testlab_A":
-        coke = W.add_object("coke-1", "coke", 4.607,  1.902, 1.000)
-        milk = W.add_object("milk-1", "milk", 4.857,  1.802, 1.000)    
+        coke = W.add_object("coke-1", "coke", 5.107,  1.952, 0.87)
+        milk = W.add_object("milk-1", "milk", 4.857,  1.952, 0.87)    
+        fanta = W.add_object("fanta-1", "fanta", 4.57,  1.942, 0.87)   
         person = W.add_object("person-1", "person", 1.0, 0.0, 0.0)  
 
     else:
