@@ -649,27 +649,31 @@ class Determine_goal(smach.State):
                                                float(answer["Phi"])) for answer in answers]
 
             if self.lookat_query:
-                rospy.logwarn("lookat_query")
-                lookat_answers = self.robot.reasoner.query(self.lookat_query)
-                basepos = self.robot.base.location.pose.position
-                basepos = (basepos.x, basepos.y, basepos.z)
-                selected_roi_answer = urh.select_answer(lookat_answers, 
-                                                    lambda answer: urh.xyz_dist(answer, basepos), 
-                                                    minmax=min)
-                rx,ry,rz = urh.answer_to_tuple(selected_roi_answer)
-                rospy.loginfo("Going to look at (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
-                lookat_point = msgs.PointStamped(rx,ry,rz)
+                try:
+                    rospy.logwarn("lookat_query")
+                    lookat_answers = self.robot.reasoner.query(self.lookat_query)
+                    basepos = self.robot.base.location.pose.position
+                    basepos = (basepos.x, basepos.y, basepos.z)
+                    selected_roi_answer = urh.select_answer(lookat_answers, 
+                                                        lambda answer: urh.xyz_dist(answer, basepos), 
+                                                        minmax=min)
+                    rx,ry,rz = urh.answer_to_tuple(selected_roi_answer)
+                    rospy.loginfo("Going to look at (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
+                    lookat_point = msgs.PointStamped(rx,ry,rz)
 
-                base_poses_for_point = self.robot.base.get_base_goal_poses(lookat_point, self.xy_dist_to_goal_tuple[0], self.xy_dist_to_goal_tuple[1])
+                    base_poses_for_point = self.robot.base.get_base_goal_poses(lookat_point, self.xy_dist_to_goal_tuple[0], self.xy_dist_to_goal_tuple[1])
 
-                if base_poses_for_point:
-                    for base_goal_pose in base_poses_for_point:
-                        # Convert to x, y, phi
-                        phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
-                        # Add to possible locations
-                        self.possible_locations += [(base_goal_pose.pose.position.x,
-                                                base_goal_pose.pose.position.y,
-                                                phi)]
+                    if base_poses_for_point:
+                        for base_goal_pose in base_poses_for_point:
+                            # Convert to x, y, phi
+                            phi = self.robot.base.phi(base_goal_pose.pose.orientation)#util.transformations.quaternion_to_euler_z(base_goal_pose.pose.orientation)
+                            # Add to possible locations
+                            self.possible_locations += [(base_goal_pose.pose.position.x,
+                                                    base_goal_pose.pose.position.y,
+                                                    phi)]
+                except Exception, e:
+                    rospy.logerr(e)
+                    return "failed"
 
             if self.lookat_point_3d:
                 rospy.logwarn("Lookat_point_3d")
