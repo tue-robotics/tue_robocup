@@ -403,8 +403,5 @@ class ToggleModules(smach.State):
         self.modules = modules
 
     def execute(self, userdata=None):
-        if self.on:
-            result = self.robot.perception.toggle(self.modules)
-        else:
-            result = self.robot.perception.toggle([])
+        self.robot.perception.toggle(self.modules)
         return "toggled"
