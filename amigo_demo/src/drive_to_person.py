@@ -85,11 +85,15 @@ class DriveToClosestPerson(smach.StateMachine):
                                                     Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
                                                     Compound("not", Compound("ignored_person", "ObjectID")))
 
-        self.current_possible_person_query = Conjunction(   Compound("current_possible_person", "ObjectID", "person"), 
+        self.current_possible_person_query = Conjunction(   Compound("current_possible_person", "ObjectID"), 
                                                             Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
         self.person_query = Conjunction(  Compound("instance_of", "ObjectID", "validated_person"), 
                                           Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        robot.reasoner.assertz(Compound("ignored_person", "nobody")) #Required to make the predicate known.
+	robot.reasoner.retractall(Compound("current_possible_person", "ObjectID"))
+#        robot.perception.toggle([])	
 
         with self:
             #Turn on LASER
@@ -98,7 +102,7 @@ class DriveToClosestPerson(smach.StateMachine):
                                     transitions={   "toggled":"WAIT_FOR_POSSIBLE_DETECTION"})
 
             smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
-                                    states.Wait_query_true(robot, self.possible_person_query, timeout=5),
+                                    states.Wait_query_true(robot, self.possible_person_query, timeout=3),
                                     transitions={   "query_true":"TOGGLE_OFF_POSSIBLE_PEOPLE_DETECTION",
                                                     "timed_out":"Failed",
                                                     "preempted":"Aborted"})
@@ -109,18 +113,23 @@ class DriveToClosestPerson(smach.StateMachine):
                                     transitions={   "toggled":"SET_CURRENT_POSSIBLE_PERSON"})
 
             #TODO: I have to determine the first person to look at and set that as the current_possible_person
-            @smach.cb_interface(outcomes=['asserted'])
+            @smach.cb_interface(outcomes=['asserted', 'all_iterated'])
             def set_current_possible_person(userdata):
+		#TODO LOY: If we can't find any person, or they are all ignopred, navigate tot a validated_person.
                 answers = self.robot.reasoner.query(self.possible_person_query)
-                rospy.loginfo("current possible_persons: " +", ".join([ans["ObjectID"] for ans in answers]))
+                rospy.loginfo("current possible_persons: " +", ".join([str(ans["ObjectID"]) for ans in answers]))
                 if answers:
                     possible_person = answers[0]["ObjectID"] #Just get the first one?
                     rospy.loginfo("Asserting ObjectID {0} as a current_possible_person".format(possible_person))
+#		    import ipdb; ipdb.set_trace()
+                    self.robot.reasoner.query(Compound("retractall", (Compound("current_possible_person", "X"))))
                     self.robot.reasoner.assertz(Compound("current_possible_person", possible_person))
-                else:
                     return "asserted"
+                else:
+                    return "all_iterated"
             smach.StateMachine.add('SET_CURRENT_POSSIBLE_PERSON', smach.CBState(set_current_possible_person),
-                                    transitions={   'asserted':'LOOK_AT_POSSIBLE_PERSON'})
+                                    transitions={   'asserted':'LOOK_AT_POSSIBLE_PERSON',
+                                                    'all_iterated':'GOTO_PERSON'})
 
             #Look at the possible_person detection, to verify through Luis's human_tracking them in a next state
             smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
@@ -135,26 +144,27 @@ class DriveToClosestPerson(smach.StateMachine):
                                     transitions={   "toggled":"WAIT_FOR_ACTUAL_DETECTION"})
 
             smach.StateMachine.add( "WAIT_FOR_ACTUAL_DETECTION",
-                                    states.Wait_query_true(robot, self.person_query, timeout=5),
+                                    states.Wait_query_true(robot, self.person_query, timeout=10),
                                     transitions={   "query_true":"RETRACT_POSSIBLE",
-                                                    "timed_out":"Failed",
+                                                    "timed_out":"RETRACT_POSSIBLE",
                                                     "preempted":"Aborted"})
 
             @smach.cb_interface(outcomes=['asserted'])
             def retract_possible_person(userdata):
                 answers = self.robot.reasoner.query(self.current_possible_person_query)
-                rospy.loginfo("current possible_persons: " +", ".join([ans["ObjectID"] for ans in answers]))
+                rospy.loginfo("current possible_persons: " +", ".join([str(ans["ObjectID"]) for ans in answers]))
                 if answers:
                     possible_person = answers[0]["ObjectID"]
                     rospy.loginfo("ObjectID {0} is current_possible_person, retracting that.".format(possible_person))
                     self.robot.reasoner.assertz(Compound("ignored_person", possible_person))
+                    return "asserted"
                 else:
                     return "asserted"
             smach.StateMachine.add('RETRACT_POSSIBLE', smach.CBState(retract_possible_person),
                                     transitions={   'asserted':'TOGGLE_OFF_HUMAN_TRACKING'}) #Yes this is a loop, but is is supposed to tick off all persons one by one.
 
 
-            #Turn off human_tracking with the kinect
+            #Turn off human_tracking with the kinect #TODO: Also do this when the SM fails
             smach.StateMachine.add( "TOGGLE_OFF_HUMAN_TRACKING",
                                     states.ToggleModules(robot, modules=[]),
                                     transitions={   "toggled":"SET_CURRENT_POSSIBLE_PERSON"}) 
