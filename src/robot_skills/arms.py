@@ -163,7 +163,7 @@ class Arms(object):
         self.arm_left_measurement_sub = rospy.Subscriber("/amigo/left_arm/measurements", JointState, self._receive_arm_left_joints)
         self.arm_right_measurement_sub = rospy.Subscriber("/amigo/right_arm/measurements", JointState, self._receive_arm_right_joints)
 
-        self.leftOffset = Offset(x=0.10, y=0.04, z=0.07) #  until May 14, y offset was -0.05, until May 18, y offset was -0.02, until June 25, x offset was 0.08
+        self.leftOffset = Offset(x=0.10, y=0.01, z=0.07)
         self.rightOffset = Offset(x=0.08, y=0.025, z=0.06)
 
 
