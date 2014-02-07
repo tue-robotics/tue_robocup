@@ -33,7 +33,6 @@ from math import degrees, radians
 
 ## TODO: Reset arm position
 #TODO : (Arm.send_[a-zA-Z_]*[(]*) replace time_out
-
 #Side en state enums
 class Side:
     """Specifies a Side, either LEFT or RIGHT"""
@@ -131,6 +130,11 @@ class Arms(object):
     WRIST_PITCH = 5
     WRIST_YAW = 6
 
+    POINT_AT_OBJECT_BACKWARD = [-0.4 ,-0.750 , 0.50 , 1.50 , 0.000 , 0.7500 , 0.000]
+    POINT_AT_OBJECT_FORWARD = [-0.2 ,-0.250 , 0.40 , 1.25 , 0.000 ,0.500 , 0.000]
+    HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
+    SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
+    RESET_POSE = [-0.1,-0.2,0.2,0.8,0.0,0.0,0.0] 
 
     def __init__(self, tf_listener):
         #Easy access to sides
