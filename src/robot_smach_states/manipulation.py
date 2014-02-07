@@ -587,7 +587,7 @@ class DropObject(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "RESET_OTHER_ARM",
-                                    ArmToJointPos(robot, otherarm, StandardPoses.RESET_POSE, timeout=1.0),
+                                    ArmToJointPos(robot, otherarm, otherarm.RESET_POSE, timeout=1.0),
                                     transitions={   'done'                  : 'PLACE_OBJECT',
                                                     'failed'                : 'PLACE_OBJECT'}) #This is risky, but try anyways
 
