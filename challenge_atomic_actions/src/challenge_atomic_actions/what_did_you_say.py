@@ -20,7 +20,6 @@ from psi import *
 # Created by: Erik Geerts #
 ###########################
 
-
 class Ask_questions(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
@@ -53,83 +52,46 @@ class Ask_questions(smach.State):
         else:
             return "failed"
 
-########################
-##### STATEMACHINE #####
-########################
 
+class WhatDidYouSay(smach.StateMachine):
 
-def setup_statemachine(robot):
+    def __init__(self, robot=None):
+        smach.StateMachine.__init__(self, outcomes=["Done"])
+        self.robot = robot
 
-    #retract old facts
-    robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
-    robot.reasoner.query(Compound("retractall", Compound("fetch_carry_object", "X")))
+        rospy.loginfo("-------------------- WHAT DIT YOU SAY ---------------------")
+        rospy.loginfo("-----------------------------------------------------------")
+        rospy.loginfo("------------ MAKE SURE YOU ADDED THE SENTENCES ------------")
+        rospy.loginfo("-------------- speech_interpreter.pl in map ---------------")
+        rospy.loginfo("----------- tue_reasoner/tue_knowledge/prolog -------------")
+        rospy.loginfo("-------- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -----------")
+        rospy.loginfo("-----------------------------------------------------------")
+            
+        with self:
 
-    #Load database
-    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
-    robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/egpsr.pl'))
+            smach.StateMachine.add("SAY_FIRST_QUESTION",
+                                       states.Say(robot,"What is your first question?"),
+                                       transitions={'spoken':'ASK_FIRST_QUESTION'})
 
-    #Assert the current challenge.
-    robot.reasoner.query(Compound("assertz",Compound("challenge", "atomic_actions")))
+            smach.StateMachine.add("ASK_FIRST_QUESTION",
+                                    Ask_questions(robot),
+                                    transitions={'succeeded':'SAY_SECOND_QUESTION',
+                                                 'failed':'ASK_FIRST_QUESTION'})
 
-    # Define arm used.    
-    robot = Amigo()
+            smach.StateMachine.add("SAY_SECOND_QUESTION",
+                                       states.Say(robot,"What is your second question?"),
+                                       transitions={'spoken':'ASK_SECOND_QUESTION'})
 
-    sm = smach.StateMachine(outcomes=['Done','Aborted'])
+            smach.StateMachine.add("ASK_SECOND_QUESTION",
+                                    Ask_questions(robot),
+                                    transitions={'succeeded':'SAY_THIRD_QUESTION',
+                                                 'failed':'ASK_SECOND_QUESTION'})
 
-    with sm:
-        # DURING A CHALLENGE, AMIGO STARTS AT A DESIGNATED POSITION, NOT IN FRONT OF A DOOR
+            smach.StateMachine.add("SAY_THIRD_QUESTION",
+                                       states.Say(robot,"What is your third question?"),
+                                       transitions={'spoken':'ASK_THIRD_QUESTION'})
 
-        ######################################################
-        ##################### INITIALIZE #####################             
-        ######################################################
-
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'SAY_FIRST_QUESTION',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
-                                                'abort':'Done'})
-
-
-        ######################################################
-        ################### ASK FETCH CARRY ##################            
-        ######################################################
-
-        smach.StateMachine.add("SAY_FIRST_QUESTION",
-                                   states.Say(robot,"What is your first question?"),
-                                   transitions={'spoken':'ASK_FIRST_QUESTION'})
-
-        smach.StateMachine.add("ASK_FIRST_QUESTION",
-                                Ask_questions(robot),
-                                transitions={'succeeded':'SAY_SECOND_QUESTION',
-                                             'failed':'ASK_FIRST_QUESTION'})
-
-        smach.StateMachine.add("SAY_SECOND_QUESTION",
-                                   states.Say(robot,"What is your second question?"),
-                                   transitions={'spoken':'ASK_SECOND_QUESTION'})
-
-        smach.StateMachine.add("ASK_SECOND_QUESTION",
-                                Ask_questions(robot),
-                                transitions={'succeeded':'SAY_THIRD_QUESTION',
-                                             'failed':'ASK_SECOND_QUESTION'})
-
-        smach.StateMachine.add("SAY_THIRD_QUESTION",
-                                   states.Say(robot,"What is your third question?"),
-                                   transitions={'spoken':'ASK_THIRD_QUESTION'})
-
-        smach.StateMachine.add("ASK_THIRD_QUESTION",
-                                Ask_questions(robot),
-                                transitions={'succeeded':'Done',
-                                             'failed':'ASK_THIRD_QUESTION'})
-
-    return sm
-
-if __name__ == "__main__":
-    rospy.init_node('what_did_you_say')
-    rospy.loginfo("-------------------- WHAT DIT YOU SAY ---------------------")
-    rospy.loginfo("-----------------------------------------------------------")
-    rospy.loginfo("------------ MAKE SURE YOU ADDED THE SENTENCES ------------")
-    rospy.loginfo("-------------- speech_interpreter.pl in map ---------------")
-    rospy.loginfo("----------- tue_reasoner/tue_knowledge/prolog -------------")
-    rospy.loginfo("-------- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -----------")
-    rospy.loginfo("-----------------------------------------------------------")
-         
-    startup(setup_statemachine)
+            smach.StateMachine.add("ASK_THIRD_QUESTION",
+                                    Ask_questions(robot),
+                                    transitions={'succeeded':'Done',
+                                                 'failed':'ASK_THIRD_QUESTION'})
