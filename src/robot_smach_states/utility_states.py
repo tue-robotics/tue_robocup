@@ -254,8 +254,8 @@ class Wait_queried_perception(Wait_query_true):
         if isinstance(modules, str):
             modules = [modules] #Make it a list
 
-        pre = lambda: robot.perception.toggle(modules)
-        post = lambda: robot.perception.toggle([])
+        pre = lambda *args, **kwargs: robot.perception.toggle(modules)
+        post = lambda *args, **kwargs: robot.perception.toggle([])
         Wait_query_true.__init__(self, robot, query, timeout=timeout, pre_callback=pre, post_callback=post)
 
 ############################## Atomic Reset States ##############################
