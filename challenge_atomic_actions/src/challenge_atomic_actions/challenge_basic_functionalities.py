@@ -4,13 +4,19 @@ import rospy
 
 import smach
 
+import avoid_that
+import fetch_and_carry
+import find_me
+import pick_and_place
+import what_did_you_say
+
 from robot_smach_states import *
-from challenge_atomic_actions import *
+from robot_skills.amigo import Amigo
 
 # ToDo: start at intermediate 
 
 class ChallengeBasicFunctionalities(smach.StateMachine):
-	def __init__(self, robot):
+    def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         query_goto_pick   = Compound("waypoint", "pick_loc", Compound("pose_2d", "X", "Y", "Phi"))
@@ -36,7 +42,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             # ToDo: additional arguments?
             smach.StateMachine.add( 'PICK_AND_PLACE',
-            	                    PickAndPlace(robot),
+            	                    pick_and_place.PickAndPlace(robot),
             	                    transitions={	"Done":		"GOTO_FETCH_AND_CARRY", 
             	                                    "Aborted":	"Aborted", 
             	                                    "Failed":	"GOTO_FETCH_AND_CARRY"})
@@ -49,7 +55,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
             smach.StateMachine.add( 'FETCH_AND_CARRY',
-            	                    FetchAndCarry(robot),
+            	                    fetch_and_carry.FetchAndCarry(robot),
             	                    transitions={	"Done":		"GOTO_FIND_ME_AND_GO_OVER_THERE", 
             	                                    "Aborted":	"Aborted", 
             	                                    "Failed":	"GOTO_FIND_ME_AND_GO_OVER_THERE"})
@@ -62,7 +68,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
             smach.StateMachine.add( 'FIND_ME_AND_GO_OVER_THERE',
-            	                    FindMe(robot),
+            	                    find_me.FindMe(robot),
             	                    transitions={	"Done":		"GOTO_AVOID_THAT", 
             	                                    "Aborted":	"Aborted", 
             	                                    "Failed":	"GOTO_AVOID_THAT"})
@@ -75,7 +81,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
             smach.StateMachine.add( 'AVOID_THAT',
-            	                    AvoidThat(robot),
+            	                    avoid_that.AvoidThat(robot),
             	                    transitions={	"Done":		"GOTO_WHAT_DID_YOU_SAY", 
             	                                    "Aborted":	"Aborted"})
 
@@ -87,9 +93,8 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
             smach.StateMachine.add( 'WHAT_DID_YOU_SAY',
-            	                    WhatDidYouSay(robot),
-            	                    transitions={	"succeeded": "Done", 
-            	                                    "failed":	"Done"})
+            	                    what_did_you_say.WhatDidYouSay(robot),
+            	                    transitions={	"Done": "Done"})
 
             smach.StateMachine.add("CANNOT_GOTO_CHALLENGE", 
                                     Say(robot, [ "I can't find a way to my next challenge, can you please take me there "]),
@@ -97,5 +102,30 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
 if __name__ == "__main__":
     rospy.init_node('basic_functionalities_exec')
-    
-    startup(ChallengeBasicFunctionalities)
+ 
+    amigo = Amigo(wait_services=True)
+
+    # Retract all old facts
+    amigo.reasoner.query(Compound("retractall", Compound("challenge", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("goal", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("explored", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
+    amigo.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("current_object", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("current_person", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("visited", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("registered", "X")))
+    amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
+
+    # Load locations and objects from knowledge files
+    amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+    amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+
+    # Assert current challenge
+    amigo.reasoner.assertz(Compound("challenge", "basic_functionalities"))
+
+    machine = ChallengeBasicFunctionalities(amigo)
+    try:
+        machine.execute()
+    except Exception, e:
+        amigo.speech.speak(e)
