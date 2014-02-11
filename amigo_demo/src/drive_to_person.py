@@ -58,9 +58,8 @@ class DriveToClosestPerson(smach.StateMachine):
     - human_tracking is turned on, we can't find a new object, as obj3 was a false positive
     - Whatever the detection, we ignore the current_possible_person, because we don't want to look at that person again. So we add:
         ignored_person(obj3).
-
-    - So, now we have these facts in the world model:
-        instance_of(obj1, person).
+   - So, now we have these facts in the world model:
+       instance_of(obj1, person).
         instance_of(obj2, person).
         instance_of(obj3, person).
         property_expected(obj1, position, 1,0,0).
@@ -92,82 +91,40 @@ class DriveToClosestPerson(smach.StateMachine):
                                           Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
         robot.reasoner.assertz(Compound("ignored_person", "nobody")) #Required to make the predicate known.
-	robot.reasoner.retractall(Compound("current_possible_person", "ObjectID"))
-#        robot.perception.toggle([])	
+        robot.reasoner.retractall(Compound("current_possible_person", "ObjectID"))
+        #robot.perception.toggle([])	
 
         with self:
-            #Turn on LASER
-            smach.StateMachine.add( "TOGGLE_POSSIBLE_PEOPLE_DETECTION",
-                                    states.TogglePeopleDetector(robot, on=True),
-                                    transitions={   "toggled":"WAIT_FOR_POSSIBLE_DETECTION"})
-
+            #Turn on ppl_detection and switch off after we detected a person
             smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
-                                    states.Wait_query_true(robot, self.possible_person_query, timeout=3),
-                                    transitions={   "query_true":"TOGGLE_OFF_POSSIBLE_PEOPLE_DETECTION",
+                                    states.Wait_queried_perception(robot, ["ppl_detection"], self.possible_person_query, timeout=3),
+                                    transitions={   "query_true":"SET_CURRENT_POSSIBLE_PERSON",
                                                     "timed_out":"Failed",
                                                     "preempted":"Aborted"})
 
-            #Turn off LASER
-            smach.StateMachine.add( "TOGGLE_OFF_POSSIBLE_PEOPLE_DETECTION",
-                                    states.TogglePeopleDetector(robot, on=False),
-                                    transitions={   "toggled":"SET_CURRENT_POSSIBLE_PERSON"})
-
-            #TODO: I have to determine the first person to look at and set that as the current_possible_person
-            @smach.cb_interface(outcomes=['asserted', 'all_iterated'])
-            def set_current_possible_person(userdata):
-		#TODO LOY: If we can't find any person, or they are all ignopred, navigate tot a validated_person.
-                answers = self.robot.reasoner.query(self.possible_person_query)
-                rospy.loginfo("current possible_persons: " +", ".join([str(ans["ObjectID"]) for ans in answers]))
-                if answers:
-                    possible_person = answers[0]["ObjectID"] #Just get the first one?
-                    rospy.loginfo("Asserting ObjectID {0} as a current_possible_person".format(possible_person))
-#		    import ipdb; ipdb.set_trace()
-                    self.robot.reasoner.query(Compound("retractall", (Compound("current_possible_person", "X"))))
-                    self.robot.reasoner.assertz(Compound("current_possible_person", possible_person))
-                    return "asserted"
-                else:
-                    return "all_iterated"
-            smach.StateMachine.add('SET_CURRENT_POSSIBLE_PERSON', smach.CBState(set_current_possible_person),
-                                    transitions={   'asserted':'LOOK_AT_POSSIBLE_PERSON',
-                                                    'all_iterated':'GOTO_PERSON'})
+            smach.StateMachine.add( 'SET_CURRENT_POSSIBLE_PERSON', 
+                                    states.Select_object(robot, self.possible_person_query, "current_possible_person"),
+                                    transitions={   'selected':'LOOK_AT_POSSIBLE_PERSON',
+                                                    'no_answers':'GOTO_PERSON'})
 
             #Look at the possible_person detection, to verify through Luis's human_tracking them in a next state
             smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
                                     states.LookAtPoint(robot, self.current_possible_person_query),
-                                    transitions={   'looking':'TOGGLE_ON_HUMAN_TRACKING',
+                                    transitions={   'looking':'WAIT_FOR_HUMAN_DETECTION',
                                                     'no_point_found':'SAY_FAILED',
                                                     'abort':'Aborted'})
 
-            #Turn on human_tracking with the kinect
-            smach.StateMachine.add( "TOGGLE_ON_HUMAN_TRACKING",
-                                    states.ToggleModules(robot, modules=["human_tracking"]),
-                                    transitions={   "toggled":"WAIT_FOR_ACTUAL_DETECTION"})
-
-            smach.StateMachine.add( "WAIT_FOR_ACTUAL_DETECTION",
-                                    states.Wait_query_true(robot, self.person_query, timeout=10),
+            #Turn on human_tracking with the kinect and wait for a match of it in the world model
+            smach.StateMachine.add( "WAIT_FOR_HUMAN_DETECTION",
+                                    states.Wait_queried_perception(robot, ["human_tracking"], self.person_query, timeout=10),
                                     transitions={   "query_true":"RETRACT_POSSIBLE",
                                                     "timed_out":"RETRACT_POSSIBLE",
                                                     "preempted":"Aborted"})
 
-            @smach.cb_interface(outcomes=['asserted'])
-            def retract_possible_person(userdata):
-                answers = self.robot.reasoner.query(self.current_possible_person_query)
-                rospy.loginfo("current possible_persons: " +", ".join([str(ans["ObjectID"]) for ans in answers]))
-                if answers:
-                    possible_person = answers[0]["ObjectID"]
-                    rospy.loginfo("ObjectID {0} is current_possible_person, retracting that.".format(possible_person))
-                    self.robot.reasoner.assertz(Compound("ignored_person", possible_person))
-                    return "asserted"
-                else:
-                    return "asserted"
-            smach.StateMachine.add('RETRACT_POSSIBLE', smach.CBState(retract_possible_person),
-                                    transitions={   'asserted':'TOGGLE_OFF_HUMAN_TRACKING'}) #Yes this is a loop, but is is supposed to tick off all persons one by one.
-
-
-            #Turn off human_tracking with the kinect #TODO: Also do this when the SM fails
-            smach.StateMachine.add( "TOGGLE_OFF_HUMAN_TRACKING",
-                                    states.ToggleModules(robot, modules=[]),
-                                    transitions={   "toggled":"SET_CURRENT_POSSIBLE_PERSON"}) 
+            smach.StateMachine.add('RETRACT_POSSIBLE', 
+                                    states.Select_object(robot, self.current_possible_person_query, "ignored_person"),
+                                    transitions={   'selected':'GOTO_PERSON',#Yes this is a loop, but is is supposed to tick off all persons one by one.
+                                                    'no_answers':'GOTO_PERSON'}) 
 
             smach.StateMachine.add( "GOTO_PERSON",
                                     states.NavigateGeneric(robot, lookat_query=self.person_query, xy_dist_to_goal_tuple=(1.0,0)),
