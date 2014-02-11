@@ -94,7 +94,7 @@ class AmigoIntroductionRIPS(smach.State):
             self.robot.head.send_goal_topic(msgs.PointStamped(frame_id="/amigo/grippoint_left"))
             #self.robot.leftArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
             self.robot.leftArm.send_goal(0.4,0.3,1.1,1.5,0.0,0.0,10.0)              
-            rospy.sleep(1.5)                                                          
+            rospy.sleep(0.5)                                                          
             self.robot.leftArm.send_goal(0.6,0.3,1.1,1.5,0.0,0.0,10.0)
             #rospy.sleep(0.5)
             self.robot.leftArm.send_gripper_goal_open(10)
@@ -106,15 +106,17 @@ class AmigoIntroductionRIPS(smach.State):
         else:
             ''' Right arm '''
             self.robot.head.send_goal_topic(msgs.PointStamped(frame_id="/amigo/grippoint_right"))
-            self.robot.rightArm.send_joint_goal(-1, 0.5819, 0.208278, 1.34569383, 0.56438928, -0.2, -0.0188)
-            #rospy.sleep(0.5)
+
+            self.robot.rightArm.send_goal(0.4,-0.3,1.1,-1.5,0.0,0.0,10.0) 
+            rospy.sleep(0.5)                                                          
+            self.robot.rightArm.send_goal(0.6,-0.3,1.1,-1.5,0.0,0.0,10.0) 
             self.robot.rightArm.send_gripper_goal_open(10)
-            
-            self.robot.rightArm.send_joint_goal(-0.1,-0.5,0.2,1.9,0.0,0.0,0.0)
-            rospy.sleep(3)
+
+            self.robot.rightArm.send_joint_goal(-0.1,-0.5,0.2,1.9,0.0,0.0,0.0)       
+            rospy.sleep(2.5)                                                        
             self.robot.rightArm.send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0)
             self.robot.rightArm.send_gripper_goal_close(5)
-        
+
         self.robot.head.reset_position()
         
         self.robot.speech.speak("If you want me to stop, you can press my emergency button on my back")
@@ -151,20 +153,11 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE_FIRST',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'OPENING_GRIPPER',
+                                transitions={   'initialized':'CLOSING_GRIPPER',
                                                 'abort':'Aborted'})
 
-        smach.StateMachine.add('OPENING_GRIPPER',
-                                    states.Say(robot, 'I will open my gripper now, so that you can put my registration form in it.'),
-                                    transitions={'spoken':'OPEN_GRIPPER'}) 
-
-        smach.StateMachine.add('OPEN_GRIPPER',
-                                    states.SetGripper(robot, selectedArm , gripperstate=0),
-                                    transitions={'succeeded':'CLOSING_GRIPPER',
-                                                 'failed'   :'CLOSING_GRIPPER'})
-
         smach.StateMachine.add('CLOSING_GRIPPER',
-                                    states.Say(robot, 'I will close my gripper now.'),
+                                    states.Say(robot, 'Please put the gripper in the hand that I close', block=False),
                                     transitions={'spoken':'CLOSE_GRIPPER'}) 
 
         smach.StateMachine.add('CLOSE_GRIPPER',
@@ -184,7 +177,7 @@ def setup_statemachine(robot):
                                     transitions={   "spoken":"GO_TO_REGISTRATION_TABLE"})
 
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE', 
-                                    states.Navigate_named(robot, "registration_table1"),
+                                    states.NavigateGeneric(robot, goal_name="registration_table1"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
                                                     'preempted':'CLEAR_PATH_TO_REGISTRATION_TABLE', 
                                                     'unreachable':'CLEAR_PATH_TO_REGISTRATION_TABLE', 
@@ -197,7 +190,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE_SECOND_TRY', 
-                                    states.Navigate_named(robot, "registration_table1"),
+                                    states.NavigateGeneric(robot, goal_name="registration_table1"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
                                                     'preempted':'GO_TO_REGISTRATION_TABLE_THIRD_TRY', 
                                                     'unreachable':'GO_TO_REGISTRATION_TABLE_THIRD_TRY', 
@@ -205,7 +198,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE_THIRD_TRY', 
-                                    states.Navigate_named(robot, "registratiorobot.len_table2"),
+                                    states.NavigateGeneric(robot, goal_name="registratiorobot.len_table2"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
                                                     'preempted':'GO_TO_REGISTRATION_TABLE_FORTH_TRY', 
                                                     'unreachable':'GO_TO_REGISTRATION_TABLE_FORTH_TRY', 
@@ -213,7 +206,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_REGISTRATION_TABLE_FORTH_TRY', 
-                                    states.Navigate_named(robot, "registration_table3"),
+                                    states.NavigateGeneric(robot, goal_name="registration_table3"),
                                     transitions={   'arrived':'ARRIVED_AT_REGISTRATION_TABLE', 
                                                     'preempted':'FAIL_BUT_INTRODUCE', 
                                                     'unreachable':'FAIL_BUT_INTRODUCE', 
@@ -251,7 +244,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.Navigate_named(robot, "exit_1_rips"),
+                                    states.NavigateGeneric(robot, goal_name="exit_1_rips"),
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'CLEAR_PATH_TO_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_EXIT', 
@@ -264,15 +257,15 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT_FIRST_TRY_AGAIN', 
-                                    states.Navigate_named(robot, "exit_1_rips"),
+                                    states.NavigateGeneric(robot, goal_name="exit_1_rips"),
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'GO_TO_EXIT_SECOND_TRY', 
                                                     'unreachable':'GO_TO_EXIT_SECOND_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_SECOND_TRY'})
-
+    
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
-                                    states.Navigate_named(robot, "exit_2_rips"),
+                                    states.NavigateGeneric(robot, goal_name="exit_2_rips"),
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'GO_TO_EXIT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_EXIT_THIRD_TRY', 
@@ -280,7 +273,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_THIRD_TRY', 
-                                    states.Navigate_named(robot, "exit_3_rips"),
+                                    states.NavigateGeneric(robot, goal_name="exit_3_rips"),
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'AT_END', 
                                                     'unreachable':'AT_END', 
