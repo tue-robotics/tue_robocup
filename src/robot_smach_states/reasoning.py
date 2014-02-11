@@ -3,8 +3,9 @@ import roslib; roslib.load_manifest("robot_smach_states")
 import rospy
 import smach
 import util
+import util.reasoning_helpers as urh
 
-from psi import Compound, Conjunction
+from psi import Compound, Conjunction, Sequence
 
 # Wait_for_door state thought the reasoner
 @util.deprecated
@@ -121,4 +122,110 @@ class Retract_facts(smach.State):
             self.robot.reasoner.query(Compound("retractall", fact))
         return 'retracted'
 
+class Select_object(smach.State):
+    """Selects an object based on some optional criteria and sorting mechanism"""
 
+    def __init__(self, robot, candidate_query, selection_predicate, 
+        sortkey=lambda answer: 1, 
+        minmax=min, 
+        criteria=None, 
+        retract_previous=True, 
+        object_variable="ObjectID"):
+        smach.State.__init__(self, outcomes=['selected', 'failed'])
+        """Select an answer from an object_query and assert it to the reasoner as being the selected object, using the selection_predicate.
+        The selection is done using the sortkey, ordered with minmax.
+        You can also optionally specify some criteria-functions.
+        By default, all facts of selection_predicate are retracted before asserting a new selection. This can be overridden by setting retract_previous=False.
+
+        The candidate_query must have a variable that is unified to the object ID we want to select. By default, object_variable=="ObjectID" but can be overridden
+        """
+        self.robot = robot
+        self.candidate_query = candidate_query
+        self.selection_predicate = selection_predicate
+        self.sortkey = sortkey
+        self.criteria = criteria
+        self.minmax = minmax
+        self.retract_previous = retract_previous
+        self.object_variable = object_variable
+
+    def execute(self, userdata=None):
+        #Get all answers. object_answers will be a list of dictionaries
+        object_answers = self.robot.reasoner.query(self.candidate_query)
+
+        #delegate the actual selection to the reasoning_helpers
+        selected_answer = urh.select_answer(object_answers, 
+                                                keyfunc=self.sortkey, 
+                                                minmax=self.minmax,
+                                                criteria=self.criteria)
+
+        try:
+            rospy.loginfo("Select_object has {0} answers for query {1}. Selected_answer: {2}".format(len(object_answers), self.candidate_query, selected_answer))
+            selected_id = selected_answer[self.object_variable]
+
+            if self.retract_previous:
+                rospy.logdebug("Retracting previous selections...")
+                self.robot.reasoner.query(Compound("retractall", Compound(self.selection_predicate, "X")))
+
+            selection_fact = Compound(self.selection_predicate, selected_id)
+            rospy.loginfo("Asserting selected object: {0}".format(selection_fact))
+            self.robot.reasoner.assertz(selection_fact)
+            return 'selected'
+        except Exception, e:
+            rospy.logerr(e)
+            return 'failed'
+
+    @staticmethod
+    def test(robot):
+        #We start with an empty database, with just *wire running*. Or at least none of the used facts asserted.
+        #Run astart-fast, amiddle_fast, amigo-console
+        #In the console, run: "import roslib; roslib.load_manifest("robot_smach_states"); import robot_smach_states as states; states.Select_object.test(amigo)"
+        #This should return "success!"
+
+        robot.reasoner.query(Compound("retractall", Compound("object", "Id", "Pos")))
+        robot.reasoner.query(Compound("retractall", Compound("selected_id", "Id")))
+        robot.reasoner.query(Compound("retractall", Compound("ignored", "Id")))
+
+        person1 = Compound("object", "id1", Compound("position", Sequence(1,1,1)))
+        person2 = Compound("object", "id2", Compound("position", Sequence(2,2,2)))
+        person3 = Compound("object", "id3", Compound("position", Sequence(3,3,3)))
+        person4 = Compound("object", "id4", Compound("position", Sequence(4,4,4)))
+        robot.reasoner.assertz(person1, person2, person3, person4)
+        robot.reasoner.assertz(Compound("ignored", "nothing")) #also make the ignored predicate existant
+
+        candidates_query = Conjunction(
+                        Compound("object", "ObjectID", Compound("position", Sequence("X", "Y", "Z"))),
+                        Compound("not", Compound("ignored", "ObjectID")))
+        selected_candidate_query = Compound("selected_id", "ObjectID")
+        
+        #This state selects an object that is not ignored.
+        selector = Select_object(robot, candidates_query, "selected_id", sortkey=lambda answer: answer["ObjectID"])
+        ignorer = Select_object(robot, selected_candidate_query, "ignored", retract_previous=False) #
+
+        #import ipdb; ipdb.set_trace()
+
+        selector.execute()
+        assert len(robot.reasoner.query(Compound("selected_id", "id1"))) == 1 #The selector should select the first object. Only one object may be selected at a time
+        
+        ignorer.execute()
+         #The first object should be ignored. On each selector-ignorer iteration, we should have more ignored object as we do not retract them 
+        assert len(robot.reasoner.query(Compound("ignored", "X"))) == 1+1 #1 extra for making sure the predicate exists
+
+        selector.execute()
+        assert len(robot.reasoner.query(Compound("selected_id", "id2"))) == 1
+        
+        ignorer.execute()
+        assert len(robot.reasoner.query(Compound("ignored", "X"))) == 2+1 #1 extra for making sure the predicate exists
+
+        selector.execute()
+        assert len(robot.reasoner.query(Compound("selected_id", "id3"))) == 1
+        
+        ignorer.execute()
+        assert len(robot.reasoner.query(Compound("ignored", "X"))) == 3+1 #1 extra for making sure the predicate exists
+
+        selector.execute()
+        assert len(robot.reasoner.query(Compound("selected_id", "id4"))) == 1
+        
+        ignorer.execute()
+        assert len(robot.reasoner.query(Compound("ignored", "X"))) == 4+1 #1 extra for making sure the predicate exists
+        
+        return "success!"
