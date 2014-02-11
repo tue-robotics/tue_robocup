@@ -131,7 +131,7 @@ class Select_object(smach.State):
         criteria=None, 
         retract_previous=True, 
         object_variable="ObjectID"):
-        smach.State.__init__(self, outcomes=['selected', 'failed'])
+        smach.State.__init__(self, outcomes=['selected', 'no_answers'])
         """Select an answer from an object_query and assert it to the reasoner as being the selected object, using the selection_predicate.
         The selection is done using the sortkey, ordered with minmax.
         You can also optionally specify some criteria-functions.
@@ -151,14 +151,14 @@ class Select_object(smach.State):
     def execute(self, userdata=None):
         #Get all answers. object_answers will be a list of dictionaries
         object_answers = self.robot.reasoner.query(self.candidate_query)
-
-        #delegate the actual selection to the reasoning_helpers
-        selected_answer = urh.select_answer(object_answers, 
-                                                keyfunc=self.sortkey, 
-                                                minmax=self.minmax,
-                                                criteria=self.criteria)
-
+        
         try:
+            #delegate the actual selection to the reasoning_helpers
+            selected_answer = urh.select_answer(object_answers, 
+                                                    keyfunc=self.sortkey, 
+                                                    minmax=self.minmax,
+                                                    criteria=self.criteria)
+
             rospy.loginfo("Select_object has {0} answers for query {1}. Selected_answer: {2}".format(len(object_answers), self.candidate_query, selected_answer))
             selected_id = selected_answer[self.object_variable]
 
@@ -170,9 +170,12 @@ class Select_object(smach.State):
             rospy.loginfo("Asserting selected object: {0}".format(selection_fact))
             self.robot.reasoner.assertz(selection_fact)
             return 'selected'
+        except ValueError, e:
+            rospy.logerr(e)
+            return 'no_answers'
         except Exception, e:
             rospy.logerr(e)
-            return 'failed'
+            return 'no_answers'
 
     @staticmethod
     def test(robot):
@@ -198,7 +201,7 @@ class Select_object(smach.State):
         selected_candidate_query = Compound("selected_id", "ObjectID")
         
         #This state selects an object that is not ignored.
-        selector = Select_object(robot, candidates_query, "selected_id", sortkey=lambda answer: answer["ObjectID"])
+        selector = Select_object(robot, candidates_query, "selected_id", sortkey=lambda answer: str(answer["ObjectID"]))
         ignorer = Select_object(robot, selected_candidate_query, "ignored", retract_previous=False) #
 
         #import ipdb; ipdb.set_trace()
@@ -227,5 +230,8 @@ class Select_object(smach.State):
         
         ignorer.execute()
         assert len(robot.reasoner.query(Compound("ignored", "X"))) == 4+1 #1 extra for making sure the predicate exists
+
+        rospy.loginfo("DEAR TESTER: There are 4 objects, but this is the 5th select-call. Will fail as intended in this test")
+        assert selector.execute() == "no_answers"
         
         return "success!"
