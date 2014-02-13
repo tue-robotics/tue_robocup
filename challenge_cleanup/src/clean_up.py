@@ -253,7 +253,7 @@ class Cleanup(smach.StateMachine):
                     # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
                     robot.reasoner.assertz(Compound("explored", target))
 
-                    robot.speech.speak("Lets go look at {0}".format(target).replace("_", " "))
+                    robot.speech.speak("Lets go look at {0}".format(target).replace("_", " "), block=False)
 
                     return 'found_exploration_target'
             
@@ -282,7 +282,7 @@ class Cleanup(smach.StateMachine):
                                     transitions={ 'spoken':'DETERMINE_EXPLORATION_TARGET' })
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
-                                    states.Say(robot, ["Lets see what I can find here."]),
+                                    states.Say(robot, ["Lets see what I can find here."], block=False),
                                     transitions={   'spoken':'LOOK'})
 
             #query_dropoff_loc = Compound("point_of_interest", "trash_bin_1", Compound("point_3d", "X", "Y", "Z"))
@@ -328,7 +328,7 @@ class Cleanup(smach.StateMachine):
                         pass
                     return "I have found something, but I'm not sure what it is."
             smach.StateMachine.add('SAY_FOUND_SOMETHING',
-                                    states.Say_generated(robot, sentence_creator=generate_object_sentence),
+                                    states.Say_generated(robot, sentence_creator=generate_object_sentence, block=False),
                                     transitions={ 'spoken':'GRAB' })
 
             smach.StateMachine.add('GRAB',
@@ -362,7 +362,7 @@ class Cleanup(smach.StateMachine):
                                                     'target_lost':'DONT_KNOW_DROP'})
             
             smach.StateMachine.add("DONT_KNOW_DROP", 
-                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trash bin."),
+                                    states.Say(robot, "Now that I fetched this, I'm not sure where to put it. i'll just toss in in a trash bin.", block=False),
                                     transitions={   'spoken':'DROPOFF_OBJECT_BACKUP'})
 
             smach.StateMachine.add("DROPOFF_OBJECT_BACKUP",
