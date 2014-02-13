@@ -83,7 +83,7 @@ class DetermineBaseGraspPose(smach.State):
         
         ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
         if not self.desired_base_poses_MAP:
-            self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad")
+            self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad", block=False)
             return 'failed'
         
         x   = self.desired_base_poses_MAP[0].pose.position.x
@@ -225,14 +225,14 @@ class UpdateObjectPose(smach.State):
         spindle_target = max(self.robot.spindle.lower_limit, spindle_target)
         spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
         self.robot.spindle.send_goal(spindle_target, timeout = 5.0)
-        rospy.loginfo("Sending head goal to {0}".format(target_point))
+
         self.robot.head.send_goal(target_point, keep_tracking=False, timeout=5.0, pan_vel=1.5, tilt_vel=1.5)
-        rospy.loginfo("head.send_goal returned")
+
         self.robot.perception.toggle(["tabletop_segmentation"])
         self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
         rospy.logwarn("Here we should keep track of the uncertainty, how can we do that? Now we simply use a sleep")
         timeout = 2.0
-        rospy.logwarn("Waiting for {0} seconds for tabletop segmentation update".format(timeout))
+        rospy.loginfo("Waiting for {0} seconds for tabletop segmentation update".format(timeout))
         rospy.sleep(rospy.Duration(timeout))
 
         ''' Reset head and stop all perception stuff '''
@@ -243,11 +243,20 @@ class UpdateObjectPose(smach.State):
         elif self.arm == self.robot.rightArm:
             self.robot.head.look_at_hand("right")
         
-        rospy.logdebug("Sending spindle to top for safety")
+        rospy.loginfo("Sending spindle to top for safety")
         spindle_pos = self.robot.spindle.upper_limit
         self.robot.spindle.send_goal(spindle_pos,timeout=40.0)
 
         return 'succeeded'
+
+class UpdateDropPose(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+
+        self.robot = robot
+
+    def execute(self, gl):
+        return 'failed'
         
 class Handover_pose(smach.State):
     def __init__(self, arm, robot=None):
@@ -416,7 +425,7 @@ class Grab(smach.State):
             #rospy.loginfo("Delta target = {0}".format(target_position_delta))
             if (target_position_delta.x < 0 or target_position_delta.x > 0.6 or target_position_delta.y < -0.3 or target_position_delta.y > 0.3 or target_position_delta.z < -0.3 or target_position_delta.z > 0.3):
                 rospy.logwarn("Ar marker detection probably incorrect")
-                self.robot.speech.speak("I guess I cannot see my hand properly")
+                self.robot.speech.speak("I guess I cannot see my hand properly", block=False)
                 ar_marker_available = False
         rospy.logwarn("ar_marker_available (3) = {0}".format(ar_marker_available))
 
@@ -430,7 +439,7 @@ class Grab(smach.State):
                 rospy.loginfo("arm at object")                    
             else:
                 rospy.logerr("Goal unreachable: {0}".format(target_position_bl).replace("\n", " "))
-                self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
+                self.robot.speech.speak("I am sorry but I cannot move my arm to the object position", block=False)
                 return 'grab_failed'
         else:
             self.robot.speech.speak("Let's go", block=False)
@@ -439,7 +448,7 @@ class Grab(smach.State):
                 rospy.loginfo("arm at object")                    
             else:
                 rospy.logerr("Goal unreachable: {0}".format(target_position_bl).replace("\n", " "))
-                self.robot.speech.speak("I am sorry but I cannot move my arm to the object position")
+                self.robot.speech.speak("I am sorry but I cannot move my arm to the object position", block=False)
                 return 'grab_failed'
             
         self.robot.head.reset_position(timeout=0.0)
@@ -599,7 +608,7 @@ class DropObject(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_HUMAN_HANDOVER', 
                                     Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
-                                                        "My apologies, but i cannot place the object. Would you be so kind to take it from me"]),
+                                                        "My apologies, but i cannot place the object. Would you be so kind to take it from me"], block=False),
                                      transitions={   'spoken':'HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add( 'HANDOVER_TO_HUMAN', 
@@ -912,5 +921,4 @@ class Point_location_hardcoded(smach.State):
 
         self.side.reset_arm()
 
-        return 'pointed'
-        
+        return 'pointed'        

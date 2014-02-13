@@ -80,7 +80,7 @@ class StartChallengeRobust(smach.StateMachine):
                                     transitions={   "spoken":"ASSESS_DOOR"}) 
 
             smach.StateMachine.add( "DOOR_OPEN",
-                                    human_interaction.Say(robot, "Door is open!"),
+                                    human_interaction.Say(robot, "Door is open!", block=False),
                                     transitions={   "spoken":"INIT_POSE"}) 
 
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
@@ -168,7 +168,7 @@ class EnterArena(smach.StateMachine):
         with self:
             # If the door is open, amigo will say that it goes to the registration table
             smach.StateMachine.add( "THROUGH_DOOR",
-                                    human_interaction.Say(robot, "I will start my task now", block=True),
+                                    human_interaction.Say(robot, "I will start my task now", block=False),
                                     transitions={   "spoken":"ENTER_ROOM"}) 
 
             smach.StateMachine.add('ENTER_ROOM',

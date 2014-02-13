@@ -665,7 +665,7 @@ class Say_userdata_sentence(smach.State):
         return "spoken"
     
 class Say_generated(smach.State): 
-    def __init__(self, robot, sentence_creator=None, input_keys=[]):
+    def __init__(self, robot, sentence_creator=None, input_keys=[], block=True):
         smach.State.__init__(self,
                        outcomes=["spoken"],
                        input_keys=input_keys)
