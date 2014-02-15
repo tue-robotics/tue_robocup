@@ -83,40 +83,71 @@ class RoboZoo(smach.StateMachine):
         with self:
             smach.StateMachine.add( "SET_CURRENT_DRINK",
                                     smach.CBState(self.set_serve_drink, cb_kwargs={'drink':'coke'},
-                                    transitions={"asserted":"GOTO_STORAGE"}))
+                                    transitions={"asserted"             :"GOTO_STORAGE"}))
 
             smach.StateMachine.add( "GOTO_STORAGE",
-                                    states.NavigateGeneric(robot, lookat_query=query_storage_table))
+                                    states.NavigateGeneric(robot, lookat_query=query_storage_table),
+                                    transitions={   "arrived"           :"LOOK_FOR_DRINK", 
+                                                    "unreachable"       :"LOOK_FOR_DRINK", 
+                                                    "preempted"         :"Aborted", 
+                                                    "goal_not_defined"  :"Failed"})
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
-                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink))
+                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink),
+                                    transitions={   'looking'           :'LOOK_FOR_DRINK',
+                                                    'object_found'      :'GRAB_DRINK',
+                                                    'no_object_found'   :'GOTO_STORAGE', #TODO: Not the best option maybe
+                                                    'abort'             :'Aborted'})
 
             smach.StateMachine.add( "GRAB_DRINK",
-                                    states.GrabMachine(robot, "left", query_ordered_drink))
+                                    states.GrabMachine(robot, "left", query_ordered_drink),
+                                    transitions={   'succeeded'         :'GOTO_ORDERING',
+                                                    'failed'            :'LOOK_FOR_DRINK' }) #TODO: Or ask for help
 
             smach.StateMachine.add( "GOTO_ORDERING",
-                                    states.NavigateGeneric(robot, lookat_query=query_ordering_table))
+                                    states.NavigateGeneric(robot, lookat_query=query_ordering_table),
+                                    transitions={   "arrived"           :"PLACE_ORDER", 
+                                                    "unreachable"       :"PLACE_ORDER", #TODO: we should ask for help
+                                                    "preempted"         :"Aborted", 
+                                                    "goal_not_defined"  :"Failed"})
 
             smach.StateMachine.add( "PLACE_ORDER",
-                                    states.PlaceObject(robot, "left", placement_query=query_ordering_table))
+                                    states.PlaceObject(robot, "left", placement_query=query_ordering_table),
+                                    transitions={   "succeeded"         :"GOTO_PICKUP",
+                                                    "failed"            :"PLACE_ORDER",     #TODO: Ask for help
+                                                    "target_lost"       :"PLACE_ORDER"})    #TODO: Ask for help
 
             smach.StateMachine.add( "GOTO_PICKUP",
-                                    states.NavigateGeneric(robot, lookat_query=query_pickup_table))
+                                    states.NavigateGeneric(robot, lookat_query=query_pickup_table),
+                                    transitions={   "arrived"           :"LOOK_FOR_EMPTY_CAN", 
+                                                    "unreachable"       :"LOOK_FOR_EMPTY_CAN", 
+                                                    "preempted"         :"Aborted", 
+                                                    "goal_not_defined"  :"Failed"})
 
             smach.StateMachine.add( "LOOK_FOR_EMPTY_CAN",
-                                    states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can))
+                                    states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can),
+                                    transitions={   'looking'           :'LOOK_FOR_EMPTY_CAN',
+                                                    'object_found'      :'GRAB_EMPTY_CAN',
+                                                    'no_object_found'   :'SET_CURRENT_DRINK', #Nothing here, so skip this step
+                                                    'abort'             :'Aborted'})
 
             smach.StateMachine.add( "GRAB_EMPTY_CAN",
-                                    states.GrabMachine(robot, "left", query_any_can))
+                                    states.GrabMachine(robot, "left", query_any_can),
+                                    transitions={   'succeeded'         :'GOTO_TRASHBIN',
+                                                    'failed'            :'SET_CURRENT_DRINK' }) #TODO: or ask for help
 
             smach.StateMachine.add( "GOTO_TRASHBIN",
-                                    states.NavigateGeneric(robot, lookat_query=query_trashbin))
+                                    states.NavigateGeneric(robot, lookat_query=query_trashbin),
+                                    transitions={   "arrived"           :"DROPOFF_EMPTY_CAN", 
+                                                    "unreachable"       :"DROPOFF_EMPTY_CAN", 
+                                                    "preempted"         :"Aborted", 
+                                                    "goal_not_defined"  :"Failed"})
 
             smach.StateMachine.add("DROPOFF_EMPTY_CAN",
                                     states.DropObject("left", robot, query_trashbin),
-                                    transitions={   'succeeded':'SET_CURRENT_DRINK',
-                                                    'failed':'SET_CURRENT_DRINK',
-                                                    'target_lost':'SET_CURRENT_DRINK'})
+                                    transitions={   'succeeded'         :'SET_CURRENT_DRINK',
+                                                    'failed'            :'SET_CURRENT_DRINK',
+                                                    'target_lost'       :'SET_CURRENT_DRINK'})
 
 
     def init_knowledge(self):
