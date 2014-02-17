@@ -34,3 +34,9 @@ rosbuild_add_executable(follow_me_gmapping src/follow_me_gmapping.cpp)
 #rosbuild_add_library(follow_me_carrot_planner
 rosbuild_add_executable(test_navigate src/test_navigate.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
+# Test new class
+rosbuild_add_executable(test_follower include/challenge_follow_me/Follower.h src/Follower.cpp src/test_follower.cpp ${HEADER_FILES})
+
+rosbuild_add_boost_directories()
+rosbuild_link_boost(test_follower thread signals system)
