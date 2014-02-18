@@ -9,6 +9,19 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from drive_to_person import DriveToClosestPerson
 
+################ TODO / Bugs
+#
+# 1. We should ignore the person we learned as a possible person to go to in DriveToClostestPerson when we're in the other room. 
+# 2. There is an infinite loop while iterating all persons. We should be able to give DriveToClosestPerson a query it should use, 
+#    so we can also ignore people
+#
+#
+#
+#
+#
+#
+#
+
 class Identify(smach.StateMachine):
 
     def __init__(self, robot, desired_person=None):
