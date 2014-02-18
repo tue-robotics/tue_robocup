@@ -76,7 +76,7 @@ class DriveToClosestPerson(smach.StateMachine):
 
     """
 
-    def __init__(self, robot):
+    def __init__(self, robot, detect_persons=True):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
 
         self.robot = robot
@@ -95,12 +95,13 @@ class DriveToClosestPerson(smach.StateMachine):
         #robot.perception.toggle([])	
 
         with self:
-            #Turn on ppl_detection and switch off after we detected a person
-            smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
-                                    states.Wait_queried_perception(robot, ["ppl_detection"], self.possible_person_query, timeout=3),
-                                    transitions={   "query_true":"SET_CURRENT_POSSIBLE_PERSON",
-                                                    "timed_out":"Failed",
-                                                    "preempted":"Aborted"})
+            if detect_persons:
+                #Turn on ppl_detection and switch off after we detected a person
+                smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
+                                        states.Wait_queried_perception(robot, ["ppl_detection"], self.possible_person_query, timeout=3),
+                                        transitions={   "query_true":"SET_CURRENT_POSSIBLE_PERSON",
+                                                        "timed_out":"Failed",
+                                                        "preempted":"Aborted"})
 
             smach.StateMachine.add( 'SET_CURRENT_POSSIBLE_PERSON', 
                                     states.Select_object(robot, self.possible_person_query, "current_possible_person"),

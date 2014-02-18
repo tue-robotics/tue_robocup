@@ -173,15 +173,22 @@ class FindMe(smach.StateMachine):
 
             smach.StateMachine.add('GOTO_ROOM',
                                     states.NavigateGeneric(robot, goal_query=self.room_query),
-                                    transitions={   "arrived":"GOTO_CLOSEST_PERSON", 
-                                                    "unreachable":"GOTO_CLOSEST_PERSON", 
-                                                    "preempted":"GOTO_CLOSEST_PERSON", 
-                                                    "goal_not_defined":"GOTO_CLOSEST_PERSON"})
+                                    transitions={   "arrived":"DETECT_PERSONS",
+                                                    "unreachable":"DETECT_PERSONS",
+                                                    "preempted":"DETECT_PERSONS", 
+                                                    "goal_not_defined":"DETECT_PERSONS"})
+
+            smach.StateMachine.add( 'DETECT_PERSONS',
+                                    states.Wait_queried_perception(robot, ['ppl_detection'], self.human_query),
+                                    transitions={'query_true':'GOTO_CLOSEST_PERSON', 
+                                                'timed_out':'GOTO_CLOSEST_PERSON',
+                                                'preempted':'GOTO_CLOSEST_PERSON'})
+	
 
             ########## In the room, find persons and look at them to identify them##########
             #TODO: We should be able to optionally only drive to a closest person within an ROI, or a room.
             smach.StateMachine.add( "GOTO_CLOSEST_PERSON",
-                                    DriveToClosestPerson(robot),
+                                    DriveToClosestPerson(robot, detect_persons=False), #Only detect persons once, in the previous state
                                     transitions={   'Done':"SAY_SOMETHING",
                                                     'Aborted':"Aborted",
                                                     'Failed':"SAY_COULD_NOT_FIND_PERSON"})
@@ -202,11 +209,11 @@ class FindMe(smach.StateMachine):
                                   #TODO: replace with actual identifcation state. one transition should be NOT_OPERATOR
 
             smach.StateMachine.add( "NOT_OPERATOR", #TODO: Not yet called from anywhere. IDENTIFY_OPERATOR should be a new Identify state
-                                    states.Say(robot, ["Nope, sorry, i'm not looking for you. "], mood="sad"),
+                                    states.Say(robot, ["Nope, sorry, i'm looking for my operator"], mood="sad"),
                                     transitions={"spoken":"ASSERT_CURRENT_NOT_OPERATOR"})
 
-            smach.StateMachine.add( "ASSERT_CURRENT_NOT_OPERATOR",
-                                    states.Select_object(robot, self.query_detect_person, "not_operator"),
+            smach.StateMachine.add( "ASSERT_CURRENT_NOT_OPERATOR", #DriveToClosestPerson asserts current_ossible_person, so we should ignore that for now
+                                    states.Select_object(robot, Compound("current_possible_person","ObjectID"), "not_operator", retract_previous=False),
                                     transitions={   'selected':'GOTO_CLOSEST_PERSON', 
                                                     'no_answers':'GOTO_CLOSEST_PERSON'})
 
