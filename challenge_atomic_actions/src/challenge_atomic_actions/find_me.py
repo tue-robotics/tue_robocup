@@ -157,7 +157,14 @@ class FindMe(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_WAIT',
                                     states.Say(robot, ["I'll come after you in a couple of seconds"]),
-                                    transitions={"spoken":"WAIT"})
+                                    transitions={"spoken":"ASSERT_LEARNED_NOT_OPERATOR"})
+
+            #Ignore the validated_person we just learn in the first room somehow. If that's the closest, don't go back.
+            #Obviously, the current person IS in fact the operator, but we don't track that person so it gets a new ID in the other room
+            smach.StateMachine.add( "ASSERT_LEARNED_NOT_OPERATOR",
+                                    states.Select_object(robot, self.query_detect_person, "not_operator", retract_previous=False),
+                                    transitions={   'selected':'WAIT', 
+                                                    'no_answers':'WAIT'})
 
             smach.StateMachine.add( 'WAIT',
                                     states.Wait_time(robot, waittime=5),
@@ -172,6 +179,7 @@ class FindMe(smach.StateMachine):
                                                     "goal_not_defined":"GOTO_CLOSEST_PERSON"})
 
             ########## In the room, find persons and look at them to identify them##########
+            #TODO: We should be able to optionally only drive to a closest person within an ROI, or a room.
             smach.StateMachine.add( "GOTO_CLOSEST_PERSON",
                                     DriveToClosestPerson(robot),
                                     transitions={   'Done':"SAY_SOMETHING",
@@ -198,7 +206,7 @@ class FindMe(smach.StateMachine):
                                     transitions={"spoken":"ASSERT_CURRENT_NOT_OPERATOR"})
 
             smach.StateMachine.add( "ASSERT_CURRENT_NOT_OPERATOR",
-                                    states.Select_object(robot, self.query_detect_person, "ignored_person"),
+                                    states.Select_object(robot, self.query_detect_person, "not_operator"),
                                     transitions={   'selected':'GOTO_CLOSEST_PERSON', 
                                                     'no_answers':'GOTO_CLOSEST_PERSON'})
 
