@@ -123,6 +123,8 @@ class FindMe(smach.StateMachine):
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
+        self.pointing_query = Conjunction(self.query_detect_person, Compound("pointing_at", "ObjectID", "Direction"))
+
         with self:
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
@@ -192,22 +194,13 @@ class FindMe(smach.StateMachine):
                                   #TODO: replace with actual identifcation state. one transition should be NOT_OPERATOR
 
             smach.StateMachine.add( "NOT_OPERATOR", #TODO: Not yet called from anywhere. IDENTIFY_OPERATOR should be a new Identify state
-                                  states.Say(robot, ["Nope, sorry, i'm not looking for you. "], mood="sad"),
-                                  transitions={"spoken":"ASSERT_CURRENT_NOT_OPERATOR"})
+                                    states.Say(robot, ["Nope, sorry, i'm not looking for you. "], mood="sad"),
+                                    transitions={"spoken":"ASSERT_CURRENT_NOT_OPERATOR"})
 
-            @smach.cb_interface(outcomes=['asserted'])
-            def assert_current_not_operator(userdata):
-                answers = self.robot.reasoner.query(self.query_detect_person)
-                rospy.loginfo("These IDs are in from of me: " +", ".join([str(ans["ObjectID"]) for ans in answers]))
-                if answers:
-                    person = answers[0]["ObjectID"]
-                    rospy.loginfo("ObjectID {0} is in front of me but not operator.".format(person))
-                    self.robot.reasoner.assertz(Compound("ignored_person", person))
-                    return "asserted"
-                else:
-                    return "asserted"
-            smach.StateMachine.add('ASSERT_CURRENT_NOT_OPERATOR', smach.CBState(assert_current_not_operator),
-                                    transitions={   'asserted':'GOTO_CLOSEST_PERSON'}) #Yes this is a loop, but is is supposed to tick off all persons one by one. 
+            smach.StateMachine.add( "ASSERT_CURRENT_NOT_OPERATOR",
+                                    states.Select_object(robot, self.query_detect_person, "ignored_person"),
+                                    transitions={   'selected':'GOTO_CLOSEST_PERSON', 
+                                                    'no_answers':'GOTO_CLOSEST_PERSON'})
 
             #### SUCCESS! ####
             smach.StateMachine.add( "FOUND_OPERATOR",
@@ -215,10 +208,12 @@ class FindMe(smach.StateMachine):
                                   transitions={"spoken":"DETECT_LEFT_RIGHT"})
 
             smach.StateMachine.add( "DETECT_LEFT_RIGHT",
-                                  states.Say(robot, ["Hmmm, let me see if I should go to your left or right"], mood="neutral"),
-                                  transitions={"spoken":"GOTO_RIGHT"})
+                                    states.Wait_queried_perception(robot, ["human_tracking"], self.pointing_query, timeout=5),
+                                    transitions={   "query_true":"GOTO_SIDE",
+                                                    "timed_out":"GOTO_SIDE", #TODO: Is this wise to do?
+                                                    "preempted":"Aborted"})
 
-            smach.StateMachine.add( "GOTO_RIGHT",
+            smach.StateMachine.add( "GOTO_SIDE",
                                     states.NavigateGeneric(robot, lookat_query=self.query_detect_person, goal_area_radius=0.5, xy_dist_to_goal_tuple=(0.0,1.0)), #just go left or right, good enough
                                     transitions={   "arrived":"Done",
                                                     "unreachable":'Failed',
