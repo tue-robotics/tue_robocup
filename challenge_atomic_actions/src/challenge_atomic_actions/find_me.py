@@ -22,6 +22,8 @@ from drive_to_person import DriveToClosestPerson
 #
 #
 
+
+
 class Identify(smach.StateMachine):
 
     def __init__(self, robot, desired_person=None):
@@ -124,7 +126,7 @@ class FindMe(smach.StateMachine):
         self.room_query = Compound("waypoint", "find_me_room", Compound("pose_2d", "X", "Y", "Phi"))
 
         #I'm looking for a person of which I don't yet know that is not my operator, so persons that *could* be the operator.
-        self.human_query = Conjunction( Compound("instance_of", "ObjectID", "person"), 
+        self.human_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "person"), 
                                         Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
                                         Compound("not", Compound("not_operator", "ObjectID"))) 
 
@@ -136,7 +138,16 @@ class FindMe(smach.StateMachine):
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
-        self.pointing_query = Conjunction(self.query_detect_person, Compound("pointing_at", "ObjectID", "Direction"))
+        self.pointing_side_query = Conjunction(
+                                self.query_detect_person, 
+                                Compound("property_expected", "ObjectID", "pointing_side", "Direction"))
+
+        self.pointing_pos_query = Conjunction(
+                                Compound("property_expected", "ObjectID", "class_label", "validated_person"),
+                                Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")), 
+                                Compound("property_expected", "ObjectID", "pointing_at", Sequence("X","Y","Z")))
+
+        robot.reasoner.assertz(Compound("not_operator", "initializer")) #Required to make the predicate known.
 
         with self:
             smach.StateMachine.add( 'INITIALIZE',
@@ -174,6 +185,7 @@ class FindMe(smach.StateMachine):
 
             #Ignore the validated_person we just learn in the first room somehow. If that's the closest, don't go back.
             #Obviously, the current person IS in fact the operator, but we don't track that person so it gets a new ID in the other room
+            #This asserts a new not_operator(objectID) to the WM
             smach.StateMachine.add( "ASSERT_LEARNED_NOT_OPERATOR",
                                     states.Select_object(robot, self.query_detect_person, "not_operator", retract_previous=False),
                                     transitions={   'selected':'WAIT', 
@@ -200,11 +212,59 @@ class FindMe(smach.StateMachine):
 
             ########## In the room, find persons and look at them to identify them##########
             #TODO: We should be able to optionally only drive to a closest person within an ROI, or a room.
-            smach.StateMachine.add( "GOTO_CLOSEST_PERSON",
-                                    DriveToClosestPerson(robot, detect_persons=False), #Only detect persons once, in the previous state
-                                    transitions={   'Done':"SAY_SOMETHING",
-                                                    'Aborted':"Aborted",
-                                                    'Failed':"SAY_COULD_NOT_FIND_PERSON"})
+            # smach.StateMachine.add( "GOTO_CLOSEST_PERSON",
+            #                         DriveToClosestPerson(robot, detect_persons=False), #Only detect persons once, in the previous state
+            #                         transitions={   'Done':"SAY_SOMETHING",
+            #                                         'Aborted':"Aborted",
+            #                                         'Failed':"SAY_COULD_NOT_FIND_PERSON"})
+
+            #Main part of DriveToClosestPerson
+
+            self.possible_person_query = Conjunction(   Compound("instance_of", "ObjectID", "person"), 
+                                                    Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
+                                                    Compound("not", Compound("ignored_person", "ObjectID")),
+                                                    Compound("not", Compound("not_operator", "ObjectID")))
+
+            self.current_possible_person_query = Conjunction(   Compound("current_possible_person", "ObjectID"), 
+                                                            Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+            self.person_query = Conjunction(  Compound("instance_of", "ObjectID", "validated_person"), 
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+            robot.reasoner.assertz(Compound("ignored_person", "initializer")) #Required to make the predicate known.
+
+            smach.StateMachine.add( 'GOTO_CLOSEST_PERSON', 
+                                    states.Select_object(robot, self.possible_person_query, "current_possible_person"),
+                                    transitions={   'selected':'LOOK_AT_POSSIBLE_PERSON',
+                                                    'no_answers':'GOTO_PERSON'})
+
+            #Look at the possible_person detection, to verify through Luis's human_tracking them in a next state
+            smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
+                                    states.LookAtPoint(robot, self.current_possible_person_query),
+                                    transitions={   'looking':'WAIT_FOR_HUMAN_DETECTION',
+                                                    'no_point_found':'SAY_COULD_NOT_FIND_PERSON',
+                                                    'abort':'Aborted'})
+
+            #Turn on human_tracking with the kinect and wait for a match of it in the world model
+            smach.StateMachine.add( "WAIT_FOR_HUMAN_DETECTION",
+                                    states.Wait_queried_perception(robot, ["human_tracking"], self.person_query, timeout=10),
+                                    transitions={   "query_true":"RETRACT_POSSIBLE",
+                                                    "timed_out":"RETRACT_POSSIBLE",
+                                                    "preempted":"Aborted"})
+
+            smach.StateMachine.add('RETRACT_POSSIBLE', 
+                                    states.Select_object(robot, self.current_possible_person_query, "ignored_person"),
+                                    transitions={   'selected':'GOTO_PERSON',#Yes this is a loop, but is is supposed to tick off all persons one by one.
+                                                    'no_answers':'GOTO_PERSON'}) 
+
+            smach.StateMachine.add( "GOTO_PERSON",
+                                    states.NavigateGeneric(robot, lookat_query=self.person_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                    transitions={   "arrived":"SAY_SOMETHING",
+                                                    "unreachable":'SAY_COULD_NOT_FIND_PERSON',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_COULD_NOT_FIND_PERSON'})
+
+            ################################################################################
 
             smach.StateMachine.add( "SAY_SOMETHING",
                                   states.Say(robot, ["Hi there, let me see if you are my operator"]),
@@ -225,7 +285,7 @@ class FindMe(smach.StateMachine):
                                     states.Say(robot, ["Nope, sorry, i'm looking for my operator"], mood="sad"),
                                     transitions={"spoken":"ASSERT_CURRENT_NOT_OPERATOR"})
 
-            smach.StateMachine.add( "ASSERT_CURRENT_NOT_OPERATOR", #DriveToClosestPerson asserts current_ossible_person, so we should ignore that for now
+            smach.StateMachine.add( "ASSERT_CURRENT_NOT_OPERATOR", #DriveToClosestPerson asserts current_possible_person, so we should ignore that for now
                                     states.Select_object(robot, Compound("current_possible_person","ObjectID"), "not_operator", retract_previous=False),
                                     transitions={   'selected':'GOTO_CLOSEST_PERSON', 
                                                     'no_answers':'GOTO_CLOSEST_PERSON'})
@@ -236,13 +296,14 @@ class FindMe(smach.StateMachine):
                                   transitions={"spoken":"DETECT_LEFT_RIGHT"})
 
             smach.StateMachine.add( "DETECT_LEFT_RIGHT",
-                                    states.Wait_queried_perception(robot, ["human_tracking"], self.pointing_query, timeout=5),
+                                    states.Wait_queried_perception(robot, ["human_tracking"], self.pointing_side_query, timeout=5),
                                     transitions={   "query_true":"GOTO_SIDE",
                                                     "timed_out":"GOTO_SIDE", #TODO: Is this wise to do?
                                                     "preempted":"Aborted"})
 
             smach.StateMachine.add( "GOTO_SIDE",
-                                    states.NavigateGeneric(robot, lookat_query=self.query_detect_person, goal_area_radius=0.5, xy_dist_to_goal_tuple=(0.0,1.0)), #just go left or right, good enough
+                                    states.NavigateGeneric(robot, goal_query=self.pointing_pos_query, goal_area_radius=0.5), 
+                                    #, xy_dist_to_goal_tuple=(0.0,1.0) not needed anymore
                                     transitions={   "arrived":"Done",
                                                     "unreachable":'Failed',
                                                     "preempted":'Aborted',
