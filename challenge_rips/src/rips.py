@@ -108,7 +108,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_SECOND_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="registration_table1", xy_dist_to_goal_tuple=(1.0,0.0)), # within 1m of the target
+                                    states.NavigateGeneric(robot, goal_name="registration_table1", goal_area_radius=0.5), # within 1m of the target
                                     transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
                                                     'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
@@ -116,7 +116,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="registratiorobot.len_table2", xy_dist_to_goal_tuple=(1.0,0.0)), # within 1m of the target
+                                    states.NavigateGeneric(robot, goal_name="registration_table2", goal_area_radius=0.5), # within 1m of the target
                                     transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
                                                     'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
@@ -124,7 +124,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="registration_table3", xy_dist_to_goal_tuple=(1.0,0.0)), # within 1m of the target
+                                    states.NavigateGeneric(robot, goal_name="registration_table3", goal_area_radius=0.5), # within 1m of the target
                                     transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
                                                     'preempted':'FAIL_BUT_INTRODUCE', 
                                                     'unreachable':'FAIL_BUT_INTRODUCE', 
@@ -160,7 +160,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_1_rips", xy_dist_to_goal_tuple=(1.0,0.0)), # within 1m of the target
+                                    states.NavigateGeneric(robot, goal_name="exit_1_rips", goal_area_radius=0.5), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'GO_TO_EXIT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_EXIT_THIRD_TRY', 
@@ -168,7 +168,7 @@ def setup_statemachine(robot):
     
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_THIRD_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_2_rips", xy_dist_to_goal_tuple=(1.0,0.0)), # within 1m of the target
+                                    states.NavigateGeneric(robot, goal_name="exit_2_rips", goal_area_radius=0.5), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'GO_TO_EXIT_FOURTH_TRY', 
                                                     'unreachable':'GO_TO_EXIT_FOURTH_TRY', 
@@ -176,7 +176,7 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_FOURTH_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_3_rips", xy_dist_to_goal_tuple=(1.0,0.0)), # within 1m of the target
+                                    states.NavigateGeneric(robot, goal_name="exit_3_rips", goal_area_radius=0.5), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'preempted':'AT_END', 
                                                     'unreachable':'AT_END', 
