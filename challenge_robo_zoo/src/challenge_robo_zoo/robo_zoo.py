@@ -16,6 +16,8 @@ from psi import Compound, Conjunction, Sequence
     pickup_table,
     storage_table
 - Define dropoff_point for trash_bin
+
+- When there are no persons at the desk, have Amigo yell like a market salesman if anyone wants a drink?
 """
 
 class RoboZoo(smach.StateMachine):
@@ -58,6 +60,8 @@ class RoboZoo(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
 
+        self.robot = robot
+
         self.init_knowledge()
 
         query_storage_table =   Compound("point_of_interest", "storage_table", Compound("point_3d", "X", "Y", "Z"))
@@ -78,12 +82,18 @@ class RoboZoo(smach.StateMachine):
                                     Compound( "property_expected", "ObjectID", "position", 
                                         Compound("in_front_of", "amigo")))
         
-        query_trashbin =        Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+        query_trashbin =        Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
 
         with self:
+            @smach.cb_interface(outcomes=['asserted'])
+            def set_serve_drink(*args, **kwargs):
+                drink = kwargs.get("drink", "coke") #Get from key and default to coke if it doesnt exist
+                robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Drink"))))
+                robot.reasoner.assertz(Compound("goal", Compound("serve", drink)))
+                return "asserted"
             smach.StateMachine.add( "SET_CURRENT_DRINK",
-                                    smach.CBState(self.set_serve_drink, cb_kwargs={'drink':'coke'},
-                                    transitions={"asserted"             :"GOTO_STORAGE"}))
+                                    smach.CBState(set_serve_drink, cb_kwargs={'drink':'coke'}),
+                                    transitions={"asserted"             :"GOTO_STORAGE"})
 
             smach.StateMachine.add( "GOTO_STORAGE",
                                     states.NavigateGeneric(robot, lookat_query=query_storage_table),
@@ -100,7 +110,7 @@ class RoboZoo(smach.StateMachine):
                                                     'abort'             :'Aborted'})
 
             smach.StateMachine.add( "GRAB_DRINK",
-                                    states.GrabMachine(robot, "left", query_ordered_drink),
+                                    states.GrabMachine("left", robot, query_ordered_drink),
                                     transitions={   'succeeded'         :'GOTO_ORDERING',
                                                     'failed'            :'LOOK_FOR_DRINK' }) #TODO: Or ask for help
 
@@ -112,7 +122,7 @@ class RoboZoo(smach.StateMachine):
                                                     "goal_not_defined"  :"Failed"})
 
             smach.StateMachine.add( "PLACE_ORDER",
-                                    states.PlaceObject(robot, "left", placement_query=query_ordering_table),
+                                    states.PlaceObject("left", robot, placement_query=query_ordering_table),
                                     transitions={   "succeeded"         :"GOTO_PICKUP",
                                                     "failed"            :"PLACE_ORDER",     #TODO: Ask for help
                                                     "target_lost"       :"PLACE_ORDER"})    #TODO: Ask for help
@@ -132,7 +142,7 @@ class RoboZoo(smach.StateMachine):
                                                     'abort'             :'Aborted'})
 
             smach.StateMachine.add( "GRAB_EMPTY_CAN",
-                                    states.GrabMachine(robot, "left", query_any_can),
+                                    states.GrabMachine("left", robot, query_any_can),
                                     transitions={   'succeeded'         :'GOTO_TRASHBIN',
                                                     'failed'            :'SET_CURRENT_DRINK' }) #TODO: or ask for help
 
@@ -164,11 +174,6 @@ class RoboZoo(smach.StateMachine):
         self.robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
     
         self.robot.reasoner.assertz(Compound("challenge", "robo_zoo"))
-
-    def set_serve_drink(self, drink="coke"):
-        self.robot.reasoner.query(Compound("retractall", Compound("goal", Compound("serve", "Drink"))))
-        self.robot.reasoner.assertz(Compound("goal", Compound("serve", drink)))
-        return "asserted"
 
 
 if __name__ == "__main__":
