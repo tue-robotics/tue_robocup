@@ -166,7 +166,7 @@ class GoToStartLocation(smach.State):
         
 
             goal = (float(return_result[0]["X"]), float(return_result[0]["Y"]), float(1.0))
-            nav = NavigateGeneric(self.robot, lookat_point_3d=goal,xy_dist_to_goal_tuple=(1.0,0.0))
+            nav = NavigateGeneric(self.robot, lookat_point_3d=goal, goal_area_radius=0.5)
             nav.execute()
             return 'done'
         else:
