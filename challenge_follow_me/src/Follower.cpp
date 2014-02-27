@@ -29,6 +29,22 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map) :
     //! Tf listener
     listener_ = new tf::TransformListener();
 
+    //! Move base
+    if (!use_map_)
+    {
+        carrot_planner_ = new CarrotPlanner("Follower_carrot_planner");
+    }
+    else
+    {
+        // Connect to move base
+        ac_move_base_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base_3d", true);
+        ac_move_base_->waitForServer(ros::Duration(10.0));
+
+        // Connect to path planning service
+        srv_client_move_base_ = nh_.serviceClient<tue_move_base_msgs::GetPath>("/move_base_3d/get_plan");
+        srv_client_move_base_.waitForExistence(ros::Duration(10.0));
+    }
+
     //! Make the robot speak
     pub_speak_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
 
@@ -49,22 +65,6 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map) :
 
     //! Connect to pein supervisor
     pein_client_ = nh_.serviceClient<perception_srvs::StartPerception>("/start_perception");
-
-    //! Move base
-    if (!use_map_)
-    {
-        carrot_planner_ = new CarrotPlanner("Follower_carrot_planner");
-    }
-    else
-    {
-        // Connect to move base
-        ac_move_base_ = new actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>("move_base_3d", true);
-        ac_move_base_->waitForServer(ros::Duration(10.0));
-
-        // Connect to path planning service
-        srv_client_move_base_ = nh_.serviceClient<tue_move_base_msgs::GetPath>("/move_base_3d/get_plan");
-        srv_client_move_base_.waitForExistence(ros::Duration(10.0));
-    }
 
 }
 
@@ -121,6 +121,13 @@ bool Follower::start()
             use_map_ = false;
             ac_move_base_->cancelAllGoals();
         }
+    }
+
+    //! Reset WIRE
+    std_srvs::Empty srv;
+    if (!reset_wire_srv_client_.call(srv))
+    {
+        ROS_WARN("Failed to clear world model, start module anyway");
     }
 
     return true;
@@ -182,7 +189,7 @@ bool Follower::update()
     }
     else
     {
-        ROS_DEBUG("No operator in the world model");
+        ROS_WARN("No operator in the world model");
         if (!findOperator(pos_operator))
         {
             ROS_WARN("Operator cannot be found!");
@@ -324,6 +331,7 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
                     //! Get position
                     pbl::Gaussian pos_gauss(3);
                     getPositionGaussian(prop_pos.getValue(), pos_gauss);
+                    pos_operator = pos_gauss;
 
                     //! Operator found!
                     pbl::Matrix cov = pos_gauss.getCovariance();
@@ -333,14 +341,13 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
                     if (cov(0,0) < operator_last_var_ || operator_last_var_ < 0)
                     {
                         // Position operator is updated
-                        operator_last_var_ = cov(0,0);
                         t_no_meas_ = 0;
                         t_last_check_ = ros::Time::now().toSec();
+
                     }
                     else
                     {
                         // Position operator is not updated
-                        operator_last_var_ = cov(0,0);
                         t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
 
                         // Inform user if needed
@@ -355,6 +362,9 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
                     }
 
                     t_last_check_ = ros::Time::now().toSec();
+
+                    // Update last variance
+                    operator_last_var_ = cov(0,0);
 
                     return true;
 
@@ -403,6 +413,10 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
             ROS_ERROR("Cannot switch on perception, hence unable to find an operator!");
             return false;
         }
+    }
+    else
+    {
+        ROS_INFO("Switched on both ppl_detection and face_segmentation");
     }
 
     if (operator_lost_)
@@ -453,12 +467,12 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
 
                     //! Check if the person stands in front of the robot
                     if (pos_gauss.getMean()(0) < DIST_MAX &&
-                            pos_gauss.getMean()(0) > -1.0*DIST_MIN &&
-                            pos_gauss.getMean()(1) > DIST_LEFT_RIGHT &&
+                            pos_gauss.getMean()(0) > DIST_MIN &&
+                            pos_gauss.getMean()(1) > -1.0*DIST_LEFT_RIGHT &&
                             pos_gauss.getMean()(1) < DIST_LEFT_RIGHT)
                     {
                         vector_possible_operator_torsos.push_back(pos_gauss);
-                        ROS_DEBUG("Found candidate operator at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_INFO("Found candidate operator at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
                     }
                     else
@@ -481,18 +495,20 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
 
                     //! Store position of the closest person (wrt robot frame)
                     double d_face = std::sqrt(pos_gauss.getMean()(0)*pos_gauss.getMean()(0) + pos_gauss.getMean()(1) * pos_gauss.getMean()(1));
+                    ROS_INFO("Distance current face is %f", d_face);
                     if ((d_closest_face < 0 || d_face < d_closest_face) &&
                             d_face < DIST_MAX && d_face > DIST_MIN &&
-                            pos_gauss.getMean()(0) > -1.0*DIST_LEFT_RIGHT && pos_gauss.getMean()(0) < DIST_LEFT_RIGHT)
+                            pos_gauss.getMean()(1) > -1.0*DIST_LEFT_RIGHT && pos_gauss.getMean()(1) < DIST_LEFT_RIGHT)
                     {
                         pos_closest_face_gauss = pos_gauss;
                         d_closest_face = d_face;
-                        ROS_DEBUG("Updated closest face: (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_INFO("Updated closest face: (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
                     }
                     else
                     {
-                        ROS_DEBUG("Face at (x,y) = (%f,%f) is not a candidate face", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_DEBUG("Face at (x,y,z) = (%f,%f,%f) in robot frame is not a candidate face",
+                                 pos_gauss.getMean()(0), pos_gauss.getMean()(1), pos_gauss.getMean()(2));
                     }
                 }
             }
@@ -528,12 +544,8 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
                 //! Operator is found!
                 ROS_INFO("Found operator at (x,y) = (%f,%f)", pos_operator.getMean()(0), pos_operator.getMean()(1));
 
-                //! Reset
-                operator_last_var_ = -1;
-                t_last_check_ = ros::Time::now().toSec();
-
                 //! Assert operator property to WIRE
-                wire::Evidence ev(t_last_check_);
+                wire::Evidence ev(ros::Time::now().toSec());
                 ev.addProperty("position", pos_operator, nav_frame_);
                 pbl::PMF name_pmf;
                 name_pmf.setProbability(wm_val_operator_, 1.0);
@@ -561,6 +573,11 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
                 // Done
                 found_operator = true;
                 operator_lost_ = false;
+
+                //! Reset
+                operator_last_var_ = -1;
+                t_last_check_ = ros::Time::now().toSec();
+                t_no_meas_ = 0;
             }
 
 
@@ -588,9 +605,10 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
         say("I did not find my operator yet");
         ros::Duration dt(3.0);
         dt.sleep();
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 bool Follower::setHeadPanTilt(double pan, double tilt, bool block)
