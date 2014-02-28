@@ -2,7 +2,10 @@
 #include <ros/package.h>
 #include <text_to_speech/Speak.h>
 #include "tue_pocketsphinx/Switch.h"
+
 #include "std_msgs/String.h"
+#include "std_msgs/ColorRGBA.h"
+#include "amigo_msgs/RGBLightCommand.h"
 
 using namespace std;
 
@@ -38,6 +41,8 @@ ros::ServiceClient srv_speech_;                                                 
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 
+ros::Publisher rgb_pub_;
+
 map<int, pair<string, string> > order_map_; // index, object, desired location
 
 // Administration
@@ -45,7 +50,9 @@ bool speech_recognition_turned_on_ = false;
 speech_state::SpeechState speech_state_ = speech_state::DRIVE;
 std::string current_loc_name_ = "";
 std::string current_side_ = "";
-unsigned int n_confirmations_ = 0;
+unsigned int n_tries_ = 1;
+
+std::string current_clr_;
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -61,6 +68,42 @@ std::string getSpeechStateName(speech_state::SpeechState ss)
 
     return name;
 }
+
+
+
+void setRGBLights(string color)
+{
+
+    ROS_DEBUG("AMIGO: %s", color.c_str());
+
+    std_msgs::ColorRGBA clr_msg;
+
+    if (color == "red") clr_msg.r = 255;
+    else if (color == "green") clr_msg.g = 255;
+    else if (color == "blue") clr_msg.g = 255;
+    else if (color == "yellow")
+    {
+        clr_msg.r = 255;
+        clr_msg.g = 255;
+    }
+    else
+    {
+        ROS_INFO("Requested color \'%s\' for RGB lights unknown", color.c_str());
+        return;
+    }
+
+    //! Send color command
+    amigo_msgs::RGBLightCommand rgb_cmd;
+    rgb_cmd.color = clr_msg;
+    rgb_cmd.show_color.data = true;
+
+    rgb_pub_.publish(rgb_cmd);
+
+    //! Update global
+    current_clr_ = color;
+
+}
+
 
 
 bool startSpeechRecognition()
@@ -95,7 +138,7 @@ bool startSpeechRecognition()
     {
         if (resp.error_msg == "")
         {
-            ROS_INFO("Switched on speech recognition");
+            ROS_INFO("Switched on speech recognition for %s", file_name.c_str());
             speech_recognition_turned_on_ = true;
         }
         else
@@ -110,10 +153,13 @@ bool startSpeechRecognition()
         return false;
     }
 
+    //setRGBLights("green");
+
     return true;
 }
 
-bool stopSpeechRecognition() {
+bool stopSpeechRecognition()
+{
 
     //! Turn off speech recognition
     tue_pocketsphinx::Switch::Request req;
@@ -123,7 +169,7 @@ bool stopSpeechRecognition() {
     {
         if (resp.error_msg == "")
         {
-            ROS_INFO("Switched off speech recognition");
+            ROS_DEBUG("Switched off speech recognition");
             speech_recognition_turned_on_ = false;
         }
         else
@@ -138,6 +184,8 @@ bool stopSpeechRecognition() {
         return false;
     }
 
+    //setRGBLights("red");
+
     return true;
 }
 
@@ -147,11 +195,13 @@ bool stopSpeechRecognition() {
  * @brief amigoSpeak let AMIGO say a sentence
  * @param sentence
  */
-void amigoSpeak(string sentence, bool block = true) {
+void amigoSpeak(string sentence, bool block = true)
+{
+
+    std::string clr_back_up = current_clr_;
+    setRGBLights("red");
 
     ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
-
-    //setRGBLights("red");
 
     // If needed toggle recognition
     bool toggle_speech = speech_recognition_turned_on_;
@@ -175,14 +225,15 @@ void amigoSpeak(string sentence, bool block = true) {
     if (toggle_speech) startSpeechRecognition();
 
 
-    //setRGBLights("green");
+    setRGBLights(clr_back_up);
 
 }
 
 void updateSpeechState(speech_state::SpeechState new_state)
 {
-    ROS_INFO("Update speech state from %s to %s", getSpeechStateName(speech_state_).c_str(), getSpeechStateName(new_state).c_str());
+    ROS_DEBUG("Update speech state from %s to %s", getSpeechStateName(speech_state_).c_str(), getSpeechStateName(new_state).c_str());
     speech_state_ = new_state;
+    stopSpeechRecognition();
     startSpeechRecognition();
 }
 
@@ -191,7 +242,13 @@ void speechCallbackGuide(std_msgs::String res)
 {
 
     std::string answer = res.data;
-    ROS_INFO("Received command: %s", answer.c_str());
+    if (answer.empty()) return;
+
+    //! Get first word
+    ROS_DEBUG("Received unfiltered speech input: %s", answer.c_str());
+    size_t position = answer.find_first_of(" ");
+    if (position > 0 && position <= answer.size()) answer = std::string(answer.c_str(), position);
+    ROS_INFO("I heard: %s", answer.c_str());
 
     // ROBOT IS ASKED TO STOP
     if (speech_state_ == speech_state::DRIVE)
@@ -199,8 +256,9 @@ void speechCallbackGuide(std_msgs::String res)
         if (answer == "amigostop")
         {
             // stop robot
-            // set unique color
+            ROS_DEBUG("Robot received a stop command");
             updateSpeechState(speech_state::LOC_NAME);
+            setRGBLights("yellow");
         }
         else ROS_WARN("Robot expects command 'amigostop' but received an unknown command '%s'!", answer.c_str());
     }
@@ -213,13 +271,14 @@ void speechCallbackGuide(std_msgs::String res)
             // continue driving
             // set original color
             updateSpeechState(speech_state::DRIVE);
+            setRGBLights("green");
         }
         else
         {
             // Received location name
-            if (answer == "1") current_loc_name_ = "delivery location one";
-            else if (answer == "2") current_loc_name_ = "delivery location two";
-            else if (answer == "3") current_loc_name_ = "delivery location three";
+            if (answer == "one") current_loc_name_ = "delivery location one";
+            else if (answer == "two") current_loc_name_ = "delivery location two";
+            else if (answer == "three") current_loc_name_ = "delivery location three";
             else if (answer == "food") current_loc_name_ = "food shelf";
             else if (answer == "drink") current_loc_name_ = "drink shelf";
             else
@@ -227,6 +286,7 @@ void speechCallbackGuide(std_msgs::String res)
                 // Unknown command!
                 ROS_WARN("Robot expects: 1, 2, 3, food or drink (unknown command '%s')", answer.c_str());
                 updateSpeechState(speech_state::DRIVE);
+                setRGBLights("green");
             }
 
             // Ask for confirmation
@@ -234,6 +294,7 @@ void speechCallbackGuide(std_msgs::String res)
             {
                 amigoSpeak(current_loc_name_ + "?");
                 updateSpeechState(speech_state::CONFIRM_LOC);
+                setRGBLights("green");
             }
         }
     }
@@ -247,19 +308,23 @@ void speechCallbackGuide(std_msgs::String res)
             ROS_INFO("Confirmed location name '%s'!", current_loc_name_.c_str());
             amigoSpeak("Which side?");
             updateSpeechState(speech_state::SIDE);
-            n_confirmations_ = 0;
+            setRGBLights("green");
+            n_tries_ = 0;
         }
-        else if (n_confirmations_ <= MAX_N_CONFIRMS)
+        else if (n_tries_ < MAX_N_CONFIRMS)
         {
             ROS_INFO("Misunderstood the location name");
             amigoSpeak("Which location?");
             updateSpeechState(speech_state::LOC_NAME);
-            ++n_confirmations_;
+            setRGBLights("green");
+            ++n_tries_;
         }
         else
         {
             amigoSpeak("I give up");
             updateSpeechState(speech_state::DRIVE);
+            setRGBLights("green");
+            n_tries_ = 0;
         }
     }
 
@@ -271,11 +336,13 @@ void speechCallbackGuide(std_msgs::String res)
             current_side_ = answer;
             amigoSpeak(current_side_ + "?");
             updateSpeechState(speech_state::CONFIRM_SIDE);
+            setRGBLights("green");
         }
         else
         {
             ROS_WARN("Robot expects: left, front or right (unknown command '%s')", answer.c_str());
             updateSpeechState(speech_state::SIDE);
+            setRGBLights("green");
         }
     }
 
@@ -290,19 +357,22 @@ void speechCallbackGuide(std_msgs::String res)
             // reset world model
             // start following again
             updateSpeechState(speech_state::DRIVE);
-            n_confirmations_ = 0;
+            n_tries_ = 0;
         }
-        else if (n_confirmations_ <= MAX_N_CONFIRMS)
+        else if (n_tries_ < MAX_N_CONFIRMS)
         {
-            ROS_INFO("Misunderstood the side");
+            ROS_DEBUG("Misunderstood the side");
             amigoSpeak("Which side?");
             updateSpeechState(speech_state::SIDE);
-            ++n_confirmations_;
+            setRGBLights("green");
+            ++n_tries_;
         }
         else
         {
             amigoSpeak("I give up");
             updateSpeechState(speech_state::DRIVE);
+            setRGBLights("green");
+            n_tries_ = 0;
         }
     }
 
@@ -316,6 +386,9 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "test_speech_restaurant");
     ros::NodeHandle nh;
 
+    rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
+    setRGBLights("blue");
+
     //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
     srv_speech_ =  nh.serviceClient<text_to_speech::Speak>("/text_to_speech/speak");
@@ -324,7 +397,8 @@ int main(int argc, char **argv) {
     //! Start speech recognition
     speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
     speech_recognition_client_.waitForExistence();
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackGuide);
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
+    stopSpeechRecognition();
     startSpeechRecognition();
     ROS_INFO("Started speech recognition");
 
