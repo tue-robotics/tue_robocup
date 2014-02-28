@@ -29,9 +29,8 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
+
 rosbuild_add_executable(restaurant_simple src/restaurant_simple.cpp)
 rosbuild_add_executable(restaurant_gmap src/restaurant_gmap.cpp)
-#rosbuild_add_executable(restaurant_gmap2 src/restaurant_gmap2.cpp)
-#rosbuild_add_library(follow_me_carrot_planner
-#rosbuild_add_executable(test_navigate src/test_navigate.cpp src/follow_me_carrot_planner.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+rosbuild_add_executable(restaurant_generic src/restaurant_generic.cpp)
+rosbuild_add_executable(test_speech src/test_speech.cpp)

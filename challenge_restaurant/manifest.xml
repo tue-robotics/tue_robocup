@@ -29,6 +29,7 @@
   
   <depend package="text_to_speech"/>
   <depend package="tue_carrot_planner"/>
+  <depend package="challenge_follow_me"/>
   <depend package="tue_pocketsphinx"/>
   
   <depend package="speech_interpreter"/>
