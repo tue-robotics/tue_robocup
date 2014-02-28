@@ -24,6 +24,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # to show include files in Qt Creator
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 
+# Follower as a library
+rosbuild_add_library(tue_follower src/Follower.cpp ${HEADER_FILES})
+
 #common commands for building c++ executables and libraries
 #rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
 #target_link_libraries(${PROJECT_NAME} another_library)

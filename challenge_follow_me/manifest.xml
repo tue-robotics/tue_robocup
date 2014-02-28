@@ -22,6 +22,10 @@
   <depend package="speech_interpreter"/>
   <depend package="amigo_head_ref"/>
   
+  <export>
+    <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -ltue_follower"/>
+  </export>
+  
 </package>
 
 

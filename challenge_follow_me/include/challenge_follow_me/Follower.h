@@ -46,6 +46,11 @@ public:
     bool start();
 
     /**
+     * @brief pause Robot should stop moving
+     */
+    void pause();
+
+    /**
      * @brief update function that triggers queries to WIRE
      */
     bool update();

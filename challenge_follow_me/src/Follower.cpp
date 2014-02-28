@@ -133,6 +133,25 @@ bool Follower::start()
     return true;
 }
 
+void Follower::pause()
+{
+    //! Stop moving
+    if (use_map_)
+    {
+        ac_move_base_->cancelAllGoals();
+    }
+    else
+    {
+        geometry_msgs::PoseStamped end_goal;
+        end_goal.header.frame_id = nav_frame_;
+        end_goal.header.stamp = ros::Time();
+        end_goal.pose.position.x = 0;
+        end_goal.pose.position.y = 0;
+        end_goal.pose.position.z = 0;
+        carrot_planner_->MoveToGoal(end_goal);
+    }
+}
+
 bool Follower::reset()
 {
     // Reset WIRE
@@ -662,7 +681,15 @@ bool Follower::moveTowardsPosition(pbl::Gaussian& pos, double offset, bool block
     if (t_no_meas_ > 1.0)
     {
         ROS_INFO("No operator position update: robot will not move");
-        if (use_map_) ac_move_base_->cancelAllGoals();
+        if (use_map_) {
+            ac_move_base_->cancelAllGoals();
+        }
+        else
+        {
+            end_goal.pose.position.x = 0;
+            end_goal.pose.position.y = 0;
+            carrot_planner_->MoveToGoal(end_goal);
+        }
     }
     else
     {
