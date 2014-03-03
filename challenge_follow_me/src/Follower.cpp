@@ -76,6 +76,8 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map) :
 
 bool Follower::start()
 {
+    double t_start = ros::Time::now().toSec();
+
     //! Set mode
     mode_ = Follower::ACTIVE;
 
@@ -84,25 +86,6 @@ bool Follower::start()
 
     //! Reset head position
     setHeadPanTilt();
-
-    //! Toggle perception
-    perception_srvs::StartPerception pein_srv;
-    pein_srv.request.modules.push_back("ppl_detection");
-    if (!pein_client_.call(pein_srv))
-    {
-        ROS_WARN("Could not switch on ppl_detection, try once more...");
-        ros::Duration dt(1.5);
-        dt.sleep();
-        if (!pein_client_.call(pein_srv))
-        {
-            ROS_ERROR("People detection cannnot be turned on, no following possible");
-            return false;
-        }
-        else
-        {
-            ROS_INFO("Second try succeeded: ppl detection is turned on now.");
-        }
-    }
 
     //! See if the map can be use
     if (use_map_ && !ac_move_base_->isServerConnected() && !!ac_move_base_->waitForServer(ros::Duration(10.0)))
@@ -123,6 +106,8 @@ bool Follower::start()
         }
     }
 
+    ROS_INFO("First part of starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
+
     //! Reset WIRE
     std_srvs::Empty srv;
     if (!reset_wire_srv_client_.call(srv))
@@ -130,7 +115,33 @@ bool Follower::start()
         ROS_WARN("Failed to clear world model, start module anyway");
     }
 
+    //! Toggle perception
+    double t_perc = ros::Time::now().toSec();
+    perception_srvs::StartPerception pein_srv;
+    pein_srv.request.modules.push_back("ppl_detection");
+    if (!pein_client_.call(pein_srv))
+    {
+        ROS_WARN("Could not switch on ppl_detection, try once more...");
+        ros::Duration dt(1.5);
+        dt.sleep();
+        if (!pein_client_.call(pein_srv))
+        {
+            ROS_ERROR("People detection cannnot be turned on, no following possible");
+            return false;
+        }
+        else
+        {
+            ROS_INFO("Second try succeeded: ppl detection is turned on now.");
+        }
+    }
+    ROS_INFO("Switching on perception took %f [ms]", 1000*(ros::Time::now().toSec()-t_perc));
+
     return true;
+}
+
+void Follower::resume()
+{
+    mode_ = Follower::ACTIVE;
 }
 
 void Follower::pause()
@@ -148,8 +159,10 @@ void Follower::pause()
         end_goal.pose.position.x = 0;
         end_goal.pose.position.y = 0;
         end_goal.pose.position.z = 0;
-        carrot_planner_->MoveToGoal(end_goal);
+        //carrot_planner_->MoveToGoal(end_goal);
     }
+
+    mode_ = Follower::PAUSE;
 }
 
 void Follower::stop()
@@ -167,7 +180,7 @@ void Follower::stop()
         end_goal.pose.position.x = 0;
         end_goal.pose.position.y = 0;
         end_goal.pose.position.z = 0;
-        carrot_planner_->MoveToGoal(end_goal);
+        //carrot_planner_->MoveToGoal(end_goal);
     }
 
     pein_client_.shutdown();
@@ -179,9 +192,13 @@ void Follower::stop()
 
 bool Follower::reset()
 {
+    double t_start = ros::Time::now().toSec();
+
     // Reset WIRE
     std_srvs::Empty srv;
     bool reset = reset_wire_srv_client_.call(srv);
+
+    ROS_INFO("Resetting WIRE took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     // Start following
     bool started = start();
@@ -193,6 +210,8 @@ bool Follower::reset()
 
     // Do not ask to operator stand in front of the robot (if position is unknown)
     operator_lost_ = false;
+
+    ROS_INFO("Resetting follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     return (reset && started);
 }
@@ -216,11 +235,18 @@ bool Follower::update()
         ROS_WARN("Request for follower update while mode is idle.");
         return true;
     }
+    else if (mode_ == Follower::PAUSE)
+    {
+        ROS_INFO("Follower is paused");
+        return true;
+    }
     else
     {
         ROS_ERROR("Unknown mode in Follower class");
         return false;
     }
+
+    ROS_DEBUG("In update function");
 
     //// Query WIRE
     std::vector<wire::PropertySet> objects = wire_client_->queryMAPObjects(nav_frame_);
@@ -246,7 +272,11 @@ bool Follower::update()
 
 
     //// Steer robot towards operator with offset (non-blocking)
-    bool move_ok = moveTowardsPosition(pos_operator, follow_distance_, false);
+    bool move_ok = true;
+    if (mode_ != Follower::PAUSE)
+    {
+        move_ok = moveTowardsPosition(pos_operator, follow_distance_, false);
+    }
 
     return move_ok;
 
@@ -401,6 +431,7 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
                         if (t_no_meas_ > time_out_operator_lost_)
                         {
                             ROS_INFO("Operator is lost!");
+                            say("I lost my operator");
                             return false;
                         }
                     }
@@ -480,6 +511,13 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
     std::vector<pbl::Gaussian> vector_possible_operator_torsos;
     pbl::Gaussian pos_closest_face_gauss(3);
     double d_closest_face = -1.0;
+    if (!operator_lost_)
+    {
+        arma::vec mu;
+        mu << 1.0 << 0 << arma::endr;
+        pos_closest_face_gauss.setMean(mu);
+        d_closest_face = 1.0;
+    }
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
@@ -490,6 +528,7 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
 
         // Get latest world state estimate
         std::vector<wire::PropertySet> objects = wire_client_->queryMAPObjects(robot_base_frame_);
+        ROS_INFO("World model contains %zu objects", objects.size());
 
         //! Iterate over all world model objects and look for a torso or face in front of the robot
         for(std::vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj)
@@ -499,6 +538,7 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
             const wire::Property& prop_label = obj.getProperty("class_label");
             if (prop_label.isValid() && prop_label.getValue().getExpectedValue().toString() == "person")
             {
+                //ROS_INFO("Found a person!");
 
                 // Check position
                 const wire::Property& prop_pos = obj.getProperty("position");
@@ -516,7 +556,7 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
                             pos_gauss.getMean()(1) < DIST_LEFT_RIGHT)
                     {
                         vector_possible_operator_torsos.push_back(pos_gauss);
-                        ROS_INFO("Found candidate operator at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_INFO("Found candidate operator torso at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
                     }
                     else
@@ -529,6 +569,7 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
             //// FACE
             else if (prop_label.isValid() && prop_label.getValue().getExpectedValue().toString() == "face")
             {
+                //ROS_INFO("Found a face!");
                 // Check position
                 const wire::Property& prop_pos = obj.getProperty("position");
                 if (prop_pos.isValid()) {
@@ -552,11 +593,16 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
                     else
                     {
                         ROS_DEBUG("Face at (x,y,z) = (%f,%f,%f) in robot frame is not a candidate face",
-                                 pos_gauss.getMean()(0), pos_gauss.getMean()(1), pos_gauss.getMean()(2));
+                                  pos_gauss.getMean()(0), pos_gauss.getMean()(1), pos_gauss.getMean()(2));
                     }
                 }
             }
             //// End person or face
+            else
+            {
+                if (prop_label.isValid()) ROS_INFO("Found a %s", prop_label.getValue().getExpectedValue().toString().c_str());
+                else ROS_INFO("Found object without valid class label!");
+            }
 
         } // Done looping over world model objects
 
@@ -594,20 +640,23 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
                 pbl::PMF name_pmf;
                 name_pmf.setProbability(wm_val_operator_, 1.0);
                 ev.addProperty(wm_prop_operator_, name_pmf);
+                pbl::PMF class_pmf;
+                class_pmf.setProbability("person", 1.0);
+                ev.addProperty("class_label", class_pmf);
                 // Reset the world model
                 std_srvs::Empty srv;
                 if (!reset_wire_srv_client_.call(srv)) ROS_WARN("Failed to clear world model");
                 // Assert evidence to WIRE (multiple times to be sure)
-                std::vector<wire::Evidence> evs;
-                for (unsigned int dummy = 0; dummy < 5; ++dummy) evs.push_back(ev);
-                wire_client_->assertEvidence(evs);
+                //std::vector<wire::Evidence> evs;
+                //for (unsigned int dummy = 0; dummy < 5; ++dummy) evs.push_back(ev);
+                wire_client_->assertEvidence(ev);
 
                 // Inform user (wait since speech is non-blocking)
                 if (operator_lost_)
                 {
                     say("I will follow you now");
-                    ros::Duration safety_delta(2.0);
-                    safety_delta.sleep();
+                    //ros::Duration safety_delta(2.0);
+                    //safety_delta.sleep();
                 }
                 else
                 {
@@ -703,7 +752,7 @@ bool Follower::moveTowardsPosition(pbl::Gaussian& pos, double offset, bool block
     end_goal.pose.position.z = 0;
 
     //! Send goal to planner
-    if (t_no_meas_ > 1.0)
+    if (t_no_meas_ > 1.5)
     {
         ROS_INFO("No operator position update: robot will not move");
         if (use_map_) {
@@ -713,7 +762,7 @@ bool Follower::moveTowardsPosition(pbl::Gaussian& pos, double offset, bool block
         {
             end_goal.pose.position.x = 0;
             end_goal.pose.position.y = 0;
-            carrot_planner_->MoveToGoal(end_goal);
+            //carrot_planner_->MoveToGoal(end_goal);
         }
     }
     else

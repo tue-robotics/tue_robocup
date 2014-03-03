@@ -33,6 +33,7 @@
 class Follower
 {
 public:
+    Follower();
     Follower(ros::NodeHandle& nh, std::string frame, bool map);
 
     /**
@@ -46,9 +47,10 @@ public:
     bool start();
 
     /**
-     * @brief pause Robot should stop moving
+     * @brief pause Robot should stop moving but continue tracking, resume continue
      */
     void pause();
+    void resume();
 
     /**
      * @brief update function that triggers queries to WIRE
@@ -132,6 +134,7 @@ private:
     enum Mode
     {
         ACTIVE,
+        PAUSE,
         IDLE
     };
     Mode mode_;
