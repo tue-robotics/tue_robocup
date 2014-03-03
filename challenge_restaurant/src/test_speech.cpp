@@ -7,12 +7,9 @@
 #include "std_msgs/ColorRGBA.h"
 #include "amigo_msgs/RGBLightCommand.h"
 
-using namespace std;
 
-#include <iostream>
 #include <vector>
-#include <cstring>
-#include <fstream>
+#include <map>
 
 enum PhaseChallenge {
     GUIDE,
@@ -27,7 +24,10 @@ enum SpeechState {
     NUMBER,
     OBJECT,
     CONFIRM_LOC,
-    CONFIRM_SIDE
+    CONFIRM_SIDE,
+    CONFIRM_NUMBER,
+    CONFIRM_OBJECT,
+    DONE
 };
 }
 
@@ -43,7 +43,7 @@ ros::Publisher pub_speech_;                                                     
 
 ros::Publisher rgb_pub_;
 
-map<int, pair<string, string> > order_map_; // index, object, desired location
+std::map<std::string, std::string> order_map_; // object, desired location
 
 // Administration
 bool speech_recognition_turned_on_ = false;
@@ -65,13 +65,16 @@ std::string getSpeechStateName(speech_state::SpeechState ss)
     else if (ss == speech_state::OBJECT) name = "OBJECT";
     else if (ss == speech_state::CONFIRM_LOC) name = "CONFIRM_LOC";
     else if (ss == speech_state::CONFIRM_SIDE) name = "CONFIRM_SIDE";
+    else if (ss == speech_state::CONFIRM_NUMBER) name = "CONFIRM_NUMBER";
+    else if (ss == speech_state::CONFIRM_OBJECT) name = "CONFIRM_OBJECT";
+    else if (ss == speech_state::DONE) name = "DONE";
 
     return name;
 }
 
 
 
-void setRGBLights(string color)
+void setRGBLights(std::string color)
 {
 
     ROS_DEBUG("AMIGO: %s", color.c_str());
@@ -123,6 +126,11 @@ bool startSpeechRecognition()
     else if (speech_state_ == speech_state::SIDE) file_name = "side";
     else if (speech_state_ == speech_state::NUMBER) file_name = "number";
     else if (speech_state_ == speech_state::OBJECT) file_name = "object";
+    else if (speech_state_ == speech_state::DONE)
+    {
+        ROS_WARN("No need to start recognition when speech state is DONE");
+        return false;
+    }
     else file_name = "yesno";
 
     //! Select appropriate speech file
@@ -195,7 +203,7 @@ bool stopSpeechRecognition()
  * @brief amigoSpeak let AMIGO say a sentence
  * @param sentence
  */
-void amigoSpeak(string sentence, bool block = true)
+void amigoSpeak(std::string sentence, bool block = true)
 {
 
     std::string clr_back_up = current_clr_;
@@ -281,6 +289,7 @@ void speechCallbackGuide(std_msgs::String res)
             else if (answer == "three") current_loc_name_ = "delivery location three";
             else if (answer == "food") current_loc_name_ = "food shelf";
             else if (answer == "drink") current_loc_name_ = "drink shelf";
+            else if (answer == "order") current_loc_name_ = "ordering location";
             else
             {
                 // Unknown command!
@@ -306,8 +315,17 @@ void speechCallbackGuide(std_msgs::String res)
         {
             if (current_loc_name_.empty()) ROS_WARN("Error in location name administration!");
             ROS_INFO("Confirmed location name '%s'!", current_loc_name_.c_str());
-            amigoSpeak("Which side?");
-            updateSpeechState(speech_state::SIDE);
+            if (current_loc_name_ == "ordering location")
+            {
+                // SWITCH TO NEXT MODE
+                amigoSpeak("I am ready to take orders. Which delicery location?");
+                speech_state_ = speech_state::NUMBER;
+            }
+            else
+            {
+                amigoSpeak("Which side?");
+                updateSpeechState(speech_state::SIDE);
+            }
             setRGBLights("green");
             n_tries_ = 0;
         }
@@ -380,6 +398,114 @@ void speechCallbackGuide(std_msgs::String res)
 }
 
 
+std::string current_delivery_location_ = "";
+std::string current_object_ = "";
+
+void speechCallbackOrder(std_msgs::String res)
+{
+
+    std::string answer = res.data;
+    if (answer.empty()) return;
+
+    //! Get first word
+    ROS_INFO("Full answer: %s", answer.c_str());
+    size_t position = answer.find_first_of(" ");
+    if (position > 0 && position <= answer.size()) answer = std::string(answer.c_str(), position);
+    ROS_INFO("I heard: %s", answer.c_str());
+
+    // ROBOT RECEIVED LOCATION
+    if (speech_state_ == speech_state::NUMBER)
+    {
+        if (answer == "one" || answer == "two" || answer == "three")
+        {
+            if (answer == "one") current_delivery_location_ = "delivery location one";
+            else if (answer == "two") current_delivery_location_ = "delivery location two";
+            else if (answer == "three") current_delivery_location_ = "delivery location three";
+            updateSpeechState(speech_state::CONFIRM_NUMBER);
+            amigoSpeak(current_delivery_location_ + "?");
+            setRGBLights("green");
+        }
+        else ROS_WARN("Robot expects 'one', 'two' or 'three' but received an unknown command '%s'!", answer.c_str());
+    }
+
+    // CONFIRMATION DELIVERY LOCATION
+    else if (speech_state_ == speech_state::CONFIRM_NUMBER)
+    {
+        if (answer == "yes")
+        {
+            updateSpeechState(speech_state::OBJECT);
+            amigoSpeak("Which object?");
+            n_tries_ = 0;
+        }
+        else if (n_tries_ < MAX_N_CONFIRMS)
+        {
+            amigoSpeak("Which location?");
+            ++n_tries_;
+        }
+        else
+        {
+            amigoSpeak("Let's try again, which delivery location?");
+            updateSpeechState(speech_state::NUMBER);
+            n_tries_ = 0;
+        }
+        setRGBLights("green");
+
+    }
+
+    // RECEIVED AN OBJECT
+    else if (speech_state_ == speech_state::OBJECT)
+    {
+        current_object_ = answer;
+        amigoSpeak(current_object_ + "?");
+        updateSpeechState(speech_state::CONFIRM_OBJECT);
+        setRGBLights("green");
+
+    }
+
+    // CONFIRMATION OBJECT
+    else if (speech_state_ == speech_state::CONFIRM_OBJECT)
+    {
+        if (answer == "yes")
+        {
+            if (current_object_.empty()) ROS_WARN("Error in location name administration!");
+            ROS_INFO("Confirmed object '%s' for '%s'!", current_object_.c_str(), current_delivery_location_.c_str());
+
+            // Store order
+            order_map_[current_delivery_location_] = current_object_;
+            if (order_map_.size() < N_ORDERS)
+            {
+                updateSpeechState(speech_state::NUMBER);
+                amigoSpeak("What's the next delivery location?");
+            }
+            else
+            {
+                amigoSpeak("I know all orders.");
+                updateSpeechState(speech_state::DONE);
+            }
+
+            n_tries_ = 0;
+        }
+        else if (n_tries_ < MAX_N_CONFIRMS)
+        {
+            ROS_DEBUG("Misunderstood the object");
+            amigoSpeak("Which object?");
+            updateSpeechState(speech_state::OBJECT);
+            setRGBLights("green");
+            ++n_tries_;
+        }
+        else
+        {
+            amigoSpeak("I don't understand. Which object?");
+            updateSpeechState(speech_state::OBJECT);
+            setRGBLights("green");
+            n_tries_ = 0;
+        }
+    }
+
+
+}
+
+
 
 int main(int argc, char **argv) {
 
@@ -403,14 +529,23 @@ int main(int argc, char **argv) {
     ROS_INFO("Started speech recognition");
 
 
-    //sub_speech.shutdown();
-    //sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackOrder);
+    sub_speech.shutdown();
+    sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackOrder);
+    amigoSpeak("Which location?");
+    speech_state_ = speech_state::NUMBER;
 
     ros::Rate loop_rate(5);
-    while (ros::ok())
+    while (ros::ok() && speech_state_ != speech_state::DONE)
     {
         ros::spinOnce();
         loop_rate.sleep();
+    }
+
+    ROS_INFO("Done taking orders:");
+
+    for (std::map<std::string, std::string>::const_iterator it = order_map_.begin(); it != order_map_.end(); ++it)
+    {
+        ROS_INFO("\tBring %s to %s", it->second.c_str(), it->first.c_str());
     }
 
 
