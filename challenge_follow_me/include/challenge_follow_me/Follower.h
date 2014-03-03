@@ -55,6 +55,11 @@ public:
      */
     bool update();
 
+    /**
+     * @brief stop
+     */
+    void stop();
+
     bool sendOwnGoalPose(double x, double y, double theta, std::string frame);
 
 private:
