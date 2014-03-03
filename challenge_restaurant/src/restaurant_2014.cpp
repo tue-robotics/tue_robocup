@@ -1,13 +1,20 @@
+// Ros
 #include <ros/ros.h>
+
+// Find ROS pkgs
 #include <ros/package.h>
+
+// Messages
 #include <text_to_speech/Speak.h>
 #include "tue_pocketsphinx/Switch.h"
-
 #include "std_msgs/String.h"
 #include "std_msgs/ColorRGBA.h"
 #include "amigo_msgs/RGBLightCommand.h"
 
+// Follower
+#include "challenge_follow_me/Follower.h"
 
+// STL
 #include <vector>
 #include <map>
 
@@ -41,11 +48,13 @@ ros::ServiceClient srv_speech_;                                                 
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 
+// Color AMIGO
 ros::Publisher rgb_pub_;
 
-std::map<int, std::pair<std::string, std::string> > order_map_; // object, desired location
+// Follower
+Follower* follower;
 
-// Administration
+// Administration: speech
 bool speech_recognition_turned_on_ = false;
 speech_state::SpeechState speech_state_ = speech_state::DRIVE;
 std::string current_loc_name_ = "";
@@ -54,7 +63,10 @@ unsigned int n_tries_ = 1;
 int current_order_ = 1;
 std::string current_delivery_location_ = "";
 std::string current_object_ = "";
+
+// Adminstration: other
 std::string current_clr_;
+std::map<int, std::pair<std::string, std::string> > order_map_; // object, desired location
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -266,6 +278,7 @@ void speechCallbackGuide(std_msgs::String res)
         if (answer == "amigostop")
         {
             // stop robot
+            follower->pause();
             ROS_DEBUG("Robot received a stop command");
             updateSpeechState(speech_state::LOC_NAME);
             setRGBLights("yellow");
@@ -278,8 +291,7 @@ void speechCallbackGuide(std_msgs::String res)
     {
         if (answer == "continue")
         {
-            // continue driving
-            // set original color
+            follower->resume();
             updateSpeechState(speech_state::DRIVE);
             setRGBLights("green");
         }
@@ -321,7 +333,6 @@ void speechCallbackGuide(std_msgs::String res)
             {
                 // SWITCH TO NEXT MODE
                 speech_state_ = speech_state::NUMBER;
-                amigoSpeak("I am ready to take orders. Which delivery location?");
             }
             else
             {
@@ -374,8 +385,9 @@ void speechCallbackGuide(std_msgs::String res)
             if (current_side_.empty()) ROS_WARN("Error in location name administration!");
             ROS_INFO("Confirmed side '%s' for '%s'!", current_side_.c_str(), current_loc_name_.c_str());
             // store location + side
-            // reset world model
-            // start following again
+
+            //! Continue following
+            follower->reset();
             updateSpeechState(speech_state::DRIVE);
             n_tries_ = 0;
         }
@@ -393,6 +405,9 @@ void speechCallbackGuide(std_msgs::String res)
             amigoSpeak("I give up");
             setRGBLights("green");
             n_tries_ = 0;
+
+            //! Continue following
+            follower->reset();
         }
     }
 
@@ -552,27 +567,64 @@ int main(int argc, char **argv) {
     speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
     speech_recognition_client_.waitForExistence();
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
+
+    //! Start follower
+    follower = new Follower(nh, "/amigo/base_link", false);
+    if (!follower->start())
+    {
+        ROS_ERROR("Could not start the follower!");
+        return -1;
+    }
+
+    //! Wait for operator
+    bool operator_found = false;
+    ros::Rate loop_rate(25);
+    while (!operator_found)
+    {
+        operator_found = follower->update();
+        loop_rate.sleep();
+
+    }
+
     stopSpeechRecognition();
     startSpeechRecognition();
     ROS_INFO("Started speech recognition");
 
+    //! Start guiding phase
+    while (ros::ok() && speech_state_ != speech_state::NUMBER)
+    {
+        //! Get information from topics
+        ros::spinOnce();
 
-    //sub_speech.shutdown();
-    //sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackOrder);
-    //amigoSpeak("Which location?");
-    //speech_state_ = speech_state::NUMBER;
-    //stopSpeechRecognition();
-    //startSpeechRecognition();
+        //! Update the follower
+        bool ok = follower->update();
+        if (!ok) ROS_WARN("Could not update Follower");
 
-    ros::Rate loop_rate(5);
+        //! Wait
+        loop_rate.sleep();
+    }
+
+    //! Reconfigure speech recognition
+    sub_speech.shutdown();
+    sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackOrder);
+    amigoSpeak("Which location?");
+    speech_state_ = speech_state::NUMBER;
+    stopSpeechRecognition();
+    startSpeechRecognition();
+
+    //! Done with the following part
+    follower->stop();
+    delete follower;
+
+    //! Take orders
     while (ros::ok() && speech_state_ != speech_state::DONE)
     {
         ros::spinOnce();
         loop_rate.sleep();
     }
 
+    //! Done
     ROS_INFO("Done taking orders:");
-
     for (std::map<int, std::pair<std::string, std::string> >::const_iterator it = order_map_.begin(); it != order_map_.end(); ++it)
     {
         ROS_INFO("\tBring %s to %s", it->second.second.c_str(), it->second.first.c_str());
@@ -581,4 +633,3 @@ int main(int argc, char **argv) {
 
     return 0;
 }
-

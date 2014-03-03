@@ -32,5 +32,5 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 rosbuild_add_executable(restaurant_simple src/restaurant_simple.cpp)
 rosbuild_add_executable(restaurant_gmap src/restaurant_gmap.cpp)
-rosbuild_add_executable(restaurant_generic src/restaurant_generic.cpp)
+rosbuild_add_executable(restaurant_2014 src/restaurant_2014.cpp)
 rosbuild_add_executable(test_speech src/test_speech.cpp)
