@@ -14,6 +14,10 @@
 #include "visualization_msgs/Marker.h"
 #include "visualization_msgs/MarkerArray.h"
 
+// Action client related
+#include <actionlib/client/simple_action_client.h>
+#include "robot_skill_server/ExecuteAction.h"
+
 // Follower
 #include "challenge_follow_me/Follower.h"
 
@@ -50,6 +54,9 @@ unsigned int MAX_N_CONFIRMS = 2;
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+
+// Actuation
+actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>* ac_skill_server_;
 
 // Visualization
 ros::Publisher rgb_pub_;                                                          // Communicatino: Set color AMIGO
@@ -707,6 +714,99 @@ void speechCallbackOrder(std_msgs::String res)
 
 }
 
+bool moveBase(double x, double y, double theta)
+{
+    // Determine goal pose
+    ROS_INFO("Move base goal: (%f,%f,%f)", x, y, theta);
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "base.move(x=" << x << ",y=" << y << ", phi=" << theta << ")";
+    goal.command = cmd.str();
+
+    // Send goal
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(60.0));
+    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Could not reach base pose within 60 [s]");
+        return false;
+    }
+
+    return true;
+
+}
+
+
+bool grabObject(std::string id, std::string side)
+{
+    // Determine goal pose
+    ROS_INFO("Grab object with id %s using the %s arm", id.c_str(), side.c_str());
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "grab(obj='" << id << "',side='" << side << "')";
+    goal.command = cmd.str();
+
+    // Send goal
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(120.0));
+    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Could not grab object within 120 [s]");
+        return false;
+    }
+
+    return true;
+
+}
+
+
+
+bool moveArmToJointPos(double q1, double q2, double q3, double q4, double q5, double q6, double q7, std::string side)
+{
+    // Determine goal pose
+    ROS_INFO("Move %s arm: (%f,%f,%f,%f,%f,%f,%f)", side.c_str(), q1, q2, q3, q4, q5, q6, q7);
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "move_arm(" << q1 << "," << q2 << "," << q3 << "," << q4 << "," << q5 << "," << q6 << "," << q7 << ",side='" << side << "')";
+    goal.command = cmd.str();
+
+    // Send goal
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(30.0));
+    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Could not reach joint positions for %s arm within 30 [s]", side.c_str());
+        return false;
+    }
+
+    return true;
+
+}
+
+
+
+bool moveSingleArm(std::string pose, std::string side)
+{
+
+    // Check input pose
+    bool result = false;
+    if (pose == "drive") result = moveArmToJointPos(-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0, side);
+    else if (pose == "carry") result = moveArmToJointPos(-0.4, -0.38, 0.51, 1.56, -0.2, 0.52, -0.38, side);
+    else ROS_WARN("Arm pose for %s arm unknown: \'%s\'", side.c_str(), pose.c_str());
+
+    return result;
+
+}
+
+
+
+bool moveBothArms(std::string pose)
+{
+    bool a1 = moveSingleArm(pose, "left");
+    bool a2 = moveSingleArm(pose, "right");
+    return (a1 && a2);
+}
+
 
 
 int main(int argc, char **argv) {
@@ -733,6 +833,14 @@ int main(int argc, char **argv) {
     speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
     speech_recognition_client_.waitForExistence();
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
+
+    //! Skill server action client
+    ROS_INFO("Connecting to the skill server...");
+    ac_skill_server_ = new actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>("/amigo/execute_command", true);
+    ac_skill_server_->waitForServer();
+    ROS_INFO("Connected!");
+
+    ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Start follower
     follower_ = new Follower(nh, "/amigo/base_link", false);
@@ -771,6 +879,8 @@ int main(int argc, char **argv) {
         loop_rate.sleep();
     }
 
+    ///////////////// ORDERING PHASE /////////////////////////////////////////////////////////////////////////////////////////////////
+
     //! Reconfigure speech recognition
     sub_speech.shutdown();
     sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackOrder);
@@ -797,6 +907,42 @@ int main(int argc, char **argv) {
         ROS_INFO("\tBring %s to %s", it->second.second.c_str(), it->second.first.c_str());
     }
 
+
+    ///////////////// DELIVERY PHASE /////////////////////////////////////////////////////////////////////////////////////////////////
+    bool done = false;
+    std::string shelf = "";
+    while (ros::ok() && !done)
+    {
+        // For both food and drink shelf
+        for (unsigned int i=0; i<2; ++i)
+        {
+            if (i == 0) shelf = "food_shelf";
+            else shelf = "drink shelf";
+
+            //! Move to location
+            if (location_map_.find(shelf) == location_map_.end())
+            {
+                ROS_ERROR("No location for known for %s", shelf.c_str());
+            }
+            else
+            {
+                if (!moveBase(location_map_[shelf].getOrigin().getX(),
+                              location_map_[shelf].getOrigin().getY(),
+                              location_map_[shelf].getRotation().getAngle()))
+                {
+                    ROS_WARN("Robot cannot reach the %s", shelf.c_str());
+                }
+                else
+                {
+                    amigoSpeak("I am at %s", shelf.c_str());
+                    // turn the head down, turn on recognition (three pan angles)
+                    // see if an object is found
+                }
+            }
+
+        }
+
+    }
 
     return 0;
 }
