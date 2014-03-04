@@ -16,6 +16,7 @@
 
 // Actions
 #include <tue_move_base_msgs/MoveBaseAction.h>
+#include <amigo_head_ref/HeadRefAction.h>
 
 // Action client
 #include <actionlib/client/simple_action_client.h>
@@ -71,6 +72,7 @@ sensor_msgs::LaserScan laser_scan_;                                             
 // Actions
 actionlib::SimpleActionClient<tue_move_base_msgs::MoveBaseAction>* move_base_ac_; // Communication: Move base action client
 actionlib::SimpleActionClient<pein_msgs::LearnAction>* learn_face_ac_;            // Communication: Learn face action client
+actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* head_ac_;           // Communication: head ref action client
 
 // Publishers/subscribers
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
@@ -399,7 +401,21 @@ bool memorizeOperator() {
     }
 
     return true;
+}
 
+void sendHeadGoal(double pan, double tilt, bool blocking = true) {
+    amigo_head_ref::HeadRefGoal head_goal;
+    head_goal.goal_type = amigo_head_ref::HeadRefGoal::PAN_TILT;
+    head_goal.pan = pan;
+    head_goal.tilt = tilt;
+
+    ROS_INFO("Sending head goal: pan = %f, tilt = %f", pan, tilt);
+
+    head_ac_->sendGoal(head_goal);
+    
+    if (blocking) {
+		head_ac_->waitForResult(ros::Duration(3.0));
+	}
 }
 
 /**
@@ -740,22 +756,12 @@ int main(int argc, char **argv) {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Head ref
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ros::Publisher head_ref_pub = nh.advertise<sensor_msgs::JointState>("/amigo/neck/references", 1);
-
-    /// set the head to look down in front of AMIGO
-    ros::Rate poll_rate(100);
-    while (head_ref_pub.getNumSubscribers() == 0) {
-        ROS_INFO_THROTTLE(1, "Waiting to connect to head ref topic...");
-        poll_rate.sleep();
-    }
-    ROS_INFO("Sending head ref goal");
-    sensor_msgs::JointState head_goal;
-    head_goal.name.push_back("neck_pan_joint");
-    head_goal.position.push_back(0);
-    head_goal.name.push_back("neck_tilt_joint");
-    head_goal.position.push_back(-0.2);
-    head_ref_pub.publish(head_goal);
-
+    head_ac_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("/head_ref_action", true);
+    ROS_INFO("Waiting for head ref server...");
+    head_ac_->waitForServer();
+    sendHeadGoal(0, -0.2);
+    ROS_INFO("Head set.");
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //// Carrot planner
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1125,7 +1131,10 @@ int main(int argc, char **argv) {
                 //! Move towards operator
                 moveTowardsPosition(operator_pos, DISTANCE_OPERATOR);
 
-
+				pbl::Vector pos_exp = operator_pos.getExpectedValue().getVector();
+				double theta = atan2(pos_exp(1), pos_exp(0));
+				sendHeadGoal(theta, 0, false);
+				
             } else {
 
                 //! Lost operator
