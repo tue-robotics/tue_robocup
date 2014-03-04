@@ -365,7 +365,7 @@ bool updateLocation(std::string location_name, std::string side)
     q += offset;
     new_location.setRotation(q);
 
-    // If front, add 1 m
+    // If front, add 1 m offset
     if (side == "front")
     {
         // Get position
@@ -374,6 +374,7 @@ bool updateLocation(std::string location_name, std::string side)
         {
             loc_base_link.header.frame_id = "/amigo/base_link";
             loc_base_link.pose.position.x = 1.0;
+            loc_base_link.pose.orientation.w = 1.0;
             listener_->transformPose("/map", loc_base_link, loc_map);
         }
         catch (tf::TransformException ex)
@@ -753,6 +754,7 @@ int main(int argc, char **argv) {
 
     stopSpeechRecognition();
     startSpeechRecognition();
+    setRGBLights("green");
     ROS_INFO("Started speech recognition");
 
     //! Start guiding phase
