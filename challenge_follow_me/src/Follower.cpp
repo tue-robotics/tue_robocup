@@ -54,7 +54,7 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo) 
     time_out_operator_lost_ = 10.0;
     wm_prop_operator_ = "name";
     wm_val_operator_ = "operator";
-    follow_distance_ = 1.5;
+    follow_distance_ = 1.2;
     max_distance_new_operator_  = 2.5;
     robot_base_frame_ = "/amigo/base_link";
 
@@ -91,9 +91,11 @@ bool Follower::start()
     mode_ = Follower::ACTIVE;
 
     //! Reset head position
-    setHeadPanTilt();
+    setHeadPanTilt(0, -0.2, false);
+    ROS_INFO("Set head in starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     //! See if the map can be use
+    double t_map = ros::Time::now().toSec();
     if (use_map_ && !ac_move_base_->isServerConnected() && !!ac_move_base_->waitForServer(ros::Duration(10.0)))
     {
         ROS_ERROR("Could not connect to move base action client, using carrot planner instead.");
@@ -112,7 +114,7 @@ bool Follower::start()
         }
     }
 
-    ROS_INFO("First part of starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
+    ROS_INFO("Map part of starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_map));
 
     //! Reset WIRE
     std_srvs::Empty srv;
@@ -207,7 +209,7 @@ bool Follower::update()
     }
     else if (mode_ == Follower::PAUSE)
     {
-        ROS_INFO("Follower is paused");
+        ROS_DEBUG("Follower is paused");
         return true;
     }
     else
@@ -411,7 +413,7 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
                         if (t_no_meas_ > time_out_operator_lost_)
                         {
                             ROS_INFO("Operator is lost!");
-                            say("I lost my operator");
+                            if (demo_) say("I lost my operator");
                             return false;
                         }
                     }
@@ -757,7 +759,7 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
                             pos_gauss.getMean()(1) < DIST_LEFT_RIGHT)
                     {
                         vector_possible_operator_torsos.push_back(pos_gauss);
-                        ROS_INFO("\tcandidate operator torso at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_DEBUG("\tcandidate operator torso at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
                     }
                     else
@@ -834,14 +836,11 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
         dt.sleep();
     }
 
-    if (!found_operator && (first_time_ || demo_))
-    {
-        say("I did not find my operator yet", true);
-        return false;
-    }
-    else if (!found_operator)
+    if (!found_operator)
     {
         ROS_INFO("Robot did not yet find an operator!");
+        if (first_time_ || demo_) say("I did not find my operator yet", true);
+        return false;
     }
 
     return true;
@@ -851,11 +850,13 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
 
 bool Follower::setHeadPanTilt(double pan, double tilt, bool block)
 {
+    double t_connect = ros::Time::now().toSec();
     if (!ac_head_->isServerConnected() && ac_head_->waitForServer(ros::Duration(1.0)))
     {
         ROS_WARN("Action client head pan/tilt is not connected and cannot connect!");
         return false;
     }
+    ROS_INFO("Checking connection with head action server took %f [ms]", 1000*(ros::Time::now().toSec()-t_connect));
 
     amigo_head_ref::HeadRefGoal head_goal;
     head_goal.goal_type = amigo_head_ref::HeadRefGoal::PAN_TILT;
@@ -897,18 +898,10 @@ bool Follower::moveTowardsPosition(pbl::Gaussian& pos, double offset, bool block
     end_goal.pose.position.z = 0;
 
     //! Send goal to planner
-    if (t_no_meas_ > 1.5)
+    if (t_no_meas_ > 1.0)
     {
         ROS_INFO("No operator position update: robot will not move");
-        if (use_map_) {
-            ac_move_base_->cancelAllGoals();
-        }
-        else
-        {
-            end_goal.pose.position.x = 0;
-            end_goal.pose.position.y = 0;
-            //carrot_planner_->MoveToGoal(end_goal);
-        }
+        freezeRobot();
     }
     else
     {
