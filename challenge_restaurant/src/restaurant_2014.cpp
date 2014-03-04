@@ -10,6 +10,9 @@
 #include "std_msgs/String.h"
 #include "std_msgs/ColorRGBA.h"
 #include "amigo_msgs/RGBLightCommand.h"
+#include "geometry_msgs/PoseStamped.h"
+#include "visualization_msgs/Marker.h"
+#include "visualization_msgs/MarkerArray.h"
 
 // Follower
 #include "challenge_follow_me/Follower.h"
@@ -48,11 +51,15 @@ ros::ServiceClient srv_speech_;                                                 
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
 
-// Color AMIGO
-ros::Publisher rgb_pub_;
+// Visualization
+ros::Publisher rgb_pub_;                                                          // Communicatino: Set color AMIGO
+ros::Publisher location_marker_pub_;                                              // Communication: Marker publisher
 
 // Follower
-Follower* follower;
+Follower* follower_;
+
+// Tf
+tf::TransformListener* listener_;												  // Tf listenter to obtain tf information to store locations
 
 // Administration: speech
 bool speech_recognition_turned_on_ = false;
@@ -67,6 +74,7 @@ std::string current_object_ = "";
 // Adminstration: other
 std::string current_clr_;
 std::map<int, std::pair<std::string, std::string> > order_map_; // object, desired location
+std::map<std::string, tf::StampedTransform> location_map_;                // location name, location
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -260,6 +268,138 @@ void updateSpeechState(speech_state::SpeechState new_state)
 }
 
 
+
+bool storeLocation(std::string location_name)
+{
+    // Get position
+    tf::StampedTransform location;
+    try
+    {
+        listener_->lookupTransform("/map", "/amigo/base_link", ros::Time(0), location);
+    }
+    catch (tf::TransformException ex)
+    {
+        ROS_ERROR("No tranform /map - /amigo/base_link");
+        amigoSpeak("I cannot store this location: %s", ex.what());
+        return false;
+    }
+
+    // Store location
+    if (location_map_.find(location_name) != location_map_.end())
+    {
+        ROS_WARN("Overwriting location '%s'!", location_name.c_str());
+    }
+    location_map_[location_name] = location;
+
+    return true;
+}
+
+
+void createMarkerWithLabel(std::string label, tf::StampedTransform& pose, double r, double g, double b, visualization_msgs::MarkerArray& array)
+{
+
+    // Geometric marker
+    visualization_msgs::Marker marker;
+    marker.ns = "restaurant/location_markers";
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.scale.x = 0.25;
+    marker.scale.y = 0.25;
+    marker.scale.z = 0.25;
+    marker.header.frame_id = "/map";
+    marker.id = location_map_.size();
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker.color.a = 1;
+    marker.pose.position.x = pose.getOrigin().x();
+    marker.pose.position.y = pose.getOrigin().y();
+    marker.pose.orientation.w = pose.getRotation().getW();
+    marker.pose.orientation.x = pose.getRotation().getX();
+    marker.pose.orientation.y = pose.getRotation().getY();
+    marker.pose.orientation.z = pose.getRotation().getZ();
+    array.markers.push_back(marker);
+
+    // Text label
+    visualization_msgs::Marker marker_txt = marker;
+    marker_txt.scale.z = 0.1;
+    marker_txt.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker_txt.text = label;
+    marker_txt.id = location_map_.size()*10;
+    marker_txt.pose.position.z *= 1.5;
+    array.markers.push_back(marker_txt);
+
+    ROS_INFO("Added marker with color (%f,%f,%f), size (%f,%f,%f) and label %s",
+             marker.color.r, marker.color.g, marker.color.b, marker.scale.x, marker.scale.y, marker.scale.z, marker_txt.text.c_str());
+
+}
+
+
+
+bool updateLocation(std::string location_name, std::string side)
+{
+    //! Verify side
+    if (side != "left" && side != "right" && side != "front")
+    {
+        ROS_ERROR("Side must me left, right or front but is %s", side.c_str());
+        return false;
+    }
+
+    //! See if location is already in the map
+    if (location_map_.find(location_name) == location_map_.end())
+    {
+        ROS_WARN("Location %s not yet in map, please check administration (adding it now)", location_name.c_str());
+        if (!storeLocation(location_name)) return false;
+    }
+
+    // Get old location
+    tf::StampedTransform new_location = location_map_[location_name];
+
+    // If needed add angle
+    double theta = 0;
+    if (side == "left") theta = 1.57;
+    else if (side == "right") theta = -1.57;
+    tf::Quaternion q = new_location.getRotation();
+    tf::Quaternion offset;
+    offset.setRPY(0, 0, theta);
+    q += offset;
+    new_location.setRotation(q);
+
+    // If front, add 1 m
+    if (side == "front")
+    {
+        // Get position
+        geometry_msgs::PoseStamped loc_base_link, loc_map;
+        try
+        {
+            loc_base_link.header.frame_id = "/amigo/base_link";
+            loc_base_link.pose.position.x = 1.0;
+            listener_->transformPose("/map", loc_base_link, loc_map);
+        }
+        catch (tf::TransformException ex)
+        {
+            ROS_ERROR("Cannot tranform position from /map to /amigo/base_link: %s", ex.what());
+            amigoSpeak("I cannot store this location: %s", ex.what());
+            return false;
+        }
+        // In appropriate format
+        new_location.setOrigin(tf::Vector3(loc_map.pose.position.x, loc_map.pose.position.y, loc_map.pose.position.z));
+        new_location.setRotation(tf::Quaternion(loc_map.pose.orientation.x, loc_map.pose.orientation.y, loc_map.pose.orientation.z, loc_map.pose.orientation.w));
+    }
+
+    // Store location
+    location_map_[location_name] = new_location;
+
+    // Publish marker
+    visualization_msgs::MarkerArray marker_array;
+    createMarkerWithLabel(location_name, new_location, 0, 0, 1, marker_array);
+    location_marker_pub_.publish(marker_array);
+
+    return true;
+}
+
+
+
 void speechCallbackGuide(std_msgs::String res)
 {
 
@@ -278,7 +418,7 @@ void speechCallbackGuide(std_msgs::String res)
         if (answer == "amigostop")
         {
             // stop robot
-            follower->pause();
+            follower_->pause();
             ROS_DEBUG("Robot received a stop command");
             updateSpeechState(speech_state::LOC_NAME);
             setRGBLights("yellow");
@@ -291,7 +431,7 @@ void speechCallbackGuide(std_msgs::String res)
     {
         if (answer == "continue")
         {
-            follower->resume();
+            follower_->resume();
             updateSpeechState(speech_state::DRIVE);
             setRGBLights("green");
         }
@@ -329,8 +469,21 @@ void speechCallbackGuide(std_msgs::String res)
         {
             if (current_loc_name_.empty()) ROS_WARN("Error in location name administration!");
             ROS_INFO("Confirmed location name '%s'!", current_loc_name_.c_str());
+
+            // Store the location
+            if (!storeLocation(current_loc_name_)) ROS_WARN("Cannot store location named %s!", current_loc_name_.c_str());
+
             if (current_loc_name_ == "ordering location")
             {
+                // Publish marker
+                if (location_map_.find("ordering location") != location_map_.end())
+                {
+                    visualization_msgs::MarkerArray marker_array;
+                    createMarkerWithLabel("Ord. loc.", location_map_["ordering location"], 0, 1, 0, marker_array);
+                    location_marker_pub_.publish(marker_array);
+                }
+                else ROS_WARN("Storing the ordering location failed!");
+
                 // SWITCH TO NEXT MODE
                 speech_state_ = speech_state::NUMBER;
             }
@@ -384,10 +537,13 @@ void speechCallbackGuide(std_msgs::String res)
         {
             if (current_side_.empty()) ROS_WARN("Error in location name administration!");
             ROS_INFO("Confirmed side '%s' for '%s'!", current_side_.c_str(), current_loc_name_.c_str());
-            // store location + side
+
+            updateLocation(current_loc_name_, current_side_);
 
             //! Continue following
-            follower->reset();
+            setRGBLights("yellow");
+            follower_->reset();
+            setRGBLights("green");
             updateSpeechState(speech_state::DRIVE);
             n_tries_ = 0;
         }
@@ -407,7 +563,9 @@ void speechCallbackGuide(std_msgs::String res)
             n_tries_ = 0;
 
             //! Continue following
-            follower->reset();
+            setRGBLights("yellow");
+            follower_->reset();
+            setRGBLights("green");
         }
     }
 
@@ -555,8 +713,15 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "test_speech_restaurant");
     ros::NodeHandle nh;
 
+    //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
     setRGBLights("blue");
+
+    //! Transforms
+    listener_ = new tf::TransformListener();
+
+    //! Location markers
+    location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/restaurant/location_markers", 10);
 
     //! Topic/srv that make AMIGO speak
     pub_speech_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
@@ -569,8 +734,8 @@ int main(int argc, char **argv) {
     ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
 
     //! Start follower
-    follower = new Follower(nh, "/amigo/base_link", false);
-    if (!follower->start())
+    follower_ = new Follower(nh, "/amigo/base_link", false);
+    if (!follower_->start())
     {
         ROS_ERROR("Could not start the follower!");
         return -1;
@@ -581,7 +746,7 @@ int main(int argc, char **argv) {
     ros::Rate loop_rate(25);
     while (!operator_found)
     {
-        operator_found = follower->update();
+        operator_found = follower_->update();
         loop_rate.sleep();
 
     }
@@ -597,7 +762,7 @@ int main(int argc, char **argv) {
         ros::spinOnce();
 
         //! Update the follower
-        bool ok = follower->update();
+        bool ok = follower_->update();
         if (!ok) ROS_WARN("Could not update Follower");
 
         //! Wait
@@ -607,14 +772,14 @@ int main(int argc, char **argv) {
     //! Reconfigure speech recognition
     sub_speech.shutdown();
     sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 10, speechCallbackOrder);
-    amigoSpeak("Which location?");
+    amigoSpeak("Read for orders. Which location?");
     speech_state_ = speech_state::NUMBER;
     stopSpeechRecognition();
     startSpeechRecognition();
 
     //! Done with the following part
-    follower->stop();
-    delete follower;
+    follower_->stop();
+    delete follower_;
 
     //! Take orders
     while (ros::ok() && speech_state_ != speech_state::DONE)
@@ -624,7 +789,7 @@ int main(int argc, char **argv) {
     }
 
     //! Done
-    ROS_INFO("Done taking orders:");
+    ROS_INFO("AMIGO took these orders:");
     for (std::map<int, std::pair<std::string, std::string> >::const_iterator it = order_map_.begin(); it != order_map_.end(); ++it)
     {
         ROS_INFO("\tBring %s to %s", it->second.second.c_str(), it->second.first.c_str());
