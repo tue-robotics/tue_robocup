@@ -17,6 +17,13 @@
 // Action client related
 #include <actionlib/client/simple_action_client.h>
 #include "robot_skill_server/ExecuteAction.h"
+#include "amigo_head_ref/HeadRefAction.h"
+
+// Interface WIRE
+#include "wire_interface/Client.h"
+
+// Services
+#include "perception_srvs/StartPerception.h"
 
 // Follower
 #include "challenge_follow_me/Follower.h"
@@ -57,6 +64,7 @@ ros::Publisher pub_speech_;                                                     
 
 // Actuation
 actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>* ac_skill_server_;
+actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* ac_head_ref_;
 
 // Visualization
 ros::Publisher rgb_pub_;                                                          // Communicatino: Set color AMIGO
@@ -67,6 +75,12 @@ Follower* follower_;
 
 // Tf
 tf::TransformListener* listener_;												  // Tf listenter to obtain tf information to store locations
+
+// Perception
+ros::ServiceClient srv_pein_;
+
+// Problib conversions
+#include "problib/conversions.h"
 
 // Administration: speech
 bool speech_recognition_turned_on_ = false;
@@ -297,6 +311,8 @@ bool storeLocation(std::string location_name)
         ROS_WARN("Overwriting location '%s'!", location_name.c_str());
     }
     location_map_[location_name] = location;
+    ROS_INFO("Stored the location (%f,%f,%f) for %s",
+             location.getOrigin().getX(), location.getOrigin().getY(), location.getRotation().getAngle(), location_name.c_str());
 
     return true;
 }
@@ -352,6 +368,8 @@ bool updateLocation(std::string location_name, std::string side)
         return false;
     }
 
+    ROS_INFO("Side is %s", side.c_str());
+
     //! See if location is already in the map
     if (location_map_.find(location_name) == location_map_.end())
     {
@@ -361,6 +379,9 @@ bool updateLocation(std::string location_name, std::string side)
 
     // Get old location
     tf::StampedTransform new_location = location_map_[location_name];
+    ROS_INFO("Update location (%f,%f,%f) for %s",
+             new_location.getOrigin().getX(), new_location.getOrigin().getY(), new_location.getRotation().getAngle(), location_name.c_str());
+
 
     // If needed add angle
     double theta = 0;
@@ -371,6 +392,7 @@ bool updateLocation(std::string location_name, std::string side)
     offset.setRPY(0, 0, theta);
     q += offset;
     new_location.setRotation(q);
+    ROS_INFO("Update location for %s with an angular offset of %f", location_name.c_str(), theta);
 
     // If front, add 1 m offset
     if (side == "front")
@@ -393,10 +415,13 @@ bool updateLocation(std::string location_name, std::string side)
         // In appropriate format
         new_location.setOrigin(tf::Vector3(loc_map.pose.position.x, loc_map.pose.position.y, loc_map.pose.position.z));
         new_location.setRotation(tf::Quaternion(loc_map.pose.orientation.x, loc_map.pose.orientation.y, loc_map.pose.orientation.z, loc_map.pose.orientation.w));
+        ROS_INFO("Added a 1 [m] offset for location %s", location_name.c_str());
     }
 
     // Store location
     location_map_[location_name] = new_location;
+    ROS_INFO("New location is (%f,%f,%f)",
+             new_location.getOrigin().getX(), new_location.getOrigin().getY(), new_location.getRotation().getAngle());
 
     // Publish marker
     visualization_msgs::MarkerArray marker_array;
@@ -808,6 +833,82 @@ bool moveBothArms(std::string pose)
 }
 
 
+bool moveHead(double pan, double tilt) {
+
+    //! Add head reference action
+    amigo_head_ref::HeadRefGoal head_ref;
+    head_ref.goal_type = 1; // 1: pan tilt, 0 keep tracking
+    head_ref.pan = pan;
+    head_ref.tilt = tilt;
+    ac_head_ref_->sendGoal(head_ref);
+    ac_head_ref_->waitForResult(ros::Duration(2.0));
+
+    if(ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Head could not reach target position");
+        return false;
+    }
+
+    return true;
+
+}
+
+
+bool togglePein(std::vector<std::string> modules) {
+
+    perception_srvs::StartPerception pein_srv;
+
+    //! Add required modules
+    if (modules.empty())
+    {
+        // Turn off perception
+        pein_srv.request.modules.push_back("");
+    }
+    else
+    {
+        // Add all modules
+        std::vector<std::string>::const_iterator it = modules.begin();
+        for (; it != modules.end(); ++it)
+        {
+            pein_srv.request.modules.push_back(*it);
+        }
+    }
+
+    //! Toggle perception
+    bool ok = srv_pein_.call(pein_srv);
+
+    //! Feedback to the user
+    if (ok) ROS_INFO("Switched on pein_modules:");
+    else ROS_WARN("Could not switch on pein_modules:");
+    std::vector<std::string>::const_iterator it = modules.begin();
+    for (; it != modules.end(); ++it) ROS_INFO("\t%s", it->c_str());
+
+    return ok;
+
+}
+
+void lookForObjects()
+{
+    ros::Duration dt(3.0);
+
+    //! Vectors used to toggle pein
+    std::vector<std::string> empty_vec, recog_vec;
+    recog_vec.push_back("object_segmentation");
+
+    //! Look in three directions
+    for (double pan = -0.15; pan < 0.2; pan +=0.15)
+    {
+        moveHead(pan, 0.35);
+        togglePein(recog_vec);
+        dt.sleep();
+        togglePein(empty_vec);
+    }
+
+    //! Reset head position
+    moveHead(0.0, 0.0);
+}
+
+
 
 int main(int argc, char **argv) {
 
@@ -839,6 +940,23 @@ int main(int argc, char **argv) {
     ac_skill_server_ = new actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>("/amigo/execute_command", true);
     ac_skill_server_->waitForServer();
     ROS_INFO("Connected!");
+
+    //! Head ref action client
+    ROS_INFO("Connecting to head ref action server...");
+    ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
+    ac_head_ref_->waitForServer();
+    ROS_INFO("Connected!");
+
+    //! WIRE interface
+    ROS_INFO("Connecting to WIRE...");
+    wire::Client client;
+    ROS_INFO("Connected!");
+
+    //! Reset arm positions
+    moveBothArms("drive");
+
+    //! Perception
+    srv_pein_ = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
 
     ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -916,7 +1034,7 @@ int main(int argc, char **argv) {
         // For both food and drink shelf
         for (unsigned int i=0; i<2; ++i)
         {
-            if (i == 0) shelf = "food_shelf";
+            if (i == 0) shelf = "food shelf";
             else shelf = "drink shelf";
 
             //! Move to location
@@ -934,15 +1052,72 @@ int main(int argc, char **argv) {
                 }
                 else
                 {
-                    amigoSpeak("I am at %s", shelf.c_str());
-                    // turn the head down, turn on recognition (three pan angles)
-                    // see if an object is found
+                    //! Inform user
+                    std::stringstream sentence;
+                    sentence << "I am at the " << shelf;
+                    amigoSpeak(sentence.str(), false);
+
+                    //! Look for objects
+                    lookForObjects();
+
+                    // @todo: check world model for objects
+
+                    //! Get objects from the world state
+                    std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
+
+                    //! Iterate over all world model objects
+                    std::string coke_id = "";
+                    double p_max = 0.0;
+                    for(std::vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
+                        wire::PropertySet& obj = *it_obj;
+                        const wire::Property& prop_label = obj.getProperty("class_label");
+                        if (prop_label.isValid())
+                        {
+
+                            std::string class_label = prop_label.getValue().getExpectedValue().toString();
+                            double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
+
+                            ROS_INFO("Found %s with probability %f!", class_label.c_str(), prob);
+
+                            if (class_label == "coke" && prob > p_max)
+                            {
+                                coke_id = obj.getID();
+                            }
+                        }
+                    }
+
+                    //! Test picking up a coke
+                    if (!coke_id.empty()) grabObject(coke_id, "left");
+
+
                 }
             }
 
         }
 
+        // Move back to the ordering location
+        std::string order_loc = "ordering location";
+        if (location_map_.find(order_loc) == location_map_.end())
+        {
+            ROS_ERROR("No location for known for %s", order_loc.c_str());
+        }
+        else
+        {
+            if (!moveBase(location_map_[order_loc].getOrigin().getX(),
+                          location_map_[order_loc].getOrigin().getY(),
+                          location_map_[order_loc].getRotation().getAngle()))
+            {
+                ROS_WARN("Robot cannot reach the %s", order_loc.c_str());
+            }
+
+        }
+
+        done = true;
+
     }
+
+    delete ac_skill_server_;
+    delete ac_head_ref_;
 
     return 0;
 }
