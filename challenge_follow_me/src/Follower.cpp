@@ -4,20 +4,21 @@
 #include "amigo_head_ref/HeadRefActionGoal.h"
 
 // ROS srvs
-#include "std_msgs/String.h"
 #include "std_srvs/Empty.h"
 #include "perception_srvs/StartPerception.h"
 
 // ROS msgs
 #include "tue_move_base_msgs/MoveBaseGoal.h"
+#include "std_msgs/String.h"
+#include "text_to_speech/Speak.h"
 
 // Conversions
 #include "problib/conversions.h"
 
 
-Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map) :
+Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo) :
     nh_(nh), wire_client_(0), nav_frame_(frame), use_map_(map),
-    t_last_check_(0), t_no_meas_(0), operator_last_var_(-1.0)
+    t_last_check_(0), t_no_meas_(0), operator_last_var_(-1.0), demo_(demo), first_time_(true)
 {
     //! Set initial mode
     mode_ = Follower::IDLE;
@@ -47,6 +48,7 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map) :
 
     //! Make the robot speak
     pub_speak_ = nh.advertise<std_msgs::String>("/text_to_speech/input", 10);
+    srv_speak_ =  nh.serviceClient<text_to_speech::Speak>("/text_to_speech/speak");
 
     //! Defaults (@todo: ros parameters)
     time_out_operator_lost_ = 10.0;
@@ -66,6 +68,13 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map) :
     //! Connect to pein supervisor
     pein_client_ = nh_.serviceClient<perception_srvs::StartPerception>("/start_perception");
 
+    //! Harcoded settings for finding the operator
+    TIME_WAIT_MAX = 10.0;
+    DIST_LEFT_RIGHT = 0.35;
+    DIST_MIN = 0.5;
+    DIST_MAX = 2.0;
+    MAX_2D_DISTANCE_TORSO_FACE = 0.5;
+
 }
 
 
@@ -80,9 +89,6 @@ bool Follower::start()
 
     //! Set mode
     mode_ = Follower::ACTIVE;
-
-    //! Ask for operator to move in front of the robot (if operator position unknown)
-    operator_lost_ = true;
 
     //! Reset head position
     setHeadPanTilt();
@@ -115,26 +121,8 @@ bool Follower::start()
         ROS_WARN("Failed to clear world model, start module anyway");
     }
 
-    //! Toggle perception
-    double t_perc = ros::Time::now().toSec();
-    perception_srvs::StartPerception pein_srv;
-    pein_srv.request.modules.push_back("ppl_detection");
-    if (!pein_client_.call(pein_srv))
-    {
-        ROS_WARN("Could not switch on ppl_detection, try once more...");
-        ros::Duration dt(1.5);
-        dt.sleep();
-        if (!pein_client_.call(pein_srv))
-        {
-            ROS_ERROR("People detection cannnot be turned on, no following possible");
-            return false;
-        }
-        else
-        {
-            ROS_INFO("Second try succeeded: ppl detection is turned on now.");
-        }
-    }
-    ROS_INFO("Switching on perception took %f [ms]", 1000*(ros::Time::now().toSec()-t_perc));
+    //! Start
+    update();
 
     return true;
 }
@@ -142,31 +130,29 @@ bool Follower::start()
 void Follower::resume()
 {
     mode_ = Follower::ACTIVE;
+    update();
 }
 
 void Follower::pause()
 {
-    //! Stop moving
-    if (use_map_)
-    {
-        ac_move_base_->cancelAllGoals();
-    }
-    else
-    {
-        geometry_msgs::PoseStamped end_goal;
-        end_goal.header.frame_id = nav_frame_;
-        end_goal.header.stamp = ros::Time();
-        end_goal.pose.position.x = 0;
-        end_goal.pose.position.y = 0;
-        end_goal.pose.position.z = 0;
-        //carrot_planner_->MoveToGoal(end_goal);
-    }
-
+    freezeRobot();
     mode_ = Follower::PAUSE;
 }
 
 void Follower::stop()
 {
+
+    freezeRobot();
+    pein_client_.shutdown();
+    ac_head_->cancelAllGoals();
+    listener_->clear();
+    mode_ = Follower::IDLE;
+}
+
+void Follower::freezeRobot()
+{
+    ROS_INFO("Freeze robot!");
+
     //! Stop moving
     if (use_map_)
     {
@@ -174,19 +160,8 @@ void Follower::stop()
     }
     else
     {
-        geometry_msgs::PoseStamped end_goal;
-        end_goal.header.frame_id = nav_frame_;
-        end_goal.header.stamp = ros::Time();
-        end_goal.pose.position.x = 0;
-        end_goal.pose.position.y = 0;
-        end_goal.pose.position.z = 0;
-        //carrot_planner_->MoveToGoal(end_goal);
+        carrot_planner_->freeze();
     }
-
-    pein_client_.shutdown();
-    ac_head_->cancelAllGoals();
-    listener_->clear();
-    mode_ = Follower::IDLE;
 }
 
 
@@ -197,7 +172,6 @@ bool Follower::reset()
     // Reset WIRE
     std_srvs::Empty srv;
     bool reset = reset_wire_srv_client_.call(srv);
-
     ROS_INFO("Resetting WIRE took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     // Start following
@@ -207,10 +181,6 @@ bool Follower::reset()
     {
         ROS_WARN("Failed to clear world model, start module anyway");
     }
-
-    // Do not ask to operator stand in front of the robot (if position is unknown)
-    operator_lost_ = false;
-
     ROS_INFO("Resetting follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     return (reset && started);
@@ -224,7 +194,7 @@ bool Follower::update()
     if (mode_ == Follower::ACTIVE)
     {
         double t = ros::Time::now().toSec();
-        if (t-t_last_check_ > 2.0)
+        if (t-t_last_check_ > 2.0 && !first_time_)
         {
             ROS_WARN("Last update is %f [s] ago, make sure update rate is reasonable!", t-t_last_check_);
         }
@@ -259,14 +229,24 @@ bool Follower::update()
     }
     else
     {
-        ROS_WARN("No operator in the world model");
-        if (!findOperator(pos_operator))
+        ROS_WARN("No operator in the world model: trying to find one");
+        if (demo_)
         {
-            ROS_WARN("Operator cannot be found!");
-            return false;
+            if (!findOperator(pos_operator))
+            {
+                ROS_WARN("Operator cannot be found (using face segmentation)!");
+                return false;
+            }
+        }
+        else
+        {
+            if (!findOperatorFast(pos_operator))
+            {
+                ROS_WARN("Operator cannot be found (without using face segmentation)!");
+                return false;
+            }
         }
     }
-
 
     // NOTE: At this point the position of the operator must be known
 
@@ -456,24 +436,33 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
 }
 
 
-void Follower::say(std::string sentence)
+void Follower::say(std::string sentence, bool block)
 {
     ROS_INFO("Robot: \'%s\'", sentence.c_str());
-    std_msgs::String sentence_msgs;
-    sentence_msgs.data = sentence;
-    pub_speak_.publish(sentence_msgs);
+
+    //! Call speech service (topic if srv fails)
+    text_to_speech::Speak speak;
+    speak.request.sentence = sentence;
+    speak.request.language = "us";
+    speak.request.character = "kyle";
+    speak.request.voice = "default";
+    speak.request.emotion = "normal";
+    speak.request.blocking_call = block;
+    if (!srv_speak_.call(speak))
+    {
+        // Use topic if service call fails
+        std_msgs::String sentence_msgs;
+        sentence_msgs.data = sentence;
+        pub_speak_.publish(sentence_msgs);
+    }
+
 }
 
 
 
 bool Follower::findOperator(pbl::Gaussian& pos_operator)
 {
-    //! @todo: for now hardcoded settings (must all be positive)
-    double TIME_WAIT_MAX = 10.0;
-    double DIST_LEFT_RIGHT = 0.75;
-    double DIST_MIN = 0.25;
-    double DIST_MAX = 2.0;
-    double MAX_2D_DISTANCE_TORSO_FACE = 0.5;
+
 
     //! Toggle perception
     perception_srvs::StartPerception pein_srv;
@@ -494,14 +483,10 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
         ROS_INFO("Switched on both ppl_detection and face_segmentation");
     }
 
-    if (operator_lost_)
+    if (first_time_ || demo_)
     {
-        say("I am looking for my operator, can you please stand in front of me");
+        say("I am looking for my operator, can you please stand in front of me", true);
     }
-
-    //! Give the operator some time to move to the robot
-    ros::Duration wait_for_operator(1.0);
-    wait_for_operator.sleep();
 
     //! Reset world model
     std_srvs::Empty srv;
@@ -511,13 +496,6 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
     std::vector<pbl::Gaussian> vector_possible_operator_torsos;
     pbl::Gaussian pos_closest_face_gauss(3);
     double d_closest_face = -1.0;
-    if (!operator_lost_)
-    {
-        arma::vec mu;
-        mu << 1.0 << 0 << arma::endr;
-        pos_closest_face_gauss.setMean(mu);
-        d_closest_face = 1.0;
-    }
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
@@ -636,41 +614,42 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
 
                 //! Assert operator property to WIRE
                 wire::Evidence ev(ros::Time::now().toSec());
+                // Position
                 ev.addProperty("position", pos_operator, nav_frame_);
+                // Name: operator
                 pbl::PMF name_pmf;
                 name_pmf.setProbability(wm_val_operator_, 1.0);
                 ev.addProperty(wm_prop_operator_, name_pmf);
+                // Class label: person
                 pbl::PMF class_pmf;
                 class_pmf.setProbability("person", 1.0);
                 ev.addProperty("class_label", class_pmf);
+
                 // Reset the world model
                 std_srvs::Empty srv;
                 if (!reset_wire_srv_client_.call(srv)) ROS_WARN("Failed to clear world model");
-                // Assert evidence to WIRE (multiple times to be sure)
-                //std::vector<wire::Evidence> evs;
-                //for (unsigned int dummy = 0; dummy < 5; ++dummy) evs.push_back(ev);
+
+                // Assert evidence to WIRE
                 wire_client_->assertEvidence(ev);
 
                 // Inform user (wait since speech is non-blocking)
-                if (operator_lost_)
+                if (first_time_ || demo_)
                 {
-                    say("I will follow you now");
-                    //ros::Duration safety_delta(2.0);
-                    //safety_delta.sleep();
+                    say("I will follow you now", true);
                 }
                 else
                 {
                     say("Let's go");
                 }
 
-                // Done
-                found_operator = true;
-                operator_lost_ = false;
-
                 //! Reset
                 operator_last_var_ = -1;
                 t_last_check_ = ros::Time::now().toSec();
                 t_no_meas_ = 0;
+                first_time_ = false;
+
+                // Break from while loop
+                found_operator = true;
             }
 
 
@@ -685,24 +664,190 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
     pein_srv.request.modules.push_back("ppl_detection");
     if (pein_client_.call(pein_srv))
     {
-        ROS_DEBUG("Switched off face detection.");
+        ROS_DEBUG("Switched off face detection: only ppl_detection active.");
     }
     else
     {
         // this should not happen
-        ROS_ERROR("Follower could not switched off face_detection");
+        ROS_ERROR("Follower could not switched off face_detection and turn on ppl_detection");
     }
 
     if (!found_operator)
     {
-        say("I did not find my operator yet");
-        ros::Duration dt(3.0);
-        dt.sleep();
+        say("I did not find my operator yet", true);
         return false;
     }
 
     return true;
 }
+
+
+bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
+{
+    //! @todo: for now hardcoded settings (must all be positive)
+    double TIME_WAIT_MAX = 10.0;
+    double DIST_LEFT_RIGHT = 0.35;
+    double DIST_MIN = 0.5;
+    double DIST_MAX = 2.0;
+
+    //! Toggle perception
+    perception_srvs::StartPerception pein_srv;
+    pein_srv.request.modules.push_back("ppl_detection");
+    if (!pein_client_.call(pein_srv))
+    {
+        pein_srv.request.modules.clear();
+        pein_srv.request.modules.push_back("ppl_detection");
+        if (!pein_client_.call(pein_srv))
+        {
+            ROS_ERROR("Cannot switch on perception, hence unable to find an operator!");
+            return false;
+        }
+    }
+    else
+    {
+        ROS_INFO("Switched on ppl_detection");
+    }
+
+    if (first_time_ || demo_)
+    {
+        say("I am looking for my operator, can you please stand in front of me", true);
+    }
+
+    //! Reset world model
+    std_srvs::Empty srv;
+    if (!reset_wire_srv_client_.call(srv)) ROS_WARN("Failed to clear world model");
+
+    //! Vector with candidate operators
+    std::vector<pbl::Gaussian> vector_possible_operator_torsos;
+
+    //! See if the a person stands in front of the robot
+    double t_start = ros::Time::now().toSec();
+    ros::Duration dt(0.5);
+    bool found_operator = false;
+    while (ros::Time::now().toSec() - t_start < TIME_WAIT_MAX && !found_operator)
+    {
+
+        // Get latest world state estimate
+        std::vector<wire::PropertySet> objects = wire_client_->queryMAPObjects(robot_base_frame_);
+        ROS_INFO("World model contains %zu objects", objects.size());
+
+        //! Iterate over all world model objects and look for a torso or face in front of the robot
+        for(std::vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj)
+        {
+            //// PERSON
+            wire::PropertySet& obj = *it_obj;
+            const wire::Property& prop_label = obj.getProperty("class_label");
+            if (prop_label.isValid() && prop_label.getValue().getExpectedValue().toString() == "person")
+            {
+                //ROS_INFO("Found a person!");
+
+                // Check position
+                const wire::Property& prop_pos = obj.getProperty("position");
+                if (prop_pos.isValid())
+                {
+
+                    //! Get position of potential operator
+                    pbl::Gaussian pos_gauss(3);
+                    getPositionGaussian(prop_pos.getValue(), pos_gauss);
+
+                    //! Check if the person stands in front of the robot
+                    if (pos_gauss.getMean()(0) < DIST_MAX &&
+                            pos_gauss.getMean()(0) > DIST_MIN &&
+                            pos_gauss.getMean()(1) > -1.0*DIST_LEFT_RIGHT &&
+                            pos_gauss.getMean()(1) < DIST_LEFT_RIGHT)
+                    {
+                        vector_possible_operator_torsos.push_back(pos_gauss);
+                        ROS_INFO("\tcandidate operator torso at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+
+                    }
+                    else
+                    {
+                        ROS_DEBUG("\ttorso at (x,y) = (%f,%f) (no candidate operator)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                    }
+                }
+
+            }
+
+        } // Done looping over world model objects
+
+        //// Select most probable torso
+
+        //! Found at least one candidate operator
+        if (!vector_possible_operator_torsos.empty())
+        {
+
+            // Find closest torso closest to the face
+            double offset_min = 0.0;
+            for (unsigned int i = 0; i < vector_possible_operator_torsos.size(); ++i)
+            {
+                if (vector_possible_operator_torsos[i].getMean()(1) < offset_min || i == 0)
+                {
+                    offset_min = vector_possible_operator_torsos[i].getMean()(1);
+                    pos_operator = vector_possible_operator_torsos[i];
+                }
+            }
+
+            //! Operator is found!
+            ROS_INFO("Found operator at (x,y) = (%f,%f)", pos_operator.getMean()(0), pos_operator.getMean()(1));
+
+            //! Assert operator property to WIRE
+            wire::Evidence ev(ros::Time::now().toSec());
+            // Position
+            ev.addProperty("position", pos_operator, nav_frame_);
+            // Name: operator
+            pbl::PMF name_pmf;
+            name_pmf.setProbability(wm_val_operator_, 1.0);
+            ev.addProperty(wm_prop_operator_, name_pmf);
+            // Class: person
+            pbl::PMF class_pmf;
+            class_pmf.setProbability("person", 1.0);
+            ev.addProperty("class_label", class_pmf);
+
+            // Reset the world model
+            std_srvs::Empty srv;
+            if (!reset_wire_srv_client_.call(srv)) ROS_WARN("Failed to clear world model");
+
+            //! Assert to WIRE
+            wire_client_->assertEvidence(ev);
+
+            // Inform user (wait since speech is non-blocking)
+            if (first_time_ || demo_)
+            {
+                say("I will follow you now", true);
+            }
+            else
+            {
+                say("Let's go", false);
+            }
+
+            //! Reset
+            operator_last_var_ = -1;
+            t_last_check_ = ros::Time::now().toSec();
+            t_no_meas_ = 0;
+            first_time_ = false;
+
+            // Break from while loop
+            found_operator = true;
+
+        } // end if at least one candidate operator
+
+        dt.sleep();
+    }
+
+    if (!found_operator && (first_time_ || demo_))
+    {
+        say("I did not find my operator yet", true);
+        return false;
+    }
+    else if (!found_operator)
+    {
+        ROS_INFO("Robot did not yet find an operator!");
+    }
+
+    return true;
+}
+
+
 
 bool Follower::setHeadPanTilt(double pan, double tilt, bool block)
 {

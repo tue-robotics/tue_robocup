@@ -34,46 +34,32 @@ class Follower
 {
 public:
     Follower();
-    Follower(ros::NodeHandle& nh, std::string frame, bool map);
+    Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo = false);
 
-    /**
-     * @brief reset Clear world model, find operator and start following
-     */
-    bool reset();
-
-    /**
-     * @brief start Resume following, find operator if needed
-     */
-    bool start();
-
-    /**
-     * @brief pause Robot should stop moving but continue tracking, resume continue
-     */
-    void pause();
-    void resume();
-
-    /**
-     * @brief update function that triggers queries to WIRE
-     */
-    bool update();
-
-    /**
-     * @brief stop
-     */
-    void stop();
+    //! Interfaces to other modules
+    bool reset();  // clear world model and start following
+    bool start();  // start follower
+    void pause();  // pause but keep on tracking
+    void resume(); // resume following after being paused
+    bool update(); // update robot reference position
+    void stop();   // stop following
 
     bool sendOwnGoalPose(double x, double y, double theta, std::string frame);
 
 private:
 
+    //! Robot must stop moving
+    void freezeRobot();
+
     //! Let the robot talk
-    void say(std::string sentence);
+    void say(std::string sentence, bool block = false);
 
     //! Get operator position
     bool getPositionOperator(std::vector<wire::PropertySet>& objects, pbl::Gaussian& pos_operator);
 
     //! Find an operator
     bool findOperator(pbl::Gaussian& pos_operator);
+    bool findOperatorFast(pbl::Gaussian& pos_operator);
 
     //! Set head pan and tilt
     bool setHeadPanTilt(double pan = 0.0, double tilt = -0.2, bool block = true);
@@ -103,6 +89,7 @@ private:
 
     //! Voice
     ros::Publisher pub_speak_;
+    ros::ServiceClient srv_speak_;
 
     //! Actuation robot
     actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* ac_head_;           // Head action client
@@ -139,10 +126,18 @@ private:
     };
     Mode mode_;
 
+    //! Find operator settings
+    double TIME_WAIT_MAX;
+    double DIST_LEFT_RIGHT;
+    double DIST_MIN;
+    double DIST_MAX;
+    double MAX_2D_DISTANCE_TORSO_FACE;
+
     //! Administration
     double t_last_check_, t_no_meas_;
     double operator_last_var_;
-    bool operator_lost_;
+    bool demo_;
+    bool first_time_;
 
 };
 
