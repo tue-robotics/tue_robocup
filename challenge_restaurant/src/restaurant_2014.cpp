@@ -24,6 +24,7 @@
 
 // Services
 #include "perception_srvs/StartPerception.h"
+#include "std_srvs/Empty.h"
 
 // Follower
 #include "challenge_follow_me/Follower.h"
@@ -91,11 +92,13 @@ unsigned int n_tries_ = 1;
 int current_order_ = 1;
 std::string current_delivery_location_ = "";
 std::string current_object_ = "";
+double t_last_speech_cmd_ = 0;
 
 // Adminstration: other
 std::string current_clr_;
 std::map<int, std::pair<std::string, std::string> > order_map_; // object, desired location
 std::map<std::string, tf::StampedTransform> location_map_;                // location name, location
+
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -126,7 +129,7 @@ void setRGBLights(std::string color)
 
     if (color == "red") clr_msg.r = 255;
     else if (color == "green") clr_msg.g = 255;
-    else if (color == "blue") clr_msg.g = 255;
+    else if (color == "blue") clr_msg.b = 255;
     else if (color == "yellow")
     {
         clr_msg.r = 255;
@@ -251,6 +254,7 @@ void amigoSpeak(std::string sentence, bool block = true)
 
     std::string clr_back_up = current_clr_;
     setRGBLights("red");
+    t_last_speech_cmd_ = ros::Time::now().toSec();
 
     ROS_INFO("AMIGO: \'%s\'", sentence.c_str());
 
@@ -377,32 +381,36 @@ bool updateLocation(std::string location_name, std::string side)
         if (!storeLocation(location_name)) return false;
     }
 
-    // Get old location
+    //! Get old location
     tf::StampedTransform new_location = location_map_[location_name];
-    ROS_INFO("Update location (%f,%f,%f) for %s",
-             new_location.getOrigin().getX(), new_location.getOrigin().getY(), new_location.getRotation().getAngle(), location_name.c_str());
+    ROS_DEBUG("Update location (%f,%f,%f) for %s",
+              new_location.getOrigin().getX(), new_location.getOrigin().getY(), new_location.getRotation().getAngle(), location_name.c_str());
 
 
-    // If needed add angle
+    // Determine angle offset
     double theta = 0;
-    if (side == "left") theta = 1.57;
-    else if (side == "right") theta = -1.57;
+    if (side == "left") theta = -1.5*3.1415;
+    else if (side == "right") theta = -0.5*3.1415;
+
+    //! Update the quaternion
     tf::Quaternion q = new_location.getRotation();
     tf::Quaternion offset;
     offset.setRPY(0, 0, theta);
-    q += offset;
+    q *= offset;
+    q.normalize();
     new_location.setRotation(q);
-    ROS_INFO("Update location for %s with an angular offset of %f", location_name.c_str(), theta);
 
-    // If front, add 1 m offset
+
+    //! If the side is front, add an offset
     if (side == "front")
     {
         // Get position
         geometry_msgs::PoseStamped loc_base_link, loc_map;
         try
         {
+            double offset = 0.5;
             loc_base_link.header.frame_id = "/amigo/base_link";
-            loc_base_link.pose.position.x = 1.0;
+            loc_base_link.pose.position.x = offset;
             loc_base_link.pose.orientation.w = 1.0;
             listener_->transformPose("/map", loc_base_link, loc_map);
         }
@@ -420,7 +428,7 @@ bool updateLocation(std::string location_name, std::string side)
 
     // Store location
     location_map_[location_name] = new_location;
-    ROS_INFO("New location is (%f,%f,%f)",
+    ROS_INFO("New location for %s is (%f,%f,%f)", location_name.c_str(),
              new_location.getOrigin().getX(), new_location.getOrigin().getY(), new_location.getRotation().getAngle());
 
     // Publish marker
@@ -436,14 +444,19 @@ bool updateLocation(std::string location_name, std::string side)
 void speechCallbackGuide(std_msgs::String res)
 {
 
+    t_last_speech_cmd_ = ros::Time::now().toSec();
+
+    //! Inform user
     std::string answer = res.data;
+    ROS_DEBUG("Received unfiltered speech input: '%s'", answer.c_str());
     if (answer.empty()) return;
 
     //! Get first word
-    ROS_DEBUG("Received unfiltered speech input: %s", answer.c_str());
     size_t position = answer.find_first_of(" ");
     if (position > 0 && position <= answer.size()) answer = std::string(answer.c_str(), position);
     ROS_INFO("I heard: %s", answer.c_str());
+
+    //// START ANALYZING ANSWER
 
     // ROBOT IS ASKED TO STOP
     if (speech_state_ == speech_state::DRIVE)
@@ -742,13 +755,14 @@ void speechCallbackOrder(std_msgs::String res)
 bool moveBase(double x, double y, double theta)
 {
     // Determine goal pose
-    ROS_INFO("Move base goal: (%f,%f,%f)", x, y, theta);
+    ROS_INFO("Received a move base goal: (%f,%f,%f)", x, y, theta);
     robot_skill_server::ExecuteGoal goal;
     std::stringstream cmd;
     cmd << "base.move(x=" << x << ",y=" << y << ", phi=" << theta << ")";
     goal.command = cmd.str();
 
     // Send goal
+    double t_send_goal = ros::Time::now().toSec();
     ac_skill_server_->sendGoal(goal);
     ac_skill_server_->waitForResult(ros::Duration(60.0));
     if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
@@ -757,33 +771,11 @@ bool moveBase(double x, double y, double theta)
         return false;
     }
 
-    return true;
-
-}
-
-
-bool grabObject(std::string id, std::string side)
-{
-    // Determine goal pose
-    ROS_INFO("Grab object with id %s using the %s arm", id.c_str(), side.c_str());
-    robot_skill_server::ExecuteGoal goal;
-    std::stringstream cmd;
-    cmd << "grab(obj='" << id << "',side='" << side << "')";
-    goal.command = cmd.str();
-
-    // Send goal
-    ac_skill_server_->sendGoal(goal);
-    ac_skill_server_->waitForResult(ros::Duration(120.0));
-    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_WARN("Could not grab object within 120 [s]");
-        return false;
-    }
+    ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
 
     return true;
 
 }
-
 
 
 bool moveArmToJointPos(double q1, double q2, double q3, double q4, double q5, double q6, double q7, std::string side)
@@ -824,6 +816,33 @@ bool moveSingleArm(std::string pose, std::string side)
 }
 
 
+bool grabObject(std::string id, std::string side)
+{
+    // Determine goal pose
+    ROS_INFO("Grab object with id %s using the %s arm", id.c_str(), side.c_str());
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "grab(obj='" << id << "',side='" << side << "')";
+    goal.command = cmd.str();
+
+    // Send goal
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(120.0));
+    if (ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        // If this failed, reset arm pose and cancel all goals
+        ROS_WARN("Could not grab object within 120 [s]");
+        ac_skill_server_->cancelAllGoals();
+        moveSingleArm("drive", side);
+
+        return false;
+    }
+
+    return true;
+
+}
+
+
 
 bool moveBothArms(std::string pose)
 {
@@ -833,22 +852,26 @@ bool moveBothArms(std::string pose)
 }
 
 
-bool moveHead(double pan, double tilt) {
+bool moveHead(double pan, double tilt, bool block = true)
+{
 
     //! Add head reference action
+    double t_start = ros::Time::now().toSec();
     amigo_head_ref::HeadRefGoal head_ref;
     head_ref.goal_type = 1; // 1: pan tilt, 0 keep tracking
     head_ref.pan = pan;
     head_ref.tilt = tilt;
     ac_head_ref_->sendGoal(head_ref);
-    ac_head_ref_->waitForResult(ros::Duration(2.0));
+    if (block) ac_head_ref_->waitForResult(ros::Duration(2.0));
 
-    if(ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    if (ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
         ROS_WARN("Head could not reach target position");
+        ROS_INFO("moveHead(%f,%f,%s) took %f [ms]", pan, tilt, block?"true":"false", 1000*(ros::Time::now().toSec()-t_start));
         return false;
     }
 
+    ROS_INFO("moveHead(%f,%f,%s) took %f [ms]", pan, tilt, block?"true":"false", 1000*(ros::Time::now().toSec()-t_start));
     return true;
 
 }
@@ -889,24 +912,83 @@ bool togglePein(std::vector<std::string> modules) {
 
 void lookForObjects()
 {
-    ros::Duration dt(3.0);
-
     //! Vectors used to toggle pein
     std::vector<std::string> empty_vec, recog_vec;
     recog_vec.push_back("object_segmentation");
 
     //! Look in three directions
-    for (double pan = -0.15; pan < 0.2; pan +=0.15)
+    for (int mult = -1; mult <= 1; ++mult)
     {
-        moveHead(pan, 0.35);
+        moveHead(static_cast<double>(mult)*0.6, 0.45, false);
+        ros::Duration(1.5).sleep();
         togglePein(recog_vec);
-        dt.sleep();
+        ros::Duration(2.0).sleep();
         togglePein(empty_vec);
     }
 
     //! Reset head position
-    moveHead(0.0, 0.0);
+    moveHead(0.0, 0.0, false);
 }
+
+
+
+std::string getIdFromWorldModel(std::vector<wire::PropertySet>& objects, std::string& req_label)
+{
+    ROS_INFO("See if %s is in the world model", req_label.c_str());
+
+    std::string obj_id = "";
+    double p_obj_max = 0.0;
+
+    //! Loop over objects
+    for(std::vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj)
+    {
+        // Get the object's class label
+        wire::PropertySet& obj = *it_obj;
+        const wire::Property& prop_label = obj.getProperty("class_label");
+        if (prop_label.isValid())
+        {
+            // Correct class label
+            // @todo: now hardcoded
+            std::string class_label = prop_label.getValue().getExpectedValue().toString();
+            if (class_label == "peanut_butter") class_label = "peanutbutter";
+            else if (class_label == "ice_tea") class_label = "icetea";
+
+            // Probability of this label
+            double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
+
+            // Store the most probable label
+            if (class_label == req_label && prob > p_obj_max)
+            {
+                ROS_INFO("Found %s with probability %f!", class_label.c_str(), prob);
+                obj_id = obj.getID();
+            }
+        }
+    }
+
+    return obj_id;
+
+}
+
+
+
+void restartSpeechIfNeeded()
+{
+    if (ros::Time::now().toSec() - t_last_speech_cmd_ > 10.0)
+    {
+        // Restart speech recognition
+        stopSpeechRecognition();
+        startSpeechRecognition();
+        t_last_speech_cmd_ = ros::Time::now().toSec();
+
+        // Inform user
+        std::string clr = current_clr_;
+        setRGBLights("blue");
+        ros::Duration(1.0).sleep();
+        setRGBLights(clr);
+        ROS_INFO("Restarted speech for state %s!", getSpeechStateName(speech_state_).c_str());
+    }
+}
+
 
 
 
@@ -958,6 +1040,11 @@ int main(int argc, char **argv) {
     //! Perception
     srv_pein_ = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
 
+    //! Clearing the world model
+    ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
+    std_srvs::Empty srv;
+    if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
+
     ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Start follower
@@ -981,6 +1068,7 @@ int main(int argc, char **argv) {
     stopSpeechRecognition();
     startSpeechRecognition();
     setRGBLights("green");
+    t_last_speech_cmd_ = ros::Time::now().toSec();
     ROS_INFO("Started speech recognition");
 
     //! Start guiding phase
@@ -993,11 +1081,15 @@ int main(int argc, char **argv) {
         bool ok = follower_->update();
         if (!ok) ROS_WARN("Could not update Follower");
 
+        //! To ensure speech keeps working
+        restartSpeechIfNeeded();
+
         //! Wait
         loop_rate.sleep();
     }
 
     ///////////////// ORDERING PHASE /////////////////////////////////////////////////////////////////////////////////////////////////
+
 
     //! Reconfigure speech recognition
     sub_speech.shutdown();
@@ -1016,6 +1108,9 @@ int main(int argc, char **argv) {
     {
         ros::spinOnce();
         loop_rate.sleep();
+
+        //! To ensure speech keeps working
+        restartSpeechIfNeeded();
     }
 
     //! Done
@@ -1024,6 +1119,9 @@ int main(int argc, char **argv) {
     {
         ROS_INFO("\tBring %s to %s", it->second.second.c_str(), it->second.first.c_str());
     }
+
+    //! Clear the world model
+    if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
 
 
     ///////////////// DELIVERY PHASE /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1048,52 +1146,80 @@ int main(int argc, char **argv) {
                               location_map_[shelf].getOrigin().getY(),
                               location_map_[shelf].getRotation().getAngle()))
                 {
-                    ROS_WARN("Robot cannot reach the %s", shelf.c_str());
+                    ROS_WARN("Robot cannot reach the %s (try to continue anyway)", shelf.c_str());
                 }
-                else
+
+
+                //! Inform user
+                std::stringstream sentence;
+                sentence << "I am at the " << shelf;
+                amigoSpeak(sentence.str(), false);
+
+                //! Look for objects
+                lookForObjects();
+
+
+                //! Get objects from the world state
+                std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
+
+                //! For all orders, see if the object is in the world model
+                std::map<int, std::pair<std::string, std::string> >::iterator it_order = order_map_.begin();
+                for (; it_order != order_map_.end(); ++it_order)
                 {
-                    //! Inform user
-                    std::stringstream sentence;
-                    sentence << "I am at the " << shelf;
-                    amigoSpeak(sentence.str(), false);
+                    //! Only order which are not yet completed
+                    if (!it_order->second.first.empty())
+                    {
 
-                    //! Look for objects
-                    lookForObjects();
+                        //! See if this object is in the world model
+                        std::string obj_id = getIdFromWorldModel(objects, it_order->second.second);
 
-                    // @todo: check world model for objects
-
-                    //! Get objects from the world state
-                    std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
-
-                    //! Iterate over all world model objects
-                    std::string coke_id = "";
-                    double p_max = 0.0;
-                    for(std::vector<wire::PropertySet>::iterator it_obj = objects.begin(); it_obj != objects.end(); ++it_obj) {
-                        wire::PropertySet& obj = *it_obj;
-                        const wire::Property& prop_label = obj.getProperty("class_label");
-                        if (prop_label.isValid())
+                        //! Grab object if the object is ordered
+                        if (!obj_id.empty())
                         {
+                            //! Inform user
+                            std::stringstream txt;
+                            txt << "I found your " << it_order->second.second;
+                            amigoSpeak(txt.str(), false);
 
-                            std::string class_label = prop_label.getValue().getExpectedValue().toString();
-                            double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
-
-                            ROS_INFO("Found %s with probability %f!", class_label.c_str(), prob);
-
-                            if (class_label == "coke" && prob > p_max)
+                            if (!grabObject(obj_id, "right"))
                             {
-                                coke_id = obj.getID();
+                                amigoSpeak("I could not pick up the object");
                             }
+                            else
+                            {
+                                if (location_map_.find(it_order->second.first) == location_map_.end())
+                                {
+                                    ROS_WARN("Poor administration: location %s for %s not defined",
+                                             it_order->second.first.c_str(), it_order->second.second.c_str());
+                                }
+                                else
+                                {
+                                    //! Serve object
+                                    tf::StampedTransform loc = location_map_[it_order->second.first];
+                                    moveBase(loc.getOrigin().getX(), loc.getOrigin().getY(), loc.getRotation().getAngle());
+                                    amigoSpeak("Here is your order");
+                                    // @todo: handover and open gripper
+                                    ros::Duration dt(2.0);
+                                    dt.sleep();
+
+                                    //! Move back to the shelf
+                                    moveBase(location_map_[shelf].getOrigin().getX(),
+                                             location_map_[shelf].getOrigin().getY(),
+                                             location_map_[shelf].getRotation().getAngle());
+                                }
+
+                            }
+
+                            //! Finished order (or failed picking it up
+                            it_order->second.first.clear();
                         }
                     }
-
-                    //! Test picking up a coke
-                    if (!coke_id.empty()) grabObject(coke_id, "left");
+                } // Finished looping over orders
 
 
-                }
             }
 
-        }
+        } // Visited both the food and the drink shelf
 
         // Move back to the ordering location
         std::string order_loc = "ordering location";
