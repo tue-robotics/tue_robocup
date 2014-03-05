@@ -33,7 +33,11 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo) 
     //! Move base
     if (!use_map_)
     {
-        carrot_planner_ = new CarrotPlanner("Follower_carrot_planner");
+        double max_vel_lin = 0.75;
+        double max_vel_rot = 0.4;
+        double dist_wall = 0.65;
+        bool allow_rotate_only = false;
+        carrot_planner_ = new CarrotPlanner("Follower_carrot_planner", max_vel_lin, max_vel_rot, dist_wall, allow_rotate_only);
     }
     else
     {
@@ -501,7 +505,7 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
-    ros::Duration dt(0.5);
+    ros::Duration dt(0.25);
     bool found_operator = false;
     while (ros::Time::now().toSec() - t_start < TIME_WAIT_MAX && !found_operator)
     {
@@ -724,7 +728,7 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
 
     //! See if the a person stands in front of the robot
     double t_start = ros::Time::now().toSec();
-    ros::Duration dt(0.5);
+    ros::Duration dt(0.25);
     bool found_operator = false;
     while (ros::Time::now().toSec() - t_start < TIME_WAIT_MAX && !found_operator)
     {
@@ -759,12 +763,12 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
                             pos_gauss.getMean()(1) < DIST_LEFT_RIGHT)
                     {
                         vector_possible_operator_torsos.push_back(pos_gauss);
-                        ROS_DEBUG("\tcandidate operator torso at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_INFO("\tcandidate operator torso at (x,y) = (%f,%f)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
 
                     }
                     else
                     {
-                        ROS_DEBUG("\ttorso at (x,y) = (%f,%f) (no candidate operator)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
+                        ROS_INFO("\ttorso at (x,y) = (%f,%f) (no candidate operator)", pos_gauss.getMean()(0), pos_gauss.getMean()(1));
                     }
                 }
 
