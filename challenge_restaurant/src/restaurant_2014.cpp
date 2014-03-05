@@ -920,7 +920,7 @@ void lookForObjects()
     for (int mult = -1; mult <= 1; ++mult)
     {
         moveHead(static_cast<double>(mult)*0.6, 0.45, false);
-        ros::Duration(1.5).sleep();
+        //ros::Duration(1.5).sleep();
         togglePein(recog_vec);
         ros::Duration(2.0).sleep();
         togglePein(empty_vec);
