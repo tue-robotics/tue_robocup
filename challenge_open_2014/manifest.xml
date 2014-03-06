@@ -1,0 +1,16 @@
+<package>
+  <description brief="challenge_open_2014">
+
+     challenge_open_2014
+
+  </description>
+  <author>Sjoerd van den Dries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_open_2014</url>
+  <depend package="amigo_skill_server"/>
+  <depend package="hector_exploration_planner"/>
+
+</package>
+
+

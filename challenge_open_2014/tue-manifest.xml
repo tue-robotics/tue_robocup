@@ -1,0 +1,12 @@
+<deps>
+
+    <stack name="hector_navigation"
+           type="git"
+           source="https://github.com/tu-darmstadt-ros-pkg/hector_navigation.git"
+           local-path="tu-darmstadt-ros-pkg"/>
+
+    <stack name="hector_slam"
+           type="git"
+           source="https://github.com/tu-darmstadt-ros-pkg/hector_slam.git"
+           local-path="tu-darmstadt-ros-pkg"/>
+</deps>
