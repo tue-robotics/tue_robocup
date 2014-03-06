@@ -4,8 +4,12 @@
 #include <nav_msgs/GetMap.h>
 
 #include <tf/transform_datatypes.h>
+#include <visualization_msgs/MarkerArray.h>
 
 double robot_inscribed_radius = 0.3;
+
+ros::Publisher pub_vis;
+ros::Publisher pub_frontier_cells;
 
 struct FrontierPoint{
   int idx;     //position
@@ -31,10 +35,15 @@ void findFrontiers(const nav_msgs::OccupancyGrid& occ_grid, std::vector<Frontier
 
     std::vector<bool> frontier_map(size, false);
 
+    nav_msgs::OccupancyGrid vis_frontier_cells;
+    vis_frontier_cells.header = occ_grid.header;
+    vis_frontier_cells.info = occ_grid.info;
+    vis_frontier_cells.data.resize(size);
+
     // Find all frontier cells (free cells next to unknown cells).
     const std::vector<signed char>& map = occ_grid.data;
     for (idx = 0; idx < size; idx++) {
-        bool free_cell = (map[idx] < 50);
+        bool free_cell = (map[idx] >= 0 && map[idx] < 50);
 
         if (free_cell &&
                 (   (idx + 1 < size && map[idx + 1] < 0)
@@ -42,8 +51,13 @@ void findFrontiers(const nav_msgs::OccupancyGrid& occ_grid, std::vector<Frontier
                  || (idx + w < size && map[idx + w] < 0)
                  || (idx - w >= 0 && map[idx - w] < 0))) {
             frontier_map[idx] = true;
+            vis_frontier_cells.data[idx] = 0;
+        } else {
+            vis_frontier_cells.data[idx] = 100;
         }
     }
+
+    pub_frontier_cells.publish(vis_frontier_cells);
 
     // Clean up frontiers detected on separate rows of the map
     idx = h - 1;
@@ -52,8 +66,7 @@ void findFrontiers(const nav_msgs::OccupancyGrid& occ_grid, std::vector<Frontier
         idx += h;
     }
 
-    // Group adjoining map_ pixels
-    int segment_id = 127;
+    // Group adjoining frontier cells
     std::vector< std::vector<FrontierPoint> > segments;
     for (int i = 0; i < size; i++) {
         if (frontier_map[i]) {
@@ -117,50 +130,65 @@ void findFrontiers(const nav_msgs::OccupancyGrid& occ_grid, std::vector<Frontier
             }
 
             segments.push_back(segment);
-            segment_id--;
-            if (segment_id < -127)
-                break;
         }
     }
 
-    int num_segments = 127 - segment_id;
-    if (num_segments <= 0)
-        return;
-
-    for (unsigned int i=0; i < segments.size(); i++) {
+    for (unsigned int i = 0; i < segments.size(); i++) {
         Frontier frontier;
         std::vector<FrontierPoint>& segment = segments[i];
         uint size = segment.size();
         //we want to make sure that the frontier is big enough for the robot to fit through
-        if (size * occ_grid.info.resolution < robot_inscribed_radius)
-            continue;
+        if (size * occ_grid.info.resolution >= robot_inscribed_radius) {
+            float x = 0, y = 0;
+            tf::Vector3 d(0,0,0);
 
-        float x = 0, y = 0;
-        tf::Vector3 d(0,0,0);
+            for (unsigned int j = 0; j < size; j++) {
+                d += segment[j].d;
+                int idx = segment[j].idx;
+                x += (idx % w);
+                y += (idx / w);
+            }
+            d = d / size;
+            frontier.pose.position.x = occ_grid.info.origin.position.x + occ_grid.info.resolution * (x / size);
+            frontier.pose.position.y = occ_grid.info.origin.position.y + occ_grid.info.resolution * (y / size);
+            frontier.pose.position.z = 0.0;
 
-        for (uint j=0; j<size; j++) {
-            d += segment[j].d;
-            int idx = segment[j].idx;
-            x += (idx % w);
-            y += (idx / w);
+            frontier.pose.orientation = tf::createQuaternionMsgFromYaw(atan2(d.y(), d.x()));
+            frontier.size = size;
+
+            frontiers.push_back(frontier);
         }
-        d = d / size;
-        frontier.pose.position.x = occ_grid.info.origin.position.x + occ_grid.info.resolution * (x / size);
-        frontier.pose.position.y = occ_grid.info.origin.position.y + occ_grid.info.resolution * (y / size);
-        frontier.pose.position.z = 0.0;
-
-        frontier.pose.orientation = tf::createQuaternionMsgFromYaw(atan2(d.y(), d.x()));
-        frontier.size = size;
-
-        frontiers.push_back(frontier);
     }
 }
 
 void visualizeFrontiers(const std::vector<Frontier>& frontiers) {
+    visualization_msgs::MarkerArray markers;
+
+    int id = 0;
     for(std::vector<Frontier>::const_iterator it = frontiers.begin(); it != frontiers.end(); ++it) {
         const Frontier& f = *it;
-        std::cout << f.pose << std::endl;
+        visualization_msgs::Marker m;
+        m.action = visualization_msgs::Marker::ADD;
+
+        m.color.a = 1;
+        m.color.r = 1;
+        m.color.g = 1;
+        m.color.b = 0;
+
+        m.header.frame_id = "/map";
+        m.header.stamp = ros::Time::now();
+
+        m.id = id++;
+        m.lifetime = ros::Duration(1.0);
+        m.pose = f.pose;
+        m.scale.x = 1;
+        m.scale.y = 0.1;
+        m.scale.z = 0.1;
+
+        markers.markers.push_back(m);
     }
+
+    pub_vis.publish(markers);
 }
 
 void foo(const nav_msgs::OccupancyGrid& msg) {
@@ -180,26 +208,25 @@ int main(int argc, char **argv) {
 
     ros::Subscriber sub = nh.subscribe("/map", 10, &callback);
 
+    pub_vis = nh.advertise<visualization_msgs::MarkerArray>("/explore/frontiers", 1);
+    pub_frontier_cells = nh.advertise<nav_msgs::OccupancyGrid>("/explore/frontier_cells", 1);
+
     // subscribing to gmapping service (get map)
     ros::ServiceClient client = nh.serviceClient<nav_msgs::GetMap>("/dynamic_map");
 
-    // create service request
-    nav_msgs::GetMap srv;
+    ros::Rate r(1);
+    while(ros::ok()) {
+        ros::spinOnce();
 
-    // populate service request
-    // srv.request.field1 = ...
-    // ...
+        nav_msgs::GetMap srv;
+        if (client.call(srv)) {
+            foo(srv.response.map);
+        } else {
+            ROS_ERROR("Failed to call service");
+        }
 
-    // call the service
-    if (client.call(srv)) {
-        foo(srv.response.map);
-    } else {
-        ROS_ERROR("Failed to call service");
-        return 1;
+        r.sleep();
     }
-
-    // spin
-    ros::spin();
 
     return 0;
 }
