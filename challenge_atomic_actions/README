@@ -1,0 +1,50 @@
+# Responsible: Janno Lunenburg
+(README not yet tested)
+
+amigo1:
+
+    amiddle
+    
+amigo3:
+
+    (For speech to text)
+    roslaunch amigo_launch_files speech_recognition.launch
+
+amigo3:
+    (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
+    alsamixer
+        Mic Boost -> 22
+        Capture -> 44
+        Digital -> 29
+        Mic on mute!!! (Should be muted already)
+        
+    amigo-console  
+		(amigo.base.reset_costmap)
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+        (lights should become green -> say 'continue')
+        (if response is 'true', amigo heard you and lights become blue)
+
+    say test  
+        (to test speaker is working) 
+
+    rosrun challenge_atomic_actions challenge_basic_functionalities.py
+
+
+== TEST THE EXECUTIVE ==
+- All basic functionalities will be tested one after another. For most cases, the robot returns to 0,0,0 to start the next part
+- Put some objects on the second table (i.e., without the computer) for the pick-and-place demo.
+- Make sure the thrashbin is correctly placed
+- Put some objects on the cabinet expedit for the fetch and carry
+- Try to be at least with two people for the find me and go over there
+- Testing avoid that is a bit difficult, since there is no space for detours in our testlab
+- Current questions for what did you say:
+"--- What is the capital of Germany? -------------"
+"--- What is the heaviest animal in the world?----"
+"--- Who is the president of America?-------------"
+"--- Who is your example?-------------------------"
+"--- When do the olympics start?------------------"
+"--- Which football club is the best?-------------"
+"--- Who is the best looking person around here?--"
+"--- Which person is not able to say yes?---------"
+"--- Which town has been bombed?------------------"
+"--- What is your motto?--------------------------"
