@@ -45,6 +45,7 @@ enum SpeechState {
     SIDE,
     NUMBER,
     OBJECT,
+    CONFIRM_OR_CONTINUE,
     CONFIRM_LOC,
     CONFIRM_SIDE,
     CONFIRM_NUMBER,
@@ -114,6 +115,7 @@ std::string getSpeechStateName(speech_state::SpeechState ss)
     else if (ss == speech_state::CONFIRM_NUMBER) name = "CONFIRM_NUMBER";
     else if (ss == speech_state::CONFIRM_OBJECT) name = "CONFIRM_OBJECT";
     else if (ss == speech_state::DONE) name = "DONE";
+    else if (ss == speech_state::CONFIRM_OR_CONTINUE) name = "CONFIRM_OR_CONTINUE";
 
     return name;
 }
@@ -172,6 +174,7 @@ bool startSpeechRecognition()
     else if (speech_state_ == speech_state::SIDE) file_name = "side";
     else if (speech_state_ == speech_state::NUMBER) file_name = "number";
     else if (speech_state_ == speech_state::OBJECT) file_name = "object";
+    else if (speech_state_ == speech_state::CONFIRM_OR_CONTINUE) file_name = "yesnocontinue";
     else if (speech_state_ == speech_state::DONE)
     {
         ROS_WARN("No need to start recognition when speech state is DONE");
@@ -441,6 +444,199 @@ bool updateLocation(std::string location_name, std::string side)
 
 
 
+bool isLocation(std::string word)
+{
+    if (word == "one") return true;
+    else if (word == "two") return true;
+    else if (word == "three") return true;
+    else if (word == "food") return true;
+    else if (word == "drink") return true;
+
+    return false;
+}
+
+bool isSide(std::string word)
+{
+    if (word == "left") return true;
+    else if (word == "right") return true;
+    else if (word == "front") return true;
+
+    return false;
+}
+
+std::string getDefaultLocation()
+{
+    // Defaults
+    std::map<std::string, std::string> default_locations;
+    default_locations["delivery location one"] =  "one";
+    default_locations["delivery location two"] = "two";
+    default_locations["delivery location three"] = "three";
+    default_locations["food sheld"] = "food";
+    default_locations["drink shelf"] = "drink";
+
+    // Get the first location which is not in the location map yet
+    std::map<std::string, std::string>::const_iterator it = default_locations.begin();
+    for (; it != default_locations.end(); ++it)
+    {
+        if (location_map_.find(it->first) == location_map_.end())
+        {
+            return it->second;
+        }
+    }
+
+    return default_locations.begin()->second;
+
+}
+
+std::string getDefaultSide()
+{
+    return "left";
+}
+
+std::string mapToFullLocation(std::string short_loc)
+{
+    if (short_loc == "one") return "delivery location one";
+    if (short_loc == "two") return "delivery location two";
+    if (short_loc == "three") return "delivery location three";
+    if (short_loc == "food") return "food sheld";
+    if (short_loc == "drink") return "drink shelf";
+    else
+    {
+        ROS_ERROR("Unknown short location '%s' cannot be mapped to a full location!", short_loc.c_str());
+    }
+
+    return short_loc;
+}
+
+void getLocationAndSideFromAnswer(std::string full_answer, std::string& location, std::string& side)
+{
+
+    ROS_INFO("Full answer is '%s'", full_answer.c_str());
+
+    // Get first word
+    size_t position = full_answer.find_first_of(" ");
+    if (position > 0 && position <= full_answer.size())
+    {
+        location = std::string(full_answer.c_str(), position);
+        full_answer = full_answer.substr(position+1, full_answer.size());
+    }
+    else location = full_answer;
+
+    // Get second word
+    position = full_answer.find_first_of(" ");
+    if ((position > 0 && position <= full_answer.size())) side = std::string(full_answer.c_str(), position);
+    else if (!full_answer.empty()) side = full_answer;
+
+    // Intermediate result
+    ROS_DEBUG("'%s' and '%s'", location.c_str(), side.c_str());
+
+    // Check first word
+    std::string loc_back_up = location;
+    if (!isLocation(location))
+    {
+        ROS_INFO("First word is not a location");
+        if (isLocation(side))
+        {
+            location = side;
+            ROS_INFO("Second word is a location!");
+        }
+        else location = getDefaultLocation();
+        ROS_INFO("Updated first word to '%s'", location.c_str());
+    }
+
+    // Check second word
+    if (!isSide(side))
+    {
+        ROS_INFO("Second word is not a side");
+        if (isSide(loc_back_up))
+        {
+            side = loc_back_up;
+            ROS_INFO("First word was a side!");
+        }
+        else side = getDefaultSide();
+        ROS_INFO("Updated second word to '%s'", side.c_str());
+    }
+
+    //! Get full location
+    //loc = mapToFullLocation(loc);
+}
+
+
+
+
+void speechCallbackGuideShort(std_msgs::String res)
+{
+
+    t_last_speech_cmd_ = ros::Time::now().toSec();
+
+    //! Only consider non-empty answers
+    std::string answer = res.data;
+    if (answer.empty()) return;
+
+    // ROBOT GOT A COMMAND
+    if (speech_state_ == speech_state::DRIVE)
+    {
+        // stop robot
+        follower_->pause();
+
+        // Get location and side
+        getLocationAndSideFromAnswer(answer, current_loc_name_, current_side_);
+
+        // ask for confirmation
+        std::stringstream ans;
+        ans << current_loc_name_ << " " << current_side_ << "?";
+        amigoSpeak(ans.str());
+        updateSpeechState(speech_state::CONFIRM_OR_CONTINUE);
+        setRGBLights("yellow");
+    }
+
+    // RECEIVED A LOCATION NAME AND A SIDE
+    else if (speech_state_ == speech_state::CONFIRM_OR_CONTINUE)
+    {
+        // Get first word from the answer
+        size_t position = answer.find_first_of(" ");
+        if (position > 0 && position <= answer.size()) answer = std::string(answer.c_str(), position);
+
+        // CONFIRMED
+        if (answer == "yes")
+        {
+            //! Map short location name to full location name
+            current_loc_name_ = mapToFullLocation(current_loc_name_);
+            ROS_INFO("Confirmed side '%s' and '%s'!", current_side_.c_str(), current_loc_name_.c_str());
+
+            //! Store location in location map
+            storeLocation(current_loc_name_);
+            updateLocation(current_loc_name_, current_side_);
+
+            //! Continue following
+            setRGBLights("yellow");
+            follower_->reset();
+            setRGBLights("green");
+            updateSpeechState(speech_state::DRIVE);
+        }
+        else
+        {
+            if (answer == "continue" || answer == "no")
+            {
+                // Robot misunderstood
+                if (answer == "no") amigoSpeak("Which location and side?");
+
+            }
+            else ROS_WARN("Received an unknown command: '%s'", answer.c_str());
+
+
+            //! Proceed (no reset needed)
+            follower_->resume();
+            updateSpeechState(speech_state::DRIVE);
+            setRGBLights("green");
+        }
+
+    }
+
+}
+
+
+/*
 void speechCallbackGuide(std_msgs::String res)
 {
 
@@ -617,6 +813,7 @@ void speechCallbackGuide(std_msgs::String res)
 
 
 }
+*/
 
 
 
@@ -983,11 +1180,140 @@ void restartSpeechIfNeeded()
         // Inform user
         std::string clr = current_clr_;
         setRGBLights("blue");
-        ros::Duration(1.0).sleep();
+        ros::Duration(0.5).sleep();
         setRGBLights(clr);
         ROS_INFO("Restarted speech for state %s!", getSpeechStateName(speech_state_).c_str());
     }
 }
+
+
+
+void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
+{
+
+    // Inform user via terminal
+    ROS_INFO("Found %zu of the ordered objects:", obj_id_order_id_map.size());
+    std::map<std::string, int>::const_iterator it_print = obj_id_order_id_map.begin();
+    for (; it_print != obj_id_order_id_map.end(); ++it_print)
+    {
+        ROS_INFO("\torder %d", it_print->second);
+    }
+
+
+    //! Pick up the objects and deliver
+    unsigned int n_picked_up = 0;
+    bool delivered = true;
+    std::string preferred_arm = "";
+    while (obj_id_order_id_map.size() != n_picked_up || !delivered)
+    {
+        // Reset if there are objects to be delivered left
+        if (n_picked_up < obj_id_order_id_map.size())
+        {
+            delivered = false;
+            preferred_arm = "right";
+        }
+
+        //! Keep track of object location and id per arm
+        std::map<std::string, std::pair<std::string, tf::StampedTransform> > obj_id_arm_loc_map;
+
+        //! Pick up one or two objects
+        std::map<std::string, int>::iterator it_id = obj_id_order_id_map.begin();
+        for (; it_id != obj_id_order_id_map.end(); ++it_id)
+        {
+            // Robot can pick up at most two objects AND only object which are not yet delivered
+            if (obj_id_arm_loc_map.size() < 2 && it_id->second >= 0)
+            {
+                // Delivery location must be known!
+                if (order_map_.find(it_id->second) ==  order_map_.end()) ROS_WARN("Mistake in administration order ids");
+                else
+                {
+                    //! Determine delivery location (points for reaching a delivery location, even without an object)
+                    std::string location_name = order_map_[it_id->second].first;
+                    if (location_map_.find(location_name) == location_map_.end()) ROS_WARN("Location %s not in location map!", location_name.c_str());
+                    else obj_id_arm_loc_map[it_id->first] = std::make_pair<std::string, tf::StampedTransform>(preferred_arm, location_map_[location_name]);
+
+                    //! Pick up the object
+                    std::string object = order_map_[it_id->second].second;
+                    if (grabObject(it_id->first, preferred_arm))
+                    {
+                        // Grab object succeeded!
+                        ROS_INFO("Picked up %s with %s arm (location is %s)", object.c_str(), preferred_arm.c_str(), location_name.c_str());
+                        preferred_arm = "left";
+                    }
+                    else ROS_WARN("Could not grab object %s", object.c_str());
+                    ++n_picked_up;
+
+                    // Update map: object is picked up
+                    it_id->second = -1;
+                }
+            }
+        }
+
+        // NOW: one or two objects are picked up
+
+        //! Deliver object(s)
+        std::map<std::string, std::pair<std::string, tf::StampedTransform> >::iterator it_del = obj_id_arm_loc_map.begin();
+        for (; it_del != obj_id_arm_loc_map.end(); ++it_del)
+        {
+            // Get delivery location
+            tf::StampedTransform loc = it_del->second.second;
+            if (moveBase(loc.getOrigin().getX(), loc.getOrigin().getY(), loc.getRotation().getAngle()))
+            {
+                std::stringstream txt;
+                txt << "Please take your order from my " << it_del->second.first << " gripper";
+                amigoSpeak(txt.str());
+            }
+            else
+            {
+                ROS_WARN("Cannot reach the delivery location!");
+                std::stringstream txt;
+                txt << "Can you take your order from my " << it_del->second.first << " gripper";
+                amigoSpeak(txt.str());
+            }
+
+            // @todo: open gripper
+
+            delivered = true;
+        }
+    }
+
+
+    //! Update the order map with completed (or failed orders)
+    std::map<std::string, int>::const_iterator it_up = obj_id_order_id_map.begin();
+    for (; it_up != obj_id_order_id_map.end(); ++it_up)
+    {
+        if (order_map_.find(it_up->second) == order_map_.end())
+        {
+            ROS_ERROR("Completed an order which is not in the map?");
+        }
+        else
+        {
+            order_map_[it_up->second].first.clear();
+            order_map_[it_up->second].second.clear();
+        }
+    }
+}
+
+
+
+bool deliveredAllOrders()
+{
+    if (order_map_.empty())
+    {
+        ROS_WARN("No orders specified (therefor all orders completed)");
+        return true;
+    }
+
+    // See if there are unfinished orders
+    std::map<int, std::pair<std::string, std::string> >::const_iterator it = order_map_.begin();
+    for (; it != order_map_.end(); ++it)
+    {
+        if (!it->second.first.empty()) return false;
+    }
+
+    return true;
+}
+
 
 
 
@@ -996,6 +1322,10 @@ int main(int argc, char **argv) {
 
     ros::init(argc, argv, "test_speech_restaurant");
     ros::NodeHandle nh;
+
+    std::string location = "", side = "";
+    getLocationAndSideFromAnswer("two left three", location, side);
+    ROS_INFO("Location: %s, side: %s", location.c_str(), side.c_str());
 
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
@@ -1015,7 +1345,8 @@ int main(int argc, char **argv) {
     //! Start speech recognition
     speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
     speech_recognition_client_.waitForExistence();
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
+    //ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
+    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuideShort);
 
     //! Skill server action client
     ROS_INFO("Connecting to the skill server...");
@@ -1130,7 +1461,7 @@ int main(int argc, char **argv) {
     while (ros::ok() && !done)
     {
         // For both food and drink shelf
-        for (unsigned int i=0; i<2; ++i)
+        for (int i=0; i<2; ++i)
         {
             if (i == 0) shelf = "food shelf";
             else shelf = "drink shelf";
@@ -1162,6 +1493,7 @@ int main(int argc, char **argv) {
                 //! Get objects from the world state
                 std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
 
+                /*
                 //! For all orders, see if the object is in the world model
                 std::map<int, std::pair<std::string, std::string> >::iterator it_order = order_map_.begin();
                 for (; it_order != order_map_.end(); ++it_order)
@@ -1215,7 +1547,27 @@ int main(int argc, char **argv) {
                         }
                     }
                 } // Finished looping over orders
+                */
 
+                // See which objects are found
+                 std::map<std::string, int> obj_id_order_id_map;
+                std::map<int, std::pair<std::string, std::string> >::iterator it_order = order_map_.begin();
+                for (; it_order != order_map_.end(); ++it_order)
+                {
+                    //! Only order which are not yet completed
+                    if (!it_order->second.first.empty())
+                    {
+                        //! See if this object is in the world model
+                        std::string obj_id = getIdFromWorldModel(objects, it_order->second.second);
+                        if (!obj_id.empty()) obj_id_order_id_map[obj_id] = it_order->first;
+                    }
+                }
+
+                //! Deliver order
+                if (!obj_id_order_id_map.empty()) deliverOrders(obj_id_order_id_map);
+
+                //! If not all orders are completed but all shelfs are visited, try it again
+                if (i == 1 && !deliveredAllOrders()) i = -1;
 
             }
 
