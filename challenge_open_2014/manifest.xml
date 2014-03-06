@@ -9,7 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/challenge_open_2014</url>
   <depend package="amigo_skill_server"/>
-  <depend package="hector_exploration_planner"/>
+  <depend package="nav_msgs"/>
 
 </package>
 
