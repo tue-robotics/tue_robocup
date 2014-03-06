@@ -148,6 +148,12 @@ void Follower::pause()
 void Follower::stop()
 {
 
+    //! Switch off ppl_detection
+    perception_srvs::StartPerception pein_srv;
+    pein_srv.request.modules.push_back("");
+    if (!pein_client_.call(pein_srv)) ROS_ERROR("Follower cannot switch off ppl_detection");
+    else ROS_INFO("Switched on ppl_detection");
+
     freezeRobot();
     pein_client_.shutdown();
     ac_head_->cancelAllGoals();
