@@ -79,6 +79,9 @@ private:
     //! Get a world model position as a Gaussian
     bool getPositionGaussian(pbl::PDF pos, pbl::Gaussian& pos_gauss);
 
+    //! RGB lights
+    void setRGB(std::string color);
+
 
     ///////////////
     // VARIABLES //
@@ -106,6 +109,9 @@ private:
 
     //! Toggle perception
     ros::ServiceClient pein_client_;
+
+    //! Color AMIGO
+    ros::Publisher rgb_pub_;
 
     //! Settings
     std::string nav_frame_;            // Frame in which navigation goals are given

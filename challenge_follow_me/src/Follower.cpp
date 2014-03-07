@@ -11,6 +11,8 @@
 #include "tue_move_base_msgs/MoveBaseGoal.h"
 #include "std_msgs/String.h"
 #include "text_to_speech/Speak.h"
+#include "std_msgs/ColorRGBA.h"
+#include "amigo_msgs/RGBLightCommand.h"
 
 // Conversions
 #include "problib/conversions.h"
@@ -29,6 +31,9 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo) 
 
     //! Tf listener
     listener_ = new tf::TransformListener();
+
+    //! Color AMIGO
+    rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
 
     //! Move base
     if (!use_map_)
@@ -372,6 +377,41 @@ bool Follower::getPositionGaussian(pbl::PDF pos, pbl::Gaussian& pos_gauss)
     return true;
 }
 
+void Follower::setRGB(std::string color)
+{
+
+    ROS_DEBUG("Follower turns AMIGO: %s", color.c_str());
+
+    std_msgs::ColorRGBA clr_msg;
+
+    if (color == "red") clr_msg.r = 255;
+    else if (color == "green") clr_msg.g = 255;
+    else if (color == "blue") clr_msg.b = 255;
+    else if (color == "yellow")
+    {
+        clr_msg.r = 255;
+        clr_msg.g = 255;
+    }
+    else if (color == "pink")
+    {
+        clr_msg.r = 255;
+        clr_msg.b = 255;
+    }
+    else
+    {
+        ROS_INFO("Requested color \'%s\' for RGB lights unknown", color.c_str());
+        return;
+    }
+
+    //! Send color command
+    amigo_msgs::RGBLightCommand rgb_cmd;
+    rgb_cmd.color = clr_msg;
+    rgb_cmd.show_color.data = true;
+    rgb_pub_.publish(rgb_cmd);
+
+
+}
+
 
 
 bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl::Gaussian& pos_operator)
@@ -702,6 +742,8 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
     double DIST_MIN = 0.5;
     double DIST_MAX = 2.0;
 
+    setRGB("pink");
+
     //! Toggle perception
     perception_srvs::StartPerception pein_srv;
     pein_srv.request.modules.push_back("ppl_detection");
@@ -837,6 +879,7 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
             t_last_check_ = ros::Time::now().toSec();
             t_no_meas_ = 0;
             first_time_ = false;
+            setRGB("green");
 
             // Break from while loop
             found_operator = true;
