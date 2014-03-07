@@ -116,6 +116,7 @@ std::map<int, std::pair<std::string, std::string> > order_map_; // object, desir
 std::map<std::string, RobotPose> location_map_;                // location name, location
 double x_last_ = 0;
 double y_last_ = 0;
+unsigned int marker_id_ = 0;
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -313,34 +314,6 @@ void updateSpeechState(speech_state::SpeechState new_state)
 
 
 
-bool storeLocation(std::string location_name)
-{
-    // Get position
-    tf::StampedTransform location;
-    try
-    {
-        listener_->lookupTransform("/map", "/amigo/base_link", ros::Time(0), location);
-    }
-    catch (tf::TransformException ex)
-    {
-        ROS_ERROR("No tranform /map - /amigo/base_link");
-        amigoSpeak("I cannot store this location: %s", ex.what());
-        return false;
-    }
-
-    // Store location
-    if (location_map_.find(location_name) != location_map_.end())
-    {
-        ROS_WARN("Overwriting location '%s'!", location_name.c_str());
-    }
-    RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), location.getRotation().getAngle());
-    location_map_[location_name] = rp_loc;
-    ROS_INFO("Stored the location (%f,%f,%f) for %s", rp_loc.x, rp_loc.y, rp_loc.phi, location_name.c_str());
-
-    return true;
-}
-
-
 void createMarkerWithLabel(std::string label, RobotPose& pose, double r, double g, double b, visualization_msgs::MarkerArray& array)
 {
 
@@ -356,7 +329,7 @@ void createMarkerWithLabel(std::string label, RobotPose& pose, double r, double 
     marker.scale.y = 0.25;
     marker.scale.z = 0.25;
     marker.header.frame_id = "/map";
-    marker.id = location_map_.size();
+    marker.id = marker_id_++;
     marker.color.r = r;
     marker.color.g = g;
     marker.color.b = b;
@@ -378,9 +351,56 @@ void createMarkerWithLabel(std::string label, RobotPose& pose, double r, double 
     marker_txt.pose.position.z *= 1.5;
     array.markers.push_back(marker_txt);
 
-    ROS_DEBUG("Added marker for %s @ (%f,%f,%f)", label.c_str(),
+    ROS_INFO("Added marker for %s @ (%f,%f,%f)", label.c_str(),
              marker.pose.position.x, marker.pose.position.y, pose.phi);
 
+}
+
+
+
+bool storeLocation(std::string location_name)
+{
+    // Get position
+    tf::StampedTransform location;
+    try
+    {
+        listener_->lookupTransform("/map", "/amigo/base_link", ros::Time(0), location);
+    }
+    catch (tf::TransformException ex)
+    {
+        ROS_ERROR("No tranform /map - /amigo/base_link");
+        amigoSpeak("I cannot store this location: %s", ex.what());
+        return false;
+    }
+
+    // Store location
+    if (location_map_.find(location_name) != location_map_.end())
+    {
+        ROS_WARN("Overwriting location '%s'!", location_name.c_str());
+    }
+
+    // FOR TESTING
+    tf::Quaternion q = location.getRotation();
+    double angle = tf::getYaw(q);
+    ROS_INFO("Angle is %f", angle);
+
+    //RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), location.getRotation().getAngle());
+    RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), angle);
+    location_map_[location_name] = rp_loc;
+    ROS_INFO("Stored the location (%f,%f,%f) for %s", rp_loc.x, rp_loc.y, rp_loc.phi, location_name.c_str());
+
+    // Publish marker
+    visualization_msgs::MarkerArray marker_array;
+    createMarkerWithLabel(location_name, rp_loc, 1, 0, 1, marker_array);
+    location_marker_pub_.publish(marker_array);
+
+    // TESTING
+    ROS_INFO("Angle before is %f", location.getRotation().getAngle());
+    location.getOrigin().rotate(tf::Vector3(0, 0, 1), 1.57);
+    ROS_INFO("Angle after is %f", location.getRotation().getAngle());
+
+
+    return true;
 }
 
 
@@ -437,7 +457,7 @@ bool updateLocation(std::string location_name, std::string side)
         new_location.x = loc_map.pose.position.x;
         new_location.y = loc_map.pose.position.y;
         tf::Quaternion q(loc_map.pose.orientation.x, loc_map.pose.orientation.y, loc_map.pose.orientation.z, loc_map.pose.orientation.w);
-        new_location.phi = q.getAngle();
+        new_location.phi = tf::getYaw(loc_map.pose.orientation);
         ROS_INFO("Added a 1 [m] offset for location %s", location_name.c_str());
     }
 
@@ -629,14 +649,10 @@ void speechCallbackGuideShort(std_msgs::String res)
             if (current_loc_name_ != "ordering location")
             {
                 // Update location
-                ROS_INFO("Updating location using side...");
                 updateLocation(current_loc_name_, current_side_);
                 ROS_INFO("Compensated position '%s' using side '%s'!", current_loc_name_.c_str(), current_side_.c_str());
 
                 // Continue following
-                setRGBLights("blue");
-                ros::Duration(0.5).sleep();
-                setRGBLights("yellow");
                 follower_->reset();
                 setRGBLights("green");
                 updateSpeechState(speech_state::DRIVE);
@@ -1370,6 +1386,8 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
                         // Grab object succeeded!
                         ROS_INFO("Picked up %s with %s arm (location is %s)", object.c_str(), preferred_arm.c_str(), location_name.c_str());
                         preferred_arm = "left";
+
+                        // @todo: reset spindle
                     }
                     else ROS_WARN("Could not grab object %s", object.c_str());
                     ++n_picked_up;
