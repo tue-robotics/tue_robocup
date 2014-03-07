@@ -2,64 +2,75 @@
 
 amigo1:
 
-    astart
-
-amigo1:
-
     amiddle-restaurant
 
-Then, start the challenge:
+Then, test the speech and start the challenge:
 
 amigo3:
-    roslaunch challenge_restaurant start.launch
 
-INSTRUCTIONS:
-- Make sure the operator is standing in front of the robot. After saying 'Can you please show me the locations', AMIGO starts following
-- If you want the robot to stop, say: 'Amigo stop', confirm and answer with 'This location is called <some name>', AMIGO confirms and continues following
-- If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
+    Alsamixer settings:
+        * Mic Boost -> 22
+        * Capture -> 44
+        * Digital -> 29
+        * Mic on mute!!! (Should be muted already)
+        
+    amigo-console  
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+   		* lights should become green -> say 'continue'
+   		* if response is 'true', amigo heard you and lights become blue
+        * if this does not work, manually start: roslaunch tue_pocketsphinx start.launch on amigo2!!
+
+    say test  
+    	* to test speaker is working) 
+
+    rosrun challenge_restaurant restaurant_2014
+
+GUIDING PHASE:
+- The guide should stand in front of the robot, then the robot starts following. If the robot turns pink, he lost the guide, stand in front of the robot.
+- You must learn three delivery locations, a food shelf and a drink shelf. 
+- Say 'one right' if the first delivery location is on AMIGO's right. Or for example food front (front means location 0.5 m in front of AMIGO) if the food shelf is in front of AMIGO. If you only give a location name AMIGO assumes that he should remember the left side.
+- AMIGO asks for confirmation (yes/no). If you instead say continue, AMIGO will continue following without storing the location
+- When you are at the ordering location, say 'order' and confirm (no side needed)
+
+ORDERING
+- AMIGO first asks for a delivery location (one, two, three), answer and confirm
+- AMIGO then asks for an object. If two objects should go to this location, you can answer with both objects
+- Repeat until three orders are specified
+
+DELIVERY
+- Now AMIGO will deliver the objects
+- After delivering all objects AMIGO returns to the ordering location
+
+==== SPEECH OVERVIEW ====
+
+Locations:
+- food (=food shelf)
+- drink (=drink shelf)
+- one (= delivery location one)
+- two (=delivery location two)
+- three (= delivery location three)
+
+Confirmation:
+- yes
+- no
+- continue (=I didn't mean to stop you, continue following me)
+
+Side:
+- left (default)
+- right
+- front (0.5 m in front of the current position)
+
+== ORDER ==
+
+Objects AMIGO knows and is able to recognize:
+- frutas
+- ice tea
+- coke
+- remia
+- peanutbutter
+- fanta
 
 
-
-With GMAPPING:
-
-amigo1:
-
-    amiddle-restaurant
-    
-amigo3:
-    rosrun challenge_restaurant restaurant_gmap
-    
-INSTRUCTIONS:
-
-GUIDING:
-- Make sure the operator is standing in front of the robot. After saying 'Can you please show me the locations', AMIGO starts following
-- If you want the robot to stop, say: 'Amigo stop', confirm and answer yes if the location is a shelf or no if the location is a delivery location
-- AMIGO asks if you want to learn more locations. If you answer with no, AMIGO expects you to bring him to the ordering location
-
-ORDERS (three times):
-- AMIGO firsts asks for an object class (drink or bathroomstuff), then for an instance from the class (coke, icetea, sif, ...) and then for a delivery location (1, 2 or 3)
-- After taking orders, AMIGO will go look for objects
-
-LOST:
-- If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
-
-BECAUSE OF CONFIG ISSUE:
-RUN FROM AMIGO-CONSOLE:
-amigo.perception.load_template_matching_config("rwc2013_drinks_food")
-
-#############################################################################
-Separately testing the grabmachine:
-
-Startup fast simulator
-Middleware
-rviz-amigo
-amigo-console
-
-rosrun challenge_cleanup testenv_rwc2013.py
-
-amigo.perception.toggle_recognition(objects=True)
-
-rosservice call 
 
 
 
