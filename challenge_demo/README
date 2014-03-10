@@ -6,10 +6,6 @@ amigo1:
 
 amigo3:
 
-    roslaunch run_speech_files speech_magdeburg2013.launch
-
-amigo3:
-
     roslaunch maluuba_ros start.launch (Get this by running: 'rosmake tue-rosdep; trunk; tue-rosdep install .')
 
 amigo3:

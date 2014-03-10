@@ -6,11 +6,6 @@ amigo1:
     amiddle
     
 amigo3:
-
-    (For speech to text)
-    roslaunch amigo_launch_files speech_recognition.launch
-
-amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
     alsamixer
         Mic Boost -> 22
