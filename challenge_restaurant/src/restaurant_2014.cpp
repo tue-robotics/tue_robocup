@@ -1051,15 +1051,15 @@ bool resetSpindlePosition()
     ROS_INFO("Reset spindle position!");
     robot_skill_server::ExecuteGoal goal;
     std::stringstream cmd;
-    cmd << "move_spindle(spindle_pos='" << std_spindle_pos << "')";
+    cmd << "move_spindle(" << std_spindle_pos << ")";
     goal.command = cmd.str();
 
     // Send goal
     ac_skill_server_->sendGoal(goal);
-    ac_skill_server_->waitForResult(ros::Duration(3.0));
+    ac_skill_server_->waitForResult(ros::Duration(4.0));
     if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
-        ROS_WARN("Could not spindle position %f within 3 [s]", std_spindle_pos);
+        ROS_WARN("Could not spindle position %f within 4 [s]", std_spindle_pos);
         return false;
     }
 
@@ -1357,6 +1357,7 @@ bool handOverObject(std::string side)
     std::stringstream cmd;
     cmd << "hand_over_to_human(side='" << side << "')";
     goal.command = cmd.str();
+    ROS_INFO("Send command %s", goal.command.c_str());
 
     // Send goal
     ac_skill_server_->sendGoal(goal);
@@ -1531,9 +1532,6 @@ int main(int argc, char **argv) {
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
     setRGBLights("blue");
 
-    //! Reset spindle
-    resetSpindlePosition();
-
     //! Transforms
     listener_ = new tf::TransformListener();
 
@@ -1556,6 +1554,9 @@ int main(int argc, char **argv) {
     ac_skill_server_ = new actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>("/amigo/execute_command", true);
     ac_skill_server_->waitForServer();
     ROS_INFO("Connected!");
+
+    //! Reset spindle
+    resetSpindlePosition();
 
     //! Head ref action client
     ROS_INFO("Connecting to head ref action server...");
