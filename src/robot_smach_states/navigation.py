@@ -719,16 +719,17 @@ class Determine_goal(smach.State):
         # merge the poses with their queried info
         possible_locations_with_info = [{'x':xyphi[0], 'y':xyphi[1], 'phi':xyphi[2], 'info':point_info} for xyphi, point_info in zip(self.possible_locations, query_result_tuples)]
         
-        # filter out unfeasible poses
-        if self.robot.base.use_2d:
-            possible_locations_with_info = [d for d in possible_locations_with_info if d['info'].cost < 253]
-        else:
-            possible_locations_with_info = [d for d in possible_locations_with_info if d['info'].cost < 1]
+        ## do not use this --> if a possible goal is inside an obstacle it might still be desirable to approach it as close as possible!
+        # # filter out unfeasible poses
+        # if self.robot.base.use_2d:
+        #     possible_locations_with_info = [d for d in possible_locations_with_info if d['info'].cost < 253]
+        # else:
+        #     possible_locations_with_info = [d for d in possible_locations_with_info if d['info'].cost < 1]
 
-        # if no feasible poses are left, abort immediately
-        if not possible_locations_with_info:
-            self.possible_locations_initialized = False
-            return 'aborted'
+        # # if no feasible poses are left, abort immediately
+        # if not possible_locations_with_info:
+        #     self.possible_locations_initialized = False
+        #     return 'aborted'
 
         # get the normalized cost factor   
         max_cost = max([d['info'].cost for d in possible_locations_with_info])
