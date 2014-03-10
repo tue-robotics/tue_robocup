@@ -4,21 +4,26 @@ import rospy
 
 import smach
 
+from navigation_interface.NavigationInterface import NavigationInterface
+
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
+ni = NavigationInterface()
+
 class FollowPerson(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["Success"])
+        smach.State.__init__(self, outcomes=["succes"])
         self.robot = robot
 
     def execute(self, userdata=None):
-        return True
+        
+        return "succes"
 
 class OpenChallenge2014(smach.StateMachine):
 
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['We did it :)'])
+        smach.StateMachine.__init__(self, outcomes=['Succes'])
 
         with self:
 

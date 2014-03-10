@@ -10,6 +10,7 @@
   <url>http://ros.org/wiki/challenge_open_2014</url>
   <depend package="amigo_skill_server"/>
   <depend package="nav_msgs"/>
+  <depend package="navigation_interface"/>
 
 </package>
 
