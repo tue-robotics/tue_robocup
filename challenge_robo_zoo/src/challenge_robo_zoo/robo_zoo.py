@@ -71,7 +71,8 @@ class RoboZoo(smach.StateMachine):
                                     Compound("goal", Compound("serve", "Drink")),
                                     Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                     Compound( "property_expected", "ObjectID", "position", 
-                                        Compound("in_front_of", "amigo")))
+                                        Compound("in_front_of", "amigo")),
+				    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         
         query_ordering_table =  Compound("point_of_interest", "ordering_table", Compound("point_3d", "X", "Y", "Z"))
         
