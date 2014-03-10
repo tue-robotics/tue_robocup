@@ -1,0 +1,21 @@
+<package>
+  <description brief="challenge_demo_2014">
+
+     challenge_demo_2014
+
+  </description>
+  <author>Ramon Wijnands</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_demo_2014</url>
+  <depend package="rospy"/>
+  <depend package="robot_skills"/>
+  <depend package="robot_smach_states"/>
+  <depend package="psi"/>
+  <depend package="tf"/>
+  <depend package="geometry_msgs"/>
+  <depend package="speech_interpreter"/>
+
+</package>
+
+
