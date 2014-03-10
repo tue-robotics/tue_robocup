@@ -1043,9 +1043,32 @@ void amigoRotateForce()
 }
 
 
+bool resetSpindlePosition()
+{
+    double std_spindle_pos = 0.35;
+
+    // Determine goal pose
+    ROS_INFO("Reset spindle position!");
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "move_spindle(spindle_pos='" << std_spindle_pos << "')";
+    goal.command = cmd.str();
+
+    // Send goal
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(3.0));
+    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Could not spindle position %f within 3 [s]", std_spindle_pos);
+        return false;
+    }
+
+    return true;
+}
 
 
-bool moveBase(double x, double y, double theta)
+
+bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
 {
     double t_start_move = ros::Time::now().toSec();
 
@@ -1053,7 +1076,7 @@ bool moveBase(double x, double y, double theta)
     ROS_INFO("Received a move base goal: (%f,%f,%f)", x, y, theta);
     robot_skill_server::ExecuteGoal goal;
     std::stringstream cmd;
-    cmd << "base.move(x=" << x << ",y=" << y << ", phi=" << theta << ")";
+    cmd << "base.move(x=" << x << ",y=" << y << ", phi=" << theta << ", goal_area_radius=" << goal_radius << ")";
     goal.command = cmd.str();
 
     // Send goal
@@ -1164,10 +1187,12 @@ bool grabObject(std::string id, std::string side)
         ROS_WARN("Could not grab object within 120 [s]");
         ac_skill_server_->cancelAllGoals();
         moveSingleArm("drive", side);
+        resetSpindlePosition();
 
         return false;
     }
 
+    resetSpindlePosition();
     return true;
 
 }
@@ -1323,6 +1348,31 @@ void restartSpeechIfNeeded()
 
 
 
+bool handOverObject(std::string side)
+{
+
+    // Determine goal pose
+    ROS_INFO("Hand over object with the %s arm", side.c_str());
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "hand_over_to_human(side='" << side << "')";
+    goal.command = cmd.str();
+
+    // Send goal
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(30.0));
+    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Could not reach hand over position for the %s arm within 30 [s]", side.c_str());
+        return false;
+    }
+
+    return true;
+
+}
+
+
+
 void printOrderMap()
 {
     ROS_INFO("Order map:");
@@ -1402,25 +1452,22 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
         std::map<std::string, std::pair<std::string, RobotPose> >::iterator it_del = obj_id_arm_loc_map.begin();
         for (; it_del != obj_id_arm_loc_map.end(); ++it_del)
         {
-            // Get delivery location
+            // Move to the delivery location
+            double delivery_loc_tolerance = 0.25;
             RobotPose loc = it_del->second.second;
-            if (moveBase(loc.x, loc.y, loc.phi))
+            if (moveBase(loc.x, loc.y, loc.phi, delivery_loc_tolerance))
             {
-                std::stringstream txt;
-                txt << "Please take your order from my " << it_del->second.first << " gripper";
-                amigoSpeak(txt.str());
+                amigoSpeak("Here is your order", false);
             }
             else
             {
                 ROS_WARN("Cannot reach the delivery location!");
-                std::stringstream txt;
-                txt << "Can you take your order from my " << it_del->second.first << " gripper";
-                amigoSpeak(txt.str());
+                amigoSpeak("I cannot reach the location, can you get your order?");
             }
 
-            // @todo: open gripper
-            ros::Duration(2.0).sleep();
+            handOverObject(it_del->second.first);
             moveSingleArm("drive", it_del->second.first);
+            resetSpindlePosition();
 
             delivered = true;
         }
@@ -1453,6 +1500,7 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
 
 
 
+
 bool deliveredAllOrders()
 {
     if (order_map_.empty())
@@ -1482,6 +1530,9 @@ int main(int argc, char **argv) {
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
     setRGBLights("blue");
+
+    //! Reset spindle
+    resetSpindlePosition();
 
     //! Transforms
     listener_ = new tf::TransformListener();
@@ -1681,6 +1732,7 @@ int main(int argc, char **argv) {
         } // Visited both the food and the drink shelf
 
         // Move back to the ordering location
+        double del_order_loc_tolerance = 0.5;
         std::string order_loc = "ordering location";
         if (location_map_.find(order_loc) == location_map_.end())
         {
@@ -1688,7 +1740,7 @@ int main(int argc, char **argv) {
         }
         else
         {
-            if (!moveBase(location_map_[order_loc].x, location_map_[order_loc].y, location_map_[order_loc].phi))
+            if (!moveBase(location_map_[order_loc].x, location_map_[order_loc].y, location_map_[order_loc].phi, del_order_loc_tolerance))
             {
                 ROS_WARN("Robot cannot reach the %s", order_loc.c_str());
             }
