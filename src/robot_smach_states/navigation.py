@@ -867,8 +867,8 @@ class Execute_path(smach.State):
                 self.previous_poses_to_goal = 0
                 return 'waiting'
 
-            # Significant re-plan (20 pct longer)
-            if (float(self.robot.base.poses_to_goal) > (float(self.previous_poses_to_goal) * 1.2) and self.previous_poses_to_goal != 0):
+            # Significant re-plan (30 pct longer)
+            if (float(self.robot.base.poses_to_goal) > (float(self.previous_poses_to_goal) * 1.3) and self.previous_poses_to_goal != 0):
                 #self.robot.speech.speak("Lets take a different path", block=False)
                 rospy.loginfo("Lets take a different path")
             self.previous_poses_to_goal = self.robot.base.poses_to_goal
