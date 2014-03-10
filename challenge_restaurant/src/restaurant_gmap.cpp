@@ -14,7 +14,7 @@
 #include "amigo_actions/AmigoGripperCommandAction.h"
 
 // Messages
-#include "amigo_msgs/arm_joints.h"
+//#include "amigo_msgs/arm_joints.h"
 #include "amigo_msgs/RGBLightCommand.h"
 #include <std_msgs/String.h>
 #include <std_msgs/Float64.h>
