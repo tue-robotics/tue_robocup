@@ -62,6 +62,8 @@
   <depend package="pein_wire_interface"/>
   <depend package="pein_color_matcher"/>
   <depend package="pein_pcl_matcher"/>
+  <depend package="pein_odufinder"/>
+  <depend package="depth_map_to_point_cloud"/>
 
   <!-- for speech recognition -->
   <depend package="create_speech_files"/>
