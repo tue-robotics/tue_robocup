@@ -41,7 +41,6 @@
   <depend package="tue_move_base"/>
   <depend package="tue_move_base_msgs"/>
   <depend package="tue_costmap_msgs"/>
-  <depend package="amigo_inverse_reachability"/>
 
   <depend package="amigo_velocity_kinematics"/>
   
