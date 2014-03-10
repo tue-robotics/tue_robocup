@@ -1,0 +1,17 @@
+challenge_robo_zoo
+
+Responsible: Loy
+amigo1$ amiddle
+amigo1$ rosrun challenge_robo_zoo robo_zoo.py
+
+Amigo is a bartender. He wants to get as many tokens as possible and thus he hands out drinks.
+There are 4 main positions: 
+ - storage table, where he gets new, full drinks.
+ - These are brought to the ordering table, where people can get their drinks
+ - pickup table, where people dump their empty cans
+ - trashbin, where amigo dumps the cans picked up at the pickup table
+
+The locations must be defined in tue_knowledge/prolog/locations.pl
+
+DEPENDENCIES:
+There are no special dependencies, only middleware
