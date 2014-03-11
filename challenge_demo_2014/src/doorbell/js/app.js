@@ -15,10 +15,11 @@ $( document ).ready(function() {
         trigger.publish(triggerMessage);
     }
 
-    $('#doorbell').click(function(e) {
-        e.preventDefault();
-
-        sendTrigger('doorbell');
+    $('#allow-access').click(function(e) {
+        sendTrigger('allow-access');
+    });
+    $('#deny-access').click(function(e) {
+        sendTrigger('deny-access');
     });
 
     var MjpegViewer = new MJPEGCANVAS.Viewer({
