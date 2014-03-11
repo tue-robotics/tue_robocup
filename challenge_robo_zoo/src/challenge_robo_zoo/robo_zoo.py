@@ -107,13 +107,18 @@ class RoboZoo(smach.StateMachine):
                                     states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink),
                                     transitions={   'looking'           :'LOOK_FOR_DRINK',
                                                     'object_found'      :'GRAB_DRINK',
-                                                    'no_object_found'   :'GOTO_STORAGE', #TODO: Not the best option maybe
+                                                    'no_object_found'   :'HELP_WITH_GETTING_DRINK', #TODO: Not the best option maybe
                                                     'abort'             :'Aborted'})
+
+            smach.StateMachine.add( "HELP_WITH_GETTING_DRINK",
+                                    states.Human_handover(robot.leftArm, robot),
+                                     transitions={  'succeeded'        :'GOTO_ORDERING',
+                                                    'failed'            :'GOTO_ORDERING' }) #We're lost if even this fails
 
             smach.StateMachine.add( "GRAB_DRINK",
                                     states.GrabMachine("left", robot, query_ordered_drink),
                                     transitions={   'succeeded'         :'GOTO_ORDERING',
-                                                    'failed'            :'LOOK_FOR_DRINK' }) #TODO: Or ask for help
+                                                    'failed'            :'HELP_WITH_GETTING_DRINK' })
 
             smach.StateMachine.add( "GOTO_ORDERING",
                                     states.NavigateGeneric(robot, lookat_query=query_ordering_table),
@@ -125,8 +130,13 @@ class RoboZoo(smach.StateMachine):
             smach.StateMachine.add( "PLACE_ORDER",
                                     states.PlaceObject("left", robot, placement_query=query_ordering_table),
                                     transitions={   "succeeded"         :"GOTO_PICKUP",
-                                                    "failed"            :"PLACE_ORDER",     #TODO: Ask for help
-                                                    "target_lost"       :"PLACE_ORDER"})    #TODO: Ask for help
+                                                    "failed"            :"HELP_WITH_PLACING_DRINK", 
+                                                    "target_lost"       :"HELP_WITH_PLACING_DRINK"})
+
+            smach.StateMachine.add( "HELP_WITH_PLACING_DRINK",
+                                    states.HandoverToHuman(robot.leftArm, robot),
+                                     transitions={  'succeeded'        :'GOTO_PICKUP',
+                                                    'failed'           :'GOTO_PICKUP' }) #We're lost if even this fails
 
             smach.StateMachine.add( "GOTO_PICKUP",
                                     states.NavigateGeneric(robot, lookat_query=query_pickup_table),
@@ -145,7 +155,12 @@ class RoboZoo(smach.StateMachine):
             smach.StateMachine.add( "GRAB_EMPTY_CAN",
                                     states.GrabMachine("left", robot, query_any_can),
                                     transitions={   'succeeded'         :'GOTO_TRASHBIN',
-                                                    'failed'            :'SET_CURRENT_DRINK' }) #TODO: or ask for help
+                                                    'failed'            :'HELP_WITH_GETTING_EMPTY_CAN' })
+
+            smach.StateMachine.add( "HELP_WITH_GETTING_EMPTY_CAN",
+                                    states.Human_handover(robot.leftArm, robot),
+                                     transitions={  'succeeded'        :'GOTO_TRASHBIN',
+                                                    'failed'           :'GOTO_TRASHBIN' }) #We're lost if even this fails
 
             smach.StateMachine.add( "GOTO_TRASHBIN",
                                     states.NavigateGeneric(robot, lookat_query=query_trashbin),
@@ -156,9 +171,14 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add("DROPOFF_EMPTY_CAN",
                                     states.DropObject("left", robot, query_trashbin),
-                                    transitions={   'succeeded'         :'SET_CURRENT_DRINK',
-                                                    'failed'            :'SET_CURRENT_DRINK',
-                                                    'target_lost'       :'SET_CURRENT_DRINK'})
+                                    transitions={   'succeeded'         :'HELP_WITH_DUMPING_CAN',
+                                                    'failed'            :'HELP_WITH_DUMPING_CAN',
+                                                    'target_lost'       :'HELP_WITH_DUMPING_CAN'})
+            
+            smach.StateMachine.add( "HELP_WITH_DUMPING_CAN",
+                                    states.HandoverToHuman(robot.leftArm, robot),
+                                     transitions={  'succeeded'        :'SET_CURRENT_DRINK',
+                                                    'failed'           :'SET_CURRENT_DRINK' }) #We're lost if even this fails
 
 
     def init_knowledge(self):
