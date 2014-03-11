@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     rospy.sleep(2) # wait for tf cache to be filled
     
-    nav_state_end_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(-0.5, -11, 1.57), look_at_path_distance=2.7)
+    nav_state_end_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(0, 0.25, 0), look_at_path_distance=2.4)
     nav_state_end_corridor.execute()
     
     #nav_state_door = navigation.NavigateGeneric(robot, goal_pose_2d=(1, 0, 0), look_at_path_distance=2.7)
@@ -26,5 +26,5 @@ if __name__ == "__main__":
     #nav_state_bedroom = navigation.NavigateGeneric(robot, goal_pose_2d=(7, -6.5, 1.57), look_at_path_distance=2.7)
     #nav_state_bedroom.execute() 
         
-    nav_state_begin_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(-0.5, 2.5, 1.57), look_at_path_distance=2.7)
+    nav_state_begin_corridor = navigation.NavigateGeneric(robot, goal_pose_2d=(4.0, 0, 1.57), look_at_path_distance=2.4)
     nav_state_begin_corridor.execute()

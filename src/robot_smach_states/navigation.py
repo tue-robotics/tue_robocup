@@ -619,7 +619,7 @@ class Determine_goal(smach.State):
             self.possible_locations = []
 
             if self.goal_pose_2d:
-                rospy.logwarn("Goalpose2d")
+                rospy.logwarn("Determine_goal: goal_pose_2d")
                 x, y, phi = self.goal_pose_2d
                 self.possible_locations += [(x, y, phi)]
 
@@ -634,7 +634,7 @@ class Determine_goal(smach.State):
                     self.possible_locations += [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
 
             if self.goal_query:
-                rospy.logwarn("Goalquery")
+                rospy.logwarn("Determine_goal: goal_query")
                 # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
                 # is a mapping of variable to a constant, like a string or number
                 answers = self.robot.reasoner.query(self.goal_query)
@@ -650,7 +650,7 @@ class Determine_goal(smach.State):
 
             if self.lookat_query:
                 try:
-                    rospy.logwarn("lookat_query")
+                    rospy.logwarn("Determine_goal: lookat_query")
                     lookat_answers = self.robot.reasoner.query(self.lookat_query)
                     basepos = self.robot.base.location.pose.position
                     basepos = (basepos.x, basepos.y, basepos.z)
@@ -676,7 +676,7 @@ class Determine_goal(smach.State):
                     return "failed"
 
             if self.lookat_point_3d:
-                rospy.logwarn("Lookat_point_3d")
+                rospy.logwarn("Determine_goal: lookat_point_3d")
                 
                 x,y,z = self.lookat_point_3d
 
@@ -774,7 +774,7 @@ class Determine_goal(smach.State):
         return 'succeeded'
 
 class Get_plan(smach.State):
-    def __init__(self, robot, goal_area_radius=0.1):
+    def __init__(self, robot, goal_area_radius=0.15):
         smach.State.__init__(self,outcomes=['succeeded','unreachable'],
                             input_keys=['goal'])
 
@@ -813,7 +813,6 @@ class Get_plan(smach.State):
             self.robot.base.reset_costmap()
 
         if not self.robot.base.path:
-            rospy.loginfo("Could not find a path to goal")
             # ToDo: get next pose
             # ToDo: clear with bigger window? reset map?
             #self.robot.speech.speak("I could not find a path to the goal")
@@ -828,19 +827,39 @@ class Get_plan(smach.State):
         return 'succeeded'
 
 class Execute_path(smach.State):
-    def __init__(self, robot, look_at_path_distance=2.7, refresh_freq=0):
+    def __init__(self, robot, goal_area_radius=0.15, look_at_path_distance=2.4, refresh_freq=0):
         smach.State.__init__(self,outcomes=['arrived','aborted','waiting','refresh', 'preempted'])
 
         self.robot = robot
+        self.goal_area_radius = goal_area_radius
         self.look_at_path_distance = look_at_path_distance
         self.previous_poses_to_goal = 0
         self.refresh_freq = refresh_freq
+        self.timeout = 10
+        self.previous_base_position_x = 0
+        self.previous_base_position_y = 0
 
     def execute(self, userdate):
 
         print "Executing!"
 
+        not_moving_flag = rospy.Time.now() 
+
         while not rospy.is_shutdown():
+
+            rospy.logdebug("time before flag is {0} seconds".format(rospy.Duration(self.timeout) - (rospy.Time.now() - not_moving_flag)))
+            if (rospy.Time.now() - not_moving_flag) > rospy.Duration(self.timeout):
+                rospy.logwarn("Executing of path timed out: the robot did not move for {0} seconds".format(self.timeout))
+                if  self.robot.base.poses_to_goal < 2:
+                    rospy.loginfo("The robot is only 1 pose away from the goal, so the execution is succeeded")
+                    return 'arrived'
+                else:
+                    rospy.loginfo("The is more than 1 pose away from the goal, so the execution is aborted")
+                    return 'aborted'
+
+            if  self.previous_poses_to_goal != self.robot.base.poses_to_goal:
+                not_moving_flag = rospy.Time.now() 
+
             if self.preempt_requested():
                 self.robot.base.cancel_goal()
                 return 'preempted'
@@ -871,6 +890,7 @@ class Execute_path(smach.State):
             if (float(self.robot.base.poses_to_goal) > (float(self.previous_poses_to_goal) * 1.3) and self.previous_poses_to_goal != 0):
                 #self.robot.speech.speak("Lets take a different path", block=False)
                 rospy.loginfo("Lets take a different path")
+                
             self.previous_poses_to_goal = self.robot.base.poses_to_goal
 
             if self.look_at_path_distance > 0:
@@ -897,6 +917,7 @@ class Execute_path(smach.State):
 
             # Wait 0.5 seconds to avoid looping too fast
 
+            # renew goal position
             if self.refresh_freq > 0:
                 rospy.sleep(1 / float(self.refresh_freq))
                 return 'refresh'
@@ -913,7 +934,7 @@ class Waiting_to_execute(smach.State):
         self.previous_replan_timeout = 0
         self.z_offset_direction = -1
         self.z_offset_timer = 0
-        self.timeout = 20
+        self.timeout = 10
         self.look_at_path_distance = look_at_path_distance
 
     def execute(self, userdata):
@@ -990,7 +1011,7 @@ class Recover(smach.State):
 
 # refresh_freq      Frequency of re-check of determine_goal (0 means only check at beginning)
 class NavigateGeneric(smach.StateMachine):
-    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.1, refresh_freq=0, move_torso=True,
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.15, refresh_freq=0, move_torso=True,
         xy_dist_to_goal_tuple=(0.8, 0.0)):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
@@ -1052,7 +1073,7 @@ class NavigateGeneric(smach.StateMachine):
                 transitions={'unreachable'      : 'DETERMINE_GOAL',
                              'succeeded'        : 'EXECUTE'})
 
-            smach.StateMachine.add('EXECUTE', Execute_path(self.robot, self.look_at_path_distance, self.refresh_freq),
+            smach.StateMachine.add('EXECUTE', Execute_path(self.robot,  self.goal_area_radius, self.look_at_path_distance, self.refresh_freq),
                 transitions={'arrived'          : 'arrived',
                              'preempted'        : 'preempted',
                              'waiting'          : 'WAITING',
