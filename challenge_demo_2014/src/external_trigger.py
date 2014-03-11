@@ -14,8 +14,6 @@ import std_msgs.msg
 
 class WaitForTrigger(smach.State):
 
-    trigger_received = False
-
     def __init__(self, robot, triggers):
         smach.State.__init__(self, 
                              outcomes=triggers+['preempted'])
@@ -32,6 +30,8 @@ class WaitForTrigger(smach.State):
         rospy.loginfo('rate:  %d Hz', self.rate)
 
     def execute(self, userdata):
+        self.trigger_received = False
+
         while not rospy.is_shutdown() and not self.trigger_received:
             rospy.sleep(1/self.rate)
 
@@ -51,14 +51,24 @@ class ChallengeDemo2014(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
-        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+        #retract old facts
+        #TODO: maybe retract more facts like other challenges?
+        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
 
-        robot.reasoner.assertz(Compound("challenge", "challenge_demo_2014"))
+        #Load database
+        robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
+
+        #Assert the current challenge.
+        robot.reasoner.query(Compound("assertz",Compound("challenge", "challenge_demo_2014")))
 
         query_start = Compound("waypoint", "start",         Compound("pose_2d", "X", "Y", "Phi"))
-        query_door  = Compound("waypoint", "front_of_door", Compound("pose_2d", "X", "Y", "Phi"))
+        query_door  = Compound("waypoint", "behind_door",   Compound("pose_2d", "X", "Y", "Phi"))
         
         with self:
+            smach.StateMachine.add('INITIALIZE_FIRST',
+                                    states.Initialize(robot),
+                                    transitions={   'initialized':'NAVIGATE_TO_START',
+                                                    'abort':'Aborted'})
 
             smach.StateMachine.add('NAVIGATE_TO_START',
                                     states.NavigateGeneric(robot, goal_query=query_start),
@@ -68,7 +78,7 @@ class ChallengeDemo2014(smach.StateMachine):
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
             
             smach.StateMachine.add("SAY_START_REACHED", 
-                                    states.Say(robot, [ "I'm going to wait for further instructions"]),
+                                    states.Say(robot,"I'm going to wait for further instructions"),
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
@@ -77,16 +87,26 @@ class ChallengeDemo2014(smach.StateMachine):
                                                     'preempted': 'Aborted'})
             
             smach.StateMachine.add("SAY_TRIGGER_RECEIVED", 
-                                    states.Say(robot, [ "I received a signal, I'm going to the door."]),
+                                    states.Say(robot,"That was the doorbell, I must hurry", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TO_DOOR'})
+
+            smach.StateMachine.add('NAVIGATE_TO_DOOR',
+                                    states.NavigateGeneric(robot, goal_query=query_door),
+                                    transitions={   "arrived":"SAY_DOOR_REACHED",
+                                                    "unreachable":'SAY_GOAL_UNREACHABLE',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
+            smach.StateMachine.add("SAY_DOOR_REACHED", 
+                                    states.Say(robot,"Can I receive your package?"),
                                     transitions={   'spoken':'Aborted'})
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
-                                    states.Say(robot, [ "Sorry, the goal is unreachable. Aborting now."]),
+                                    states.Say(robot,"Sorry, the goal is unreachable. Aborting now."),
                                     transitions={   'spoken':'Aborted'})
 
             smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
-                                    states.Say(robot, [ "Sorry, I don't know where to go. Please specify my waypoint. Aborting now."]),
+                                    states.Say(robot,"Sorry, I don't know where to go. Please specify my waypoint. Aborting now."),
                                     transitions={   'spoken':'Aborted'})
 
 def WaitForTriggerTester():
