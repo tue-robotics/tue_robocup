@@ -532,6 +532,12 @@ def welcome_maxima3(robot):
 def grab_demo(robot):
     import smach
     import robot_smach_states as states
+    
+    robot.leftArm.reset_arm()
+    robot.rightArm.reset_arm()
+    robot.reasoner.reset()
+    robot.reasoner.detach_all_from_gripper("/amigo/grippoint_left")
+    robot.reasoner.detach_all_from_gripper("/amigo/grippoint_right")
 
     r = robot.reasoner
     r.query(r.load_database("tue_knowledge", 'prolog/locations.pl'))
@@ -540,7 +546,7 @@ def grab_demo(robot):
     rospy.loginfo("Setting up state machine")
     sm = smach.StateMachine(outcomes=['Done', "Failed", "Aborted"])
 
-    search_query = Compound("point_of_interest", "Object", Compound("point_3d", "X", "Y", "Z"))
+    search_query = Compound("point_of_interest", "Poi", Compound("point_3d", "X", "Y", "Z"))
     object_query = Compound("position", Compound("point_3d", "X", "Y", "Z")) #I don't care a bout the type for now.
 
     with sm:
