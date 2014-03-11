@@ -871,7 +871,7 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
             }
             else
             {
-                say("Let's go", false);
+                say("Let's go", true);
             }
 
             //! Reset
