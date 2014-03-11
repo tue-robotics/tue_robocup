@@ -277,14 +277,16 @@ class VisitQueryPoi(smach.StateMachine):
             smach.StateMachine.add( 'ASSERT_VISITED',
                                     reasoning.Select_object(robot, current_goal_query,  #Find the object we just went to
                                                             "visited",                  #And set it as being visited
-                                                            retract_previous=False),    #And keep them visited, don't try to go there again
+                                                            retract_previous=False,     #And keep them visited, don't try to go there again
+					                    object_variable=self.identifier),
                                     transitions={'selected':'arrived',
                                                  'no_answers':'goal_not_defined'})      #This should never occur
 
             smach.StateMachine.add( 'ASSERT_UNREACHABLE',
                                     reasoning.Select_object(robot, current_goal_query,  #Find the object we just tried to go to
                                                             "unreachable",              #And set it as being unreachable
-                                                            retract_previous=False),    #And keep them unreachable, don't try to go there again
+                                                            retract_previous=False,     #And keep them unreachable, don't try to go there again
+					                    object_variable=self.identifier),
                                     transitions={'selected':'unreachable',
                                                  'no_answers':'goal_not_defined'})      #This should never occur
 
