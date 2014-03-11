@@ -355,8 +355,7 @@ class LookForDrink(smach.State):
         self.robot.speech.speak("Let's see what I can find here")
 
         # start template matching
-
-        self.response_start = self.robot.perception.toggle(["object_recognition"])
+        self.response_start = self.robot.perception.toggle(["object_segmentation"])
  
         if self.response_start.error_code == 0:
             rospy.loginfo("Template matching has started correctly")
@@ -654,6 +653,10 @@ class Navigate_to_queryoutcome_point_cocktail(Navigate_abstract):
 
             rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,z)))
 
+            look_pose = geometry_msgs.msg.PoseStamped()
+            look_pose.pose.position = self.robot.base.point(x,y)
+            look_pose.pose.orientation = msgs.Quaternion(z=1.0)
+
             look_point = geometry_msgs.msg.PointStamped()
             look_point.point = self.robot.base.point(x,y)
             pose = msgs.Quaternion(z=1.0)
@@ -663,14 +666,13 @@ class Navigate_to_queryoutcome_point_cocktail(Navigate_abstract):
                 base_pose_for_point = base_poses_for_point[0]
             else:
                 rospy.logerr("IK returned empty pose.")
-                return PoseStamped(pose=Pose(position=look_point.point, orientation=pose)) #look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return look_pose #look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
                 
             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
                 rospy.logerr("IK returned empty pose.")
-                return PoseStamped(pose=Pose(position=look_point.point, orientation=pose))#look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
+                return look_pose#look_point.point, pose  #outWhen the IK pose is empty, just try to drive to the point itself. Will likely also fail.
 
-            #TODO Teun: this should return a PoseStamped.
-            return PoseStamped(pose=Pose(position=base_pose_for_point.pose.position, orientation=base_pose_for_point.pose.orientation))
+            return base_pose_for_point
 
 class HandoverToKnownHuman(smach.StateMachine):
     def __init__(self, robot):
