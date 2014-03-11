@@ -23,7 +23,8 @@ class StandardPoses:
     POINT_AT_OBJECT_FORWARD = [-0.2 ,-0.250 , 0.40 , 1.25 , 0.000 ,0.500 , 0.000]
     HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
     SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
-    RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
+    #RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
+    RESET_POSE = [-0.3, -0.05, 0.2, 1.0, 0, 1.0, 0]
 
 class DetermineBaseGraspPose(smach.State):
     def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
@@ -387,21 +388,33 @@ class Grab(smach.State):
         ''' First check to see if visual servoing is possible '''
         self.robot.perception.toggle(['ar_pose'])
 
-        ''' Check if transform is available '''
-        target_position_delta = transformations.tf_transform(target_position, self.end_effector_frame_id, self.ar_frame_id, tf_listener=self.robot.tf_listener, timeout=1.0)
-        if target_position_delta == None:
-            ar_marker_available = False
-        else:
-            ar_marker_available = True
-        rospy.logwarn("ar_marker_available (1) = {0}".format(ar_marker_available))
+        ''' Transform point(0,0,0) in ar marker frame to grippoint frame '''
+        ar_point = msgs.PointStamped(0, 0, 0, frame_id = self.ar_frame_id, stamp = rospy.Time())
+
+        ''' Check several times if transform is available '''
+        cntr = 0
+        ar_marker_available = False
+        while (cntr < 5 and not ar_marker_available):
+            rospy.loginfo("Checking AR marker for the {0} time".format(cntr+1))
+            ar_point_grippoint = transformations.tf_transform(ar_point, self.ar_frame_id, self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
+            if not ar_point_grippoint == None:
+                ar_marker_available = True
+            else:
+                cntr += 1
+                rospy.sleep(0.2)
+        
+        #''' Check if transform is available '''
+        #if ar_point_grippoint == None:
+        #    ar_marker_available = False
+        #else:
+        #    ar_marker_available = True
+        #rospy.logwarn("ar_marker_available (1) = {0}".format(ar_marker_available))
             
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
             self.side.send_delta_goal(0.05,0.0,0.0,0.0,0.0,0.0, timeout=5.0, frame_id=self.end_effector_frame_id, pre_grasp = False)
             self.robot.speech.speak("Let me have a closer look", block=False)
-
-        ''' Transform point(0,0,0) in ar marker frame to grippoint frame '''
-        ar_point = msgs.PointStamped(0, 0, 0, frame_id = self.ar_frame_id, stamp = rospy.Time())
+        
         ar_point_grippoint = transformations.tf_transform(ar_point, self.ar_frame_id, self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
         rospy.loginfo("AR marker in end-effector frame = {0}".format(ar_point_grippoint))
 
