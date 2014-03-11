@@ -329,7 +329,7 @@ class Base(object):
     def clear_costmap(self, window_size=1.0):
         if self.use_2d:
             self.clear_service()
-            rospy.sleep(rospy.Duration(2.0))
+            rospy.sleep(rospy.Duration(1.0))
         else:
             if self.base_pose == None:
                 # If no path request has been given yet, self.base_pose equals None, but we might get the base pose from tf
@@ -349,7 +349,7 @@ class Base(object):
             bbx_request.max.z = 2
             self.clear_service(bbx_request)
             # Sleep for a while to ensure the map is cleared and obstacles are inserted again
-            rospy.sleep(rospy.Duration(2.0))
+            rospy.sleep(rospy.Duration(1.0))
     
     def free_unknown_space(self, window_size=0.2):
         if self.use_2d:
@@ -373,14 +373,14 @@ class Base(object):
             bbx_request.max.z = 2
             self.unknown_to_free_service(bbx_request)
             # Sleep for a while to ensure the map is cleared and obstacles are inserted again
-            rospy.sleep(rospy.Duration(2.0))
+            rospy.sleep(rospy.Duration(1.0))
 
     def reset_costmap(self):
         if self.use_2d:
             try:
                 self.clear_service()
                 # Sleep for a while to ensure the map is cleared and obstacles are inserted again
-                rospy.sleep(rospy.Duration(2.0))
+                rospy.sleep(rospy.Duration(1.0))
             except:
                 rospy.logerr("Clear costmap service does not return correctly")
             return True
@@ -388,7 +388,7 @@ class Base(object):
             try:
                 self.reset_costmap_service()
                 # Sleep for a while to ensure the map is cleared and obstacles are inserted again
-                rospy.sleep(rospy.Duration(2.0))
+                rospy.sleep(rospy.Duration(1.0))
             except:
                 rospy.logerr("Clear costmap service does not return correctly")
             return True
