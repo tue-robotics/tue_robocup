@@ -83,16 +83,13 @@ class AvoidThat(smach.StateMachine):
 def AvoidThatTester():
 
     sm = smach.StateMachine(outcomes=['Done'])
-    #sm.userdata.sm_counter = 0
 
-    # Open the container
     with sm:
         # Add states to the container
         smach.StateMachine.add('WAITFORTRIGGER', WaitForTrigger(), 
                                transitions={'trigger_received': 'Done',
                                             'Aborted':          'Done'})
 
-    # Execute SMACH plan
     sm.execute()
 
 
