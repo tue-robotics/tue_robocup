@@ -57,6 +57,35 @@ class Identify(smach.StateMachine):
                                     states.ToggleModules(robot, modules=[]),
                                     transitions={   "toggled":"name_not_found"})
 
+class GoToSideOfPerson(smach.StateMachine):
+    """Go to the side of a person where the person is pointing"""
+
+    def __init__(self, robot, desired_person=None):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Failed', 'Aborted'])
+
+        self.query_detect_person = Conjunction(  Compound("property_expected", "ObjectID", "class_label", "validated_person"),
+                                            Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                            Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        self.pointing_side_query = Conjunction(
+                                self.query_detect_person, 
+                                Compound("property_expected", "ObjectID", "pointing_side", "Direction"))
+
+        with self:
+            smach.StateMachine.add( "DETECT_LEFT_RIGHT",
+                                    states.Wait_queried_perception(robot, ["human_tracking"], self.pointing_side_query, timeout=5),
+                                    transitions={   "query_true":"GOTO_SIDE",
+                                                    "timed_out":"GOTO_SIDE", #TODO: Is this wise to do?
+                                                    "preempted":"Aborted"})
+
+            smach.StateMachine.add( "GOTO_SIDE",
+                                    states.NavigateGeneric(robot, goal_query=self.pointing_pos_query, goal_area_radius=0.5), 
+                                    #, xy_dist_to_goal_tuple=(0.0,1.0) not needed anymore
+                                    transitions={   "arrived":"Done",
+                                                    "unreachable":'Failed',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'Failed'})
+
 class FindMe(smach.StateMachine):
     """The Find me basic functionality. 
     The robot must find a person again after it moves to a different room.
@@ -91,12 +120,14 @@ class FindMe(smach.StateMachine):
         v
     Say(Hi)
         |
-        v
-    DetectLeftRight
-        |
-        v
-    NavigateGeneric(DetectedPoint)
-        |
+        v   GoToSideOfPerson
+    +--------------------------------------------+
+    |DetectLeftRight                             |
+    |   |                                        |
+    |   v                                        |
+    |NavigateGeneric(DetectedPoint)              |
+    |   |                                        |
+    +---+----------------------------------------+
         v
       Done
     """
@@ -293,23 +324,16 @@ class FindMe(smach.StateMachine):
             #### SUCCESS! ####
             smach.StateMachine.add( "FOUND_OPERATOR",
                                   states.Say(robot, ["Hey, I found you!"], mood="excited"),
-                                  transitions={"spoken":"DETECT_LEFT_RIGHT"})
-
-            smach.StateMachine.add( "DETECT_LEFT_RIGHT",
-                                    states.Wait_queried_perception(robot, ["human_tracking"], self.pointing_side_query, timeout=5),
-                                    transitions={   "query_true":"GOTO_SIDE",
-                                                    "timed_out":"GOTO_SIDE", #TODO: Is this wise to do?
-                                                    "preempted":"Aborted"})
+                                  transitions={"spoken":"GOTO_SIDE"})
 
             smach.StateMachine.add( "GOTO_SIDE",
-                                    states.NavigateGeneric(robot, goal_query=self.pointing_pos_query, goal_area_radius=0.5), 
-                                    #, xy_dist_to_goal_tuple=(0.0,1.0) not needed anymore
-                                    transitions={   "arrived":"Done",
-                                                    "unreachable":'Failed',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'Failed'})
+                                    GoToSideOfPerson(robot),
+                                    transitions={   "Done":"Done",
+                                                    "Failed":"Failed",
+                                                    "Aborted":"Aborted"})
 
 if __name__ == "__main__":
     rospy.init_node('find_me_exec')
     
     startup(FindMe)
+    #startup(GoToSideOfPerson)
