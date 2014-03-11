@@ -18,6 +18,8 @@ class Spindle(object):
         ac_move_spindle = actionlib.SimpleActionClient('/spindle_server', amigo_actions.msg.AmigoSpindleCommandAction)
         ac_joint_trajectory_action = actionlib.SimpleActionClient('/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
         rospy.loginfo("waiting for spindle action server")
+
+	self.wbc = False
         if ac_move_spindle.wait_for_server(timeout=rospy.Duration(0.5)):
             self.ac_move_spindle = ac_move_spindle
             self.wbc = False
