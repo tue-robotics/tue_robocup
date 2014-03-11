@@ -1070,7 +1070,7 @@ bool resetSpindlePosition()
 
 bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
 {
-    double t_start_move = ros::Time::now().toSec();
+    //double t_start_move = ros::Time::now().toSec();
 
     // Determine goal pose
     ROS_INFO("Received a move base goal: (%f,%f,%f)", x, y, theta);
@@ -1096,6 +1096,7 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
      * Sometimes move base 3d returns succeeded within one second even though the robot did not move and
      * therefore not reach the goal position, the if statement below is to avoid possible problems
      */
+    /*
 
     // See if the robot moved
     if (ros::Time::now().toSec() - t_start_move < 1.5 && (std::fabs(x-x_last_) > 1 || std::fabs(y-y_last_) > 1))
@@ -1119,7 +1120,7 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
             return false;
         }
 
-    }
+    }*/
 
     ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
 
@@ -1438,7 +1439,6 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
                         ROS_INFO("Picked up %s with %s arm (location is %s)", object.c_str(), preferred_arm.c_str(), location_name.c_str());
                         preferred_arm = "left";
 
-                        // @todo: reset spindle
                     }
                     else ROS_WARN("Could not grab object %s", object.c_str());
                     ++n_picked_up;
@@ -1453,16 +1453,16 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
         std::map<std::string, std::pair<std::string, RobotPose> >::iterator it_del = obj_id_arm_loc_map.begin();
         for (; it_del != obj_id_arm_loc_map.end(); ++it_del)
         {
-            // Move to the delivery location
+            // Move to the delivery location (if this fails, try again with a larger tolerance)
             double delivery_loc_tolerance = 0.25;
             RobotPose loc = it_del->second.second;
-            if (moveBase(loc.x, loc.y, loc.phi, delivery_loc_tolerance))
+            if (moveBase(loc.x, loc.y, loc.phi, delivery_loc_tolerance) || moveBase(loc.x, loc.y, loc.phi, 2*delivery_loc_tolerance))
             {
                 amigoSpeak("Here is your order", false);
             }
             else
             {
-                ROS_WARN("Cannot reach the delivery location!");
+                ROS_WARN("Cannot reach the delivery location!");                
                 amigoSpeak("I cannot reach the location, can you get your order?");
             }
 
