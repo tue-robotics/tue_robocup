@@ -548,7 +548,8 @@ def grab_demo(robot):
                                states.GetObject(robot, robot.leftArm, search_query, object_query),
                                transitions={'Done':'DROPOFF_OBJECT',
                                             'Failed':'Failed',
-                                            'Aborted':'Aborted'})
+                                            'Aborted':'Aborted',
+                                            'Timeout':'Failed'})
 
         query_dropoff_loc = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
         smach.StateMachine.add("DROPOFF_OBJECT",
