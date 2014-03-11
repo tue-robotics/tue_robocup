@@ -104,10 +104,6 @@ class LookForObjectsAtROI(smach.State):
                 self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.", block=False)
             assert hasattr(self.robot, "head")
 
-    def calc_dist(self, (xA,yA,zA), (xB,yB,zB)):
-            dist = math.sqrt(abs(xA-xB)**2 + abs(yA-yB)**2 + abs(zA-zB)**2)
-            return dist
-
     def execute(self, userdata):
 
         # Query reasoner for position to look at
@@ -167,7 +163,7 @@ class LookForObjectsAtROI(smach.State):
         rospy.loginfo("Stop object recognition")
 
         #result = self.robot.perception.toggle_recognition(objects=False)
-        result = self.robot.perception.toggle([])
+        self.robot.perception.toggle([])
 
         # Query reasoner for objects
         try:
@@ -175,11 +171,6 @@ class LookForObjectsAtROI(smach.State):
             object_answers = self.robot.reasoner.query(self.object_query)
             #Sort by distance to lookat_point
             #import ipdb; ipdb.set_trace()
-            # closest_QA = min(object_answers, key=lambda ans: self.calc_dist((lookat_point.x, lookat_point.y,lookat_point.z), (     float(ans["X"]),
-            #                                                                                     float(ans["Y"]),
-            #                                                                                     float(ans["Z"]))))
-
-            # object_id = closest_QA["ObjectID"]
             rospy.loginfo("Selecting closest answer")
             closest_QA = urh.select_answer(object_answers, 
                                                 lambda answer: urh.xyz_dist(answer, (rx,ry,rz)), 
@@ -197,7 +188,7 @@ class LookForObjectsAtROI(smach.State):
             object_id = closest_QA["ObjectID"]
             r.assertz(Compound("current_object", object_id))
             return 'object_found'
-        except ValueError, ve2:
+        except ValueError:
             return 'no_object_found'
             
 class LookForObjectsAtPoint(smach.State):
@@ -232,7 +223,7 @@ class LookForObjectsAtPoint(smach.State):
 
         # Toggle perception on
         rospy.loginfo("Start object recognition")
-        result = self.robot.perception.toggle(self.modules)
+        self.robot.perception.toggle(self.modules)
 
         # Let the object recognition run for a certain period
         '''Try to set the region of interest. This is not implemented for every module '''
@@ -247,32 +238,33 @@ class LookForObjectsAtPoint(smach.State):
 
         rospy.loginfo("Stop object recognition")
 
-        result = self.robot.perception.toggle([])
+        self.robot.perception.toggle([])
 
         # Query reasoner for objects
-        answers = self.robot.reasoner.query(self.object_query)
+        try:
+            rospy.loginfo("Querying reasoner")
+            object_answers = self.robot.reasoner.query(self.object_query)
+            #Sort by distance to lookat_point
+            #import ipdb; ipdb.set_trace()
+            rx,ry,rz = self.point_stamped.point.x, self.point_stamped.point.y, self.point_stamped.point.z
 
-        if not answers:
-            return 'no_object_found'
-        else:
-            def calc_dist((xA,yA,zA), (xB,yB,zB)):
-                dist = math.sqrt(abs(xA-xB)**2 + abs(yA-yB)**2 + abs(zA-zB)**2)
-                return dist
-            p = (self.point_stamped.point.x,  self.point_stamped.point.y, self.point_stamped.point.z)
-            closest_QA = min(answers, key=lambda ans: calc_dist(p, (float(ans["X"]), float(ans["Y"]), float(ans["Z"]))))
-
-            object_id = closest_QA["ObjectID"]
-            #object_id = answers[0]["ObjectID"]
-
+            rospy.loginfo("Selecting closest answer")
+            closest_QA = urh.select_answer(object_answers, 
+                                                lambda answer: urh.xyz_dist(answer, (rx,ry,rz)), 
+                                                minmax=min,
+                                                criteria=[  lambda answer: urh.xyz_dist(answer, (rx,ry,rz)) < self.maxdist,
+                                                            lambda answer: answer["Z"] > 0.4]) #The object is above 0.4m
             # retract current object id
             r = self.robot.reasoner
 
             r.query(Compound("retractall", Compound("current_object", "X")))
-
+            rospy.loginfo("Asserting new ID")
             # assert new object id
+            object_id = closest_QA["ObjectID"]
             r.assertz(Compound("current_object", object_id))
-
             return 'object_found'
+        except ValueError:
+            return 'no_object_found'
 
 class LookAtPoint(smach.State):
     def __init__(self, robot, lookat_query, maxdist=0.8, modules=["template_matching"], waittime=2.5):
