@@ -28,5 +28,7 @@ rosbuild_gensrv()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
 rosbuild_add_executable(emergency_paper src/pdf_create.cpp)
+rosbuild_add_executable(emergency_paper_home src/pdf_create_home.cpp)
 					
 target_link_libraries(emergency_paper hpdf png z)
+target_link_libraries(emergency_paper_home hpdf png z)

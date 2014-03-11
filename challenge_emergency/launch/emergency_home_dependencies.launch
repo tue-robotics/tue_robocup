@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+  
+  <arg name="env" default="$(optenv ROBOT_ENV robotics_testlab_A)" />
+  <rosparam file="$(find challenge_emergency)/parameters/parameters_$(arg env).yaml" command="load" />
+
+  <node pkg="challenge_emergency" type="emergency_paper_home" respawn="false" name="emergency_paper" output="screen">
+  </node>
+
+  <node pkg="virtual_cam" type="save" args="SERVICE /amigo/top_kinect/rgb/image_color /amigo/top_kinect/depth_registered/image /amigo/top_kinect/rgb/camera_info /amigo/top_kinect/depth_registered/camera_info" name="virtual_cam" /> 
+  
+  <include  file="$(find person_emergency_detector)/launch/start.launch"/>
+  
+</launch>	

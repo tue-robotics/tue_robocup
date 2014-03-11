@@ -18,6 +18,8 @@
   <depend package="virtual_cam"/>
   <depend package="perception_srvs"/>
   <depend package="opencv2"/>
+  <depend package="amigo_demo"/>
+  <depend package="person_emergency_detector"/>
   
   <rosdep name="hpdf" />
   <rosdep name="png" />
