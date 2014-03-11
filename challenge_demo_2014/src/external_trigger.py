@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_atomic_actions')
+import roslib; roslib.load_manifest('challenge_demo_2014')
 import rospy
 
 import smach
