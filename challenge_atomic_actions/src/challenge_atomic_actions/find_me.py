@@ -71,7 +71,13 @@ class GoToSideOfPerson(smach.StateMachine):
                                 self.query_detect_person, 
                                 Compound("property_expected", "ObjectID", "pointing_side", "Direction"))
 
-        with self:
+        self.pointing_pos_query = Conjunction(
+                                Compound("property_expected", "ObjectID", "class_label", "validated_person"),
+                                Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")), 
+                                Compound("property_expected", "ObjectID", "pointing_at", Sequence("X","Y","Z")),
+				Compound("=", "Phi", "3.14"))
+        
+	with self:
             smach.StateMachine.add( "DETECT_LEFT_RIGHT",
                                     states.Wait_queried_perception(robot, ["human_tracking"], self.pointing_side_query, timeout=5),
                                     transitions={   "query_true":"GOTO_SIDE",
