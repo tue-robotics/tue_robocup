@@ -40,7 +40,7 @@ class Learn_Person(smach.State):
                 name_to_learn = "unknown"
 
         rospy.loginfo('Get user name {0}'.format(name_to_learn))
-        self.robot.speech.speak("This may take a while, please be patient while I try to learn your face.")
+        self.robot.speech.speak("This may take a while, please be patient while I try to learn your face.", block=False)
         speech_sentence = [ 'Please look at my left arm, until I am finished learning.',
                             'Now look at my right arm, please wait until I am finished learning',
                             'Please look at my face, till I am finished.']
@@ -49,7 +49,7 @@ class Learn_Person(smach.State):
             # learn left face
             self.robot.leftArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
-            self.robot.speech.speak(speech_sentence[0])
+            self.robot.speech.speak(speech_sentence[0], block=False)
             result = self.robot.perception.learn_person(
                 name_to_learn, 
                 view='left', 
@@ -57,7 +57,7 @@ class Learn_Person(smach.State):
                 n_models=self.models_per_view['left'])
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
-            self.robot.speech.speak("Finished learning your left side")
+            self.robot.speech.speak("Finished learning your left side", block=False)
 
         if 'right' in self.models_per_view:
             # learn right face
@@ -65,22 +65,22 @@ class Learn_Person(smach.State):
             self.robot.leftArm.reset_arm()
             self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
-            self.robot.speech.speak(speech_sentence[1])
+            self.robot.speech.speak(speech_sentence[1], block=False)
             result = self.robot.perception.learn_person(name_to_learn, view = 'right', n_models=self.models_per_view['right'])
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "right")))
-            self.robot.speech.speak("Finished learning your right side")
+            self.robot.speech.speak("Finished learning your right side", block=False)
 
         if 'front' in self.models_per_view:
             # learn front face
             self.robot.rightArm.send_joint_goal(-1.159, 1.096, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
             self.robot.rightArm.reset_arm()
 
-            self.robot.speech.speak(speech_sentence[2])
+            self.robot.speech.speak(speech_sentence[2], block=False)
             result = self.robot.perception.learn_person(name_to_learn, view = 'front', n_models=self.models_per_view['front'])
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
-            self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!")
+            self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!", block=False)
         
         return 'face_learned'
 
@@ -101,7 +101,7 @@ class LookForObjectsAtROI(smach.State):
                 assert hasattr(self.robot, "perception")
             except AssertionError:
                 rospy.logerr("perception not available, but still trying without")
-                self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
+                self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.", block=False)
             assert hasattr(self.robot, "head")
 
     def calc_dist(self, (xA,yA,zA), (xB,yB,zB)):
@@ -137,7 +137,7 @@ class LookForObjectsAtROI(smach.State):
         except ValueError, ve:
             rospy.loginfo("lookat_answers = {0}".format(lookat_answers))
             rospy.loginfo("Further processing yielded {0}".format(ve))
-            self.robot.speech.speak("I did not find an object.")
+            self.robot.speech.speak("I did not find an object.", block=False)
             return 'no_object_found'
             
         # Toggle perception on
@@ -215,7 +215,7 @@ class LookForObjectsAtPoint(smach.State):
             assert hasattr(self.robot, "perception")
         except AssertionError:
             rospy.logerr("perception not available, but still trying without")
-            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
+            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.", block=False)
         assert hasattr(self.robot, "reasoner")
 
     def execute(self, userdata=[]):
@@ -321,7 +321,7 @@ class LookAtPoint(smach.State):
         except ValueError, ve:
             rospy.loginfo("lookat_answers = {0}".format(lookat_answers))
             rospy.loginfo("Further processing yielded {0}".format(ve))
-            self.robot.speech.speak("I did not find an object.")
+            self.robot.speech.speak("I did not find an object.", block=False)
             return 'no_point_found'
 
 class Read_laser(smach.State):
@@ -343,7 +343,7 @@ class Read_laser(smach.State):
             assert hasattr(self.robot, "perception")
         except AssertionError:
             rospy.logerr("perception not available, but still trying without")
-            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.")
+            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.", block=False)
         assert hasattr(self.robot, "reasoner")
 
     def callback_laser(self, data):
