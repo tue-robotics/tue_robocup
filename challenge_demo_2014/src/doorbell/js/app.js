@@ -20,4 +20,12 @@ $( document ).ready(function() {
 
         sendTrigger('doorbell');
     });
+
+    var MjpegViewer = new MJPEGCANVAS.Viewer({
+        divID : 'webcam-image',
+        host : window.location.hostname,
+        width : $('#webcam-image').width(),
+        height : $('#webcam-image').width()/4*3,
+        topic : '/amigo/top_kinect/rgb/image_color'
+    });
 });
