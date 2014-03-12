@@ -94,7 +94,11 @@ class RoboZoo(smach.StateMachine):
                 return "asserted"
             smach.StateMachine.add( "SET_CURRENT_DRINK",
                                     smach.CBState(set_serve_drink, cb_kwargs={'drink':'coke'}),
-                                    transitions={"asserted"             :"GOTO_STORAGE"})
+                                    transitions={"asserted"             :"RESET_ARMS"})
+            
+            smach.StateMachine.add( "RESET_ARMS",
+                                    states.ResetArms(robot),
+                                    transitions={"done"                 :"GOTO_STORAGE"})
 
             smach.StateMachine.add( "GOTO_STORAGE",
                                     states.NavigateGeneric(robot, lookat_query=query_storage_table),
@@ -135,8 +139,12 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "HELP_WITH_PLACING_DRINK",
                                     states.HandoverToHuman(robot.leftArm, robot),
-                                     transitions={  'succeeded'        :'GOTO_PICKUP',
-                                                    'failed'           :'GOTO_PICKUP' }) #We're lost if even this fails
+                                     transitions={  'succeeded'        :'RESET_ARMS2',
+                                                    'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
+
+            smach.StateMachine.add( "RESET_ARMS2",
+                                    states.ResetArms(robot),
+                                    transitions={"done"                 :"GOTO_PICKUP"})
 
             smach.StateMachine.add( "GOTO_PICKUP",
                                     states.NavigateGeneric(robot, lookat_query=query_pickup_table),
