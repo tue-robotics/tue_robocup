@@ -55,21 +55,20 @@ class executePlan(smach.State):
 
     def execute(self, userdate):
 
+        time_path_free = rospy.Time.now()
         r = rospy.Rate(10) # 10hz
-        while not rospy.is_shutdown():
-
-            print self.robot.base2.local_planner_status
+        while (rospy.Time.now() - time_path_free) < rospy.Duration(2.0):
 
             # Check the local planner status
             if self.robot.base2.local_planner_status == "idle":
                 self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
             elif self.robot.base2.local_planner_status == "arrived":
+                self.robot.base2.local_planner_status = "idle"
                 return "arrived"
-            elif self.robot.base2.local_planner_status == "blocked":
-                return "blocked"
 
-            if not self.robot.base2.globalPlannerCheckPlan(self.robot.base2.plan):
-                return "blocked"
+            # Check global path state
+            if self.robot.base2.globalPlannerCheckPlan(self.robot.base2.plan):
+                time_path_free = rospy.Time.now()
 
             r.sleep()
 
@@ -85,10 +84,16 @@ class planBlocked(smach.State):
         # Check if we can find an other plan
         plan = self.robot.base2.globalPlannerGetPlan(self.robot.base2.pc)
 
-        if (len(plan) == 0):
+        if plan < 0:
+            self.robot.base2.localPlannerCancelCurrentPlan()
+            return "unreachable"
+
+        if len(plan) == 0:
+            self.robot.base2.localPlannerCancelCurrentPlan()
             return "unreachable"
 
         # Set the new plan
+        self.robot.base2.local_planner_status = "idle"
         self.robot.base2.plan = plan
 
         return "execute"
