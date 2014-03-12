@@ -1,6 +1,7 @@
 from human_interaction import *
 from manipulation import *
 from navigation import *
+from navigation2 import *
 from utility_states import *
 from perception import *
 from motion_sequences import *
