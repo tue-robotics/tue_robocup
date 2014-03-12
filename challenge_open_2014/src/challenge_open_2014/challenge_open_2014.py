@@ -14,8 +14,6 @@ import robot_smach_states as states
 
 from speech_interpreter.srv import AskUser
 
-from navigation_interface import Navigation
-
 class AskOpenChallenge(smach.State):
 
     def __init__(self, robot):
@@ -67,7 +65,7 @@ class OpenChallenge2014(smach.StateMachine):
                                 transitions={'done'             :   'NAVIGATE_TO_TARGET'})
 
             smach.StateMachine.add("NAVIGATE_TO_TARGET",
-                                Navigation.NavigateWithConstraints(robot),
+                                states.NavigateWithConstraints(robot),
                                 transitions={'arrived'          :   'ASK_OPENCHALLENGE',
                                              'unreachable'      :   'ASK_OPENCHALLENGE',
                                              'goal_not_defined' :   'ASK_OPENCHALLENGE'})
