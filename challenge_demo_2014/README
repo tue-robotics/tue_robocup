@@ -2,11 +2,13 @@
 
 make sure amiddle is running
 
+
+amigo1:
 start the webserver for this challenge:
 - roslaunch challenge_demo_2014 start.launch
 
 the doorbell is at http://amigo1:8001/doorbell.html
 the gui      is at http://amigo1:8001/app.html
 
-start the statemachine 
+amigo3:
 rosrun rosrun challenge_demo_2014 external_trigger.py
