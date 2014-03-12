@@ -321,7 +321,7 @@ void moveToRelativePosition(double x, double y, double phi, double dt)
 {
     geometry_msgs::PoseStamped goal_pos;
     goal_pos.header.frame_id = ROBOT_BASE_FRAME;
-    goal_pos.header.stamp = ros::Time::now();
+    goal_pos.header.stamp = ros::Time::now()-ros::Duration(0.5);
     goal_pos.pose.position.x = x;
     goal_pos.pose.position.y = y;
     tf::Quaternion q;
@@ -372,7 +372,7 @@ void speechCallback(std_msgs::String res)
         if (answer == "yes")
         {
             //! Leave the elevator
-            moveToRelativePosition(-3.0, 0.0, 3.14, 25.0);
+            moveToRelativePosition(-2.5, 0.0, 3.14, 25.0);
 
             //! Shutdown the speech
             sub_speech_.shutdown();
@@ -455,7 +455,7 @@ void restartSpeechIfNeeded()
 
 int main(int argc, char **argv) {
 
-    ros::init(argc, argv, "test_speech_restaurant");
+    ros::init(argc, argv, "follow_me_2014");
     ros::NodeHandle nh;
 
     //! RGB lights
@@ -490,7 +490,6 @@ int main(int argc, char **argv) {
     std_srvs::Empty empty_srv;
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
 
-    ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Start follower
     follower_ = new Follower(nh, ROBOT_BASE_FRAME, false);
@@ -515,6 +514,10 @@ int main(int argc, char **argv) {
     setRGBLights("green");
     t_last_speech_cmd_ = ros::Time::now().toSec();
     ROS_INFO("Started speech recognition");
+    
+    // @todo: clear world model
+    // @todo: move base goal in base link? Must be in map
+    // @todo: no laser data available robot only starts driving after a few [s]
 
     //! Start Following
     bool drive = false;
