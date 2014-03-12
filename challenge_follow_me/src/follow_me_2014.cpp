@@ -19,11 +19,7 @@
 #include "robot_skill_server/ExecuteAction.h"
 #include "amigo_head_ref/HeadRefAction.h"
 
-// Interface WIRE
-#include "wire_interface/Client.h"
-
 // Services
-#include "perception_srvs/StartPerception.h"
 #include "std_srvs/Empty.h"
 
 // Follower
@@ -54,12 +50,15 @@ struct RobotPose {
 
 
 // SETTINGS
-std::string robot_base_frame_ = "/amigo/base_link";
+const std::string ROBOT_BASE_FRAME = "/amigo/base_link";
+const double T_WAIT_MAX_AFTER_STOP_CMD = 5.0;
+const double T_MAX_NO_MOVE_BEFORE_TRYING_3D = 5.0;
 
 // Speech
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
 ros::ServiceClient speech_recognition_client_;                                    // Communication: Client for starting / stopping speech recognition
 ros::Publisher pub_speech_;                                                       // Communication: Publisher that makes AMIGO speak
+ros::Subscriber sub_speech_;
 
 // Actuation
 actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>* ac_skill_server_;
@@ -75,9 +74,6 @@ Follower* follower_;
 // Tf
 tf::TransformListener* listener_;												  // Tf listenter to obtain tf information to store locations
 
-// Perception
-ros::ServiceClient srv_pein_;
-
 // Clear cost map
 ros::ServiceClient srv_cost_map;
 
@@ -92,6 +88,7 @@ double t_last_speech_cmd_ = 0;
 // Adminstration: other
 std::string current_clr_;
 bool left_elevator_ = false;
+double t_pause_ = 0;
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -106,7 +103,7 @@ std::string getSpeechStateName(speech_state::SpeechState ss)
 
 bool transformPoseStamped(geometry_msgs::PoseStamped& in, geometry_msgs::PoseStamped& out, std::string frame_out)
 {
-    //! Transform goal to the map frame
+    //! Transform goal to another frame
     try
     {
         listener_->transformPose(frame_out, in, out);
@@ -292,9 +289,54 @@ void updateSpeechState(speech_state::SpeechState new_state)
 
 
 
+bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double dt = 3.0)
+{
+
+    // Determine goal pose
+    ROS_INFO("Received a move base goal: (%f,%f,%f)", x, y, theta);
+    robot_skill_server::ExecuteGoal goal;
+    std::stringstream cmd;
+    cmd << "base.move(x=" << x << ",y=" << y << ", phi=" << theta << ", goal_area_radius=" << goal_radius << ")";
+    goal.command = cmd.str();
+
+    // Send goal
+    double t_send_goal = ros::Time::now().toSec();
+    ac_skill_server_->sendGoal(goal);
+    ac_skill_server_->waitForResult(ros::Duration(dt));
+    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Could not reach base pose within %f [s]", dt);
+        return false;
+    }
+
+    ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
+
+    return true;
+
+}
 
 
-void speechCallbackGuideShort(std_msgs::String res)
+
+void moveToRelativePosition(double x, double y, double phi, double dt)
+{
+    geometry_msgs::PoseStamped goal_pos;
+    goal_pos.header.frame_id = ROBOT_BASE_FRAME;
+    goal_pos.header.stamp = ros::Time::now();
+    goal_pos.pose.position.x = x;
+    goal_pos.pose.position.y = y;
+    tf::Quaternion q;
+    q.setRPY(0, 0, phi);
+    goal_pos.pose.orientation.x = q.getX();
+    goal_pos.pose.orientation.y = q.getY();
+    goal_pos.pose.orientation.z = q.getZ();
+    goal_pos.pose.orientation.w = q.getW();
+    transformPoseStamped(goal_pos, goal_pos, "/map");
+    moveBase(goal_pos.pose.position.x, goal_pos.pose.position.y, tf::getYaw(goal_pos.pose.orientation), 0.5, dt);
+}
+
+
+
+void speechCallback(std_msgs::String res)
 {
 
     t_last_speech_cmd_ = ros::Time::now().toSec();
@@ -312,8 +354,11 @@ void speechCallbackGuideShort(std_msgs::String res)
         ROS_INFO("Paused follower!");
 
         // Get location and side
+        updateSpeechState(speech_state::CONFIRM_LEAVE);
         amigoSpeak("Should I leave the elevator?");
         setRGBLights("green");
+
+        t_pause_ = ros::Time::now().toSec();
     }
 
     // RECEIVED THE COMMAND TO LEAVE THE ELEVATOR
@@ -327,21 +372,10 @@ void speechCallbackGuideShort(std_msgs::String res)
         if (answer == "yes")
         {
             //! Leave the elevator
-            geometry_msgs::PoseStamped goal_pos;
-            goal_pos.header.frame_id = robot_base_frame_;
-            goal_pos.header.stamp = ros::Time::now();
-            goal_pos.pose.position.x = -3.0;
-            tf::Quaternion q;
-            q.setRPY(0, 0, 3.14);
-            goal_pos.pose.orientation.x = q.getX();
-            goal_pos.pose.orientation.y = q.getY();
-            goal_pos.pose.orientation.z = q.getZ();
-            goal_pos.pose.orientation.w = q.getW();
-            transformPoseStamped(goal_pos, goal_pos, "/map");
-            moveBase(goal_pos.x, goal_pos.y, tf::getYaw(goal_pos.pose.orientation), 0.5, 25.0);
+            moveToRelativePosition(-3.0, 0.0, 3.14, 25.0);
 
             //! Shutdown the speech
-            sub_speech.shutdown();
+            sub_speech_.shutdown();
             left_elevator_ = true;
 
 
@@ -392,100 +426,6 @@ bool resetSpindlePosition()
 
 
 
-bool moveBase(double x, double y, double theta, double goal_radius = 0.1, dt = 3.0)
-{
-    //double t_start_move = ros::Time::now().toSec();
-
-    // Determine goal pose
-    ROS_INFO("Received a move base goal: (%f,%f,%f)", x, y, theta);
-    robot_skill_server::ExecuteGoal goal;
-    std::stringstream cmd;
-    cmd << "base.move(x=" << x << ",y=" << y << ", phi=" << theta << ", goal_area_radius=" << goal_radius << ")";
-    goal.command = cmd.str();
-
-    // Send goal
-    double t_send_goal = ros::Time::now().toSec();
-    ac_skill_server_->sendGoal(goal);
-    ac_skill_server_->waitForResult(ros::Duration(dt));
-    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_WARN("Could not reach base pose within 60 [s]");
-        // Administration
-        x_last_ = x;
-        y_last_ = y;
-        return false;
-    }
-
-    ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
-
-    // Administration
-    x_last_ = x;
-    y_last_ = y;
-    return true;
-
-}
-
-
-
-
-
-bool moveHead(double pan, double tilt, bool block = true)
-{
-
-    //! Add head reference action
-    double t_start = ros::Time::now().toSec();
-    amigo_head_ref::HeadRefGoal head_ref;
-    head_ref.goal_type = 1; // 1: pan tilt, 0 keep tracking
-    head_ref.pan = pan;
-    head_ref.tilt = tilt;
-    ac_head_ref_->sendGoal(head_ref);
-    if (block) ac_head_ref_->waitForResult(ros::Duration(3.0));
-
-    if (ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_WARN("Head could not reach target position");
-        ROS_INFO("moveHead(%f,%f,%s) took %f [ms]", pan, tilt, block?"true":"false", 1000*(ros::Time::now().toSec()-t_start));
-        return false;
-    }
-
-    ROS_INFO("moveHead(%f,%f,%s) took %f [ms]", pan, tilt, block?"true":"false", 1000*(ros::Time::now().toSec()-t_start));
-    return true;
-
-}
-
-
-bool togglePein(std::vector<std::string> modules) {
-
-    perception_srvs::StartPerception pein_srv;
-
-    //! Add required modules
-    if (modules.empty())
-    {
-        // Turn off perception
-        pein_srv.request.modules.push_back("");
-    }
-    else
-    {
-        // Add all modules
-        std::vector<std::string>::const_iterator it = modules.begin();
-        for (; it != modules.end(); ++it)
-        {
-            pein_srv.request.modules.push_back(*it);
-        }
-    }
-
-    //! Toggle perception
-    bool ok = srv_pein_.call(pein_srv);
-
-    //! Feedback to the user
-    if (ok) ROS_INFO("Switched on pein_modules:");
-    else ROS_WARN("Could not switch on pein_modules:");
-    std::vector<std::string>::const_iterator it = modules.begin();
-    for (; it != modules.end(); ++it) ROS_INFO("\t%s", it->c_str());
-
-    return ok;
-
-}
 
 
 
@@ -533,8 +473,7 @@ int main(int argc, char **argv) {
     //! Start speech recognition
     speech_recognition_client_ = nh.serviceClient<tue_pocketsphinx::Switch>("/pocketsphinx/switch");
     speech_recognition_client_.waitForExistence();
-    //ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuide);
-    ros::Subscriber sub_speech = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallbackGuideShort);
+    sub_speech_ = nh.subscribe<std_msgs::String>("/pocketsphinx/output", 1, speechCallback);
 
     //! Skill server action client
     ROS_INFO("Connecting to the skill server...");
@@ -545,30 +484,16 @@ int main(int argc, char **argv) {
     //! Reset spindle
     resetSpindlePosition();
 
-    //! Head ref action client
-    ROS_INFO("Connecting to head ref action server...");
-    ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
-    ac_head_ref_->waitForServer();
-    ROS_INFO("Connected!");
-
     //! Clear cost map interface
     srv_cost_map = nh.serviceClient<tue_pocketsphinx::Switch>("/move_base_3d/reset");
     srv_cost_map.waitForExistence(ros::Duration(3.0));
     std_srvs::Empty empty_srv;
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
 
-    //! Perception
-    srv_pein_ = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
-
-    //! Clearing the world model
-    ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
-    std_srvs::Empty srv;
-    if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
-
     ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Start follower
-    follower_ = new Follower(nh, robot_base_frame_, false);
+    follower_ = new Follower(nh, ROBOT_BASE_FRAME, false);
     if (!follower_->start())
     {
         ROS_ERROR("Could not start the follower!");
@@ -599,39 +524,49 @@ int main(int argc, char **argv) {
         //! Get information from topics
         ros::spinOnce();
 
+
+        //! To avoid a deadlock after a false speech command
+        if (speech_state_ == speech_state::CONFIRM_LEAVE &&
+                ros::Time::now().toSec() - t_pause_ > T_WAIT_MAX_AFTER_STOP_CMD)
+        {
+            ROS_WARN("I assume I misunderstood, I will continue following");
+            speech_state_ = speech_state::DRIVE;
+            follower_->resume();
+        }
+
+
         //! Update the follower
         bool non_zero_vel = follower_->update();
 
-        //! If the robot did not move for a while, try moving using move_base_3d
+
+        //! If the robot did not move for a while
         if (!non_zero_vel)
         {
             if (drive) t_start_no_move = ros::Time::now().toSec();
             ROS_DEBUG("Robot does not move");
             drive = false;
 
-            if (ros::Time::now().toSec() - t_start_no_drive > 5.0)
+            if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
             {
 
+                // AFTER THE ELEVATOR: move forward (around the crowd)
                 if (left_elevator_)
                 {
-                    // AFTER THE ELEVATOR: move forward
                     follower_->pause();
-                    // @todo: move 2 [m] forward
+                    double dt = 45.0;
+                    moveToRelativePosition(3.0, 0.0, 0.0, dt);
                     follower_->reset();
 
-
                 }
+                // BEFORE THE ELEVATOR: just try to move (there is something in the way)
                 else
                 {
-                    // BEFORE THE ELEVATOR: just try to move
-                    ROS_WARN("Robot did not move for %f [s], trying move_base_3d to plan around obstacle", ros::Time::now().toSec() - t_start_no_drive);
+                    ROS_WARN("Robot did not move for %f [s], trying move_base_3d to plan around obstacle", ros::Time::now().toSec() - t_start_no_move);
                     double x = 0, y = 0, phi = 0;
-                    follower_->getCurrentOperatorPosition(x, y, phi, robot_base_frame_);
+                    follower_->getCurrentOperatorPosition(x, y, phi, ROBOT_BASE_FRAME);
                     moveBase(x, y, phi, 0.2, 2.0);
                 }
             }
-
-            // @todo: after leaving the elevator another str
 
         }
         else drive = true;

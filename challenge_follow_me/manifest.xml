@@ -21,6 +21,7 @@
   <depend package="tue_pocketsphinx"/>
   <depend package="speech_interpreter"/>
   <depend package="amigo_head_ref"/>
+  <depend package="robot_skill_server"/>
   
   <export>
     <cpp cflags="-I${prefix}/include" lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -ltue_follower"/>

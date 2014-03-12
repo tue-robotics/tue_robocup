@@ -43,3 +43,5 @@ rosbuild_add_executable(test_follower include/challenge_follow_me/Follower.h src
 
 rosbuild_add_boost_directories()
 rosbuild_link_boost(test_follower thread signals system)
+
+rosbuild_add_executable(follow_me_2014 include/challenge_follow_me/Follower.h src/Follower.cpp src/follow_me_2014.cpp ${HEADER_FILES})
