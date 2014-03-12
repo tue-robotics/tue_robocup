@@ -134,7 +134,8 @@ class Arms(object):
     POINT_AT_OBJECT_FORWARD = [-0.2 ,-0.250 , 0.40 , 1.25 , 0.000 ,0.500 , 0.000]
     HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
     SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
-    RESET_POSE = [-0.1,-0.2,0.2,0.8,0.0,0.0,0.0] 
+    RESET_POSE = [-0.1,-0.2,0.2,0.8,0.0,0.0,0.0] # This is the usual
+    #RESET_POSE = [-0.3, -0.05, 0.2, 1.0, 0.0, 0.0, 0.0] # This is more useful for whole-body control
 
     def __init__(self, tf_listener):
         #Easy access to sides
@@ -672,7 +673,8 @@ class Arm(Arms):
 
     def reset_arm(self):
         """Send the arm to a suitable (natural looking) (driving) position"""
-        return super(Arm, self).send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0,self.side)
+        #return super(Arm, self).send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0,self.side)
+        return super(Arm, self).send_joint_goal(side=self.side,*(self.RESET_POSE))
     
     def cancel_goal(self):
          """Cancel arm goal """
