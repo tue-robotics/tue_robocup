@@ -236,31 +236,30 @@ class GotoMeetingPoint(smach.State):
 class VisitQueryPoi(smach.StateMachine):
     """Go to the outcome of a point_of_interest-query and mark that identifier as visited or unreachable.
     When all matches are visited, the outcome is all_matches_tried"""
-    def __init__(self, robot, object_query, identifier="Poi", visit_label="current_visiting"):
+    def __init__(self, robot, poi_query, identifier="Poi", visit_label="currently_visiting"):
         smach.StateMachine.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined", "all_matches_tried"]) #visit_query_outcome also defines 'all_matches_tried'
         
         self.robot = robot
         self.identifier = identifier
 
-        decorated_query = Conjunction(object_query, 
+        decorated_query = Conjunction(poi_query, 
                         Compound("not", Compound("visited",     self.identifier)),
                         Compound("not", Compound("unreachable", self.identifier)))
 
-        current_goal_query = Conjunction(
-                                Compound(visit_label, self.identifier),
-                                Compound("point_of_interest", self.identifier, Compound("point_3d", "X", "Y", "Z")))
+        current_goal_query = Conjunction(Compound(visit_label, self.identifier),
+                                         Compound("point_of_interest", self.identifier, Compound("point_3d", "X", "Y", "Z")))
 
         with self:
             smach.StateMachine.add( 'SELECT_OBJECT_TO_VISIT',
                                     reasoning.Select_object(robot, decorated_query,     #Find an answer to this query
-                                                            visit_label,                #And set it as the current_visiting
+                                                            visit_label,                #And set it as the currently_visiting
                                                             object_variable=self.identifier),        
                                     transitions={'selected':'VISIT_OBJECT',
                                                  'no_answers':'CHECK_UNDECORATED_MATCHES'})
 
             #If we can find a match for the undecorated query, that means there are objects, but that we all tried them
             smach.StateMachine.add( 'CHECK_UNDECORATED_MATCHES',
-                                    reasoning.Ask_query_true(robot, object_query),
+                                    reasoning.Ask_query_true(robot, poi_query),
                                     transitions={'query_false':'goal_not_defined',
                                                  'query_true':'all_matches_tried',
                                                  'waiting':'goal_not_defined',          #this transition should no occur
@@ -300,6 +299,12 @@ class GetObject(smach.StateMachine):
         self.roi_query = roi_query
         self.object_query = object_query
 
+        rospy.logwarn("roi_query = {0}".format(roi_query))
+
+        lookatquery = Conjunction(
+                                Compound("currently_visiting","ID"),
+                                Compound("point_of_interest", "ID", Compound("point_3d", "X", "Y", "Z")))
+
         assert hasattr(robot, "base")
         assert hasattr(robot, "reasoner")
         assert hasattr(robot, "perception")
@@ -311,7 +316,7 @@ class GetObject(smach.StateMachine):
                                     transitions={   'done':'DRIVE_TO_SEARCHPOS' })            
                                                     
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
-                                    VisitQueryPoi(self.robot,  self.roi_query, visit_label="current_visiting"),
+                                    VisitQueryPoi(self.robot,  self.roi_query, visit_label="currently_visiting"),
                                     transitions={   'arrived'         :'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable'     :'DRIVE_TO_SEARCHPOS',
                                                     'preempted'       :'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
@@ -322,10 +327,6 @@ class GetObject(smach.StateMachine):
                                     human_interaction.Say(robot, ["Lets see what I can find here."],block=False),
                                     transitions={   'spoken':'LOOK'})
 
-            lookatquery = Conjunction(
-                                Compound("current_visiting","ID"),
-                                Compound("point_of_interest", "ID", Compound("point_3d", "X", "Y", "Z")))
-
             smach.StateMachine.add('LOOK',
                                     perception.LookForObjectsAtROI(robot, lookatquery, self.object_query),
                                     transitions={   'looking':'LOOK',
@@ -333,9 +334,12 @@ class GetObject(smach.StateMachine):
                                                     'no_object_found':'RESET_HEAD_AND_SPINDLE',
                                                     'abort':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED'})      # End State
 
+            #smach.StateMachine.add('RESET_HEAD_AND_SPINDLE',
+            #                        utility_states.ResetHeadSpindle(robot),
+            #                        transitions={   'done':'CHECK_TIME'})   # End State
             smach.StateMachine.add('RESET_HEAD_AND_SPINDLE',
                                     utility_states.ResetHeadSpindle(robot),
-                                    transitions={   'done':'CHECK_TIME'})   # End State
+                                    transitions={   'done':'DRIVE_TO_SEARCHPOS'})   # End State
 
             smach.StateMachine.add('CHECK_TIME',
                                     utility_states.CheckTime(robot, "get_object_start", max_duration),
