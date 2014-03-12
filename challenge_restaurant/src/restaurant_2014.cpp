@@ -143,17 +143,18 @@ std::string getSpeechStateName(speech_state::SpeechState ss)
 void setRGBLights(std::string color)
 {
 
-    ROS_DEBUG("AMIGO: %s", color.c_str());
+    ROS_INFO("Update color AMIGO: %s", color.c_str());
 
     std_msgs::ColorRGBA clr_msg;
 
     if (color == "red") clr_msg.r = 255;
     else if (color == "green") clr_msg.g = 255;
     else if (color == "blue") clr_msg.b = 255;
-    else if (color == "yellow")
+    else if (color == "cyan")
     {
-        clr_msg.r = 255;
+        clr_msg.r = 0;
         clr_msg.g = 255;
+        clr_msg.b = 255;
     }
     else
     {
@@ -636,7 +637,7 @@ void speechCallbackGuideShort(std_msgs::String res)
             ans << current_loc_name_ << " " << current_side_ << "?";
             amigoSpeak(ans.str());
         }
-        setRGBLights("yellow");
+        setRGBLights("cyan");
     }
 
     // RECEIVED A LOCATION NAME AND A SIDE
@@ -741,7 +742,7 @@ void speechCallbackGuide(std_msgs::String res)
             follower_->pause();
             ROS_DEBUG("Robot received a stop command");
             updateSpeechState(speech_state::LOC_NAME);
-            setRGBLights("yellow");
+            setRGBLights("cyan");
         }
         else ROS_WARN("Robot expects command 'amigostop' but received an unknown command '%s'!", answer.c_str());
     }
@@ -861,7 +862,7 @@ void speechCallbackGuide(std_msgs::String res)
             updateLocation(current_loc_name_, current_side_);
 
             //! Continue following
-            setRGBLights("yellow");
+            setRGBLights("cyan");
             follower_->reset();
             setRGBLights("green");
             updateSpeechState(speech_state::DRIVE);
@@ -883,7 +884,7 @@ void speechCallbackGuide(std_msgs::String res)
             n_tries_ = 0;
 
             //! Continue following
-            setRGBLights("yellow");
+            setRGBLights("cyan");
             follower_->reset();
             setRGBLights("green");
         }
