@@ -473,13 +473,20 @@ class Say_and_Navigate(smach.StateMachine):
                                     cc)
 
 class PointObject(smach.StateMachine):
-    def __init__(self, robot, side, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
+    def __init__(self, robot, side, roi_query, roi_identifier="Poi", object_query=None, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
         self.side = side
         self.roi_query = roi_query
         self.object_query = object_query
+        self.roi_identifier =roi_identifier
+
+        rospy.logwarn("roi_query = {0}".format(roi_query))
+
+        lookatquery = Conjunction(
+                                Compound("currently_visiting","ID"),
+                                Compound("point_of_interest", "ID", Compound("point_3d", "X", "Y", "Z")))
 
         assert hasattr(robot, "base")
         assert hasattr(robot, "reasoner")
@@ -496,22 +503,30 @@ class PointObject(smach.StateMachine):
             #                         transitions={   'object_found':'SAY_FOUND_SOMETHING_BEFORE',
             #                                         'no_object_found':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE' })
 
+            # smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
+            #                         navigation.Visit_query_outcome_3d(self.robot, 
+            #                                                           self.roi_query, 
+            #                                                           x_offset=0.7, y_offset=0.0001,
+            #                                                           identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
+            #                         transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
+            #                                         'unreachable':'DRIVE_TO_SEARCHPOS',
+            #                                         'preempted':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+            #                                         'goal_not_defined':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
+            #                                         'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})
+
+
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
-                                    navigation.Visit_query_outcome_3d(self.robot, 
-                                                                      self.roi_query, 
-                                                                      x_offset=0.7, y_offset=0.0001,
-                                                                      identifier=object_identifier),  #TODO Bas: when this is 0.0, amingo_inverse_reachability returns a 0,0,0,0,0,0,0 pose
-                                    transitions={   'arrived':'SAY_LOOK_FOR_OBJECTS',
-                                                    'unreachable':'DRIVE_TO_SEARCHPOS',
-                                                    'preempted':'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+                                    VisitQueryPoi(self.robot, poi_query=self.roi_query, identifier=self.roi_identifier, visit_label="currently_visiting"),
+                                    transitions={   'arrived'         :'SAY_LOOK_FOR_OBJECTS',
+                                                    'unreachable'     :'DRIVE_TO_SEARCHPOS',
+                                                    'preempted'       :'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
                                                     'goal_not_defined':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
-                                                    'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})
+                                                    'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})    # End State
+
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     human_interaction.Say(robot, ["Lets see if I can find the object."],block=False),
                                     transitions={   'spoken':'LOOK'})
-
-            lookatquery = Compound("current_poi","POI", Compound("point_3d","X","Y","Z"))
 
             smach.StateMachine.add('LOOK',
                                     perception.LookForObjectsAtROI(robot, lookatquery, self.object_query),
