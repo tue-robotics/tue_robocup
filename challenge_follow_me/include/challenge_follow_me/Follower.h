@@ -44,7 +44,7 @@ public:
     bool update(); // update robot reference position
     void stop();   // stop following
 
-    bool sendOwnGoalPose(double x, double y, double theta, std::string frame);
+    bool getCurrentOperatorPosition(double& x, double& y, double& phi, std::string frame);
 
 private:
 

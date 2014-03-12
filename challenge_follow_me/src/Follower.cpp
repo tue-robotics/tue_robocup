@@ -166,6 +166,27 @@ void Follower::stop()
     mode_ = Follower::IDLE;
 }
 
+bool Follower::getCurrentOperatorPosition(double& x, double& y, double& phi, std::string frame)
+{
+    //! Get world model objects
+    std::vector<wire::PropertySet> objects = wire_client_->queryMAPObjects(frame);
+
+    //! Find operator
+    pbl::Gaussian pos_operator(3);
+    if (getPositionOperator(objects, pos_operator))
+    {
+        //! Calculate operator position
+        ROS_DEBUG("Found operator");
+        pbl::Vector pos_exp = pos_operator.getExpectedValue().getVector();
+        x = pos_exp(0);
+        y = pos_exp(1);
+        phi = std::atan2(y, x);
+        return true;
+    }
+
+    return false;
+}
+
 void Follower::freezeRobot()
 {
     ROS_INFO("Freeze robot!");
@@ -269,63 +290,13 @@ bool Follower::update()
 
 
     //// Steer robot towards operator with offset (non-blocking)
-    bool move_ok = true;
+    bool non_zero_vel = true;
     if (mode_ != Follower::PAUSE)
     {
-        move_ok = moveTowardsPosition(pos_operator, follow_distance_, false);
+        non_zero_vel = moveTowardsPosition(pos_operator, follow_distance_, false);
     }
 
-    return move_ok;
-
-}
-
-bool Follower::sendOwnGoalPose(double x, double y, double theta, std::string frame)
-{
-
-    //! End point of the path is the given position
-    geometry_msgs::PoseStamped end_goal;
-    end_goal.header.frame_id = frame;
-    end_goal.header.stamp = ros::Time();
-
-    //! Set orientation
-    addQuaternion(end_goal, theta);
-
-    //! Set the position
-    end_goal.pose.position.x = x;
-    end_goal.pose.position.y = y;
-    end_goal.pose.position.z = 0;
-
-    //! Transform to the appropriate frame
-    transformPoseStamped(end_goal, end_goal, nav_frame_);
-
-    // Move towards position
-    ROS_DEBUG("Follower: Move base custom goal: (x,y,theta) = (%f,%f,%f)", end_goal.pose.position.x, end_goal.pose.position.y, theta);
-
-    // See which of the methods must be used
-    if (use_map_)
-    {
-        tue_move_base_msgs::GetPath srv_get_path;
-        if (!findPath(end_goal, srv_get_path))
-        {
-            // No path found
-            return false;
-        }
-
-        // Send path
-        tue_move_base_msgs::MoveBaseGoal base_goal;
-        base_goal.path = srv_get_path.response.path;
-        ac_move_base_->sendGoal(base_goal);
-        if (!ac_move_base_->waitForResult(ros::Duration(60.0)))
-        {
-            ROS_WARN("Robot could not custom reach map position before time-out!");
-        }
-    }
-    else
-    {
-        carrot_planner_->MoveToGoal(end_goal);
-    }
-
-    return true;
+    return non_zero_vel;
 
 }
 
@@ -983,7 +954,8 @@ bool Follower::moveTowardsPosition(pbl::Gaussian& pos, double offset, bool block
         }
         else
         {
-            carrot_planner_->MoveToGoal(end_goal);
+            // Return true if the robot moves and false otherwise
+            return carrot_planner_->MoveToGoal(end_goal);
         }
 
     }
