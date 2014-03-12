@@ -21,7 +21,7 @@ amigo3:
     # Mount the usb stick (for example: /dev/sdc1)
     pmount /dev/sdb1 usb-stick
 
-    roslaunch challenge_emergency emergency_dependencies.launch
+    roslaunch challenge_emergency emergency_home_dependencies.launch
 
 amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
@@ -39,7 +39,7 @@ amigo3:
     say test  
         (to test speaker is working) 
 
-    rosrun challenge_emergency emergency.py
+    rosrun challenge_emergency emergency_2014.py
 
 
 ---------------------------------------

@@ -30,7 +30,7 @@ room = 'kitchen'
 #       Created by: Teun Derksen        #
 #########################################
 class SleepTime(smach.State):
-    def __init__(self, robot=None,sleeptime=60):
+    def __init__(self, robot=None,sleeptime=1):
         smach.State.__init__(self, outcomes=['finished'])
 
         self.robot = robot
@@ -136,6 +136,10 @@ class LookingForPersonOld(smach.State):
             self.robot.speech.speak("I see some people!")
         else:
             self.robot.speech.speak("I found someone!")
+            print person_result
+            print person_result[0]["ObjectID"]
+            self.robot.reasoner.assertz(Compound("emergency_person", person_result[0]["ObjectID"]))
+
         return "found"     
         
 
@@ -256,14 +260,11 @@ class LookForObject(smach.State):
                                                  Compound("not", Compound("visited", "Waypoint"))))
 
         if not goal_answers:
-            self.robot.speech.speak("I want to find the object, but I don't know where to go... I'm sorry!")
+            self.robot.speech.speak("I cannot find the object")
             return "not_found"
 
-        self.robot.speech.speak("I think I know the location of your " + serving_drink)
-        # for now, take the first goal found
+        self.robot.speech.speak("I know the location of your " + serving_drink)
         goal_answer = goal_answers[0]
-
-        self.robot.speech.speak("I'm on the move, looking for your object!")
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
         waypoint_name = goal_answer["Waypoint"]
@@ -304,12 +305,12 @@ class LookForObject(smach.State):
                 return "looking"
 
             grasp_drink = str(object_answer_alternative[0]["Drink"])
-            self.robot.speech.speak("I apologize, I could not find your drink. However, I will bring you a " + str(grasp_drink))
+            self.robot.speech.speak("Could not find your drink. However, I will bring you a " + str(grasp_drink))
             self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", grasp_drink))))
             return "found"
 
         if object_answers:
-            self.robot.speech.speak("Here it is! I found the " + serving_drink)
+            self.robot.speech.speak("I found the " + serving_drink)
             return "found"
         else:
             return "looking"
@@ -328,10 +329,9 @@ class AskObject(smach.State):
                 response_answer = self.response.values[x]
 
         if response_answer == "no_answer" or  response_answer == "wrong_answer":
-            self.robot.speech.speak("I understood that you need a water")
+            self.robot.speech.speak("I'll bring you a water")
             response_answer = "water"
 
-        #import ipdb; ipdb.set_trace()
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
         return "done"
 
@@ -353,26 +353,28 @@ class AskYesNo(smach.State):
                     response_answer = self.response.values[x]
 
         if response_answer == "false":
-            return "no"
-        else:
             return "yes"
+        else:
+            return "no"
 
-# Class for registering person
 class Register(smach.State):
     def __init__(self, robot=None, status=1):
         smach.State.__init__(self, outcomes=['finished'])
     
         self.robot = robot
-
         self.status = status
-
         self.get_picture = rospy.ServiceProxy('virtual_cam/cheese', cheese)
 
     def execute(self, userdata=None):    
 
+        '''
         person_query = Conjunction( 
                             Compound("instance_of", "ObjectID", "person"), 
                             Compound("property_expected","ObjectID", "position", Sequence("X","Y","Z")))
+        '''
+        person_query = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
 
         answers = self.robot.reasoner.query(person_query)
@@ -405,9 +407,9 @@ class Register(smach.State):
             f.write('person;1;')  # 0 is not oke; 1 is ok and ;2 fire
 
         rospy.logdebug("Wrote status")
-        f.write('%.2f;%.2f; \n' % (x, y))
+        f.write('%.2f;%.2f \n' % (x, y))
         '''   
-        f.write('%.2f;%.2f;' % (x, y))
+        f.write('%.2f;%.2f' % (x, y))
         f.write(room + '\n')
         '''
         f.close() 
@@ -456,7 +458,6 @@ class SwitchEmergencyDetector(smach.State):
         try:
             self.response = self.startup_people_emergency_detection(self.switch, 0.0) 
         except Exception, e:
-        #except KeyError, ke:
             print e
             return "failed"
         return "done"
@@ -464,7 +465,7 @@ class SwitchEmergencyDetector(smach.State):
 
 class ObservingEmergency(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['done','failed','expired'])
+        smach.State.__init__(self, outcomes=['done','waiting','expired'])
         self.robot = robot
         rospy.Subscriber("/person_emergency_detector/result", std_msgs.msg.String, self.callback)
         self.detected_poses = { 'wave' : 0, 'fall' : 0 }
@@ -472,21 +473,20 @@ class ObservingEmergency(smach.State):
 
     def callback(self, data):
         seen = data.data
-        #rospy.loginfo(": I heard %s" % seen)
-
         if seen != '':
             self.detected_poses[seen] = self.detected_poses[seen] + 1
-            rospy.loginfo(": I heard %s" % seen)
+            rospy.loginfo(": I saw %s" % seen)
 
     def execute(self, userdata=None):
+
         if self.counter > 100:
             return 'expired'
 
-        if self.detected_poses['wave'] < 3 or self.detected_poses['fall'] < 3:
-            self.counter = self.counter + 1 
-            return 'failed'
+        if self.detected_poses['wave'] > 30 or self.detected_poses['fall'] > 30:
+            return 'done'
 
-        return 'done'
+        self.counter = self.counter + 1 
+        return 'waiting'
 
 class WaitForAmbulance(smach.State):
     def __init__(self, robot):
@@ -563,14 +563,9 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
     robot.reasoner.query(Compound("retractall", Compound("not_visited", "X")))
     robot.reasoner.query(Compound("retractall", Compound("not_unreachable", "X")))
-    robot.reasoner.query(Compound("retractall", Compound("registered", "X")))
+    robot.reasoner.query(Compound("retractall", Compound("emergency_person", "X")))
     robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
     robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
-
-    # Emergency parameters
-    robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))
-    robot.reasoner.query(Compound("retractall", Compound("register_person_no", "X")))
-    robot.reasoner.query(Compound("assert",Compound("register_person_no", "1")))
 
     # Load database
     robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
@@ -579,6 +574,28 @@ def setup_statemachine(robot):
     robot.reasoner.query(Compound("assertz",Compound("challenge", "emergency")))
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
+
+    person_query = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+    general_person_query = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+    emergency_person_query = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
+                                    Compound( "emergency_person", "ObjectID"))
+
+    grabpoint_query = Conjunction(  
+                                    Compound("goal", Compound("serve", "Drink")),
+                                    Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+
 
     with sm:
 
@@ -594,20 +611,15 @@ def setup_statemachine(robot):
         smach.StateMachine.add("SAY_LOOK_FOR_PERSON",
                                     states.Say(robot, "Looking for person.", block=False),
                                     transitions={   "spoken":"FIND_PERSON"})
-        
         ######################################################
-        #####################  GO TO ROOM  ###################
+        ########## GO TO ROOM AND LOOK FOR PERSON ############
         ######################################################
         smach.StateMachine.add("FIND_PERSON",
                                 LookingForPersonOld(robot),
                                 transitions={   'found':'NAVIGATE_TO_PERSON',
                                                 'looking':'FIND_PERSON',
                                                 'not_found':'SAY_GO_TO_EXIT'})
-        person_query = Conjunction(  
-                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
-
+        
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
                                     states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
                                     transitions={   "arrived":"LOOK_AT_PERSON",
@@ -616,7 +628,7 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
         smach.StateMachine.add('LOOK_AT_PERSON',
                                 LookAtPerson(robot),                          
-                                transitions={'finished':'TURN_ON_EMERGENCY_DETECTOR'})  
+                                transitions={'finished':'SAY_TURN_ON_EMERGENCY_DETECTOR'})  
 
 
         smach.StateMachine.add("SAY_PERSON_UNREACHABLE",
@@ -639,7 +651,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('RELOOK_AT_PERSON',
                                 LookAtPerson(robot),                          
-                                transitions={'finished':'TURN_ON_EMERGENCY_DETECTOR'}) 
+                                transitions={'finished':'SAY_TURN_ON_EMERGENCY_DETECTOR'}) 
 
 
         ''' NEW, NOT TESTED
@@ -680,27 +692,30 @@ def setup_statemachine(robot):
         ######################################################
         ################  OBSERVE EMERGENCY  #################
         ######################################################
+        smach.StateMachine.add("SAY_TURN_ON_EMERGENCY_DETECTOR",
+                                states.Say(robot,["Waiting for emergency"], block=False),
+                                transitions={'spoken':'TURN_ON_EMERGENCY_DETECTOR'})
+
+
         smach.StateMachine.add("TURN_ON_EMERGENCY_DETECTOR",
-                                SwitchEmergencyDetector(robot,switch=True),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                SwitchEmergencyDetector(robot,switch=True),  
                                 transitions={'done':'OBSERVE_EMERGENCY',
                                              'failed':'OBSERVE_EMERGENCY'})
 
-
-
         smach.StateMachine.add("OBSERVE_EMERGENCY",
-                                ObservingEmergency(robot),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                ObservingEmergency(robot), 
                                 transitions={'done':'TURN_OFF_EMERGENCY_DETECTOR',
-                                             'failed':'OBSERVE_EMERGENCY',
+                                             'waiting':'WAITING_STATE',
                                              'expired':'TURN_OFF_EMERGENCY_DETECTOR'})
 
+        smach.StateMachine.add("WAITING_STATE",
+                                SleepTime(robot, sleeptime=1), 
+                                transitions={'finished':'OBSERVE_EMERGENCY'})
+
         smach.StateMachine.add("TURN_OFF_EMERGENCY_DETECTOR",
-                                SwitchEmergencyDetector(robot,switch=False),  #LOCATION SHOULD BE FOUND, otherwise sentence is to long for non-blocking
+                                SwitchEmergencyDetector(robot,switch=False), 
                                 transitions={'done':'APPROACH_PERSON',
                                              'failed':'APPROACH_PERSON'})
-
-        smach.StateMachine.add('TIME_SLEEP',
-                                    SleepTime(robot,sleeptime=20),
-                                    transitions={   'finished':'APPROACH_PERSON'}) 
 
         ######################################################
         ################   APPROACH PERSON   #################
@@ -715,10 +730,6 @@ def setup_statemachine(robot):
         smach.StateMachine.add("FAILED_DRIVING_TO_LOCATION",
                                 states.Say(robot,"I was not able to reach the desired location of the person.", block=False),
                                 transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT2'})
-
-
-        query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Location"),
-                                                      Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))
 
         smach.StateMachine.add('GO_TO_LAST_EXPLORATION_POINT2', 
                                     states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
@@ -744,8 +755,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('ANSWER_AMBULANCE',
                                     AskYesNo(robot),
-                                    transitions={   'yes':'SAY_REGISTER_NOT_OKAY',             # REGISTER AND RUN PDF
-                                                    'preempted':'SAY_REGISTER_NOT_OKAY',        #
+                                    transitions={   'yes':'SAY_REGISTER_NOT_OKAY',            
+                                                    'preempted':'SAY_REGISTER_NOT_OKAY',       
                                                     'no':'SAY_REGISTER_OKAY'})    
 
         smach.StateMachine.add('SAY_REGISTER_NOT_OKAY',
@@ -786,24 +797,15 @@ def setup_statemachine(robot):
                                                     "found":'PICKUP_OBJECT',
                                                     "not_found":'SAY_OBJECT_NOT_FOUND'})
 
-        query_grabpoint = Conjunction(  Compound("goal", Compound("serve", "Drink")),
-                                           Compound( "property_expected", "ObjectID", "class_label", "Drink"),
-                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                           Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-
         arm = robot.leftArm
 
         smach.StateMachine.add( 'PICKUP_OBJECT',
-                                    states.GrabMachine(arm, robot, query_grabpoint),
+                                    states.GrabMachine(arm, robot, grabpoint_query),
                                     transitions={   "succeeded":"RETURN_TO_PERSON",
                                                     "failed":'SAY_OBJECT_NOT_GRASPED' }) 
-        person_query2 = Conjunction(  
-                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
-
-
+        
         smach.StateMachine.add( "RETURN_TO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=person_query2, xy_dist_to_goal_tuple=(0.8,0)),
+                                    states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(0.8,0)),
                                     transitions={   "arrived":"HANDOVER_TO_HUMAN",
                                                     "unreachable":'HANDOVER_TO_HUMAN',
                                                     "preempted":'HANDOVER_TO_HUMAN',
@@ -844,6 +846,9 @@ def setup_statemachine(robot):
                                                     'unreachable':'WAIT_FOR_AMBULANCE', 
                                                     'goal_not_defined':'WAIT_FOR_AMBULANCE'})
 
+        ######################################################
+        ################# WAIT FOR AMBULANCE #################
+        ######################################################
         smach.StateMachine.add('WAIT_FOR_AMBULANCE', 
                                     WaitForAmbulance(robot),
                                     transitions={   'detected':'SAY_FOLLOW_ME', 
@@ -852,26 +857,30 @@ def setup_statemachine(robot):
                                                     'timed_out':'GUIDE_TO_PERSON'})
 
         smach.StateMachine.add('SAY_FOLLOW_ME',
-                                    states.Say(robot, 'Please follow me to the patient.'),
+                                    states.Say(robot, 'Please follow me to the patient.',block=False),
                                     transitions={'spoken':'GUIDE_TO_PERSON'})
 
         smach.StateMachine.add('SAY_FAILED_DETECTION',
-                                    states.Say(robot, 'I could not detect the ambulance, please follow me to the patient whereever you are.'),
+                                    states.Say(robot, 'I could not detect the ambulance, please follow me to the patient whereever you are.',block=False),
                                     transitions={'spoken':'GUIDE_TO_PERSON'})
 
-
+        ######################################################
+        ################### DRIVE TO PERSON ##################
+        ######################################################
         smach.StateMachine.add('GUIDE_TO_PERSON', 
-                                    states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    states.NavigateGeneric(robot, lookat_query=emergency_person_query, xy_dist_to_goal_tuple=(0.8,0)),
                                     transitions={   "arrived":"SAY_ARRIVED_AT_PATIENT",
                                                     "unreachable":'SAY_ARRIVED_AT_PATIENT',
                                                     "preempted":'SAY_ARRIVED_AT_PATIENT',
                                                     "goal_not_defined":'SAY_ARRIVED_AT_PATIENT'})
 
         smach.StateMachine.add('SAY_ARRIVED_AT_PATIENT',
-                                    states.Say(robot, 'The patient is here, thanks for your assistance.'),
+                                    states.Say(robot, 'The patient is here, thanks for the assistance.',block=False),
                                     transitions={'spoken':'EXIT_APPARTMENT'})
 
-        # Then amigo will drive to the registration table. Defined in knowledge base. Now it is the table in the test map.
+        ######################################################
+        #####################  GO TO EXIT  ###################
+        ######################################################
         smach.StateMachine.add('EXIT_APPARTMENT', 
                                     states.Navigate_named(robot, "exit_1"),
                                     transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
@@ -880,23 +889,21 @@ def setup_statemachine(robot):
                                                     'goal_not_defined':'FAILED_GO_TO_EXIT'})
 
         smach.StateMachine.add('FAILED_GO_TO_EXIT',
-                                    states.Say(robot, 'I was not able to go to the exit. I will stop here and save all the information I gathered in a PDF file on a USB stick.', block=False),
+                                    states.Say(robot, 'I was not able to go to the exit.', block=False),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK_FINAL'})
 
         smach.StateMachine.add('SUCCEED_GO_TO_EXIT',
-                                    states.Say(robot, 'I will now save all the information I gathered in a PDF file on a USB stick.', block=False),
+                                    states.Say(robot, 'I will now save all the information I gathered.', block=False),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK_FINAL'})
 
         smach.StateMachine.add('SAVE_PDF_ON_STICK_FINAL',
                                     RunPdfCreator(robot),
                                     transitions={'done':'AT_END',
                                                  'failed':'AT_END'})
-    
 
         ######################################################
-        ################# WAIT FOR AMBULANCE #################
+        #####################  AT THE END  ###################
         ######################################################
-        # Finally amigo will stop and says 'goodbye' to show that he's done.
         smach.StateMachine.add('AT_END',
                                 states.Say(robot, "Goodbye"),
                                 transitions={'spoken':'Done'})
