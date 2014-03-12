@@ -8,7 +8,7 @@ import math
 from sensor_msgs.msg import LaserScan
 import geometry_msgs
 
-from psi import Compound
+from psi import Compound, Conjunction
 
 import util.reasoning_helpers as urh
 import robot_skills.util.msg_constructors as msgs
@@ -40,10 +40,10 @@ class Learn_Person(smach.State):
                 name_to_learn = "unknown"
 
         rospy.loginfo('Get user name {0}'.format(name_to_learn))
-        self.robot.speech.speak("This may take a while, please be patient while I try to learn your face.", block=False)
-        speech_sentence = [ 'Please look at my left arm, until I am finished learning.',
-                            'Now look at my right arm, please wait until I am finished learning',
-                            'Please look at my face, till I am finished.']
+        self.robot.speech.speak("I will now learn your face.", block=False)
+        speech_sentence = [ 'Please look at my left arm',
+                            'Now look at my right arm',
+                            'Please look at my face']
 
         if 'left' in self.models_per_view:
             # learn left face
@@ -83,6 +83,85 @@ class Learn_Person(smach.State):
             self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!", block=False)
         
         return 'face_learned'
+
+class RecognizePerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['no_people_found', 'no_people_recognized', 'person_recognized'],
+                                   input_keys=[],
+                                   output_keys=[])
+        self.robot = robot
+        
+        self.detect_query = Conjunction(Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                        Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+        
+        self.recognize_query = Conjunction(Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                           Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF")))
+
+    def execute(self, userdata=None):
+        ''' Reset robot '''
+        self.robot.speech.speak("Let me see who's here", block=False)
+        self.robot.head.look_up()
+        self.robot.spindle.reset()
+
+        # Do we need this?
+        #''' Toggle perception and wait for someone to appear'''
+        #cntr = 0;
+        #self.robot.perception.toggle(["face_segmentation"])
+        #while (not person_result and cntr < 10):
+        #    rospy.sleep(0.5)
+        #    cntr += 1
+        #    rospy.loginfo("Checking for a person for the {0} time".format(cntr))
+        #    person_result = self.robot.reasoner.query(self.detect_query)
+        #    self.robot.perception.toggle([])
+
+        #if not person_result:
+        #    self.robot.speech.speak("No one here. Face segmentation did not find a person here", block=False)
+        #    return 'no_people_found'
+
+        #self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.", block=False)  
+    
+        cntr = 0
+        name = None
+        self.robot.perception.toggle(["face_recognition", "face_segmentation"])
+
+        while (cntr < 10 and not name):
+            rospy.sleep(0.5)
+            cntr += 1
+            rospy.loginfo("Checking for the {0} time".format(cntr))
+
+            person_result = self.robot.reasoner.query(self.recognize_query)
+
+            # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
+            if len(person_result) > 0:
+                name_pmf = person_result[0]["NamePMF"]
+
+                if len(person_result) > 1:
+                    rospy.logwarn("Multiple faces detected, only checking the first one!")
+
+                name=None
+                name_prob=0
+                for name_possibility in name_pmf:
+                    print name_possibility
+                    prob = float(name_possibility[0])
+                    if prob > 0.175 and prob > name_prob:
+                        name = str(name_possibility[1][0])
+                        #print "Updated most probable name to " + str(name)
+                        name_prob = prob
+
+        self.robot.perception.toggle([])
+        
+        if not person_result:
+            rospy.logwarn("No person names received from world model")
+            return 'no_people_found'
+        elif not name:
+            self.robot.speech.speak("I don't know who you are.", block=False)
+            return 'no_people_recognized'
+        elif name:
+            self.robot.speech.speak("Hello " + str(name), block=False)
+            #userdata.name = str(name)
+            return 'person_recognized'        
+            
 
 class LookForObjectsAtROI(smach.State):
     def __init__(self, robot, lookat_query, object_query, maxdist=0.8, modules=["object_recognition"], waittime=2.5):
