@@ -560,7 +560,7 @@ class HandoverToHuman(smach.StateMachine):
                                      'failed'   :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
 
             smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL",
-                        ArmToJointPos(self.robot, self.side, (-0.2, 0.5, -0.2, 0.8, 0, 0.210, 0.2), timeout=1.0),
+                        ArmToJointPos(self.robot, self.side, (-0.2, -0.7, 0.2, 2.0, 0, 0.5, 0.3), timeout=1.0),
                         transitions={   'done':'SAY_OPEN_GRIPPER',
                                       'failed':'SAY_OPEN_GRIPPER'})
             #smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),

@@ -650,8 +650,9 @@ class Determine_goal(smach.State):
 
             if self.lookat_query:
                 try:
-                    rospy.logwarn("Determine_goal: lookat_query")
+                    rospy.logwarn("Determine_goal: lookat_query = {0}".format(self.lookat_query))
                     lookat_answers = self.robot.reasoner.query(self.lookat_query)
+                    
                     basepos = self.robot.base.location.pose.position
                     basepos = (basepos.x, basepos.y, basepos.z)
                     selected_roi_answer = urh.select_answer(lookat_answers, 
@@ -671,6 +672,9 @@ class Determine_goal(smach.State):
                             self.possible_locations += [(base_goal_pose.pose.position.x,
                                                     base_goal_pose.pose.position.y,
                                                     phi)]
+                    else:
+                        rospy.logerr("Cannot find a valid base pose for {0} with offsets {1} and {2}".format(lookat_point, self.xy_dist_to_goal_tuple[0],self.xy_dist_to_goal_tuple[1]))
+
                 except Exception, e:
                     rospy.logerr(e)
                     return "failed"

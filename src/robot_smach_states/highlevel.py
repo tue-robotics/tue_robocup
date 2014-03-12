@@ -291,13 +291,14 @@ class VisitQueryPoi(smach.StateMachine):
 
 
 class GetObject(smach.StateMachine):
-    def __init__(self, robot, side, roi_query, object_query, object_identifier="Object", max_duration=rospy.Duration(3600)):
+    def __init__(self, robot, side, roi_query, roi_identifier="Poi", object_query=None, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
         self.side = side
         self.roi_query = roi_query
         self.object_query = object_query
+        self.roi_identifier =roi_identifier
 
         rospy.logwarn("roi_query = {0}".format(roi_query))
 
@@ -316,7 +317,7 @@ class GetObject(smach.StateMachine):
                                     transitions={   'done':'DRIVE_TO_SEARCHPOS' })            
                                                     
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
-                                    VisitQueryPoi(self.robot,  self.roi_query, visit_label="currently_visiting"),
+                                    VisitQueryPoi(self.robot, poi_query=self.roi_query, identifier=self.roi_identifier, visit_label="currently_visiting"),
                                     transitions={   'arrived'         :'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable'     :'DRIVE_TO_SEARCHPOS',
                                                     'preempted'       :'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
