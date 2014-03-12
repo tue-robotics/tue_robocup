@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="gdb" default="false"/>
+    <arg if="$(arg gdb)" name="launch-prefix" value="gdb -ex run --args"/>
+    <arg unless="$(arg gdb)" name="launch-prefix" value=""/>
+
+    <node name="explore" pkg="challenge_open_2014" type="explore" output="screen" launch-prefix="$(arg launch-prefix)">
+    </node>
+
+</launch>

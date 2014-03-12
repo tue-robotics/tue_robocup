@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="gdb" default="false"/>
+    <arg if="$(arg gdb)" name="launch-prefix" value="gdb -ex run --args"/>
+    <arg unless="$(arg gdb)" name="launch-prefix" value=""/>
+
+    <!-- WIRE VOLUME -->     
+    <node name="wire_volume" pkg="wire_volume" type="server" output="screen" launch-prefix="$(arg launch-prefix)"/>
+
+    <!-- Load transport interface plugin -->
+    <include file="$(find wire_volume_transport)/launch/load_server_plugin.launch"/>
+
+    <!-- Load Entity Fitter Plugin -->
+    <node name="wv_load_fitter_plugin" pkg="wire_volume" type="load_plugin" args="wire_fitter entity_fitter_plugin depth_image_topic=/amigo/top_kinect/depth_registered/image cam_info_topic=/amigo/top_kinect/depth_registered/camera_info fit_type=table"/>
+
+    <!-- Vis Plugin Wire Volume loader -->
+    <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
+
+    <!-- TF Plugin Wire Volume loader -->
+    <node name="tf_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_tf_broadcaster tf_plugin" output="screen"/>
+
+</launch>
