@@ -29,8 +29,8 @@ class Base(object):
 
         # Wait for services to be active
         rospy.loginfo("Waiting for the global planner services ...")
-        rospy.wait_for_service("/gp/get_plan_srv")
-        rospy.wait_for_service("/gp/check_plan_srv")
+#        rospy.wait_for_service("/gp/get_plan_srv")
+#        rospy.wait_for_service("/gp/check_plan_srv")
 
         # ROS Services for global planner
         self.get_plan_client = rospy.ServiceProxy("/gp/get_plan_srv", GetPlan)
@@ -51,7 +51,6 @@ class Base(object):
         self.local_planner_status = "controlling"
 
     def __localPlannerFeedbackCallback(self, feedback):
-        print feedback
         self.local_planner_status = "controlling" # or stuck (blocked)
 
     def __localPlannerDoneCallback(self, terminal_state, result):
@@ -69,8 +68,12 @@ class Base(object):
         try:
             resp = self.get_plan_client(pcs)
         except:
-            rospy.logerr("Could not get plan from global planner, is the global planner running?")
-            return []
+            rospy.logerr("Could not get plan from global planner via service call, is the global planner running?")
+            return -2
+
+        if not resp.succes:
+            rospy.logerr("Global planner couldn't figure out your request. Are your constraints set correctly?")
+            return -1
 
         return resp.plan
 
