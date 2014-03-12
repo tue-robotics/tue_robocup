@@ -23,7 +23,7 @@ class AvoidThat(smach.StateMachine):
         with self:
 
             smach.StateMachine.add('NAVIGATE_TO_WAYPOINT',
-                                    states.NavigateGeneric(robot, goal_query=query_waypoint),
+                                    states.NavigateGeneric(robot, goal_query=query_waypoint, goal_area_radius=0.2),
                                     transitions={   "arrived":"SAY_GOAL_REACHED",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'Aborted',
