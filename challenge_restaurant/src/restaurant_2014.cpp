@@ -1310,6 +1310,8 @@ std::string getIdFromWorldModel(std::vector<wire::PropertySet>& objects, std::st
             std::string class_label = prop_label.getValue().getExpectedValue().toString();
             if (class_label == "peanut_butter") class_label = "peanutbutter";
             else if (class_label == "ice_tea") class_label = "icetea";
+            else if (class_label == "glam_up") class_label = "glamup";
+            else if (class_label == "gold_tea") class_label = "goldtea";
 
             // Probability of this label
             double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
