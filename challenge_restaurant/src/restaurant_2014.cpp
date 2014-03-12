@@ -1749,6 +1749,8 @@ int main(int argc, char **argv) {
             }
 
         }
+        
+        amigoSpeak("I am done");
 
         done = true;
 
