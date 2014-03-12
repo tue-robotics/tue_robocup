@@ -476,12 +476,13 @@ class ObservingEmergency(smach.State):
 
         if seen != '':
             self.detected_poses[seen] = self.detected_poses[seen] + 1
+            rospy.loginfo(": I heard %s" % seen)
 
     def execute(self, userdata=None):
-        if self.counter > 10:
+        if self.counter > 100:
             return 'expired'
 
-        if self.detected_poses['wave'] < 3 and self.detected_poses['fall'] < 3:
+        if self.detected_poses['wave'] < 3 or self.detected_poses['fall'] < 3:
             self.counter = self.counter + 1 
             return 'failed'
 
@@ -615,7 +616,7 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
         smach.StateMachine.add('LOOK_AT_PERSON',
                                 LookAtPerson(robot),                          
-                                transitions={'finished':'OBSERVE_EMERGENCY'})  
+                                transitions={'finished':'TURN_ON_EMERGENCY_DETECTOR'})  
 
 
         smach.StateMachine.add("SAY_PERSON_UNREACHABLE",
@@ -796,11 +797,13 @@ def setup_statemachine(robot):
                                     states.GrabMachine(arm, robot, query_grabpoint),
                                     transitions={   "succeeded":"RETURN_TO_PERSON",
                                                     "failed":'SAY_OBJECT_NOT_GRASPED' }) 
-
+        person_query2 = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
 
         smach.StateMachine.add( "RETURN_TO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    states.NavigateGeneric(robot, lookat_query=person_query2, xy_dist_to_goal_tuple=(0.8,0)),
                                     transitions={   "arrived":"HANDOVER_TO_HUMAN",
                                                     "unreachable":'HANDOVER_TO_HUMAN',
                                                     "preempted":'HANDOVER_TO_HUMAN',
