@@ -107,6 +107,9 @@ bool transformPoseStamped(geometry_msgs::PoseStamped& in, geometry_msgs::PoseSta
     try
     {
         listener_->transformPose(frame_out, in, out);
+        ROS_INFO("Transformed (%f,%f) in %s to (%f,%f) in %s",
+                 in.pose.position.x, in.pose.position.y, in.header.frame_id.c_str(),
+                 out.pose.position.x, out.pose.position.y, out.header.frame_id.c_str());
     }
     catch (tf::TransformException& e)
     {
@@ -319,19 +322,19 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
 
 void moveToRelativePosition(double x, double y, double phi, double dt)
 {
-    geometry_msgs::PoseStamped goal_pos;
-    goal_pos.header.frame_id = ROBOT_BASE_FRAME;
-    goal_pos.header.stamp = ros::Time::now()-ros::Duration(0.5);
-    goal_pos.pose.position.x = x;
-    goal_pos.pose.position.y = y;
+    geometry_msgs::PoseStamped goal_pos_in, goal_pos_map;
+    goal_pos_in.header.frame_id = ROBOT_BASE_FRAME;
+    goal_pos_in.header.stamp = ros::Time::now()-ros::Duration(0.5);
+    goal_pos_in.pose.position.x = x;
+    goal_pos_in.pose.position.y = y;
     tf::Quaternion q;
     q.setRPY(0, 0, phi);
-    goal_pos.pose.orientation.x = q.getX();
-    goal_pos.pose.orientation.y = q.getY();
-    goal_pos.pose.orientation.z = q.getZ();
-    goal_pos.pose.orientation.w = q.getW();
-    transformPoseStamped(goal_pos, goal_pos, "/map");
-    moveBase(goal_pos.pose.position.x, goal_pos.pose.position.y, tf::getYaw(goal_pos.pose.orientation), 0.5, dt);
+    goal_pos_in.pose.orientation.x = q.getX();
+    goal_pos_in.pose.orientation.y = q.getY();
+    goal_pos_in.pose.orientation.z = q.getZ();
+    goal_pos_in.pose.orientation.w = q.getW();
+    transformPoseStamped(goal_pos_in, goal_pos_map, "/map");
+    moveBase(goal_pos_map.pose.position.x, goal_pos_map.pose.position.y, tf::getYaw(goal_pos_map.pose.orientation), 0.5, dt);
 }
 
 
@@ -372,11 +375,13 @@ void speechCallback(std_msgs::String res)
         if (answer == "yes")
         {
             //! Leave the elevator
-            moveToRelativePosition(-2.5, 0.0, 3.14, 25.0);
+            moveToRelativePosition(-2.5, 0.0, 3.14, 35.0);
 
             //! Shutdown the speech
             sub_speech_.shutdown();
             left_elevator_ = true;
+
+            amigoSpeak("Please leave the elevator", false);
 
 
         }
@@ -458,6 +463,9 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "follow_me_2014");
     ros::NodeHandle nh;
 
+    //! Initialize the follower
+    follower_ = new Follower(nh, ROBOT_BASE_FRAME, false);
+
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
     setRGBLights("blue");
@@ -485,14 +493,17 @@ int main(int argc, char **argv) {
     resetSpindlePosition();
 
     //! Clear cost map interface
-    srv_cost_map = nh.serviceClient<tue_pocketsphinx::Switch>("/move_base_3d/reset");
+    srv_cost_map = nh.serviceClient<std_srvs::Empty>("/move_base_3d/reset");
     srv_cost_map.waitForExistence(ros::Duration(3.0));
     std_srvs::Empty empty_srv;
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
 
+    //! Clear the world model
+    ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
+    std_srvs::Empty srv;
+    if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
 
     //! Start follower
-    follower_ = new Follower(nh, ROBOT_BASE_FRAME, false);
     if (!follower_->start())
     {
         ROS_ERROR("Could not start the follower!");
@@ -514,10 +525,9 @@ int main(int argc, char **argv) {
     setRGBLights("green");
     t_last_speech_cmd_ = ros::Time::now().toSec();
     ROS_INFO("Started speech recognition");
-    
-    // @todo: clear world model
-    // @todo: move base goal in base link? Must be in map
-    // @todo: no laser data available robot only starts driving after a few [s]
+
+    // @todo: move base goal in base link? Must be in map: DONE
+    // @todo: no laser data available robot only starts driving after a few [s]: DONE?
 
     //! Start Following
     bool drive = false;
@@ -565,9 +575,10 @@ int main(int argc, char **argv) {
                 else
                 {
                     ROS_WARN("Robot did not move for %f [s], trying move_base_3d to plan around obstacle", ros::Time::now().toSec() - t_start_no_move);
+                    double offset = 0.75; // otherwise target always an obstacle
                     double x = 0, y = 0, phi = 0;
                     follower_->getCurrentOperatorPosition(x, y, phi, ROBOT_BASE_FRAME);
-                    moveBase(x, y, phi, 0.2, 2.0);
+                    moveToRelativePosition(x-offset, y, phi, 3.0);
                 }
             }
 

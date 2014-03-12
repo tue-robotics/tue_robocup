@@ -6,21 +6,12 @@ amigo1:
 
 amigo1:
 
-    amiddle-follow-me-gmapping
-    
-  OR
-    
-    amiddle-follow-me (OLD VERSION: not maintained)
+    amiddle-restaurant
+   
+amigo3:
 
-amigo2:
-
-    rosrun challenge_follow_me follow_me_gmapping
-
-  OR
-
-    rosrun challenge_follow_me follow_me_simple  (OLD VERSION: not maintained)
+    rosrun challenge_follow_me follow_me_2014
 
 INSTRUCTIONS:
-- Say 'continue' to start the challenge
-- If you want the robot to leave the elevator, say: 'amigo leave', AMIGO should now leave the elevator. Leave the elevator when AMIGO calls you.
-- If AMIGO lost the operator it will say so. It expects the operator to come stand in front of him.
+- If you want the robot to leave the elevator, say: 'amigo leave', confirm with yes. Wait for AMIGO to call you
+- If AMIGO lost the operator it will turn purple. It expects the operator to come stand in front of him.
