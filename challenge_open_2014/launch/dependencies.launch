@@ -12,6 +12,9 @@
     <!-- Load transport interface plugin -->
     <include file="$(find wire_volume_transport)/launch/load_server_plugin.launch"/>
 
+    <!-- Load test environment -->
+    <!--node name="wv_load_environment" pkg="wire_volume_transport" type="load_xml" args="$(find wire_volume)/worlds/robotics_testlab_A.xml" output="screen"/-->
+
     <!-- Load Entity Fitter Plugin -->
     <node name="wv_load_fitter_plugin" pkg="wire_volume" type="load_plugin" args="wire_fitter entity_fitter_plugin depth_image_topic=/amigo/top_kinect/depth_registered/image cam_info_topic=/amigo/top_kinect/depth_registered/camera_info fit_type=table"/>
 
