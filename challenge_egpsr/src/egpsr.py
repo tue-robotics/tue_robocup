@@ -768,8 +768,9 @@ def setup_statemachine(robot):
 
             #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
 
+
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, selectedArm, search_query, object_query, object_identifier=object_identifier_query), 
+                                    states.GetObject(robot, side=selectedArm, roi_query=search_query, roi_identifier="ROI_Location", object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
@@ -1017,12 +1018,14 @@ def setup_statemachine(robot):
 
             #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
 
+
             smach.StateMachine.add('POINT_OBJECT',
-                                    states.PointObject(robot, selectedArm, search_query, object_query, object_identifier=object_identifier_query), 
+                                    states.PointObject(robot, side=selectedArm, roi_query=search_query, roi_identifier="ROI_Location", object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Timeout':'POINT_OBJECT_TIMED_OUT' })
+
 
             # TIMED OUT FINDING OBJECT  -> BACK TO MEETING POINT
             smach.StateMachine.add("POINT_OBJECT_TIMED_OUT",
@@ -1124,21 +1127,21 @@ def setup_statemachine(robot):
         with sm_leave:
 
             smach.StateMachine.add('GO_TO_EXIT_1', 
-                                    states.Navigate_named(robot, "exit_1"),
+                                    states.NavigateGeneric(robot, goal_name="exit_1"),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'GO_TO_EXIT_2', 
                                                     'unreachable':'GO_TO_EXIT_2', 
                                                     'goal_not_defined':'GO_TO_EXIT_2'})
 
             smach.StateMachine.add('GO_TO_EXIT_2', 
-                                    states.Navigate_named(robot, "exit_2"),
+                                    states.NavigateGeneric(robot, goal_name="exit_2"),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'GO_TO_EXIT_3', 
                                                     'unreachable':'GO_TO_EXIT_3', 
                                                     'goal_not_defined':'GO_TO_EXIT_3'})
 
             smach.StateMachine.add('GO_TO_EXIT_3', 
-                                    states.Navigate_named(robot, "exit_3"),
+                                    states.NavigateGeneric(robot, goal_name="exit_3"),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'NOT_AT_EXIT', 
                                                     'unreachable':'NOT_AT_EXIT', 
