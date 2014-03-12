@@ -50,6 +50,9 @@ class Base(object):
         self.action_client.send_goal(goal, done_cb = self.__localPlannerDoneCallback, feedback_cb = self.__localPlannerFeedbackCallback) 
         self.local_planner_status = "controlling"
 
+    def localPlannerCancelCurrentPlan(self):
+        self.action_client.cancel_goal()
+
     def __localPlannerFeedbackCallback(self, feedback):
         self.local_planner_status = "controlling" # or stuck (blocked)
 
