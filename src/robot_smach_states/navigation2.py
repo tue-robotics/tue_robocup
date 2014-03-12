@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('navigation_interface')
+import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import geometry_msgs.msg
