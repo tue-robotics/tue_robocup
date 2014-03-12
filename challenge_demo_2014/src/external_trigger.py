@@ -78,7 +78,7 @@ class ChallengeDemo2014(smach.StateMachine):
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
             
             smach.StateMachine.add("SAY_START_REACHED", 
-                                    states.Say(robot,"I'm going to wait for further instructions"),
+                                    states.Say(robot,"I'm going to wait for further instructions", block=False),
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
@@ -96,9 +96,36 @@ class ChallengeDemo2014(smach.StateMachine):
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
+
             smach.StateMachine.add("SAY_DOOR_REACHED", 
-                                    states.Say(robot,"Can I receive your package?"),
-                                    transitions={   'spoken':'Aborted'})
+                                    states.Say(robot,"Can I receive your package?", block=False),
+                                    transitions={   'spoken':'RECEIVE_POSE_LEFT'})
+            
+            smach.StateMachine.add("RECEIVE_POSE_LEFT", 
+                                    states.Carrying_pose(robot.leftArm, robot),
+                                    transitions={   'succeeded':'RECEIVE_POSE_RIGHT',
+                                                    'failed':'RECEIVE_POSE_RIGHT'})
+
+            smach.StateMachine.add("RECEIVE_POSE_RIGHT", 
+                                    states.Carrying_pose(robot.rightArm, robot),
+                                    transitions={   'succeeded':'WAIT_FOR_LOAD',
+                                                    'failed':'WAIT_FOR_LOAD'})
+
+            smach.StateMachine.add( 'WAIT_FOR_LOAD',
+                        states.Wait_time(robot, waittime=2),
+                        transitions={   'waited':'SAY_PACKAGE_RECEIVED',
+                                        'preempted':'SAY_PACKAGE_RECEIVED'})
+            
+            smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
+                                    states.Say(robot,"Thank you, I will notify my owner", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TO_START_2'})
+
+            smach.StateMachine.add('NAVIGATE_TO_START_2',
+                                    states.NavigateGeneric(robot, goal_query=query_start),
+                                    transitions={   "arrived":"Aborted",
+                                                    "unreachable":'SAY_GOAL_UNREACHABLE',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
