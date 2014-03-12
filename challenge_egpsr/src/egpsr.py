@@ -661,7 +661,7 @@ def setup_statemachine(robot):
                                          Compound("not", Compound("disposed", "ObjectID")))
             
             smach.StateMachine.add('GET_OBJECT',
-                                    states.GetObject(robot, selectedArm, search_query, object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
+                                    states.GetObject(robot, side=selectedArm, roi_query=search_query, roi_identifier="ROI_Location", object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
                                     transitions={'Done':'SAY_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Failed':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
                                                  'Aborted':'SAY_NOT_AT_GOAL_NAVIGATE_TO_LOC_TO',
