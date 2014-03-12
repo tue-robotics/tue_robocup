@@ -19,7 +19,7 @@ os.chdir(roslib.packages.get_pkg_dir('challenge_demo_2014'))
 os.chdir('src/doorbell')
 
 #PORT
-sys.argv[1] = '8000'
+sys.argv[1] = '8001'
 
 HandlerClass = SimpleHTTPRequestHandler
 ServerClass = BaseHTTPServer.HTTPServer
