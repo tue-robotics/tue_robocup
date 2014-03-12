@@ -14,7 +14,6 @@ from std_msgs.msg import String
 from math import sin
 
 from transporter import Transporter
-from drive_to_person import DriveToClosestPerson
 
 #This node publishes integer values to the 'key_commands' topic
 
