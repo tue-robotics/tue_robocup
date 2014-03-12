@@ -7,7 +7,6 @@ from robot_skills.reasoner import Compound, Conjunction, Sequence
 import smach
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
-from drive_to_person import DriveToClosestPerson
 
 ################ TODO / Bugs
 #
@@ -158,7 +157,7 @@ class FindMe(smach.StateMachine):
     
         #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
-        robot.reasoner.assertz(Compound("challenge", "find_me"))
+        robot.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
         self.room_query = Compound("waypoint", "find_me_room", Compound("pose_2d", "X", "Y", "Phi"))
 

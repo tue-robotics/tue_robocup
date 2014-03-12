@@ -16,7 +16,7 @@ class AvoidThat(smach.StateMachine):
 
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
 
-        robot.reasoner.assertz(Compound("challenge", "avoid_that"))
+        robot.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
         query_waypoint =  Compound("waypoint", "goal", Compound("pose_2d", "X", "Y", "Phi"))
         
@@ -42,8 +42,8 @@ class AvoidThat(smach.StateMachine):
                                     transitions={   'spoken':'Aborted'})
 
             smach.StateMachine.add("SAY_GOAL_REACHED", 
-                                    states.Say(robot, [ "Yeah, I reached my goal. Exiting challenge."]),
-                                    transitions={   'spoken':'Aborted'})
+                                    states.Say(robot, [ "Yeah, I reached my goal"]),
+                                    transitions={   'spoken':'Done'})
 
 if __name__ == "__main__":
     rospy.init_node('avoid_that_exec')

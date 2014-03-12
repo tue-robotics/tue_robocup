@@ -3,7 +3,6 @@ import roslib; roslib.load_manifest('challenge_atomic_actions')
 import rospy
 
 # 
-from drive_to_person import DriveToClosestPerson
 from speech_interpreter.srv import AskUser
 
 import smach
@@ -196,7 +195,7 @@ class FetchAndCarry(smach.StateMachine):
         # Load locations and objects from knowledge files
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
-        robot.reasoner.assertz(Compound("challenge", "fetch_and_carry"))
+        robot.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
         # Use reasonar to store start pose
         robot.reasoner.query(Compound("retractall", Compound("starting_pose", "X", "Y", "Z")))

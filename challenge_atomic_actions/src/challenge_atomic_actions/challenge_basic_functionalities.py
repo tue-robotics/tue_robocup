@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('challenge_cleanup')
 import rospy
+import sys
 
 import smach
 
@@ -35,7 +36,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_PICK_AND_PLACE',
                                     NavigateGeneric(robot, goal_query=query_goto_pick),
-                                    transitions={   "arrived":"GOTO_FETCH_AND_CARRY",
+                                    transitions={   "arrived":"PICK_AND_PLACE",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
@@ -43,39 +44,39 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             # ToDo: additional arguments?
             smach.StateMachine.add( 'PICK_AND_PLACE',
             	                    pick_and_place.PickAndPlace(robot),
-            	                    transitions={	"Done":		"GOTO_FETCH_AND_CARRY", 
-            	                                    "Aborted":	"Aborted", 
-            	                                    "Failed":	"GOTO_FETCH_AND_CARRY"})
-
-            smach.StateMachine.add( 'GOTO_FETCH_AND_CARRY',
-                                    NavigateGeneric(robot, goal_query=query_goto_fetch),
-                                    transitions={   "arrived":"GOTO_FIND_ME_AND_GO_OVER_THERE",
-                                                    "unreachable":'CANNOT_GOTO_CHALLENGE',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
-
-            smach.StateMachine.add( 'FETCH_AND_CARRY',
-            	                    fetch_and_carry.FetchAndCarry(robot),
-            	                    transitions={	"Done":		"GOTO_FIND_ME_AND_GO_OVER_THERE", 
-            	                                    "Aborted":	"Aborted", 
-            	                                    "Failed":	"GOTO_FIND_ME_AND_GO_OVER_THERE"})
-
-            smach.StateMachine.add( 'GOTO_FIND_ME_AND_GO_OVER_THERE',
-                                    NavigateGeneric(robot, goal_query=query_goto_find),
-                                    transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
-                                                    "unreachable":'CANNOT_GOTO_CHALLENGE',
-                                                    "preempted":'Aborted',
-                                                    "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
-
-            smach.StateMachine.add( 'FIND_ME_AND_GO_OVER_THERE',
-            	                    find_me.FindMe(robot),
             	                    transitions={	"Done":		"GOTO_AVOID_THAT", 
             	                                    "Aborted":	"Aborted", 
             	                                    "Failed":	"GOTO_AVOID_THAT"})
 
+            #smach.StateMachine.add( 'GOTO_FETCH_AND_CARRY',
+            #                        NavigateGeneric(robot, goal_query=query_goto_fetch),
+            #                        transitions={   "arrived":"GOTO_FIND_ME_AND_GO_OVER_THERE",
+            #                                        "unreachable":'CANNOT_GOTO_CHALLENGE',
+            #                                        "preempted":'Aborted',
+            #                                        "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
+
+            #smach.StateMachine.add( 'FETCH_AND_CARRY',
+            #	                    fetch_and_carry.FetchAndCarry(robot),
+            #	                    transitions={	"Done":		"GOTO_FIND_ME_AND_GO_OVER_THERE", 
+            #	                                    "Aborted":	"Aborted", 
+            #	                                    "Failed":	"GOTO_FIND_ME_AND_GO_OVER_THERE"})
+
+            #smach.StateMachine.add( 'GOTO_FIND_ME_AND_GO_OVER_THERE',
+            #                        NavigateGeneric(robot, goal_query=query_goto_find),
+            #                        transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
+            #                                       "unreachable":'CANNOT_GOTO_CHALLENGE',
+            #                                       "preempted":'Aborted',
+            #                                       "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
+
+            #smach.StateMachine.add( 'FIND_ME_AND_GO_OVER_THERE',
+            #	                    find_me.FindMe(robot),
+            #	                    transitions={	"Done":		"GOTO_AVOID_THAT", 
+            #	                                    "Aborted":	"Aborted", 
+            #	                                    "Failed":	"GOTO_AVOID_THAT"})
+
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid),
-                                    transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
+                                    transitions={   "arrived":"AVOID_THAT",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
@@ -94,7 +95,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'WHAT_DID_YOU_SAY',
             	                    what_did_you_say.WhatDidYouSay(robot),
-            	                    transitions={	"Done": "Done"})
+            	                    transitions={	"Done": "GOTO_PICK_AND_PLACE"})
 
             smach.StateMachine.add("CANNOT_GOTO_CHALLENGE", 
                                     Say(robot, [ "I can't find a way to my next challenge, can you please take me there "]),
@@ -124,7 +125,16 @@ if __name__ == "__main__":
     # Assert current challenge
     amigo.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
+    ''' Setup state machine'''
     machine = ChallengeBasicFunctionalities(amigo)
+
+    ''' If necessary: set initial state '''
+    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
+    if  len(sys.argv) > 1:
+        initial_state = [str(sys.argv[1])]
+        rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
+        machine.set_initial_state(initial_state)
+
     try:
         machine.execute()
     except Exception, e:
