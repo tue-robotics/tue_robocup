@@ -1057,6 +1057,7 @@ class NavigateGeneric(smach.StateMachine):
 
             self.determine_goal.possible_locations_initialized = False
             self.determine_goal.possible_locations = []
+
             return "done"
 
         with self:

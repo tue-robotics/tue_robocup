@@ -395,20 +395,13 @@ class Grab(smach.State):
         cntr = 0
         ar_marker_available = False
         while (cntr < 5 and not ar_marker_available):
-            rospy.loginfo("Checking AR marker for the {0} time".format(cntr+1))
+            rospy.logdebug("Checking AR marker for the {0} time".format(cntr+1))
             ar_point_grippoint = transformations.tf_transform(ar_point, self.ar_frame_id, self.end_effector_frame_id, tf_listener=self.robot.tf_listener)
             if not ar_point_grippoint == None:
                 ar_marker_available = True
             else:
                 cntr += 1
                 rospy.sleep(0.2)
-        
-        #''' Check if transform is available '''
-        #if ar_point_grippoint == None:
-        #    ar_marker_available = False
-        #else:
-        #    ar_marker_available = True
-        #rospy.logwarn("ar_marker_available (1) = {0}".format(ar_marker_available))
             
         ''' If transform is not available, try again, but use head movement as well '''
         if not ar_marker_available:
