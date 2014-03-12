@@ -109,6 +109,7 @@ int current_order_ = 1;
 std::string current_delivery_location_ = "";
 std::string current_object_ = "";
 double t_last_speech_cmd_ = 0;
+bool not_two_ = false;
 
 // Adminstration: other
 std::string current_clr_;
@@ -592,6 +593,13 @@ void getLocationAndSideFromAnswer(std::string full_answer, std::string& location
         ROS_INFO("Updated second word to '%s'", side.c_str());
     }
 
+    if (location == "two" && not_two_)
+    {
+        ROS_WARN("I heard two but I assume you meant food!");
+        location = "food";
+        not_two_ = false;
+    }
+
     //! Get full location
     //loc = mapToFullLocation(loc);
 }
@@ -684,7 +692,8 @@ void speechCallbackGuideShort(std_msgs::String res)
 
             if (answer == "no")
             {
-                // Robot misunderstood
+                // Robot misunderstood (in case of misunderstanding two, turn two into food next time)
+                if (current_loc_name_ == "two") not_two_ = true;
                 amigoSpeak("Which location and side?");
             }
             else if (answer == "continue")
