@@ -4,6 +4,7 @@ import rospy
 import head
 #import worldmodel
 import base
+import base2
 import spindle
 import speech
 import arms
@@ -41,6 +42,8 @@ class Amigo(object):
             self.head = head.Head()
         # if 'worldmodel' not in dontInclude:
         #     self.worldmodel = worldmodel.WorldModel(self.tf_listener)
+        if 'base2' not in dontInclude:
+            self.base2 = base2.Base(self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
         if 'base' not in dontInclude:
             self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
         if 'spindle' not in dontInclude:

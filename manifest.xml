@@ -79,6 +79,8 @@
   
   <depend package="amigo_launch_files"/>
 
+  <depend package="cb_planner_msgs_srvs"/>
+
 </package>
 
 
