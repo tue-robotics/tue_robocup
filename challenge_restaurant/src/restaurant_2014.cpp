@@ -384,7 +384,7 @@ bool storeLocation(std::string location_name)
     // FOR TESTING
     tf::Quaternion q = location.getRotation();
     double angle = tf::getYaw(q);
-    ROS_INFO("Angle is %f", angle);
+    ROS_DEBUG("Angle is %f", angle);
 
     //RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), location.getRotation().getAngle());
     RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), angle);
@@ -397,9 +397,9 @@ bool storeLocation(std::string location_name)
     location_marker_pub_.publish(marker_array);
 
     // TESTING
-    ROS_INFO("Angle before is %f", location.getRotation().getAngle());
-    location.getOrigin().rotate(tf::Vector3(0, 0, 1), 1.57);
-    ROS_INFO("Angle after is %f", location.getRotation().getAngle());
+    //ROS_INFO("Angle before is %f", location.getRotation().getAngle());
+    //location.getOrigin().rotate(tf::Vector3(0, 0, 1), 1.57);
+    //ROS_INFO("Angle after is %f", location.getRotation().getAngle());
 
 
     return true;
@@ -1582,13 +1582,18 @@ int main(int argc, char **argv) {
     ROS_INFO("Connected!");
 
     //! Clear cost map interface
-    srv_cost_map = nh.serviceClient<tue_pocketsphinx::Switch>("/move_base_3d/reset");
+    srv_cost_map = nh.serviceClient<std_srvs::Empty>("/move_base_3d/reset");
     srv_cost_map.waitForExistence(ros::Duration(3.0));
     std_srvs::Empty empty_srv;
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
 
     //! Reset arm positions
     moveBothArms("drive");
+
+    //! Construct the follower
+    ROS_INFO("Constructing the follower...");
+    follower_ = new Follower(nh, "/amigo/base_link", false);
+    ROS_INFO("done!");
 
     //! Perception
     srv_pein_ = nh.serviceClient<perception_srvs::StartPerception>("/start_perception");
@@ -1601,7 +1606,6 @@ int main(int argc, char **argv) {
     ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
     //! Start follower
-    follower_ = new Follower(nh, "/amigo/base_link", false);
     if (!follower_->start())
     {
         ROS_ERROR("Could not start the follower!");
@@ -1632,7 +1636,7 @@ int main(int argc, char **argv) {
 
         //! Update the follower
         bool ok = follower_->update();
-        if (!ok) ROS_WARN("Could not update Follower");
+        if (!ok) ROS_DEBUG("Robot will not move!");
 
         //! To ensure speech keeps working
         restartSpeechIfNeeded();
