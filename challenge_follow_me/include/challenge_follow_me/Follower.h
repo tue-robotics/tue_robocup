@@ -38,6 +38,7 @@ public:
 
     //! Interfaces to other modules
     bool reset();  // clear world model and start following
+    bool reset(double left_right_margin);  // clear world model and start following
     bool start();  // start follower
     void pause();  // pause but keep on tracking
     void resume(); // resume following after being paused
@@ -140,7 +141,7 @@ private:
     double MAX_2D_DISTANCE_TORSO_FACE;
 
     //! Administration
-    double t_last_check_, t_no_meas_;
+    double t_last_check_, t_no_meas_, t_last_print_;
     double operator_last_var_;
     bool demo_;
     bool first_time_;

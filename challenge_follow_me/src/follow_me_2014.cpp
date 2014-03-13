@@ -25,6 +25,9 @@
 // Follower
 #include "challenge_follow_me/Follower.h"
 
+// Problib conversions
+#include "problib/conversions.h"
+
 // STL
 #include <vector>
 #include <map>
@@ -50,9 +53,11 @@ struct RobotPose {
 
 
 // SETTINGS
-const std::string ROBOT_BASE_FRAME = "/amigo/base_link";
-const double T_WAIT_MAX_AFTER_STOP_CMD = 5.0;
-const double T_MAX_NO_MOVE_BEFORE_TRYING_3D = 5.0;
+const std::string ROBOT_BASE_FRAME = "/amigo/base_link";   // name of the robot's base link frame
+const double T_WAIT_MAX_AFTER_STOP_CMD = 5.0;              // after a stop command, resume following if no confirmation is heart after this time
+const double T_MAX_NO_MOVE_BEFORE_TRYING_3D = 5.0;         // time robot stands still before move_base_3d is used instead of the carrot planner
+const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;             // Maximum distance of robot to wall in elevator (used to detect elevator)
+const double ELEVATOR_INLIER_RATIO = 0.60;                 // % of laser points that should at least be within bounds for elevator to be detected
 
 // Speech
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
@@ -77,8 +82,7 @@ tf::TransformListener* listener_;												  // Tf listenter to obtain tf info
 // Clear cost map
 ros::ServiceClient srv_cost_map;
 
-// Problib conversions
-#include "problib/conversions.h"
+ros::Subscriber sub_laser_;
 
 // Administration: speech
 bool speech_recognition_turned_on_ = false;
@@ -88,6 +92,8 @@ double t_last_speech_cmd_ = 0;
 // Adminstration: other
 std::string current_clr_;
 bool left_elevator_ = false;
+bool in_elevator_ = false;
+double t_elevator_print_ = 0;
 double t_pause_ = 0;
 
 
@@ -338,6 +344,65 @@ void moveToRelativePosition(double x, double y, double phi, double dt)
 }
 
 
+void leaveElevator()
+{
+
+    double t_start = ros::Time::now().toSec();
+
+    // Get the current position wrt the map frame
+    geometry_msgs::PointStamped p_start, p_current;
+    try
+    {
+        listener_->transformPoint("/map", ros::Time(0), p_start, ROBOT_BASE_FRAME, p_current);
+        ROS_INFO("Current position is (%f,%f)", p_current.point.x, p_current.point.y);
+
+        // if the robot did barely move: try another set point
+        double dx = 0, dy = 0;
+        double y = 0;
+        int fctr = 1;
+        int count = 1;
+        while (dx*dx+dy*dy < 1.0 && count < 5)
+        {
+            if (count == 1) ROS_INFO("Trying to move out of the elevator: attempt %d", count);
+            else ROS_WARN("Trying to move out of the elevator: attempt %d", count);
+
+            // Try to move to this position
+            moveToRelativePosition(-3.5, fctr*y, 3.14, 35.0);
+
+            // Get current robot position
+            try
+            {
+                geometry_msgs::PointStamped p_now;
+                listener_->transformPoint("/map", ros::Time(0), p_current, ROBOT_BASE_FRAME, p_now);
+                dx = std::fabs(p_now.point.x - p_start.point.x);
+                dy = std::fabs(p_now.point.y - p_start.point.y);
+                p_current = p_now;
+            }
+            catch (tf::TransformException& e) {ROS_WARN("While driving out of the elevator: %s", e.what());}
+
+            // Update goal if the robot didn't move
+            y += 0.25;
+            fctr *= -1.0;
+            ++count;
+        }
+
+        if (count == 5) ROS_ERROR("I cannot leave the elevator the way I want it, I will continue from here");
+
+    }
+    catch (tf::TransformException& e)
+    {
+        ROS_WARN("Could not transform goal to map frame: %s", e.what());
+        moveToRelativePosition(-2.5, 0.0, 3.14, 35.0);
+        return;
+    }
+
+
+    ROS_INFO("Leaving the elevator took %f [s]", ros::Time::now().toSec()-t_start);
+
+
+}
+
+
 
 void speechCallback(std_msgs::String res)
 {
@@ -349,8 +414,8 @@ void speechCallback(std_msgs::String res)
     ROS_INFO("Received command: %s", answer.c_str());
     if (answer.empty()) return;
 
-    // ROBOT GOT A COMMAND
-    if (speech_state_ == speech_state::DRIVE && answer == "amigoleave")
+    // ROBOT GOT A COMMAND TO STOP AND COULD BE IN AN ELEVATOR
+    if (speech_state_ == speech_state::DRIVE && answer == "amigoleave" && in_elevator_)
     {
         // stop robot
         follower_->pause();
@@ -364,24 +429,29 @@ void speechCallback(std_msgs::String res)
         t_pause_ = ros::Time::now().toSec();
     }
 
-    // RECEIVED THE COMMAND TO LEAVE THE ELEVATOR
+    // ASKED FOR CONFIRMATION ON WHETHER OR NOT TO LEAVE THE ELEVATOR
     else if (speech_state_ == speech_state::CONFIRM_LEAVE)
     {
         // Get first word from the answer
         size_t position = answer.find_first_of(" ");
         if (position > 0 && position <= answer.size()) answer = std::string(answer.c_str(), position);
 
-        // CONFIRMED
+        // MUST LEAVE THE ELEVATOR
         if (answer == "yes")
         {
+            amigoSpeak("I will leave the elevator. Please wait until I call you", false);
+
             //! Leave the elevator
-            moveToRelativePosition(-2.5, 0.0, 3.14, 35.0);
+            leaveElevator();
 
             //! Shutdown the speech
             sub_speech_.shutdown();
             left_elevator_ = true;
 
-            amigoSpeak("Please leave the elevator", false);
+            //! Done with the elevator
+            amigoSpeak("You can leave the elevator", true);
+            follower_->reset(1.0);
+            sub_laser_.shutdown();
 
 
         }
@@ -455,6 +525,65 @@ void restartSpeechIfNeeded()
 
 
 
+void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
+
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    //   ELEVATOR DETECTOR
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    const double PI = 3.14;
+    std::vector<int> num_total_points(3, 0);
+    std::vector<int> num_points_in_bounds(3, 0);
+
+    double angle = laser_scan_msg->angle_min;
+    for(unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i)
+    {
+        double range = laser_scan_msg->ranges[i];
+
+        // check left of robot
+        if (angle > -0.5 * PI && angle < -0.25 * PI)
+        {
+            num_total_points[0]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE) num_points_in_bounds[0]++;
+        }
+        // check in front of robot
+        else if (angle > -0.25 * PI && angle < 0.25 * PI)
+        {
+            num_total_points[1]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE) num_points_in_bounds[1]++;
+
+        }
+        // check right of robot
+        else if (angle > 0.25 * PI && angle < 0.5 * PI)
+        {
+            num_total_points[2]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE) num_points_in_bounds[2]++;
+        }
+
+        angle += laser_scan_msg->angle_increment;
+    }
+
+    // check if all parts have enough 'inliers'
+    in_elevator_ = true;
+    for (unsigned int i = 0; i < num_total_points.size(); ++i)
+    {
+        if ((double)num_points_in_bounds[i] / num_total_points[i] < ELEVATOR_INLIER_RATIO)
+        {
+            in_elevator_ = false;
+            break;
+        }
+    }
+
+    if (ros::Time::now().toSec() - t_elevator_print_ > 1.0)
+    {
+        ROS_INFO("Based on the laser data I could be in the elevator");
+        t_elevator_print_ = ros::Time::now().toSec();
+    }
+}
+
+
+
 
 
 
@@ -462,9 +591,6 @@ int main(int argc, char **argv) {
 
     ros::init(argc, argv, "follow_me_2014");
     ros::NodeHandle nh;
-
-    //! Initialize the follower
-    follower_ = new Follower(nh, ROBOT_BASE_FRAME, false);
 
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
@@ -492,6 +618,9 @@ int main(int argc, char **argv) {
     //! Reset spindle
     resetSpindlePosition();
 
+    //! Laser data
+    sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_front_laser", 10, laserCallback);
+
     //! Clear cost map interface
     srv_cost_map = nh.serviceClient<std_srvs::Empty>("/move_base_3d/reset");
     srv_cost_map.waitForExistence(ros::Duration(3.0));
@@ -502,6 +631,11 @@ int main(int argc, char **argv) {
     ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     std_srvs::Empty srv;
     if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
+
+    //! Construct the follower
+    ROS_INFO("Constructing the follower...");
+    follower_ = new Follower(nh, ROBOT_BASE_FRAME, false);
+    ROS_INFO("done!");
 
     //! Start follower
     if (!follower_->start())
@@ -526,8 +660,12 @@ int main(int argc, char **argv) {
     t_last_speech_cmd_ = ros::Time::now().toSec();
     ROS_INFO("Started speech recognition");
 
-    // @todo: move base goal in base link? Must be in map: DONE
-    // @todo: no laser data available robot only starts driving after a few [s]: DONE?
+    // @todo: spindle as high as possible
+    // @todo: see if face segmentation is needed for finding the operator after leaving the elevator (to avoid false positive)
+    // @todo: consider using base_link for tracking:
+    //        alias amiddle-follow-me='amiddle AMIGO_NAV=3d AMIGO_LOC=gmapping wire_frame:=/amigo/base_link wire_viz_frame:=/amigo/base_link'
+    // @todo: see if move around crowd requires a strategy similar to moving out of the elevator
+
 
     //! Start Following
     bool drive = false;
@@ -568,17 +706,23 @@ int main(int argc, char **argv) {
                     follower_->pause();
                     double dt = 45.0;
                     moveToRelativePosition(3.0, 0.0, 0.0, dt);
-                    follower_->reset();
+                    follower_->reset(1.0);
 
                 }
                 // BEFORE THE ELEVATOR: just try to move (there is something in the way)
                 else
                 {
+                    // Get position operator
                     ROS_WARN("Robot did not move for %f [s], trying move_base_3d to plan around obstacle", ros::Time::now().toSec() - t_start_no_move);
-                    double offset = 0.75; // otherwise target always an obstacle
                     double x = 0, y = 0, phi = 0;
                     follower_->getCurrentOperatorPosition(x, y, phi, ROBOT_BASE_FRAME);
-                    moveToRelativePosition(x-offset, y, phi, 3.0);
+                    ROS_INFO("Operator at (x,y,phi) = (%f,%f,%f)", x, y, phi);
+
+                    // option 1:
+                    //double offset = 0.75; // otherwise target always an obstacle
+                    //moveToRelativePosition(x-offset, y, phi, 3.0);
+                    // option 2:
+                    moveToRelativePosition(1.25*x, 1.25*y, phi, 3.0);
                 }
             }
 

@@ -20,7 +20,7 @@
 
 Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo) :
     nh_(nh), wire_client_(0), nav_frame_(frame), use_map_(map),
-    t_last_check_(0), t_no_meas_(0), operator_last_var_(-1.0), demo_(demo), first_time_(true)
+    t_last_check_(0), t_no_meas_(0), t_last_print_(0), operator_last_var_(-1.0), demo_(demo), first_time_(true)
 {
     //! Set initial mode
     mode_ = Follower::IDLE;
@@ -101,7 +101,7 @@ bool Follower::start()
 
     //! Reset head position
     setHeadPanTilt(0, -0.2, false);
-    ROS_INFO("Set head in starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
+    ROS_DEBUG("Set head in starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     //! See if the map can be use
     double t_map = ros::Time::now().toSec();
@@ -123,7 +123,7 @@ bool Follower::start()
         }
     }
 
-    ROS_INFO("Map part of starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_map));
+    ROS_DEBUG("Map part of starting the follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_map));
 
     //! Reset WIRE
     std_srvs::Empty srv;
@@ -189,7 +189,7 @@ bool Follower::getCurrentOperatorPosition(double& x, double& y, double& phi, std
 
 void Follower::freezeRobot()
 {
-    ROS_INFO("Freeze robot!");
+    ROS_DEBUG("Freeze robot!");
 
     //! Stop moving
     if (use_map_)
@@ -222,6 +222,16 @@ bool Follower::reset()
     ROS_INFO("Resetting follower took %f [ms]", 1000*(ros::Time::now().toSec()-t_start));
 
     return (reset && started);
+}
+
+bool Follower::reset(double left_right_margin)
+{
+    // Less strict reset
+    double back_up_val = DIST_LEFT_RIGHT;
+    DIST_LEFT_RIGHT = left_right_margin;
+    bool suc = reset();
+    DIST_LEFT_RIGHT = back_up_val;
+    return suc;
 }
 
 
@@ -427,8 +437,13 @@ bool Follower::getPositionOperator(std::vector<wire::PropertySet>& objects, pbl:
                         // Position operator is not updated
                         t_no_meas_ += (ros::Time::now().toSec() - t_last_check_);
 
-                        // Inform user if needed
-                        if (t_no_meas_ > 1) ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
+                        // Inform user if needed (avoid to much printing)
+                        if (t_no_meas_ > 1 && ros::Time::now().toSec() - t_last_print_ > 0.75)
+                        {
+                            ROS_INFO("%f [s] without position update operator: ", t_no_meas_);
+                            t_last_print_ = ros::Time::now().toSec();
+                        }
+                        else if (t_no_meas_ > 1) ROS_DEBUG("%f [s] without position update operator: ", t_no_meas_);
 
                         //! Position uncertainty increased too long: operator lost
                         if (t_no_meas_ > time_out_operator_lost_)
@@ -801,7 +816,7 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
         if (!vector_possible_operator_torsos.empty())
         {
 
-            // Find closest torso closest to the face
+            // Find person with the lowest offset
             double offset_min = 0.0;
             for (unsigned int i = 0; i < vector_possible_operator_torsos.size(); ++i)
             {
@@ -924,7 +939,7 @@ bool Follower::moveTowardsPosition(pbl::Gaussian& pos, double offset, bool block
     //! Send goal to planner
     if (t_no_meas_ > 1.0)
     {
-        ROS_INFO("No operator position update: robot will not move");
+        ROS_DEBUG("No operator position update: robot will not move");
         freezeRobot();
     }
     else
