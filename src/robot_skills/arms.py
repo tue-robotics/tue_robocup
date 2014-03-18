@@ -518,7 +518,7 @@ class Arms(object):
         delta = [q1,q2,q3,q4,q5,q6,q7]
         current = self._joint_pos[side]
         if current[0]:
-            new = [A+B.data for A, B in zip(delta,current)] #Adds the two lists
+            new = [A+B for A, B in zip(delta,current)] #Adds the two lists
             rospy.logdebug("Sending {side} arm from {old} to {new} with delta {delta}".format(delta=delta, new=new, old=current, side={Side.LEFT:"left", Side.RIGHT:"right"}[side]))
 
             n1,n2,n3,n4,n5,n6,n7 = new
