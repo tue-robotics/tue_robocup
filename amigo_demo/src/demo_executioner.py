@@ -769,6 +769,12 @@ def cancel_actions(robot):
     robot.base.cancel_goal()
     robot.head.cancel_goal()
 
+@dec.register_robot_key("s")
+def selfie_pose(robot):
+    robot.leftArm.send_joint_goal( -1.57, -0.42, -0.15, 0.90, 1.83, -0.07, -0.55 )
+    robot.rightArm.send_joint_goal( -1.57, 1.47, -0.15, 0.50, 1.82, -0.08, -0.55)
+    robot.head.reset_position()
+
 @dec.register_key("L")
 def next_language():
     global language

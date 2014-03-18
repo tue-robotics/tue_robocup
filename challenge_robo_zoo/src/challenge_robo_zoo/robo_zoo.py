@@ -36,17 +36,25 @@ class GetClog(smach.StateMachine):
             smach.StateMachine.add( "OPEN_GRIPPER",
                                     states.SetGripper(robot, side),
                                     transitions={   'succeeded'         :'HOLD_ARM_FOR_CLOG',
-                                                    'failed'            :'Failed' })
+                                                    'failed'            :'RESET_ARM' })
             
             smach.StateMachine.add( "HOLD_ARM_FOR_CLOG",
-                                    states.ArmToJointPos(robot, side, [0,0,0,0,0,0,0]), #TODO: Set correct pose
+                                    states.ArmToJointPos(robot, side, [-0.1, 0.6, 0.2, 1.6, 0.0, -0.5,-0.0]), #TODO: Set correct pose
                                     transitions={   'done'              :'CLOSE_GRIPPER',
-                                                    'failed'            :'Failed' })
+                                                    'failed'            :'RESET_ARM' })
+            
+            smach.StateMachine.add( "LOOK_AT_HAND",
+                                    states.LookAtHand(robot, side), #TODO: Set correct pose
+                                    transitions={   'done'              :'CLOSE_GRIPPER'})
             
             smach.StateMachine.add( "CLOSE_GRIPPER",
                                     states.SetGripper(robot, side, gripperstate=ArmState.CLOSE),
-                                    transitions={   'succeeded'         :'Done',
-                                                    'failed'            :'Failed' })
+                                    transitions={   'succeeded'         :'RESET_ARM',
+                                                    'failed'            :'RESET_ARM' })
+            
+            smach.StateMachine.add( "RESET_ARM",
+                                    states.ResetArm(robot, side),
+                                    transitions={   'done'              :'Done'})
 
 class RoboZoo(smach.StateMachine):
     """The goal of the challenge is to attract people and be attractive to an audience.
@@ -122,7 +130,16 @@ class RoboZoo(smach.StateMachine):
                 return "asserted"
             smach.StateMachine.add( "SET_CURRENT_DRINK",
                                     smach.CBState(set_serve_drink, cb_kwargs={'drink':'coke'}),
-                                    transitions={"asserted"             :"RESET_ARMS"})
+                                    transitions={"asserted"             :"SAY_GETTING_DRINK"})
+
+            smach.StateMachine.add( "SAY_GETTING_DRINK",
+                                    states.Say(robot, [ "You look like you could use a drink, I'll get you something",
+                                                        "Let me fetch you a drink",
+                                                        "Wait a sec, I'll get you a drink and a present",
+                                                        "I will bring you a drink and a special present if you wait a sec.",
+                                                        "I'll be back. With a drink and a little gift for you"], 
+                                               block=False),
+                                    transitions={'spoken': "RESET_ARMS"})
             
             smach.StateMachine.add( "RESET_ARMS",
                                     states.ResetArms(robot),
@@ -174,16 +191,34 @@ class RoboZoo(smach.StateMachine):
                                                     "failed"            :"HELP_WITH_PLACING_DRINK", 
                                                     "target_lost"       :"HELP_WITH_PLACING_DRINK"})
 
+            smach.StateMachine.add( "SAY_TAKE_DRINK",
+                                    states.Say(robot, [ "Enjoy your drink! I have another present as well for you", 
+                                                        "There you go, enjoy your drink. If you wait, I have ssomething else for you as well",
+                                                        "Cheers! I have a special gift for you as well, please wait a sec."], 
+                                               block=False),
+                                    transitions={'spoken': "PLACE_CLOG"})
+
             smach.StateMachine.add( "HELP_WITH_PLACING_DRINK",
                                     states.HandoverToHuman(robot.leftArm, robot),
                                      transitions={  'succeeded'        :'RESET_ARMS2',
                                                     'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
 
             smach.StateMachine.add( "PLACE_CLOG",
-                                    states.PlaceObject("left", robot, placement_query=query_ordering_table),
-                                    transitions={   "succeeded"         :"GOTO_PICKUP",
+                                    states.PlaceObject("right", robot, placement_query=query_ordering_table),
+                                    transitions={   "succeeded"         :"SAY_TAKE_CLOGS",
                                                     "failed"            :"HELP_WITH_PLACING_CLOG", 
                                                     "target_lost"       :"HELP_WITH_PLACING_CLOG"})
+
+            smach.StateMachine.add( "SAY_TAKE_CLOGS",
+                                    states.Say(robot, [ "Enjoy your clogs! If you give them enough water, they'll grow to your size.",
+                                                        "Enjoy your wooden shoes and your drink!",
+                                                        "Enjoy your drink and real dutch clogs!",
+                                                        "There you are, real Dutch wooden shoes!",
+                                                        "Enjoy your special Limited Edition Tech United clogs",
+                                                        "Here's my gift to you, real dutch clogs.",
+                                                        "Please take these clogs and feel like a real Dutchman."], 
+                                               block=False),
+                                    transitions={'spoken': "GOTO_PICKUP"})
 
             smach.StateMachine.add( "HELP_WITH_PLACING_CLOG",
                                     states.HandoverToHuman(robot.leftArm, robot),
@@ -196,14 +231,21 @@ class RoboZoo(smach.StateMachine):
             
             smach.StateMachine.add( "SPINDLE_HIGH_2",
                                     states.SetSpindle(robot, height=0.4),
-                                    transitions={"done"                 :"GOTO_PICKUP"})
+                                    transitions={"done"                 :"SAY_TAKE_CLOGS"})
 
             smach.StateMachine.add( "GOTO_PICKUP",
                                     states.NavigateGeneric(robot, lookat_query=query_pickup_table),
-                                    transitions={   "arrived"           :"LOOK_FOR_EMPTY_CAN", 
-                                                    "unreachable"       :"LOOK_FOR_EMPTY_CAN", 
+                                    transitions={   "arrived"           :"SAY_BRING_EMPTY_CANS", 
+                                                    "unreachable"       :"SAY_BRING_EMPTY_CANS", 
                                                     "preempted"         :"Aborted", 
                                                     "goal_not_defined"  :"Failed"})
+            
+            smach.StateMachine.add( "SAY_BRING_EMPTY_CANS",
+                                    states.Say(robot, [ "Please put you empty cans on the table, I'll clean them up",
+                                                        "Your empty cans please. I'll get them from the table",
+                                                        "If you put your empty cans on the table, I'll clean up"], 
+                                               block=False),
+                                    transitions={'spoken': "LOOK_FOR_EMPTY_CAN"})
 
             smach.StateMachine.add( "LOOK_FOR_EMPTY_CAN",
                                     states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can),
