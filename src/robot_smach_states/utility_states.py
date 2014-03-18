@@ -258,6 +258,19 @@ class Wait_queried_perception(Wait_query_true):
         post = lambda *args, **kwargs: robot.perception.toggle([])
         Wait_query_true.__init__(self, robot, query, timeout=timeout, pre_callback=pre, post_callback=post)
 
+class LookAtHand(smach.State):
+    def __init__(self, robot, side, keep_tracking=False, timeout=0.0):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        self.side = side
+        self.keep_tracking = keep_tracking
+
+    def execute(self, userdata=None):
+        side_string = {self.robot.leftArm:"left", self.robot.rightArm:"right"}[self.side]
+        self.robot.head.look_at_hand(side_string, keep_tracking=self.keep_tracking) #TODO: Unify side as string or/and object
+        return "done"
+
 ############################## Atomic Reset States ##############################
 
 class ResetHead(smach.State):
@@ -307,6 +320,18 @@ class ResetArms(smach.State):
         self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
         self.robot.rightArm.reset_arm()
         self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
+        return "done"
+
+class ResetArm(smach.State):
+    def __init__(self, robot, side, timeout=0.0):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        self.side = side
+
+    def execute(self, userdata=None):
+        self.side.reset_arm()
+        self.side.send_gripper_goal_close(timeout=self.timeout)
         return "done"
 
 class ResetSpindle(smach.State):
