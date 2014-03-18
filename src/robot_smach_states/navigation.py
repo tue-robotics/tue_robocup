@@ -987,6 +987,10 @@ class Recover(smach.State):
         if self.look_at_path_distance > 0:        
             self.robot.head.send_goal(self.robot.base.obstacle_position)
 
+        if not self.robot.base.obstacle_position:
+            rospy.logerr("obstacle pos not defined yet!!! PLEASE EMAIL THIS RESULT TO BAS C --> status = {0}, result = {1}".format(self.robot.base.ac_move_base.get_state(), self.robot.base.get_state()))
+            return 'new_goal_required'
+
         # if there is no obstacle on the global path while the robot is not able to reach its goal
         # the local planner is probably in unknown space, so clear this
         if (self.robot.base.obstacle_position.point.x == -1 and self.robot.base.obstacle_position.point.y == -1 and self.robot.base.obstacle_position.point.z == -1):
