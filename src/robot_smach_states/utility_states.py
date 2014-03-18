@@ -320,6 +320,16 @@ class ResetSpindle(smach.State):
         self.robot.spindle.reset()
         return "done"
 
+class SetSpindle(smach.State):
+    def __init__(self, robot, timeout=0.0, height=0.35):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        self.height = height
+
+    def execute(self, userdata=None):
+        self.robot.spindle.send_goal(self.height)
+        return "done"
 ############################## Combination Reset States ##############################
 
 class ResetArmsSpindle(smach.State):
