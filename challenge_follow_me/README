@@ -2,15 +2,29 @@
 
 amigo1:
 
-    astart
+    amiddle-follow-me
 
-amigo1:
+Then, test the speech and start the challenge:
 
-    amiddle-restaurant
-   
 amigo3:
 
+    Alsamixer settings:
+        * Mic Boost -> 22
+        * Capture -> 44
+        * Digital -> 29
+        * Mic on mute!!! (should be muted already)
+        
+    amigo-console  
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+   		* lights should become green -> say 'continue'
+   		* if response is 'true', amigo heard you and lights become blue
+        * if this does not work, manually start: roslaunch tue_pocketsphinx start.launch on amigo2!!
+
+    say test  
+    	* to test speaker is working
+
     rosrun challenge_follow_me follow_me_2014
+
 
 INSTRUCTIONS:
 - If you want the robot to leave the elevator, say: 'amigo leave', confirm with yes. Wait for AMIGO to call you

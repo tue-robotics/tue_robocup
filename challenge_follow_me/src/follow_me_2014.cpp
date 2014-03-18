@@ -97,6 +97,34 @@ double t_elevator_print_ = 0;
 double t_pause_ = 0;
 
 
+
+bool moveHead(double pan, double tilt, bool block = true)
+{
+
+    //! Add head reference action
+    double t_start = ros::Time::now().toSec();
+    amigo_head_ref::HeadRefGoal head_ref;
+    head_ref.goal_type = 1; // 1: pan tilt, 0 keep tracking
+    head_ref.pan = pan;
+    head_ref.tilt = tilt;
+    ac_head_ref_->sendGoal(head_ref);
+    if (block) ac_head_ref_->waitForResult(ros::Duration(3.0));
+
+    if (ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    {
+        ROS_WARN("Head could not reach target position");
+        ROS_INFO("moveHead(%f,%f,%s) took %f [ms]", pan, tilt, block?"true":"false", 1000*(ros::Time::now().toSec()-t_start));
+        return false;
+    }
+
+    ROS_INFO("moveHead(%f,%f,%s) took %f [ms]", pan, tilt, block?"true":"false", 1000*(ros::Time::now().toSec()-t_start));
+    return true;
+
+}
+
+
+
+
 std::string getSpeechStateName(speech_state::SpeechState ss)
 {
     std::string name = "<unknown mode>";
@@ -315,10 +343,13 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
     if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
         ROS_WARN("Could not reach base pose within %f [s]", dt);
+        moveHead(0, -0.2, false);
         return false;
     }
 
     ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
+
+    moveHead(0, -0.2, false);
 
     return true;
 
@@ -349,14 +380,15 @@ void leaveElevator()
 
     double t_start = ros::Time::now().toSec();
 
-    // Get the current position wrt the map frame
-    geometry_msgs::PointStamped p_start, p_current;
+    // Get position
+    tf::StampedTransform location_start;
     try
     {
-        listener_->transformPoint("/map", ros::Time(0), p_start, ROBOT_BASE_FRAME, p_current);
-        ROS_INFO("Current position is (%f,%f)", p_current.point.x, p_current.point.y);
+        // Look up transform
+        listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_start);
+        ROS_INFO("Current position is (%f,%f)", location_start.getOrigin().getX(), location_start.getOrigin().getY());
 
-        // if the robot did barely move: try another set point
+        // If the robot did barely move: try another set point
         double dx = 0, dy = 0;
         double y = 0;
         int fctr = 1;
@@ -367,16 +399,16 @@ void leaveElevator()
             else ROS_WARN("Trying to move out of the elevator: attempt %d", count);
 
             // Try to move to this position
-            moveToRelativePosition(-3.5, fctr*y, 3.14, 35.0);
+            //moveToRelativePosition(-3.5, fctr*y, 3.14, 35.0);
+            moveToRelativePosition(-3.5, fctr*y, 0.0, 35.0);
 
             // Get current robot position
             try
             {
-                geometry_msgs::PointStamped p_now;
-                listener_->transformPoint("/map", ros::Time(0), p_current, ROBOT_BASE_FRAME, p_now);
-                dx = std::fabs(p_now.point.x - p_start.point.x);
-                dy = std::fabs(p_now.point.y - p_start.point.y);
-                p_current = p_now;
+                tf::StampedTransform location_now;
+                listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_now);
+                dx = std::fabs(location_now.getOrigin().getX() - location_start.getOrigin().getX());
+                dy = std::fabs(location_now.getOrigin().getY() - location_start.getOrigin().getY());
             }
             catch (tf::TransformException& e) {ROS_WARN("While driving out of the elevator: %s", e.what());}
 
@@ -389,15 +421,74 @@ void leaveElevator()
         if (count == 5) ROS_ERROR("I cannot leave the elevator the way I want it, I will continue from here");
 
     }
-    catch (tf::TransformException& e)
+    catch (tf::TransformException ex)
     {
-        ROS_WARN("Could not transform goal to map frame: %s", e.what());
+        ROS_ERROR("No tranform /map - /amigo/base_link: %s", ex.what());
         moveToRelativePosition(-2.5, 0.0, 3.14, 35.0);
         return;
     }
 
-
     ROS_INFO("Leaving the elevator took %f [s]", ros::Time::now().toSec()-t_start);
+
+
+}
+
+
+
+
+void driveAroundCrowd()
+{
+
+    double t_start = ros::Time::now().toSec();
+
+    // Get position
+    tf::StampedTransform location_start;
+    try
+    {
+        // Look up transform
+        listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_start);
+        ROS_INFO("Current position is (%f,%f)", location_start.getOrigin().getX(), location_start.getOrigin().getY());
+
+        // If the robot did barely move: try another set point
+        double dx = 0, dy = 0;
+        double y = 0;
+        int fctr = 1;
+        int count = 1;
+        while (dx*dx+dy*dy < 1.0 && count < 5)
+        {
+            if (count == 1) ROS_INFO("Trying to move around the crowd: attempt %d", count);
+            else ROS_WARN("Trying to move around the crowd: attempt %d", count);
+
+            // Try to move to this position
+            moveToRelativePosition(2.5, fctr*y, 0.0, 45.0);
+
+            // Get current robot position
+            try
+            {
+                tf::StampedTransform location_now;
+                listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_now);
+                dx = std::fabs(location_now.getOrigin().getX() - location_start.getOrigin().getX());
+                dy = std::fabs(location_now.getOrigin().getY() - location_start.getOrigin().getY());
+            }
+            catch (tf::TransformException& e) {ROS_WARN("While driving around the crowd: %s", e.what());}
+
+            // Update goal if the robot didn't move
+            y += 0.25;
+            fctr *= -1.0;
+            ++count;
+        }
+
+        if (count == 5) ROS_ERROR("I cannot drive aroud the crowd, I will continue from here");
+
+    }
+    catch (tf::TransformException ex)
+    {
+        ROS_ERROR("No tranform /map - /amigo/base_link: %s", ex.what());
+        moveToRelativePosition(2.5, 0.0, 0.0, 35.0);
+        return;
+    }
+
+    ROS_INFO("Driving around the crowd took %f [s]", ros::Time::now().toSec()-t_start);
 
 
 }
@@ -415,18 +506,22 @@ void speechCallback(std_msgs::String res)
     if (answer.empty()) return;
 
     // ROBOT GOT A COMMAND TO STOP AND COULD BE IN AN ELEVATOR
-    if (speech_state_ == speech_state::DRIVE && answer == "amigoleave" && in_elevator_)
+    if (speech_state_ == speech_state::DRIVE && answer == "amigoleave")
     {
-        // stop robot
-        follower_->pause();
-        ROS_INFO("Paused follower!");
+        if (in_elevator_)
+        {
+            // stop robot
+            follower_->pause();
+            ROS_INFO("Paused follower!");
 
-        // Get location and side
-        updateSpeechState(speech_state::CONFIRM_LEAVE);
-        amigoSpeak("Should I leave the elevator?");
-        setRGBLights("green");
+            // Get location and side
+            updateSpeechState(speech_state::CONFIRM_LEAVE);
+            amigoSpeak("Should I leave the elevator?");
+            setRGBLights("green");
 
-        t_pause_ = ros::Time::now().toSec();
+            t_pause_ = ros::Time::now().toSec();
+        }
+        else ROS_INFO("Heard stop command but in_elevator is false");
     }
 
     // ASKED FOR CONFIRMATION ON WHETHER OR NOT TO LEAVE THE ELEVATOR
@@ -478,7 +573,7 @@ void speechCallback(std_msgs::String res)
 
 bool resetSpindlePosition()
 {
-    double std_spindle_pos = 0.35;
+    double std_spindle_pos = 0.40;
 
     // Determine goal pose
     ROS_INFO("Reset spindle position!");
@@ -506,7 +601,7 @@ bool resetSpindlePosition()
 
 void restartSpeechIfNeeded()
 {
-    if (ros::Time::now().toSec() - t_last_speech_cmd_ > 10.0)
+    if (ros::Time::now().toSec() - t_last_speech_cmd_ > 10.0 && !left_elevator_)
     {
         // Restart speech recognition
         stopSpeechRecognition();
@@ -575,7 +670,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
         }
     }
 
-    if (ros::Time::now().toSec() - t_elevator_print_ > 1.0)
+    if (ros::Time::now().toSec() - t_elevator_print_ > 3.0)
     {
         ROS_INFO("Based on the laser data I could be in the elevator");
         t_elevator_print_ = ros::Time::now().toSec();
@@ -613,6 +708,12 @@ int main(int argc, char **argv) {
     ROS_INFO("Connecting to the skill server...");
     ac_skill_server_ = new actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>("/amigo/execute_command", true);
     ac_skill_server_->waitForServer();
+    ROS_INFO("Connected!");
+
+    //! Head
+    ROS_INFO("Connecting to head ref action server...");
+    ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
+    ac_head_ref_->waitForServer();
     ROS_INFO("Connected!");
 
     //! Reset spindle
@@ -703,9 +804,9 @@ int main(int argc, char **argv) {
                 // AFTER THE ELEVATOR: move forward (around the crowd)
                 if (left_elevator_)
                 {
+                    ROS_INFO("I think I am at the crowd, I will try to drive around the crowd");
                     follower_->pause();
-                    double dt = 45.0;
-                    moveToRelativePosition(3.0, 0.0, 0.0, dt);
+                    driveAroundCrowd();
                     follower_->reset(1.0);
 
                 }
@@ -722,7 +823,7 @@ int main(int argc, char **argv) {
                     //double offset = 0.75; // otherwise target always an obstacle
                     //moveToRelativePosition(x-offset, y, phi, 3.0);
                     // option 2:
-                    moveToRelativePosition(1.25*x, 1.25*y, phi, 3.0);
+                    moveToRelativePosition(0.65*x, 0.65*y, phi, 7.5);
                 }
             }
 
