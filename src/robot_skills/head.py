@@ -137,7 +137,7 @@ class Head(object):
 
         return self._ac_head_ref_action.send_goal(head_goal)
 
-    def look_down(self):
+    def look_down(self, pan_vel=0, tilt_vel=0):
         """
         Amigo looks down at a predefined position
         """
@@ -145,13 +145,13 @@ class Head(object):
         # head_goal = self.point_stamped(1.0, 0.0, 0.8, '/amigo/base_link')
         # return self.send_goal(head_goal.point, head_goal.header.frame_id, keep_tracking=False)
 
-        return self.set_pan_tilt(0.0, 0.4)
+        return self.set_pan_tilt(0.0, 0.4, pan_vel=pan_vel, tilt_vel=tilt_vel)
 
-    def look_up(self):
+    def look_up(self, pan_vel=0, tilt_vel=0):
         """
         AMIGO looks up at a predefined tilt angle
         """
-        return self.set_pan_tilt(0.0, -0.2)
+        return self.set_pan_tilt(0.0, -0.2, pan_vel=pan_vel, tilt_vel=tilt_vel)
 
     def reset_position(self, timeout=2.0):
         """
