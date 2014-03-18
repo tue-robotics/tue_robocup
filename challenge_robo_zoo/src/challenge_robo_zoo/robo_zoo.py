@@ -8,6 +8,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 
 from psi import Compound, Conjunction, Sequence
+from robot_skills.arms import State as ArmState
 
 
 """ TODOs, BUGs:
@@ -19,6 +20,33 @@ from psi import Compound, Conjunction, Sequence
 
 - When there are no persons at the desk, have Amigo yell like a market salesman if anyone wants a drink?
 """
+
+class GetClog(smach.StateMachine):
+    def __init__(self, robot, side):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+        self.side = side
+
+        with self:
+            smach.StateMachine.add( "ASK_FOR_CLOG",
+                                    states.Say(robot, ["Can I have clogs?", "Please hand me some clogs", "Can I have some clogs?", "Clogs please"], 
+                                               block=False),
+                                    transitions={'spoken': "OPEN_GRIPPER"})
+            
+            smach.StateMachine.add( "OPEN_GRIPPER",
+                                    states.SetGripper(robot, side),
+                                    transitions={   'succeeded'         :'HOLD_ARM_FOR_CLOG',
+                                                    'failed'            :'Failed' })
+            
+            smach.StateMachine.add( "HOLD_ARM_FOR_CLOG",
+                                    states.ArmToJointPos(robot, side, [0,0,0,0,0,0,0]), #TODO: Set correct pose
+                                    transitions={   'done'              :'CLOSE_GRIPPER',
+                                                    'failed'            :'Failed' })
+            
+            smach.StateMachine.add( "CLOSE_GRIPPER",
+                                    states.SetGripper(robot, side, gripperstate=ArmState.CLOSE),
+                                    transitions={   'succeeded'         :'Done',
+                                                    'failed'            :'Failed' })
 
 class RoboZoo(smach.StateMachine):
     """The goal of the challenge is to attract people and be attractive to an audience.
@@ -98,6 +126,10 @@ class RoboZoo(smach.StateMachine):
             
             smach.StateMachine.add( "RESET_ARMS",
                                     states.ResetArms(robot),
+                                    transitions={"done"                 :"SPINDLE_HIGH_1"})
+            
+            smach.StateMachine.add( "SPINDLE_HIGH_1",
+                                    states.SetSpindle(robot, height=0.4),
                                     transitions={"done"                 :"GOTO_STORAGE"})
 
             smach.StateMachine.add( "GOTO_STORAGE",
@@ -116,13 +148,18 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "HELP_WITH_GETTING_DRINK",
                                     states.Human_handover(robot.leftArm, robot),
-                                     transitions={  'succeeded'        :'GOTO_ORDERING',
-                                                    'failed'            :'GOTO_ORDERING' }) #We're lost if even this fails
+                                     transitions={  'succeeded'         :'GET_CLOG',
+                                                    'failed'            :'GET_CLOG' }) #We're lost if even this fails
 
             smach.StateMachine.add( "GRAB_DRINK",
                                     states.GrabMachine("left", robot, query_ordered_drink),
-                                    transitions={   'succeeded'         :'GOTO_ORDERING',
+                                    transitions={   'succeeded'         :'GET_CLOG',
                                                     'failed'            :'HELP_WITH_GETTING_DRINK' })
+
+            smach.StateMachine.add( "GET_CLOG",
+                                    GetClog(robot, robot.rightArm),
+                                    transitions={   'Done'         :'GOTO_ORDERING',
+                                                    'Failed'            :'GOTO_ORDERING' })
 
             smach.StateMachine.add( "GOTO_ORDERING",
                                     states.NavigateGeneric(robot, lookat_query=query_ordering_table),
@@ -133,7 +170,7 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "PLACE_ORDER",
                                     states.PlaceObject("left", robot, placement_query=query_ordering_table),
-                                    transitions={   "succeeded"         :"GOTO_PICKUP",
+                                    transitions={   "succeeded"         :"PLACE_CLOG",
                                                     "failed"            :"HELP_WITH_PLACING_DRINK", 
                                                     "target_lost"       :"HELP_WITH_PLACING_DRINK"})
 
@@ -142,8 +179,23 @@ class RoboZoo(smach.StateMachine):
                                      transitions={  'succeeded'        :'RESET_ARMS2',
                                                     'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
 
+            smach.StateMachine.add( "PLACE_CLOG",
+                                    states.PlaceObject("left", robot, placement_query=query_ordering_table),
+                                    transitions={   "succeeded"         :"GOTO_PICKUP",
+                                                    "failed"            :"HELP_WITH_PLACING_CLOG", 
+                                                    "target_lost"       :"HELP_WITH_PLACING_CLOG"})
+
+            smach.StateMachine.add( "HELP_WITH_PLACING_CLOG",
+                                    states.HandoverToHuman(robot.leftArm, robot),
+                                     transitions={  'succeeded'        :'RESET_ARMS2',
+                                                    'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
+
             smach.StateMachine.add( "RESET_ARMS2",
                                     states.ResetArms(robot),
+                                    transitions={"done"                 :"SPINDLE_HIGH_2"})
+            
+            smach.StateMachine.add( "SPINDLE_HIGH_2",
+                                    states.SetSpindle(robot, height=0.4),
                                     transitions={"done"                 :"GOTO_PICKUP"})
 
             smach.StateMachine.add( "GOTO_PICKUP",
@@ -179,7 +231,7 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add("DROPOFF_EMPTY_CAN",
                                     states.DropObject("left", robot, query_trashbin),
-                                    transitions={   'succeeded'         :'HELP_WITH_DUMPING_CAN',
+                                    transitions={   'succeeded'         :'SET_CURRENT_DRINK',
                                                     'failed'            :'HELP_WITH_DUMPING_CAN',
                                                     'target_lost'       :'HELP_WITH_DUMPING_CAN'})
             
