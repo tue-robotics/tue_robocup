@@ -218,7 +218,7 @@ class UpdateObjectPose(smach.State):
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
             target_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map")
-            self.robot.head.send_goal(target_point, keep_tracking=True, pan_vel=1.5, tilt_vel=1.5)
+            self.robot.head.send_goal(target_point, keep_tracking=True, pan_vel=0.75, tilt_vel=0.75)
         else:
             return 'target_lost'
 
@@ -227,7 +227,7 @@ class UpdateObjectPose(smach.State):
         spindle_target = min(self.robot.spindle.upper_limit, spindle_target)
         self.robot.spindle.send_goal(spindle_target, timeout = 5.0)
 
-        self.robot.head.send_goal(target_point, keep_tracking=False, timeout=5.0, pan_vel=1.5, tilt_vel=1.5)
+        self.robot.head.send_goal(target_point, keep_tracking=False, timeout=5.0, pan_vel=0.75, tilt_vel=0.75)
 
         self.robot.perception.toggle(["tabletop_segmentation"])
         self.robot.perception.set_perception_roi(target_point, length_x=0.3, length_y=0.3, length_z=0.4)
@@ -286,6 +286,62 @@ def reset_arm(userdata, side):
     return 'done'
         
 ########################################### State Grab ###############################################
+''' Grab machine which will switch hand (hence the A of arbitrary), if possible
+    API is kept the same as with the GrabMachine, but now side is only considered to be a preference'''
+class GrabMachineA(smach.StateMachine):
+    def __init__(self, side, robot, grabpoint_query):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        self.robot = robot
+    
+        if isinstance(side, basestring):
+            if side == "left":
+                self.side = self.robot.leftArm
+                self.backupside = self.robot.rightArm
+            elif side == "right":
+                self.side = self.robot.rightArm
+                self.backupside = self.robot.leftArm
+            else:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        elif side == self.robot.leftArm:           
+            self.side = side
+            self.backupside = self.robot.rightArm
+        elif side == self.robot.rightArm:
+            self.side = side
+            self.backupside = self.robot.rightArm
+        else:
+            print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+            self.side = self.robot.rightArm
+            self.backupside = self.robot.leftArm
+
+        self.grabpoint_query = grabpoint_query
+
+        with self:
+            
+            @smach.cb_interface(outcomes=['free', 'occupied'])
+            def check_occupancy(userdata, arm):
+                if arm.occupied:
+                    return 'occupied'
+                else:
+                    return 'free'
+
+            smach.StateMachine.add('CHECK_PRIMARY_OCCUPANCY', smach.CBState(check_occupancy, cb_args=[self.side]),
+                                    transitions={'free'         : 'GRASP',
+                                                 'occupied'     : 'CHECK_SECONDARY_OCCUPANCY'})
+
+            smach.StateMachine.add('GRASP', GrabMachine(self.side, self.robot, self.grabpoint_query),
+                                    transitions={'succeeded'    : 'succeeded',
+                                                 'failed'       : 'CHECK_SECONDARY_OCCUPANCY'})
+
+            smach.StateMachine.add('CHECK_SECONDARY_OCCUPANCY', smach.CBState(check_occupancy, cb_args=[self.backupside]),
+                                    transitions={'free'         : 'GRASP_BACKUP',
+                                                 'occupied'     : 'failed'})
+
+            smach.StateMachine.add('GRASP_BACKUP', GrabMachine(self.side, self.robot, self.grabpoint_query),
+                                    transitions={'succeeded'    : 'succeeded',
+                                                 'failed'       : 'failed'})
+
 class GrabMachine(smach.StateMachine):
     def __init__(self, side, robot, grabpoint_query):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -646,6 +702,7 @@ class SetGripper(smach.State):
                     self.robot.reasoner.attach_object_to_gripper(answer["ObjectID"], self.end_effector_frame_id, True)
                 except KeyError, ke:
                     rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
+                self.side.occupied = True
 
         if self.side.send_gripper_goal(self.gripperstate, timeout=self.timeout):
             result = True
@@ -655,6 +712,7 @@ class SetGripper(smach.State):
         # ToDo: make sure things can get attached to the gripper in this state. Use userdata?
         if self.gripperstate == ArmState.OPEN:
             self.robot.reasoner.detach_all_from_gripper(self.end_effector_frame_id)
+            self.side.occupied = False
 
         # ToDo: check for failed in other states
         if result:
