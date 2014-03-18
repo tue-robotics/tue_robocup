@@ -130,9 +130,9 @@ class LookingForPersonOld(smach.State):
                 return "looking"
 
         if len(person_result) > 1:
-            self.robot.speech.speak("I see some people!")
+            self.robot.speech.speak("I see some people!",block=False)
         else:
-            self.robot.speech.speak("I found someone!")
+            self.robot.speech.speak("I found someone!",block=False)
         print person_result
         print person_result[0]["ObjectID"]
         self.robot.reasoner.assertz(Compound("emergency_person", person_result[0]["ObjectID"]))
@@ -200,12 +200,6 @@ class LookAtPerson(smach.State):
 
     def execute(self, userdata=None):    
 
-        '''
-        person_query = Conjunction(   Compound("instance_of", "ObjectID", "person"), 
-                                                    Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
-                                                    Compound("not", Compound("ignored_person", "ObjectID")))
-        '''
-
         person_query = Conjunction(  
                                     Compound( "property_expected", "ObjectID", "class_label", "face"),
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
@@ -260,7 +254,7 @@ class LookForObject(smach.State):
             self.robot.speech.speak("I cannot find the object")
             return "not_found"
 
-        self.robot.speech.speak("I know the location of your " + serving_drink)
+        #self.robot.speech.speak("I know the location of your " + serving_drink)
         goal_answer = goal_answers[0]
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
@@ -287,6 +281,43 @@ class LookForObject(smach.State):
             roi_answer = roi_answers[0]
             self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
 
+
+        # query to detect object, finishes when something found or timeout!
+        query_detect_object = Conjunction(Compound("goal", Compound("serve", "Drink")),
+                                          Compound( "property_expected", "ObjectID", "class_label", "Drink"),
+                                          Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+
+        self.response_start = self.robot.perception.toggle(["object_segmentation"])
+ 
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Object recogition has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.loginfo("Object recogition failed to start")
+            self.robot.speech.speak("I was not able to start object recognition.")
+            return "not_found"
+
+        wait_machine = states.Wait_query_true(self.robot, query_detect_object, 7)
+        wait_result = wait_machine.execute()
+
+        rospy.loginfo("Object recogition will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Object recogition is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping Object recogition")
+
+        # interpret results wait machine
+        if wait_result == "timed_out":
+            return "looking"
+        elif wait_result == "preempted":
+            return "looking"
+        elif wait_result == "query_true":
+            self.robot.speech.speak("Hey, I found your " + serving_drink,block=False)
+            return "found"
+
+
+        '''
         self.robot.perception.toggle(["object_segmentation"])
         rospy.sleep(5.0)
         self.robot.perception.toggle([])
@@ -311,6 +342,7 @@ class LookForObject(smach.State):
             return "found"
         else:
             return "looking"
+        '''
 
 class AskObject(smach.State):
     def __init__(self, robot):
@@ -326,7 +358,7 @@ class AskObject(smach.State):
                 response_answer = self.response.values[x]
 
         if response_answer == "no_answer" or  response_answer == "wrong_answer":
-            self.robot.speech.speak("I'll bring you a water")
+            self.robot.speech.speak("I'll bring you a water",block=False)
             response_answer = "water"
 
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
@@ -348,8 +380,8 @@ class AskYesNo(smach.State):
         for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "answer":
                     response_answer = self.response.values[x]
-
-        if response_answer == "false":
+        print response_answer
+        if response_answer == "true":
             return "yes"
         else:
             return "no"
@@ -494,13 +526,13 @@ class WaitForAmbulance(smach.State):
     
     def execute(self, userdata=None):
 
-        if self.counter > 5:
+        if self.counter > 3:
             return 'timed_out'
 
         self.robot.spindle.reset()
         self.robot.head.set_pan_tilt(tilt=-0.2)
         
-        self.robot.speech.speak("Waiting for the ambulance.")
+        self.robot.speech.speak("Waiting for the ambulance.",block=False)
 
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
@@ -528,7 +560,6 @@ class WaitForAmbulance(smach.State):
             rospy.loginfo("Failed stopping face segmentation")
 
         if wait_result == "timed_out":
-            self.robot.speech.speak("Please, don't keep me waiting.")
             self.counter = self.counter + 1
             return "waiting"
 
@@ -591,6 +622,8 @@ def setup_statemachine(robot):
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
 
+    fallback_ambulance_query = Compound("waypoint", room, Compound("pose_2d", "X", "Y", "Phi"))
+
     query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Location"),
                                                       Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))
 
@@ -601,14 +634,15 @@ def setup_statemachine(robot):
         ################## ENTER APPARTMENT ##################
         ######################################################
         smach.StateMachine.add( "START_CHALLENGE",
-                                    states.StartChallengeRobust(robot, "initial"), 
-                                    transitions={   "Done":"SAY_LOOK_FOR_PERSON", 
+                                states.StartChallengeRobust(robot, "initial"), 
+                                transitions={   "Done":"SAY_LOOK_FOR_PERSON", 
                                                     "Aborted":"SAY_LOOK_FOR_PERSON", 
                                                     "Failed":"SAY_LOOK_FOR_PERSON"})
 
         smach.StateMachine.add("SAY_LOOK_FOR_PERSON",
-                                    states.Say(robot, "Looking for person.", block=False),
-                                    transitions={   "spoken":"FIND_PERSON"})
+                                states.Say(robot, "Looking for person.", block=False),
+                                transitions={   "spoken":"FIND_PERSON"})
+
         ######################################################
         ########## GO TO ROOM AND LOOK FOR PERSON ############
         ######################################################
@@ -619,8 +653,8 @@ def setup_statemachine(robot):
                                                 'not_found':'SAY_GO_TO_EXIT'})
         
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
-                                    transitions={   "arrived":"LOOK_AT_PERSON",
+                                states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                transitions={   "arrived":"LOOK_AT_PERSON",
                                                     "unreachable":'SAY_PERSON_UNREACHABLE',
                                                     "preempted":'SAY_PERSON_UNREACHABLE',
                                                     "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
@@ -634,8 +668,8 @@ def setup_statemachine(robot):
                                 transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT'})
 
         smach.StateMachine.add( 'GO_TO_LAST_EXPLORATION_POINT', 
-                                    states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   'arrived':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
+                                states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
+                                transitions={   'arrived':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
                                                     'preempted':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
                                                     'unreachable':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
                                                     'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
@@ -704,7 +738,7 @@ def setup_statemachine(robot):
                                              'expired':'TURN_OFF_EMERGENCY_DETECTOR'})
 
         smach.StateMachine.add( "WAITING_STATE",
-                                SleepTime(robot, sleeptime=1), 
+                                SleepTime(robot, sleeptime=0.75), 
                                 transitions={'finished':'OBSERVE_EMERGENCY'})
 
         smach.StateMachine.add( "TURN_OFF_EMERGENCY_DETECTOR",
@@ -842,8 +876,8 @@ def setup_statemachine(robot):
                                                     'goal_not_defined':'WAIT_FOR_AMBULANCE'})
 
         ######################################################
-        ################# WAIT FOR AMBULANCE #################
-        ######################################################
+        ################# WAIT FOR AMBULANCE #################  ENDLESS LOOOP NEEDS COUNTER!
+        ######################################################  
         smach.StateMachine.add('WAIT_FOR_AMBULANCE', 
                                     WaitForAmbulance(robot),
                                     transitions={   'detected':'SAY_FOLLOW_ME', 
@@ -867,7 +901,14 @@ def setup_statemachine(robot):
                                     transitions={   "arrived":"SAY_ARRIVED_AT_PATIENT",
                                                     "unreachable":'SAY_ARRIVED_AT_PATIENT',
                                                     "preempted":'SAY_ARRIVED_AT_PATIENT',
-                                                    "goal_not_defined":'SAY_ARRIVED_AT_PATIENT'})
+                                                    "goal_not_defined":'FAILBACK_GUIDE_TO_PERSON'})
+
+        smach.StateMachine.add('FAILBACK_GUIDE_TO_PERSON',
+                                    states.NavigateGeneric(robot, goal_query=fallback_ambulance_query),
+                                    transitions={   "arrived":"SAY_ARRIVED_AT_PATIENT",
+                                                    "unreachable":"SAY_ARRIVED_AT_PATIENT",
+                                                    "preempted":"SAY_ARRIVED_AT_PATIENT", 
+                                                    "goal_not_defined":"SAY_ARRIVED_AT_PATIENT"})
 
         smach.StateMachine.add('SAY_ARRIVED_AT_PATIENT',
                                     states.Say(robot, 'The patient is here, thanks for the assistance.',block=False),
