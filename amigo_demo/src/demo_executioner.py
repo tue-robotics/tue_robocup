@@ -11,6 +11,8 @@ from robot_skills.reasoner import Conjunction, Compound
 import robot_skills.util.msg_constructors as msgs
 from std_msgs.msg import String
 
+from robot_smach_states.drive_to_person import DriveToClosestPerson
+
 from math import sin
 
 from transporter import Transporter
