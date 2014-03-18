@@ -644,6 +644,7 @@ class Arm(Arms):
 
         side_name = Side.name[self.side]
         self.joint_names = [joint_name.format(side=side_name) for joint_name in self.joint_names] #The Arms-class provides a format, which we fill in here
+        self.occupied = False
     
     @add_side_argument
     def send_goal(self, *args, **kwargs):
