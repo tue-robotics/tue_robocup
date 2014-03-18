@@ -131,7 +131,13 @@ if __name__ == "__main__":
     ''' If necessary: set initial state '''
     rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
     if  len(sys.argv) > 1:
-        initial_state = [str(sys.argv[1])]
+        if int(sys.argv[1]) == 1:
+            initial_state = ["PICK_AND_PLACE"]
+        elif int(sys.argv[1]) == 2:
+            initial_state = ["AVOID_THAT"]
+        elif int(sys.argv[1]) == 3:
+            initial_state = ["WHAT_DID_YOU_SAY"]
+        #initial_state = [str(sys.argv[1])]
         rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
         machine.set_initial_state(initial_state)
 

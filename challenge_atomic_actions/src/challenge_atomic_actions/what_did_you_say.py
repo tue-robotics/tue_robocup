@@ -29,7 +29,7 @@ class AskQuestions(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.head.look_up()
+        self.robot.head.look_up(tilt_vel=0.75)
 
         rospy.loginfo("----Possible questions for now: -----------------")
         rospy.loginfo("--- What is the capital of Germany? -------------")
