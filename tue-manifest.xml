@@ -1,0 +1,3 @@
+<deps ros_distro="groovy">
+    <stack name="executive_smach_visualization" type="system" source="ros-groovy-executive-smach-visualization"/>
+</deps>
