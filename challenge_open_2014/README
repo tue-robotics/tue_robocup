@@ -1,0 +1,20 @@
+# Responsible: Sjoerd & Rein
+
+amigo2:
+
+    roslaunch amigo_launch_files all_etherCAT_hardware.launch
+
+amigo1:
+
+    vim ~/.bashrc  
+    TUE_USE_CATKIN=true // enable catkin_ws (hydro costmaps)
+
+    // restart ssh session
+
+    roslaunch challenge_open_2014 dependencies.launch // loads the world model server and loads the map
+    rosrun challenge_open_2014 challenge_open_2014.py
+
+amigo1:
+    
+    amiddle-open // starts constraint navigation (base2,navigation2)
+
