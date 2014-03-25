@@ -1,19 +1,24 @@
 #!/usr/bin/env python
+import os
+import subprocess as sub
 
-import roslib; roslib.load_manifest('challenge_demo_2014')
+import roslib
 import rospy
 import rosnode
 from std_msgs.msg import String
 import diagnostic_msgs.msg
-import subprocess as sub
+
+PKG = 'challenge_demo_2014'
+roslib.load_manifest(PKG)
+os.chdir(roslib.packages.get_pkg_dir(PKG))
 
 def callback(data): 
     if(data.data == "doorbell"):
-        response = sub.Popen(['aplay','doorbell.wav'])
+        response = sub.Popen(['aplay','src/doorbell.wav'])
 
 # Main function.
 if __name__ == '__main__':
-    rospy.init_node('node_alive_server')
+    rospy.init_node('doorbell_listener')
     subscriber = rospy.Subscriber("/trigger", String, callback)
     while not rospy.is_shutdown():
         rospy.sleep(.5)	
