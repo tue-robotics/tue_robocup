@@ -30,26 +30,54 @@ class GetClog(smach.StateMachine):
         with self:
             smach.StateMachine.add( "ASK_FOR_CLOG",
                                     states.Say(robot, ["Can I have clogs?", "Please hand me some clogs", "Can I have some clogs?", "Clogs please"], 
-                                               block=False),
-                                    transitions={'spoken': "OPEN_GRIPPER"})
+                                               block=True),
+                                    transitions={'spoken': "HOLD_ARM_FOR_CLOG2"})
             
-            smach.StateMachine.add( "OPEN_GRIPPER",
-                                    states.SetGripper(robot, side),
-                                    transitions={   'succeeded'         :'HOLD_ARM_FOR_CLOG',
-                                                    'failed'            :'RESET_ARM' })
+            #Upper arm back a bit: -0.00, -0.39, 0.00, 0.00, 0.00, 0.00, 0.00
+            #Then the lower arm up: -0.00, -0.39, 0.00, 1.93, 0.00, 0.00, 0.00
+            #Then to -0.1, -0.4, 0.00, 1.93, 0.000, 0.00, 0.00
+            # smach.StateMachine.add( "HOLD_ARM_FOR_CLOG1",
+            #                         states.ArmToJointPos(robot, side, [-0.00, -0.39, 0.00, 0.00, 0.00, 0.00, 0.00], timeout=4), #TODO: Set correct pose
+            #                         transitions={   'done'              :'HOLD_ARM_FOR_CLOG2',
+            #                                         'failed'            :'RESET_ARM1' })
             
-            smach.StateMachine.add( "HOLD_ARM_FOR_CLOG",
-                                    states.ArmToJointPos(robot, side, [-0.1, 0.6, 0.2, 1.6, 0.0, -0.5,-0.0]), #TODO: Set correct pose
-                                    transitions={   'done'              :'CLOSE_GRIPPER',
-                                                    'failed'            :'RESET_ARM' })
+            smach.StateMachine.add( "HOLD_ARM_FOR_CLOG2",
+                                    states.ArmToJointPos(robot, side, [0.00, -0.39, 0.00, 1.93, 0.00, 0.00, 0.00], timeout=4), #TODO: Set correct pose
+                                    transitions={   'done'              :'HOLD_ARM_FOR_CLOG3',
+                                                    'failed'            :'RESET_ARM1' })
+            
+            smach.StateMachine.add( "HOLD_ARM_FOR_CLOG3",
+                                    states.ArmToJointPos(robot, side, [-0.1, -0.4, 0.00, 1.93, 0.000, 0.00, 0.00], timeout=4), #TODO: Set correct pose
+                                    transitions={   'done'              :'LOOK_AT_HAND',
+                                                    'failed'            :'RESET_ARM1' })
             
             smach.StateMachine.add( "LOOK_AT_HAND",
                                     states.LookAtHand(robot, side), #TODO: Set correct pose
-                                    transitions={   'done'              :'CLOSE_GRIPPER'})
+                                    transitions={   'done'              :'OPEN_GRIPPER'})
+            
+            smach.StateMachine.add( "OPEN_GRIPPER",
+                                    states.SetGripper(robot, side, timeout=2),
+                                    transitions={   'succeeded'         :'ASK_FOR_CLOG2',
+                                                    'failed'            :'ASK_FOR_CLOG2' })
+            
+            smach.StateMachine.add( "ASK_FOR_CLOG2",
+                                    states.Say(robot, ["Please put a clog in my gripper, they're too small for me to pick up"], 
+                                               block=True),
+                                    transitions={'spoken': "CLOSE_GRIPPER"})
             
             smach.StateMachine.add( "CLOSE_GRIPPER",
                                     states.SetGripper(robot, side, gripperstate=ArmState.CLOSE),
-                                    transitions={   'succeeded'         :'RESET_ARM',
+                                    transitions={   'succeeded'         :'RESET_ARM1',
+                                                    'failed'            :'RESET_ARM1' })
+            
+            smach.StateMachine.add( "RESET_ARM1",
+                                    states.ArmToJointPos(robot, side, [-0.1, -0.4, 0.00, 1.93, 0.000, 0.00, 0.00], timeout=4), #TODO: Set correct pose
+                                    transitions={   'done'              :'RESET_ARM2',
+                                                    'failed'            :'RESET_ARM2' })
+            
+            smach.StateMachine.add( "RESET_ARM2",
+                                    states.ArmToJointPos(robot, side, [0.00, -0.39, 0.00, 1.93, 0.00, 0.00, 0.00], timeout=4), #TODO: Set correct pose
+                                    transitions={   'done'              :'RESET_ARM',
                                                     'failed'            :'RESET_ARM' })
             
             smach.StateMachine.add( "RESET_ARM",
@@ -97,6 +125,9 @@ class RoboZoo(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
 
         self.robot = robot
+
+        self.can_hand = robot.leftArm
+        self.clog_hand = robot.rightArm
 
         self.init_knowledge()
 
@@ -164,7 +195,7 @@ class RoboZoo(smach.StateMachine):
                                                     'abort'             :'Aborted'})
 
             smach.StateMachine.add( "HELP_WITH_GETTING_DRINK",
-                                    states.Human_handover(robot.leftArm, robot),
+                                    states.Human_handover(self.can_hand, robot),
                                      transitions={  'succeeded'         :'GET_CLOG',
                                                     'failed'            :'GET_CLOG' }) #We're lost if even this fails
 
@@ -174,7 +205,7 @@ class RoboZoo(smach.StateMachine):
                                                     'failed'            :'HELP_WITH_GETTING_DRINK' })
 
             smach.StateMachine.add( "GET_CLOG",
-                                    GetClog(robot, robot.rightArm),
+                                    GetClog(robot, self.clog_hand),
                                     transitions={   'Done'         :'GOTO_ORDERING',
                                                     'Failed'            :'GOTO_ORDERING' })
 
@@ -199,7 +230,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "PLACE_CLOG"})
 
             smach.StateMachine.add( "HELP_WITH_PLACING_DRINK",
-                                    states.HandoverToHuman(robot.leftArm, robot),
+                                    states.HandoverToHuman(self.can_hand, robot),
                                      transitions={  'succeeded'        :'RESET_ARMS2',
                                                     'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
 
@@ -221,7 +252,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "GOTO_PICKUP"})
 
             smach.StateMachine.add( "HELP_WITH_PLACING_CLOG",
-                                    states.HandoverToHuman(robot.leftArm, robot),
+                                    states.HandoverToHuman(self.clog_hand, robot),
                                      transitions={  'succeeded'        :'RESET_ARMS2',
                                                     'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
 
@@ -260,7 +291,7 @@ class RoboZoo(smach.StateMachine):
                                                     'failed'            :'HELP_WITH_GETTING_EMPTY_CAN' })
 
             smach.StateMachine.add( "HELP_WITH_GETTING_EMPTY_CAN",
-                                    states.Human_handover(robot.leftArm, robot),
+                                    states.Human_handover(self.can_hand, robot),
                                      transitions={  'succeeded'        :'GOTO_TRASHBIN',
                                                     'failed'           :'GOTO_TRASHBIN' }) #We're lost if even this fails
 
@@ -278,7 +309,7 @@ class RoboZoo(smach.StateMachine):
                                                     'target_lost'       :'HELP_WITH_DUMPING_CAN'})
             
             smach.StateMachine.add( "HELP_WITH_DUMPING_CAN",
-                                    states.HandoverToHuman(robot.leftArm, robot),
+                                    states.HandoverToHuman(self.can_hand, robot),
                                      transitions={  'succeeded'        :'SET_CURRENT_DRINK',
                                                     'failed'           :'SET_CURRENT_DRINK' }) #We're lost if even this fails
 
