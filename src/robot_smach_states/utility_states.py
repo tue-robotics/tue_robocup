@@ -419,3 +419,15 @@ class ResetArmsSpindleHead(smach.State):
 
         return "done"
 
+class ResetSpindle_HeadUp(smach.State):
+    def __init__(self, robot, timeout=0.0):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+
+    def execute(self, userdata=None):
+
+        self.robot.spindle.reset()
+        self.robot.head.look_up()
+        return "done"
+
