@@ -62,7 +62,7 @@ class GetClog(smach.StateMachine):
             
             smach.StateMachine.add( "ASK_FOR_CLOG2",
                                     states.Say(robot, ["Please put a clog in my gripper, they're too small for me to pick up"], 
-                                               block=True),
+                                               block=False),
                                     transitions={'spoken': "CLOSE_GRIPPER"})
             
             smach.StateMachine.add( "CLOSE_GRIPPER",
