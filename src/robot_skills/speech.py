@@ -26,13 +26,13 @@ class Speech(object):
         """Interface to Amigo's stt-module
            To do: better integration with other Speech code"""
         if wait_service:
-            rospy.loginfo("Waiting for service /speech_interpreter/get_info_user and /speech_interpreter/get_action_user.")
+            rospy.loginfo("Waiting for service /speech_interpreter/ask_user and /speech_interpreter/get_action_user.")
 
             try:
-                rospy.wait_for_service('interpreter/get_action_user', timeout = 2)
+                rospy.wait_for_service('interpreter/ask_user', timeout = 2)
                 rospy.wait_for_service('interpreter/get_info_user', timeout = 2)
             except rospy.ROSException:
-                rospy.logwarn("Please roslaunch create_speech_files speech.launch \& rosrun speech_interpreter interpreter to start the speech recognizer and speech interpretr.")
+                rospy.logwarn("Speech interpreter services are not running! Start interpreter!")
 
         self.ask_user_service_get_info = rospy.ServiceProxy('interpreter/ask_user', AskUser)
         self.ask_user_service_get_action = rospy.ServiceProxy('interpreter/ask_user', AskUser)
