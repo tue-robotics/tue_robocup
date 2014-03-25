@@ -20,7 +20,12 @@ from psi import Compound, Sequence, Conjunction
 # Hardcoded emergency room {'living_room','bedroom' or 'kitchen'}
 room = 'kitchen'
 
-
+''' TO DO:
+- Make a list of likely and unlikely positions for the emergency to occur
+- Fill in hardcoded room before the start of the challenge also in the pdf creator
+- Verification of a face when you drove to it!
+- Decide if we want to detect the accident or just move to a person
+'''
 #########################################
 #       Created by: Teun Derksen        #
 #########################################
@@ -46,6 +51,8 @@ class LookingForPersonOld(smach.State):
         self.robot.spindle.reset()
         self.robot.head.reset_position()
 
+        self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
+
         navigate_room = Conjunction(  Compound("=", "Waypoint", Compound(room, "W")),
                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
                                                  Compound("not", Compound("visited", "Waypoint")),
@@ -53,8 +60,8 @@ class LookingForPersonOld(smach.State):
 
         goal_answers = self.robot.reasoner.query(navigate_room)             # I do not use not_visited and not_unreachable since these are no roi's
 
-        self.robot.reasoner.query(Conjunction(Compound("current_exploration_target", "Waypoint_name"),
-                                                      Compound("assert", Compound("unreachable", "Waypoint_name"))))
+        self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
+
         if not goal_answers:
             return "not_found"
 
@@ -624,8 +631,8 @@ def setup_statemachine(robot):
 
     fallback_ambulance_query = Compound("waypoint", room, Compound("pose_2d", "X", "Y", "Phi"))
 
-    query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Location"),
-                                                      Compound("waypoint", "Location", Compound("pose_2d", "X", "Y", "Phi")))
+    query_last_exploration_location = Conjunction(Compound("current_exploration_target", room),
+                                                  Compound("waypoint", room, Compound("pose_2d", "X", "Y", "Phi")))
 
 
     with sm:
@@ -636,12 +643,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add( "START_CHALLENGE",
                                 states.StartChallengeRobust(robot, "initial"), 
                                 transitions={   "Done":"SAY_LOOK_FOR_PERSON", 
-                                                    "Aborted":"SAY_LOOK_FOR_PERSON", 
-                                                    "Failed":"SAY_LOOK_FOR_PERSON"})
+                                                "Aborted":"SAY_LOOK_FOR_PERSON", 
+                                                "Failed":"SAY_LOOK_FOR_PERSON"})
 
         smach.StateMachine.add( "SAY_LOOK_FOR_PERSON",
-                                states.Say(robot, "Looking for person.", block=False),
-                                transitions={   "spoken":"FIND_PERSON"})
+                                states.Say(robot,"Looking for person.", block=False),
+                                transitions={    "spoken":"FIND_PERSON"})
 
         ######################################################
         ########## GO TO ROOM AND LOOK FOR PERSON ############
@@ -653,7 +660,7 @@ def setup_statemachine(robot):
                                                 'not_found':'SAY_GO_TO_EXIT'})
         
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.5,0)),
+                                states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
                                 transitions={   "arrived":"LOOK_AT_PERSON",
                                                     "unreachable":'SAY_PERSON_UNREACHABLE',
                                                     "preempted":'SAY_PERSON_UNREACHABLE',
@@ -667,12 +674,22 @@ def setup_statemachine(robot):
                                 states.Say(robot,["I failed going to the desired person", "I am not able to reach the person I want to speak"], block=False),
                                 transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT'})
 
+        '''
         smach.StateMachine.add( 'GO_TO_LAST_EXPLORATION_POINT', 
                                 states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
                                 transitions={   'arrived':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
                                                     'preempted':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
                                                     'unreachable':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
                                                     'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+        '''
+
+        smach.StateMachine.add( "GO_TO_LAST_EXPLORATION_POINT",
+                                states.NavigateGeneric(robot, goal_query=query_last_exploration_location),
+                                transitions={   "arrived":"SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
+                                                    "unreachable":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+        
 
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
                                 states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
@@ -743,8 +760,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "TURN_OFF_EMERGENCY_DETECTOR",
                                 SwitchEmergencyDetector(robot,switch=False), 
-                                transitions={'done':'APPROACH_PERSON',
-                                             'failed':'APPROACH_PERSON'})
+                                transitions={'done':'SAY_TURN_OFF_EMERGENCY_DETECTOR',
+                                             'failed':'SAY_TURN_OFF_EMERGENCY_DETECTOR'})
+
+        smach.StateMachine.add( "SAY_TURN_OFF_EMERGENCY_DETECTOR",
+                                states.Say(robot,["Emergency detected"], block=False),
+                                transitions={'spoken':'APPROACH_PERSON'})
 
         ######################################################
         ################   APPROACH PERSON   #################
@@ -759,6 +780,16 @@ def setup_statemachine(robot):
         smach.StateMachine.add( "FAILED_DRIVING_TO_LOCATION",
                                     states.Say(robot,"I was not able to reach the desired location of the person.", block=False),
                                     transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT2'})
+        
+
+        smach.StateMachine.add( "GO_TO_LAST_EXPLORATION_POINT2",
+                                states.NavigateGeneric(robot, goal_query=query_last_exploration_location),
+                                transitions={   "arrived":"SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2",
+                                                    "unreachable":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2',
+                                                    "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2',
+                                                    "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
+
+        '''
 
         smach.StateMachine.add( 'GO_TO_LAST_EXPLORATION_POINT2', 
                                     states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
@@ -766,6 +797,8 @@ def setup_statemachine(robot):
                                                     'preempted':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2', 
                                                     'unreachable':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2', 
                                                     'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
+        
+        '''
 
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2",
                                     states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
