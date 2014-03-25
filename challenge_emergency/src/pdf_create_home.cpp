@@ -161,54 +161,44 @@ void initializePDFObject(HPDF_Doc& pdf, HPDF_Font& font)
 
 
 /// Read the status file
-void readStatusFile(int** statusArray, float*** coordinatesArray)
+void readStatusFile(int** status, float** coordinates, string** room)
 {
 
     //! Define string to pull out each line
     string STRING;
     ifstream myfile;
-    int number_lines = 0;
-
-    //! Find number of lines
-    myfile.open((ros::package::getPath("challenge_emergency")+"/output/status.txt").c_str());
-    while(getline(myfile,STRING))
-    {
-        number_lines++;
-    }
-    myfile.close();
 
     //! Reopen to fill arrays status and coordinates
-    *statusArray = new int[number_lines];
-    *coordinatesArray = new float*[number_lines];
-    for(int i = 0; i < number_lines; i++)
-        (*coordinatesArray)[i] = new float[2];
+    *status = new int;
+    *coordinates = new float[2];
+    *room = new string;
+
 
     myfile.open((ros::package::getPath("challenge_emergency")+"/output/status.txt").c_str());
 
-    //! Actual filling
-    for (int ii = 0; ii < number_lines; ii++)
-    {
+    //! Assign status and coordinates
+    getline(myfile,STRING);
+    unsigned found = STRING.find(";");  //find first ';'
+    STRING = STRING.substr(found+1);
+    //! Prutscode to seperate 'status'/'coordinates'
+    string statuss = STRING.substr(0,1);//status = {0,1,2}
 
-        //! Go through every line
-        getline(myfile,STRING);
-        unsigned found = STRING.find(";");  //find first ';'
-        STRING = STRING.substr(found+1);
-        //! Prutscode to seperate 'status'/'coordinates'
-        string statuss = STRING.substr(0,1);//status = {0,1,2}
+    found = STRING.find(";");
+    STRING = STRING.substr(found+1);    //move to next ';'
+    found = STRING.find(";");
+    string x = STRING.substr(0,found);  //length unknown (float)
+    string y = STRING.substr(found+1);  //length unknown (float)
 
-        found = STRING.find(";");
-        STRING = STRING.substr(found+1);    //move to next ';'
-        found = STRING.find(";");
-        string x = STRING.substr(0,found);  //length unknown (float)
-        string y = STRING.substr(found+1);  //length unknown (float)
+    //! Save 'status' information to array
+    (*status)[0] = atoi(statuss.c_str());
 
-        //! Save 'status' information to array
-        (*statusArray)[ii] = atoi(statuss.c_str());
+    //! Save coordinates of object (fire/person)  in 'x' and 'y'
+    (*coordinates)[0] = atof(x.c_str());
+    (*coordinates)[1] = atof(y.c_str());
 
-        //! Save coordinates of object (fire/person)  in 'x' and 'y'
-        (*coordinatesArray)[ii][0] = atof(x.c_str());
-        (*coordinatesArray)[ii][1] = atof(y.c_str());
-    }
+    //! Save room
+    getline(myfile,STRING);
+    (*room)[0] = STRING;
 
     myfile.close();
 }
@@ -285,7 +275,8 @@ int createPDF()
 
     //Status arrays
     int* status = NULL;
-    float** coordinates = NULL;
+    float* coordinates = NULL;
+    string* room = NULL;
 
     // Map [0,0]
     double x_null;// = (450/2)-x_map;
@@ -300,7 +291,7 @@ int createPDF()
      */
 
     //Read the status file
-    readStatusFile(&status, &coordinates);
+    readStatusFile(&status, &coordinates, &room);
 
     //Find correct usb dir
     findUSBDir(usb_dir, img_path);
@@ -346,10 +337,13 @@ int createPDF()
     HPDF_Page_EndText (page[n_page]);
 
     y = y-18;
+    std::string location;
+    location = string_format("Location: %s", room->c_str());
+    ROS_INFO("ROOM: %s",location.c_str());
     HPDF_Page_BeginText (page[n_page]);
     HPDF_Page_SetFontAndSize (page[n_page], font, 12);
     HPDF_Page_MoveTextPos (page[n_page], x, y);
-    HPDF_Page_ShowText (page[n_page], "Location: Kitchen room");
+    HPDF_Page_ShowText (page[n_page], location.c_str());
     HPDF_Page_EndText (page[n_page]);
 
     y = y - 14;
@@ -398,8 +392,8 @@ int createPDF()
     for (int i = 0; i < 1; i++){
 
         //! Position person/fire
-        int pos_x = coordinates[i][0] * scaledWidth+originOffsetX;
-        int pos_y = image_map_cv.size().height - coordinates[i][1] * scaledHeight-originOffsetY;
+        int pos_x = coordinates[0] * scaledWidth+originOffsetX;
+        int pos_y = image_map_cv.size().height - coordinates[1] * scaledHeight-originOffsetY;
 
         //! Give number to person
 
@@ -466,7 +460,7 @@ int createPDF()
 
 
         //! Give location to person
-        person_coords = string_format("\t Location(x,y): x = %f, y = %f",  coordinates[i][0], coordinates[i][1]);
+        person_coords = string_format("\t Location(x,y): x = %f, y = %f",  coordinates[0], coordinates[1]);
 
 
 

@@ -444,6 +444,7 @@ class Register(smach.State):
 
         rospy.logdebug("Wrote status")
         f.write('%.2f;%.2f \n' % (x, y))
+        f.write(room + '\n')
         '''   
         f.write('%.2f;%.2f' % (x, y))
         f.write(room + '\n')
