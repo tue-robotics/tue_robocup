@@ -623,11 +623,15 @@ def setup_statemachine(robot):
             smach.StateMachine.add("AT_LOC_TO",
                                    states.Say(robot,"I am at the meeting point again, I will open my gripper now so that you are \
                                                      able to get it out of my hands."),
-                                   transitions={'spoken':'DROP_OBJECT'})
+                                   transitions={'spoken':'RESET_SPINDLE_HEAD_UP'})
 
             smach.StateMachine.add("NOT_AT_MEETING_POINT",
                                    states.Say(robot,"I could not reach the meeting point the way I wanted. I am sorry. But could someone take the object out of my hands, I will open my gripper now."),
-                                   transitions={'spoken':'DROP_OBJECT'})
+                                   transitions={'spoken':'RESET_SPINDLE_HEAD_UP'})
+
+            smach.StateMachine.add("RESET_SPINDLE_HEAD_UP",
+                                states.ResetSpindle_HeadUp(robot),
+                                transitions={'done':'DROP_OBJECT'})
 
             smach.StateMachine.add( 'DROP_OBJECT', states.SetGripper(robot, selectedArm, gripperstate=0),         #open
                                     transitions={   'succeeded':'CLOSE_AFTER_DROP',
