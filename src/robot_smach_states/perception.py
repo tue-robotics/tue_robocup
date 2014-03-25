@@ -12,6 +12,7 @@ from psi import Compound, Conjunction
 
 import util.reasoning_helpers as urh
 import robot_skills.util.msg_constructors as msgs
+from robot_skills.util.transformations import tf_transform
 
 class Learn_Person(smach.State):
     '''
@@ -271,7 +272,7 @@ class LookForObjectsAtROI(smach.State):
             return 'no_object_found'
             
 class LookForObjectsAtPoint(smach.State):
-    def __init__(self, robot, object_query, point_stamped, modules=["object_recognition"], waittime=2.5):
+    def __init__(self, robot, object_query, point_stamped, modules=["object_recognition"], waittime=2.5, maxdist=0.8):
         smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
                                 input_keys=[],
                                 output_keys=[])
@@ -280,6 +281,8 @@ class LookForObjectsAtPoint(smach.State):
         self.point_stamped = point_stamped
         self.modules = modules
         self.waittime= waittime
+        self.maxdist = maxdist
+
         assert hasattr(self.robot, "head")
         try:
             assert hasattr(self.robot, "perception")
@@ -325,7 +328,10 @@ class LookForObjectsAtPoint(smach.State):
             object_answers = self.robot.reasoner.query(self.object_query)
             #Sort by distance to lookat_point
             #import ipdb; ipdb.set_trace()
-            rx,ry,rz = self.point_stamped.point.x, self.point_stamped.point.y, self.point_stamped.point.z
+
+            #Transform from base link to map.
+            transformedpoint = tf_transform(self.point_stamped, self.point_stamped.header.frame_id, "/map")
+            rx,ry,rz = transformedpoint.x, transformedpoint.y, transformedpoint.z
 
             rospy.loginfo("Selecting closest answer")
             closest_QA = urh.select_answer(object_answers, 
