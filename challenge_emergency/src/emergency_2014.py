@@ -76,7 +76,7 @@ class LookingForPersonOld(smach.State):
         self.robot.spindle.reset()
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
-        #self.robot.speech.speak("Let me see who I can find here...")
+        self.robot.speech.speak("Let me see who I can find here...")
         
         self.response_start = self.robot.perception.toggle(["face_segmentation"])
         if self.response_start.error_code == 0:
@@ -104,7 +104,7 @@ class LookingForPersonOld(smach.State):
  
         if not person_result:
             self.robot.head.set_pan_tilt(tilt=0.2)
-            #self.robot.speech.speak("No one here. Checking for sitting persons!")
+            self.robot.speech.speak("Checking the floor")
 
             self.response_start = self.robot.perception.toggle(["face_segmentation"])
             if self.response_start.error_code == 0:
@@ -475,7 +475,7 @@ class RunPdfCreator(smach.State):
         return "done"
 
 class SwitchEmergencyDetector(smach.State):
-    def __init__(self, robot,switch):
+    def __init__(self, robot, switch):
         smach.State.__init__(self, outcomes=['done','failed'])
 
         self.switch = switch
@@ -532,7 +532,7 @@ class WaitForAmbulance(smach.State):
         self.robot.spindle.reset()
         self.robot.head.set_pan_tilt(tilt=-0.2)
         
-        self.robot.speech.speak("Waiting for the ambulance.",block=False)
+        self.robot.speech.speak("Waiting for the ambulance.")
 
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
@@ -639,21 +639,21 @@ def setup_statemachine(robot):
                                                     "Aborted":"SAY_LOOK_FOR_PERSON", 
                                                     "Failed":"SAY_LOOK_FOR_PERSON"})
 
-        smach.StateMachine.add("SAY_LOOK_FOR_PERSON",
+        smach.StateMachine.add( "SAY_LOOK_FOR_PERSON",
                                 states.Say(robot, "Looking for person.", block=False),
                                 transitions={   "spoken":"FIND_PERSON"})
 
         ######################################################
         ########## GO TO ROOM AND LOOK FOR PERSON ############
         ######################################################
-        smach.StateMachine.add("FIND_PERSON",
+        smach.StateMachine.add( "FIND_PERSON",
                                 LookingForPersonOld(robot),
                                 transitions={   'found':'NAVIGATE_TO_PERSON',
                                                 'looking':'FIND_PERSON',
                                                 'not_found':'SAY_GO_TO_EXIT'})
         
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.5,0)),
                                 transitions={   "arrived":"LOOK_AT_PERSON",
                                                     "unreachable":'SAY_PERSON_UNREACHABLE',
                                                     "preempted":'SAY_PERSON_UNREACHABLE',
@@ -757,8 +757,8 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":'FAILED_DRIVING_TO_LOCATION'})
 
         smach.StateMachine.add( "FAILED_DRIVING_TO_LOCATION",
-                                states.Say(robot,"I was not able to reach the desired location of the person.", block=False),
-                                transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT2'})
+                                    states.Say(robot,"I was not able to reach the desired location of the person.", block=False),
+                                    transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT2'})
 
         smach.StateMachine.add( 'GO_TO_LAST_EXPLORATION_POINT2', 
                                     states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
@@ -768,12 +768,12 @@ def setup_statemachine(robot):
                                                     'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
 
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2",
-                                states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
-                                transitions={'spoken':'RELOOK_AT_PERSON2'})
+                                    states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
+                                    transitions={'spoken':'RELOOK_AT_PERSON2'})
 
         smach.StateMachine.add( 'RELOOK_AT_PERSON2',
-                                LookAtPerson(robot),                          
-                                transitions={'finished':'ASK_IF_AMBULANCE'})  
+                                    LookAtPerson(robot),                          
+                                    transitions={'finished':'ASK_IF_AMBULANCE'})  
 
         ######################################################
         #############   ASK AMBU AND REGISTER   ##############
@@ -843,7 +843,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add( 'SAY_OBJECT_NOT_GRASPED',
                                     states.Say(robot, ["I could not pick up the object you wanted", 
                                                        "I failed to grab the object you wanted."]),
-                                    transitions={     'spoken':'HUMAN_HANDOVER' }) 
+                                    transitions={   'spoken':'HUMAN_HANDOVER' }) 
 
         smach.StateMachine.add( 'HUMAN_HANDOVER',
                                     states.Human_handover(arm,robot),
@@ -852,7 +852,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( 'SAY_OBJECT_NOT_FOUND',
                                     states.Say(robot, ["I could not find the object you wanted.", 
-                                                "I looked really hard, but I couldn't find your object."]),
+                                                       "I looked really hard, but I couldn't find your object."]),
                                     transitions={   'spoken':'SAY_GO_TO_EXIT' }) 
 
         smach.StateMachine.add("HANDOVER_TO_HUMAN",
@@ -941,8 +941,8 @@ def setup_statemachine(robot):
         #####################  AT THE END  ###################
         ######################################################
         smach.StateMachine.add('AT_END',
-                                states.Say(robot, "Goodbye"),
-                                transitions={'spoken':'Done'})
+                                    states.Say(robot, "Goodbye"),
+                                    transitions={'spoken':'Done'})
 
     return sm
 
