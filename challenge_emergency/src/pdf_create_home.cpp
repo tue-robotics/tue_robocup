@@ -405,10 +405,9 @@ int createPDF()
             ROS_INFO("Status HELP");
             person_stat = "\n Status: Need Assistance!";
             r = 1;
-
-            //! Draw a picture of 'fire' with subscript
+            
             stringstream ss;
-            ss << "pers" << person_index;
+            ss << "pers";
             cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             cv::putText(image_map_cv, "help!", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
 
@@ -420,10 +419,8 @@ int createPDF()
             person_stat = "\n Status: Ok!";
             r = 0;
 
-
-            //! Draw a picture of 'fire' with subscript
             stringstream ss;
-            ss << "pers" << person_index;
+            ss << "pers";
             cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
             cv::putText(image_map_cv, "=ok", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
 

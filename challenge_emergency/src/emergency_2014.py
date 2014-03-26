@@ -83,7 +83,8 @@ class LookingForPersonOld(smach.State):
         self.robot.spindle.reset()
 
         # we made it to the new goal. Let's have a look to see whether we can find the person here
-        self.robot.speech.speak("Let me see who I can find here...")
+        #self.robot.speech.speak("Let me see who I can find here...")
+        rospy.sleep(1.5)
         
         self.response_start = self.robot.perception.toggle(["face_segmentation"])
         if self.response_start.error_code == 0:
@@ -92,7 +93,7 @@ class LookingForPersonOld(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(5)
+        rospy.sleep(2)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -111,7 +112,8 @@ class LookingForPersonOld(smach.State):
  
         if not person_result:
             self.robot.head.set_pan_tilt(tilt=0.2)
-            self.robot.speech.speak("Checking the floor")
+            #self.robot.speech.speak("Checking the floor")
+            rospy.sleep(1.5)
 
             self.response_start = self.robot.perception.toggle(["face_segmentation"])
             if self.response_start.error_code == 0:
@@ -540,6 +542,9 @@ class WaitForAmbulance(smach.State):
         self.robot.spindle.reset()
         self.robot.head.set_pan_tilt(tilt=-0.2)
         
+        if self.counter == 1:
+            rospy.sleep(1.5)        
+        
         self.robot.speech.speak("Waiting for the ambulance.")
 
 
@@ -740,7 +745,7 @@ def setup_statemachine(robot):
         ################  OBSERVE EMERGENCY  #################
         ######################################################
         smach.StateMachine.add( "SAY_TURN_ON_EMERGENCY_DETECTOR",
-                                states.Say(robot,["Waiting for emergency"], block=False),
+                                states.Say(robot,["Waiting for emergency"], block=True),
                                 transitions={'spoken':'TURN_ON_EMERGENCY_DETECTOR'})
 
 
@@ -852,7 +857,7 @@ def setup_statemachine(robot):
                                                  "failed":"ASK_FETCH"})
 
         ######################################################
-        ############### LOOK GRAP AND DELIVER ################
+        ############## LOOK, GRAP AND DELIVER ################
         ######################################################
         smach.StateMachine.add( 'LOOK_FOR_OBJECT',
                                     LookForObject(robot),
