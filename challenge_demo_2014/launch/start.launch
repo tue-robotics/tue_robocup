@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-
 <launch>
 
     <!-- Launch the text to speech (Should not be here but just for debugging) -->
@@ -12,6 +11,8 @@
     <!--<node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" />-->
 
     <!-- Start the simple webserver to handle static files -->    
-    <node pkg="challenge_demo_2014" type="webserver.py" name="doorbell_gui" output="screen" />
+    <node pkg="challenge_demo_2014" type="webserver.py" name="doorbell_gui" output="screen">
+		<param name="port" value="8001" />
+    </node>
 
 </launch>
