@@ -16,8 +16,7 @@ $( document ).ready(function() {
     }
 
     $('#doorbell').click(function(e) {
-        e.preventDefault();
-
         sendTrigger('doorbell');
+        $(this).fadeOut(100).fadeIn(100);
     });
 });

@@ -12,7 +12,7 @@
 // configuration
 var rosUrl = 'ws://' + window.location.hostname + ':9090';
 var pingInterval = 5000;  // ms. The time between pings
-var pingTimeout = 65;     // ms. If ros doesn't respond within this period of time, close the connection
+var pingTimeout = 250;     // ms. If ros doesn't respond within this period of time, close the connection
 
 // global variables
 var ros;
