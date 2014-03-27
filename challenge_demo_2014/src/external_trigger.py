@@ -46,6 +46,27 @@ class WaitForTrigger(smach.State):
         if data.data in self.triggers:
             self.trigger_received = data.data
 
+class PackagePose(smach.State):
+
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        
+        self.robot = robot
+
+    def execute(self, gl):        
+        rospy.loginfo("start moving to package pose")   
+
+        resultL = self.robot.leftArm.send_goal( 0.18,  0.2, 0.75, 0, 0, 0, 60)
+        resultR = self.robot.rightArm.send_goal(0.18, -0.2, 0.75, 0, 0, 0, 60)
+
+        if not resultL:
+            rospy.loginfo("error sending leftArm goal")
+            return 'failed'
+        if not resultR:
+            rospy.loginfo("error sending rightArm goal")
+            return 'failed'
+        return 'succeeded' 
+
 class ChallengeDemo2014(smach.StateMachine):
 
     def __init__(self, robot):
@@ -99,15 +120,10 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add("SAY_DOOR_REACHED", 
                                     states.Say(robot,"Can I receive your package?", block=False),
-                                    transitions={   'spoken':'RECEIVE_POSE_LEFT'})
+                                    transitions={   'spoken':'RECEIVE_POSE'})
             
-            smach.StateMachine.add("RECEIVE_POSE_LEFT", 
-                                    states.Carrying_pose(robot.leftArm, robot),
-                                    transitions={   'succeeded':'RECEIVE_POSE_RIGHT',
-                                                    'failed':'RECEIVE_POSE_RIGHT'})
-
-            smach.StateMachine.add("RECEIVE_POSE_RIGHT", 
-                                    states.Carrying_pose(robot.rightArm, robot),
+            smach.StateMachine.add("RECEIVE_POSE", 
+                                    PackagePose(robot),
                                     transitions={   'succeeded':'WAIT_FOR_LOAD',
                                                     'failed':'WAIT_FOR_LOAD'})
 
@@ -131,10 +147,15 @@ class ChallengeDemo2014(smach.StateMachine):
                                     states.DriveToClosestPerson(robot),
                                     transitions={   "Done":"SAY_PERSON_FOUND",
                                                     "Aborted":"SAY_PERSON_FOUND",
-                                                    "Failed":"SAY_PERSON_FOUND"})
+                                                    "Failed":"SAY_STILL_NOT_FOUND"})
+
+            smach.StateMachine.add("SAY_STILL_NOT_FOUND", 
+                                    states.Say(robot,"My owner is still not home"),
+                                    transitions={   'spoken':'DRIVE_TO_CLOSEST_PERSON'})
+
 
             smach.StateMachine.add("SAY_PERSON_FOUND", 
-                                    states.Say(robot,"Hey, there is my owner", block=False),
+                                    states.Say(robot,"Hello owner, I have a package for you", block=False),
                                     transitions={   'spoken':'Aborted'})
 
             # navigation states

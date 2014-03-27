@@ -1,14 +1,20 @@
-# Responsible: Ramon
+challenge_demo_2014
+===================
+Responsible: Ramon
+-------------------
+
 
 make sure amiddle is running
 
+**amigo1:**
 
-amigo1:
-start the webserver for this challenge:
-- roslaunch challenge_demo_2014 start.launch
+- start the webserver for this challenge:
+    `roslaunch challenge_demo_2014 start.launch`
 
-the doorbell is at http://amigo1:8001/doorbell.html
-the gui      is at http://amigo1:8001/app.html
+- open the web gui's
+  - the doorbell is at http://amigo1:8001/src/doorbell/doorbell.html
+  - the gui      is at http://amigo1:8001/src/doorbell/app.html
 
-amigo3:
-rosrun rosrun challenge_demo_2014 external_trigger.py
+**amigo3:**
+
+- `rosrun rosrun challenge_demo_2014 external_trigger.py`
