@@ -57,7 +57,7 @@ const std::string ROBOT_BASE_FRAME = "/amigo/base_link";   // name of the robot'
 const double T_WAIT_MAX_AFTER_STOP_CMD = 5.0;              // after a stop command, resume following if no confirmation is heart after this time
 const double T_MAX_NO_MOVE_BEFORE_TRYING_3D = 5.0;         // time robot stands still before move_base_3d is used instead of the carrot planner
 const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;             // Maximum distance of robot to wall in elevator (used to detect elevator)
-const double ELEVATOR_INLIER_RATIO = 0.60;                 // % of laser points that should at least be within bounds for elevator to be detected
+const double ELEVATOR_INLIER_RATIO = 0.70;                 // % of laser points that should at least be within bounds for elevator to be detected
 
 // Speech
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
@@ -343,13 +343,13 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
     if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
         ROS_WARN("Could not reach base pose within %f [s]", dt);
-        moveHead(0, -0.2, false);
+        moveHead(0, -0.2, true);
         return false;
     }
 
     ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
 
-    moveHead(0, -0.2, false);
+    moveHead(0, -0.2, true);
 
     return true;
 
@@ -400,7 +400,7 @@ void leaveElevator()
 
             // Try to move to this position
             //moveToRelativePosition(-3.5, fctr*y, 3.14, 35.0);
-            moveToRelativePosition(-3.5, fctr*y, 0.0, 35.0);
+            moveToRelativePosition(-2.5, fctr*y, 0.0, 30.0);
 
             // Get current robot position
             try
@@ -715,6 +715,7 @@ int main(int argc, char **argv) {
     ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
     ac_head_ref_->waitForServer();
     ROS_INFO("Connected!");
+    moveHead(0, -0.2, true);
 
     //! Reset spindle
     resetSpindlePosition();
@@ -808,6 +809,7 @@ int main(int argc, char **argv) {
                     follower_->pause();
                     driveAroundCrowd();
                     follower_->reset(1.0);
+                    ROS_INFO("Done with the 3d nav move around the crowd");
 
                 }
                 // BEFORE THE ELEVATOR: just try to move (there is something in the way)
@@ -824,6 +826,7 @@ int main(int argc, char **argv) {
                     //moveToRelativePosition(x-offset, y, phi, 3.0);
                     // option 2:
                     moveToRelativePosition(0.65*x, 0.65*y, phi, 7.5);
+                    ROS_INFO("Done with the 3d nav move");
                 }
             }
 
