@@ -112,9 +112,9 @@ class ChallengeDemo2014(smach.StateMachine):
                                                     'failed':'WAIT_FOR_LOAD'})
 
             smach.StateMachine.add( 'WAIT_FOR_LOAD',
-                        states.Wait_time(robot, waittime=2),
-                        transitions={   'waited':'SAY_PACKAGE_RECEIVED',
-                                        'preempted':'SAY_PACKAGE_RECEIVED'})
+                        states.Wait_time(robot, waittime=5),
+                                    transitions={   'waited':'SAY_PACKAGE_RECEIVED',
+                                                    'preempted':'SAY_PACKAGE_RECEIVED'})
             
             smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
                                     states.Say(robot,"Thank you, I will notify my owner", block=False),
@@ -122,10 +122,20 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_START_2',
                                     states.NavigateGeneric(robot, goal_query=query_start),
-                                    transitions={   "arrived":"Aborted",
+                                    transitions={   "arrived":"DRIVE_TO_CLOSEST_PERSON",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'Aborted',
+                                                    "preempted":'DRIVE_TO_CLOSEST_PERSON',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
+
+            smach.StateMachine.add( 'DRIVE_TO_CLOSEST_PERSON',
+                                    states.DriveToClosestPerson(robot),
+                                    transitions={   "Done":"SAY_PERSON_FOUND",
+                                                    "Aborted":"SAY_PERSON_FOUND",
+                                                    "Failed":"SAY_PERSON_FOUND"})
+
+            smach.StateMachine.add("SAY_PERSON_FOUND", 
+                                    states.Say(robot,"Hey, there is my owner", block=False),
+                                    transitions={   'spoken':'Aborted'})
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
