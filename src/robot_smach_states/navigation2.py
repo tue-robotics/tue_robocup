@@ -56,47 +56,54 @@ class executePlan(smach.State):
     def execute(self, userdate):
 
         time_path_free = rospy.Time.now()
-        r = rospy.Rate(10) # 10hz
-        while (rospy.Time.now() - time_path_free) < rospy.Duration(2.0):
+        count = 5
+        r = rospy.Rate(1.0) # 10hz
+        while not rospy.is_shutdown():
 
-            # Check the local planner status
-            if self.robot.base2.local_planner_status == "idle":
-                self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
-            elif self.robot.base2.local_planner_status == "arrived":
+            if self.robot.base2.local_planner_status == "arrived":
                 self.robot.base2.local_planner_status = "idle"
                 return "arrived"
 
-            # Check global path state
-            if self.robot.base2.globalPlannerCheckPlan(self.robot.base2.plan):
-                time_path_free = rospy.Time.now()
+            # Check if we can find an other plan
+            plan = self.robot.base2.globalPlannerGetPlan(self.robot.base2.pc)
+
+            if plan < 0 or len(plan) == 0:
+                count+=1
+            else:
+                count = 0
+
+            if count > 5:
+                self.robot.base2.localPlannerCancelCurrentPlan()
+                return "unreachable"
+            
+            # Send the plan to the local_planner
+            self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
 
             r.sleep()
 
-        return "blocked"
-
-class planBlocked(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['execute','unreachable'])
-        self.robot = robot 
-
-    def execute(self, userdate):
-
-        # Check if we can find an other plan
-        plan = self.robot.base2.globalPlannerGetPlan(self.robot.base2.pc)
-
-        if plan < 0:
-            self.robot.base2.localPlannerCancelCurrentPlan()
-            return "unreachable"
-
-        if len(plan) == 0:
-            self.robot.base2.localPlannerCancelCurrentPlan()
-            return "unreachable"
-
-        # Set the new plan
-        self.robot.base2.local_planner_status = "idle"
-        self.robot.base2.plan = plan
-
-        return "execute"
+#class planBlocked(smach.State):
+#    def __init__(self, robot):
+#        smach.State.__init__(self,outcomes=['execute','unreachable'])
+#        self.robot = robot 
+#
+#    def execute(self, userdate):
+#
+#        # Check if we can find an other plan
+#        plan = self.robot.base2.globalPlannerGetPlan(self.robot.base2.pc)
+#
+#        if plan < 0:
+#            self.robot.base2.localPlannerCancelCurrentPlan()
+#            return "unreachable"
+#
+#        if len(plan) == 0:
+#            self.robot.base2.localPlannerCancelCurrentPlan()
+#            return "unreachable"
+#
+#        # Set the new plan
+#        self.robot.base2.local_planner_status = "idle"
+#        self.robot.base2.plan = plan
+#
+#        return "execute"
 
 class NavigateWithConstraints(smach.StateMachine):
     def __init__(self, robot):
@@ -115,8 +122,4 @@ class NavigateWithConstraints(smach.StateMachine):
 
             smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
                 transitions={'arrived'                              :   'arrived',
-                             'blocked'                              :   'PLAN_BLOCKED'})
-
-            smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
-                transitions={'execute'                              :   'EXECUTE_PLAN',
-                             'unreachable'                          :   'unreachable'})
+                             'blocked'                              :   'unreachable'})
