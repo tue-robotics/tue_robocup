@@ -51,8 +51,11 @@
 
 
         <!-- build:js js/app.js -->
+        <script>
+          var weinre = window.location.protocol + '//' + window.location.hostname + ':8080/target/target-script-min.js#anonymous';
+          location.search.indexOf('debug')>0 && document.write('<script src="' + weinre + '"><\/script>');
+        </script>
         <script src="vendor/js/console-polyfill.js"></script>
-        <!--<script src="../include/js/waterbug.js"></script>-->
 
         <script src="vendor/js/jquery.js"></script>
         <script src="vendor/js/bootstrap.js"></script>
