@@ -41,24 +41,24 @@ import robot_skills.util.msg_constructors as msgs
 #    if no solution is found at the first try. 
 
 
-class AmigoIntroductionRIPS(smach.State):
-    def __init__(self, robot=None): 
-        smach.State.__init__(self, outcomes=['finished'])
-        
-        self.robot = robot
-        
-    def execute(self, userdata):      
-        rospy.loginfo("Introducing AMIGO")
-        
-        self.robot.head.reset_position()
-        
-        self.robot.speech.speak("Hello, my name is amigo")
-        rospy.sleep(1.0)
-        self.robot.speech.speak("I am participating in robocup 2014 on behalf of Tech United Eindhoven")      
-        self.robot.speech.speak("If you want me to stop, you can press my emergency button on my back")
-        self.robot.speech.speak("Thank you for your attention, I will now leave the arena")
-        
-        return 'finished'
+#class AmigoIntroductionRIPS(smach.State):
+#    def __init__(self, robot=None): 
+#        smach.State.__init__(self, outcomes=['finished'])
+#        
+#        self.robot = robot
+#        
+#    def execute(self, userdata):      
+#        rospy.loginfo("Introducing AMIGO")
+#        
+#        self.robot.head.reset_position()
+#        
+#        self.robot.speech.speak("Hello, my name is amigo")
+#        rospy.sleep(1.0)
+#        self.robot.speech.speak("I am participating in robocup 2014 on behalf of Tech United Eindhoven")      
+#        self.robot.speech.speak("If you want me to stop, you can press my emergency button on my back")
+#        self.robot.speech.speak("Thank you for your attention, I will now leave the arena")
+#        
+#        return 'finished'
 
 
 def setup_statemachine(robot):
@@ -86,30 +86,30 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
                                     states.StartChallengeRobust(robot, "initial"), 
-                                    transitions={   "Done":"SAY_START_CHALLENGE", 
-                                                    "Aborted":"SAY_START_CHALLENGE", 
-                                                    "Failed":"SAY_START_CHALLENGE"})   # There is no transition to Failed in StartChallengeRobust (28 May)
+                                    transitions={   "Done":"GO_TO_INTERMEDIATE_WAYPOINT", 
+                                                    "Aborted":"GO_TO_INTERMEDIATE_WAYPOINT", 
+                                                    "Failed":"GO_TO_INTERMEDIATE_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
-        smach.StateMachine.add("SAY_START_CHALLENGE",
-                                    states.Say(robot, "Hello, I am Amigo, human cyborg relations", block=False),
-                                    transitions={   "spoken":"GO_TO_INTERMEDIATE_WAYPOINT"})
+        #smach.StateMachine.add("SAY_START_CHALLENGE",
+        #                            states.Say(robot, "Hello, I am Amigo, human cyborg relations", block=False),
+        #                            transitions={   "spoken":"GO_TO_INTERMEDIATE_WAYPOINT"})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT', 
                                     states.NavigateGeneric(robot, goal_name="registration_table1"),
-                                    transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
+                                    transitions={   'arrived':'GO_TO_EXIT', 
                                                     'preempted':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
                                                     'unreachable':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT'})
 
         # Amigo will say that it arrives at the intermediate waypoint table
         smach.StateMachine.add('CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT',
-                                    states.Say(robot, "Please clear the path, so that I can find a path."),
+                                    states.Say(robot, "Please clear the path, so that I can find my way."),
                                     transitions={'spoken':'GO_TO_INTERMEDIATE_WAYPOINT_SECOND_TRY'}) 
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_SECOND_TRY', 
                                     states.NavigateGeneric(robot, goal_name="registration_table1", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
+                                    transitions={   'arrived':'GO_TO_EXIT', 
                                                     'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY'})
@@ -117,7 +117,7 @@ def setup_statemachine(robot):
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                     states.NavigateGeneric(robot, goal_name="registration_table2", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
+                                    transitions={   'arrived':'GO_TO_EXIT', 
                                                     'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY'})
@@ -125,25 +125,25 @@ def setup_statemachine(robot):
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                     states.NavigateGeneric(robot, goal_name="registration_table3", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'ARRIVED_AT_INTERMEDIATE_WAYPOINT', 
-                                                    'preempted':'FAIL_BUT_INTRODUCE', 
-                                                    'unreachable':'FAIL_BUT_INTRODUCE', 
-                                                    'goal_not_defined':'FAIL_BUT_INTRODUCE'})
+                                    transitions={   'arrived':'GO_TO_EXIT', 
+                                                    'preempted':'GO_TO_EXIT', 
+                                                    'unreachable':'GO_TO_EXIT', 
+                                                    'goal_not_defined':'GO_TO_EXIT'})
 
         # Amigo will say that it arrives at the intermediate waypoint
-        smach.StateMachine.add('ARRIVED_AT_INTERMEDIATE_WAYPOINT',
-                                    states.Say(robot, "I'm at the intermediate waypoint, I will now introduce myself"),
-                                    transitions={'spoken':'INTRODUCE_AMIGO'}) 
+        #smach.StateMachine.add('ARRIVED_AT_INTERMEDIATE_WAYPOINT',
+        #                            states.Say(robot, "I'm at the intermediate waypoint, I will now introduce myself"),
+        #                            transitions={'spoken':'INTRODUCE_AMIGO'}) 
 
         # In case the path is blocked, amigo will say that it still introduce itself.
-        smach.StateMachine.add('FAIL_BUT_INTRODUCE',
-                                    states.Say(robot, "I stil couldn't get to the intermediate waypoint, I will now introduce myself"),
-                                    transitions={'spoken':'INTRODUCE_AMIGO'}) 
+        #smach.StateMachine.add('FAIL_BUT_INTRODUCE',
+        #                            states.Say(robot, "I stil couldn't get to the intermediate waypoint, I will now introduce myself"),
+        #                            transitions={'spoken':'INTRODUCE_AMIGO'}) 
 
         # It will start the introduction (MAKE SURE THAT THE FULL INTRODUCTION IS PLAYED DURING COMPETITION!!!))
-        smach.StateMachine.add('INTRODUCE_AMIGO', 
-                                    AmigoIntroductionRIPS(robot),
-                                    transitions={'finished':'GO_TO_EXIT'})
+        #smach.StateMachine.add('INTRODUCE_AMIGO', 
+        #                            AmigoIntroductionRIPS(robot),
+        #                            transitions={'finished':'GO_TO_EXIT'})
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
