@@ -11,10 +11,6 @@ amigo1:
 
     // restart ssh session
 
-    roslaunch challenge_open_2014 dependencies.launch // loads the world model server and loads the map
+    amiddle-open // starts custom middleware and dependencies.launch 
     rosrun challenge_open_2014 challenge_open_2014.py
-
-amigo1:
-    
-    amiddle-open // starts constraint navigation (base2,navigation2)
 
