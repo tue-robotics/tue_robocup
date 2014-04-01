@@ -52,6 +52,71 @@ class AskQuestions(smach.State):
         else:
             return "failed"
 
+class WaitForPerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['detected','waiting','timed_out','failed'])
+        self.robot = robot
+
+        self.counter = 0
+    
+    def execute(self, userdata=None):
+
+        if self.counter > 3:
+            return 'timed_out'
+
+        self.robot.spindle.reset()
+        self.robot.head.set_pan_tilt(tilt=-0.2)
+        
+        if self.counter == 0:
+            rospy.sleep(1.5)        
+        
+        query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        self.response_start = self.robot.perception.toggle(['face_segmentation'])
+
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Face segmentation has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.logerr("Face segmentation failed to start")
+            return "failed"
+
+        wait_machine = states.Wait_query_true(self.robot, query_detect_person, 10)
+        wait_result = wait_machine.execute()
+
+        rospy.loginfo("Face segmentation will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Face segmentation is stopped")
+        elif self.response_stop.error_code == 1:
+            robot.lights.set_color(255, 0, 0)
+            rospy.sleep(0.1)  
+            robot.lights.set_color(0, 0, 255)
+            rospy.loginfo("Failed stopping face segmentation")
+
+        if wait_result == "timed_out":
+            self.counter = self.counter + 1
+            return "waiting"
+
+        elif wait_result == "query_true":
+            answers = self.robot.reasoner.query(query_detect_person)
+            possible_locations = [( float(answer["X"]), 
+                                    float(answer["Y"]), 
+                                    float(answer["Z"])) for answer in answers]
+            x,y,z = possible_locations[0]
+
+            if z > 1.5:
+                self.robot.spindle.high()
+                rospy.logdebug("Spindle should come up now!")
+
+            lookat_point = msgs.PointStamped(x,y,z)
+            rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
+            self.robot.head.send_goal(lookat_point,timeout=0)
+
+            return 'detected'
+
 
 class WhatDidYouSay(smach.StateMachine):
 
@@ -69,8 +134,17 @@ class WhatDidYouSay(smach.StateMachine):
             
         with self:
 
+
+            smach.StateMachine.add("WAIT_FOR_PERSON",
+                                    WaitForPerson(robot),
+                                    transitions={'detected':'SAY_FIRST_QUESTION',
+                                                 'waiting':'WAIT_FOR_PERSON',
+                                                 'timed_out':'SAY_FIRST_QUESTION',
+                                                 'failed':'SAY_FIRST_QUESTION'})
+
+
             smach.StateMachine.add("SAY_FIRST_QUESTION",
-                                    states.Say(robot,"What is your first question?"),
+                                    states.Say(robot,"Hello! What is your first question?"),
                                     transitions={'spoken':'ASK_FIRST_QUESTION'})
 
             smach.StateMachine.add("ASK_FIRST_QUESTION",
