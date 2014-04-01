@@ -12,7 +12,7 @@ from robot_skills.arms import State as ArmState
 
 
 """ TODOs, BUGs:
-- Define point_of_interest for:
+- Define point_of_interest (In demo_laser package) for:
     ordering_table,
     pickup_table,
     storage_table
@@ -84,6 +84,92 @@ class GetClog(smach.StateMachine):
                                     states.ResetArm(robot, side),
                                     transitions={   'done'              :'Done'})
 
+class GiveClog(smach.StateMachine):
+    def __init__(self, robot, side, poor_point_query):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+        self.side = side
+        self.poor_point_query = poor_point_query
+
+        with self:
+            smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
+                                    states.Say(robot, [ "Hold up your hand please!"], 
+                                               block=False),
+                                    transitions={'spoken': "PREPARE_POOR_1"})
+
+            smach.StateMachine.add( "PREPARE_POOR_1",
+                                    states.ArmToJointPos(robot, side, [0.00, -0.39, 0.00, 1.93, 0.00, 0.00, 0.00], timeout=4),
+                                    transitions={   'done'              :'PREPARE_POOR_2',
+                                                    'failed'            :'Failed' })
+            
+            smach.StateMachine.add( "PREPARE_POOR_2",
+                                    states.ArmToJointPos(robot, side, [-0.1, -0.4, 0.00, 1.93, 0.000, 0.00, 0.00], timeout=4), 
+                                    transitions={   'done'              :'POOR_POS1',
+                                                    'failed'            :'Failed' })
+
+            smach.StateMachine.add( "POOR_POS1", 
+                                    states.ArmToUserPose(self.side, 0.1, 0.1, 0.25, 0.0, 0.0 , 0.0, 
+                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'POOR_POS2',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR_POS2", 
+                                    states.ArmToUserPose(self.side, 0.1, 0.0, 0.0, 0.0, 0.0 , 0.0, 
+                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'POOR1',
+                                                    'failed'                : 'Failed'})
+
+            #smach.StateMachine.add( "POOR",
+            #                       states.ArmToUserPose(self.side, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 
+            #                            time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+            #                        transitions={   'succeeded'             : 'RETRACT',
+            #                                       'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR1",
+                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR2',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR2",
+                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR3',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR3",
+                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR4',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR4",
+                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR5',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR5",
+                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'POOR6',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR6",
+                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
+                                    transitions={   'done'                  : 'RETRACT',
+                                                    'failed'                : 'RETRACT'})
+
+            smach.StateMachine.add('RETRACT', 
+                                    states.ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'RETRACT2',
+                                                    'failed'                : 'RETRACT2'})
+                                                    
+            smach.StateMachine.add('RETRACT2', 
+                                    states.ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'RETRACT3',
+                                                    'failed'                : 'RETRACT3'})
+                                                    
+            smach.StateMachine.add('RETRACT3', 
+                                    states.ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'Done',
+                                                    'failed'                : 'Failed'})
+
 class RoboZoo(smach.StateMachine):
     """The goal of the challenge is to attract people and be attractive to an audience.
     So, the robot will hand out cans of coke and fanta on one end of a table and clean up empty cans at another end.
@@ -102,9 +188,12 @@ class RoboZoo(smach.StateMachine):
         This involves two states: 
         1.1:    NavigateGeneric(query_storage_table)
         1.2:    GrabMachine(query_ordered_drink)
-    2:  Brink the drink to the table and place it on the table. Or directly hand it over to the customer?
+        1.3:    GetClog (entails grabbing a cup that cointains some clogs)
+    2:  Brink the drink to the table and wait for a human to appear. When a face is detected, say that the user can take the drink from his hand. 
         2.1:    NavigateGeneric(query_ordering_table)
-        2.2:    PlaceObject(query_ordering_table)
+        2.2:    Await_queried_perception(face in front)
+        2.3:    HandoverToHuman (for the can and and say something nice)
+        2.4:    HandOverClogs (by pooring from the can we grasped)
     3:  Then we look if there are any cans delivered to the other end of the table, and clean them up if so.
         3.1:    NavigateGeneric(query_pickup_table)
         3.2:    GrabMachine(query_any_can)
@@ -134,23 +223,29 @@ class RoboZoo(smach.StateMachine):
         query_storage_table =   Compound("point_of_interest", "storage_table", Compound("point_3d", "X", "Y", "Z"))
 
         #To store an order, assertz Compound("goal", Compound("serve", "Drink")) to the world model
-        query_ordered_drink =   Conjunction(
+        query_ordered_drink     = Conjunction(
                                     Compound("goal", Compound("serve", "Drink")),
                                     Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                     Compound( "property_expected", "ObjectID", "position", 
                                         Compound("in_front_of", "amigo")),
 				    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         
-        query_ordering_table =  Compound("point_of_interest", "ordering_table", Compound("point_3d", "X", "Y", "Z"))
+        query_ordering_table    = Compound("point_of_interest", "ordering_table", Compound("point_3d", "X", "Y", "Z"))
         
-        query_pickup_table =    Compound("point_of_interest", "pickup_table", Compound("point_3d", "X", "Y", "Z"))
+        poor_point_query        = Compound("point_of_interest", "poor_point", Compound("point_3d", "X", "Y", "Z"))
         
-        query_any_can =         Conjunction(
+        query_pickup_table      = Compound("point_of_interest", "pickup_table", Compound("point_3d", "X", "Y", "Z"))
+        
+        query_any_can           = Conjunction(
                                     Compound( "property_expected", "ObjectID", "class_label", "can"),
                                     Compound( "property_expected", "ObjectID", "position", 
                                         Compound("in_front_of", "amigo")))
         
-        query_trashbin =        Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
+        query_trashbin          = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
+
+        query_detect_person     = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         with self:
             @smach.cb_interface(outcomes=['asserted'])
@@ -206,33 +301,50 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "GET_CLOG",
                                     GetClog(robot, self.clog_hand),
-                                    transitions={   'Done'         :'GOTO_ORDERING',
+                                    transitions={   'Done'              :'GOTO_ORDERING',
                                                     'Failed'            :'GOTO_ORDERING' })
 
             smach.StateMachine.add( "GOTO_ORDERING",
                                     states.NavigateGeneric(robot, lookat_query=query_ordering_table),
-                                    transitions={   "arrived"           :"PLACE_ORDER", 
-                                                    "unreachable"       :"PLACE_ORDER", #TODO: we should ask for help
+                                    transitions={   "arrived"           :"AWAIT_FACE", 
+                                                    "unreachable"       :"AWAIT_FACE", #TODO: we should ask for help
                                                     "preempted"         :"Aborted", 
                                                     "goal_not_defined"  :"Failed"})
 
+            smach.StateMachine.add( 'AWAIT_FACE',
+                                    states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person),
+                                    transitions={   'query_true'        :'SAY_HOLDUP_HAND_FOR_DRINK', 
+                                                    'timed_out'         :'PLACE_ORDER',
+                                                    'preempted'         :'Aborted'})
+
+            smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_DRINK",
+                                    states.Say(robot, [ "I'll give you a drink, hold your hand up", "Hold your hand up, I'll give you a drink"], 
+                                               block=False),
+                                    transitions={'spoken': "HAND_DRINK_TO_HUMAN"})
+
+            smach.StateMachine.add( "HAND_DRINK_TO_HUMAN",
+                                    states.HandoverToHuman(self.can_hand, robot),
+                                     transitions={  'succeeded'        :'SAY_TAKE_DRINK',
+                                                    'failed'           :'SAY_TAKE_DRINK' }) #We're lost if even this fails
+
             smach.StateMachine.add( "PLACE_ORDER",
                                     states.PlaceObject("left", robot, placement_query=query_ordering_table),
-                                    transitions={   "succeeded"         :"PLACE_CLOG",
-                                                    "failed"            :"HELP_WITH_PLACING_DRINK", 
-                                                    "target_lost"       :"HELP_WITH_PLACING_DRINK"})
+                                    transitions={   "succeeded"         :"SAY_TAKE_DRINK",
+                                                    "failed"            :"HAND_DRINK_TO_HUMAN", 
+                                                    "target_lost"       :"HAND_DRINK_TO_HUMAN"})
 
             smach.StateMachine.add( "SAY_TAKE_DRINK",
                                     states.Say(robot, [ "Enjoy your drink! I have another present as well for you", 
-                                                        "There you go, enjoy your drink. If you wait, I have ssomething else for you as well",
+                                                        "There you go, enjoy your drink. If you wait, I have something else for you as well",
                                                         "Cheers! I have a special gift for you as well, please wait a sec."], 
                                                block=False),
-                                    transitions={'spoken': "PLACE_CLOG"})
+                                    transitions={'spoken': "GIVE_CLOG"})
 
-            smach.StateMachine.add( "HELP_WITH_PLACING_DRINK",
-                                    states.HandoverToHuman(self.can_hand, robot),
-                                     transitions={  'succeeded'        :'RESET_ARMS2',
-                                                    'failed'           :'RESET_ARMS2' }) #We're lost if even this fails
+            smach.StateMachine.add( "GIVE_CLOG",
+                                    GiveClog(robot, self.clog_hand, poor_point_query),
+                                    transitions={   "Done"         :"SAY_TAKE_CLOGS",
+                                                    "Aborted"      :"Aborted", 
+                                                    "Failed"       :"PLACE_CLOG"})
 
             smach.StateMachine.add( "PLACE_CLOG",
                                     states.PlaceObject("right", robot, placement_query=query_ordering_table),
@@ -243,7 +355,7 @@ class RoboZoo(smach.StateMachine):
             smach.StateMachine.add( "SAY_TAKE_CLOGS",
                                     states.Say(robot, [ "Enjoy your clogs! If you give them enough water, they'll grow to your size.",
                                                         "Enjoy your wooden shoes and your drink!",
-                                                        "Enjoy your drink and real dutch clogs!",
+                                                        "Enjoy your drink and your real dutch clogs!",
                                                         "There you are, real Dutch wooden shoes!",
                                                         "Enjoy your special Limited Edition Tech United clogs",
                                                         "Here's my gift to you, real dutch clogs.",
