@@ -20,8 +20,27 @@ from robot_skills.arms import State as ArmState
 
 - When there are no persons at the desk, have Amigo yell like a market salesman if anyone wants a drink?
 """
+class GrabClog(smach.StateMachine):
+    def __init__(self, robot, side):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+        self.side = side
 
-class GetClog(smach.StateMachine):
+        query_clog_cup = Conjunction(
+                                    Compound( "property_expected", "ObjectID", "class_label", "cup"), #TODO: 
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+        with self:
+            smach.StateMachine.add( "ASK_FOR_CLOG",
+                                    states.Say(robot, ["Let me get some clogs!"], 
+                                               block=True),
+                                    transitions={'spoken': "GRAB_CLOG_CUP"})
+            
+            smach.StateMachine.add( "GRAB_CLOG_CUP",
+                                    states.GrabMachine(side, robot, query_clog_cup),
+                                    transitions={   'succeeded'         :'Done',
+                                                    'failed'            :'Failed' })
+class ReceiveClog(smach.StateMachine):
     def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
@@ -188,7 +207,7 @@ class RoboZoo(smach.StateMachine):
         This involves two states: 
         1.1:    NavigateGeneric(query_storage_table)
         1.2:    GrabMachine(query_ordered_drink)
-        1.3:    GetClog (entails grabbing a cup that cointains some clogs)
+        1.3:    ReceiveClog (entails grabbing a cup that cointains some clogs)
     2:  Brink the drink to the table and wait for a human to appear. When a face is detected, say that the user can take the drink from his hand. 
         2.1:    NavigateGeneric(query_ordering_table)
         2.2:    Await_queried_perception(face in front)
@@ -291,16 +310,21 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "HELP_WITH_GETTING_DRINK",
                                     states.Human_handover(self.can_hand, robot),
-                                     transitions={  'succeeded'         :'GET_CLOG',
-                                                    'failed'            :'GET_CLOG' }) #We're lost if even this fails
+                                     transitions={  'succeeded'         :'GET_CLOG_1',
+                                                    'failed'            :'GET_CLOG_1' }) #We're lost if even this fails
 
             smach.StateMachine.add( "GRAB_DRINK",
                                     states.GrabMachine("left", robot, query_ordered_drink),
-                                    transitions={   'succeeded'         :'GET_CLOG',
+                                    transitions={   'succeeded'         :'GET_CLOG_1',
                                                     'failed'            :'HELP_WITH_GETTING_DRINK' })
 
-            smach.StateMachine.add( "GET_CLOG",
-                                    GetClog(robot, self.clog_hand),
+            smach.StateMachine.add( "GET_CLOG_1",
+                                    GrabClog(robot, "right"),
+                                    transitions={   'Done'              :'GOTO_ORDERING',
+                                                    'Failed'            :'GET_CLOG_BACKUP' })
+
+            smach.StateMachine.add( "GET_CLOG_BACKUP",
+                                    ReceiveClog(robot, self.clog_hand),
                                     transitions={   'Done'              :'GOTO_ORDERING',
                                                     'Failed'            :'GOTO_ORDERING' })
 
