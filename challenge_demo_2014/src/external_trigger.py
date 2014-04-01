@@ -145,11 +145,6 @@ class ChallengeDemo2014(smach.StateMachine):
         
         with self:
 
-            smach.StateMachine.add('WAIT_FOR_OWNER',
-                                    WaitForOwner(robot),
-                                    transitions={   "person_found":"NAVIGATE_TO_OWNER",
-                                                    "timed_out":"Aborted"})
-
             smach.StateMachine.add('INITIALIZE_FIRST',
                                     states.Initialize(robot),
                                     transitions={   'initialized':'NAVIGATE_TO_START',
@@ -194,7 +189,7 @@ class ChallengeDemo2014(smach.StateMachine):
             smach.StateMachine.add( 'WAIT_FOR_LOAD',
                         states.Wait_time(robot, waittime=5),
                                     transitions={   'waited':'SAY_PACKAGE_RECEIVED',
-                                                    'preempted':'SAY_PACKAGE_RECEIVED'})
+                                                    'preempted':'Aborted'})
             
             smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
                                     states.Say(robot,"Thank you, I will notify my owner", block=False),
@@ -202,10 +197,19 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_START_2',
                                     states.NavigateGeneric(robot, goal_query=query_start),
-                                    transitions={   "arrived":"Aborted",
+                                    transitions={   "arrived":"WAIT_FOR_OWNER",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
+
+            smach.StateMachine.add('WAIT_FOR_OWNER',
+                                    WaitForOwner(robot),
+                                    transitions={   "person_found":"NAVIGATE_TO_OWNER",
+                                                    "timed_out":"SAY_PERSON_TIMEOUT"})
+
+            smach.StateMachine.add("SAY_PERSON_TIMEOUT", 
+                                    states.Say(robot,"It took too long, I better go to where he usually is", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
             smach.StateMachine.add('NAVIGATE_TO_OWNER',
                                     states.NavigateGeneric(robot, lookat_query=query_owner),
@@ -216,11 +220,11 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add("SAY_PERSON_LOST", 
                                     states.Say(robot,"I lost my operator, I better go where he usually is", block=False),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
             smach.StateMachine.add("SAY_PERSON_UNREACHABLE", 
                                     states.Say(robot,"I lost my operator, I better go where he usually is", block=False),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
             smach.StateMachine.add('NAVIGATE_TO_OWNER_BACKUP',
                                     states.NavigateGeneric(robot, goal_query=query_backup),
