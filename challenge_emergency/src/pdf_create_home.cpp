@@ -330,11 +330,13 @@ int createPDF()
 
     //! Create header with overview of information
     y = y - 40;
+    /*
     HPDF_Page_BeginText (page[n_page]);
     HPDF_Page_SetFontAndSize (page[n_page], font, 16);
     HPDF_Page_MoveTextPos (page[n_page], x, y); // HEADER
     HPDF_Page_ShowText (page[n_page], "Header");
     HPDF_Page_EndText (page[n_page]);
+    */
 
     y = y-18;
     std::string location;
@@ -416,13 +418,13 @@ int createPDF()
         else if (status[i]==1)
         {
             ROS_INFO("Status OK");
-            person_stat = "\n Status: Ok!";
+            person_stat = "\n Status: Oke, no ambulance needed.";
             r = 0;
 
             stringstream ss;
             ss << "pers";
             cv::putText(image_map_cv, ss.str(), cv::Point(pos_x, pos_y), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
-            cv::putText(image_map_cv, "=ok", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
+            cv::putText(image_map_cv, "=ok!", cv::Point(pos_x, pos_y+20), cv::FONT_HERSHEY_COMPLEX_SMALL, 1, cv::Scalar(0,0,0), 1, 8);
 
             ROS_INFO("Added text to image (ok)");
 

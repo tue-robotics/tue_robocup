@@ -13,6 +13,8 @@ from speech_interpreter.srv import AskUser
 from virtual_cam.srv import cheese
 from challenge_emergency.srv import Start
 from person_emergency_detector.srv import Switch
+from person_emergency_detector.srv import GetUnknownOctomapBlobPositions
+from person_emergency_detector.msg import Position
 
 #import states_new as states 
 from psi import Compound, Sequence, Conjunction
@@ -39,6 +41,39 @@ class SleepTime(smach.State):
     def execute(self, userdata=None):    
         rospy.sleep(self.sleeptime)
         return "finished"
+
+class UnknownOctomapBlobDetector(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["success", "failed", "unreachable"])
+
+        self.robot = robot
+        self.unknown_blob_detection = rospy.ServiceProxy('/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions',GetUnknownOctomapBlobPositions) 
+
+    def execute(self, userdata=None):
+
+        rospy.wait_for_service("/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions",timeout=2.0)
+        try:
+            self.response = self.unknown_blob_detection(-5, -5, 0, 5 ,5 ,5) 
+            print self.response
+            if len(self.response.positions) == 0:
+                return 'failed'
+
+
+            possible_locations = [( float(answer.x), 
+                                    float(answer.y), 
+                                    float(answer.z)) for answer in self.response.positions]
+
+
+            print possible_locations[0]
+            goal = possible_locations[0]
+            nav = states.NavigateGeneric(self.robot, lookat_point_3d=goal)# xy_dist_to_goal_tuple=(1.0,0))
+            nav_result = nav.execute()
+
+        except Exception, e:
+            print e
+            return "failed"
+        return "success"
+
 
 class LookingForPersonOld(smach.State):
     def __init__(self, robot):
@@ -122,7 +157,8 @@ class LookingForPersonOld(smach.State):
                 rospy.loginfo("Face segmentation failed to start")
                 self.robot.speech.speak("I was not able to start face segmentation.")
                 return 'looking'
-            rospy.sleep(2)
+
+            rospy.sleep(1.5)
 
             rospy.loginfo("Face segmentation will be stopped now")
             self.response_stop = self.robot.perception.toggle([])
@@ -542,10 +578,10 @@ class WaitForAmbulance(smach.State):
         self.robot.spindle.reset()
         self.robot.head.set_pan_tilt(tilt=-0.2)
         
-        if self.counter == 1:
+        if self.counter == 0:
             rospy.sleep(1.5)        
         
-        self.robot.speech.speak("Waiting for the ambulance.")
+        self.robot.speech.speak("Waiting for help!.")
 
 
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
@@ -640,6 +676,7 @@ def setup_statemachine(robot):
     query_last_exploration_location = Conjunction(Compound("current_exploration_target", room),
                                                   Compound("waypoint", room, Compound("pose_2d", "X", "Y", "Phi")))
 
+    arm = robot.leftArm
 
     with sm:
 
@@ -653,8 +690,8 @@ def setup_statemachine(robot):
                                                 "Failed":"SAY_LOOK_FOR_PERSON"})
 
         smach.StateMachine.add( "SAY_LOOK_FOR_PERSON",
-                                states.Say(robot,"Looking for person.", block=False),
-                                transitions={    "spoken":"FIND_PERSON"})
+                                states.Say(robot,"Going to the " + room, block=False),
+                                transitions={    "spoken":"FIND_PERSON_BACKUP"})
 
         ######################################################
         ########## GO TO ROOM AND LOOK FOR PERSON ############
@@ -663,31 +700,29 @@ def setup_statemachine(robot):
                                 LookingForPersonOld(robot),
                                 transitions={   'found':'NAVIGATE_TO_PERSON',
                                                 'looking':'FIND_PERSON',
-                                                'not_found':'SAY_GO_TO_EXIT'})
+                                                'not_found':'FIND_PERSON_BACKUP'})
+
+        smach.StateMachine.add( "FIND_PERSON_BACKUP",
+                                UnknownOctomapBlobDetector(robot),
+                                transitions={   'success':'NAVIGATE_TO_PERSON',
+                                                'failed':'ASK_IF_AMBULANCE',
+                                                'unreachable':'SAY_PERSON_UNREACHABLE'})
         
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
                                 states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
                                 transitions={   "arrived":"LOOK_AT_PERSON",
-                                                    "unreachable":'SAY_PERSON_UNREACHABLE',
-                                                    "preempted":'SAY_PERSON_UNREACHABLE',
-                                                    "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
+                                                "unreachable":'SAY_PERSON_UNREACHABLE',
+                                                "preempted":'SAY_PERSON_UNREACHABLE',
+                                                "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
+
         smach.StateMachine.add( 'LOOK_AT_PERSON',
                                 LookAtPerson(robot),                          
-                                transitions={'finished':'SAY_TURN_ON_EMERGENCY_DETECTOR'})  
+                                transitions={'finished':'APPROACH_PERSON'})  #SKIP THE EMERGENCY DETECTOR
 
 
         smach.StateMachine.add( "SAY_PERSON_UNREACHABLE",
-                                states.Say(robot,["I failed going to the desired person", "I am not able to reach the person I want to speak"], block=False),
+                                states.Say(robot,"I failed going to the person", block=False),
                                 transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT'})
-
-        '''
-        smach.StateMachine.add( 'GO_TO_LAST_EXPLORATION_POINT', 
-                                states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
-                                transitions={   'arrived':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
-                                                    'preempted':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
-                                                    'unreachable':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE', 
-                                                    'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
-        '''
 
         smach.StateMachine.add( "GO_TO_LAST_EXPLORATION_POINT",
                                 states.NavigateGeneric(robot, goal_query=query_last_exploration_location),
@@ -698,12 +733,12 @@ def setup_statemachine(robot):
         
 
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
-                                states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
+                                states.Say(robot,"I will ask my questions from here.", block=False),
                                 transitions={'spoken':'RELOOK_AT_PERSON'})
 
         smach.StateMachine.add( 'RELOOK_AT_PERSON',
                                 LookAtPerson(robot),                          
-                                transitions={'finished':'SAY_TURN_ON_EMERGENCY_DETECTOR'}) 
+                                transitions={'finished':'APPROACH_PERSON'})  # SKIP THE EMERGENCY DETECTOR
 
 
         ''' NEW, NOT TESTED
@@ -781,7 +816,7 @@ def setup_statemachine(robot):
                                     transitions={   "arrived":"RELOOK_AT_PERSON2",
                                                     "unreachable":'FAILED_DRIVING_TO_LOCATION',
                                                     "preempted":'FAILED_DRIVING_TO_LOCATION',
-                                                    "goal_not_defined":'FAILED_DRIVING_TO_LOCATION'})
+                                                    "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
 
         smach.StateMachine.add( "FAILED_DRIVING_TO_LOCATION",
                                     states.Say(robot,"I was not able to reach the desired location of the person.", block=False),
@@ -795,19 +830,8 @@ def setup_statemachine(robot):
                                                     "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2',
                                                     "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
 
-        '''
-
-        smach.StateMachine.add( 'GO_TO_LAST_EXPLORATION_POINT2', 
-                                    states.Navigate_to_queryoutcome(robot, query_last_exploration_location, X="X", Y="Y", Phi="Phi"),
-                                    transitions={   'arrived':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2', 
-                                                    'preempted':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2', 
-                                                    'unreachable':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2', 
-                                                    'goal_not_defined':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
-        
-        '''
-
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2",
-                                    states.Say(robot,["I will ask my questions from here.", "I will ask you some questions from here."], block=False),
+                                    states.Say(robot,"I will ask my questions from here.", block=False),
                                     transitions={'spoken':'RELOOK_AT_PERSON2'})
 
         smach.StateMachine.add( 'RELOOK_AT_PERSON2',
@@ -840,7 +864,7 @@ def setup_statemachine(robot):
                                     transitions={'finished':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add( 'REGISTER_PERSON_OKAY',
-                                    Register(robot, status=1),  #input 0 (person is not oke)
+                                    Register(robot, status=1),  #input 0 (person is oke)
                                     transitions={'finished':'SAVE_PDF_ON_STICK'})
 
         smach.StateMachine.add( 'SAVE_PDF_ON_STICK',
@@ -903,26 +927,33 @@ def setup_statemachine(robot):
         ############# GO TO ENTRY OF APPARTMENT ##############
         ######################################################
         smach.StateMachine.add('SAY_GO_TO_EXIT',
-                                    states.Say(robot, "I'm going to wait at the exit", block=False),
+                                    states.Say(robot, "I'm going to wait at the entry", block=False),
                                     transitions={'spoken':'GO_TO_EXIT'}) 
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.Navigate_named(robot, "emergency_exit"),
+                                    states.NavigateGeneric(robot, goal_name="emergency_exit"),
+                                    transitions={   'arrived':'WAIT_FOR_AMBULANCE', 
+                                                    'preempted':'GO_TO_EXIT2', 
+                                                    'unreachable':'GO_TO_EXIT2', 
+                                                    'goal_not_defined':'GO_TO_EXIT2'})
+
+        smach.StateMachine.add('GO_TO_EXIT2', 
+                                    states.NavigateGeneric(robot, goal_name="emergency_exit2"),
                                     transitions={   'arrived':'WAIT_FOR_AMBULANCE', 
                                                     'preempted':'WAIT_FOR_AMBULANCE', 
                                                     'unreachable':'WAIT_FOR_AMBULANCE', 
                                                     'goal_not_defined':'WAIT_FOR_AMBULANCE'})
 
         ######################################################
-        ################# WAIT FOR AMBULANCE #################  ENDLESS LOOOP NEEDS COUNTER!
+        ################# WAIT FOR AMBULANCE ################# 
         ######################################################  
         smach.StateMachine.add('WAIT_FOR_AMBULANCE', 
                                     WaitForAmbulance(robot),
                                     transitions={   'detected':'SAY_FOLLOW_ME', 
                                                     'waiting':'WAIT_FOR_AMBULANCE', 
                                                     'failed':'SAY_FAILED_DETECTION',
-                                                    'timed_out':'GUIDE_TO_PERSON'})
+                                                    'timed_out':'SAY_FOLLOW_ME'})
 
         smach.StateMachine.add('SAY_FOLLOW_ME',
                                     states.Say(robot, 'Please follow me to the patient.',block=False),
@@ -951,13 +982,14 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SAY_ARRIVED_AT_PATIENT',
                                     states.Say(robot, 'The patient is here, thanks for the assistance.',block=False),
-                                    transitions={'spoken':'EXIT_APPARTMENT'})
+                                    transitions={'spoken':'SAVE_PDF_ON_STICK_FINAL'})
 
         ######################################################
         #####################  GO TO EXIT  ###################
-        ######################################################
+        ###################################################### 
+        # SKIPPED NOT NEEDED FOR CHALLENGE
         smach.StateMachine.add('EXIT_APPARTMENT', 
-                                    states.Navigate_named(robot, "exit_1"),
+                                    states.NavigateGeneric(robot, goal_name="exit_1"),
                                     transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
                                                     'preempted':'FAILED_GO_TO_EXIT', 
                                                     'unreachable':'FAILED_GO_TO_EXIT', 
