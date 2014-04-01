@@ -27,7 +27,7 @@ class GrabClog(smach.StateMachine):
         self.side = side
 
         query_clog_cup = Conjunction(
-                                    Compound( "property_expected", "ObjectID", "class_label", "cup"), #TODO: 
+                                    Compound( "property_expected", "ObjectID", "class_label", "noodles"), #TODO: class name noodles may need to be changed to cup
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         with self:
