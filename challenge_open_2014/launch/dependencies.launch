@@ -7,11 +7,12 @@
     <arg unless="$(arg gdb)" name="launch-prefix" value=""/>
 
     <!-- WIRE VOLUME -->  
+
     <!-- (This includes loading the transport plugin and tf plugin) -->
     <include file="$(find wire_volume)/launch/start.launch"/>
 
     <!-- Load Entity Fitter Plugin -->
-    <node name="wv_load_fitter_plugin" pkg="wire_volume" type="load_plugin" args="wire_fitter entity_fitter_plugin depth_image_topic=/amigo/top_kinect/depth_registered/image cam_info_topic=/amigo/top_kinect/depth_registered/camera_info fit_type=table"/>
+<!--<node name="wv_load_fitter_plugin" pkg="wire_volume" type="load_plugin" args="wire_fitter entity_fitter_plugin depth_image_topic=/amigo/top_kinect/depth_registered/image cam_info_topic=/amigo/top_kinect/depth_registered/camera_info fit_type=table"/>-->
 
     <!-- Vis Plugin Wire Volume loader -->
     <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>

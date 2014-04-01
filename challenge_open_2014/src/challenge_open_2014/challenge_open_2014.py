@@ -34,7 +34,7 @@ class AskOpenChallenge(smach.State):
 
             if response_answer == "no_answer" or response_answer == "wrong_answer" or response_answer == "":
                 self.robot.speech.speak("I was not able to understand you but I'll drive to table.")
-                target = "table"
+                target = "table-1"
             else:
                 target = response_answer
 
@@ -56,12 +56,16 @@ class AskOpenChallenge(smach.State):
 class OpenChallenge2014(smach.StateMachine):
 
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['success'])
+        smach.StateMachine.__init__(self, outcomes=['success','aborted'])
 
         with self:
 
             smach.StateMachine.add("ASK_OPENCHALLENGE",
                                 AskOpenChallenge(robot),
+                                transitions={'done'             :   'INITIALIZE'})
+
+            smach.StateMachine.add("INITIALIZE",
+                                states.ResetArmsSpindleHead(robot),
                                 transitions={'done'             :   'NAVIGATE_TO_TARGET'})
 
             smach.StateMachine.add("NAVIGATE_TO_TARGET",

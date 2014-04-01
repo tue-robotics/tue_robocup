@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <!-- middleware -->
+    <include file="$(find amigo_launch_files)/launch/middleware/start.launch"/>
+
+    <!-- open_challenge_deps -->
+    <include file="$(find challenge_open_2014)/launch/dependencies.launch"/>
+
+</launch>
