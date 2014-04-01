@@ -69,7 +69,7 @@ class WaitForPerson(smach.State):
         
         if self.counter == 0:
             rospy.sleep(1.5)        
-        
+
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
@@ -91,9 +91,9 @@ class WaitForPerson(smach.State):
         if self.response_stop.error_code == 0:
             rospy.loginfo("Face segmentation is stopped")
         elif self.response_stop.error_code == 1:
-            robot.lights.set_color(255, 0, 0)
+            self.robot.lights.set_color(1, 0, 0)
             rospy.sleep(0.1)  
-            robot.lights.set_color(0, 0, 255)
+            self.robot.lights.set_color(0, 0, 1)
             rospy.loginfo("Failed stopping face segmentation")
 
         if wait_result == "timed_out":
