@@ -5,6 +5,19 @@ import math
 
 import pprint
 
+def xy_dist(answer, (origX, origY), mapping={"X":"X", "Y":"Y"}):
+    """
+    >>> xyz_dist({'X': 0.5, 'Y': 0.5}, (0.0,0.0)) == 0.70710678118654757
+    True
+    """
+    x = float(answer[mapping["X"]])
+    y = float(answer[mapping["Y"]])
+
+    origX = float(origX)
+    origY = float(origY)
+    dist = math.sqrt(abs(origX-x)**2 + abs(origY-y)**2)
+    return dist
+
 def xyz_dist(answer, (origX, origY, origZ), mapping={"X":"X", "Y":"Y", "Z":"Z"}):
     """
     >>> xyz_dist({'X': 0.5, 'Y': 0.5, 'Z': 0.0}, (0.0,0.0,0.0)) == 0.70710678118654757
