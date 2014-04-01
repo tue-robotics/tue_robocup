@@ -9,6 +9,8 @@ from robot_smach_states.util.startup import startup
 
 from psi import Compound, Conjunction, Sequence
 from robot_skills.arms import State as ArmState
+from robot_skills.util import msg_constructors as msg
+from robot_skills.util import transformations
 
 
 """ TODOs, BUGs:
@@ -266,7 +268,43 @@ class RoboZoo(smach.StateMachine):
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
+        #Points are defined relative to a flightcase, using package demo_laser. The /kist-frame is in the middle of the front of the case
+        #waypoint_storage_table  = msg.PoseStamped( -0.7, 0,     0,      frame_id="/kist") #In front of the flightcase
+        poi_storage_table       = msg.PointStamped( 0.1, 0,     0.74,   frame_id="/kist") #10cm inside the bounds of the flight case
+        poi_trashbin            = msg.PointStamped(-0.7, 1.1,   0.7,    frame_id="/kist") #Trashbin is outside the bounds of the case, 1.1m right of the waypoint_storage_table
+        poi_pooring             = msg.PointStamped(-1.9, 0,     0.9,    frame_id="/kist")
+        poi_ordering_table      = msg.PointStamped(-1.9, 0,     0.74,   frame_id="/kist")
+        poi_pickup_table        = msg.PointStamped(-1.9, 0.5,   0.74,   frame_id="/kist")
+
+        transformations.tf_transform(poi_storage_table, poi_storage_table.header.frame_id, "/map")
+
+
         with self:
+            smach.StateMachine.add( "FIND_FLIGHTCASE",
+                                    states.ToggleDemoLaser(robot),
+                                    transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+
+            @smach.cb_interface(outcomes=['asserted'])
+            def rel_to_flightcase(*args, **kwargs):
+                storage = transformations.tf_transform(poi_storage_table, poi_storage_table.header.frame_id, "/map")
+                robot.reasoner.assertz(Compound("point_of_interest", "storage_table", Compound("point_3d", storage.x, storage.y, storage.z)))
+
+                trash = transformations.tf_transform(poi_trashbin, poi_trashbin.header.frame_id, "/map")
+                robot.reasoner.assertz(Compound("point_of_interest", "trashbin1", Compound("point_3d", trash.x, trash.y, trash.z)))
+
+                poor = transformations.tf_transform(poi_pooring, poi_pooring.header.frame_id, "/map")
+                robot.reasoner.assertz(Compound("point_of_interest", "poor_point", Compound("point_3d", poor.x, poor.y, poor.z)))
+
+                order = transformations.tf_transform(poi_ordering_table, poi_ordering_table.header.frame_id, "/map")
+                robot.reasoner.assertz(Compound("point_of_interest", "ordering_table", Compound("point_3d", order.x, order.y, order.z)))
+
+                pickup = transformations.tf_transform(poi_pickup_table, poi_pickup_table.header.frame_id, "/map")
+                robot.reasoner.assertz(Compound("point_of_interest", "pickup_table", Compound("point_3d", pickup.x, pickup.y, pickup.z)))
+                return "asserted"
+            smach.StateMachine.add( "ASSERT_RELATIVE_TO_FLIGHTCASE",
+                                    smach.CBState(rel_to_flightcase),
+                                    transitions={"asserted"             :"SET_CURRENT_DRINK"})
+
             @smach.cb_interface(outcomes=['asserted'])
             def set_serve_drink(*args, **kwargs):
                 drink = kwargs.get("drink", "coke") #Get from key and default to coke if it doesnt exist
@@ -302,7 +340,7 @@ class RoboZoo(smach.StateMachine):
                                                     "goal_not_defined"  :"Failed"})
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
-                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink),
+                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink), 
                                     transitions={   'looking'           :'LOOK_FOR_DRINK',
                                                     'object_found'      :'GRAB_DRINK',
                                                     'no_object_found'   :'HELP_WITH_GETTING_DRINK', #TODO: Not the best option maybe
@@ -365,7 +403,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "GIVE_CLOG"})
 
             smach.StateMachine.add( "GIVE_CLOG",
-                                    GiveClog(robot, self.clog_hand, poor_point_query),
+                                    GiveClog(robot, self.clog_hand, poor_point_query), 
                                     transitions={   "Done"         :"SAY_TAKE_CLOGS",
                                                     "Aborted"      :"Aborted", 
                                                     "Failed"       :"PLACE_CLOG"})
@@ -460,8 +498,8 @@ class RoboZoo(smach.StateMachine):
         self.robot.reasoner.query(Compound("retractall", Compound("current_object", "X")))
         self.robot.reasoner.query(Compound("retractall", Compound("disposed", "X")))
         
-        self.robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
-        self.robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+        # self.robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
+        # self.robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
     
         self.robot.reasoner.assertz(Compound("challenge", "robo_zoo"))
 
