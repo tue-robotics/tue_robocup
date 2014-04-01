@@ -11,4 +11,6 @@
   
   <include  file="$(find person_emergency_detector)/launch/start.launch"/>
   
+  <include  file="$(find person_emergency_detector)/launch/unknown_octomap_blob_detector.launch"/>
+  
 </launch>	
