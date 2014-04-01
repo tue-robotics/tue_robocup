@@ -988,7 +988,7 @@ class Recover(smach.State):
             self.robot.head.send_goal(self.robot.base.obstacle_position)
 
         if not self.robot.base.obstacle_position:
-            rospy.logerr("obstacle pos not defined yet!!! PLEASE EMAIL THIS RESULT TO BAS C --> status = {0}, result = {1}".format(self.robot.base.ac_move_base.get_state(), self.robot.base.get_state()))
+            rospy.logerr("obstacle pos not defined yet!!! PLEASE EMAIL THIS RESULT TO BAS C --> status = {0}, result = {1}".format(self.robot.base.ac_move_base.get_state(), self.robot.base.ac_move_base.get_result()))
             return 'new_goal_required'
 
         # if there is no obstacle on the global path while the robot is not able to reach its goal
