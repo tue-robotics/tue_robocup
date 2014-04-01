@@ -164,8 +164,8 @@ class Arms(object):
         self.arm_left_measurement_sub = rospy.Subscriber("/amigo/left_arm/measurements", JointState, self._receive_arm_left_joints)
         self.arm_right_measurement_sub = rospy.Subscriber("/amigo/right_arm/measurements", JointState, self._receive_arm_right_joints)
 
-        self.leftOffset = Offset(x=0.10, y=0.01, z=0.07)
-        self.rightOffset = Offset(x=0.08, y=0.025, z=0.06)
+        self.leftOffset = Offset(x=0.10, y=-0.10, z=0.04)
+        self.rightOffset = Offset(x=0.08, y=-0.025, z=0.06)
 
 
         self.markerToGrippointOffset = Offset(x=-0.03, y=0.0, z=0.03)
