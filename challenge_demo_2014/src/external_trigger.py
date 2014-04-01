@@ -7,9 +7,11 @@ import smach
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
-from robot_skills.reasoner  import Compound
+from robot_skills.reasoner import Conjunction, Compound, Sequence
 from robot_smach_states.util.startup import startup
+import robot_smach_states.util.reasoning_helpers as urh
 import std_msgs.msg
+import perception_srvs.srv
 
 
 class WaitForTrigger(smach.State):
@@ -67,6 +69,59 @@ class PackagePose(smach.State):
             return 'failed'
         return 'succeeded' 
 
+class WaitForOwner(smach.State):
+
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['person_found','timed_out'])
+        self.robot = robot
+        self.timeout = 30.0
+        # ToDo: fill
+        self.query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
+                                 Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+        # ToDo: don't hardcode
+        self.roipos = (2.5, 0.0)
+
+    def execute(self, gl):
+        #rospy.loginfo('start_perception: modules=%s' % str(self.modules))
+        self.robot.perception.toggle(['ppl_detection'])
+
+        rospy.loginfo("Waiting for a person to appear in the region of interest, make sure this happens within 30 seconds!!!")
+
+        starttime = rospy.Time.now()
+        person_found = False
+
+        while (not person_found and (rospy.Time.now() - starttime) < rospy.Duration(self.timeout) and not rospy.is_shutdown()):
+
+            ''' Do query '''
+            answers = self.robot.reasoner.query(self.query)
+
+            ''' Check for region of interest '''
+            try:
+                selected_answer = urh.select_answer(answers, 
+                                                lambda answer: urh.xy_dist(answer, self.roipos), 
+                                                minmax=min,
+                                                criteria=[lambda answer: urh.xy_dist(answer, self.roipos) < 1.0])
+            except ValueError:
+                selected_answer = None
+
+            if selected_answer:
+                ''' Assert result '''
+                self.robot.reasoner.query(Compound("retractall", Compound("current_person", "X")))
+                person_id = selected_answer["ObjectID"]
+                rospy.loginfo("Asserting new ID: {0}".format(person_id))
+                # assert new object id
+                self.robot.reasoner.assertz(Compound("current_person", person_id))
+
+                person_found = True
+
+            rospy.sleep(rospy.Duration(0.1))
+
+        if person_found:
+            return 'person_found'
+        else:
+            return 'timed_out'
+
+
 class ChallengeDemo2014(smach.StateMachine):
 
     def __init__(self, robot):
@@ -84,8 +139,17 @@ class ChallengeDemo2014(smach.StateMachine):
 
         query_start = Compound("waypoint", "start",         Compound("pose_2d", "X", "Y", "Phi"))
         query_door  = Compound("waypoint", "behind_door",   Compound("pose_2d", "X", "Y", "Phi"))
+        query_backup= Compound("waypoint", "demo_backup",   Compound("pose_2d", "X", "Y", "Phi"))
+        query_owner = Conjunction(Compound("current_person", "ObjectID"),
+                                  Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         
         with self:
+
+            smach.StateMachine.add('WAIT_FOR_OWNER',
+                                    WaitForOwner(robot),
+                                    transitions={   "person_found":"NAVIGATE_TO_OWNER",
+                                                    "timed_out":"Aborted"})
+
             smach.StateMachine.add('INITIALIZE_FIRST',
                                     states.Initialize(robot),
                                     transitions={   'initialized':'NAVIGATE_TO_START',
@@ -138,20 +202,36 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_START_2',
                                     states.NavigateGeneric(robot, goal_query=query_start),
-                                    transitions={   "arrived":"DRIVE_TO_CLOSEST_PERSON",
+                                    transitions={   "arrived":"Aborted",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'DRIVE_TO_CLOSEST_PERSON',
+                                                    "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
-            smach.StateMachine.add( 'DRIVE_TO_CLOSEST_PERSON',
-                                    states.DriveToClosestPerson(robot),
-                                    transitions={   "Done":"SAY_PERSON_FOUND",
-                                                    "Aborted":"SAY_PERSON_FOUND",
-                                                    "Failed":"SAY_STILL_NOT_FOUND"})
+            smach.StateMachine.add('NAVIGATE_TO_OWNER',
+                                    states.NavigateGeneric(robot, lookat_query=query_owner),
+                                    transitions={   "arrived":"SAY_PERSON_FOUND",
+                                                    "unreachable":'SAY_PERSON_UNREACHABLE',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_PERSON_LOST'})
+
+            smach.StateMachine.add("SAY_PERSON_LOST", 
+                                    states.Say(robot,"I lost my operator, I better go where he usually is", block=False),
+                                    transitions={   'spoken':'Aborted'})
+
+            smach.StateMachine.add("SAY_PERSON_UNREACHABLE", 
+                                    states.Say(robot,"I lost my operator, I better go where he usually is", block=False),
+                                    transitions={   'spoken':'Aborted'})
+
+            smach.StateMachine.add('NAVIGATE_TO_OWNER_BACKUP',
+                                    states.NavigateGeneric(robot, goal_query=query_backup),
+                                    transitions={   "arrived":"SAY_PERSON_FOUND",
+                                                    "unreachable":'SAY_GOAL_UNREACHABLE',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
             smach.StateMachine.add("SAY_STILL_NOT_FOUND", 
                                     states.Say(robot,"My owner is still not home"),
-                                    transitions={   'spoken':'DRIVE_TO_CLOSEST_PERSON'})
+                                    transitions={   'spoken':'Aborted'})
 
 
             smach.StateMachine.add("SAY_PERSON_FOUND", 
@@ -160,11 +240,11 @@ class ChallengeDemo2014(smach.StateMachine):
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
-                                    states.Say(robot,"Sorry, the goal is unreachable. Aborting now."),
+                                    states.Say(robot,"I am sorry but I cannot figure it out, the goal is unreachable"),
                                     transitions={   'spoken':'Aborted'})
 
             smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
-                                    states.Say(robot,"Sorry, I don't know where to go. Please specify my waypoint. Aborting now."),
+                                    states.Say(robot,"I am sorry, I don't know where to go"),
                                     transitions={   'spoken':'Aborted'})
 
 def WaitForTriggerTester():
