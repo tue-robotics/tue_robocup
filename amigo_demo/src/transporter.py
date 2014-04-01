@@ -9,18 +9,6 @@ import robot_smach_states as states
 from std_srvs.srv import Empty
 
 
-class ScanRoom(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
-
-        self.robot = robot
-        self.demo_laser_service = rospy.ServiceProxy('/toggle_demo_laser', Empty)  
-
-    def execute(self, userdata):
-        self.demo_laser_service()
-        return "done"
-
-
 class Transporter(smach.StateMachine):
 
     """Transport an object from one point to another.
@@ -64,7 +52,7 @@ class Transporter(smach.StateMachine):
                 transitions={   "retracted":"SCAN"})
 
             smach.StateMachine.add("SCAN",
-                ScanRoom(robot),
+                states.ToggleDemoLaser(robot),
                 transitions={   "done":"DRIVE_TO_WP1"})
 
             smach.StateMachine.add( "DRIVE_TO_WP1",
