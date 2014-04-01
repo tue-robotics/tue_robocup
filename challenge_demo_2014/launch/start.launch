@@ -15,4 +15,7 @@
         <param name="port" value="8001" />
     </node>
 
+    <include file="$(find challenge_demo_2014)/launch/laser.launch" />
+    <include file="$(find challenge_demo_2014)/launch/ppl_detection.launch" />
+
 </launch>
