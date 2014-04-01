@@ -8,11 +8,11 @@
     <!--<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />-->
 
     <!-- Launch mjpeg server (kinect video stream) -->
-    <!--<node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" />-->
+    <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" />
 
     <!-- Start the simple webserver to handle static files -->    
     <node pkg="challenge_demo_2014" type="webserver.py" name="doorbell_gui" output="screen">
-		<param name="port" value="8001" />
+        <param name="port" value="8001" />
     </node>
 
 </launch>
