@@ -32,16 +32,17 @@ rosbuild_add_library(tue_follower src/Follower.cpp ${HEADER_FILES})
 #target_link_libraries(${PROJECT_NAME} another_library)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
-rosbuild_add_executable(follow_me_simple src/follow_me_simple.cpp)
-rosbuild_add_executable(follow_me_gmapping src/follow_me_gmapping.cpp)
-#rosbuild_add_library(follow_me_carrot_planner
-rosbuild_add_executable(test_navigate src/test_navigate.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+
+# Old versions
+#rosbuild_add_executable(follow_me_simple src/follow_me_simple.cpp)
+#rosbuild_add_executable(follow_me_gmapping src/follow_me_gmapping.cpp)
+#rosbuild_add_executable(test_navigate src/test_navigate.cpp)
+
 
 # Test new class
-rosbuild_add_executable(test_follower include/challenge_follow_me/Follower.h src/Follower.cpp src/test_follower.cpp ${HEADER_FILES})
+#rosbuild_add_executable(test_follower include/challenge_follow_me/Follower.h src/Follower.cpp src/test_follower.cpp ${HEADER_FILES})
+#rosbuild_add_boost_directories()
+#rosbuild_link_boost(test_follower thread signals system)
 
-rosbuild_add_boost_directories()
-rosbuild_link_boost(test_follower thread signals system)
-
+# 2014 verwion
 rosbuild_add_executable(follow_me_2014 include/challenge_follow_me/Follower.h src/Follower.cpp src/follow_me_2014.cpp ${HEADER_FILES})

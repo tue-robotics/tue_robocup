@@ -770,6 +770,7 @@ int main(int argc, char **argv) {
 
 
     //! Start Following
+    unsigned int n_move_base_3d_tries = 0;
     bool drive = false;
     double t_start_no_move = 0;
     while (ros::ok())
@@ -802,6 +803,13 @@ int main(int argc, char **argv) {
             if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
             {
 
+                // There is a problem with move base 3d: robot can not get to operator
+                if (n_move_base_3d_tries > 4)
+                {
+                    ROS_WARN("There probably is a move base 3d problem!");
+
+                }
+
                 // AFTER THE ELEVATOR: move forward (around the crowd)
                 if (left_elevator_)
                 {
@@ -831,7 +839,11 @@ int main(int argc, char **argv) {
             }
 
         }
-        else drive = true;
+        else
+        {
+            drive = true;
+            n_move_base_3d_tries = 0;
+        }
 
         //! To ensure speech keeps working
         restartSpeechIfNeeded();
