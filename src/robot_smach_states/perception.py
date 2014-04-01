@@ -5,6 +5,7 @@ import smach
 #import object_msgs.msg
 import math
 
+from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan
 import geometry_msgs
 
@@ -482,3 +483,15 @@ class ToggleModules(smach.State):
     def execute(self, userdata=None):
         self.robot.perception.toggle(self.modules)
         return "toggled"
+
+class ToggleDemoLaser(smach.State):
+    """Toggle the demo laser service on. This allows to navigate relative to an object rather than to a static map."""
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+
+        self.robot = robot
+        self.demo_laser_service = rospy.ServiceProxy('/toggle_demo_laser', Empty)  
+
+    def execute(self, userdata):
+        self.demo_laser_service()
+        return "done"
