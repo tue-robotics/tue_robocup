@@ -50,7 +50,7 @@ class Base(object):
         
         self.move_simple_base = rospy.Publisher("/move_base_simple/goal", geometry_msgs.msg.PoseStamped)
 
-        self.initial_pose_publisher = rospy.Publisher('/initialpose',geometry_msgs.msg.PoseWithCovarianceStamped)
+        self.initial_pose_publisher = rospy.Publisher('/amigo/initialpose',geometry_msgs.msg.PoseWithCovarianceStamped)
 
         self.tf_listener    = tf_listener
         # WORKAROUND for missing transform between /map and /amigo/base_link frame, to make sure that TF is correctly initialised
