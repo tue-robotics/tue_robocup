@@ -15,6 +15,7 @@ from challenge_emergency.srv import Start
 from person_emergency_detector.srv import Switch
 from person_emergency_detector.srv import GetUnknownOctomapBlobPositions
 from person_emergency_detector.msg import Position
+from pein_srvs.srv import SetObjects
 
 #import states_new as states 
 from psi import Compound, Sequence, Conjunction
@@ -49,10 +50,11 @@ class UnknownOctomapBlobDetector(smach.State):
         self.counter = 0
         self.robot = robot
         self.unknown_blob_detection = rospy.ServiceProxy('/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions',GetUnknownOctomapBlobPositions) 
+        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
 
     def execute(self, userdata=None):
 
-
+        respnse = self.set_objects(['pills','water'])
         self.robot.spindle.reset()
         self.robot.head.reset_position()
 
@@ -356,6 +358,7 @@ class LookForObject(smach.State):
         smach.State.__init__(self, outcomes=["looking" , "found", "not_found"])
         self.robot = robot
 
+
     def execute(self, userdata=None):
 
         return_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
@@ -566,8 +569,8 @@ class Register(smach.State):
         f.write(room + '\n')
         '''
         f.close() 
-        rospy.logdebug("Closed file")   
-        pathname = "/home/amigo/ros/groovy/tue/trunk/tue_robocup/challenge_emergency/output/person.png"
+        rospy.logdebug("Closed file")
+        pathname = "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/tue_robocup/challenge_emergency/output/person.png"
         rospy.logdebug("pathname = {0}".format(pathname))
 
         if self.get_picture(pathname):
