@@ -143,7 +143,7 @@ class GrabClog(smach.StateMachine):
         with self:
             smach.StateMachine.add( "ASK_FOR_CLOG",
                                     states.Say(robot, ["Let me get some clogs!"], 
-                                               block=True),
+                                               block=False),
                                     transitions={'spoken': "GRAB_CLOG_CUP"})
             
             smach.StateMachine.add( "GRAB_CLOG_CUP",
@@ -372,7 +372,7 @@ class RoboZoo(smach.StateMachine):
 
                 #Points are defined relative to a flightcase, using package demo_laser. The /kist-frame is in the middle of the front of the case
                 #waypoint_storage_table  = msg.PoseStamped( -0.7, 0,     0,      frame_id="/kist") #In front of the flightcase
-                poi_storage_table       = msg.PointStamped( 0.1, 0,     0.74,   frame_id="/kist") #10cm inside the bounds of the flight case
+                poi_storage_table       = msg.PointStamped( 0.1, 0,     0.55,   frame_id="/kist") #10cm inside the bounds of the flight case
                 poi_trashbin            = msg.PointStamped(-0.4, -1.1,   0.7,    frame_id="/kist") #Trashbin is outside the bounds of the case, 1.1m right of the waypoint_storage_table
                 poi_pooring             = msg.PointStamped(-1.9, 0,     0.9,    frame_id="/kist")
                 poi_ordering_table      = msg.PointStamped(-1.9, 0,     0.74,   frame_id="/kist")
