@@ -62,7 +62,7 @@ ros::ServiceServer startupSrv_;
 /// Scaling parameters for robotics_labA
 const double scaledWidth = 1/0.025;
 const double scaledHeight = 1/0.025;
-const int originOffsetX = 41;
+const int originOffsetX = -10; // 41
 const int originOffsetY = 100;
 
 /* Scaling parameters for rwc2013 -> EINDHOVEN WK

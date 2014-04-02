@@ -44,30 +44,97 @@ class SleepTime(smach.State):
 
 class UnknownOctomapBlobDetector(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["success", "failed", "unreachable"])
+        smach.State.__init__(self, outcomes=["success", "failed", "looking"])
 
+        self.counter = 0
         self.robot = robot
         self.unknown_blob_detection = rospy.ServiceProxy('/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions',GetUnknownOctomapBlobPositions) 
 
     def execute(self, userdata=None):
 
-        rospy.wait_for_service("/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions",timeout=2.0)
+
+        self.robot.spindle.reset()
+        self.robot.head.reset_position()
+
+        self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
+        self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
+
+        navigate_room = Conjunction(  Compound("=", "Waypoint", Compound(room, "W")),
+                                                 Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+                                                 Compound("not", Compound("visited", "Waypoint")),
+                                                 Compound("not", Compound("unreachable", "Waypoint")))
+
+        goal_answers = self.robot.reasoner.query(navigate_room)             # I do not use not_visited and not_unreachable since these are no roi's
+
+        self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
+
+        if not goal_answers:
+            return "failed"
+
+        goal_answer = goal_answers[0]
+        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+
+        waypoint_name = goal_answer["Waypoint"]
+            
+
+        nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
+        nav_result = nav.execute()
+        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+
+        # look to ROI
+        if room == "kitchen" and self.counter == 1:
+            roi_answers = self.robot.reasoner.query(Compound("point_of_interest", Compound("kitchen2", "W"), Compound("point_3d", "X", "Y", "Z")))
+            if roi_answers:
+                #print roi_answers
+                for x in range(0,len(roi_answers)):
+                    roi_answer = roi_answers[x]
+                    #print roi_answer
+                    self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
+                    rospy.sleep(1.5)
+
+        else:
+            roi_answers = self.robot.reasoner.query(Compound("point_of_interest", Compound(room, "W"), Compound("point_3d", "X", "Y", "Z")))
+            if roi_answers:
+                #print roi_answers
+                for x in range(0,len(roi_answers)):
+                    roi_answer = roi_answers[x]
+                    #print roi_answer
+                    self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
+                    rospy.sleep(1.5)
+
+        #rospy.wait_for_service("/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions",timeout=2.0)
         try:
-            self.response = self.unknown_blob_detection(-5, -5, 0, 5 ,5 ,5) 
+            if room == 'bedroom':
+                self.response = self.unknown_blob_detection(0.0, -1.4, 0, 5.2, 3.5, 2)# todo     
+            elif room == 'living_room':
+                self.response = self.unknown_blob_detection(0.5, 0.0, 0, 5.2, 3.2, 2)
+            else:
+                if self.counter == 0:
+                    self.response = self.unknown_blob_detection(5, -1.4, 0, 8.8, 3.7, 2)
+                    self.counter = self.counter + 1
+                else:
+                    self.response = self.unknown_blob_detection(5, 3.74, 0, 8.8, 8.5, 2)
+
             print self.response
             if len(self.response.positions) == 0:
-                return 'failed'
-
+                return 'looking'
 
             possible_locations = [( float(answer.x), 
                                     float(answer.y), 
                                     float(answer.z)) for answer in self.response.positions]
 
-
-            print possible_locations[0]
+            
             goal = possible_locations[0]
-            nav = states.NavigateGeneric(self.robot, lookat_point_3d=goal)# xy_dist_to_goal_tuple=(1.0,0))
-            nav_result = nav.execute()
+            #nav = states.NavigateGeneric(self.robot, lookat_point_3d=goal)
+            #nav_result = nav.execute()
+
+            ''' HOW TO ASSERT'''
+            self.robot.reasoner.assertz(Compound("emergency_person", Compound("point_3d", Sequence(goal[0], goal[1], goal[2]))))
+
+            answers = self.robot.reasoner.query(Compound("emergency_person", Compound("point_3d",Sequence("X","Y","Z"))))
+             
+            lookat_point = msgs.PointStamped(goal[0],goal[1],goal[2]) # todo
+            self.robot.head.send_goal(lookat_point, timeout=0, keep_tracking=True)
 
         except Exception, e:
             print e
@@ -250,11 +317,16 @@ class LookAtPerson(smach.State):
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
+        emergency_blob_query = Compound("emergency_person", Compound("point_3d",Sequence("X","Y","Z")))
 
-        answers = self.robot.reasoner.query(person_query)
+
+
+
+        answers = self.robot.reasoner.query(emergency_blob_query)
+        print answers
 
         if not answers:            
-            rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=person_query))
+            rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!! Query: {query}".format(query=emergency_blob_query))
             pos = self.robot.base.location.pose.position
             x = pos.x
             y = pos.y
@@ -324,6 +396,7 @@ class LookForObject(smach.State):
         roi_answers = self.robot.reasoner.query(Compound("point_of_interest", waypoint_name, Compound("point_3d", "X", "Y", "Z")))
         if roi_answers:
             roi_answer = roi_answers[0]
+            print roi_answer
             self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
 
 
@@ -450,8 +523,10 @@ class Register(smach.State):
                                     Compound( "property_expected", "ObjectID", "class_label", "face"),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
+        emergency_blob_query = Compound("emergency_person", Compound("point_3d",Sequence("X","Y","Z")))
 
-        answers = self.robot.reasoner.query(person_query)
+
+        answers = self.robot.reasoner.query(emergency_blob_query)
 
         if not answers:            
             rospy.logerr("No answers found for query. SHOULD NOT HAPPEN!!")# Query: {query}".format(query=person_query))
@@ -491,7 +566,6 @@ class Register(smach.State):
         rospy.logdebug("Closed file")   
         pathname = "/home/amigo/ros/groovy/tue/trunk/tue_robocup/challenge_emergency/output/person.png"
         rospy.logdebug("pathname = {0}".format(pathname))
-
 
         if self.get_picture(pathname):
             rospy.loginfo("Picture taken!!")
@@ -676,6 +750,9 @@ def setup_statemachine(robot):
     query_last_exploration_location = Conjunction(Compound("current_exploration_target", room),
                                                   Compound("waypoint", room, Compound("pose_2d", "X", "Y", "Phi")))
 
+
+    emergency_blob_query = Compound("emergency_person", Compound("point_3d",Sequence("X","Y","Z")))
+
     arm = robot.leftArm
 
     with sm:
@@ -700,16 +777,17 @@ def setup_statemachine(robot):
                                 LookingForPersonOld(robot),
                                 transitions={   'found':'NAVIGATE_TO_PERSON',
                                                 'looking':'FIND_PERSON',
-                                                'not_found':'FIND_PERSON_BACKUP'})
+                                                'not_found':'ASK_IF_AMBULANCE'})
 
         smach.StateMachine.add( "FIND_PERSON_BACKUP",
                                 UnknownOctomapBlobDetector(robot),
                                 transitions={   'success':'NAVIGATE_TO_PERSON',
-                                                'failed':'ASK_IF_AMBULANCE',
-                                                'unreachable':'SAY_PERSON_UNREACHABLE'})
+                                                'failed':'FIND_PERSON',
+                                                'looking':'FIND_PERSON_BACKUP'})
         
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                #states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(1.0,0)),
                                 transitions={   "arrived":"LOOK_AT_PERSON",
                                                 "unreachable":'SAY_PERSON_UNREACHABLE',
                                                 "preempted":'SAY_PERSON_UNREACHABLE',
@@ -812,7 +890,8 @@ def setup_statemachine(robot):
         ################   APPROACH PERSON   #################
         ######################################################
         smach.StateMachine.add( "APPROACH_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    #states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(0.8,0)),
                                     transitions={   "arrived":"RELOOK_AT_PERSON2",
                                                     "unreachable":'FAILED_DRIVING_TO_LOCATION',
                                                     "preempted":'FAILED_DRIVING_TO_LOCATION',
@@ -897,7 +976,8 @@ def setup_statemachine(robot):
                                                     "failed":'SAY_OBJECT_NOT_GRASPED' }) 
         
         smach.StateMachine.add( "RETURN_TO_PERSON",
-                                    states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    #states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(0.8,0)),
                                     transitions={   "arrived":"HANDOVER_TO_HUMAN",
                                                     "unreachable":'HANDOVER_TO_HUMAN',
                                                     "preempted":'HANDOVER_TO_HUMAN',
@@ -967,7 +1047,8 @@ def setup_statemachine(robot):
         ################### DRIVE TO PERSON ##################
         ######################################################
         smach.StateMachine.add('GUIDE_TO_PERSON', 
-                                    states.NavigateGeneric(robot, lookat_query=emergency_person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    #states.NavigateGeneric(robot, lookat_query=emergency_person_query, xy_dist_to_goal_tuple=(0.8,0)),
                                     transitions={   "arrived":"SAY_ARRIVED_AT_PATIENT",
                                                     "unreachable":'SAY_ARRIVED_AT_PATIENT',
                                                     "preempted":'SAY_ARRIVED_AT_PATIENT',
