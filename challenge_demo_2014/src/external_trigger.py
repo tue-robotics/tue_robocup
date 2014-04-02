@@ -178,10 +178,19 @@ class ReceivePackage(smach.StateMachine):
 
             smach.StateMachine.add('NAVIGATE_TO_START_2',
                                     states.NavigateGeneric(robot, goal_query=query_start),
-                                    transitions={   "arrived":"WAIT_FOR_OWNER",
+                                    transitions={   "arrived":"succeeded",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'Aborted',
+                                                    "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
+
+            # navigation states
+            smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
+                                    states.Say(robot,"I am sorry but I cannot figure it out, the goal is unreachable"),
+                                    transitions={   'spoken':'failed'})
+
+            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
+                                    states.Say(robot,"I am sorry, I don't know where to go"),
+                                    transitions={   'spoken':'failed'})
 
 class GivePackage(smach.StateMachine):
 
@@ -224,14 +233,9 @@ class GivePackage(smach.StateMachine):
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
-            smach.StateMachine.add("SAY_STILL_NOT_FOUND", 
-                                    states.Say(robot,"My owner is still not home"),
-                                    transitions={   'spoken':'failed'})
-
-
             smach.StateMachine.add("SAY_PERSON_FOUND", 
                                     states.Say(robot,"Hello owner, I have a package for you", block=False),
-                                    transitions={   'spoken':'failed'})
+                                    transitions={   'spoken':'succeeded'})
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
@@ -260,12 +264,12 @@ class ChallengeDemo2014(smach.StateMachine):
         with self:
 
             smach.StateMachine.add("RECEIVE_PACKAGE", 
-                                    GivePackage(robot),
+                                    ReceivePackage(robot),
                                     transitions={   'succeeded': 'GIVE_PACKAGE',
-                                                    'failed':    'Done'})
+                                                    'failed':    'GIVE_PACKAGE'})
 
             smach.StateMachine.add("GIVE_PACKAGE", 
-                                    ReceivePackage(robot),
+                                    GivePackage(robot),
                                     transitions={   'succeeded': 'Done',
                                                     'failed':    'Done'})
 
