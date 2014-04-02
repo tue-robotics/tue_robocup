@@ -14,6 +14,8 @@ from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
 from geometry_msgs.msg import PoseStamped, Pose
 
+from pein_srvs.srv import SetObjects
+
 
 grasp_arm = "left"
 #grasp_arm = "right"
@@ -33,9 +35,12 @@ class DeleteModels(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
+        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
 
     def execute(self, userdata=None):
 
+        response = self.set_objects(['orange_juice','fruit_juice','ice_tea','coffee','beer'])
+        print response
         folder = p.get_pkg_dir('pein_face_recognition')+'/models'
         #folder = '/path/to/folder'
         for the_file in os.listdir(folder):
