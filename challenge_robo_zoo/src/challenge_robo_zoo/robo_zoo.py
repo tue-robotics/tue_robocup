@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_cleanup')
+import roslib; roslib.load_manifest('challenge_robo_zoo')
 import rospy
 
 import smach
@@ -67,7 +67,7 @@ class GrabClog(smach.StateMachine):
         self.side = side
 
         query_clog_cup = Conjunction(
-                                    Compound( "property_expected", "ObjectID", "class_label", "noodles"), #TODO: class name noodles may need to be changed to cup
+                                    Compound( "property_expected", "ObjectID", "class_label", "water"),#TODO: class name noodles may need to be changed to cup
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         with self:
@@ -161,7 +161,7 @@ class GiveClog(smach.StateMachine):
                                     transitions={'spoken': "POOR_1"})
 
             smach.StateMachine.add( "POOR_1",
-                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=4),
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=4),
                                     transitions={   'done'                  :'POOR_2',
                                                     'failed'                :'Failed' })
             
@@ -208,7 +208,7 @@ class GiveClog(smach.StateMachine):
                                                     'failed'                : 'POOR_1_INVERSE'})
 
             smach.StateMachine.add( "POOR_1_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=5.0),
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=5.0),
                                     transitions={   'done'                  : 'Done',
                                                     'failed'                : 'Done'}) #If this worked, we still poored
 
@@ -229,7 +229,7 @@ class GiveCan(smach.StateMachine):
                                     transitions={'spoken': "GIVE_1"})
 
             smach.StateMachine.add( "GIVE_1",
-                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=4),
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=4),
                                     transitions={   'done'                  :'GIVE_2',
                                                     'failed'                :'Failed' })
             
@@ -240,6 +240,11 @@ class GiveCan(smach.StateMachine):
 
             smach.StateMachine.add( "GIVE_3", 
                                     states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
+                                    transitions={   'done'                  : 'GIVE_3_A',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "GIVE_3_A", 
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.0, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
                                     transitions={   'done'                  : 'GIVE_4',
                                                     'failed'                : 'Failed'})
 
@@ -263,7 +268,7 @@ class GiveCan(smach.StateMachine):
                                     states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=5.0),
                                     transitions={   'done'                  : 'GIVE_3_INVERSE',
                                                     'failed'                : 'GIVE_3_INVERSE'})
-
+#TODO: Insert step in between
             smach.StateMachine.add( "GIVE_3_INVERSE",
                                     states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
                                     transitions={   'done'                  : 'GIVE_2_INVERSE',
@@ -275,7 +280,7 @@ class GiveCan(smach.StateMachine):
                                                     'failed'                : 'GIVE_1_INVERSE'})
 
             smach.StateMachine.add( "GIVE_1_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=5.0),
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=5.0),
                                     transitions={   'done'                  : 'Done',
                                                     'failed'                : 'Done'}) #If this worked, we still poored
 
@@ -360,7 +365,7 @@ class RoboZoo(smach.StateMachine):
         with self:
             smach.StateMachine.add( "LOCK_GMAPPING",
                                     ClearCostmapAround(robot),
-                                    transitions={'Done':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+                                    transitions={'Done':"FIND_FLIGHTCASE"})
             
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),

@@ -5,9 +5,10 @@ Responsible: Loy
 AMIGO's laser scanner must look at the lid of the small flightcase.
 This flightcase should be under one of the 4 tables that enclose AMIGO. See the layout below
 
-
+MAKE SURE TO USE gmapping and 2d nav in rsettings!!!!!!
 
 amigo1$ amiddle
+amigo1$ roslaunch demo_laser start.launch
 amigo1$ rosrun challenge_robo_zoo robo_zoo.py
 
 Amigo is a bartender. He wants to get as many tokens as possible and thus he hands out drinks.
