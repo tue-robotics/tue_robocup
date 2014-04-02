@@ -1,3 +1,8 @@
+// WARNING, some knowledge is hardcoded
+// - objects belonging to categories food and drinks
+// - mapping no underscore (speech) to with underscore (perception)
+// So: (ctrl+f for HARDCODED and update!!)
+
 // Ros
 #include <ros/ros.h>
 
@@ -26,6 +31,8 @@
 // Services
 #include "perception_srvs/StartPerception.h"
 #include "std_srvs/Empty.h"
+#include "pein_srvs/SetObjects.h"
+#include "pein_srvs/Threshold.h"
 
 // Follower
 #include "challenge_follow_me/Follower.h"
@@ -1099,6 +1106,7 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
         // Administration
         x_last_ = x;
         y_last_ = y;
+        ac_skill_server_->cancelAllGoals();
         return false;
     }
 
@@ -1315,13 +1323,15 @@ std::string getIdFromWorldModel(std::vector<wire::PropertySet>& objects, std::st
         const wire::Property& prop_label = obj.getProperty("class_label");
         if (prop_label.isValid())
         {
-            // Correct class label
-            // @todo: now hardcoded
+            // HARDCODED: Correct class label
             std::string class_label = prop_label.getValue().getExpectedValue().toString();
             if (class_label == "peanut_butter") class_label = "peanutbutter";
             else if (class_label == "ice_tea") class_label = "icetea";
             else if (class_label == "glam_up") class_label = "glamup";
-            else if (class_label == "gold_tea") class_label = "goldtea";
+            else if (class_label == "orange_juice") class_label = "orangejuice";
+            else if (class_label == "fruit_juice") class_label = "fruitjuice";
+            else if (class_label == "noodle_sauce") class_label = "noodlesauce";
+            else if (class_label == "cat_food") class_label = "catfood";
 
             // Probability of this label
             double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
@@ -1602,6 +1612,15 @@ int main(int argc, char **argv) {
     ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     std_srvs::Empty srv;
     if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
+    
+    //! Select a subset of objects (at food shelf, drink shelf)
+    ros::ServiceClient set_objects_client = nh.serviceClient<pein_srvs::SetObjects>("/pein/set_object_models");
+    
+    //! Set the object recognition threshold for the ODUFinder low, since no unknown objects are present
+    ros::ServiceClient set_pein_thr_client = nh.serviceClient<pein_srvs::Threshold>("/pein_odufinder/set_threshold");
+    pein_srvs::Threshold pein_thr_srv;
+    pein_thr_srv.request.threshold = 0.15;
+    if (!set_pein_thr_client.call(pein_thr_srv)) ROS_WARN("Could not update the ODUFinder threshold!");
 
     ///////////////// GUIDING PHASE //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1718,6 +1737,29 @@ int main(int argc, char **argv) {
                 amigoSpeak(sentence.str(), false);
 
                 //! Look for objects
+                if (i == 0)
+                {
+					// HARDCODED: food
+					// service call to perception: noodle_sauce, cat_food, dumplings, tacos
+					pein_srvs::SetObjects obj_srv;
+					obj_srv.request.objects.push_back("noodle_sauce");
+					obj_srv.request.objects.push_back("cat_food");
+					obj_srv.request.objects.push_back("dumplings");
+					obj_srv.request.objects.push_back("tacos");
+					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
+				}
+				else if (i == 1)
+				{
+					// HARDCODED: drinks
+					// service call to perception: orange_juice, fruit_juice, ice_tea, coffee, beer
+					pein_srvs::SetObjects obj_srv;
+					obj_srv.request.objects.push_back("orange_juice");
+					obj_srv.request.objects.push_back("fruit_juice");
+					obj_srv.request.objects.push_back("ice_tea");
+					obj_srv.request.objects.push_back("coffee");
+					obj_srv.request.objects.push_back("beer");
+					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
+				}
                 lookForObjects();
 
 

@@ -26,6 +26,7 @@
   
   <depend package="std_srvs"/>
   <depend package="perception_srvs"/>
+  <depend package="pein_srvs"/>
   
   <depend package="text_to_speech"/>
   <depend package="tue_carrot_planner"/>
