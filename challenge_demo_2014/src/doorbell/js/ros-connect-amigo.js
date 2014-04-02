@@ -11,7 +11,7 @@
 
 // configuration
 //var rosUrl = 'ws://' + window.location.hostname + ':9090';
-var rosUrl = 'ws://amigo1:9090'
+var rosUrl = 'ws://192.168.2.91:9090';
 var pingInterval = 5000;  // ms. The time between pings
 var pingTimeout = 2000;     // ms. If ros doesn't respond within this period of time, close the connection
 
