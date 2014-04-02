@@ -27,6 +27,6 @@ $( document ).ready(function() {
         host : window.location.hostname,
         width : $('#webcam-image').width(),
         height : $('#webcam-image').width()/4*3,
-        topic : '/amigo/top_kinect/rgb/image_color'
+        topic : '/external_kinect/rgb/image_color'
     });
 });

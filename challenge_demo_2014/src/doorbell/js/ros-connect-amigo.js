@@ -10,9 +10,10 @@
 /*global $:false */
 
 // configuration
-var rosUrl = 'ws://' + window.location.hostname + ':9090';
+//var rosUrl = 'ws://' + window.location.hostname + ':9090';
+var rosUrl = 'ws://amigo1:9090'
 var pingInterval = 5000;  // ms. The time between pings
-var pingTimeout = 250;     // ms. If ros doesn't respond within this period of time, close the connection
+var pingTimeout = 2000;     // ms. If ros doesn't respond within this period of time, close the connection
 
 var pingHistory = [];
 
@@ -64,6 +65,7 @@ function initConnectionManager() {
 
   ros.addListener('ping.ok', function(e) {
     pingHistory.push(e);
+    console.log('rosbridge ping with %i ms', e);
     modalReconnect.modal('hide');
   });
 
