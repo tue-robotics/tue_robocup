@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_robo_zoo')
+import roslib; roslib.load_manifest('challenge_cleanup')
 import rospy
 
 import smach
@@ -12,6 +12,77 @@ from robot_skills.arms import State as ArmState
 from robot_skills.util import msg_constructors as msg
 from robot_skills.util import transformations
 
+q1 ="q1"  
+q2 ="q2"  
+q3 ="q3"  
+q4 ="q4"  
+q5 ="q5"  
+q6 ="q6"  
+q7 ="q7" 
+
+sequence = [
+    [-0.01,-0.4, 0, 1.2, 0, 0.8, 0],
+    [-0.1, 1.3, 0, 0.27, 2.3, 0, 0]
+]
+
+delta_sequence_origin = [-0.01,-0.4, 0, 1.2, 0, 0.8, 0]
+delta_sequence = [
+    {q4:0.2, q6:-0.2},
+    {q4:0.2, q6:-0.2},
+    {q4:0.2, q6:-0.2},
+    {q4:0.2, q6:-0.2},
+    {q4:0.2, q6:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.2},
+    {q2:0.2, q4:-0.3, q6:0.1},
+    {q5:2.2}
+]
+
+def reverse_delta_sequence(delta_dict_list):
+    rev = []
+    for delta_dict in delta_dict_list:
+        #invert the value/joint_delta for each key/jointname
+        rev += [{k:(v*-1) for k,v in delta_dict.iteritems()}]
+    return list(reversed(rev))
+
+poor_seq = delta_sequence+ reverse_delta_sequence(delta_sequence)
+
+almost_poor = [{'q4': 0.2, 'q6': -0.2},
+ {'q4': 0.2, 'q6': -0.2},
+ {'q4': 0.2, 'q6': -0.2},
+ {'q4': 0.2, 'q6': -0.2},
+ {'q4': 0.2, 'q6': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.2},
+ {'q2': 0.2, 'q4': -0.3, 'q6': 0.1}]
+
+poor_and_retract = [{'q5': 2.2},
+ {'q5': -2.2},
+ {'q2': -0.2, 'q4': 0.3, 'q6': -0.1},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q2': -0.2, 'q4': 0.2},
+ {'q4': -0.2, 'q6': 0.2},
+ {'q4': -0.2, 'q6': 0.2},
+ {'q4': -0.2, 'q6': 0.2},
+ {'q4': -0.2, 'q6': 0.2},
+ {'q4': -0.2, 'q6': 0.2}]
+
+#amigo.rightArm.send_delta_joint_trajectory(delta_sequence, origin=delta_sequence_origin);amigo.rightArm.send_delta_joint_trajectory(reverse_delta_sequence(delta_sequence))
 
 """ TODOs, BUGs:
 - DONE:reset pose after grasping a can is in collision, move the arm a bit
@@ -47,19 +118,6 @@ def publish_marker(point_stamped, color=(0,0,1)):
     # Publish the MarkerArray
     publisher.publish(markerArray)
 
-class ClearCostmapAround(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["Done", "Aborted", "Failed"])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-        b = self.robot.base
-        #b.force_drive(0.25, 0, 0, 3)
-        b.force_drive(0, 0, 0.5, 12) #turn yourself around
-        #b.force_drive(-0.25, 0, 0, 3)
-        return "Done"
-
-
 class GrabClog(smach.StateMachine):
     def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
@@ -67,7 +125,7 @@ class GrabClog(smach.StateMachine):
         self.side = side
 
         query_clog_cup = Conjunction(
-                                    Compound( "property_expected", "ObjectID", "class_label", "water"),#TODO: class name noodles may need to be changed to cup
+                                    Compound( "property_expected", "ObjectID", "class_label", "noodles"), #TODO: class name noodles may need to be changed to cup
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         with self:
@@ -158,59 +216,22 @@ class GiveClog(smach.StateMachine):
             smach.StateMachine.add( "SAY_GIVE_CLOGS",
                                     states.Say(robot, [ "I'll give you a present!"], 
                                                block=False),
-                                    transitions={'spoken': "POOR_1"})
+                                    transitions={'spoken': "ALMOST_POOR"})
 
-            smach.StateMachine.add( "POOR_1",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=4),
-                                    transitions={   'done'                  :'POOR_2',
-                                                    'failed'                :'Failed' })
-            
-            smach.StateMachine.add( "POOR_2",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4), 
-                                    transitions={   'done'                  :'POOR_3',
-                                                    'failed'                :'Failed' })
-
-            smach.StateMachine.add( "POOR_3", 
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
-                                    transitions={   'done'                  : 'POOR_4',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "POOR_4", 
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=4),
+            smach.StateMachine.add( "ALMOST_POOR",
+                                    states.ArmFollowDeltaTrajectory(self.robot, self.side, almost_poor, origin=delta_sequence_origin, timeout=5.0),
                                     transitions={   'done'                  : 'SAY_HOLDUP_HAND_FOR_CLOG',
                                                     'failed'                : 'Failed'})
-            
             
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
                                     states.Say(robot, [ "Hold up your hand please!"], 
                                                block=True),
-                                    transitions={'spoken': "POOR_5"})
+                                    transitions={'spoken': "POOR_AND_RETRACT"})
 
-
-            smach.StateMachine.add( "POOR_5",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 2.3, 0, 0], timeout=5.0),
-                                    transitions={   'done'                  : 'POOR_4_INVERSE',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "POOR_4_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=5.0),
-                                    transitions={   'done'                  : 'POOR_3_INVERSE',
-                                                    'failed'                : 'POOR_3_INVERSE'})
-
-            smach.StateMachine.add( "POOR_3_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
-                                    transitions={   'done'                  : 'POOR_2_INVERSE',
-                                                    'failed'                : 'POOR_2_INVERSE'})
-
-            smach.StateMachine.add( "POOR_2_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
-                                    transitions={   'done'                  : 'POOR_1_INVERSE',
-                                                    'failed'                : 'POOR_1_INVERSE'})
-
-            smach.StateMachine.add( "POOR_1_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=5.0),
+            smach.StateMachine.add( "POOR_AND_RETRACT",
+                                    states.ArmFollowDeltaTrajectory(self.robot, self.side, poor_and_retract, origin=delta_sequence_origin, timeout=5.0),
                                     transitions={   'done'                  : 'Done',
-                                                    'failed'                : 'Done'}) #If this worked, we still poored
+                                                    'failed'                : 'Done'})
 
 class GiveCan(smach.StateMachine):
     def __init__(self, robot, side):
@@ -221,68 +242,27 @@ class GiveCan(smach.StateMachine):
         with self:
             smach.StateMachine.add("RESET_SPINDLE_HEAD_UP",
                                 states.ResetSpindle_HeadUp(robot),
-                                transitions={'done':'SAY_GIVE_CAN'})
-
-            smach.StateMachine.add( "SAY_GIVE_CAN",
-                                    states.Say(robot, [ "Here is your drink"], 
-                                               block=False),
-                                    transitions={'spoken': "GIVE_1"})
-
-            smach.StateMachine.add( "GIVE_1",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=4),
-                                    transitions={   'done'                  :'GIVE_2',
-                                                    'failed'                :'Failed' })
+                                transitions={'done':'SAY_GIVE_CLOGS'})
             
-            smach.StateMachine.add( "GIVE_2",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4), 
-                                    transitions={   'done'                  :'GIVE_3',
-                                                    'failed'                :'Failed' })
+            smach.StateMachine.add( "SAY_GIVE_CLOGS",
+                                    states.Say(robot, [ "I'll give you a present!"], 
+                                               block=False),
+                                    transitions={'spoken': "ALMOST_POOR"})
 
-            smach.StateMachine.add( "GIVE_3", 
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
-                                    transitions={   'done'                  : 'GIVE_3_A',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "GIVE_3_A", 
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.0, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
-                                    transitions={   'done'                  : 'GIVE_4',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "GIVE_4", 
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=4),
+            smach.StateMachine.add( "ALMOST_POOR",
+                                    states.ArmFollowDeltaTrajectory(self.robot, self.side, almost_poor, origin=delta_sequence_origin, timeout=5.0),
                                     transitions={   'done'                  : 'SAY_HOLDUP_HAND_FOR_CLOG',
                                                     'failed'                : 'Failed'})
             
-            
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
-                                    states.Say(robot, [ "Please take the drink from my hand, I'll open my gripper"], 
+                                    states.Say(robot, [ "Hold up your hand please!"], 
                                                block=True),
-                                    transitions={'spoken': "OPEN_GRIPPER"})
+                                    transitions={'spoken': "POOR_AND_RETRACT"})
 
-            smach.StateMachine.add( 'OPEN_GRIPPER', 
-                                    states.SetGripper(robot, self.side, gripperstate=0), #open
-                                    transitions={'succeeded'    :   'GIVE_4_INVERSE',
-                                             'failed'       :   'GIVE_4_INVERSE'})
-
-            smach.StateMachine.add( "GIVE_4_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=5.0),
-                                    transitions={   'done'                  : 'GIVE_3_INVERSE',
-                                                    'failed'                : 'GIVE_3_INVERSE'})
-#TODO: Insert step in between
-            smach.StateMachine.add( "GIVE_3_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
-                                    transitions={   'done'                  : 'GIVE_2_INVERSE',
-                                                    'failed'                : 'GIVE_2_INVERSE'})
-
-            smach.StateMachine.add( "GIVE_2_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
-                                    transitions={   'done'                  : 'GIVE_1_INVERSE',
-                                                    'failed'                : 'GIVE_1_INVERSE'})
-
-            smach.StateMachine.add( "GIVE_1_INVERSE",
-                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.1, 0, 2, 0, 0, 0], timeout=5.0),
+            smach.StateMachine.add( "POOR_AND_RETRACT", #Skip the tilting
+                                    states.ArmFollowDeltaTrajectory(self.robot, self.side, poor_and_retract[2:], origin=delta_sequence_origin, timeout=5.0),
                                     transitions={   'done'                  : 'Done',
-                                                    'failed'                : 'Done'}) #If this worked, we still poored
+                                                    'failed'                : 'Done'})
 
 class RoboZoo(smach.StateMachine):
     """The goal of the challenge is to attract people and be attractive to an audience.
@@ -363,12 +343,10 @@ class RoboZoo(smach.StateMachine):
 
 
         with self:
-            smach.StateMachine.add( "LOCK_GMAPPING",
-                                    ClearCostmapAround(robot),
-                                    transitions={'Done':"FIND_FLIGHTCASE"})
-            
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),
+                                    # transitions={'done':"GIVE_CLOG",
+                                    #              'failed':"GIVE_CLOG"}) #SKIP THE REST FOR TESTING
                                     transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
                                                  'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
 
