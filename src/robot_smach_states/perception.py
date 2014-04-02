@@ -22,7 +22,8 @@ class Learn_Person(smach.State):
     Face learning state, learn face from left, right, and front view.
     '''
 
-    def __init__(self, robot, name=None, models_per_view={'front':10, 'left':10, 'right':10}):
+    #def __init__(self, robot, name=None, models_per_view={'front':10, 'left':10, 'right':10}):
+    def __init__(self, robot, name=None, models_per_view={'front':12}):
         smach.State.__init__(self,
                              outcomes = ['face_learned', 'learn_failed'])
         self.robot = robot
@@ -57,6 +58,7 @@ class Learn_Person(smach.State):
                 view='left', 
                 publish_while_learning=False, 
                 n_models=self.models_per_view['left'])
+            
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "left")))
             self.robot.speech.speak("Finished learning your left side", block=False)
@@ -68,7 +70,10 @@ class Learn_Person(smach.State):
             self.robot.rightArm.send_joint_goal(-1.159, 0.511, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
 
             self.robot.speech.speak(speech_sentence[1], block=False)
-            result = self.robot.perception.learn_person(name_to_learn, view = 'right', n_models=self.models_per_view['right'])
+            result = self.robot.perception.learn_person(name_to_learn, 
+                view = 'right', 
+                n_models=self.models_per_view['right'])
+
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "right")))
             self.robot.speech.speak("Finished learning your right side", block=False)
@@ -79,7 +84,10 @@ class Learn_Person(smach.State):
             self.robot.rightArm.reset_arm()
 
             self.robot.speech.speak(speech_sentence[2], block=False)
-            result = self.robot.perception.learn_person(name_to_learn, view = 'front', n_models=self.models_per_view['front'])
+            result = self.robot.perception.learn_person(name_to_learn, 
+                view = 'front', 
+                n_models=self.models_per_view['front'])
+
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
             self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!", block=False)
