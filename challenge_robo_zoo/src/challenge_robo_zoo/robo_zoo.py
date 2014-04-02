@@ -14,13 +14,9 @@ from robot_skills.util import transformations
 
 
 """ TODOs, BUGs:
-- Define point_of_interest (In demo_laser package) for:
-    ordering_table,
-    pickup_table,
-    storage_table
-- Define dropoff_point for trash_bin
-
-- When there are no persons at the desk, have Amigo yell like a market salesman if anyone wants a drink?
+- reset pose after grasping a can is in collision
+- don't pick up empty cans, takes too much time
+- waiting for person doesn't work, starts placing directly
 """
 
 from visualization_msgs.msg import Marker, MarkerArray
