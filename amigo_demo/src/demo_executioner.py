@@ -122,6 +122,12 @@ sent_keymap['!'] = "OUCH"
 sent_keymap['Y'] = "YES"
 sent_keymap['p'] = "PASS"
 
+@dec.register_robot_key("M", "Merkel demo cheese holding pose")
+def cheese_plank_pose(robot):
+    robot.rightArm.send_joint_goal(-0.3650 , 0.9436 , 0.4707 , 1.0420 , 0.7136 , -0.1692 , 0.2180)
+    robot.leftArm.send_joint_goal(-0.365, 0.843, 0.470, 1.142, -0.756, -0.2692, 0.218)
+    robot.leftArm.send_gripper_goal_open()
+
 #TODO: Looking at finger is not yet tested!!
 @dec.register_robot_key("q", "right grasp")
 def grasp(robot):
