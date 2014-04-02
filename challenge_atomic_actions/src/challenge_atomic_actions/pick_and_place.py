@@ -37,8 +37,7 @@ class PickAndPlace(smach.StateMachine):
         robot.reasoner.query(Compound("retractall", Compound("disposed", "X")))
         
         robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
-        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects_tue.pl'))
-        rospy.logwarn("Loading objects_tue, why are there two prolog files???")
+        robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
         
         #robot.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/cleanup_test.pl'))
         #Assert the current challenge.
