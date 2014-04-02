@@ -572,7 +572,6 @@ class Arms(object):
     def send_delta_joint_trajectory(self, delta_dict_list, side=None, timeout=5.0, origin=None):
         """@param delta_dict_list is a list of dictionaries with deltas per joint, per step, e.g. [{"q1":-0.1, "q2":-0.3}, {"q3":-0.6}]
         @param origin The joint position list to start from, in order to optionally have a defined start. If empty, uses the current position"""
-
         if origin:
             self.send_joint_goal(origin[0], origin[1], origin[2], origin[3], origin[4], origin[5], origin[6], timeout)
 
@@ -731,7 +730,7 @@ class Arm(Arms):
         >>> some_arm.send_delta_joint_goal(q1=radians(-20)) #e.g. amigo.leftArm.send_delta_joint_goal(q1=radians(-20))"""
         return super(Arm, self).send_delta_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
     
-    def send_delta_joint_trajectory(self, delta_dict_list, timeout=0, origin=None):
+    def send_delta_joint_trajectory(self, delta_dict_list, timeout=5.0, origin=None):
         """@param delta_dict_list is a list of dictionaries with deltas per joint, per step, e.g. [{q1=-0.1, q4=0.4}, {q6=1.57}]
         @param origin The joint position list to start from, in order to optionally have a defined start. If empty, uses the current position"""
         return super(Arm, self).send_delta_joint_trajectory(delta_dict_list,self.side, timeout=timeout, origin=origin)
