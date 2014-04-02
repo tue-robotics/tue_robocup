@@ -13,6 +13,55 @@ import robot_smach_states.util.reasoning_helpers as urh
 import std_msgs.msg
 import perception_srvs.srv
 
+class NavigateToStartRobust(smach.StateMachine):
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, 
+                             outcomes=['arrived', 'unreachable',  'preempted', 'goal_not_defined'])
+        self.robot = robot
+        self.query_start = Compound("waypoint", "start",     Compound("pose_2d", "X", "Y", "Phi"))
+
+        self.query_start1 = Conjunction(  Compound("=", "Waypoint",        Compound("start", "a")),
+                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+        self.query_start2 = Conjunction(  Compound("=", "Waypoint",        Compound("start", "b")),
+                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+        self.query_start3 = Conjunction(  Compound("=", "Waypoint",        Compound("start", "c")),
+                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+        with self:
+
+            smach.StateMachine.add('NAVIGATE_TRY_ONE',
+                                    states.NavigateGeneric(self.robot, goal_query=self.query_start1),
+                                    transitions={   "arrived":          'arrived',
+                                                    "unreachable":      'SAY_NAVIGATE_FAILED_ONE',
+                                                    "preempted":        'preempted',
+                                                    "goal_not_defined": 'SAY_NAVIGATE_FAILED_ONE'})
+            
+            smach.StateMachine.add("SAY_NAVIGATE_FAILED_ONE", 
+                                    states.Say(robot,"I was not able to reach my goal, I will try again", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TRY_TWO'})
+
+            smach.StateMachine.add('NAVIGATE_TRY_TWO',
+                                    states.NavigateGeneric(self.robot, goal_query=self.query_start2),
+                                    transitions={   "arrived":          'arrived',
+                                                    "unreachable":      'SAY_NAVIGATE_FAILED_TWO',
+                                                    "preempted":        'preempted',
+                                                    "goal_not_defined": 'SAY_NAVIGATE_FAILED_TWO'})
+            
+            smach.StateMachine.add("SAY_NAVIGATE_FAILED_TWO", 
+                                    states.Say(robot,"I was not able to reach my goal, I will try again", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TRY_THREE'})
+
+            smach.StateMachine.add('NAVIGATE_TRY_THREE',
+                                    states.NavigateGeneric(self.robot, goal_query=self.query_start3),
+                                    transitions={   "arrived":          'arrived',
+                                                    "unreachable":      'SAY_NAVIGATE_FAILED_THREE',
+                                                    "preempted":        'preempted',
+                                                    "goal_not_defined": 'SAY_NAVIGATE_FAILED_THREE'})
+            
+            smach.StateMachine.add("SAY_NAVIGATE_FAILED_THREE", 
+                                    states.Say(robot,"I was not able to reach my goal, sorry for that", block=False),
+                                    transitions={   'spoken':'unreachable'})
 
 class WaitForTrigger(smach.State):
 
@@ -126,13 +175,12 @@ class ReceivePackage(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        query_start = Compound("waypoint", "start",     Compound("pose_2d", "X", "Y", "Phi"))
         query_door  = Compound("waypoint", "behind_door",   Compound("pose_2d", "X", "Y", "Phi"))
 
         with self:
 
             smach.StateMachine.add('NAVIGATE_TO_START',
-                                    states.NavigateGeneric(robot, goal_query=query_start),
+                                    NavigateToStartRobust(robot),
                                     transitions={   "arrived":"SAY_START_REACHED",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'failed',
@@ -177,7 +225,7 @@ class ReceivePackage(smach.StateMachine):
                                     transitions={   'spoken':'NAVIGATE_TO_START_2'})
 
             smach.StateMachine.add('NAVIGATE_TO_START_2',
-                                    states.NavigateGeneric(robot, goal_query=query_start),
+                                    NavigateToStartRobust(robot),
                                     transitions={   "arrived":"succeeded",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'failed',
