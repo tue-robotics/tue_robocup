@@ -132,17 +132,16 @@ class ReceiveClog(smach.StateMachine):
                                     transitions={   'done'              :'Done'})
 
 class GiveClog(smach.StateMachine):
-    def __init__(self, robot, side, poor_point_query):
+    def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
         self.side = side
-        self.poor_point_query = poor_point_query
-
-        query_detect_person     = Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
-                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         with self:
+            smach.StateMachine.add("RESET_SPINDLE_HEAD_UP",
+                                states.ResetSpindle_HeadUp(robot),
+                                transitions={'done':'SAY_GIVE_CLOGS'})
+            
             smach.StateMachine.add( "SAY_GIVE_CLOGS",
                                     states.Say(robot, [ "I'll give you a present!"], 
                                                block=False),
@@ -196,6 +195,73 @@ class GiveClog(smach.StateMachine):
                                                     'failed'                : 'POOR_1_INVERSE'})
 
             smach.StateMachine.add( "POOR_1_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=5.0),
+                                    transitions={   'done'                  : 'Done',
+                                                    'failed'                : 'Done'}) #If this worked, we still poored
+
+class GiveCan(smach.StateMachine):
+    def __init__(self, robot, side):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+        self.side = side
+
+        with self:
+            smach.StateMachine.add("RESET_SPINDLE_HEAD_UP",
+                                states.ResetSpindle_HeadUp(robot),
+                                transitions={'done':'SAY_GIVE_CAN'})
+
+            smach.StateMachine.add( "SAY_GIVE_CAN",
+                                    states.Say(robot, [ "Here is your drink"], 
+                                               block=False),
+                                    transitions={'spoken': "GIVE_1"})
+
+            smach.StateMachine.add( "GIVE_1",
+                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=4),
+                                    transitions={   'done'                  :'GIVE_2',
+                                                    'failed'                :'Failed' })
+            
+            smach.StateMachine.add( "GIVE_2",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4), 
+                                    transitions={   'done'                  :'GIVE_3',
+                                                    'failed'                :'Failed' })
+
+            smach.StateMachine.add( "GIVE_3", 
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
+                                    transitions={   'done'                  : 'GIVE_4',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "GIVE_4", 
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=4),
+                                    transitions={   'done'                  : 'SAY_HOLDUP_HAND_FOR_CLOG',
+                                                    'failed'                : 'Failed'})
+            
+            
+            smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
+                                    states.Say(robot, [ "Please take the drink from my hand, I'll open my gripper"], 
+                                               block=True),
+                                    transitions={'spoken': "OPEN_GRIPPER"})
+
+            smach.StateMachine.add( 'OPEN_GRIPPER', 
+                                    states.SetGripper(robot, self.side, gripperstate=0), #open
+                                    transitions={'succeeded'    :   'GIVE_4_INVERSE',
+                                             'failed'       :   'GIVE_4_INVERSE'})
+
+            smach.StateMachine.add( "GIVE_4_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=5.0),
+                                    transitions={   'done'                  : 'GIVE_3_INVERSE',
+                                                    'failed'                : 'GIVE_3_INVERSE'})
+
+            smach.StateMachine.add( "GIVE_3_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
+                                    transitions={   'done'                  : 'GIVE_2_INVERSE',
+                                                    'failed'                : 'GIVE_2_INVERSE'})
+
+            smach.StateMachine.add( "GIVE_2_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
+                                    transitions={   'done'                  : 'GIVE_1_INVERSE',
+                                                    'failed'                : 'GIVE_1_INVERSE'})
+
+            smach.StateMachine.add( "GIVE_1_INVERSE",
                                     states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=5.0),
                                     transitions={   'done'                  : 'Done',
                                                     'failed'                : 'Done'}) #If this worked, we still poored
@@ -281,10 +347,10 @@ class RoboZoo(smach.StateMachine):
         with self:
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),
-                                    transitions={'done':"GIVE_CLOG",
-                                                 'failed':"GIVE_CLOG"}) #SKIP THE REST FOR TESTING
-                                    # transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
-                                    #              'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+                                    # transitions={'done':"GIVE_CLOG",
+                                    #              'failed':"GIVE_CLOG"}) #SKIP THE REST FOR TESTING
+                                    transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
+                                                 'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
 
             @smach.cb_interface(outcomes=['asserted'])
             def rel_to_flightcase(*args, **kwargs):
@@ -409,9 +475,13 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "HAND_DRINK_TO_HUMAN"})
 
             smach.StateMachine.add( "HAND_DRINK_TO_HUMAN",
-                                    states.HandoverToHuman(self.can_hand, robot),
-                                     transitions={  'succeeded'        :'SAY_TAKE_DRINK',
-                                                    'failed'           :'SAY_TAKE_DRINK' }) #We're lost if even this fails
+                                    #states.HandoverToHuman(self.can_hand, robot),
+                                    GiveCan(robot, self.can_hand),
+                                    transitions={   "Done"         :"SAY_TAKE_DRINK",
+                                                    "Aborted"      :"Aborted", 
+                                                    "Failed"       :"SAY_TAKE_DRINK"}) #We're lost if even this fails
+                                     # transitions={  'succeeded'        :'SAY_TAKE_DRINK',
+                                     #                'failed'           :'SAY_TAKE_DRINK' }) #We're lost if even this fails
 
             smach.StateMachine.add( "PLACE_ORDER",
                                     states.PlaceObject("left", robot, placement_query=query_ordering_table),
@@ -433,7 +503,7 @@ class RoboZoo(smach.StateMachine):
                                                     'preempted'         :'Aborted'})
 
             smach.StateMachine.add( "GIVE_CLOG",
-                                    GiveClog(robot, self.clog_hand, poor_point_query), 
+                                    GiveClog(robot, self.clog_hand), 
                                     transitions={   "Done"         :"SAY_TAKE_CLOGS",
                                                     "Aborted"      :"Aborted", 
                                                     "Failed"       :"PLACE_CLOG"})
