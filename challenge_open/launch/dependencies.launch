@@ -11,8 +11,8 @@
     <!-- (This includes loading the transport plugin and tf plugin) -->
     <include file="$(find wire_volume)/launch/start.launch"/>
 
-    <!-- Load Entity Fitter Plugin -->
-<!--<node name="wv_load_fitter_plugin" pkg="wire_volume" type="load_plugin" args="wire_fitter entity_fitter_plugin depth_image_topic=/amigo/top_kinect/depth_registered/image cam_info_topic=/amigo/top_kinect/depth_registered/camera_info fit_type=table"/>-->
+    <!-- Insert heightmap into the world model -->
+    <node name="height_map_loader" pkg="wire_fitter" type="height_map_to_world_model" args="$(find amigo_maps)/wire_volume/rgo2014.pgm 0.025 2 -4 -2"/>
 
     <!-- Vis Plugin Wire Volume loader -->
     <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
