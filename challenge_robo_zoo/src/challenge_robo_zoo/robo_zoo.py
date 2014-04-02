@@ -142,90 +142,63 @@ class GiveClog(smach.StateMachine):
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
-        with self:            
-            smach.StateMachine.add( 'AWAIT_PERSON',
-                                    states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person),
-                                    transitions={   'query_true'        :'SAY_HOLDUP_HAND_FOR_CLOG', 
-                                                    'timed_out'         :'Failed',
-                                                    'preempted'         :'Aborted'})
+        with self:
+            smach.StateMachine.add( "SAY_GIVE_CLOGS",
+                                    states.Say(robot, [ "I'll give you a present!"], 
+                                               block=False),
+                                    transitions={'spoken': "POOR_1"})
 
+            smach.StateMachine.add( "POOR_1",
+                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=4),
+                                    transitions={   'done'                  :'POOR_2',
+                                                    'failed'                :'Failed' })
+            
+            smach.StateMachine.add( "POOR_2",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4), 
+                                    transitions={   'done'                  :'POOR_3',
+                                                    'failed'                :'Failed' })
+
+            smach.StateMachine.add( "POOR_3", 
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=4),
+                                    transitions={   'done'                  : 'POOR_4',
+                                                    'failed'                : 'Failed'})
+
+            smach.StateMachine.add( "POOR_4", 
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=4),
+                                    transitions={   'done'                  : 'SAY_HOLDUP_HAND_FOR_CLOG',
+                                                    'failed'                : 'Failed'})
+            
+            
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
                                     states.Say(robot, [ "Hold up your hand please!"], 
-                                               block=False),
-                                    transitions={'spoken': "PREPARE_POOR_1"})
+                                               block=True),
+                                    transitions={'spoken': "POOR_5"})
 
-            smach.StateMachine.add( "PREPARE_POOR_1",
-                                    states.ArmToJointPos(robot, side, [0.00, -0.39, 0.00, 1.93, 0.00, 0.00, 0.00], timeout=4),
-                                    transitions={   'done'              :'PREPARE_POOR_2',
-                                                    'failed'            :'Failed' })
-            
-            smach.StateMachine.add( "PREPARE_POOR_2",
-                                    states.ArmToJointPos(robot, side, [-0.1, -0.4, 0.00, 1.93, 0.000, 0.00, 0.00], timeout=4), 
-                                    transitions={   'done'              :'POOR_POS1',
-                                                    'failed'            :'Failed' })
 
-            smach.StateMachine.add( "POOR_POS1", 
-                                    states.ArmToUserPose(self.side, 0.1, 0.1, 0.25, 0.0, 0.0 , 0.0, 
-                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'POOR_POS2',
+            smach.StateMachine.add( "POOR_5",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 2.3, 0, 0], timeout=5.0),
+                                    transitions={   'done'                  : 'POOR_4_INVERSE',
                                                     'failed'                : 'Failed'})
 
-            smach.StateMachine.add( "POOR_POS2", 
-                                    states.ArmToUserPose(self.side, 0.1, 0.0, 0.0, 0.0, 0.0 , 0.0, 
-                                                                time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'POOR1',
-                                                    'failed'                : 'Failed'})
+            smach.StateMachine.add( "POOR_4_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, 1.3, 0, 0.27, 0, 0, 0], timeout=5.0),
+                                    transitions={   'done'                  : 'POOR_3_INVERSE',
+                                                    'failed'                : 'POOR_3_INVERSE'})
 
-            #smach.StateMachine.add( "POOR",
-            #                       states.ArmToUserPose(self.side, 0.0, 0.0, 0.0, 2.0, 0.0, 0.0, 
-            #                            time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-            #                        transitions={   'succeeded'             : 'RETRACT',
-            #                                       'failed'                : 'Failed'})
+            smach.StateMachine.add( "POOR_3_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
+                                    transitions={   'done'                  : 'POOR_2_INVERSE',
+                                                    'failed'                : 'POOR_2_INVERSE'})
 
-            smach.StateMachine.add( "POOR1",
-                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
-                                    transitions={   'done'                  : 'POOR2',
-                                                    'failed'                : 'Failed'})
+            smach.StateMachine.add( "POOR_2_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [-0.1, -0.4, 0.0, 1.93, 0.0, 0.0, 0.0], timeout=5.0),
+                                    transitions={   'done'                  : 'POOR_1_INVERSE',
+                                                    'failed'                : 'POOR_1_INVERSE'})
 
-            smach.StateMachine.add( "POOR2",
-                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
-                                    transitions={   'done'                  : 'POOR3',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "POOR3",
-                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
-                                    transitions={   'done'                  : 'POOR4',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "POOR4",
-                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
-                                    transitions={   'done'                  : 'POOR5',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "POOR5",
-                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
-                                    transitions={   'done'                  : 'POOR6',
-                                                    'failed'                : 'Failed'})
-
-            smach.StateMachine.add( "POOR6",
-                                    states.ArmToJointPos(self.robot, self.side, [0.0, 0.0, 0.0, 0.0, 0.3, 0.0, 0.0], delta=True, timeout=5.0),
-                                    transitions={   'done'                  : 'RETRACT',
-                                                    'failed'                : 'RETRACT'})
-
-            smach.StateMachine.add('RETRACT', 
-                                    states.ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'RETRACT2',
-                                                    'failed'                : 'RETRACT2'})
-                                                    
-            smach.StateMachine.add('RETRACT2', 
-                                    states.ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'RETRACT3',
-                                                    'failed'                : 'RETRACT3'})
-                                                    
-            smach.StateMachine.add('RETRACT3', 
-                                    states.ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
-                                    transitions={   'succeeded'             : 'Done',
-                                                    'failed'                : 'Failed'})
+            smach.StateMachine.add( "POOR_1_INVERSE",
+                                    states.ArmToJointPos(self.robot, self.side, [0.1, -1, 0, 2, 0, 0, 0], timeout=5.0),
+                                    transitions={   'done'                  : 'Done',
+                                                    'failed'                : 'Done'}) #If this worked, we still poored
 
 class RoboZoo(smach.StateMachine):
     """The goal of the challenge is to attract people and be attractive to an audience.
@@ -308,8 +281,10 @@ class RoboZoo(smach.StateMachine):
         with self:
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),
-                                    transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
-                                                 'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+                                    transitions={'done':"GIVE_CLOG",
+                                                 'failed':"GIVE_CLOG"}) #SKIP THE REST FOR TESTING
+                                    # transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
+                                    #              'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
 
             @smach.cb_interface(outcomes=['asserted'])
             def rel_to_flightcase(*args, **kwargs):
@@ -449,7 +424,13 @@ class RoboZoo(smach.StateMachine):
                                                         "There you go, enjoy your drink. If you wait, I have something else for you as well",
                                                         "Cheers! I have a special gift for you as well, please wait a sec."], 
                                                block=False),
-                                    transitions={'spoken': "GIVE_CLOG"})
+                                    transitions={'spoken': "AWAIT_PERSON_FOR_CLOG"})
+
+            smach.StateMachine.add( 'AWAIT_PERSON_FOR_CLOG',
+                                    states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person),
+                                    transitions={   'query_true'        :'GIVE_CLOG', 
+                                                    'timed_out'         :'PLACE_CLOG',
+                                                    'preempted'         :'Aborted'})
 
             smach.StateMachine.add( "GIVE_CLOG",
                                     GiveClog(robot, self.clog_hand, poor_point_query), 
