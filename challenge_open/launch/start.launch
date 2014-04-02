@@ -6,6 +6,6 @@
     <include file="$(find amigo_launch_files)/launch/middleware/middleware.launch"/>
 
     <!-- open_challenge_deps -->
-    <include file="$(find challenge_open_2014)/launch/dependencies.launch"/>
+    <include file="$(find challenge_open)/launch/dependencies.launch"/>
 
 </launch>
