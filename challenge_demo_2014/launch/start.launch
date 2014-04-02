@@ -14,7 +14,9 @@
     <node pkg="challenge_demo_2014" type="webserver.py" name="doorbell_gui" output="screen">
         <param name="port" value="8001" />
     </node>
-
+    
+    <node pkg="challenge_demo_2014" type="doorbell_listener.py" name="doorbell_listener" output="screen" />
+    
     <include file="$(find challenge_demo_2014)/launch/laser.launch" />
     <include file="$(find challenge_demo_2014)/launch/ppl_detection.launch" />
 

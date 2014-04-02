@@ -11,6 +11,11 @@ make sure amiddle is running
 - start the webserver for this challenge:
     `roslaunch challenge_demo_2014 start.launch`
 
+- if the Hokuyo node gives an error:
+    - read the error and try to fix it
+    - if it is a permission denied error:
+        - run `hokuyo.sh` to fix that
+
 - open the web gui's
   - the doorbell is at http://amigo1:8001/src/doorbell/doorbell.html
   - the gui      is at http://amigo1:8001/src/doorbell/app.html
