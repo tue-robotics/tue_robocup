@@ -138,7 +138,17 @@ class GiveClog(smach.StateMachine):
         self.side = side
         self.poor_point_query = poor_point_query
 
-        with self:
+        query_detect_person     = Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        with self:            
+            smach.StateMachine.add( 'AWAIT_PERSON',
+                                    states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person),
+                                    transitions={   'query_true'        :'SAY_HOLDUP_HAND_FOR_CLOG', 
+                                                    'timed_out'         :'Failed',
+                                                    'preempted'         :'Aborted'})
+
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
                                     states.Say(robot, [ "Hold up your hand please!"], 
                                                block=False),
@@ -407,12 +417,12 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_ORDERING",
                                     states.NavigateGeneric(robot, lookat_query=query_ordering_table),
-                                    transitions={   "arrived"           :"AWAIT_FACE", 
-                                                    "unreachable"       :"AWAIT_FACE", #TODO: we should ask for help
+                                    transitions={   "arrived"           :"AWAIT_PERSON", 
+                                                    "unreachable"       :"AWAIT_PERSON", #TODO: we should ask for help
                                                     "preempted"         :"Aborted", 
                                                     "goal_not_defined"  :"Failed"})
 
-            smach.StateMachine.add( 'AWAIT_FACE',
+            smach.StateMachine.add( 'AWAIT_PERSON',
                                     states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person),
                                     transitions={   'query_true'        :'SAY_HOLDUP_HAND_FOR_DRINK', 
                                                     'timed_out'         :'PLACE_ORDER',
