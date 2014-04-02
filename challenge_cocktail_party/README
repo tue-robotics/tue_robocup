@@ -1,8 +1,6 @@
 # Responsible: Teun
 
 amigo1:
-    roscd pein_face_recognition/
-    rm -rf models/
     svn up	
     astart
 
@@ -26,7 +24,7 @@ amigo3:
     say test  
     	(to test speaker is working) 
 
-    rosrun challenge_cocktail_party cocktail_party_smach.py
+    rosrun challenge_cocktail_party cocktail_party_rgo2014.py
 
 INSTRUCTIONS:
 
