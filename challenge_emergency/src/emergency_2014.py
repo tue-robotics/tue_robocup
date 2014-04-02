@@ -20,7 +20,7 @@ from person_emergency_detector.msg import Position
 from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'living_room','bedroom' or 'kitchen'}
-room = 'kitchen'
+room = 'bedroom'
 
 ''' TO DO:
 - Make a list of likely and unlikely positions for the emergency to occur
@@ -56,7 +56,6 @@ class UnknownOctomapBlobDetector(smach.State):
         self.robot.spindle.reset()
         self.robot.head.reset_position()
 
-        self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
         self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
 
         navigate_room = Conjunction(  Compound("=", "Waypoint", Compound(room, "W")),
