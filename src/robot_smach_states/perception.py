@@ -23,7 +23,7 @@ class Learn_Person(smach.State):
     '''
 
     #def __init__(self, robot, name=None, models_per_view={'front':10, 'left':10, 'right':10}):
-    def __init__(self, robot, name=None, models_per_view={'front':12}):
+    def __init__(self, robot, name=None, models_per_view={'front':10}):
         smach.State.__init__(self,
                              outcomes = ['face_learned', 'learn_failed'])
         self.robot = robot
