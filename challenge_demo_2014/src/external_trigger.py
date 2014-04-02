@@ -50,7 +50,7 @@ class WaitForTrigger(smach.State):
 
 class PackagePose(smach.State):
 
-    def __init__(self, robot=None):
+    def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         
         self.robot = robot
@@ -71,7 +71,7 @@ class PackagePose(smach.State):
 
 class WaitForOwner(smach.State):
 
-    def __init__(self, robot=None):
+    def __init__(self, robot):
         smach.State.__init__(self, outcomes=['person_found','timed_out'])
         self.robot = robot
         self.timeout = 30.0
@@ -121,40 +121,21 @@ class WaitForOwner(smach.State):
         else:
             return 'timed_out'
 
-
-class ChallengeDemo2014(smach.StateMachine):
+class ReceivePackage(smach.StateMachine):
 
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        #retract old facts
-        #TODO: maybe retract more facts like other challenges?
-        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
-
-        #Load database
-        robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
-
-        #Assert the current challenge.
-        robot.reasoner.query(Compound("assertz",Compound("challenge", "challenge_demo_2014")))
-
-        query_start = Compound("waypoint", "start",         Compound("pose_2d", "X", "Y", "Phi"))
+        query_start = Compound("waypoint", "start",     Compound("pose_2d", "X", "Y", "Phi"))
         query_door  = Compound("waypoint", "behind_door",   Compound("pose_2d", "X", "Y", "Phi"))
-        query_backup= Compound("waypoint", "demo_backup",   Compound("pose_2d", "X", "Y", "Phi"))
-        query_owner = Conjunction(Compound("current_person", "ObjectID"),
-                                  Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
-        
-        with self:
 
-            smach.StateMachine.add('INITIALIZE_FIRST',
-                                    states.Initialize(robot),
-                                    transitions={   'initialized':'NAVIGATE_TO_START',
-                                                    'abort':'Aborted'})
+        with self:
 
             smach.StateMachine.add('NAVIGATE_TO_START',
                                     states.NavigateGeneric(robot, goal_query=query_start),
                                     transitions={   "arrived":"SAY_START_REACHED",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'Aborted',
+                                                    "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
             
             smach.StateMachine.add("SAY_START_REACHED", 
@@ -164,7 +145,7 @@ class ChallengeDemo2014(smach.StateMachine):
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
                                     WaitForTrigger(robot, ['doorbell']),
                                     transitions={   'doorbell':'SAY_TRIGGER_RECEIVED',
-                                                    'preempted': 'Aborted'})
+                                                    'preempted': 'failed'})
             
             smach.StateMachine.add("SAY_TRIGGER_RECEIVED", 
                                     states.Say(robot,"That was the doorbell, I must hurry", block=False),
@@ -174,7 +155,7 @@ class ChallengeDemo2014(smach.StateMachine):
                                     states.NavigateGeneric(robot, goal_query=query_door),
                                     transitions={   "arrived":"SAY_DOOR_REACHED",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'Aborted',
+                                                    "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
             smach.StateMachine.add("SAY_DOOR_REACHED", 
@@ -189,7 +170,7 @@ class ChallengeDemo2014(smach.StateMachine):
             smach.StateMachine.add( 'WAIT_FOR_LOAD',
                         states.Wait_time(robot, waittime=5),
                                     transitions={   'waited':'SAY_PACKAGE_RECEIVED',
-                                                    'preempted':'Aborted'})
+                                                    'preempted':'failed'})
             
             smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
                                     states.Say(robot,"Thank you, I will notify my owner", block=False),
@@ -201,6 +182,16 @@ class ChallengeDemo2014(smach.StateMachine):
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
+
+class GivePackage(smach.StateMachine):
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        query_backup= Compound("waypoint", "demo_backup",   Compound("pose_2d", "X", "Y", "Phi"))
+        query_owner = Conjunction(Compound("current_person", "ObjectID"),
+                                  Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+        with self:
 
             smach.StateMachine.add('WAIT_FOR_OWNER',
                                     WaitForOwner(robot),
@@ -215,7 +206,7 @@ class ChallengeDemo2014(smach.StateMachine):
                                     states.NavigateGeneric(robot, lookat_query=query_owner),
                                     transitions={   "arrived":"SAY_PERSON_FOUND",
                                                     "unreachable":'SAY_PERSON_UNREACHABLE',
-                                                    "preempted":'Aborted',
+                                                    "preempted":'failed',
                                                     "goal_not_defined":'SAY_PERSON_LOST'})
 
             smach.StateMachine.add("SAY_PERSON_LOST", 
@@ -230,36 +221,63 @@ class ChallengeDemo2014(smach.StateMachine):
                                     states.NavigateGeneric(robot, goal_query=query_backup),
                                     transitions={   "arrived":"SAY_PERSON_FOUND",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
-                                                    "preempted":'Aborted',
+                                                    "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
             smach.StateMachine.add("SAY_STILL_NOT_FOUND", 
                                     states.Say(robot,"My owner is still not home"),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'failed'})
 
 
             smach.StateMachine.add("SAY_PERSON_FOUND", 
                                     states.Say(robot,"Hello owner, I have a package for you", block=False),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'failed'})
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
                                     states.Say(robot,"I am sorry but I cannot figure it out, the goal is unreachable"),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'failed'})
 
             smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
                                     states.Say(robot,"I am sorry, I don't know where to go"),
-                                    transitions={   'spoken':'Aborted'})
+                                    transitions={   'spoken':'failed'})
+
+class ChallengeDemo2014(smach.StateMachine):
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+
+        #retract old facts
+        #TODO: maybe retract more facts like other challenges?
+        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
+
+        #Load database
+        robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
+
+        #Assert the current challenge.
+        robot.reasoner.query(Compound("assertz",Compound("challenge", "challenge_demo_2014")))
+
+        with self:
+
+            smach.StateMachine.add("RECEIVE_PACKAGE", 
+                                    GivePackage(robot),
+                                    transitions={   'succeeded': 'GIVE_PACKAGE',
+                                                    'failed':    'Done'})
+
+            smach.StateMachine.add("GIVE_PACKAGE", 
+                                    ReceivePackage(robot),
+                                    transitions={   'succeeded': 'Done',
+                                                    'failed':    'Done'})
 
 def WaitForTriggerTester():
 
     sm = smach.StateMachine(outcomes=['Done'])
 
     with sm:
-        smach.StateMachine.add("WAIT_FOR_TRIGGER", 
-                                WaitForTrigger(None, ['doorbell']),
-                                transitions={   'doorbell': 'Done',
-                                                'Aborted':  'Done'})
+        smach.StateMachine.add('INITIALIZE_FIRST',
+                                    states.Initialize(robot),
+                                    transitions={   'initialized':'NAVIGATE_TO_START',
+                                                    'abort':'Aborted'})
     sm.execute()
 
 
