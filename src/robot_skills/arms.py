@@ -484,7 +484,12 @@ class Arms(object):
         traj_goal.trajectory.points = [p]
         traj_goal.trajectory.joint_names = self._joint_names[side]
 
-        rospy.loginfo("Send arm to jointcoords {0}".format(p.positions))
+        class prettyfloat(float):
+            """See http://stackoverflow.com/questions/1566936/easy-pretty-printing-of-floats-in-python"""
+            def __repr__(self):
+                return "%0.3f" % self
+
+        rospy.loginfo("Send arm to jointcoords {0}".format(map(prettyfloat, p.positions)))
         
         result = None
 
@@ -508,6 +513,44 @@ class Arms(object):
                 rospy.logwarn("Cannot reach joint goal {0}".format(traj_goal))
                 return False
 
+    def send_joint_trajectory(self, joint_positions, side=None, timeout=0):
+        """Let the arms follow a trajectory. 
+        @param joint_positions is a list of joint coordinate lists, so a nested list.
+        e.g. joint_positions = [[0,0,0,0,0,0,0], [-0.1,0,0,0,0,0,0], [-0.1,0,1,0,0,0,0]]
+        Moves the arm from its home position to -0.1 on q1, then q3 to 1. 
+        All coordinates are needed"""
+                
+        traj_goal = FollowJointTrajectoryGoal()
+        traj_goal.trajectory.joint_names = self._joint_names[side]
+        
+        for joint_position in joint_positions:
+            p = JointTrajectoryPoint()
+            p.positions = joint_position
+
+            traj_goal.trajectory.points += [p]
+
+        rospy.loginfo("Moving arm in trajectory of {0} length".format(len(traj_goal.trajectory.points)))
+
+        if side == Side.LEFT:
+            current_ac = actionClients._ac_joint_traj_left
+        elif side == Side.RIGHT:
+            current_ac = actionClients._ac_joint_traj_right
+        else:
+            raise Exception("check_gripper_content: Invalid side specified")
+            return False
+
+        current_ac.send_goal(traj_goal)
+
+        if timeout == 0.0:
+            return True
+        else:
+            current_ac.wait_for_result(rospy.Duration(timeout))
+            if current_ac.get_state() == GoalStatus.SUCCEEDED:
+                return True
+            else:
+                rospy.logwarn("Cannot reach part of joint trajectory {0}".format(traj_goal))
+                return False
+
 
     def send_delta_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, side=None, timeout=0):
         """Move joint qX by some angle in radians. """
@@ -526,6 +569,22 @@ class Arms(object):
         else:
             rospy.logerr("There is no joint reference received for {side} arm, cannot send *relative* joint goal, only absolute".format(side={Side.LEFT:"left", Side.RIGHT:"right"}[side]))
 
+    def send_delta_joint_trajectory(self, delta_dict_list, side=None, timeout=5.0, origin=None):
+        """@param delta_dict_list is a list of dictionaries with deltas per joint, per step, e.g. [{"q1":-0.1, "q2":-0.3}, {"q3":-0.6}]
+        @param origin The joint position list to start from, in order to optionally have a defined start. If empty, uses the current position"""
+
+        if origin:
+            self.send_joint_goal(origin[0], origin[1], origin[2], origin[3], origin[4], origin[5], origin[6], timeout)
+
+        for delta_dict in delta_dict_list:
+            #Take joint delta if it exists, otherwise, delta is 0
+            self.send_delta_joint_goal( q1=delta_dict.get("q1", 0), 
+                                        q2=delta_dict.get("q2", 0), 
+                                        q3=delta_dict.get("q3", 0), 
+                                        q4=delta_dict.get("q4", 0), 
+                                        q5=delta_dict.get("q5", 0), 
+                                        q6=delta_dict.get("q6", 0), 
+                                        q7=delta_dict.get("q7", 0), timeout=timeout)
     
     def update_correction(self, side=None):
 
@@ -662,11 +721,20 @@ class Arm(Arms):
         """Send a goal to the arms in joint coordinates"""
         return super(Arm, self).send_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
     
+    def send_joint_trajectory(self, positions, timeout=0):
+        """Send a goal to the arms in joint coordinates"""
+        return super(Arm, self).send_joint_trajectory(positions,self.side, timeout=timeout)
+    
     def send_delta_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
         """Move the arm joints by some angle (in radians)
         >>> from math import radians
         >>> some_arm.send_delta_joint_goal(q1=radians(-20)) #e.g. amigo.leftArm.send_delta_joint_goal(q1=radians(-20))"""
         return super(Arm, self).send_delta_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
+    
+    def send_delta_joint_trajectory(self, delta_dict_list, timeout=0, origin=None):
+        """@param delta_dict_list is a list of dictionaries with deltas per joint, per step, e.g. [{q1=-0.1, q4=0.4}, {q6=1.57}]
+        @param origin The joint position list to start from, in order to optionally have a defined start. If empty, uses the current position"""
+        return super(Arm, self).send_delta_joint_trajectory(delta_dict_list,self.side, timeout=timeout, origin=origin)
 
     def send_arm_task(self, *args, **kwargs):
         """Send a goal to the whole-body planner"""
