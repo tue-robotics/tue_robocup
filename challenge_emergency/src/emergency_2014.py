@@ -19,8 +19,8 @@ from person_emergency_detector.msg import Position
 #import states_new as states 
 from psi import Compound, Sequence, Conjunction
 
-# Hardcoded emergency room {'living_room','bedroom' or 'kitchen'}
-room = 'kitchen'
+# Hardcoded emergency room {'office','bedroom' or 'kitchen'}
+room = 'office'
 
 ''' TO DO:
 - Make a list of likely and unlikely positions for the emergency to occur
@@ -105,29 +105,31 @@ class UnknownOctomapBlobDetector(smach.State):
         try:
             if room == 'bedroom':
                 self.response = self.unknown_blob_detection(0.0, -1.4, 0, 5.2, 3.5, 2)# todo     
-            elif room == 'living_room':
-                self.response = self.unknown_blob_detection(0.5, 0.0, 0, 5.2, 3.2, 2)
+            elif room == 'office':
+                self.response = self.unknown_blob_detection(0.0, 3.6, 0, 4.75, 8.5, 2)    
             else:
                 if self.counter == 0:
                     self.response = self.unknown_blob_detection(5, -1.4, 0, 8.8, 3.7, 2)
                     self.counter = self.counter + 1
                 else:
-                    self.response = self.unknown_blob_detection(5, 3.74, 0, 8.8, 8.5, 2)
+                    self.response = self.unknown_blob_detection(5.0, 4, 0, 8.8, 8.5, 2)
 
             print self.response
             if len(self.response.positions) == 0:
                 return 'looking'
 
+
             possible_locations = [( float(answer.x), 
                                     float(answer.y), 
                                     float(answer.z)) for answer in self.response.positions]
 
-            
-            goal = possible_locations[0]
+            print possible_locations
+            goal = list(possible_locations[0])
+            print goal
             #nav = states.NavigateGeneric(self.robot, lookat_point_3d=goal)
             #nav_result = nav.execute()
 
-            # HACK TO LOOK UP WHEN FACING STANDING PEOPLE!?
+            # HACK TO LOOK UP WHEN FACING STANDING PEOPLE
             if goal[2] > 0.45:
                 goal[2] = 1.2
 
