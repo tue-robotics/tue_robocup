@@ -18,12 +18,28 @@ class AvoidThat(smach.StateMachine):
 
         robot.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
-        query_waypoint =  Compound("waypoint", "goal", Compound("pose_2d", "X", "Y", "Phi"))
+        query_waypoint1 =  Compound("waypoint", "goal1", Compound("pose_2d", "X", "Y", "Phi"))
+        query_waypoint2 =  Compound("waypoint", "goal2", Compound("pose_2d", "X", "Y", "Phi"))
+        query_waypoint3 =  Compound("waypoint", "goal3", Compound("pose_2d", "X", "Y", "Phi"))
         
         with self:
 
             smach.StateMachine.add('NAVIGATE_TO_WAYPOINT',
-                                    states.NavigateGeneric(robot, goal_query=query_waypoint, goal_area_radius=0.2),
+                                    states.NavigateGeneric(robot, goal_query=query_waypoint1, goal_area_radius=0.2),
+                                    transitions={   "arrived":"SAY_GOAL_REACHED",
+                                                    "unreachable":'NAVIGATE_TO_WAYPOINT2',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'NAVIGATE_TO_WAYPOINT2'})
+
+            smach.StateMachine.add('NAVIGATE_TO_WAYPOINT2',
+                                    states.NavigateGeneric(robot, goal_query=query_waypoint2, goal_area_radius=0.2),
+                                    transitions={   "arrived":"SAY_GOAL_REACHED",
+                                                    "unreachable":'NAVIGATE_TO_WAYPOINT3',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'NAVIGATE_TO_WAYPOINT3'})
+
+            smach.StateMachine.add('NAVIGATE_TO_WAYPOINT3',
+                                    states.NavigateGeneric(robot, goal_query=query_waypoint3, goal_area_radius=0.2),
                                     transitions={   "arrived":"SAY_GOAL_REACHED",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'Aborted',

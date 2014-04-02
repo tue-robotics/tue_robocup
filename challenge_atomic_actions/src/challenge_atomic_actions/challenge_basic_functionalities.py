@@ -75,7 +75,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             #	                                    "Failed":	"GOTO_AVOID_THAT"})
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
-                                    NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.2),
+                                    NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
                                     transitions={   "arrived":"AVOID_THAT",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
@@ -87,7 +87,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                                    "Aborted":	"Aborted"})
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
-                                    NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.2),
+                                    NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
                                     transitions={   "arrived":"WHAT_DID_YOU_SAY",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',

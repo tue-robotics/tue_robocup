@@ -12,7 +12,7 @@ from robot_smach_states.util.startup import startup
 
 class PickAndPlace(smach.StateMachine):
 
-    def __init__(self, robot, poi_lookat="desk_1", grasp_arm="left"):
+    def __init__(self, robot, poi_lookat="pick_poi", grasp_arm="left"):
         # ToDo: get rid of hardcode poi lookat
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
