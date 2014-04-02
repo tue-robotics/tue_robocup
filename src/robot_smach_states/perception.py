@@ -495,11 +495,14 @@ class ToggleModules(smach.State):
 class ToggleDemoLaser(smach.State):
     """Toggle the demo laser service on. This allows to navigate relative to an object rather than to a static map."""
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done"])
+        smach.State.__init__(self, outcomes=["done", "failed"])
 
         self.robot = robot
         self.demo_laser_service = rospy.ServiceProxy('/toggle_demo_laser', Empty)  
 
     def execute(self, userdata):
-        self.demo_laser_service()
-        return "done"
+        try:
+            self.demo_laser_service()
+            return "done"
+        except rospy.ServiceException:
+            return "failed"
