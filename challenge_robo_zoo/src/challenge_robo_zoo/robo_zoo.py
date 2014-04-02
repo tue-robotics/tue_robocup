@@ -118,6 +118,18 @@ def publish_marker(point_stamped, color=(0,0,1)):
     # Publish the MarkerArray
     publisher.publish(markerArray)
 
+class ClearCostmapAround(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        b = self.robot.base
+        #b.force_drive(0.25, 0, 0, 3)
+        b.force_drive(0, 0, 0.5, 12) #turn yourself around
+        #b.force_drive(-0.25, 0, 0, 3)
+        return "Done"
+
 class GrabClog(smach.StateMachine):
     def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
@@ -125,7 +137,7 @@ class GrabClog(smach.StateMachine):
         self.side = side
 
         query_clog_cup = Conjunction(
-                                    Compound( "property_expected", "ObjectID", "class_label", "noodles"), #TODO: class name noodles may need to be changed to cup
+                                    Compound( "property_expected", "ObjectID", "class_label", "water"), #TODO: class name noodles may need to be changed to cup
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         with self:
@@ -343,6 +355,10 @@ class RoboZoo(smach.StateMachine):
 
 
         with self:
+            smach.StateMachine.add( "LOCK_GMAPPING",
+                                    ClearCostmapAround(robot),
+                                    transitions={'Done':"FIND_FLIGHTCASE"})
+
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),
                                     # transitions={'done':"GIVE_CLOG",
@@ -423,7 +439,7 @@ class RoboZoo(smach.StateMachine):
                                                     "goal_not_defined"  :"Failed"})
             
             smach.StateMachine.add( "SPINDLE_LOW_1",
-                                    states.SetSpindle(robot, height=0.2),
+                                    states.SetSpindle(robot, height=0.1),
                                     transitions={"done"                 :"LOOK_FOR_DRINK"})
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
