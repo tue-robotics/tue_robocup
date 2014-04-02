@@ -2,7 +2,10 @@ challenge_robo_zoo
 
 Responsible: Loy
 
-There is no predefined initial pose required
+AMIGO's laser scanner must look at the lid of the small flightcase.
+This flightcase should be under one of the 4 tables that enclose AMIGO. See the layout below
+
+
 
 amigo1$ amiddle
 amigo1$ rosrun challenge_robo_zoo robo_zoo.py
@@ -17,4 +20,42 @@ There are 4 main positions:
 The locations must be defined in tue_knowledge/prolog/locations.pl
 
 DEPENDENCIES:
-There are no special dependencies, only middleware
+roslaunch demo_laser start.launch #in sim, run rosrun tf static_transform_publisher 2.65 1.5 0 0 0 0 "/map" "/kist" 50
+
+LAYOUT:
+
+            +––––––––––––––––––––––––––––––––––––––+               
+            |                                      |               
+            |    +––––––––––––+                    |               
+            |    |            |                    |               
+            |    |Case/storage|                    |               
+            |    |            |                    |               
++––––––––––––––––+––––––––––––+–––––––––––––––––––––––––––––––––––+
+|           |                                      |              |
+|           |                                XX    |              |
+|           |                              XX  XX  |              |
+|           |                    Trashbin  X    X  |              |
+|           |                              XX  XX  |              |
+|           |                                XX    |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
+|           |                                      |              |
++–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––+
+            |                                      |               
+            |   ordering table:                    |               
+            |    place/pooring           pickup    |               
+            |                                      |               
+            |                                      |               
+            |                                      |               
+            +––––––––––––––––––––––––––––––––––––––+               
+

@@ -22,6 +22,35 @@ from robot_skills.util import transformations
 
 - When there are no persons at the desk, have Amigo yell like a market salesman if anyone wants a drink?
 """
+
+from visualization_msgs.msg import Marker, MarkerArray
+publisher = rospy.Publisher('visualization_markers', MarkerArray)
+markerArray = MarkerArray()
+ids = 0
+def publish_marker(point_stamped, color=(0,0,1)):
+    global ids
+    marker = Marker()
+    marker.id = ids
+    ids += 1
+    marker.header.frame_id = point_stamped.header.frame_id
+    marker.header.stamp = rospy.Time.now()
+    marker.type = Marker.SPHERE
+    marker.pose.position.x = point_stamped.point.x
+    marker.pose.position.y = point_stamped.point.y
+    marker.pose.position.z = point_stamped.point.z
+    marker.pose.orientation.w = 1
+    marker.scale.x = 0.2
+    marker.scale.y = 0.2
+    marker.scale.z = 0.2
+    marker.color.a = 1.0
+    marker.color.r = color[0]
+    marker.color.g = color[1]
+    marker.color.b = color[2]
+
+    markerArray.markers.append(marker)
+    # Publish the MarkerArray
+    publisher.publish(markerArray)
+
 class GrabClog(smach.StateMachine):
     def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
@@ -42,6 +71,7 @@ class GrabClog(smach.StateMachine):
                                     states.GrabMachine(side, robot, query_clog_cup),
                                     transitions={   'succeeded'         :'Done',
                                                     'failed'            :'Failed' })
+
 class ReceiveClog(smach.StateMachine):
     def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
@@ -268,24 +298,32 @@ class RoboZoo(smach.StateMachine):
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
-        #Points are defined relative to a flightcase, using package demo_laser. The /kist-frame is in the middle of the front of the case
-        #waypoint_storage_table  = msg.PoseStamped( -0.7, 0,     0,      frame_id="/kist") #In front of the flightcase
-        poi_storage_table       = msg.PointStamped( 0.1, 0,     0.74,   frame_id="/kist") #10cm inside the bounds of the flight case
-        poi_trashbin            = msg.PointStamped(-0.7, 1.1,   0.7,    frame_id="/kist") #Trashbin is outside the bounds of the case, 1.1m right of the waypoint_storage_table
-        poi_pooring             = msg.PointStamped(-1.9, 0,     0.9,    frame_id="/kist")
-        poi_ordering_table      = msg.PointStamped(-1.9, 0,     0.74,   frame_id="/kist")
-        poi_pickup_table        = msg.PointStamped(-1.9, 0.5,   0.74,   frame_id="/kist")
-
-        transformations.tf_transform(poi_storage_table, poi_storage_table.header.frame_id, "/map")
-
 
         with self:
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),
-                                    transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+                                    transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
+                                                 'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
 
             @smach.cb_interface(outcomes=['asserted'])
             def rel_to_flightcase(*args, **kwargs):
+                self.robot.reasoner.query(Compound("retractall", Compound("point_of_interest", "Poi", "P")))
+
+                #Points are defined relative to a flightcase, using package demo_laser. The /kist-frame is in the middle of the front of the case
+                #waypoint_storage_table  = msg.PoseStamped( -0.7, 0,     0,      frame_id="/kist") #In front of the flightcase
+                poi_storage_table       = msg.PointStamped( 0.1, 0,     0.74,   frame_id="/kist") #10cm inside the bounds of the flight case
+                poi_trashbin            = msg.PointStamped(-0.4, -1.1,   0.7,    frame_id="/kist") #Trashbin is outside the bounds of the case, 1.1m right of the waypoint_storage_table
+                poi_pooring             = msg.PointStamped(-1.9, 0,     0.9,    frame_id="/kist")
+                poi_ordering_table      = msg.PointStamped(-1.9, 0,     0.74,   frame_id="/kist")
+                poi_pickup_table        = msg.PointStamped(-1.9, -0.5,   0.74,   frame_id="/kist")
+
+                #import ipdb; ipdb.set_trace()
+                publish_marker(poi_storage_table,   color=(0,   1.0,0))     #green
+                publish_marker(poi_trashbin,        color=(0,   0,  0))     #black
+                publish_marker(poi_pooring,         color=(0,   0,  1.0))   #blue
+                publish_marker(poi_ordering_table,  color=(1.0, 0,  1.0))   #purple
+                publish_marker(poi_pickup_table,    color=(1.0, 0,  0))     #red
+
                 storage = transformations.tf_transform(poi_storage_table, poi_storage_table.header.frame_id, "/map")
                 robot.reasoner.assertz(Compound("point_of_interest", "storage_table", Compound("point_3d", storage.x, storage.y, storage.z)))
 
