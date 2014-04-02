@@ -14,9 +14,9 @@ from robot_skills.util import transformations
 
 
 """ TODOs, BUGs:
-- reset pose after grasping a can is in collision
-- don't pick up empty cans, takes too much time
-- waiting for person doesn't work, starts placing directly
+- DONE:reset pose after grasping a can is in collision, move the arm a bit
+- DONE: don't pick up empty cans, takes too much time
+- DONE: waiting for person doesn't work, starts placing directly
 """
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -290,7 +290,7 @@ class RoboZoo(smach.StateMachine):
         
         query_trashbin          = Compound("point_of_interest", "trashbin1", Compound("point_3d", "X", "Y", "Z"))
 
-        query_detect_person     = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+        query_detect_person     = Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
@@ -387,8 +387,13 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "GRAB_DRINK",
                                     states.GrabMachine("left", robot, query_ordered_drink),
-                                    transitions={   'succeeded'         :'GET_CLOG_1',
+                                    transitions={   'succeeded'         :'MOVE_ARM_AWAY_FROM_COLLISION',
                                                     'failed'            :'HELP_WITH_GETTING_DRINK' })
+
+            smach.StateMachine.add( "MOVE_ARM_AWAY_FROM_COLLISION", 
+                                    states.ArmToUserPose(self.can_hand, 0.0, 0.0, -0.1, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/base_link", delta=True),
+                                    transitions={   'succeeded'             : 'GET_CLOG_1',
+                                                    'failed'                : 'GET_CLOG_1'})
 
             smach.StateMachine.add( "GET_CLOG_1",
                                     GrabClog(robot, "right"),
@@ -457,7 +462,7 @@ class RoboZoo(smach.StateMachine):
                                                         "Here's my gift to you, real dutch clogs.",
                                                         "Please take these clogs and feel like a real Dutchman."], 
                                                block=False),
-                                    transitions={'spoken': "GOTO_PICKUP"})
+                                    transitions={'spoken': "SET_CURRENT_DRINK"}) #Don't pick up empty cans, takes too much time
 
             smach.StateMachine.add( "HELP_WITH_PLACING_CLOG",
                                     states.HandoverToHuman(self.clog_hand, robot),
