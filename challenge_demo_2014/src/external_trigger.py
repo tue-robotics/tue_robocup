@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('challenge_demo_2014')
 import rospy
+import sys
 
 import smach
 
@@ -175,7 +176,10 @@ class ReceivePackage(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        query_door  = Compound("waypoint", "behind_door",   Compound("pose_2d", "X", "Y", "Phi"))
+        query_door1 = Conjunction(  Compound("=", "Waypoint",        Compound("behind_door", "a")),
+                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+        query_door2 = Conjunction(  Compound("=", "Waypoint",        Compound("behind_door", "b")),
+                                    Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
         with self:
 
@@ -200,7 +204,14 @@ class ReceivePackage(smach.StateMachine):
                                     transitions={   'spoken':'NAVIGATE_TO_DOOR'})
 
             smach.StateMachine.add('NAVIGATE_TO_DOOR',
-                                    states.NavigateGeneric(robot, goal_query=query_door),
+                                    states.NavigateGeneric(robot, goal_query=query_door1),
+                                    transitions={   "arrived":"SAY_DOOR_REACHED",
+                                                    "unreachable":'NAVIGATE_TO_DOOR_RETRY',
+                                                    "preempted":'failed',
+                                                    "goal_not_defined":'NAVIGATE_TO_DOOR_RETRY'})
+
+            smach.StateMachine.add('NAVIGATE_TO_DOOR_RETRY',
+                                    states.NavigateGeneric(robot, goal_query=query_door2),
                                     transitions={   "arrived":"SAY_DOOR_REACHED",
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'failed',
@@ -245,7 +256,7 @@ class GivePackage(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        query_backup= Compound("waypoint", "demo_backup",   Compound("pose_2d", "X", "Y", "Phi"))
+        query_backup= Compound("waypoint", "user_backup",   Compound("pose_2d", "X", "Y", "Phi"))
         query_owner = Conjunction(Compound("current_person", "ObjectID"),
                                   Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
@@ -320,20 +331,13 @@ class ChallengeDemo2014(smach.StateMachine):
                                     GivePackage(robot),
                                     transitions={   'succeeded': 'Done',
                                                     'failed':    'Done'})
-
-def WaitForTriggerTester():
-
-    sm = smach.StateMachine(outcomes=['Done'])
-
-    with sm:
-        smach.StateMachine.add('INITIALIZE_FIRST',
-                                    states.Initialize(robot),
-                                    transitions={   'initialized':'NAVIGATE_TO_START',
-                                                    'abort':'Aborted'})
-    sm.execute()
+            if  len(sys.argv) > 1:
+                initial_state = sys.argv[1]
+                rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
+                self.set_initial_state([initial_state])
 
 
 if __name__ == "__main__":
     rospy.init_node('challenge_demo_2014_exec')
-    #WaitForTriggerTester()
+
     startup(ChallengeDemo2014)
