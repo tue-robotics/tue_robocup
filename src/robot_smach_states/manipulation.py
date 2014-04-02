@@ -769,15 +769,46 @@ class ArmToJointPos(smach.State):
 
     def execute(self, userdata):
         if not self.delta:
-            result = self.side.send_joint_goal(*self.jointgoal,timeout=self.timeout)
+            result = self.side.send_joint_goal(*self.jointgoal, timeout=self.timeout)
         if self.delta:
-            result = self.side.send_delta_joint_goal(*self.jointgoal,timeout=self.timeout)
+            result = self.side.send_delta_joint_goal(*self.jointgoal, timeout=self.timeout)
         if result:
             return "done"
         else:
             return "failed"
 
 ArmToPose = ArmToJointPos
+
+class ArmFollowTrajectory(smach.State):
+    def __init__(self, robot, side, trajectory, timeout=0):
+        smach.State.__init__(self, outcomes=['done', "failed"])
+        self.side = side
+        self.robot = robot
+        self.trajectory = trajectory
+        self.timeout = timeout
+
+    def execute(self, userdata):
+        result = self.side.send_joint_trajectory(*self.jointgoal,timeout=self.timeout)
+        if result:
+            return "done"
+        else:
+            return "failed"
+
+class ArmFollowDeltaTrajectory(smach.State):
+    def __init__(self, robot, side, delta_dict_list, timeout=0, origin=None):
+        smach.State.__init__(self, outcomes=['done', "failed"])
+        self.side = side
+        self.robot = robot
+        self.delta_dict_list = delta_dict_list
+        self.timeout = timeout
+        self.origin = origin
+        
+    def execute(self, userdata):
+        result = self.side.send_delta_joint_trajectory(self.delta_dict_list, timeout=self.timeout, origin=self.origin)
+        if result:
+            return "done"
+        else:
+            return "failed"
 
 class ArmToUserPose(smach.State):
     def __init__(self, side, x, y, z, roll=0, pitch=0, yaw=0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False):
