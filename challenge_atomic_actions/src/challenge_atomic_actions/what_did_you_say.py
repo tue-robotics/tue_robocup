@@ -29,8 +29,6 @@ class AskQuestions(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.head.look_up(tilt_vel=0.75)
-
         rospy.loginfo("----Possible questions for now: -----------------")
         rospy.loginfo("--- What is the capital of Germany? -------------")
         rospy.loginfo("--- What is the heaviest animal in the world?----")
@@ -62,6 +60,7 @@ class WaitForPerson(smach.State):
     def execute(self, userdata=None):
 
         if self.counter > 3:
+            self.robot.head.look_up(tilt_vel=0.75)
             return 'timed_out'
 
         self.robot.spindle.reset()
@@ -80,6 +79,7 @@ class WaitForPerson(smach.State):
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
             rospy.logerr("Face segmentation failed to start")
+            self.robot.head.look_up(tilt_vel=0.75)
             return "failed"
 
         wait_machine = states.Wait_query_true(self.robot, query_detect_person, 10)
