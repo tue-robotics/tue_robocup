@@ -9,7 +9,9 @@
     <!-- WIRE VOLUME -->  
 
     <!-- (This includes loading the transport plugin and tf plugin) -->
-    <include file="$(find wire_volume)/launch/start.launch"/>
+    <include file="$(find wire_volume)/launch/start.launch">
+        <arg name="gdb" value="true" />
+    </include>
 
     <!-- Insert heightmap into the world model -->
     <node name="height_map_loader" pkg="wire_fitter" type="height_map_to_world_model" args="$(find amigo_maps)/wire_volume/rgo2014.pgm 0.025 2 -4 -2"/>
