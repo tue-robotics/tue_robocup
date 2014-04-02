@@ -16,10 +16,10 @@ $( document ).ready(function() {
     }
 
     $('#allow-access').click(function(e) {
-        sendTrigger('allow-access');
+        sendTrigger('allow');
     });
     $('#deny-access').click(function(e) {
-        sendTrigger('deny-access');
+        sendTrigger('deny');
     });
 
     var MjpegViewer = new MJPEGCANVAS.Viewer({

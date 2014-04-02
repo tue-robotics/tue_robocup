@@ -195,13 +195,18 @@ class ReceivePackage(smach.StateMachine):
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
-                                    WaitForTrigger(robot, ['doorbell']),
-                                    transitions={   'doorbell':'SAY_TRIGGER_RECEIVED',
-                                                    'preempted': 'failed'})
+                                    WaitForTrigger(robot, ['allow', 'deny']),
+                                    transitions={   'allow':    'SAY_TRIGGER_ALLOW',
+                                                    'deny':     'SAY_TRIGGER_DENY',
+                                                    'preempted':'failed'})
             
-            smach.StateMachine.add("SAY_TRIGGER_RECEIVED", 
-                                    states.Say(robot,"That was the doorbell, I must hurry", block=False),
+            smach.StateMachine.add("SAY_TRIGGER_ALLOW", 
+                                    states.Say(robot,"There is somebody at the door, I must hurry", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_DOOR'})
+
+            smach.StateMachine.add("SAY_TRIGGER_DENY", 
+                                    states.Say(robot,"I dont know that guy, my owner told me not to open the door for strangers", block=False),
+                                    transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
             smach.StateMachine.add('NAVIGATE_TO_DOOR',
                                     states.NavigateGeneric(robot, goal_query=query_door1),
