@@ -47,6 +47,19 @@ def publish_marker(point_stamped, color=(0,0,1)):
     # Publish the MarkerArray
     publisher.publish(markerArray)
 
+class ClearCostmapAround(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        b = self.robot.base
+        #b.force_drive(0.25, 0, 0, 3)
+        b.force_drive(0, 0, 0.5, 12) #turn yourself around
+        #b.force_drive(-0.25, 0, 0, 3)
+        return "Done"
+
+
 class GrabClog(smach.StateMachine):
     def __init__(self, robot, side):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
@@ -345,10 +358,12 @@ class RoboZoo(smach.StateMachine):
 
 
         with self:
+            smach.StateMachine.add( "LOCK_GMAPPING",
+                                    ClearCostmapAround(robot),
+                                    transitions={'Done':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+            
             smach.StateMachine.add( "FIND_FLIGHTCASE",
                                     states.ToggleDemoLaser(robot),
-                                    # transitions={'done':"GIVE_CLOG",
-                                    #              'failed':"GIVE_CLOG"}) #SKIP THE REST FOR TESTING
                                     transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
                                                  'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
 
