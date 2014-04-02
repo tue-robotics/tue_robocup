@@ -327,6 +327,12 @@ class ChallengeDemo2014(smach.StateMachine):
 
         with self:
 
+            smach.StateMachine.add("INITIALIZE", 
+                                    states.Initialize(robot),
+                                    transitions={   'initialized':  'RECEIVE_PACKAGE',
+                                                    'abort':        'Aborted'})
+
+
             smach.StateMachine.add("RECEIVE_PACKAGE", 
                                     ReceivePackage(robot),
                                     transitions={   'succeeded': 'GIVE_PACKAGE',
