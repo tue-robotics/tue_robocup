@@ -417,10 +417,14 @@ class RoboZoo(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_STORAGE",
                                     states.NavigateGeneric(robot, lookat_query=query_storage_table),
-                                    transitions={   "arrived"           :"LOOK_FOR_DRINK", 
-                                                    "unreachable"       :"LOOK_FOR_DRINK", 
+                                    transitions={   "arrived"           :"SPINDLE_LOW_1", 
+                                                    "unreachable"       :"SPINDLE_LOW_1", 
                                                     "preempted"         :"Aborted", 
                                                     "goal_not_defined"  :"Failed"})
+            
+            smach.StateMachine.add( "SPINDLE_LOW_1",
+                                    states.SetSpindle(robot, height=0.2),
+                                    transitions={"done"                 :"LOOK_FOR_DRINK"})
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
                                     states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink), 
