@@ -80,13 +80,12 @@ class Learn_Person(smach.State):
 
         if 'front' in self.models_per_view:
             # learn front face
-            self.robot.rightArm.send_joint_goal(-1.159, 1.096, -1.021, 1.669, -0.603, 0.255, 0.0206,timeout=2)
-            self.robot.rightArm.reset_arm()
+            #self.robot.rightArm.reset_arm()
 
             self.robot.speech.speak(speech_sentence[2], block=False)
             result = self.robot.perception.learn_person(name_to_learn, 
-                view = 'front', 
-                n_models=self.models_per_view['front'])
+                                                        view = 'front', 
+                                                        n_models=self.models_per_view['front'])
 
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
