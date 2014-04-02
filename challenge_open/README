@@ -7,10 +7,14 @@ amigo2:
 amigo1:
 
     vim ~/.bashrc  
-    TUE_USE_CATKIN=true // enable catkin_ws (hydro costmaps)
+    TUE_USE_CATKIN=true # enable catkin_ws (hydro costmaps)
 
-    // restart ssh session
+    # restart ssh session
+    amiddle-open # starts custom middleware and dependencies.launch 
 
-    amiddle-open // starts custom middleware and dependencies.launch 
+    # load walls into world model
+    rosrun wire_fitter height_map_to_world_model `rospack find amigo_maps`/wire_volume/rgo2014.pgm 0.025 2 -4 -2
+
+    # start the challenge
     rosrun challenge_open_2014 challenge_open_2014.py
 
