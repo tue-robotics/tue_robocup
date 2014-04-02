@@ -20,7 +20,7 @@ from person_emergency_detector.msg import Position
 from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'living_room','bedroom' or 'kitchen'}
-room = 'bedroom'
+room = 'kitchen'
 
 ''' TO DO:
 - Make a list of likely and unlikely positions for the emergency to occur
@@ -127,10 +127,12 @@ class UnknownOctomapBlobDetector(smach.State):
             #nav = states.NavigateGeneric(self.robot, lookat_point_3d=goal)
             #nav_result = nav.execute()
 
-            ''' HOW TO ASSERT'''
-            self.robot.reasoner.assertz(Compound("emergency_person", Compound("point_3d", Sequence(goal[0], goal[1], goal[2]))))
+            # HACK TO LOOK UP WHEN FACING STANDING PEOPLE!?
+            if goal[2] > 0.45:
+                goal[2] = 1.2
 
-            answers = self.robot.reasoner.query(Compound("emergency_person", Compound("point_3d",Sequence("X","Y","Z"))))
+            self.robot.reasoner.assertz(Compound("emergency_person", Compound("point_3d", Sequence(goal[0], goal[1], goal[2]))))
+            #answers = self.robot.reasoner.query(Compound("emergency_person", Compound("point_3d",Sequence("X","Y","Z"))))
              
             lookat_point = msgs.PointStamped(goal[0],goal[1],goal[2]) # todo
             self.robot.head.send_goal(lookat_point, timeout=0, keep_tracking=True)
@@ -244,9 +246,9 @@ class LookingForPersonOld(smach.State):
             self.robot.speech.speak("I see some people!",block=False)
         else:
             self.robot.speech.speak("I found someone!",block=False)
-        print person_result
-        print person_result[0]["ObjectID"]
-        self.robot.reasoner.assertz(Compound("emergency_person", person_result[0]["ObjectID"]))
+        #self.robot.reasoner.assertz(Compound("emergency_person", person_result[0]["ObjectID"]))
+        self.robot.reasoner.assertz(Compound("emergency_person", Compound("point_3d", Sequence(person_result[0]["X"], person_result[0]["Y"], person_result[0]["Z"]))))
+
 
         return "found"     
         
@@ -768,6 +770,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add( "SAY_LOOK_FOR_PERSON",
                                 states.Say(robot,"Going to the " + room, block=False),
                                 transitions={    "spoken":"FIND_PERSON_BACKUP"})
+                                #transitions={    "spoken":"FIND_PERSON"})
 
         ######################################################
         ########## GO TO ROOM AND LOOK FOR PERSON ############
