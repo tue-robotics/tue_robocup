@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import roslib; roslib.load_manifest('amigo_demo')
 import rospy
 import os
@@ -124,9 +125,27 @@ sent_keymap['p'] = "PASS"
 
 @dec.register_robot_key("M", "Merkel demo cheese holding pose")
 def cheese_plank_pose(robot):
+    robot.spindle.send_goal(0.4)
     robot.rightArm.send_joint_goal(-0.3650 , 0.9436 , 0.4707 , 1.0420 , 0.7136 , -0.1692 , 0.2180)
     robot.leftArm.send_joint_goal(-0.365, 0.843, 0.470, 1.142, -0.756, -0.2692, 0.218)
     robot.leftArm.send_gripper_goal_open()
+    rospy.sleep(5)
+    robot.rightArm.send_gripper_goal_close()
+
+@dec.register_robot_key("N", "Say text for Merkel")
+def merkel_sentence(robot):
+    #merkel_text = """Wir begrüßen Sie herzlich im Holland High Tech Haus! Überzeugen Sie sich dass Holland viel mehr ist als Windmühlen Käse und Tulpen. Holland ist High Tech"""
+    #robot.speech.speak( merkel_text,"de")
+
+    import os
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+    os.chdir("..")
+    os.chdir("sound")
+    os.system("mpg123 ../sound/0speech_google.mp3")
+    os.system("mpg123 ../sound/1speech_google.mp3")
+    os.system("mpg123 ../sound/2speech_google.mp3")
 
 #TODO: Looking at finger is not yet tested!!
 @dec.register_robot_key("q", "right grasp")
