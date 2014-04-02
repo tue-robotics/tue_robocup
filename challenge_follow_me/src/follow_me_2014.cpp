@@ -343,6 +343,7 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
     if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
         ROS_WARN("Could not reach base pose within %f [s]", dt);
+        ac_skill_server_->cancelAllGoals();
         moveHead(0, -0.2, true);
         return false;
     }
