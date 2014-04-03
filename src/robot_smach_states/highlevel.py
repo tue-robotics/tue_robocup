@@ -632,3 +632,48 @@ class Say_and_point_location(smach.StateMachine):
 
             smach.StateMachine.add('SUB_CONT_SAY_POINT',
                                     cc)
+
+
+class LookAtItem(smach.StateMachine):
+    """Enable a perception module(s), wait for a query that uses percepts from that module and look at the closest match to the item_query.
+    The query should use ObjectID to mark the possible object's ID in the query"""
+
+    face_in_front_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+    
+    anything_in_front_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "Anything"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+
+    def __init__(self, robot, perception_modules, item_query, timeout=10):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
+
+        self.robot = robot
+
+        item_to_look_at_predicate = "item_to_look_at"
+        item_to_look_at = Conjunction(   Compound(item_to_look_at_predicate, "ObjectID"), 
+                                         Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        with self:
+            smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
+                                    utility_states.Wait_queried_perception(robot, perception_modules, item_query, timeout=3),
+                                    transitions={   "query_true"    :"SELECT_ITEM_TO_LOOK_AT",
+                                                    "timed_out"     :"Failed",
+                                                    "preempted"     :"Aborted"})
+
+            smach.StateMachine.add( 'SELECT_ITEM_TO_LOOK_AT', 
+                                    reasoning.Select_object(robot, item_query, item_to_look_at_predicate),
+                                    transitions={   'selected'      :'LOOK_AT_POSSIBLE_PERSON',
+                                                    'no_answers'    :'Failed'})
+
+            smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
+                                    perception.LookAtPoint(robot, item_to_look_at),
+                                    transitions={   'looking'       :'RETRACT_ITEM_TO_LOOK_AT',
+                                                    'no_point_found':'Failed',
+                                                    'abort'         :'Aborted'})  
+
+            smach.StateMachine.add( 'RETRACT_ITEM_TO_LOOK_AT', 
+                                    reasoning.Retract_facts(robot, Compound(item_to_look_at_predicate, "Item")),
+                                    transitions={   'retracted'     :'Done'})
