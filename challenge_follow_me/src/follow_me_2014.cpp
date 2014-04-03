@@ -13,6 +13,7 @@
 #include "geometry_msgs/PoseStamped.h"
 #include "visualization_msgs/Marker.h"
 #include "visualization_msgs/MarkerArray.h"
+#include "geometry_msgs/Twist.h"
 
 // Action client related
 #include <actionlib/client/simple_action_client.h>
@@ -68,6 +69,7 @@ ros::Subscriber sub_speech_;
 // Actuation
 actionlib::SimpleActionClient<robot_skill_server::ExecuteAction>* ac_skill_server_;
 actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>* ac_head_ref_;
+ros::Publisher cmd_vel_pub_;
 
 // Visualization
 ros::Publisher rgb_pub_;                                                          // Communicatino: Set color AMIGO
@@ -96,6 +98,30 @@ bool in_elevator_ = false;
 double t_elevator_print_ = 0;
 double t_pause_ = 0;
 
+
+void rotateRobot(double desired_angle)
+{
+    // Fixed velocity
+    geometry_msgs::Twist cmd_vel;
+    cmd_vel.linear.x = 0;
+    cmd_vel.linear.y = 0;
+    cmd_vel.angular.z = 0.5;
+
+    // 12 [s] at 0.5 means approximately 360 [deg]
+    double rotating_time = desired_angle/360.0 * 12.0;
+    ROS_INFO("Rotate robot approximately %f degree (%f seconds)...", desired_angle, rotating_time);
+
+    // Move
+    double t_start_rotating = ros::Time::now().toSec();
+    ros::Rate r(30);
+    while (ros::Time::now().toSec() - t_start_rotating < rotating_time)
+    {
+        cmd_vel_pub_.publish(cmd_vel);
+        r.sleep();
+    }
+    ROS_INFO("Done rotating");
+
+}
 
 
 bool moveHead(double pan, double tilt, bool block = true)
@@ -344,13 +370,13 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
     {
         ROS_WARN("Could not reach base pose within %f [s]", dt);
         ac_skill_server_->cancelAllGoals();
-        moveHead(0, -0.2, true);
+        moveHead(0, 0, true);
         return false;
     }
 
     ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
 
-    moveHead(0, -0.2, true);
+    moveHead(0, 0, true);
 
     return true;
 
@@ -380,6 +406,9 @@ void leaveElevator()
 {
 
     double t_start = ros::Time::now().toSec();
+
+    // First rotate (to avoid move base 3d problem: path found but robot does not move)
+    rotateRobot(180);
 
     // Get position
     tf::StampedTransform location_start;
@@ -441,6 +470,9 @@ void driveAroundCrowd()
 {
 
     double t_start = ros::Time::now().toSec();
+
+    // Do a random rotation (to avoid move base 3d problem: path found but robot does not move)
+    rotateRobot(90);
 
     // Get position
     tf::StampedTransform location_start;
@@ -535,6 +567,7 @@ void speechCallback(std_msgs::String res)
         // MUST LEAVE THE ELEVATOR
         if (answer == "yes")
         {
+            follower_->pause();
             amigoSpeak("I will leave the elevator. Please wait until I call you", false);
 
             //! Leave the elevator
@@ -574,7 +607,7 @@ void speechCallback(std_msgs::String res)
 
 bool resetSpindlePosition()
 {
-    double std_spindle_pos = 0.40;
+    double std_spindle_pos = 0.35;
 
     // Determine goal pose
     ROS_INFO("Reset spindle position!");
@@ -716,10 +749,13 @@ int main(int argc, char **argv) {
     ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
     ac_head_ref_->waitForServer();
     ROS_INFO("Connected!");
-    moveHead(0, -0.2, true);
+    moveHead(0, 0, true);
 
     //! Reset spindle
     resetSpindlePosition();
+
+    //! Allow for rotations
+    cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
 
     //! Laser data
     sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_front_laser", 10, laserCallback);
@@ -763,13 +799,6 @@ int main(int argc, char **argv) {
     t_last_speech_cmd_ = ros::Time::now().toSec();
     ROS_INFO("Started speech recognition");
 
-    // @todo: spindle as high as possible
-    // @todo: see if face segmentation is needed for finding the operator after leaving the elevator (to avoid false positive)
-    // @todo: consider using base_link for tracking:
-    //        alias amiddle-follow-me='amiddle AMIGO_NAV=3d AMIGO_LOC=gmapping wire_frame:=/amigo/base_link wire_viz_frame:=/amigo/base_link'
-    // @todo: see if move around crowd requires a strategy similar to moving out of the elevator
-
-
     //! Start Following
     unsigned int n_move_base_3d_tries = 0;
     bool drive = false;
@@ -801,7 +830,8 @@ int main(int argc, char **argv) {
             ROS_DEBUG("Robot does not move");
             drive = false;
 
-            if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
+            if ( (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D && !in_elevator_) || // Outside the elevator we move to 3d nav faster
+                   ros::Time::now().toSec() - t_start_no_move > 2.2 * T_MAX_NO_MOVE_BEFORE_TRYING_3D )
             {
 
                 // There is a problem with move base 3d: robot can not get to operator

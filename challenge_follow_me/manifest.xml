@@ -16,6 +16,7 @@
   <depend package="std_srvs"/>
   <depend package="amigo_msgs"/>
   <depend package="sensor_msgs"/>
+  <depend package="geometry_msgs"/>
   <depend package="perception_srvs"/>
   <depend package="tue_carrot_planner"/>
   <depend package="tue_pocketsphinx"/>
