@@ -9,6 +9,7 @@ from robot_smach_states.util.startup import startup
 import random
 
 from part1 import TurnAround
+from look_at_person import LookAtPerson
 
 class RandomOutcome(smach.State):
     """Of the state's registered outcomes, just select a random one"""
@@ -41,7 +42,7 @@ class RoboZooSimple(smach.StateMachine):
                                     RandomOutcome(robot, ["1","2","3"]),
                                     transitions={"1":"SAY_HI",
                                                  "2":"MAKE_JOKES",
-                                                 "3":"TURN_AROUND"})
+                                                 "3":"LOOK_AT_PERSON"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
@@ -53,6 +54,10 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "TURN_AROUND",
                                     TurnAround(robot),
+                                    transitions={"Done":"SELECT_RANDOM", "Aborted":"SELECT_RANDOM", "Failed":"SELECT_RANDOM"})
+
+            smach.StateMachine.add( "LOOK_AT_PERSON",
+                                    LookAtPerson(robot),
                                     transitions={"Done":"SELECT_RANDOM", "Aborted":"SELECT_RANDOM", "Failed":"SELECT_RANDOM"})
 
 if __name__ == "__main__":
