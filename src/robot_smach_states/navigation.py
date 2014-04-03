@@ -707,7 +707,6 @@ class Determine_goal(smach.State):
             # if the list is not filled it failed to add a possible location
             if not self.possible_locations:
                 rospy.logerr("No goal could be defined in {state}".format(state=self))
-                self.robot.speech.speak("I don't know where to go. I'm very sorry.")
                 return 'failed'
 
         # abort if there are no poses left to go to
