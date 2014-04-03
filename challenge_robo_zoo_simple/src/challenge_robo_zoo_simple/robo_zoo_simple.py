@@ -12,6 +12,8 @@ from part1 import TurnAround
 from look_at_person import LookAtPerson
 from flash_lights import FlashLights
 
+from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
+
 class RandomOutcome(smach.State):
     """Of the state's registered outcomes, just select a random one"""
 
@@ -39,13 +41,14 @@ class RoboZooSimple(smach.StateMachine):
     IDEAS:
         - Reset everything before SELECT_RANDOM
         - Walk like an egyptian (with arms and music)
-        - Flash lights
+        - DONE: Flash lights
         - wave (smile and wave boys)
         - Look at person and say something funny
         - Act like a monkey (with arms and sound)
     """
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
         with self:
             
             smach.StateMachine.add( "RESET_ALL",
@@ -53,18 +56,20 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"done":"SELECT_RANDOM"})
 
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, ["1","2","3","4"]),
+                                    RandomOutcome(robot, ["1","2","3","4","5"]),
                                     transitions={"1":"SAY_HI",
                                                  "2":"MAKE_JOKES",
                                                  "3":"LOOK_AT_PERSON",
-                                                 "4":"FLASH_LIGHTS"})
+                                                 "4":"FLASH_LIGHTS",
+                                                 "5":"WAVE_LIGHTS"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
                                     transitions={"spoken":"RESET_ALL"})
 
             smach.StateMachine.add( "MAKE_JOKES",
-                                    states.Say(robot, ["Should I tell a joke?", "Want to hear a robot joke?", "Two robots walk into a bar. Hahahahaha, robots can't walk that well"]),
+                                    states.Say(robot, ["Two robots walk into a bar. Hahahahaha, robots can't walk that well",
+                                                       "A computer programmer holds up his newly born baby, the mother asks: 'is it a boy or a girl?' He answers 'yes'."]),
                                     transitions={"spoken":"RESET_ALL"})
 
             smach.StateMachine.add( "TURN_AROUND",
@@ -78,6 +83,14 @@ class RoboZooSimple(smach.StateMachine):
             smach.StateMachine.add( "FLASH_LIGHTS",
                                     FlashLights(robot),
                                     transitions={"Done":"RESET_ALL"})
+            
+            @smach.cb_interface(outcomes=['done'])
+            def wave_lights_wrapped(*args, **kwargs):
+                wave_lights(robot)
+                return 'done'
+            smach.StateMachine.add( "WAVE_LIGHTS",
+                                    smach.CBState(wave_lights_wrapped),
+                                    transitions={"done":"RESET_ALL"})
 
 if __name__ == "__main__":
     rospy.init_node("challenge_robo_zoo")
