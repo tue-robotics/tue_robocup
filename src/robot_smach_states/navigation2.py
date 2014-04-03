@@ -3,6 +3,7 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import geometry_msgs.msg
+import time
 
 from math import cos, sin
 from geometry_msgs.msg import *
@@ -45,6 +46,7 @@ class prepareNavigation(smach.State):
 
     def execute(self, userdata):
         # Set all poses for navigation
+	self.robot.head.set_pan_tilt(0,0.6)
 
         return 'succeeded'
 
@@ -52,6 +54,7 @@ class executePlan(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,outcomes=['arrived','blocked'])
         self.robot = robot 
+	time.sleep(2)
 
     def execute(self, userdate):
 
