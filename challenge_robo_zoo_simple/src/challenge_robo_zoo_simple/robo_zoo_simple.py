@@ -10,6 +10,7 @@ import random
 
 from part1 import TurnAround
 from look_at_person import LookAtPerson
+from flash_lights import FlashLights
 
 class RandomOutcome(smach.State):
     """Of the state's registered outcomes, just select a random one"""
@@ -30,35 +31,53 @@ class RoboZooSimple(smach.StateMachine):
     - Create a file with a new thing to do for the challenge, like waving or making a joke.
         This file must contain one main state(machine).
     - Import the file and the stae(machine) from it.
-    - Add a new state to the machine below. All of its transitions should make it go back to SELECT_RANDOM
+    - Add a new state to the machine below. All of its transitions should make it go back to RESET_ALL
     - Edit the SELECT_RANDOM state to have a new transition to the newly added state.
         The list after 'robot' in its constructor is a list of the possible outcomes and should match with the possible outcomes in its transitions.
-        RandomOutcome takes a random item from this list as an outcome."""
-    
+        RandomOutcome takes a random item from this list as an outcome.
+
+    IDEAS:
+        - Reset everything before SELECT_RANDOM
+        - Walk like an egyptian (with arms and music)
+        - Flash lights
+        - wave (smile and wave boys)
+        - Look at person and say something funny
+        - Act like a monkey (with arms and sound)
+    """
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         with self:
+            
+            smach.StateMachine.add( "RESET_ALL",
+                                    states.ResetArmsSpindleHead(robot),
+                                    transitions={"done":"SELECT_RANDOM"})
+
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, ["1","2","3"]),
+                                    RandomOutcome(robot, ["1","2","3","4"]),
                                     transitions={"1":"SAY_HI",
                                                  "2":"MAKE_JOKES",
-                                                 "3":"LOOK_AT_PERSON"})
+                                                 "3":"LOOK_AT_PERSON",
+                                                 "4":"FLASH_LIGHTS"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
-                                    transitions={"spoken":"SELECT_RANDOM"})
+                                    transitions={"spoken":"RESET_ALL"})
 
             smach.StateMachine.add( "MAKE_JOKES",
                                     states.Say(robot, ["Should I tell a joke?", "Want to hear a robot joke?", "Two robots walk into a bar. Hahahahaha, robots can't walk that well"]),
-                                    transitions={"spoken":"SELECT_RANDOM"})
+                                    transitions={"spoken":"RESET_ALL"})
 
             smach.StateMachine.add( "TURN_AROUND",
                                     TurnAround(robot),
-                                    transitions={"Done":"SELECT_RANDOM", "Aborted":"SELECT_RANDOM", "Failed":"SELECT_RANDOM"})
+                                    transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
 
             smach.StateMachine.add( "LOOK_AT_PERSON",
                                     LookAtPerson(robot),
-                                    transitions={"Done":"SELECT_RANDOM", "Aborted":"SELECT_RANDOM", "Failed":"SELECT_RANDOM"})
+                                    transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
+
+            smach.StateMachine.add( "FLASH_LIGHTS",
+                                    FlashLights(robot),
+                                    transitions={"Done":"RESET_ALL"})
 
 if __name__ == "__main__":
     rospy.init_node("challenge_robo_zoo")
