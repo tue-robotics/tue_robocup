@@ -13,6 +13,7 @@
 
   <depend package="wire_volume"/>
   <depend package="wire_fitter"/>
+  <depend package="wire_volume_viz"/>
   <depend package="robot_smach_states"/>
 
 </package>
