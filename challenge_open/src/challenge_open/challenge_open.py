@@ -14,6 +14,18 @@ import robot_smach_states as states
 
 from speech_interpreter.srv import AskUser
 
+class TurnAround(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        b = self.robot.base
+        #b.force_drive(0.25, 0, 0, 3)
+        b.force_drive(0, 0, 0.5, 6.28) #turn yourself around, 0.5*2PI rads = 1 pi rads = 180 degrees
+        #b.force_drive(-0.25, 0, 0, 3)
+        return "Done"
+
 class AskOpenChallenge(smach.State):
 
     def __init__(self, robot):
@@ -28,7 +40,7 @@ class AskOpenChallenge(smach.State):
         self.robot.head.look_up()
         
         try:
-            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(60))  # This means that within 4 tries and within 60 seconds an answer is received. 
+            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(0))  # This means that within 4 tries and within 60 seconds an answer is received. 
             
             for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "answer":
@@ -77,9 +89,27 @@ class OpenChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_TARGET",
                                 states.NavigateWithConstraints(robot),
-                                transitions={'arrived'          :   'ASK_OPENCHALLENGE',
-                                             'unreachable'      :   'ASK_OPENCHALLENGE',
-                                             'goal_not_defined' :   'ASK_OPENCHALLENGE'})
+                                transitions={'arrived'          :   'SAY_ARRIVED',
+                                             'unreachable'      :   'SAY_UNREACHABLE',
+                                             'goal_not_defined' :   'SAY_UNDEFINED'})              
+
+            smach.StateMachine.add( "SAY_ARRIVED",
+                                    states.Say(robot, ["Hey, i'm at a newly learned object"]),
+                                    transitions={"spoken":"TURN_AROUND"})          
+          
+            smach.StateMachine.add( "SAY_UNREACHABLE",
+                                    states.Say(robot, ["I can't reach the goal you asked me to go to"]),
+                                    transitions={"spoken":"TURN_AROUND"})          
+
+            smach.StateMachine.add( "SAY_UNDEFINED",
+                                    states.Say(robot, ["I can't find the location you asked me to go to."]),
+                                    transitions={"spoken":"TURN_AROUND"})
+
+            smach.StateMachine.add( "TURN_AROUND",
+                                    TurnAround(robot),
+                                    transitions={   "Done"      :"ASK_OPENCHALLENGE", 
+                                                    "Aborted"   :"ASK_OPENCHALLENGE", 
+                                                    "Failed"    :"ASK_OPENCHALLENGE"})
 
 if __name__ == "__main__":
     rospy.init_node('open_challenge_2014')
