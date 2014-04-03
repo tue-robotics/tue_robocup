@@ -14,8 +14,6 @@ import what_did_you_say
 from robot_smach_states import *
 from robot_skills.amigo import Amigo
 
-# ToDo: start at intermediate 
-
 
 class Ask_continue(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
