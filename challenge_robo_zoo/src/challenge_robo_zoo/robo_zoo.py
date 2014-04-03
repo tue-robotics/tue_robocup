@@ -25,7 +25,6 @@ sequence = [
     [-0.1, 1.3, 0, 0.27, 2.3, 0, 0]
 ]
 
-delta_sequence_origin = [-0.01,-0.4, 0, 1.2, 0, 0.8, 0]
 delta_sequence = [
     {q4:0.2, q6:-0.2},
     {q4:0.2, q6:-0.2},
@@ -52,6 +51,8 @@ def reverse_delta_sequence(delta_dict_list):
 
 poor_seq = delta_sequence+ reverse_delta_sequence(delta_sequence)
 
+delta_sequence_origin = [-0.01,-0.4, 0, 1.2, 0, 0.8, 0]
+poor_origin = [-0.009, 1.085, 0.000, 0.420, -0.002, -0.045, -0.000]
 almost_poor = [{'q4': 0.2, 'q6': -0.2},
  {'q4': 0.2, 'q6': -0.2},
  {'q4': 0.2, 'q6': -0.2},
@@ -66,8 +67,9 @@ almost_poor = [{'q4': 0.2, 'q6': -0.2},
  {'q2': 0.2, 'q4': -0.2},
  {'q2': 0.2, 'q4': -0.3, 'q6': 0.1}]
 
-poor_and_retract = [{'q5': 2.2},
- {'q5': -2.2},
+poor_and_retract = [
+ {'q3': 1.00,'q5': 1.0},
+ {'q3':-1.00, 'q5': -1.0},
  {'q2': -0.2, 'q4': 0.3, 'q6': -0.1},
  {'q2': -0.2, 'q4': 0.2},
  {'q2': -0.2, 'q4': 0.2},
@@ -82,7 +84,7 @@ poor_and_retract = [{'q5': 2.2},
  {'q4': -0.2, 'q6': 0.2},
  {'q4': -0.2, 'q6': 0.2}]
 
-#amigo.rightArm.send_delta_joint_trajectory(delta_sequence, origin=delta_sequence_origin);amigo.rightArm.send_delta_joint_trajectory(reverse_delta_sequence(delta_sequence))
+#amigo.rightArm.send_delta_joint_trajectory(almost_poor, origin=delta_sequence_origin);amigo.rightArm.send_delta_joint_trajectory(poor_and_retract)
 
 """ TODOs, BUGs:
 - DONE:reset pose after grasping a can is in collision, move the arm a bit
@@ -238,7 +240,15 @@ class GiveClog(smach.StateMachine):
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
                                     states.Say(robot, [ "Hold up your hand please!"], 
                                                block=True),
-                                    transitions={'spoken': "POOR_AND_RETRACT"})
+                                    transitions={'spoken': "OPEN_GRIPPER_HANDOVER"})
+                                    
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', states.SetGripper(self.robot, self.side, gripperstate=0),
+                        transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                     'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', states.SetGripper(self.robot, self.side, gripperstate=1, timeout=0.0),
+                        transitions={'succeeded'    :   'POOR_AND_RETRACT',
+                                     'failed'       :   'POOR_AND_RETRACT'})
 
             smach.StateMachine.add( "POOR_AND_RETRACT",
                                     states.ArmFollowDeltaTrajectory(self.robot, self.side, poor_and_retract, origin=delta_sequence_origin, timeout=5.0),
@@ -269,7 +279,15 @@ class GiveCan(smach.StateMachine):
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
                                     states.Say(robot, [ "Hold up your hand please!"], 
                                                block=True),
-                                    transitions={'spoken': "POOR_AND_RETRACT"})
+                                    transitions={'spoken': "OPEN_GRIPPER_HANDOVER"})
+                                    
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', states.SetGripper(self.robot, self.side, gripperstate=0),
+                        transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                     'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', states.SetGripper(self.robot, self.side, gripperstate=1, timeout=0.0),
+                        transitions={'succeeded'    :   'POOR_AND_RETRACT',
+                                     'failed'       :   'POOR_AND_RETRACT'})
 
             smach.StateMachine.add( "POOR_AND_RETRACT", #Skip the tilting
                                     states.ArmFollowDeltaTrajectory(self.robot, self.side, poor_and_retract[2:], origin=delta_sequence_origin, timeout=5.0),
@@ -334,7 +352,7 @@ class RoboZoo(smach.StateMachine):
                                     Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                     Compound( "property_expected", "ObjectID", "position", 
                                         Compound("in_front_of", "amigo")),
-				    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         
         query_ordering_table    = Compound("point_of_interest", "ordering_table", Compound("point_3d", "X", "Y", "Z"))
         
