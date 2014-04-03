@@ -364,7 +364,11 @@ class RoboZoo(smach.StateMachine):
                                     # transitions={'done':"GIVE_CLOG",
                                     #              'failed':"GIVE_CLOG"}) #SKIP THE REST FOR TESTING
                                     transitions={'done':"ASSERT_RELATIVE_TO_FLIGHTCASE",
-                                                 'failed':"ASSERT_RELATIVE_TO_FLIGHTCASE"})
+                                                 'failed':"SAY_LOST_FLIGHTCASE"})
+
+            smach.StateMachine.add( "SAY_LOST_FLIGHTCASE",
+                                    states.Say(robot, [ "I can't find my flightcase. Let me see it and I'll try again"], block=False),
+                                    transitions={'spoken': "Failed"})
 
             @smach.cb_interface(outcomes=['asserted'])
             def rel_to_flightcase(*args, **kwargs):
@@ -443,7 +447,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={"done"                 :"LOOK_FOR_DRINK"})
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
-                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink), 
+                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink, modules=["object_recognition", "template_matching"]), 
                                     transitions={   'looking'           :'LOOK_FOR_DRINK',
                                                     'object_found'      :'GRAB_DRINK',
                                                     'no_object_found'   :'HELP_WITH_GETTING_DRINK', #TODO: Not the best option maybe
@@ -515,7 +519,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "AWAIT_PERSON_FOR_CLOG"})
 
             smach.StateMachine.add( 'AWAIT_PERSON_FOR_CLOG',
-                                    states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person),
+                                    states.Wait_queried_perception(robot, ['ppl_detection'], query_detect_person, timeout=30),
                                     transitions={   'query_true'        :'GIVE_CLOG', 
                                                     'timed_out'         :'PLACE_CLOG',
                                                     'preempted'         :'Aborted'})
@@ -571,7 +575,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "LOOK_FOR_EMPTY_CAN"})
 
             smach.StateMachine.add( "LOOK_FOR_EMPTY_CAN",
-                                    states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can),
+                                    states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can, modules=["object_recognition", "template_matching"]),
                                     transitions={   'looking'           :'LOOK_FOR_EMPTY_CAN',
                                                     'object_found'      :'GRAB_EMPTY_CAN',
                                                     'no_object_found'   :'SET_CURRENT_DRINK', #Nothing here, so skip this step
