@@ -36,9 +36,7 @@ from psi import *
 #######################
 
 # - andere microfoon bekijken
-# - speech -> geen actie in stappen. Direct verstaan.
 # - dropoff points in eindhoven definieren.
-# - Navigate Generic
 # - remove timeout of 5 minutes -> DID YOU SAY SOMETHING, IN ANY CASE, I DID NOT HEAR YOU!
 
 ##########################################
@@ -65,14 +63,6 @@ from psi import *
 # Available locations and objects can be found in /challenge_egpsr/input_speech_not_used/tue_test_lab/
 
 # If speech files for tue_test_lab are used ONLY DRINKS AND BATHROOMSTUFF can be questioned at this point!
-
-#################
-### Questions ###
-#################
-# - See questions on top of every action in the statemachine
-# - Is AMIGO easily able to put something down? I haven't seen him doing this. 
-# - In case amigo is unable to say something, then class Say_and_Navigate will get into a deadlock. 
-#   has this ever happened before (that amigo is not able to say something)?
 
 
 class Ask_action(smach.State):
@@ -177,89 +167,6 @@ class Query_specific_action(smach.State):
             return "action_leave"
         else:
             return "error"
-
-# class Navigate_to_queryoutcome_point_location(states.Navigate_abstract):
-#     """Move to the output of a query, which is passed to this state as a Term from the reasoner-module.
-    
-#     The state can take some parameters that specify which keys of the dictionary to use for which data.
-#     By default, the binding-key "X" refers to the x-part of the goal, etc. 
-    
-#     Optionally, also a sorter can be given that sorts the bindings according to some measure.
-#     """
-#     def __init__(self, robot, query, X="X", Y="Y", Z="Z", x_offset=0.7, y_offset=0.0):
-#         states.Navigate_abstract.__init__(self, robot)
-
-#         assert isinstance(query, Term)
-
-#         self.queryTerm = query
-#         self.X, self.Y, self.Z = X, Y, Z
-
-#         self.x_offset = x_offset
-#         self.y_offset = y_offset
-        
-#     def get_goal(self, userdata):
-#         """self.get_goal gets the answer to this query and lets it parse it into a list of binding-dictionaries. """     
-
-#         # Gets result from the reasoner. The result is a list of dictionaries. Each dictionary
-#         # is a mapping of variable to a constant, like a string or number
-#         answers = self.robot.reasoner.query(self.queryTerm)
-
-#         if not answers:
-#             rospy.logerr("No answers found for query {query}".format(query=self.queryTerm))
-#             return None
-#         else:
-#             chosen_answer = answers[0]
-#             #From the summarized answer, 
-#             possible_locations = [( float(answer[self.X]), 
-#                                     float(answer[self.Y]), 
-#                                     float(answer[self.Z])) for answer in answers]
-
-#             x,y,z = possible_locations[0]
-            
-#             goal = possible_locations[0]
-#             rospy.loginfo("goal = {0}".format(goal))
-#             poi_name = chosen_answer["ROI_Location"]
-
-#             rospy.logdebug("Found location for '{0}': {1}".format(self.queryTerm, (x,y,z)))
-            
-#             self.robot.reasoner.query(Compound("assert", Compound("point_roi_tried", poi_name))) 
-
-#             # check if goal is transport, than location should be known for dropoff
-#             return_result = self.robot.reasoner.query(Compound("goal","A","B","C","D","E","F"))
-#             if (str(return_result[0]["A"]) == "transport"):
-
-#                 rospy.loginfo("Action is transport, dropoff location is saved. Dropoff location is {0}".format(poi_name))
-
-#                 self.robot.reasoner.query(Compound("retractall", Compound("dropoff_loc", "X"))) 
-#                 self.robot.reasoner.query(Compound("assert", Compound("dropoff_loc", poi_name))) 
-            
-#             look_pose = geometry_msgs.msg.PoseStamped()
-#             look_pose.pose.position = self.robot.base.point(x,y)
-#             look_pose.pose.orientation = msgs.Quaternion(z=1.0)
-
-#             look_point = geometry_msgs.msg.PointStamped()
-#             look_point.point = self.robot.base.point(x,y)
-
-#             rospy.loginfo("[EGPSR] look_pose = {0}".format(look_pose))
-#             rospy.loginfo("[EGPSR] look point x = {0}".format(x))
-#             rospy.loginfo("[EGPSR] look point y = {0}".format(y))
-#             rospy.loginfo("[EGPSR] self.x_offset = {0}".format(self.x_offset))
-#             rospy.loginfo("[EGPSR] self.y_offset = {0}".format(self.y_offset))
-
-#             base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
-
-#             if base_poses_for_point:
-#                 base_pose_for_point = base_poses_for_point[0]
-#             else:
-#                 rospy.logerr("IK returned empty pose.")
-#                 return look_pose
-
-#             if base_pose_for_point.pose.position.x == 0 and base_pose_for_point.pose.position.y == 0:
-#                 rospy.logerr("IK returned empty pose.")
-#                 return look_pose
-
-#             return base_pose_for_point
-
 
 class Finished_goal(smach.State):
     # Checks how many tasks have been done and if another task is needed
@@ -574,7 +481,17 @@ def setup_statemachine(robot):
 
             smach.StateMachine.add('GO_TO_GETOBJECT',
                                    states.Say(robot,"I will get it right away!", block=False),
-                                   transitions={'spoken':'GET_OBJECT'})
+                                   transitions={'spoken':'GOTO_WAYPOINT_PICKUP'})
+
+            ## THIS STATE ONLY GOES TO A WAYPOINT IF THE PICK UP PLACE IS KNOWN. DRIVE TO WAYPOINT IS SAFER. 
+            query_goto_waypoint_pickup  = Compound("from_loc_waypoint_egpsr", "ROI_Location", Compound("pose_2d", "X", "Y", "Phi"))
+            smach.StateMachine.add( 'GOTO_WAYPOINT_PICKUP',
+                                    states.NavigateGeneric(robot, goal_query=query_goto_waypoint_pickup, goal_area_radius=0.2),
+                                    transitions={   "arrived":"GET_OBJECT",
+                                                    "unreachable":'GET_OBJECT',
+                                                    "preempted":'GET_OBJECT',
+                                                    "goal_not_defined":'GET_OBJECT'})
+
 
             search_query            = Compound("search_query_manipulation","ROI_Location",Compound("point_3d","X","Y","Z"))
             object_identifier_query = "ROI_Location"
@@ -684,7 +601,7 @@ def setup_statemachine(robot):
             # FINDING OBJECT 
             smach.StateMachine.add('GO_TO_GETOBJECT',
                                    states.Say(robot,"I will get it right away!", block=False),
-                                   transitions={'spoken':'GET_OBJECT'})
+                                   transitions={'spoken':'GOTO_WAYPOINT_PICKUP'})
 
             search_query            = Compound("search_query_manipulation","ROI_Location",Compound("point_3d","X","Y","Z"))
             object_identifier_query = "ROI_Location"
@@ -692,8 +609,14 @@ def setup_statemachine(robot):
                                          Compound("object_query","ObjectID", Sequence("X","Y","Z")),
                                          Compound("not", Compound("disposed", "ObjectID")))     
 
-            #object_query            = Compound("object_query","ObjectID", Sequence("X","Y","Z")) 
-
+            ## THIS STATE ONLY GOES TO A WAYPOINT IF THE PICK UP PLACE IS KNOWN. DRIVE TO WAYPOINT IS SAFER. 
+            query_goto_waypoint_pickup  = Compound("from_loc_waypoint_egpsr", "ROI_Location", Compound("pose_2d", "X", "Y", "Phi"))
+            smach.StateMachine.add( 'GOTO_WAYPOINT_PICKUP',
+                                    states.NavigateGeneric(robot, goal_query=query_goto_waypoint_pickup, goal_area_radius=0.2),
+                                    transitions={   "arrived":"GET_OBJECT",
+                                                    "unreachable":'GET_OBJECT',
+                                                    "preempted":'GET_OBJECT',
+                                                    "goal_not_defined":'GET_OBJECT'})
 
             smach.StateMachine.add('GET_OBJECT',
                                     states.GetObject(robot, side=selectedArm, roi_query=search_query, roi_identifier="ROI_Location", object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)), 
@@ -729,11 +652,21 @@ def setup_statemachine(robot):
             # query_point = Conjunction(  Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z")),
             #                            Compound("not",Compound("point_roi_tried","ROI_Location")))
             
-            query_point = Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
+            # query_point = Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
 
             smach.StateMachine.add("SAY_AT_GOAL_NAVIGATE_TO_LOC_TO",
                                    states.Say(robot,"Since I have the object in my hands, I will go to the drop off location.", block=False),
-                                   transitions={'spoken':'DROPOFF_OBJECT'})
+                                   transitions={'spoken':'GOTO_WAYPOINT_DROPOFF'})
+
+            query_goto_waypoint_dropoff  = Compound("to_loc_waypoint_egpsr", "ROI_Location", Compound("pose_2d", "X", "Y", "Phi"))
+
+            smach.StateMachine.add( 'GOTO_WAYPOINT_DROPOFF',
+                                    states.NavigateGeneric(robot, goal_query=query_goto_waypoint_dropoff, goal_area_radius=0.2),
+                                    transitions={   "arrived":"DROPOFF_OBJECT",
+                                                    "unreachable":'DROPOFF_OBJECT',
+                                                    "preempted":'DROPOFF_OBJECT',
+                                                    "goal_not_defined":'DROPOFF_OBJECT'})
+
 
 #             smach.StateMachine.add('AT_GOAL_NAVIGATE_TO_LOC_TO', 
 #                                     Navigate_to_queryoutcome_point_location(robot, query_point, X="X", Y="Y", Z="Z", x_offset=0.5, y_offset=0.2),
@@ -875,7 +808,16 @@ def setup_statemachine(robot):
 
             smach.StateMachine.add('SAY_GO_TO_POINT_LOCATION',
                                     states.Say(robot,"I will try to find the location!", block=False),
-                                    transitions={'spoken':'GO_TO_POINT_LOCATION'})
+                                    transitions={'spoken':'GOTO_WAYPOINT_POINT'})
+
+            query_goto_waypoint_dropoff  = Compound("to_loc_waypoint_egpsr", "ROI_Location", Compound("pose_2d", "X", "Y", "Phi"))
+
+            smach.StateMachine.add( 'GOTO_WAYPOINT_POINT',
+                                    states.NavigateGeneric(robot, goal_query=query_goto_waypoint_dropoff, goal_area_radius=0.2),
+                                    transitions={   "arrived":"GO_TO_POINT_LOCATION",
+                                                    "unreachable":'GO_TO_POINT_LOCATION',
+                                                    "preempted":'GO_TO_POINT_LOCATION',
+                                                    "goal_not_defined":'GO_TO_POINT_LOCATION'})
 
 
             query_point =   Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
@@ -1023,7 +965,17 @@ def setup_statemachine(robot):
 
             smach.StateMachine.add('GO_TO_LOCATION',
                                    states.Say(robot,"I will try to go the desired location!", block=False),
-                                   transitions={'spoken':'DRIVE_TO_LOCATION'})
+                                   transitions={'spoken':'GOTO_WAYPOINT_NAVIGATE'})
+
+
+            query_goto_waypoint_dropoff  = Compound("to_loc_waypoint_egpsr", "ROI_Location", Compound("pose_2d", "X", "Y", "Phi"))
+
+            smach.StateMachine.add( 'GOTO_WAYPOINT_NAVIGATE',
+                                    states.NavigateGeneric(robot, goal_query=query_goto_waypoint_dropoff, goal_area_radius=0.2),
+                                    transitions={   "arrived":"SAY_BACK_TO_MEETING_POINT",
+                                                    "unreachable":'DRIVE_TO_LOCATION',
+                                                    "preempted":'DRIVE_TO_LOCATION',
+                                                    "goal_not_defined":'DRIVE_TO_LOCATION'})
 
             query_point = Compound("point_location","ROI_Location", Compound("point_3d", "X", "Y", "Z"))
 
