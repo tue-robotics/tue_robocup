@@ -443,11 +443,11 @@ class RoboZoo(smach.StateMachine):
                                                     "goal_not_defined"  :"Failed"})
             
             smach.StateMachine.add( "SPINDLE_LOW_1",
-                                    states.SetSpindle(robot, height=0.1),
+                                    states.SetSpindle(robot, height=0.1, timeout=4.0),
                                     transitions={"done"                 :"LOOK_FOR_DRINK"})
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
-                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink, modules=["object_recognition", "template_matching"]), 
+                                    states.LookForObjectsAtROI(robot, query_storage_table, query_ordered_drink, modules=["object_recognition"]), 
                                     transitions={   'looking'           :'LOOK_FOR_DRINK',
                                                     'object_found'      :'GRAB_DRINK',
                                                     'no_object_found'   :'HELP_WITH_GETTING_DRINK', #TODO: Not the best option maybe
@@ -575,7 +575,7 @@ class RoboZoo(smach.StateMachine):
                                     transitions={'spoken': "LOOK_FOR_EMPTY_CAN"})
 
             smach.StateMachine.add( "LOOK_FOR_EMPTY_CAN",
-                                    states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can, modules=["object_recognition", "template_matching"]),
+                                    states.LookForObjectsAtROI(robot, query_pickup_table, query_any_can, modules=["object_recognition"]),
                                     transitions={   'looking'           :'LOOK_FOR_EMPTY_CAN',
                                                     'object_found'      :'GRAB_EMPTY_CAN',
                                                     'no_object_found'   :'SET_CURRENT_DRINK', #Nothing here, so skip this step
