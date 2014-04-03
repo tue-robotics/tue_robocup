@@ -74,7 +74,7 @@ class executePlan(smach.State):
 
             if count > 5:
                 self.robot.base2.localPlannerCancelCurrentPlan()
-                return "unreachable"
+                return "blocked"
             
             # Send the plan to the local_planner
             self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
