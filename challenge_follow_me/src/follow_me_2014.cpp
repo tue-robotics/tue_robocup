@@ -408,7 +408,7 @@ void leaveElevator()
     double t_start = ros::Time::now().toSec();
 
     // First rotate (to avoid move base 3d problem: path found but robot does not move)
-    rotateRobot(180);
+		rotateRobot(180);
 
     // Get position
     tf::StampedTransform location_start;
@@ -417,6 +417,8 @@ void leaveElevator()
         // Look up transform
         listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_start);
         ROS_INFO("Current position is (%f,%f)", location_start.getOrigin().getX(), location_start.getOrigin().getY());
+        
+        
 
         // If the robot did barely move: try another set point
         double dx = 0, dy = 0;
@@ -430,7 +432,7 @@ void leaveElevator()
 
             // Try to move to this position
             //moveToRelativePosition(-3.5, fctr*y, 3.14, 35.0);
-            moveToRelativePosition(-2.5, fctr*y, 0.0, 30.0);
+            moveToRelativePosition(2.5, fctr*y, 3.14, 30.0);
 
             // Get current robot position
             try
@@ -472,7 +474,7 @@ void driveAroundCrowd()
     double t_start = ros::Time::now().toSec();
 
     // Do a random rotation (to avoid move base 3d problem: path found but robot does not move)
-    rotateRobot(90);
+	rotateRobot(90);
 
     // Get position
     tf::StampedTransform location_start;
@@ -481,6 +483,8 @@ void driveAroundCrowd()
         // Look up transform
         listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_start);
         ROS_INFO("Current position is (%f,%f)", location_start.getOrigin().getX(), location_start.getOrigin().getY());
+        
+        
 
         // If the robot did barely move: try another set point
         double dx = 0, dy = 0;
@@ -493,7 +497,7 @@ void driveAroundCrowd()
             else ROS_WARN("Trying to move around the crowd: attempt %d", count);
 
             // Try to move to this position
-            moveToRelativePosition(2.5, fctr*y, 0.0, 45.0);
+            moveToRelativePosition(2.5, fctr*y, -1.57, 45.0);
 
             // Get current robot position
             try
