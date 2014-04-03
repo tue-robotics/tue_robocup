@@ -16,10 +16,7 @@ amigo3:
         Digital -> 29
         Mic on mute!!! (Should be muted already)
 
-    amigo-console        
-        amigo.ears.ask_user("continue")    
-
-    say test        (to test if speaker works)
+    To test audio I/O and speech interpreter, run test_audio in an amigo-console
 
     --------------------
     OPTIONAL:
