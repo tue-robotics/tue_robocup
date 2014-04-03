@@ -21,7 +21,7 @@ from pein_srvs.srv import SetObjects
 from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'office','bedroom' or 'kitchen'}
-room = 'office'
+room = 'kitchen'
 
 ''' TO DO:
 - Make a list of likely and unlikely positions for the emergency to occur
@@ -53,8 +53,6 @@ class UnknownOctomapBlobDetector(smach.State):
         self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
 
     def execute(self, userdata=None):
-
-        respnse = self.set_objects(['pills','water'])
         self.robot.spindle.reset()
         self.robot.head.reset_position()
 
@@ -114,12 +112,11 @@ class UnknownOctomapBlobDetector(smach.State):
                     self.response = self.unknown_blob_detection(5, -1.4, 0, 8.8, 3.7, 2)
                     self.counter = self.counter + 1
                 else:
-                    self.response = self.unknown_blob_detection(5.0, 4, 0, 8.8, 8.5, 2)
+                    self.response = self.unknown_blob_detection(5.0, 3.8, 0, 8.8, 8.5, 2)
 
             print self.response
             if len(self.response.positions) == 0:
                 return 'looking'
-
 
             possible_locations = [( float(answer.x), 
                                     float(answer.y), 
@@ -357,6 +354,7 @@ class LookForObject(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["looking" , "found", "not_found"])
         self.robot = robot
+        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
 
 
     def execute(self, userdata=None):
@@ -368,8 +366,17 @@ class LookForObject(smach.State):
             return "not_found"
         serving_drink = str(return_result[0]["Drink"])  
 
+        print serving_drink
 
-        goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("storage_room", "W")),
+        if serving_drink == 'pills':
+            respnse = self.set_objects(['pills'])
+            storage_room = 'desk'
+        else:
+            respnse = self.set_objects(['water'])
+            storage_room = 'kitchen_table'
+
+
+        goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound(storage_room, "W")),
                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
                                                  Compound("not", Compound("visited", "Waypoint"))))
 
@@ -411,7 +418,7 @@ class LookForObject(smach.State):
                                           Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
 
-        self.response_start = self.robot.perception.toggle(["object_segmentation"])
+        self.response_start = self.robot.perception.toggle(["object_segmentation"]) #object_segmentation
  
         if self.response_start.error_code == 0:
             rospy.loginfo("Object recogition has started correctly")
@@ -482,8 +489,8 @@ class AskObject(smach.State):
                 response_answer = self.response.values[x]
 
         if response_answer == "no_answer" or  response_answer == "wrong_answer":
-            self.robot.speech.speak("I'll bring you a water",block=False)
-            response_answer = "water"
+            self.robot.speech.speak("I'll bring you pills",block=False)
+            response_answer = "pills"
 
         self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", response_answer))))
         return "done"
@@ -572,11 +579,13 @@ class Register(smach.State):
         rospy.logdebug("Closed file")
         pathname = "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/tue_robocup/challenge_emergency/output/person.png"
         rospy.logdebug("pathname = {0}".format(pathname))
-
-        if self.get_picture(pathname):
-            rospy.loginfo("Picture taken!!")
-        else:
-            rospy.loginfo("No picture taken")       
+        try:
+            if self.get_picture(pathname):
+                rospy.loginfo("Picture taken!!")
+            else:
+                rospy.loginfo("No picture taken") 
+        except Exception, e:
+            print e      
         return 'finished'
 
 
@@ -789,12 +798,16 @@ def setup_statemachine(robot):
         smach.StateMachine.add( "FIND_PERSON_BACKUP",
                                 UnknownOctomapBlobDetector(robot),
                                 transitions={   'success':'NAVIGATE_TO_PERSON',
-                                                'failed':'FIND_PERSON',
+                                                'failed':'RETRACT_VISITED',
                                                 'looking':'FIND_PERSON_BACKUP'})
+
+        smach.StateMachine.add( "RETRACT_VISITED",
+                                states.Retract_facts(robot, [Compound("visited", "X")]),
+                                transitions={"retracted":"FIND_PERSON"})
         
         smach.StateMachine.add( "NAVIGATE_TO_PERSON",
                                 #states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(1.0,0)),
-                                states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(0.8,0)),
                                 transitions={   "arrived":"LOOK_AT_PERSON",
                                                 "unreachable":'SAY_PERSON_UNREACHABLE',
                                                 "preempted":'SAY_PERSON_UNREACHABLE',
