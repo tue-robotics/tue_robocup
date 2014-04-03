@@ -33,7 +33,7 @@ class AskOpenChallenge(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.locations = ["bar","kitchenblock","table"]
+        self.locations = ["bar","kitchen_block","table"]
 
     def execute(self, userdata=None):
 

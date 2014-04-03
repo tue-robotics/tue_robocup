@@ -10,7 +10,7 @@
 
     <!-- (This includes loading the transport plugin and tf plugin) -->
     <include file="$(find wire_volume)/launch/start.launch">
-        <arg name="gdb" value="true" />
+<!--        <arg name="gdb" value="true" /> -->
     </include>
 
     <!-- Insert heightmap into the world model -->
