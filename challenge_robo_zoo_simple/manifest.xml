@@ -1,0 +1,19 @@
+<package>
+  <description brief="challenge_robo_zoo_simple">
+
+     challenge_robo_zoo_simple
+
+  </description>
+  <author>amigo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_robo_zoo_simple</url>
+  <depend package="rospy"/>
+  <depend package="robot_skills"/>
+  <depend package="robot_smach_states"/>
+  <depend package="psi"/>
+  <depend package="smach"/>
+
+</package>
+
+
