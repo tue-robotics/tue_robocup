@@ -40,7 +40,7 @@ class AskOpenChallenge(smach.State):
         self.robot.head.look_up()
         
         try:
-            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(0))  # This means that within 4 tries and within 60 seconds an answer is received. 
+            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
             
             for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "answer":
@@ -78,6 +78,12 @@ class OpenChallenge2014(smach.StateMachine):
 
         with self:
 
+            smach.StateMachine.add( "TURN_AROUND",
+                                    TurnAround(robot),
+                                    transitions={   "Done"      :"ASK_OPENCHALLENGE", 
+                                                    "Aborted"   :"ASK_OPENCHALLENGE", 
+                                                    "Failed"    :"ASK_OPENCHALLENGE"})
+
             smach.StateMachine.add("ASK_OPENCHALLENGE",
                                 AskOpenChallenge(robot),
                                 transitions={'location_selected':   'INITIALIZE',
@@ -105,11 +111,6 @@ class OpenChallenge2014(smach.StateMachine):
                                     states.Say(robot, ["I can't find the location you asked me to go to."]),
                                     transitions={"spoken":"TURN_AROUND"})
 
-            smach.StateMachine.add( "TURN_AROUND",
-                                    TurnAround(robot),
-                                    transitions={   "Done"      :"ASK_OPENCHALLENGE", 
-                                                    "Aborted"   :"ASK_OPENCHALLENGE", 
-                                                    "Failed"    :"ASK_OPENCHALLENGE"})
 
 if __name__ == "__main__":
     rospy.init_node('open_challenge_2014')
