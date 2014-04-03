@@ -467,9 +467,9 @@ class LookForPerson(smach.State):
             return_drink_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
             if return_drink_result:
                 serving_drink = str(return_drink_result[0]["Drink"])
-                self.robot.speech.speak(str(serving_person) +", I have been looking everywhere. To hand over your " + str(serving_drink),block=False)
+                self.robot.speech.speak(str(serving_person) +", I could not find you to hand over your " + str(serving_drink),block=False)
             else:
-                self.robot.speech.speak(str(serving_person) +", I have been looking everywhere. But could not find you.",block=False)
+                self.robot.speech.speak(str(serving_person) +", I could not find you.",block=False)
             return "not_found"
 
         # for now, take the first goal found
@@ -498,14 +498,14 @@ class LookForPerson(smach.State):
         self.robot.speech.speak("Let me see who I can find here") # Blocking to avoid false positives by moving head
         
         # turn on face segmentation
-        self.response_start = self.robot.perception.toggle(["face_segmentation"])
+        self.response_start = self.robot.perception.toggle(["ppl_detection_cocktail"])
         if self.response_start.error_code == 0:
             rospy.loginfo("Face segmentation has started correctly")
         elif self.response_start.error_code == 1:
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(2)
+        rospy.sleep(1.5)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -568,12 +568,20 @@ class PersonFound(smach.State):
 
     def execute(self, userdata=None):
 
-        # prepare query to get faces detected in front of amigo
+
+
         person_query = Conjunction(  
-                        Compound( "property_expected", "ObjectID", "class_label", "face"),
-                        Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                        Compound( "property_expected", "ObjectID", "position", Compound("point_3d", "X", "Y", "Z")),
-                        Compound( "not", Compound("registered", "ObjectID")))
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
+                                    Compound( "not", Compound("registered", "ObjectID")))
+
+        # prepare query to get faces detected in front of amigo
+        #person_query = Conjunction(  
+        #                Compound( "property_expected", "ObjectID", "class_label", "face"),
+        #                Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+        #                Compound( "property_expected", "ObjectID", "position", Compound("point_3d", "X", "Y", "Z")),
+        #                Compound( "not", Compound("registered", "ObjectID")))
 
         # get results from the query
         person_detection_result = self.robot.reasoner.query(person_query)
@@ -691,7 +699,7 @@ class PersonFound(smach.State):
 
         # if there were no people found...
         else:
-            self.robot.speech.speak("I thought there was someone here, but I'm mistaken.",block=False)
+            self.robot.speech.speak("I did not find a person yet",block=False)
             if len(person_detection_result) > 1:
                 return 'persons_unchecked'
             rospy.loginfo("No person names received from world model") 
@@ -779,8 +787,8 @@ class HandoverToKnownHuman(smach.StateMachine):
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
-                                    Handover_pose(arm, robot),
-                                    transitions={   'succeeded':'PLEASE_TAKE',
+                                    ArmToPose(robot, arm, (-0.2, -0.7, 0.2, 2.0, 0, 0.5, 0.3), timeout=1.0), 
+                                    transitions={   'done':'PLEASE_TAKE',
                                                     'failed':'PLEASE_TAKE'})
             
             smach.StateMachine.add( 'PLEASE_TAKE',
@@ -838,8 +846,8 @@ class HandoverToUnknownHuman(smach.StateMachine):
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
-                                    Handover_pose(arm, robot),
-                                    transitions={   'succeeded':'PLEASE_TAKE',
+                                    ArmToPose(robot, arm, (-0.2, -0.7, 0.2, 2.0, 0, 0.5, 0.3), timeout=1.0), 
+                                    transitions={   'done':'PLEASE_TAKE',
                                                     'failed':'PLEASE_TAKE'})
             
             smach.StateMachine.add( 'PLEASE_TAKE',
@@ -959,7 +967,7 @@ class CocktailParty(smach.StateMachine):
                     
                     smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
                                             Say(robot, ["I could not find the drink you wanted.", 
-                                                        "I looked really hard, but I couldn't find your drink."]),
+                                                        "I looked really hard, but I couldn't find your drink."],block=False),
                                             transitions={   'spoken':'GOTO_INITIAL_FAIL' }) 
 
                     smach.StateMachine.add( 'PICKUP_DRINK',
@@ -996,7 +1004,7 @@ class CocktailParty(smach.StateMachine):
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you.", 
                                                         "I can't find you. I really don't like fluids.",
-                                                        "I could not find you."]),
+                                                        "I could not find you."],block=False),
                                             transitions={   'spoken':'HANDOVER_DRINK_UNKNOWN_PERSON' }) #GOTO_INITIAL_FAIL
 
                     smach.StateMachine.add( 'HANDOVER_DRINK_UNKNOWN_PERSON',
