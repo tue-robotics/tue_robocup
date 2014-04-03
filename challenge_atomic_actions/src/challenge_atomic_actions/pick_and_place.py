@@ -10,6 +10,8 @@ from robot_smach_states import *
 from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 from robot_smach_states.util.startup import startup
 
+from pein_srvs.srv import SetObjects
+
 class PickAndPlace(smach.StateMachine):
 
     def __init__(self, robot, poi_lookat="pick_poi", grasp_arm="left"):
@@ -17,6 +19,9 @@ class PickAndPlace(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
 
+        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
+        
+        response = self.set_objects(['noodle_sauce','cat_food', 'dumplings', 'tacos', 'chocolates', 'chewing_gums', 'peanuts'])
         if grasp_arm == "left":
             arm = robot.leftArm
         elif grasp_arm == "right":
