@@ -14,6 +14,8 @@ from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
 from geometry_msgs.msg import PoseStamped, Pose
 
+import robot_smach_states.util.transformations as transformations
+
 from pein_srvs.srv import SetObjects
 
 grasp_arm = "left"
@@ -98,7 +100,8 @@ class DetectWavingPeople(smach.State):
 
         # compose person query
         qPeopleFound = Conjunction( Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+                                    Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound("not", Compound("ordered", "ObjectID")))
 
         # get results from the query
         peopleFoundRed = self.robot.reasoner.query(qPeopleFound)
@@ -122,6 +125,10 @@ class WaitForPerson(smach.State):
     def execute(self, userdata=None):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: WaitForPerson\n")
+
+        # reset visited locations and people who already ordered
+        self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
+        self.robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
 
         # Use reasoner to iterate over no of waited times (if face seg won't work we will continue to asking names/serving drinks!)
         return_result = self.robot.reasoner.query(Compound("waited_times_no", "X"))
@@ -263,7 +270,7 @@ class LearnPersonName(smach.State):
 
 #########################################################################################
 
-class Ask_drink(smach.State):
+class AskDrink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
                                 outcomes=["done", "failed"],
@@ -275,7 +282,7 @@ class Ask_drink(smach.State):
         self.drink_learn_failed = 0
 
     def execute(self, userdata=None):
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: Ask_drink\n")
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: AskDrink\n")
 
         # ask the name of the drink
         self.response = self.ask_user_service_get_drink("drink_cocktail", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
@@ -303,17 +310,20 @@ class Ask_drink(smach.State):
                 self.robot.speech.speak("I will just bring you a coke")
                 response_answer = "coke"
 
+        # get Amigo's current location and rotation
+        amigoPose = self.robot.base.location
+        pos, rot = amigoPose.pose.position, amigoPose.pose.orientation
+        rotation = transformations.euler_z_from_quaternion(rot)
+
+        # currentLoc[0] = amigoPose.pose.position.X
+        # currentLoc[1] = amigoPose.pose.position.Y
+        # currentLoc[2] = rotation
+        
         # save the requested drink
-        # assert(goal(serve(Person, Drink)))
-        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", userdata.personName_in, response_answer))))
+        # assert( goal( serve( Person, Drink, Last Known Location)))
+        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", userdata.personName_in, response_answer,  Compound("1","1","1")))))
 
-        # update the number of served people (this will no be satying here, its just for now)
-        answer = self.robot.reasoner.query(Compound("n_people_served", "X"))
-        nServed = float(answer[0]["X"])
-        nServed += 1
-        self.robot.reasoner.query(Compound("retractall", Compound("n_people_served", "X")))
-        self.robot.reasoner.query(Compound("assertz",Compound("n_people_served", nServed)))
-
+        # rospy.loginfo("I'm getting a {0} for {1}", format(response_answer), format(userdata.personName_in))
         return "done"
 
 
@@ -336,7 +346,7 @@ class LearnPersonFaceCustom(smach.State):
         # learn the face of the person
         learn_machine = Learn_Person(self.robot, userdata.personName_in)
         learn_result = learn_machine.execute()
-        self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # Make sure we're not left with a goal from last time
+        # self.robot.reasoner.query(Compound("retractall", Compound("goal", "X")))  # Make sure we're not left with a goal from last time
 
         ## TO CHECK IF OUTCOME IS face_learned or learn_failed and ACT adequatly!
         if learn_result == 'face_learned':
@@ -409,7 +419,8 @@ class NavToPerson(smach.State):
         # compose person query
         qPeopleWaving = Conjunction(Compound("property_expected", "ObjectID", "class_label", "validated_person"),
                                     Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Phi")),
-                                    Compound("not", Compound("visited", "ObjectID")))
+                                    Compound("not", Compound("visited", "ObjectID")),
+                                    Compound("not", Compound("ordered", "ObjectID")))
 
         # get results from the query
         goal_answers = self.robot.reasoner.query(qPeopleWaving)
@@ -435,6 +446,7 @@ class NavToPerson(smach.State):
 
         # assert that this location has been visited
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+        self.robot.reasoner.query(Compound("assert", Compound("ordered", waypoint_name)))
 
         # If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
         if nav_result == "unreachable":                    
@@ -480,6 +492,43 @@ class ServedStatus(smach.State):
 
 #########################################################################################
 
+
+class PendingOrders(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(   self, 
+                                outcomes=["enough_orders", "insuficient_orders"])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):
+
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: ServedStatus\n")
+
+        # retract all visited locations and people
+        # import ipdb; ipdb.set_trace()
+        self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
+
+        # SHOULD BE RECTRACTING WAVING PERSONS!!!!!!!!
+
+        # query the number of current orders
+        answer = self.robot.reasoner.query(Compound("goal", "X"))
+        nOrders = len(answer)
+        
+        rospy.loginfo("I have {0} pending orders". format(nOrders))
+
+        # if there are enough requests start serving
+        if nOrders < 2:
+            self.robot.speech.speak("I need more requests before getting the drinks")
+            return "insuficient_orders"
+        else:
+            # retract the people already served, maybe they want something again
+            self.robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
+            self.robot.speech.speak("I will now get your drinks")
+            return "enough_orders"  
+
+
+#########################################################################################
+
 class LookForDrink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -490,6 +539,15 @@ class LookForDrink(smach.State):
     def execute(self, userdata = None):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LookForDrink\n")
+
+        ############################################################
+        # update the number of served people (this will no be satying here, its just for now)
+        answer = self.robot.reasoner.query(Compound("n_people_served", "X"))
+        nServed = float(answer[0]["X"])
+        nServed += 1
+        self.robot.reasoner.query(Compound("retractall", Compound("n_people_served", "X")))
+        self.robot.reasoner.query(Compound("assertz",Compound("n_people_served", nServed)))
+        ############################################################
 
         # query requested drink
         return_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Person", "Drink")))
@@ -766,7 +824,7 @@ class PersonFound(smach.State):
         # elif nav_result == "arrived":
         #     self.robot.speech.speak("I reached the person location", block=False)
         #     return "?"
-        # else: #goal not defined
+        # else: #goal not defkined
         #     self.robot.speech.speak("The location of the person is invalid", block=False)
         #     return "?"
 
@@ -983,6 +1041,9 @@ class CocktailParty(smach.StateMachine):
         # Create a SMACH state machine
         sm = smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
 
+        robot.reasoner.assertz(Compound("ordered", "dummy"))
+        robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
+
         # Queries:
         qPartyRoomWaypts = Compound('waypoint', 'party_room', Compound('pose_2d', 'X', 'Y', 'Phi'))
 
@@ -990,7 +1051,7 @@ class CocktailParty(smach.StateMachine):
 
         qLookoutWaypts = Compound('waypoint', Compound('party_room_lookout', 'R'), Compound('pose_2d', 'X', 'Y', 'Phi'))
 
-        qStorageRoomWaypts = Compound('waypoint', 'storage_room', Compound('pose_2d', 'X', 'Y', 'Phi'))
+        qStorageRoomWaypts = Compound('waypoint', Compound('storage_room', 'S'), Compound('pose_2d', 'X', 'Y', 'Phi'))
 
         qGrabDrinksWaypts = Conjunction(Compound('goal', Compound('serve', 'Drink')),
                                         Compound( 'property_expected', 'ObjectID', 'class_label', 'Drink'),
@@ -1027,10 +1088,10 @@ class CocktailParty(smach.StateMachine):
             #Go to the party room
             smach.StateMachine.add('GOTO_PARTY_ROOM',
                                     NavigateGeneric(robot, goal_query = qPartyRoomWaypts),
-                                    transitions={   'arrived':'LOOKOUT_ITERATOR', 
-                                                    'unreachable':'LOOKOUT_ITERATOR', 
-                                                    'preempted':'LOOKOUT_ITERATOR', 
-                                                    'goal_not_defined':'LOOKOUT_ITERATOR'})
+                                    transitions={   'arrived':'LOOKOUT_CONTAINER', 
+                                                    'unreachable':'LOOKOUT_CONTAINER', 
+                                                    'preempted':'LOOKOUT_CONTAINER', 
+                                                    'goal_not_defined':'LOOKOUT_CONTAINER'})
 
 
 #----------------------------------------FIND PEOPLE TO SERVE-------------------------------------------------------
@@ -1039,43 +1100,44 @@ class CocktailParty(smach.StateMachine):
             # amigo.reasoner.query(Compound("retractall", Compound("visited", "X")))
 
             # Iterate through Lookout Waypoints twice before giving up
-            lookoutIterator = smach.Iterator( outcomes=['succeeded','preempted','aborted'], 
-                                        it = lambda: range(0, 2),
-                                        it_label='lookoutIndex',
-                                        input_keys=[],
-                                        output_keys=[],
-                                        exhausted_outcome='succeeded')
-            with lookoutIterator:
+            # lookoutIterator = smach.Iterator( outcomes=['succeeded','preempted','aborted'], 
+            #                             it = lambda: range(0, 2),
+            #                             it_label='lookoutIndex',
+            #                             input_keys=[],
+            #                             output_keys=[],
+            #                             exhausted_outcome='succeeded')
+            # with lookoutIterator:
                 
-                # Create container for the iterator
-                lookoutContainer = smach.StateMachine(  outcomes = ['succeeded', 'preempted', 'aborted', 'continue'],
-                                                        input_keys = ['lookoutIndex'])
-                with lookoutContainer:
+            # Create container for the iterator
+            lookoutContainer = smach.StateMachine(  outcomes = ['looked_all', 'got_request'])
 
-                    smach.StateMachine.add( 'NAV_TO_LOOKOUT',
-                                            NavToLookout(robot),
-                                            transitions={   'unreachable':'NAV_TO_LOOKOUT',
-                                                            'arrived':'DETECT_WAVING_PEOPLE',
-                                                            'visited_all':'aborted'})
+            with lookoutContainer:
 
-                    # Go to predefined lookout positions in the room and look arround to detect waving people
-                    smach.StateMachine.add( 'DETECT_WAVING_PEOPLE',
-                                            DetectWavingPeople(robot),
-                                            transitions={   'detected':'preempted',
-                                                            'not_detected':'continue',
-                                                            'error':'DETECT_WAVING_PEOPLE'})
+                smach.StateMachine.add( 'NAV_TO_LOOKOUT',
+                                        NavToLookout(robot),
+                                        transitions={   'unreachable':'NAV_TO_LOOKOUT',
+                                                        'arrived':'DETECT_WAVING_PEOPLE',
+                                                        'visited_all':'looked_all'})
 
-                #add container to the iterator lookoutIterator
-                smach.Iterator.set_contained_state( 'LOOKOUT_CONTAINER', 
-                                                    lookoutContainer, 
-                                                    loop_outcomes=['continue'])
+                # Go to predefined lookout positions in the room and look arround to detect waving people
+                smach.StateMachine.add( 'DETECT_WAVING_PEOPLE',
+                                        DetectWavingPeople(robot),
+                                        transitions={   'detected':'got_request',
+                                                        'not_detected':'NAV_TO_LOOKOUT',
+                                                        'error':'DETECT_WAVING_PEOPLE'})
 
-            #add the lookoutIterator to the state machine
-            smach.StateMachine.add( 'LOOKOUT_ITERATOR',
-                                    lookoutIterator,
-                                    {   'succeeded':'GOTO_WAITING_PLACE',
-                                        'preempted':'ORDERS_CONTAINER',
-                                        'aborted':'GOTO_WAITING_PLACE'})
+            #add container to the iterator lookoutIterator
+            smach.StateMachine.add( 'LOOKOUT_CONTAINER', 
+                                    lookoutContainer, 
+                                    transitions={   'looked_all':'WAIT_FOR_PERSON',
+                                                    'got_request':'ORDERS_CONTAINER'})
+
+            #add the lookoutIterator to the main state machine
+            # smach.StateMachine.add( 'LOOKOUT_ITERATOR',
+            #                         lookoutIterator,
+            #                         {   'succeeded':'GOTO_WAITING_PLACE',
+            #                             'preempted':'ORDERS_CONTAINER',
+            #                             'aborted':'GOTO_WAITING_PLACE'})
 
 
             # Go to waiting location if no one was detected previously (backup plan)
@@ -1122,7 +1184,7 @@ class CocktailParty(smach.StateMachine):
 
                 # Take the persons order
                 smach.StateMachine.add( 'TAKE_ORDER',
-                                        Ask_drink(robot),
+                                        AskDrink(robot),
                                         remapping={     'personName_in':'personName'},
                                         transitions={   'done':'NAV_TO_PERSON',
                                                         'failed':'TAKE_ORDER'})
@@ -1131,51 +1193,64 @@ class CocktailParty(smach.StateMachine):
                                         Say(robot, "I have taken all the orders from this group.", block=False),
                                         transitions={   'spoken':'succeeded'})
 
-            # close the lookoutIterator
+            # add orders container to the main state machine
             smach.StateMachine.add( 'ORDERS_CONTAINER',
                                     ordersContainer,
-                                    transitions={   'succeeded':'SERVED_STATUS',
+                                    transitions={   'succeeded':'PENDING_ORDERS',
                                                     'aborted':'SAY_FAILED'})
 
+            smach.StateMachine.add( 'PENDING_ORDERS',
+                                    PendingOrders(robot),
+                                    transitions={   'enough_orders':'FIND_DRINKS_CONTAINER',
+                                                    'insuficient_orders':'LOOKOUT_CONTAINER'})
 
 #--------------------------------------------FIND THE REQUESTED DRINKS---------------------------------------------
 
-            # TODO: If the list of request drinks is empty or there is no arm available to carry more, start serving
+            # create find drinks container
+            findDrinksContainer = smach.StateMachine(  outcomes = ['succeeded','aborted'])
 
-            # Go to storage room waypoint and look for the drinks
-            smach.StateMachine.add( 'LOOK_FOR_DRINK',
-                                    LookForDrink(robot),
-                                    transitions={   'looking':'LOOK_FOR_DRINK',
-                                                    'found':'PICKUP_DRINK',
-                                                    'not_found':'SAY_DRINK_NOT_FOUND'})
-            
-            # Say drink not found
-            smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
-                                    Say(robot, ["I could not find any of the drinks requested.", 
-                                                "I looked really hard, but I couldn't find the drinks i was looking for."]),
-                                    transitions={   'spoken':'SAY_FINISHED_SERVING' }) 
+            with findDrinksContainer:
 
-            # Determine which arm is available if any
-            # smach.StateMachine.add( 'SET_AVAILABLE_ARM',
-            #                         LookForDrink(robot),            # query console for available arm!
-            #                         transitions={   'sucess':'STATE',
-            #                                         'error':'SAY_DRINK_NOT_GRASPED'})
+                # Go to storage room waypoint and look for the drinks
+                smach.StateMachine.add( 'LOOK_FOR_DRINK',
+                                        LookForDrink(robot),
+                                        transitions={   'looking':'LOOK_FOR_DRINK',
+                                                        'found':'PICKUP_DRINK',
+                                                        'not_found':'SAY_DRINK_NOT_FOUND'})
+                
+                # Say drink not found
+                smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
+                                        Say(robot, ["I could not find any of the drinks requested.", 
+                                                    "I looked really hard, but I couldn't find the drinks i was looking for."]),
+                                        transitions={   'spoken':'aborted' }) 
 
-            # Pickup the drink
-            smach.StateMachine.add( 'PICKUP_DRINK',
-                                    GrabMachine(arm, robot, qStorageRoomWaypts),
-                                    transitions={   'succeeded':'RETRACT_PICKED_DRINK',
-                                                    'failed':'SAY_DRINK_NOT_GRASPED' }) 
+                # Determine which arm is available if any
+                # smach.StateMachine.add( 'SET_AVAILABLE_ARM',
+                #                         LookForDrink(robot),            # query console for available arm!
+                #                         transitions={   'sucess':'STATE',
+                #                                         'error':'SAY_DRINK_NOT_GRASPED'})
 
-            # Say drink not grasped
-            smach.StateMachine.add( 'SAY_DRINK_NOT_GRASPED',
-                                    Say(robot, ['I could not pick up the drink you wanted', 
-                                                'I failed to grab the object you wanted.']),
-                                    transitions={   'spoken':'RETRACT_PICKED_DRINK' }) 
+                # Pickup the drink
+                smach.StateMachine.add( 'PICKUP_DRINK',
+                                        GrabMachine(arm, robot, qStorageRoomWaypts),
+                                        transitions={   'succeeded':'RETRACT_PICKED_DRINK',
+                                                        'failed':'SAY_DRINK_NOT_GRASPED' }) 
 
-            smach.StateMachine.add( 'RETRACT_PICKED_DRINK',
-                                    Retract_facts(robot, [Compound('drinksRequested', 'X')]),
-                                    transitions={'retracted':'LOOK_FOR_DRINK'})  
+                # Say drink not grasped
+                smach.StateMachine.add( 'SAY_DRINK_NOT_GRASPED',
+                                        Say(robot, ['I could not pick up the drink you wanted', 
+                                                    'I failed to grab the object you wanted.']),
+                                        transitions={   'spoken':'RETRACT_PICKED_DRINK' }) 
+
+                smach.StateMachine.add( 'RETRACT_PICKED_DRINK',
+                                        Retract_facts(robot, [Compound('drinksRequested', 'X')]),
+                                        transitions={'retracted':'LOOK_FOR_DRINK'})
+
+            # add find drinks container to the main state machine
+            smach.StateMachine.add( 'FIND_DRINKS_CONTAINER',
+                                    findDrinksContainer,
+                                    transitions={   'succeeded':'SERVED_STATUS',
+                                                    'aborted':'SERVED_STATUS'})
 
 
 #-----------------------------------------DELIVER THE REQUESTED DRINKS---------------------------------------------
@@ -1234,7 +1309,7 @@ class CocktailParty(smach.StateMachine):
             smach.StateMachine.add( 'SERVED_STATUS',
                                     ServedStatus(robot),
                                     transitions={   'complete':'SAY_FINISHED_SERVING',
-                                                    'incomplete':'LOOKOUT_ITERATOR'})
+                                                    'incomplete':'LOOKOUT_CONTAINER'})
 
 
  #-------------------------------------------FINISH THE CHALLENGE AND LEAVE----------------------------------------

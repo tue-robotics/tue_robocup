@@ -400,11 +400,12 @@ class LookForDrink(smach.State):
 
         # start object template matching
         self.response_start = self.robot.perception.toggle(["object_segmentation"])
+        # self.response_start = self.robot.perception.toggle(["template_matching"])
  
         if self.response_start.error_code == 0:
-            rospy.loginfo("Template matching has started correctly")
+            rospy.loginfo("Object recogition has started correctly")
         elif self.response_start.error_code == 1:
-            rospy.loginfo("Template matching failed to start")
+            rospy.loginfo("Object recogition failed to start")
             self.robot.speech.speak("I was not able to start object recognition.")
             looked_no = 0;
             self.robot.reasoner.query(Compound("retractall", Compound("looked_drink_no", "X")))
@@ -418,9 +419,9 @@ class LookForDrink(smach.State):
         self.response_stop = self.robot.perception.toggle([])
         
         if self.response_stop.error_code == 0:
-            rospy.loginfo("Template matching is stopped")
+            rospy.loginfo("Object recogition is stopped")
         elif self.response_stop.error_code == 1:
-            rospy.loginfo("Failed stopping template matching ")
+            rospy.loginfo("Failed stopping Object recogition")
 
         # interpret results wait machine
         if wait_result == "timed_out":

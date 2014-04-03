@@ -26,7 +26,12 @@ if __name__ == "__main__":
 
     elif env == "robotics_testlab_A":
         coke = W.add_object("coke-1", "seven_up", 4.607,  1.902, 1.000)
-        milk = W.add_object("milk-1", "milk", 4.857,  1.802, 1.000)    
+        milk = W.add_object("milk-1", "milk", 4.857,  1.802, 1.000)   
+
+    elif env == "rgo2014":
+        coke = W.add_object("coke-1", "coke", 7.346, 1.802, 1.000)
+
+
 
     else:
         print "No test scenario specified for environment {0}.".format(env)
