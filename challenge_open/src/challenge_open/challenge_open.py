@@ -21,6 +21,8 @@ class AskOpenChallenge(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
+        self.locations = ["bar","kitchenblock","table"]
+
     def execute(self, userdata=None):
 
         self.robot.head.look_up()
@@ -33,9 +35,9 @@ class AskOpenChallenge(smach.State):
                     response_answer = self.response.values[x]
 
             if response_answer == "no_answer" or response_answer == "wrong_answer" or response_answer == "":
-                self.robot.speech.speak("I was not able to understand you but I'll drive to table.")
-                if locations:
-                    target = locations.pop(0) #Get the first item from the list
+                if self.locations:
+                    target = self.locations.pop(0) #Get the first item from the list
+                    self.robot.speech.speak("I was not able to understand you but I'll drive to %s."%target)
                 else:
                     return "all_visited"
             else:
