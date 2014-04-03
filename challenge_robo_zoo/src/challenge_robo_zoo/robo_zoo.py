@@ -194,7 +194,7 @@ class ReceiveClog(smach.StateMachine):
             
             smach.StateMachine.add( "ASK_FOR_CLOG2",
                                     states.Say(robot, ["Please put a clog in my gripper, they're too small for me to pick up"], 
-                                               block=False),
+                                               block=True),
                                     transitions={'spoken': "CLOSE_GRIPPER"})
             
             smach.StateMachine.add( "CLOSE_GRIPPER",
@@ -229,13 +229,13 @@ class GiveClog(smach.StateMachine):
             
             smach.StateMachine.add( "SAY_GIVE_CLOGS",
                                     states.Say(robot, [ "I'll give you a present!"], 
-                                               block=False),
-                                    transitions={'spoken': "ALMOST_POOR"})
+                                               block=True),
+                                    transitions={'spoken': "Failed"})
 
             smach.StateMachine.add( "ALMOST_POOR",
                                     states.ArmFollowDeltaTrajectory(self.robot, self.side, almost_poor, origin=delta_sequence_origin, timeout=5.0),
                                     transitions={   'done'                  : 'SAY_HOLDUP_HAND_FOR_CLOG',
-                                                    'failed'                : 'Failed'})
+                                                    'failed'                : 'SAY_HOLDUP_HAND_FOR_CLOG'})
             
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
                                     states.Say(robot, [ "Hold up your hand please!"], 
@@ -267,17 +267,17 @@ class GiveCan(smach.StateMachine):
                                 transitions={'done':'SAY_GIVE_CLOGS'})
             
             smach.StateMachine.add( "SAY_GIVE_CLOGS",
-                                    states.Say(robot, [ "I'll give you a present!"], 
-                                               block=False),
-                                    transitions={'spoken': "ALMOST_POOR"})
+                                    states.Say(robot, [ "I'll give you a drink"], 
+                                               block=True),
+                                    transitions={'spoken': "Failed"})
 
             smach.StateMachine.add( "ALMOST_POOR",
                                     states.ArmFollowDeltaTrajectory(self.robot, self.side, almost_poor, origin=delta_sequence_origin, timeout=5.0),
                                     transitions={   'done'                  : 'SAY_HOLDUP_HAND_FOR_CLOG',
-                                                    'failed'                : 'Failed'})
+                                                    'failed'                : 'SAY_HOLDUP_HAND_FOR_CLOG'})
             
             smach.StateMachine.add( "SAY_HOLDUP_HAND_FOR_CLOG",
-                                    states.Say(robot, [ "Hold up your hand please!"], 
+                                    states.Say(robot, [ "Hold up your hand please and take the drink from my hand"], 
                                                block=True),
                                     transitions={'spoken': "OPEN_GRIPPER_HANDOVER"})
                                     
@@ -396,9 +396,9 @@ class RoboZoo(smach.StateMachine):
                 #waypoint_storage_table  = msg.PoseStamped( -0.7, 0,     0,      frame_id="/kist") #In front of the flightcase
                 poi_storage_table       = msg.PointStamped( 0.1, 0,     0.55,   frame_id="/kist") #10cm inside the bounds of the flight case
                 poi_trashbin            = msg.PointStamped(-0.4, -1.1,   0.7,    frame_id="/kist") #Trashbin is outside the bounds of the case, 1.1m right of the waypoint_storage_table
-                poi_pooring             = msg.PointStamped(-1.9, 0,     0.9,    frame_id="/kist")
-                poi_ordering_table      = msg.PointStamped(-1.9, 0,     0.74,   frame_id="/kist")
-                poi_pickup_table        = msg.PointStamped(-1.9, -0.5,   0.74,   frame_id="/kist")
+                poi_pooring             = msg.PointStamped(-1.3, 0,     0.9,    frame_id="/kist")
+                poi_ordering_table      = msg.PointStamped(-1.3, 0,     0.74,   frame_id="/kist")
+                poi_pickup_table        = msg.PointStamped(-1.3, -0.5,   0.74,   frame_id="/kist")
 
                 #import ipdb; ipdb.set_trace()
                 publish_marker(poi_storage_table,   color=(0,   1.0,0))     #green
