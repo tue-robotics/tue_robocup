@@ -108,7 +108,7 @@ class OpenChallenge2014(smach.StateMachine):
                                     transitions={"spoken":"TURN_AROUND"})          
 
             smach.StateMachine.add( "SAY_UNDEFINED",
-                                    states.Say(robot, ["I can't find the location you asked me to go to."]),
+                                    states.Say(robot, ["I can't reach the location you asked me to go to."]),
                                     transitions={"spoken":"TURN_AROUND"})
 
 
