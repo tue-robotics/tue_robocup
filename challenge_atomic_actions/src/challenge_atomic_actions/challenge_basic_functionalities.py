@@ -16,6 +16,32 @@ from robot_skills.amigo import Amigo
 
 # ToDo: start at intermediate 
 
+
+class Ask_continue(smach.State):
+    def __init__(self, robot, tracking=True, rate=2):
+        smach.State.__init__(self, outcomes=["done", "no_continue"])
+
+        self.robot = robot
+        self.preempted = False
+        self.rate = rate
+        self.ask_user_service_continue = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+
+    def execute(self, userdata):
+
+        self.response = self.ask_user_service_continue("continue", 4 , rospy.Duration(180))
+
+        for x in range(0,len(self.response.keys)):
+            if self.response.keys[x] == "answer":
+                if self.response.values[x] == "true":
+                    return "done"
+                else: 
+                    return "no_continue"
+
+        rospy.loginfo("answer was not found in response of interpreter. Should not happen!!")
+        return "no_continue"
+
+
+
 class ChallengeBasicFunctionalities(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
@@ -29,7 +55,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    StartChallengeRobust(robot, "initial"), 
+                                    StartChallengeRobust(robot, "initial_exit"), 
                                     transitions={   "Done":"GOTO_PICK_AND_PLACE", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"GOTO_PICK_AND_PLACE"})
@@ -76,10 +102,19 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
-                                    transitions={   "arrived":"AVOID_THAT",
+                                    transitions={   "arrived":"SAY_ASK_CONTINUE",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
+
+            smach.StateMachine.add("SAY_ASK_CONTINUE", 
+                                    Say(robot, [ "Please say continue."]),
+                                    transitions={   'spoken':'ASK_CONTINUE'})
+
+            smach.StateMachine.add("ASK_CONTINUE",
+                                    Ask_continue(robot),
+                                    transitions={   'done':'AVOID_THAT',
+                                                    'no_continue':'AVOID_THAT'})
 
             smach.StateMachine.add( 'AVOID_THAT',
             	                    avoid_that.AvoidThat(robot),
@@ -88,18 +123,31 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
-                                    transitions={   "arrived":"WHAT_DID_YOU_SAY",
-                                                    "unreachable":'CANNOT_GOTO_CHALLENGE',
+                                    transitions={   "arrived":"SAY_ASK_CONTINUE2",
+                                                    "unreachable":'SAY_ASK_CONTINUE2',
                                                     "preempted":'Aborted',
-                                                    "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
+                                                    "goal_not_defined":'SAY_ASK_CONTINUE2'})
+
+            smach.StateMachine.add("SAY_ASK_CONTINUE2", 
+                                    Say(robot, [ "Please say continue."]),
+                                    transitions={   'spoken':'ASK_CONTINUE2'})
+
+            smach.StateMachine.add("ASK_CONTINUE2",
+                                    Ask_continue(robot),
+                                    transitions={   'done':'WHAT_DID_YOU_SAY',
+                                                    'no_continue':'WHAT_DID_YOU_SAY'})
 
             smach.StateMachine.add( 'WHAT_DID_YOU_SAY',
             	                    what_did_you_say.WhatDidYouSay(robot),
-            	                    transitions={	"Done": "GOTO_PICK_AND_PLACE"})
+            	                    transitions={	"Done": "FINISHED"})
 
             smach.StateMachine.add("CANNOT_GOTO_CHALLENGE", 
                                     Say(robot, [ "I can't find a way to my next challenge, can you please take me there "]),
                                     transitions={   'spoken':'Aborted'})
+
+            smach.StateMachine.add("FINISHED", 
+                                    Say(robot, [ "I finished this challenge"]),
+                                    transitions={   'spoken':'Done'})
 
 if __name__ == "__main__":
     rospy.init_node('basic_functionalities_exec')
