@@ -195,10 +195,20 @@ class ReceivePackage(smach.StateMachine):
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
-                                    WaitForTrigger(robot, ['allow', 'deny']),
+                                    WaitForTrigger(robot, ['allow', 'deny', 'doorbell']),
                                     transitions={   'allow':    'SAY_TRIGGER_ALLOW',
                                                     'deny':     'SAY_TRIGGER_DENY',
+                                                    'doorbell' : 'WAIT_FOR_DOORBELL_SOUND',
                                                     'preempted':'failed'})
+
+            smach.StateMachine.add( 'WAIT_FOR_DOORBELL_SOUND',
+                        states.Wait_time(robot, waittime=2),
+                                    transitions={   'waited':'SAY_SOMEONE_AT_THE_DOOR',
+                                                    'preempted':'failed'})
+            
+            smach.StateMachine.add("SAY_SOMEONE_AT_THE_DOOR", 
+                                    states.Say(robot,"There is somebody at the door, I will notify my owner.", block=True),
+                                    transitions={   'spoken':'WAIT_FOR_TRIGGER'})
             
             smach.StateMachine.add("SAY_TRIGGER_ALLOW", 
                                     states.Say(robot,"There is somebody at the door, I must hurry", block=False),
