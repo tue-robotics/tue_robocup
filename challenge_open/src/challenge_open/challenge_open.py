@@ -100,7 +100,7 @@ class OpenChallenge2014(smach.StateMachine):
                                              'goal_not_defined' :   'SAY_UNDEFINED'})              
 
             smach.StateMachine.add( "SAY_ARRIVED",
-                                    states.Say(robot, ["Hey, i'm at a newly learned object"]),
+                                    states.Say(robot, ["Hey, I reached my goal."]),
                                     transitions={"spoken":"TURN_AROUND"})          
           
             smach.StateMachine.add( "SAY_UNREACHABLE",
