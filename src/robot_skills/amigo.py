@@ -273,7 +273,7 @@ if __name__ == "__main__":
         OKGREEN = '\033[92m'
         ENDC = '\033[0m'
 
-        amigo.speech.speak("Please say: test when I turn green", block=True) #definately block here, otherwise we hear ourselves
+        amigo.speech.speak("Please say: continue when I turn green", block=True) #definitely block here, otherwise we hear ourselves
         
         result = amigo.ears.ask_user("continue")
         rospy.loginfo("test_audio result: {0}".format(result))
