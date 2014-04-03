@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_open')
+import roslib; roslib.load_manifest('challenge_open_2014')
 import rospy, sys
 
 import smach
@@ -13,6 +13,8 @@ from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
 from speech_interpreter.srv import AskUser
+
+locations = ["bar", "table", "kitchenblock"]
 
 class AskOpenChallenge(smach.State):
 
