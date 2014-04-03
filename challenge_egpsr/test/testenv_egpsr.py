@@ -19,6 +19,19 @@ if __name__ == "__main__":
     if env == "rgo2014":
         coke1 = W.add_object("coke-1", "coke", 4.25, 4.148, 0.86)   
 
+        table_x = 8.028
+        table_y = 1.766
+        table_vy = 0 #0.03
+        table_angle = 0
+        table_angle_v = 0#.03   
+
+        # table = W.add_object("dinner_table", "dinner_table", table_x, table_y, 0)        
+
+        # table_x = 5.683
+        # table_y = -2.637
+
+        table = W.add_object("table-1", "table", table_x, table_y, 0)
+
     elif env == "robotics_testlab_A":
         coke2 = W.add_object("coke-2", "coke", 4.8, 2, 0.8)    
 
