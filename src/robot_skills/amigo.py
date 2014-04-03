@@ -269,6 +269,21 @@ if __name__ == "__main__":
         path += ".wav"
         os.system("mv /tmp/speech.wav /tmp/{0}".format(path))
 
+    def test_audio():
+        OKGREEN = '\033[92m'
+        ENDC = '\033[0m'
+
+        amigo.speech.speak("Please say: test when I turn green", block=True) #definately block here, otherwise we hear ourselves
+        
+        result = amigo.ears.ask_user("continue")
+        rospy.loginfo("test_audio result: {0}".format(result))
+        if result and result != "false":
+            rospy.loginfo(OKGREEN+"Speach pipeline working"+ENDC)
+            amigo.speech.speak("Yep, my ears are fine", block=False)
+        else:
+            rospy.logerr("Speech pipeline not working")
+            amigo.speech.speak("Nope, my ears are clogged", block=False)
+
 
     print """\033[1;33m You can now command amigo from the python REPL. 
     Type e.g. help(amigo) for help on objects and functions, 
@@ -284,4 +299,5 @@ if __name__ == "__main__":
         - speak/praat/(sentence), save_sentence(sentence) saves the .wav file to /tmp/<sentence_you_typed>.wav
         - head_down, head_reset, left/right_close/open, look_at_point(x,y,z), 
         - get_pose_2d()
+        - test_audio()
     Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m"""
