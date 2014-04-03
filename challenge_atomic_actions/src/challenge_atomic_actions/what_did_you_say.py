@@ -135,13 +135,16 @@ class WhatDidYouSay(smach.StateMachine):
         with self:
 
 
+            smach.StateMachine.add("STEP_IN_FRONT",
+                                    states.Say(robot,"Please step in front of me so that you can ask some questions"),
+                                    transitions={'spoken':'WAIT_FOR_PERSON'})
+
             smach.StateMachine.add("WAIT_FOR_PERSON",
                                     WaitForPerson(robot),
                                     transitions={'detected':'SAY_FIRST_QUESTION',
                                                  'waiting':'WAIT_FOR_PERSON',
                                                  'timed_out':'SAY_FIRST_QUESTION',
                                                  'failed':'SAY_FIRST_QUESTION'})
-
 
             smach.StateMachine.add("SAY_FIRST_QUESTION",
                                     states.Say(robot,"Hello! What is your first question?"),
