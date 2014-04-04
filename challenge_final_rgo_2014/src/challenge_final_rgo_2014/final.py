@@ -26,7 +26,7 @@ class TurnAround(smach.State):
         #b.force_drive(-0.25, 0, 0, 3)
         return "Done"
 
-class AskOpenChallenge(smach.State):
+class AskChallengeDestination(smach.State):
 
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["location_selected", "all_visited"])
@@ -83,7 +83,7 @@ class AskAndNavigate(smach.StateMachine):
                                                     "Failed"    :"ASK_OPENCHALLENGE"})
 
             smach.StateMachine.add("ASK_OPENCHALLENGE",
-                                    AskOpenChallenge(robot),
+                                    AskChallengeDestination(robot),
                                     transitions={'location_selected':   'INITIALIZE',
                                                  'all_visited':         'Done'})
 
@@ -108,6 +108,44 @@ class AskAndNavigate(smach.StateMachine):
             smach.StateMachine.add( "SAY_UNDEFINED",
                                     states.Say(robot, ["I can't reach the location you asked me to go to."]),
                                     transitions={"spoken":"Failed"})
+
+class AskChallengeObject(smach.State):
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["item_selected", "all_grabbed"])
+        self.robot = robot
+        self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+
+        self.objects = ["coke", "ice_tea"] #TODO: set all options
+
+    def execute(self, userdata=None):
+
+        self.robot.head.look_up()
+        
+        try:
+            self.response = self.ask_user_service("final_challenge", 4 , rospy.Duration(18))  #4 tries and within 18 seconds an answer is received. 
+
+            #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
+            response_dict = dict(zip(self.response.keys, self.response.values)) 
+            response_answer = response_dict.get("answer", "no_answer")
+
+            if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
+                if self.objects:
+                    target = self.objects.pop(0) #Get the first item from the list
+                    self.robot.speech.speak("I was not able to understand you but I'll get a %s."%target)
+                else:
+                    return "all_grabbed"
+            else:
+                target = response_answer
+                self.robot.assertz(Compound("selected_object", target))
+
+        except Exception, e:
+            rospy.logerr(e)
+            target = "table"
+            self.robot.speech.speak("There is something wrong with my ears, I will get a %s"%target)
+
+        return "item_selected"
+
 #######################################################################################################################################################################################################
 
 class FinalRgo2014(smach.StateMachine):
@@ -118,11 +156,13 @@ class FinalRgo2014(smach.StateMachine):
 
         side = robot.leftArm
 
+        # object_query = Conjunction(
+        #                             Compound( "property_expected", "ObjectID", "class_label", "Anything"), #TODO: Specify class?
+        #                             Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+        #                             Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         object_query = Conjunction(
-                                    Compound( "property_expected", "ObjectID", "class_label", "Anything"), #TODO: Specify class?
-                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound("selected_object", "ObjectID"), 
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-
         with self:
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
                                     AskAndNavigate(robot),
@@ -136,13 +176,18 @@ class FinalRgo2014(smach.StateMachine):
             
             smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
                                     AskAndNavigate(robot),
-                                    transitions={   "Done"      :"LOOK_FOR_DRINK", 
+                                    transitions={   "Done"      :"ASK_OBJECT", 
                                                     "Failed"    :"SAY_FAILED"})        
 
             smach.StateMachine.add( "SAY_FAILED",
                                     states.Say(robot, ["I don't know where that thing went, it was just right here!"]),
                                     transitions={"spoken":"Failed"}) 
             
+            smach.StateMachine.add("ASK_OBJECT",
+                                    AskChallengeObject(robot),
+                                    transitions={'item_selected':   'LOOK_FOR_DRINK',
+                                                 'all_grabbed'  :   'Done'})
+
             @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
                 robot.head.look_down()
