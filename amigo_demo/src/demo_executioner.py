@@ -126,8 +126,12 @@ sent_keymap['p'] = "PASS"
 @dec.register_robot_key("M", "Merkel demo cheese holding pose")
 def cheese_plank_pose(robot):
     robot.spindle.send_goal(0.4)
-    robot.rightArm.send_joint_goal(-0.3650 , 0.9436 , 0.4707 , 1.0420 , 0.7136 , -0.1692 , 0.2180)
-    robot.leftArm.send_joint_goal(-0.365, 0.843, 0.470, 1.142, -0.756, -0.2692, 0.218)
+
+    robot.rightArm.send_gripper_goal_open()
+
+    robot.rightArm.send_joint_goal(-0.365, 0.944, 0.470, 1.043, 0.912, 0.230, 0.217, timeout=0.0)#Don't wait for the other arm to start
+    robot.leftArm.send_joint_goal(-0.364, 0.843, 0.473, 1.044, -0.655, 0.093, 0.221, timeout=5.0)
+
     robot.leftArm.send_gripper_goal_open()
     rospy.sleep(5)
     robot.rightArm.send_gripper_goal_close()
