@@ -296,12 +296,13 @@ class Failed_goal(smach.State):
 # It is important for the EGPSR to get back to the meeting point!! Otherwise restart, therefore understanding solution.
 class GotoMeetingPointRobustEGPSR(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
-    def __init__(self, robot):
+    def __init__(self, robot,meeting_point="initial_egpsr_1"):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "not_at_loc"])
 
+        self.meeting_point = meeting_point
 
         with self:
-            navigate_meeting_point_1 = Conjunction(  Compound("=", "Waypoint", Compound("initial_egpsr_1", "a")),
+            navigate_meeting_point_1 = Conjunction(  Compound("=", "Waypoint", Compound(self.meeting_point, "a")),
                                                      Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
             smach.StateMachine.add('GO_TO_MEETING_POINT_EGPSR_1', 
@@ -315,7 +316,7 @@ class GotoMeetingPointRobustEGPSR(smach.StateMachine):
                                     states.Say(robot, ["I was not able to reach the meeting point at first attempt, I will try it again."]),
                                     transitions={   "spoken":"GO_TO_MEETING_POINT_EGPSR_2"})
 
-            navigate_meeting_point_2 = Conjunction(  Compound("=", "Waypoint", Compound("initial_egpsr_1", "b")),
+            navigate_meeting_point_2 = Conjunction(  Compound("=", "Waypoint", Compound(self.meeting_point, "b")),
                                                      Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
             smach.StateMachine.add('GO_TO_MEETING_POINT_EGPSR_2', 
@@ -329,7 +330,7 @@ class GotoMeetingPointRobustEGPSR(smach.StateMachine):
                                     states.Say(robot, [  "Also my second attempt was not succesful. One last try."], block=False),
                                     transitions={   "spoken":"GO_TO_MEETING_POINT_EGPSR_3"})
 
-            navigate_meeting_point_3 = Conjunction(  Compound("=", "Waypoint", Compound("initial_egpsr_1", "c")),
+            navigate_meeting_point_3 = Conjunction(  Compound("=", "Waypoint", Compound(self.meeting_point, "c")),
                                                      Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
             smach.StateMachine.add('GO_TO_MEETING_POINT_EGPSR_3', 
@@ -380,6 +381,9 @@ def setup_statemachine(robot):
     else:
         selectedArm = robot.rightArm
 
+    robot.initial_location = "initial_egpsr_2"
+    rospy.logerr("!! DEFINE INITIAL LOCATION. CURRENT LOCATION IS {0} !!".format(robot.initial_location))
+
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
@@ -405,7 +409,7 @@ def setup_statemachine(robot):
                                transitions={'spoken':'INIT_POSE'})
 
         smach.StateMachine.add('INIT_POSE',
-                                states.Set_initial_pose(robot, 'initial_egpsr_1'),
+                                states.Set_initial_pose(robot, robot.initial_location),
                                 transitions={   'done':'ASK_ACTION',
                                                 'preempted':'ASK_ACTION',
                                                 'error':'ASK_ACTION'})
@@ -516,7 +520,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -533,7 +537,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'WITH_OBJECT_TO_MEETING_POINT'}) 
 
             smach.StateMachine.add('WITH_OBJECT_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -636,7 +640,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_MEETING_POINT_ROBUST'}) 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_MEETING_POINT_ROBUST',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -723,7 +727,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'SUCCES_BACK_TO_MEETING_POINT'}) 
 
             smach.StateMachine.add('SUCCES_BACK_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'AT_MEETING_POINT',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -744,7 +748,7 @@ def setup_statemachine(robot):
 
 
             smach.StateMachine.add('FAILED_WITH_OBJECT_BACK_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT_AND_PACKAGE_NOT_DELIVERED'})
 
@@ -866,7 +870,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'BACK_TO_MEETING_POINT'}) 
 
             smach.StateMachine.add('BACK_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -923,7 +927,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'NOT_AT_GOAL_NAVIGATE_TO_MEETING_POINT_ROBUST'}) 
 
             smach.StateMachine.add('NOT_AT_GOAL_NAVIGATE_TO_MEETING_POINT_ROBUST',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'FAILED_AT_MEETING_POINT',
                                                      'not_at_loc':'FAILED_NOT_AT_MEETING_POINT'})
 
@@ -940,7 +944,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'SUCCES_BACK_TO_MEETING_POINT'}) 
 
             smach.StateMachine.add('SUCCES_BACK_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'AT_MEETING_POINT',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -1005,7 +1009,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'BACK_TO_MEETING_POINT'}) 
 
             smach.StateMachine.add('BACK_TO_MEETING_POINT',                               
-                                    GotoMeetingPointRobustEGPSR(robot),
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
                                         transitions={'succeeded':'AT_LOC_TO',
                                                      'not_at_loc':'NOT_AT_MEETING_POINT'})
 
@@ -1028,22 +1032,31 @@ def setup_statemachine(robot):
 
         with sm_leave:
 
+            navigate_exit_1 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "a")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
             smach.StateMachine.add('GO_TO_EXIT_1', 
-                                    states.NavigateGeneric(robot, goal_name="exit_1"),
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_1),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'GO_TO_EXIT_2', 
                                                     'unreachable':'GO_TO_EXIT_2', 
                                                     'goal_not_defined':'GO_TO_EXIT_2'})
 
+            navigate_exit_2 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "b")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
             smach.StateMachine.add('GO_TO_EXIT_2', 
-                                    states.NavigateGeneric(robot, goal_name="exit_2"),
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_2),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'GO_TO_EXIT_3', 
                                                     'unreachable':'GO_TO_EXIT_3', 
                                                     'goal_not_defined':'GO_TO_EXIT_3'})
 
+            navigate_exit_3 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "c")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
             smach.StateMachine.add('GO_TO_EXIT_3', 
-                                    states.NavigateGeneric(robot, goal_name="exit_3"),
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_3),
                                     transitions={   'arrived':'AT_EXIT', 
                                                     'preempted':'NOT_AT_EXIT', 
                                                     'unreachable':'NOT_AT_EXIT', 
@@ -1055,12 +1068,17 @@ def setup_statemachine(robot):
                 
             smach.StateMachine.add("NOT_AT_EXIT",
                                    states.Say(robot,"I was not able to reach the exit, I am sorry."),
-                                   transitions={'spoken':'Failed'})
+                                   transitions={'spoken':'BACK_TO_MEETING_POINT'})
+
+            smach.StateMachine.add('BACK_TO_MEETING_POINT',                               
+                                    GotoMeetingPointRobustEGPSR(robot, meeting_point = robot.initial_location),
+                                        transitions={'succeeded':'Done',
+                                                     'not_at_loc':'Failed'})
 
         smach.StateMachine.add("SUB_SM_LEAVE",
                                 sm_leave,
                                 transitions={'Done':'FINISH',                
-                                             'Failed':'FINISH'})
+                                             'Failed':'FAILED_TASK'})
 
         ######################################################
         ########### CHECK NUMBER OF TASKS COMPLETED ##########
