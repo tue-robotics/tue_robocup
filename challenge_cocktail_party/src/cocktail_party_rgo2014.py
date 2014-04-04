@@ -505,7 +505,7 @@ class LookForPerson(smach.State):
             rospy.loginfo("Face segmentation failed to start")
             self.robot.speech.speak("I was not able to start face segmentation.")
             return 'looking'
-        rospy.sleep(1.5)
+        rospy.sleep(4.0)
 
         rospy.loginfo("Face segmentation will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
@@ -517,7 +517,7 @@ class LookForPerson(smach.State):
 
         # compose person query
         person_query = Conjunction(  
-                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "class_label", "person"),
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
@@ -531,14 +531,14 @@ class LookForPerson(smach.State):
             self.robot.head.set_pan_tilt(tilt=0.2)
             self.robot.speech.speak("Did not find a person yet.")
 
-            self.response_start = self.robot.perception.toggle(["face_segmentation"])
+            self.response_start = self.robot.perception.toggle(["ppl_detection_cocktail"])
             if self.response_start.error_code == 0:
                 rospy.loginfo("Face segmentation has started correctly")
             elif self.response_start.error_code == 1:
                 rospy.loginfo("Face segmentation failed to start")
                 self.robot.speech.speak("I was not able to start face segmentation.")
                 return 'looking'
-            rospy.sleep(2)
+            rospy.sleep(3)
 
             rospy.loginfo("Face segmentation will be stopped now")
             self.response_stop = self.robot.perception.toggle([])
@@ -556,9 +556,9 @@ class LookForPerson(smach.State):
                 self.robot.speech.speak("No one here.",block=False)
                 return "looking"
         if len(person_result) > 1:
-            self.robot.speech.speak("I see some people!",block=False)
+            self.robot.speech.speak("I think I found some people",block=False)
         else:
-            self.robot.speech.speak("I found someone!",block=False)
+            self.robot.speech.speak("I think I found someone!",block=False)
         return "found"     
 
 class PersonFound(smach.State):
@@ -571,10 +571,10 @@ class PersonFound(smach.State):
 
 
         person_query = Conjunction(  
-                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "class_label", "person"),
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
-                                    Compound( "not", Compound("registered", "ObjectID")))
+                                    Compound( "not", Compound("visited", "ObjectID")))
 
         # prepare query to get faces detected in front of amigo
         #person_query = Conjunction(  
@@ -621,8 +621,11 @@ class PersonFound(smach.State):
             self.robot.head.send_goal(lookat_point,timeout=0)
 
         # get the objectID of the person we are trying to serve the drink to
-        self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
-                                              Compound("assert", Compound("registered", "ObjectID"))))
+        current_persons =  self.robot.reasoner.query(Compound("current_person", "ObjectID"))
+        if current_persons:
+			current_person = current_persons[0]["ObjectID"]
+			self.robot.reasoner.assertz(Compound("visited", current_person))   
+                                             
         return_result = self.robot.reasoner.query(Compound("current_person", "Person"))       
 
         # if there is no result, we forgot who we were serving, return!
@@ -631,7 +634,7 @@ class PersonFound(smach.State):
             return "not_correct"
 
         serving_person = str(return_result[0]["Person"]) 
-        self.robot.speech.speak("Please look into my eyes.")
+        #self.robot.speech.speak("Please look into my eyes.")
         
         # perform face recognition on the person found
         self.response_start = self.robot.perception.toggle(["face_recognition"])
@@ -1003,7 +1006,7 @@ class CocktailParty(smach.StateMachine):
 
                     smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                             Say(robot, ["I could not find you.", 
-                                                        "I can't find you. I really don't like fluids.",
+                                                        "I can't find you.",
                                                         "I could not find you."],block=False),
                                             transitions={   'spoken':'HANDOVER_DRINK_UNKNOWN_PERSON' }) #GOTO_INITIAL_FAIL
 
