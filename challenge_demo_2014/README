@@ -3,8 +3,11 @@ challenge_demo_2014
 Responsible: Ramon
 -------------------
 
-
 make sure amiddle is running
+
+connect a LRF and a kinect to an external laptop
+
+run the challenge with amigo-core
 
 **amigo1:**
 
@@ -17,8 +20,8 @@ make sure amiddle is running
         - run `hokuyo.sh` to fix that
 
 - open the web gui's
-  - the doorbell is at http://amigo1:8001/src/doorbell/doorbell.html
-  - the gui      is at http://amigo1:8001/src/doorbell/app.html
+  - the doorbell is at http://your-laptops-ip:8001/src/doorbell/doorbell.html
+  - the gui      is at http://your-laptops-ip:8001/src/doorbell/app.html
 
 **amigo3:**
 
