@@ -5,6 +5,7 @@ import rospy
 from std_msgs.msg import String
 import geometry_msgs
 import smach
+import sys
 
 from robot_skills.amigo import Amigo
 import robot_smach_states as states
@@ -381,8 +382,21 @@ def setup_statemachine(robot):
     else:
         selectedArm = robot.rightArm
 
-    robot.initial_location = "initial_egpsr_2"
+    # Set initial location:
+
+    ''' If necessary: set initial state '''
+    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
+    if  len(sys.argv) > 1:
+        if int(sys.argv[1]) == 1:
+            robot.initial_location = "initial_egpsr_1"
+        elif int(sys.argv[1]) == 2:
+            robot.initial_location = "initial_egpsr_2"
+        elif int(sys.argv[1]) == 3:
+            robot.initial_location = "initial_egpsr_3"
+    else:
+        robot.initial_location = "initial_egpsr_2"
     rospy.logerr("!! DEFINE INITIAL LOCATION. CURRENT LOCATION IS {0} !!".format(robot.initial_location))
+    rospy.sleep(10)
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -1125,3 +1139,4 @@ if __name__ == "__main__":
     rospy.loginfo("- See README_SPEECH_POSSIBILITIES for input possibilities -")
     rospy.loginfo("----------------------------------------------------------")
     startup(setup_statemachine)
+
