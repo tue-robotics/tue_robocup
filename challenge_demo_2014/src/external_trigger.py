@@ -133,7 +133,7 @@ class WaitForOwner(smach.State):
 
     def execute(self, gl):
         #rospy.loginfo('start_perception: modules=%s' % str(self.modules))
-        self.robot.perception.toggle(['ppl_detection', 'ppl_detection_external'])
+        self.robot.perception.toggle(['ppl_detection_external'])
 
         rospy.loginfo("Waiting for a person to appear in the region of interest, make sure this happens within 30 seconds!!!")
 
