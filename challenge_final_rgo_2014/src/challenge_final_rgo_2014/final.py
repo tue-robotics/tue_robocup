@@ -178,8 +178,18 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "OPEN_GRIPPER",
                                     states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
-                                    transitions={   'succeeded'         :'RESET_ARM1',
-                                                    'failed'            :'RESET_ARM1' })
+                                    transitions={   'succeeded'         :'TURN_AROUND',
+                                                    'failed'            :'TURN_AROUND' })
+
+            smach.StateMachine.add( "TURN_AROUND",
+                    TurnAround(robot),
+                    transitions={   "Done"      :"SAY_DONE", 
+                                    "Aborted"   :"SAY_DONE", 
+                                    "Failed"    :"SAY_DONE"})            
+
+            smach.StateMachine.add( "SAY_DONE",
+                                    states.Say(robot, ["Thats all folks"]),
+                                    transitions={"spoken":"Done"}) 
 
 
 if __name__ == "__main__":
