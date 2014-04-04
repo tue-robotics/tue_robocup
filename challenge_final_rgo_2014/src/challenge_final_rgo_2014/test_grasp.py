@@ -26,7 +26,10 @@ class AskOpenChallenge(smach.State):
 
 	target="coke"
 
-        self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.5385164807134505^2'
+        #self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.5385164807134505^2'
+        #self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2'
+        #self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.49'
+        self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30'
         self.robot.base2.pc.frame      = target
 
         self.robot.base2.oc.look_at    = Point()
