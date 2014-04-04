@@ -278,15 +278,19 @@ class GivePackage(smach.StateMachine):
 
             smach.StateMachine.add('WAIT_FOR_OWNER',
                                     WaitForOwner(robot),
-                                    transitions={   "person_found":"NAVIGATE_TO_OWNER",
+                                    transitions={   "person_found":"SAY_OWNER_FOUND",
                                                     "timed_out":"SAY_PERSON_TIMEOUT"})
+
+            smach.StateMachine.add("SAY_OWNER_FOUND", 
+                                    states.Say(robot,"Hey, I can see that my owner arrived home, I will give this package to him", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TO_OWNER'})
 
             smach.StateMachine.add("SAY_PERSON_TIMEOUT", 
                                     states.Say(robot,"It took too long, I better go to where he usually is", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
             smach.StateMachine.add('NAVIGATE_TO_OWNER',
-                                    states.NavigateGeneric(robot, lookat_query=query_owner),
+                                    states.NavigateGeneric(robot, lookat_query=query_owner, refresh_freq=1),
                                     transitions={   "arrived":"SAY_PERSON_FOUND",
                                                     "unreachable":'SAY_PERSON_UNREACHABLE',
                                                     "preempted":'failed',
