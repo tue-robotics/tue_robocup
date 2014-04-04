@@ -179,7 +179,7 @@ class PrepareGrasp(smach.State):
 
         # Move arm to desired joint coordinates (no need to wait)
         # ToDo: don't hardcode
-        self.arm.send_joint_goal(-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42)
+        self.arm.send_joint_trajectory([[-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42]])
 
         # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
         # Probably do this afterwards
