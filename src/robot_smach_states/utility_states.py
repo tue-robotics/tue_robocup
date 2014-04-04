@@ -28,6 +28,7 @@ class Initialize(smach.State):
         self.robot.reasoner.reset()
         self.robot.spindle.reset()
         self.robot.base.reset_costmap()
+        self.robot.perception.toggle([])
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
         rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
