@@ -179,7 +179,14 @@ class PrepareGrasp(smach.State):
 
         # Move arm to desired joint coordinates (no need to wait)
         # ToDo: don't hardcode
-        self.arm.send_joint_trajectory([[-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42]])
+        self.arm.send_joint_trajectory([
+        [-0.1,-0.6,0.1,1.2,0.0,0.1,0.0],
+        [-0.1,-0.8,0.1,1.6,0.0,0.2,0.0],
+        [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0],
+        [-0.1,-0.5,0.1,2.0,0.0,0.3,0.0],
+        ],
+        timeout=20)
+        #[-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42]
 
         # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
         # Probably do this afterwards
@@ -426,6 +433,12 @@ class GrabMachineWithoutBase(smach.StateMachine):
         self.grabpoint_query = grabpoint_query
         '''check check input and output keys'''
         with self:
+            
+            smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grabpoint_query),
+                        transitions={'succeeded'    :   'PREPARE_GRAB',
+                                     'failed'       :   'PREPARE_GRAB',
+                                     'target_lost'  :   'CLOSE_GRIPPER_UPON_FAIL'})
+            
             smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
                         transitions={'succeeded'    :   'OPEN_GRIPPER',
                                      'failed'       :   'failed'})
