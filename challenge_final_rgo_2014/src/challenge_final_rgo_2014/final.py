@@ -46,6 +46,8 @@ class AskChallengeDestination(smach.State):
             response_dict = dict(zip(self.response.keys, self.response.values)) 
             response_answer = response_dict.get("answer", "no_answer")
 
+            rospy.loginfo("response_answer = {0}".format(response_answer))
+
             if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
                 if self.locations:
                     target = self.locations.pop(0) #Get the first item from the list
@@ -128,6 +130,8 @@ class AskChallengeObject(smach.State):
             #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
             response_dict = dict(zip(self.response.keys, self.response.values)) 
             response_answer = response_dict.get("answer", "no_answer")
+
+            rospy.loginfo("response_answer = {0}".format(response_answer))
 
             if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
                 if self.objects:
