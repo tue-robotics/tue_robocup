@@ -280,6 +280,10 @@ class GivePackage(smach.StateMachine):
                                   Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
 
+            smach.StateMachine.add("SAY_WAIT_OWNER", 
+                                    states.Say(robot,"I will hold on to the package until my owner comes home.", block=True),
+                                    transitions={   'spoken':'WAIT_FOR_OWNER'})
+
             smach.StateMachine.add('WAIT_FOR_OWNER',
                                     WaitForOwner(robot),
                                     transitions={   "person_found":"SAY_OWNER_FOUND",
