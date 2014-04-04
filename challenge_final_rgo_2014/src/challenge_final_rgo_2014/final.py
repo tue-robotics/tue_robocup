@@ -49,7 +49,7 @@ class AskOpenChallenge(smach.State):
             if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
                 if self.locations:
                     target = self.locations.pop(0) #Get the first item from the list
-                    self.robot.speech.speak("I was not able to understand you but I'll drive to %s."%target)
+                    self.robot.speech.speak("I was not able to understand you but I'll drive to the %s."%target)
                 else:
                     return "all_visited"
             else:
@@ -136,8 +136,12 @@ class FinalRgo2014(smach.StateMachine):
             
             smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
                                     AskAndNavigate(robot),
-                                    transitions={   "Done"      :"GRAB_OBJECT", 
-                                                    "Failed"    :"ASK_AND_NAV_2"}) 
+                                    transitions={   "Done"      :"LOOK_FOR_DRINK", 
+                                                    "Failed"    :"SAY_FAILED"})        
+
+            smach.StateMachine.add( "SAY_FAILED",
+                                    states.Say(robot, ["I don't know where that thing went, it was just right here!"]),
+                                    transitions={"spoken":"Failed"}) 
             
             @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
@@ -168,13 +172,25 @@ class FinalRgo2014(smach.StateMachine):
             smach.StateMachine.add("NAVIGATE_TO_TRASHBIN",
                                     states.NavigateWithConstraints(robot),
                                     transitions={'arrived'          :   'ARM_TO_DROPPOS',
-                                                 'unreachable'      :   'Failed',
-                                                 'goal_not_defined' :   'Failed'}) 
+                                                 'unreachable'      :   'SAY_UNREACHABLE',
+                                                 'goal_not_defined' :   'SAY_UNDEFINED'})        
+
+            smach.StateMachine.add( "SAY_UNREACHABLE",
+                                    states.Say(robot, ["I can't reach the location I was supposed to go to"]),
+                                    transitions={"spoken":"Failed"})        
+
+            smach.StateMachine.add( "SAY_UNDEFINED",
+                                    states.Say(robot, ["I don't know where to go, sorry"]),
+                                    transitions={"spoken":"Failed"}) 
 
             smach.StateMachine.add("ARM_TO_DROPPOS",
                                     states.ArmToJointPos(robot, side, [-0.100, 0.400, 0.600, 1.130, -0.300, 0.100, 0.000], timeout=4),
                                     transitions={'done'             :'OPEN_GRIPPER',
-                                                 'failed'           :'Failed' })
+                                                 'failed'           :'SAY_CANNOT_DROP' })       
+
+            smach.StateMachine.add( "SAY_CANNOT_DROP",
+                                    states.Say(robot, ["I can't drop the object, sorry"]),
+                                    transitions={"spoken":"TURN_AROUND"}) 
 
             smach.StateMachine.add( "OPEN_GRIPPER",
                                     states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
