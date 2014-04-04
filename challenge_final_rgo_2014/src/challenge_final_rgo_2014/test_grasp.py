@@ -24,28 +24,7 @@ class AskOpenChallenge(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.head.look_up()
-        
-        try:
-            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
-
-            #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
-            response_dict = dict(zip(self.response.keys, self.response.values)) 
-            response_answer = response_dict.get("answer", "no_answer")
-
-            if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
-                if self.locations:
-                    target = self.locations.pop(0) #Get the first item from the list
-                    self.robot.speech.speak("I was not able to understand you but I'll drive to %s."%target)
-                else:
-                    return "all_visited"
-            else:
-                target = response_answer
-
-        except Exception, e:
-            rospy.logerr(e)
-            target = "table"
-            self.robot.speech.speak("There is something wrong with my ears, I will go to %s"%target)
+	target="coke"
 
         self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.5385164807134505^2'
         self.robot.base2.pc.frame      = target
