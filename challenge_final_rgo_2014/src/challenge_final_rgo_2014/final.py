@@ -4,7 +4,7 @@ import rospy, sys
 
 import smach
 
-from robot_skills.reasoner  import Conjunction, Compound
+from robot_skills.reasoner  import Conjunction, Compound, Sequence
 
 from math import cos, sin
 from geometry_msgs.msg import *
@@ -32,7 +32,7 @@ class AskOpenChallenge(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.locations = ["bar","bar","kitchen_block","table"] #Go to the bar twice! The bar will be moved, tracked and then we must go there again, to its new location
+        self.locations = ["bar","bar","table"] #Go to the bar twice! The bar will be moved, tracked and then we must go there again, to its new location
 
     def execute(self, userdata=None):
 
@@ -40,8 +40,10 @@ class AskOpenChallenge(smach.State):
         
         try:
             self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
-            
-            response_answer = self.response.get("answer", "no_answer")
+
+            #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
+            response_dict = dict(zip(self.response.keys, self.response.values)) 
+            response_answer = response_dict.get("answer", "no_answer")
 
             if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
                 if self.locations:
@@ -82,7 +84,7 @@ class AskAndNavigate(smach.StateMachine):
             smach.StateMachine.add("ASK_OPENCHALLENGE",
                                     AskOpenChallenge(robot),
                                     transitions={'location_selected':   'INITIALIZE',
-                                                 'all_visited':         'success'})
+                                                 'all_visited':         'Done'})
 
             smach.StateMachine.add("INITIALIZE",
                                     states.ResetArmsSpindleHead(robot),
@@ -110,7 +112,7 @@ class AskAndNavigate(smach.StateMachine):
 class FinalRgo2014(smach.StateMachine):
 
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['success','aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done','Failed'])
         self.robot = robot
 
         side = robot.leftArm
@@ -124,21 +126,18 @@ class FinalRgo2014(smach.StateMachine):
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"ASK_AND_NAV_2", 
-                                                    "Aborted"   :"aborted", 
                                                     "Failed"    :"ASK_AND_NAV_2"})
             #Amigo arrived at the bar. 
             smach.StateMachine.add( "ASK_AND_NAV_2", #The bar is moved and amigo is asked to go to the bar once more, after it moved and was tracked in the WM
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"ASK_AND_NAV_3", 
-                                                    "Aborted"   :"ASK_AND_NAV_3", 
                                                     "Failed"    :"ASK_AND_NAV_3"}) 
             
             smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"GRAB_OBJECT", 
-                                                    "Aborted"   :"ASK_AND_NAV_2", 
                                                     "Failed"    :"ASK_AND_NAV_2"}) 
-            @smach.cb_interface(outcomes="done")
+            @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
                 robot.head.look_down()
                 return "done"
