@@ -15,6 +15,6 @@
         <param name="port" value="8001" />
     </node>
     
-    <node pkg="challenge_demo_2014" type="doorbell_listener.py" name="doorbell_listener" output="screen" />
+    <node pkg="challenge_demo_2014" type="doorbell_listener.py" name="doorbell_listener" output="screen" machine="amigo1" />
 
 </launch>
