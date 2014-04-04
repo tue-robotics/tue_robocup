@@ -24,6 +24,7 @@
 	<remap from="rgb_image" to="/amigo/top_kinect/rgb/image_rect_color" />
 	<remap from="depth_image" to="/amigo/top_kinect/depth_registered/image_rect" />
 	<remap from="cam_info" to="/amigo/top_kinect/rgb/camera_info" />
+	<remap from="output" to="/amigo/top_kinect/rgbd" />
 	<param name="max_fps" value="30" />
     </node>
 
