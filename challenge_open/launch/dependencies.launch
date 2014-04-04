@@ -10,7 +10,7 @@
 
     <!-- (This includes loading the transport plugin and tf plugin) -->
     <include file="$(find wire_volume)/launch/start.launch">
-        <arg name="gdb" value="$(arg gdb)" />
+<!--        <arg name="gdb" value="true" /> -->
     </include>
 
     <!-- Insert heightmap into the world model -->
@@ -19,7 +19,12 @@
     <!-- Vis Plugin Wire Volume loader -->
     <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
 
-    <!-- Load fitter plugin (for dynamic updates) -->
-    <include file="$(find wire_fitter)/launch/load_kinect_plugin.launch"/>
+    <!-- Launch the streaming server (depth image) -->
+    <node name="rgbd_transport_server" pkg="rgbd_transport" type="server">
+	<remap from="rgb_image" to="/amigo/top_kinect/rgb/image_rect_color" />
+	<remap from="depth_image" to="/amigo/top_kinect/depth_registered/image_rect" />
+	<remap from="cam_info" to="/amigo/top_kinect/rgb/camera_info" />
+	<param name="max_fps" value="30" />
+    </node>
 
 </launch>
