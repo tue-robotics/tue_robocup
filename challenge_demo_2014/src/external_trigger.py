@@ -108,8 +108,8 @@ class PackagePose(smach.State):
     def execute(self, gl):        
         rospy.loginfo("start moving to package pose")   
 
-        resultL = self.robot.leftArm.send_goal( 0.18,  0.2, 0.75, 0, 0, 0, 60)
-        resultR = self.robot.rightArm.send_goal(0.18, -0.2, 0.75, 0, 0, 0, 60)
+        resultL = self.robot.leftArm.send_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
+        resultR = self.robot.rightArm.send_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
 
         if not resultL:
             rospy.loginfo("error sending leftArm goal")
