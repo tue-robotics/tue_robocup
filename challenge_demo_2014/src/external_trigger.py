@@ -108,8 +108,8 @@ class PackagePose(smach.State):
     def execute(self, gl):        
         rospy.loginfo("start moving to package pose")   
 
-        resultL = self.robot.leftArm.send_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
-        resultR = self.robot.rightArm.send_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
+        resultL = self.robot.leftArm.send_joint_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
+        resultR = self.robot.rightArm.send_joint_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
 
         if not resultL:
             rospy.loginfo("error sending leftArm goal")
@@ -211,7 +211,7 @@ class ReceivePackage(smach.StateMachine):
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
             
             smach.StateMachine.add("SAY_TRIGGER_ALLOW", 
-                                    states.Say(robot,"There is somebody at the door, I must hurry", block=False),
+                                    states.Say(robot,"My owned said I could open the door, I'm on my way!", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_DOOR'})
 
             smach.StateMachine.add("SAY_TRIGGER_DENY", 
@@ -247,7 +247,7 @@ class ReceivePackage(smach.StateMachine):
                                                     'preempted':'failed'})
             
             smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
-                                    states.Say(robot,"Thank you, I will notify my owner", block=False),
+                                    states.Say(robot,"Thank you, I will hold on to the package until my owner comes home.", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_START_2'})
 
             smach.StateMachine.add('NAVIGATE_TO_START_2',
@@ -270,6 +270,10 @@ class GivePackage(smach.StateMachine):
 
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+        self.robot = robot
+
+        self.query_start1 = Conjunction(  Compound("=", "Waypoint",        Compound("start", "a")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
         query_backup= Compound("waypoint", "user_backup",   Compound("pose_2d", "X", "Y", "Phi"))
         query_owner = Conjunction(Compound("current_person", "ObjectID"),
@@ -282,11 +286,11 @@ class GivePackage(smach.StateMachine):
                                                     "timed_out":"SAY_PERSON_TIMEOUT"})
 
             smach.StateMachine.add("SAY_OWNER_FOUND", 
-                                    states.Say(robot,"Hey, I can see that my owner arrived home, I will give this package to him", block=False),
+                                    states.Say(robot,"Hey, the house notified me that my owned entered. I will deliver the package to him.", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER'})
 
             smach.StateMachine.add("SAY_PERSON_TIMEOUT", 
-                                    states.Say(robot,"It took too long, I better go to where he usually is", block=False),
+                                    states.Say(robot,"It took too long, I better go to where he usually is.", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
             smach.StateMachine.add('NAVIGATE_TO_OWNER',
@@ -312,8 +316,19 @@ class GivePackage(smach.StateMachine):
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
             smach.StateMachine.add("SAY_PERSON_FOUND", 
-                                    states.Say(robot,"Hello owner, I have a package for you", block=False),
-                                    transitions={   'spoken':'succeeded'})
+                                    states.Say(robot,"Hello owner, I have a package for you..", block=True),
+                                    transitions={   'spoken':'SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN'})
+
+            smach.StateMachine.add("SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN", 
+                                    states.Say(robot,"Call me when you need me again.", block=False),
+                                    transitions={   'spoken':'NAVIGATE_TRY_ONE'})
+
+            smach.StateMachine.add('NAVIGATE_TRY_ONE',
+                                    states.NavigateGeneric(self.robot, goal_query=self.query_start1),
+                                    transitions={   "arrived":          'succeeded',
+                                                    "unreachable":      'SAY_GOAL_UNREACHABLE',
+                                                    "preempted":        'failed',
+                                                    "goal_not_defined": 'SAY_GOAL_NOT_DEFINED'})
 
             # navigation states
             smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
