@@ -21,14 +21,19 @@ amigo3:
 
     To test audio I/O and speech interpreter, run test_audio in an amigo-console
 
-    --------------------
-    OPTIONAL:
-    In case the new tue_pocketsphinx will crash, with this launch file, error could be traced. 
-    In case of crash, get Sjoerd/me and/or email the output in the terminal.
-    Launch file:
-        roslaunch tue_pocketsphinx start.launch gdb:=true
-    --------------------
+    rosrun challenge_egpsr egpsr.py 
 
+    ------------------
+    ----  OPTIONAL ---
+
+    - Set initial location (for egpsr 3 possibilities for 3 robots)
+    rosrun challenge_egpsr egpsr.py 1  (rgo2014: office)
+    or
+    rosrun challenge_egpsr egpsr.py 2  (rgo2014: kitchen)
+    or
+    rosrun challenge_egpsr egpsr.py 3  (rgo2014: bedroom)
+
+    - Change arm.
     rosrun challenge_egpsr egpsr.py _arm:=left
 
     or 
