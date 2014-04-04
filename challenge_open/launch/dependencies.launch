@@ -10,7 +10,7 @@
 
     <!-- (This includes loading the transport plugin and tf plugin) -->
     <include file="$(find wire_volume)/launch/start.launch">
-<!--        <arg name="gdb" value="true" /> -->
+        <arg name="gdb" value="$(arg gdb)" />
     </include>
 
     <!-- Insert heightmap into the world model -->
@@ -18,5 +18,8 @@
 
     <!-- Vis Plugin Wire Volume loader -->
     <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
+
+    <!-- Load fitter plugin (for dynamic updates) -->
+    <include file="$(find wire_fitter)/launch/load_kinect_plugin.launch"/>
 
 </launch>
