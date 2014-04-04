@@ -1,0 +1,20 @@
+# Responsible: Sjoerd & Rein
+
+amigo2:
+
+    roslaunch amigo_launch_files all_etherCAT_hardware.launch
+
+amigo1:
+
+    # Make sure hydro's costmap_2d is used
+    ln -s ~/ros/groovy/rosbuild_ws/tue/user/Rein/catkin_packages/hydro_navigation ~/ros/groovy/catkin_ws/src/
+
+    # restart ssh session
+    amiddle-open # starts custom middleware and dependencies.launch 
+
+    # start the challenge
+    rosrun challenge_open_2014 challenge_open_2014.py
+
+    # Clean up
+    rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
+

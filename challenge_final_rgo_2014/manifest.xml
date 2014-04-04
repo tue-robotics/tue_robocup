@@ -1,0 +1,25 @@
+<package>
+  <description brief="challenge_final_rgo_2014">
+
+     Amigo is first guided around the apartment. 
+     The environment is mapped and semantically annotated. Objects are bar, table, kitchenblock, trashbin.
+     Then, Amigo is instructed to go to on of the newly learned objects (e.g. the bar).
+     Once there, the object is moved, Amigo tracks it, and is instructed to go tho the bar again.
+     Because the object is tracked, Amigo know where to move again.
+     Then, Amigo is instructed to grasp something from the table and then to drop that object in the trashbin (which is also newly learned)
+
+  </description>
+  <author>Sjoerd van den Dries</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/challenge_open_2014</url>
+  <depend package="amigo_skill_server"/>
+  <depend package="nav_msgs"/>
+  <depend package="wire_volume"/>
+  <depend package="wire_fitter"/>
+  <depend package="wire_volume_viz"/>
+  <depend package="robot_smach_states"/>
+
+</package>
+
+

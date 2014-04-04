@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="gdb" default="false"/>
+    <arg if="$(arg gdb)" name="launch-prefix" value="gdb -ex run --args"/>
+    <arg unless="$(arg gdb)" name="launch-prefix" value=""/>
+
+    <!-- WIRE VOLUME -->  
+
+    <!-- (This includes loading the transport plugin and tf plugin) -->
+    <include file="$(find wire_volume)/launch/start.launch">
+<!--        <arg name="gdb" value="true" /> -->
+    </include>
+
+    <!-- Insert heightmap into the world model -->
+    <node name="height_map_loader" pkg="wire_fitter" type="height_map_to_world_model" args="$(find amigo_maps)/wire_volume/rgo2014.pgm 0.025 2 -4 -2"/>
+
+    <!-- Vis Plugin Wire Volume loader -->
+    <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
+
+</launch>

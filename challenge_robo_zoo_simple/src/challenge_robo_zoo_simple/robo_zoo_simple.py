@@ -38,13 +38,17 @@ class RoboZooSimple(smach.StateMachine):
         The list after 'robot' in its constructor is a list of the possible outcomes and should match with the possible outcomes in its transitions.
         RandomOutcome takes a random item from this list as an outcome.
 
+    It could be handy 
+
     IDEAS:
-        - Reset everything before SELECT_RANDOM
+        - DONE: Reset everything before SELECT_RANDOM
         - Walk like an egyptian (with arms and music)
         - DONE: Flash lights
-        - wave (smile and wave boys)
+        - DONE: wave (smile and wave boys)
         - Look at person and say something funny
         - Act like a monkey (with arms and sound)
+        - Use AR markers to select actions
+        - Photo pose with speech
     """
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
