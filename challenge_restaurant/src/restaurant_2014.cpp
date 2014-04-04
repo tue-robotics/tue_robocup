@@ -1330,8 +1330,7 @@ std::string getIdFromWorldModel(std::vector<wire::PropertySet>& objects, std::st
             else if (class_label == "glam_up") class_label = "glamup";
             else if (class_label == "orange_juice") class_label = "orangejuice";
             else if (class_label == "fruit_juice") class_label = "fruitjuice";
-            else if (class_label == "noodle_sauce") class_label = "noodlesauce";
-            else if (class_label == "cat_food") class_label = "catfood";
+            else if (class_label == "chewing_gums") class_label = "chewinggums";
 
             // Probability of this label
             double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
@@ -1739,13 +1738,12 @@ int main(int argc, char **argv) {
                 //! Look for objects
                 if (i == 0)
                 {
-					// HARDCODED: food
+                    // HARDCODED: snacks
 					// service call to perception: noodle_sauce, cat_food, dumplings, tacos
 					pein_srvs::SetObjects obj_srv;
-					obj_srv.request.objects.push_back("noodle_sauce");
-					obj_srv.request.objects.push_back("cat_food");
-					obj_srv.request.objects.push_back("dumplings");
-					obj_srv.request.objects.push_back("tacos");
+                    obj_srv.request.objects.push_back("chocolates");
+                    obj_srv.request.objects.push_back("chewing_gums");
+                    obj_srv.request.objects.push_back("peanuts");
 					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
 				}
 				else if (i == 1)
