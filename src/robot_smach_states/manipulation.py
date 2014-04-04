@@ -406,6 +406,59 @@ class GrabMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'failed',
                                      'failed'       :   'failed'})
 
+class GrabMachineWithoutBase(smach.StateMachine):
+    def __init__(self, side, robot, grabpoint_query):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        self.robot = robot
+    
+        if isinstance(side, basestring):
+            if side == "left":
+                self.side = self.robot.leftArm
+            elif side == "right":
+                self.side = self.robot.rightArm
+            else:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        else:           
+            self.side = side
+        
+        self.grabpoint_query = grabpoint_query
+        '''check check input and output keys'''
+        with self:
+            smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
+                        transitions={'succeeded'    :   'OPEN_GRIPPER',
+                                     'failed'       :   'failed'})
+
+            smach.StateMachine.add('OPEN_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN, timeout=0.0),
+                        transitions={'succeeded'    :   'PRE_GRASP',
+                                     'failed'       :   'PRE_GRASP'})
+            
+            smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(self.robot, self.side, self.grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+                        transitions={'succeeded'    :   'GRAB',
+                                     'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
+        
+            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grabpoint_query),
+                        transitions={'grab_succeeded':  'CLOSE_GRIPPER',
+                                     'grab_failed'   :  'CLOSE_GRIPPER',
+                                     'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, grabpoint_query=self.grabpoint_query),
+                        transitions={'succeeded'    :   'LIFT',
+                                     'failed'       :   'LIFT'})
+
+            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
+                        transitions={'succeeded':'RETRACT','failed':'RETRACT'})
+
+            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
+                        transitions={'succeeded':'CARR_POS','failed':'CARR_POS'})
+        
+            smach.StateMachine.add('CARR_POS', Carrying_pose(self.side, self.robot),
+                        transitions={'succeeded':'succeeded','failed':'CLOSE_GRIPPER_UPON_FAIL'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_UPON_FAIL', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, timeout=0.0),
+                        transitions={'succeeded'    :   'failed',
+                                     'failed'       :   'failed'})
             
 class Grab(smach.State):
     def __init__(self, side, robot, grabpoint_query):
