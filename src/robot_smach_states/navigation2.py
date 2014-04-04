@@ -59,7 +59,7 @@ class executePlan(smach.State):
     def execute(self, userdate):
 
         time_path_free = rospy.Time.now()
-        count = 5
+        count = 10
         r = rospy.Rate(1.0) # 10hz
         while not rospy.is_shutdown():
 
