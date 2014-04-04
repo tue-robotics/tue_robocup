@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_open')
+import roslib; roslib.load_manifest('challenge_final_rgo_2014')
 import rospy, sys
 
 import smach
@@ -9,7 +9,6 @@ from robot_skills.reasoner  import Conjunction, Compound
 from math import cos, sin
 from geometry_msgs.msg import *
 
-from robot_skills.amigo import Amigo
 import robot_smach_states as states
 
 from speech_interpreter.srv import AskUser
@@ -33,7 +32,7 @@ class AskOpenChallenge(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.locations = ["bar","kitchen_block","table"]
+        self.locations = ["bar","bar","kitchen_block","table"] #Go to the bar twice! The bar will be moved, tracked and then we must go there again, to its new location
 
     def execute(self, userdata=None):
 
@@ -42,11 +41,9 @@ class AskOpenChallenge(smach.State):
         try:
             self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
             
-            for x in range(0,len(self.response.keys)):
-                if self.response.keys[x] == "answer":
-                    response_answer = self.response.values[x]
+            response_answer = self.response.get("answer", "no_answer")
 
-            if response_answer == "no_answer" or response_answer == "wrong_answer" or response_answer == "":
+            if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
                 if self.locations:
                     target = self.locations.pop(0) #Get the first item from the list
                     self.robot.speech.speak("I was not able to understand you but I'll drive to %s."%target)
@@ -68,50 +65,93 @@ class AskOpenChallenge(smach.State):
 
         return "location_selected"
 
+class AskAndNavigate(smach.StateMachine):
+    def __init__(self, robot, turn_before_ask=True):
+        smach.StateMachine.__init__(self, outcomes=["Done","Failed"])
 
-#######################################################################################################################################################################################################
-
-class OpenChallenge2014(smach.StateMachine):
-
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['success','aborted'])
+        self.robot = robot
 
         with self:
-
-            smach.StateMachine.add( "TURN_AROUND",
+            if turn_before_ask:
+                smach.StateMachine.add( "TURN_AROUND",
                                     TurnAround(robot),
                                     transitions={   "Done"      :"ASK_OPENCHALLENGE", 
                                                     "Aborted"   :"ASK_OPENCHALLENGE", 
                                                     "Failed"    :"ASK_OPENCHALLENGE"})
 
             smach.StateMachine.add("ASK_OPENCHALLENGE",
-                                AskOpenChallenge(robot),
-                                transitions={'location_selected':   'INITIALIZE',
-                                             'all_visited':         'success'})
+                                    AskOpenChallenge(robot),
+                                    transitions={'location_selected':   'INITIALIZE',
+                                                 'all_visited':         'success'})
 
             smach.StateMachine.add("INITIALIZE",
-                                states.ResetArmsSpindleHead(robot),
-                                transitions={'done'             :   'NAVIGATE_TO_TARGET'})
+                                    states.ResetArmsSpindleHead(robot),
+                                    transitions={'done'             :   'NAVIGATE_TO_TARGET'})
 
             smach.StateMachine.add("NAVIGATE_TO_TARGET",
-                                states.NavigateWithConstraints(robot),
-                                transitions={'arrived'          :   'SAY_ARRIVED',
-                                             'unreachable'      :   'SAY_UNREACHABLE',
-                                             'goal_not_defined' :   'SAY_UNDEFINED'})              
+                                    states.NavigateWithConstraints(robot),
+                                    transitions={'arrived'          :   'SAY_ARRIVED',
+                                                 'unreachable'      :   'SAY_UNREACHABLE',
+                                                 'goal_not_defined' :   'SAY_UNDEFINED'})              
 
             smach.StateMachine.add( "SAY_ARRIVED",
                                     states.Say(robot, ["Hey, I reached my goal."]),
-                                    transitions={"spoken":"TURN_AROUND"})          
+                                    transitions={"spoken":"Done"})          
           
             smach.StateMachine.add( "SAY_UNREACHABLE",
                                     states.Say(robot, ["I can't reach the goal you asked me to go to"]),
-                                    transitions={"spoken":"TURN_AROUND"})          
+                                    transitions={"spoken":"Failed"})          
 
             smach.StateMachine.add( "SAY_UNDEFINED",
                                     states.Say(robot, ["I can't reach the location you asked me to go to."]),
-                                    transitions={"spoken":"TURN_AROUND"})
+                                    transitions={"spoken":"Failed"})
+#######################################################################################################################################################################################################
+
+class FinalRgo2014(smach.StateMachine):
+
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['success','aborted'])
+        self.robot = robot
+
+        side = robot.leftArm
+
+        object_query = Conjunction(
+                                    Compound( "property_expected", "ObjectID", "class_label", "Anything"), #TODO: Specify class?
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        with self:
+            smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
+                                    AskAndNavigate(robot),
+                                    transitions={   "Done"      :"ASK_AND_NAV_2", 
+                                                    "Aborted"   :"aborted", 
+                                                    "Failed"    :"ASK_AND_NAV_2"})
+            #Amigo arrived at the bar. 
+            smach.StateMachine.add( "ASK_AND_NAV_2", #The bar is moved and amigo is asked to go to the bar once more, after it moved and was tracked in the WM
+                                    AskAndNavigate(robot),
+                                    transitions={   "Done"      :"ASK_AND_NAV_3", 
+                                                    "Aborted"   :"ASK_AND_NAV_3", 
+                                                    "Failed"    :"ASK_AND_NAV_3"}) 
+            
+            smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
+                                    AskAndNavigate(robot),
+                                    transitions={   "Done"      :"GRAB_OBJECT", 
+                                                    "Aborted"   :"ASK_AND_NAV_2", 
+                                                    "Failed"    :"ASK_AND_NAV_2"}) 
+            @smach.cb_interface(outcomes="done")
+            def look_down(*args, **kwargs):
+                robot.head.look_down()
+                return "done"
+            smach.StateMachine.add( "LOOK_FOR_DRINK",
+                                    smach.CBState(look_down), 
+                                    transitions={   'done'      :'GRAB_OBJECT'})
+            
+            smach.StateMachine.add( "GRAB_OBJECT",
+                                    states.GrabMachine(side, robot, object_query),
+                                    transitions={   'succeeded' :'Done',
+                                                    'failed'    :'Failed' })
 
 
 if __name__ == "__main__":
     rospy.init_node('open_challenge_2014')
-    states.util.startup(OpenChallenge2014)
+    states.util.startup(FinalRgo2014)
