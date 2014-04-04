@@ -4,6 +4,7 @@ import rospy, sys
 
 import smach
 
+from robot_skills.arms import State as ArmState
 from robot_skills.reasoner  import Conjunction, Compound, Sequence
 
 from math import cos, sin
@@ -68,7 +69,7 @@ class AskOpenChallenge(smach.State):
         return "location_selected"
 
 class AskAndNavigate(smach.StateMachine):
-    def __init__(self, robot, turn_before_ask=True):
+    def __init__(self, robot, turn_before_ask=False):
         smach.StateMachine.__init__(self, outcomes=["Done","Failed"])
 
         self.robot = robot
@@ -137,6 +138,7 @@ class FinalRgo2014(smach.StateMachine):
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"GRAB_OBJECT", 
                                                     "Failed"    :"ASK_AND_NAV_2"}) 
+            
             @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
                 robot.head.look_down()
@@ -147,8 +149,37 @@ class FinalRgo2014(smach.StateMachine):
             
             smach.StateMachine.add( "GRAB_OBJECT",
                                     states.GrabMachine(side, robot, object_query),
-                                    transitions={   'succeeded' :'Done',
+                                    transitions={   'succeeded' :'SET_PARAMS',
                                                     'failed'    :'Failed' })
+
+            @smach.cb_interface(outcomes=["done"])
+            def set_nav_constraints(*args, **kwargs):
+                self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.45^2' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
+                self.robot.base2.pc.frame      = target
+
+                self.robot.base2.oc.look_at    = Point()
+                self.robot.base2.oc.frame      = target
+                return "done"
+
+            smach.StateMachine.add( "SET_PARAMS",
+                                    smach.CBState(set_nav_constraints), 
+                                    transitions={   'done'      :'NAVIGATE_TO_TRASHBIN'})
+
+            smach.StateMachine.add("NAVIGATE_TO_TRASHBIN",
+                                    states.NavigateWithConstraints(robot),
+                                    transitions={'arrived'          :   'ARM_TO_DROPPOS',
+                                                 'unreachable'      :   'Failed',
+                                                 'goal_not_defined' :   'Failed'}) 
+
+            smach.StateMachine.add("ARM_TO_DROPPOS",
+                                    states.ArmToJointPos(robot, side, [-0.100, 0.400, 0.600, 1.130, -0.300, 0.100, 0.000], timeout=4),
+                                    transitions={'done'             :'OPEN_GRIPPER',
+                                                 'failed'           :'Failed' })
+
+            smach.StateMachine.add( "OPEN_GRIPPER",
+                                    states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
+                                    transitions={   'succeeded'         :'RESET_ARM1',
+                                                    'failed'            :'RESET_ARM1' })
 
 
 if __name__ == "__main__":
