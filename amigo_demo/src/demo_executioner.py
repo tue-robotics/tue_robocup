@@ -123,7 +123,7 @@ sent_keymap['!'] = "OUCH"
 sent_keymap['Y'] = "YES"
 sent_keymap['p'] = "PASS"
 
-@dec.register_robot_key("M", "Merkel demo cheese holding pose")
+@dec.register_robot_key("K", "KAAS: Merkel demo cheese holding pose")
 def cheese_plank_pose(robot):
     robot.lights.set_color(1,0.25,0)
     robot.spindle.send_goal(0.4)
@@ -137,7 +137,7 @@ def cheese_plank_pose(robot):
     rospy.sleep(5)
     robot.rightArm.send_gripper_goal_close()
 
-@dec.register_robot_key("N", "Say text for Merkel")
+@dec.register_robot_key("M", "MERKEL Say text for Merkel")
 def merkel_sentence(robot):
     #merkel_text = """Wir begrüßen Sie herzlich im Holland High Tech Haus! Überzeugen Sie sich dass Holland viel mehr ist als Windmühlen Käse und Tulpen. Holland ist High Tech"""
     #robot.speech.speak( merkel_text,"de")
