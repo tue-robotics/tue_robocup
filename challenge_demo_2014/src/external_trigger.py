@@ -320,8 +320,12 @@ class GivePackage(smach.StateMachine):
                                     transitions={   'spoken':'SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN'})
 
             smach.StateMachine.add("SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN", 
-                                    states.Say(robot,"Call me when you need me again.", block=False),
-                                    transitions={   'spoken':'NAVIGATE_TRY_ONE'})
+                                    states.Say(robot,"Call me when you need me again.", block=True),
+                                    transitions={   'spoken':'RESET_STATE'})
+
+            smach.StateMachine.add('RESET_STATE',
+                                    states.ResetArmsSpindleHead(self.robot),
+                                    transitions={   "done":          'NAVIGATE_TRY_ONE'})
 
             smach.StateMachine.add('NAVIGATE_TRY_ONE',
                                     states.NavigateGeneric(self.robot, goal_query=self.query_start1),
