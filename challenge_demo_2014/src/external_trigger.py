@@ -11,7 +11,6 @@ import robot_smach_states as states
 from robot_skills.reasoner import Conjunction, Compound, Sequence
 from robot_smach_states.util.startup import startup
 import robot_smach_states.util.reasoning_helpers as urh
-import std_msgs.msg
 import perception_srvs.srv
 
 class NavigateToStartRobust(smach.StateMachine):
@@ -63,40 +62,6 @@ class NavigateToStartRobust(smach.StateMachine):
             smach.StateMachine.add("SAY_NAVIGATE_FAILED_THREE", 
                                     states.Say(robot,"I was not able to reach my goal, sorry for that", block=False),
                                     transitions={   'spoken':'unreachable'})
-
-class WaitForTrigger(smach.State):
-
-    def __init__(self, robot, triggers):
-        smach.State.__init__(self, 
-                             outcomes=triggers+['preempted'])
-        self.robot = robot
-        self.triggers = triggers
-
-        # Get the ~private namespace parameters from command line or launch file.
-        self.rate = float(rospy.get_param('~rate', '1.0'))
-        topic     = rospy.get_param('~topic', 'trigger')
-        
-        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
-
-        rospy.loginfo('topic: /%s', topic)
-        rospy.loginfo('rate:  %d Hz', self.rate)
-
-    def execute(self, userdata):
-        self.trigger_received = False
-
-        while not rospy.is_shutdown() and not self.trigger_received:
-            rospy.sleep(1/self.rate)
-
-        if self.trigger_received:
-            return self.trigger_received
-        else:
-            return 'preempted'
-
-    def callback(self, data):
-        # Simply print out values in our custom message.
-        rospy.loginfo('trigger_received: %s', data.data)
-        if data.data in self.triggers:
-            self.trigger_received = data.data
 
 class PackagePose(smach.State):
 
@@ -195,7 +160,7 @@ class ReceivePackage(smach.StateMachine):
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
-                                    WaitForTrigger(robot, ['allow', 'deny', 'doorbell']),
+                                    states.WaitForTrigger(robot, ['allow', 'deny', 'doorbell']),
                                     transitions={   'allow':    'SAY_TRIGGER_ALLOW',
                                                     'deny':     'SAY_TRIGGER_DENY',
                                                     'doorbell' : 'WAIT_FOR_DOORBELL_SOUND',
