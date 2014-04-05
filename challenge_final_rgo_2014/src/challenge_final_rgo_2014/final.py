@@ -118,7 +118,7 @@ class AskChallengeObject(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.objects = ["coke", "ice_tea", "fruit_juice", "cat_food"] #TODO: set all options
+        self.objects = ["milk", "coke", "ice_tea", "fruit_juice", "cat_food"] #TODO: set all options
 
     def execute(self, userdata=None):
 
@@ -196,11 +196,11 @@ class FinalRgo2014(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints_1(*args, **kwargs):
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30'
-                self.robot.base2.pc.frame      = "coke"
+                self.robot.base2.pc.frame      = "milk" #TODO: don't ALWAYS go to the milk
 
                 self.robot.base2.oc.look_at    = Point()
                 self.robot.base2.oc.angle_offset = -0.3805063771123649
-                self.robot.base2.oc.frame      = target
+                self.robot.base2.oc.frame      = "milk"#TODO: don't ALWAYS go to the milk
                 return "done"
 
             smach.StateMachine.add( "SET_PARAMS_1",
