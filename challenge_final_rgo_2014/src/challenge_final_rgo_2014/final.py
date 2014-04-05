@@ -274,7 +274,7 @@ class FinalRgo2014(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints(*args, **kwargs):
-                self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.45^2' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
+                self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
                 self.robot.base2.pc.frame      = "trash_bin"
                 self.robot.base2.oc.look_at    = Point()
                 self.robot.base2.oc.frame      = "trash_bin"
