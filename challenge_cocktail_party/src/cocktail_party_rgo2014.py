@@ -17,6 +17,7 @@ from geometry_msgs.msg import PoseStamped, Pose
 from pein_srvs.srv import SetObjects
 
 
+
 grasp_arm = "left"
 #grasp_arm = "right"
 

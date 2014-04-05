@@ -14,6 +14,7 @@
   <depend package="wire_jpl"/>
   <depend package="state_viewer"/>
   <depend package="fast_simulator"/>
+  <depend package="pein_srvs"/>
 
 
 </package>
