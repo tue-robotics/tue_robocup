@@ -99,8 +99,12 @@ class AskAndNavigate(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def toggle_dynamic_off(*args, **kwargs):
                 #toggle dynamic update
-                service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
-                service(FitterStartStopRequest(False, "bar"))
+                try:
+                    service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
+                    service(FitterStartStopRequest(False, "bar"))
+                except Exception, e:
+                    robot.speech.speak("I could not track the object")
+                    rospy.logerr("/wire_fitter/fitter_start_stop not called succesfully: {0}".format(e))
                 return "done"            
             smach.StateMachine.add( "TOGGLE_DYNAMIC_OFF",
                                     smach.CBState(toggle_dynamic_off), 
@@ -194,10 +198,14 @@ class FinalRgo2014(smach.StateMachine):
             
             @smach.cb_interface(outcomes=["done"])
             def toggle_dynamic_on(*args, **kwargs):
-                #toggle dynamic update
-                service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
-                service(FitterStartStopRequest(True, "bar"))
-                return "done"
+                #toggle dynamic update                
+                try:
+                    service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
+                    service(FitterStartStopRequest(True, "bar"))
+                except Exception, e:
+                    robot.speech.speak("I could not track the object")
+                    rospy.logerr("/wire_fitter/fitter_start_stop not called succesfully: {0}".format(e))
+                return "done"  
 
             smach.StateMachine.add( "TOGGLE_DYNAMIC",
                                     smach.CBState(toggle_dynamic_on), 
