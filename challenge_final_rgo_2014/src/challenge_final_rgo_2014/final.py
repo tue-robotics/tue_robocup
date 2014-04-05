@@ -188,8 +188,8 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
                                     AskAndNavigate(robot, turn_before_ask=True),
-                                    transitions={   "Done"      :"WAIT_FOR_TRIGGER2", 
-                                                    "Failed"    :"WAIT_FOR_TRIGGER2"})
+                                    transitions={   "Done"      :"TOGGLE_DYNAMIC", 
+                                                    "Failed"    :"TOGGLE_DYNAMIC"})
 
             smach.StateMachine.add("WAIT_FOR_TRIGGER2", 
                                     states.WaitForTrigger(robot, ['start_challenge']),
@@ -200,8 +200,8 @@ class FinalRgo2014(smach.StateMachine):
             #Amigo arrived at the bar. 
             smach.StateMachine.add( "ASK_AND_NAV_2", #The bar is moved and amigo is asked to go to the bar once more, after it moved and was tracked in the WM
                                     AskAndNavigate(robot),
-                                    transitions={   "Done"      :"TOGGLE_DYNAMIC", 
-                                                    "Failed"    :"TOGGLE_DYNAMIC"}) 
+                                    transitions={   "Done"      :"ASK_AND_NAV_3", 
+                                                    "Failed"    :"ASK_AND_NAV_3"}) 
             
             @smach.cb_interface(outcomes=["done"])
             def toggle_dynamic_on(*args, **kwargs):
@@ -216,7 +216,7 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "TOGGLE_DYNAMIC",
                                     smach.CBState(toggle_dynamic_on), 
-                                    transitions={   'done'      :'ASK_AND_NAV_3'})
+                                    transitions={   'done'      :'WAIT_FOR_TRIGGER2'})
 
             smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
                                     AskAndNavigate(robot),
