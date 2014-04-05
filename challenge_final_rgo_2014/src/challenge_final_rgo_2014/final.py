@@ -177,8 +177,8 @@ class FinalRgo2014(smach.StateMachine):
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
-                                    states.WaitForTrigger(robot, ['start_executive']),
-                                    transitions={   'start_executive':    'ASK_AND_NAV_1',
+                                    states.WaitForTrigger(robot, ['start_challenge']),
+                                    transitions={   'start_challenge':    'ASK_AND_NAV_1',
                                                     'preempted' :'ASK_AND_NAV_1'})
 
 
