@@ -160,7 +160,7 @@ class FinalRgo2014(smach.StateMachine):
 
         side = robot.leftArm
 
-        object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "coke"),
+        object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "milk"),
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
