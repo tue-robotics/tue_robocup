@@ -145,9 +145,11 @@ class WaitForTrigger(smach.State):
 
     def callback(self, data):
         # Simply print out values in our custom message.
-        rospy.loginfo('trigger_received: %s', data.data)
         if data.data in self.triggers:
+            rospy.loginfo('trigger received: %s', data.data)
             self.trigger_received = data.data
+        else:
+            rospy.loginfo('wrong trigger received: %s', data.data)
 
 ############################## State Wait ##############################
 class Wait_time(smach.State):
