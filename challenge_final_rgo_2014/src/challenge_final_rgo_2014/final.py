@@ -163,6 +163,12 @@ class FinalRgo2014(smach.StateMachine):
         object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "coke"),
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
+            smach.StateMachine.add("WAIT_FOR_TRIGGER", 
+                                    states.WaitForTrigger(robot, ['start_executive']),
+                                    transitions={   'start_executive':    'ASK_AND_NAV_1',
+                                                    'preempted' :'ASK_AND_NAV_1'})
+
+
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"ASK_AND_NAV_2", 

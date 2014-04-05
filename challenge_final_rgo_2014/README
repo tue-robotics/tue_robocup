@@ -18,3 +18,4 @@ amigo1:
     # Clean up
     rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
 
+The executive will wait for a string "start_execute" on topic /trigger
