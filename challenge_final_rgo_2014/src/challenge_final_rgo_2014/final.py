@@ -277,6 +277,7 @@ class FinalRgo2014(smach.StateMachine):
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
                 self.robot.base2.pc.frame      = "trash_bin"
                 self.robot.base2.oc.look_at    = Point()
+                self.robot.base2.oc.angle_offset = -0.3805063771123649
                 self.robot.base2.oc.frame      = "trash_bin"
                 return "done"
 
