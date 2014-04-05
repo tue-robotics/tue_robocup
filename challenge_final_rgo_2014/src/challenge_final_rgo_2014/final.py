@@ -292,21 +292,21 @@ class FinalRgo2014(smach.StateMachine):
                                                  'goal_not_defined' :   'SAY_UNDEFINED'})        
 
             smach.StateMachine.add( "SAY_UNREACHABLE",
-                                    states.Say(robot, ["I can't reach the location I was supposed to go to"]),
+                                    states.Say(robot, ["I cannot get there, but I will try again."]),
                                     transitions={"spoken":"SET_PARAMS"})        
 
             smach.StateMachine.add( "SAY_UNDEFINED",
-                                    states.Say(robot, ["I don't know where to go, sorry"]),
+                                    states.Say(robot, ["I cannot get there, but I will try again."]),
                                     transitions={"spoken":"SET_PARAMS"}) 
 
             smach.StateMachine.add("ARM_TO_DROPPOS",
-                                    states.ArmToJointPos(robot, side, [-0.100, 0.400, 0.600, 1.130, -0.300, 0.100, 0.000], timeout=4),
+                                    states.ArmToJointPos(robot, side, [-0.100, 0.400, 0.600, 1.130, -0.300, 0.100, 0.000], timeout=6),
                                     transitions={'done'             :'OPEN_GRIPPER',
                                                  'failed'           :'SAY_CANNOT_DROP' })       
 
             smach.StateMachine.add( "SAY_CANNOT_DROP",
-                                    states.Say(robot, ["I can't drop the object, sorry"]),
-                                    transitions={"spoken":"TURN_AROUND"}) 
+                                    states.Say(robot, ["Something is wrong with my arm, so I will just drop the object now. Sorry!"]),
+                                    transitions={"spoken":"OPEN_GRIPPER"}) 
 
             smach.StateMachine.add( "OPEN_GRIPPER",
                                     states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
