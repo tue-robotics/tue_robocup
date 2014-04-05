@@ -39,7 +39,7 @@ class AskChallengeDestination(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.head.look_up()
+        self.robot.head.set_pan_tilt(0,0.2)
         
         try:
             self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
@@ -188,8 +188,15 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
                                     AskAndNavigate(robot, turn_before_ask=True),
-                                    transitions={   "Done"      :"ASK_AND_NAV_2", 
-                                                    "Failed"    :"ASK_AND_NAV_2"})
+                                    transitions={   "Done"      :"WAIT_FOR_TRIGGER2", 
+                                                    "Failed"    :"WAIT_FOR_TRIGGER2"})
+
+            smach.StateMachine.add("WAIT_FOR_TRIGGER2", 
+                                    states.WaitForTrigger(robot, ['start_challenge']),
+                                    transitions={   'start_challenge':'ASK_AND_NAV_2',
+                                                    'preempted' :'ASK_AND_NAV_2'})
+
+
             #Amigo arrived at the bar. 
             smach.StateMachine.add( "ASK_AND_NAV_2", #The bar is moved and amigo is asked to go to the bar once more, after it moved and was tracked in the WM
                                     AskAndNavigate(robot),
