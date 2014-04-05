@@ -58,6 +58,7 @@ class AskChallengeDestination(smach.State):
                     return "all_visited"
             else:
                 target = response_answer
+                self.locations.pop(0) #Get the first item from the list
 
         except Exception, e:
             rospy.logerr(e)
