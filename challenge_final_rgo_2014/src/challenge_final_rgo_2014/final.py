@@ -100,7 +100,7 @@ class AskAndNavigate(smach.StateMachine):
             def toggle_dynamic_off(*args, **kwargs):
                 #toggle dynamic update
                 try:
-                    service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
+                    service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStop)
                     service(FitterStartStopRequest(False, "bar"))
                 except Exception, e:
                     robot.speech.speak("I could not track the object")
@@ -200,7 +200,7 @@ class FinalRgo2014(smach.StateMachine):
             def toggle_dynamic_on(*args, **kwargs):
                 #toggle dynamic update                
                 try:
-                    service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
+                    service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStop
                     service(FitterStartStopRequest(True, "bar"))
                 except Exception, e:
                     robot.speech.speak("I could not track the object")
