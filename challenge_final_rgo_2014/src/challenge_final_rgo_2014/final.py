@@ -160,13 +160,8 @@ class FinalRgo2014(smach.StateMachine):
 
         side = robot.leftArm
 
-        # object_query = Conjunction(
-        #                             Compound( "property_expected", "ObjectID", "class_label", "Anything"), #TODO: Specify class?
-        #                             Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-        #                             Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-        object_query = Conjunction(
-                                    Compound("selected_object", "ObjectID"), 
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+        object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "coke"),
+                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
                                     AskAndNavigate(robot),
@@ -189,9 +184,28 @@ class FinalRgo2014(smach.StateMachine):
             
             smach.StateMachine.add("ASK_OBJECT",
                                     AskChallengeObject(robot),
-                                    transitions={'item_selected':   'LOOK_FOR_DRINK',
+                                    transitions={'item_selected':   'SET_PARAMS_1',
                                                  'all_grabbed'  :   'Done'})
 
+            @smach.cb_interface(outcomes=["done"])
+            def set_nav_constraints_1(*args, **kwargs):
+                self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30'
+                self.robot.base2.pc.frame      = "coke"
+
+                self.robot.base2.oc.look_at    = Point()
+                self.robot.base2.oc.angle_offset = -0.3805063771123649
+                self.robot.base2.oc.frame      = target
+                return "done"
+
+            smach.StateMachine.add( "SET_PARAMS_1",
+                                    smach.CBState(set_nav_constraints_1), 
+                                    transitions={   'done'      :'NAVIGATE_TO_OBJECT'})
+
+            smach.StateMachine.add("NAVIGATE_TO_OBJECT",
+                                    states.NavigateWithConstraints(robot),
+                                    transitions={'arrived'          :   'LOOK_FOR_DRINK',
+                                                 'unreachable'      :   'SAY_UNREACHABLE',
+                                                 'goal_not_defined' :   'SAY_UNDEFINED'})        
             @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
                 robot.head.look_down()
@@ -201,17 +215,16 @@ class FinalRgo2014(smach.StateMachine):
                                     transitions={   'done'      :'GRAB_OBJECT'})
             
             smach.StateMachine.add( "GRAB_OBJECT",
-                                    states.GrabMachine(side, robot, object_query),
+                                    states.GrabMachineWithoutBase(side, robot, object_query),
                                     transitions={   'succeeded' :'SET_PARAMS',
                                                     'failed'    :'Failed' })
 
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints(*args, **kwargs):
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.45^2' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
-                self.robot.base2.pc.frame      = target
-
+                self.robot.base2.pc.frame      = "trashbin"
                 self.robot.base2.oc.look_at    = Point()
-                self.robot.base2.oc.frame      = target
+                self.robot.base2.oc.frame      = "trashbin"
                 return "done"
 
             smach.StateMachine.add( "SET_PARAMS",
