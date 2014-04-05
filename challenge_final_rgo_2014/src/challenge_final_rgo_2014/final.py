@@ -222,8 +222,13 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
                                     AskAndNavigate(robot),
-                                    transitions={   "Done"      :"ASK_OBJECT", 
-                                                    "Failed"    :"SAY_FAILED"})        
+                                    transitions={   "Done"      :"WAIT_FOR_TRIGGER3", 
+                                                    "Failed"    :"WAIT_FOR_TRIGGER3"})
+
+            smach.StateMachine.add("WAIT_FOR_TRIGGER3", 
+                                    states.WaitForTrigger(robot, ['start_challenge']),
+                                    transitions={   'start_challenge':'ASK_OBJECT',
+                                                    'preempted' :'ASK_OBJECT'})     
 
             smach.StateMachine.add( "SAY_FAILED",
                                     states.Say(robot, ["I don't know where that thing went, it was just right here!"]),
@@ -334,5 +339,5 @@ if __name__ == "__main__":
             initial_state = ["ASK_OBJECT"]
 
         states.util.startup_final(FinalRgo2014, initial_state)            
-
-    states.util.startup(FinalRgo2014)            
+    else:
+        states.util.startup(FinalRgo2014)            
