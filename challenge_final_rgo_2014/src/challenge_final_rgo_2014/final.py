@@ -287,8 +287,8 @@ class FinalRgo2014(smach.StateMachine):
             smach.StateMachine.add("NAVIGATE_TO_TRASHBIN",
                                     states.NavigateWithConstraints(robot),
                                     transitions={'arrived'          :   'ARM_TO_DROPPOS',
-                                                 'unreachable'      :   'SAY_UNREACHABLE',
-                                                 'goal_not_defined' :   'SAY_UNDEFINED'})        
+                                                 'unreachable'      :   'SET_PARAMS',
+                                                 'goal_not_defined' :   'SET_PARAMS'})        
 
             smach.StateMachine.add( "SAY_UNREACHABLE",
                                     states.Say(robot, ["I can't reach the location I was supposed to go to"]),
