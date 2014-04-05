@@ -149,7 +149,7 @@ class WaitForTrigger(smach.State):
             rospy.loginfo('trigger received: %s', data.data)
             self.trigger_received = data.data
         else:
-            rospy.loginfo('wrong trigger received: %s', data.data)
+            rospy.logwarn('wrong trigger received: %s', data.data)
 
 ############################## State Wait ##############################
 class Wait_time(smach.State):
