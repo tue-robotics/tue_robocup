@@ -162,7 +162,7 @@ class AskChallengeObject(smach.State):
 
         except Exception, e:
             rospy.logerr(e)
-            target = "table"
+            target = "milk"
             self.robot.speech.speak("There is something wrong with my ears, I will get a %s"%target)
 
         return "item_selected"
@@ -310,5 +310,20 @@ class FinalRgo2014(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    rospy.init_node('open_challenge_2014')
-    states.util.startup(FinalRgo2014)
+    rospy.init_node('final_challenge_rgo2014')
+
+    ''' If necessary: set initial state '''
+    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
+    if  len(sys.argv) > 1:
+        if int(sys.argv[1]) == 1:
+            initial_state = ["ASK_AND_NAV_1"]
+        elif int(sys.argv[1]) == 2:
+            initial_state = ["ASK_AND_NAV_2"]
+        elif int(sys.argv[1]) == 3:
+            initial_state = ["ASK_AND_NAV_3"]
+        elif int(sys.argv[1]) == 4:
+            initial_state = ["ASK_OBJECT"]
+
+        states.util.startup_final(FinalRgo2014, initial_state)            
+
+    states.util.startup(FinalRgo2014)            
