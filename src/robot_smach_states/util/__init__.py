@@ -2,7 +2,7 @@
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 
-from startup import startup
+from startup import startup, startup_final
 
 def deprecated(func_or_cls):
     """Print a deprecation warning once on first use of the function.
