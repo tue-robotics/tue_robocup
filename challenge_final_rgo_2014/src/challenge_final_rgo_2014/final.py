@@ -118,7 +118,7 @@ class AskChallengeObject(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.objects = ["milk", "coke", "ice_tea", "fruit_juice", "cat_food"] #TODO: set all options
+        self.objects = self.objects = ["milk", "cup", "fruit_juice"]
 
     def execute(self, userdata=None):
 
