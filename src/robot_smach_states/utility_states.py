@@ -10,6 +10,7 @@ from robot_smach_states.reasoning import Wait_query_true
 
 from psi import Compound
 import robot_skills.util.msg_constructors as msgs
+import std_msgs.msg
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -102,32 +103,51 @@ class Set_initial_pose(smach.State):
 
         return "done"
 
-# class Pause(smach.State):
-#     def __init__(self, robot=None, timeout = 300.0):
-#         # Default timeout of 5 minutes
-#         smach.State.__init__(self, outcomes=['pausing','pause_done','abort'],
-#                                     input_keys=['rate','command'])
-#         self.robot = robot
-#         self.waiting = False # Bool indicating when waiting is turned on, used for timeout
-#         self.timeout = timeout
-    
-#     def execute(self, gl):
+############################## Wait for trigger ##############################
+class WaitForTrigger(smach.State):
+    '''
+    This state will block execution until a suitable trigger command is received on the channel /trigger
+    It will receive std_msgs.String and will compare it to the strings in the array that is given.
+
+    Example to wait for one of the strings 'allow' or 'deny' (could be sent from a gui):
+
+        WaitForTrigger(robot, ['allow', 'deny']),
+                       transitions={    'allow':     'DO_SOMETHING',
+                                        'deny':      'DO_SOMETHING',
+                                        'preempted': 'failed'})
+    '''
+
+    def __init__(self, robot, triggers):
+        smach.State.__init__(self, 
+                             outcomes=triggers+['preempted'])
+        self.robot = robot
+        self.triggers = triggers
+
+        # Get the ~private namespace parameters from command line or launch file.
+        self.rate = float(rospy.get_param('~rate', '1.0'))
+        topic     = rospy.get_param('~topic', 'trigger')
         
-#         loop_rate(gl.rate)
-        
-#         if self.waiting == False:
-#             self.start_time = rospy.Time.now()
-#             self.waiting = True
-        
-#         # wait for command from operator
-#         if gl.command == "abort":
-#             self.waiting = False
-#             return 'abort'
-#         elif ((gl.command == "continue") or ((rospy.Time.now()-self.start_time)>rospy.Duration(self.timeout))):
-#             self.waiting = False
-#             return 'pause_done'
-#         else:
-#             return 'pausing'
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+
+        rospy.loginfo('topic: /%s', topic)
+        rospy.loginfo('rate:  %d Hz', self.rate)
+
+    def execute(self, userdata):
+        self.trigger_received = False
+
+        while not rospy.is_shutdown() and not self.trigger_received:
+            rospy.sleep(1/self.rate)
+
+        if self.trigger_received:
+            return self.trigger_received
+        else:
+            return 'preempted'
+
+    def callback(self, data):
+        # Simply print out values in our custom message.
+        rospy.loginfo('trigger_received: %s', data.data)
+        if data.data in self.triggers:
+            self.trigger_received = data.data
 
 ############################## State Wait ##############################
 class Wait_time(smach.State):
