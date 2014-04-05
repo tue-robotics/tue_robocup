@@ -141,7 +141,7 @@ class AskChallengeObject(smach.State):
                     return "all_grabbed"
             else:
                 target = response_answer
-                self.robot.assertz(Compound("selected_object", target))
+                self.robot.reasoner.assertz(Compound("selected_object", target))
 
         except Exception, e:
             rospy.logerr(e)
