@@ -10,6 +10,8 @@ from robot_skills.reasoner  import Conjunction, Compound, Sequence
 from math import cos, sin
 from geometry_msgs.msg import *
 
+from wire_fitter.srv import *
+
 import robot_smach_states as states
 
 from speech_interpreter.srv import AskUser
@@ -91,7 +93,18 @@ class AskAndNavigate(smach.StateMachine):
 
             smach.StateMachine.add("INITIALIZE",
                                     states.ResetArmsSpindleHead(robot),
-                                    transitions={'done'             :   'NAVIGATE_TO_TARGET'})
+                                    transitions={'done'             :   'TOGGLE_DYNAMIC_OFF'})
+
+            #Swith off dynamic tracking before driving
+            @smach.cb_interface(outcomes=["done"])
+            def toggle_dynamic_off(*args, **kwargs):
+                #toggle dynamic update
+                service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
+                service(FitterStartStopRequest(False, "bar"))
+                return "done"            
+            smach.StateMachine.add( "TOGGLE_DYNAMIC_OFF",
+                                    smach.CBState(toggle_dynamic_off), 
+                                    transitions={   'done'      :'NAVIGATE_TO_TARGET'})
 
             smach.StateMachine.add("NAVIGATE_TO_TARGET",
                                     states.NavigateWithConstraints(robot),
@@ -170,15 +183,26 @@ class FinalRgo2014(smach.StateMachine):
 
 
             smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
-                                    AskAndNavigate(robot),
+                                    AskAndNavigate(robot, turn_before_ask=True),
                                     transitions={   "Done"      :"ASK_AND_NAV_2", 
                                                     "Failed"    :"ASK_AND_NAV_2"})
             #Amigo arrived at the bar. 
             smach.StateMachine.add( "ASK_AND_NAV_2", #The bar is moved and amigo is asked to go to the bar once more, after it moved and was tracked in the WM
                                     AskAndNavigate(robot),
-                                    transitions={   "Done"      :"ASK_AND_NAV_3", 
-                                                    "Failed"    :"ASK_AND_NAV_3"}) 
+                                    transitions={   "Done"      :"TOGGLE_DYNAMIC", 
+                                                    "Failed"    :"TOGGLE_DYNAMIC"}) 
             
+            @smach.cb_interface(outcomes=["done"])
+            def toggle_dynamic_on(*args, **kwargs):
+                #toggle dynamic update
+                service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStopRequest)
+                service(FitterStartStopRequest(True, "bar"))
+                return "done"
+
+            smach.StateMachine.add( "TOGGLE_DYNAMIC",
+                                    smach.CBState(toggle_dynamic_on), 
+                                    transitions={   'done'      :'ASK_AND_NAV_3'})
+
             smach.StateMachine.add( "ASK_AND_NAV_3", #User asks to go to the table
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"ASK_OBJECT", 
@@ -195,6 +219,7 @@ class FinalRgo2014(smach.StateMachine):
 
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints_1(*args, **kwargs):
+                #TODO: Query reasoner
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30'
                 self.robot.base2.pc.frame      = "milk" #TODO: don't ALWAYS go to the milk
 
@@ -228,9 +253,9 @@ class FinalRgo2014(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints(*args, **kwargs):
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.45^2' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
-                self.robot.base2.pc.frame      = "trashbin"
+                self.robot.base2.pc.frame      = "trash_bin"
                 self.robot.base2.oc.look_at    = Point()
-                self.robot.base2.oc.frame      = "trashbin"
+                self.robot.base2.oc.frame      = "trash_bin"
                 return "done"
 
             smach.StateMachine.add( "SET_PARAMS",
