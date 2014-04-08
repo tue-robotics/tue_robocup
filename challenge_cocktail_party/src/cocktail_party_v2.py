@@ -314,9 +314,14 @@ class AskDrink(smach.State):
         
         # save the requested drink
         # assert( goal( serve( Person, Drink, Last Known Location)))
-        self.robot.reasoner.query(Compound("assert", Compound("goal", Compound("serve", userdata.personName_in, response_answer,  Compound("1","1","1")))))
+        self.robot.reasoner.query(  Compound("assert", 
+                                    Compound("goal", 
+                                    Compound("serve", userdata.personName_in, response_answer, Compound("1","1","1")))))
 
-        # rospy.loginfo("I'm getting a {0} for {1}", format(response_answer), format(userdata.personName_in))
+        rospy.loginfo("I'm getting a {0} for {1}".format(response_answer,userdata.personName_in))
+
+        # self.robot.reasoner.query(Compound("retractall", Compound("preempt_head_focus", "X")))
+        # self.robot.reasoner.query(Compound("assert",Compound("preempt_head_focus", "1")))
         return "done"
 
 
@@ -596,10 +601,9 @@ class LookForDrink(smach.State):
 
 
         # query for detect object, finishes when something found or timeout!
-        query_detect_object = Conjunction(Compound("goal", Compound("serve", "Drink")), #get all requested drinks
+        query_detect_object = Conjunction(Compound("goal", Compound("serve", "Drink", "LastLoc")), #get all requested drinks
                                           Compound( "property_expected", "ObjectID", "class_label", "Drink"),
                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
-
 
         self.robot.speech.speak("Let's see what I can find here")
 
@@ -624,15 +628,15 @@ class LookForDrink(smach.State):
         elif self.response_stop.error_code == 1:
             rospy.loginfo("Failed stopping template matching ")
 
+
         ############################################################
         # update the number of served people (this will no be staying here, its just for now)
-        answer = self.robot.reasoner.query(Compound("n_people_served", "X"))
-        nServed = float(answer[0]["X"])
-        nServed += 1
+        nServed += float(len(self.robot.query(Compound("goal", Compound("serve", "Person", "Drink", "LastLoc")))))
         rospy.loginfo("Hurray! Another drink was served ({0})".format(nServed))
         self.robot.reasoner.query(Compound("retractall", Compound("n_people_served", "X")))
         self.robot.reasoner.query(Compound("assertz",Compound("n_people_served", nServed)))
         ############################################################
+
 
         # interpret results wait machine
         if wait_result == "timed_out":
@@ -1019,9 +1023,9 @@ class FocusOnFace(smach.StateMachine):
         self.robot = robot
 
     def execute(self, userdata=None):
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: FocusOnFace\n")
+        # rospy.loginfo("\t\t[Cocktail Party] Entered State: FocusOnFace\n")
 
-        self.robot.perception.toggle(['human_tracking'])      
+        # self.robot.perception.toggle(['human_tracking'])      
 
         # prepare query to get faces detected in front of amigo
         person_query = Conjunction(  
@@ -1036,7 +1040,7 @@ class FocusOnFace(smach.StateMachine):
 
             lookat_point = msgs.PointStamped(x,y,z)
 
-            rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x, y, z))
+            rospy.loginfo("[Cocktail Party] Person at (x = {0}, y = {1}, z = {2})".format(x, y, z))
             self.robot.head.send_goal(lookat_point, timeout=0)
 
 
@@ -1048,6 +1052,9 @@ class FocusOnFace(smach.StateMachine):
             rospy.sleep(0.3)
             return 'loop'
         else:
+            # reset preempt flag
+            self.robot.reasoner.query(Compound("retractall", Compound("preempt_head_focus", "X")))
+            self.robot.reasoner.query(Compound("assert",Compound("preempt_head_focus", "0")))
             return 'preempted'
         
 
@@ -1071,12 +1078,12 @@ class PreemptFaceFocus(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: PreemptFaceFocus!!!!!\n")
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: PreemptFaceFocus!\n")
 
-        robot.reasoner.query(Compound("retractall", Compound("preempt_head_focus", "X")))
-        robot.reasoner.query(Compound("assert",Compound("preempt_head_focus", "1")))
+        self.robot.reasoner.query(Compound("retractall", Compound("preempt_head_focus", "X")))
+        self.robot.reasoner.query(Compound("assert",Compound("preempt_head_focus", "1")))
 
-        self.robot.perception.toggle(['']) 
+        # self.robot.perception.toggle(['']) 
 
         return 'done'
 
@@ -1108,8 +1115,12 @@ class TakeNewOrder(smach.StateMachine):
             smach.StateMachine.add( 'TAKE_ORDER',
                                     AskDrink(robot),
                                     remapping={     'personName_in':'personName'},
-                                    transitions={   'done':'done',
+                                    transitions={   'done':'PREEMPT_FACE_FOCUS',
                                                     'failed':'TAKE_ORDER'})
+
+            smach.StateMachine.add( 'PREEMPT_FACE_FOCUS',
+                                    PreemptFaceFocus(robot),
+                                    transitions={   'done':'done'})
 
 #########################################################################################
 
@@ -1132,11 +1143,7 @@ class TakeNewOrderFocus(smach.StateMachine):
 
             smach.StateMachine.add('CONCURRENT_MACHINE', 
                                     concurrenceContainer,
-                                    transitions={'succeeded':'PREEMPT_FACE_FOCUS'})
-
-            smach.StateMachine.add( 'PREEMPT_FACE_FOCUS',
-                                    PreemptFaceFocus(robot),
-                                    transitions={   'done':'done'})
+                                    transitions={'succeeded':'done'})
 
 
 #########################################################################################
@@ -1520,8 +1527,8 @@ if __name__ == '__main__':
     # Assert current challenge
     amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
 
-    # initial_state = None
-    initial_state = "ASSUMING_PERSON_FRONT"
+    initial_state = None
+    # initial_state = "ASSUMING_PERSON_FRONT"
 
     machine = CocktailParty(amigo)
     

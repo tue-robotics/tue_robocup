@@ -9,14 +9,14 @@ if __name__ == "__main__":
 
     W = SimWorld()
 
-    raw_input("\nPress enter to say 'John'\n")
-    W.speak("john")
+    raw_input("\nPress enter to say 'William'\n")
+    W.speak("william")
 
     raw_input("\nPress enter to say 'yes'\n")
     W.speak("yes")
 
-    raw_input("\nPress enter to say 'fanta'\n")
-    W.speak("fanta")
+    raw_input("\nPress enter to say 'juice'\n")
+    W.speak("juice")
 
     raw_input("\nPress enter to say 'yes'\n")
     W.speak("yes")
