@@ -362,7 +362,7 @@ class Base(object):
         else:
             if self.base_pose == None:
                 # If no path request has been given yet, self.base_pose equals None, but we might get the base pose from tf
-                base.pose = self.get_location()
+                base_pose = self.get_location()
                 pos_x = base_pose.pose.position.x
                 pos_y = base_pose.pose.position.y
             else:
