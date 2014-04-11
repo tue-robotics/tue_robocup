@@ -59,7 +59,7 @@ const std::string ROBOT_BASE_FRAME = "/amigo/base_link";   // name of the robot'
 const double T_WAIT_MAX_AFTER_LEAVE_CMD = 7.5;             // after an amigoleave command, resume following if no confirmation is heart after this time
 const double T_MAX_NO_MOVE_BEFORE_TRYING_3D = 5.0;         // time robot stands still before move_base_3d is used instead of the carrot planner
 const double MAX_ELEVATOR_WALL_DISTANCE = 1.5;             // maximum distance of robot to wall in elevator (used to detect elevator)
-const double ELEVATOR_INLIER_RATIO = 0.95;                 // % of laser points that should at least be within bounds for elevator to be detected
+const double ELEVATOR_INLIER_RATIO = 0.90;                 // % of laser points that should at least be within bounds for elevator to be detected
 
 // Speech
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
@@ -683,8 +683,9 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
     std::vector<int> num_points_in_bounds(3, 0);
 
     double angle = laser_scan_msg->angle_min;
-    for(unsigned int i = 0; i < laser_scan_msg->ranges.size(); ++i)
+    for(int i = 0; i < laser_scan_msg->ranges.size(); ++i)
     {
+		double previous_range = laser_scan_msg->ranges[std::max(i-1,0)];
         double range = laser_scan_msg->ranges[i];
 
         // check left of robot
@@ -704,7 +705,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
         else if (angle > 0.25 * PI && angle < 0.5 * PI)
         {
             num_total_points[2]++;
-            if (range < MAX_ELEVATOR_WALL_DISTANCE) num_points_in_bounds[2]++;
+            if (range < MAX_ELEVATOR_WALL_DISTANCE < 0.5) num_points_in_bounds[2]++;
         }
 
         angle += laser_scan_msg->angle_increment;
@@ -714,11 +715,13 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
     in_elevator_ = true;
     for (unsigned int i = 0; i < num_total_points.size(); ++i)
     {
+		ROS_DEBUG("Ratio is %f", (double)num_points_in_bounds[i] / num_total_points[i]);
         if ((double)num_points_in_bounds[i] / num_total_points[i] < ELEVATOR_INLIER_RATIO)
         {
             in_elevator_ = false;
+            check_elevator_ = false;
             setRGBLights("green");
-            break;
+            return;
         }
     }
 
@@ -827,8 +830,6 @@ int main(int argc, char **argv) {
     {
         operator_found = follower_->update();
         loop_rate_slow.sleep();
-        setRGBLights("red");
-        amigoSpeak("I did not find my operator yet", true);
         setRGBLights("green");
 
     }
