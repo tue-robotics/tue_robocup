@@ -9,6 +9,7 @@
 #include "tue_pocketsphinx/Switch.h"
 #include "std_msgs/String.h"
 #include "std_msgs/ColorRGBA.h"
+#include "std_msgs/Bool.h"
 #include "amigo_msgs/RGBLightCommand.h"
 #include "geometry_msgs/PoseStamped.h"
 #include "visualization_msgs/Marker.h"
@@ -55,10 +56,10 @@ struct RobotPose {
 
 // SETTINGS
 const std::string ROBOT_BASE_FRAME = "/amigo/base_link";   // name of the robot's base link frame
-const double T_WAIT_MAX_AFTER_STOP_CMD = 5.0;              // after a stop command, resume following if no confirmation is heart after this time
+const double T_WAIT_MAX_AFTER_LEAVE_CMD = 7.5;             // after an amigoleave command, resume following if no confirmation is heart after this time
 const double T_MAX_NO_MOVE_BEFORE_TRYING_3D = 5.0;         // time robot stands still before move_base_3d is used instead of the carrot planner
-const double MAX_ELEVATOR_WALL_DISTANCE = 2.0;             // Maximum distance of robot to wall in elevator (used to detect elevator)
-const double ELEVATOR_INLIER_RATIO = 0.70;                 // % of laser points that should at least be within bounds for elevator to be detected
+const double MAX_ELEVATOR_WALL_DISTANCE = 1.5;             // maximum distance of robot to wall in elevator (used to detect elevator)
+const double ELEVATOR_INLIER_RATIO = 0.95;                 // % of laser points that should at least be within bounds for elevator to be detected
 
 // Speech
 ros::ServiceClient srv_speech_;                                                   // Communication: Service that makes AMIGO speak
@@ -95,8 +96,9 @@ double t_last_speech_cmd_ = 0;
 std::string current_clr_;
 bool left_elevator_ = false;
 bool in_elevator_ = false;
-double t_elevator_print_ = 0;
 double t_pause_ = 0;
+bool emergency_button_pressed_ = true;
+bool check_elevator_ = true; // only check every second time laser data is received
 
 
 void rotateRobot(double desired_angle)
@@ -107,8 +109,8 @@ void rotateRobot(double desired_angle)
     cmd_vel.linear.y = 0;
     cmd_vel.angular.z = 0.5;
 
-    // 12 [s] at 0.5 means approximately 360 [deg]
-    double rotating_time = desired_angle/360.0 * 12.0;
+    // Calculate rotating time
+    double rotating_time = desired_angle/cmd_vel.angular.z;
     ROS_INFO("Rotate robot approximately %f degree (%f seconds)...", desired_angle, rotating_time);
 
     // Move
@@ -119,6 +121,9 @@ void rotateRobot(double desired_angle)
         cmd_vel_pub_.publish(cmd_vel);
         r.sleep();
     }
+
+    cmd_vel.angular.z = 0;
+    cmd_vel_pub_.publish(cmd_vel);
     ROS_INFO("Done rotating");
 
 }
@@ -192,10 +197,11 @@ void setRGBLights(std::string color)
     if (color == "red") clr_msg.r = 255;
     else if (color == "green") clr_msg.g = 255;
     else if (color == "blue") clr_msg.b = 255;
-    else if (color == "yellow")
+    else if (color == "cyan")
     {
-        clr_msg.r = 255;
+        clr_msg.r = 0;
         clr_msg.g = 255;
+        clr_msg.b = 255;
     }
     else
     {
@@ -408,7 +414,7 @@ void leaveElevator()
     double t_start = ros::Time::now().toSec();
 
     // First rotate (to avoid move base 3d problem: path found but robot does not move)
-		rotateRobot(180);
+    rotateRobot(180);
 
     // Get position
     tf::StampedTransform location_start;
@@ -474,7 +480,7 @@ void driveAroundCrowd()
     double t_start = ros::Time::now().toSec();
 
     // Do a random rotation (to avoid move base 3d problem: path found but robot does not move)
-	rotateRobot(90);
+    rotateRobot(90);
 
     // Get position
     tf::StampedTransform location_start;
@@ -658,7 +664,14 @@ void restartSpeechIfNeeded()
 
 
 
-void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
+void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
+{
+
+    if (!check_elevator_)
+    {
+        check_elevator_ = true;
+        return;
+    }
 
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -704,20 +717,29 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg){
         if ((double)num_points_in_bounds[i] / num_total_points[i] < ELEVATOR_INLIER_RATIO)
         {
             in_elevator_ = false;
+            setRGBLights("green");
             break;
         }
     }
 
-    if (ros::Time::now().toSec() - t_elevator_print_ > 3.0)
-    {
-        ROS_INFO("Based on the laser data I could be in the elevator");
-        t_elevator_print_ = ros::Time::now().toSec();
-    }
+    // Inside elevator: cyan
+    setRGBLights("cyan");
+    check_elevator_ = false;
 }
 
 
 
+void emergencyCallback(const std_msgs::Bool::ConstPtr& em_button_msg)
+{
+    // If the emergency button is released, boolean is false
+    if (!em_button_msg->data)
+    {
+        emergency_button_pressed_ = false;
+        return;
+    }
 
+    ROS_DEBUG("Emergency button is pressed...");
+}
 
 
 int main(int argc, char **argv) {
@@ -770,6 +792,18 @@ int main(int argc, char **argv) {
     std_srvs::Empty empty_srv;
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
 
+    //! Wait for the emergency switch to be released
+    ros::Subscriber sub_emergency = nh.subscribe<std_msgs::Bool>("/emergency_switch", 10, emergencyCallback);
+    ros::Rate loop_rate_slow(5);
+    ROS_INFO("Waiting for emegency button to be released...");
+    while (emergency_button_pressed_)
+    {
+        ros::spinOnce();
+        loop_rate_slow.sleep();
+    }
+    sub_emergency.shutdown();
+    ROS_INFO("Emergency button released!");
+
     //! Clear the world model
     ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
     std_srvs::Empty srv;
@@ -789,11 +823,13 @@ int main(int argc, char **argv) {
 
     //! Wait for operator
     bool operator_found = false;
-    ros::Rate loop_rate(25);
     while (!operator_found)
     {
         operator_found = follower_->update();
-        loop_rate.sleep();
+        loop_rate_slow.sleep();
+        setRGBLights("red");
+        amigoSpeak("I did not find my operator yet", true);
+        setRGBLights("green");
 
     }
 
@@ -807,6 +843,7 @@ int main(int argc, char **argv) {
     unsigned int n_move_base_3d_tries = 0;
     bool drive = false;
     double t_start_no_move = 0;
+    ros::Rate loop_rate_fast(25);
     while (ros::ok())
     {
         //! Get information from topics
@@ -815,7 +852,7 @@ int main(int argc, char **argv) {
 
         //! To avoid a deadlock after a false speech command
         if (speech_state_ == speech_state::CONFIRM_LEAVE &&
-                ros::Time::now().toSec() - t_pause_ > T_WAIT_MAX_AFTER_STOP_CMD)
+                ros::Time::now().toSec() - t_pause_ > T_WAIT_MAX_AFTER_LEAVE_CMD)
         {
             ROS_WARN("I assume I misunderstood, I will continue following");
             speech_state_ = speech_state::DRIVE;
@@ -834,57 +871,62 @@ int main(int argc, char **argv) {
             ROS_DEBUG("Robot does not move");
             drive = false;
 
-            if ( (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D && !in_elevator_) || // Outside the elevator we move to 3d nav faster
-                   ros::Time::now().toSec() - t_start_no_move > 2.2 * T_MAX_NO_MOVE_BEFORE_TRYING_3D )
+            // If the robot did not move for a while
+            if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
             {
 
-                // There is a problem with move base 3d: robot can not get to operator
-                if (n_move_base_3d_tries > 4)
+                // Inside the elevator: do not use 3d navigation here!
+                if (in_elevator_)
                 {
-                    ROS_WARN("There probably is a move base 3d problem!");
-
+                    ROS_INFO("In the elevator. TODO: slowly move forward.");
                 }
-
-                // AFTER THE ELEVATOR: move forward (around the crowd)
-                if (left_elevator_)
-                {
-                    ROS_INFO("I think I am at the crowd, I will try to drive around the crowd");
-                    follower_->pause();
-                    driveAroundCrowd();
-                    follower_->reset(1.0);
-                    ROS_INFO("Done with the 3d nav move around the crowd");
-
-                }
-                // BEFORE THE ELEVATOR: just try to move (there is something in the way)
+                // Outside the elevator, see if and how move base 3d must be used
                 else
                 {
-                    // Get position operator
-                    ROS_WARN("Robot did not move for %f [s], trying move_base_3d to plan around obstacle", ros::Time::now().toSec() - t_start_no_move);
-                    double x = 0, y = 0, phi = 0;
-                    follower_->getCurrentOperatorPosition(x, y, phi, ROBOT_BASE_FRAME);
-                    ROS_INFO("Operator at (x,y,phi) = (%f,%f,%f)", x, y, phi);
 
-                    // option 1:
-                    //double offset = 0.75; // otherwise target always an obstacle
-                    //moveToRelativePosition(x-offset, y, phi, 3.0);
-                    // option 2:
-                    moveToRelativePosition(0.65*x, 0.65*y, phi, 7.5);
-                    ROS_INFO("Done with the 3d nav move");
+                    // AFTER THE ELEVATOR: move forward (around the crowd)
+                    if (left_elevator_)
+                    {
+                        ROS_INFO("I think I am at the crowd, I will try to drive around the crowd");
+                        follower_->pause();
+                        driveAroundCrowd();
+                        follower_->reset(1.0);
+                        ROS_INFO("Done with the 3d nav move around the crowd");
+
+                    }
+                    // BEFORE THE ELEVATOR: just try to move (there is something in the way)
+                    else
+                    {
+                        // Get position operator
+                        ROS_WARN("Robot did not move for %f [s], trying move_base_3d to plan around obstacle", ros::Time::now().toSec() - t_start_no_move);
+                        double x = 0, y = 0, phi = 0;
+                        follower_->getCurrentOperatorPosition(x, y, phi, ROBOT_BASE_FRAME);
+                        ROS_INFO("Operator at (x,y,phi) = (%f,%f,%f)", x, y, phi);
+
+                        // Go to the position:
+                        moveToRelativePosition(0.65*x, 0.65*y, phi, 7.5);
+                        ROS_INFO("Done with the 3d nav move");
+                    }
+
+                    // There is might be a problem with move base 3d: robot can not get to operator
+                    if (n_move_base_3d_tries > 4) ROS_WARN("Follow me: there might be a move base 3d problem!");
                 }
             }
+            // Else: robot did not move for a while but that is not a problem
 
         }
+        // Else: robot is moving, do adminstration
         else
         {
             drive = true;
             n_move_base_3d_tries = 0;
         }
 
-        //! To ensure speech keeps working
+        //! To ensure speech keeps working restart it every now and then
         restartSpeechIfNeeded();
 
         //! Wait
-        loop_rate.sleep();
+        loop_rate_fast.sleep();
     }
 
     delete ac_skill_server_;
