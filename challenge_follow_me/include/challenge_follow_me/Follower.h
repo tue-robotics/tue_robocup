@@ -109,7 +109,8 @@ private:
     tf::TransformListener* listener_;
 
     //! Toggle perception
-    ros::ServiceClient pein_client_;
+    ros::ServiceClient pein_client_; // old
+    ros::ServiceClient ppl_client_;  // new
 
     //! Color AMIGO
     ros::Publisher rgb_pub_;

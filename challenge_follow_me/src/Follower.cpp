@@ -6,6 +6,7 @@
 // ROS srvs
 #include "std_srvs/Empty.h"
 #include "perception_srvs/StartPerception.h"
+#include "pein_srvs/StartStopWithROIArray.h"
 
 // ROS msgs
 #include "tue_move_base_msgs/MoveBaseGoal.h"
@@ -76,6 +77,7 @@ Follower::Follower(ros::NodeHandle& nh, std::string frame, bool map, bool demo) 
 
     //! Connect to pein supervisor
     pein_client_ = nh_.serviceClient<perception_srvs::StartPerception>("/start_perception");
+    ppl_client_ = nh_.serviceClient<pein_srvs::StartStopWithROIArray>("/ppl_detection_generic/start_with_roi");
 
     //! Harcoded settings for finding the operator
     TIME_WAIT_MAX = 10.0;
@@ -731,26 +733,24 @@ bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
     setRGB("pink");
 
     //! Toggle perception
-    perception_srvs::StartPerception pein_srv;
-    pein_srv.request.modules.push_back("ppl_detection");
-    if (!pein_client_.call(pein_srv))
+    pein_srvs::StartStopWithROIArray ppl_srv;
+    ppl_srv.request.status = 1;
+    if (!ppl_client_.call(ppl_srv))
     {
-        pein_srv.request.modules.clear();
-        pein_srv.request.modules.push_back("ppl_detection");
-        if (!pein_client_.call(pein_srv))
+        if (!ppl_client_.call(ppl_srv))
         {
-            ROS_ERROR("Cannot switch on perception, hence unable to find an operator!");
+            ROS_ERROR("Cannot switch on ppl detection generic, hence unable to find an operator!");
             return false;
         }
     }
     else
     {
-        ROS_INFO("Switched on ppl_detection");
+        ROS_INFO("Switched on ppl_detection_generic");
     }
 
     if (first_time_ || demo_)
     {
-        say("I am looking for my operator, can you please stand in front of me", true);
+        say("Can you please stand in front of me", true);
     }
 
     //! Reset world model
