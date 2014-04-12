@@ -49,6 +49,9 @@ def Quaternion(x=0, y=0, z=0, w=0, roll=0, pitch=0, yaw=0):
         quat_parts = tf.transformations.quaternion_from_euler(roll, pitch, yaw)
         quat = Quaternion(*quat_parts)
         return quat
+    else:
+        # Assume unit quaternion
+        return gm.Quaternion(0.0,0.0,0.0,1.0)
 
 def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
     """
