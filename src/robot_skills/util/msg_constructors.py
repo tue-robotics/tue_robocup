@@ -67,6 +67,9 @@ def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
       z: 0.247403959255
       w: 0.968912421711
     """
+    if phi:
+      rospy.logerr("Please specify yaw instead of phi. Phi will be removed!!!")
+      
     z_rotation = phi or yaw #Get the one that is not 0
 
     quat = Quaternion(roll=roll, pitch=pitch, yaw=z_rotation)
@@ -92,7 +95,6 @@ def PoseStamped(x=0, y=0, z=0, phi=0,
       z: 0.247403959255
       w: 0.968912421711
     """
-    
     if not stamp:
         stamp = rospy.get_rostime()
 
