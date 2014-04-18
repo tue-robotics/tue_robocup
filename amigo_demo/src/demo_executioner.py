@@ -107,9 +107,17 @@ sentences["APPLAUSE"] = "Applaus alstublieft!"#"Applause please!"
 sentences["AUB"] = "Alsjeblieft!"#"Applause please!"
 sentences["OUCH"] = "Au! Dat doet pijn."#"Ouch! That hurts!"
 sentences["YES"] = "Ja"#"Yes!"
+sentences["CHANGE1"] = "TEST"
+sentences["CHANGE2"] = "TEST"
+sentences["CHANGE3"] = "TEST"
+sentences["CHANGE4"] = "TEST"
 #sentences[""] = ""
 
 sent_keymap = dict()
+sent_keymap['7'] = "CHANGE1"
+sent_keymap['8'] = "CHANGE2"
+sent_keymap['9'] = "CHANGE3"
+sent_keymap['0'] = "CHANGE4"
 sent_keymap['d'] = "HI"
 sent_keymap['6'] = "PICTURE"
 sent_keymap['$'] = "GREET"
@@ -207,15 +215,15 @@ def home(robot):
     robot.rightArm.send_joint_goal() #defaults to 0, 0....
     robot.rightArm.send_gripper_goal_close()
 
-@dec.register_robot_key("7")
-def tip(robot):
-    print "joints = TIPPING"
-    robot.rightArm.send_joint_goal(*poses["TIP1"][1])
-    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
-    #rospy.sleep(rospy.Duration(4.0))
-    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
-    #robot.rightArm.send_joint_goal(*poses["TIP2"][1])
-    rospy.sleep(rospy.Duration(1.0))
+#@dec.register_robot_key("7")
+#def tip(robot):
+    #print "joints = TIPPING"
+    #robot.rightArm.send_joint_goal(*poses["TIP1"][1])
+    #robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
+    ##rospy.sleep(rospy.Duration(4.0))
+    #robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
+    ##robot.rightArm.send_joint_goal(*poses["TIP2"][1])
+    #rospy.sleep(rospy.Duration(1.0))
 
 @dec.register_robot_key("w")
 def wave2(robot):
