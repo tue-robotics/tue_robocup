@@ -12,3 +12,7 @@ en:
     OUCH:       "Ouch! That hurts!"
     !!str YES:  "Yes!"
     PASS:       "May I please pass?"
+    CHANGE1:    ["Good afternoon, I’m amigo, your host for today. The role of human moderators is nearing its end. I am the living proof of this. Well, living…The first speaker is Salim Ismail from Singularity University, give him a warm applause."]
+    CHANGE2:    [" Welcome back, I hope you enjoyed the Tech Festival. After the great talk of Salim about technology, it is now time to talk about the passion to create change. The next inspiring speaker is Bel Pesce from Brazil. Give her a warm applause."]
+    CHANGE3:    ["Thank you Bel for your great life story. Alex and Arjen are there any questions from the audience?"]
+    CHANGE4:    ["Please stay for the tech festival and have a drink. Goodbye!"]
