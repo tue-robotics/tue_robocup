@@ -12,3 +12,7 @@ nl:
     OUCH:       ["Au! Dat doet pijn.", "Auw, dat doet zeer.", "auw, auw, dat was pijnlijk."]
     !!str YES:  ["Ja", "Ja graag", "Ja zeker", "Yep"]
     PASS:       ["Mag ik er effe langs?", "Zou ik er door mogen?", "Ik wil er graag langs", "Ik moet er door... dank u"]
+    CHANGE0:    ["Good afternoon, I’m amigo, your host for today. The role of human moderators is nearing its end. I am the living proof of this. Well, living…The first speaker is Salim Ismail from Singularity University, give him a warm applause."]
+    CHANGE1:    [" Welcome back, I hope you enjoyed the Tech Festival. After the great talk of Salim about technology, it is now time to talk about the passion to create change. The next inspiring speaker is Bel Pesce from Brazil. Give her a warm applause."]
+    CHANGE2:    ["Thank you Bel for your great life story. Alex and Arjen are there any questions from the audience?"]
+    CHANGE3:    ["Please stay for the tech festival and have a drink. Goodbye!"]

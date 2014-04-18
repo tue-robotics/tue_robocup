@@ -12,4 +12,7 @@ en:
     OUCH:       ["Ouch! That hurts!", "Aw, that causes me pain!", "Ai, Ai that was painfull"]
     !!str YES:  ["Yes!", "Yes please!", "For sure", "Yep"]
     PASS:       ["May I please pass?", "Can I pass please?", "I would like to pass", "I have to get through. . Thank you"]
-
+    CHANGE0:    ["Test 0"]
+    CHANGE1:    ["Test 1"]
+    CHANGE2:    ["Test 2"]
+    CHANGE3:    ["Test 3"]
