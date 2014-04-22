@@ -6,9 +6,9 @@ import smach
 import robot_skills.util.msg_constructors as msgs
 import robot_smach_states as states
 
-egyptian_pose_start     = [-1.570, 0.000, -1.570, 1.963, 0.000, -1.177, 0.000]
-egyptian_pose_center    = [-1.570, 0.000, -1.570, 1.570, 0.000, -0.785, 0.000]
-egyptian_pose_end       = [-1.570, 0.000, -1.570, 1.177, 0.000, -0.393, 0.000]
+egyptian_pose_start     = [-1.570, 0.000, -1.50, 1.800, 0.000, -0.55, 0.000]
+egyptian_pose_center    = [-1.570, 0.000, -1.50, 1.570, 0.000, -0.30, 0.000]
+egyptian_pose_end       = [-1.570, 0.000, -1.50, 1.177, 0.000, -0.15, 0.000]
 
 egyptian_motion_left = [egyptian_pose_center, egyptian_pose_start, egyptian_pose_center, egyptian_pose_end, egyptian_pose_center]
 egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_center, egyptian_pose_start, egyptian_pose_center]
