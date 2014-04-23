@@ -114,7 +114,7 @@ sentences["CHANGE4"] = "TEST"
 #sentences[""] = ""
 
 sent_keymap = dict()
-sent_keymap['7'] = "CHANGE1"
+sent_keymap['2'] = "CHANGE1"
 sent_keymap['8'] = "CHANGE2"
 sent_keymap['9'] = "CHANGE3"
 sent_keymap['0'] = "CHANGE4"
@@ -539,19 +539,19 @@ def welcome_maxima1(robot):
     result = sm.execute()
     rospy.loginfo("State machine executed. Result: {0}".format(result))
 
-@dec.register_robot_key("2")    
-def welcome_maxima2(robot):
-    import smach
-    import robot_smach_states as states
-    rospy.loginfo("Setting up state machine")
-    sm = smach.StateMachine(outcomes=["Done"])
-    with sm:
-        smach.StateMachine.add('WELCOME_MAXIMA',
-            states.WelcomeMaxima2(robot),
-            transitions={'done':'Done'})
-    rospy.loginfo("State machine set up, start execution...")
-    result = sm.execute()
-    rospy.loginfo("State machine executed. Result: {0}".format(result))
+#@dec.register_robot_key("2")    
+#def welcome_maxima2(robot):
+#    import smach
+#    import robot_smach_states as states
+#    rospy.loginfo("Setting up state machine")
+#    sm = smach.StateMachine(outcomes=["Done"])
+#    with sm:
+#        smach.StateMachine.add('WELCOME_MAXIMA',
+#            states.WelcomeMaxima2(robot),
+#            transitions={'done':'Done'})
+#    rospy.loginfo("State machine set up, start execution...")
+#    result = sm.execute()
+#    rospy.loginfo("State machine executed. Result: {0}".format(result))
 
 @dec.register_robot_key("3")    
 def welcome_maxima3(robot):
