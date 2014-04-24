@@ -27,12 +27,20 @@ def walk_like_an_egyptian(robot):
     robot.leftArm.reset_arm()
     robot.head.reset_position()
 
+def music():
+    import os
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+    os.system("mpg123 '01 Walk Like An Egyptian.mp3' &")
+
 class WalkLikeAnEgyptian(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
 
     def execute(self, userdata=None):
+        music()
         walk_like_an_egyptian(self.robot)
         return "Done"
 

@@ -21,4 +21,19 @@ class LookAtPerson(smach.StateMachine):
                                     'Aborted'   :'Aborted',
                                     'Failed'    :'Failed'})
 
-            
+
+class TellJoke(smach.StateMachine):
+    def __init__(self, robot, jokefilename):
+        smach.StateMachine.__init__(self, outcomes=["Done"])
+        self.robot = robot
+
+        with self:
+            smach.StateMachine.add("LOOK_AT_PERSON",
+                    LookAtPerson(robot),
+                    transitions={   'Done'      :'TALK',
+                                    'Aborted'   :'TALK',
+                                    'Failed'    :'TALK'})
+
+            smach.StateMachine.add("TALK",
+                    states.Say(robot, ),
+                    transitions={   'Done'      :'Done'})

@@ -43,10 +43,10 @@ class RoboZooSimple(smach.StateMachine):
 
     IDEAS:
         - DONE: Reset everything before SELECT_RANDOM
-        - Walk like an egyptian (with arms and music)
+        - DONE: Walk like an egyptian (with arms and music)
         - DONE: Flash lights
         - DONE: wave (smile and wave boys)
-        - Look at person and say something funny
+        - TEST: Look at person and say something funny
         - Act like a monkey (with arms and sound)
         - Use AR markers to select actions
         - Photo pose with speech
