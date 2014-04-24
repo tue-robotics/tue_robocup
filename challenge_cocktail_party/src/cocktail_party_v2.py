@@ -469,10 +469,8 @@ class NavToLastKnowLoc(smach.State):
 
         # qGoals = Compound("goal", Compound("serve", "ID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Phi")))
 
-
         qGoals = Conjunction(   Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Phi"))),
                                 Compound("not", Compound("visited", "ObjectID")))
-
 
         # get results from the query
         goals = self.robot.reasoner.query(qGoals)
@@ -714,10 +712,10 @@ class PreparePickup(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: PreparePickup\n")
 
         if self.armSelect == 0:
-            arm = robot.leftArm
+            arm = self.robot.leftArm
             self.armSelect += 1
         elif self.armSelect == 1:
-            arm = robot.rightArm
+            arm = self.robot.rightArm
             self.armSelect = 0
 
         qGrabpoint = Conjunction(   Compound("goal", Compound("serve", "UniqueID", "Person", "Drink", "LastKnowPose")),
@@ -732,7 +730,10 @@ class PreparePickup(smach.State):
             self.robot.speech.speak("I finished picking up all the drinks", block=False)
             return 'grabbed_all'
         else:
-            rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}\n".format(goal_answers[0]["Drink"]))
+            if self.armSelect == 0:
+                rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, with my left arm\n".format(goal_answers[0]["Drink"]))
+            elif self.armSelect == 1:
+                rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, with my right arm\n".format(goal_answers[0]["Drink"]))
 
             # goalLoc = (float(goal_answers[0]["X"]), float(goal_answers[0]["Y"]), float(goal_answers[0]["Z"]))
 
@@ -743,7 +744,7 @@ class PreparePickup(smach.State):
                                         Compound("drink", goal_answers[0]["Drink"]))))
 
             # assert that this drink has been grabbed
-            uniqueID = goal_answer[0]["UniqueID"]
+            uniqueID = goal_answers[0]["UniqueID"]
             self.robot.reasoner.query(Compound("assert", Compound("grabbed", uniqueID)))
 
             return 'done'
@@ -881,19 +882,28 @@ class PersonFound(smach.State):
     def execute(self, userdata=None):
 
         # prepare query to get faces detected in front of amigo
-        person_query = Conjunction(  
-                        Compound( "property_expected", "ObjectID", "class_label", "face"),
-                        Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                        Compound( "property_expected", "ObjectID", "position", Compound("point_3d", "X", "Y", "Z")),
-                        Compound( "not", Compound("registered", "ObjectID")))
+        # person_query = Conjunction(  
+        #                 Compound( "property_expected", "ObjectID", "class_label", "face"),
+        #                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+        #                 Compound( "property_expected", "ObjectID", "position", Compound("point_3d", "X", "Y", "Z")),
+        #                 Compound( "not", Compound("registered", "ObjectID")))
+
+
+        person_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "validated_person"),
+                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Phi")),
+                                    Compound("not", Compound("visited", "ObjectID")))
 
         # get results from the query
-        person_detection_result = self.robot.reasoner.query(person_query)
-        rospy.loginfo("I found {0} people". format(len(person_detection_result)))
+        queryRes = self.robot.reasoner.query(person_query)
+        rospy.loginfo("I found {0} people". format(len(queryRes)))
         
         # navigate to one of the detected faces
-        nav = NavigateGeneric(self.robot, lookat_query=person_query)
+        goal = (float(queryRes[0]["X"]), float(queryRes[0]["Y"]), float(queryRes[0]["Phi"]))
+        nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
         nav_result = nav.execute()
+
+        # nav = NavigateGeneric(self.robot, lookat_query=person_query)
+        # nav_result = nav.execute()
 
         # if nav_result == "unreachable":  #Compound("meeting_point", waypoint_name)
         #     self.robot.speech.speak("The location of the person unreachable", block=False)
@@ -907,35 +917,35 @@ class PersonFound(smach.State):
         #     self.robot.speech.speak("The location of the person is invalid", block=False)
         #     return "?"
 
-        # retrieve all possible locations
-        possible_locations = [( float(answer["X"]), 
-                                float(answer["Y"]), 
-                                float(answer["Z"])) for answer in person_detection_result]
+        # # retrieve all possible locations
+        # possible_locations = [( float(answer["X"]), 
+        #                         float(answer["Y"]), 
+        #                         float(answer["Z"])) for answer in person_detection_result]
 
-        # if there are locations of interest...
-        if len(possible_locations) > 0:
-            x,y,z = possible_locations[0]
-            if z > 1.5:
-                self.robot.spindle.high()
-                rospy.logdebug("Spindle should come up now!")
+        # # if there are locations of interest...
+        # if len(possible_locations) > 0:
+        #     x,y,z = possible_locations[0]
+        #     if z > 1.5:
+        #         self.robot.spindle.high()
+        #         rospy.logdebug("Spindle should come up now!")
 
-            # Look at person
-            lookat_point = msgs.PointStamped(x,y,z)
-            rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-            self.robot.head.send_goal(lookat_point,timeout=0)
+        #     # Look at person
+        #     lookat_point = msgs.PointStamped(x,y,z)
+        #     rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
+        #     self.robot.head.send_goal(lookat_point,timeout=0)
 
         # get the objectID of the person we are trying to serve the drink to
-        self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
-                                              Compound("assert", Compound("registered", "ObjectID"))))
+        # self.robot.reasoner.query(Conjunction(Compound("current_person", "ObjectID"),
+        #                                       Compound("assert", Compound("registered", "ObjectID"))))
 
-        return_result = self.robot.reasoner.query(Compound("current_person", "Person"))       
+        # return_result = self.robot.reasoner.query(Compound("current_person", "Person"))       
 
-        # if there is no result, we forgot who we were serving, return!
-        if not return_result:
-            self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
-            return "not_correct"
+        # # if there is no result, we forgot who we were serving, return!
+        # if not return_result:
+        #     self.robot.speech.speak("That's horrible, I forgot who I should bring the drink to!")
+        #     return "not_correct"
 
-        serving_person = str(return_result[0]["Person"]) 
+        # serving_person = str(return_result[0]["Person"]) 
         self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
         
         # perform face recognition on the person found
@@ -967,7 +977,7 @@ class PersonFound(smach.State):
                                                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                                 Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF"))))
         # if there were people found...
-        if len(person_result) > 0:
+        if len(person_result) > 0:          
             name_pmf = person_result[0]["NamePMF"]
 
             if len(person_result) > 1:
@@ -975,6 +985,15 @@ class PersonFound(smach.State):
 
             name=None
             name_prob=0
+
+            queryRes = self.robot.reasoner.query(Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", "LastKnowPose")))
+
+            # if there is no drink requested, return not found
+            if not queryRes:
+                self.robot.speech.speak("I forgot who I had to serve")
+                return "unknown"
+
+            personNames = set([str(answer["Person"]) for answer in queryRes])
 
             for name_possibility in name_pmf:
                 print name_possibility
@@ -1332,7 +1351,8 @@ class CocktailParty(smach.StateMachine):
            
             # Create container for the iterator
             lookoutContainer = smach.StateMachine(  outcomes = ['looked_all', 'got_request'])
-
+            
+            # Go to predefined lookout positions in the room and look arround to detect waving people
             with lookoutContainer:
 
                 smach.StateMachine.add( 'NAV_TO_LOOKOUT',
@@ -1340,8 +1360,7 @@ class CocktailParty(smach.StateMachine):
                                         transitions={   'unreachable':'NAV_TO_LOOKOUT',
                                                         'arrived':'DETECT_WAVING_PEOPLE',
                                                         'visited_all':'looked_all'})
-
-                # Go to predefined lookout positions in the room and look arround to detect waving people
+    
                 smach.StateMachine.add( 'DETECT_WAVING_PEOPLE',
                                         DetectWavingPeople(robot),
                                         transitions={   'detected':'got_request',
@@ -1511,15 +1530,14 @@ class CocktailParty(smach.StateMachine):
                 smach.StateMachine.add('NAV_TO_LAST_KNOWN_LOCATION',
                                         NavToLastKnowLoc(robot),
                                         transitions={   'going':'NAV_TO_LAST_KNOWN_LOCATION' , 
-                                                        'arrived':'SAY_PERSON_NOT_FOUND', 
+                                                        'arrived':'DETECT_WAVING_PEOPLE', 
                                                         'visited_all':'succeeded'})
 
-
-                # smach.StateMachine.add( 'LOOK_FOR_PERSON',
-                #                         LookForPerson(robot),
-                #                         transitions={   'looking':'LOOK_FOR_PERSON',
-                #                                         'found':'PERSON_FOUND',
-                #                                         'not_found':'SAY_PERSON_NOT_FOUND'})
+                smach.StateMachine.add( 'DETECT_WAVING_PEOPLE',
+                                        DetectWavingPeople(robot),
+                                        transitions={   'detected':'PERSON_FOUND',
+                                                        'not_detected':'SAY_PERSON_NOT_FOUND',
+                                                        'error':'SAY_PERSON_NOT_FOUND'})
 
                 smach.StateMachine.add( 'PERSON_FOUND',
                                         PersonFound(robot),
@@ -1527,6 +1545,12 @@ class CocktailParty(smach.StateMachine):
                                                         'unknown':'SAY_PERSON_NOT_FOUND',
                                                         'persons_unchecked':'PERSON_FOUND',
                                                         'not_correct':'SAY_PERSON_NOT_FOUND'})
+
+                # smach.StateMachine.add( 'LOOK_FOR_PERSON',
+#                         LookForPerson(robot),
+#                         transitions={   'looking':'LOOK_FOR_PERSON',
+#                                         'found':'PERSON_FOUND',
+#                                         'not_found':'SAY_PERSON_NOT_FOUND'})
 
                 smach.StateMachine.add( 'SAY_PERSON_NOT_FOUND',
                                         Say(robot, ['I could not find people who ordered here.']),
@@ -1562,6 +1586,8 @@ class CocktailParty(smach.StateMachine):
                                     ServedStatus(robot),
                                     transitions={   'complete':'SAY_FINISHED_SERVING',
                                                     'incomplete':'LOOKOUT_CONTAINER'})
+
+            #   BACKUP STATE TO DELIVER THE DRINKS TO ANYONE, EVEN IF ITS NOT THE PERSON WHO REQUESTED THEM
 
 
  #-------------------------------------------FINISH THE CHALLENGE AND LEAVE----------------------------------------
@@ -1607,55 +1633,65 @@ if __name__ == '__main__':
     amigo = Amigo(wait_services=True)
 
     # Number of people served
-    amigo.reasoner.query(Compound("retractall", Compound("n_people_served", "X")))
-    amigo.reasoner.query(Compound("assert",Compound("n_people_served", "0")))
+    amigo.reasoner.query(Compound('retractall', Compound('n_people_served', 'X')))
+    amigo.reasoner.query(Compound('assert',Compound('n_people_served', '0')))
 
-    amigo.reasoner.query(Compound("retractall", Compound("preempt_head_focus", "X")))
-    amigo.reasoner.query(Compound("assert",Compound("preempt_head_focus", "0")))
+    amigo.reasoner.query(Compound('retractall', Compound('preempt_head_focus', 'X')))
+    amigo.reasoner.query(Compound('assert',Compound('preempt_head_focus', '0')))
 
-    amigo.reasoner.query(Compound("retractall", Compound("goal", "X")))
-    amigo.reasoner.query(Compound("retractall", Compound("visited", "X")))
-    amigo.reasoner.query(Compound("retractall", Compound("grabbed", "X")))
+    amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('visited', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('grabbed', 'X')))
 
 
     #################################
 
     # Retract all old facts
-    amigo.reasoner.query(Compound("retractall", Compound("challenge", "X")))
+    amigo.reasoner.query(Compound('retractall', Compound('challenge', 'X')))
     
-    amigo.reasoner.query(Compound("retractall", Compound("explored", "X")))
-    amigo.reasoner.query(Compound("retractall", Compound("state", "X", "Y")))
-    amigo.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X")))
-    amigo.reasoner.query(Compound("retractall", Compound("current_object", "X")))
-    amigo.reasoner.query(Compound("retractall", Compound("current_person", "X")))
+    amigo.reasoner.query(Compound('retractall', Compound('explored', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('state', 'X', 'Y')))
+    amigo.reasoner.query(Compound('retractall', Compound('current_exploration_target', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('current_object', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('current_person', 'X')))
 
-    amigo.reasoner.query(Compound("retractall", Compound("registered", "X")))
-    amigo.reasoner.query(Compound("retractall", Compound("type", "X", "Y")))
+    amigo.reasoner.query(Compound('retractall', Compound('registered', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('type', 'X', 'Y')))
 
-    amigo.reasoner.query(Compound("retractall", Compound("curLook", "X", "Y", "Phi")))
+    amigo.reasoner.query(Compound('retractall', Compound('curLook', 'X', 'Y', 'Phi')))
 
     # Load locations and objects from knowledge files
-    amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/locations.pl'))
-    amigo.reasoner.query(Compound("load_database", "tue_knowledge", 'prolog/objects.pl'))
+    amigo.reasoner.query(Compound('load_database', 'tue_knowledge', 'prolog/locations.pl'))
+    amigo.reasoner.query(Compound('load_database', 'tue_knowledge', 'prolog/objects.pl'))
 
     # Use reasoner for max iter in LookForPerson 
-    amigo.reasoner.query(Compound("retractall", Compound("looked_person_no", "X")))
-    amigo.reasoner.query(Compound("assert",Compound("looked_person_no", "0")))
+    amigo.reasoner.query(Compound('retractall', Compound('looked_person_no', 'X')))
+    amigo.reasoner.query(Compound('assert',Compound('looked_person_no', '0')))
 
     # Use reasoner for max iter in LookForDrink 
-    amigo.reasoner.query(Compound("retractall", Compound("looked_drink_no", "X")))
-    amigo.reasoner.query(Compound("assert",Compound("looked_drink_no", "0")))
+    amigo.reasoner.query(Compound('retractall', Compound('looked_drink_no', 'X')))
+    amigo.reasoner.query(Compound('assert',Compound('looked_drink_no', '0')))
 
     # Assert current challenge
-    amigo.reasoner.assertz(Compound("challenge", "cocktailparty"))
+    amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
 
-    initial_state = None
-    # initial_state = "ASSUMING_PERSON_FRONT"
+    # initial_state = None
+    initial_state = 'FIND_DRINKS_CONTAINER'
 
     machine = CocktailParty(amigo)
     
     if initial_state != None:
+        amigo.reasoner.reset()
+
         machine.set_initial_state([initial_state])
+
+        amigo.reasoner.query(Compound('assert', 
+                Compound('goal',
+                Compound('serve', 'david_coke', 'david', 'coke', Compound('pose_2d', '7.40384679073', '0.732638137824', '1.07275376797')))))
+
+        amigo.reasoner.query(Compound('assert', 
+                Compound('goal',
+                Compound('serve', 'william_cofee', 'william', 'cofee', Compound('pose_2d', '7.49561907834', '5.03812406629', '1.09756570188')))))
 
     introserver = smach_ros.IntrospectionServer('SM_TOP', machine, '/SM_ROOT_PRIMARY')
     introserver.start()
