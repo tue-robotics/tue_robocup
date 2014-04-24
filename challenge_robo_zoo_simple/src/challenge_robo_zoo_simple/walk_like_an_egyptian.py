@@ -27,6 +27,15 @@ def walk_like_an_egyptian(robot):
     robot.leftArm.reset_arm()
     robot.head.reset_position()
 
+class WalkLikeAnEgyptian(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["Done"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        walk_like_an_egyptian(self.robot)
+        return "Done"
+
 if __name__ == "__main__":
     rospy.init_node("walk_like_an_egyptian")
     import robot_skills.amigo

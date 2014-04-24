@@ -11,6 +11,7 @@ import random
 from part1 import TurnAround
 from look_at_person import LookAtPerson
 from flash_lights import FlashLights
+from walk_like_an_egyptian import WalkLikeAnEgyptian
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
@@ -60,12 +61,13 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"done":"SELECT_RANDOM"})
 
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, ["1","2","3","4","5"]),
+                                    RandomOutcome(robot, ["1","2","3","4","5","6"]),
                                     transitions={"1":"SAY_HI",
                                                  "2":"MAKE_JOKES",
                                                  "3":"LOOK_AT_PERSON",
                                                  "4":"FLASH_LIGHTS",
-                                                 "5":"WAVE_LIGHTS"})
+                                                 "5":"WAVE_LIGHTS",
+                                                 "6":"WALK_EGYPTIAN"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
@@ -86,6 +88,10 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "FLASH_LIGHTS",
                                     FlashLights(robot),
+                                    transitions={"Done":"RESET_ALL"})
+            
+            smach.StateMachine.add( "WALK_EGYPTIAN",
+                                    WalkLikeAnEgyptian(robot),
                                     transitions={"Done":"RESET_ALL"})
             
             @smach.cb_interface(outcomes=['done'])
