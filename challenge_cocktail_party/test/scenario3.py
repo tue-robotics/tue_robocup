@@ -16,7 +16,7 @@ if __name__ == "__main__":
     W.speak("yes")
 
     raw_input("\nPress enter to say 'cofee'\n")
-    W.speak("cofee")
+    W.speak("coffee")
 
     raw_input("\nPress enter to say 'yes'\n")
     W.speak("yes")
