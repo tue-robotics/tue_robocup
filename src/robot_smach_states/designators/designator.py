@@ -2,6 +2,15 @@
 """Designators are intended to excapsulate the process of selecting goals and 
 of marking them as finished or inachievable.
 
+TODO: Build up a family of ever complexer Designators.
+1. The simplest one only resolves to a single value at runtime.
+2. A more complex one can be Iterable and has a .next()-method. 
+    After next() is called, the designator resolves to a different value.
+3. More complex is a designator that can be refined in several ways, 
+    or which can add knowledge or annotations to their current value.
+For each designator, some class decorator can be added that will cast the current value to an object of some type.
+    This can be an Arm, a Point/Pose(Stamped), a class name for perception etc.
+
 TODO:
 Designators can be refined by a user of it. That can be through a perception routine determining something, the answer to a question etc. 
 This means that the query for it is extended with an extra conjunction, making the answers more specific, for example. 
