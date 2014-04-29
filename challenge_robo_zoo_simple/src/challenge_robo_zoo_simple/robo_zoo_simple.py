@@ -50,6 +50,16 @@ class RoboZooSimple(smach.StateMachine):
         - Act like a monkey (with arms and sound)
         - Use AR markers to select actions
         - Photo pose with speech
+        - State into the distance and wait for a face to appear. Then say "boo!" :-) Sorry
+        - Play the tune from jaws when you are not looking and stop when you are looking.
+        - Macarena move
+        - Do movie-quotes and sounds:
+            - "I'll be back" from Terminator
+            - Roger Roger from the star wars battle droids
+            - Play the Mos Eisly pub music
+        - When Amigo recognizes a face, say 'These aren't the human I am looking for' and do the jedi arm wiggle
+        - Wait for 'stop' to be said and say "Hammertime"
+
     """
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
