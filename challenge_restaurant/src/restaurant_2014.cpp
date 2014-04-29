@@ -1,9 +1,12 @@
-// WARNING, some knowledge is hardcoded
-// - objects belonging to categories food and drinks
-// - mapping no underscore (speech) to with underscore (perception)
-// So: (ctrl+f for HARDCODED and update!!)
+// WARNING, some knowledge is hardcoded. The hardcoded knowledge MUST be updated each tournament. See the initializeMappings() function
 
-// Ros
+// TODO: test
+// - two, no two should result in food
+// - order objects with underscore in world model name, see if underscore is removed too match world model object with order
+// - test confusion mapping: object, no, same object should result in other object
+// END TODO
+
+// ROS
 #include <ros/ros.h>
 
 // Find ROS pkgs
@@ -36,6 +39,9 @@
 
 // Follower
 #include "challenge_follow_me/Follower.h"
+
+// Problib conversions
+#include "problib/conversions.h"
 
 // STL
 #include <vector>
@@ -103,9 +109,6 @@ ros::ServiceClient srv_pein_;
 // Clear cost map
 ros::ServiceClient srv_cost_map;
 
-// Problib conversions
-#include "problib/conversions.h"
-
 // Administration: speech
 bool speech_recognition_turned_on_ = false;
 speech_state::SpeechState speech_state_ = speech_state::DRIVE;
@@ -118,13 +121,94 @@ std::string current_object_ = "";
 double t_last_speech_cmd_ = 0;
 bool not_two_ = false;
 
+// For confusion mapping
+bool last_answer_correct_ = true;
+std::string last_answer_ = "";
+std::map<std::string, std::string> confusion_map_;
+
+// Difference speech and world model object names
+std::map<std::string, std::string> class_label_map_;
+
+// Objects per category
+std::vector<std::string> shelf_one_objects_;
+std::vector<std::string> shelf_two_objects_;
+
 // Adminstration: other
 std::string current_clr_;
 std::map<int, std::pair<std::string, std::string> > order_map_; // object, desired location
-std::map<std::string, RobotPose> location_map_;                // location name, location
+std::map<std::string, RobotPose> location_map_;                 // location name, location
 double x_last_ = 0;
 double y_last_ = 0;
 unsigned int marker_id_ = 0;
+
+////////////////////////////////////////
+//         HARCODED KNOWLEDGE         //
+////////////////////////////////////////
+
+void initializeMappings()
+{
+    // HARDCODED MAPPINGS
+
+    /**
+     * Confusion mapping :
+     * if the speech recognition mixes two words (e.g. typically hears A instead of B)
+     * replace the answer A by B if A is heart twice in a row
+     * - allowed are all objects (ordering phase) and the numbers one, two, three (ordering phase)
+     */
+    confusion_map_["beer"] = "peanuts";
+    confusion_map_["peanuts"] = "beer";
+
+
+    /**
+     * Underscore mapping:
+     * speech recognition writes these objects as one word whereas the world model
+     * will contain underscores instead of spaces
+     */
+    class_label_map_["peanut_butter"] = "peanutbutter";
+    class_label_map_["ice_tea"] = "icetea";
+    class_label_map_["glam_up"] = "glamup";
+    class_label_map_["orange_juice"] = "orangejuice";
+    class_label_map_["fruit_juice"] = "fruitjuice";
+    class_label_map_["chewing_gums"] = "chewinggums";
+
+    /**
+     * Objects on shelf one and two
+     */
+    // Snacks
+    shelf_one_objects_.clear();
+    shelf_one_objects_.push_back("chocolates");
+    shelf_one_objects_.push_back("chewing_gums");
+    shelf_one_objects_.push_back("peanuts");
+    // Drinks
+    shelf_two_objects_.clear();
+    shelf_two_objects_.push_back("orange_juice");
+    shelf_two_objects_.push_back("fruit_juice");
+    shelf_two_objects_.push_back("ice_tea");
+    shelf_two_objects_.push_back("coffee");
+    shelf_two_objects_.push_back("beer");
+
+}
+
+////////////////////////////////////////
+//      END OF HARCODED KNOWLEDGE     //
+////////////////////////////////////////
+
+std::string getCorrectedAnswer(std::string answer)
+{
+    // if the previous answer was wrong and the current answer is the same as this wrong answer
+    if (!last_answer_correct_ && answer == last_answer_)
+    {
+        // see if there is an alternative defined
+        if (confusion_map_.find(answer) != confusion_map_.end())
+        {
+            // In case the incorrect answer is within the map, return confusion map entry
+            ROS_WARN("Confusion mapping turned %s into %s", answer.c_str(), confusion_map_[answer].c_str());
+            return confusion_map_[answer];
+        }
+    }
+
+    return answer;
+}
 
 
 std::string getSpeechStateName(speech_state::SpeechState ss)
@@ -601,6 +685,7 @@ void getLocationAndSideFromAnswer(std::string full_answer, std::string& location
         ROS_INFO("Updated second word to '%s'", side.c_str());
     }
 
+    // Two and food get confused regularly
     if (location == "two" && not_two_)
     {
         ROS_WARN("I heard two but I assume you meant food!");
@@ -608,8 +693,6 @@ void getLocationAndSideFromAnswer(std::string full_answer, std::string& location
         not_two_ = false;
     }
 
-    //! Get full location
-    //loc = mapToFullLocation(loc);
 }
 
 
@@ -657,6 +740,7 @@ void speechCallbackGuideShort(std_msgs::String res)
         // CONFIRMED
         if (answer == "yes")
         {
+
             //! Map short location name to full location name
             current_loc_name_ = mapToFullLocation(current_loc_name_);
 
@@ -722,186 +806,6 @@ void speechCallbackGuideShort(std_msgs::String res)
 }
 
 
-/*
-void speechCallbackGuide(std_msgs::String res)
-{
-
-    t_last_speech_cmd_ = ros::Time::now().toSec();
-
-    //! Inform user
-    std::string answer = res.data;
-    ROS_DEBUG("Received unfiltered speech input: '%s'", answer.c_str());
-    if (answer.empty()) return;
-
-    //! Get first word
-    size_t position = answer.find_first_of(" ");
-    if (position > 0 && position <= answer.size()) answer = std::string(answer.c_str(), position);
-    ROS_INFO("I heard: %s", answer.c_str());
-
-    //// START ANALYZING ANSWER
-
-    // ROBOT IS ASKED TO STOP
-    if (speech_state_ == speech_state::DRIVE)
-    {
-        if (answer == "amigostop")
-        {
-            // stop robot
-            follower_->pause();
-            ROS_DEBUG("Robot received a stop command");
-            updateSpeechState(speech_state::LOC_NAME);
-            setRGBLights("cyan");
-        }
-        else ROS_WARN("Robot expects command 'amigostop' but received an unknown command '%s'!", answer.c_str());
-    }
-
-    // RECEIVED A LOCATION NAME
-    else if (speech_state_ == speech_state::LOC_NAME)
-    {
-        if (answer == "continue")
-        {
-            follower_->resume();
-            updateSpeechState(speech_state::DRIVE);
-            setRGBLights("green");
-        }
-        else
-        {
-            // Received location name
-            if (answer == "one") current_loc_name_ = "delivery location one";
-            else if (answer == "two") current_loc_name_ = "delivery location two";
-            else if (answer == "three") current_loc_name_ = "delivery location three";
-            else if (answer == "food") current_loc_name_ = "food shelf";
-            else if (answer == "drink") current_loc_name_ = "drink shelf";
-            else if (answer == "order") current_loc_name_ = "ordering location";
-            else
-            {
-                // Unknown command!
-                ROS_WARN("Robot expects: 1, 2, 3, food or drink (unknown command '%s')", answer.c_str());
-                updateSpeechState(speech_state::DRIVE);
-                setRGBLights("green");
-            }
-
-            // Ask for confirmation
-            if (speech_state_ == speech_state::LOC_NAME)
-            {
-                updateSpeechState(speech_state::CONFIRM_LOC);
-                amigoSpeak(current_loc_name_ + "?");
-                setRGBLights("green");
-            }
-        }
-    }
-
-    // CONFIRMATION LOCATION NAME
-    else if (speech_state_ == speech_state::CONFIRM_LOC)
-    {
-        if (answer == "yes")
-        {
-            if (current_loc_name_.empty()) ROS_WARN("Error in location name administration!");
-            ROS_INFO("Confirmed location name '%s'!", current_loc_name_.c_str());
-
-            // Store the location
-            if (!storeLocation(current_loc_name_)) ROS_WARN("Cannot store location named %s!", current_loc_name_.c_str());
-
-            if (current_loc_name_ == "ordering location")
-            {
-                // Publish marker
-                if (location_map_.find("ordering location") != location_map_.end())
-                {
-                    visualization_msgs::MarkerArray marker_array;
-                    createMarkerWithLabel("Ord. loc.", location_map_["ordering location"], 0, 1, 0, marker_array);
-                    location_marker_pub_.publish(marker_array);
-                }
-                else ROS_WARN("Storing the ordering location failed!");
-
-                // SWITCH TO NEXT MODE
-                speech_state_ = speech_state::NUMBER;
-            }
-            else
-            {
-                updateSpeechState(speech_state::SIDE);
-                amigoSpeak("Which side?");
-            }
-            setRGBLights("green");
-            n_tries_ = 0;
-        }
-        else if (n_tries_ < MAX_N_CONFIRMS)
-        {
-            ROS_INFO("Misunderstood the location name");
-            updateSpeechState(speech_state::LOC_NAME);
-            amigoSpeak("Which location?");
-            setRGBLights("green");
-            ++n_tries_;
-        }
-        else
-        {
-            updateSpeechState(speech_state::DRIVE);
-            amigoSpeak("I give up");
-            setRGBLights("green");
-            n_tries_ = 0;
-        }
-    }
-
-    // RECEIVED A SIDE
-    else if (speech_state_ == speech_state::SIDE)
-    {
-        if (answer == "left" || answer == "right" || answer == "front")
-        {
-            current_side_ = answer;
-            updateSpeechState(speech_state::CONFIRM_SIDE);
-            amigoSpeak(current_side_ + "?");
-            setRGBLights("green");
-        }
-        else
-        {
-            ROS_WARN("Robot expects: left, front or right (unknown command '%s')", answer.c_str());
-            updateSpeechState(speech_state::SIDE);
-            setRGBLights("green");
-        }
-    }
-
-    // CONFIRMATION SIDE
-    else if (speech_state_ == speech_state::CONFIRM_SIDE)
-    {
-        if (answer == "yes")
-        {
-            if (current_side_.empty()) ROS_WARN("Error in location name administration!");
-            ROS_INFO("Confirmed side '%s' for '%s'!", current_side_.c_str(), current_loc_name_.c_str());
-
-            updateLocation(current_loc_name_, current_side_);
-
-            //! Continue following
-            setRGBLights("cyan");
-            follower_->reset();
-            setRGBLights("green");
-            updateSpeechState(speech_state::DRIVE);
-            n_tries_ = 0;
-        }
-        else if (n_tries_ < MAX_N_CONFIRMS)
-        {
-            ROS_DEBUG("Misunderstood the side");
-            updateSpeechState(speech_state::SIDE);
-            amigoSpeak("Which side?");
-            setRGBLights("green");
-            ++n_tries_;
-        }
-        else
-        {
-            updateSpeechState(speech_state::DRIVE);
-            amigoSpeak("I give up");
-            setRGBLights("green");
-            n_tries_ = 0;
-
-            //! Continue following
-            setRGBLights("cyan");
-            follower_->reset();
-            setRGBLights("green");
-        }
-    }
-
-
-}
-*/
-
-
 
 void speechCallbackOrder(std_msgs::String res)
 {
@@ -923,6 +827,11 @@ void speechCallbackOrder(std_msgs::String res)
     {
         if (answer == "one" || answer == "two" || answer == "three")
         {
+            //! Administration
+            answer = getCorrectedAnswer(answer);
+            last_answer_ = answer;
+
+            //! Get full name
             if (answer == "one") current_delivery_location_ = "delivery location one";
             else if (answer == "two") current_delivery_location_ = "delivery location two";
             else if (answer == "three") current_delivery_location_ = "delivery location three";
@@ -938,18 +847,21 @@ void speechCallbackOrder(std_msgs::String res)
     {
         if (answer == "yes")
         {
+            last_answer_correct_ = true;
             updateSpeechState(speech_state::OBJECT);
             amigoSpeak("Which object?");
             n_tries_ = 0;
         }
         else if (n_tries_ < MAX_N_CONFIRMS)
         {
+            last_answer_correct_ = false;
             updateSpeechState(speech_state::NUMBER);
             amigoSpeak("Which location?");
             ++n_tries_;
         }
         else
         {
+            last_answer_correct_ = false;
             updateSpeechState(speech_state::NUMBER);
             amigoSpeak("Let's try again, which delivery location?");
             n_tries_ = 0;
@@ -961,7 +873,13 @@ void speechCallbackOrder(std_msgs::String res)
     // RECEIVED AN OBJECT
     else if (speech_state_ == speech_state::OBJECT)
     {
+        //! Exploit confusion mapping
+        answer = getCorrectedAnswer(answer);
+        last_answer_ = answer;
+
+        //! Continue
         current_object_ = answer;
+        last_answer_ = answer;    // in this case a copy of current_object_ but more general
         updateSpeechState(speech_state::CONFIRM_OBJECT);
         amigoSpeak(current_object_ + "?");
         setRGBLights("green");
@@ -973,6 +891,8 @@ void speechCallbackOrder(std_msgs::String res)
     {
         if (answer == "yes")
         {
+            last_answer_correct_ = true;
+
             if (current_object_.empty()) ROS_WARN("Error in location name administration!");
 
             //! Store one or two objects (at most two objects according to rulebook)
@@ -1017,6 +937,7 @@ void speechCallbackOrder(std_msgs::String res)
         }
         else if (n_tries_ < MAX_N_CONFIRMS)
         {
+            last_answer_correct_ = false;
             ROS_DEBUG("Misunderstood the object");
             updateSpeechState(speech_state::OBJECT);
             amigoSpeak("Which object?");
@@ -1025,6 +946,7 @@ void speechCallbackOrder(std_msgs::String res)
         }
         else
         {
+            last_answer_correct_ = false;
             updateSpeechState(speech_state::OBJECT);
             amigoSpeak("I don't understand. Which object?");
             setRGBLights("green");
@@ -1323,14 +1245,13 @@ std::string getIdFromWorldModel(std::vector<wire::PropertySet>& objects, std::st
         const wire::Property& prop_label = obj.getProperty("class_label");
         if (prop_label.isValid())
         {
-            // HARDCODED: Correct class label
+            // Correct class label
             std::string class_label = prop_label.getValue().getExpectedValue().toString();
-            if (class_label == "peanut_butter") class_label = "peanutbutter";
-            else if (class_label == "ice_tea") class_label = "icetea";
-            else if (class_label == "glam_up") class_label = "glamup";
-            else if (class_label == "orange_juice") class_label = "orangejuice";
-            else if (class_label == "fruit_juice") class_label = "fruitjuice";
-            else if (class_label == "chewing_gums") class_label = "chewinggums";
+            if (class_label_map_.find(class_label) != class_label_map_.end())
+            {
+                ROS_INFO("Mapped %s to %s", class_label.c_str(), class_label_map_[class_label].c_str());
+                class_label = class_label_map_[class_label];
+            }
 
             // Probability of this label
             double prob = pbl::toPMF(prop_label.getValue()).getProbability(prop_label.getValue().getExpectedValue());
@@ -1549,6 +1470,9 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "test_speech_restaurant");
     ros::NodeHandle nh;
 
+    //! Initialize mappings
+    initializeMappings();
+
     //! RGB lights
     rgb_pub_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 1);
     setRGBLights("blue");
@@ -1738,24 +1662,24 @@ int main(int argc, char **argv) {
                 //! Look for objects
                 if (i == 0)
                 {
-                    // HARDCODED: snacks
-					// service call to perception: noodle_sauce, cat_food, dumplings, tacos
+                    // service call to perception: only recognize objects from the correct category
 					pein_srvs::SetObjects obj_srv;
-                    obj_srv.request.objects.push_back("chocolates");
-                    obj_srv.request.objects.push_back("chewing_gums");
-                    obj_srv.request.objects.push_back("peanuts");
+                    std::vector<std::string>::const_iterator it = shelf_one_objects_.begin();
+                    for (; it != shelf_one_objects_.end(); ++it)
+                    {
+                        obj_srv.request.objects.push_back(*it);
+                    }
 					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
 				}
 				else if (i == 1)
 				{
-					// HARDCODED: drinks
-					// service call to perception: orange_juice, fruit_juice, ice_tea, coffee, beer
+                    // service call to perception: only recognize objects from the correct category
 					pein_srvs::SetObjects obj_srv;
-					obj_srv.request.objects.push_back("orange_juice");
-					obj_srv.request.objects.push_back("fruit_juice");
-					obj_srv.request.objects.push_back("ice_tea");
-					obj_srv.request.objects.push_back("coffee");
-					obj_srv.request.objects.push_back("beer");
+                    std::vector<std::string>::const_iterator it = shelf_two_objects_.begin();
+                    for (; it != shelf_two_objects_.end(); ++it)
+                    {
+                        obj_srv.request.objects.push_back(*it);
+                    }
 					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
 				}
                 lookForObjects();
