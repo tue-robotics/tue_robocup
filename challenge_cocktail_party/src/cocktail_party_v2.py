@@ -22,10 +22,6 @@ import robot_smach_states.util.transformations as transformations
 
 from pein_srvs.srv import SetObjects
 
-grasp_arm = "left"
-#grasp_arm = "right"
-
-
 #########################################################################################
 
 class DeleteModels(smach.State):
@@ -745,36 +741,29 @@ class LookForDrinks(smach.State):
 #########################################################################################
 
 class PreparePickup(smach.State):
-    def __init__(self, robot, arm):
+    def __init__(self, robot):
         smach.State.__init__(   self, 
-                                outcomes=['done', 'grabbed_all', 'put_in_basket'])
+                                outcomes=['pickup_left', 'pickup_right', 'pickup_basket', 'grabbed_all', 'put_in_basket'])
 
         # initializations
         self.robot = robot
-        self.arm = arm
-        self.armSelect = 0
-        carryingLoc = "left_arm"    
+        self.armCount = 0
 
     def execute(self, userdata = None):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: PreparePickup\n")
 
-        if self.armSelect == 0:
-            arm = self.robot.leftArm
-            self.arm = self.robot.leftArm
-            self.armSelect += 1
+        if self.armCount == 0:
             carryingLoc = "left_arm"
-        elif self.armSelect == 1:
-            arm = self.robot.rightArm
-            self.arm = self.robot.rightArm
-            self.armSelect = 0
+            self.armCount += 1
+        elif self.armCount == 1:
             carryingLoc = "right_arm"
+            self.armCount += 1
         else:
-            arm = self.robot.leftArm
-            self.arm = self.robot.leftArm
             carryingLoc = "basket"
+            self.armCount = 0
 
-        qRequests = Conjunction(   Compound("goal", Compound("serve", "UniqueID", "Person", "Drink", "LastKnowPose")),
+        qRequests = Conjunction(    Compound("goal", Compound("serve", "UniqueID", "Person", "Drink", "LastKnowPose")),
                                     Compound("property_expected", "ObjectID", "class_label", "Drink"),
                                     # Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
@@ -788,37 +777,27 @@ class PreparePickup(smach.State):
         else:
             rospy.loginfo("\t\t[Cocktail Party] Still have to pick up {0} orders\n".format(len(goal_answers)))
 
-            rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, with {1}\n".format(goal_answers[0]["Drink"], str(arm)))
-
-            # define where the drink is being carried
-            # if self.armSelect == 0:
-            #     rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, with my left arm\n".format(goal_answers[0]["Drink"]))
-            #     carryingLoc = "left_arm"
-            # elif self.armSelect == 1:
-            #     rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, with my right arm\n".format(goal_answers[0]["Drink"]))
-            #     carryingLoc = "right_arm"
-            # elif self.armSelect == 2:
-            #     rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, and put it in my basket\n".format(goal_answers[0]["Drink"]))
-            #     carryingLoc = "basket"
-
-            # goalLoc = (float(goal_answers[0]["X"]), float(goal_answers[0]["Y"]), float(goal_answers[0]["Z"]))
-            # save the requested drink
-            # assert( grab_goal( grab, Drink Name))
+            rospy.loginfo("\t\t[Cocktail Party] Preparing to pickup the {0}, with the {1}\n".format(goal_answers[0]["Drink"], carryingLoc))
 
             drinkName = goal_answers[0]["Drink"]
 
             # retract previous goals
-            self.robot.reasoner.query(  Compound('retractall', 
-                                        Compound('grab_goal', 'X')))
+            self.robot.reasoner.query(  Compound('retractall', Compound('grab_goal', 'X')))
 
             # add new goal
             self.robot.reasoner.query(  Compound("assert", 
                                         Compound("grab_goal",
                                         Compound("grab", drinkName, carryingLoc))))
-            
+
             # self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
 
-            return 'done'
+            if carryingLoc == "left_arm":
+                return 'pickup_left'
+            elif carryingLoc  == "right_arm":
+                return 'pickup_right'
+            else:
+                return 'pickup_basket'
+
 
 #########################################################################################
 
@@ -1126,18 +1105,57 @@ class PersonFound(smach.State):
 
 #########################################################################################
 
-class HandoverDrink(smach.StateMachine):
+class HandoverDrinkLeft(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, 
                                     input_keys=['armHandover_in'],
                                     outcomes=["done"])
 
-        if grasp_arm == "left":
-            arm = robot.leftArm
-        if grasp_arm == "right":
-            arm = robot.rightArm
+        arm = robot.leftArm
 
-        # arm = self.armHandover_in
+        with self:
+            smach.StateMachine.add( 'PRESENT_DRINK',
+                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"], block=False),
+                                    transitions={"spoken":"POSE"})
+
+            smach.StateMachine.add( 'POSE',
+                                    Handover_pose(arm, robot),
+                                    transitions={   'succeeded':'PLEASE_TAKE',
+                                                    'failed':'PLEASE_TAKE'})
+            
+            smach.StateMachine.add( 'PLEASE_TAKE',
+                                    Say(robot, ["Please hold the drink, I'm going to let it go.", "Please take the drink, I'll let it go"]),
+                                    transitions={"spoken":"OPEN_GRIPPER"})
+
+            smach.StateMachine.add( "OPEN_GRIPPER", 
+                                    SetGripper(robot, arm, gripperstate=0, drop_from_frame="/amigo/grippoint_left"), #open
+                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
+                                                    'failed':'CLOSE_AFTER_DROP'})
+            smach.StateMachine.add( 'CLOSE_AFTER_DROP',
+                                    SetGripper(robot, arm, gripperstate=1), #close
+                                    transitions={   'succeeded':'RESET_ARM',
+                                                    'failed':'RESET_ARM'})
+            smach.StateMachine.add('RESET_ARM', 
+                                    ArmToPose(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
+                                    transitions={   'done':'RESET_TORSO',
+                                                    'failed':'RESET_TORSO'})
+            smach.StateMachine.add('RESET_TORSO',
+                                    ResetTorso(robot),
+                                    transitions={   'succeeded':'SAY_ENJOY',
+                                                    'failed'   :'SAY_ENJOY'})
+            smach.StateMachine.add( 'SAY_ENJOY',
+                                    Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"], block=False),
+                                    transitions={"spoken":"done"})
+
+#########################################################################################
+
+class HandoverDrinkRight(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, 
+                                    input_keys=['armHandover_in'],
+                                    outcomes=["done"])
+
+        arm = robot.rightArm
 
         with self:
             smach.StateMachine.add( 'PRESENT_DRINK',
@@ -1571,13 +1589,25 @@ class CocktailParty(smach.StateMachine):
 
                 # Pickup the drink
                 smach.StateMachine.add( 'PREPARE_PICKUP',
-                                        PreparePickup(robot, arm),
-                                        transitions={   'done':'PICKUP_DRINK',
+                                        PreparePickup(robot),
+                                        transitions={   'pickup_left':'PICKUP_DRINK_LEFT',
+                                                        'pickup_right':'PICKUP_DRINK_RIGHT',
+                                                        'pickup_basket':'PICKUP_DRINK_BASKET',
                                                         'grabbed_all': 'succeeded',
                                                         'put_in_basket':'DROP_IN_BASKET' }) 
 
-                smach.StateMachine.add( 'PICKUP_DRINK',
-                                        GrabMachine(arm, robot, qGrabpoint),
+                smach.StateMachine.add( 'PICKUP_DRINK_LEFT',
+                                        GrabMachine("left", robot, qGrabpoint),
+                                        transitions={   "succeeded":"ASSERT_PICKUP",
+                                                        "failed":'SAY_DRINK_NOT_GRASPED' }) 
+
+                smach.StateMachine.add( 'PICKUP_DRINK_RIGHT',
+                                        GrabMachine("right", robot, qGrabpoint),
+                                        transitions={   "succeeded":"ASSERT_PICKUP",
+                                                        "failed":'SAY_DRINK_NOT_GRASPED' }) 
+
+                smach.StateMachine.add( 'PICKUP_DRINK_BASKET',
+                                        GrabMachine("left", robot, qGrabpoint),
                                         transitions={   "succeeded":"ASSERT_PICKUP",
                                                         "failed":'SAY_DRINK_NOT_GRASPED' }) 
 
@@ -1675,7 +1705,7 @@ class CocktailParty(smach.StateMachine):
                 #                         transitions={'done':'GOTO_INITIAL_FAIL'})
 
                 smach.StateMachine.add( 'HANDOVER_DRINK',
-                                        HandoverDrink(robot),
+                                        HandoverDrinkLeft(robot),
                                         remapping={     'armHandover_in':'armHandover'},
                                         transitions={   'done':'NAV_TO_LAST_KNOWN_LOCATION'})
 
@@ -1751,6 +1781,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
     amigo.reasoner.query(Compound('retractall', Compound('visited', 'X')))
     amigo.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('arm', 'X')))
 
 
     #################################
@@ -1784,8 +1815,8 @@ if __name__ == '__main__':
     # Assert current challenge
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
 
-    initial_state = None
-    # initial_state = 'FIND_DRINKS_CONTAINER'
+    # initial_state = None
+    initial_state = 'FIND_DRINKS_CONTAINER'
 
     machine = CocktailParty(amigo)
     
