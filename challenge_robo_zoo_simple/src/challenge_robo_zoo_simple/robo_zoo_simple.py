@@ -22,11 +22,16 @@ class RandomOutcome(smach.State):
 
     def __init__(self, robot, outcomes):
         smach.State.__init__(self, outcomes=outcomes)
+        self.previous_outcome = None
 
     def execute(self, userdata=None):
-        """Randomly selects one of its registered outcomes"""
-
-        return random.choice(self.get_registered_outcomes())
+        """Randomly selects one of its registered outcomes. It excludes the previous outcome so it doesn't do the same thing twice"""
+        possible_outcomes = list(self.get_registered_outcomes())
+        if self.previous_outcome in possible_outcomes:
+            possible_outcomes.remove(self.previous_outcome)
+        current_outcome = random.choice(possible_outcomes)
+        self.previous_outcome = current_outcome
+        return current_outcome
 
 
 class RoboZooSimple(smach.StateMachine):
