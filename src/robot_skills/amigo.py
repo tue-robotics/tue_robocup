@@ -87,7 +87,7 @@ class Amigo(object):
         output_pose = self.tf_listener.transformPose(frame, ps) 
         return output_pose
 
-    def store_position_knowledge(self, label, dx=0.7, z=0.8, filename='/tmp/locations.pl'):
+    def store_position_knowledge(self, label, dx=0.78, z=0.75, filename='/tmp/locations.pl'):
 
         # Query reasoner for environment name
         ans_env = self.reasoner.query(Compound("environment", "Env"))
