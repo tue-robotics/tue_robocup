@@ -87,7 +87,7 @@ class Amigo(object):
         output_pose = self.tf_listener.transformPose(frame, ps) 
         return output_pose
 
-    def store_position_knowledge(self, label, dx=0.78, z=0.75, filename='/tmp/locations.pl'):
+    def store_position_knowledge(self, label, dx=0.78, z=0.75, drop_dz=0.13, filename='/tmp/locations.pl'):
 
         # Query reasoner for environment name
         ans_env = self.reasoner.query(Compound("environment", "Env"))
@@ -121,12 +121,15 @@ class Amigo(object):
         ps_MAP = self.tf_listener.transformPoint("/map", ps)
 
         poi = Compound("point_of_interest", env_name, "Challenge", label, Compound("point_3d", round(ps_MAP.point.x, 3), round(ps_MAP.point.y, 3), round(ps_MAP.point.z, 3)))
-
         print poi
+
+        dropoff = Compound("dropoff_point", env_name, "Challenge", label, Compound("point_3d", round(ps_MAP.point.x, 3), round(ps_MAP.point.y, 3), round(ps_MAP.point.z + drop_dz, 3)))
+        print dropoff        
 
         with open(filename, "a") as myfile:
             myfile.write(str(base_pose) + ".\n")
             myfile.write(str(poi) + ".\n")
+            myfile.write(str(dropoff) + ".\n")
 
         # assert the facts to the reasoner
         #self.reasoner.query(Compound("assert", base_pose))
