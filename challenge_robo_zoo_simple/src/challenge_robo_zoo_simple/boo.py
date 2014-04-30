@@ -1,8 +1,11 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('challenge_robo_zoo_simple')
+import rospy
+
+from robot_smach_states.util.startup import startup
+import smach
 
 import robot_smach_states as states
-import smach
 
 from psi import Compound, Conjunction, Sequence
 
@@ -21,9 +24,12 @@ class Boo(smach.StateMachine):
 
         with self:
             #TODO: Make sure the arms are straight down and the head is staring away into the distance
-            smach.StateMachine.add( "RESET_ALL",
-                                    states.ResetArmsSpindleHead(robot),
-                                    transitions={"done":"WAIT_FOR_PERSON"})
+            smach.StateMachine.add( "RESET_RIGHT",
+                                    states.ArmToJointPos(robot, robot.rightArm, [0,0,0,0,0,0,0]),
+                                    transitions={"done":"RESET_LEFT", "failed":"RESET_LEFT"})
+            smach.StateMachine.add( "RESET_LEFT",
+                                    states.ArmToJointPos(robot, robot.leftArm, [0,0,0,0,0,0,0]),
+                                    transitions={"done":"WAIT_FOR_PERSON", "failed":"WAIT_FOR_PERSON"})
 
             smach.StateMachine.add("WAIT_FOR_PERSON",
                     states.Wait_queried_perception(self.robot, ["face_recognition"], self.query_detect_face, timeout=60),
@@ -34,3 +40,8 @@ class Boo(smach.StateMachine):
             smach.StateMachine.add("TALK",
                     states.Say(robot, ["Boooo!"]),
                     transitions={   'spoken'      :'Done'})
+
+if __name__ == "__main__":
+    rospy.init_node("challenge_robo_zoo_boo")
+
+    startup(Boo)
