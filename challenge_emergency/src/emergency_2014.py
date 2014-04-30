@@ -22,6 +22,11 @@ from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'office','bedroom' or 'kitchen'}
 room = 'kitchen'
+manipulation_location = {'water' : 'desk', 
+                         'firstaidkit' : 'desk', 
+                         'cellphone' : 'desk'}
+
+
 
 ''' TO DO:
 - Make a list of likely and unlikely positions for the emergency to occur
@@ -32,16 +37,6 @@ room = 'kitchen'
 #########################################
 #       Created by: Teun Derksen        #
 #########################################
-class SleepTime(smach.State):
-    def __init__(self, robot=None,sleeptime=1):
-        smach.State.__init__(self, outcomes=['finished'])
-
-        self.robot = robot
-        self.sleeptime = sleeptime
-
-    def execute(self, userdata=None):    
-        rospy.sleep(self.sleeptime)
-        return "finished"
 
 class UnknownOctomapBlobDetector(smach.State):
     def __init__(self, robot):
@@ -50,11 +45,13 @@ class UnknownOctomapBlobDetector(smach.State):
         self.counter = 0
         self.robot = robot
         self.unknown_blob_detection = rospy.ServiceProxy('/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions',GetUnknownOctomapBlobPositions) 
-        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
+        
 
     def execute(self, userdata=None):
         self.robot.spindle.reset()
         self.robot.head.reset_position()
+
+        
 
         self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
 
@@ -104,15 +101,15 @@ class UnknownOctomapBlobDetector(smach.State):
         #rospy.wait_for_service("/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions",timeout=2.0)
         try:
             if room == 'bedroom':
-                self.response = self.unknown_blob_detection(0.0, -1.4, 0, 5.2, 3.5, 2)# todo     
+                self.response = self.unknown_blob_detection(0.0, -1.4, 0, 5.2, 3.5, 1.2)# todo     
             elif room == 'office':
-                self.response = self.unknown_blob_detection(0.0, 3.6, 0, 4.75, 8.5, 2)    
+                self.response = self.unknown_blob_detection(0.0, 3.6, 0, 4.75, 8.5, 1.2)    
             else:
                 if self.counter == 0:
-                    self.response = self.unknown_blob_detection(5, -1.4, 0, 8.8, 3.7, 2)
+                    self.response = self.unknown_blob_detection(5, -1.4, 0, 8.8, 3.7, 1.2)
                     self.counter = self.counter + 1
                 else:
-                    self.response = self.unknown_blob_detection(5.0, 3.8, 0, 8.8, 8.5, 2)
+                    self.response = self.unknown_blob_detection(5.0, 3.8, 0, 8.8, 8.5, 1.2)
 
             print self.response
             if len(self.response.positions) == 0:
@@ -142,7 +139,6 @@ class UnknownOctomapBlobDetector(smach.State):
             print e
             return "failed"
         return "success"
-
 
 class LookingForPersonOld(smach.State):
     def __init__(self, robot):
@@ -252,59 +248,6 @@ class LookingForPersonOld(smach.State):
 
 
         return "found"     
-        
-
-class LookingForPerson(smach.StateMachine):
-    def __init__(self, robot, detect_persons=True):
-        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
-
-        self.robot = robot
-
-        self.possible_person_query = Conjunction(   Compound("instance_of", "ObjectID", "person"), 
-                                                    Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
-                                                    Compound("not", Compound("ignored_person", "ObjectID")))
-
-        self.current_possible_person_query = Conjunction(   Compound("current_possible_person", "ObjectID"), 
-                                                            Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-
-        self.person_query = Conjunction(  Compound("instance_of", "ObjectID", "validated_person"), 
-                                          Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
-
-        robot.reasoner.assertz(Compound("ignored_person", "nobody")) #Required to make the predicate known.
-        robot.reasoner.retractall(Compound("current_possible_person", "ObjectID"))
-
-        with self:
-            if detect_persons:
-                #Turn on ppl_detection and switch off after we detected a person
-                smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
-                                        states.Wait_queried_perception(robot, ["ppl_detection"], self.possible_person_query, timeout=3),
-                                        transitions={   "query_true":"SET_CURRENT_POSSIBLE_PERSON",
-                                                        "timed_out":"Failed",
-                                                        "preempted":"Aborted"})
-
-            smach.StateMachine.add( 'SET_CURRENT_POSSIBLE_PERSON', 
-                                    states.Select_object(robot, self.possible_person_query, "current_possible_person"),
-                                    transitions={   'selected':'LOOK_AT_POSSIBLE_PERSON',
-                                                    'no_answers':'Failed'})
-
-            #Look at the possible_person detection, to verify through Luis's human_tracking them in a next state
-            smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
-                                    states.LookAtPoint(robot, self.current_possible_person_query),
-                                    transitions={   'looking':'WAIT_FOR_HUMAN_DETECTION',
-                                                    'no_point_found':'Failed',
-                                                    'abort':'Aborted'})
-
-            #Turn on human_tracking with the kinect and wait for a match of it in the world model
-            smach.StateMachine.add( "WAIT_FOR_HUMAN_DETECTION",
-                                    states.Wait_queried_perception(robot, ["human_tracking"], self.person_query, timeout=10),
-                                    transitions={   "query_true":"RETRACT_POSSIBLE",
-                                                    "timed_out":"RETRACT_POSSIBLE",
-                                                    "preempted":"Aborted"})
-
-            smach.StateMachine.add('RETRACT_POSSIBLE', 
-                                    states.Select_object(robot, self.current_possible_person_query, "ignored_person"),
-                                    transitions={   'selected':'Done',
-                                                    'no_answers':'Failed'})
 
 class LookAtPerson(smach.State):
     def __init__(self, robot=None):
@@ -349,7 +292,6 @@ class LookAtPerson(smach.State):
         return 'finished' 
 
 
-
 class LookForObject(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["looking" , "found", "not_found"])
@@ -362,20 +304,31 @@ class LookForObject(smach.State):
         return_result = self.robot.reasoner.query(Compound("goal", Compound("serve", "Drink")))
 
         if not return_result:
-            self.robot.speech.speak("I forgot which object you wanted")
+            self.robot.speech.speak("I forgot which object you wanted",block=False)
             return "not_found"
-        serving_drink = str(return_result[0]["Drink"])  
+        serving_drink = str(return_result[0]["Drink"])
 
-        print serving_drink
 
+        
+        if serving_drink not in manipulation_location:
+            storage_room = 'desk'
+
+        else:
+            storage_room = manipulation_location[serving_drink]
+            if not storage_room:
+                storage_room = 'desk' 
+        
+
+        rospy.loginfo('I am looking for a object {0}, at hardcoded location {1}'.format(serving_drink,storage_room))
+
+        '''
         if serving_drink == 'pills':
-            respnse = self.set_objects(['pills'])
+            self.set_objects(['pills'])
             storage_room = 'desk'
         else:
-            respnse = self.set_objects(['water'])
+            self.set_objects(['water'])
             storage_room = 'kitchen_table'
-
-
+        '''
         goal_answers = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound(storage_room, "W")),
                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
                                                  Compound("not", Compound("visited", "Waypoint"))))
@@ -444,7 +397,7 @@ class LookForObject(smach.State):
         elif wait_result == "preempted":
             return "looking"
         elif wait_result == "query_true":
-            self.robot.speech.speak("Hey, I found your " + serving_drink,block=False)
+            self.robot.speech.speak("Hey, I found your " + serving_drink, block=False)
             return "found"
 
 
@@ -577,8 +530,9 @@ class Register(smach.State):
         '''
         f.close() 
         rospy.logdebug("Closed file")
-        pathname = "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/tue_robocup/challenge_emergency/output/person.png"
-        rospy.logdebug("pathname = {0}".format(pathname))
+
+        pathname = p.get_pkg_dir('challenge_emergency') + '/output/person.png'
+        rospy.loginfo("pathname = {0}".format(pathname))
         try:
             if self.get_picture(pathname):
                 rospy.loginfo("Picture taken!!")
@@ -608,49 +562,6 @@ class RunPdfCreator(smach.State):
         rospy.loginfo("PDF is created on usb-stick")
                
         return "done"
-
-class SwitchEmergencyDetector(smach.State):
-    def __init__(self, robot, switch):
-        smach.State.__init__(self, outcomes=['done','failed'])
-
-        self.switch = switch
-        self.robot = robot
-        self.startup_people_emergency_detection = rospy.ServiceProxy('/person_emergency_detector/switch', Switch) 
-
-    def execute(self, userdata=None):
-
-        try:
-            self.response = self.startup_people_emergency_detection(self.switch, 0.0) 
-        except Exception, e:
-            print e
-            return "failed"
-        return "done"
-
-
-class ObservingEmergency(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['done','waiting','expired'])
-        self.robot = robot
-        rospy.Subscriber("/person_emergency_detector/result", std_msgs.msg.String, self.callback)
-        self.detected_poses = { 'wave' : 0, 'fall' : 0 }
-        self.counter = 0
-
-    def callback(self, data):
-        seen = data.data
-        if seen != '':
-            self.detected_poses[seen] = self.detected_poses[seen] + 1
-            rospy.loginfo(": I saw %s" % seen)
-
-    def execute(self, userdata=None):
-
-        if self.counter > 100:
-            return 'expired'
-
-        if self.detected_poses['wave'] > 30 or self.detected_poses['fall'] > 30:
-            return 'done'
-
-        self.counter = self.counter + 1 
-        return 'waiting'
 
 class WaitForAmbulance(smach.State):
     def __init__(self, robot):
@@ -718,6 +629,118 @@ class WaitForAmbulance(smach.State):
 
             return 'detected'
 
+###############################################################
+#       The following custom states are not used anymore      #
+###############################################################
+
+class SleepTime(smach.State):
+    def __init__(self, robot=None,sleeptime=1):
+        smach.State.__init__(self, outcomes=['finished'])
+
+        self.robot = robot
+        self.sleeptime = sleeptime
+
+    def execute(self, userdata=None):    
+        rospy.sleep(self.sleeptime)
+        return "finished"        
+
+class LookingForPerson(smach.StateMachine):
+    def __init__(self, robot, detect_persons=True):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
+
+        self.robot = robot
+
+        self.possible_person_query = Conjunction(   Compound("instance_of", "ObjectID", "person"), 
+                                                    Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")),
+                                                    Compound("not", Compound("ignored_person", "ObjectID")))
+
+        self.current_possible_person_query = Conjunction(   Compound("current_possible_person", "ObjectID"), 
+                                                            Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        self.person_query = Conjunction(  Compound("instance_of", "ObjectID", "validated_person"), 
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+
+        robot.reasoner.assertz(Compound("ignored_person", "nobody")) #Required to make the predicate known.
+        robot.reasoner.retractall(Compound("current_possible_person", "ObjectID"))
+
+        with self:
+            if detect_persons:
+                #Turn on ppl_detection and switch off after we detected a person
+                smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
+                                        states.Wait_queried_perception(robot, ["ppl_detection"], self.possible_person_query, timeout=3),
+                                        transitions={   "query_true":"SET_CURRENT_POSSIBLE_PERSON",
+                                                        "timed_out":"Failed",
+                                                        "preempted":"Aborted"})
+
+            smach.StateMachine.add( 'SET_CURRENT_POSSIBLE_PERSON', 
+                                    states.Select_object(robot, self.possible_person_query, "current_possible_person"),
+                                    transitions={   'selected':'LOOK_AT_POSSIBLE_PERSON',
+                                                    'no_answers':'Failed'})
+
+            #Look at the possible_person detection, to verify through Luis's human_tracking them in a next state
+            smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
+                                    states.LookAtPoint(robot, self.current_possible_person_query),
+                                    transitions={   'looking':'WAIT_FOR_HUMAN_DETECTION',
+                                                    'no_point_found':'Failed',
+                                                    'abort':'Aborted'})
+
+            #Turn on human_tracking with the kinect and wait for a match of it in the world model
+            smach.StateMachine.add( "WAIT_FOR_HUMAN_DETECTION",
+                                    states.Wait_queried_perception(robot, ["human_tracking"], self.person_query, timeout=10),
+                                    transitions={   "query_true":"RETRACT_POSSIBLE",
+                                                    "timed_out":"RETRACT_POSSIBLE",
+                                                    "preempted":"Aborted"})
+
+            smach.StateMachine.add('RETRACT_POSSIBLE', 
+                                    states.Select_object(robot, self.current_possible_person_query, "ignored_person"),
+                                    transitions={   'selected':'Done',
+                                                    'no_answers':'Failed'})
+
+class SwitchEmergencyDetector(smach.State):
+    def __init__(self, robot, switch):
+        smach.State.__init__(self, outcomes=['done','failed'])
+
+        self.switch = switch
+        self.robot = robot
+        self.startup_people_emergency_detection = rospy.ServiceProxy('/person_emergency_detector/switch', Switch) 
+
+    def execute(self, userdata=None):
+
+        try:
+            self.response = self.startup_people_emergency_detection(self.switch, 0.0) 
+        except Exception, e:
+            print e
+            return "failed"
+        return "done"
+
+
+class ObservingEmergency(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done','waiting','expired'])
+        self.robot = robot
+        rospy.Subscriber("/person_emergency_detector/result", std_msgs.msg.String, self.callback)
+        self.detected_poses = { 'wave' : 0, 'fall' : 0 }
+        self.counter = 0
+
+    def callback(self, data):
+        seen = data.data
+        if seen != '':
+            self.detected_poses[seen] = self.detected_poses[seen] + 1
+            rospy.loginfo(": I saw %s" % seen)
+
+    def execute(self, userdata=None):
+
+        if self.counter > 100:
+            return 'expired'
+
+        if self.detected_poses['wave'] > 30 or self.detected_poses['fall'] > 30:
+            return 'done'
+
+        self.counter = self.counter + 1 
+        return 'waiting'
+
+
+
 def setup_statemachine(robot):
 
     # Retract old facts
@@ -783,7 +806,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "SAY_LOOK_FOR_PERSON",
                                 states.Say(robot,"Going to the " + room, block=False),
-                                transitions={    "spoken":"FIND_PERSON_BACKUP"})
+                                transitions={    "spoken":"FIND_PERSON_BLOB_DETECTOR"})
                                 #transitions={    "spoken":"FIND_PERSON"})
 
         ######################################################
@@ -795,11 +818,11 @@ def setup_statemachine(robot):
                                                 'looking':'FIND_PERSON',
                                                 'not_found':'ASK_IF_AMBULANCE'})
 
-        smach.StateMachine.add( "FIND_PERSON_BACKUP",
+        smach.StateMachine.add( "FIND_PERSON_BLOB_DETECTOR",
                                 UnknownOctomapBlobDetector(robot),
                                 transitions={   'success':'NAVIGATE_TO_PERSON',
                                                 'failed':'RETRACT_VISITED',
-                                                'looking':'FIND_PERSON_BACKUP'})
+                                                'looking':'FIND_PERSON_BLOB_DETECTOR'})
 
         smach.StateMachine.add( "RETRACT_VISITED",
                                 states.Retract_facts(robot, [Compound("visited", "X")]),
@@ -813,9 +836,15 @@ def setup_statemachine(robot):
                                                 "preempted":'SAY_PERSON_UNREACHABLE',
                                                 "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
 
-        smach.StateMachine.add( 'LOOK_AT_PERSON',
-                                LookAtPerson(robot),                          
-                                transitions={'finished':'APPROACH_PERSON'})  #SKIP THE EMERGENCY DETECTOR
+        smach.StateMachine.add('LOOK_AT_PERSON',
+                                states.LookAtPoint(robot, lookat_query=emergency_blob_query),
+                                transitions={   'looking':'APPROACH_PERSON',
+                                                'no_point_found':'APPROACH_PERSON',
+                                                'abort':'APPROACH_PERSON'})
+
+        #smach.StateMachine.add( 'LOOK_AT_PERSON',
+        #                        LookAtPerson(robot),                          
+        #                        transitions={'finished':'APPROACH_PERSON'})  
 
 
         smach.StateMachine.add( "SAY_PERSON_UNREACHABLE",
@@ -832,11 +861,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
                                 states.Say(robot,"I will ask my questions from here.", block=False),
-                                transitions={'spoken':'RELOOK_AT_PERSON'})
+                                transitions={'spoken':'LOOK_AT_PERSON'})
 
-        smach.StateMachine.add( 'RELOOK_AT_PERSON',
-                                LookAtPerson(robot),                          
-                                transitions={'finished':'APPROACH_PERSON'})  # SKIP THE EMERGENCY DETECTOR
 
 
         ''' NEW, NOT TESTED
