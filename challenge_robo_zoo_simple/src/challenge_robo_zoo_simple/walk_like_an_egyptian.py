@@ -15,12 +15,12 @@ egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_c
 
 def walk_like_an_egyptian(robot):
     for i in range(2):
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=5.0, tilt_vel=5.0)
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=5.0, tilt_vel=5.0)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.leftArm.send_joint_trajectory(egyptian_motion_left, timeout=10)
 
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=5.0, tilt_vel=5.0)
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=5.0, tilt_vel=5.0)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.rightArm.send_joint_trajectory(egyptian_motion_right, timeout=10)
 
     robot.rightArm.reset_arm()
@@ -34,14 +34,30 @@ def music():
     os.chdir(dname)
     os.system("mpg123 '01 Walk Like An Egyptian.mp3' &")
 
+def start_music():
+    import os
+    import signal
+    import time
+    import subprocess
+
+    # The os.setsid() is passed in the argument preexec_fn so
+    # it's run after the fork() and before  exec() to run the shell.
+    music_process = subprocess.Popen("mpg123 '01 Walk Like An Egyptian.mp3'", stdout=subprocess.PIPE, 
+                           shell=True, preexec_fn=os.setsid) 
+    return music_process
+
+def stop_music(music_process):
+    os.killpg(music_process.pid, signal.SIGTERM)  # Send the signal to all the process groups
+
 class WalkLikeAnEgyptian(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
 
     def execute(self, userdata=None):
-        music()
+        proc = start_music()
         walk_like_an_egyptian(self.robot)
+        stop_music(proc)
         return "Done"
 
 if __name__ == "__main__":
