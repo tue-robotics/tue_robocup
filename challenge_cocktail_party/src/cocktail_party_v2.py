@@ -248,7 +248,7 @@ class WaitForPerson(smach.State):
             waited_no += 1
             return "waiting"
         elif wait_result == "preempted":
-            self.robot.speech.speak("Waiting for person was preemted... I don't even know what that means!")
+            self.robot.speech.speak("Waiting for person was preemted.")
             return "waiting"
         # if the query succeeded
         elif wait_result == "query_true":
@@ -275,6 +275,25 @@ class LearnPersonName(smach.State):
     def execute(self, userdata=None):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LearnPersonName\n")
+
+        # prepare query to get faces detected in front of amigo
+        # qFaces = Conjunction(  
+        #                 Compound( "property_expected", "ObjectID", "class_label", "human_face"),
+        #                 Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+        #                 Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        # res = self.robot.reasoner.query(qFaces)
+
+        # # look at the persons face or at least reset the position of the face
+        # if res:
+        #     x,y,z = res[0]["X"], res[0]["Y"], res[0]["Z"]
+
+        #     lookat_point = msgs.PointStamped(x,y,z)
+
+        #     rospy.loginfo("\t\t[Cocktail Party] Looking at person's face (x = {0}, y = {1}, z = {2})\n".format(x, y, z))
+        #     self.robot.head.send_goal(lookat_point, timeout=0)
+        # else:
+        self.robot.head.reset_position()
 
         # ask the name of the user (within 3 tries and within 60 seconds an answer is received)
         self.response = self.ask_user_service_get_learn_person_name("name", 3 , rospy.Duration(60))
@@ -471,19 +490,13 @@ class NavToWavingPerson(smach.State):
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
             return "visited_all"
 
-        
         rospy.loginfo("\t\t[Cocktail Party] I found {0} persons\n". format(len(goal_answers)))
-        self.robot.speech.speak("Going to the next person who waved.", block=False)
 
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Z"]))
         waypointName = goal_answer["ObjectID"]
-
-        # navigate to the waypoint queried
-        # nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
-        # nav_result = nav.execute()
 
         # Use the lookat query
         nav = NavigateGeneric(self.robot, lookat_query = qPeopleWaving)
@@ -514,9 +527,6 @@ class NavToLastKnowLoc(smach.State):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToLastKnowLoc\n")
 
-
-        # qGoals = Compound("goal", Compound("serve", "ID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Phi")))
-
         qGoals = Conjunction(   Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Z"))),
                                 Compound("not", Compound("visited", "ObjectID")))
 
@@ -525,7 +535,7 @@ class NavToLastKnowLoc(smach.State):
 
         # if there is no location associated with lookout points say it
         if not goals:
-            self.robot.speech.speak("I don't remember where i saw people.")
+            self.robot.speech.speak("I don't remember where i saw more people.", block=False)
             return "visited_all"
         else:    
             # take the first goal found
@@ -535,10 +545,6 @@ class NavToLastKnowLoc(smach.State):
             goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Z"]))
 
             waypointName = goal_answer["ObjectID"]
-
-            # navigate to the waypoint queried
-            # nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
-            # nav_result = nav.execute()
 
              # Use the lookat query
             nav = NavigateGeneric(self.robot, lookat_query = qGoals)
@@ -606,7 +612,7 @@ class PendingOrders(smach.State):
 
         # retract all visited locations and people
         # import ipdb; ipdb.set_trace()
-        self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
+        # self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
 
         # SHOULD BE RECTRACTING WAVING PERSONS!!!!!!!!
 
@@ -621,6 +627,7 @@ class PendingOrders(smach.State):
             self.robot.speech.speak("I need more requests before getting the drinks", block=False)
             return "insuficient_orders"
         else:
+            self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
             # retract the people already served, maybe they want something again
             self.robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
             self.robot.speech.speak("I will now get your drinks", block=False)
@@ -647,6 +654,7 @@ class LookForDrinks(smach.State):
         # if there is no drink requested, return not found
         if not goals:
             self.robot.speech.speak("I picked up all the drink requested", block=False)
+            self.robot.reasoner.reset()
             return "done"
 
         drinkNames = set([str(answer["Drink"]) for answer in goals])
@@ -659,11 +667,12 @@ class LookForDrinks(smach.State):
 
         # if there is no location associated with drinks return not found
         if not storageRoomWaypts:
+            amigo.reasoner.reset()
             self.robot.speech.speak("I want to find a " + orderedDrinks + ", but I don't know where to search for them... I'm sorry!", block=False)
             return "not_found"
 
         # say different phrases randomly
-        lookedIdx =  random.randint(0, 3)
+        lookedIdx =  random.randint(0, 4)
         if lookedIdx == 1:
             self.robot.speech.speak("I'm on the move, looking for your " + orderedDrinks, block = False)
         elif lookedIdx == 2:
@@ -1360,23 +1369,27 @@ class FocusOnFace(smach.StateMachine):
         qFaces = Conjunction(  
                         Compound( "property_expected", "ObjectID", "class_label", "human_face"),
                         Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                        Compound( "property_expected", "ObjectID", "position", Compound("point_3d", "X", "Y", "Z")))
+                        Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         res = self.robot.reasoner.query(qFaces)
 
         if len(res) > 0:
-            x,y,z = res[0][X],res[0][Y],res[0][Z]
+            x,y,z = res[0]["X"],res[0]["Y"],res[0]["Z"]
 
             lookat_point = msgs.PointStamped(x,y,z)
 
-            rospy.loginfo("[Cocktail Party] Person at (x = {0}, y = {1}, z = {2})".format(x, y, z))
+            rospy.loginfo("\t\t[Cocktail Party] Person at (x = {0}, y = {1}, z = {2})\n".format(x, y, z))
             self.robot.head.send_goal(lookat_point, timeout=0)
 
         # self.robot.perception.toggle([''])   
 
         # check if the behaviour is supposed to be preempted or loop
         answer = self.robot.reasoner.query(Compound("preempt_head_focus", "X"))
-        preempt = float(answer[0]["X"])        
+        if answer:
+            preempt = float(answer[0]["X"])
+        else:
+            rospy.logwarn("\t\t[Cocktail Party] Unable to query preempt_head_focus, assuming its 0\n".format(x, y, z))
+            preempt = 0
 
         if preempt == "0":
             rospy.sleep(0.3)
