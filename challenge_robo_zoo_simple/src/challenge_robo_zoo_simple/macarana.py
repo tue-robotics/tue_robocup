@@ -27,40 +27,83 @@ left_arm_to_head_4 =            [0.000, 1.750, 0.000, 1.900, 1.570, 0.500, 0.000
 #7. Right arm down to the hips
 arm_to_hips_1 =                 [-0.200, -0.200, 0.200, 0.800, 0.000, 0.000, 0.000] 
 arm_to_hips_2 =                 [-0.400, 0.000, 1.570, 0.600, 0.000, 0.000, 0.000]
+arm_to_hips_3 =                 [-0.400, 0.000, 1.570, 0.000, 0.000, 0.000, 0.000]
+arm_to_hips_4 =                 [-0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000]
 
 zero =                          [-0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000]
 #7a. Left arm down to the hips
 
+import threading
+
+class StoppableThread(threading.Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+
+    def __init__(self):
+        super(StoppableThread, self).__init__()
+        self._stop = threading.Event()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+def spindle_up_down(robot, lower, upper, stopEvent):
+    """Loop the robot's spindle between the lower and upper heights given here"""
+    while not rospy.is_shutdown() and not stopEvent.is_set():
+        robot.spindle.send_goal(lower, timeout=2.0)
+        robot.spindle.send_goal(upper, timeout=2.0)
+
 def macarena(robot):
-    _left =  robot.leftArm.send_joint_goal #The undersore makes the outlining work (below). OCD
-    right = robot.rightArm.send_joint_goal
+    stopEvent = threading.Event()
+
+    up_and_down = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
+    up_and_down.start()
+    #robot.spindle.send_goal(0.3)
+    def _left(*args, **kwargs): #The underscore  makes the outlining below easier to read
+        if not robot.leftArm.send_joint_goal(*args, **kwargs):
+            raise Exception("Arms dit not reach goal,  need help")
+            robot.speech.speak("Guys, could you help me, i'm stuck in the macarena")
+    
+    def right(*args, **kwargs): 
+        if not robot.rightArm.send_joint_goal(*args, **kwargs):
+            raise Exception("Arms dit not reach goal,  need help")
+            robot.speech.speak("Guys, could you help me, i'm stuck in the macarena")
+
     for i in range(1):
-        right(*arm_straight_1, timeout=10)
-        _left(*arm_straight_1, timeout=10)
+        right(*arm_straight_1, timeout=5)
+        _left(*arm_straight_1, timeout=5)
 
-        right(*arm_straight_2, timeout=10)
-        _left(*arm_straight_2, timeout=10)
+        right(*arm_straight_2, timeout=5)
+        _left(*arm_straight_2, timeout=5)
 
-        right(*right_hand_to_left_shoulder, timeout=10)
-        _left(*left_hand_to_right_shoulder, timeout=10)
+        right(*right_hand_to_left_shoulder, timeout=5)
+        _left(*left_hand_to_right_shoulder, timeout=5)
 
-        right(*right_arm_to_head, timeout=10)
+        right(*right_arm_to_head, timeout=5)
 
-        _left(*left_arm_to_head_1, timeout=10)
-        _left(*left_arm_to_head_2, timeout=10)
-        _left(*left_arm_to_head_3, timeout=10)
-        _left(*left_arm_to_head_4, timeout=10)
+        _left(*left_arm_to_head_1, timeout=5)
+        _left(*left_arm_to_head_2, timeout=5)
+        _left(*left_arm_to_head_3, timeout=5)
+        _left(*left_arm_to_head_4, timeout=5)
 
-        right(*arm_to_hips_1, timeout=10)
-        _left(*arm_to_hips_1, timeout=10)
-        right(*arm_to_hips_2, timeout=10)
-        _left(*arm_to_hips_2, timeout=10)
-        right(*arm_to_hips_1, timeout=10)
-        _left(*arm_to_hips_1, timeout=10)
+        right(*arm_to_hips_1, timeout=5)
+        _left(*arm_to_hips_1, timeout=5)
+        right(*arm_to_hips_2, timeout=5)
+        _left(*arm_to_hips_2, timeout=5)
+        right(*arm_to_hips_3, timeout=5)
+        _left(*arm_to_hips_3, timeout=5)
+        right(*arm_to_hips_4, timeout=5)
+        _left(*arm_to_hips_4, timeout=5)
+        right(*arm_to_hips_1, timeout=5)
+        _left(*arm_to_hips_1, timeout=5)
         
-        right(*zero, timeout=10)
-        _left(*zero, timeout=10)
+        # right(*zero, timeout=10)
+        # _left(*zero, timeout=10)
 
+    stopEvent.set()
+    up_and_down.join()
     robot.rightArm.reset_arm()
     robot.leftArm.reset_arm()
     robot.head.reset_position()
