@@ -974,17 +974,21 @@ class PersonFound(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: PersonFound\n")
 
         person_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Phi")),
+                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
                                     Compound("not", Compound("visited", "ObjectID")))
 
-        # get results from the query
-        queryRes = self.robot.reasoner.query(person_query)
-        rospy.loginfo("I found {0} people". format(len(queryRes)))
+        ## get results from the query
+        #queryRes = self.robot.reasoner.query(person_query)
+        #rospy.loginfo("I found {0} people". format(len(queryRes)))
         
-        # navigate to one of the detected faces
-        goal = (float(queryRes[0]["X"]), float(queryRes[0]["Y"]), float(queryRes[0]["Phi"]))
-        nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
-        nav_result = nav.execute()
+        ## navigate to one of the detected faces
+        #goal = (float(queryRes[0]["X"]), float(queryRes[0]["Y"]), float(queryRes[0]["Phi"]))
+        #nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
+        #nav_result = nav.execute()
+        
+        # Use the lookat query
+        nav = NavigateGeneric(self.robot, lookat_query = person_query)
+        nav_result = nav.execut()
 
         # serving_person = str(return_result[0]["Person"]) 
         self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")

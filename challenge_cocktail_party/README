@@ -27,7 +27,8 @@ amigo3:
     say test  
     	(to test speaker is working) 
 
-    rosrun challenge_cocktail_party cocktail_party_rgo2014.py
+    #####rosrun challenge_cocktail_party cocktail_party_rgo2014.py#####old####
+    rosrun challenge_cocktail_party cocktail_party_v2.py
 
 INSTRUCTIONS:
 
