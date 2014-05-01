@@ -394,7 +394,7 @@ def setup_statemachine(robot):
         elif int(sys.argv[1]) == 3:
             robot.initial_location = "initial_egpsr_3"
     else:
-        robot.initial_location = "initial_egpsr_2"
+        robot.initial_location = "initial_egpsr_1"
     rospy.logerr("!! DEFINE INITIAL LOCATION. CURRENT LOCATION IS {0} !!".format(robot.initial_location))
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
