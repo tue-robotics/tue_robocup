@@ -2,8 +2,8 @@
 import roslib; roslib.load_manifest('challenge_robo_zoo_simple')
 
 import smach
-
-import os, sys
+import rospy
+import os
 
 class R2D2(smach.State):
     def __init__(self, robot):

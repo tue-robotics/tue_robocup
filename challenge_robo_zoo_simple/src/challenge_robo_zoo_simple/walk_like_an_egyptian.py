@@ -4,7 +4,6 @@ import roslib; roslib.load_manifest('challenge_robo_zoo_simple')
 import rospy
 import smach
 import robot_skills.util.msg_constructors as msgs
-import robot_smach_states as states
 
 import os
 import signal
@@ -12,9 +11,10 @@ import signal
 egyptian_pose_start     = [-1.570, 0.000, -1.50, 1.800, 0.000, -0.55, 0.000]
 egyptian_pose_center    = [-1.570, 0.000, -1.50, 1.570, 0.000, -0.30, 0.000]
 egyptian_pose_end       = [-1.570, 0.000, -1.50, 1.177, 0.000, -0.15, 0.000]
-
-egyptian_motion_left = [egyptian_pose_center, egyptian_pose_start, egyptian_pose_center, egyptian_pose_end, egyptian_pose_center]
-egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_center, egyptian_pose_start, egyptian_pose_center]
+egyptian_pose_down      = [-1.570, 0.000, 1.57, 1.177, 0.000, -0.30, 0.000]
+                                                                                                                                 #Also moving the arms down is way too slow
+egyptian_motion_left = [egyptian_pose_center, egyptian_pose_start, egyptian_pose_center, egyptian_pose_end, egyptian_pose_center]#, egyptian_pose_down]
+egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_center, egyptian_pose_start, egyptian_pose_center]#, egyptian_pose_down]
 
 def walk_like_an_egyptian(robot):
     for i in range(4):
@@ -31,15 +31,12 @@ def walk_like_an_egyptian(robot):
     robot.head.reset_position()
 
 def music():
-    import os
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
     os.system("mpg123 '01 Walk Like An Egyptian.mp3' &")
 
 def start_music():
-    import signal
-    import time
     import subprocess
     
     abspath = os.path.abspath(__file__)

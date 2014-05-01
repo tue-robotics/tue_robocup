@@ -20,21 +20,3 @@ class LookAtPerson(smach.StateMachine):
                     transitions={   'Done'      :'Done',
                                     'Aborted'   :'Aborted',
                                     'Failed'    :'Failed'})
-
-
-class TellJoke(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=["Done"])
-        self.robot = robot
-
-        with self:
-            smach.StateMachine.add("LOOK_AT_PERSON",
-                    LookAtPerson(robot),
-                    transitions={   'Done'      :'TALK',
-                                    'Aborted'   :'TALK',
-                                    'Failed'    :'TALK'})
-
-            smach.StateMachine.add("TALK",
-                    states.Say(robot, ["Two robots walk into a bar. Haha, robots can't walk that well",
-                                       ""]),
-                    transitions={   'Done'      :'Done'})
