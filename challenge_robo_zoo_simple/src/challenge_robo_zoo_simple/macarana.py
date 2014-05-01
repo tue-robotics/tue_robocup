@@ -63,13 +63,13 @@ def macarena(robot):
     #robot.spindle.send_goal(0.3)
     def _left(*args, **kwargs): #The underscore  makes the outlining below easier to read
         if not robot.leftArm.send_joint_goal(*args, **kwargs):
-            raise Exception("Arms dit not reach goal,  need help")
             robot.speech.speak("Guys, could you help me, i'm stuck in the macarena")
+            raise Exception("Arms dit not reach goal,  need help")
     
     def right(*args, **kwargs): 
         if not robot.rightArm.send_joint_goal(*args, **kwargs):
-            raise Exception("Arms dit not reach goal,  need help")
             robot.speech.speak("Guys, could you help me, i'm stuck in the macarena")
+            raise Exception("Arms dit not reach goal,  need help")
 
     for i in range(1):
         right(*arm_straight_1, timeout=5)
