@@ -21,13 +21,13 @@ from pein_srvs.srv import SetObjects
 from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
-room = 'kitchen'
-manipulation_location = {'water' : 'bar', 
+room = 'living_room'
+manipulation_location = {'water' : 'nightstand', 
                          'firstaidkit' : 'bar', 
                          'cellphone' : 'nightstand'}
 
-# ToDo move to locations
-room_dimension = {'livingroom' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
+# ToDo move to locations, region of interest for person xyz_min, xyz_max
+room_dimension = {'living_room' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
                   'bedroom' : [4.37, -3.04, 0.0, 6.25, -1.36, 1.2],
                   'kitchen' : [-0.44, 0.73, 0.0, 1.76, 2.67, 1.2]}
 
@@ -84,25 +84,15 @@ class UnknownOctomapBlobDetector(smach.State):
         print room_dimension[room]
 
         # look to ROI
-        if room == "kitchen" and self.counter == 1:
-            roi_answers = self.robot.reasoner.query(Compound("point_of_interest", Compound("kitchen2", "W"), Compound("point_3d", "X", "Y", "Z")))
-            if roi_answers:
-                #print roi_answers
-                for x in range(0,len(roi_answers)):
-                    roi_answer = roi_answers[x]
-                    #print roi_answer
-                    self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
-                    rospy.sleep(1.5)
 
-        else:
-            roi_answers = self.robot.reasoner.query(Compound("point_of_interest", Compound(room, "W"), Compound("point_3d", "X", "Y", "Z")))
-            if roi_answers:
-                #print roi_answers
-                for x in range(0,len(roi_answers)):
-                    roi_answer = roi_answers[x]
-                    #print roi_answer
-                    self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
-                    rospy.sleep(1.5)
+        roi_answers = self.robot.reasoner.query(Compound("point_of_interest", Compound(room, "W"), Compound("point_3d", "X", "Y", "Z")))
+        if roi_answers:
+            #print roi_answers
+            for x in range(0,len(roi_answers)):
+                roi_answer = roi_answers[x]
+                print roi_answer
+                self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
+                rospy.sleep(1.5)
 
         try:
             '''
@@ -324,8 +314,10 @@ class LookForObject(smach.State):
             return "not_found"
         serving_drink = str(return_result[0]["Drink"])
 
+        # Service to only try to object the desired object!
+        self.set_objects([serving_drink])
 
-        
+        # Check if the object is defined in the manipulation locations (SEE TOP)
         if serving_drink not in manipulation_location:
             storage_room = 'bar'
 
