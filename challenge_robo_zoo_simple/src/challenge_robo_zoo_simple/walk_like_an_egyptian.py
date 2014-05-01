@@ -6,6 +6,9 @@ import smach
 import robot_skills.util.msg_constructors as msgs
 import robot_smach_states as states
 
+import os
+import signal
+
 egyptian_pose_start     = [-1.570, 0.000, -1.50, 1.800, 0.000, -0.55, 0.000]
 egyptian_pose_center    = [-1.570, 0.000, -1.50, 1.570, 0.000, -0.30, 0.000]
 egyptian_pose_end       = [-1.570, 0.000, -1.50, 1.177, 0.000, -0.15, 0.000]
@@ -14,7 +17,7 @@ egyptian_motion_left = [egyptian_pose_center, egyptian_pose_start, egyptian_pose
 egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_center, egyptian_pose_start, egyptian_pose_center]
 
 def walk_like_an_egyptian(robot):
-    for i in range(2):
+    for i in range(4):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.leftArm.send_joint_trajectory(egyptian_motion_left, timeout=10)
@@ -35,15 +38,21 @@ def music():
     os.system("mpg123 '01 Walk Like An Egyptian.mp3' &")
 
 def start_music():
-    import os
     import signal
     import time
     import subprocess
-
+    
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
+    musicfile = "01 Walk Like An Egyptian.mp3"
+    musicfile = os.path.join(dname, musicfile)
+    rospy.loginfo("Playing music: {0}".format(musicfile))
     # The os.setsid() is passed in the argument preexec_fn so
     # it's run after the fork() and before  exec() to run the shell.
-    music_process = subprocess.Popen("mpg123 '01 Walk Like An Egyptian.mp3'", stdout=subprocess.PIPE, 
+    music_process = subprocess.Popen("mpg123 '{0}'".format(musicfile), stdout=subprocess.PIPE, 
                            shell=True, preexec_fn=os.setsid) 
+    rospy.loginfo("If the music keeps going somehow, its PID is: {0}".format(music_process.pid))
     return music_process
 
 def stop_music(music_process):
