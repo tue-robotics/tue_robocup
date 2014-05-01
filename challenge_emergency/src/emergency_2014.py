@@ -20,12 +20,16 @@ from pein_srvs.srv import SetObjects
 #import states_new as states 
 from psi import Compound, Sequence, Conjunction
 
-# Hardcoded emergency room {'office','bedroom' or 'kitchen'}
+# Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
 room = 'kitchen'
-manipulation_location = {'water' : 'desk', 
-                         'firstaidkit' : 'desk', 
-                         'cellphone' : 'desk'}
+manipulation_location = {'water' : 'bar', 
+                         'firstaidkit' : 'bar', 
+                         'cellphone' : 'nightstand'}
 
+# ToDo move to locations
+room_dimension = {'livingroom' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
+                  'bedroom' : [4.37, -3.04, 0.0, 6.25, -1.36, 1.2],
+                  'kitchen' : [-0.44, 0.73, 0.0, 1.76, 2.67, 1.2]}
 
 
 ''' TO DO:
@@ -48,10 +52,10 @@ class UnknownOctomapBlobDetector(smach.State):
         
 
     def execute(self, userdata=None):
+
         self.robot.spindle.reset()
         self.robot.head.reset_position()
-
-        
+       
 
         self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
 
@@ -60,7 +64,7 @@ class UnknownOctomapBlobDetector(smach.State):
                                                  Compound("not", Compound("visited", "Waypoint")),
                                                  Compound("not", Compound("unreachable", "Waypoint")))
 
-        goal_answers = self.robot.reasoner.query(navigate_room)             # I do not use not_visited and not_unreachable since these are no roi's
+        goal_answers = self.robot.reasoner.query(navigate_room)
 
         self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
 
@@ -76,6 +80,8 @@ class UnknownOctomapBlobDetector(smach.State):
         nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+
+        print room_dimension[room]
 
         # look to ROI
         if room == "kitchen" and self.counter == 1:
@@ -98,10 +104,10 @@ class UnknownOctomapBlobDetector(smach.State):
                     self.robot.head.send_goal(msgs.PointStamped(float(roi_answer["X"]), float(roi_answer["Y"]), float(roi_answer["Z"]), "/map"))
                     rospy.sleep(1.5)
 
-        #rospy.wait_for_service("/unknown_octomap_blob_detector/get_unknown_octomap_blob_positions",timeout=2.0)
         try:
+            '''
             if room == 'bedroom':
-                self.response = self.unknown_blob_detection(0.0, -1.4, 0, 5.2, 3.5, 1.2)# todo     
+                self.response = self.unknown_blob_detection(0.0, -1.4, 0, 5.2, 3.5, 1.2)# todo  
             elif room == 'office':
                 self.response = self.unknown_blob_detection(0.0, 3.6, 0, 4.75, 8.5, 1.2)    
             else:
@@ -110,7 +116,17 @@ class UnknownOctomapBlobDetector(smach.State):
                     self.counter = self.counter + 1
                 else:
                     self.response = self.unknown_blob_detection(5.0, 3.8, 0, 8.8, 8.5, 1.2)
+            '''            
+            if room not in room_dimension:
+                return 'failed'
 
+            else:
+                self.response = self.unknown_blob_detection(room_dimension[room][0], 
+                                                            room_dimension[room][1], 
+                                                            room_dimension[room][2], 
+                                                            room_dimension[room][3], 
+                                                            room_dimension[room][4], 
+                                                            room_dimension[room][5])
             print self.response
             if len(self.response.positions) == 0:
                 return 'looking'
@@ -311,12 +327,12 @@ class LookForObject(smach.State):
 
         
         if serving_drink not in manipulation_location:
-            storage_room = 'desk'
+            storage_room = 'bar'
 
         else:
             storage_room = manipulation_location[serving_drink]
             if not storage_room:
-                storage_room = 'desk' 
+                storage_room = 'bar' 
         
 
         rospy.loginfo('I am looking for a object {0}, at hardcoded location {1}'.format(serving_drink,storage_room))
@@ -938,7 +954,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add( "APPROACH_PERSON",
                                     #states.NavigateGeneric(robot, lookat_query=person_query, xy_dist_to_goal_tuple=(0.8,0)),
                                     states.NavigateGeneric(robot, lookat_query=emergency_blob_query, xy_dist_to_goal_tuple=(0.8,0)),
-                                    transitions={   "arrived":"RELOOK_AT_PERSON2",
+                                    transitions={   "arrived":"RELOOK_AT_PERSON",
                                                     "unreachable":'FAILED_DRIVING_TO_LOCATION',
                                                     "preempted":'FAILED_DRIVING_TO_LOCATION',
                                                     "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2'})
@@ -957,11 +973,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE2",
                                     states.Say(robot,"I will ask my questions from here.", block=False),
-                                    transitions={'spoken':'RELOOK_AT_PERSON2'})
+                                    transitions={'spoken':'RELOOK_AT_PERSON'})
 
-        smach.StateMachine.add( 'RELOOK_AT_PERSON2',
-                                    LookAtPerson(robot),                          
-                                    transitions={'finished':'ASK_IF_AMBULANCE'})  
+        smach.StateMachine.add('RELOOK_AT_PERSON',
+                                states.LookAtPoint(robot, lookat_query=emergency_blob_query),
+                                transitions={   'looking':'ASK_IF_AMBULANCE',
+                                                'no_point_found':'ASK_IF_AMBULANCE',
+                                                'abort':'ASK_IF_AMBULANCE'})  
 
         ######################################################
         #############   ASK AMBU AND REGISTER   ##############
