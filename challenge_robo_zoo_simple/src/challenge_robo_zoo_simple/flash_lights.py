@@ -21,5 +21,5 @@ class FlashLights(smach.State):
 
             l.set_color(*color)
 
-        l.set_color(0,1,0)
+        l.set_color(0,0,1)
         return "Done"

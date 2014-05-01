@@ -13,6 +13,7 @@ from look_at_person import LookAtPerson
 from flash_lights import FlashLights
 from walk_like_an_egyptian import WalkLikeAnEgyptian
 from boo import Boo
+from make_jokes import MakeJokes
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
@@ -74,7 +75,7 @@ class RoboZooSimple(smach.StateMachine):
         with self:
             
             smach.StateMachine.add( "RESET_ALL",
-                                    states.ResetArmsSpindleHead(robot),
+                                    states.ResetArmsSpindleHead(robot, timeout=5.0),
                                     transitions={"done":"SELECT_RANDOM"})
 
             smach.StateMachine.add( "SELECT_RANDOM",
@@ -92,9 +93,8 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"spoken":"RESET_ALL"})
 
             smach.StateMachine.add( "MAKE_JOKES",
-                                    states.Say(robot, ["Two robots walk into a bar. Hahahahaha, robots can't walk that well",
-                                                       "A computer programmer holds up his newly born baby, the mother asks: 'is it a boy or a girl?' He answers 'yes'."]),
-                                    transitions={"spoken":"RESET_ALL"})
+                                    MakeJokes(robot)
+                                    transitions={"Done":"RESET_ALL"})
 
             smach.StateMachine.add( "TURN_AROUND",
                                     TurnAround(robot),
