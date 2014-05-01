@@ -103,7 +103,7 @@ class DetectWavingPeople(smach.State):
 
         # compose person query
         qPeopleFound = Conjunction( Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    #Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound("not", Compound("ordered", "ObjectID")))
 
         # get results from the query
