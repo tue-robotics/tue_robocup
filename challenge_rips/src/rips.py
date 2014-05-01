@@ -77,10 +77,10 @@ def setup_statemachine(robot):
 
     with sm:
 
-        smach.StateMachine.add('INITIALIZE_FIRST',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'START_CHALLENGE_ROBUST',
-                                                'abort':'Aborted'})
+        #smach.StateMachine.add('INITIALIZE_FIRST',
+        #                        states.Initialize(robot),
+        #                        transitions={   'initialized':'START_CHALLENGE_ROBUST',
+        #                                        'abort':'Aborted'})
 
 
         # Start challenge via StartChallengeRobust
