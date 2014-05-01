@@ -355,6 +355,7 @@ class AskDrink(smach.State):
 
         locX = amigoPose.pose.position.x
         locY = amigoPose.pose.position.y
+        locZ = amigoPose.pose.position.z
         locPhi = rotation
 
         uniqueID = "{0}_{1}".format(userdata.personName_in, response_answer)
@@ -363,7 +364,7 @@ class AskDrink(smach.State):
         # assert( goal( serve, UniqueID, Person, Drink, Person Last Known Location, Carrying the drink))
         self.robot.reasoner.query(  Compound("assert", 
                                     Compound("goal",
-                                    Compound("serve", uniqueID, userdata.personName_in, response_answer, Compound("pose_2d", locX, locY, locPhi)))))
+                                    Compound("serve", uniqueID, userdata.personName_in, response_answer, Compound("pose_2d", locX, locY, locZ)))))
 
         rospy.loginfo("\t\t[Cocktail Party] I'm getting a {0} for {1}".format(response_answer,userdata.personName_in))
 
@@ -458,29 +459,34 @@ class NavToWavingPerson(smach.State):
 
         # compose person query
         qPeopleWaving = Conjunction(Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Phi")),
+                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
                                     Compound("not", Compound("visited", "ObjectID")),
                                     Compound("not", Compound("ordered", "ObjectID")))
 
         # get results from the query
         goal_answers = self.robot.reasoner.query(qPeopleWaving)
-        
-        rospy.loginfo("I found {0} persons". format(len(goal_answers)))
 
         # if there is no location associated with lookout points say it
         if not goal_answers:
+            rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
             return "visited_all"
 
+        
+        rospy.loginfo("\t\t[Cocktail Party] I found {0} persons\n". format(len(goal_answers)))
         self.robot.speech.speak("Going to the next person who waved.", block=False)
 
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
-        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Z"]))
         waypointName = goal_answer["ObjectID"]
 
         # navigate to the waypoint queried
-        nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
+        # nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
+        # nav_result = nav.execute()
+
+        # Use the lookat query
+        nav = NavigateGeneric(self.robot, lookat_query = qPeopleWaving)
         nav_result = nav.execute()
 
         # assert that this location has been visited
@@ -511,7 +517,7 @@ class NavToLastKnowLoc(smach.State):
 
         # qGoals = Compound("goal", Compound("serve", "ID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Phi")))
 
-        qGoals = Conjunction(   Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Phi"))),
+        qGoals = Conjunction(   Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Z"))),
                                 Compound("not", Compound("visited", "ObjectID")))
 
         # get results from the query
@@ -526,12 +532,16 @@ class NavToLastKnowLoc(smach.State):
             goal_answer = goals[0]
             self.robot.speech.speak("I'm going to {0}'s last know location.".format(goal_answer["Person"]))
 
-            goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+            goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Z"]))
 
             waypointName = goal_answer["ObjectID"]
 
             # navigate to the waypoint queried
-            nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
+            # nav = NavigateGeneric(self.robot, goal_pose_2d = goal)
+            # nav_result = nav.execute()
+
+             # Use the lookat query
+            nav = NavigateGeneric(self.robot, lookat_query = qGoals)
             nav_result = nav.execute()
 
             # assert that this location has been visited
@@ -640,7 +650,7 @@ class LookForDrinks(smach.State):
             return "done"
 
         drinkNames = set([str(answer["Drink"]) for answer in goals])
-        orderedDrinks = " or ".join(drinkNames) #str(goals[0]["Drink"])  
+        orderedDrinks = " and ".join(drinkNames) #str(goals[0]["Drink"])  
 
         # get the waypoint of where to search, storage_room
         storageRoomWaypts = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("storage_room", "W")),
@@ -655,11 +665,11 @@ class LookForDrinks(smach.State):
         # say different phrases randomly
         lookedIdx =  random.randint(0, 3)
         if lookedIdx == 1:
-            self.robot.speech.speak("I'm on the move, looking for your " + orderedDrinks)
+            self.robot.speech.speak("I'm on the move, looking for your " + orderedDrinks, block = False)
         elif lookedIdx == 2:
-            self.robot.speech.speak("Still on the move looking for your " + orderedDrinks)
+            self.robot.speech.speak("Still on the move looking for your " + orderedDrinks, block = False)
         else:
-            self.robot.speech.speak("I think I know the location of your " + orderedDrinks)
+            self.robot.speech.speak("I think I know the location of your " + orderedDrinks, block = False)
 
         #take the first goal found
         goal = (float(storageRoomWaypts[0]["X"]), float(storageRoomWaypts[0]["Y"]), float(storageRoomWaypts[0]["Phi"]))
@@ -869,7 +879,7 @@ class LookForPerson(smach.State):
         # for now, take the first goal found
         goal_answer = goal_answers[0]
 
-        self.robot.speech.speak(str(serving_person) + ", I'm on my way!", language="us", personality="kyle", voice="default", mood="excited")
+        self.robot.speech.speak(str(serving_person) + ", I'm on my way!", block = False)
 
         # convert response location to numbers
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
@@ -978,8 +988,8 @@ class PersonFound(smach.State):
                                     Compound("not", Compound("visited", "ObjectID")))
 
         ## get results from the query
-        #queryRes = self.robot.reasoner.query(person_query)
-        #rospy.loginfo("I found {0} people". format(len(queryRes)))
+        queryRes = self.robot.reasoner.query(person_query)
+        rospy.loginfo("I found {0} people". format(len(queryRes)))
         
         ## navigate to one of the detected faces
         #goal = (float(queryRes[0]["X"]), float(queryRes[0]["Y"]), float(queryRes[0]["Phi"]))
@@ -988,7 +998,7 @@ class PersonFound(smach.State):
         
         # Use the lookat query
         nav = NavigateGeneric(self.robot, lookat_query = person_query)
-        nav_result = nav.execut()
+        nav_result = nav.execute()
 
         # serving_person = str(return_result[0]["Person"]) 
         self.robot.speech.speak("Hi there, human. Please look into my eyes, so I can recognize you.")
