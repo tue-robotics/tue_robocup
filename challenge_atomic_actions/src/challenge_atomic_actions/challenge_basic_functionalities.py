@@ -6,8 +6,8 @@ import sys
 import smach
 
 import avoid_that
-import fetch_and_carry
-import find_me
+#import fetch_and_carry
+#import find_me
 import pick_and_place
 import what_did_you_say
 
