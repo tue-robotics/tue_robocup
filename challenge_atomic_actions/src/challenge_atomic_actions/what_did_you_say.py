@@ -208,6 +208,14 @@ class LookingForPerson(smach.State):
         person_result = self.robot.reasoner.query(person_query)
         
         print "person_result = ", person_result
+        
+        person_query2 = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        person_result2 = self.robot.reasoner.query(person_query2)
+        
+        print "person_result2 = ", person_result2
 
         if not person_result:
             self.robot.speech.speak("No one here.")
