@@ -13,7 +13,15 @@ class LookAtPerson(smach.StateMachine):
         with self:
             smach.StateMachine.add("RESET_SPINDLE_HEAD_UP",
                     states.ResetSpindle_HeadUp(robot),
-                    transitions={'done':'LOOK'})
+                    transitions={'done':'RESET_REASONER'})
+                    
+            @smach.cb_interface(outcomes=['done'])
+            def reset_reasoner(*args, **kwargs):
+                robot.reasoner.reset()
+                return 'done'
+            smach.StateMachine.add( "RESET_REASONER",
+                                    smach.CBState(reset_reasoner),
+                                    transitions={"done":"LOOK"})
 
             smach.StateMachine.add("LOOK",
                     states.LookAtItem(robot, ["face_recognition"], states.LookAtItem.face_in_front_query),

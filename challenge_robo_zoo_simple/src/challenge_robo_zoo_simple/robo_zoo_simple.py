@@ -88,7 +88,7 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "SELECT_RANDOM",
                                     RandomOutcome(robot, ["1","2","3","4","5","6","7","8","9","10", "11", "12"]),
-                                    transitions={"1":"GANGNAM_STYLE",
+                                    transitions={"1":"SAY_HI",
                                                  "2":"MAKE_JOKES",
                                                  "3":"LOOK_AT_PERSON",
                                                  "4":"FLASH_LIGHTS",
@@ -132,10 +132,6 @@ class RoboZooSimple(smach.StateMachine):
             
             smach.StateMachine.add( "WALK_EGYPTIAN",
                                     WalkLikeAnEgyptian(robot),
-                                    transitions={"Done":"RESET_ALL"})
-                                    
-            smach.StateMachine.add( "GANGNAM_STYLE",
-                                    GangNamStyle(robot),
                                     transitions={"Done":"RESET_ALL"})
             
             smach.StateMachine.add( "BOO",
