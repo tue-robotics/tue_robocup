@@ -1867,9 +1867,9 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
 
 
-    # initial_state = None
+    initial_state = None
     # initial_state = 'FIND_DRINKS_CONTAINER'
-    initial_state = 'DELIVER_DRINKS_CONTAINER'
+    # initial_state = 'DELIVER_DRINKS_CONTAINER'
 
     machine = CocktailParty(amigo)
     
