@@ -78,8 +78,10 @@ class GangNamStyle(smach.State):
 
     def execute(self, userdata=None):
         proc = start_music()
-        gangnam_style(self.robot)
-        stop_music(proc)
+        try:
+            gangnam_style(self.robot)
+        finally:
+            stop_music(proc)
         return "Done"
 
 if __name__ == "__main__":

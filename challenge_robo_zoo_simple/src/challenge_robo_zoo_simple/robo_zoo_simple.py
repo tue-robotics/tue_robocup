@@ -17,6 +17,8 @@ from boo import Boo
 from make_jokes import MakeJokes
 from pickuplines import Pickup
 from sounds import R2D2, Toeter
+from macarana import Macarena
+from gangnam_style import GangNamStyle
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
@@ -59,12 +61,13 @@ class RoboZooSimple(smach.StateMachine):
         - DONE: wave (smile and wave boys)
         - DONE: Say some pickup lines when a face is detected (we can't select on gender just yet)
         - DONE: Stare into the distance and wait for a face to appear. Then say "boo!" :-)
+        - DONE: Macarena move
+        - DONE: Oppa Gangnam style
         - TEST: Look at person and say something funny
         - Act like a monkey (with arms and sound)
         - Use AR markers to select actions
         - Photo pose with speech
         - Play the tune from jaws when you are not looking and stop when you are looking.
-        - Macarena move
         - Do movie-quotes and sounds:
             - "I'll be back" from Terminator
             - Roger Roger from the star wars battle droids
@@ -72,7 +75,6 @@ class RoboZooSimple(smach.StateMachine):
         - When Amigo recognizes a face, say 'These aren't the human I am looking for' and do the jedi arm wiggle
         - Wait for 'stop' to be said and say "Hammertime"
         - Do the Robot-dance (let the arms swing like is dead)
-        - Oppa Gangnam style
 
     """
     def __init__(self, robot):
@@ -85,7 +87,7 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"done":"SELECT_RANDOM"})
 
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, ["1","2","3","4","5","6","7","8","9","10"]),
+                                    RandomOutcome(robot, ["1","2","3","4","5","6","7","8","9","10", "11", "12"]),
                                     transitions={"1":"GANGNAM_STYLE",
                                                  "2":"MAKE_JOKES",
                                                  "3":"LOOK_AT_PERSON",
@@ -95,7 +97,9 @@ class RoboZooSimple(smach.StateMachine):
                                                  "7":"BOO",
                                                  "8":"PICKUP_LINES",
                                                  "9":"R2D2",
-                                                 "10":"TOETER"})
+                                                 "10":"TOETER",
+                                                 "11":"MACARENA",
+                                                 "12":"GANGNAM"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
@@ -148,6 +152,14 @@ class RoboZooSimple(smach.StateMachine):
             
             smach.StateMachine.add( "TOETER",
                                     Toeter(robot),
+                                    transitions={"Done":"RESET_ALL"})
+            
+            smach.StateMachine.add( "MACARENA",
+                                    Macarena(robot),
+                                    transitions={"Done":"RESET_ALL"})
+            
+            smach.StateMachine.add( "GANGNAM",
+                                    GangNamStyle(robot),
                                     transitions={"Done":"RESET_ALL"})
 if __name__ == "__main__":
     rospy.init_node("challenge_robo_zoo")

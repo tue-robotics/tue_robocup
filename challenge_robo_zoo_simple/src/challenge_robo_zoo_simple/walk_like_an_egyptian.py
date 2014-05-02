@@ -62,8 +62,10 @@ class WalkLikeAnEgyptian(smach.State):
 
     def execute(self, userdata=None):
         proc = start_music()
-        walk_like_an_egyptian(self.robot)
-        stop_music(proc)
+        try:
+            walk_like_an_egyptian(self.robot)
+        finally:
+            stop_music(proc)
         return "Done"
 
 if __name__ == "__main__":

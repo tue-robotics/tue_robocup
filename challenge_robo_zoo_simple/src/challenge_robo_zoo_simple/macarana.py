@@ -132,7 +132,7 @@ def start_music():
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
-    musicfile = "01 Walk Like An macarena.mp3"
+    musicfile = "macarena.mp3"
     musicfile = os.path.join(dname, musicfile)
     rospy.loginfo("Playing music: {0}".format(musicfile))
     # The os.setsid() is passed in the argument preexec_fn so
@@ -152,8 +152,10 @@ class Macarena(smach.State):
 
     def execute(self, userdata=None):
         proc = start_music()
-        macarena(self.robot)
-        stop_music(proc)
+        try:
+            macarena(self.robot)
+        finally:
+            stop_music(proc)
         return "Done"
 
 if __name__ == "__main__":
