@@ -60,7 +60,7 @@ def macarena(robot):
     stopEvent = threading.Event()
 
     up_and_down = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
-#    up_and_down.start()
+    up_and_down.start()
     #robot.spindle.send_goal(0.3)
     def _left(*args, **kwargs): #The underscore  makes the outlining below easier to read
         if not robot.leftArm.send_joint_goal(*args, **kwargs):
@@ -87,7 +87,7 @@ def macarena(robot):
 
             #_left(*left_arm_to_head_1, timeout=5) #?
             #_left(*left_arm_to_head_2, timeout=5) #?
-            _left(*left_arm_to_head_3, timeout=5)
+            #_left(*left_arm_to_head_3, timeout=5)
             _left(*left_arm_to_head_4, timeout=5)
 
             right(*arm_to_hips_1, timeout=10)
@@ -98,8 +98,8 @@ def macarena(robot):
             _left(*arm_to_hips_3, timeout=5)
             right(*arm_to_hips_4, timeout=5)
             _left(*arm_to_hips_4, timeout=5)
-            right(*arm_to_hips_1, timeout=10)
-            _left(*arm_to_hips_1, timeout=10)
+            right(*arm_to_hips_1, timeout=15)
+            _left(*arm_to_hips_1, timeout=15)
 
         stopEvent.set()
         up_and_down.join()
