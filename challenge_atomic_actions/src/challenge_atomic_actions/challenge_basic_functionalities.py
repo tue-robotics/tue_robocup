@@ -68,9 +68,13 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             # ToDo: additional arguments?
             smach.StateMachine.add( 'PICK_AND_PLACE',
             	                    pick_and_place.PickAndPlace(robot),
-            	                    transitions={	"Done":		"GOTO_AVOID_THAT", 
+            	                    transitions={	"Done":		"SAY_GOTO_AVOID_THAT", 
             	                                    "Aborted":	"Aborted", 
-            	                                    "Failed":	"GOTO_AVOID_THAT"})
+            	                                    "Failed":	"SAY_GOTO_AVOID_THAT"})
+
+            smach.StateMachine.add("SAY_GOTO_AVOID_THAT", 
+                                    Say(robot, [ "I will go to the next task"], block=False),
+                                    transitions={   'spoken':'GOTO_AVOID_THAT'})
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
@@ -78,6 +82,10 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
+
+            smach.StateMachine.add("RESET_HEAD1",
+                                states.ResetHead(robot),
+                                transitions={'done':'SAY_ASK_CONTINUE'})
 
             smach.StateMachine.add("SAY_ASK_CONTINUE", 
                                     Say(robot, [ "Please say continue."]),
@@ -93,12 +101,20 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                    transitions={	"Done":		"GOTO_WHAT_DID_YOU_SAY", 
             	                                    "Aborted":	"Aborted"})
 
+            smach.StateMachine.add("SAY_GOTO_WHAT_DID_YOU_SAY", 
+                                    Say(robot, [ "I will go to the next task"], block=False),
+                                    transitions={   'spoken':'GOTO_WHAT_DID_YOU_SAY'})
+
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
                                     transitions={   "arrived":"SAY_ASK_CONTINUE2",
                                                     "unreachable":'SAY_ASK_CONTINUE2',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_ASK_CONTINUE2'})
+
+            smach.StateMachine.add("RESET_HEAD2",
+                                states.ResetHead(robot),
+                                transitions={'done':'SAY_ASK_CONTINUE2'})
 
             smach.StateMachine.add("SAY_ASK_CONTINUE2", 
                                     Say(robot, [ "Please say continue."]),
@@ -153,10 +169,13 @@ if __name__ == "__main__":
     if  len(sys.argv) > 1:
         if int(sys.argv[1]) == 1:
             initial_state = ["PICK_AND_PLACE"]
+            amigo.reasoner.reset()
         elif int(sys.argv[1]) == 2:
             initial_state = ["AVOID_THAT"]
+            amigo.reasoner.reset()
         elif int(sys.argv[1]) == 3:
             initial_state = ["WHAT_DID_YOU_SAY"]
+            amigo.reasoner.reset()
         #initial_state = [str(sys.argv[1])]
         rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
         machine.set_initial_state(initial_state)

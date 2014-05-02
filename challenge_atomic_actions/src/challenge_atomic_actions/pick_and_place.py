@@ -55,12 +55,12 @@ class PickAndPlace(smach.StateMachine):
         #ToDo: if disposed not relevant. Rather have the Object with the highest probability!
         query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
 
-        query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
-                                        Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
+        # query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
+        #                                 Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
-        query_current_object_class = Conjunction(
-                                Compound("current_object",      "Obj_to_Dispose"), #Of the current object
-                                Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
+        # query_current_object_class = Conjunction(
+        #                         Compound("current_object",      "Obj_to_Dispose"), #Of the current object
+        #                         Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
 
         query_dropoff_loc = Conjunction(
                                     Compound("current_object", "Obj_to_Dispose"), #Of the current object
@@ -68,7 +68,7 @@ class PickAndPlace(smach.StateMachine):
                                     Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
                                     Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
-        query_dropoff_loc_backup = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc_backup = Compound("dropoff_point", Compound("trash_bin","Loc"), Compound("point_3d", "X", "Y", "Z"))
 
         with self:
             smach.StateMachine.add('INIT',

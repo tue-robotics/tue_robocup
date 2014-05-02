@@ -1,21 +1,23 @@
-# Responsible: Janno Lunenburg
-(README not yet tested)
+# Responsible: Janno Lunenburg / Erik Geerts
 
 amigo1:
 
     amiddle
     
 amigo3:
+
+    reset-audio
+
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
     alsamixer
         Mic Boost -> 22
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
-        
+
     amigo-console  
 		(amigo.base.reset_costmap)
-        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+        test_audio
         (lights should become green -> say 'continue')
         (if response is 'true', amigo heard you and lights become blue)
 
@@ -31,16 +33,18 @@ amigo3:
 - Make sure the thrashbin is placed correctly
 - Testing avoid that is a bit difficult, since there is no space for detours in our testlab
 - Current questions for what did you say:
-"--- What is the capital of Germany? -------------"
-"--- What is the heaviest animal in the world?----"
-"--- Who is the president of America?-------------"
-"--- Who is your example?-------------------------"
-"--- When do the olympics start?------------------"
-"--- Which football club is the best?-------------"
-"--- Who is the best looking person around here?--"
-"--- Which person is not able to say yes?---------"
-"--- Which town has been bombed?------------------"
-"--- What is your motto?--------------------------"
+
+-- Possible questions for now: ----------------------------------------------------------
+-- What time is it? ---------------------------------------------------------------------
+-- What is the answer to the ultimate question about life the universe and everything? --
+-- What is the capital of poland?--------------------------------------------------------
+-- What is the oldest most widely used drug on earth?------------------------------------
+-- What is your name?--------------------------------------------------------------------
+-- What is your team's name?-------------------------------------------------------------
+-- Which country grows the most potatoes?------------------------------------------------
+-- Which country grew the first orange?--------------------------------------------------
+-- Which fish can hold objects in its tail?----------------------------------------------
+-- How many countries are in europe?-----------------------------------------------------
 
 It is possible to start the challenge at one of the other atomic actions. To this end, give an argument:
 Pick and place: 	rosrun challenge_atomic_actions challenge_basic_functionalities.py 1

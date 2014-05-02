@@ -32,18 +32,6 @@ class AskQuestions(smach.State):
 
     def execute(self, userdata=None):
 
-        # rospy.loginfo("----Possible questions for now: -----------------")
-        # rospy.loginfo("--- What is the capital of Germany? -------------")
-        # rospy.loginfo("--- What is the heaviest animal in the world?----")
-        # rospy.loginfo("--- Who is the president of America?-------------")
-        # rospy.loginfo("--- Who is your example?-------------------------")
-        # rospy.loginfo("--- When do the olympics start?------------------")
-        # rospy.loginfo("--- Which football club is the best?-------------")
-        # rospy.loginfo("--- Who is the best looking person around here?--")
-        # rospy.loginfo("--- Which person is not able to say yes?---------")
-        # rospy.loginfo("--- Which town has been bombed?------------------")
-        # rospy.loginfo("--- What is your motto?--------------------------")
-
         rospy.loginfo("-- Possible questions for now: ----------------------------------------------------------")
         rospy.loginfo("-- What time is it? ---------------------------------------------------------------------")
         rospy.loginfo("-- What is the answer to the ultimate question about life the universe and everything? --")
@@ -131,9 +119,6 @@ class WaitForPerson(smach.State):
 
             return 'detected'
 
-
-
-
 # this class drives to a point and then checks for persons. asserts that location as visited.
 class LookingForPerson(smach.State):
     def __init__(self, robot):
@@ -202,20 +187,11 @@ class LookingForPerson(smach.State):
 
         person_query = Conjunction(  
                                     Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         person_result = self.robot.reasoner.query(person_query)
         
         print "person_result = ", person_result
-        
-        person_query2 = Conjunction(  
-                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
-
-        person_result2 = self.robot.reasoner.query(person_query2)
-        
-        print "person_result2 = ", person_result2
 
         if not person_result:
             self.robot.speech.speak("No one here.")
