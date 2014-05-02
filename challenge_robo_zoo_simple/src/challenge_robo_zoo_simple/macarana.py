@@ -6,6 +6,7 @@ import smach
 
 import os
 import signal
+import robot_skills.util.msg_constructors as msgs
 
 #0. Arms are in reset pose
 #1. Right arm straight forward and hand up
@@ -53,15 +54,27 @@ class StoppableThread(threading.Thread):
 def spindle_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.spindle.send_goal(lower, timeout=2.0)
-        robot.spindle.send_goal(upper, timeout=2.0)
+        robot.spindle.send_goal(lower, timeout=4.0)
+        robot.spindle.send_goal(upper, timeout=4.0)
+
+
+def head_up_down(robot, stopEvent):
+    """Loop the robot's spindle between the lower and upper heights given here"""
+    while not rospy.is_shutdown() and not stopEvent.is_set():
+        robot.head.look_down(tilt_vel=0.5)
+        robot.head.look_up(tilt_vel=0.5)
+    robot.head.reset_position()
 
 def macarena(robot):
     stopEvent = threading.Event()
 
-    up_and_down = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
-    up_and_down.start()
+    up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
+    up_and_down_spindle.start()
     #robot.spindle.send_goal(0.3)
+    up_and_down_head = threading.Thread(target=head_up_down, args=(robot, stopEvent))
+    #up_and_down_head.start()
+    robot.head.send_goal(msgs.PointStamped(0.2, 0, 1.3, frame_id="/amigo/base"), keep_tracking=True)
+    
     def _left(*args, **kwargs): #The underscore  makes the outlining below easier to read
         if not robot.leftArm.send_joint_goal(*args, **kwargs):
             raise Exception("Arms dit not reach goal,  need help")
@@ -102,7 +115,8 @@ def macarena(robot):
             _left(*arm_to_hips_1, timeout=15)
 
         stopEvent.set()
-        up_and_down.join()
+        up_and_down_spindle.join()
+        #up_and_down_head.join()
         robot.rightArm.reset_arm()
         robot.leftArm.reset_arm()
         robot.head.reset_position()
