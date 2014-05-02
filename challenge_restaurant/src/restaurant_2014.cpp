@@ -958,30 +958,6 @@ void speechCallbackOrder(std_msgs::String res)
 
 
 
-void amigoRotateForce()
-{
-    double FIXED_ROTATION_TIME = 11.5;
-
-    ros::NodeHandle nh;
-
-    ros::Publisher pub_cmd_vel = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
-
-    // Publish command
-    geometry_msgs::Twist cmd_vel;
-    cmd_vel.linear.x = 0;
-    cmd_vel.linear.y = 0;
-    cmd_vel.angular.z = 0.5;
-
-    double t_start = ros::Time::now().toSec();
-    ros::Rate r(20);
-    while (ros::Time::now().toSec() - t_start < FIXED_ROTATION_TIME)
-    {
-        pub_cmd_vel.publish(cmd_vel);
-        r.sleep();
-    }
-}
-
-
 bool resetSpindlePosition()
 {
     double std_spindle_pos = 0.35;
@@ -1036,31 +1012,6 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
      * Sometimes move base 3d returns succeeded within one second even though the robot did not move and
      * therefore not reach the goal position, the if statement below is to avoid possible problems
      */
-    /*
-
-    // See if the robot moved
-    if (ros::Time::now().toSec() - t_start_move < 1.5 && (std::fabs(x-x_last_) > 1 || std::fabs(y-y_last_) > 1))
-    {
-        ROS_WARN("Moving to location in less than 1.5 [s] is very unlikely, clear cost map, forced rotation and try again!");
-
-        // Clear cost map
-        std_srvs::Empty empty_srv;
-        if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
-        // Forced rotation
-        amigoRotateForce();
-        // Try again
-        ac_skill_server_->sendGoal(goal);
-        ac_skill_server_->waitForResult(ros::Duration(60.0));
-        if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
-        {
-            ROS_WARN("Could not reach base pose within 60 [s]");
-            // Administration
-            x_last_ = x;
-            y_last_ = y;
-            return false;
-        }
-
-    }*/
 
     ROS_INFO("Reached base goal after %f [s].", ros::Time::now().toSec()-t_send_goal);
 
@@ -1626,6 +1577,22 @@ int main(int argc, char **argv) {
 
     //! Clear cost map
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
+    
+    //! Forced rotation of 180 deg: otherwise nav 3d regularly returns 'I am at the location' without driving
+    // service: /move_base_3d/set_unknown_to_free_bbx
+    // octomap_msgs/BoundingBoxQuery
+    // # minimum corner point of axis-aligned bounding box in global frame
+    // geometry_msgs/Point min
+    // # maximum corner point of axis-aligned bounding box in global frame
+    // geometry_msgs/Point max
+    
+    // bbx_request.min.x = pos_x - (window_size/2)
+    // bbx_request.min.y = pos_y - (window_size/2)
+    // bbx_request.min.z = -1
+    // bbx_request.max.x = pos_x + (window_size/2)
+    // bbx_request.max.y = pos_y + (window_size/2)
+    // bbx_request.max.z = 2
+
 
 
     ///////////////// DELIVERY PHASE /////////////////////////////////////////////////////////////////////////////////////////////////
