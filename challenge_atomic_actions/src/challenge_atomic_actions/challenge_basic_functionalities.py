@@ -53,7 +53,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( "START_CHALLENGE",
-                                    StartChallengeRobust(robot, "initial_exit"), 
+                                    StartChallengeRobust(robot, "initial"), 
                                     transitions={   "Done":"GOTO_PICK_AND_PLACE", 
                                                     "Aborted":"Aborted", 
                                                     "Failed":"GOTO_PICK_AND_PLACE"})
@@ -71,32 +71,6 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                    transitions={	"Done":		"GOTO_AVOID_THAT", 
             	                                    "Aborted":	"Aborted", 
             	                                    "Failed":	"GOTO_AVOID_THAT"})
-
-            #smach.StateMachine.add( 'GOTO_FETCH_AND_CARRY',
-            #                        NavigateGeneric(robot, goal_query=query_goto_fetch, goal_area_radius=0.2),
-            #                        transitions={   "arrived":"GOTO_FIND_ME_AND_GO_OVER_THERE",
-            #                                        "unreachable":'CANNOT_GOTO_CHALLENGE',
-            #                                        "preempted":'Aborted',
-            #                                        "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
-
-            #smach.StateMachine.add( 'FETCH_AND_CARRY',
-            #	                    fetch_and_carry.FetchAndCarry(robot),
-            #	                    transitions={	"Done":		"GOTO_FIND_ME_AND_GO_OVER_THERE", 
-            #	                                    "Aborted":	"Aborted", 
-            #	                                    "Failed":	"GOTO_FIND_ME_AND_GO_OVER_THERE"})
-
-            #smach.StateMachine.add( 'GOTO_FIND_ME_AND_GO_OVER_THERE',
-            #                        NavigateGeneric(robot, goal_query=query_goto_find, goal_area_radius=0.2),
-            #                        transitions={   "arrived":"SAY_LOOK_FOR_OBJECTS",
-            #                                       "unreachable":'CANNOT_GOTO_CHALLENGE',
-            #                                       "preempted":'Aborted',
-            #                                       "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
-
-            #smach.StateMachine.add( 'FIND_ME_AND_GO_OVER_THERE',
-            #	                    find_me.FindMe(robot),
-            #	                    transitions={	"Done":		"GOTO_AVOID_THAT", 
-            #	                                    "Aborted":	"Aborted", 
-            #	                                    "Failed":	"GOTO_AVOID_THAT"})
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),

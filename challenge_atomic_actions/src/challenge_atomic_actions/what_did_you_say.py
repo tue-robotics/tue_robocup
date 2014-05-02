@@ -20,6 +20,9 @@ from psi import *
 # Created by: Erik Geerts #
 ###########################
 
+# # Hardcoded question room {'livingroom','bedroom' or 'kitchen'}
+# room = 'living_room'
+
 class AskQuestions(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
@@ -29,21 +32,32 @@ class AskQuestions(smach.State):
 
     def execute(self, userdata=None):
 
-        rospy.loginfo("----Possible questions for now: -----------------")
-        rospy.loginfo("--- What is the capital of Germany? -------------")
-        rospy.loginfo("--- What is the heaviest animal in the world?----")
-        rospy.loginfo("--- Who is the president of America?-------------")
-        rospy.loginfo("--- Who is your example?-------------------------")
-        rospy.loginfo("--- When do the olympics start?------------------")
-        rospy.loginfo("--- Which football club is the best?-------------")
-        rospy.loginfo("--- Who is the best looking person around here?--")
-        rospy.loginfo("--- Which person is not able to say yes?---------")
-        rospy.loginfo("--- Which town has been bombed?------------------")
-        rospy.loginfo("--- What is your motto?--------------------------")
+        # rospy.loginfo("----Possible questions for now: -----------------")
+        # rospy.loginfo("--- What is the capital of Germany? -------------")
+        # rospy.loginfo("--- What is the heaviest animal in the world?----")
+        # rospy.loginfo("--- Who is the president of America?-------------")
+        # rospy.loginfo("--- Who is your example?-------------------------")
+        # rospy.loginfo("--- When do the olympics start?------------------")
+        # rospy.loginfo("--- Which football club is the best?-------------")
+        # rospy.loginfo("--- Who is the best looking person around here?--")
+        # rospy.loginfo("--- Which person is not able to say yes?---------")
+        # rospy.loginfo("--- Which town has been bombed?------------------")
+        # rospy.loginfo("--- What is your motto?--------------------------")
 
+        rospy.loginfo("-- Possible questions for now: ----------------------------------------------------------")
+        rospy.loginfo("-- What time is it? ---------------------------------------------------------------------")
+        rospy.loginfo("-- What is the answer to the ultimate question about life the universe and everything? --")
+        rospy.loginfo("-- What is the capital of poland?--------------------------------------------------------")
+        rospy.loginfo("-- What is the oldest most widely used drug on earth?------------------------------------")
+        rospy.loginfo("-- What is your name?--------------------------------------------------------------------")
+        rospy.loginfo("-- What is your team's name?-------------------------------------------------------------")
+        rospy.loginfo("-- Which country grows the most potatoes?------------------------------------------------")
+        rospy.loginfo("-- Which country grew the first orange?--------------------------------------------------")
+        rospy.loginfo("-- Which fish can hold objects in its tail?----------------------------------------------")
+        rospy.loginfo("-- How many countries are in europe?-----------------------------------------------------")
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
-        self.response = self.ask_user_service_questions("questions", 10 , rospy.Duration(60))
+        self.response = self.ask_user_service_questions("questions_grammar", 10 , rospy.Duration(60))
 
         if self.response.keys[0] == "answer":
             return "succeeded"
@@ -118,6 +132,95 @@ class WaitForPerson(smach.State):
             return 'detected'
 
 
+
+
+# this class drives to a point and then checks for persons. asserts that location as visited.
+class LookingForPerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["found", "looking", "not_found"])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        
+        self.robot.spindle.reset()
+        self.robot.head.reset_position()
+
+        self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
+
+        navigate_room = Conjunction(  Compound("=", "Waypoint", Compound("look_person", "W")),
+                                                 Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+                                                 Compound("not", Compound("visited", "Waypoint")),
+                                                 Compound("not", Compound("unreachable", "Waypoint")))
+
+        goal_answers = self.robot.reasoner.query(navigate_room)
+
+        print "goal answers = ", goal_answers
+
+        self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
+
+        if not goal_answers:
+            return "not_found"
+
+        goal_answer = goal_answers[0]
+        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+
+        waypoint_name = goal_answer["Waypoint"]
+            
+
+        nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
+        nav_result = nav.execute()
+
+        self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+
+        if nav_result == "unreachable" or nav_result == "preempted":
+            return "looking"
+
+        self.robot.head.set_pan_tilt(tilt=0.0)
+        self.robot.spindle.reset()
+
+        # we made it to the new goal. Let's have a look to see whether we can find the person here
+        #self.robot.speech.speak("Let me see who I can find here...")
+        rospy.sleep(1.5)
+        
+        self.response_start = self.robot.perception.toggle(["face_segmentation"])
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Face segmentation has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.loginfo("Face segmentation failed to start")
+            self.robot.speech.speak("I was not able to start face segmentation.")
+            return 'looking'
+        rospy.sleep(2)
+
+        rospy.loginfo("Face segmentation will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Face segmentation is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.loginfo("Failed stopping face segmentation")
+
+        person_query = Conjunction(  
+                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        person_result = self.robot.reasoner.query(person_query)
+
+        if not person_result:
+            self.robot.speech.speak("No one here.")
+            return "looking"
+
+        if len(person_result) > 1:
+            self.robot.speech.speak("I see some people!",block=False)
+        else:
+            self.robot.speech.speak("I found someone!",block=False)
+
+        self.robot.reasoner.assertz(Compound("question_person", Compound("point_3d", Sequence(person_result[0]["X"], person_result[0]["Y"], person_result[0]["Z"]))))
+
+        return "found"    
+
+
 class WhatDidYouSay(smach.StateMachine):
 
     def __init__(self, robot=None):
@@ -134,10 +237,56 @@ class WhatDidYouSay(smach.StateMachine):
             
         with self:
 
+            smach.StateMachine.add("SAY_LOOK_EYES",
+                                    states.Say(robot,"I will try to find you", block=False),
+                                    transitions={'spoken':'FIND_PERSON'})
 
-            smach.StateMachine.add("STEP_IN_FRONT",
-                                    states.Say(robot,"Please step in front of me so that you can ask some questions"),
+            smach.StateMachine.add( "FIND_PERSON",
+                                LookingForPerson(robot),
+                                transitions={   'found':'NAVIGATE_TO_PERSON',
+                                                'looking':'FIND_PERSON',
+                                                'not_found':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+
+            question_person_query = Compound("question_person", Compound("point_3d",Sequence("X","Y","Z")))
+
+            smach.StateMachine.add( "NAVIGATE_TO_PERSON",
+                                #states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(1.0,0)),
+                                states.NavigateGeneric(robot, lookat_query=question_person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                transitions={   "arrived":"LOOK_AT_PERSON",
+                                                "unreachable":'SAY_PERSON_UNREACHABLE',
+                                                "preempted":'SAY_PERSON_UNREACHABLE',
+                                                "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
+
+            smach.StateMachine.add( "SAY_PERSON_UNREACHABLE",
+                                states.Say(robot,"I failed going to the person", block=False),
+                                transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT'})
+
+            query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Waypoint"),
+                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+            
+            smach.StateMachine.add( "GO_TO_LAST_EXPLORATION_POINT",
+                                states.NavigateGeneric(robot, goal_query=query_last_exploration_location),
+                                transitions={   "arrived":"SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
+                                                    "unreachable":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+
+            smach.StateMachine.add('LOOK_AT_PERSON',
+                                states.LookAtPoint(robot, lookat_query=question_person_query),
+                                transitions={   'looking':'SAY_FIRST_QUESTION',
+                                                'no_point_found':'SAY_FIRST_QUESTION',
+                                                'abort':'SAY_FIRST_QUESTION'})
+
+
+            smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
+                                    states.Say(robot,"I will ask my questions from here, Please step in front of me", block=True),
                                     transitions={'spoken':'WAIT_FOR_PERSON'})
+
+
+
+            # smach.StateMachine.add("STEP_IN_FRONT",
+            #                         states.Say(robot,"Please step in front of me so that you can ask some questions"),
+            #                         transitions={'spoken':'WAIT_FOR_PERSON'})
 
             smach.StateMachine.add("WAIT_FOR_PERSON",
                                     WaitForPerson(robot),
