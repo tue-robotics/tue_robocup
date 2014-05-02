@@ -10,13 +10,13 @@ import signal
 
 gangnam_poseA_left_start     = [-0.050, 1.500, 1.500, 0.800, -0.15, 0.000, 0.000]
 gangnam_poseA_left_end       = [-0.050, 1.500, 1.500, 0.800, 0.150, 0.000, 0.000]
-gangnam_poseA_right_start    = [-0.050, 1.500, 1.500, 0.000, 0.150, 0.000, 0.000]
-gangnam_poseA_right_end      = [-0.050, 1.500, 1.500, 0.000, -0.15, 0.000, 0.000]
+gangnam_poseA_right_start    = [-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000]
+gangnam_poseA_right_end      = [-0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000]
 
 gangnam_poseB_left_start     = [-0.050, 1.500, 1.500, 1.300, -0.15, 0.000, 0.000]
 gangnam_poseB_left_end       = [-0.050, 1.500, 1.500, 1.300, 0.150, 0.000, 0.000]
-gangnam_poseB_right_start    = [-0.050, 1.500, 0.000, 1.570, 0.150, 0.000, 0.000]
-gangnam_poseB_right_end      = [-0.050, 1.500, 0.000, 1.570, -0.15, 0.000, 0.000]
+gangnam_poseB_right_start    = [-0.050, 1.500, 0.250, 1.570, 0.250, 0.000, 0.000]
+gangnam_poseB_right_end      = [-0.050, 1.500, -0.25, 1.570, -0.25, 0.000, 0.000]
                                                                                                                                  
 gangnam_motionA_left = [gangnam_poseA_left_start, gangnam_poseA_left_end, gangnam_poseA_left_start, gangnam_poseA_left_end, gangnam_poseA_left_start, gangnam_poseA_left_end]
 gangnam_motionA_right= [gangnam_poseA_right_start, gangnam_poseA_right_end, gangnam_poseA_right_start, gangnam_poseA_right_end, gangnam_poseA_right_start, gangnam_poseA_right_end]
@@ -24,13 +24,23 @@ gangnam_motionB_left = [gangnam_poseB_left_start, gangnam_poseB_left_end, gangna
 gangnam_motionB_right= [gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end]
 
 def gangnam_style(robot):
-    for i in range(4):
+    robot.rightArm.send_joint_goal(-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000)
+    for i in range(1):
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.leftArm.send_joint_trajectory(gangnam_motionA_left, timeout=10)
         robot.rightArm.send_joint_trajectory(gangnam_motionA_right, timeout=10)
+    
+    robot.leftArm.reset_arm()
+    rospy.sleep(5)
+    #robot.rightArm.send_joint_goal(-0.050, 1.500, 0.000, 1.570, 0.150, 0.000, 0.000)
 
-    for j in range(4):
-        robot.leftArm.send_joint_trajectory(gangnam_motionB_left, timeout=10)
+    for i in range(1):
+        robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 1.300, -0.15, 0.000, 0.000)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
+        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.rightArm.send_joint_trajectory(gangnam_motionB_right, timeout=10)
+        
 
     robot.rightArm.reset_arm()
     robot.leftArm.reset_arm()
@@ -61,14 +71,14 @@ def start_music():
 def stop_music(music_process):
     os.killpg(music_process.pid, signal.SIGTERM)  # Send the signal to all the process groups
 
-class gangnam_style(smach.State):
+class GangNamStyle(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
 
     def execute(self, userdata=None):
         proc = start_music()
-        walk_like_an_egyptian(self.robot)
+        gangnam_style(self.robot)
         stop_music(proc)
         return "Done"
 
