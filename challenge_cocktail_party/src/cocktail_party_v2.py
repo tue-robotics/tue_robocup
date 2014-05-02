@@ -894,7 +894,9 @@ class ResetSearchedLocations(smach.State):
 
             self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
         else:
+            self.resetCount=0;
             self.robot.speech.speak("I still could not pickup the drink. I give up.", block=False)
+
 
         return 'done'
 
