@@ -31,9 +31,9 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
-rosbuild_add_library(robot_skills src/Robot.cpp
-                                  src/Amigo.cpp
-                                  src/Skill.cpp
-                                  src/MoveBase.cpp
-                                  src/Grasp.cpp
-                                  ${HEADER_FILES})
+#rosbuild_add_library(robot_skills src/Robot.cpp
+#                                  src/Amigo.cpp
+#                                  src/Skill.cpp
+#                                  src/MoveBase.cpp
+#                                  src/Grasp.cpp
+#                                  ${HEADER_FILES})
