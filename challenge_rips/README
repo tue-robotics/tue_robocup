@@ -21,7 +21,7 @@ amigo3:
         Mic on mute!!! (Should be muted already)
         
     amigo-console        
-        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+	test_audio()
         (lights should become green -> say 'continue')
         (if response is 'true', amigo heard you and lights become blue)
 
