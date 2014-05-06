@@ -645,6 +645,10 @@ class LookAtItem(smach.StateMachine):
     anything_in_front_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "Anything"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+    
+    person_in_front_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
 
     def __init__(self, robot, perception_modules, item_query, timeout=10):
