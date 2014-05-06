@@ -87,7 +87,12 @@ class RoboZooSimple(smach.StateMachine):
             
             smach.StateMachine.add( "RESET_ALL",
                                     states.ResetArmsSpindleHead(robot, timeout=5.0),
-                                    transitions={"done":"SELECT_RANDOM"})
+                                    transitions={"done":"WAIT_A_SEC"})
+
+            smach.StateMachine.add( "WAIT_A_SEC", 
+                                    states.Wait_time(robot, waittime=1),
+                                    transitions={'waited'   :"SELECT_RANDOM",
+                                                 'preempted':"Aborted"})
 
             smach.StateMachine.add( "SELECT_RANDOM",
                                     RandomOutcome(robot, ["1","2","3","4","5","6","7","8","9","10", "11", "12"]),
