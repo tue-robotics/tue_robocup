@@ -525,21 +525,12 @@ class NavToLastKnowLoc(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToLastKnowLoc\n")
 
-        # TODO: REMOVE THIS LATER!!!
-        return "visited_all"
+        qGoals =   Conjunction(Compound("=", "Waypoint", Compound("last_known_location", "ID")),
+                                                        Compound("waypoint", "Waypoint", Sequence("X", "Y", "Z")),
+                                                        Compound("not", Compound("visited", "Waypoint")))
 
-        #  TODO: SAVE THE LAST KNOW LOCATIONS AS WAYPOINTS INSTEAD OF IN THE "SERVE" QUERY
-
-        # qGoals = Conjunction(   Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", Compound("pose_2d", "X", "Y", "Z"))),
-        #                         Compound("not", Compound("visited", "ObjectID" + "X" + "Y" + "Z")))
-
-        goals = self.robot.reasoner.query(Conjunction(  Compound("=", "Waypoint", Compound("last_known_location", "W")),
-                                                 Compound("waypoint", "Waypoint", Sequence("X", "Y", "Z")),
-                                                 Compound("not", Compound("visited", "Waypoint"))))
-
-        # get results from the query
-        # goals = self.robot.reasoner.query(qGoals)
-
+        goals = self.robot.reasoner.query(qGoals)
+        
         # if there is no location associated with lookout points say it
         if not goals:
             rospy.loginfo("\t\t[Cocktail Party] Visited all the last know locations\n")
@@ -554,16 +545,17 @@ class NavToLastKnowLoc(smach.State):
         else:    
             self.resetVisited = 0
 
-            # take the first goal found
-            goal_answer = goals[0]
+            
             # self.robot.speech.speak("I'm going to {0}'s last know location.".format(goal_answer["Person"]))
             self.robot.speech.speak("Going to the place I last saw people.", block=False)
 
+            # take the first goal found
+            goal_answer = goals[0]
             waypointName = goal_answer["Waypoint"]
             # waypointName =  str(goal_answer["ObjectID"]) +  str(goal_answer["X"]) + str(goal_answer["Y"]) + str(goal_answer["Z"])
 
              # Use the lookat query
-            nav = NavigateGeneric(self.robot, lookat_query = goals)
+            nav = NavigateGeneric(self.robot, lookat_query = qGoals)
             nav_result = nav.execute()
 
             # assert that this location has been visited
@@ -998,6 +990,7 @@ class PrepareDelivery(smach.State):
                                                                 Compound("drink", drinkName, "CarryingLoc")))
 
                         if not carryingRes:
+                            self.robot.speech.speak("I don't have any drinks for you", block=False)
                             rospy.logwarn("\t\t[Cocktail Party] Query about carried objects is empty!\n") 
                             return 'error'
 
@@ -1526,7 +1519,7 @@ class CocktailParty(smach.StateMachine):
                                         DetectWavingPeople(robot),
                                         transitions={   'detected':'got_request',
                                                         'not_detected':'NAV_TO_LOOKOUT',
-                                                        'error':'DETECT_WAVING_PEOPLE'})
+                                                        'error':'NAV_TO_LOOKOUT'})
 
             #add container to the iterator lookoutIterator
             smach.StateMachine.add( 'LOOKOUT_CONTAINER', 
