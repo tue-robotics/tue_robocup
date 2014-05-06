@@ -174,7 +174,7 @@ class Cleanup(smach.StateMachine):
                                 Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
                                 Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
-        query_dropoff_loc_backup = Compound("dropoff_point", "trash_bin", Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc_backup = Compound("dropoff_point", Compound("trash_bin","Loc"), Compound("point_3d", "X", "Y", "Z"))
 
         meeting_point = Conjunction(    Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
                                         Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint"))))
@@ -253,7 +253,11 @@ class Cleanup(smach.StateMachine):
                     # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
                     robot.reasoner.assertz(Compound("explored", target))
 
-                    robot.speech.speak("Lets go look at {0}".format(target).replace("_", " "), block=False)
+                    target_index = str(target).index("(")
+
+                    speak_target = target[0:target_index]
+
+                    robot.speech.speak("Lets go look at {0}".format(speak_target).replace("_", " "), block=False)
 
                     return 'found_exploration_target'
             
