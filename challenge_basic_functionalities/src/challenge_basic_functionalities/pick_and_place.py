@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_atomic_actions')
+import roslib; roslib.load_manifest('challenge_basic_functionalities')
 import rospy
 
 import smach
@@ -19,9 +19,10 @@ class PickAndPlace(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
 
-        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
-        
-        response = self.set_objects(['noodle_sauce','cat_food', 'dumplings', 'tacos', 'chocolates', 'chewing_gums', 'peanuts'])
+        ## if only certain types of objects are possible to be recognized, use understanding code
+        # self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
+        # response = self.set_objects(['noodle_sauce','cat_food', 'dumplings', 'tacos', 'chocolates', 'chewing_gums', 'peanuts'])
+
         if grasp_arm == "left":
             arm = robot.leftArm
         elif grasp_arm == "right":

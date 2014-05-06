@@ -29,5 +29,8 @@ if __name__ == "__main__":
         fanta = W.add_object("fanta-1", "fanta", 4.57,  1.942, 0.87)   
         person = W.add_object("person-1", "person", 1.0, 0.0, 0.0)  
 
+    elif env == "robotics_testlab_B":
+        coke = W.add_object("coke-1", "coke", 1,  2.4, 0.87)
+
     else:
         print "No test scenario specified for environment {0}.".format(env)

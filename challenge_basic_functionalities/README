@@ -24,7 +24,7 @@ amigo3:
     say test  
         (to test speaker is working) 
 
-    rosrun challenge_atomic_actions challenge_basic_functionalities.py
+    rosrun challenge_basic_funtionalities challenge_basic_functionalities.py
 
 
 == TEST THE EXECUTIVE ==

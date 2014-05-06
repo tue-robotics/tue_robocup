@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('challenge_atomic_actions')
+import roslib; roslib.load_manifest('challenge_basic_functionalities')
 import rospy
 #import robot_parts.speech
 from std_msgs.msg import String
@@ -61,7 +61,7 @@ class WaitForPerson(smach.State):
     
     def execute(self, userdata=None):
 
-        if self.counter > 3:
+        if self.counter > 1:
             self.robot.head.look_up(tilt_vel=0.75)
             return 'timed_out'
 
@@ -84,7 +84,7 @@ class WaitForPerson(smach.State):
             self.robot.head.look_up(tilt_vel=0.75)
             return "failed"
 
-        wait_machine = states.Wait_query_true(self.robot, query_detect_person, 10)
+        wait_machine = states.Wait_query_true(self.robot, query_detect_person, 12)
         wait_result = wait_machine.execute()
 
         rospy.loginfo("Face segmentation will be stopped now")
@@ -277,7 +277,7 @@ class WhatDidYouSay(smach.StateMachine):
             smach.StateMachine.add("WAIT_FOR_PERSON",
                                     WaitForPerson(robot),
                                     transitions={'detected':'SAY_FIRST_QUESTION',
-                                                 'waiting':'WAIT_FOR_PERSON',
+                                                 'waiting':'SAY_FIRST_QUESTION',
                                                  'timed_out':'SAY_FIRST_QUESTION',
                                                  'failed':'SAY_FIRST_QUESTION'})
 

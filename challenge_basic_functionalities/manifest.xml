@@ -1,20 +1,19 @@
 <package>
-  <description brief="challenge_atomic_actions">
+  <description brief="challenge_basic_functionalities">
 
-     Atomic actions Amigo
+     Basic Functionalities Amigo
 
   </description>
   <author>Rein Appeldoorn</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/challenge_demo</url>
+  <url>http://ros.org/wiki/challenge_basic_functionalities</url>
   <depend package="rospy"/>
   <depend package="robot_skills"/>
   <depend package="robot_smach_states"/>
   <depend package="psi"/>
   <depend package="tf"/>
   <depend package="geometry_msgs"/>
-  <depend package="speech_interpreter"/>
   <depend package="speech_interpreter"/>
   <depend package="amigo_demo"/>
 </package>

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import roslib
-roslib.load_manifest('challenge_atomic_actions')
+roslib.load_manifest('challenge_basic_funtionalities')
 import rospy
 
 from robot_skills.reasoner import Compound, Conjunction, Sequence

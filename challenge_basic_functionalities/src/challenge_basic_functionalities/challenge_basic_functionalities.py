@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_cleanup')
+import roslib; roslib.load_manifest('challenge_basic_functionalities')
 import rospy
 import sys
 
@@ -38,7 +38,17 @@ class Ask_continue(smach.State):
         rospy.loginfo("answer was not found in response of interpreter. Should not happen!!")
         return "no_continue"
 
+class HeadLookUp(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
 
+        self.robot = robot
+        self.preempted = False
+
+    def execute(self, userdata):
+
+        self.robot.head.look_up(tilt_vel=0.75)
+        return "done"
 
 class ChallengeBasicFunctionalities(smach.StateMachine):
     def __init__(self, robot):
@@ -78,14 +88,14 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
-                                    transitions={   "arrived":"SAY_ASK_CONTINUE",
+                                    transitions={   "arrived":"RESET_HEAD1",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
             smach.StateMachine.add("RESET_HEAD1",
-                                states.ResetHead(robot),
-                                transitions={'done':'SAY_ASK_CONTINUE'})
+                                    HeadLookUp(robot),
+                                    transitions={'done':'SAY_ASK_CONTINUE'})
 
             smach.StateMachine.add("SAY_ASK_CONTINUE", 
                                     Say(robot, [ "Please say continue."]),
@@ -107,14 +117,14 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
-                                    transitions={   "arrived":"SAY_ASK_CONTINUE2",
+                                    transitions={   "arrived":"RESET_HEAD2",
                                                     "unreachable":'SAY_ASK_CONTINUE2',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_ASK_CONTINUE2'})
 
             smach.StateMachine.add("RESET_HEAD2",
-                                states.ResetHead(robot),
-                                transitions={'done':'SAY_ASK_CONTINUE2'})
+                                    HeadLookUp(robot),
+                                    transitions={'done':'SAY_ASK_CONTINUE2'})
 
             smach.StateMachine.add("SAY_ASK_CONTINUE2", 
                                     Say(robot, [ "Please say continue."]),
