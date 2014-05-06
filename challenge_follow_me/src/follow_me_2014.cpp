@@ -804,7 +804,7 @@ int main(int argc, char **argv) {
     ROS_INFO("done!");
     
     //! Wait for the emergency switch to be released
-    ros::Subscriber sub_emergency = nh.subscribe<std_msgs::Bool>("/emergency_switch", 10, emergencyCallback);
+    ros::Subscriber sub_emergency = nh.subscribe<std_msgs::Bool>("/amigo/emergency_switch", 10, emergencyCallback);
     ros::Rate loop_rate_slow(5);
     ROS_INFO("Waiting for emegency button to be released...");
     while (emergency_button_pressed_)
