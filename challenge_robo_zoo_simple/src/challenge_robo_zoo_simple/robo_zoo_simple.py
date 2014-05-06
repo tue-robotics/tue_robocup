@@ -18,7 +18,6 @@ from make_jokes import MakeJokes
 from pickuplines import Pickup
 from sounds import R2D2, Toeter
 from macarana import Macarena
-from gangnam_style import GangNamStyle
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
