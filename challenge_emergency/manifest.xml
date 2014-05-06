@@ -14,7 +14,6 @@
   <depend package="psi"/>
   <depend package="roscpp"/>
   <depend package="image_transport"/>
-  <depend package="compressed_image_transport"/>
   <depend package="virtual_cam"/>
   <depend package="perception_srvs"/>
   <depend package="opencv2"/>
