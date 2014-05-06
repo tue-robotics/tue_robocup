@@ -38,8 +38,8 @@ class IterateLookAtPerson(smach.StateMachine):
         self.robot = robot
 
         ignore_predicate = "ignore"
-        item_to_look_at_predicate = "item_to_look_at"
-        item_to_look_at = Conjunction(   Compound(item_to_look_at_predicate, "ObjectID"), 
+        person_to_look_at_predicate = "person_to_look_at"
+        person_to_look_at = Conjunction(   Compound(person_to_look_at_predicate, "ObjectID"), 
                                          Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
         
 	#Make sure the predicate exists and we don't get stupid existence errors
@@ -75,28 +75,34 @@ class IterateLookAtPerson(smach.StateMachine):
 
             #Then, of those matching objects, select one to look at and mark that object as the object we should look at.
             smach.StateMachine.add( 'SELECT_ITEM_TO_LOOK_AT', 
-                                    states.Select_object(robot, item_query, item_to_look_at_predicate),
+                                    states.Select_object(robot, item_query, person_to_look_at_predicate),
                                     transitions={   'selected'      :'LOOK_AT_POSSIBLE_PERSON',
                                                     'no_answers'    :'Failed'})
 
             #Then, finally, look at it.
             smach.StateMachine.add('LOOK_AT_POSSIBLE_PERSON',
-                                    states.LookAtPoint(robot, item_to_look_at),
-                                    transitions={   'looking'       :'IGNORE_CURRENTLY_LOOKED_AT',
+                                    states.LookAtPoint(robot, person_to_look_at),
+                                    transitions={   'looking'       :'LOOK_AT_FACE',
                                                     'no_point_found':'Failed',
                                                     'abort'         :'Aborted'})
+
+            smach.StateMachine.add("LOOK_AT_FACE",
+                    states.LookAtItem(robot, ["face_recognition"], states.LookAtItem.face_in_front_query),
+                    transitions={   'Done'      :'IGNORE_CURRENTLY_LOOKED_AT',
+                                    'Aborted'   :'Aborted',
+                                    'Failed'    :'IGNORE_CURRENTLY_LOOKED_AT'})
 
             #Mark the selected object as that it should be ignored. If there is no such item, retract all ignores
             #If we did succesfully ignore the item we just looked at, unmark the object as the object we should look at. 
             #   The result is that there is no item to look at
             smach.StateMachine.add( 'IGNORE_CURRENTLY_LOOKED_AT', 
-                                    states.Select_object(robot, item_to_look_at, ignore_predicate, retract_previous=False),
+                                    states.Select_object(robot, person_to_look_at, ignore_predicate, retract_previous=False),
                                     transitions={   'selected'      :'RETRACT_ITEM_TO_LOOK_AT',
                                                     'no_answers'    :'RETRACT_IGNORE'})
 
             #Un-select the object we were looking at
             smach.StateMachine.add( 'RETRACT_ITEM_TO_LOOK_AT', 
-                                    states.Retract_facts(robot, Compound(item_to_look_at_predicate, "Item")),
+                                    states.Retract_facts(robot, Compound(person_to_look_at_predicate, "Item")),
                                     transitions={   'retracted'     :'WAIT_FOR_POSSIBLE_DETECTION'})
 
             #When we're done, and can't find matches to the WM query, retract all ignores we introduced so the WM is normal again
