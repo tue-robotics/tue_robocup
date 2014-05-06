@@ -87,7 +87,7 @@ class IterateLookAtPerson(smach.StateMachine):
                                                     'abort'         :'Aborted'})
 
             smach.StateMachine.add("LOOK_AT_FACE",
-                    states.LookAtItem(robot, ["face_recognition"], states.LookAtItem.face_in_front_query),
+                    states.LookAtItem(robot, ["face_recognition"], states.LookAtItem.face_in_front_query, timeout=3),
                     transitions={   'Done'      :'IGNORE_CURRENTLY_LOOKED_AT',
                                     'Aborted'   :'Aborted',
                                     'Failed'    :'IGNORE_CURRENTLY_LOOKED_AT'})
