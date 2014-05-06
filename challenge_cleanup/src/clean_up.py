@@ -47,7 +47,11 @@ class Ask_cleanup(smach.State):
                  # ToDo: don't hardcode this!                
                 room = "living_room"
             else:
-                room = response_answer
+
+                room_string = str(response_answer).replace("clean_up_the_", "")
+                room = room_string
+                rospy.loginfo("Room to clean is '{0}'".format(room))
+
         except Exception, e:
             rospy.logerr("Could not get_cleanup_service: {0}. Defaulting to {1}".format(e, room))
             self.robot.speech.speak("There is something wrong with my ears, I will cleanup the {1}, humans always tend to make a mess of that".format(e, room))
@@ -253,14 +257,12 @@ class Cleanup(smach.StateMachine):
                     # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
                     robot.reasoner.assertz(Compound("explored", target))
 
-                    # string_target = str(target)
-                    # target_index = str(target).index("(")
+                    string_target = str(target)
+                    target_index = str(string_target).index("(")
 
-                    # speak_target = target[0:target_index]
+                    speak_target = string_target[0:target_index]
 
-                    # robot.speech.speak("Lets go look at {0}".format(speak_target).replace("_", " "), block=False)
-
-                    robot.speech.speak("Lets go clean it up!", block=False)
+                    robot.speech.speak("Lets go look at the {0}".format(speak_target).replace("_", " "), block=False)
 
                     return 'found_exploration_target'
             
