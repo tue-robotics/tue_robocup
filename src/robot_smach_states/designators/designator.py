@@ -11,6 +11,9 @@ TODO: Build up a family of ever complexer Designators.
 For each designator, some class decorator can be added that will cast the current value to an object of some type.
     This can be an Arm, a Point/Pose(Stamped), a class name for perception etc.
 
+TODO: Designators can be combined. Eg. get the closest answers to a query relative to the outcome of some other designator. 
+Eg. one designator the the look_at point and a designator for objects close to that look_at point.
+
 TODO:
 Designators can be refined by a user of it. That can be through a perception routine determining something, the answer to a question etc. 
 This means that the query for it is extended with an extra conjunction, making the answers more specific, for example. 
