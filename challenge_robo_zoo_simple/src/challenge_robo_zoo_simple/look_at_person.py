@@ -41,9 +41,13 @@ class IterateLookAtPerson(smach.StateMachine):
         item_to_look_at_predicate = "item_to_look_at"
         item_to_look_at = Conjunction(   Compound(item_to_look_at_predicate, "ObjectID"), 
                                          Compound("property_expected", "ObjectID", "position", Sequence("X", "Y", "Z")))
+        
+	#Make sure the predicate exists and we don't get stupid existence errors
+        robot.reasoner.assertz(ignore_predicate, "dummy")
+	robot.reasoner.query(Compound("retractall", Compound(ignore_predicate, "X")))
 
         item_query = Conjunction(
-                        states.LookAtItem.face_in_front_query,
+                        states.LookAtItem.person_in_front_query,
                         Compound("not", Compound(ignore_predicate, "ObjectID")))
 
         print item_query
@@ -55,14 +59,14 @@ class IterateLookAtPerson(smach.StateMachine):
                 return 'done'
             smach.StateMachine.add( "RESET_REASONER",
                                     smach.CBState(reset_reasoner),
-                                    transitions={"done":"LOOK"})
+                                    transitions={"done":"WAIT_FOR_POSSIBLE_DETECTION"})
 
             #Wait until there are some objects in the WM that match the query. The object should not be marked to ignore them.
             #If we can't find a match, this can mean there are nu objects that have the right class, 
             #   or that each of those are already ignored. 
             #   If all objects of a class are already ignored, we're done and should unignore the ignored objects
             smach.StateMachine.add( "WAIT_FOR_POSSIBLE_DETECTION",
-                                    states.Wait_queried_perception(robot, ["ppl_detection"], item_query, timeout=3),
+                                    states.Wait_queried_perception(robot, ["ppl_detection"], item_query, timeout=60),
                                     transitions={   "query_true"    :"SELECT_ITEM_TO_LOOK_AT",
                                                     "timed_out"     :"RETRACT_IGNORE",
                                                     "preempted"     :"Aborted"})
@@ -84,7 +88,7 @@ class IterateLookAtPerson(smach.StateMachine):
             #If we did succesfully ignore the item we just looked at, unmark the object as the object we should look at. 
             #   The result is that there is no item to look at
             smach.StateMachine.add( 'IGNORE_CURRENTLY_LOOKED_AT', 
-                                    states.Select_object(robot, item_to_look_at, ignore_predicate),
+                                    states.Select_object(robot, item_to_look_at, ignore_predicate, retract_previous=False),
                                     transitions={   'selected'      :'RETRACT_ITEM_TO_LOOK_AT',
                                                     'no_answers'    :'RETRACT_IGNORE'})
 
