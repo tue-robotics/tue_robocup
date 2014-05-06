@@ -22,6 +22,14 @@ from gangnam_style import GangNamStyle
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
+def randomize_list(l):
+    """Generate a semi-random version of the list l. Items are not repeated until the whole list has been outputted once"""
+    while True:
+        shuffled = list(l)
+        random.shuffle(shuffled)
+        while shuffled: #Checks whether its not empty
+            yield shuffled.pop()
+
 
 class RandomOutcome(smach.State):
     """Of the state's registered outcomes, just select a random one"""
@@ -29,15 +37,11 @@ class RandomOutcome(smach.State):
     def __init__(self, robot, outcomes):
         smach.State.__init__(self, outcomes=outcomes)
         self.previous_outcome = None
+        self.randomizer = randomize_list(outcomes)
 
     def execute(self, userdata=None):
         """Randomly selects one of its registered outcomes. It excludes the previous outcome so it doesn't do the same thing twice"""
-        possible_outcomes = list(self.get_registered_outcomes())
-        if self.previous_outcome in possible_outcomes:
-            possible_outcomes.remove(self.previous_outcome)
-        current_outcome = random.choice(possible_outcomes)
-        self.previous_outcome = current_outcome
-        return current_outcome
+        return self.randomizer.next()
 
 
 class RoboZooSimple(smach.StateMachine):
