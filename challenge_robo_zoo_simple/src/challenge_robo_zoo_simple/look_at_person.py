@@ -4,6 +4,7 @@ import rospy
 
 import smach
 
+from psi import Conjunction, Compound, Sequence
 import robot_smach_states as states
 
 class LookAtPerson(smach.StateMachine):
