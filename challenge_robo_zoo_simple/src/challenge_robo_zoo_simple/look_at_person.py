@@ -44,10 +44,12 @@ class IterateLookAtPerson(smach.StateMachine):
         
 	#Make sure the predicate exists and we don't get stupid existence errors
         robot.reasoner.assertz(ignore_predicate, "dummy")
-	robot.reasoner.query(Compound("retractall", Compound(ignore_predicate, "X")))
+        robot.reasoner.query(Compound("retractall", Compound(ignore_predicate, "X")))
 
         item_query = Conjunction(
-                        states.LookAtItem.person_in_front_query,
+                        Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
+                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","IgnoredZ"))),
+                                    Compound("=", "Z", "1.65"),
                         Compound("not", Compound(ignore_predicate, "ObjectID")))
 
         print item_query
