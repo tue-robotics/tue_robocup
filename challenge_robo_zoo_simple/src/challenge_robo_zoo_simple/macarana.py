@@ -8,6 +8,8 @@ import os
 import signal
 import robot_skills.util.msg_constructors as msgs
 
+from musicmanager import music
+
 #0. Arms are in reset pose
 #1. Right arm straight forward and hand up
 arm_straight_1 =                [0.000, 1.500, 0.000, 0.000, 0.000, 0.000, 0.000]
@@ -36,20 +38,6 @@ zero =                          [-0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.00
 #7a. Left arm down to the hips
 
 import threading
-
-class StoppableThread(threading.Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the stopped() condition."""
-
-    def __init__(self):
-        super(StoppableThread, self).__init__()
-        self._stop = threading.Event()
-
-    def stop(self):
-        self._stop.set()
-
-    def stopped(self):
-        return self._stop.isSet()
 
 def spindle_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
@@ -85,7 +73,7 @@ def macarena(robot):
     #Defined shortcuts above
 
     try:
-        for i in range(2):
+        for i in range(1):
             right(*arm_straight_1, timeout=10)
             _left(*arm_straight_1, timeout=10)
 
@@ -126,36 +114,20 @@ def macarena(robot):
             # right(*zero, timeout=10)
             # _left(*zero, timeout=10)
 
-def start_music():
-    import subprocess
-    
-    abspath = os.path.abspath(__file__)
-    dname = os.path.dirname(abspath)
-    os.chdir(dname)
-    musicfile = "macarena.mp3"
-    musicfile = os.path.join(dname, musicfile)
-    rospy.loginfo("Playing music: {0}".format(musicfile))
-    # The os.setsid() is passed in the argument preexec_fn so
-    # it's run after the fork() and before  exec() to run the shell.
-    music_process = subprocess.Popen("mpg123 '{0}'".format(musicfile), stdout=subprocess.PIPE, 
-                           shell=True, preexec_fn=os.setsid) 
-    rospy.loginfo("If the music keeps going somehow, its PID is: {0}".format(music_process.pid))
-    return music_process
-
-def stop_music(music_process):
-    os.killpg(music_process.pid, signal.SIGTERM)  # Send the signal to all the process groups
-
 class Macarena(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
 
+        abspath = os.path.abspath(__file__)
+        dname = os.path.dirname(abspath)
+        os.chdir(dname)
+        musicfile = "macarena.mp3"
+        self.musicfile = os.path.join(dname, musicfile)
+
     def execute(self, userdata=None):
-        proc = start_music()
-        try:
+        with music(self.musicfile):
             macarena(self.robot)
-        finally:
-            stop_music(proc)
         return "Done"
 
 if __name__ == "__main__":
