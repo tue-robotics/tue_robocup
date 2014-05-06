@@ -253,11 +253,14 @@ class Cleanup(smach.StateMachine):
                     # Not so nice, but works for now: (TODO: add the fact if the target is actually explored)
                     robot.reasoner.assertz(Compound("explored", target))
 
-                    target_index = str(target).index("(")
+                    # string_target = str(target)
+                    # target_index = str(target).index("(")
 
-                    speak_target = target[0:target_index]
+                    # speak_target = target[0:target_index]
 
-                    robot.speech.speak("Lets go look at {0}".format(speak_target).replace("_", " "), block=False)
+                    # robot.speech.speak("Lets go look at {0}".format(speak_target).replace("_", " "), block=False)
+
+                    robot.speech.speak("Lets go clean it up!", block=False)
 
                     return 'found_exploration_target'
             
