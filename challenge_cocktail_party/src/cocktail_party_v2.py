@@ -22,12 +22,13 @@ import robot_smach_states.util.transformations as transformations
 
 from pein_srvs.srv import SetObjects
 
-################### SETUP VARIABLES ###################
+
+################################# SETUP VARIABLES ######################################
 
 SIMULTANEOUS_ORDERS = 2
 TOTAL_ORDERS = 3
 
-#######################################################
+
 
 #########################################################################################
 
@@ -103,7 +104,6 @@ class DetectWavingPeople(smach.State):
 
         # compose person query
         qPeopleFound = Conjunction( Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    #Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound("not", Compound("ordered", "ObjectID")))
 
         # get results from the query
@@ -596,13 +596,15 @@ class ServedStatus(smach.State):
         # if there were enough people served, finish the challenge
         if nServed < TOTAL_ORDERS:
             # retract most of the facts
-            amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
-            amigo.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
-            amigo.reasoner.query(Compound("retractall", Compound('ordered', 'X')))
-            amigo.reasoner.query(Compound("retractall", Compound('approached', 'X')))
+            self.robot.reasoner.query(Compound('retractall', Compound('goal', 'X')))
+            self.robot.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
+            self.robot.reasoner.query(Compound("retractall", Compound('ordered', 'X')))
+            self.robot.reasoner.query(Compound("retractall", Compound('approached', 'X')))
             self.robot.reasoner.query(Compound("retractall", Compound("waypoint", "X", "Y")))
             self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
             self.robot.reasoner.reset()
+
+            rospy.loginfo("\t\t[Cocktail Party] Need to serve {0} more person(s) to finish the challenge\n". format(TOTAL_ORDERS-nServed))
             return "incomplete"
         else:
             return "complete"
@@ -1013,7 +1015,7 @@ class PrepareDelivery(smach.State):
 
                         if carryingLoc == "left_arm":
                             return 'handover_left'
-                        elif carryingLoc == "righ_arm":
+                        elif carryingLoc == "right_arm":
                             return 'handover_right'
                         elif carryingLoc == "basket":
                             return 'handover_basket'
@@ -1219,7 +1221,7 @@ class RetractServedPerson(smach.State):
 
             carryingRes = self.robot.reasoner.query(Compound( "carrying",
                                                     Compound( "drink", "Drink", "Arm")))
-            if len(carryingRes) == 0:
+            if not carryingRes:
                 self.robot.speech.speak("I finished delivering every drink.", block=False)
                 return 'all_served'
             else:
@@ -1351,6 +1353,21 @@ class FocusOnFace(smach.StateMachine):
             self.robot.reasoner.query(Compound("assert",Compound("preempt_head_focus", "0")))
             return 'preempted'
         
+
+
+#########################################################################################
+
+
+class HandoverUndeliveredDrinks(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['done'])
+
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: HandoverUndeliveredDrinks\n")
+
+        return 'done'
 
 #########################################################################################
 
@@ -1733,6 +1750,8 @@ class CocktailParty(smach.StateMachine):
                                         Say(robot, "Please remove your drink from my basket and tell me when you're done"),
                                         transitions={'spoken':'RETRACT_SERVED_PERSON' })
 
+                # TODO: ADD THE STATE THAT LISTENS TO THE PERSON
+
                 smach.StateMachine.add( 'HANDOVER_DRINK_LEFT',
                                         HandoverDrinkLeft(robot),
                                         transitions={   'done':'RETRACT_SERVED_PERSON'})
@@ -1757,17 +1776,16 @@ class CocktailParty(smach.StateMachine):
             smach.StateMachine.add( 'DELIVER_DRINKS_CONTAINER',
                                     deliverDrinksContainer,
                                     transitions={   'succeeded':'SERVED_STATUS',
-                                                    'aborted':'SERVED_STATUS'})
+                                                    'aborted':'HANDOVER_UNDELIVERED_DRINKS'})
 
-            # TODO: CREATE A FALLBACK PLAN WHEN THERE ARE UNDELIVERED REQUESTS 'aborted':'SERVED_STATUS'
+            smach.StateMachine.add( 'HANDOVER_UNDELIVERED_DRINKS',
+                                    HandoverUndeliveredDrinks(robot),
+                                    transitions={   'done':'SERVED_STATUS'})
 
-            # close the lookoutIterator
             smach.StateMachine.add( 'SERVED_STATUS',
                                     ServedStatus(robot),
                                     transitions={   'complete':'SAY_FINISHED_SERVING',
                                                     'incomplete':'LOOKOUT_CONTAINER'})
-
-            # TODO: BACKUP STATE TO DELIVER THE DRINKS TO ANYONE, EVEN IF ITS NOT THE PERSON WHO REQUESTED THEM
 
 
  #-------------------------------------------FINISH THE CHALLENGE AND LEAVE----------------------------------------
@@ -1812,19 +1830,31 @@ if __name__ == '__main__':
  
     amigo = Amigo(wait_services=True)
 
-    # Number of people served
+    # Number of total people served
     amigo.reasoner.query(Compound('retractall', Compound('people_served_count', 'X')))
     amigo.reasoner.query(Compound('assert',Compound('people_served_count', '0')))
 
+    # Variable to preempt the focus on face loop
     amigo.reasoner.query(Compound('retractall', Compound('preempt_head_focus', 'X')))
     amigo.reasoner.query(Compound('assert',Compound('preempt_head_focus', '0')))
 
+    # requests being fullfiled from the people who ordered
     amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
+
+    # locations visited
     amigo.reasoner.query(Compound('retractall', Compound('visited', 'X')))
+
+    # drinks currently being carried
     amigo.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
-    amigo.reasoner.query(Compound("retractall", Compound('ordered', 'X')))
-    amigo.reasoner.query(Compound("retractall", Compound('approached', 'X')))
-    amigo.reasoner.query(Compound("retractall", Compound("waypoint", "X", "Y")))
+
+    # tag to identify people who already ordered, used when getting the requests
+    amigo.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
+
+    # tag to identify people who the robot already tried to deliver the drink, but failed
+    amigo.reasoner.query(Compound('retractall', Compound('approached', 'X')))
+
+    # list of waypoints, used when navigating to last know locations of people who ordered
+    amigo.reasoner.query(Compound('retractall', Compound('waypoint', 'X', 'Y')))
 
 
     #################################
@@ -1833,28 +1863,28 @@ if __name__ == '__main__':
     # Retract all old facts
     amigo.reasoner.query(Compound('retractall', Compound('challenge', 'X')))
     
-    amigo.reasoner.query(Compound('retractall', Compound('explored', 'X')))
+    # amigo.reasoner.query(Compound('retractall', Compound('explored', 'X')))
     amigo.reasoner.query(Compound('retractall', Compound('state', 'X', 'Y')))
-    amigo.reasoner.query(Compound('retractall', Compound('current_exploration_target', 'X')))
-    amigo.reasoner.query(Compound('retractall', Compound('current_object', 'X')))
-    amigo.reasoner.query(Compound('retractall', Compound('current_person', 'X')))
+    # amigo.reasoner.query(Compound('retractall', Compound('current_exploration_target', 'X')))
+    # amigo.reasoner.query(Compound('retractall', Compound('current_object', 'X')))
+    # amigo.reasoner.query(Compound('retractall', Compound('current_person', 'X')))
 
-    amigo.reasoner.query(Compound('retractall', Compound('registered', 'X')))
+    # amigo.reasoner.query(Compound('retractall', Compound('registered', 'X')))
     amigo.reasoner.query(Compound('retractall', Compound('type', 'X', 'Y')))
 
-    amigo.reasoner.query(Compound('retractall', Compound('curLook', 'X', 'Y', 'Phi')))
+    # amigo.reasoner.query(Compound('retractall', Compound('curLook', 'X', 'Y', 'Phi')))
 
     # Load locations and objects from knowledge files
     amigo.reasoner.query(Compound('load_database', 'tue_knowledge', 'prolog/locations.pl'))
     amigo.reasoner.query(Compound('load_database', 'tue_knowledge', 'prolog/objects.pl'))
 
     # Use reasoner for max iter in LookForPerson 
-    amigo.reasoner.query(Compound('retractall', Compound('looked_person_no', 'X')))
-    amigo.reasoner.query(Compound('assert',Compound('looked_person_no', '0')))
+    # amigo.reasoner.query(Compound('retractall', Compound('looked_person_no', 'X')))
+    # amigo.reasoner.query(Compound('assert',Compound('looked_person_no', '0')))
 
     # Use reasoner for max iter in LookForDrink 
-    amigo.reasoner.query(Compound('retractall', Compound('looked_drink_no', 'X')))
-    amigo.reasoner.query(Compound('assert',Compound('looked_drink_no', '0')))
+    # amigo.reasoner.query(Compound('retractall', Compound('looked_drink_no', 'X')))
+    # amigo.reasoner.query(Compound('assert',Compound('looked_drink_no', '0')))
 
     # Assert current challenge
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
@@ -1877,7 +1907,7 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'william_coffee', 'william', 'coffee', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
+                                Compound('serve', 'william_coffee', 'william', 'cup', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
 
         amigo.reasoner.query(   Compound("assert", 
                                 Compound("carrying", 
@@ -1885,7 +1915,7 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound("assert", 
                                 Compound("carrying", 
-                                Compound("drink", "coffee", "right_arm"))))
+                                Compound("drink", "cup", "right_arm"))))
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('waypoint', Compound('last_known_location', '2.5071_1.2574_0.0'), Sequence('2.5071', '1.2574', '0.0'))))
