@@ -110,6 +110,9 @@ void rotateRobot(double desired_angle)
     cmd_vel.linear.y = 0;
     cmd_vel.angular.z = 0.5;
 
+    // Convert angle from degree to rad
+    desired_angle = desired_angle/180.0*3.1415;
+
     // Calculate rotating time
     double rotating_time = desired_angle/cmd_vel.angular.z;
     ROS_INFO("Rotate robot approximately %f degree (%f seconds)...", desired_angle, rotating_time);
