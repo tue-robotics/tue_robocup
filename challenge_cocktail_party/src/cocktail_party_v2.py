@@ -83,11 +83,11 @@ class DetectWavingPeople(smach.State):
             self.robot.speech.speak("I was not able to start human tracking.")
             return "error"
 
-        # self.robot.head.set_pan_tilt(pan=-1.0)
-        # rospy.sleep(2)
-        # self.robot.head.set_pan_tilt(pan=-0.0)
-        # rospy.sleep(2)
-        # self.robot.head.set_pan_tilt(pan=1.0)
+        self.robot.head.set_pan_tilt(pan=-1.0)
+        rospy.sleep(2)
+        self.robot.head.set_pan_tilt(pan=-0.0)
+        rospy.sleep(2)
+        self.robot.head.set_pan_tilt(pan=1.0)
         rospy.sleep(4)
 
         self.robot.head.reset_position()
@@ -141,11 +141,11 @@ class DetectPeople(smach.State):
         # reset head position
         self.robot.head.reset_position()
 
-        # self.robot.head.set_pan_tilt(pan=-1.0)
-        # rospy.sleep(2)
-        # self.robot.head.set_pan_tilt(pan=-0.0)
-        # rospy.sleep(2)
-        # self.robot.head.set_pan_tilt(pan=1.0)
+        self.robot.head.set_pan_tilt(pan=-1.0)
+        rospy.sleep(2)
+        self.robot.head.set_pan_tilt(pan=-0.0)
+        rospy.sleep(2)
+        self.robot.head.set_pan_tilt(pan=1.0)
         rospy.sleep(4)
 
         self.robot.head.reset_position()
@@ -1613,11 +1613,6 @@ class CocktailParty(smach.StateMachine):
                 smach.StateMachine.add( 'TAKE_NEW_ORDER_FOCUS',
                                         TakeNewOrderFocus(robot),
                                         transitions={'done':'NAV_TO_WAIVING_PERSON'})
-
-
-                # smach.StateMachine.add( 'VISITED_ALL_PERSONS',
-                #                         Say(robot, "I have taken all the orders from this group.", block=False),
-                #                         transitions={   'spoken':'succeeded'})
 
             # add orders container to the main state machine
             smach.StateMachine.add( 'ORDERS_CONTAINER',
