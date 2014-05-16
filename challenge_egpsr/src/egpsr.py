@@ -384,18 +384,22 @@ def setup_statemachine(robot):
 
     # Set initial location:
 
-    ''' If necessary: set initial state '''
-    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
-    if  len(sys.argv) > 1:
-        if int(sys.argv[1]) == 1:
-            robot.initial_location = "initial_egpsr_1"
-        elif int(sys.argv[1]) == 2:
-            robot.initial_location = "initial_egpsr_2"
-        elif int(sys.argv[1]) == 3:
-            robot.initial_location = "initial_egpsr_3"
-    else:
+    # ''' If necessary: set initial state '''
+    start_loc = rospy.get_param('~start_loc', 1)
+
+    if start_loc == 1:
         robot.initial_location = "initial_egpsr_1"
-    rospy.logerr("!! DEFINE INITIAL LOCATION. CURRENT LOCATION IS {0} !!".format(robot.initial_location))
+    elif start_loc == 2:
+        robot.initial_location = "initial_egpsr_2"
+    elif start_loc == 3:
+        robot.initial_location = "initial_egpsr_3"
+
+    if rospy.has_param('~start_loc'):
+        print "jaaa deleten"
+        rospy.sleep(6)
+        rospy.delete_param('~start_loc')
+        print "deleted"
+        rospy.sleep(6)
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
