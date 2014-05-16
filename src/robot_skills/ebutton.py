@@ -12,7 +12,7 @@ class EButton:
         
         rospy.loginfo("Initializing ebutton listener")
         self._ebuttonstatus = True
-        self._topic = rospy.Subscriber("/emergency_switch", 
+        self._topic = rospy.Subscriber("/amigo/emergency_switch", 
                                          Bool, 
                                          self._listen)
 
