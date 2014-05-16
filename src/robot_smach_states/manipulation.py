@@ -75,13 +75,13 @@ class DetermineBaseGraspPose(smach.State):
             self.nr_inverse_reachability_calls += 1
             #grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)               
             #rospy.loginfo('Grasp point base link = {0}'.format(grasp_point_BASE_LINK))
-            self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
+            self.desired_base_poses_MAP = self.robot.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
             #rospy.loginfo('Grasp poses base in map = {0}'.format(self.desired_base_poses_MAP))
             
             ''' If there are no base poses, reset costmap and retry '''
             if not self.desired_base_poses_MAP:
                 self.robot.base.reset_costmap()
-                self.desired_base_poses_MAP = self.robot.base.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
+                self.desired_base_poses_MAP = self.robot.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)                
         
         ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
         if not self.desired_base_poses_MAP:

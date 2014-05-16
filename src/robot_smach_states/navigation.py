@@ -387,7 +387,7 @@ class Visit_query_outcome_3d(Visit_query_outcome):
             look_point = geometry_msgs.msg.PointStamped()
             look_point.point = self.robot.base.point(x,y)
 
-            base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
+            base_poses_for_point = self.robot.get_base_goal_poses(look_point, self.x_offset, self.y_offset)
 
             if base_poses_for_point:
                 base_pose_for_point = base_poses_for_point[0]
@@ -662,7 +662,7 @@ class Determine_goal(smach.State):
                     rospy.loginfo("Going to look at (X = {0}, Y = {1}, Z = {2})".format(rx,ry,rz))
                     lookat_point = msgs.PointStamped(rx,ry,rz)
 
-                    base_poses_for_point = self.robot.base.get_base_goal_poses(lookat_point, self.xy_dist_to_goal_tuple[0], self.xy_dist_to_goal_tuple[1])
+                    base_poses_for_point = self.robot.get_base_goal_poses(lookat_point, self.xy_dist_to_goal_tuple[0], self.xy_dist_to_goal_tuple[1])
 
                     if base_poses_for_point:
                         for base_goal_pose in base_poses_for_point:
@@ -690,7 +690,7 @@ class Determine_goal(smach.State):
                 look_point.point.y = y
                 look_point.point.z = z
 
-                base_poses_for_point = self.robot.base.get_base_goal_poses(look_point, 0.7, 0.0)
+                base_poses_for_point = self.robot.get_base_goal_poses(look_point, 0.7, 0.0)
 
                 if base_poses_for_point:
                     for base_goal_pose in base_poses_for_point:
