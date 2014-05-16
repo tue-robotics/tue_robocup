@@ -5,180 +5,97 @@
 It is not possible to say every sentence. All the possibilities are defined here.
 ---------------------------------------------------------------------------------
 
-<transportCmd> = 	 <transportAction> <article> <objectCategory> to   <article> <locationCategory>;
 <transportplusCmd> = <transportAction> <article> <objectCategory> from <article> <locationCategory> to <article> <locationCategory>;
 
-<getCmd> = 		<getAction> me <article> <objectCategory>;
-<getPlusCmd> =  <getAction> me <article> <objectCategory> from <article> <locationCategory>;
-
-<pointCmd> = 		 <pointAction> at <article> <objectCategory>;
-<pointPlusCmd> = 	 <pointAction> at <article> <objectCategory> from <article> <locationCategory>;
-<pointLocationCmd> = <pointAction> at <article> <locationCategory>;
-<pointExitCmd> = 	 <pointAction> at an exit;
-
-<findCmd> = 		<findAction> <article> <objectCategory>;
-<findPlusCmd> = 	<findAction> <article> <objectCategory> from <article> <locationCategory>;
-<findLocationCmd> = <findAction> <article> <locationCategory>;
-<findExitCmd> = 	<findAction> an exit;
-
-<navigateLocationCmd> = <navigateAction> to <article> <locationCategory>;
-<navigateExitCmd> = 	<navigateAction> to an exit;
+<getPlusCmd> = <getAction> me <article> <objectCategory> from <article> <locationCategory>;
 
 <transportAction> = transport | bring | carry;
-<getAction> = 		bring | get | give;
-<pointAction> = 	point | look;
-<findAction> = 		detect | find;
-<navigateAction> = 	go | move | navigate;
+<getAction> = bring | get | give;
 
-******************
-robotics_testlab_A
-******************
-
-Object and location categories for robotics_testlab_A
------------------------------------------------------
-
-<objectCategory> = 	 drink | bathroomstuff;
-<locationCategory> = seat | table | shelf | bin;
+<objectCategory> = drink | cleaningstuff | food;
+<locationCategory> = shelf | seating | table | utensil | appliance;
 
 <article> = a | an | some;
 
-Drink:
-coke
-icetea
-teapack
-
-Bathroomstuff:
-cif
-
-Seat:
-couchtable
-loungechair
-
-Table:
-couchtable
-dinnertable
-
-Shelf:
-desk
-cabinet
-bedcabinet
-
-Bin:
-bin
-
-Rooms:
-livingroom
-bedroom
-
-Locations in bedroom:
-cabinet
-bed
-bedcabinet
-bin
-
-Locations in livingroom:
-dinnertable
-desk
-couchtable
-loungechair
-
-
-*****************
-**** rgo2013 ****
-*****************
-
-Object and location categories for rgo2013
-------------------------------------------
-
-<objectCategory> = drink | medicine | stuff | food;
-<locationCategory> = seat | table | storage | decoration | appliance;
-
-<article> = a | an | some;
+------------------
+robotics_testlab_B
+------------------
 
 Drink:
-redbull
 coke
-juice
+fanta
+milk
 beer
+sevenup
+orangedrink
+coffee
+energydrink
+tea
+frutas
+
+Cleaningstuff:
+shavingfoam
 water
-wine
-
-Medicine:
-bandaids
-creme
-kleenex
-
-Stuff:
-matches
-cards
-flowers
-soap
-sponge
-bag
-headphone
-cube
-tape
-microphone
+pills
 cup
+deodorant
 
 Food:
-cookies
-peanuts
-chocolade
-hazelnuts
-noodles
+chewinggum
+vegetablesoup
+remia
+chickennoodles
+yoghurt
+crackers
 
-Seat:
-bar
-armchair
-lounge
-couch
+
+shelf:
+nightstand
+workbench
+cabinet
+
+seating:
 bed
 
-Table:
-desk
-dinnertable
-sidetable
+table:
 couchtable
+dinnertable
+desk
 
-Storage:
-shelf
-hanger
-
-Decoration:
+utensil:
 plant
-poster
+tulip
+trashbin
 
-Appliance:
-fridge
-tv
-sink
-waste
+appliance:
+bar
+kitchencounter
 
 Rooms:
-diningroom
-livingroom
 kitchen
-
-Locations in diningroom:
-desk
-hanger
-dinnertable
-
-Locations in livingroom:
-plant
-sidetable
-bed
-couch
-couchtable
+livingroom
+bedroom
+workshop
+hallway
 
 Locations in kitchen:
+trashbin
+kitchencounter
+plant
+tulip
+
+Locations in livingroom:
+cabinet
+couchtable
+dinnertable
+
+Locations in bedroom:
+nightstand
+bed
+
+Locations in workshop:
+workbench
+
+Locations in hallway:
 bar
-waste
-shelf
-tv
-fridge
-sink
-armchair
-lounge
-poster
+desk

@@ -1,8 +1,8 @@
 # Responsible: Erik
 
-amigo2:
+(amigo2:
 
-    hardware: base, spindle, left-arm, head
+    ahardware)
 
 amigo1:
     
@@ -27,11 +27,11 @@ amigo3:
     ----  OPTIONAL ---
 
     - Set initial location (for egpsr 3 possibilities for 3 robots)
-    rosrun challenge_egpsr egpsr.py 1  (rgo2014: office)
+    rosrun challenge_egpsr egpsr.py _start_loc:=1  (robotics_lab_B: In hallway, at start position 0,0,0)
     or
-    rosrun challenge_egpsr egpsr.py 2  (rgo2014: kitchen)
+    rosrun challenge_egpsr egpsr.py _start_loc:=2  (robotics_lab_B: In living_room, in corner looking at control table)
     or
-    rosrun challenge_egpsr egpsr.py 3  (rgo2014: bedroom)
+    rosrun challenge_egpsr egpsr.py _start_loc:=3  (robotics_lab_B: In workshop, looking at robotics_testlab_A)
 
     - Change arm.
     rosrun challenge_egpsr egpsr.py _arm:=left
@@ -40,14 +40,18 @@ amigo3:
 
     rosrun challenge_egpsr egpsr.py _arm:=right   !!! WATCH CAREFULLY DURING RIGHT ARM MOVEMENTS, needs to be checked !!!
 
+    (both possible: 
+    rosrun challenge_egpsr egpsr.py _start_loc:=3 _arm:=right
+    or 
+    rosrun challenge_egpsr egpsr.py _arm:=right _start_loc:=3)
+
 INSTRUCTIONS:
-Amigo will go to the meeting point (0,0,0 in testlab) and ask for a task.
+Amigo will go to the initial position (meeting point) and ask for a task.
 In README_SPEECH_POSSIBILITIES you can find the possible sentences, 
 object classes, location classes, objects and locations that can be used
 for the specific map.
 Amigo should give feedback during getting the action. At the moment he will
-try to get the action directly two times, then he will try to get the action
-in steps. This takes more time, but will get the right action.
+try to get the action directly two times. 
 
 Please give feedback about speech interpreter. If you might think it should
 be different.
