@@ -17,7 +17,7 @@ egyptian_motion_left = [egyptian_pose_center, egyptian_pose_start, egyptian_pose
 egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_center, egyptian_pose_start, egyptian_pose_center]#, egyptian_pose_down]
 
 def walk_like_an_egyptian(robot):
-    for i in range(4):
+    for i in range(2):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.leftArm.send_joint_trajectory(egyptian_motion_left, timeout=10)
