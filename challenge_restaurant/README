@@ -8,21 +8,16 @@ Then, test the speech and start the challenge:
 
 amigo3:
 
+    reset-audio (sets Alsamixer settings automatically to:)
+    
     Alsamixer settings:
         * Mic Boost -> 22
         * Capture -> 44
         * Digital -> 29
         * Mic on mute!!! (Should be muted already)
         
-    amigo-console  
-        amigo.ears.ask_user("continue",2,rospy.Duration(15))
-   		* lights should become green -> say 'continue'
-   		* if response is 'true', amigo heard you and lights become blue
-        * if this does not work, manually start: roslaunch tue_pocketsphinx start.launch on amigo2!!
-
-    say test  
-    	* to test speaker is working) 
-
+    run test_audio in amigo-console
+        
     rosrun challenge_restaurant restaurant_2014
 
 GUIDING PHASE:
