@@ -23,8 +23,8 @@ from psi import Compound, Sequence, Conjunction
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
 room = 'living_room'
 manipulation_location = {'water' : 'nightstand',  #If no location is defined for an object here, the default is 'bar' 
-                         'firstaidkit' : 'bar', 
-                         'cellphone' : 'nightstand'}
+                         'firstaidkit' : 'bar', #TODO: What object is this? 
+                         'cellphone' : 'nightstand'} #TODO: What object is this? 
 
 # ToDo move to locations, region of interest for person xyz_min, xyz_max
 room_dimension = {'living_room' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
@@ -38,6 +38,8 @@ room_dimension = {'living_room' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
 - Verification of a face when you drove to it!
 - Decide if we want to detect the accident or just move to a person
 - Reset spindle up after asking a user that's laying on the ground. 
+- The params-file, what should the contents be?
+- Amigo says there is no-one found but then still asks if you need an ambulance and what he should bring you. 
 '''
 #########################################
 #       Created by: Teun Derksen        #
