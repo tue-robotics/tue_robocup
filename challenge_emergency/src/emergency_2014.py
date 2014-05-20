@@ -22,7 +22,7 @@ from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
 room = 'living_room'
-manipulation_location = {'water' : 'nightstand', 
+manipulation_location = {'water' : 'nightstand',  #If no location is defined for an object here, the default is 'bar' 
                          'firstaidkit' : 'bar', 
                          'cellphone' : 'nightstand'}
 
@@ -37,6 +37,7 @@ room_dimension = {'living_room' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
 - Fill in hardcoded room before the start of the challenge also in the pdf creator
 - Verification of a face when you drove to it!
 - Decide if we want to detect the accident or just move to a person
+- Reset spindle up after asking a user that's laying on the ground. 
 '''
 #########################################
 #       Created by: Teun Derksen        #

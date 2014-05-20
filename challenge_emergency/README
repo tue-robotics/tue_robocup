@@ -2,6 +2,9 @@
 
 !!! PUT USB STICK IN AMIGO3 !!!
 
+Environment:
+In rosed challenge_emergency emergency_2014.py (search for 'manipulation_location'), look up where each object should be placed. 
+
 amigo2:
 
     hardware: base, spindle, left-arm, head
