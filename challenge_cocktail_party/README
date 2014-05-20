@@ -3,6 +3,17 @@
 
 ############################### COCKTAIL PARTY V2 ###############################
 
+amigo1:
+
+    - amiddle
+
+    - Place the robot in the correct starting point for the given map
+
+    - rosrun challenge_cocktail_party cocktail_party_v2.py
+        (finish the rest of the steps first!!!)
+
+amigo2:
+    - ahardware
 
 amigo3:
     - alsamixer

@@ -1534,6 +1534,14 @@ class HandoverUndeliveredDrinks(smach.StateMachine):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: HandoverUndeliveredDrinks\n")
 
+        self.robot.speech.speak("Someone please remove these drinks from my hands.")
+
+        # retract from drinks being carried
+        amigo.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
+        amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
+
+        rospy.sleep(10)
+
         return 'done'
 
 #########################################################################################
