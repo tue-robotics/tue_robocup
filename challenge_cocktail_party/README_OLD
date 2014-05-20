@@ -1,0 +1,51 @@
+# Responsible: Teun (cocktail_party_rgo2014.py)
+
+############################### COCKTAIL PARTY RGO2014 ##########################
+amigo1:
+
+    amiddle
+
+amigo2:
+    roslaunch laser_ppl_detection detect_ppl_cocktail.launch
+
+amigo3:
+    (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
+    alsamixer
+        Mic Boost -> 22
+        Capture -> 44
+        Digital -> 29
+        Mic on mute!!! (Should be muted already)
+        
+    amigo-console        
+        amigo.ears.ask_user("continue",2,rospy.Duration(15))
+   		(lights should become green -> say 'continue')
+   		(if response is 'true', amigo heard you and lights become blue)
+
+    say test  
+    	(to test speaker is working) 
+
+    #####rosrun challenge_cocktail_party cocktail_party_rgo2014.py#####old####
+    rosrun challenge_cocktail_party cocktail_party_v2.py
+
+    INSTRUCTIONS:
+
+- Possible names are :
+
+    Barbara     Charles
+    David       Dorothy
+    Elizabeth   James
+    Jennifer    John
+    Joseph      Linda
+    Margareth   Maria
+    Mary        Michael
+    Patricia    Richards
+    Robert      Susan
+    Thomas      William
+
+- Possible drinks for speech recognition are, though template matching only has (coke, rubiks, teapack and wire):
+
+    coke
+    icetea
+    teapack
+
+#################################################################################

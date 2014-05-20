@@ -1,61 +1,46 @@
-# Responsible: Teun
+# Responsible: Luis (cocktail_party_v2.py)
 
-amigo1:
-    svn up	
-    astart
 
-amigo1:
+############################### COCKTAIL PARTY V2 ###############################
 
-    amiddle
-
-amigo2:
-    roslaunch laser_ppl_detection detect_ppl_cocktail.launch
 
 amigo3:
-    (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
-    alsamixer
+    - alsamixer
         Mic Boost -> 22
         Capture -> 44
         Digital -> 29
         Mic on mute!!! (Should be muted already)
+
+    - reset-audio
         
-    amigo-console        
-        amigo.ears.ask_user("continue",2,rospy.Duration(15))
-   		(lights should become green -> say 'continue')
-   		(if response is 'true', amigo heard you and lights become blue)
+    - amigo-console -> amigo.ears.ask_user("continue",2,rospy.Duration(15))
+        (lights should become green -> say 'continue')
+        (if response is 'true', amigo heard you and lights become blue)
 
-    say test  
-    	(to test speaker is working) 
+    - say test  
+        (to test speaker is working) 
 
-    #####rosrun challenge_cocktail_party cocktail_party_rgo2014.py#####old####
-    rosrun challenge_cocktail_party cocktail_party_v2.py
+amigo1:
+
+    - amiddle
+
+    - Place the robot in the correct starting point for the given map
+
+    - rosrun challenge_cocktail_party cocktail_party_v2.py
+        (finish the rest of the steps first)
+
 
 INSTRUCTIONS:
 
-- Possible names are :
-Barbara
-Charles
-David
-Dorothy
-Elizabeth
-James
-Jennifer
-John
-Joseph
-Linda
-Margareth
-Maria
-Mary
-Michael
-Patricia
-Richards
-Robert
-Susan
-Thomas
-William
+    - Possible names and drinks should be on a A4 paper on the Robotics Lab B
 
-- Possible drinks for speech recognition are, though template matching only has (coke, rubiks, teapack and wire):
-coke
-icetea
-teapack
+    - AMIGO will enter the party room and will go the a predefined Lookout point where he will search for people (waving not implemented yet). Place yourselves somewhere on the room where you think its correct without worring about AMIGO's position, let him do the work. When he sees someone he will go to you and do the normal interaction, get yuor name, learn your face and ask which drink you want. He will only start serving as soon as he has enough request (right now 2). AMIGO will then fetch the drinks and will return to the last place he saw the people who ordered. He will then perform a search for people and will try to deliver the drinks he is carrying to the correct person. If for some reason he doesn't find every person he is looking for he will go into the first Lookout point and wait for anyone to take the drink from him. When AMIGO has served at least 3 people he will finish the challenge.
+
+#################################################################################
+
+
+
+
+
+
 
