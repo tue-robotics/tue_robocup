@@ -68,15 +68,13 @@ class DetectWavingPeople(smach.State):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectWavingPeople\n")
 
+        self.robot.speech.speak("Ladies and gentlemen, please wave to call me and place an order.")
+
         # turn head to one side to start the swipping the room
         self.robot.head.reset_position()
         self.robot.head.set_pan_tilt(pan=-1.2)
         rospy.sleep(3)
-
-        # import ipdb; ipdb.set_trace()
-
-        # TODO: can i define non-blocking also here?
-        self.robot.speech.speak("Ladies and gentlemen, please wave to call me and place an order.")
+        
 
         # Turn ON Human Tracking
         self.response_start = self.robot.perception.toggle(['human_tracking'])
@@ -90,7 +88,7 @@ class DetectWavingPeople(smach.State):
 
         # self.robot.head.set_pan_tilt(pan=-1.2, pan_vel=0.1)
         # rospy.sleep(3)
-        self.robot.head.set_pan_tilt(pan=-0.0, pan_vel=0.05)
+        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.05)
         rospy.sleep(3)
         self.robot.head.set_pan_tilt(pan=1.2, pan_vel=0.05)
         rospy.sleep(3)
@@ -529,7 +527,7 @@ class NavToLastKnowLoc(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToLastKnowLoc\n")
 
-        qGoals =   Conjunction(Compound("=", "Waypoint", Compound("last_known_location", "ID")),
+        qGoals = Conjunction(Compound("=", "Waypoint",  Compound("last_known_location", "ID")),
                                                         Compound("waypoint", "Waypoint", Sequence("X", "Y", "Z")),
                                                         Compound("not", Compound("visited", "Waypoint")))
 
@@ -582,7 +580,6 @@ class ServedStatus(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
                                 outcomes=["complete", "incomplete"])
-
         global TOTAL_ORDERS;
 
         self.robot = robot
@@ -610,6 +607,7 @@ class ServedStatus(smach.State):
             self.robot.reasoner.reset()
 
             rospy.loginfo("\t\t[Cocktail Party] Need to serve {0} more person(s) to finish the challenge\n". format(TOTAL_ORDERS-nServed))
+            self.robot.speech.speak("I still need to serve more people.", block=False)
             return "incomplete"
         else:
             return "complete"
@@ -650,6 +648,7 @@ class PendingOrders(smach.State):
 
 
 #########################################################################################
+
 
 class LookForDrinks(smach.State):
     def __init__(self, robot):
@@ -869,6 +868,7 @@ class ResetSearchedLocations(smach.State):
 
 #########################################################################################
 
+
 class AssertPickup(smach.State):
     def __init__(self, robot, query):
         smach.State.__init__(   self, 
@@ -891,11 +891,11 @@ class AssertPickup(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Asserted pickup of a {0} with the {1}\n".format(res[0]["Drink"], res[0]["CarryingLoc"]))
 
-
         return 'done'
 
 
 #########################################################################################
+
 
 class PrepareDelivery(smach.State):
     def __init__(self, robot):
@@ -1992,7 +1992,7 @@ if __name__ == '__main__':
     amigo = Amigo(wait_services=True)
 
 
-    # Number of total people served
+    # Total number of people served
     amigo.reasoner.query(Compound('retractall', Compound('people_served_count', 'X')))
     amigo.reasoner.query(Compound('assert',Compound('people_served_count', '0')))
 
@@ -2000,7 +2000,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound('retractall', Compound('preempt_head_focus', 'X')))
     amigo.reasoner.query(Compound('assert',Compound('preempt_head_focus', '0')))
 
-    # requests being fullfiled from the people who ordered
+    # requests being fullfilled from the people who ordered
     amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
 
     # locations visited
@@ -2015,20 +2015,11 @@ if __name__ == '__main__':
     # tag to identify people who the robot already tried to deliver the drink, but failed
     amigo.reasoner.query(Compound('retractall', Compound('approached', 'X')))
 
-    # list of waypoints, used when navigating to last know locations of people who ordered
+    # last know location of people saved as waypoints
     amigo.reasoner.query(Compound('retract', Compound('waypoint', Compound('last_known_location', 'X'), 'Y')))
 
-
-    #################################
-
-
-    # Retract all old facts
     amigo.reasoner.query(Compound('retractall', Compound('challenge', 'X')))
-    
-    # amigo.reasoner.query(Compound('retractall', Compound('explored', 'X')))
     amigo.reasoner.query(Compound('retractall', Compound('state', 'X', 'Y')))
-
-    # amigo.reasoner.query(Compound('retractall', Compound('registered', 'X')))
     amigo.reasoner.query(Compound('retractall', Compound('type', 'X', 'Y')))
 
     # Load locations and objects from knowledge files
@@ -2072,6 +2063,7 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('waypoint', Compound('last_known_location', '3.0161_0.9186_0.0'), Sequence('3.0161', '0.9186', '0.0'))))
+
 
     introserver = smach_ros.IntrospectionServer('SM_TOP', machine, '/SM_ROOT_PRIMARY')
     introserver.start()
