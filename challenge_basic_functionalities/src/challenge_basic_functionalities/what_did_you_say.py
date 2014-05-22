@@ -14,6 +14,8 @@ from robot_smach_states.util.startup import startup
 
 from speech_interpreter.srv import AskUser # for speech_to_text only
 
+from pein_srvs.srv import StartStopWithROIArray
+
 from psi import *
 
 ###########################
@@ -119,10 +121,9 @@ class WaitForPerson(smach.State):
 
             return 'detected'
 
-# this class drives to a point and then checks for persons. asserts that location as visited.
-class LookingForPerson(smach.State):
+class DriveToFindPerson(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["found", "looking", "not_found"])
+        smach.State.__init__(self, outcomes=["arrived", "failed", "no_waypoint"])
 
         self.robot = robot
 
@@ -130,6 +131,8 @@ class LookingForPerson(smach.State):
         
         self.robot.spindle.reset()
         self.robot.head.reset_position()
+
+        # NAVIGATE TO LOCATION TO DETECT PEOPLE
 
         self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
 
@@ -145,7 +148,7 @@ class LookingForPerson(smach.State):
         self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
 
         if not goal_answers:
-            return "not_found"
+            return "no_waypoint"
 
         goal_answer = goal_answers[0]
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
@@ -159,52 +162,127 @@ class LookingForPerson(smach.State):
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
 
         if nav_result == "unreachable" or nav_result == "preempted":
-            return "looking"
+            return "failed"
+        else:
+            return "arrived"
 
-        self.robot.head.set_pan_tilt(tilt=0.0)
-        self.robot.spindle.reset()
 
-        # we made it to the new goal. Let's have a look to see whether we can find the person here
-        #self.robot.speech.speak("Let me see who I can find here...")
-        rospy.sleep(1.5)
-        
-        self.response_start = self.robot.perception.toggle(["face_segmentation"])
-        if self.response_start.error_code == 0:
-            rospy.loginfo("Face segmentation has started correctly")
-        elif self.response_start.error_code == 1:
-            rospy.loginfo("Face segmentation failed to start")
-            self.robot.speech.speak("I was not able to start face segmentation.")
-            return 'looking'
-        rospy.sleep(2)
 
-        rospy.loginfo("Face segmentation will be stopped now")
-        self.response_stop = self.robot.perception.toggle([])
-        
-        if self.response_stop.error_code == 0:
-            rospy.loginfo("Face segmentation is stopped")
-        elif self.response_stop.error_code == 1:
-            rospy.loginfo("Failed stopping face segmentation")
+class CheckForPerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["found", "not_found"])
 
-        person_query = Conjunction(  
-                                    Compound( "property_expected", "ObjectID", "class_label", "face"),
+        self.robot = robot
+
+    def execute(self, userdata=None):
+
+        person_query = Conjunction( Compound( "property_expected", "ObjectID", "class_label", "person"),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         person_result = self.robot.reasoner.query(person_query)
         
-        print "person_result = ", person_result
-
         if not person_result:
             self.robot.speech.speak("No one here.")
-            return "looking"
+            return "not_found"
+
+        print "person_result = ", person_result
 
         if len(person_result) > 1:
             self.robot.speech.speak("I see some people!",block=False)
         else:
             self.robot.speech.speak("I found someone!",block=False)
 
-        self.robot.reasoner.assertz(Compound("question_person", Compound("point_3d", Sequence(person_result[0]["X"], person_result[0]["Y"], person_result[0]["Z"]))))
+        self.robot.reasoner.assertz(Compound("question_person", Compound("point_3d", Sequence(person_result[0]["X"], person_result[0]["Y"], 1.5))))
 
         return "found"    
+
+
+# # this class drives to a point and then checks for persons. asserts that location as visited.
+# class LookingForPerson(smach.State):
+#     def __init__(self, robot):
+#         smach.State.__init__(self, outcomes=["found", "looking", "not_found"])
+
+#         self.robot = robot
+
+#     def execute(self, userdata=None):
+        
+#         self.robot.spindle.reset()
+#         self.robot.head.reset_position()
+
+#         self.robot.reasoner.query(Compound("retractall", Compound("current_exploration_target", "X"))) 
+
+#         navigate_room = Conjunction(  Compound("=", "Waypoint", Compound("look_person", "W")),
+#                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
+#                                                  Compound("not", Compound("visited", "Waypoint")),
+#                                                  Compound("not", Compound("unreachable", "Waypoint")))
+
+#         goal_answers = self.robot.reasoner.query(navigate_room)
+
+#         print "goal answers = ", goal_answers
+
+#         self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
+
+#         if not goal_answers:
+#             return "not_found"
+
+#         goal_answer = goal_answers[0]
+#         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
+
+#         waypoint_name = goal_answer["Waypoint"]
+            
+
+#         nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
+#         nav_result = nav.execute()
+
+#         self.robot.reasoner.query(Compound("assert", Compound("visited", waypoint_name)))
+
+#         if nav_result == "unreachable" or nav_result == "preempted":
+#             return "looking"
+
+#         self.robot.head.set_pan_tilt(tilt=0.0)
+#         self.robot.spindle.reset()
+
+#         # we made it to the new goal. Let's have a look to see whether we can find the person here
+#         #self.robot.speech.speak("Let me see who I can find here...")
+#         rospy.sleep(1.5)
+        
+#         self.response_start = self.robot.perception.toggle(["face_segmentation"])
+#         if self.response_start.error_code == 0:
+#             rospy.loginfo("Face segmentation has started correctly")
+#         elif self.response_start.error_code == 1:
+#             rospy.loginfo("Face segmentation failed to start")
+#             self.robot.speech.speak("I was not able to start face segmentation.")
+#             return 'looking'
+#         rospy.sleep(2)
+
+#         rospy.loginfo("Face segmentation will be stopped now")
+#         self.response_stop = self.robot.perception.toggle([])
+        
+#         if self.response_stop.error_code == 0:
+#             rospy.loginfo("Face segmentation is stopped")
+#         elif self.response_stop.error_code == 1:
+#             rospy.loginfo("Failed stopping face segmentation")
+
+#         person_query = Conjunction(  
+#                                     Compound( "property_expected", "ObjectID", "class_label", "face"),
+#                                     Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+#         person_result = self.robot.reasoner.query(person_query)
+        
+#         print "person_result = ", person_result
+
+#         if not person_result:
+#             self.robot.speech.speak("No one here.")
+#             return "looking"
+
+#         if len(person_result) > 1:
+#             self.robot.speech.speak("I see some people!",block=False)
+#         else:
+#             self.robot.speech.speak("I found someone!",block=False)
+
+#         self.robot.reasoner.assertz(Compound("question_person", Compound("point_3d", Sequence(person_result[0]["X"], person_result[0]["Y"], person_result[0]["Z"]))))
+
+#         return "found"    
 
 
 class WhatDidYouSay(smach.StateMachine):
@@ -225,13 +303,27 @@ class WhatDidYouSay(smach.StateMachine):
 
             smach.StateMachine.add("SAY_LOOK_EYES",
                                     states.Say(robot,"I will try to find you", block=False),
-                                    transitions={'spoken':'FIND_PERSON'})
+                                    transitions={'spoken':'DRIVE_TO_FIND_PERSON_LOC'})
 
-            smach.StateMachine.add( "FIND_PERSON",
-                                LookingForPerson(robot),
+            smach.StateMachine.add( "DRIVE_TO_FIND_PERSON_LOC",
+                                DriveToFindPerson(robot),
+                                transitions={   'arrived':'RESET_HEAD_SPINDLE',
+                                                'failed':'DRIVE_TO_FIND_PERSON_LOC',
+                                                'no_waypoint':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+
+            smach.StateMachine.add("RESET_HEAD_SPINDLE",
+                                states.ResetHeadSpindle(robot),
+                                transitions={   'done':'PEOPLE_DETECTION'})
+
+            smach.StateMachine.add("PEOPLE_DETECTION",
+                                    states.PeopleDetectorTorsoLaser(robot, time=4, room='living_room'),
+                                transitions={   'done':'CHECK_FOR_PERSON',
+                                                'failed':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+
+            smach.StateMachine.add( "CHECK_FOR_PERSON",
+                                CheckForPerson(robot),
                                 transitions={   'found':'NAVIGATE_TO_PERSON',
-                                                'looking':'FIND_PERSON',
-                                                'not_found':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+                                                'not_found':'DRIVE_TO_FIND_PERSON_LOC'})
 
             question_person_query = Compound("question_person", Compound("point_3d",Sequence("X","Y","Z")))
 
