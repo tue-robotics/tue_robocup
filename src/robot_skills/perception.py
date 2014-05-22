@@ -6,7 +6,7 @@ import actionlib
 
 # Perception
 from perception_srvs.srv import StartPerception
-from pein_msgs.msg import LearnAction, LearnGoal # for face learning
+from pein_msgs.msg import LearnAction, LearnGoal, ROI
 import pein_srvs.srv
 
 import collections
@@ -59,6 +59,9 @@ class Perception(object):
         self.testpoint.point.x = 0.66
         self.testpoint.point.y = 0.73
         self.testpoint.point.z = 0.83
+
+        '''People detection ROI'''
+        self.ppl_detection_laser = rospy.ServiceProxy('ppl_detection_generic/start_with_roi', pein_srvs.srv.StartStopWithROIArray)
 
     def close(self):
         pass
@@ -283,6 +286,41 @@ class Perception(object):
         
         self.pub_rec.publish(msg)        
 
+
+    def people_detection_torso_laser(self, pointstamped, time=4.0, length_x=3.0, length_y=3.0, length_z=1.0):
+
+        ''' Starts people detection '''
+        request = pein_srvs.srv.StartStopWithROIArrayRequest()
+        request.status = True
+        
+        roi_ppl = ROI()
+        roi_ppl.x = pointstamped.point.x
+        roi_ppl.y = pointstamped.point.y
+        roi_ppl.z = pointstamped.point.z
+        roi_ppl.length_x = length_x
+        roi_ppl.length_y = length_y
+        roi_ppl.length_z = length_z
+        roi_ppl.frame = pointstamped.header.frame_id
+
+        request.rois.append(roi_ppl)
+
+        print "\n request ppl_detection = ", request, "\n"
+
+        ''' Wait for service '''
+        try:
+            rospy.wait_for_service("/ppl_detection_generic/start_with_roi", timeout=5.0)
+            response = self.ppl_detection_laser(request)
+        except (rospy.ServiceException, rospy.ROSException), e:
+            rospy.logerr("People Detection Laser service not available: {0}".format(e))
+            return False
+
+        ''' Wait time before stopping people detection '''
+        rospy.sleep(time)
+        request.status = False
+        self.ppl_detection_laser(request)
+
+        return response
+        
 
 if __name__ == "__main__":
     rospy.init_node("amigo_perception_executioner", anonymous=True)
