@@ -505,3 +505,72 @@ class ToggleDemoLaser(smach.State):
             return "done"
         except rospy.ServiceException:
             return "failed"
+
+class PeopleDetectorTorsoLaser(smach.State):
+    """Enables or disables PeopleDetector"""
+    #TODO: If ToggleModules works, make this state a specialization of that
+    def __init__(self, robot, time=None, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
+        smach.State.__init__(self, outcomes=["done", "failed"])
+        self.robot = robot
+        self.time = time
+        self.room = room
+        self.point_stamped = point_stamped
+        self.length_x = length_x
+        self.length_y = length_y
+        self.length_z = length_z
+        self.distance_to_walls = 0.2  # This is the distance that is retracted from the room dimensions in x and y directions.
+
+    def execute(self, userdata=None):
+
+        # First check if room is given or already a point. 
+        
+        if self.room:
+            
+            room_dimensions = Compound("room_dimensions",self.room, Compound("size", "Xmin", "Ymin", "Zmin", "Xmax", "Ymax", "Zmax"))
+
+            room_dimensions_answers = self.robot.reasoner.query(room_dimensions)
+
+
+            if not room_dimensions_answers:
+                rospy.logerr("Dimensions for room were not found in reasoner!!")
+                return "failed"
+
+            print "room_dimensions_answers = ", room_dimensions_answers
+
+            # assumed is that there is only one block per room.
+            room_dimensions_answer = room_dimensions_answers[0]
+            x_min = float(room_dimensions_answer["Xmin"])
+            y_min = float(room_dimensions_answer["Ymin"])
+            z_min = float(room_dimensions_answer["Zmin"])
+            x_max = float(room_dimensions_answer["Xmax"])
+            y_max = float(room_dimensions_answer["Ymax"])
+            z_max = float(room_dimensions_answer["Zmax"])
+
+            print "\n x_min = ", x_min, "\n"
+            print "\n x_max = ", x_max, "\n"
+            
+            new_pointstamped = geometry_msgs.msg.PointStamped()
+            new_pointstamped.point.x = (x_max-x_min)*0.5 + x_min
+            new_pointstamped.point.y = (y_max-y_min)*0.5 + y_min
+            new_pointstamped.point.z = (z_max-z_min)*0.5 + z_min
+            new_pointstamped.header.frame_id = '/map'         
+
+            print "\n new_pointstamped = ", new_pointstamped, "\n"
+
+            new_length_x = x_max-x_min - 2 * self.distance_to_walls
+            new_length_y = y_max-y_min - 2 * self.distance_to_walls
+            new_length_z = z_max-z_min - 2 * self.distance_to_walls
+
+            print "\n new_length_x = ", new_length_x, "\n"
+            print "\n new_length_y = ", new_length_y, "\n"
+            print "\n new_length_z = ", new_length_z, "\n"
+
+            self.robot.perception.people_detection_torso_laser(new_pointstamped, self.time, abs(new_length_x), abs(new_length_y), abs(new_length_z))
+
+        elif self.point_stamped:
+            self.robot.perception.people_detection_torso_laser(self.point_stamped, self.time, self.length_x, self.length_y, self.length_z)
+        else:
+            rospy.logerr("No room or point was defined for detecting people")
+            return "failed"
+
+        return "done"
