@@ -68,11 +68,11 @@ class DetectWavingPeople(smach.State):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectWavingPeople\n")
 
+        self.robot.head.reset_position()
         self.robot.speech.speak("Ladies and gentlemen, please wave to call me and place an order.")
 
         # turn head to one side to start the swipping the room
-        self.robot.head.reset_position()
-        self.robot.head.set_pan_tilt(pan=-1.2)
+        self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0)
         rospy.sleep(3)
         
 
@@ -88,10 +88,11 @@ class DetectWavingPeople(smach.State):
 
         # self.robot.head.set_pan_tilt(pan=-1.2, pan_vel=0.1)
         # rospy.sleep(3)
-        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.05)
+        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0)
         rospy.sleep(3)
-        self.robot.head.set_pan_tilt(pan=1.2, pan_vel=0.05)
-        rospy.sleep(3)
+        
+        self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0)
+        rospy.sleep(5)
 
         # Turn OFF Human Tracking
         self.response_stop = self.robot.perception.toggle([])
@@ -133,6 +134,12 @@ class DetectPeople(smach.State):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectPeople\n")
 
+        self.robot.head.reset_position()
+        
+        # turn head to one side to start the swipping the room
+        self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0)
+        rospy.sleep(3)
+        
         # Turn ON Human Tracking
         self.response_start = self.robot.perception.toggle(['human_tracking'])
 
@@ -143,17 +150,13 @@ class DetectPeople(smach.State):
             self.robot.speech.speak("I was not able to start human tracking.")
             return "error"
 
-        # reset head position
-        self.robot.head.reset_position()
-
-        # self.robot.head.set_pan_tilt(pan=-1.0)
-        # rospy.sleep(2)
-        # self.robot.head.set_pan_tilt(pan=-0.0)
-        # rospy.sleep(2)
-        # self.robot.head.set_pan_tilt(pan=1.0)
-        rospy.sleep(4)
-
-        self.robot.head.reset_position()
+        # self.robot.head.set_pan_tilt(pan=-1.2, pan_vel=0.1)
+        # rospy.sleep(3)
+        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0)
+        rospy.sleep(3)
+        
+        self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0)
+        rospy.sleep(5)
 
         # Turn OFF Human Tracking
         self.response_stop = self.robot.perception.toggle([])
@@ -164,6 +167,10 @@ class DetectPeople(smach.State):
             rospy.loginfo("human_tracking failed to shutdown")
             self.robot.speech.speak("I was not able to stop human tracking.")
             return "error"
+
+        rospy.sleep(1)
+        
+        self.robot.head.reset_position()
 
         # compose person query
         qPeopleFound = Conjunction( Compound("property_expected", "ObjectID", "class_label", "validated_person"),
@@ -274,6 +281,8 @@ class LearnPersonName(smach.State):
     def execute(self, userdata=None):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LearnPersonName\n")
+        
+        self.robot.head.reset_position()
 
         # ask the name of the user (within 3 tries and within 60 seconds an answer is received)
         self.response = self.ask_user_service_get_learn_person_name("name", 3 , rospy.Duration(60))
