@@ -3,12 +3,13 @@ import roslib; roslib.load_manifest('challenge_robo_zoo')
 
 import rospy
 import smach
+import math
 
 import os
-import signal
-import robot_skills.util.msg_constructors as msgs
 
 from musicmanager import music
+
+TURNSPEED = 1.0
 
 #0. Arms are in reset pose
 #1. Right arm straight forward and hand up
@@ -37,7 +38,6 @@ arm_to_hips_4 =                 [-0.400, 0.000, 0.000, 0.000, 0.000, 0.000, 0.00
 zero =                          [-0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000]
 #7a. Left arm down to the hips
 
-import threading
 
 def spindle_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
@@ -75,12 +75,12 @@ def hoofdschoudersknieteen(robot):
         right(*right_hand_to_left_shoulder, timeout=0) #Dont wait, both arms should move in sync
         _left(*left_hand_to_right_shoulder, timeout=10)
 
-    def knie():
+    def knie(): #TODO: tune poses
         robot.spindle.send_goal(0.3, timeout=4.0)
         right(*arm_to_hips_1, timeout=0)#Dont wait, both arms should move in sync
         _left(*arm_to_hips_1, timeout=10)
     
-    def teen():
+    def teen(): #TODO: tune poses
         robot.spindle.send_goal(0.1, timeout=4.0)
         right(*arm_to_hips_1, timeout=0)#Dont wait, both arms should move in sync
         _left(*arm_to_hips_1, timeout=10)
@@ -92,11 +92,13 @@ def hoofdschoudersknieteen(robot):
 
     def ogen():
         robot.spindle.send_goal(0.4, timeout=4.0)
-        #TODO: Move elbows forward a bit and point to th front side of the kinect
+        #TODO: Move elbows forward a bit and point to the front side of the kinect
         right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
         _left(*left_arm_to_head_4,  timeout=10)
 
-    def puntje_van_je_neus():
+    def puntje_van_je_neus(turn=False):
+        if turn:
+            robot.base.force_drive(0, 0, TURNSPEED, (2*math.pi)/TURNSPEED) #Turn a full circle at TURNSPEED rad/sec
         robot.spindle.send_goal(0.4, timeout=4.0)
         right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
         robot.leftArm.reset() #Move left arm down, only use right arm to point at 'nose'
@@ -109,8 +111,6 @@ def hoofdschoudersknieteen(robot):
     except Exception, e:
         robot.speech.speak("Guys, could you help me, my dance stopped suddenly")
         rospy.logerr(e)
-            # right(*zero, timeout=10)
-            # _left(*zero, timeout=10)
 
 class HoofdSchouderKnieTeen(smach.State):
     def __init__(self, robot):
