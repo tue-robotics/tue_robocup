@@ -137,7 +137,7 @@ class DetectPeople(smach.State):
         self.robot.head.reset_position()
         
         # turn head to one side to start the swipping the room
-        self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0)
+        self.robot.head.set_pan_tilt(pan=-0.8, tilt=0.0)
         rospy.sleep(3)
         
         # Turn ON Human Tracking
@@ -150,12 +150,11 @@ class DetectPeople(smach.State):
             self.robot.speech.speak("I was not able to start human tracking.")
             return "error"
 
-        # self.robot.head.set_pan_tilt(pan=-1.2, pan_vel=0.1)
-        # rospy.sleep(3)
+        # TODO CAN I USE TIMEOUTS INSTEAD OF SLEEPS?
         self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0)
         rospy.sleep(3)
         
-        self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0)
+        self.robot.head.set_pan_tilt(pan=0.8, pan_vel=0.1, tilt=0.0)
         rospy.sleep(5)
 
         # Turn OFF Human Tracking
@@ -282,6 +281,8 @@ class LearnPersonName(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LearnPersonName\n")
         
+        # reset pose
+        self.robot.spindle.high()
         self.robot.head.reset_position()
 
         # ask the name of the user (within 3 tries and within 60 seconds an answer is received)
@@ -542,14 +543,14 @@ class NavToLastKnowLoc(smach.State):
 
         goals = self.robot.reasoner.query(qGoals)
         
-        # if there is no location associated with lookout points say it
+        # reset visited pepople if all the last know locations have been visited
         if not goals:
             rospy.loginfo("\t\t[Cocktail Party] Visited all the last know locations\n")
             
             if self.resetVisited == 0:
                 rospy.loginfo("\t\t[Cocktail Party] Reseting approached people and detections\n")
                 self.robot.reasoner.reset()
-                amigo.reasoner.query(Compound("retractall", Compound('approached', 'X')))
+                amigo.reasoner.query(Compound('retractall', Compound('approached', 'X')))
                 self.resetVisited = 1
 
             return 'visited_all'
@@ -631,21 +632,30 @@ class PendingOrders(smach.State):
                                 outcomes=["enough_orders", "insuficient_orders"])
 
         global MIN_SIMULTANEOUS_ORDERS;
+        global TOTAL_ORDERS
 
         self.robot = robot
 
     def execute(self, userdata=None):
 
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: ServedStatus\n")
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: PendingOrders\n")
 
         # query the number of current orders
         answer = self.robot.reasoner.query(Compound("goal", "X"))
-        nOrders = len(answer)
         
-        rospy.loginfo("I have {0} pending orders". format(nOrders))
+        if answer:
+            nOrders = len(answer)
+            rospy.loginfo("\t\t[Cocktail Party] I have {0} pending orders\n". format(nOrders))
+        else:
+            rospy.logwarn("\t\t[Cocktail Party] I could not query the number of goals!\n")
+        
+        # query the number of people served so far
+        peopleServedCount = self.robot.reasoner.query(Compound("people_served_count", "X"))
+        peopleServedCount = float(peopleServedCount[0]["X"])
 
-        # if there are enough requests start serving
-        if nOrders < MIN_SIMULTANEOUS_ORDERS:
+        # if there are enough requests start serving, or if there are enough request to 
+        #   complete the total number of people needed to serve
+        if nOrders < MIN_SIMULTANEOUS_ORDERS and nOrders < TOTAL_ORDERS - peopleServedCount:
             self.robot.speech.speak("I need more requests before getting the drinks", block=False)
             return "insuficient_orders"
         else:
@@ -653,6 +663,7 @@ class PendingOrders(smach.State):
             # retract the people already served, maybe they want something again
             self.robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
             self.robot.speech.speak("I will now get your drinks", block=False)
+            self.robot.reasoner.reset()
             return "enough_orders"  
 
 
@@ -678,7 +689,6 @@ class LookForDrinks(smach.State):
         if not goals:
             self.robot.speech.speak("I picked up all the drinks requested", block=False)
             self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
-            self.robot.reasoner.reset()
             return "done"
 
         drinkNames = set([str(answer["Drink"]) for answer in goals])
@@ -925,6 +935,7 @@ class PrepareDelivery(smach.State):
 
         self.robot.head.reset_position()
         self.robot.spindle.reset()
+        self.robot.spindle.high()
 
         self.robot.speech.speak("Let me se if i can find the correct person here.", block=False)
 
@@ -1191,7 +1202,7 @@ class NavToDetectedPerson(smach.State):
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
             return "visited_all"
         else:
-            rospy.loginfo("I found {0} person(s)". format(len(queryRes)))
+            rospy.loginfo("\t\t[Cocktail Party] I found {0} person(s)\n". format(len(queryRes)))
             
             waypointName = queryRes[0]["ObjectID"]
 
@@ -1208,7 +1219,6 @@ class NavToDetectedPerson(smach.State):
             elif nav_result == "preempted":
                 return "unreachable"
 
-            # we made it to the new goal. Let's have a look to see whether we can find here
             return "arrived"
 
 #########################################################################################
@@ -1222,7 +1232,8 @@ class HandoverDrinkLeft(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"], block=False),
+                                    Say(robot, ["I'm going to hand over your drink now", 
+                                                "Here you go! Handing over your drink"], block=False),
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
@@ -1231,7 +1242,8 @@ class HandoverDrinkLeft(smach.StateMachine):
                                                     'failed':'PLEASE_TAKE'})
             
             smach.StateMachine.add( 'PLEASE_TAKE',
-                                    Say(robot, ["Please hold it, I'm going to let go.", "Please grab the drink, I'm releasing"]),
+                                    Say(robot, ["Please hold it, I'm going to let go.", 
+                                                "Please grab the drink, I'm releasing"]),
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
@@ -1264,7 +1276,8 @@ class HandoverDrinkRight(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"], block=False),
+                                    Say(robot, ["I'm going to hand over your drink now", 
+                                                "Here you go! Handing over your drink"], block=False),
                                     transitions={"spoken":"POSE"})
 
             smach.StateMachine.add( 'POSE',
@@ -1273,7 +1286,8 @@ class HandoverDrinkRight(smach.StateMachine):
                                                     'failed':'PLEASE_TAKE'})
             
             smach.StateMachine.add( 'PLEASE_TAKE',
-                                    Say(robot, ["Please hold it, I'm going to let go.", "Please grab the drink, I'm releasing"]),
+                                    Say(robot, ["Please hold it, I'm going to let go.", 
+                                                "Please grab the drink, I'm releasing"]),
                                     transitions={"spoken":"OPEN_GRIPPER"})
 
             smach.StateMachine.add( "OPEN_GRIPPER", 
@@ -1303,8 +1317,8 @@ class HandoverDrinkRight(smach.StateMachine):
 class RetractServedPerson(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
-                                outcomes=[  'done', 'all_served', 'failed'],
-                                input_keys=['person_in', 'drink_in'])
+                                input_keys=['person_in', 'drink_in'],
+                                outcomes=[  'done', 'all_served', 'failed'])
         # initializations
         self.robot = robot
 
@@ -1312,15 +1326,17 @@ class RetractServedPerson(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: RetractServedPerson\n")
 
-        # personName = str(userdata.person_in)
-        # drinkName = str(userdata.drink_in)
+        # personName2 = str(userdata.person_in)
+        # drinkName2 = str(userdata.drink_in)
+        # rospy.loginfo("\t\t[Cocktail Party] Name: {0}, drink: {1}\n".format(personName2, drinkName2))
         
-        # TODO PASS THE VARIABLES THROUGH USERDATA AND NOT QUERY
+        # TODO PASS THE VARIABLES THROUGH USERDATA AND NOT QUERY (Not working, not sure why)
+
         deliveryRes = self.robot.reasoner.query(Compound("delivering",
                                                 Compound("delivery", "Person", "Drink")))
     
         if not deliveryRes:
-            rospy.loginfo("\t\t[Cocktail Party] No information on this delivery.\n")
+            rospy.logwarn("\t\t[Cocktail Party] No information on this delivery.\n")
             return 'failed'
         else:
             personName = deliveryRes[0]["Person"]
@@ -1342,84 +1358,27 @@ class RetractServedPerson(smach.State):
             ############################################################
             # update the number of served people
             res1 = self.robot.reasoner.query(Compound("people_served_count", "Counter"))
-            res2 = self.robot.reasoner.query(Compound("goal", Compound("serve", "ObjectID", "Person", "Drink", "LastKnowPose")))
 
             nServed = float(res1[0]["Counter"]) + 1
 
-            rospy.loginfo("\t\t[Cocktail Party]Hurray! Another drink was served (total served: {0} )\n".format(float(res1[0]["Counter"])))
+            rospy.loginfo("\t\t[Cocktail Party]Hurray! Another drink was served (total served: {0})\n".format(float(res1[0]["Counter"])))
+
             self.robot.reasoner.query(Compound("retractall", Compound("people_served_count", "X")))
             self.robot.reasoner.query(Compound("assert",Compound("people_served_count", nServed)))
             ############################################################
 
-            carryingRes = self.robot.reasoner.query(Compound( "carrying",
-                                                    Compound( "drink", "Drink", "Arm")))
+            carrying = self.robot.reasoner.query(Compound("carrying", Compound( "drink", "Drink", "Arm")))
 
-            if not carryingRes:
+            if not carrying:
                 self.robot.speech.speak("I finished delivering every drink.", block=False)
                 return 'all_served'
             else:
-                rospy.loginfo("\t\t[Cocktail Party] Still have to deliver {0} drink(s)\n".format(len(carryingRes)))
+                rospy.loginfo("\t\t[Cocktail Party] Still have to deliver {0} drink(s)\n".format(len(carrying)))
                 return 'done'
 
         else:
-            rospy.loginfo("\t\t[Cocktail Party] Unable to retract the person and drink served\n")
+            rospy.logwarn("\t\t[Cocktail Party] Unable to retract the person or drink served\n")
             return 'failed'
-
-
-#########################################################################################
-
-
-class HandoverToUnknownHuman(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=["done"])
-
-        if grasp_arm == "left":
-            arm = robot.leftArm
-        if grasp_arm == "right":
-            arm = robot.rightArm
-
-        qPartyRoomWaypts = Compound("waypoint", "party_room", Compound("pose_2d", "X", "Y", "Phi"))    
-
-        with self:
-            smach.StateMachine.add('GOTO_PARTY_ROOM',
-                                    NavigateGeneric(robot, goal_query=qPartyRoomWaypts),
-                                    transitions={   "arrived":"PRESENT_DRINK", 
-                                                    "unreachable":"PRESENT_DRINK", 
-                                                    "preempted":"PRESENT_DRINK", 
-                                                    "goal_not_defined":"PRESENT_DRINK"})
-            smach.StateMachine.add( 'PRESENT_DRINK',
-                                    Say(robot, ["I'm going to hand over your drink now", "Here you go! Handing over your drink"], block=False),
-                                    transitions={"spoken":"POSE"})
-
-            smach.StateMachine.add( 'POSE',
-                                    Handover_pose(arm, robot),
-                                    transitions={   'succeeded':'PLEASE_TAKE',
-                                                    'failed':'PLEASE_TAKE'})
-            
-            smach.StateMachine.add( 'PLEASE_TAKE',
-                                    Say(robot, ["Please hold the drink, I'm going to let it go.", "Please take the drink, i'll let it go"]),
-                                    transitions={"spoken":"OPEN_GRIPPER"})
-
-            smach.StateMachine.add( "OPEN_GRIPPER", 
-                                    SetGripper(robot, arm, gripperstate=0, drop_from_frame="/amigo/grippoint_right"), #open
-                                    transitions={   'succeeded':'CLOSE_AFTER_DROP',
-                                                    'failed':'CLOSE_AFTER_DROP'})
-            smach.StateMachine.add( 'CLOSE_AFTER_DROP',
-                                    SetGripper(robot, arm, gripperstate=1), #close
-                                    transitions={   'succeeded':'RESET_ARM',
-                                                    'failed':'RESET_ARM'})
-            smach.StateMachine.add('RESET_ARM', 
-                                    ArmToPose(robot, arm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), 
-                                    transitions={   'done':'RESET_TORSO',
-                                                    'failed':'RESET_TORSO'})
-            smach.StateMachine.add('RESET_TORSO',
-                                    ResetTorso(robot),
-                                    transitions={   'succeeded':'SAY_ENJOY',
-                                                    'failed'   :'SAY_ENJOY'})
-
-            smach.StateMachine.add( 'SAY_ENJOY',
-                                    Say(robot, ["Enjoy your drink!", "I hope your thirsty, enjoy!"], block=False),
-                                    transitions={"spoken":"done"})
 
 
 ########################################################################################
@@ -1740,13 +1699,13 @@ class CocktailParty(smach.StateMachine):
             with waitPersonIterator:
 
                 waitPersonContainer = smach.StateMachine(   outcomes = ['found_person', 'continue'],
-                                                            input_keys = ['waitIndex'])
+                                                            input_keys = ['waitCounter'])
                 with waitPersonContainer:
 
                     # Wait for someone to come in front of the robot
                     smach.StateMachine.add( "WAIT_FOR_PERSON", 
                                             WaitForPerson(robot),
-                                            remapping={     'waitIndex_in':'waitIndex'},
+                                            remapping={     'waitIndex_in':'waitCounter'},
                                             transitions={   "waiting":"continue",
                                                             "unknown_person":"found_person"})
 
@@ -1911,10 +1870,10 @@ class CocktailParty(smach.StateMachine):
                                         transitions={   'handover_left':'HANDOVER_DRINK_LEFT',
                                                         'handover_right':'HANDOVER_DRINK_RIGHT',
                                                         'handover_basket':'SAY_DRINK_IN_BASKET',
-                                                        'unknown':'NAV_TO_LAST_KNOWN_LOCATION',
-                                                        'not_correct':'NAV_TO_LAST_KNOWN_LOCATION',
-                                                        'no_people':'NAV_TO_LAST_KNOWN_LOCATION',
-                                                        'error':'NAV_TO_LAST_KNOWN_LOCATION'})
+                                                        'unknown':'NAV_TO_DETECTED_PERSON',
+                                                        'not_correct':'NAV_TO_DETECTED_PERSON',
+                                                        'no_people':'NAV_TO_DETECTED_PERSON',
+                                                        'error':'NAV_TO_DETECTED_PERSON'})
 
                 smach.StateMachine.add( 'SAY_DRINK_IN_BASKET',
                                         Say(robot, "Please remove your drink from my basket and tell me when you're done"),
@@ -1938,7 +1897,7 @@ class CocktailParty(smach.StateMachine):
                                         RetractServedPerson(robot),
                                         remapping={     'person_in':'personServed',
                                                         'drink_in':'drinkServed'},
-                                        transitions={   'done':'NAV_TO_LAST_KNOWN_LOCATION',
+                                        transitions={   'done':'NAV_TO_DETECTED_PERSON',
                                                         'all_served':'succeeded',
                                                         'failed':'aborted'})
 
