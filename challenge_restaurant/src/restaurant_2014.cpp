@@ -134,6 +134,7 @@ std::vector<std::string> shelf_one_objects_;
 std::vector<std::string> shelf_two_objects_;
 
 // Adminstration: other
+std::string default_side_ = "";
 std::string current_clr_;
 std::map<int, std::pair<std::string, std::string> > order_map_; // object, desired location
 std::map<std::string, RobotPose> location_map_;                 // location name, location
@@ -147,6 +148,8 @@ unsigned int marker_id_ = 0;
 
 void initializeMappings()
 {
+	default_side_ = "left";
+	
     // HARDCODED MAPPINGS
 
     /**
@@ -164,28 +167,29 @@ void initializeMappings()
      * speech recognition writes these objects as one word whereas the world model
      * will contain underscores instead of spaces
      */
-    class_label_map_["peanut_butter"] = "peanutbutter";
-    class_label_map_["ice_tea"] = "icetea";
-    class_label_map_["glam_up"] = "glamup";
-    class_label_map_["orange_juice"] = "orangejuice";
-    class_label_map_["fruit_juice"] = "fruitjuice";
-    class_label_map_["chewing_gums"] = "chewinggums";
-
+    class_label_map_["vegetable_soup"] = "vegetablesoup";
+    class_label_map_["chewing_gum"] = "chewinggum";
+    class_label_map_["chicken_noodles"] = "chickennoodles";
+    class_label_map_["orange_drink"] = "orangedrink";
+    class_label_map_["seven_up"] = "sevenup";
+    
     /**
      * Objects on shelf one and two
      */
     // Snacks
     shelf_one_objects_.clear();
-    shelf_one_objects_.push_back("chocolates");
-    shelf_one_objects_.push_back("chewing_gums");
-    shelf_one_objects_.push_back("peanuts");
+    shelf_one_objects_.push_back("vegetable_soup");
+    shelf_one_objects_.push_back("remia");
+    shelf_one_objects_.push_back("chewing_gum");
+    shelf_one_objects_.push_back("chicken_noodles");
+    shelf_one_objects_.push_back("crackers");
     // Drinks
     shelf_two_objects_.clear();
-    shelf_two_objects_.push_back("orange_juice");
-    shelf_two_objects_.push_back("fruit_juice");
-    shelf_two_objects_.push_back("ice_tea");
+    shelf_two_objects_.push_back("orange_drink");
+    shelf_two_objects_.push_back("seven_up");
     shelf_two_objects_.push_back("coffee");
-    shelf_two_objects_.push_back("beer");
+    shelf_two_objects_.push_back("tea");
+    shelf_two_objects_.push_back("milk");
 
 }
 
@@ -614,7 +618,7 @@ std::string getDefaultLocation()
 
 std::string getDefaultSide()
 {
-    return "left";
+	return default_side_;
 }
 
 std::string mapToFullLocation(std::string short_loc)

@@ -58,15 +58,13 @@ Side:
 == ORDER ==
 
 Objects AMIGO knows and is able to recognize:
-coke
-fanta
-milk
-energydrink
-frutas
-chewinggum
-yoghurt
-crackers
-remia
+
+food:				drink:
+vegetablesoup		orangedrink
+remia 				sevenup
+chewingum 			coffee
+chickennoodles 		tea
+crackers 			milk
 
 
 
