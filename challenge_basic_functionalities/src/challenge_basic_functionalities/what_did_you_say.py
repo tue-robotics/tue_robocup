@@ -313,6 +313,10 @@ class WhatDidYouSay(smach.StateMachine):
 
             smach.StateMachine.add("RESET_HEAD_SPINDLE",
                                 states.ResetHeadSpindle(robot),
+                                transitions={   'done':'RESET_REASONER'})
+
+            smach.StateMachine.add("RESET_REASONER",
+                                states.ResetReasoner(robot),
                                 transitions={   'done':'PEOPLE_DETECTION'})
 
             smach.StateMachine.add("PEOPLE_DETECTION",
