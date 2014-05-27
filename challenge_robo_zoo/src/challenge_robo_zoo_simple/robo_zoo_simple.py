@@ -18,6 +18,7 @@ from make_jokes import MakeJokes
 from pickuplines import Pickup
 from sounds import R2D2, Toeter
 from macarana import Macarena
+from hoofd_schouders_knie_teen import HoofdSchouderKnieTeen
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
@@ -95,7 +96,7 @@ class RoboZooSimple(smach.StateMachine):
                                                  'preempted':"Aborted"})
 
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, ["1","5","6","9","10", "11", "12"]),
+                                    RandomOutcome(robot, ["1","5","6","9","10", "11", "12", "13"]),
                                     transitions={"1":"SAY_HI",
                                                  #"2":"MAKE_JOKES",
                                                  #"3":"LOOK_AT_PERSON",
@@ -107,7 +108,8 @@ class RoboZooSimple(smach.StateMachine):
                                                  "9":"R2D2",
                                                  "10":"TOETER",
                                                  "11":"MACARENA",
-                                                 "12":"GANGNAM"})
+                                                 "12":"GANGNAM",
+                                                 "13":"HOOFD_SCHOUDERS_KNIE_TEEN"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
@@ -164,6 +166,10 @@ class RoboZooSimple(smach.StateMachine):
             
             smach.StateMachine.add( "GANGNAM",
                                     GangNamStyle(robot),
+                                    transitions={"Done":"RESET_ALL"})
+            
+            smach.StateMachine.add( "HOOFD_SCHOUDERS_KNIE_TEEN",
+                                    HoofdSchouderKnieTeen(robot),
                                     transitions={"Done":"RESET_ALL"})
 if __name__ == "__main__":
     rospy.init_node("challenge_robo_zoo")

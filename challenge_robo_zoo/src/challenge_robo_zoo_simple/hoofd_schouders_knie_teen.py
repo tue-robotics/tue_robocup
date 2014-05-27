@@ -50,7 +50,6 @@ def hoofdschoudersknieteen(robot):
     #TODO: Look at hand at given times
 
     def _left(*args, **kwargs): #The underscore  makes the outlining below easier to read
-        return
         if not robot.leftArm.send_joint_goal(*args, **kwargs):
             raise Exception("Arms did not reach goal,  need help")
     
@@ -107,7 +106,7 @@ def hoofdschoudersknieteen(robot):
     try:
         hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
         hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
-        oren(speak=True); ogen(speak=True); puntje_van_je_neus(speak=True, turn=True)
+        oren(speak=True); ogen(speak=True); puntje_van_je_neus(speak=True, turn=False)
         hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
 
         robot.spindle.reset()
