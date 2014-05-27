@@ -145,8 +145,6 @@ class DriveToFindPerson(smach.State):
 
         print "goal answers = ", goal_answers
 
-        self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", "Waypoint"))) 
-
         if not goal_answers:
             return "no_waypoint"
 
@@ -154,7 +152,10 @@ class DriveToFindPerson(smach.State):
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
 
         waypoint_name = goal_answer["Waypoint"]
+
+        print "waypoint_name = ", waypoint_name
             
+        self.robot.reasoner.query(Compound("assert", Compound("current_exploration_target", waypoint_name))) 
 
         nav = states.NavigateGeneric(self.robot, goal_pose_2d=goal)
         nav_result = nav.execute()
