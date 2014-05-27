@@ -58,56 +58,62 @@ def hoofdschoudersknieteen(robot):
         if not robot.rightArm.send_joint_goal(*args, **kwargs):
             raise Exception("Arms did not reach goal,  need help")
     #Defined shortcuts above
-
+    robot.head.look_at_hand("right", keep_tracking=True)
+    
     def hoofd(speak=False):
-        robot.spindle.send_goal(0.4, timeout=4.0)
-        if speak: robot.speech.speak("Hoofd", language='nl', block=False)
-        right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
+        robot.spindle.send_goal(0.4, timeout=0.0)
+        right(*right_arm_to_head_1, timeout=10) #Dont wait, both arms should move in sync
+        if speak: robot.speech.speak("Hoofd", language='nl', block=True)
         _left(*left_arm_to_head_1,  timeout=10)
 
     def schouders(speak=False):
-        robot.spindle.send_goal(0.4, timeout=4.0)
-        if speak: robot.speech.speak("Schouders", language='nl', block=False)
+        robot.spindle.send_goal(0.4, timeout=0.0)
         right(*right_hand_to_left_shoulder, timeout=10) #Wait, otherwise arms collide
+        if speak: robot.speech.speak("Schouders", language='nl', block=True)
         _left(*left_hand_to_right_shoulder, timeout=10)
 
     def knie(speak=False): #TODO: tune poses
-        robot.spindle.send_goal(0.2, timeout=4.0)
-        if speak: robot.speech.speak("Knie", language='nl', block=False)
-        right(*arm_to_knees_1, timeout=0)#Dont wait, both arms should move in sync
+        robot.spindle.send_goal(0.2, timeout=1.0)
+        right(*arm_to_knees_1, timeout=10)#Dont wait, both arms should move in sync
+        if speak: robot.speech.speak("Knie", language='nl', block=True)
         _left(*arm_to_knees_1, timeout=10)
     
     def teen(speak=False): #TODO: tune poses
-        robot.spindle.send_goal(0.1, timeout=4.0)
-        if speak: robot.speech.speak("En teen", language='nl', block=False)
-        right(*arm_to_knees_1, timeout=0)#Dont wait, both arms should move in sync
+        robot.spindle.send_goal(0.1, timeout=1.0)
+        right(*arm_to_knees_1, timeout=10)#Dont wait, both arms should move in sync
+        if speak: robot.speech.speak("En teen", language='nl', block=True)
         _left(*arm_to_knees_1, timeout=10)
 
     def oren(speak=False):
-        robot.spindle.send_goal(0.4, timeout=4.0)
-        if speak: robot.speech.speak("Oren", language='nl', block=False)
-        right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
+        robot.spindle.send_goal(0.4, timeout=0.0)
+        right(*right_arm_to_head_1, timeout=10) #Dont wait, both arms should move in sync
+        if speak: robot.speech.speak("Oren", language='nl', block=True)
         _left(*left_arm_to_head_1,  timeout=10)
 
     def ogen(speak=False):
-        robot.spindle.send_goal(0.4, timeout=4.0)
-        if speak: robot.speech.speak("Ogen", language='nl', block=False)
-        right(*right_arm_to_eyes_1, timeout=0) #Dont wait, both arms should move in sync
+        robot.spindle.send_goal(0.4, timeout=0.0)
+        right(*right_arm_to_eyes_1, timeout=10) #Dont wait, both arms should move in sync
+        if speak: robot.speech.speak("Ogen", language='nl', block=True)
         _left(*left_arm_to_eyes_1,  timeout=10)
 
     def puntje_van_je_neus(turn=False, speak=False):
+        if speak: robot.speech.speak("Puntje van je neus!", language='nl', block=False)
         if turn:
             robot.base.force_drive(0, 0, TURNSPEED, (2*math.pi)/TURNSPEED) #Turn a full circle at TURNSPEED rad/sec
-        if speak: robot.speech.speak("Puntje van je neus!", language='nl', block=False)
-        robot.spindle.send_goal(0.4, timeout=4.0)
-        right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
+        robot.spindle.send_goal(0.4, timeout=0.0)
+        right(*right_arm_to_nose_1, timeout=10) #Dont wait, both arms should move in sync
         robot.leftArm.reset_arm() #Move left arm down, only use right arm to point at 'nose'
 
     try:
-        hoofd(); schouders(); knie(); teen(); knie(); teen()
-        hoofd(); schouders(); knie(); teen(); knie(); teen()
-        oren(); ogen(); puntje_van_je_neus()
-        hoofd(); schouders(); knie(); teen(); knie(); teen()
+        hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
+        hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
+        oren(speak=True); ogen(speak=True); puntje_van_je_neus(speak=True, turn=True)
+        hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
+
+        robot.spindle.reset()
+        robot.head.reset_position()
+        robot.rightArm.reset_arm()
+        robot.leftArm.reset_arm()
     except Exception, e:
         robot.speech.speak("Guys, could you help me, my dance stopped suddenly")
         rospy.logerr(e)
