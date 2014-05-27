@@ -22,13 +22,13 @@ right_hand_to_left_shoulder =   [0.000, 1.500, 1.200, 1.500, 1.500, 0.000, 0.000
 #5. Left hand to right shoulder
 left_hand_to_right_shoulder =   [0.000, 1.500, 1.000, 1.000, 0.000, 0.000, 0.000]
 #6. Right arm to head
-right_arm_to_head_1 =           [0.000, 1.500, 0.000, 1.500, 1.500, 0.500, 0.000]
-right_arm_to_head_2 =           [0.000, 1.500, 0.000, 1.500, 1.500, 0.500, 0.000]
+right_arm_to_head_1 =           [0.000, 1.400, 0.000, 2.100, 1.500, 0.500, 0.000]
 #6a. Left arm to head
-left_arm_to_head_1 =            [0.000, 1.290, 1.500, 1.300, 1.500, 0.000, 0.000]
-left_arm_to_head_2 =            [0.000, 1.500, 1.500, 1.300, 1.500, 0.000, 0.000]
-left_arm_to_head_3 =            [0.000, 1.500, 0.000, 1.300, 1.500, 0.000, 0.000]
-left_arm_to_head_4 =            [0.000, 1.500, 0.000, 1.500, 1.500, 0.500, 0.000]
+left_arm_to_head_1 =            [0.000, 1.400, 0.000, 2.100, 1.500, 0.500, 0.000]
+#6. Right arm to eyes
+right_arm_to_eyes_1 =           [0.000, 1.400, 0.350, 1.800, 0.0, 0.0, 0.500]
+#6a. Left arm to eyes
+left_arm_to_eyes_1 =            [0.000, 1.400, 0.350, 1.800, 0.0, 0.0, 0.500]
 #7. Right arm down to the hips
 arm_to_hips_1 =                 [-0.200, -0.200, 0.200, 0.800, 0.000, 0.000, 0.000] 
 arm_to_hips_2 =                 [-0.400, 0.000, 1.500, 0.600, 0.000, 0.000, 0.000]
@@ -58,21 +58,21 @@ def hoofdschoudersknieteen(robot):
 
     def _left(*args, **kwargs): #The underscore  makes the outlining below easier to read
         if not robot.leftArm.send_joint_goal(*args, **kwargs):
-            raise Exception("Arms dit not reach goal,  need help")
+            raise Exception("Arms did not reach goal,  need help")
     
     def right(*args, **kwargs): 
         if not robot.rightArm.send_joint_goal(*args, **kwargs):
-            raise Exception("Arms dit not reach goal,  need help")
+            raise Exception("Arms did not reach goal,  need help")
     #Defined shortcuts above
 
     def hoofd():
         robot.spindle.send_goal(0.4, timeout=4.0)
         right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
-        _left(*left_arm_to_head_4,  timeout=10)
+        _left(*left_arm_to_head_1,  timeout=10)
 
     def schouders():
         robot.spindle.send_goal(0.4, timeout=4.0)
-        right(*right_hand_to_left_shoulder, timeout=0) #Dont wait, both arms should move in sync
+        right(*right_hand_to_left_shoulder, timeout=10) #Wait, otherwise arms collide
         _left(*left_hand_to_right_shoulder, timeout=10)
 
     def knie(): #TODO: tune poses
@@ -88,20 +88,20 @@ def hoofdschoudersknieteen(robot):
     def oren():
         robot.spindle.send_goal(0.4, timeout=4.0)
         right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
-        _left(*left_arm_to_head_4,  timeout=10)
+        _left(*left_arm_to_head_1,  timeout=10)
 
     def ogen():
         robot.spindle.send_goal(0.4, timeout=4.0)
         #TODO: Move elbows forward a bit and point to the front side of the kinect
-        right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
-        _left(*left_arm_to_head_4,  timeout=10)
+        right(*right_arm_to_eyes_1, timeout=0) #Dont wait, both arms should move in sync
+        _left(*left_arm_to_eyes_1,  timeout=10)
 
     def puntje_van_je_neus(turn=False):
         if turn:
             robot.base.force_drive(0, 0, TURNSPEED, (2*math.pi)/TURNSPEED) #Turn a full circle at TURNSPEED rad/sec
         robot.spindle.send_goal(0.4, timeout=4.0)
         right(*right_arm_to_head_1, timeout=0) #Dont wait, both arms should move in sync
-        robot.leftArm.reset() #Move left arm down, only use right arm to point at 'nose'
+        robot.leftArm.reset_arm() #Move left arm down, only use right arm to point at 'nose'
 
     try:
         hoofd(); schouders(); knie(); teen(); knie(); teen()
