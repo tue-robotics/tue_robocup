@@ -1,10 +1,15 @@
-# Responsible: Jos
+# Responsible: Max (Jos)
+
+amigo2:
+    ahardware (+home all on dashboard)
 
 amigo1:
 
     amiddle-restaurant
-
-Then, test the speech and start the challenge:
+    
+local-pc: (for visualization)
+    amigo-core
+    rviz-restaurant (if this alias does not work you could manually add the markerarray, just add a markerarry and select /restaurant/locationmarkers from the list of available markerarrays)
 
 amigo3:
 
