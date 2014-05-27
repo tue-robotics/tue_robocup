@@ -171,9 +171,6 @@ if __name__ == "__main__":
     # Assert current challenge
     amigo.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
-    ''' Setup state machine'''
-    machine = ChallengeBasicFunctionalities(amigo)
-
     ''' If necessary: set initial state '''
     rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
     if  len(sys.argv) > 1:
@@ -186,6 +183,10 @@ if __name__ == "__main__":
         elif int(sys.argv[1]) == 3:
             initial_state = ["WHAT_DID_YOU_SAY"]
             amigo.reasoner.reset()
+
+    ''' Setup state machine'''
+    machine = ChallengeBasicFunctionalities(amigo)
+    if  len(sys.argv) > 1:
         #initial_state = [str(sys.argv[1])]
         rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
         machine.set_initial_state(initial_state)
