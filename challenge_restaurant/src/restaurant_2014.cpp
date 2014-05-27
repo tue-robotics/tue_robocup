@@ -1,9 +1,8 @@
 // WARNING, some knowledge is hardcoded. The hardcoded knowledge MUST be updated each tournament. See the initializeMappings() function
 
 // TODO: test
-// - two, no two should result in food
-// - order objects with underscore in world model name, see if underscore is removed too match world model object with order
-// - test confusion mapping: object, no, same object should result in other object
+// - test recognition of objects
+// - test confusion mapping (at the moment no confusion present)
 // END TODO
 
 // ROS
@@ -119,7 +118,6 @@ int current_order_ = 1;
 std::string current_delivery_location_ = "";
 std::string current_object_ = "";
 double t_last_speech_cmd_ = 0;
-bool not_two_ = false;
 
 // For confusion mapping
 bool last_answer_correct_ = true;
@@ -218,17 +216,17 @@ std::string getCorrectedAnswer(std::string answer)
 std::string getSpeechStateName(speech_state::SpeechState ss)
 {
     std::string name = "<unknown mode>";
-    if (ss == speech_state::DRIVE) name = "DRIVE";
-    else if (ss == speech_state::LOC_NAME) name = "LOC_NAME";
-    else if (ss == speech_state::SIDE) name = "SIDE";
-    else if (ss == speech_state::NUMBER) name = "NUMBER";
-    else if (ss == speech_state::OBJECT) name = "OBJECT";
-    else if (ss == speech_state::CONFIRM_LOC) name = "CONFIRM_LOC";
-    else if (ss == speech_state::CONFIRM_SIDE) name = "CONFIRM_SIDE";
-    else if (ss == speech_state::CONFIRM_NUMBER) name = "CONFIRM_NUMBER";
-    else if (ss == speech_state::CONFIRM_OBJECT) name = "CONFIRM_OBJECT";
-    else if (ss == speech_state::DONE) name = "DONE";
-    else if (ss == speech_state::CONFIRM_OR_CONTINUE) name = "CONFIRM_OR_CONTINUE";
+    if (ss == speech_state::DRIVE) name = "DRIVE";									// beginning of the challenge untill ariving at ordering loc					// (locationsidenew)
+    else if (ss == speech_state::LOC_NAME) name = "LOC_NAME";						// obsolete
+    else if (ss == speech_state::SIDE) name = "SIDE";								// obsolete
+    else if (ss == speech_state::NUMBER) name = "NUMBER"; 							// after ordering location untill all orders are stored (together with object)  // (number)
+    else if (ss == speech_state::OBJECT) name = "OBJECT";							// after  untill all orders are stored (together with number)					// (object)	
+    else if (ss == speech_state::CONFIRM_LOC) name = "CONFIRM_LOC";					// obsolete				
+    else if (ss == speech_state::CONFIRM_SIDE) name = "CONFIRM_SIDE";				// obsolete
+    else if (ss == speech_state::CONFIRM_NUMBER) name = "CONFIRM_NUMBER";			// confirmition after a number is heard											// (def: yesno)
+    else if (ss == speech_state::CONFIRM_OBJECT) name = "CONFIRM_OBJECT";			// confirmition after an object is heard										// (def: yesno)
+    else if (ss == speech_state::DONE) name = "DONE";								// after all orders are learned 												// ()
+    else if (ss == speech_state::CONFIRM_OR_CONTINUE) name = "CONFIRM_OR_CONTINUE";	// confirmation after a command is heared 										// (yesnocontinue)
 
     return name;
 }
@@ -283,7 +281,7 @@ bool startSpeechRecognition()
 
     //! Determine file name
     std::string file_name = "";
-    if (speech_state_ == speech_state::DRIVE) file_name = "locationside"; //"amigostop";
+    if (speech_state_ == speech_state::DRIVE) file_name = "locationsidenew";
     else if (speech_state_ == speech_state::LOC_NAME) file_name = "location";
     else if (speech_state_ == speech_state::SIDE) file_name = "side";
     else if (speech_state_ == speech_state::NUMBER) file_name = "number";
@@ -577,8 +575,8 @@ bool isLocation(std::string word)
     if (word == "one") return true;
     else if (word == "two") return true;
     else if (word == "three") return true;
-    else if (word == "food") return true;
-    else if (word == "drink") return true;
+    else if (word == "kitchen") return true;
+    else if (word == "bar") return true;
 
     return false;
 }
@@ -599,8 +597,8 @@ std::string getDefaultLocation()
     default_locations["delivery location one"] =  "one";
     default_locations["delivery location two"] = "two";
     default_locations["delivery location three"] = "three";
-    default_locations["food sheld"] = "food";
-    default_locations["drink shelf"] = "drink";
+    default_locations["kitchen shelf"] = "kitchen";
+    default_locations["bar shelf"] = "bar";
 
     // Get the first location which is not in the location map yet
     std::map<std::string, std::string>::const_iterator it = default_locations.begin();
@@ -626,8 +624,8 @@ std::string mapToFullLocation(std::string short_loc)
     if (short_loc == "one") return "delivery location one";
     if (short_loc == "two") return "delivery location two";
     if (short_loc == "three") return "delivery location three";
-    if (short_loc == "food") return "food shelf";
-    if (short_loc == "drink") return "drink shelf";
+    if (short_loc == "kitchen") return "kitchen shelf";
+    if (short_loc == "bar") return "bar shelf";
     if (short_loc == "order") return "ordering location";
     else
     {
@@ -687,14 +685,6 @@ void getLocationAndSideFromAnswer(std::string full_answer, std::string& location
         }
         else side = getDefaultSide();
         ROS_INFO("Updated second word to '%s'", side.c_str());
-    }
-
-    // Two and food get confused regularly
-    if (location == "two" && not_two_)
-    {
-        ROS_WARN("I heard two but I assume you meant food!");
-        location = "food";
-        not_two_ = false;
     }
 
 }
@@ -773,7 +763,7 @@ void speechCallbackGuideShort(std_msgs::String res)
                     createMarkerWithLabel("Ord. loc.", location_map_["ordering location"], 0, 1, 0, marker_array);
                     location_marker_pub_.publish(marker_array);
 
-                    // Ready for oders
+                    // Ready for orders
                     updateSpeechState(speech_state::NUMBER);
                 }
 
@@ -788,8 +778,6 @@ void speechCallbackGuideShort(std_msgs::String res)
 
             if (answer == "no")
             {
-                // Robot misunderstood (in case of misunderstanding two, turn two into food next time)
-                if (current_loc_name_ == "two") not_two_ = true;
                 amigoSpeak("Which location and side?");
             }
             else if (answer == "continue")
@@ -1491,7 +1479,7 @@ int main(int argc, char **argv) {
     std_srvs::Empty srv;
     if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
     
-    //! Select a subset of objects (at food shelf, drink shelf)
+    //! Select a subset of objects (at kitchen or bar shelves)
     ros::ServiceClient set_objects_client = nh.serviceClient<pein_srvs::SetObjects>("/pein/set_object_models");
     
     //! Set the object recognition threshold for the ODUFinder low, since no unknown objects are present
@@ -1604,11 +1592,11 @@ int main(int argc, char **argv) {
     std::string shelf = "";
     while (ros::ok() && !done)
     {
-        // For both food and drink shelf
+        // For both bar and kitchen shelves
         for (int i=0; i<2; ++i)
         {
-            if (i == 0) shelf = "food shelf";
-            else shelf = "drink shelf";
+            if (i == 0) shelf = "kitchen shelf";
+            else shelf = "bar shelf";
 
             //! Move to location
             if (location_map_.find(shelf) == location_map_.end())
@@ -1681,7 +1669,7 @@ int main(int argc, char **argv) {
 
             }
 
-        } // Visited both the food and the drink shelf
+        } // Visited both the bar and kitchen shelf
 
         // Move back to the ordering location
         double del_order_loc_tolerance = 0.5;
