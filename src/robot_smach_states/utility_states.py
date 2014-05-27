@@ -134,7 +134,7 @@ class WaitForTrigger(smach.State):
 
     def execute(self, userdata):
         self.trigger_received = False
-
+        #rospy.logwarn("Waiting for trigger (any of {0}) on topic /trigger".format(self.triggers))
         while not rospy.is_shutdown() and not self.trigger_received:
             rospy.sleep(1/self.rate)
 
@@ -452,5 +452,15 @@ class ResetSpindle_HeadUp(smach.State):
 
         self.robot.spindle.reset()
         self.robot.head.look_up()
+        return "done"
+
+############################## RESET REASONER State ##############################
+
+class ResetReasoner(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+    def execute(self, userdata=None):
+        self.robot.reasoner.reset()
         return "done"
 
