@@ -12,8 +12,8 @@ lines = ["Roses are red, violets are blue. All my base, are belong to you.",
          "Was your father a thief? Because he stole some titanium bolts and put them in your eyes.",
          "Do you believe in love at first optical recognition, or should I scan your location again?",
          "Were you designed for use on Mars? Because your chassis is out of this world!",
-         "Was that my CPU malfunctioning or did I just feel a spark between us?",
-         "Can I have your I P number? I seem to have lost mine."]
+         "Was that my CPU malfunctioning or did I just feel a spark between us?"]
+         #"Can I have your I P number? I seem to have lost mine."]
 
 class Pickup(smach.StateMachine):
     def __init__(self, robot):

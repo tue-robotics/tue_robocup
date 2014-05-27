@@ -6,7 +6,9 @@ import smach
 import robot_skills.util.msg_constructors as msgs
 
 import os
-import signal
+
+from musicmanager import music
+import threading
 
 gangnam_poseA_left_start     = [-0.050, 1.500, 1.500, 0.800, -0.15, 0.000, 0.000]
 gangnam_poseA_left_end       = [-0.050, 1.500, 1.500, 0.800, 0.150, 0.000, 0.000]
@@ -23,7 +25,19 @@ gangnam_motionA_right= [gangnam_poseA_right_start, gangnam_poseA_right_end, gang
 gangnam_motionB_left = [gangnam_poseB_left_start, gangnam_poseB_left_end, gangnam_poseB_left_start, gangnam_poseB_left_end, gangnam_poseB_left_start, gangnam_poseB_left_end]
 gangnam_motionB_right= [gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end]
 
-def gangnam_style(robot):
+
+def spindle_up_down(robot, lower, upper, stopEvent):
+    """Loop the robot's spindle between the lower and upper heights given here"""
+    while not rospy.is_shutdown() and not stopEvent.is_set():
+        robot.spindle.send_goal(lower, timeout=4.0)
+        robot.spindle.send_goal(upper, timeout=4.0)
+
+def gangnam_style(robot):    
+    stopEvent = threading.Event()
+
+    up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
+    up_and_down_spindle.start()
+
     robot.rightArm.send_joint_goal(-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000)
     for i in range(1):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
@@ -41,47 +55,25 @@ def gangnam_style(robot):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.rightArm.send_joint_trajectory(gangnam_motionB_right, timeout=10)
         
-
+    stopEvent.set()
     robot.rightArm.reset_arm()
     robot.leftArm.reset_arm()
     robot.head.reset_position()
-
-def music():
-    abspath = os.path.abspath(__file__)
-    dname = os.path.dirname(abspath)
-    os.chdir(dname)
-    os.system("mpg123 'psygangnam.mp3' &")
-
-def start_music():
-    import subprocess
-    
-    abspath = os.path.abspath(__file__)
-    dname = os.path.dirname(abspath)
-    os.chdir(dname)
-    musicfile = "psygangnam.mp3"
-    musicfile = os.path.join(dname, musicfile)
-    rospy.loginfo("Playing music: {0}".format(musicfile))
-    # The os.setsid() is passed in the argument preexec_fn so
-    # it's run after the fork() and before  exec() to run the shell.
-    music_process = subprocess.Popen("mpg123 '{0}'".format(musicfile), stdout=subprocess.PIPE, 
-                           shell=True, preexec_fn=os.setsid) 
-    rospy.loginfo("If the music keeps going somehow, its PID is: {0}".format(music_process.pid))
-    return music_process
-
-def stop_music(music_process):
-    os.killpg(music_process.pid, signal.SIGTERM)  # Send the signal to all the process groups
 
 class GangNamStyle(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
 
+        abspath = os.path.abspath(__file__)
+        dname = os.path.dirname(abspath)
+        os.chdir(dname)
+        musicfile = "psygangnam.mp3"
+        self.musicfile = os.path.join(dname, musicfile)
+
     def execute(self, userdata=None):
-        proc = start_music()
-        try:
+        with music(self.musicfile):
             gangnam_style(self.robot)
-        finally:
-            stop_music(proc)
         return "Done"
 
 if __name__ == "__main__":
@@ -89,4 +81,5 @@ if __name__ == "__main__":
     import robot_skills.amigo
     amigo = robot_skills.amigo.Amigo(wait_services=True)
 
-    gangnam_style(amigo)
+    gns = GangNamStyle(amigo)
+    gns.execute()
