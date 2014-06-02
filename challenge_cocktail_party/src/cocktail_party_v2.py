@@ -264,6 +264,66 @@ class WaitForPerson(smach.State):
                                     float(answer["Z"])) for answer in answers]
             return "unknown_person"
 
+
+#########################################################################################
+
+class ConfirmPerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(   self, 
+                                outcomes=['found', 'not_found', 'error'])
+        
+        self.robot = robot
+
+    def execute(self, userdata=None):
+
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: ConfirmPerson\n")
+
+                # reset robo pose
+        self.robot.spindle.reset()
+        # self.robot.reasoner.reset()
+        self.robot.head.set_pan_tilt(tilt=-0.2)
+        
+        self.robot.speech.speak("Let me make sure there's someone here.", block=False)
+
+        # prepare query for detected person
+        detectPersonQ = Conjunction(Compound("property_expected", "ObjectID", "class_label", "human_face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        # start face segmentation node
+        self.response_start = self.robot.perception.toggle(['human_tracking'])
+
+        if self.response_start.error_code == 0:
+            rospy.loginfo("Human Tracking has started correctly")
+        elif self.response_start.error_code == 1:
+            rospy.logwarn("Human Tracking failed to start")
+            self.robot.speech.speak("I was not able to start Human Tracking.")
+            return "error"
+
+        # wait until the query detected person is true, or 10 second timeout
+        wait_machine = Wait_query_true(self.robot, detectPersonQ, 10)
+        wait_result = wait_machine.execute()
+
+        # turn off face segmentation
+        rospy.loginfo("Human Tracking will be stopped now")
+        self.response_stop = self.robot.perception.toggle([])
+        
+        if self.response_stop.error_code == 0:
+            rospy.loginfo("Human Tracking is stopped")
+        elif self.response_stop.error_code == 1:
+            rospy.logwarn("Failed stopping Human Tracking")
+
+        # if the query timed out...
+        if wait_result == 'timed_out':
+            self.robot.speech.speak("I guess i was wrong.", block=False)
+            return "not_found"
+        elif wait_result == 'preempted':
+            self.robot.speech.speak("Waiting for person was preemted.", block=False)
+            return "not_found"
+        # if the query succeeded
+        elif wait_result == 'query_true':
+            rospy.loginfo("\t\t[Cocktail Party] Person found!\n")
+            return "found"
          
 #########################################################################################
 
@@ -1744,9 +1804,14 @@ class CocktailParty(smach.StateMachine):
                                                         'max_orders':'succeeded',
                                                         'visited_all':'succeeded'})
 
+                smach.StateMachine.add( 'CONFIRM_PERSON',
+                                        ConfirmPerson(robot),
+                                        transitions={   'found':'TAKE_NEW_ORDER_FOCUS',
+                                                        'not_found':'NAV_TO_WAIVING_PERSON'})
+
                 smach.StateMachine.add( 'TAKE_NEW_ORDER_FOCUS',
                                         TakeNewOrder(robot),
-                                        transitions={'done':'NAV_TO_WAIVING_PERSON'})
+                                        transitions={   'done':'NAV_TO_WAIVING_PERSON'})
 
             # add orders container to the main state machine
             smach.StateMachine.add( 'ORDERS_CONTAINER',
