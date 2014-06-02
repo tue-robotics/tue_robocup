@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+    
+    <include file="$(find amigo_launch_files)/launch/sensors/external_kinect.launch" />
+    <include file="$(find challenge_demo)/launch/server.launch" />
+    <include file="$(find challenge_demo)/launch/laser.launch" />
+    <include file="$(find challenge_demo)/launch/ppl_detection.launch" />
+    <node pkg="challenge_demo" type="doorbell_listener.py" name="doorbell_listener" output="screen" />
+
+</launch>
