@@ -16,4 +16,5 @@
         <param name="port" value="8001" />
     </node>
 
+    <node pkg="challenge_demo" type="detected_objects_publisher.py" name="detected_objects_publisher" output="screen" />
 </launch>
