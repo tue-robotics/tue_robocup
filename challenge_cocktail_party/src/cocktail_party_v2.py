@@ -116,7 +116,7 @@ class DetectWavingPeople(smach.State):
         peopleFoundRed = self.robot.reasoner.query(qPeopleFound)
         
         if len(peopleFoundRed) > 0 :
-            self.robot.speech.speak("Someone is calling me, I will be with there soon!", block=False)
+            self.robot.speech.speak("Someone is calling me, I will be with you soon!", block=False)
             return 'detected'
         else:
             self.robot.speech.speak("No one called me. Forever alone.", block=False)
@@ -286,9 +286,10 @@ class ConfirmPerson(smach.State):
         self.robot.speech.speak("Let me make sure there's someone here.", block=False)
 
         # prepare query for detected person
-        detectPersonQ = Conjunction(Compound("property_expected", "ObjectID", "class_label", "human_face"),
+        detectPersonQ = Conjunction(      Compound("property_expected", "ObjectID", "class_label", "human_face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z"),
+                                          Compound("not", Compound("approached", "Waypoint"))))
 
         # start face segmentation node
         self.response_start = self.robot.perception.toggle(['human_tracking'])
@@ -301,7 +302,7 @@ class ConfirmPerson(smach.State):
             return "error"
 
         # wait until the query detected person is true, or 10 second timeout
-        wait_machine = Wait_query_true(self.robot, detectPersonQ, 10)
+        wait_machine = Wait_query_true(self.robot, detectPersonQ, 5)
         wait_result = wait_machine.execute()
 
         # turn off face segmentation
@@ -323,6 +324,13 @@ class ConfirmPerson(smach.State):
         # if the query succeeded
         elif wait_result == 'query_true':
             rospy.loginfo("\t\t[Cocktail Party] Person found!\n")
+            
+            result = self.robot.reasoner.query(detectPersonQ)
+            
+            objectID = result["ObjectID"]
+            
+            # assert that this location has been visited
+            self.robot.reasoner.query(Compound("assert", Compound("approached", objectID)))
             return "found"
          
 #########################################################################################
@@ -706,8 +714,9 @@ class PendingOrders(smach.State):
         if answer:
             nOrders = len(answer)
             rospy.loginfo("\t\t[Cocktail Party] I have {0} pending orders\n". format(nOrders))
-        else:
-            rospy.logwarn("\t\t[Cocktail Party] I could not query the number of goals!\n")
+        else: 
+            nOrders = 0
+            rospy.logwarn("\t\t[Cocktail Party] Could not query the number of goals! Setting it to 0.\n")
         
         # query the number of people served so far
         peopleServedCount = self.robot.reasoner.query(Compound("people_served_count", "X"))
@@ -719,9 +728,10 @@ class PendingOrders(smach.State):
             self.robot.speech.speak("I need more requests before getting the drinks", block=False)
             return "insuficient_orders"
         else:
-            self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
             # retract the people already served, maybe they want something again
+            self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
             self.robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
+            self.robot.reasoner.query(Compound('retractall', Compound('approached', 'X')))
             self.robot.speech.speak("I will now get your drinks", block=False)
             self.robot.reasoner.reset()
             return "enough_orders"  
@@ -1800,13 +1810,14 @@ class CocktailParty(smach.StateMachine):
                 smach.StateMachine.add( 'NAV_TO_WAIVING_PERSON',
                                         NavToWavingPerson(robot),
                                         transitions={   'going':'NAV_TO_WAIVING_PERSON',
-                                                        'arrived':'TAKE_NEW_ORDER_FOCUS',
+                                                        'arrived':'CONFIRM_PERSON',
                                                         'max_orders':'succeeded',
                                                         'visited_all':'succeeded'})
 
                 smach.StateMachine.add( 'CONFIRM_PERSON',
                                         ConfirmPerson(robot),
                                         transitions={   'found':'TAKE_NEW_ORDER_FOCUS',
+                                                        'error':'NAV_TO_WAIVING_PERSON',
                                                         'not_found':'NAV_TO_WAIVING_PERSON'})
 
                 smach.StateMachine.add( 'TAKE_NEW_ORDER_FOCUS',
