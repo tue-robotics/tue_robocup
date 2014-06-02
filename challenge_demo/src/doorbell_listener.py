@@ -8,7 +8,7 @@ import rosnode
 from std_msgs.msg import String
 import diagnostic_msgs.msg
 
-PKG = 'challenge_demo_2014'
+PKG = 'challenge_demo'
 roslib.load_manifest(PKG)
 os.chdir(roslib.packages.get_pkg_dir(PKG))
 

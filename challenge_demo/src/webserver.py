@@ -6,7 +6,7 @@ import signal
 import roslib
 import rospy
 
-PKG = 'challenge_demo_2014'
+PKG = 'challenge_demo'
 roslib.load_manifest(PKG)
 os.chdir(roslib.packages.get_pkg_dir(PKG))
 
