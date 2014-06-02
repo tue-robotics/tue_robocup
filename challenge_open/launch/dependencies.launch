@@ -24,11 +24,11 @@
 
     <!-- Launch the streaming server (depth image) -->
     <node name="rgbd_transport_server" pkg="rgbd_transport" type="server">
-	<remap from="rgb_image" to="/amigo/top_kinect/rgb/image_rect_color" />
-	<remap from="depth_image" to="/amigo/top_kinect/depth_registered/image_rect" />
-	<remap from="cam_info" to="/amigo/top_kinect/rgb/camera_info" />
-	<remap from="output" to="/amigo/top_kinect/rgbd" />
-	<param name="max_fps" value="30" />
+        <remap from="rgb_image" to="/amigo/top_kinect/rgb/image_color" />
+        <remap from="depth_image" to="/amigo/top_kinect/depth_registered/image" />
+        <remap from="cam_info" to="/amigo/top_kinect/rgb/camera_info" />
+        <remap from="output" to="/amigo/top_kinect/rgbd" />
+        <param name="max_fps" value="30" />
     </node>
 
 </launch>
