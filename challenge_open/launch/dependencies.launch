@@ -13,8 +13,8 @@
 <!--        <arg name="gdb" value="true" /> -->
     </include>
 
-    <!-- Insert heightmap into the world model -->
-    <node name="height_map_loader" pkg="wire_fitter" type="height_map_to_world_model" args="$(find amigo_maps)/wire_volume/rgo2014.pgm 0.025 2 -4 -2"/>
+    <!-- Insert the map to the world model -->
+    <node name="wall_loader" pkg="wire_volume" type="load_from_file" args="$(find amigo_maps)/wire_volume/robotics_testlab_B_thick_walls.vwm"/>
 
     <!-- Vis Plugin Wire Volume loader -->
     <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
