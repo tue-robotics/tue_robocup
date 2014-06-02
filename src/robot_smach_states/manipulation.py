@@ -179,6 +179,39 @@ class PrepareGrasp(smach.State):
 
         # Move arm to desired joint coordinates (no need to wait)
         # ToDo: don't hardcode
+        self.arm.send_joint_trajectory([[-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42]])
+
+        # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
+        # Probably do this afterwards
+        answers = self.robot.reasoner.query(self.grabpoint_query)
+        
+        if answers:
+            answer = answers[0] #ToDo: 0.55 is a dirty hack, might be better
+            spindle_target = float(answer["Z"]) - 0.45
+
+            rospy.logwarn("Temp spindle target")
+            spindle_target = 0.4
+
+            # ToDo: parameterize
+            if (spindle_target > self.robot.spindle.lower_limit):
+                self.robot.spindle.send_goal(spindle_target,timeout=5.0)
+            # Else: there's no point in doing it any other way
+
+        return 'succeeded'
+
+class PrepareGraspSafe(smach.State):
+    def __init__(self, arm, robot, grabpoint_query):
+        ''' Similar to PrepareGrasp but has a more elaborate joint trajectory to avoid hitting the table when standing close to it'''
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+
+        self.arm = arm
+        self.robot = robot
+        self.grabpoint_query = grabpoint_query
+
+    def execute(self, gl):
+
+        # Move arm to desired joint coordinates (no need to wait)
+        # ToDo: don't hardcode
         self.arm.send_joint_trajectory([
         [-0.1,-0.6,0.1,1.2,0.0,0.1,0.0],
         [-0.1,-0.8,0.1,1.6,0.0,0.2,0.0],
@@ -441,7 +474,7 @@ class GrabMachineWithoutBase(smach.StateMachine):
                                      'failed'       :   'PREPARE_GRAB',
                                      'target_lost'  :   'CLOSE_GRIPPER_UPON_FAIL'})
             
-            smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('PREPARE_GRAB', PrepareGraspSafe(self.side, self.robot, self.grabpoint_query),
                         transitions={'succeeded'    :   'OPEN_GRIPPER',
                                      'failed'       :   'failed'})
 
@@ -635,6 +668,67 @@ class PlaceObject(smach.StateMachine):
         
             smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.placement_query),
                         transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
+            
+            smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
+                        transitions={'succeeded'    :   'POSITION',
+                                     'failed'       :   'failed'})
+            # When pre-position fails, there is no use in dropping the object
+            smach.StateMachine.add('POSITION', ArmToUserPose(   self.side, 0.0, 0.0, -self.dropoff_height_offset, 0.0, 0.0 , 0.0, 
+                                                                time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
+                        transitions={'succeeded':'OPEN_GRIPPER','failed':'OPEN_GRIPPER'})
+            # When position fails, it might be tried 
+            smach.StateMachine.add('OPEN_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.OPEN),
+                        transitions={'succeeded'    :   'LIFT',
+                                     'failed'       :   'LIFT'})
+
+            smach.StateMachine.add('LIFT', ArmToUserPose(self.side, 0.0, 0.0, self.dropoff_height_offset, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
+                        transitions={'succeeded':'RETRACT','failed':'RETRACT'})
+
+            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
+                        transitions={'succeeded':'CARR_POS','failed':'CARR_POS'})
+        
+            smach.StateMachine.add('CARR_POS', Carrying_pose(self.side, self.robot),
+                        transitions={'succeeded':'CLOSE_GRIPPER','failed':'CLOSE_GRIPPER'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, timeout=0.0),
+                        transitions={'succeeded'    :   'RESET_ARM',
+                                     'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add('RESET_ARM', 
+                        ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
+                        transitions={   'done':'RESET_TORSO',
+                                      'failed':'RESET_TORSO'    })
+
+            smach.StateMachine.add('RESET_TORSO',
+                        ResetTorso(self.robot),
+                        transitions={'succeeded':'succeeded',
+                                     'failed'   :'succeeded'})
+
+class PlaceObjectWithoutBase(smach.StateMachine):
+    def __init__(self, side, robot, placement_query, dropoff_height_offset=0.1):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed','target_lost'])
+        
+        self.robot = robot
+
+        if isinstance(side, basestring):
+            if side == "left":
+                self.side = self.robot.leftArm
+            elif side == "right":
+                self.side = self.robot.rightArm
+            else:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        else:           
+            self.side = side
+
+
+        self.placement_query = placement_query
+        self.dropoff_height_offset = dropoff_height_offset
+
+        with self:
+            smach.StateMachine.add('PREPARE_PLACEMENT', PrepareGraspSafe(self.side, self.robot, self.placement_query),
+                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
+                                     'failed'       :   'failed'})
             
             smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
                         transitions={'succeeded'    :   'POSITION',
