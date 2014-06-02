@@ -13,7 +13,7 @@ amigo1:
     amiddle-open # starts custom middleware and dependencies.launch 
 
     # start the challenge
-    rosrun challenge_open_2014 challenge_open_2014.py
+    rosrun challenge_open challenge_open.py
 
     # Clean up
     rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
