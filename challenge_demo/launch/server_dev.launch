@@ -6,13 +6,13 @@
 
     <!-- Launch the websocket server (communication via roslib) -->
     <remap from="/cmd_vel" to="/amigo/base/references" />
-    <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" />
+    <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" /> -->
 
     <!-- Launch mjpeg server (kinect video stream) -->
     <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" />
 
     <!-- Start the simple webserver to handle static files -->
-    <node pkg="amigo_mobile_ui" type="webserver.py" name="amigo_mobile_webserver" output="screen">
+    <node pkg="challenge_demo" type="webserver.py" name="amigo_mobile_webserver" output="screen">
         <param name="port" value="8001" />
     </node>
 
