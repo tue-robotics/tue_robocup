@@ -278,18 +278,19 @@ class ConfirmPerson(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: ConfirmPerson\n")
 
-                # reset robo pose
+        # reset robo pose
         self.robot.spindle.reset()
         # self.robot.reasoner.reset()
         self.robot.head.set_pan_tilt(tilt=-0.2)
-        
+        rospy.sleep(2.0)
+
         self.robot.speech.speak("Let me make sure there's someone here.", block=False)
 
         # prepare query for detected person
         detectPersonQ = Conjunction(      Compound("property_expected", "ObjectID", "class_label", "human_face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z"),
-                                          Compound("not", Compound("approached", "Waypoint"))))
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
+                                          Compound("not", Compound("approached", "ObjectID")))
 
         # start face segmentation node
         self.response_start = self.robot.perception.toggle(['human_tracking'])
@@ -302,7 +303,7 @@ class ConfirmPerson(smach.State):
             return "error"
 
         # wait until the query detected person is true, or 10 second timeout
-        wait_machine = Wait_query_true(self.robot, detectPersonQ, 5)
+        wait_machine = Wait_query_true(self.robot, detectPersonQ, 10)
         wait_result = wait_machine.execute()
 
         # turn off face segmentation
@@ -327,7 +328,8 @@ class ConfirmPerson(smach.State):
             
             result = self.robot.reasoner.query(detectPersonQ)
             
-            objectID = result["ObjectID"]
+            objectID = result[0]["ObjectID"]
+            rospy.loginfo("\t\t[Cocktail Party] Asserted {0} as approached!\n".format(objectID))
             
             # assert that this location has been visited
             self.robot.reasoner.query(Compound("assert", Compound("approached", objectID)))
@@ -556,12 +558,13 @@ class NavToWavingPerson(smach.State):
         qPeopleWaving = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
                                     Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')),
                                     Compound('not', Compound('visited', 'ObjectID')),
+                                    Compound('not', Compound('approached', 'ObjectID')),
                                     Compound('not', Compound('ordered', 'ObjectID')))
 
         # get results from the query
         goal_answers = self.robot.reasoner.query(qPeopleWaving)
 
-        # if there is no location associated with lookout points say it
+        # if there is no location associated with lookout points
         if not goal_answers:
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
             return "visited_all"
@@ -732,7 +735,8 @@ class PendingOrders(smach.State):
             self.robot.reasoner.query(Compound("retractall", Compound("visited", "X")))
             self.robot.reasoner.query(Compound("retractall", Compound("ordered", "X")))
             self.robot.reasoner.query(Compound('retractall', Compound('approached', 'X')))
-            self.robot.speech.speak("I will now get your drinks", block=False)
+            
+            self.robot.speech.speak("I will now get your drinks.", block=False)
             self.robot.reasoner.reset()
             return "enough_orders"  
 
@@ -1302,9 +1306,15 @@ class HandoverDrinkLeft(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'PRESENT_DRINK',
+
+                                    transitions={"spoken":"POSE"})
+                                    
+            smach.StateMachine.add( 'PRESENT_DRINK',
                                     Say(robot, ["I'm going to hand over your drink now", 
                                                 "Here you go! Handing over your drink"], block=False),
                                     transitions={"spoken":"POSE"})
+
+self.robot.spindle.reset()
 
             smach.StateMachine.add( 'POSE',
                                     Handover_pose(arm, robot),
