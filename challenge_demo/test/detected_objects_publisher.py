@@ -7,7 +7,7 @@ import random
 
 pub = rospy.Publisher('/detected_objects', String)
 
-rospy.init_node('node_alive_server')
+rospy.init_node('detected_objects_publisher')
 
 objects = ['coke','sprite','fanta','peanut_butter','milk','yoghurt','dr_pepper','pills','chewing_gum','noodles','bla','rofl']
 
