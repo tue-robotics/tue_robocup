@@ -22,7 +22,7 @@ amigo3:
     ls /dev/sd*
  
     # Mount the usb stick (for example: /dev/sdc1)
-    pmount /dev/sdb1 usb-stick
+    pmount /dev/sdb{???}1 usb-stick #This must not give errors, or the emergency_paper thingy will crash on startup
 
     roslaunch challenge_emergency emergency_home_dependencies.launch
 

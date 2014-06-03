@@ -507,7 +507,9 @@ int createPDF()
     ROS_INFO("Image stored");
 
     //! Load this image and draw it in pdf
+    ROS_INFO("Loading PngImageFromFile...: %s", file_name_map.c_str());
     HPDF_Image image_map_generated = HPDF_LoadPngImageFromFile (pdf, file_name_map.c_str());
+    ROS_INFO("Loaded PngImageFromFile");
     //HPDF_Page_DrawImage (page[n_page], image_map, x, y, image_map_cv.size().width, image_map_cv.size().height);
     int width_map_in_pdf = image_map_cv.size().width;
     int height_map_in_pdf = image_map_cv.size().height;
@@ -520,6 +522,7 @@ int createPDF()
     n_page = n_page + 1;
 
     //! Add a new page object
+    ROS_INFO("Adding page to PDF");
     page[n_page] = HPDF_AddPage (pdf);
 
     HPDF_Page_SetWidth (page[n_page], 550);
