@@ -45,4 +45,4 @@ rosbuild_add_library(tue_follower src/Follower.cpp ${HEADER_FILES})
 #rosbuild_link_boost(test_follower thread signals system)
 
 # 2014 verwion
-rosbuild_add_executable(follow_me_2014 include/challenge_follow_me/Follower.h src/Follower.cpp src/follow_me_2014.cpp ${HEADER_FILES})
+rosbuild_add_executable(follow_me include/challenge_follow_me/Follower.h src/Follower.cpp src/follow_me.cpp ${HEADER_FILES})
