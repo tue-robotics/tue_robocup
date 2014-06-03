@@ -4,21 +4,22 @@
 
 <arg name="setting" default="$(optenv PERCEPTION_SETTING robotics_testlab_B)"/>
 
-<node pkg="pein_tabletop_segmentation" type="pein_tabletop_segmentation" name="pein_tabletop_segmentation_external" output="screen">
-	<remap from="/amigo/top_kinect/driver/set_parameters" to="/external/top_kinect/driver/set_parameters"/>
-	<remap from="/amigo/top_kinect/depth_registered/camera_info" to="/external/top_kinect/depth_registered/camera_info"/>
-	<remap from="/amigo/top_kinect/depth_registered/image_rect" to="/external/top_kinect/depth_registered/image_rect"/>
-	<remap from="/amigo/top_kinect/rgb/image_color" to="/external/top_kinect/rgb/image_color"/>
+<node pkg="pein_tabletop_segmentation" type="pein_tabletop_segmentation" name="pein_tabletop_segmentation_external">
+	<remap from="/amigo/top_kinect/driver/set_parameters" to="/external_kinect/driver/set_parameters"/>
+	<remap from="/amigo/top_kinect/depth_registered/camera_info" to="/external_kinect/depth_registered/camera_info"/>
+	<remap from="/amigo/top_kinect/depth_registered/image_rect" to="/external_kinect/depth_registered/image_rect"/>
+	<remap from="/amigo/top_kinect/rgb/image_color" to="/external_kinect/rgb/image_color"/>
+	<remap from="/amigo/top_kinect/depth_registered/camera_info" to="/external_kinect/depth_registered/camera_info"/>
 
-	<remap from="/tabletop_rois" to="/external/tabletop_rois"/>
-	<remap from="/vis_clusters" to="/external/vis_clusters"/>
-	<remap from="/vis_plane" to="/external/vis_plane"/>
-	<remap from="/vis_tabletop_roi" to="/external/vis_tabletop_roi"/>
-	<remap from="/object_segmentation/srv_input" to="/external/object_segmentation/srv_input"/>
-	<remap from="/tabletop_segmentation/srv_input" to="/external/tabletop_segmentation/srv_input"/>
-	<remap from="/table_detection/srv_input" to="/external/table_detection/srv_input"/>
-	<remap from="/object_segmentation/roi_srv_input" to="/external/object_segmentation/roi_srv_input"/>
-	<remap from="/tabletop_segmentation/roi_srv_input" to="/external/tabletop_segmentation/roi_srv_input"/>
+	<remap from="/tabletop_rois" to="/external_kinect/tabletop_rois"/>
+	<remap from="/vis_clusters" to="/external_kinect/vis_clusters"/>
+	<remap from="/vis_plane" to="/external_kinect/vis_plane"/>
+	<remap from="/vis_tabletop_roi" to="/external_kinect/vis_tabletop_roi"/>
+	<remap from="/object_segmentation/srv_input" to="/external_kinect/object_segmentation/srv_input"/>
+	<remap from="/tabletop_segmentation/srv_input" to="/external_kinect/tabletop_segmentation/srv_input"/>
+	<remap from="/table_detection/srv_input" to="/external_kinect/table_detection/srv_input"/>
+	<remap from="/object_segmentation/roi_srv_input" to="/external_kinect/object_segmentation/roi_srv_input"/>
+	<remap from="/tabletop_segmentation/roi_srv_input" to="/external_kinect/tabletop_segmentation/roi_srv_input"/>
 
 	<param name="service_name" value="input_service"/>
 	<param name="input_tf" type="string" value="/map"/>
@@ -28,23 +29,44 @@
 	<param name="vis_pcls" type="bool" value="true"/>
 </node>
 
-<node pkg="pein_pcl_matcher" type="pein_pcl_matcher" name="pein_pcl_matcher_external" output="screen">
-	<param name="input_topic" value="/external/tabletop_rois"/>
-	<param name="output_topic" value="/external/pcl_matcher/output"/>
+<node pkg="pein_pcl_matcher" type="pein_pcl_matcher" name="pein_pcl_matcher_external">
+	<remap from="/tabletop_rois" to="/external_kinect/tabletop_rois"/>
+	<remap from="/pcl_matcher/learning/goal" to="/external_kinect/pcl_matcher/learning/goal"/>
+	<remap from="/pcl_matcher/learning/cancel" to="/external_kinect/pcl_matcher/learning/cancel"/>
+	<remap from="/pein/set_object_models" to="/external_kinect/pein/set_object_models"/>
+
+	<remap from="/pointcloud_matcher/output" to="/external_kinect/pointcloud_matcher/output"/>
+	<remap from="/pcl_matcher/learning/feedback" to="/external_kinect/pcl_matcher/learning/feedback"/>
+	<remap from="/pcl_matcher/learning/result" to="/external_kinect/pcl_matcher/learning/result"/>
+	<remap from="/pcl_matcher/learning/status" to="/external_kinect/pcl_matcher/learning/status"/>
+
+	<param name="base_frame" value="/external_kinect/base_link"/>
+	<param name="input_topic" value="/external_kinect/tabletop_rois"/>
+	<param name="output_topic" value="/external_kinect/pcl_matcher/output"/>
 	<param name="debug_mode" type="bool" value="false"/>
 
 	<!-- Loading the correct model set -->
 	<param name="setting" value="$(arg setting)"/>
 </node>
 
-<node pkg="pein_color_matcher" type="pein_color_matcher" name="pein_color_matcher_external" output="screen">
-	<remap from="~input" to="/external/pcl_matcher/output"/>
-	<remap from="~output" to="/external/color_matcher/output"/>
+<node pkg="pein_color_matcher" type="pein_color_matcher" name="pein_color_matcher_external">
+	<remap from="~input" to="/external_kinect/pointcloud_matcher/output"/>
+	<remap from="~output" to="/external_kinect/color_matcher/output"/>
 	<param name="debug_mode" type="bool" value="false"/>
 </node>
 
 <!-- Object detector -->
-<node  pkg="pein_odufinder" type="odu_finder_node" name="odu_finder" output="screen">
+<node  pkg="pein_odufinder" type="odu_finder_node" name="odu_finder_external">
+	<remap from="/odu_finder/learning/result" to="/external_kinect/odu_finder/learning/result"/>
+	<remap from="/odu_finder/learning/status" to="/external_kinect/odu_finder/learning/status"/>
+	<remap from="/odu_finder/learning/feedback" to="/external_kinect/odu_finder/learning/feedback"/>
+	<remap from="/odu_finder/object_found" to="/external_kinect/odu_finder/object_found"/>
+	<remap from="/odu_finder/learning/cancel" to="/external_kinect/odu_finder/learning/cancel"/>
+	<remap from="/odu_finder/learning/goal" to="/external_kinect/odu_finder/learning/goal"/>
+
+	<remap from="/odu_finder/set_tuning_mode" to="/external_kinect/odu_finder/set_tuning_mode"/>
+	<remap from="/pein_odufinder/set_threshold" to="/external_kinect/pein_odufinder/set_threshold"/>
+
 	<!-- Location images -->
 	<param  name="images_folder" type="string" value="$(arg setting)" />
 
@@ -53,8 +75,8 @@
 	<param  name="image_topic" type="string" value="/external/tabletop_rois" />
 	<param  name="images_for_visualization_directory" type="string" value="$(find pein_odufinder)/image_data" />
 
-	<param  name="pein_input_topic" type="string" value="/external/color_matcher/output" />
-	<param  name="pein_output_topic" type="string" value="/external/odu_finder/output" />
+	<param  name="pein_input_topic" type="string" value="/external_kinect/color_matcher/output" />
+	<param  name="pein_output_topic" type="string" value="/external_kinect/odu_finder/output" />
 	<param  name="template_topic" type="string" value="found_template" />
 
 	<param  name="enable_visualization" type="int" value="1" />
@@ -66,5 +88,10 @@
 	<param  name="votes_count" type="int" value="10" />
 	<param  name="object_threshold" type="double" value="0.22" />
 </node>
+
+<!-- Toggle that shit ! -->
+<node pkg="challenge_demo" type="start_external_object_segmentation" name="toggle_external_os" />
+
+<node pkg="challenge_demo" type="publish_current_objects" name="publish_current_objects_result" output="screen"/>
 
 </launch>
