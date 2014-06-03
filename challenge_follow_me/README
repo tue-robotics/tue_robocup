@@ -1,5 +1,8 @@
 # Responsible: Jos
 
+amigo2:
+ahardware (home all on dashboard)
+
 amigo1:
 
     amiddle-follow-me
@@ -14,18 +17,16 @@ amigo3:
         * Digital -> 29
         * Mic on mute!!! (should be muted already)
         
-    amigo-console  
-        amigo.ears.ask_user("continue",2,rospy.Duration(15))
-   		* lights should become green -> say 'continue'
-   		* if response is 'true', amigo heard you and lights become blue
-        * if this does not work, manually start: roslaunch tue_pocketsphinx start.launch on amigo2!!
-
-    say test  
-    	* to test speaker is working
+    amigo-console
+        test_audio
 
     rosrun challenge_follow_me follow_me_2014
 
 
 INSTRUCTIONS:
-- If you want the robot to leave the elevator, say: 'amigo leave', confirm with yes. Wait for AMIGO to call you
+STEP 1: Guiding:  Guide the robot while other people are walking around you. also let other people walk between you (the guide) and the robot.
+STEP 2: Elevator: Guide the robot into the elevator and say amigo leave. confirm with yes and check if amigo turns around and leaves the elevator and calls for you.
+STEP 3: Crowd:    Walk through a crowd and position yourself about one meter behind the crowd. Amigo should now go around the crowd and find you again.
+
+Furthermore:
 - If AMIGO lost the operator it will turn purple. It expects the operator to come stand in front of him.

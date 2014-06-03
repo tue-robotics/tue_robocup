@@ -632,12 +632,12 @@ bool resetSpindlePosition()
 
     // Send goal
     ac_skill_server_->sendGoal(goal);
-    ac_skill_server_->waitForResult(ros::Duration(4.0));
-    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
-    {
-        ROS_WARN("Could not spindle position %f within 4 [s]", std_spindle_pos);
-        return false;
-    }
+    //ac_skill_server_->waitForResult(ros::Duration(4.0));
+    //if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    //{
+    //    ROS_WARN("Could not spindle position %f within 4 [s]", std_spindle_pos);
+    //    return false;
+    //}
 
     return true;
 }
@@ -785,9 +785,6 @@ int main(int argc, char **argv) {
     ROS_INFO("Connected!");
     moveHead(0, 0, true);
 
-    //! Reset spindle
-    resetSpindlePosition();
-
     //! Allow for rotations
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
 
@@ -817,6 +814,9 @@ int main(int argc, char **argv) {
     }
     sub_emergency.shutdown();
     ROS_INFO("Emergency button released!");
+    
+    //! Reset spindle
+    resetSpindlePosition();
 
     //! Clear the world model
     ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
@@ -895,6 +895,7 @@ int main(int argc, char **argv) {
                     if (left_elevator_)
                     {
                         ROS_INFO("I think I am at the crowd, I will try to drive around the crowd");
+                        amigoSpeak("I think I am at the crowd, I will try to drive around the crowd");
                         follower_->pause();
                         driveAroundCrowd();
                         follower_->reset(1.0);
