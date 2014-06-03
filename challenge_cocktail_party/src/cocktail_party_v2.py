@@ -75,7 +75,6 @@ class DetectWavingPeople(smach.State):
         self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0)
         rospy.sleep(3)
         
-
         # Turn ON Human Tracking
         self.response_start = self.robot.perception.toggle(['human_tracking'])
 
@@ -85,6 +84,8 @@ class DetectWavingPeople(smach.State):
             rospy.loginfo("human_tracking failed to start")
             self.robot.speech.speak("I was not able to start human tracking.")
             return "error"
+
+        # TODO: CHANGE SLEEPS FOR TIMEOUTS!
 
         # self.robot.head.set_pan_tilt(pan=-1.2, pan_vel=0.1)
         # rospy.sleep(3)
@@ -116,7 +117,7 @@ class DetectWavingPeople(smach.State):
         peopleFound = self.robot.reasoner.query(peopleFoundQ)
         
         if peopleFound:
-            self.robot.speech.speak("Someone is calling me, I will be with you soon!", block=False)
+            self.robot.speech.speak("Someone is calling me, I will be with you soon! {0}".format(len(peopleFound)), block=False)
             return 'detected'
         else:
             self.robot.speech.speak("No one called me. Forever alone.", block=False)
@@ -172,9 +173,9 @@ class DetectPeople(smach.State):
         self.robot.head.reset_position()
 
         # compose person query
-        qPeopleFound = Conjunction( Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    # Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                    Compound("not", Compound("approached", "ObjectID")))
+        qPeopleFound = Conjunction( Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
+                                    # Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
+                                    Compound('not', Compound('approached', 'ObjectID')))
 
         # get results from the query
         peopleFoundRes = self.robot.reasoner.query(qPeopleFound)
@@ -477,7 +478,7 @@ class LearnPersonFace(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LearnPersonFace\n")
 
-        self.robot.speech.speak("Now " + userdata.personName_in + ", let me look at you.", block=False)
+        # self.robot.speech.speak("Now " + userdata.personName_in + ", let me look at you.", block=False)
 
         # learn the face of the person
         learn_machine = Learn_Person(self.robot, userdata.personName_in)
@@ -487,7 +488,7 @@ class LearnPersonFace(smach.State):
         if learn_result == 'face_learned':
             rospy.loginfo("Face learning succeeded")
         elif learn_result == 'learn_failed':
-            rospy.logwarn("Failed learning face, WHAT TO DO!? Just continue to the next state and ask drink.")
+            rospy.logwarn("Failed learning face. Just continue to the next state and ask drink.")
         return learn_result
 
 
@@ -565,8 +566,7 @@ class NavToWavingPerson(smach.State):
         qPeopleWaving = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
                                     Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')),
                                     Compound('not', Compound('visited', 'ObjectID')),
-                                    # Compound('not', Compound('ordered', 'ObjectID'))
-                                    )
+                                    Compound('not', Compound('ordered', 'ObjectID')))
 
         # get results from the query
         goal_answers = self.robot.reasoner.query(qPeopleWaving)
@@ -590,16 +590,15 @@ class NavToWavingPerson(smach.State):
 
         # assert that this location has been visited
         self.robot.reasoner.query(Compound('assert', Compound('visited', waypointName)))
-        # self.robot.reasoner.query(Compound('assert', Compound('ordered', waypointName)))
+        self.robot.reasoner.query(Compound('assert', Compound('ordered', waypointName)))
 
-        # If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
+        # If nav_result is unreachable DO NOT stop looking, there are more options
         if nav_result == 'unreachable':                    
             return 'going'
         elif nav_result == 'preempted':
             return 'going'
-
-        # we made it to the new goal. Let's have a look to see whether we can find the object here
-        return 'arrived'
+        else:
+            return 'arrived'
 
 #########################################################################################
 
@@ -615,14 +614,14 @@ class NavToLastKnowLoc(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToLastKnowLoc\n")
 
-        qGoals = Conjunction(Compound("=", "Waypoint",  Compound("last_known_location", "ID")),
+        lastLocQ = Conjunction(Compound("=", "Waypoint",  Compound("last_known_location", "ID")),
                                                         Compound("waypoint", "Waypoint", Sequence("X", "Y", "Z")),
                                                         Compound("not", Compound("visited", "Waypoint")))
 
-        goals = self.robot.reasoner.query(qGoals)
+        lastLoc = self.robot.reasoner.query(lastLocQ)
         
         # reset visited pepople if all the last know locations have been visited
-        if not goals:
+        if not lastLoc:
             rospy.loginfo("\t\t[Cocktail Party] Visited all the last know locations\n")
             
             if self.resetVisited == 0:
@@ -635,17 +634,14 @@ class NavToLastKnowLoc(smach.State):
         else:    
             self.resetVisited = 0
 
-            
-            # self.robot.speech.speak("I'm going to {0}'s last know location.".format(goal_answer["Person"]))
             self.robot.speech.speak("Going to the place I last saw people.", block=False)
 
             # take the first goal found
-            goal_answer = goals[0]
+            goal_answer = lastLoc[0]
             waypointName = goal_answer["Waypoint"]
-            # waypointName =  str(goal_answer["ObjectID"]) +  str(goal_answer["X"]) + str(goal_answer["Y"]) + str(goal_answer["Z"])
 
              # Use the lookat query
-            nav = NavigateGeneric(self.robot, lookat_query = qGoals)
+            nav = NavigateGeneric(self.robot, lookat_query = lastLocQ)
             nav_result = nav.execute()
 
             # assert that this location has been visited
@@ -687,7 +683,7 @@ class ServedStatus(smach.State):
             # retract most of the facts
             self.robot.reasoner.query(Compound('retractall', Compound('goal', 'X')))
             self.robot.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
-            # self.robot.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
+            self.robot.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
             self.robot.reasoner.query(Compound('retractall', Compound('approached', 'X')))
             self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
             self.robot.reasoner.query(Compound('retract', Compound("waypoint", Compound("last_known_location", "X"), "Y")))
@@ -740,7 +736,7 @@ class CheckPendingOrders(smach.State):
         else:
             # retract the people already served, maybe they want something again
             self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
-            # self.robot.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
+            self.robot.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
             self.robot.reasoner.query(Compound('retractall', Compound('approached', 'X')))
             
             # self.robot.speech.speak("I will now get your drinks.", block=False)
@@ -2125,7 +2121,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
 
     # tag to identify people who already ordered, used when getting the requests
-    # amigo.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
 
     # tag to identify people who the robot already tried to deliver the drink, but failed
     amigo.reasoner.query(Compound('retractall', Compound('approached', 'X')))
