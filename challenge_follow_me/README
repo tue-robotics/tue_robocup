@@ -1,26 +1,23 @@
-# Responsible: Jos
+# Responsible: Max, Jos
 
 amigo2:
-ahardware (home all on dashboard)
+	ahardware (home all on dashboard)
 
 amigo1:
-
     amiddle-follow-me
 
-Then, test the speech and start the challenge:
-
 amigo3:
-
-    Alsamixer settings:
-        * Mic Boost -> 22
-        * Capture -> 44
-        * Digital -> 29
-        * Mic on mute!!! (should be muted already)
+    alsamixer
+		settings shoul be:
+			* Mic Boost -> 22
+			* Capture -> 44
+			* Digital -> 29
+			* Mic on mute!!! (should be muted already)
         
     amigo-console
         test_audio
 
-    rosrun challenge_follow_me follow_me_2014
+    rosrun challenge_follow_me follow_me
 
 
 INSTRUCTIONS:
