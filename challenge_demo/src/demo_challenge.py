@@ -20,7 +20,7 @@ class WaitForOwner(smach.State):
         smach.State.__init__(self, outcomes=['person_found','timed_out'])
         self.robot = robot
         self.timeout = 30.0
-        # ToDo: fill
+        # ToDo (before testing): fill
         self.query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "person"),
                                  Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         # ToDo: don't hardcode
@@ -68,23 +68,52 @@ class WaitForOwner(smach.State):
 
 class WaitForExternalCamera(smach.StateMachine):
 
-    def __init__(self):
+    def __init__(self, robot, object_query):
         smach.State.__init__(self, 
-                             outcomes=['present', 'not_present'])
-        self.object_list = []
-        self.rate = 1.0
+                             outcomes=['present', 'not_present', 'failed'])
+        
+        self.robot = robot
+        self.object_query = object_query
+
+        # Get the ~private namespace parameters from command line or launch file.
+        self.rate = float(rospy.get_param('~rate', '1.0'))
+        topic     = rospy.get_param('~topic', '/detected_objects')
 
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
         rospy.loginfo('topic: /%s', topic)
         rospy.loginfo('rate:  %d Hz', self.rate)
 
+        self.object_list = []
+
     def execute(self, gl):
 
-        
+        answers = self.robot.reasoner.query(object_query)
 
+        if not answers:
+            rospy.logerr("Dont know which object to get")
+            return 'failed'
+        elif not self.object_list:
+            rospy.logerr("Object list is empty!!!")
+            return 'not_present'
+        else:
+            obj = answers[0]
 
+        if obj in self.object_list:
+            return 'present'
+        else:
+            return 'not_present'
 
+    def callback(self, msg):
+        # split data
+        # for each object:
+        #   if not present:
+        #       add
+        temp_object_list = msg.data.split("|")
+
+        for obj in temp_object_list:
+            if not obj in self.object_list:
+                self.object_list.append(obj)
 
 
 class ReceivePackage(smach.StateMachine):
@@ -156,19 +185,14 @@ class FetchObject(smach.StateMachine):
 
 		smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-		# ToDo: fill/check queries
+		# ToDo (before testing): fill/check queries
 		roi_query = 
 		object_query = 
-
+        camera_object_query = 
 		query_owner = Conjunction(Compound("current_person", "ObjectID"),
                                   Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
 		with self:
-
-			# ToDo: update Ramon's list?
-			# ToDo: listen to selected object and assert current object to reasoner
-			# ToDo: determine whether object is present and decide whether to go and get it or to receive it at the door
-
             # ToDo: don't hardcode the following four states and do it a bit more intelligent
             smach.StateMachine.add("WAIT_FOR_ORDER", 
                                     states.WaitForTrigger(robot, ['coke', 'sprite', 'fanta']),
@@ -183,7 +207,7 @@ class FetchObject(smach.StateMachine):
             def assert_object(ud):
                 desired_object = ud.object
 
-                # ToDo: assert this to the reasoner!
+                # ToDo (before testing): assert this to the reasoner!
                 
                 return 'succeeded'
 
@@ -202,7 +226,13 @@ class FetchObject(smach.StateMachine):
                                     transitions={   'succeeded' : 'GET_OBJECT_SHELF',
                                                     'failed'    : 'SAY_FAIL'})
 
+            smach.StateMachine.add('IS_PRESENT', WaitForExternalCamera(robot, camera_object_query),
+                                    transitions={   'present'   : 'SAY_PRESENT',
+                                                    'not_present':'SAY_NOT_PRESENT',
+                                                    'failed'    : 'SAY_FAIL'})
 
+            smach.StateMachine.add('SAY_PRESENT', states.Say("We still have that in store, I will go and get it", block=False),
+                                    transitions={   'spoken'    : 'GET_OBJECT_SHELF'})
 
 			smach.StateMachine.add('GET_OBJECT_SHELF',
 									states.GetObject(robot, arm, roi_query, object_query),
@@ -210,6 +240,9 @@ class FetchObject(smach.StateMachine):
 													'Aborted'	: 'SAY_FAIL',
 													'Failed'	: 'SAY_FAIL',
 													'Timeout'	: 'SAY_FAIL' })
+
+            smach.StateMachine.add('SAY_NOT_PRESENT', states.Say("That is not in store, I better order it online", block=False),
+                                    transitions={   'spoken'    : 'GET_OBJECT_DOOR'})
 
 			smach.StateMachine.add('GET_OBJECT_DOOR',
 				            		ReceivePackage(robot, arm),
@@ -292,14 +325,7 @@ class ChallengeDemo2014(smach.StateMachine):
                                     transitions={   'initialized':  'TOGGLE_EXTERNAL_PPL',
                                                     'abort':        'Aborted'})
 
-            # ToDo: make sure it does not get switched off again
-            # ToDo: assert ID
-            #smach.StateMachine.add("TOGGLE_EXTERNAL_PPL", states.ToggleModules(robot,['ppl_detection_external'],
-            #	                                                               external_ppl_target,
-            #	                                                               external_ppl_lenght_x,
-            # 	                                                               external_ppl_lenght_y,
-            #	                                                               external_ppl_lenght_z),
-            #	                    transitions={	'toggled':		'Done'})
+            # ToDo (before testing): make sure it does not get switched off again
 
             smach.StateMachine.add('WAIT_FOR_OWNER',
                                     WaitForOwner(robot),
