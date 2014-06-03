@@ -3,6 +3,7 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
 import navigation
+import reasoning
 from util import transformations
 from psi import Compound
 
@@ -657,21 +658,27 @@ class PlaceObject(smach.StateMachine):
         else:           
             self.side = side
 
+        self.dropoff_query = Compound("current_dropoff_point", "X","Y","Z")
 
         self.placement_query = placement_query
         self.dropoff_height_offset = dropoff_height_offset
 
         with self:
-            smach.StateMachine.add('PREPARE_PLACEMENT', PrepareGrasp(self.side, self.robot, self.placement_query),
+            smach.StateMachine.add('DETERMINE_DROPOFF_POINT', DetermineDropoffPoint(self.robot, self.placement_query),
+                        transitions={'succeeded'    :   'PREPARE_PLACEMENT',
+                                     'all_points_tried'       :   'FAILURE_RESET_DROPOFF',
+                                     'no_dropoff_points'       :   'FAILURE_RESET_DROPOFF'})
+
+            smach.StateMachine.add('PREPARE_PLACEMENT', PrepareGrasp(self.side, self.robot, self.dropoff_query),
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
-                                     'failed'       :   'failed'})
+                                     'failed'       :   'DETERMINE_DROPOFF_POINT'})
         
-            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.placement_query),
-                        transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'target_lost'})
+            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.dropoff_query),
+                        transitions={'orientation_succeeded':'PRE_POSITION','orientation_failed':'PRE_POSITION','abort':'failed','target_lost':'DETERMINE_DROPOFF_POINT'})
             
-            smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
+            smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.dropoff_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
                         transitions={'succeeded'    :   'POSITION',
-                                     'failed'       :   'failed'})
+                                     'failed'       :   'DETERMINE_DROPOFF_POINT'})
             # When pre-position fails, there is no use in dropping the object
             smach.StateMachine.add('POSITION', ArmToUserPose(   self.side, 0.0, 0.0, -self.dropoff_height_offset, 0.0, 0.0 , 0.0, 
                                                                 time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
@@ -691,9 +698,36 @@ class PlaceObject(smach.StateMachine):
                         transitions={'succeeded':'CLOSE_GRIPPER','failed':'CLOSE_GRIPPER'})
 
             smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, timeout=0.0),
-                        transitions={'succeeded'    :   'RESET_ARM',
-                                     'failed'       :   'RESET_ARM'})
+                        transitions={'succeeded'    :   'RESET_DROPOFF',
+                                     'failed'       :   'RESET_DROPOFF'})
 
+            smach.StateMachine.add("FAILURE_RESET_DROPOFF",
+                        ResetAfterDropoff(self.side, self.robot),
+                        transitions={'succeeded':'failed'})
+
+            smach.StateMachine.add("RESET_DROPOFF",
+                        ResetAfterDropoff(self.side, self.robot),
+                        transitions={'succeeded':'succeeded'})
+
+
+class ResetAfterDropoff(smach.StateMachine):
+    def __init__(self, side, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded'])
+        
+        self.robot = robot
+
+        if isinstance(side, basestring):
+            if side == "left":
+                self.side = self.robot.leftArm
+            elif side == "right":
+                self.side = self.robot.rightArm
+            else:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        else:           
+            self.side = side
+
+        with self:
             smach.StateMachine.add('RESET_ARM', 
                         ArmToJointPos(self.robot, self.side, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)), #Copied from demo_executioner NORMAL
                         transitions={   'done':'RESET_TORSO',
@@ -701,8 +735,68 @@ class PlaceObject(smach.StateMachine):
 
             smach.StateMachine.add('RESET_TORSO',
                         ResetTorso(self.robot),
-                        transitions={'succeeded':'succeeded',
-                                     'failed'   :'succeeded'})
+                        transitions={'succeeded':'RETRACT_CURRENT_DROPOFF_POINT',
+                                     'failed'   :'RETRACT_CURRENT_DROPOFF_POINT'})
+
+            smach.StateMachine.add("RETRACT_CURRENT_DROPOFF_POINT",
+                                reasoning.Retract_facts(robot, [Compound("current_dropoff_point", "X", "Y", "Z")]),
+                                transitions={'retracted':'RETRACT_PREVIOUS_DROPOFF_POINTS'})
+
+            smach.StateMachine.add("RETRACT_PREVIOUS_DROPOFF_POINTS",
+                                reasoning.Retract_facts(robot, [Compound("previous_dropoff_point", "X", "Y", "Z")]),
+                                transitions={'retracted':'succeeded'})
+
+
+class DetermineDropoffPoint(smach.State):
+    def __init__(self, robot, placement_query):
+        smach.State.__init__(self, outcomes=["succeeded", "all_points_tried", "no_dropoff_points"])
+
+        self.robot = robot
+        self.placement_query = placement_query
+
+    def execute(self, userdata=None):
+
+        list_previous_dropoff_points = []
+
+        # Check if there is already a current dropoff point
+        answers_dropoff_point = self.robot.reasoner.query(Compound("current_dropoff_point", "X","Y","Z"))
+
+        # If this is the case, move it to a fact "previous_dropoff_point"
+        if answers_dropoff_point:
+            answer_dropoff_point = answers_dropoff_point[0]
+            self.robot.reasoner.query(Compound("assert", Compound("previous_dropoff_point", float(answer_dropoff_point["X"]), float(answer_dropoff_point["Y"]), float(answer_dropoff_point["Z"]))))
+
+        answers_previous_dropoff_points = self.robot.reasoner.query(Compound("previous_dropoff_point", "X","Y","Z"))
+        self.robot.reasoner.query(Compound("retractall", Compound("current_dropoff_point", "X", "Y", "Z")))
+
+        if answers_previous_dropoff_points:
+            for i in range(0,len(answers_previous_dropoff_points)):
+                answer = answers_previous_dropoff_points[i]
+                x,y,z = float(answer["X"]), float(answer["Y"]), float(answer["Z"])
+                list_previous_dropoff_points.append([x,y,z])
+
+        answers = self.robot.reasoner.query(self.placement_query)
+
+        if answers:
+            for i in range(0,len(answers)):
+                answer = answers[i]
+
+                rospy.loginfo("Answer(0) = {0}".format(answer))
+                x,y,z = float(answer["X"]), float(answer["Y"]), float(answer["Z"])
+                
+                if [x,y,z] not in list_previous_dropoff_points:                
+                    self.robot.reasoner.query(Compound("assert", Compound("current_dropoff_point", x,y,z))) 
+                    rospy.loginfo("Current Dropoff Point is x = {0}, y = {1}, z = {2}".format(x,y,z))
+                    return 'succeeded'
+
+            self.robot.reasoner.query(Compound("retractall", Compound("current_dropoff_point", "X", "Y", "Z")))
+            self.robot.reasoner.query(Compound("retractall", Compound("previous_dropoff_point", "X", "Y", "Z")))
+            return 'all_points_tried'
+
+        else:
+            #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
+            return 'no_dropoff_points'
+
 
 class PlaceObjectWithoutBase(smach.StateMachine):
     def __init__(self, side, robot, placement_query, dropoff_height_offset=0.1):
@@ -807,6 +901,7 @@ class HandoverToHuman(smach.StateMachine):
                         transitions={'succeeded':'succeeded',
                                      'failed'   :'succeeded'})
 
+
 class DropObject(smach.StateMachine):
     def __init__(self, side, robot, placement_query, dropoff_height_offset=0.1):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed', 'target_lost'])
@@ -819,6 +914,10 @@ class DropObject(smach.StateMachine):
         if otherarm == side:
             otherarm = self.robot.leftArm
 
+        # removes previous defined dropoff points
+        self.robot.reasoner.query(Compound("retractall", Compound("current_dropoff_point", "X", "Y", "Z")))
+        self.robot.reasoner.query(Compound("retractall", Compound("previous_dropoff_point", "X", "Y", "Z")))
+
         with self:
             smach.StateMachine.add( "RESET_OTHER_ARM",
                                     ArmToJointPos(robot, otherarm, otherarm.RESET_POSE, timeout=1.0),
@@ -829,7 +928,7 @@ class DropObject(smach.StateMachine):
                                     PlaceObject(self.side, self.robot, self.placement_query, self.dropoff_height_offset),
                                     transitions={'succeeded'    : 'succeeded',
                                                  'failed'       : 'SAY_HUMAN_HANDOVER',
-                                                 'target_lost'  : 'target_lost' })
+                                                 'target_lost'  : 'SAY_HUMAN_HANDOVER' })
 
             smach.StateMachine.add( 'SAY_HUMAN_HANDOVER', 
                                     Say(robot, [ "I am terribly sorry, but I cannot place the object. Can you please take it from me", 
@@ -840,6 +939,7 @@ class DropObject(smach.StateMachine):
                                     HandoverToHuman(self.side, self.robot),
                                     transitions={'succeeded'    : 'succeeded',
                                                  'failed'       : 'failed'})
+
 
 
 class SetGripper(smach.State):
@@ -1180,3 +1280,4 @@ class Point_location_hardcoded(smach.State):
         self.side.reset_arm()
 
         return 'pointed'        
+
