@@ -1472,33 +1472,38 @@ class RetractServedPerson(smach.State):
 ########################################################################################
 
 
-class DropInBasket(smach.StateMachine):
+class DropInBasket(smach.State):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, 
-                                    outcomes=["done"])
+        smach.State.__init__(   self, 
+                                outcomes=['done'])
+
+        # initializations
         self.robot = robot
 
-        def execute(self, userdata):
+    def execute(self, userdata = None):
 
-            #self.robot.spindle.high()
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: DropInBasket\n")
 
-            #self.robot.leftArm.send_joint_goal(-0.1, -0.4, 0.2, 1.6, 0.0, 0.5, 0.0, timeout=1.0)
+        self.robot.spindle.high()
 
-            #self.robot.leftArm.send_joint_goal(-0.3, -0.2, 0.7, 1.8, 0.0, 0.3, 0.6, timeout=1.0)
+        self.robot.leftArm.send_joint_goal(-0.1, -0.4, 0.2, 1.6, 0.0, 0.5, 0.0, timeout=1.0)
 
-            #self.robot.spindle.send_goal(0.2)
+        self.robot.leftArm.send_joint_goal(-0.3, -0.2, 0.7, 1.8, 0.0, 0.3, 0.6, timeout=1.0)
 
-            #self.robot.leftArm.send_gripper_goal_open(timeout=1.0)
+        self.robot.spindle.send_goal(0.2)
 
-            #self.robot.spindle.high()
+        self.robot.leftArm.send_gripper_goal_open(timeout=1.0)
 
-            #self.robot.leftArm.send_gripper_goal_close(timeout=1.0)
+        self.robot.spindle.high()
 
-            #self.robot.leftArm.reset_arm()
+        self.robot.leftArm.send_gripper_goal_close(timeout=1.0)
 
-            #self.robot.spindle.reset()
+        self.robot.leftArm.reset_arm()
 
-            return 'done'
+        self.robot.spindle.reset()
+
+        return 'done'
+
 
 #########################################################################################
 
@@ -1933,19 +1938,19 @@ class CocktailParty(smach.StateMachine):
                                                         'grabbed_all':'succeeded'}) 
 
                 smach.StateMachine.add( 'PICKUP_DRINK_LEFT',
-                                        GrabMachine("left", robot, qGrabpoint),
-                                        transitions={   "succeeded":"ASSERT_PICKUP",
-                                                        "failed":'RESET_SEARCHED_LOCATIONS' }) 
+                                        GrabMachine('left', robot, qGrabpoint),
+                                        transitions={   'succeeded':'ASSERT_PICKUP',
+                                                        'failed':'RESET_SEARCHED_LOCATIONS' }) 
 
                 smach.StateMachine.add( 'PICKUP_DRINK_RIGHT',
-                                        GrabMachine("right", robot, qGrabpoint),
-                                        transitions={   "succeeded":"ASSERT_PICKUP",
-                                                        "failed":'RESET_SEARCHED_LOCATIONS' }) 
+                                        GrabMachine('right', robot, qGrabpoint),
+                                        transitions={   'succeeded':'ASSERT_PICKUP',
+                                                        'failed':'RESET_SEARCHED_LOCATIONS' }) 
 
                 smach.StateMachine.add( 'PICKUP_DRINK_BASKET',
-                                        GrabMachine("left", robot, qGrabpoint),
-                                        transitions={   "succeeded":"DROP_IN_BASKET",
-                                                        "failed":'RESET_SEARCHED_LOCATIONS' })
+                                        GrabMachine('left', robot, qGrabpoint),
+                                        transitions={   'succeeded':'DROP_IN_BASKET',
+                                                        'failed':'RESET_SEARCHED_LOCATIONS' })
 
                 smach.StateMachine.add( 'DROP_IN_BASKET',
                                         DropInBasket(robot),
@@ -1953,11 +1958,11 @@ class CocktailParty(smach.StateMachine):
 
                 smach.StateMachine.add( 'RESET_SEARCHED_LOCATIONS',
                                         ResetSearchedLocations(robot),
-                                        transitions={   "done":"LOOK_FOR_DRINK"})
+                                        transitions={   'done':'LOOK_FOR_DRINK'})
 
                 smach.StateMachine.add( 'ASSERT_PICKUP',
                                         AssertPickup(robot, qGrabpoint),
-                                        transitions={   "done":"PREPARE_PICKUP"}) 
+                                        transitions={   'done':'PREPARE_PICKUP'}) 
 
                 smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
                                         Say(robot, "I could not find any of the drinks requested.", block=False),
@@ -2168,7 +2173,7 @@ if __name__ == '__main__':
 
         #amigo.reasoner.query(   Compound("assert", 
                                 #Compound("carrying", 
-                                #Compound("drink", "cup", "basket"))))
+                                #Compound("drink", "cup", "right_hand"))))
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('waypoint', Compound('last_known_location', '2.5071_1.2574_0.0'), Sequence('2.5071', '1.2574', '0.0'))))
