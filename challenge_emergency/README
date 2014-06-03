@@ -11,7 +11,7 @@ amigo2:
     
 amigo1:
     
-    amiddle
+    amiddle 3dnav:=true #Or without the 3dnav:=true if that is already on by default
 
 amigo3:
 
