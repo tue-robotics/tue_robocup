@@ -1016,7 +1016,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add('ASK_FETCH',
                                     AskObject(robot),
                                     transitions={"done":"LOOK_FOR_OBJECT",
-                                                 "failed":"ASK_FETCH"})
+                                                 "failed":"RESET_SPINDLE_AND_ARMS_BEFORE_LOOKING"})
+
+        #TODO(Loy): Reset the spindle before grasping the object
+        smach.StateMachine.add('RESET_SPINDLE_AND_ARMS_BEFORE_LOOKING',
+                                    ResetArmsSpindle(robot, timeout=4.0),
+                                    transitions={"done":"LOOK_FOR_OBJECT"})
 
         ######################################################
         ############## LOOK, GRAP AND DELIVER ################
