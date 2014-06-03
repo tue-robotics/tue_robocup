@@ -7,13 +7,18 @@ $( document ).ready(function() {
 
     var obj_list = $('#objects-list');
 
-    var trigger = new ROSLIB.Topic({
+    var detector = new ROSLIB.Topic({
         ros : ros,
         name : '/detected_objects',
         messageType : 'std_msgs/String'
     });
+    detector.subscribe(object_callback);
 
-    trigger.subscribe(object_callback);
+    var trigger = new ROSLIB.Topic({
+        ros : ros,
+        name : '/trigger',
+        messageType : 'std_msgs/String'
+    });
 
     function object_callback(msg) {
         var objs = msg.data;
@@ -22,8 +27,6 @@ $( document ).ready(function() {
         } else {
             objs = objs.split('|');
         }
-
-        console.log(objs);
 
         var data = objs.map(function (o) {
             var c;
@@ -43,6 +46,7 @@ $( document ).ready(function() {
     obj_list.on('click', 'button', function (e) {
         var name = $(e.currentTarget).html();
         console.log('click', name);
+        trigger.publish({data:name});
     });
 
     function random_colour(){
@@ -55,9 +59,7 @@ $( document ).ready(function() {
     function random_color(){
         h += golden_ratio_conjugate;
         h %= 1;
-        var c = get_color(h, 0.7, 0.8);
-        console.log(c);
-        return c;
+        return get_color(h, 0.7, 0.8);
     }
 
     function get_color(h, s, l) {
