@@ -12,6 +12,12 @@ amigo1:
     # Make sure cb_base_navigation is used
     Uncomment the following line from rospkgs: #- other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
 
+    # Source the bashrc
+    source ~/.bashrc
+
+    # Rosmake navigation
+    rosmake cb_base_navigation
+
     # restart ssh session
     amiddle-open # starts custom middleware and dependencies.launch 
 
