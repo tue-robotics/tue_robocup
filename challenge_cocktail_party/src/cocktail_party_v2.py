@@ -282,7 +282,7 @@ class ConfirmPersonDetection(smach.State):
 
         # reset robo pose
         self.robot.spindle.reset()
-        self.robot.head.reset_position()
+        self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
 
         self.robot.speech.speak("Let me make sure there's someone here.", block=False)
 
@@ -2147,7 +2147,7 @@ if __name__ == '__main__':
     amigo.reasoner.query(Compound('retractall', Compound('ordered', 'X')))
 
     # tag to identify faces that were used to confirm a person detection
-    self.robot.reasoner.query(Compound('retractall', Compound('confirmed', 'X')))
+    amigo.reasoner.query(Compound('retractall', Compound('confirmed', 'X')))
 
     # tag to identify people who the robot already tried to deliver the drink, but failed
     amigo.reasoner.query(Compound('retractall', Compound('approached', 'X')))
