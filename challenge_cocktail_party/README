@@ -28,9 +28,7 @@ SETUP:
 
         - reset-audio
             
-        - amigo-console -> amigo.ears.ask_user("continue",2,rospy.Duration(15))
-            (lights should become green -> say 'continue')
-            (if response is 'true', amigo heard you and lights become blue)
+        - test_audio
 
         - say test  
             (to test speaker is working) 

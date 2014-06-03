@@ -27,7 +27,7 @@ from pein_srvs.srv import SetObjects
 
 
 MIN_SIMULTANEOUS_ORDERS = 2
-MAX_SIMULTANEOUS_ORDERS = 2
+MAX_SIMULTANEOUS_ORDERS = 3
 TOTAL_ORDERS = 3
 
 
@@ -280,6 +280,7 @@ class ConfirmPerson(smach.State):
 
         # reset robo pose
         self.robot.spindle.reset()
+        self.robot.head.reset_position()
 
         self.robot.speech.speak("Let me make sure there's someone here.", block=False)
 
@@ -1475,26 +1476,27 @@ class DropInBasket(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, 
                                     outcomes=["done"])
+        self.robot = robot
 
-        def execute(self, userdata=None):
+        def execute(self, userdata):
 
-            self.robot.spindle.high()
+            #self.robot.spindle.high()
 
-            self.robot.leftArm.send_joint_goal(-0.1, -0.4, 0.2, 1.6, 0.0, 0.5, 0.0, timeout=1.0)
+            #self.robot.leftArm.send_joint_goal(-0.1, -0.4, 0.2, 1.6, 0.0, 0.5, 0.0, timeout=1.0)
 
-            self.robot.leftArm.send_joint_goal(-0.3, -0.2, 0.7, 1.8, 0.0, 0.3, 0.6, timeout=1.0)
+            #self.robot.leftArm.send_joint_goal(-0.3, -0.2, 0.7, 1.8, 0.0, 0.3, 0.6, timeout=1.0)
 
-            self.robot.spindle.send_goal(0.2, timeout=1.0)
+            #self.robot.spindle.send_goal(0.2)
 
-            self.robot.leftArm.send_gripper_goal_open(timeout=1.0)
+            #self.robot.leftArm.send_gripper_goal_open(timeout=1.0)
 
-            self.robot.spindle.high()
+            #self.robot.spindle.high()
 
-            self.robot.leftArm.send_gripper_goal_close(timeout=1.0)
+            #self.robot.leftArm.send_gripper_goal_close(timeout=1.0)
 
-            self.robot.leftArm.reset_arm()
+            #self.robot.leftArm.reset_arm()
 
-            self.robot.spindle.reset()
+            #self.robot.spindle.reset()
 
             return 'done'
 
@@ -2140,8 +2142,8 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    initial_state = None
-    # initial_state = 'FIND_DRINKS_CONTAINER'
+    # initial_state = None
+    initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
 
@@ -2158,15 +2160,15 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'william_coffee', 'william', 'cup', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
+                                Compound('serve', 'william_coffee', 'william', 'orange_drink', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
 
-        amigo.reasoner.query(   Compound("assert", 
-                                Compound("carrying", 
-                                Compound("drink", "coke", "basket"))))
+        #amigo.reasoner.query(   Compound("assert", 
+        #                        Compound("carrying", 
+                                #Compound("drink", "coke", "basket"))))
 
-        amigo.reasoner.query(   Compound("assert", 
-                                Compound("carrying", 
-                                Compound("drink", "cup", "basket"))))
+        #amigo.reasoner.query(   Compound("assert", 
+                                #Compound("carrying", 
+                                #Compound("drink", "cup", "basket"))))
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('waypoint', Compound('last_known_location', '2.5071_1.2574_0.0'), Sequence('2.5071', '1.2574', '0.0'))))
