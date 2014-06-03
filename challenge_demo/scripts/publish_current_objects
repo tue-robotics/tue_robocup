@@ -9,7 +9,13 @@ from pein_msgs.msg import ODM
 
 def oduCB(data):
     for image in data.object_images:
-        print image.object_evidence
+	if len(image.object_evidence) > 0:
+	    import pdb; pdb.set_trace()
+	#obj = max(image.object_evidence.iterkeys(), key=(lamda key: stats[key]))
+            #string  object_name
+            #string  category
+            #float64 probability
+            #rospy.loginfo('name: %s', hypothesis.object_name)
 
 rospy.init_node("pub_objects_external_kinect", anonymous=True)
 
