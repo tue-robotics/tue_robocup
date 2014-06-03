@@ -4,7 +4,7 @@
 
 <arg name="setting" default="$(optenv PERCEPTION_SETTING robotics_testlab_B)"/>
 
-<node pkg="pein_tabletop_segmentation" type="pein_tabletop_segmentation" name="pein_tabletop_segmentation_external">
+<node pkg="pein_tabletop_segmentation" type="pein_tabletop_segmentation" name="pein_tabletop_segmentation_external" output="screen">
 	<remap from="/amigo/top_kinect/driver/set_parameters" to="/external_kinect/driver/set_parameters"/>
 	<remap from="/amigo/top_kinect/depth_registered/camera_info" to="/external_kinect/depth_registered/camera_info"/>
 	<remap from="/amigo/top_kinect/depth_registered/image_rect" to="/external_kinect/depth_registered/image_rect"/>
@@ -90,7 +90,7 @@
 </node>
 
 <!-- Toggle that shit ! -->
-<node pkg="challenge_demo" type="start_external_object_segmentation" name="toggle_external_os" />
+<node pkg="challenge_demo" type="start_external_object_segmentation" name="toggle_external_os" output="screen"/>
 
 <node pkg="challenge_demo" type="publish_current_objects" name="publish_current_objects_result" output="screen"/>
 
