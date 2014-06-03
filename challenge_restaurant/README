@@ -1,29 +1,31 @@
-# Responsible: Max (Jos)
+# Responsible: Max, Jos
 
 amigo2:
-    ahardware (+home all on dashboard)
+	ahardware (home all on dashboard)
 
 amigo1:
-
     amiddle-restaurant
-    
+
 local-pc: (for visualization)
     amigo-core
     rviz-restaurant (if this alias does not work you could manually add the markerarray, just add a markerarry and select /restaurant/locationmarkers from the list of available markerarrays)
 
 amigo3:
+    alsamixer
+		settings shoul be:
+			* Mic Boost -> 22
+			* Capture -> 44
+			* Digital -> 29
+			* Mic on mute!!! (should be muted already)
+        
+    amigo-console
+        test_audio
 
-    reset-audio (sets Alsamixer settings automatically to:)
-    
-    Alsamixer settings:
-        * Mic Boost -> 22
-        * Capture -> 44
-        * Digital -> 29
-        * Mic on mute!!! (Should be muted already)
-        
-    run test_audio in amigo-console
-        
-    rosrun challenge_restaurant restaurant_2014
+    rosrun challenge_restaurant restaurant
+
+
+
+
 
 GUIDING PHASE:
 - The guide should stand in front of the robot, then the robot starts following. If the robot turns pink, he lost the guide, stand in front of the robot.
@@ -67,7 +69,7 @@ Objects AMIGO knows and is able to recognize:
 from the kitchen:	from the bar:
 vegetablesoup		orangedrink
 remia 				sevenup
-chewingum 			coffee
+chewingum 			coffee (Senseopads)
 chickennoodles 		tea
 crackers 			milk
 
