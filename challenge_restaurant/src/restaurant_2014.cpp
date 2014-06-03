@@ -139,6 +139,7 @@ std::map<std::string, RobotPose> location_map_;                 // location name
 double x_last_ = 0;
 double y_last_ = 0;
 unsigned int marker_id_ = 0;
+bool move_base_succesfull_ = true;
 
 ////////////////////////////////////////
 //         HARCODED KNOWLEDGE         //
@@ -1102,9 +1103,14 @@ bool moveHead(double pan, double tilt, bool block = true)
     head_ref.pan = pan;
     head_ref.keep_tracking = false;
     head_ref.tilt = tilt;
-    ac_head_ref_->sendGoal(head_ref);
-    if (block) ac_head_ref_->waitForResult(ros::Duration(3.0));
-    //ac_head_ref_->sendGoalAndWait(head_ref, ros::Duration(3.0));
+    //ac_head_ref_->sendGoal(head_ref);
+    //if (block) ac_head_ref_->waitForResult(ros::Duration(3.0));
+    if (block) {
+		ac_head_ref_->sendGoalAndWait(head_ref, ros::Duration(2.0));
+	}
+    else {
+		ac_head_ref_->sendGoal(head_ref);
+	}
 
     if (ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
@@ -1609,67 +1615,72 @@ int main(int argc, char **argv) {
             else
             {
 
-
+				move_base_succesfull_ = true;
                 if (!moveBase(location_map_[shelf].x, location_map_[shelf].y, location_map_[shelf].phi))
                 {
                     ROS_WARN("Robot cannot reach the %s (try to continue anyway)", shelf.c_str());
+                    std::stringstream sentence;
+                    sentence << "I could not reach the " << shelf;
+                    amigoSpeak(sentence.str(), false);
+                    move_base_succesfull_ = false;
                 }
 
+				if (move_base_succesfull_) {
+					//! Inform user
+					std::stringstream sentence;
+					sentence << "I am at the " << shelf;
+					amigoSpeak(sentence.str(), false);
 
-                //! Inform user
-                std::stringstream sentence;
-                sentence << "I am at the " << shelf;
-                amigoSpeak(sentence.str(), false);
+					//! Look for objects
+					if (i == 0)
+					{
+						// service call to perception: only recognize objects from the correct category
+						pein_srvs::SetObjects obj_srv;
+						std::vector<std::string>::const_iterator it = shelf_one_objects_.begin();
+						for (; it != shelf_one_objects_.end(); ++it)
+						{
+							obj_srv.request.objects.push_back(*it);
+						}
+						if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
+					}
+					else if (i == 1)
+					{
+						// service call to perception: only recognize objects from the correct category
+						pein_srvs::SetObjects obj_srv;
+						std::vector<std::string>::const_iterator it = shelf_two_objects_.begin();
+						for (; it != shelf_two_objects_.end(); ++it)
+						{
+							obj_srv.request.objects.push_back(*it);
+						}
+						if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
+					}
+					lookForObjects();
 
-                //! Look for objects
-                if (i == 0)
-                {
-                    // service call to perception: only recognize objects from the correct category
-					pein_srvs::SetObjects obj_srv;
-                    std::vector<std::string>::const_iterator it = shelf_one_objects_.begin();
-                    for (; it != shelf_one_objects_.end(); ++it)
-                    {
-                        obj_srv.request.objects.push_back(*it);
-                    }
-					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
+
+					//! Get objects from the world state
+					std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
+
+					// See which objects are found
+					 std::map<std::string, int> obj_id_order_id_map;
+					std::map<int, std::pair<std::string, std::string> >::iterator it_order = order_map_.begin();
+					for (; it_order != order_map_.end(); ++it_order)
+					{
+						//! Only order which are not yet completed
+						if (!it_order->second.first.empty())
+						{
+							//! See if this object is in the world model
+							std::string obj_id = getIdFromWorldModel(objects, it_order->second.second);
+							if (!obj_id.empty()) obj_id_order_id_map[obj_id] = it_order->first;
+						}
+					}
+
+					//! Deliver order
+					if (!obj_id_order_id_map.empty()) deliverOrders(obj_id_order_id_map);
+
 				}
-				else if (i == 1)
-				{
-                    // service call to perception: only recognize objects from the correct category
-					pein_srvs::SetObjects obj_srv;
-                    std::vector<std::string>::const_iterator it = shelf_two_objects_.begin();
-                    for (; it != shelf_two_objects_.end(); ++it)
-                    {
-                        obj_srv.request.objects.push_back(*it);
-                    }
-					if (!set_objects_client.call(obj_srv)) ROS_WARN("Cannot set subset of objects in pein");
-				}
-                lookForObjects();
 
-
-                //! Get objects from the world state
-                std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
-
-                // See which objects are found
-                 std::map<std::string, int> obj_id_order_id_map;
-                std::map<int, std::pair<std::string, std::string> >::iterator it_order = order_map_.begin();
-                for (; it_order != order_map_.end(); ++it_order)
-                {
-                    //! Only order which are not yet completed
-                    if (!it_order->second.first.empty())
-                    {
-                        //! See if this object is in the world model
-                        std::string obj_id = getIdFromWorldModel(objects, it_order->second.second);
-                        if (!obj_id.empty()) obj_id_order_id_map[obj_id] = it_order->first;
-                    }
-                }
-
-                //! Deliver order
-                if (!obj_id_order_id_map.empty()) deliverOrders(obj_id_order_id_map);
-
-                //! If not all orders are completed but all shelfs are visited, try it again
-                if (i == 1 && !deliveredAllOrders()) i = -1;
-
+				//! If not all orders are completed but all shelfs are visited, try it again
+				if (i == 1 && !deliveredAllOrders()) i = -1;
             }
 
         } // Visited both the bar and kitchen shelf
