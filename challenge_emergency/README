@@ -40,7 +40,8 @@ amigo3:
 
     rosrun challenge_emergency emergency_2014.py
 
-
+After the challenge ended, you can inspect the PDF by either getting the USB stick from amigo, or by running:
+ amigo@athomeX $ scp amigo@amigo3:/media/usb-stick/emergency_paper.pdf . ; evince emergency_paper.pdf
 ---------------------------------------
 
 Dependency launch file includes:
