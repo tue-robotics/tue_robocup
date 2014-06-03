@@ -694,7 +694,7 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
     double angle = laser_scan_msg->angle_min;
     for(int i = 0; i < (int)laser_scan_msg->ranges.size(); ++i)
     {
-		double previous_range = laser_scan_msg->ranges[std::max(i-1,0)];
+		//double previous_range = laser_scan_msg->ranges[std::max(i-1,0)];
         double range = laser_scan_msg->ranges[i];
 
         // check left of robot
@@ -792,12 +792,6 @@ int main(int argc, char **argv) {
     //! Laser data
     sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_front_laser", 10, laserCallback);
 
-    //! Clear cost map interface
-    srv_cost_map = nh.serviceClient<std_srvs::Empty>("/move_base_3d/reset");
-    srv_cost_map.waitForExistence(ros::Duration(3.0));
-    std_srvs::Empty empty_srv;
-    if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
-
 	//! Create follower (which connects with WIRE)
 	//! Construct the follower
     ROS_INFO("Constructing the follower...");
@@ -815,6 +809,12 @@ int main(int argc, char **argv) {
     }
     sub_emergency.shutdown();
     ROS_INFO("Emergency button released!");
+    
+    //! Clear cost map interface
+    srv_cost_map = nh.serviceClient<std_srvs::Empty>("/move_base_3d/reset");
+    srv_cost_map.waitForExistence(ros::Duration(2.0));
+    std_srvs::Empty empty_srv;
+    if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
     
     //! Reset spindle
     resetSpindlePosition();
@@ -882,7 +882,7 @@ int main(int argc, char **argv) {
             // If the robot did not move for a while
             if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
             {
-                ROS_INFO("left_elevator_ : " , left_elevator_ , "!");
+                ROS_INFO("left_elevator_ : %i!" , left_elevator_);
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
