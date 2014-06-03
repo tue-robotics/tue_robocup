@@ -590,6 +590,7 @@ void speechCallback(std_msgs::String res)
             //! Shutdown the speech
             sub_speech_.shutdown();
             left_elevator_ = true;
+            in_elevator_ = false;
 
             //! Done with the elevator
             amigoSpeak("You can leave the elevator", true);
@@ -881,7 +882,7 @@ int main(int argc, char **argv) {
             // If the robot did not move for a while
             if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
             {
-
+                ROS_INFO("left_elevator_ : " , left_elevator_ , "!");
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
