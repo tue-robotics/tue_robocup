@@ -10,7 +10,9 @@ amigo1:
     ln -s ~/ros/groovy/rosbuild_ws/tue/user/Rein/catkin_packages/hydro_navigation ~/ros/groovy/catkin_ws/src/
 
     # Make sure cb_base_navigation is used
-    Uncomment the following line from rospkgs: #- other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
+    Uncomment the following line from rospkgs: 
+
+        - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
 
     # Source the bashrc
     source ~/.bashrc
@@ -24,6 +26,39 @@ amigo1:
     # start the challenge
     rosrun challenge_open challenge_open.py
 
-    # Clean up
+    # When you're done:
     rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
 
+########################################
+###                                  ###
+##             SCENARIO               ##
+###                                  ###   
+########################################
+
+Mapping can be done using the wire_fitter gui. On your local machine:
+
+    amigo-core
+    roslaunch wire_fitter gui.launch
+
+Mapping is done using the right mouse button. You can use the pan / tilt controls (sliders on the bottom and left)
+to pan and tilt AMIGOs camera
+
+Navigating AMIGO around can be done using RVIZ. On your local machine:
+
+    amigo-core
+    rviz-open-challenge
+
+1) Navigate Amigo around in RVIZ and map:
+    - 'bar' (an object you can easily move around)
+    - 'table' (with no objects on top)
+    - 'trash_bin'
+2) ** Click on the 'GO' button in the GUI **
+3) Tell Amigo to navigate to the 'bar'
+4) If Amigo reaches the 'bar', move the 'bar' and see the dynamic update
+5) ** Click on the 'GO' button in the GUI **
+6) Tell Amigo to navigate to the 'bar'
+7) Tell Amigo navigate to the 'table'
+8) Put the ;milk; on top of the 'table'
+9) Map the 'milk'
+10) ** Click on the 'GO' button in the GUI **
+11) Tell Amigo to 'move a milk to the trash_bin'
