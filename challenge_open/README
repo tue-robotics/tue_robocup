@@ -35,6 +35,8 @@ amigo1:
 ###                                  ###   
 ########################################
 
+!! Do the mapping on the field or in the living room
+
 Mapping can be done using the wire_fitter gui. On your local machine:
 
     amigo-core
