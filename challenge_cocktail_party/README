@@ -5,7 +5,8 @@
 
 SETUP:
     Amigo Robot:
-        - insert the basket on the waste!! If you don't have it Amigo will release the first drink, so catch it...
+        - insert the basket on the waste!! If you don't Amigo will drop the first drink, so catch it...
+
 
     amigo1:
 
@@ -33,12 +34,12 @@ SETUP:
         - test_audio
 
         - say test  
-            (to test speaker is working) 
+            (to test if the speaker is working) 
 
 
 INSTRUCTIONS:
 
-    - Possible names and drinks should be on a A4 paper on the Robotics Lab B
+    - Possible names and drinks should be on a A4 paper on the Robotics Lab B wall
 
     - AMIGO will enter the party room and will go a predefined Lookout point where he will search for people (waving not implemented yet). Place yourselves somewhere on the room where you think its correct without worring about AMIGO's position, let him do the work. When he sees someone he will go to you and do the normal interaction, get your name, learn your face and ask which drink you want. He will only start serving as soon as he has enough request (defined as 2). AMIGO will then fetch the drinks and will return to the last place he saw the people who ordered or lookout points. He will then perform a search for people and will try to deliver the drinks he is carrying to the correct person. If for some reason he doesn't find every person he is looking for he will go into the first Lookout point and wait for anyone to take the drink from him. When AMIGO has served at least 3 people he will finish the challenge.
 
