@@ -906,7 +906,7 @@ class PreparePickup(smach.State):
                                                                     Compound("not", Compound("carrying", Compound("drink", "Drink", "CarryingLoc")))))
 
             if not incompleteReq:
-                self.robot.speech.speak("I finished picking up all the drinks", block=False)
+                self.robot.speech.speak("I finished picking up all the drinks.", block=False)
                 self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
                 self.robot.reasoner.reset()
                 return 'grabbed_all'
@@ -1489,7 +1489,8 @@ class DropInBasket(smach.State):
         self.robot.leftArm.send_gripper_goal_open(timeout=5.0)
 
         self.robot.spindle.high()
-
+        rospy.sleep(1.0)
+        
         self.robot.leftArm.send_gripper_goal_close(timeout=5.0)
 
         self.robot.leftArm.reset_arm()
@@ -2142,7 +2143,7 @@ if __name__ == '__main__':
   
 
     initial_state = None
-    # initial_state = 'FIND_DRINKS_CONTAINER'
+    #initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
 
@@ -2155,7 +2156,7 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'david_coke', 'david', 'coke', Compound('pose_2d', '2.5071', '1.2574', '0.0')))))
+                                Compound('serve', 'david_coke', 'david', 'milk', Compound('pose_2d', '2.5071', '1.2574', '0.0')))))
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
