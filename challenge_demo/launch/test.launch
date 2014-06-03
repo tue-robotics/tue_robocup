@@ -5,16 +5,16 @@
     <!--include file="$(find amigo_launch_files)/launch/interaction/text_to_speech.launch" /-->
 
     <!-- Launch the websocket server (communication via roslib) -->
-    <remap from="/cmd_vel" to="/amigo/base/references" />
-    <!-- <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" /> -->
+<!--<include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" /> -->
 
     <!-- Launch mjpeg server (kinect video stream) -->
     <node pkg="mjpeg_server" type="mjpeg_server" name="mjpeg_server" output="screen" />
 
-    <!-- Start the simple webserver to handle static files -->
-    <node pkg="challenge_demo" type="webserver.py" name="amigo_mobile_webserver" output="screen">
+    <!-- Start the simple webserver to handle static files -->    
+    <node pkg="challenge_demo_2014" type="webserver.py" name="doorbell_gui" output="screen">
         <param name="port" value="8001" />
     </node>
+    
+    <node pkg="challenge_demo_2014" type="doorbell_listener.py" name="doorbell_listener" output="screen" />
 
-    <node pkg="challenge_demo" type="detected_objects_publisher.py" name="detected_objects_publisher" output="screen" />
 </launch>

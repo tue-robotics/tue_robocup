@@ -16,7 +16,7 @@ import perception_srvs.srv
 class NavigateToStartRobust(smach.StateMachine):
 
     def __init__(self, robot):
-        smach.StateMachine.__init__(self,
+        smach.StateMachine.__init__(self, 
                              outcomes=['arrived', 'unreachable',  'preempted', 'goal_not_defined'])
         self.robot = robot
         self.query_start = Compound("waypoint", "start",     Compound("pose_2d", "X", "Y", "Phi"))
@@ -36,8 +36,8 @@ class NavigateToStartRobust(smach.StateMachine):
                                                     "unreachable":      'SAY_NAVIGATE_FAILED_ONE',
                                                     "preempted":        'preempted',
                                                     "goal_not_defined": 'SAY_NAVIGATE_FAILED_ONE'})
-
-            smach.StateMachine.add("SAY_NAVIGATE_FAILED_ONE",
+            
+            smach.StateMachine.add("SAY_NAVIGATE_FAILED_ONE", 
                                     states.Say(robot,"I was not able to reach my goal, I will try again", block=False),
                                     transitions={   'spoken':'NAVIGATE_TRY_TWO'})
 
@@ -47,8 +47,8 @@ class NavigateToStartRobust(smach.StateMachine):
                                                     "unreachable":      'SAY_NAVIGATE_FAILED_TWO',
                                                     "preempted":        'preempted',
                                                     "goal_not_defined": 'SAY_NAVIGATE_FAILED_TWO'})
-
-            smach.StateMachine.add("SAY_NAVIGATE_FAILED_TWO",
+            
+            smach.StateMachine.add("SAY_NAVIGATE_FAILED_TWO", 
                                     states.Say(robot,"I was not able to reach my goal, I will try again", block=False),
                                     transitions={   'spoken':'NAVIGATE_TRY_THREE'})
 
@@ -58,8 +58,8 @@ class NavigateToStartRobust(smach.StateMachine):
                                                     "unreachable":      'SAY_NAVIGATE_FAILED_THREE',
                                                     "preempted":        'preempted',
                                                     "goal_not_defined": 'SAY_NAVIGATE_FAILED_THREE'})
-
-            smach.StateMachine.add("SAY_NAVIGATE_FAILED_THREE",
+            
+            smach.StateMachine.add("SAY_NAVIGATE_FAILED_THREE", 
                                     states.Say(robot,"I was not able to reach my goal, sorry for that", block=False),
                                     transitions={   'spoken':'unreachable'})
 
@@ -67,11 +67,11 @@ class PackagePose(smach.State):
 
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
-
+        
         self.robot = robot
 
-    def execute(self, gl):
-        rospy.loginfo("start moving to package pose")
+    def execute(self, gl):        
+        rospy.loginfo("start moving to package pose")   
 
         resultL = self.robot.leftArm.send_joint_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
         resultR = self.robot.rightArm.send_joint_goal(-0.05,0.3,0.5,1.8,0.3,0.5,0.0)
@@ -82,7 +82,7 @@ class PackagePose(smach.State):
         if not resultR:
             rospy.loginfo("error sending rightArm goal")
             return 'failed'
-        return 'succeeded'
+        return 'succeeded' 
 
 class WaitForOwner(smach.State):
 
@@ -112,8 +112,8 @@ class WaitForOwner(smach.State):
 
             ''' Check for region of interest '''
             try:
-                selected_answer = urh.select_answer(answers,
-                                                lambda answer: urh.xy_dist(answer, self.roipos),
+                selected_answer = urh.select_answer(answers, 
+                                                lambda answer: urh.xy_dist(answer, self.roipos), 
                                                 minmax=min,
                                                 criteria=[lambda answer: urh.xy_dist(answer, self.roipos) < 1.0])
             except ValueError:
@@ -154,12 +154,12 @@ class ReceivePackage(smach.StateMachine):
                                                     "unreachable":'SAY_GOAL_UNREACHABLE',
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
-
-            smach.StateMachine.add("SAY_START_REACHED",
+            
+            smach.StateMachine.add("SAY_START_REACHED", 
                                     states.Say(robot,"I'm going to wait for further instructions", block=False),
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
-            smach.StateMachine.add("WAIT_FOR_TRIGGER",
+            smach.StateMachine.add("WAIT_FOR_TRIGGER", 
                                     states.WaitForTrigger(robot, ['allow', 'deny', 'doorbell']),
                                     transitions={   'allow':    'SAY_TRIGGER_ALLOW',
                                                     'deny':     'SAY_TRIGGER_DENY',
@@ -170,16 +170,16 @@ class ReceivePackage(smach.StateMachine):
                         states.Wait_time(robot, waittime=2),
                                     transitions={   'waited':'SAY_SOMEONE_AT_THE_DOOR',
                                                     'preempted':'failed'})
-
-            smach.StateMachine.add("SAY_SOMEONE_AT_THE_DOOR",
+            
+            smach.StateMachine.add("SAY_SOMEONE_AT_THE_DOOR", 
                                     states.Say(robot,"There is somebody at the door, I will notify my owner.", block=True),
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
-
-            smach.StateMachine.add("SAY_TRIGGER_ALLOW",
+            
+            smach.StateMachine.add("SAY_TRIGGER_ALLOW", 
                                     states.Say(robot,"My owned said I could open the door, I'm on my way!", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_DOOR'})
 
-            smach.StateMachine.add("SAY_TRIGGER_DENY",
+            smach.StateMachine.add("SAY_TRIGGER_DENY", 
                                     states.Say(robot,"I dont know that guy, my owner told me not to open the door for strangers", block=False),
                                     transitions={   'spoken':'WAIT_FOR_TRIGGER'})
 
@@ -197,11 +197,11 @@ class ReceivePackage(smach.StateMachine):
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
-            smach.StateMachine.add("SAY_DOOR_REACHED",
+            smach.StateMachine.add("SAY_DOOR_REACHED", 
                                     states.Say(robot,"Can I receive your package?", block=False),
                                     transitions={   'spoken':'RECEIVE_POSE'})
-
-            smach.StateMachine.add("RECEIVE_POSE",
+            
+            smach.StateMachine.add("RECEIVE_POSE", 
                                     PackagePose(robot),
                                     transitions={   'succeeded':'WAIT_FOR_LOAD',
                                                     'failed':'WAIT_FOR_LOAD'})
@@ -210,8 +210,8 @@ class ReceivePackage(smach.StateMachine):
                         states.Wait_time(robot, waittime=5),
                                     transitions={   'waited':'SAY_PACKAGE_RECEIVED',
                                                     'preempted':'failed'})
-
-            smach.StateMachine.add("SAY_PACKAGE_RECEIVED",
+            
+            smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
                                     states.Say(robot,"Thank you, I will hold on to the package until my owner comes home.", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_START_2'})
 
@@ -223,11 +223,11 @@ class ReceivePackage(smach.StateMachine):
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
             # navigation states
-            smach.StateMachine.add("SAY_GOAL_UNREACHABLE",
+            smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
                                     states.Say(robot,"I am sorry but I cannot figure it out, the goal is unreachable"),
                                     transitions={   'spoken':'failed'})
 
-            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED",
+            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
                                     states.Say(robot,"I am sorry, I don't know where to go"),
                                     transitions={   'spoken':'failed'})
 
@@ -245,7 +245,7 @@ class GivePackage(smach.StateMachine):
                                   Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
         with self:
 
-            smach.StateMachine.add("SAY_WAIT_OWNER",
+            smach.StateMachine.add("SAY_WAIT_OWNER", 
                                     states.Say(robot,"I will hold on to the package until my owner comes home.", block=True),
                                     transitions={   'spoken':'WAIT_FOR_OWNER'})
 
@@ -254,11 +254,11 @@ class GivePackage(smach.StateMachine):
                                     transitions={   "person_found":"SAY_OWNER_FOUND",
                                                     "timed_out":"SAY_PERSON_TIMEOUT"})
 
-            smach.StateMachine.add("SAY_OWNER_FOUND",
+            smach.StateMachine.add("SAY_OWNER_FOUND", 
                                     states.Say(robot,"Hey, the house notified me that my owned entered. I will deliver the package to him.", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER'})
 
-            smach.StateMachine.add("SAY_PERSON_TIMEOUT",
+            smach.StateMachine.add("SAY_PERSON_TIMEOUT", 
                                     states.Say(robot,"It took too long, I better go to where he usually is.", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
@@ -269,11 +269,11 @@ class GivePackage(smach.StateMachine):
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_PERSON_LOST'})
 
-            smach.StateMachine.add("SAY_PERSON_LOST",
+            smach.StateMachine.add("SAY_PERSON_LOST", 
                                     states.Say(robot,"I lost my operator, I better go where he usually is", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
-            smach.StateMachine.add("SAY_PERSON_UNREACHABLE",
+            smach.StateMachine.add("SAY_PERSON_UNREACHABLE", 
                                     states.Say(robot,"I lost my operator, I better go where he usually is", block=False),
                                     transitions={   'spoken':'NAVIGATE_TO_OWNER_BACKUP'})
 
@@ -284,11 +284,11 @@ class GivePackage(smach.StateMachine):
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
-            smach.StateMachine.add("SAY_PERSON_FOUND",
+            smach.StateMachine.add("SAY_PERSON_FOUND", 
                                     states.Say(robot,"Hello owner, I have a package for you..", block=True),
                                     transitions={   'spoken':'SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN'})
 
-            smach.StateMachine.add("SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN",
+            smach.StateMachine.add("SAY_CALL_ME_WHEN_YOU_NEED_ME_AGAIN", 
                                     states.Say(robot,"Call me when you need me again.", block=True),
                                     transitions={   'spoken':'RESET_STATE'})
 
@@ -304,11 +304,11 @@ class GivePackage(smach.StateMachine):
                                                     "goal_not_defined": 'SAY_GOAL_NOT_DEFINED'})
 
             # navigation states
-            smach.StateMachine.add("SAY_GOAL_UNREACHABLE",
+            smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
                                     states.Say(robot,"I am sorry but I cannot figure it out, the goal is unreachable"),
                                     transitions={   'spoken':'failed'})
 
-            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED",
+            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
                                     states.Say(robot,"I am sorry, I don't know where to go"),
                                     transitions={   'spoken':'failed'})
 
@@ -325,22 +325,22 @@ class ChallengeDemo2014(smach.StateMachine):
         robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
 
         #Assert the current challenge.
-        robot.reasoner.query(Compound("assertz",Compound("challenge", "challenge_demo")))
+        robot.reasoner.query(Compound("assertz",Compound("challenge", "challenge_demo_2014")))
 
         with self:
 
-            smach.StateMachine.add("INITIALIZE",
+            smach.StateMachine.add("INITIALIZE", 
                                     states.Initialize(robot),
                                     transitions={   'initialized':  'RECEIVE_PACKAGE',
                                                     'abort':        'Aborted'})
 
 
-            smach.StateMachine.add("RECEIVE_PACKAGE",
+            smach.StateMachine.add("RECEIVE_PACKAGE", 
                                     ReceivePackage(robot),
                                     transitions={   'succeeded': 'GIVE_PACKAGE',
                                                     'failed':    'GIVE_PACKAGE'})
 
-            smach.StateMachine.add("GIVE_PACKAGE",
+            smach.StateMachine.add("GIVE_PACKAGE", 
                                     GivePackage(robot),
                                     transitions={   'succeeded': 'Done',
                                                     'failed':    'Done'})
@@ -351,6 +351,6 @@ class ChallengeDemo2014(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    rospy.init_node('challenge_demo_exec')
+    rospy.init_node('challenge_demo_2014_exec')
 
     startup(ChallengeDemo2014)

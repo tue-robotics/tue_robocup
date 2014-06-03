@@ -1,4 +1,4 @@
-challenge_demo
+challenge_demo_2014
 ===================
 Responsible: Ramon
 -------------------
@@ -12,7 +12,7 @@ run the challenge with amigo-core
 **amigo1:**
 
 - start the webserver for this challenge:
-    `roslaunch challenge_demo start_real.launch`
+    `roslaunch challenge_demo_2014 start.launch`
 
 - if the Hokuyo node gives an error:
     - read the error and try to fix it
@@ -25,4 +25,4 @@ run the challenge with amigo-core
 
 **amigo3:**
 
-- `rosrun rosrun challenge_demo external_trigger.py`
+- `rosrun rosrun challenge_demo_2014 external_trigger.py`

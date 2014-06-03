@@ -10,9 +10,12 @@
 /*global $:false */
 
 // configuration
-var rosUrl = 'ws://' + window.location.hostname + ':9090';
+//var rosUrl = 'ws://' + window.location.hostname + ':9090';
+var rosUrl = 'ws://192.168.2.91:9090';
 var pingInterval = 5000;  // ms. The time between pings
 var pingTimeout = 2000;     // ms. If ros doesn't respond within this period of time, close the connection
+
+var pingHistory = [];
 
 // global variables
 var ros;
@@ -61,6 +64,7 @@ function initConnectionManager() {
   });
 
   ros.addListener('ping.ok', function(e) {
+    pingHistory.push(e);
     console.log('rosbridge ping with %i ms', e);
     modalReconnect.modal('hide');
   });
@@ -92,10 +96,10 @@ function initPingService() {
 }
 
 function pingNodesAlive() {
-
+  
   var request = new ROSLIB.ServiceRequest({});
   var start = new Date();
-
+  
   setTimeout(function() {
     if (start != -1) { // check if already received a response
       ros.emit('ping.timeout', pingTimeout);
