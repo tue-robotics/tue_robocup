@@ -362,8 +362,6 @@ class LearnPersonName(smach.State):
         # self.robot.spindle.high()
         # self.robot.head.reset_position()
 
-        self.robot.speech.speak("Please tell me your name.", block=False)
-
         # ask the name of the user (within 3 tries and within 60 seconds an answer is received)
         self.response = self.ask_user_service_get_learn_person_name("name", 3 , rospy.Duration(60))
             
@@ -1486,17 +1484,17 @@ class DropInBasket(smach.State):
 
         self.robot.spindle.high()
 
-        self.robot.leftArm.send_joint_goal(-0.1, -0.4, 0.2, 1.6, 0.0, 0.5, 0.0, timeout=1.0)
+        self.robot.leftArm.send_joint_goal(-0.1, -0.4, 0.2, 1.6, 0.0, 0.5, 0.0, timeout=5.0)
 
-        self.robot.leftArm.send_joint_goal(-0.3, -0.2, 0.7, 1.8, 0.0, 0.3, 0.6, timeout=1.0)
+        self.robot.leftArm.send_joint_goal(-0.3, -0.2, 0.7, 1.8, 0.0, 0.3, 0.6, timeout=5.0)
 
-        self.robot.spindle.send_goal(0.2)
+        self.robot.spindle.send_goal(0.2, timeout= 5.0)
 
-        self.robot.leftArm.send_gripper_goal_open(timeout=1.0)
+        self.robot.leftArm.send_gripper_goal_open(timeout=5.0)
 
         self.robot.spindle.high()
 
-        self.robot.leftArm.send_gripper_goal_close(timeout=1.0)
+        self.robot.leftArm.send_gripper_goal_close(timeout=5.0)
 
         self.robot.leftArm.reset_arm()
 
@@ -2147,8 +2145,8 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    # initial_state = None
-    initial_state = 'FIND_DRINKS_CONTAINER'
+    initial_state = None
+    # initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
 
