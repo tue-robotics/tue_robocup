@@ -503,7 +503,12 @@ class Arms(object):
         current_ac.send_goal(traj_goal)
 
         if timeout == 0.0:
-            return True
+            current_ac.wait_for_result(rospy.Duration(0.01))
+            if current_ac.get_state() == GoalStatus.REJECTED:
+                rospy.logwarn("Infeasible joint goal {0}".format(traj_goal))
+                return False
+            else:
+				return True
         else:
             current_ac.wait_for_result(rospy.Duration(timeout))
             if current_ac.get_state() == GoalStatus.SUCCEEDED:
@@ -541,7 +546,12 @@ class Arms(object):
         current_ac.send_goal(traj_goal)
 
         if timeout == 0.0:
-            return True
+            current_ac.wait_for_result(rospy.Duration(0.01))
+            if current_ac.get_state() == GoalStatus.REJECTED:
+                rospy.logwarn("Infeasible joint goal {0}".format(traj_goal))
+                return False
+            else:
+				return True
         else:
             current_ac.wait_for_result(rospy.Duration(timeout))
             if current_ac.get_state() == GoalStatus.SUCCEEDED:
