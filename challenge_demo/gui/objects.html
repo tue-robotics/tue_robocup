@@ -53,6 +53,8 @@
         <script id="objects-template" type="text/x-handlebars-template">
           {{#each this}}
             <button type="button" class="btn btn-lg btn-block" style="background-color: {{color}}">{{name}}</button>
+          {{else}}
+            <button type="button" class="btn btn-lg btn-block" disabled="disabled">No objects found</button>
           {{/each}}
         </script>
 

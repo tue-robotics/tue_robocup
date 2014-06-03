@@ -16,5 +16,6 @@ while not rospy.is_shutdown():
     sample_size = random.randint(1,len(objects))
     msg.data = "|".join(random.sample(objects,sample_size))
     pub.publish(msg)
-    rospy.sleep(0.2)
+    print msg
+    rospy.sleep(0.5)
 
