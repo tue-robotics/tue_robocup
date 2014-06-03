@@ -1,8 +1,4 @@
 <deps>
-    <stack name="maluuba_ros"
-           type="git"
-           source="https://github.com/yol/maluuba_ros"
-           local-path="yol-ros-pkg"/>
+    <library name="ros-groovy-rosbridge-suite" type="system"/>
+    <library name="ros-groovy-mjpeg-server" type="system"/>
 </deps>
-
-
