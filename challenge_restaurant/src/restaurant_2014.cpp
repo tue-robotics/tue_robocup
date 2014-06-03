@@ -990,7 +990,8 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1)
     double t_send_goal = ros::Time::now().toSec();
     ac_skill_server_->sendGoal(goal);
     ac_skill_server_->waitForResult(ros::Duration(60.0));
-    if(ac_skill_server_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
+    robot_skill_server::ExecuteResultConstPtr resultptr = ac_skill_server_->getResult();
+    if(resultptr->result != "arrived" )
     {
         ROS_WARN("Could not reach base pose within 60 [s]");
         // Administration
@@ -1097,11 +1098,13 @@ bool moveHead(double pan, double tilt, bool block = true)
     //! Add head reference action
     double t_start = ros::Time::now().toSec();
     amigo_head_ref::HeadRefGoal head_ref;
-    head_ref.goal_type = 1; // 1: pan tilt, 0 keep tracking
+    head_ref.goal_type = 1; // 1: pan tilt, 0 LOOKAT
     head_ref.pan = pan;
+    head_ref.keep_tracking = false;
     head_ref.tilt = tilt;
     ac_head_ref_->sendGoal(head_ref);
     if (block) ac_head_ref_->waitForResult(ros::Duration(3.0));
+    //ac_head_ref_->sendGoalAndWait(head_ref, ros::Duration(3.0));
 
     if (ac_head_ref_->getState() != actionlib::SimpleClientGoalState::SUCCEEDED)
     {
