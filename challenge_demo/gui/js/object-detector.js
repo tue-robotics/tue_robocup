@@ -1,5 +1,19 @@
 var color_map = {};
 
+var known_objects = [
+    "dr_pepper: ",
+    "chewing_gum",
+    "coke",
+    "dr_pepper",
+    "fanta",
+    "milk",
+    "noodles",
+    "peanut_butter",
+    "pills",
+    "sprite",
+    "yoghurt",
+];
+
 $( document ).ready(function() {
 
     var source = $('#objects-template').html();
@@ -28,7 +42,10 @@ $( document ).ready(function() {
             objs = objs.split('|');
         }
 
-        var data = objs.map(function (o) {
+        known_objects = _.union(known_objects, objs);
+        known_objects.sort();
+
+        var data = known_objects.map(function (o) {
             var c;
             if (color_map[o]) {
                 c = color_map[o];
@@ -36,7 +53,7 @@ $( document ).ready(function() {
                 c = color_map[o] =  random_color();
             }
             return {
-                color: c, name: o
+                color: c, name: o, found: objs.indexOf(o)!=-1
             };
         });
         //background-color
@@ -48,10 +65,6 @@ $( document ).ready(function() {
         console.log('click', name);
         trigger.publish({data:name});
     });
-
-    function random_colour(){
-        return '#'+Math.floor(Math.random()*16777215).toString(16);
-    }
 
     var golden_ratio_conjugate = 0.618033988749895;
     var h = Math.random(); // use random start value

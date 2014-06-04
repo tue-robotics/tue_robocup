@@ -46,13 +46,22 @@
         </div>
 
         <div class="container">
-          <h1>asdf</h1>
           <div id='objects-list'></div>
         </div><!-- /.container -->
 
         <script id="objects-template" type="text/x-handlebars-template">
           {{#each this}}
-            <button type="button" class="btn btn-lg btn-block" style="background-color: {{color}}">{{name}}</button>
+            <button type="button" class="btn btn-lg btn-block"
+                    style="background-color: {{color}};
+                    {{#if found}}
+                    opacity: .3;
+                    {{/if}}>
+                    "
+                    {{#if found}}
+                      disabled="disabled"
+                    {{/if}}>
+              {{name}}
+            </button>
           {{else}}
             <button type="button" class="btn btn-lg btn-block" disabled="disabled">No objects found</button>
           {{/each}}
@@ -69,6 +78,7 @@
         <script src="vendor/js/jquery.js"></script>
         <script src="vendor/js/bootstrap.js"></script>
         <script src="vendor/js/handlebars.js"></script>
+        <script src="vendor/js/underscore.js"></script>
 
         <script src="vendor/js/eventemitter2.js"></script>
         <script src="vendor/js/roslib.js"></script>
