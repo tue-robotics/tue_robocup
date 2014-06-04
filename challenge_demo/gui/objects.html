@@ -53,9 +53,9 @@
           {{#each this}}
             <button type="button" class="btn btn-lg btn-block"
                     style="background-color: {{color}};
-                    {{#if found}}
+                    {{#unless found}}
                       opacity: .3;
-                    {{/if}}
+                    {{/unless}}
               ">
               {{name}}
             </button>
