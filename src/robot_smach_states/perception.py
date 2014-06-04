@@ -89,7 +89,7 @@ class Learn_Person(smach.State):
 
             if result == True:
                 self.robot.reasoner.assertz(Compound("learned_person", name_to_learn, Compound("view", "front")))
-            self.robot.speech.speak("Learning succeeded. Now I should recognize you, next time!", block=False)
+            self.robot.speech.speak("Learning succeeded", block=False)
         
         return 'face_learned'
 
