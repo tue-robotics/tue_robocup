@@ -291,7 +291,7 @@ class VisitQueryPoi(smach.StateMachine):
 
 
 class GetObject(smach.StateMachine):
-    def __init__(self, robot, side, roi_query, roi_identifier="Poi", object_query=None, object_identifier="Object", max_duration=rospy.Duration(3600), waittime = 2.5):
+    def __init__(self, robot, side, roi_query, roi_identifier="Poi", object_query=None, object_identifier="Object", max_duration=rospy.Duration(3600)):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
@@ -299,7 +299,6 @@ class GetObject(smach.StateMachine):
         self.roi_query = roi_query
         self.object_query = object_query
         self.roi_identifier =roi_identifier
-        self.waittime = waittime
 
         rospy.logwarn("roi_query = {0}".format(roi_query))
 
@@ -330,7 +329,7 @@ class GetObject(smach.StateMachine):
                                     transitions={   'spoken':'LOOK'})
 
             smach.StateMachine.add('LOOK',
-                                    perception.LookForObjectsAtROI(robot, lookatquery, self.object_query, waittime=self.waittime),
+                                    perception.LookForObjectsAtROI(robot, lookatquery, self.object_query),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'RESET_HEAD_AND_SPINDLE',
