@@ -533,7 +533,7 @@ void driveAroundCrowd()
     // Do a random rotation (to avoid move base 3d problem: path found but robot does not move)
     rotateRobot(90);
     
-    sleep(10);
+    sleep(5);
     
     // Get position
     tf::StampedTransform location_start;
@@ -550,14 +550,14 @@ void driveAroundCrowd()
         double y = 0;
         int fctr = 1;
         int count = 1;
-        while (dx*dx+dy*dy < 1.0 && count < 5)
+        while (dx*dx+dy*dy < 1.0 && count < 2)
         {
             if (count == 1) ROS_INFO("Trying to move around the crowd: attempt %d", count);
             else ROS_WARN("Trying to move around the crowd: attempt %d", count);
 
             // Try to move to this position
-            moveToRelativePosition(2.0, -2.0, -3.14, 60.0);
-			
+            moveToRelativePosition(1.5, -2.5, -3.14, 60.0);
+
             // Get current robot position
             try
             {
@@ -934,7 +934,7 @@ int main(int argc, char **argv) {
             // If the robot did not move for a while
             if (ros::Time::now().toSec() - t_start_no_move > T_MAX_NO_MOVE_BEFORE_TRYING_3D)
             {
-                ROS_INFO("left_elevator_ : %i!" , left_elevator_);
+
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
