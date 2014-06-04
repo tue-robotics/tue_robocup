@@ -281,7 +281,8 @@ class ConfirmPersonDetection(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: ConfirmPersonDetection\n")
 
         # reset robo pose
-        self.robot.spindle.reset()
+        # self.robot.spindle.reset()
+        self.robot.spindle.high()
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
 
         self.robot.speech.speak("Let me make sure there's someone here.", block=False)
@@ -290,7 +291,8 @@ class ConfirmPersonDetection(smach.State):
         detectPersonQ = Conjunction(      Compound('property_expected', 'ObjectID', 'class_label', 'face'),
                                           Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
                                           Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')),
-                                          Compound('not', Compound('confirmed', 'Waypoint')))
+                                          # Compound('not', Compound('confirmed', 'ObjectID'))
+                                          )
 
         # start face segmentation node
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
@@ -302,10 +304,9 @@ class ConfirmPersonDetection(smach.State):
             self.robot.speech.speak("I was not able to start face segmentation.")
 
         # wait until the query detected person is true, or 10 second timeout
-        wait_machine = Wait_query_true(self.robot, detectPersonQ, 8)
+        wait_machine = Wait_query_true(self.robot, detectPersonQ, 6)
         # TODO TEST IF I CAN REDUCE THIS TIME
         wait_result = wait_machine.execute()
-
 
         # turn off face segmentation
         rospy.loginfo("Face Segmentation will be stopped now")
@@ -319,10 +320,11 @@ class ConfirmPersonDetection(smach.State):
         # if the query timed out...
         if wait_result == 'timed_out':
             self.robot.speech.speak("I guess i was wrong.", block=False)
-            return "not_found"
+            rospy.loginfo("\t\t[Cocktail Party] No faces were found in front of Amigo.\n")
+            return 'not_found'
         elif wait_result == 'preempted':
             self.robot.speech.speak("Waiting for person was preemted.", block=False)
-            return "not_found"
+            return 'not_found'
         # if the query succeeded
         elif wait_result == 'query_true':
             rospy.loginfo("\t\t[Cocktail Party] Person found!\n")
@@ -330,18 +332,19 @@ class ConfirmPersonDetection(smach.State):
             result = self.robot.reasoner.query(detectPersonQ)
 
             if result:
-                x,y,z = result[0]["X"],result[0]["Y"],result[0]["Z"]
+                # SELECT THE ONE THATS CLOSEST TO AMIGO, NOT JUST THE FIRST
+                x,y,z = result[0]['X'],result[0]['Y'],result[0]['Z']
 
                 lookat_point = msgs.PointStamped(x,y,z)
 
                 rospy.loginfo("\t\t[Cocktail Party] Looking at person's face at ({0}, {1}, {2})\n".format(x, y, z))
                 self.robot.head.send_goal(lookat_point, timeout=0)
             else: 
-                rospy.logwarn("\t\t[Cocktail Party] No face found in front of amigo\n")
+                rospy.logwarn('\t\t[Cocktail Party] No face found in front of amigo\n')
             
-            objectID = result[0]['ObjectID']
-            self.robot.reasoner.query(Compound('assert', Compound('confirmed', objectID)))
-            return "found"
+            # objectID = result[0]['ObjectID']
+            # self.robot.reasoner.query(Compound('assert', Compound('confirmed', objectID)))
+            return 'found'
 
 
 #########################################################################################
@@ -350,7 +353,7 @@ class ConfirmPersonDetection(smach.State):
 class LearnPersonName(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
-                                outcomes=["learned", "failed"],
+                                outcomes=['learned', 'failed'],
                                 output_keys=['personName_out'])
 
         self.robot = robot
@@ -361,20 +364,16 @@ class LearnPersonName(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LearnPersonName\n")
         
-        # reset pose
-        # self.robot.spindle.high()
-        # self.robot.head.reset_position()
-
         # ask the name of the user (within 3 tries and within 60 seconds an answer is received)
-        self.response = self.ask_user_service_get_learn_person_name("name", 3 , rospy.Duration(60))
+        self.response = self.ask_user_service_get_learn_person_name('name', 3 , rospy.Duration(60))
             
         # test if the name is allowed / exists
         for x in range(0,len(self.response.keys)):
-            if self.response.keys[x] == "answer":
+            if self.response.keys[x] == 'answer':
                 response_answer = self.response.values[x]
 
         # if no answer was found / unsupported name
-        if response_answer == "no_answer" or response_answer == "wrong_answer":
+        if response_answer == 'no_answer' or response_answer == 'wrong_answer':
             if self.person_learn_failed == 2:
                 self.robot.speech.speak("I will call you David")
                 response_answer = "david"
@@ -393,15 +392,16 @@ class LearnPersonName(smach.State):
         self.robot.speech.speak("Hello " + str(response_answer) + "!")
 
         # Person's name successfully learned
-        return "learned"
+        return 'learned'
 
 
 #########################################################################################
 
+
 class AskDrink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
-                                outcomes=["done", "failed"],
+                                outcomes=['done', 'failed'],
                                 input_keys=['personName_in'])
 
         self.robot = robot
@@ -413,18 +413,18 @@ class AskDrink(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: AskDrink\n")
 
         # ask the name of the drink
-        self.response = self.ask_user_service_get_drink("drink_cocktail", 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
+        self.response = self.ask_user_service_get_drink('drink_cocktail', 3 , rospy.Duration(60))  # This means that within 3 tries and within 60 seconds an answer is received. 
             
         # determine if the answer is allowed
         for x in range(0,len(self.response.keys)):
-            if self.response.keys[x] == "answer":
+            if self.response.keys[x] == 'answer':
                 response_answer = self.response.values[x]
 
         # if the answer is not allwed just assume another possible drink
-        if response_answer == "no_answer" or  response_answer == "wrong_answer":
+        if response_answer == 'no_answer' or  response_answer == 'wrong_answer':
             if self.drink_learn_failed == 2:
                 self.robot.speech.speak("I will just bring you a seven up")
-                response_answer = "seven_up"
+                response_answer = 'seven_up'
                 self.drink_learn_failed = 3
             elif self.drink_learn_failed == 1:
                 self.robot.speech.speak("I will just bring you a milk")
@@ -432,11 +432,11 @@ class AskDrink(smach.State):
                 self.drink_learn_failed = 2
             elif self.drink_learn_failed == 0:
                 self.robot.speech.speak("I will just bring you a coke")
-                response_answer = "coke"
+                response_answer = 'coke'
                 self.drink_learn_failed = 1
             else:
                 self.robot.speech.speak("I will just bring you a coke")
-                response_answer = "coke"
+                response_answer = 'coke'
 
         # get Amigo's current location and rotation
         amigoPose = self.robot.base.location
@@ -452,7 +452,6 @@ class AskDrink(smach.State):
         lastLocID = "{0}_{1}_{2}".format(locX, locY, locZ)
         
         # save the requested drink
-        # assert( goal( serve, UniqueID, Person, Drink, Person Last Known Location, Carrying the drink))
         self.robot.reasoner.query(  Compound('assert', 
                                     Compound('goal',
                                     Compound('serve', uniqueID, userdata.personName_in, response_answer, Compound('pose_2d', locX, locY, locZ)))))
@@ -462,7 +461,7 @@ class AskDrink(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] I'm getting a {0} for {1}".format(response_answer,userdata.personName_in))
 
-        return "done"
+        return 'done'
 
 
 #########################################################################################
@@ -560,49 +559,66 @@ class NavToWavingPerson(smach.State):
         # query the number of current orders
         goals = self.robot.reasoner.query(Compound("goal", "X"))
         
+        # In case Amigo still has more people to visit but cannot take more orders
         if len(goals) >= MAX_SIMULTANEOUS_ORDERS:
             rospy.loginfo("\t\t[Cocktail Party] Maximum number of simultaneous orders reached ({0})\n". format(len(goals)))
             return 'max_orders'
 
         # compose person query
-        qPeopleWaving = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
+        peopleWavingQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
                                     Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')),
                                     Compound('not', Compound('visited', 'ObjectID')),
                                     Compound('not', Compound('ordered', 'ObjectID')))
 
         # get results from the query
-        goal_answers = self.robot.reasoner.query(qPeopleWaving)
+        peopleWaving = self.robot.reasoner.query(peopleWavingQ)
+
 
         # if there is no location associated with lookout points
-        if not goal_answers:
+        if not peopleWaving:
+
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
-            return "visited_all"
-
-        rospy.loginfo("\t\t[Cocktail Party] I found {0} person(s)\n". format(len(goal_answers)))
-
-        # for now, take the first goal found
-        goal_answer = goal_answers[0]
-
-        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Z"]))
-        waypointName = goal_answer["ObjectID"]
-
-        # Use the lookat query
-        nav = NavigateGeneric(self.robot, lookat_query = qPeopleWaving)
-        nav_result = nav.execute()
-
-        # assert that this location has been visited
-        self.robot.reasoner.query(Compound('assert', Compound('visited', waypointName)))
-        self.robot.reasoner.query(Compound('assert', Compound('ordered', waypointName)))
-
-        # If nav_result is unreachable DO NOT stop looking, there are more options
-        if nav_result == 'unreachable':                    
-            return 'going'
-        elif nav_result == 'preempted':
-            return 'going'
+            return 'visited_all'
         else:
-            return 'arrived'
+
+            rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s). Going to visit the first in the list.\n". format(len(peopleWaving)))
+
+            # If there is more than 1 result, force a query that only returns the first result
+            #   otherwise i don't know which one the nav generic will choose
+            if len(peopleWaving) > 1:
+                selectedID = peopleWaving[0]["ObjectID"]
+
+                peopleWavingQ = Conjunction(Compound('property_expected', selectedID, 'class_label', 'validated_person'),
+                                            Compound('property_expected', selectedID, 'position', Sequence('X','Y','Z')),
+                                            Compound('not', Compound('visited', selectedID)),
+                                            Compound('not', Compound('ordered', selectedID)))
+                objectID = selectedID
+            else:
+                objectID = peopleWaving[0]["ObjectID"]
+
+            # take the first goal found
+            # goal = (float(peopleWaving[0]["X"]), float(peopleWaving[0]["Y"]), float(peopleWaving[0]["Z"]))
+
+            # Use the lookat query
+            nav = NavigateGeneric(self.robot, lookat_query=peopleWavingQ)
+            navResult = nav.execute()
+
+            # assert that this location has been visited
+            rospy.loginfo("\t\t[Cocktail Party] Asserting as visited: {0}\n".format(objectID))
+            self.robot.reasoner.query(Compound('assert', Compound('visited', objectID)))
+            self.robot.reasoner.query(Compound('assert', Compound('ordered', objectID)))
+
+            # If nav_result is unreachable DO NOT stop looking, there are more options
+            if navResult == 'unreachable':                    
+                return 'going'
+            elif navResult == 'preempted':
+                return 'going'
+            else:
+                return 'arrived'
+
 
 #########################################################################################
+
 
 class NavToLastKnowLoc(smach.State):
     def __init__(self, robot):
@@ -636,7 +652,7 @@ class NavToLastKnowLoc(smach.State):
         else:    
             self.resetVisited = 0
 
-            self.robot.speech.speak("Going to the place I last saw people.", block=False)
+            self.robot.speech.speak("I'm going to the place I last saw people.", block=False)
 
             # take the first goal found
             goal_answer = lastLoc[0]
@@ -1015,9 +1031,8 @@ class PrepareDelivery(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: PrepareDelivery\n")
 
-        self.robot.head.reset_position()
-        self.robot.spindle.reset()
         self.robot.spindle.high()
+        self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
 
         self.robot.speech.speak("Let me se if i can find the correct person here.", block=False)
 
@@ -1270,38 +1285,50 @@ class NavToDetectedPerson(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToDetectedPerson\n")
 
-        person_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "validated_person"),
-                                    Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
-                                    Compound("not", Compound("visited", "ObjectID"),
-                                    # Compound("not", Compound("approached", "ObjectID"))
-                                    ))
+        detectedPersonQ = Conjunction(  Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
+                                        Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')),
+                                        Compound('not', Compound('visited', 'ObjectID')))
 
         # get results from the query
-        queryRes = self.robot.reasoner.query(person_query)
+        detectedPerson = self.robot.reasoner.query(detectedPersonQ)
 
         # if there is no location associated with lookout points say it
-        if not queryRes:
+        if not detectedPerson:
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
             return "visited_all"
         else:
-            rospy.loginfo("\t\t[Cocktail Party] I found {0} person(s)\n". format(len(queryRes)))
-            
-            waypointName = queryRes[0]["ObjectID"]
+
+            rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s)\n". format(len(detectedPerson)))
+
+            # If there is more than 1 result, force a query that only returns the first result
+            #   otherwise i don't know which one the nav generic will choose
+            if len(detectedPerson) > 1:
+                selectedID = detectedPerson[0]["ObjectID"]
+
+                detectedPersonQ = Conjunction(Compound('property_expected', selectedID, 'class_label', 'validated_person'),
+                                            Compound('property_expected', selectedID, 'position', Sequence('X','Y','Z')),
+                                            Compound('not', Compound('visited', selectedID)))
+
+                objectID = selectedID
+            else:
+                objectID = detectedPerson[0]['ObjectID']
+
+            # objectID = detectedPerson[0]['ObjectID']
 
             # Use the lookat query
-            nav = NavigateGeneric(self.robot, lookat_query = person_query)
+            nav = NavigateGeneric(self.robot, lookat_query = detectedPersonQ)
             nav_result = nav.execute()
 
             # assert that this location has been visited
-            self.robot.reasoner.query(Compound("assert", Compound("visited", waypointName)))
-            # self.robot.reasoner.query(Compound("assert", Compound("approached", waypointName)))
+            self.robot.reasoner.query(Compound('assert', Compound('visited', objectID)))
+            # self.robot.reasoner.query(Compound('assert', Compound('approached', objectID)))
 
-            if nav_result == "unreachable":                    
-                return "unreachable"
-            elif nav_result == "preempted":
-                return "unreachable"
+            if nav_result == 'unreachable':                    
+                return 'unreachable'
+            elif nav_result == 'preempted':
+                return 'unreachable'
 
-            return "arrived"
+            return 'arrived'
 
 #########################################################################################
 
@@ -2187,15 +2214,15 @@ if __name__ == '__main__':
                                 Compound('goal',
                                 Compound('serve', 'william_coffee', 'william', 'orange_drink', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
 
-        amigo.reasoner.query(   Compound("assert", Compound("carrying", Compound("drink", "coke", "basket"))))
+        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'basket'))))
 
-        amigo.reasoner.query(   Compound("assert", Compound("carrying", Compound("drink", "cup", "right_hand"))))
-
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '2.5071_1.2574_0.0'), Sequence('2.5071', '1.2574', '0.0'))))
+        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'cup', 'right_hand'))))
 
         amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '3.0161_0.9186_0.0'), Sequence('3.0161', '0.9186', '0.0'))))
+                                Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
+
+        amigo.reasoner.query(   Compound('assert', 
+                                Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Sequence('4.832', '0.134', '0.0'))))
 
 
     introserver = smach_ros.IntrospectionServer('SM_TOP', machine, '/SM_ROOT_PRIMARY')
