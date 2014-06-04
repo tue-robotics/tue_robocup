@@ -1103,10 +1103,8 @@ bool moveHead(double pan, double tilt, bool block = true)
     head_ref.pan = pan;
     head_ref.keep_tracking = false;
     head_ref.tilt = tilt;
-    //ac_head_ref_->sendGoal(head_ref);
-    //if (block) ac_head_ref_->waitForResult(ros::Duration(3.0));
     if (block) {
-		ac_head_ref_->sendGoalAndWait(head_ref, ros::Duration(2.0));
+		ac_head_ref_->sendGoalAndWait(head_ref, ros::Duration(3.0));
 	}
     else {
 		ac_head_ref_->sendGoal(head_ref);

@@ -30,8 +30,5 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
-#rosbuild_add_executable(restaurant_simple src/restaurant_simple.cpp)
-#rosbuild_add_executable(restaurant_gmap src/restaurant_gmap.cpp)
 rosbuild_add_executable(restaurant src/restaurant.cpp)
 rosbuild_add_executable(restaurant_2014_head src/restaurant_2014_head.cpp)
-#rosbuild_add_executable(test_speech src/test_speech.cpp)
