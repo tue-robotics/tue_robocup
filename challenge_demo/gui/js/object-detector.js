@@ -61,7 +61,7 @@ $( document ).ready(function() {
     }
 
     obj_list.on('click', 'button', function (e) {
-        var name = $(e.currentTarget).html();
+        var name = $(e.currentTarget).html().trim();
         console.log('click', name);
         trigger.publish({data:name});
     });
