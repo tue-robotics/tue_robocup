@@ -241,7 +241,7 @@ class Perception(object):
             self.sv_bin_detector = rospy.ServiceProxy("/set_roi_bin_detection", pein_srvs.srv.FindObjInRoi)
             response = self.sv_bin_detector(request)
         else:
-            rospy.logerr("Laser service not available: {0}".format(e))
+            rospy.logerr("Laser service not available")
             return False
 
         return response
