@@ -1,7 +1,7 @@
 var color_map = {};
 
 var known_objects = [
-    "dr_pepper: ",
+    "dr_pepper",
     "chewing_gum",
     "coke",
     "dr_pepper",
