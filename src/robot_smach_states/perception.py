@@ -647,7 +647,7 @@ class CheckForFaces(smach.State):
             self.robot.head.look_up(tilt_vel=0.75)
             return "failed"
 
-        wait_machine = reasoning.Wait_query_true(self.robot, query_detect_person, 4)
+        wait_machine = reasoning.Wait_query_true(self.robot, query_detect_person, 2)
         wait_result = wait_machine.execute()
 
         rospy.loginfo("Face segmentation will be stopped now")
@@ -680,7 +680,6 @@ class CheckForFaces(smach.State):
             self.robot.head.send_goal(lookat_point,timeout=0)
 
             return 'detected'
-
 
 
 class StandingPeopleDetectorWithFace(smach.StateMachine):
@@ -724,7 +723,7 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
                                                     "goal_not_defined":'SAY_UNREACHABLE_CHECKING_PERSON'})
 
             smach.StateMachine.add("SAY_UNREACHABLE_CHECKING_PERSON",
-                                    human_interaction.Say(robot,"I was not able to check a possible found person", block=False),
+                                    human_interaction.Say(robot,"I was not able to check a possible person", block=False),
                                     transitions={'spoken':'ASSERT_PERSON_UNREACHABLE'})
 
             smach.StateMachine.add("ASSERT_PERSON_UNREACHABLE",
