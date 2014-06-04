@@ -100,7 +100,7 @@ bool in_elevator_ = false;
 double t_pause_ = 0;
 bool emergency_button_pressed_ = true;
 bool check_elevator_ = true; // only check every second time laser data is received
-
+unsigned int marker_id_ = 0;
 
 void rotateRobot(double desired_angle)
 {
@@ -392,7 +392,47 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
 
 }
 
+void createMarkerWithLabel(std::string label, RobotPose& pose, double r, double g, double b, visualization_msgs::MarkerArray& array)
+{
 
+    tf::Quaternion q;
+    q.setRPY(0, 0, pose.phi);
+
+    // Geometric marker
+    visualization_msgs::Marker marker;
+    marker.ns = "restaurant/location_markers";
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.scale.x = 0.25;
+    marker.scale.y = 0.25;
+    marker.scale.z = 0.25;
+    marker.header.frame_id = "/map";
+    marker.id = marker_id_++;
+    marker.color.r = r;
+    marker.color.g = g;
+    marker.color.b = b;
+    marker.color.a = 1;
+    marker.pose.position.x = pose.x;
+    marker.pose.position.y = pose.y;
+    marker.pose.orientation.w = q.getW();
+    marker.pose.orientation.x = q.getX();
+    marker.pose.orientation.y = q.getY();
+    marker.pose.orientation.z = q.getZ();
+    array.markers.push_back(marker);
+
+    // Text label
+    visualization_msgs::Marker marker_txt = marker;
+    marker_txt.scale.z = 0.1;
+    marker_txt.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    marker_txt.text = label;
+    marker_txt.id = 10;
+    marker_txt.pose.position.z *= 1.5;
+    array.markers.push_back(marker_txt);
+
+    ROS_INFO("Added marker for %s @ (%f,%f,%f)", label.c_str(),
+             marker.pose.position.x, marker.pose.position.y, pose.phi);
+
+}
 
 void moveToRelativePosition(double x, double y, double phi, double dt)
 {
@@ -409,8 +449,15 @@ void moveToRelativePosition(double x, double y, double phi, double dt)
     goal_pos_in.pose.orientation.w = q.getW();
     transformPoseStamped(goal_pos_in, goal_pos_map, "/map");
     moveBase(goal_pos_map.pose.position.x, goal_pos_map.pose.position.y, tf::getYaw(goal_pos_map.pose.orientation), 0.5, dt);
+    
+    //RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), location.getRotation().getAngle());
+    RobotPose rp_loc(goal_pos_map.pose.position.x, goal_pos_map.pose.position.y, tf::getYaw(goal_pos_map.pose.orientation));
+    
+    // Publish marker
+    visualization_msgs::MarkerArray marker_array;
+    createMarkerWithLabel("FollowMe_LOC", rp_loc, 1, 0, 1, marker_array);
+    location_marker_pub_.publish(marker_array);
 }
-
 
 void leaveElevator()
 {
@@ -485,7 +532,9 @@ void driveAroundCrowd()
 
     // Do a random rotation (to avoid move base 3d problem: path found but robot does not move)
     rotateRobot(90);
-
+    
+    sleep(10);
+    
     // Get position
     tf::StampedTransform location_start;
     try
@@ -507,8 +556,8 @@ void driveAroundCrowd()
             else ROS_WARN("Trying to move around the crowd: attempt %d", count);
 
             // Try to move to this position
-            moveToRelativePosition(2.5, fctr*y, -1.57, 45.0);
-
+            moveToRelativePosition(2.0, -2.0, -3.14, 60.0);
+			
             // Get current robot position
             try
             {
@@ -785,6 +834,9 @@ int main(int argc, char **argv) {
     ac_head_ref_->waitForServer();
     ROS_INFO("Connected!");
     moveHead(0, 0, true);
+    
+    //! location markers
+    location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/follow_me/location_markers", 10);
 
     //! Allow for rotations
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
