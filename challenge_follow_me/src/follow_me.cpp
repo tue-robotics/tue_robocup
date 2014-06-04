@@ -589,6 +589,78 @@ void driveAroundCrowd()
 
 }
 
+void driveAroundCrowd2()
+{
+
+    double t_start = ros::Time::now().toSec();
+
+    // Get start position
+    tf::StampedTransform location_start;
+    listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_start);
+    ROS_INFO("Current position is (%f,%f)", location_start.getOrigin().getX(), location_start.getOrigin().getY());
+
+    // Do a random rotation (to avoid move base 3d problem: path found but robot does not move)
+    rotateRobot(90);
+    sleep(5);
+
+    // Get operator estimate position
+    tf::StampedTransform location_operator_behind_crowd;
+    location_operator_behind_crowd = location_start;
+
+
+    try
+    {
+        // Look up transform
+        listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_start);
+        ROS_INFO("Current position is (%f,%f)", location_start.getOrigin().getX(), location_start.getOrigin().getY());
+
+
+
+        // If the robot did barely move: try another set point
+        double dx = 0, dy = 0;
+        double y = 0;
+        int fctr = 1;
+        int count = 1;
+        while (dx*dx+dy*dy < 1.0 && count < 2)
+        {
+            if (count == 1) ROS_INFO("Trying to move around the crowd: attempt %d", count);
+            else ROS_WARN("Trying to move around the crowd: attempt %d", count);
+
+            // Try to move to this position
+            moveToRelativePosition(1.5, -2.5, -3.14, 60.0);
+
+            // Get current robot position
+            try
+            {
+                tf::StampedTransform location_now;
+                listener_->lookupTransform("/map", ROBOT_BASE_FRAME, ros::Time(0), location_now);
+                dx = std::fabs(location_now.getOrigin().getX() - location_start.getOrigin().getX());
+                dy = std::fabs(location_now.getOrigin().getY() - location_start.getOrigin().getY());
+            }
+            catch (tf::TransformException& e) {ROS_WARN("While driving around the crowd: %s", e.what());}
+
+            // Update goal if the robot didn't move
+            y += 0.25;
+            fctr *= -1.0;
+            ++count;
+        }
+
+        if (count == 5) ROS_ERROR("I cannot drive aroud the crowd, I will continue from here");
+
+    }
+    catch (tf::TransformException ex)
+    {
+        ROS_ERROR("No tranform /map - /amigo/base_link: %s", ex.what());
+        moveToRelativePosition(2.5, 0.0, 0.0, 35.0);
+        return;
+    }
+
+    ROS_INFO("Driving around the crowd took %f [s]", ros::Time::now().toSec()-t_start);
+
+
+}
+
+
 
 
 void speechCallback(std_msgs::String res)
