@@ -85,7 +85,7 @@
     </group> <!-- camera -->
 
     <!-- Load reasonable defaults for the relative pose between cameras -->
-    <node pkg="tf" type="static_transform_publisher" name="external_kinect_broadcaster" args="0 0 1.5 0 0 -2.1 /map /external_kinect/openni_rgb_optical_frame 100" />
+    <node pkg="tf" type="static_transform_publisher" name="external_kinect_broadcaster" args="3.2 -1.1 1.5 1.57 0 -2.1 /map /external_kinect/openni_rgb_optical_frame 100" />
     <node pkg="tf" type="static_transform_publisher" name="external_kinect_broadcaster_bl" args="0 0 0 0 0 0 /map /external_kinect/base_link 100" />
 
 </launch>
