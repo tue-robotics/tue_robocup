@@ -205,9 +205,9 @@ class FetchObject(smach.StateMachine):
         query_owner = Conjunction(Compound("current_person", "ObjectID"),
                                   Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
-        query_failure_owner1 = Conjunction(  Compound("=", "Waypoint",        Compound("behind_door", "a")),
+        query_failure_owner1 = Conjunction(  Compound("=", "Waypoint",        Compound("backup_room_owner", "a")),
                                     Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
-        query_failure_owner2 = Conjunction(  Compound("=", "Waypoint",        Compound("behind_door", "b")),
+        query_failure_owner2 = Conjunction(  Compound("=", "Waypoint",        Compound("backup_room_owner", "b")),
                                     Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
         with self:
