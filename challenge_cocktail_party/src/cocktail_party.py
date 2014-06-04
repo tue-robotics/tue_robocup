@@ -26,7 +26,7 @@ from pein_srvs.srv import SetObjects
 ################################# SETUP VARIABLES ######################################
 
 
-MIN_SIMULTANEOUS_ORDERS = 2
+MIN_SIMULTANEOUS_ORDERS = 3
 MAX_SIMULTANEOUS_ORDERS = 3
 TOTAL_ORDERS = 3
 
@@ -484,15 +484,18 @@ class AskDrink(smach.State):
         locPhi = rotation
 
         uniqueID = "{0}_{1}".format(userdata.personName_in, response_answer)
-        lastLocID = "{0}_{1}_{2}".format(locX, locY, locZ)
+        lastLocID = "{0}_{1}_{2}".format(locX, locY, locPhi)
         
         # save the requested drink
         self.robot.reasoner.query(  Compound('assert', 
                                     Compound('goal',
-                                    Compound('serve', uniqueID, userdata.personName_in, response_answer, Compound('pose_2d', locX, locY, locZ)))))
+                                    Compound('serve', uniqueID, userdata.personName_in, response_answer, Compound('pose_2d', locX, locY, rotation)))))
+
+        # self.robot.reasoner.query(  Compound('assert', 
+        #                             Compound('waypoint', Compound('last_known_location', lastLocID), Sequence(locX, locY, rotation))))
 
         self.robot.reasoner.query(  Compound('assert', 
-                                    Compound('waypoint', Compound('last_known_location', lastLocID), Sequence(locX, locY, locZ))))
+                                    Compound('waypoint', Compound('last_known_location', lastLocID), Compound('pose_2d', locX, locY, rotation))))
 
         rospy.loginfo("\t\t[Cocktail Party] I'm getting a {0} for {1}".format(response_answer,userdata.personName_in))
 
@@ -667,9 +670,13 @@ class NavToLastKnowLoc(smach.State):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToLastKnowLoc\n")
 
-        lastLocQ = Conjunction(Compound("=", "Waypoint",  Compound("last_known_location", "ID")),
-                                                        Compound("waypoint", "Waypoint", Sequence("X", "Y", "Z")),
-                                                        Compound("not", Compound("visited", "Waypoint")))
+        # lastLocQ = Conjunction(Compound('=', 'Waypoint', Compound('last_known_location', 'ID')),
+        #                                                  Compound('waypoint', 'Waypoint', Sequence('X', 'Y', 'Z')),
+        #                                                  Compound('not', Compound('visited', 'Waypoint')))
+
+        lastLocQ = Conjunction(Compound('=', 'Waypoint', Compound('last_known_location', 'ID')),
+                                                         Compound('waypoint', 'Waypoint', Compound('pose_2d', 'X', 'Y', 'Phi')),
+                                                         Compound('not', Compound('visited', 'Waypoint')))
 
         lastLoc = self.robot.reasoner.query(lastLocQ)
         
@@ -690,15 +697,20 @@ class NavToLastKnowLoc(smach.State):
             self.robot.speech.speak("I'm going to the place I last saw people.", block=False)
 
             # take the first goal found
-            goal_answer = lastLoc[0]
-            waypointName = goal_answer["Waypoint"]
+            # waypointName = lastLoc[0]["Waypoint"]
 
-             # Use the lookat query
-            nav = NavigateGeneric(self.robot, lookat_query = lastLocQ)
+            goal = (float(lastLoc[0]["X"]), float(lastLoc[0]["Y"]), float(lastLoc[0]["Phi"]))
+
+            # nav = NavigateGeneric(self.robot, lookat_query = lastLocQ)
+            nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
             nav_result = nav.execute()
 
             # assert that this location has been visited
-            self.robot.reasoner.query(Compound("assert", Compound("visited", waypointName)))
+            # self.robot.reasoner.query(Compound('assert', Compound('visited', waypointName)))
+            
+            # changed this to assert all at once, remove this if Amigo goes to the people, instead of the reverse
+            for waypoint in lastLoc:
+                self.robot.reasoner.query(Compound('assert', Compound('visited', waypoint["Waypoint"])))
 
             # If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
             if nav_result == "unreachable":                    
@@ -1515,7 +1527,7 @@ class RetractServedPerson(smach.State):
 
             nServed = float(servedCount[0]["Counter"]) + 1.0
 
-            rospy.loginfo("\t\t[Cocktail Party]Hurray! Another drink was served (total served: {0})\n".format(float(servedCount[0]["Counter"])))
+            rospy.loginfo("\t\t[Cocktail Party]Hurray! Another drink was served (total served: {0})\n".format(nServed))
 
             self.robot.reasoner.query(Compound('retractall', Compound('people_served_count', 'X')))
             self.robot.reasoner.query(Compound('assert',Compound('people_served_count', nServed)))
@@ -1717,7 +1729,7 @@ class HandoverUndeliveredDrinks(smach.StateMachine):
         amigo.reasoner.query(Compound('retractall', Compound('carrying', 'X')))
         amigo.reasoner.query(Compound('retractall', Compound('goal', 'X')))
 
-        rospy.sleep(10)
+        rospy.sleep(5)
 
         return 'done'
 
@@ -2092,11 +2104,6 @@ class CocktailParty(smach.StateMachine):
 
             with deliverDrinksContainer:
 
-                smach.StateMachine.add( 'CHECK_CARRIED_DRINKS',
-                                    checkCarriedDrinks(robot),
-                                    transitions={   'something':'NAV_TO_LAST_KNOWN_LOCATION',
-                                                    'none':'succeeded'})
-
                 # Go to the last person known location
                 smach.StateMachine.add('NAV_TO_LAST_KNOWN_LOCATION',
                                         NavToLastKnowLoc(robot),
@@ -2164,6 +2171,11 @@ class CocktailParty(smach.StateMachine):
                                         transitions={   'done':'CHECK_CARRIED_DRINKS',
                                                         'all_served':'succeeded',
                                                         'failed':'aborted'})
+
+                smach.StateMachine.add( 'CHECK_CARRIED_DRINKS',
+                                    checkCarriedDrinks(robot),
+                                    transitions={   'something':'NAV_TO_DETECTED_PERSON',
+                                                    'none':'succeeded'})
 
             # add find drinks container to the main state machine
             smach.StateMachine.add( 'DELIVER_DRINKS_CONTAINER',
@@ -2291,26 +2303,28 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'david_coke', 'david', 'milk', Compound('pose_2d', '2.5071', '1.2574', '0.0')))))
+                                Compound('serve', 'david_milk', 'david', 'milk', Compound('pose_2d', '2.829', '2.030', '-1.514')))))
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'william_coffee', 'william', 'coke', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
-                                
-                                
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('goal',
-                                Compound('serve', 'william_coffee', 'joshua', 'seven_up', Compound('pose_2d', '3.5161', '1.2186', '0.0')))))
+                                Compound('serve', 'william_coke', 'william', 'coke',  Compound('pose_2d', '2.829', '2.030', '-1.514')))))
 
-        #amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'basket'))))
+        # amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'milk', 'basket'))))
 
-        #amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'cup', 'right_hand'))))
+        # amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'right_arm'))))
 
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
+        # amigo.reasoner.query(   Compound('assert', 
+        #                         Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
+
+        # amigo.reasoner.query(   Compound('assert', 
+        #                         Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Sequence('4.832', '0.134', '0.0'))))
 
         amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Sequence('4.832', '0.134', '0.0'))))
+                                Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
+
+        amigo.reasoner.query(   Compound('assert', 
+                                Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
+
 
 
     introserver = smach_ros.IntrospectionServer('SM_TOP', machine, '/SM_ROOT_PRIMARY')
