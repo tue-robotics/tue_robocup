@@ -299,6 +299,11 @@ class WhatDidYouSay(smach.StateMachine):
         rospy.loginfo("----------- tue_reasoner/tue_knowledge/prolog -------------")
         rospy.loginfo("-------- !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -----------")
         rospy.loginfo("-----------------------------------------------------------")
+
+        navigate_questions_unreachable1 = Conjunction(  Compound("=", "Waypoint", Compound("questions_unreachable", "a")),
+                                                        Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+        navigate_questions_unreachable2 = Conjunction(  Compound("=", "Waypoint", Compound("questions_unreachable", "b")),
+                                                        Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
             
         with self:
 
@@ -318,7 +323,7 @@ class WhatDidYouSay(smach.StateMachine):
                                 DriveToFindPerson(robot),
                                 transitions={   'arrived':'PEOPLE_DETECTION',
                                                 'failed':'DRIVE_TO_FIND_PERSON_LOC',
-                                                'no_waypoint':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+                                                'no_waypoint':'NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE'})
 
             smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
                                     states.Say(robot,"I will ask my questions from here, Please step in front of me", block=True),
@@ -335,7 +340,21 @@ class WhatDidYouSay(smach.StateMachine):
                                     states.StandingPeopleDetectorWithFace(robot, check_all_persons=False, time=4, room='living_room'),
                                     transitions={   'succeeded':'SAY_FIRST_QUESTION',
                                                     'no_person_found':'DRIVE_TO_FIND_PERSON_LOC',
-                                                    'failed':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+                                                    'failed':'NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE'})
+
+            smach.StateMachine.add('NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE',
+                                    states.NavigateGeneric(robot, goal_query=navigate_questions_unreachable1),
+                                    transitions={   "arrived":"SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
+                                                    "unreachable":'NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE_RETRY',
+                                                    "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "goal_not_defined":'NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE_RETRY'})
+
+            smach.StateMachine.add('NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE_RETRY',
+                                    states.NavigateGeneric(robot, goal_query=navigate_questions_unreachable2),
+                                    transitions={   "arrived":"SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
+                                                    "unreachable":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
+                                                    "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
 
             smach.StateMachine.add("SAY_FIRST_QUESTION",
                                     states.Say(robot,"Hello! What is your first question?"),
