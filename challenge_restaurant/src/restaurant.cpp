@@ -157,8 +157,8 @@ void initializeMappings()
      * replace the answer A by B if A is heart twice in a row
      * - allowed are all objects (ordering phase) and the numbers one, two, three (ordering phase)
      */
-    confusion_map_["beer"] = "peanuts";
-    confusion_map_["peanuts"] = "beer";
+    confusion_map_["bar"] = "order";
+    confusion_map_["order"] = "bar";
 
 
     /**
@@ -201,6 +201,7 @@ std::string getCorrectedAnswer(std::string answer)
     // if the previous answer was wrong and the current answer is the same as this wrong answer
     if (!last_answer_correct_ && answer == last_answer_)
     {
+		ROS_WARN("Confusion previous answer was wrong and the current answer is the same. answer is: %s", answer.c_str());
         // see if there is an alternative defined
         if (confusion_map_.find(answer) != confusion_map_.end())
         {
@@ -1677,8 +1678,17 @@ int main(int argc, char **argv) {
 
 				}
 
-				//! If not all orders are completed but all shelfs are visited, try it again
-				if (i == 1 && !deliveredAllOrders()) i = -1;
+				//! If not all orders are completed but all shelfs are visited
+				if (i == 1 && !deliveredAllOrders()) {
+					
+					//! try again the first location
+					i = -1;
+					
+					//! Clearing the world model
+					ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
+					std_srvs::Empty srv;
+					if (!reset_wire_client.call(srv)) ROS_WARN("Failed to clear world model");
+				}
             }
 
         } // Visited both the bar and kitchen shelf
