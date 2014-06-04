@@ -9,6 +9,7 @@ SETUP:
 
 
     amigo1:
+        - rsettings -> set 2D navigation
 
         - amiddle
 
