@@ -1660,7 +1660,7 @@ int main(int argc, char **argv) {
 					std::vector<wire::PropertySet> objects = client.queryMAPObjects("/map");
 
 					// See which objects are found
-					 std::map<std::string, int> obj_id_order_id_map;
+                    std::map<std::string, int> obj_id_order_id_map;
 					std::map<int, std::pair<std::string, std::string> >::iterator it_order = order_map_.begin();
 					for (; it_order != order_map_.end(); ++it_order)
 					{
