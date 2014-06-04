@@ -304,72 +304,25 @@ class WhatDidYouSay(smach.StateMachine):
 
             smach.StateMachine.add("SAY_LOOK_EYES",
                                     states.Say(robot,"I will try to find you", block=False),
-                                    transitions={'spoken':'DRIVE_TO_FIND_PERSON_LOC'})
-
-            smach.StateMachine.add( "DRIVE_TO_FIND_PERSON_LOC",
-                                DriveToFindPerson(robot),
-                                transitions={   'arrived':'RESET_HEAD_SPINDLE',
-                                                'failed':'DRIVE_TO_FIND_PERSON_LOC',
-                                                'no_waypoint':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
+                                    transitions={'spoken':'RESET_HEAD_SPINDLE'})
 
             smach.StateMachine.add("RESET_HEAD_SPINDLE",
                                 states.ResetHeadSpindle(robot),
-                                transitions={   'done':'RESET_REASONER'})
+                                transitions={   'done':'RESET_REASONER'})   
 
             smach.StateMachine.add("RESET_REASONER",
                                 states.ResetReasoner(robot),
-                                transitions={   'done':'PEOPLE_DETECTION'})
+                                transitions={   'done':'DRIVE_TO_FIND_PERSON_LOC'})
 
-            smach.StateMachine.add("PEOPLE_DETECTION",
-                                    states.PeopleDetectorTorsoLaser(robot, time=4, room='living_room'),
-                                transitions={   'done':'CHECK_FOR_PERSON',
-                                                'failed':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
-
-            smach.StateMachine.add( "CHECK_FOR_PERSON",
-                                CheckForPerson(robot),
-                                transitions={   'found':'NAVIGATE_TO_PERSON',
-                                                'not_found':'DRIVE_TO_FIND_PERSON_LOC'})
-
-            question_person_query = Compound("question_person", Compound("point_3d",Sequence("X","Y","Z")))
-
-            smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                #states.NavigateGeneric(robot, lookat_query=general_person_query, xy_dist_to_goal_tuple=(1.0,0)),
-                                states.NavigateGeneric(robot, lookat_query=question_person_query, xy_dist_to_goal_tuple=(0.8,0)),
-                                transitions={   "arrived":"LOOK_AT_PERSON",
-                                                "unreachable":'SAY_PERSON_UNREACHABLE',
-                                                "preempted":'SAY_PERSON_UNREACHABLE',
-                                                "goal_not_defined":'SAY_PERSON_UNREACHABLE'})
-
-            smach.StateMachine.add( "SAY_PERSON_UNREACHABLE",
-                                states.Say(robot,"I failed going to the person", block=False),
-                                transitions={'spoken':'GO_TO_LAST_EXPLORATION_POINT'})
-
-            query_last_exploration_location = Conjunction(Compound("current_exploration_target", "Waypoint"),
-                                                  Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
-            
-            smach.StateMachine.add( "GO_TO_LAST_EXPLORATION_POINT",
-                                states.NavigateGeneric(robot, goal_query=query_last_exploration_location),
-                                transitions={   "arrived":"SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
-                                                    "unreachable":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
-                                                    "preempted":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE',
-                                                    "goal_not_defined":'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
-
-            smach.StateMachine.add('LOOK_AT_PERSON',
-                                states.LookAtPoint(robot, lookat_query=question_person_query),
-                                transitions={   'looking':'SAY_FIRST_QUESTION',
-                                                'no_point_found':'SAY_FIRST_QUESTION',
-                                                'abort':'SAY_FIRST_QUESTION'})
-
+            smach.StateMachine.add( "DRIVE_TO_FIND_PERSON_LOC",
+                                DriveToFindPerson(robot),
+                                transitions={   'arrived':'PEOPLE_DETECTION',
+                                                'failed':'DRIVE_TO_FIND_PERSON_LOC',
+                                                'no_waypoint':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
 
             smach.StateMachine.add( "SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE",
                                     states.Say(robot,"I will ask my questions from here, Please step in front of me", block=True),
                                     transitions={'spoken':'WAIT_FOR_PERSON'})
-
-
-
-            # smach.StateMachine.add("STEP_IN_FRONT",
-            #                         states.Say(robot,"Please step in front of me so that you can ask some questions"),
-            #                         transitions={'spoken':'WAIT_FOR_PERSON'})
 
             smach.StateMachine.add("WAIT_FOR_PERSON",
                                     WaitForPerson(robot),
@@ -377,6 +330,12 @@ class WhatDidYouSay(smach.StateMachine):
                                                  'waiting':'SAY_FIRST_QUESTION',
                                                  'timed_out':'SAY_FIRST_QUESTION',
                                                  'failed':'SAY_FIRST_QUESTION'})
+
+            smach.StateMachine.add("PEOPLE_DETECTION",
+                                    states.StandingPeopleDetectorWithFace(robot, check_all_persons=False, time=4, room='living_room'),
+                                    transitions={   'succeeded':'SAY_FIRST_QUESTION',
+                                                    'no_person_found':'DRIVE_TO_FIND_PERSON_LOC',
+                                                    'failed':'SAY_ASK_QUESTIONS_TO_PERSON_UNREACHABLE'})
 
             smach.StateMachine.add("SAY_FIRST_QUESTION",
                                     states.Say(robot,"Hello! What is your first question?"),
