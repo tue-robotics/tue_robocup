@@ -116,9 +116,9 @@ class PickAndPlace(smach.StateMachine):
             smach.StateMachine.add("DROPOFF_OBJECT",
                                     DropObject(arm, robot, query_dropoff_loc),
                                     transitions={   'succeeded':'RESET',
-                                                    'failed':'Failed',
+                                                    'failed':'DROPOFF_OBJECT_TRASHBIN',
                                                     'target_lost':'DROPOFF_OBJECT_TRASHBIN'})
-            ''' In case of failed: the DropObject state has already done a human handover at the dropoff location
+            ''' In case of failed: the DropObject state has already done a human handover at the dropoff location (ERIK: ??? GIVE AMIGO THE UNKNOWN OBJECT AND HE WILL PUT IT IN THE TRASHBIN)
                 In case of target_lost, it cannot go to the dropoff location but has to hand over the object anyway in order to proceed to the next task'''
 
             smach.StateMachine.add("DROPOFF_OBJECT_TRASHBIN",
