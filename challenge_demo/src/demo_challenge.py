@@ -38,7 +38,7 @@ class WaitForOwner(smach.State):
 
         starttime = rospy.Time.now()
         person_found = False
-
+        
         while (not person_found and (rospy.Time.now() - starttime) < rospy.Duration(self.timeout) and not rospy.is_shutdown()):
 
             ''' Do query '''
@@ -92,7 +92,7 @@ class WaitForExternalCamera(smach.State):
 
     def execute(self, gl):
 
-        answers = self.robot.reasoner.query(object_query)
+        answers = self.robot.reasoner.query(self.object_query)
 
         if not answers:
             rospy.logerr("Dont know which object to get")
@@ -187,8 +187,8 @@ class FetchObject(smach.StateMachine):
     def __init__(self, robot, arm):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        #self.robot = robot
-        #self.arm = arm
+        self.robot = robot
+        self.arm = arm
 
         roi_query = Conjunction(    Compound("=", "ROI_Location", Compound("demo_object_location", "W")),
                                     Compound("point_of_interest", "ROI_Location", Compound("point_3d", "X", "Y", "Z")))
@@ -219,11 +219,11 @@ class FetchObject(smach.StateMachine):
                                                     'fanta'     : 'ASSERT_FANTA',
                                                     'preempted' : 'failed'})
 
-            @smach.cb_interface(input_keys=['object'],
+            @smach.cb_interface(input_keys=[],
                     output_keys=[],
                     outcomes=['succeeded'])
-            def assert_object(ud):
-                desired_object = ud.object
+            def assert_object(ud, obj):
+                desired_object = obj
 
                 self.robot.reasoner.query(Compound("retractall", Compound("demo_get_object", "X")))
                 self.robot.reasoner.assertz(Compound("demo_get_object", str(desired_object)))
@@ -247,7 +247,7 @@ class FetchObject(smach.StateMachine):
                                                     'not_present':'SAY_NOT_PRESENT',
                                                     'failed'    : 'SAY_FAIL'})
 
-            smach.StateMachine.add('SAY_PRESENT', states.Say("We still have that in store, I will go and get it", block=False),
+            smach.StateMachine.add('SAY_PRESENT', states.Say(robot, "We still have that in store, I will go and get it", block=False),
                                     transitions={   'spoken'    : 'GET_OBJECT_SHELF'})
 
             smach.StateMachine.add('GET_OBJECT_SHELF',
@@ -257,7 +257,7 @@ class FetchObject(smach.StateMachine):
                                                     'Failed'    : 'SAY_FAIL',
                                                     'Timeout'   : 'SAY_FAIL' })
 
-            smach.StateMachine.add('SAY_NOT_PRESENT', states.Say("That is not in store, I better order it online", block=False),
+            smach.StateMachine.add('SAY_NOT_PRESENT', states.Say(robot, "That is not in store, I better order it online", block=False),
                                     transitions={   'spoken'    : 'GET_OBJECT_DOOR'})
 
             smach.StateMachine.add('GET_OBJECT_DOOR',
