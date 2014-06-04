@@ -122,6 +122,19 @@ class Retract_facts(smach.State):
             self.robot.reasoner.query(Compound("retractall", fact))
         return 'retracted'
 
+class Execute_query(smach.State):
+    def __init__(self, robot, facts):
+        smach.State.__init__(self, outcomes=['executed'])
+        assert hasattr(robot, "reasoner")
+
+        self.robot = robot
+        self.facts = facts
+
+    def execute(self, userdata=None):
+        for fact in self.facts:
+            self.robot.reasoner.query(fact)
+        return 'executed'
+
 class Select_object(smach.State):
     """Selects an object based on some optional criteria and sorting mechanism"""
 
