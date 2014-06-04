@@ -2,9 +2,6 @@
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import smach
-import navigation
-import reasoning
-import human_interaction
 #import object_msgs.msg
 import math
 
@@ -12,7 +9,7 @@ from std_srvs.srv import Empty
 from sensor_msgs.msg import LaserScan
 import geometry_msgs
 
-from psi import Compound, Conjunction, Sequence
+from psi import Compound, Conjunction
 
 import util.reasoning_helpers as urh
 import robot_skills.util.msg_constructors as msgs
@@ -509,10 +506,10 @@ class ToggleDemoLaser(smach.State):
         except rospy.ServiceException:
             return "failed"
 
-class StandingPeopleDetector(smach.State):
+class PeopleDetectorTorsoLaser(smach.State):
     """Enables or disables PeopleDetector"""
     #TODO: If ToggleModules works, make this state a specialization of that
-    def __init__(self, robot, distance_to_walls=0.2, time=None, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
+    def __init__(self, robot, time=None, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
         smach.State.__init__(self, outcomes=["done", "failed"])
         self.robot = robot
         self.time = time
@@ -521,7 +518,7 @@ class StandingPeopleDetector(smach.State):
         self.length_x = length_x
         self.length_y = length_y
         self.length_z = length_z
-        self.distance_to_walls = int(distance_to_walls)  # This is the distance that is retracted from the room dimensions in x and y directions.
+        self.distance_to_walls = 0.2  # This is the distance that is retracted from the room dimensions in x and y directions.
 
     def execute(self, userdata=None):
 
@@ -538,7 +535,7 @@ class StandingPeopleDetector(smach.State):
                 rospy.logerr("Dimensions for room were not found in reasoner!!")
                 return "failed"
 
-            # print "room_dimensions_answers = ", room_dimensions_answers
+            print "room_dimensions_answers = ", room_dimensions_answers
 
             # assumed is that there is only one block per room.
             room_dimensions_answer = room_dimensions_answers[0]
@@ -549,8 +546,8 @@ class StandingPeopleDetector(smach.State):
             y_max = float(room_dimensions_answer["Ymax"])
             z_max = float(room_dimensions_answer["Zmax"])
 
-            # print "\n x_min = ", x_min, "\n"
-            # print "\n x_max = ", x_max, "\n"
+            print "\n x_min = ", x_min, "\n"
+            print "\n x_max = ", x_max, "\n"
             
             new_pointstamped = geometry_msgs.msg.PointStamped()
             new_pointstamped.point.x = (x_max-x_min)*0.5 + x_min
@@ -558,15 +555,15 @@ class StandingPeopleDetector(smach.State):
             new_pointstamped.point.z = (z_max-z_min)*0.5 + z_min
             new_pointstamped.header.frame_id = '/map'         
 
-            # print "\n new_pointstamped = ", new_pointstamped, "\n"
+            print "\n new_pointstamped = ", new_pointstamped, "\n"
 
             new_length_x = x_max-x_min - 2 * self.distance_to_walls
             new_length_y = y_max-y_min - 2 * self.distance_to_walls
             new_length_z = z_max-z_min - 2 * self.distance_to_walls
 
-            # print "\n new_length_x = ", new_length_x, "\n"
-            # print "\n new_length_y = ", new_length_y, "\n"
-            # print "\n new_length_z = ", new_length_z, "\n"
+            print "\n new_length_x = ", new_length_x, "\n"
+            print "\n new_length_y = ", new_length_y, "\n"
+            print "\n new_length_z = ", new_length_z, "\n"
 
             self.robot.perception.people_detection_torso_laser(new_pointstamped, self.time, abs(new_length_x), abs(new_length_y), abs(new_length_z))
 
@@ -577,198 +574,3 @@ class StandingPeopleDetector(smach.State):
             return "failed"
 
         return "done"
-
-class CheckForPerson(smach.State):
-    def __init__(self, robot, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
-        smach.State.__init__(self, outcomes=["found", "not_found"])
-
-        self.robot = robot
-
-        # understanding not yet used. But should be.
-        self.room = room
-        self.point_stamped = point_stamped
-        self.length_x = length_x
-        self.length_y = length_y
-        self.length_z = length_z
-
-    def execute(self, userdata=None):
-
-        person_query = Conjunction( Compound( "property_expected", "ObjectID", "class_label", "person"),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
-                                    Compound( "not", Compound( "person_checked_positively", "ObjectID")),
-                                    Compound( "not", Compound( "person_checked_negatively", "ObjectID")),
-                                    Compound( "not", Compound( "person_unreachable", "ObjectID")))
-
-        person_result = self.robot.reasoner.query(person_query)
-        
-        # TODO ERIK: ER KUNNEN PERSONEN NU BIJ ZITTEN DIE NIET IN DE KAMER ZITTEN WAAR JE GRAAG NAAR WIL KIJKEN. ZORGEN DAT DEZE CLASS OOK RUIMTE AFHANKELIJK IS.
-
-        if not person_result:
-            #self.robot.speech.speak("No one here.",block=False)
-            return "not_found"
-
-        print "person_result = ", person_result
-
-        if len(person_result) > 1:
-            self.robot.speech.speak("I think I see some people",block=False)
-        else:
-            self.robot.speech.speak("I think I found someone",block=False)
-
-        # TODO ERIK: HIER BEPALEN DAT DE DICHTSBIJZIJNDE PERSOON GECONTROLEERD MOET WORDEN IPV DE EERSTE UIT DE LIJST.
-
-        self.robot.reasoner.assertz(Compound("current_checked_person", person_result[0]["ObjectID"], Compound("point_3d", Sequence(person_result[0]["X"], person_result[0]["Y"], 1.5))))
-
-        return "found"  
-
-
-class CheckForFaces(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['detected','no_person','failed'])
-        self.robot = robot
-
-    def execute(self, userdata=None):
-
-        # self.robot.spindle.reset()
-        # self.robot.head.set_pan_tilt(tilt=-0.2)
-        
-        # # to make sure head is at right position.
-        # rospy.sleep(0.5)
-
-        query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
-                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
-
-        self.response_start = self.robot.perception.toggle(['face_segmentation'])
-
-        if self.response_start.error_code == 0:
-            rospy.loginfo("Face segmentation has started correctly")
-        elif self.response_start.error_code == 1:
-            rospy.logerr("Face segmentation failed to start")
-            self.robot.head.look_up(tilt_vel=0.75)
-            return "failed"
-
-        wait_machine = reasoning.Wait_query_true(self.robot, query_detect_person, 4)
-        wait_result = wait_machine.execute()
-
-        rospy.loginfo("Face segmentation will be stopped now")
-        self.response_stop = self.robot.perception.toggle([])
-        
-        if self.response_stop.error_code == 0:
-            rospy.loginfo("Face segmentation is stopped")
-        elif self.response_stop.error_code == 1:
-            self.robot.lights.set_color(1, 0, 0)
-            rospy.sleep(0.1)
-            self.robot.lights.set_color(0, 0, 1)
-            rospy.loginfo("Failed stopping face segmentation")
-
-        if wait_result == "timed_out":
-            return "no_person"
-
-        elif wait_result == "query_true":
-            answers = self.robot.reasoner.query(query_detect_person)
-            possible_locations = [( float(answer["X"]), 
-                                    float(answer["Y"]), 
-                                    float(answer["Z"])) for answer in answers]
-            x,y,z = possible_locations[0]
-
-            if z > 1.5:
-                self.robot.spindle.high()
-                rospy.logdebug("Spindle should come up now!")
-
-            lookat_point = msgs.PointStamped(x,y,z)
-            rospy.loginfo("AMIGO should look at person now. (x = {0}, y = {1}, z = {2})".format(x,y,z))
-            self.robot.head.send_goal(lookat_point,timeout=0)
-
-            return 'detected'
-
-
-
-class StandingPeopleDetectorWithFace(smach.StateMachine):
-    """Highlevel state. Possibility to use only Enables or disables PeopleDetector"""
-    def __init__(self, robot, check_all_persons=False, distance_to_walls=0.2, time=4, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
-        smach.StateMachine.__init__(self, outcomes=["succeeded", "no_person_found","failed"])
-        self.robot = robot
-        self.time = time
-        self.room = room
-        self.point_stamped = point_stamped
-        self.length_x = length_x
-        self.length_y = length_y
-        self.length_z = length_z
-        self.distance_to_walls = distance_to_walls  # This is the distance that is retracted from the room dimensions in x and y directions.
-        self.check_all_persons = check_all_persons
-
-        current_checked_person_query = Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))
-
-        # removes previous defined dropoff points
-        self.robot.reasoner.query(Compound("retractall", Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))))
-        self.robot.reasoner.query(Compound("retractall",Compound("person_unreachable", "ObjectID")))
-        self.robot.reasoner.query(Compound("retractall",Compound("person_checked_negatively", "ObjectID")))
-        self.robot.reasoner.query(Compound("retractall",Compound("person_checked_positively", "ObjectID")))
-        
-        with self:
-            smach.StateMachine.add("DETECT_PEOPLE_TORSO_LASER",
-                                    StandingPeopleDetector(self.robot, distance_to_walls=self.distance_to_walls, time=self.time, room=self.room, point_stamped=self.point_stamped, length_x=self.length_x, length_y=self.length_y, length_z=self.length_z),
-                                    transitions={   'done':'CHECK_FOR_PEOPLE',
-                                                    'failed':'failed'})
-
-            smach.StateMachine.add("CHECK_FOR_PEOPLE",
-                                    CheckForPerson(self.robot, room=self.room, point_stamped=self.point_stamped, length_x=self.length_x, length_y=self.length_y, length_z=self.length_z),
-                                    transitions={   'found':'NAVIGATE_TO_PERSON',
-                                                    'not_found':'no_person_found'})
-
-            smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                    navigation.NavigateGeneric(robot, lookat_query=current_checked_person_query, xy_dist_to_goal_tuple=(0.8,0)),
-                                    transitions={   "arrived":"LOOK_AT_PERSON",
-                                                    "unreachable":'SAY_UNREACHABLE_CHECKING_PERSON',
-                                                    "preempted":'SAY_UNREACHABLE_CHECKING_PERSON',
-                                                    "goal_not_defined":'SAY_UNREACHABLE_CHECKING_PERSON'})
-
-            smach.StateMachine.add("SAY_UNREACHABLE_CHECKING_PERSON",
-                                    human_interaction.Say(robot,"I was not able to check a possible found person", block=False),
-                                    transitions={'spoken':'ASSERT_PERSON_UNREACHABLE'})
-
-            smach.StateMachine.add("ASSERT_PERSON_UNREACHABLE",
-                                reasoning.Execute_query(robot, [Conjunction(    Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z"))),
-                                                                                Compound("assertz",Compound("person_unreachable", "ObjectID")),
-                                                                                Compound("retractall", Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))))]),
-                                transitions={'executed':'CHECK_FOR_PEOPLE'})
-
-            smach.StateMachine.add('LOOK_AT_PERSON',
-                                LookAtPoint(robot, lookat_query=current_checked_person_query),
-                                transitions={   'looking':'CHECK_FOR_FACE',
-                                                'no_point_found':'CHECK_FOR_FACE',
-                                                'abort':'CHECK_FOR_FACE'}) # abort never happens in this state
-
-            smach.StateMachine.add('CHECK_FOR_FACE',
-                                CheckForFaces(robot),
-                                transitions={   'detected':'SAY_SUCCES_CHECKING_PERSON',
-                                                'no_person':'SAY_FAILED_CHECKING_PERSON',
-                                                'failed':'SAY_FAILED_CHECKING_PERSON'})
-
-            # TODO: Check if found person (face) is recognized before
-
-            smach.StateMachine.add("SAY_SUCCES_CHECKING_PERSON",
-                                    human_interaction.Say(robot,"Hi there!", block=False),
-                                    transitions={'spoken':'ASSERT_PERSON_CHECKED_POSITIVELY'})
-
-            smach.StateMachine.add("SAY_FAILED_CHECKING_PERSON",
-                                    human_interaction.Say(robot,"Nope no one here", block=False),
-                                    transitions={'spoken':'ASSERT_PERSON_CHECKED_NEGATIVELY'})
-
-            smach.StateMachine.add("ASSERT_PERSON_CHECKED_NEGATIVELY",
-                                reasoning.Execute_query(robot, [Conjunction(    Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z"))),
-                                                                                Compound("assertz",Compound("person_checked_negatively", "ObjectID")),
-                                                                                Compound("retractall", Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))))]),
-                                transitions={'executed':'CHECK_FOR_PEOPLE'})
-
-            smach.StateMachine.add("ASSERT_PERSON_CHECKED_POSITIVELY",
-                                reasoning.Execute_query(robot, [Conjunction(    Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z"))),
-                                                                                Compound("assertz",Compound("person_checked_positively", "ObjectID")),
-                                                                                Compound("retractall", Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))))]),
-                                transitions={'executed':'succeeded'}) # IN CASE MULTIPLE PERSONS NEED TO BE FOUND, MAKE NEW STATE.
-            
-            # TODO: amigo stops now when he found someone. The possibility to check everyone must still be build in.
-
-
-
-
