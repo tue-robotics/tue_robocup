@@ -2295,11 +2295,16 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'william_coffee', 'william', 'orange_drink', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
+                                Compound('serve', 'william_coffee', 'william', 'coke', Compound('pose_2d', '3.0161', '0.9186', '0.0')))))
+                                
+                                
+        amigo.reasoner.query(   Compound('assert', 
+                                Compound('goal',
+                                Compound('serve', 'william_coffee', 'joshua', 'seven_up', Compound('pose_2d', '3.5161', '1.2186', '0.0')))))
 
-        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'basket'))))
+        #amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'basket'))))
 
-        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'cup', 'right_hand'))))
+        #amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'cup', 'right_hand'))))
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
