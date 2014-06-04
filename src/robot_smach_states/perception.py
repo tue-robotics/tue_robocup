@@ -521,7 +521,7 @@ class StandingPeopleDetector(smach.State):
         self.length_x = length_x
         self.length_y = length_y
         self.length_z = length_z
-        self.distance_to_walls = int(distance_to_walls)  # This is the distance that is retracted from the room dimensions in x and y directions.
+        self.distance_to_walls = distance_to_walls  # This is the distance that is retracted from the room dimensions in x and y directions.
 
     def execute(self, userdata=None):
 
