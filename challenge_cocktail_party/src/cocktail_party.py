@@ -69,11 +69,11 @@ class DetectWavingPeople(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectWavingPeople\n")
 
         self.robot.head.reset_position()
-        self.robot.speech.speak("Ladies and gentlemen, please wave to call me and place an order.")
+        self.robot.speech.speak("Please wave to call me")
 
         # turn head to one side to start the swipping the room
-        self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0)
-        rospy.sleep(3)
+        self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0, timeout=3.0)
+        #rospy.sleep(3)
         
         # Turn ON Human Tracking
         self.response_start = self.robot.perception.toggle(['human_tracking'])
@@ -89,11 +89,11 @@ class DetectWavingPeople(smach.State):
 
         # self.robot.head.set_pan_tilt(pan=-1.2, pan_vel=0.1)
         # rospy.sleep(3)
-        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0)
-        rospy.sleep(3)
+        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0, timeout=3.0)
+        #rospy.sleep(3)
         
-        self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0)
-        rospy.sleep(5)
+        self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0, timeout=5.0)
+        #rospy.sleep(5)
 
         # Turn OFF Human Tracking
         self.response_stop = self.robot.perception.toggle([])
@@ -105,6 +105,7 @@ class DetectWavingPeople(smach.State):
             self.robot.speech.speak("I was not able to stop human tracking.")
             return "error"
 
+        # sleep to give enough time for the human tracking to stop before moving the head again
         rospy.sleep(1)
 
         self.robot.head.reset_position()
@@ -120,7 +121,7 @@ class DetectWavingPeople(smach.State):
             self.robot.speech.speak("Someone is calling me, I will be with you soon! {0}".format(len(peopleFound)), block=False)
             return 'detected'
         else:
-            self.robot.speech.speak("No one called me. Forever alone.", block=False)
+            self.robot.speech.speak("No one called me.", block=False)
             return 'not_detected'
 
 
@@ -211,7 +212,7 @@ class WaitForPerson(smach.State):
         if waitedCount == 3:
             # Reset the counter for waiting
             waitedCount = 0;
-            self.robot.speech.speak("I was not able to detect a person, assuming someone is in front of me!")
+            self.robot.speech.speak("I was not able to detect a person")
             return "unknown_person"
         else:
             rospy.loginfo("Waited for {0} times!!!".format(waitedCount))
@@ -221,7 +222,7 @@ class WaitForPerson(smach.State):
         self.robot.reasoner.reset()
         self.robot.head.set_pan_tilt(tilt=-0.2)
         
-        self.robot.speech.speak("Ladies and gentlemen, please step in front of me to order your drink.", block=False)
+        self.robot.speech.speak("Please step in front of me to order your drink.", block=False)
 
         # prepare query for detected person
         query_detect_person = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'human_face'),
@@ -835,6 +836,8 @@ class LookForDrinks(smach.State):
         if pointsInterest:
             point = pointsInterest[0]
             self.robot.head.send_goal(msgs.PointStamped(float(point["X"]), float(point["Y"]), float(point["Z"]), "/map"))
+        else:
+            rospy.logerr("No point of interest found! It should be looking at the drinks table.")
 
         self.robot.speech.speak("Let's see what I can find here", block=False)
 
@@ -2194,14 +2197,15 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    initial_state = None
+    #initial_state = None
     #initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
+    initial_state = 'LOOKOUT_CONTAINER'
 
     machine = CocktailParty(amigo)
     
-    if initial_state != None :
+    if initial_state != None:
         amigo.reasoner.reset()
 
         machine.set_initial_state([initial_state])
