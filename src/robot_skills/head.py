@@ -126,7 +126,7 @@ class Head(object):
         head_goal.point.z = z
         return head_goal
 
-    def set_pan_tilt(self, pan = 0.0, tilt = 0.2, pan_vel=0, tilt_vel=0):
+    def set_pan_tilt(self, pan = 0.0, tilt = 0.2, pan_vel=0, tilt_vel=0, timeout=0.0):
         """Amigo rotate head based on pan/tilt, both in radius"""
         head_goal = HeadRefGoal()
         head_goal.goal_type = 1
@@ -135,7 +135,24 @@ class Head(object):
         head_goal.pan_vel   = pan_vel
         head_goal.tilt_vel  = tilt_vel
 
-        return self._ac_head_ref_action.send_goal(head_goal)
+        #return self._ac_head_ref_action.send_goal(head_goal)
+        
+        # send goal:
+        rospy.logdebug("Head_goal is ({0})".format(head_goal.target_point.point))
+        self._ac_head_ref_action.send_goal(head_goal)
+        rospy.logdebug("Waiting {0} secs for head goal".format(timeout))
+
+        if timeout == 0.0:
+            return True
+        else:
+            self._ac_head_ref_action.wait_for_result(rospy.Duration(timeout))
+            if self._ac_head_ref_action.get_state() == GoalStatus.SUCCEEDED:
+                return True
+            else:
+                rospy.logwarn("Cannot reach head target {0}".format(head_goal))
+                ''' Cancel goal to stop publishing reference values '''
+                self.cancel_goal()
+                return False
 
     def look_down(self, pan_vel=0, tilt_vel=0):
         """
