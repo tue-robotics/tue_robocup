@@ -34,7 +34,9 @@ $( document ).ready(function() {
         messageType : 'std_msgs/String'
     });
 
-    object_callback({data:''})
+    setTimeout(function() {
+        object_callback({data:''});
+    }, 1);
     function object_callback(msg) {
         var objs = msg.data;
         if (!objs) {
