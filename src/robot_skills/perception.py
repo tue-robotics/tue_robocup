@@ -52,16 +52,11 @@ class Perception(object):
         ''' Publisher for signaling image recording '''
         self.pub_rec = rospy.Publisher('/recorder/start', tue_recorder.msg.Start)
 
-        ''' Temporarily included to test toggle_perception_2d '''
-        import geometry_msgs
-        self.testpoint = geometry_msgs.msg.PointStamped()
-        self.testpoint.header.frame_id = '/map'
-        self.testpoint.point.x = 0.66
-        self.testpoint.point.y = 0.73
-        self.testpoint.point.z = 0.83
-
         '''People detection ROI'''
         self.ppl_detection_laser = rospy.ServiceProxy('ppl_detection_generic/start_with_roi', pein_srvs.srv.StartStopWithROIArray)
+
+        ''' List with modules that should be always on '''
+        self.always_on_modules = []
 
     def close(self):
         pass
@@ -83,8 +78,33 @@ class Perception(object):
         # If 'object_recognition' is called, this is replaced by the current default module
         modules = [module.replace("object_recognition", self.default_object_recognition_method) for module in modules]
 
+        ''' Add always_on_modules '''
+        for module in self.always_on_modules:
+            if not module in modules:
+                modules.append(module)
+
         rospy.loginfo("modules are {0}".format(modules))
         return self.sv_recognition(modules)
+
+    def toggle_always_on(self, modules):
+        ''' Switches on modules that remain switched on when switching other modules on and off '''
+        for module in modules:
+            if not module in self.always_on_modules:
+                self.always_on_modules.append(module)
+        rospy.loginfo("Always on modules are {0}".format(self.always_on_modules))
+        self.toggle(self.always_on_modules)
+
+    def toggle_always_off(self, modules):
+        ''' Switches off modules that remain switched on when switching other modules on and off '''
+        for module in modules:
+            self.always_on_modules = [x for x in self.always_on_modules if x != module]
+        rospy.loginfo("Always on modules are {0}".format(self.always_on_modules))
+        self.toggle(self.always_on_modules)
+
+    def toggle_everything_off(self):
+        ''' Switches off everything, i.e., normal and always_on modules '''
+        self.always_on_modules = []
+        self.toggle([])
 
     def toggle_recognition(self, faces=False, objects=False, people=False):
         rospy.logwarn("This function is deprecated, please use toggle instead")
