@@ -139,6 +139,7 @@ class DetectPeople(smach.State):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectPeople\n")
 
+        self.robot.spindle.high()
         self.robot.head.reset_position()
         
         # turn head to one side to start the swipping the room
@@ -1655,11 +1656,13 @@ class HandoverUndeliveredDrinks(smach.StateMachine):
 
         self.robot.speech.speak("I will open my grippers now.")
 
-        self.robot.leftArm.reset_arm()
-        self.robot.rightArm.reset_arm()
+        # TODO: copy the arm pose from Handover_pose and set it
 
         self.robot.leftArm.send_gripper_goal_open(timeout=5.0)
         self.robot.rightArm.send_gripper_goal_open(timeout=5.0)
+        
+        self.robot.leftArm.reset_arm()
+        self.robot.rightArm.reset_arm()
 
         self.robot.leftArm.send_gripper_goal_close(timeout=5.0)
         self.robot.rightArm.send_gripper_goal_close(timeout=5.0)
