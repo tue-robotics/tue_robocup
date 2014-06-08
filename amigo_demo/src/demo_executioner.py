@@ -17,6 +17,7 @@ from robot_smach_states.drive_to_person import DriveToClosestPerson
 from math import sin
 
 from transporter import Transporter
+from contextmanagers import iterate_in_background
 
 #This node publishes integer values to the 'key_commands' topic
 
@@ -47,6 +48,8 @@ poses["TUC"]                    = ("",  [ -0.3080 , 0.2312 , 1.6400 , 1.6220 , -
 poses["EGYPTIAN1"]              = ("",  [ 0.0000 , 1.0000 , 0.0000 , 1.4000 , 0.0000 , -0.8292 , 0.0000 ])
 poses["EGYPTIAN2"]              = ("",  [ 0.0000 , -2.5708 , 0.0000 , 1.0000 , 0.0000 , -0.8292 , 0.0000 ])
 poses["GOAL"]                   = ("",  [ 0.0000 , 1.5692 , 0.0000 , 1.5700 , 0.0000 , 0.0008 , 0.0000 ])
+poses["GOAL_1"]                 = ("",  [ 0.0000 , 1.5692 , 0.5000 , 1.5700 , 0.0000 , 0.0008 , 0.0000 ])
+poses["GOAL_2"]                 = ("",  [ 0.0000 , 1.5692 , -0.5000 , 1.5700 , 0.0000 , 0.0008 , 0.0000 ])
 poses["NORMAL"]                 = ("u", [ -0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800 ])
 poses["HANDSHAKEUP_NEW"]        = ("a", [ -0.3650 , 0.9436 , 0.4707 , 1.0420 , 0.7136 , -0.1692 , 0.2180 ])
 poses["lEFT_HANDSHAKEDOWN_NEW"] = ("",  [ -0.2750 , 0.8678 , 0.6077 , 0.8030 , 0.7176 , -0.2852 , 0.1450 ])
@@ -259,29 +262,40 @@ def wave1(robot, arm):
     rospy.loginfo("Waving done")
     arm.send_joint_goal(*poses["DRIVE"][1])
 
+def random_lights(robot):
+    robot.lights.set_color( random.random(),
+                            random.random(),
+                            random.random())
+
 @dec.register_robot_key("m")
-def wave_lights(robot):
+def wave_lights(robot, repeat=5):
     rospy.loginfo("GOAL, LET'S CHEER")
     os.system("mpg123 -q /home/amigo/Music/Toeter1.mp3 &")
 
-    joints = poses["GOAL"][1]
+    goal_center = poses["GOAL"][1]
+    goal_1_right = poses["GOAL_1"][1]
+    goal_2_right = poses["GOAL_2"][1]
 
-    robot.leftArm.send_joint_goal(*joints)
-    robot.rightArm.send_joint_goal(*joints)
+    goal_1_left = poses["GOAL_1"][1]
+    goal_2_left = poses["GOAL_2"][1]
 
-    #rospy.loginfo("double wave, abort with esc")
+    #Mirror the poses, so the arms are not symmetrical but parallel
+    goal_1_left[2] = -goal_1_right[2]
+    goal_2_left[2] = -goal_2_right[2]
 
-    start_time = rospy.Time.now()
+    robot.leftArm.send_joint_goal(*goal_center)
+    robot.rightArm.send_joint_goal(*goal_center)
 
-    while ((rospy.Time.now() - start_time) < rospy.Duration(10.0)) and not actions_canceled:
-        joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
-        robot.leftArm.send_joint_goal(*joints)
-        joints[2] = -joints[2] # q3 of left and right arm should be mirrorred
-        robot.rightArm.send_joint_goal(*joints)
-        #rospy.sleep(rospy.Duration(0.05))
-        robot.lights.set_color( random.random(),
-                                random.random(),
-                                random.random())
+    with iterate_in_background(random_lights, robot):
+        for i in range(repeat):
+            if not actions_canceled:
+                #rospy.sleep(rospy.Duration(0.05))
+
+                robot.leftArm.send_joint_goal(*goal_1_left, timeout=0.0)
+                robot.rightArm.send_joint_goal(*goal_1_right, timeout=5.0)
+                
+                robot.leftArm.send_joint_goal(*goal_2_left, timeout=0.0)
+                robot.rightArm.send_joint_goal(*goal_2_right, timeout=5.0)
     rospy.loginfo("Waving done")
 
     robot.rightArm.send_joint_goal(*poses["DRIVE"][1])
