@@ -1032,6 +1032,10 @@ def setup_statemachine(robot):
                                                     "found":'PICKUP_OBJECT',
                                                     "not_found":'SAY_OBJECT_NOT_FOUND'})
 
+        #TODO(Loy): If the object is not found, edit the query and get at least something. 
+        #So, retract Compound("goal", Compound("serve", "Drink")) 
+        #but assert a new Compound("goal", Compound("serve", "Drink")). Leave Drink a variable so it matches everything
+
         arm = robot.leftArm
 
         smach.StateMachine.add( 'PICKUP_OBJECT',
