@@ -28,7 +28,7 @@ from pein_srvs.srv import SetObjects
 ################################# SETUP VARIABLES ######################################
 
 
-MIN_SIMULTANEOUS_ORDERS = 3   # Amigo won't fetch the drinks until he has this ammount of requests
+MIN_SIMULTANEOUS_ORDERS = 2   # Amigo won't fetch the drinks until he has this ammount of requests
 MAX_SIMULTANEOUS_ORDERS = 3   # Amigo will fetch the drinks when he as reached this ammount of requests
 TOTAL_ORDERS = 3              # The challenge will finish when Amigo has served this ammount of requests
 
@@ -2124,7 +2124,7 @@ class CocktailParty(smach.StateMachine):
             smach.StateMachine.add( 'HEAR_CONTINUE_UNDELIVERED',
                                     HearContinue(robot),
                                     transitions={   'continue':'HANDOVER_UNDELIVERED_DRINKS',
-                                                    'force_continue':'HEAR_CONTINUE_UNDELIVERED',
+                                                    'force_continue':'HANDOVER_UNDELIVERED_DRINKS',
                                                     'no_continue':'HEAR_CONTINUE_UNDELIVERED'})
 
             smach.StateMachine.add( 'HANDOVER_UNDELIVERED_DRINKS',
@@ -2223,9 +2223,9 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    initial_state = None
+    # initial_state = None
     # initial_state = 'FIND_DRINKS_CONTAINER'
-    # initial_state = 'DELIVER_DRINKS_CONTAINER'
+    initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
 
