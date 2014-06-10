@@ -14,8 +14,10 @@ from robot_skills.amigo import Amigo
 from std_msgs.msg import Empty
 
 from robot_smach_states import *
+
 from psi import Compound, Sequence, Conjunction, Term
 import robot_skills.util.msg_constructors as msgs
+
 from geometry_msgs.msg import PoseStamped, Pose
 
 import robot_smach_states.util.transformations as transformations
@@ -26,8 +28,8 @@ from pein_srvs.srv import SetObjects
 ################################# SETUP VARIABLES ######################################
 
 
-MIN_SIMULTANEOUS_ORDERS = 2   # Amigo won't fetch the drinks until he has this ammount of requests
-MAX_SIMULTANEOUS_ORDERS = 3   # Amigo won't interview more people when he has this ammount of requests
+MIN_SIMULTANEOUS_ORDERS = 3   # Amigo won't fetch the drinks until he has this ammount of requests
+MAX_SIMULTANEOUS_ORDERS = 3   # Amigo will fetch the drinks when he as reached this ammount of requests
 TOTAL_ORDERS = 3              # The challenge will finish when Amigo has served this ammount of requests
 
 
@@ -922,8 +924,6 @@ class LookForDrinks(smach.State):
         if navResult == 'unreachable' or navResult == 'preempted': 
             return 'looking'
 
-        # we made it to the new goal. Let's have a look to see whether we can find the object here
-
         # look to points of interest, if there is any, look at it
         pointsInterest = self.robot.reasoner.query(Compound('point_of_interest', waypointName, Compound('point_3d', 'X', 'Y', 'Z')))
 
@@ -1101,13 +1101,13 @@ class AssertPickup(smach.State):
 
         # initializations
         self.robot = robot
-        self.qPickedUpDrink = query
+        self.pickedUpDrinkQ = query
 
     def execute(self, userdata = None):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: AssertPickup\n")
 
-        res = self.robot.reasoner.query(self.qPickedUpDrink)
+        res = self.robot.reasoner.query(self.pickedUpDrinkQ)
 
         # assert that this drink has been grabbed
         self.robot.reasoner.query(  Compound("assert", 
@@ -1146,7 +1146,7 @@ class PrepareDelivery(smach.State):
         self.robot.spindle.high()
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0, timeout=2.0)
 
-        self.robot.speech.speak("Let me see if there's someone here.", block=False)
+        self.robot.speech.speak("Let me see if there's someone here. Please look at my face.", block=False)
 
         # perform face recognition on the person found
         self.response_start = self.robot.perception.toggle(['face_recognition'])
@@ -1303,8 +1303,6 @@ class NavToDetectedPerson(smach.State):
             else:
                 objectID = detectedPerson[0]['ObjectID']
 
-            # objectID = detectedPerson[0]['ObjectID']
-
             # Use the lookat query
             nav = NavigateGeneric(self.robot, lookat_query = detectedPersonQ)
             nav_result = nav.execute()
@@ -1319,6 +1317,7 @@ class NavToDetectedPerson(smach.State):
                 return 'unreachable'
 
             return 'arrived'
+
 
 #########################################################################################
 
@@ -1434,7 +1433,7 @@ class RetractServedPerson(smach.State):
         # personName2 = str(userdata.person_in)
         # drinkName2 = str(userdata.drink_in)
         # rospy.loginfo("\t\t[Cocktail Party] Name: {0}, drink: {1}\n".format(personName2, drinkName2))
-        # TODO PASS THE VARIABLES THROUGH USERDATA AND NOT QUERY (Not working, not sure why)
+        # TODO: PASS THE VARIABLES THROUGH USERDATA AND NOT QUERY (Not working, not sure why)
 
         deliveryRes = self.robot.reasoner.query(Compound("delivering",
                                                 Compound("delivery", "Person", "Drink")))
@@ -1459,7 +1458,6 @@ class RetractServedPerson(smach.State):
 
             rospy.loginfo("\t\t[Cocktail Party] Retracted {0} drink and {1} person.\n".format(len(retractDrink), len(retractPerson)))
 
-            ############################################################
             # update the number of served people
             servedCount = self.robot.reasoner.query(Compound("people_served_count", "Counter"))
 
@@ -1469,7 +1467,6 @@ class RetractServedPerson(smach.State):
 
             self.robot.reasoner.query(Compound('retractall', Compound('people_served_count', 'X')))
             self.robot.reasoner.query(Compound('assert',Compound('people_served_count', nServed)))
-            ############################################################
 
             carrying = self.robot.reasoner.query(Compound('carrying', Compound('drink', 'Drink', 'Arm')))
 
@@ -1512,7 +1509,7 @@ class DropInBasket(smach.State):
 
         self.robot.spindle.high()
 
-        # sleep to give enough time for the torso to go up before closing the gripper
+        # sleep to give enough time for the spindle to go up before closing the gripper
         rospy.sleep(1.5)
         
         self.robot.leftArm.send_gripper_goal_close(timeout=5.0)
@@ -1576,7 +1573,7 @@ class FocusOnFace(smach.StateMachine):
         if answer:
             preempt = float(answer[0]['X'])
         else:
-            rospy.logwarn("\t\t[Cocktail Party] Unable to query preempt_head_focus, assuming its 0\n".format(x, y, z))
+            rospy.logwarn("\t\t[Cocktail Party] Unable to query preempt_head_focus, assuming its 0/FALSE\n")
             preempt = 0
 
         # loop or preempt focus on face
@@ -1812,7 +1809,7 @@ class CocktailParty(smach.StateMachine):
 
             # Start
             smach.StateMachine.add( 'START_CHALLENGE',
-                                    StartChallengeRobust(robot, 'initial'), #query_meeting_point
+                                    StartChallengeRobust(robot, 'initial'),
                                     transitions={   'Done':'DELETE_MODELS', 
                                                     'Aborted':'DELETE_MODELS', 
                                                     'Failed':'DELETE_MODELS'})
@@ -1827,20 +1824,17 @@ class CocktailParty(smach.StateMachine):
                                     Say(robot, "I'm going to the party room.", block=False),
                                     transitions={   'spoken':'GOTO_PARTY_ROOM'})
 
-            #Go to the party room
-            # smach.StateMachine.add('GOTO_PARTY_ROOM',
-            #                         NavigateGeneric(robot, goal_query = partyRoomWayptsQ),
-            #                         transitions={   'arrived':'LOOKOUT_CONTAINER', 
-            #                                         'unreachable':'LOOKOUT_CONTAINER', 
-            #                                         'preempted':'LOOKOUT_CONTAINER', 
-            #                                         'goal_not_defined':'LOOKOUT_CONTAINER'})
-
             smach.StateMachine.add('GOTO_PARTY_ROOM',
                                     NavigateGeneric(robot, goal_query = partyRoomWayptsQ),
                                     transitions={   'arrived':'GOTO_WAITING_PLACE', 
                                                     'unreachable':'GOTO_WAITING_PLACE', 
                                                     'preempted':'GOTO_WAITING_PLACE', 
                                                     'goal_not_defined':'GOTO_WAITING_PLACE'})
+                                    # transitions={   'arrived':'LOOKOUT_CONTAINER', 
+                                    #               'unreachable':'LOOKOUT_CONTAINER', 
+                                    #               'preempted':'LOOKOUT_CONTAINER', 
+                                    #               'goal_not_defined':'LOOKOUT_CONTAINER'})
+
 
 
 #----------------------------------------FIND PEOPLE TO SERVE-------------------------------------------------------
