@@ -229,36 +229,49 @@ def home(robot):
     #rospy.sleep(rospy.Duration(1.0))
 
 @dec.register_robot_key("w")
-def wave2(robot):
-    joints = poses["GOAL"][1]
+def wave2(robot, repeat=2):
+    goal_center = poses["GOAL"][1]
+    goal_1_right = list(poses["GOAL_1"][1])
+    goal_2_right = list(poses["GOAL_2"][1])
 
-    robot.leftArm.send_joint_goal(*joints)
-    robot.rightArm.send_joint_goal(*joints)
+    goal_1_left = list(poses["GOAL_1"][1])
+    goal_2_left = list(poses["GOAL_2"][1])
 
-    #rospy.loginfo("double wave, abort with esc")
+    #Mirror the poses, so the arms are not symmetrical but parallel
+    goal_1_left[2] *= -1#goal_1_right[2]
+    goal_2_left[2] *= -1#goal_2_right[2]
 
-    start_time = rospy.Time.now()
+    robot.leftArm.send_joint_goal(*goal_center, timeout=0.0)
+    robot.rightArm.send_joint_goal(*goal_center, timeout=5.0)
 
-    while ((rospy.Time.now() - start_time) < rospy.Duration(10.0)) and not actions_canceled:
-        joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
-        robot.leftArm.send_joint_goal(*joints)
-        joints[2] = -joints[2] # q3 of left and right arm should be mirrorred
-        robot.rightArm.send_joint_goal(*joints)
-        #rospy.sleep(rospy.Duration(0.05))
-    rospy.loginfo("Waving done")
+    for i in range(repeat):
+        if not actions_canceled:
+            #rospy.sleep(rospy.Duration(0.05))
+
+            robot.leftArm.send_joint_goal(*goal_1_left, timeout=0.0)
+            robot.rightArm.send_joint_goal(*goal_1_right, timeout=5.0)
+            
+            robot.leftArm.send_joint_goal(*goal_2_left, timeout=0.0)
+            robot.rightArm.send_joint_goal(*goal_2_right, timeout=5.0)
+
     robot.rightArm.send_joint_goal(*poses["DRIVE"][1])
     robot.leftArm.send_joint_goal(*poses["DRIVE"][1])
+    rospy.loginfo("Waving done")
 
 @dec.register_robot_arm_key("n")
-def wave1(robot, arm):
-    joints = poses["GOAL"][1]
-    arm.send_joint_goal(*joints)
+def wave1(robot, arm, repeat=2):
 
-    start_time = rospy.Time.now()
+    goal_center = poses["GOAL"][1]
+    goal_1 = list(poses["GOAL_1"][1])
+    goal_2 = list(poses["GOAL_2"][1])
+    
+    arm.send_joint_goal(*goal_center, timeout=0.0)
+    
+    for i in range(repeat):
+        if not actions_canceled:
+            arm.send_joint_goal(*goal_1, timeout=5.0)
+            arm.send_joint_goal(*goal_2, timeout=5.0)
 
-    while ((rospy.Time.now() - start_time) < rospy.Duration(10.0)) and not actions_canceled:
-        joints[2] = 0.5*sin(0.25*3.14 * (rospy.Time.now().to_sec() - start_time.to_sec()) )
-        arm.send_joint_goal(*joints)
     rospy.loginfo("Waving done")
     arm.send_joint_goal(*poses["DRIVE"][1])
 
