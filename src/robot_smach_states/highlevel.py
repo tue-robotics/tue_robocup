@@ -52,8 +52,7 @@ class StartChallengeRobust(smach.StateMachine):
                                                     "abort"         :"Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
-                                    human_interaction.Say(robot, [  "I will now wait until the door is opened", 
-                                                                    "Knock knock, may I please come in?"]),
+                                    human_interaction.Say(robot, [  "Hi there, I will now wait until the door is opened"], block=False),
                                     transitions={   "spoken":"ASSESS_DOOR"})
 
 
