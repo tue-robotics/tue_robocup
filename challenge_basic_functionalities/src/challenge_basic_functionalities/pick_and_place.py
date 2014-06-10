@@ -14,7 +14,7 @@ from pein_srvs.srv import SetObjects
 
 class PickAndPlace(smach.StateMachine):
 
-    def __init__(self, robot, poi_lookat="pick_poi", grasp_arm="left"):
+    def __init__(self, robot, grasp_arm="left"):
         # ToDo: get rid of hardcode poi lookat
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
@@ -50,7 +50,11 @@ class PickAndPlace(smach.StateMachine):
         robot.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
         #query_lookat = Compound("point_of_interest", poi_lookat, Compound("point_3d", "X", "Y", "Z"))
-        query_lookat = Compound("=", "Poi", poi_lookat)
+        #query_lookat = Compound("=", "Poi", Compound("pick_poi", "Option"))
+        
+        query_lookat = Conjunction(  Compound("=", "Poi", Compound("pick_poi", "Option")),
+                                     Compound("point_of_interest", "Poi", Compound("point_3d", "X", "Y", "Phi")))
+
         rospy.logwarn("query_lookat = {0}".format(query_lookat))
 
         #ToDo: if disposed not relevant. Rather have the Object with the highest probability!
