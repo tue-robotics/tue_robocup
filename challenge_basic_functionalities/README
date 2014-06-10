@@ -2,6 +2,7 @@
 
 amigo1:
 
+    rsettings -> AMIGO_NAV = 3d
     amiddle
     
 amigo3:
