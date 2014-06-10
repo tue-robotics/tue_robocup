@@ -268,23 +268,23 @@ def random_lights(robot):
                             random.random())
 
 @dec.register_robot_key("m")
-def wave_lights(robot, repeat=5):
+def wave_lights(robot, repeat=2):
     rospy.loginfo("GOAL, LET'S CHEER")
     os.system("mpg123 -q /home/amigo/Music/Toeter1.mp3 &")
 
     goal_center = poses["GOAL"][1]
-    goal_1_right = poses["GOAL_1"][1]
-    goal_2_right = poses["GOAL_2"][1]
+    goal_1_right = list(poses["GOAL_1"][1])
+    goal_2_right = list(poses["GOAL_2"][1])
 
-    goal_1_left = poses["GOAL_1"][1]
-    goal_2_left = poses["GOAL_2"][1]
+    goal_1_left = list(poses["GOAL_1"][1])
+    goal_2_left = list(poses["GOAL_2"][1])
 
     #Mirror the poses, so the arms are not symmetrical but parallel
-    goal_1_left[2] = -goal_1_right[2]
-    goal_2_left[2] = -goal_2_right[2]
+    goal_1_left[2] *= -1#goal_1_right[2]
+    goal_2_left[2] *= -1#goal_2_right[2]
 
-    robot.leftArm.send_joint_goal(*goal_center)
-    robot.rightArm.send_joint_goal(*goal_center)
+    robot.leftArm.send_joint_goal(*goal_center, timeout=0.0)
+    robot.rightArm.send_joint_goal(*goal_center, timeout=5.0)
 
     with iterate_in_background(random_lights, robot):
         for i in range(repeat):
@@ -296,11 +296,11 @@ def wave_lights(robot, repeat=5):
                 
                 robot.leftArm.send_joint_goal(*goal_2_left, timeout=0.0)
                 robot.rightArm.send_joint_goal(*goal_2_right, timeout=5.0)
-    rospy.loginfo("Waving done")
 
     robot.rightArm.send_joint_goal(*poses["DRIVE"][1])
     robot.leftArm.send_joint_goal(*poses["DRIVE"][1])
     robot.lights.set_color(0, 0, 1)
+    rospy.loginfo("Waving done")
 
 @dec.register_robot_key("Q")
 def ask_drinks(robot):
