@@ -18,9 +18,9 @@ class AvoidThat(smach.StateMachine):
 
         robot.reasoner.assertz(Compound("challenge", "basic_functionalities"))
 
-        query_waypoint1 =  Compound("waypoint", "goal1", Compound("pose_2d", "X", "Y", "Phi"))
-        query_waypoint2 =  Compound("waypoint", "goal2", Compound("pose_2d", "X", "Y", "Phi"))
-        query_waypoint3 =  Compound("waypoint", "goal3", Compound("pose_2d", "X", "Y", "Phi"))
+        query_waypoint1 =  Compound("waypoint", "goal_avoid_that_1", Compound("pose_2d", "X", "Y", "Phi"))
+        query_waypoint2 =  Compound("waypoint", "goal_avoid_that_2", Compound("pose_2d", "X", "Y", "Phi"))
+        query_waypoint3 =  Compound("waypoint", "goal_avoid_that_3", Compound("pose_2d", "X", "Y", "Phi"))
         
         with self:
 
