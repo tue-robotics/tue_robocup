@@ -142,7 +142,8 @@ class DetectPeople(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectPeople\n")
 
         self.robot.spindle.high()
-        self.robot.head.reset_position()
+        
+        rospy.sleep(1.0)
         
         # turn head to one side to start the swipping the room
         self.robot.head.set_pan_tilt(pan=-0.7, tilt=0.0, timeout=3.0)
@@ -201,10 +202,12 @@ class WaitForPerson(smach.State):
                                 input_keys=['waitIndex_in'])
         
         self.robot = robot
+        self.counter = 0
 
         self.faceInFrontQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'face'),
                                         Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
                                         Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')))
+
     def execute(self, userdata):
 
         rospy.loginfo("\t\t[Cocktail Party] Entered State: WaitForPerson\n")
@@ -224,7 +227,15 @@ class WaitForPerson(smach.State):
         self.robot.spindle.high()
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
         
-        self.robot.speech.speak("Please step in front of me to order your drink.", block=False)
+        if self.counter == 0:
+            self.robot.speech.speak("Please step in front of me to order your drink.", block=False)
+            self.counter +=1
+        elif self.counter == 1:
+            self.robot.speech.speak("Would someone else stand in front of me to order.", block=False)
+            self.counter +=1
+        else:
+            self.robot.speech.speak("Does someone else want to order? Please come to me.", block=False)
+            self.counter = 0
 
         # prepare query for detected person
         # query_detect_person = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'human_face'),
@@ -837,7 +848,7 @@ class CheckPendingOrders(smach.State):
         # if there are enough requests start serving, or if there are enough request to 
         #   complete the total number of people needed to serve
         if nOrders < MIN_SIMULTANEOUS_ORDERS and nOrders < TOTAL_ORDERS - peopleServedCount:
-            self.robot.speech.speak("I need more requests before getting the drinks", block=False)
+            self.robot.speech.speak("I need more requests before getting the drinks.")
             return "insuficient_orders"
         else:
             # retract the people already served, maybe they want something again
@@ -1315,7 +1326,9 @@ class NavToDetectedPerson(smach.State):
                 return 'unreachable'
             elif nav_result == 'preempted':
                 return 'unreachable'
-
+            else:
+                rospy.logwarn("\t\t[Cocktail Party] Invalid return value from Nav: {0}\n".format(nav_result))
+                
             return 'arrived'
 
 
@@ -1697,6 +1710,7 @@ class HearContinue(smach.State):
                     return 'no_continue'
 
         rospy.logwarn("answer was not found in response of interpreter. Should not happen!!")
+        
         return 'no_continue'
 
 
@@ -2104,7 +2118,7 @@ class CocktailParty(smach.StateMachine):
                                                     'aborted':'SAY_ANYONE_GRAB_DRINKS'})
 
             smach.StateMachine.add( 'SAY_ANYONE_GRAB_DRINKS',
-                                    Say(robot, "Can someone please take these drinks from my hand? I will drop them when i hear continue.", block=False),
+                                    Say(robot, "Can someone please take these drinks from my hand and basket? I will drop them when i hear continue.", block=False),
                                     transitions={   'spoken':'HEAR_CONTINUE_UNDELIVERED' })
 
             smach.StateMachine.add( 'HEAR_CONTINUE_UNDELIVERED',
