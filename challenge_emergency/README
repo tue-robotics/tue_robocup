@@ -10,8 +10,10 @@ amigo2:
     hardware: base, spindle, left-arm, head
     
 amigo1:
-    
-    amiddle 3dnav:=true #Or without the 3dnav:=true if that is already on by default
+    in rsettings, enable 3dnav:
+        "export AMIGO_NAV=3d"
+    and source ~/.bashrc in the terminal you launch amiddle from.
+    amiddle
 
 amigo3:
 
