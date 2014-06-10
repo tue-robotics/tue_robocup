@@ -1,12 +1,8 @@
 # Responsible: Erik
 
-(amigo2:
-
-    ahardware)
-
 amigo1:
     
-    !! USE NAVIGATION 2D via rsettings !!    
+    rsettings -> AMIGO_NAV = 2d
     amiddle
 
 amigo3:
