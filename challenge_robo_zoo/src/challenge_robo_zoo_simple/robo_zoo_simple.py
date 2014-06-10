@@ -7,6 +7,7 @@ import smach
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 import random
+import std_msgs.msg
 
 from part1 import TurnAround
 from look_at_person import LookAtPerson
@@ -21,6 +22,15 @@ from macarana import Macarena
 from hoofd_schouders_knie_teen import HoofdSchouderKnieTeen
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
+
+demos=["SAY_HI", "WAVE_LIGHTS", "WALK_EGYPTIAN", "R2D2", "TOETER", "MACARENA", "GANGNAM", "HOOFD_SCHOUDERS_KNIE_TEEN"]
+
+# ToDo: make nice
+qr_transitions ={}
+#random_transitions = {}
+for demo in demos:
+    qr_transitions[demo] = demo
+qr_transitions["empty"] = "SELECT_RANDOM"
 
 def randomize_list(l):
     """Generate a semi-random version of the list l. Items are not repeated until the whole list has been outputted once"""
@@ -42,7 +52,50 @@ class RandomOutcome(smach.State):
     def execute(self, userdata=None):
         """Randomly selects one of its registered outcomes. It excludes the previous outcome so it doesn't do the same thing twice"""
         return self.randomizer.next()
+        
+class CheckQRMarker(smach.State):
 
+    def __init__(self):
+        smach.State.__init__(self, 
+                             outcomes=demos+["empty"])
+
+        # Get the ~private namespace parameters from command line or launch file.
+        self.rate = float(rospy.get_param('~rate', '10'))
+        topic     = rospy.get_param('~topic', 'qr_marker')
+        
+        self.demo = None
+                
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+
+        rospy.loginfo('topic: /%s', topic)
+        rospy.loginfo('rate:  %d Hz', self.rate)
+
+    def execute(self, userdata):
+        
+        counter = 0
+        while (counter < self.rate and not self.demo):
+            rospy.sleep(rospy.Duration(1/self.rate))
+            counter += 1
+        
+        if self.demo:
+            demo = self.demo
+            self.demo = None
+            rospy.loginfo("Demo = {0}".format(demo))
+            return demo
+        else:
+            return "empty"
+
+    def callback(self, str_msg):
+        
+        rospy.loginfo("Received new demo request: {0}".format(str_msg.data))
+        # ToDo: turn into capitals (if necessary)
+        if (str_msg.data in demos):
+            self.demo = str_msg.data
+        else:
+            rospy.logwarn("Demo {0} is not in the list".format(str_msg.data))
+            self.demo = None
+        rospy.loginfo("Next demo = {0}".format(self.demo))
+        
 
 class RoboZooSimple(smach.StateMachine):
     """Calls each part in turn and makes a random switch between parts, i.e smach State(Machine)s.
@@ -92,8 +145,12 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "WAIT_A_SEC", 
                                     states.Wait_time(robot, waittime=1),
-                                    transitions={'waited'   :"SELECT_RANDOM",
+                                    transitions={'waited'   :"CHECK_QR_MARKER",
                                                  'preempted':"Aborted"})
+                                                 
+            smach.StateMachine.add( "CHECK_QR_MARKER",
+                                     CheckQRMarker(),
+                                     transitions=qr_transitions)
 
             smach.StateMachine.add( "SELECT_RANDOM",
                                     RandomOutcome(robot, ["1","5","6","9","10", "11", "12", "13"]),
@@ -172,6 +229,8 @@ class RoboZooSimple(smach.StateMachine):
                                     HoofdSchouderKnieTeen(robot),
                                     transitions={"Done":"RESET_ALL"})
 if __name__ == "__main__":
-    rospy.init_node("challenge_robo_zoo")
+    rospy.init_node("challenge_robo_zoo_exec")
+    
+    rospy.loginfo("QR transitions: {0}".format(qr_transitions))
 
     startup(RoboZooSimple)
