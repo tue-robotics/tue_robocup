@@ -55,8 +55,6 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         query_goto_pick   = Compound("waypoint", "pick_loc", Compound("pose_2d", "X", "Y", "Phi"))
-        query_goto_fetch  = Compound("waypoint", "fetch_loc", Compound("pose_2d", "X", "Y", "Phi"))
-        query_goto_find   = Compound("waypoint", "find_loc", Compound("pose_2d", "X", "Y", "Phi"))
         query_goto_avoid  = Compound("waypoint", "avoid_loc", Compound("pose_2d", "X", "Y", "Phi"))
         query_goto_what   = Compound("waypoint", "what_loc", Compound("pose_2d", "X", "Y", "Phi"))
 
@@ -69,6 +67,17 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "Failed":"GOTO_PICK_AND_PLACE"})
 
             smach.StateMachine.add( 'GOTO_PICK_AND_PLACE',
+                                    NavigateGeneric(robot, goal_query=query_goto_pick, goal_area_radius=0.2),
+                                    transitions={   "arrived":"PICK_AND_PLACE",
+                                                    "unreachable":'SAY_PLEASE_MOVE_1',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_PLEASE_MOVE_1'})
+
+            smach.StateMachine.add("SAY_PLEASE_MOVE_1", 
+                                    Say(robot, [ "I am not able to go to the next part of the challenge, please clear the way"], block=True),
+                                    transitions={   'spoken':'GOTO_PICK_AND_PLACE_2ND_TRY'})
+
+            smach.StateMachine.add( 'GOTO_PICK_AND_PLACE_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_pick, goal_area_radius=0.2),
                                     transitions={   "arrived":"PICK_AND_PLACE",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
@@ -87,6 +96,17 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                     transitions={   'spoken':'GOTO_AVOID_THAT'})
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
+                                    NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
+                                    transitions={   "arrived":"RESET_HEAD1",
+                                                    "unreachable":'SAY_PLEASE_MOVE_2',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_PLEASE_MOVE_2'})
+
+            smach.StateMachine.add("SAY_PLEASE_MOVE_2", 
+                                    Say(robot, [ "I am not able to go to the next part of the challenge, please clear the way"], block=True),
+                                    transitions={   'spoken':'GOTO_AVOID_THAT_2ND_TRY'})
+
+            smach.StateMachine.add( 'GOTO_AVOID_THAT_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
                                     transitions={   "arrived":"RESET_HEAD1",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
@@ -118,6 +138,17 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
                                     transitions={   "arrived":"RESET_HEAD2",
+                                                    "unreachable":'SAY_PLEASE_MOVE_3',
+                                                    "preempted":'Aborted',
+                                                    "goal_not_defined":'SAY_PLEASE_MOVE_3'})
+
+            smach.StateMachine.add("SAY_PLEASE_MOVE_3", 
+                                    Say(robot, [ "I am not able to go to the next part of the challenge, please clear the way"], block=True),
+                                    transitions={   'spoken':'GOTO_WHAT_DID_YOU_SAY_2ND_TRY'})
+
+            smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY_2ND_TRY',
+                                    NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
+                                    transitions={   "arrived":"RESET_HEAD2",
                                                     "unreachable":'SAY_ASK_CONTINUE2',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_ASK_CONTINUE2'})
@@ -137,15 +168,54 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'WHAT_DID_YOU_SAY',
             	                    what_did_you_say.WhatDidYouSay(robot),
-            	                    transitions={	"Done": "FINISHED"})
+            	                    transitions={	"Done": "SAY_GO_TO_EXIT"})
 
             smach.StateMachine.add("CANNOT_GOTO_CHALLENGE", 
                                     Say(robot, [ "I can't find a way to my next challenge, can you please take me there "]),
                                     transitions={   'spoken':'Aborted'})
 
-            smach.StateMachine.add("FINISHED", 
-                                    Say(robot, [ "I finished this challenge"]),
-                                    transitions={   'spoken':'Done'})
+            smach.StateMachine.add("SAY_GO_TO_EXIT", 
+                                    Say(robot, [ "I will now go to the exit"]),
+                                    transitions={   'spoken':'GO_TO_EXIT_1'})
+
+            navigate_exit_1 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "a")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_EXIT_1', 
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_1),
+                                    transitions={   'arrived':'AT_EXIT', 
+                                                    'preempted':'GO_TO_EXIT_2', 
+                                                    'unreachable':'GO_TO_EXIT_2', 
+                                                    'goal_not_defined':'GO_TO_EXIT_2'})
+
+            navigate_exit_2 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "b")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_EXIT_2', 
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_2),
+                                    transitions={   'arrived':'AT_EXIT', 
+                                                    'preempted':'GO_TO_EXIT_3', 
+                                                    'unreachable':'GO_TO_EXIT_3', 
+                                                    'goal_not_defined':'GO_TO_EXIT_3'})
+
+            navigate_exit_3 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "c")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_EXIT_3', 
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_3),
+                                    transitions={   'arrived':'AT_EXIT', 
+                                                    'preempted':'NOT_AT_EXIT', 
+                                                    'unreachable':'NOT_AT_EXIT', 
+                                                    'goal_not_defined':'NOT_AT_EXIT'})
+
+            smach.StateMachine.add("NOT_AT_EXIT",
+                                   states.Say(robot,"I was not able to reach the exit, I am sorry. Goodbye!"),
+                                   transitions={'spoken':'Done'})
+
+            smach.StateMachine.add("AT_EXIT",
+                                   states.Say(robot,"I finished this challenge, goodbye!"),
+                                   transitions={'spoken':'Done'})
+
 
 if __name__ == "__main__":
     rospy.init_node('basic_functionalities_exec')
