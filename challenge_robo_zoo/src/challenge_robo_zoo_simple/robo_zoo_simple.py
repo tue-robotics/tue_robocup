@@ -23,13 +23,14 @@ from hoofd_schouders_knie_teen import HoofdSchouderKnieTeen
 
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
+# list of available demo challanges:
 demos=["SAY_HI", "WAVE_LIGHTS", "WALK_EGYPTIAN", "R2D2", "TOETER", "MACARENA", "GANGNAM", "HOOFD_SCHOUDERS_KNIE_TEEN"]
 
-# ToDo: make nice
-qr_transitions ={}
-#random_transitions = {}
+# Create dictionary lists
+random_transitions = {}
 for demo in demos:
-    qr_transitions[demo] = demo
+    random_transitions[demo] = demo
+qr_transitions = random_transitions.copy()
 qr_transitions["empty"] = "SELECT_RANDOM"
 
 def randomize_list(l):
@@ -153,20 +154,21 @@ class RoboZooSimple(smach.StateMachine):
                                      transitions=qr_transitions)
 
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, ["1","5","6","9","10", "11", "12", "13"]),
-                                    transitions={"1":"SAY_HI",
+                                    RandomOutcome(robot, demos), #["1","5","6","9","10", "11", "12", "13"]),
+                                    transitions= random_transitions)
+                                                 #{"1":"SAY_HI",
                                                  #"2":"MAKE_JOKES",
                                                  #"3":"LOOK_AT_PERSON",
                                                  #"4":"FLASH_LIGHTS",
-                                                 "5":"WAVE_LIGHTS",
-                                                 "6":"WALK_EGYPTIAN",
+                                                 #"5":"WAVE_LIGHTS",
+                                                 #"6":"WALK_EGYPTIAN",
                                                  #"7":"BOO",
                                                  #"8":"PICKUP_LINES",
-                                                 "9":"R2D2",
-                                                 "10":"TOETER",
-                                                 "11":"MACARENA",
-                                                 "12":"GANGNAM",
-                                                 "13":"HOOFD_SCHOUDERS_KNIE_TEEN"})
+                                                 #"9":"R2D2",
+                                                 #"10":"TOETER",
+                                                 #"11":"MACARENA",
+                                                 #"12":"GANGNAM",
+                                                 #"13":"HOOFD_SCHOUDERS_KNIE_TEEN"})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy", "Hi there"]),
