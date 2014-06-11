@@ -143,10 +143,11 @@ class DetectPeople(smach.State):
 
         self.robot.spindle.high()
         
-        rospy.sleep(1.0)
-        
         # turn head to one side to start the swipping the room
         self.robot.head.set_pan_tilt(pan=-0.7, tilt=0.0, timeout=3.0)
+
+        # sleep to make sure the spindle is at the position
+        rospy.sleep(0.5)
         
         # Turn ON Human Tracking
         self.response_start = self.robot.perception.toggle(['human_tracking'])
@@ -158,8 +159,11 @@ class DetectPeople(smach.State):
             self.robot.speech.speak("I was not able to start human tracking.")
             return "error"
 
+        # TODO check color
+        self.robot.lights.set_color(0, 0, 1)
+
         # sleep to give time for the tracking to start
-        rospy.sleep(1)
+        rospy.sleep(0.5)
 
         self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0, timeout=3.0)
         
@@ -176,16 +180,34 @@ class DetectPeople(smach.State):
             return "error"
 
         # sleep to give the tracking time to stop before reseting the head
-        rospy.sleep(1)
+        rospy.sleep(0.5)
         
         self.robot.head.reset_position()
+
+        ###################################################
+
+        laserDetectPeople = Conjunction(Compound( "property_expected", "ObjectID", "class_label", "person"),
+                                        Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
+                                        Compound( "not", Compound( "person_checked_positively", "ObjectID")),
+                                        Compound( "not", Compound( "person_checked_negatively", "ObjectID")),
+                                        Compound( "not", Compound( "person_unreachable", "ObjectID")))
+
+        peopleResult = self.robot.reasoner.query(laserDetectPeople)
+
+        if not peopleResult:
+            self.robot.speech.speak("Laser detection didn't find anything.", block=False)
+        else:
+            self.robot.speech.speak("Laser detection found something.", block=False)
+            import ipdb; ipdb.set_trace()
+
+        ###################################################
 
         # get results from the query
         peopleFoundRes = self.robot.reasoner.query(self.peopleDetectedQ)
         
         if peopleFoundRes:
             rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s)\n".format(len(peopleFoundRes)))
-            self.robot.speech.speak("I think i saw someone. {0}".format(len(peopleFoundRes)), block=False)
+            self.robot.speech.speak("I think i saw someone. {0}".format(len(peopleFoundRes)), mood='excited', block=False)
             return 'detected'
         else:
             self.robot.speech.speak("There's no one here.", block=False)
@@ -204,12 +226,15 @@ class WaitForPerson(smach.State):
         self.robot = robot
         self.counter = 0
 
-        self.faceInFrontQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'face'),
+        # self.faceInFrontQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'face'),
+        #                                 Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
+        #                                 Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')))
+
+        self.faceInFrontQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'human_face'),
                                         Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
                                         Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')))
 
     def execute(self, userdata):
-
         rospy.loginfo("\t\t[Cocktail Party] Entered State: WaitForPerson\n")
 
         waitedCount = userdata.waitIndex_in
@@ -217,7 +242,7 @@ class WaitForPerson(smach.State):
         if waitedCount == 3:
             # Reset the counter for waiting
             waitedCount = 0;
-            self.robot.speech.speak("I was not able to detect a person")
+            self.robot.speech.speak("I didn't see anyone in front of me.")
             return "unknown_person"
         else:
             rospy.loginfo("Waited for {0} times!!!".format(waitedCount))
@@ -227,66 +252,68 @@ class WaitForPerson(smach.State):
         self.robot.spindle.high()
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
         
+        # say difference sentences 
         if self.counter == 0:
             self.robot.speech.speak("Please step in front of me to order your drink.", block=False)
-            self.counter +=1
         elif self.counter == 1:
-            self.robot.speech.speak("Would someone else stand in front of me to order.", block=False)
-            self.counter +=1
+            self.robot.speech.speak("Would another person stand in front of me to order.", block=False)
         else:
             self.robot.speech.speak("Does someone else want to order? Please come to me.", block=False)
             self.counter = 0
 
-        # prepare query for detected person
-        # query_detect_person = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'human_face'),
-        #                                   Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
-        #                                   Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')))
-
+        # TODO check color
+        self.robot.lights.set_color(0, 0, 1)
         
         # start face segmentation node
-        # self.response_start = self.robot.perception.toggle(['human_tracking'])
-
-        # if self.response_start.error_code == 0:
-        #     rospy.loginfo("Human Tracking has started correctly")
-        # elif self.response_start.error_code == 1:
-        #     rospy.loginfo("Human Tracking failed to start")
-        #     self.robot.speech.speak("I was not able to start Human Tracking.")
-        #     return "waiting"
-
-        # start face segmentation node
-        self.response_start = self.robot.perception.toggle(['face_segmentation'])
+        self.response_start = self.robot.perception.toggle(['human_tracking'])
 
         if self.response_start.error_code == 0:
-            rospy.loginfo("face_segmentation turned on")
+            rospy.loginfo("Human Tracking has started correctly")
         elif self.response_start.error_code == 1:
-            rospy.logwarn("face_segmentation failed to start")
-            self.robot.speech.speak("I was not able to start face segmentation.")
+            rospy.loginfo("Human Tracking failed to start")
+            self.robot.speech.speak("I was not able to start Human Tracking.")
+            return "waiting"
+
+        # start face segmentation node
+        # self.response_start = self.robot.perception.toggle(['face_segmentation'])
+
+        # if self.response_start.error_code == 0:
+        #     rospy.loginfo("face_segmentation turned on")
+        # elif self.response_start.error_code == 1:
+        #     rospy.logwarn("face_segmentation failed to start")
+        #     self.robot.speech.speak("I was not able to start face segmentation.")
 
         # wait until the query detected person is true, or 10 second timeout
         wait_machine = Wait_query_true(self.robot, self.faceInFrontQ, 15)
         wait_result = wait_machine.execute()
 
-        # turn off face segmentation
-        # rospy.loginfo("Human Tracking will be stopped now")
-        # self.response_stop = self.robot.perception.toggle([])
+        # TODO check color
+        self.robot.lights.set_color(0, 1, 0)
         
-        # if self.response_stop.error_code == 0:
-        #     rospy.loginfo("Human Tracking is stopped")
-        # elif self.response_stop.error_code == 1:
-        #     rospy.loginfo("Failed stopping Human Tracking")
+        # Do a sleep with the node still on so that the location of the face is correct since the person was moving
+        rospy.sleep(1.0)
 
         # turn off face segmentation
-        rospy.loginfo("Face Segmentation will be stopped now")
+        rospy.loginfo("Human Tracking will be stopped now")
         self.response_stop = self.robot.perception.toggle([])
         
         if self.response_stop.error_code == 0:
-            rospy.loginfo("Face Segmentation is stopped")
+            rospy.loginfo("Human Tracking is stopped")
         elif self.response_stop.error_code == 1:
-            rospy.logwarn("Failed stopping Face Segmentation")
+            rospy.loginfo("Failed stopping Human Tracking")
+
+        # turn off face segmentation
+        # rospy.loginfo("Face Segmentation will be stopped now")
+        # self.response_stop = self.robot.perception.toggle([])
+        
+        # if self.response_stop.error_code == 0:
+        #     rospy.loginfo("Face Segmentation is stopped")
+        # elif self.response_stop.error_code == 1:
+        #     rospy.logwarn("Failed stopping Face Segmentation")
 
         # if the query timed out...
         if wait_result == "timed_out":
-            self.robot.speech.speak("Please, don't keep me waiting.", block=False)
+            self.robot.speech.speak("Please, don't keep me waiting.", mood='excited', block=False)
             waitedCount += 1
             return "waiting"
         elif wait_result == "preempted":
@@ -295,6 +322,8 @@ class WaitForPerson(smach.State):
         # if the query succeeded
         elif wait_result == "query_true":
             rospy.loginfo("\t\t[Cocktail Party] A person was seen in front of Amigo\n")
+
+            self.counter +=1
 
             result = self.robot.reasoner.query(self.faceInFrontQ)
 
@@ -420,13 +449,13 @@ class LearnPersonName(smach.State):
         # if no answer was found / unsupported name
         if response_answer == 'no_answer' or response_answer == 'wrong_answer':
             if self.person_learn_failed == 2:
-                self.robot.speech.speak("I will call you David")
+                self.robot.speech.speak("I will call you David", block=False)
                 response_answer = "david"
             if self.person_learn_failed == 1:
-                self.robot.speech.speak("I will call you Michael")
+                self.robot.speech.speak("I will call you Michael", block=False)
                 response_answer = "michael"
             if self.person_learn_failed == 0:
-                self.robot.speech.speak("I will call you Joseph")
+                self.robot.speech.speak("I will call you Joseph", block=False)
                 response_answer = "joseph"
 
             self.person_learn_failed += 1
@@ -434,7 +463,7 @@ class LearnPersonName(smach.State):
              self.person_learn_failed = 0
 
         userdata.personName_out = str(response_answer)
-        self.robot.speech.speak("Hello " + str(response_answer) + "!")
+        self.robot.speech.speak("Hello " + str(response_answer) + "!", mood='excited', block=False)
 
         # Person's name successfully learned
         return 'learned'
@@ -565,7 +594,7 @@ class NavToLookout(smach.State):
             rospy.loginfo("\t\t[Cocktail Party] Visited all lookout points\n")
             return "visited_all"
 
-        self.robot.speech.speak("Going to the next lookout point", block=False)
+        self.robot.speech.speak("Going to the next location.", block=False)
 
         # for now, take the first goal found
         goal_answer = lookoutPoints[0]
@@ -614,7 +643,7 @@ class NavToWaitingLoc(smach.State):
             rospy.loginfo("\t\t[Cocktail Party] Visited all waiting places.\n")
             return "visited_all"
 
-        self.robot.speech.speak("Going to the waiting place.", block=False)
+        self.robot.speech.speak("Going to the waiting location.", block=False)
 
         # for now, take the first goal found
         goal_answer = waitingLocs[0]
@@ -848,7 +877,7 @@ class CheckPendingOrders(smach.State):
         # if there are enough requests start serving, or if there are enough request to 
         #   complete the total number of people needed to serve
         if nOrders < MIN_SIMULTANEOUS_ORDERS and nOrders < TOTAL_ORDERS - peopleServedCount:
-            self.robot.speech.speak("I need more requests before getting the drinks.")
+            self.robot.speech.speak("I need more requests before getting the drinks.", block=False)
             return "insuficient_orders"
         else:
             # retract the people already served, maybe they want something again
@@ -893,7 +922,7 @@ class LookForDrinks(smach.State):
 
         # if there is no drink requested, return not found
         if not goals:
-            self.robot.speech.speak("I picked up all the drinks.", block=False)
+            self.robot.speech.speak("I picked up all the drinks.", mood='excited', block=False)
             self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
             return 'done'
 
@@ -944,10 +973,10 @@ class LookForDrinks(smach.State):
             lookat_point = msgs.PointStamped(x,y,z)
             self.robot.head.send_goal(lookat_point, timeout=2.0)
         else:
-            self.robot.speech.speak("No points of interest found. I don't know where to look.", block=False)
+            self.robot.speech.speak("I don't know where to look for drinks.", block=False)
             rospy.logerr("\t\t[Cocktail Party] No point of interest found!\n")
 
-        self.robot.speech.speak("Let's see what I can find here", block=False)
+        self.robot.speech.speak("Let's see what I can find here.", block=False)
 
         # start object template matching
         self.response_start = self.robot.perception.toggle(["object_segmentation"])
@@ -987,7 +1016,7 @@ class LookForDrinks(smach.State):
                 drinkNames = set([str(answer["Drink"]) for answer in drinksFound])
                 orderedDrinks = " and ".join(drinkNames)
 
-            self.robot.speech.speak("Hey, I found a {0}!".format(orderedDrinks), block=False)
+            self.robot.speech.speak("Hey, I found a {0}!".format(orderedDrinks), mood="excited", block=False)
             return 'found'
 
 
@@ -1090,7 +1119,7 @@ class ResetSearchedLocations(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: ResetSearchedLocations\n")
 
         if self.resetCount == 0:
-            self.robot.speech.speak("I could not pick up the drink you wanted. I'll try again.", block=False)
+            self.robot.speech.speak("I could not pick up one of the drinks. I'll try again.", block=False)
             self.resetCount+=1;
 
             self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
@@ -1158,6 +1187,9 @@ class PrepareDelivery(smach.State):
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0, timeout=2.0)
 
         self.robot.speech.speak("Let me see if there's someone here. Please look at my face.", block=False)
+        # TODO check color
+        self.robot.lights.set_color(0, 0, 1)
+
 
         # perform face recognition on the person found
         self.response_start = self.robot.perception.toggle(['face_recognition'])
@@ -1268,7 +1300,7 @@ class PrepareDelivery(smach.State):
         # if there were no people found...
         else:
             self.robot.speech.speak("I thought there was someone here, but I'm mistaken.", block=False)
-            rospy.loginfo("\t\t[Cocktail Party] No person names received from world model\n") 
+            rospy.logwarn("\t\t[Cocktail Party] No person names received from world model\n") 
             return 'no_people'
 
 
@@ -1484,7 +1516,7 @@ class RetractServedPerson(smach.State):
             carrying = self.robot.reasoner.query(Compound('carrying', Compound('drink', 'Drink', 'Arm')))
 
             if not carrying:
-                self.robot.speech.speak("I finished delivering every drink.", block=False)
+                self.robot.speech.speak("I finished delivering all the drinks!", mood="excited", block=False)
                 return 'all_served'
             else:
                 rospy.loginfo("\t\t[Cocktail Party] Still have to deliver {0} drink(s)\n".format(len(carrying)))
@@ -1664,7 +1696,7 @@ class HandoverUndeliveredDrinks(smach.StateMachine):
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: HandoverUndeliveredDrinks\n")
 
-        self.robot.speech.speak("I will open my grippers now.")
+        self.robot.speech.speak("I will open both grippers now.")
 
         # TODO: copy the arm pose from Handover_pose and set it
 
@@ -1700,11 +1732,14 @@ class HearContinue(smach.State):
     def execute(self, userdata):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: HearContinue\n")
 
-        self.response = self.ask_user_service_continue("continue", 4, rospy.Duration(15))
+        # TODO check color
+        self.robot.lights.set_color(1, 0, 0)
 
-        for x in range(0, len(self.response.keys)):
-            if self.response.keys[x] == 'answer':
-                if self.response.values[x] == 'true':
+        response = self.ask_user_service_continue("continue", 4, rospy.Duration(15))
+
+        for x in range(0, len(response.keys)):
+            if response.keys[x] == 'answer':
+                if response.values[x] == 'true':
                     return 'continue'
                 else: 
                     return 'no_continue'
@@ -1717,7 +1752,7 @@ class HearContinue(smach.State):
 #########################################################################################
 
 
-class checkCarriedDrinks(smach.State):
+class CheckCarriedDrinks(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
                                 outcomes=['something', 'none'])
@@ -1725,7 +1760,7 @@ class checkCarriedDrinks(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: checkCarriedDrinks\n")
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: CheckCarriedDrinks\n")
 
         carrying = self.robot.reasoner.query(Compound('carrying', 'X'))
 
@@ -1735,6 +1770,76 @@ class checkCarriedDrinks(smach.State):
         else:
             rospy.loginfo("\t\t[Cocktail Party] Not carrying any drinks\n")
             return 'none'
+
+
+#########################################################################################
+
+
+class StandingPeopleDetector(smach.State):
+    def __init__(self, robot, distance_to_walls=0.2, time=None, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
+        smach.State.__init__(self, outcomes=["done", "failed"])
+        self.robot = robot
+        self.time = time
+        self.room = room
+        self.point_stamped = point_stamped
+        self.length_x = length_x
+        self.length_y = length_y
+        self.length_z = length_z
+        self.distance_to_walls = distance_to_walls  # This is the distance that is retracted from the room dimensions in x and y directions.
+
+    def execute(self, userdata=None):
+
+        rospy.loginfo("\t\t[Cocktail Party] Entered State: StandingPeopleDetector\n")
+
+        # First check if room is given or already a point. 
+        
+        if self.room:
+            
+            room_dimensions = Compound('room_dimensions',self.room, Compound('size', 'Xmin', 'Ymin', 'Zmin', 'Xmax', 'Ymax', 'Zmax'))
+
+            room_dimensions_answers = self.robot.reasoner.query(room_dimensions)
+
+            if not room_dimensions_answers:
+                rospy.logerr("\t\t[Cocktail Party] Dimensions for room were not found in reasoner!\n")
+                return 'failed'
+
+            # assumed is that there is only one block per room.
+            room_dimensions_answer = room_dimensions_answers[0]
+            x_min = float(room_dimensions_answer['Xmin'])
+            y_min = float(room_dimensions_answer['Ymin'])
+            z_min = float(room_dimensions_answer['Zmin'])
+            x_max = float(room_dimensions_answer['Xmax'])
+            y_max = float(room_dimensions_answer['Ymax'])
+            z_max = float(room_dimensions_answer['Zmax'])
+
+            rospy.loginfo("\t\t[Cocktail Party] room dimensions: X - [{0}, {1}], Y - [{2}, {3}], Z - [{4}, {5}]\n".format(
+                x_min, x_max, y_min, y_max, z_min, z_max))
+            
+            new_pointstamped = geometry_msgs.msg.PointStamped()
+            new_pointstamped.point.x = (x_max-x_min)*0.5 + x_min
+            new_pointstamped.point.y = (y_max-y_min)*0.5 + y_min
+            new_pointstamped.point.z = (z_max-z_min)*0.5 + z_min
+            new_pointstamped.header.frame_id = '/map'         
+
+            # print "\n new_pointstamped = ", new_pointstamped, "\n"
+
+            new_length_x = x_max-x_min - 2 * self.distance_to_walls
+            new_length_y = y_max-y_min - 2 * self.distance_to_walls
+            new_length_z = z_max-z_min - 2 * self.distance_to_walls
+
+            # print "\n new_length_x = ", new_length_x, "\n"
+            # print "\n new_length_y = ", new_length_y, "\n"
+            # print "\n new_length_z = ", new_length_z, "\n"
+
+            self.robot.perception.people_detection_torso_laser(new_pointstamped, self.time, abs(new_length_x), abs(new_length_y), abs(new_length_z))
+
+        elif self.point_stamped:
+            self.robot.perception.people_detection_torso_laser(self.point_stamped, self.time, self.length_x, self.length_y, self.length_z)
+        else:
+            rospy.logerr("\t\t[Cocktail Party]No room or point was defined for detecting people\n")
+            return 'failed'
+
+        return 'done'
 
 
 #########################################################################################
@@ -1816,6 +1921,7 @@ class CocktailParty(smach.StateMachine):
                                        Compound( 'property_expected', 'ObjectID', 'class_label', 'Drink'),
                                        Compound( 'property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
                                        Compound( 'property_expected', 'ObjectID', 'position', Sequence('X', 'Y', 'Z')))
+
 
 #-----------------------------------------ENTER THE ROOM---------------------------------------------------------
 
@@ -2026,7 +2132,7 @@ class CocktailParty(smach.StateMachine):
                                                     'aborted':'CHECK_CARRIED_DRINKS_PICKUP'})
 
             smach.StateMachine.add( 'CHECK_CARRIED_DRINKS_PICKUP',
-                                    checkCarriedDrinks(robot),
+                                    CheckCarriedDrinks(robot),
                                     transitions={   'something':'DELIVER_DRINKS_CONTAINER',
                                                     'none':'SERVED_STATUS'})
 
@@ -2042,15 +2148,22 @@ class CocktailParty(smach.StateMachine):
                 smach.StateMachine.add('NAV_TO_LAST_KNOWN_LOCATION',
                                         NavToLastKnowLoc(robot),
                                         transitions={   'unreachable':'NAV_TO_LAST_KNOWN_LOCATION' , 
-                                                        'arrived':'DETECT_PEOPLE', 
+                                                        # 'arrived':'DETECT_PEOPLE',
+                                                        'arrived':'DETECT_PEOPLE_TORSO_LASER', 
                                                         'visited_all':'NAV_TO_LOOKOUT'})
 
                 # if the request weren't all delivered continue searching on the lookout points
                 smach.StateMachine.add( 'NAV_TO_LOOKOUT',
                                         NavToLookout(robot),
                                         transitions={   'unreachable':'NAV_TO_LOOKOUT',
-                                                        'arrived':'DETECT_PEOPLE',
+                                                        # 'arrived':'DETECT_PEOPLE',
+                                                        'arrived':'DETECT_PEOPLE_TORSO_LASER',
                                                         'visited_all':'aborted'})
+
+                smach.StateMachine.add( 'DETECT_PEOPLE_TORSO_LASER',
+                                        StandingPeopleDetector( robot, time=4, room='living_room'),
+                                        transitions={   'done':'DETECT_PEOPLE',
+                                                        'failed':'DETECT_PEOPLE'})
 
                 smach.StateMachine.add( 'DETECT_PEOPLE',
                                         DetectPeople(robot),
@@ -2107,7 +2220,7 @@ class CocktailParty(smach.StateMachine):
                                                         'failed':'aborted'})
 
                 smach.StateMachine.add( 'CHECK_CARRIED_DRINKS_DELIVERY',
-                                    checkCarriedDrinks(robot),
+                                    CheckCarriedDrinks(robot),
                                     transitions={   'something':'NAV_TO_DETECTED_PERSON',
                                                     'none':'succeeded'})
 
@@ -2223,14 +2336,16 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    # initial_state = None
+    initial_state = None
     # initial_state = 'FIND_DRINKS_CONTAINER'
-    initial_state = 'DELIVER_DRINKS_CONTAINER'
+    # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
 
     machine = CocktailParty(amigo)
     
+    # Testing data, automatically asserted
+
     if initial_state != None:
         amigo.reasoner.reset()
 
