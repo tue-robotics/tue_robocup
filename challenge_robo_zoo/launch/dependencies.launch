@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <include file="$(find qr_detector_zbar)/launch/qr_data_publisher.launch"/>
+  <include file="$(find rgbd_transport)/launch/top_kinect_server.launch"/>
+
+</launch>

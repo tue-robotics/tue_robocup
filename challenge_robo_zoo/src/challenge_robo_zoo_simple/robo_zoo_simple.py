@@ -24,7 +24,15 @@ from hoofd_schouders_knie_teen import HoofdSchouderKnieTeen
 from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
 # list of available demo challanges:
-demos=["SAY_HI", "WAVE_LIGHTS", "WALK_EGYPTIAN", "R2D2", "TOETER", "MACARENA", "GANGNAM", "HOOFD_SCHOUDERS_KNIE_TEEN"]
+colormap = {    "SAY_HI":(1,0,1),
+                "WAVE_LIGHTS":(1,1,1), #All colors together 
+                "WALK_EGYPTIAN":(1,1,0), #Pyramids are yellow :-S?
+                "R2D2":(0,0,1), #R2D2 is partly blue, so Amigo will as well
+                "TOETER":(0,1,0), 
+                "MACARENA":(0.99, 0.96, 0.90), #Orange
+                "GANGNAM":(1,0,0), 
+                "HOOFD_SCHOUDERS_KNIE_TEEN":(0,1,1)}
+demos = list(colormap.keys())
 
 # Create dictionary lists
 random_transitions = {}
@@ -56,7 +64,7 @@ class RandomOutcome(smach.State):
         
 class CheckQRMarker(smach.State):
 
-    def __init__(self):
+    def __init__(self, robot):
         smach.State.__init__(self, 
                              outcomes=demos+["empty"])
 
@@ -65,6 +73,7 @@ class CheckQRMarker(smach.State):
         topic     = rospy.get_param('~topic', 'qr_marker')
         
         self.demo = None
+        self.robot = robot
                 
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
@@ -82,6 +91,10 @@ class CheckQRMarker(smach.State):
             demo = self.demo
             self.demo = None
             rospy.loginfo("Demo = {0}".format(demo))
+            try:
+                self.robot.lights.set_color(*colormap[demo])
+            except KeyError:
+                pass
             return demo
         else:
             return "empty"
@@ -150,7 +163,7 @@ class RoboZooSimple(smach.StateMachine):
                                                  'preempted':"Aborted"})
                                                  
             smach.StateMachine.add( "CHECK_QR_MARKER",
-                                     CheckQRMarker(),
+                                     CheckQRMarker(robot),
                                      transitions=qr_transitions)
 
             smach.StateMachine.add( "SELECT_RANDOM",
