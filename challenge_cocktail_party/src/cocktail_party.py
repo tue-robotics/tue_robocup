@@ -147,7 +147,7 @@ class DetectPeople(smach.State):
         self.robot.head.set_pan_tilt(pan=-0.7, tilt=0.0, timeout=3.0)
 
         # sleep to make sure the spindle is at the position
-        rospy.sleep(0.5)
+        rospy.sleep(0.8)
         
         # Turn ON Human Tracking
         self.response_start = self.robot.perception.toggle(['human_tracking'])
@@ -254,11 +254,15 @@ class WaitForPerson(smach.State):
         
         # say difference sentences 
         if self.counter == 0:
-            self.robot.speech.speak("Please step in front of me to order your drink.", block=False)
+            self.robot.speech.speak("Please step in front of me to order your drink.")
         elif self.counter == 1:
-            self.robot.speech.speak("Would another person stand in front of me to order.", block=False)
+            self.robot.speech.speak("Would another person stand in front of me to order.")
+            # give time for the last person to move away
+            rospy.sleep(1.0)
         else:
-            self.robot.speech.speak("Does someone else want to order? Please come to me.", block=False)
+            self.robot.speech.speak("Does someone else want to order? Please come to me.")
+            # give time for the last person to move away
+            rospy.sleep(1.0)
             self.counter = 0
 
         # TODO check color
@@ -291,7 +295,7 @@ class WaitForPerson(smach.State):
         self.robot.lights.set_color(0, 1, 0)
         
         # Do a sleep with the node still on so that the location of the face is correct since the person was moving
-        rospy.sleep(1.0)
+        rospy.sleep(2.0)
 
         # turn off face segmentation
         rospy.loginfo("Human Tracking will be stopped now")
