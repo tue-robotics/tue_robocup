@@ -61,7 +61,7 @@ class DeleteModels(smach.State):
 
 #########################################################################################
 
-
+# Uses the human_tracking to detect people while turning the head arround. Wave not implemented yet.
 class DetectWavingPeople(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -125,7 +125,7 @@ class DetectWavingPeople(smach.State):
 
 #########################################################################################
 
-
+# Uses the human_tracking to detect people while turning the head arround.
 class DetectPeople(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -146,7 +146,7 @@ class DetectPeople(smach.State):
         # turn head to one side to start the swipping the room
         self.robot.head.set_pan_tilt(pan=-0.7, tilt=0.0, timeout=3.0)
 
-        # sleep to make sure the spindle is at the position
+        # sleep to make sure the spindle is at the target position
         rospy.sleep(0.8)
         
         # Turn ON Human Tracking
@@ -186,13 +186,13 @@ class DetectPeople(smach.State):
 
         ###################################################
 
-        laserDetectPeople = Conjunction(Compound( "property_expected", "ObjectID", "class_label", "person"),
-                                        Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
-                                        Compound( "not", Compound( "person_checked_positively", "ObjectID")),
-                                        Compound( "not", Compound( "person_checked_negatively", "ObjectID")),
-                                        Compound( "not", Compound( "person_unreachable", "ObjectID")))
+        laserDetectQ = Conjunction( Compound( "property_expected", "ObjectID", "class_label", "person"),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
+                                    Compound( "not", Compound( "person_checked_positively", "ObjectID")),
+                                    Compound( "not", Compound( "person_checked_negatively", "ObjectID")),
+                                    Compound( "not", Compound( "person_unreachable", "ObjectID")))
 
-        peopleResult = self.robot.reasoner.query(laserDetectPeople)
+        peopleResult = self.robot.reasoner.query(laserDetectQ)
 
         if not peopleResult:
             self.robot.speech.speak("Laser detection didn't find anything.", block=False)
@@ -216,7 +216,7 @@ class DetectPeople(smach.State):
 
 #########################################################################################
 
-
+# Wait for the person to step in front of the robot, uses the human_tracking node.
 class WaitForPerson(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -224,7 +224,7 @@ class WaitForPerson(smach.State):
                                 input_keys=['waitIndex_in'])
         
         self.robot = robot
-        self.counter = 0
+        self.sentenceCounter = 0
 
         # self.faceInFrontQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'face'),
         #                                 Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
@@ -253,9 +253,9 @@ class WaitForPerson(smach.State):
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
         
         # say difference sentences 
-        if self.counter == 0:
+        if self.sentenceCounter == 0:
             self.robot.speech.speak("Please step in front of me to order your drink.")
-        elif self.counter == 1:
+        elif self.sentenceCounter == 1:
             self.robot.speech.speak("Would another person stand in front of me to order.")
             # give time for the last person to move away
             rospy.sleep(1.0)
@@ -263,7 +263,7 @@ class WaitForPerson(smach.State):
             self.robot.speech.speak("Does someone else want to order? Please come to me.")
             # give time for the last person to move away
             rospy.sleep(1.0)
-            self.counter = 0
+            self.sentenceCounter = 0
 
         # TODO check color
         self.robot.lights.set_color(0, 0, 1)
@@ -292,10 +292,10 @@ class WaitForPerson(smach.State):
         wait_result = wait_machine.execute()
 
         # TODO check color
-        self.robot.lights.set_color(0, 1, 0)
+        self.robot.lights.set_color(1, 0, 0)
         
-        # Do a sleep with the node still on so that the location of the face is correct since the person was moving
-        rospy.sleep(2.0)
+        # Do a sleep with the node still on so that the location of the face is more correct since the person was moving
+        rospy.sleep(1.5)
 
         # turn off face segmentation
         rospy.loginfo("Human Tracking will be stopped now")
@@ -327,7 +327,7 @@ class WaitForPerson(smach.State):
         elif wait_result == "query_true":
             rospy.loginfo("\t\t[Cocktail Party] A person was seen in front of Amigo\n")
 
-            self.counter +=1
+            self.sentenceCounter +=1
 
             result = self.robot.reasoner.query(self.faceInFrontQ)
 
@@ -347,7 +347,7 @@ class WaitForPerson(smach.State):
 
 #########################################################################################
 
-
+# Double-check if there is a face in front of the robot, using face_segmentation, and look at it
 class ConfirmPersonDetection(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -366,11 +366,12 @@ class ConfirmPersonDetection(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: ConfirmPersonDetection\n")
 
         # reset robo pose
-        # self.robot.spindle.reset()
         self.robot.spindle.high()
         self.robot.head.set_pan_tilt(tilt=-0.2, pan=0.0)
 
         self.robot.speech.speak("Let me make sure there's someone here.", block=False)
+
+        # TODO use the human_tracking instead of face_segmentation, its much faster
 
         # start face segmentation node
         self.response_start = self.robot.perception.toggle(['face_segmentation'])
@@ -428,6 +429,7 @@ class ConfirmPersonDetection(smach.State):
 #########################################################################################
 
 
+# Ask the persons name, if nothing is heard for several times the robot chooses one
 class LearnPersonName(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -476,6 +478,7 @@ class LearnPersonName(smach.State):
 #########################################################################################
 
 
+# Ask the persons drink, if nothing is heard for several times the robot chooses one
 class AskDrink(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -534,9 +537,6 @@ class AskDrink(smach.State):
                                     Compound('goal',
                                     Compound('serve', uniqueID, userdata.personName_in, response_answer, Compound('pose_2d', locX, locY, rotation)))))
 
-        # self.robot.reasoner.query(  Compound('assert', 
-        #                             Compound('waypoint', Compound('last_known_location', lastLocID), Sequence(locX, locY, rotation))))
-
         self.robot.reasoner.query(  Compound('assert', 
                                     Compound('waypoint', Compound('last_known_location', lastLocID), Compound('pose_2d', locX, locY, rotation))))
 
@@ -548,6 +548,7 @@ class AskDrink(smach.State):
 #########################################################################################
 
 
+# Learn the persons face
 class LearnPersonFace(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -574,6 +575,7 @@ class LearnPersonFace(smach.State):
 #########################################################################################
 
 
+# Navigate to a lookout point. When reached assert it as visited so the robot can iterate through several points
 class NavToLookout(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -594,13 +596,12 @@ class NavToLookout(smach.State):
 
         # if there is no location associated with lookout points say it
         if not lookoutPoints:
-            # self.robot.speech.speak("I visited all the lookout points", block=False)
             rospy.loginfo("\t\t[Cocktail Party] Visited all lookout points\n")
             return "visited_all"
 
         self.robot.speech.speak("Going to the next location.", block=False)
 
-        # for now, take the first goal found
+        # take the first goal found
         goal_answer = lookoutPoints[0]
 
         goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
@@ -614,9 +615,13 @@ class NavToLookout(smach.State):
         self.robot.reasoner.query(Compound("assert", Compound("visited", waypointName)))
 
         # If nav_result is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
-        if nav_result == "unreachable":                    
+        if nav_result == "unreachable":
+            rospy.logwarn("\t\t[Cocktail Party] Could not go to the lookout location.\n")
+            self.robot.speech.speak("I'm unable to go to the lookout place.", block=False)
             return "unreachable"
         elif nav_result == "preempted":
+            rospy.logwarn("\t\t[Cocktail Party] Could not go to the lookout location.\n")
+            self.robot.speech.speak("I'm unable to go to the lookout place.", block=False)
             return "unreachable"
 
         return "arrived"
@@ -625,6 +630,7 @@ class NavToLookout(smach.State):
 #########################################################################################
 
 
+# Navigate to a waiting point. When reached assert it as visited so the robot can iterate through several points
 class NavToWaitingLoc(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -643,7 +649,6 @@ class NavToWaitingLoc(smach.State):
 
         # if there is no location associated with lookout points say it
         if not waitingLocs:
-            # self.robot.speech.speak("I visited all the lookout points", block=False)
             rospy.loginfo("\t\t[Cocktail Party] Visited all waiting places.\n")
             return "visited_all"
 
@@ -664,9 +669,11 @@ class NavToWaitingLoc(smach.State):
 
         if nav_result == "unreachable":
             rospy.logwarn("\t\t[Cocktail Party] Could not go to the waiting location.\n")
+            self.robot.speech.speak("I'm unable to go to the waiting place.", block=False)
             return "unreachable"
         elif nav_result == "preempted":
             rospy.logwarn("\t\t[Cocktail Party] Could not go to the waiting location.\n")
+            self.robot.speech.speak("I'm unable to go to the waiting place.", block=False)
             return "unreachable"
 
         return "arrived"
@@ -675,6 +682,7 @@ class NavToWaitingLoc(smach.State):
 #########################################################################################
 
 
+# Navigate to the location of a detected person. When reached assert it as visited so the robot can iterate through several people
 class NavToWavingPerson(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -707,11 +715,10 @@ class NavToWavingPerson(smach.State):
 
         # if there is no location associated with lookout points
         if not peopleWaving:
-
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
             return 'visited_all'
-        else:
 
+        else:
             rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s). Going to visit the first in the list.\n". format(len(peopleWaving)))
 
             # If there is more than 1 result, force a query that only returns the first result
@@ -747,7 +754,7 @@ class NavToWavingPerson(smach.State):
 
 #########################################################################################
 
-
+# Navigate to the last know location of a person who ordered.
 class NavToLastKnowLoc(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
