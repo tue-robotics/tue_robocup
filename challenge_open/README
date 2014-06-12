@@ -29,6 +29,11 @@ amigo1:
     # When you're done:
     rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
 
+    # Remove the cb base navigation again:
+    comment the following line from rospkgs: 
+
+        - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
+
 ########################################
 ###                                  ###
 ##             SCENARIO               ##
