@@ -87,6 +87,7 @@ tf::TransformListener* listener_;												  // Tf listenter to obtain tf info
 ros::ServiceClient srv_cost_map;
 
 ros::Subscriber sub_laser_;
+ros::Subscriber sub_laser_back_;
 
 // Administration: speech
 bool speech_recognition_turned_on_ = false;
@@ -97,6 +98,7 @@ double t_last_speech_cmd_ = 0;
 std::string current_clr_;
 bool left_elevator_ = false;
 bool in_elevator_ = false;
+bool elevator_door_closed_ = false;
 double t_pause_ = 0;
 bool emergency_button_pressed_ = true;
 bool check_elevator_ = true; // only check every second time laser data is received
@@ -717,6 +719,7 @@ void speechCallback(std_msgs::String res)
             amigoSpeak("You can leave the elevator", true);
             follower_->reset(1.0);
             sub_laser_.shutdown();
+            sub_laser_back_.shutdown();
 
 
         }
@@ -857,7 +860,33 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 	check_elevator_ = false;
 }
 
+void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
+{
 
+    if (!in_elevator_)
+    {
+        return;
+    }
+
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    //   ELEVATOR DOOR DETECTOR
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+    if ((laser_scan_msg->ranges.size() ) > 100) {
+        int laser_middle_ = (int) ((laser_scan_msg->ranges.size() )/ 2.0);
+        double door_distance_ = (laser_scan_msg->ranges[laser_middle_ + 20] + laser_scan_msg->ranges[laser_middle_ + 10] + laser_scan_msg->ranges[laser_middle_] + laser_scan_msg->ranges[laser_middle_ - 10] + laser_scan_msg->ranges[laser_middle_ - 20])/5.0;
+
+        if (door_distance_ < 1.0) {
+			if (elevator_door_closed_ != true) {
+				amigoSpeak("My laser on the back detected a closed elevator door!"); 
+			}
+            elevator_door_closed_ = true;
+        }
+        else {
+            elevator_door_closed_ = false;
+        }
+    }
+}
 
 void emergencyCallback(const std_msgs::Bool::ConstPtr& em_button_msg)
 {
@@ -915,6 +944,9 @@ int main(int argc, char **argv) {
 
     //! Laser data
     sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_front_laser", 10, laserCallback);
+
+    //! Laser data back
+    sub_laser_back_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_back_laser", 10, laserbackCallback);
 
 	//! Create follower (which connects with WIRE)
 	//! Construct the follower
@@ -1045,7 +1077,7 @@ int main(int argc, char **argv) {
                     if (n_move_base_3d_tries > 4) ROS_WARN("Follow me: there might be a move base 3d problem!");
                 }
             }
-            // Else: robot did not move for a while but that is not a problem
+            // Else: robot did not move for a while but less than the T_MAX_NO_MOVE_BEFORE_TRYING_3D threshold
 
         }
         // Else: robot is moving, do adminstration
