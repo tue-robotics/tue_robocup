@@ -294,6 +294,7 @@ class WaitForPerson(smach.State):
         # TODO check color
         self.robot.lights.set_color(1, 0, 0)
         
+        # TODO not sure if this is actually working
         # Do a sleep with the node still on so that the location of the face is more correct since the person was moving
         rospy.sleep(1.5)
 
@@ -897,7 +898,9 @@ class CheckPendingOrders(smach.State):
             self.robot.reasoner.query(Compound('retractall', Compound('approached', 'X')))
             self.robot.reasoner.query(Compound('retractall', Compound('confirmed', 'X')))
             
-            # self.robot.speech.speak("I will now get your drinks.", block=False)
+            self.robot.speech.speak("Please step aside so i can go and get the drinks.")
+            rospy.sleep(1.0)
+            
             self.robot.reasoner.reset()
             return "enough_orders"  
 
@@ -2349,7 +2352,7 @@ if __name__ == '__main__':
 
     initial_state = None
     # initial_state = 'FIND_DRINKS_CONTAINER'
-    # initial_state = 'DELIVER_DRINKS_CONTAINER'
+    #initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
 
@@ -2368,7 +2371,7 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
-                                Compound('serve', 'william_coke', 'william', 'coke',  Compound('pose_2d', '2.829', '2.030', '-1.514')))))
+                                Compound('serve', 'elisabeth_coke', 'elisabeth', 'coke',  Compound('pose_2d', '2.829', '2.030', '-1.514')))))
 
         amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'milk', 'basket'))))
 
