@@ -99,6 +99,8 @@ std::string current_clr_;
 bool left_elevator_ = false;
 bool in_elevator_ = false;
 bool elevator_door_closed_ = false;
+bool first_door_detection_ = true;
+int door_dections_cntr_ = 0;
 double t_pause_ = 0;
 bool emergency_button_pressed_ = true;
 bool check_elevator_ = true; // only check every second time laser data is received
@@ -862,7 +864,6 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 
 void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
-
     if (!in_elevator_)
     {
         return;
@@ -877,13 +878,29 @@ void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
         double door_distance_ = (laser_scan_msg->ranges[laser_middle_ + 20] + laser_scan_msg->ranges[laser_middle_ + 10] + laser_scan_msg->ranges[laser_middle_] + laser_scan_msg->ranges[laser_middle_ - 10] + laser_scan_msg->ranges[laser_middle_ - 20])/5.0;
 
         if (door_distance_ < 1.0) {
-			if (elevator_door_closed_ != true) {
-				amigoSpeak("My laser on the back detected a closed elevator door!"); 
+			if (elevator_door_closed_ != true && first_door_detection_ == true) {
+				ROS_INFO("ELEVATOR DOOR DETECTOR:Closed door!");
+				amigoSpeak("Closed door!");
+				first_door_detection_ = false;
+				door_dections_cntr_ = 0;
 			}
-            elevator_door_closed_ = true;
+			else if (elevator_door_closed_ != true && door_dections_cntr_ <= 50) {
+				ROS_INFO("DETECTING ELEVATOR DOOR: door_dections_cntr = [%i]",door_dections_cntr_);
+				door_dections_cntr_++; 
+			}
+			else if (elevator_door_closed_ != true) {
+				elevator_door_closed_ = true;
+				ROS_INFO("ELEVATOR DOOR DETECTOR: My laser on the back detected a closed elevator door!");
+				amigoSpeak("My laser on the back detected a closed elevator door!");
+				
+			}
         }
         else {
             elevator_door_closed_ = false;
+            door_dections_cntr_ = 0;
+            first_door_detection_ = true;
+            ROS_INFO("ELEVATOR DOOR DETECTOR: Door Reset");
+            amigoSpeak("Door Reset");
         }
     }
 }
@@ -957,7 +974,7 @@ int main(int argc, char **argv) {
     //! Wait for the emergency switch to be released
     ros::Subscriber sub_emergency = nh.subscribe<std_msgs::Bool>("/amigo/emergency_switch", 10, emergencyCallback);
     ros::Rate loop_rate_slow(5);
-    ROS_INFO("Waiting for emegency button to be released...");
+    ROS_INFO("Waiting for emergency button to be released...");
     while (emergency_button_pressed_)
     {
         ros::spinOnce();
@@ -1083,6 +1100,10 @@ int main(int argc, char **argv) {
         // Else: robot is moving, do adminstration
         else
         {
+			if (in_elevator_)
+			{
+				ROS_INFO("In the elevator. However velocity is not nonzero.");
+			}
             drive = true;
             n_move_base_3d_tries = 0;
         }
