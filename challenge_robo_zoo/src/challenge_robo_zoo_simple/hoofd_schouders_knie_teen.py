@@ -132,11 +132,11 @@ class HoofdSchouderKnieTeen(smach.State):
         abspath = os.path.abspath(__file__)
         dname = os.path.dirname(abspath)
         os.chdir(dname)
-        musicfile = "hoofd_schouders_knie_teen.mp3"
+        musicfile = "hoofd_schouders_knie_teen_2.mp3"
         self.musicfile = os.path.join(dname, musicfile)
 
     def execute(self, userdata=None):
-        with music(self.musicfile):
+        with music(self.musicfile, volume=30):
             hoofdschoudersknieteen(self.robot)
         return "Done"
 

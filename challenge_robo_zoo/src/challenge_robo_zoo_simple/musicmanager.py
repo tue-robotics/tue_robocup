@@ -3,11 +3,14 @@ import subprocess
 import os
 import signal
 
-def start_music(filepath):
+def start_music(filepath, volume=100):
     print "Playing music: {0}".format(filepath)
     # The os.setsid() is passed in the argument preexec_fn so
     # it's run after the fork() and before  exec() to run the shell.
-    music_process = subprocess.Popen("mpg123 '{0}'".format(filepath), stdout=subprocess.PIPE, 
+    max_volume = 32768
+    current_volume = int((max_volume / 100) * volume)
+
+    music_process = subprocess.Popen("mpg123 --scale {1} '{0}'".format(filepath, current_volume), stdout=subprocess.PIPE, 
                            shell=True, preexec_fn=os.setsid) 
     print "If the music keeps going somehow, its PID is: {0}".format(music_process.pid)
     return music_process
@@ -16,8 +19,8 @@ def stop_music(music_process):
     os.killpg(music_process.pid, signal.SIGTERM)  # Send the signal to all the process groups
 
 @contextmanager
-def music(filename):
-    pid = start_music(filename)
+def music(filename, volume=100):
+    pid = start_music(filename, volume)
     yield
     stop_music(pid)
 
