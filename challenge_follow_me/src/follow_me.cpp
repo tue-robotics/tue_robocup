@@ -104,6 +104,7 @@ int door_dections_cntr_ = 0;
 double t_pause_ = 0;
 bool emergency_button_pressed_ = true;
 bool check_elevator_ = true; // only check every second time laser data is received
+bool check_elevator_door_ = true; // only check every second time laser data is received
 unsigned int marker_id_ = 0;
 
 void rotateRobot(double desired_angle)
@@ -864,7 +865,13 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 
 void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 {
-    if (!in_elevator_)
+	if (!check_elevator_door_) // only do this check every second time the laser data gets in
+    {
+        check_elevator_door_ = true;
+        return;
+    }
+	
+    if (!in_elevator_) // only do this check in the elevator
     {
         return;
     }
@@ -879,13 +886,13 @@ void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
 
         if (door_distance_ < 1.0) {
 			if (elevator_door_closed_ != true && first_door_detection_ == true) {
-				ROS_INFO("ELEVATOR DOOR DETECTOR:Closed door!");
-				amigoSpeak("Closed door!");
+				ROS_INFO("ELEVATOR DOOR DETECTOR: Closed door First Time detected!");
+				//amigoSpeak("Closed door!");
 				first_door_detection_ = false;
 				door_dections_cntr_ = 0;
 			}
 			else if (elevator_door_closed_ != true && door_dections_cntr_ <= 50) {
-				ROS_INFO("DETECTING ELEVATOR DOOR: door_dections_cntr = [%i]",door_dections_cntr_);
+				//ROS_INFO("DETECTING ELEVATOR DOOR: door_dections_cntr = [%i]",door_dections_cntr_);
 				door_dections_cntr_++; 
 			}
 			else if (elevator_door_closed_ != true) {
@@ -899,8 +906,8 @@ void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
             elevator_door_closed_ = false;
             door_dections_cntr_ = 0;
             first_door_detection_ = true;
-            ROS_INFO("ELEVATOR DOOR DETECTOR: Door Reset");
-            amigoSpeak("Door Reset");
+            //ROS_INFO("ELEVATOR DOOR DETECTOR: Door Reset");
+            //amigoSpeak("Door Reset");
         }
     }
 }
@@ -951,7 +958,6 @@ int main(int argc, char **argv) {
     ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
     ac_head_ref_->waitForServer();
     ROS_INFO("Connected!");
-    moveHead(0, 0, true);
     
     //! location markers
     location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/follow_me/location_markers", 10);
@@ -989,8 +995,9 @@ int main(int argc, char **argv) {
     std_srvs::Empty empty_srv;
     if (!srv_cost_map.exists() && !srv_cost_map.call(empty_srv)) ROS_WARN("Cannot clear the cost map");
     
-    //! Reset spindle
+    //! Reset hardware
     resetSpindlePosition();
+    moveHead(0, 0, true);
 
     //! Clear the world model
     ros::ServiceClient reset_wire_client = nh.serviceClient<std_srvs::Empty>("/wire/reset");
@@ -1023,7 +1030,9 @@ int main(int argc, char **argv) {
     //! Start Following
     unsigned int n_move_base_3d_tries = 0;
     bool drive = false;
-    double t_start_no_move = 0;
+	bool first_time_in_elevator_ = true;
+    double t_start_no_move = 0.0;
+    double t_first_time_in_elevator_ = 0.0;
     ros::Rate loop_rate_fast(25);
     while (ros::ok())
     {
@@ -1059,7 +1068,20 @@ int main(int argc, char **argv) {
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
-                    ROS_INFO("In the elevator. TODO: slowly move forward.");
+					if (!elevator_door_closed_) {
+						if (first_time_in_elevator_) {
+							t_first_time_in_elevator_ = ros::Time::now().toSec();
+							t_first_time_in_elevator_ = t_first_time_in_elevator_ + 20.0;
+							first_time_in_elevator_ = false;
+						}
+
+						if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 10.0) {
+							follower_->pause();
+							moveToRelativePosition(0.3, 0.0, 0.0, 5.0);
+							t_first_time_in_elevator_ = ros::Time::now().toSec();
+							amigoSpeak("ELEVATOR GOAL, nonzero");
+						}
+					}
                 }
                 // Outside the elevator, see if and how move base 3d must be used
                 else
@@ -1102,7 +1124,20 @@ int main(int argc, char **argv) {
         {
 			if (in_elevator_)
 			{
-				ROS_INFO("In the elevator. However velocity is not nonzero.");
+				if (!elevator_door_closed_) {
+					if (first_time_in_elevator_) {
+						t_first_time_in_elevator_ = ros::Time::now().toSec();
+						t_first_time_in_elevator_ = t_first_time_in_elevator_ + 20.0;
+						first_time_in_elevator_ = false;
+					}
+
+					if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 10.0) {
+						follower_->pause();
+						moveToRelativePosition(0.5, 0.0, 0.0, 5.0);
+						t_first_time_in_elevator_ = ros::Time::now().toSec();
+						amigoSpeak("ELEVATOR GOAL, nonzero");
+					}
+				}
 			}
             drive = true;
             n_move_base_3d_tries = 0;
