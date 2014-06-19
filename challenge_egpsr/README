@@ -2,12 +2,12 @@
 
 amigo1:
     
-    rsettings -> AMIGO_NAV = 2d
-    amiddle
+    1. rsettings -> AMIGO_NAV = 2d
+    2. amiddle
 
 amigo3:
 
-    reset-audio
+    3. reset-audio
     
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
     alsamixer
@@ -16,9 +16,9 @@ amigo3:
         Digital -> 29
         Mic on mute!!! (Should be muted already)
 
-    To test audio I/O and speech interpreter, run test_audio in an amigo-console
+    4. To test audio I/O and speech interpreter, run test_audio in an amigo-console
 
-    rosrun challenge_egpsr egpsr.py 
+    5. rosrun challenge_egpsr egpsr.py 
 
     ------------------
     ----  OPTIONAL ---
@@ -41,6 +41,18 @@ amigo3:
     rosrun challenge_egpsr egpsr.py _start_loc:=3 _arm:=right
     or 
     rosrun challenge_egpsr egpsr.py _arm:=right _start_loc:=3)
+
+    -------------------
+    --- FAKE SPEECH ---
+    -------------------
+
+    In terminal type (no quotation marks are needed):
+
+    hear give me a drink
+
+    or 
+
+    hear yes
 
 INSTRUCTIONS:
 Amigo will go to the initial position (meeting point) and ask for a task.
