@@ -692,6 +692,10 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
 
         current_checked_person_query = Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))
 
+        detected_face_query = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
+                                          Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                          Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
         # removes previous defined dropoff points
         self.robot.reasoner.query(Compound("retractall", Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))))
         self.robot.reasoner.query(Compound("retractall",Compound("person_unreachable", "ObjectID")))
@@ -743,14 +747,14 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
                                                 'failed':'SAY_FAILED_CHECKING_PERSON'})
 
             smach.StateMachine.add( "NAVIGATE_TO_FOUND_PERSON",
-                                    navigation.NavigateGeneric(robot, lookat_query=current_checked_person_query, xy_dist_to_goal_tuple=(0.8 ,0)),
+                                    navigation.NavigateGeneric(robot, lookat_query=detected_face_query, xy_dist_to_goal_tuple=(0.5 ,0)),
                                     transitions={   "arrived":"LOOK_AT_FOUND_PERSON",
                                                     "unreachable":'LOOK_AT_FOUND_PERSON',
                                                     "preempted":'LOOK_AT_FOUND_PERSON',
                                                     "goal_not_defined":'LOOK_AT_FOUND_PERSON'})
 
             smach.StateMachine.add('LOOK_AT_FOUND_PERSON',
-                                LookAtPoint(robot, lookat_query=current_checked_person_query),
+                                LookAtPoint(robot, lookat_query=detected_face_query),
                                 transitions={   'looking':'SAY_SUCCES_CHECKING_PERSON',
                                                 'no_point_found':'SAY_SUCCES_CHECKING_PERSON',
                                                 'abort':'SAY_SUCCES_CHECKING_PERSON'}) # abort never happens in this state
