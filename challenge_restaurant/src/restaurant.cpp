@@ -1351,12 +1351,14 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
             RobotPose loc = it_del->second.second;
             if (moveBase(loc.x, loc.y, loc.phi, delivery_loc_tolerance) || moveBase(loc.x, loc.y, loc.phi, 2*delivery_loc_tolerance))
             {
-                amigoSpeak("Here is your order", false);
+                std::string object = order_map_[it_id->second].second;
+                std::string sentence = "Here is your order!";
+                amigoSpeak(sentence ,false); //to do add object;
             }
             else
             {
                 ROS_WARN("Cannot reach the delivery location!");                
-                amigoSpeak("I cannot reach the location, can you get your order?");
+                amigoSpeak("I cannot reach the delivery location, can you get your order?");
             }
 
             handOverObject(it_del->second.first);
