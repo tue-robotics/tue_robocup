@@ -710,7 +710,7 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
                                                     'not_found':'no_person_found'})
 
             smach.StateMachine.add( "NAVIGATE_TO_PERSON",
-                                    navigation.NavigateGeneric(robot, lookat_query=current_checked_person_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    navigation.NavigateGeneric(robot, lookat_query=current_checked_person_query, xy_dist_to_goal_tuple=(1.2 ,0)),
                                     transitions={   "arrived":"SAY_LOOKAT_MY_EYES",
                                                     "unreachable":'SAY_UNREACHABLE_CHECKING_PERSON',
                                                     "preempted":'SAY_UNREACHABLE_CHECKING_PERSON',
@@ -727,18 +727,14 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
                                 transitions={'executed':'CHECK_FOR_PEOPLE'})           
 
             smach.StateMachine.add("SAY_LOOKAT_MY_EYES",
-                                    human_interaction.Say(robot,"Look into my eyes please", block=True),
+                                    human_interaction.Say(robot,"Look into my eyes please", block=False),
                                     transitions={'spoken':'LOOK_AT_PERSON'})
 
             smach.StateMachine.add('LOOK_AT_PERSON',
                                 LookAtPoint(robot, lookat_query=current_checked_person_query),
-                                transitions={   'looking':'SAY_TEST',
-                                                'no_point_found':'SAY_TEST',
-                                                'abort':'SAY_TEST'}) # abort never happens in this state
-
-            smach.StateMachine.add("SAY_TEST",
-                                    human_interaction.Say(robot,"ready with looking", block=False),
-                                    transitions={'spoken':'CHECK_FOR_FACE'})
+                                transitions={   'looking':'CHECK_FOR_FACE',
+                                                'no_point_found':'CHECK_FOR_FACE',
+                                                'abort':'CHECK_FOR_FACE'}) # abort never happens in this state
 
             smach.StateMachine.add('CHECK_FOR_FACE',
                                 CheckForFaces(robot),
