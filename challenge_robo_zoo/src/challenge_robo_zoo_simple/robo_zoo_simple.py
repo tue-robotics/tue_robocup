@@ -105,11 +105,12 @@ class CheckQRMarker(smach.State):
         # ToDo: turn into capitals (if necessary)
         if (str_msg.data in demos):
             self.demo = str_msg.data
+            self.robot.lights.set_color(0,1,0)
         else:
             rospy.logwarn("Demo {0} is not in the list".format(str_msg.data))
             self.demo = None
         rospy.loginfo("Next demo = {0}".format(self.demo))
-        
+        self.robot.lights.set_color(0,0,1)
 
 class RoboZooSimple(smach.StateMachine):
     """Calls each part in turn and makes a random switch between parts, i.e smach State(Machine)s.
