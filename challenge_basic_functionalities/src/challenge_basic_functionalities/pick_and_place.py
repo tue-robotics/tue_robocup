@@ -105,8 +105,13 @@ class PickAndPlace(smach.StateMachine):
                     return "I'll throw this in the trashbin. I don't know what I'm actually doing"
             smach.StateMachine.add('SAY_DROPOFF',
                                     Say_generated(robot, sentence_creator=generate_drop_object_sentence, block=False),
-                                    transitions={ 'spoken':'DROPOFF_OBJECT' })
+                                    transitions={ 'spoken':'CHECK_FOR_ANSWERS_DROPOFF' })
 
+            smach.StateMachine.add( "CHECK_FOR_ANSWERS_DROPOFF",
+                                    Wait_query_true(robot, query_dropoff_loc, timeout=1),
+                                    transitions={   "query_true":"DROPOFF_OBJECT",
+                                                    "timed_out":"DROPOFF_OBJECT_TRASHBIN",
+                                                    "preempted":"DROPOFF_OBJECT_TRASHBIN"})
             
             smach.StateMachine.add('SAY_FOUND_NOTHING',
                                     Say(robot, ["I didn't find anything here", "No objects here", "There are no objects here", "I do not see anything here"]),
