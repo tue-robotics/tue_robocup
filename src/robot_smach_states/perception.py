@@ -738,9 +738,22 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
 
             smach.StateMachine.add('CHECK_FOR_FACE',
                                 CheckForFaces(robot),
-                                transitions={   'detected':'SAY_SUCCES_CHECKING_PERSON',
+                                transitions={   'detected':'NAVIGATE_TO_FOUND_PERSON',
                                                 'no_person':'SAY_FAILED_CHECKING_PERSON',
                                                 'failed':'SAY_FAILED_CHECKING_PERSON'})
+
+            smach.StateMachine.add( "NAVIGATE_TO_FOUND_PERSON",
+                                    navigation.NavigateGeneric(robot, lookat_query=current_checked_person_query, xy_dist_to_goal_tuple=(0.8 ,0)),
+                                    transitions={   "arrived":"LOOK_AT_FOUND_PERSON",
+                                                    "unreachable":'LOOK_AT_FOUND_PERSON',
+                                                    "preempted":'LOOK_AT_FOUND_PERSON',
+                                                    "goal_not_defined":'LOOK_AT_FOUND_PERSON'})
+
+            smach.StateMachine.add('LOOK_AT_FOUND_PERSON',
+                                LookAtPoint(robot, lookat_query=current_checked_person_query),
+                                transitions={   'looking':'SAY_SUCCES_CHECKING_PERSON',
+                                                'no_point_found':'SAY_SUCCES_CHECKING_PERSON',
+                                                'abort':'SAY_SUCCES_CHECKING_PERSON'}) # abort never happens in this state
 
             # TODO: Check if found person (face) is recognized before
 
