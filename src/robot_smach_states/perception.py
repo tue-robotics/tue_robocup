@@ -628,12 +628,6 @@ class CheckForFaces(smach.State):
 
     def execute(self, userdata=None):
 
-        # self.robot.spindle.reset()
-        # self.robot.head.set_pan_tilt(tilt=-0.2)
-        
-        # # to make sure head is at right position.
-        # rospy.sleep(0.5)
-
         query_detect_person = Conjunction(Compound("property_expected", "ObjectID", "class_label", "face"),
                                           Compound("property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                           Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
@@ -717,7 +711,7 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
 
             smach.StateMachine.add( "NAVIGATE_TO_PERSON",
                                     navigation.NavigateGeneric(robot, lookat_query=current_checked_person_query, xy_dist_to_goal_tuple=(0.8,0)),
-                                    transitions={   "arrived":"LOOK_AT_PERSON",
+                                    transitions={   "arrived":"SAY_LOOKAT_MY_EYES",
                                                     "unreachable":'SAY_UNREACHABLE_CHECKING_PERSON',
                                                     "preempted":'SAY_UNREACHABLE_CHECKING_PERSON',
                                                     "goal_not_defined":'SAY_UNREACHABLE_CHECKING_PERSON'})
@@ -730,13 +724,21 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
                                 reasoning.Execute_query(robot, [Conjunction(    Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z"))),
                                                                                 Compound("assertz",Compound("person_unreachable", "ObjectID")),
                                                                                 Compound("retractall", Compound("current_checked_person", "ObjectID", Compound("point_3d",Sequence("X","Y","Z")))))]),
-                                transitions={'executed':'CHECK_FOR_PEOPLE'})
+                                transitions={'executed':'CHECK_FOR_PEOPLE'})           
+
+            smach.StateMachine.add("SAY_LOOKAT_MY_EYES",
+                                    human_interaction.Say(robot,"Look into my eyes please", block=True),
+                                    transitions={'spoken':'LOOK_AT_PERSON'})
 
             smach.StateMachine.add('LOOK_AT_PERSON',
                                 LookAtPoint(robot, lookat_query=current_checked_person_query),
-                                transitions={   'looking':'CHECK_FOR_FACE',
-                                                'no_point_found':'CHECK_FOR_FACE',
-                                                'abort':'CHECK_FOR_FACE'}) # abort never happens in this state
+                                transitions={   'looking':'SAY_TEST',
+                                                'no_point_found':'SAY_TEST',
+                                                'abort':'SAY_TEST'}) # abort never happens in this state
+
+            smach.StateMachine.add("SAY_TEST",
+                                    human_interaction.Say(robot,"ready with looking", block=False),
+                                    transitions={'spoken':'CHECK_FOR_FACE'})
 
             smach.StateMachine.add('CHECK_FOR_FACE',
                                 CheckForFaces(robot),
