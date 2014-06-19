@@ -747,11 +747,16 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
                                                 'failed':'SAY_FAILED_CHECKING_PERSON'})
 
             smach.StateMachine.add( "NAVIGATE_TO_FOUND_PERSON",
-                                    navigation.NavigateGeneric(robot, lookat_query=detected_face_query, xy_dist_to_goal_tuple=(0.5 ,0)),
-                                    transitions={   "arrived":"LOOK_AT_FOUND_PERSON",
-                                                    "unreachable":'LOOK_AT_FOUND_PERSON',
-                                                    "preempted":'LOOK_AT_FOUND_PERSON',
-                                                    "goal_not_defined":'LOOK_AT_FOUND_PERSON'})
+                                    navigation.NavigateGeneric(robot, lookat_query=detected_face_query, xy_dist_to_goal_tuple=(0.6 ,0)),
+                                    transitions={   "arrived":"RESET_HEAD",
+                                                    "unreachable":'RESET_HEAD',
+                                                    "preempted":'RESET_HEAD',
+                                                    "goal_not_defined":'RESET_HEAD'})
+
+            # reset head, if next state is not able to look at the person, it will definitely not look down (due to 3d navigation) with this reset state.
+            smach.StateMachine.add("RESET_HEAD",
+                                states.ResetHead(robot),
+                                transitions={'done':'LOOK_AT_FOUND_PERSON'})
 
             smach.StateMachine.add('LOOK_AT_FOUND_PERSON',
                                 LookAtPoint(robot, lookat_query=detected_face_query),
