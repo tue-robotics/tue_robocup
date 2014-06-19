@@ -75,7 +75,12 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add("SAY_PLEASE_MOVE_1", 
                                     Say(robot, [ "I am not able to go to the next part of the challenge, please clear the way"], block=True),
-                                    transitions={   'spoken':'GOTO_PICK_AND_PLACE_2ND_TRY'})
+                                    transitions={   'spoken':'GIVE_TIME_TO_UPDATE_COSTMAP_1'})
+
+            smach.StateMachine.add( 'GIVE_TIME_TO_UPDATE_COSTMAP_1',
+                                    states.Wait_time(robot, waittime=3),
+                                    transitions={   'waited':'GOTO_PICK_AND_PLACE_2ND_TRY',
+                                                    'preempted':'GOTO_PICK_AND_PLACE_2ND_TRY'})
 
             smach.StateMachine.add( 'GOTO_PICK_AND_PLACE_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_pick, goal_area_radius=0.2),
@@ -104,7 +109,12 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add("SAY_PLEASE_MOVE_2", 
                                     Say(robot, [ "I am not able to go to the next part of the challenge, please clear the way"], block=True),
-                                    transitions={   'spoken':'GOTO_AVOID_THAT_2ND_TRY'})
+                                    transitions={   'spoken':'GIVE_TIME_TO_UPDATE_COSTMAP_2'})
+
+            smach.StateMachine.add( 'GIVE_TIME_TO_UPDATE_COSTMAP_2',
+                                    states.Wait_time(robot, waittime=3),
+                                    transitions={   'waited':'GOTO_AVOID_THAT_2ND_TRY',
+                                                    'preempted':'GOTO_AVOID_THAT_2ND_TRY'})
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
@@ -144,7 +154,13 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add("SAY_PLEASE_MOVE_3", 
                                     Say(robot, [ "I am not able to go to the next part of the challenge, please clear the way"], block=True),
-                                    transitions={   'spoken':'GOTO_WHAT_DID_YOU_SAY_2ND_TRY'})
+                                    transitions={   'spoken':'GIVE_TIME_TO_UPDATE_COSTMAP_3'})
+
+            smach.StateMachine.add( 'GIVE_TIME_TO_UPDATE_COSTMAP_3',
+                                    states.Wait_time(robot, waittime=3),
+                                    transitions={   'waited':'GOTO_WHAT_DID_YOU_SAY_2ND_TRY',
+                                                    'preempted':'GOTO_WHAT_DID_YOU_SAY_2ND_TRY'})
+
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
