@@ -755,7 +755,7 @@ class StandingPeopleDetectorWithFace(smach.StateMachine):
 
             # reset head, if next state is not able to look at the person, it will definitely not look down (due to 3d navigation) with this reset state.
             smach.StateMachine.add("RESET_HEAD",
-                                states.ResetHead(robot),
+                                ResetHead(robot),
                                 transitions={'done':'LOOK_AT_FOUND_PERSON'})
 
             smach.StateMachine.add('LOOK_AT_FOUND_PERSON',
