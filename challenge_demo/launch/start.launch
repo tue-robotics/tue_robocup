@@ -18,7 +18,7 @@
     <node pkg="challenge_demo" type="visualize_current_person.py" name="visualize_current_person" output="screen"/>
     
     <!-- Other stuff -->
-    <include file="$(find challenge_demo)/launch/server_real.launch" />
+    <include file="$(find challenge_demo)/launch/server.launch" />
     <node pkg="challenge_demo" type="doorbell_listener.py" name="doorbell_listener" output="screen" machine="amigo1" />
 
 </launch>
