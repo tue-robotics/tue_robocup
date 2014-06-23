@@ -300,7 +300,7 @@ class FinalRgo2014(smach.StateMachine):
                                     transitions={"spoken":"SET_PARAMS"}) 
 
             smach.StateMachine.add("ARM_TO_DROPPOS",
-                                    states.ArmToJointPos(robot, side, [-0.100, 0.400, 0.600, 1.130, -0.300, 0.100, 0.000], timeout=6),
+                                    states.ArmToJointPos(robot, side, [-0.100, 1.100, 1.100, 0.8, -0.700, 0.100, 0.000], timeout=6),
                                     transitions={'done'             :'OPEN_GRIPPER',
                                                  'failed'           :'SAY_CANNOT_DROP' })       
 
@@ -310,8 +310,13 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "OPEN_GRIPPER",
                                     states.SetGripper(robot, side, gripperstate=ArmState.OPEN),
-                                    transitions={   'succeeded'         :'TURN_AROUND',
-                                                    'failed'            :'TURN_AROUND' })
+                                    transitions={   'succeeded'         :'ARM_TO_INIT_POS',
+                                                    'failed'            :'ARM_TO_INIT_POS' })
+
+            smach.StateMachine.add("ARM_TO_INIT_POS",
+                                    states.ArmToJointPos(robot, side, [-0.1, -0.35, 0.2, 1.2, 0, 0, 0], timeout=6),
+                                    transitions={'done'             :'TURN_AROUND',
+                                                 'failed'           :'TURN_AROUND' })
 
             smach.StateMachine.add( "TURN_AROUND",
                     TurnAround(robot),
