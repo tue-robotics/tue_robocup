@@ -32,7 +32,6 @@ amigo3:
 - All basic functionalities will be tested one after another. For most cases, the robot returns to 0,0,0 to start the next part
 - Put some objects on the second table (i.e., without the computer) for the pick-and-place demo.
 - Make sure the thrashbin is placed correctly
-- Testing avoid that is a bit difficult, since there is no space for detours in our testlab
 - Current questions for what did you say:
 
 -- Possible questions for now: ----------------------------------------------------------
@@ -47,10 +46,10 @@ amigo3:
 -- Which fish can hold objects in its tail?----------------------------------------------
 -- How many countries are in europe?-----------------------------------------------------
 
-It is possible to start the challenge at one of the other atomic actions. To this end, give an argument:
-Pick and place: 	rosrun challenge_atomic_actions challenge_basic_functionalities.py 1
-Avoid that:			rosrun challenge_atomic_actions challenge_basic_functionalities.py 2
-What did you say?:	rosrun challenge_atomic_actions challenge_basic_functionalities.py 3
+It is possible to start the challenge at one of the other basic functionalities. To this end, give an argument:
+Pick and place: 	rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 1
+Avoid that:			rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 2
+What did you say?:	rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 3
 Before doing so, please make sure the robot is reset (arms, spindle, head) and is localized correctly
 
 == OBSOLETE ==
