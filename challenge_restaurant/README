@@ -4,6 +4,10 @@ amigo2:
 	ahardware (home all on dashboard)
 
 amigo1:
+    rsettings
+      AMIGO_NAV=3d
+      AMIGO_LOC=gmapping
+      
     amiddle-restaurant
 
 local-pc: (for visualization)
@@ -22,10 +26,6 @@ amigo3:
         test_audio
 
     rosrun challenge_restaurant restaurant
-
-
-
-
 
 GUIDING PHASE:
 - The guide should stand in front of the robot, then the robot starts following. If the robot turns pink, he lost the guide, stand in front of the robot.
