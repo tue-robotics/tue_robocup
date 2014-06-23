@@ -1079,7 +1079,7 @@ int main(int argc, char **argv) {
 							follower_->pause();
 							moveToRelativePosition(0.3, 0.0, 0.0, 5.0);
 							t_first_time_in_elevator_ = ros::Time::now().toSec();
-							amigoSpeak("ELEVATOR GOAL, nonzero");
+							amigoSpeak("ELEVATOR GOAL, zero");
 						}
 					}
                 }
