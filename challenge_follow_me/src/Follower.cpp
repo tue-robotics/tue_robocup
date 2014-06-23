@@ -189,6 +189,18 @@ bool Follower::getCurrentOperatorPosition(double& x, double& y, double& phi, std
     return false;
 }
 
+void Follower::updateFollowDistance(double new_distance)
+{
+    if (new_distance < 0.75)
+    {
+        ROS_WARN("Following distance must at least be 0.75 [m]");
+        follow_distance_ = 0.75;
+        return;
+    }
+ 
+    follow_distance_ = new_distance;
+}
+
 void Follower::freezeRobot()
 {
     ROS_DEBUG("Freeze robot!");

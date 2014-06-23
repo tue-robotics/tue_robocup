@@ -46,7 +46,8 @@ public:
     void stop();   // stop following
 
     bool getCurrentOperatorPosition(double& x, double& y, double& phi, std::string frame);
-
+    void updateFollowDistance(double new_distance);
+ 
 private:
 
     //! Robot must stop moving

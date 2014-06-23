@@ -643,6 +643,7 @@ void speechCallback(std_msgs::String res)
             sub_speech_.shutdown();
             left_elevator_ = true;
             in_elevator_ = false;
+            follower_->updateFollowDistance(1.2);
 
             //! Done with the elevator
             amigoSpeak("You can leave the elevator", true);
@@ -994,18 +995,22 @@ int main(int argc, char **argv) {
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
+					follower_->updateFollowDistance(0.8);
+					amigoSpeak("Updated Follower Distance to 80 centimeter");
 					if (!elevator_door_closed_) {
 						if (first_time_in_elevator_) {
 							t_first_time_in_elevator_ = ros::Time::now().toSec();
-							t_first_time_in_elevator_ = t_first_time_in_elevator_;
 							first_time_in_elevator_ = false;
 						}
-
-						if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 10.0) {
-							follower_->pause();
-							moveToRelativePosition(0.3, 0.0, 0.0, 15.0);
+						if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 30.0) {
+							follower_->updateFollowDistance(0.65);
 							t_first_time_in_elevator_ = ros::Time::now().toSec();
-							amigoSpeak("ELEVATOR GOAL, zero");
+							amigoSpeak("Updated Follower Distance to 65 centimeter");
+						}
+						if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 60.0) {
+							follower_->updateFollowDistance(0.5);
+							t_first_time_in_elevator_ = ros::Time::now().toSec();
+							amigoSpeak("Updated Follower Distance to 50 centimeter");
 						}
 					}
                 }
@@ -1048,23 +1053,6 @@ int main(int argc, char **argv) {
         // Else: robot is moving, do adminstration
         else
         {
-			if (in_elevator_)
-			{
-				if (!elevator_door_closed_) {
-					if (first_time_in_elevator_) {
-						t_first_time_in_elevator_ = ros::Time::now().toSec();
-						t_first_time_in_elevator_ = t_first_time_in_elevator_ + 20.0;
-						first_time_in_elevator_ = false;
-					}
-
-					if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 10.0) {
-						follower_->pause();
-						moveToRelativePosition(0.3, 0.0, 0.0, 15.0);
-						t_first_time_in_elevator_ = ros::Time::now().toSec();
-						amigoSpeak("ELEVATOR GOAL, nonzero");
-					}
-				}
-			}
             drive = true;
             n_move_base_3d_tries = 0;
         }
