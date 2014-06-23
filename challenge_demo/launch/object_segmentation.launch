@@ -35,7 +35,7 @@
 	<remap from="/pcl_matcher/learning/cancel" to="/external_kinect/pcl_matcher/learning/cancel"/>
 	<remap from="/pein/set_object_models" to="/external_kinect/pein/set_object_models"/>
 
-	<remap from="/pointcloud_matcher/output" to="/external_kinect/pointcloud_matcher/output"/>
+	<remap from="/pcl_matcher/output" to="/external_kinect/pointcloud_matcher/output"/>
 	<remap from="/pcl_matcher/learning/feedback" to="/external_kinect/pcl_matcher/learning/feedback"/>
 	<remap from="/pcl_matcher/learning/result" to="/external_kinect/pcl_matcher/learning/result"/>
 	<remap from="/pcl_matcher/learning/status" to="/external_kinect/pcl_matcher/learning/status"/>
