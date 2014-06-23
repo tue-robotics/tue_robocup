@@ -4,8 +4,11 @@ amigo2:
 	ahardware (home all on dashboard)
 
 amigo1:
+    rsettings:
+      AMIGO_NAV=3d
+      AMIGO_LOC=gmapping
     amiddle-follow-me
-
+    
 amigo3:
     alsamixer
 		settings shoul be:
