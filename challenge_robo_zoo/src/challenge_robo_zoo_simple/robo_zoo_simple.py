@@ -34,6 +34,16 @@ colormap = {    "SAY_HI":(1,0,1),
                 "HOOFD_SCHOUDERS_KNIE_TEEN":(0,1,1)}
 demos = list(colormap.keys())
 
+description_map = { "SAY_HI":"I'll say hi when i'm done",
+                    "WAVE_LIGHTS":"Wave and blink is coming up",
+                    "WALK_EGYPTIAN":"I'll walk like an egyptian",
+                    "R2D2":"R2D2 coming up",
+                    "TOETER":"I'll honk next",
+                    "MACARENA":"I'll do the macarena after this",
+                    "GANGNAM":"Gangnam style is next",
+                    "HOOFD_SCHOUDERS_KNIE_TEEN":"Next up: a children's dance"}
+
+
 # Create dictionary lists
 random_transitions = {}
 for demo in demos:
@@ -100,10 +110,12 @@ class CheckQRMarker(smach.State):
             return "empty"
 
     def callback(self, str_msg):
-        
         rospy.loginfo("Received new demo request: {0}".format(str_msg.data))
         # ToDo: turn into capitals (if necessary)
         if (str_msg.data in demos):
+            if self.demo != str_msg.data:
+                #Apparently, the new QR-code is something different, so we'll do that
+                self.robot.speech.speak(description_map[str_msg.data])
             self.demo = str_msg.data
             self.robot.lights.set_color(0,1,0)
         else:
