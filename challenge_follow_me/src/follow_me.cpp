@@ -1002,10 +1002,10 @@ int main(int argc, char **argv) {
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
-					follower_->updateFollowDistance(0.8);
-					amigoSpeak("Follow Distance 80");
 					if (!elevator_door_closed_) {
 						if (first_time_in_elevator_) {
+							follower_->updateFollowDistance(0.8);
+							amigoSpeak("Follow Distance 80");
 							t_first_time_in_elevator_ = ros::Time::now().toSec();
 							first_time_in_elevator_ = false;
 						}
@@ -1064,6 +1064,8 @@ int main(int argc, char **argv) {
 				if (first_time_in_elevator2_) {
 					t_first_time_in_elevator2_ = ros::Time::now().toSec() + 20.00;
 					first_time_in_elevator2_ = false;
+					follower_->updateFollowDistance(0.8);
+					amigoSpeak("TWO, Follow Distance 80");
 				}
 				else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 60.0) && (beentheredonethat1 == false)) {
 					follower_->updateFollowDistance(0.5);
