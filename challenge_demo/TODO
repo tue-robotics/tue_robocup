@@ -3,12 +3,7 @@ TODO
 
 - Remove hardcoded objects in the state machine (and the gui?)
 
-- Fix the camera_object_query, the output was:
-[INFO] [WallTime: 1403636747.013207] trigger received: coke
-[INFO] [WallTime: 1403636747.412745] State machine transitioning 'WAIT_FOR_ORDER':'coke'-->'ASSERT_COKE'
-[INFO] [WallTime: 1403636747.428396] State machine transitioning 'ASSERT_COKE':'succeeded'-->'IS_PRESENT'
-[INFO] [WallTime: 1403636747.442421] State machine transitioning 'IS_PRESENT':'not_present'-->'SAY_NOT_PRESENT'
-[INFO] [WallTime: 1403636747.443005] 'That is not in store, I better order it online'
+- Amigo drives towards the wrong table, probably an error in GET_OBJECT_SHELF
 
 
 

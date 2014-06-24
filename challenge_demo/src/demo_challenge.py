@@ -110,10 +110,6 @@ class WaitForExternalCamera(smach.State):
             return 'not_present'
 
     def callback(self, msg):
-        # split data
-        # for each object:
-        #   if not present:
-        #       add
         temp_object_list = msg.data.split("|")
 
         for obj in temp_object_list:
