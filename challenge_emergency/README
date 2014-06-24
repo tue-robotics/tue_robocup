@@ -3,7 +3,7 @@
 !!! PUT USB STICK IN AMIGO3 !!!
 
 Environment:
-In rosed challenge_emergency emergency_2014.py (search for 'manipulation_location'), look up where each object should be placed. 
+In rosed challenge_emergency emergency.py (search for 'manipulation_location'), look up where each object should be placed. 
 
 amigo2:
 
@@ -39,7 +39,13 @@ amigo3:
     amigo-console        
         test_audio
 
-    rosrun challenge_emergency emergency_2014.py
+    rosrun challenge_emergency emergency.py
+
+SCENARIO:
+	Please see https://docs.google.com/viewer?a=v&pid=sites&srcid=cm9ib2N1cGF0aG9tZS5vcmd8cm9ib2N1cC1ob21lfGd4OjEzYWQ0MzQwYjdhYmQyODM page 48 & 49.
+	- A person may be wandering about in the designated room (hardcoded in the top of emergency.py)
+	- Between 30 and 60 seconads after the start, the person has an accident.
+	- After the accident, the person is sitting or lying on the ground or sitting in a chair.
 
 After the challenge ended, you can inspect the PDF by either getting the USB stick from amigo, or by running:
  amigo@athomeX $ scp amigo@amigo3:/media/usb-stick/emergency_paper.pdf . ; evince emergency_paper.pdf
