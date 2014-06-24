@@ -97,11 +97,12 @@ class WaitForExternalCamera(smach.State):
         if not answers:
             rospy.logerr("Dont know which object to get")
             return 'failed'
-        elif not self.object_list:
+        if not self.object_list:
             rospy.logerr("Object list is empty!!!")
             return 'not_present'
-        else:
-            obj = answers[0]["Desired_object"]
+        
+	obj = answers[0]["Desired_object"]
+	obj = str(obj) # very important !!!
 
         if obj in self.object_list:
             return 'present'
@@ -119,6 +120,7 @@ class WaitForExternalCamera(smach.State):
             if not obj in self.object_list:
                 self.object_list.append(obj)
 
+	print '\tcurrent object_list:', str(self.object_list)
 
 class ReceivePackage(smach.StateMachine):
 
