@@ -7,7 +7,7 @@ amigo1:
     rsettings:
       AMIGO_NAV=3d
       AMIGO_LOC=gmapping
-    amiddle-follow-me
+    amiddle-follow-me (Always restart middleware just before start of the challenge)
     
 amigo3:
     alsamixer
@@ -30,3 +30,4 @@ STEP 3: Crowd:    Walk through a crowd and position yourself about one meter beh
 
 Furthermore:
 - If AMIGO lost the operator it will turn purple. It expects the operator to come stand in front of him.
+- Everytime you restart this challenge middleware should be restarted as well. (During the official challenge restart in brasil this might take to long)

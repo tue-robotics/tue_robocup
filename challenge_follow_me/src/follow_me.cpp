@@ -644,6 +644,7 @@ void speechCallback(std_msgs::String res)
             left_elevator_ = true;
             in_elevator_ = false;
             follower_->updateFollowDistance(1.2);
+            amigoSpeak("Follow distance 120", true);
 
             //! Done with the elevator
             amigoSpeak("You can leave the elevator", true);
@@ -958,8 +959,14 @@ int main(int argc, char **argv) {
     unsigned int n_move_base_3d_tries = 0;
     bool drive = false;
 	bool first_time_in_elevator_ = true;
+	bool first_time_in_elevator2_ = true;
+	bool beentheredonethat1 = false;
+	bool beentheredonethat2 = false;
+	bool beentheredonethat3 = false;
+	bool beentheredonethat4 = false;
     double t_start_no_move = 0.0;
     double t_first_time_in_elevator_ = 0.0;
+    double t_first_time_in_elevator2_ = 0.0;
     ros::Rate loop_rate_fast(25);
     while (ros::ok())
     {
@@ -996,21 +1003,21 @@ int main(int argc, char **argv) {
                 if (in_elevator_)
                 {
 					follower_->updateFollowDistance(0.8);
-					amigoSpeak("Updated Follower Distance to 80 centimeter");
+					amigoSpeak("Follow Distance 80");
 					if (!elevator_door_closed_) {
 						if (first_time_in_elevator_) {
 							t_first_time_in_elevator_ = ros::Time::now().toSec();
 							first_time_in_elevator_ = false;
 						}
-						if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 30.0) {
+						if ((ros::Time::now().toSec() - t_first_time_in_elevator_ > 30.0) && (beentheredonethat3 == false)) {
 							follower_->updateFollowDistance(0.65);
-							t_first_time_in_elevator_ = ros::Time::now().toSec();
-							amigoSpeak("Updated Follower Distance to 65 centimeter");
+							amigoSpeak("Follow Distance 65");
+							beentheredonethat3 = true;
 						}
-						if (ros::Time::now().toSec() - t_first_time_in_elevator_ > 60.0) {
+						if ((ros::Time::now().toSec() - t_first_time_in_elevator_ > 60.0) && (beentheredonethat4 == false)) {
 							follower_->updateFollowDistance(0.5);
-							t_first_time_in_elevator_ = ros::Time::now().toSec();
-							amigoSpeak("Updated Follower Distance to 50 centimeter");
+							amigoSpeak("Follow Distance 50");
+							beentheredonethat4 = true;
 						}
 					}
                 }
@@ -1053,6 +1060,22 @@ int main(int argc, char **argv) {
         // Else: robot is moving, do adminstration
         else
         {
+			if (!elevator_door_closed_) {
+				if (first_time_in_elevator2_) {
+					t_first_time_in_elevator2_ = ros::Time::now().toSec() + 20.00;
+					first_time_in_elevator2_ = false;
+				}
+				else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 60.0) && (beentheredonethat1 == false)) {
+					follower_->updateFollowDistance(0.5);
+					amigoSpeak("TWO, Follow Distance 50");
+					beentheredonethat1 = true;
+				}
+				else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 30.0) && (beentheredonethat2 == false)) {
+					follower_->updateFollowDistance(0.65);
+					amigoSpeak("TWO, Follow Distance 65");
+					beentheredonethat2 = true;
+				}
+			}
             drive = true;
             n_move_base_3d_tries = 0;
         }
