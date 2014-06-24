@@ -5,8 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /MarkerArray3
       Splitter Ratio: 0.678571
-    Tree Height: 655
+    Tree Height: 818
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -39,6 +40,16 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        back_laser:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        back_lasertop:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         base:
           Alpha: 1
           Show Axes: false
@@ -453,6 +464,7 @@ Visualization Manager:
       Transport Hint: raw
       Value: false
       Visibility:
+        "": true
         Cam - Head Depth: true
         Cam - Head Point Cloud: true
         Cam - Head Target: true
@@ -500,6 +512,7 @@ Visualization Manager:
       Transport Hint: raw
       Value: false
       Visibility:
+        "": true
         Cam - Head Point Cloud: true
         Cam - Head RGB: true
         Cam - Head Target: true
@@ -570,7 +583,7 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Cam - Head Target
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -660,10 +673,10 @@ Visualization Manager:
     - Alpha: 0.7
       Class: rviz/Map
       Draw Behind: false
-      Enabled: false
+      Enabled: true
       Name: Loc - Map
       Topic: /loc_map
-      Value: false
+      Value: true
     - Alpha: 0.7
       Class: rviz/Map
       Draw Behind: false
@@ -672,21 +685,21 @@ Visualization Manager:
       Topic: /nav_map
       Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: /move_base/global_costmap
       Name: Nav - Global Costmap
       Namespaces:
-        costmap_amigo: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
-      Enabled: true
+      Enabled: false
       Marker Topic: visualization_marker
       Name: Nav - Static Costmap
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /move_base/current_path
@@ -700,7 +713,7 @@ Visualization Manager:
       Marker Topic: visualization_marker
       Name: Nav - Replanned Global Path
       Namespaces:
-        {}
+        "": true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -912,6 +925,22 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: false
+      Marker Topic: /ppl_markers
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: visualization_marker_array
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -935,17 +964,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.64918
+      Distance: 8.77647
       Focal Point:
-        X: 1.70702
-        Y: 0.62101
-        Z: 1.80476
+        X: 1.11158
+        Y: -1.83582
+        Z: 0.856957
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.559797
+      Pitch: 0.804796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.70411
+      Yaw: 3.04411
     Saved: ~
 Window Geometry:
   Cam - Head Depth:
@@ -954,10 +983,10 @@ Window Geometry:
     collapsed: false
   Displays:
     collapsed: false
-  Height: 961
+  Height: 1124
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000019a0000031efc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000000410000031e000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001c00430061006d0020002d002000480065006100640020005200470042000000026f0000011a0000001600fffffffb0000002000430061006d0020002d00200048006500610064002000440065007000740068000000018e000000c80000001600fffffffb0000002c005700690072006500320020002d0020004b0069006e00650063007400200055006e006b006e006f0077006e0000000255000000800000001600ffffff000000010000010f000002b1fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000041000002b1000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005900000003efc0100000002fb0000000800540069006d0065010000000000000590000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000003f00000031e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000019a000003c1fc020000000bfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c0061007900730100000041000003c1000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000001c00430061006d0020002d002000480065006100640020005200470042000000026f0000011a0000001600fffffffb0000002000430061006d0020002d00200048006500610064002000440065007000740068000000018e000000c80000001600fffffffb0000002c005700690072006500320020002d0020004b0069006e00650063007400200055006e006b006e006f0077006e0000000255000000800000001600ffffff000000010000010f000002b1fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000041000002b1000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000005e0000003c100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -966,8 +995,8 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1424
+  Width: 1920
   Wire2 - Kinect Unknown:
     collapsed: false
-  X: 182
-  Y: 130
+  X: 0
+  Y: 24
