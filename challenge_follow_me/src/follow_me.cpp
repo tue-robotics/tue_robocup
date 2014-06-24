@@ -105,7 +105,6 @@ double t_pause_ = 0;
 bool emergency_button_pressed_ = true;
 bool check_elevator_ = true; // only check every second time laser data is received
 bool check_elevator_door_ = true; // only check every second time laser data is received
-unsigned int marker_id_ = 0;
 
 void rotateRobot(double desired_angle)
 {
@@ -397,48 +396,6 @@ bool moveBase(double x, double y, double theta, double goal_radius = 0.1, double
 
 }
 
-void createMarkerWithLabel(std::string label, RobotPose& pose, double r, double g, double b, visualization_msgs::MarkerArray& array)
-{
-
-    tf::Quaternion q;
-    q.setRPY(0, 0, pose.phi);
-
-    // Geometric marker
-    visualization_msgs::Marker marker;
-    marker.ns = "restaurant/location_markers";
-    marker.type = visualization_msgs::Marker::ARROW;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.scale.x = 0.25;
-    marker.scale.y = 0.25;
-    marker.scale.z = 0.25;
-    marker.header.frame_id = "/map";
-    marker.id = marker_id_++;
-    marker.color.r = r;
-    marker.color.g = g;
-    marker.color.b = b;
-    marker.color.a = 1;
-    marker.pose.position.x = pose.x;
-    marker.pose.position.y = pose.y;
-    marker.pose.orientation.w = q.getW();
-    marker.pose.orientation.x = q.getX();
-    marker.pose.orientation.y = q.getY();
-    marker.pose.orientation.z = q.getZ();
-    array.markers.push_back(marker);
-
-    // Text label
-    visualization_msgs::Marker marker_txt = marker;
-    marker_txt.scale.z = 0.1;
-    marker_txt.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    marker_txt.text = label;
-    marker_txt.id = 10;
-    marker_txt.pose.position.z *= 1.5;
-    array.markers.push_back(marker_txt);
-
-    ROS_INFO("Added marker for %s @ (%f,%f,%f)", label.c_str(),
-             marker.pose.position.x, marker.pose.position.y, pose.phi);
-
-}
-
 void moveToRelativePosition(double x, double y, double phi, double dt)
 {
     geometry_msgs::PoseStamped goal_pos_in, goal_pos_map;
@@ -454,14 +411,6 @@ void moveToRelativePosition(double x, double y, double phi, double dt)
     goal_pos_in.pose.orientation.w = q.getW();
     transformPoseStamped(goal_pos_in, goal_pos_map, "/map");
     moveBase(goal_pos_map.pose.position.x, goal_pos_map.pose.position.y, tf::getYaw(goal_pos_map.pose.orientation), 0.5, dt);
-    
-    //RobotPose rp_loc(location.getOrigin().getX(), location.getOrigin().getY(), location.getRotation().getAngle());
-    RobotPose rp_loc(goal_pos_map.pose.position.x, goal_pos_map.pose.position.y, tf::getYaw(goal_pos_map.pose.orientation));
-    
-    // Publish marker
-    visualization_msgs::MarkerArray marker_array;
-    createMarkerWithLabel("FollowMe_LOC", rp_loc, 1, 0, 1, marker_array);
-    location_marker_pub_.publish(marker_array);
 }
 
 void leaveElevator()
@@ -644,7 +593,7 @@ void speechCallback(std_msgs::String res)
             left_elevator_ = true;
             in_elevator_ = false;
             follower_->updateFollowDistance(1.2);
-            amigoSpeak("Follow distance 120", true);
+            amigoSpeak("Follow distance 120", true); // REMOVE
 
             //! Done with the elevator
             amigoSpeak("You can leave the elevator", true);
@@ -749,7 +698,6 @@ void laserCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
     double angle = laser_scan_msg->angle_min;
     for(int i = 0; i < (int)laser_scan_msg->ranges.size(); ++i)
     {
-		//double previous_range = laser_scan_msg->ranges[std::max(i-1,0)];
         double range = laser_scan_msg->ranges[i];
 
         // check left of robot
@@ -815,18 +763,16 @@ void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
         if (door_distance_ < 1.0) {
 			if (elevator_door_closed_ != true && first_door_detection_ == true) {
 				ROS_INFO("ELEVATOR DOOR DETECTOR: Closed door First Time detected!");
-				//amigoSpeak("Closed door!");
 				first_door_detection_ = false;
 				door_dections_cntr_ = 0;
 			}
 			else if (elevator_door_closed_ != true && door_dections_cntr_ <= 50) {
-				//ROS_INFO("DETECTING ELEVATOR DOOR: door_dections_cntr = [%i]",door_dections_cntr_);
 				door_dections_cntr_++; 
 			}
 			else if (elevator_door_closed_ != true) {
 				elevator_door_closed_ = true;
 				ROS_INFO("ELEVATOR DOOR DETECTOR: My laser on the back detected a closed elevator door!");
-				amigoSpeak("My laser on the back detected a closed elevator door!");
+				amigoSpeak("My laser on the back detected a closed elevator door!"); // REMOVE
 				
 			}
         }
@@ -834,8 +780,6 @@ void laserbackCallback(const sensor_msgs::LaserScan::ConstPtr& laser_scan_msg)
             elevator_door_closed_ = false;
             door_dections_cntr_ = 0;
             first_door_detection_ = true;
-            //ROS_INFO("ELEVATOR DOOR DETECTOR: Door Reset");
-            //amigoSpeak("Door Reset");
         }
     }
 }
@@ -886,9 +830,6 @@ int main(int argc, char **argv) {
     ac_head_ref_ = new actionlib::SimpleActionClient<amigo_head_ref::HeadRefAction>("head_ref_action", true);
     ac_head_ref_->waitForServer();
     ROS_INFO("Connected!");
-    
-    //! location markers
-    location_marker_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/follow_me/location_markers", 10);
 
     //! Allow for rotations
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
@@ -958,14 +899,14 @@ int main(int argc, char **argv) {
     //! Start Following
     unsigned int n_move_base_3d_tries = 0;
     bool drive = false;
-	bool first_time_in_elevator_ = true;
+	bool first_time_in_elevator1_ = true;
 	bool first_time_in_elevator2_ = true;
-	bool beentheredonethat1 = false;
-	bool beentheredonethat2 = false;
-	bool beentheredonethat3 = false;
-	bool beentheredonethat4 = false;
+	bool follow_distance_updated1_ = false;
+	bool follow_distance_updated2_ = false;
+	bool follow_distance_updated_twice1_ = false;
+	bool follow_distance_updated_twice2_ = false;
     double t_start_no_move = 0.0;
-    double t_first_time_in_elevator_ = 0.0;
+    double t_first_time_in_elevator1_ = 0.0;
     double t_first_time_in_elevator2_ = 0.0;
     ros::Rate loop_rate_fast(25);
     while (ros::ok())
@@ -1002,22 +943,33 @@ int main(int argc, char **argv) {
                 // Inside the elevator: do not use 3d navigation here!
                 if (in_elevator_)
                 {
+<<<<<<< .mine
+					follower_->updateFollowDistance(0.8);
+					amigoSpeak("Follow Distance 80"); // REMOVE
+=======
+>>>>>>> .r25132
 					if (!elevator_door_closed_) {
+<<<<<<< .mine
+						if (first_time_in_elevator1_) {
+							t_first_time_in_elevator1_ = ros::Time::now().toSec();
+							first_time_in_elevator1_ = false;
+=======
 						if (first_time_in_elevator_) {
 							follower_->updateFollowDistance(0.8);
 							amigoSpeak("Follow Distance 80");
 							t_first_time_in_elevator_ = ros::Time::now().toSec();
 							first_time_in_elevator_ = false;
+>>>>>>> .r25132
 						}
-						if ((ros::Time::now().toSec() - t_first_time_in_elevator_ > 30.0) && (beentheredonethat3 == false)) {
+						if ((ros::Time::now().toSec() - t_first_time_in_elevator1_ > 30.0) && (follow_distance_updated1_ == false)) {
 							follower_->updateFollowDistance(0.65);
-							amigoSpeak("Follow Distance 65");
-							beentheredonethat3 = true;
+							amigoSpeak("Follow Distance 65"); // REMOVE
+							follow_distance_updated1_ = true;
 						}
-						if ((ros::Time::now().toSec() - t_first_time_in_elevator_ > 60.0) && (beentheredonethat4 == false)) {
+						if ((ros::Time::now().toSec() - t_first_time_in_elevator1_ > 60.0) && (follow_distance_updated_twice1_ == false)) {
 							follower_->updateFollowDistance(0.5);
-							amigoSpeak("Follow Distance 50");
-							beentheredonethat4 = true;
+							amigoSpeak("Follow Distance 50"); // REMOVE
+							follow_distance_updated_twice1_ = true;
 						}
 					}
                 }
@@ -1029,7 +981,7 @@ int main(int argc, char **argv) {
                     if (left_elevator_)
                     {
                         ROS_INFO("I think I am at the crowd, I will try to drive around the crowd");
-                        amigoSpeak("I think I am at the crowd, I will try to drive around the crowd");
+                        amigoSpeak("I think I am at the crowd, I will try to drive around the crowd"); // REMOVE
                         follower_->pause();
                         driveAroundCrowd();
                         follower_->reset(1.0);
@@ -1060,22 +1012,26 @@ int main(int argc, char **argv) {
         // Else: robot is moving, do adminstration
         else
         {
-			if (!elevator_door_closed_) {
-				if (first_time_in_elevator2_) {
-					t_first_time_in_elevator2_ = ros::Time::now().toSec() + 20.00;
-					first_time_in_elevator2_ = false;
+			if (in_elevator_) {
+				follower_->updateFollowDistance(0.8);
+				amigoSpeak("Follow Distance 80"); // REMOVE
+				if (!elevator_door_closed_) {
+					if (first_time_in_elevator2_) {
+						t_first_time_in_elevator2_ = ros::Time::now().toSec() + 20.00;
+						first_time_in_elevator2_ = false;
+					}
+					else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 60.0) && (follow_distance_updated2_ == false)) {
+						follower_->updateFollowDistance(0.5);
+						amigoSpeak("TWO, Follow Distance 50"); // REMOVE
+						follow_distance_updated2_ = true;
+					}
+					else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 30.0) && (follow_distance_updated_twice2_ == false)) {
+						follower_->updateFollowDistance(0.65);
+						amigoSpeak("TWO, Follow Distance 65"); // REMOVE
+						follow_distance_updated_twice2_ = true;
+					}
 					follower_->updateFollowDistance(0.8);
 					amigoSpeak("TWO, Follow Distance 80");
-				}
-				else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 60.0) && (beentheredonethat1 == false)) {
-					follower_->updateFollowDistance(0.5);
-					amigoSpeak("TWO, Follow Distance 50");
-					beentheredonethat1 = true;
-				}
-				else if ((ros::Time::now().toSec() - t_first_time_in_elevator2_ > 30.0) && (beentheredonethat2 == false)) {
-					follower_->updateFollowDistance(0.65);
-					amigoSpeak("TWO, Follow Distance 65");
-					beentheredonethat2 = true;
 				}
 			}
             drive = true;
