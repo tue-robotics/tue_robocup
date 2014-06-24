@@ -17,7 +17,7 @@ amigo3:
         Mic on mute!!! (Should be muted already)
 
     amigo-console  
-		(amigo.base.reset_costmap)
+        (amigo.base.reset_costmap)
         test_audio
         (lights should become green -> say 'continue')
         (if response is 'true', amigo heard you and lights become blue)
@@ -29,29 +29,33 @@ amigo3:
 
 
 == TEST THE EXECUTIVE ==
-- All basic functionalities will be tested one after another. For most cases, the robot returns to 0,0,0 to start the next part
-- Put some objects on the second table (i.e., without the computer) for the pick-and-place demo.
-- Make sure the thrashbin is placed correctly
-- Current questions for what did you say:
+Three basic functionalities will be tested one after another. Understanding is defined for robotics_testlab_B.
 
--- Possible questions for now: ----------------------------------------------------------
--- What time is it? ---------------------------------------------------------------------
--- What is the answer to the ultimate question about life the universe and everything? --
--- What is the capital of poland?--------------------------------------------------------
--- What is the oldest most widely used drug on earth?------------------------------------
--- What is your name?--------------------------------------------------------------------
--- What is your team's name?-------------------------------------------------------------
--- Which country grows the most potatoes?------------------------------------------------
--- Which country grew the first orange?--------------------------------------------------
--- Which fish can hold objects in its tail?----------------------------------------------
--- How many countries are in europe?-----------------------------------------------------
+-- Pick and Place --
+Amigo starts at his normal position. Then he will check what is on the cabinet (make sure there is one known and one unknown object). In case of a known object he will place it on the bar. In case of an unknown object, he will place it in the trashbin. Then he will continue to the livingroom where he will wait for someone to say "continue".
+
+-- Avoid That --
+Amigo will drive to the bedroom. The idea is that suddenly the fastest way to the bedroom via the livingroom is blocked and that he should find a way around it (via the kitchen, hallway, workshop).
+When he arrives he will wait for a "continue".
+
+-- What Did You Say --
+Amigo will drive into the livingroom and will check for a person in that room. At this point there can only be ONE person in the livingroom. Amigo will try to find that person first with his torso laser, then with face recognition. He will try a few locations. If he still cannot find the right person, amigo will drive back to a location and asks the person to step in front of him. Then you are able to ask 3 questions. After answering those questions, amigo will drive to the exit (=in the bedroom).
+
+Possible questions for now: 
+- What time is it? 
+- What is the answer to the ultimate question about life the universe and everything?
+- What is the capital of poland?
+- What is the oldest most widely used drug on earth?
+- What is your name?
+- What is your team's name?
+- Which country grows the most potatoes?
+- Which country grew the first orange?
+- Which fish can hold objects in its tail?
+- How many countries are in europe?
+
 
 It is possible to start the challenge at one of the other basic functionalities. To this end, give an argument:
-Pick and place: 	rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 1
-Avoid that:			rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 2
-What did you say?:	rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 3
-Before doing so, please make sure the robot is reset (arms, spindle, head) and is localized correctly
-
-== OBSOLETE ==
-- Put some objects on the cabinet expedit for the fetch and carry
-- Try to be at least with two people for the find me and go over there
+Pick and place:     rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 1
+Avoid that:         rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 2
+What did you say?:  rosrun challenge_basic_funtionalities challenge_basic_functionalities.py 3
+!!!! Before doing so, please make sure the robot is reset (arms, spindle, head) and is localized correctly !!!!
