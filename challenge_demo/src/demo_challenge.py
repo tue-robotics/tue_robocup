@@ -249,7 +249,7 @@ class FetchObject(smach.StateMachine):
                                     transitions={   'spoken'    : 'GET_OBJECT_SHELF'})
 
             smach.StateMachine.add('GET_OBJECT_SHELF',
-                                    states.GetObject(robot, side=arm,  roi_query=roi_query, object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)),
+                                    states.GetObject(robot, side=arm,  roi_query=roi_query, roi_identifier="ROI_Location", object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)),
                                     transitions={   'Done'      : 'SAY_KNOW_OWNER',
                                                     'Aborted'   : 'SAY_FAIL',
                                                     'Failed'    : 'SAY_FAIL',
