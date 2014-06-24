@@ -2,6 +2,7 @@ TODO
 =========
 
 - Remove hardcoded objects in the state machine (and the gui?)
+- Reset reasoner???
 
 - Amigo drives towards the wrong table, probably an error in GET_OBJECT_SHELF
 
