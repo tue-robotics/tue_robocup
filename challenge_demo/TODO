@@ -1,10 +1,12 @@
 TODO
 =========
+
+- Remove hardcoded objects in the state machine (and the gui?)
+
+
+
+
+
 Make sure the ppl_detection is working
 - not a lot of false positives
 - seamless integration of two laser scanners
-
-Better launching of the challenge
-- make 2 launch files, 1 for on the robot and 1 for in testing
-- run rosbridge also on the external laptop
-- fix the hardcoded ip addresses
