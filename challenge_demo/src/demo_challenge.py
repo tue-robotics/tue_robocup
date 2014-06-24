@@ -38,7 +38,7 @@ class WaitForOwner(smach.State):
 
         starttime = rospy.Time.now()
         person_found = False
-        
+
         while (not person_found and (rospy.Time.now() - starttime) < rospy.Duration(self.timeout) and not rospy.is_shutdown()):
 
             ''' Do query '''
@@ -46,8 +46,8 @@ class WaitForOwner(smach.State):
 
             ''' Check for region of interest '''
             try:
-                selected_answer = urh.select_answer(answers, 
-                                                lambda answer: urh.xy_dist(answer, self.roipos), 
+                selected_answer = urh.select_answer(answers,
+                                                lambda answer: urh.xy_dist(answer, self.roipos),
                                                 minmax=min,
                                                 criteria=[lambda answer: urh.xy_dist(answer, self.roipos) < self.detecting_range])
             except ValueError:
@@ -73,9 +73,9 @@ class WaitForOwner(smach.State):
 class WaitForExternalCamera(smach.State):
 
     def __init__(self, robot, object_query):
-        smach.State.__init__(self, 
+        smach.State.__init__(self,
                              outcomes=['present', 'not_present', 'failed'])
-        
+
         self.robot = robot
         self.object_query = object_query
 
@@ -132,7 +132,7 @@ class ReceivePackage(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add("WAIT_FOR_DOORBELL", 
+            smach.StateMachine.add("WAIT_FOR_DOORBELL",
                                     states.WaitForTrigger(robot, ['doorbell']),
                                     transitions={   'doorbell' : 'WAIT_FOR_DOORBELL_SOUND',
                                                     'preempted':'failed'})
@@ -141,11 +141,11 @@ class ReceivePackage(smach.StateMachine):
                                     states.Wait_time(robot, waittime=2),
                                     transitions={   'waited':'SAY_SOMEONE_AT_THE_DOOR',
                                                     'preempted':'failed'})
-            
-            smach.StateMachine.add("SAY_SOMEONE_AT_THE_DOOR", 
+
+            smach.StateMachine.add("SAY_SOMEONE_AT_THE_DOOR",
                                     states.Say(robot,"There is somebody at the door, I should go over there.", block=True),
                                     transitions={   'spoken':'NAVIGATE_TO_DOOR'})
-            
+
 
             smach.StateMachine.add('NAVIGATE_TO_DOOR',
                                     states.NavigateGeneric(robot, goal_query=query_door1),
@@ -161,25 +161,25 @@ class ReceivePackage(smach.StateMachine):
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_GOAL_NOT_DEFINED'})
 
-            smach.StateMachine.add("SAY_DOOR_REACHED", 
+            smach.StateMachine.add("SAY_DOOR_REACHED",
                                     states.Say(robot,"Can I receive your package?", block=False),
                                     transitions={   'spoken':'RECEIVE_OBJECT'})
-            
-            smach.StateMachine.add("RECEIVE_OBJECT", 
+
+            smach.StateMachine.add("RECEIVE_OBJECT",
                                     states.Human_handover(arm, robot),
                                     transitions={   'succeeded':'SAY_PACKAGE_RECEIVED',
                                                     'failed':'SAY_PACKAGE_RECEIVED'})
-            
-            smach.StateMachine.add("SAY_PACKAGE_RECEIVED", 
+
+            smach.StateMachine.add("SAY_PACKAGE_RECEIVED",
                                     states.Say(robot,"Thank you, I will bring this to the man of the house", block=False),
                                     transitions={   'spoken':'succeeded'})
 
             # navigation states
-            smach.StateMachine.add("SAY_GOAL_UNREACHABLE", 
+            smach.StateMachine.add("SAY_GOAL_UNREACHABLE",
                                     states.Say(robot,"I am sorry but I cannot figure it out, the goal is unreachable"),
                                     transitions={   'spoken':'failed'})
 
-            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED", 
+            smach.StateMachine.add("SAY_GOAL_NOT_DEFINED",
                                     states.Say(robot,"I am sorry, I don't know where to go"),
                                     transitions={   'spoken':'failed'})
 
@@ -212,7 +212,7 @@ class FetchObject(smach.StateMachine):
 
         with self:
             # ToDo: don't hardcode the following four states and do it a bit more intelligent
-            smach.StateMachine.add("WAIT_FOR_ORDER", 
+            smach.StateMachine.add("WAIT_FOR_ORDER",
                                     states.WaitForTrigger(robot, ['coke', 'sprite', 'fanta']),
                                     transitions={   'coke'      : 'ASSERT_COKE',
                                                     'sprite'    : 'ASSERT_SPRITE',
@@ -227,7 +227,7 @@ class FetchObject(smach.StateMachine):
 
                 self.robot.reasoner.query(Compound("retractall", Compound("demo_get_object", "X")))
                 self.robot.reasoner.assertz(Compound("demo_get_object", str(desired_object)))
-                
+
                 return 'succeeded'
 
             smach.StateMachine.add('ASSERT_COKE', smach.CBState(assert_object,
@@ -272,17 +272,6 @@ class FetchObject(smach.StateMachine):
             smach.StateMachine.add('NAVIGATE_TO_OWNER',
                                     states.NavigateGeneric(robot, lookat_query=query_owner, refresh_freq=1),
                                     transitions={   "arrived":"SAY_HANDOVER",
-                                                    "unreachable":'SAY_CANNOT_REACH_OWNER',
-                                                    "preempted":'failed',
-                                                    "goal_not_defined":'SAY_LOST_OWNER'})
-
-            smach.StateMachine.add('SAY_KNOW_OWNER_FAIL',
-                                    states.Say(robot, "Luckily I know where my owner is", block=False),
-                                    transitions={   'spoken'    : 'NAVIGATE_TO_OWNER_FAIL'})
-
-            smach.StateMachine.add('NAVIGATE_TO_OWNER_FAIL',
-                                    states.NavigateGeneric(robot, lookat_query=query_owner, refresh_freq=1),
-                                    transitions={   "arrived":"HANDOVER_TO_HUMAN",
                                                     "unreachable":'SAY_CANNOT_REACH_OWNER',
                                                     "preempted":'failed',
                                                     "goal_not_defined":'SAY_LOST_OWNER'})
@@ -346,9 +335,9 @@ class ChallengeDemo2014(smach.StateMachine):
     def __init__(self, robot=None):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        if grasp_arm == "right": 
+        if grasp_arm == "right":
             arm = robot.rightArm
-        else:            
+        else:
             arm = robot.leftArm
 
         #retract old facts
@@ -375,7 +364,7 @@ class ChallengeDemo2014(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add("INITIALIZE", 
+            smach.StateMachine.add("INITIALIZE",
                                     states.Initialize(robot),
                                     transitions={   'initialized':  'WAIT_FOR_OWNER',
                                                     'abort':        'Aborted'})
