@@ -238,13 +238,33 @@ bool Follower::reset()
     return (reset && started);
 }
 
-bool Follower::reset(double left_right_margin)
+bool Follower::reset(double left_right_margin, double dist_min, double dist_max)
 {
+	if ((left_right_margin < 0.0) && (left_right_margin > 5.0)) {
+		ROS_WARN("Failed Resetting with new parameters, reset done using old param. left_right_margin outside bounds");
+		bool suc = reset();
+		return suc;
+	} else if ((dist_min < 0.0) && (dist_min > 5.0)) {
+		ROS_WARN("Failed Resetting with new parameters, reset done using old param. dist_min outside bounds");
+		bool suc = reset();
+		return suc;
+	} else if ((dist_max < 0.0) && (dist_max > 15.0)) {
+		ROS_WARN("Failed Resetting with new parameters, reset done using old param. dist_max outside bounds");
+		bool suc = reset();
+		return suc;
+	}
+
     // Less strict reset
-    double back_up_val = DIST_LEFT_RIGHT;
+    double back_up_val_LEFT_RIGHT = DIST_LEFT_RIGHT;
+    double back_up_val_MIN = DIST_MIN;
+    double back_up_val_MAX = DIST_MAX;
     DIST_LEFT_RIGHT = left_right_margin;
+    DIST_MIN = dist_min;
+    DIST_MAX = dist_max;
     bool suc = reset();
-    DIST_LEFT_RIGHT = back_up_val;
+    DIST_LEFT_RIGHT = back_up_val_LEFT_RIGHT;
+    DIST_LEFT_RIGHT = back_up_val_MIN;
+    DIST_LEFT_RIGHT = back_up_val_MAX;
     return suc;
 }
 
@@ -737,10 +757,10 @@ bool Follower::findOperator(pbl::Gaussian& pos_operator)
 bool Follower::findOperatorFast(pbl::Gaussian& pos_operator)
 {
     //! @todo: for now hardcoded settings (must all be positive)
-    double TIME_WAIT_MAX = 10.0;
-    double DIST_LEFT_RIGHT = 0.35;
-    double DIST_MIN = 0.5;
-    double DIST_MAX = 2.0;
+    //double TIME_WAIT_MAX = 10.0;
+    //double DIST_LEFT_RIGHT = 0.35;
+    //double DIST_MIN = 0.5;
+    //double DIST_MAX = 2.0;
 
     setRGB("pink");
 

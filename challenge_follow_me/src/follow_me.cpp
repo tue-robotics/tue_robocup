@@ -596,7 +596,7 @@ void speechCallback(std_msgs::String res)
 
             //! Done with the elevator
             amigoSpeak("You can leave the elevator", true);
-            follower_->reset(1.0);
+            follower_->reset(1.0,0.5,2.5);
             sub_laser_.shutdown();
             sub_laser_back_.shutdown();
 
@@ -964,8 +964,8 @@ int main(int argc, char **argv) {
                         ROS_INFO("I think I am at the crowd, I will try to drive around the crowd");
                         amigoSpeak("I think I am at the crowd, I will try to drive around the crowd"); // REMOVE
                         follower_->pause();
-                        driveAroundCrowd();
-                        follower_->reset(1.0);
+                        driveAroundCrowd();                        
+                        follower_->reset(1.0,0.25,4.0);
                         ROS_INFO("Done with the 3d nav move around the crowd");
 
                     }

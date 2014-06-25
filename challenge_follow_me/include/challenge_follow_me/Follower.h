@@ -38,7 +38,7 @@ public:
 
     //! Interfaces to other modules
     bool reset();  // clear world model and start following
-    bool reset(double left_right_margin);  // clear world model and start following
+    bool reset(double left_right_margin, double dist_min, double dist_max);  // clear world model and start following
     bool start();  // start follower
     void pause();  // pause but keep on tracking
     void resume(); // resume following after being paused
@@ -47,7 +47,7 @@ public:
 
     bool getCurrentOperatorPosition(double& x, double& y, double& phi, std::string frame);
     void updateFollowDistance(double new_distance);
- 
+
 private:
 
     //! Robot must stop moving
