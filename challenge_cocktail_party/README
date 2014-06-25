@@ -1,24 +1,27 @@
-# Responsible: Luis (cocktail_party_v2.py)
+# Responsible: Luis Ferreira (l.f.bento.ferreira@tue.nl)
 
 
 ############################### COCKTAIL PARTY ###############################
 
 SETUP:
+
     Amigo Robot:
         - insert the basket on the waste secured on the breeding holes! It should be secure enough not to shake
-        - orient the handles of the bucket to face the front of Amigo, not to the sides.
+        - orient the handles of the bucket to face the front/back of Amigo, not to the sides.
 
-    amigo2:
+
+    AMIGO2:
         - ahardware
 
 
-    amigo1:
-        - rsettings -> set 2D navigation
+    AMIGO1:
+        - Set 2D Navigation: 
+            - rsettings -> export AMIGO_NAV=2d -> source ~/.bashrc
 
         - amiddle
 
 
-    amigo3:
+    AMIGO3:
         - reset-audio
             
         - amigo-console 
@@ -28,7 +31,7 @@ SETUP:
         - say test
             - You should hear Amigo say Test
 
-    amigo1:
+    AMIGO1:
         - Place the robot in the correct starting point for the given map
 
         - rosrun challenge_cocktail_party cocktail_party.py
@@ -39,7 +42,7 @@ INSTRUCTIONS:
 
     - Possible names and drinks should be on a A4 paper on the Robotics Lab B wall
 
-    - AMIGO will enter the party room and will go a predefined location where he will wait for people to come in front of him. Amigo will see you and do the normal interaction, get your name, learn your face and ask which drink you want. He will only start serving as soon as he has enough request (defined as 3). AMIGO will then fetch the drinks and will return to the last place he saw the people who ordered, or if he does not deliver all drinks he will continue searching on lookout points. He will search for people and try to deliver the drinks he is carrying to the correct person. If for some reason he doesn't find every person he is looking for he will wait for anyone to take the drinks from him, and then hear a Continue to finish the challenge. When AMIGO has served at least 3 people he will finish the challenge.
+    - AMIGO will enter the party room and will go a predefined location where he will wait for people to come in front of him. Amigo will see you and do the normal interaction, get your name, learn your face and ask which drink you want. He will only start serving as soon as he has enough request (defined in cocktail_party.py, SETUP VARIABLES). AMIGO will then fetch the drinks and will return to the last place he saw the people who ordered, and if he does not deliver all drinks he will continue searching on lookout points. He will search for people and try to deliver the drinks he is carrying to the correct person. If for some reason he doesn't find every person he is looking for he will wait for anyone to take the drinks from him, and then hear a Continue to finish the challenge. When AMIGO has served at least 3 people he will finish the challenge.
 
 #################################################################################
 
