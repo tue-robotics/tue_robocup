@@ -857,7 +857,7 @@ void speechCallbackOrder(std_msgs::String res)
         {
             last_answer_correct_ = false;
             updateSpeechState(speech_state::NUMBER);
-            amigoSpeak("Let's try again, which delivery location?");
+            amigoSpeak("Which location?");
             n_tries_ = 0;
         }
         setRGBLights("green");
@@ -919,7 +919,7 @@ void speechCallbackOrder(std_msgs::String res)
             if (order_map_.size() < N_ORDERS)
             {
                 updateSpeechState(speech_state::NUMBER);
-                amigoSpeak("What's the next delivery location?");
+                amigoSpeak("What's the next location?");
             }
             else
             {
@@ -942,7 +942,7 @@ void speechCallbackOrder(std_msgs::String res)
         {
             last_answer_correct_ = false;
             updateSpeechState(speech_state::OBJECT);
-            amigoSpeak("I don't understand. Which object?");
+            amigoSpeak("Which object?");
             setRGBLights("green");
             n_tries_ = 0;
         }
