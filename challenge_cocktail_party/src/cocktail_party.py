@@ -2202,8 +2202,8 @@ class CocktailParty(smach.StateMachine):
                 smach.StateMachine.add( 'NAV_TO_LOOKOUT',
                                         NavToLookout(robot),
                                         transitions={   'unreachable':'NAV_TO_LOOKOUT',
-                                                        # 'arrived':'DETECT_PEOPLE',
-                                                        'arrived':'DETECT_PEOPLE_TORSO_LASER',
+                                                        'arrived':'DETECT_PEOPLE',
+                                                        # 'arrived':'DETECT_PEOPLE_TORSO_LASER',
                                                         'visited_all':'aborted'})
 
                 smach.StateMachine.add( 'DETECT_PEOPLE_TORSO_LASER',
