@@ -125,21 +125,48 @@ class DetectWavingPeople(smach.State):
 
 #########################################################################################
 
+
 # Uses the human_tracking to detect people while turning the head arround.
 class DetectPeople(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, distance_to_walls=0.2, time=None, room=None):
         smach.State.__init__(   self, 
                                 outcomes=["detected", "not_detected", "error"])
         
         self.robot = robot
-
+        self.distance_to_walls = distance_to_walls  # distance to inflate the room walls
+        self.time = time
+        self.room = room
         # compose person query
-        self.peopleDetectedQ = Conjunction(Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
-                                        # Compound('property_expected', 'ObjectID', 'position', Compound('in_front_of', 'amigo')),
-                                        Compound('not', Compound('approached', 'ObjectID')))
+        self.peopleDetectedQ = Conjunction( Compound('property_expected', 'ObjectID', 'class_label', 'validated_person'),
+                                            Compound('property_expected', 'ObjectID', 'position', Sequence('X','Y','Z')),
+                                            Compound('not', Compound('approached', 'ObjectID')))
 
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: DetectPeople\n")
+
+        # Get the coordinates of the room
+        if self.room:
+            
+            roomDimensionsQ = Compound('room_dimensions',self.room, Compound('size', 'Xmin', 'Ymin', 'Zmin', 'Xmax', 'Ymax', 'Zmax'))
+
+            room_dimensions = self.robot.reasoner.query(roomDimensionsQ)
+
+            if not room_dimensions:
+                rospy.logerr("\t\t[Cocktail Party] Dimensions for room were not found in reasoner!\n")
+
+
+            # assumed is that there is only one block per room.
+            room_dimensions_answer = room_dimensions[0]
+            x_min = float(room_dimensions_answer['Xmin'])
+            y_min = float(room_dimensions_answer['Ymin'])
+            z_min = float(room_dimensions_answer['Zmin'])
+            x_max = float(room_dimensions_answer['Xmax'])
+            y_max = float(room_dimensions_answer['Ymax'])
+            z_max = float(room_dimensions_answer['Zmax'])
+
+            rospy.loginfo("\t\t[Cocktail Party] room dimensions: X - [{0}, {1}], Y - [{2}, {3}], Z - [{4}, {5}]\n".format(
+                x_min, x_max, y_min, y_max, z_min, z_max))
+
 
         self.robot.spindle.high()
         
@@ -165,8 +192,9 @@ class DetectPeople(smach.State):
         # sleep to give time for the tracking to start
         rospy.sleep(0.5)
 
+        # look right
         self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0, timeout=3.0)
-        
+        # look left
         self.robot.head.set_pan_tilt(pan=0.7, pan_vel=0.1, tilt=0.0, timeout=5.0)
 
         # Turn OFF Human Tracking
@@ -185,37 +213,61 @@ class DetectPeople(smach.State):
         self.robot.head.reset_position()
 
         ###################################################
+        # Check the results from the laser people detection
 
-        laserDetectQ = Conjunction( Compound( "property_expected", "ObjectID", "class_label", "person"),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")),
-                                    Compound( "not", Compound( "person_checked_positively", "ObjectID")),
-                                    Compound( "not", Compound( "person_checked_negatively", "ObjectID")),
-                                    Compound( "not", Compound( "person_unreachable", "ObjectID")))
+        # laserDetectQ = Conjunction( Compound( "property_expected", "ObjectID", "class_label", "person"),
+        #                             Compound( "property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
-        peopleResult = self.robot.reasoner.query(laserDetectQ)
+        # peopleResult = self.robot.reasoner.query(laserDetectQ)
 
-        if not peopleResult:
-            self.robot.speech.speak("Laser detection didn't find anything.", block=False)
-        else:
-            self.robot.speech.speak("Laser detection found something.", block=False)
-            import ipdb; ipdb.set_trace()
+        # if not peopleResult:
+        #     self.robot.speech.speak("Laser detection didn't find anything.", block=False)
+        # else:
+        #     self.robot.speech.speak("Laser detection found something. {0}".format(len(peopleResult)), block=False)
 
         ###################################################
 
         # get results from the query
-        peopleFoundRes = self.robot.reasoner.query(self.peopleDetectedQ)
+        peopleFound = self.robot.reasoner.query(self.peopleDetectedQ)
         
-        if peopleFoundRes:
-            rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s)\n".format(len(peopleFoundRes)))
-            self.robot.speech.speak("I think i saw someone.", mood='excited', block=False)
-            # self.robot.speech.speak("I think i saw someone. {0}".format(len(peopleFoundRes)), mood='excited', block=False)
-            return 'detected'
+        if peopleFound:
+            rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s) (unfiltered)\n".format(len(peopleFound)))
+
+            # assert people detected outside the room as visited
+            for candidate in peopleFound:
+                rospy.loginfo("\t\t[Cocktail Party] Person found at ({0},{1},{2})\n".format(candidate['X'], candidate['Y'], candidate['Z']))
+                xPos, yPos, zPos = float(candidate['X']), float(candidate['Y']), float(candidate['Z'])
+                # check if the person found is inside or outside of the room
+                if not (xPos > x_min and xPos < x_max and
+                        yPos > y_min and yPos < y_max and
+                        zPos > z_min and zPos < z_max):
+
+                    rospy.logwarn("\t\t[Cocktail Party] Person outside of the room!\n")
+
+                    self.robot.reasoner.query(Compound('assert', Compound('visited', candidate['ObjectID'])))
+                    self.robot.reasoner.query(Compound('assert', Compound('approached', candidate['ObjectID'])))
+                else:
+                    rospy.loginfo("\t\t[Cocktail Party] Person inside the room!\n")
+
+
+            peopleFoundROI = self.robot.reasoner.query(self.peopleDetectedQ)
+
+            if peopleFoundROI:
+                rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s) (filtered)\n".format(len(peopleFoundROI)))
+                self.robot.speech.speak("I think i saw someone.", mood='excited', block=False)
+                
+                return 'detected'
+            else:
+                self.robot.speech.speak("There's no one here.", block=False)
+                return 'not_detected'
+
         else:
             self.robot.speech.speak("There's no one here.", block=False)
             return 'not_detected'
 
 
 #########################################################################################
+
 
 # Wait for the person to step in front of the robot, uses the human_tracking node.
 class WaitForPerson(smach.State):
@@ -447,7 +499,7 @@ class LearnPersonName(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: LearnPersonName\n")
         
         # ask the name of the user (within 3 tries and within 60 seconds an answer is received)
-        self.response = self.ask_user_service_get_learn_person_name('name', 5, rospy.Duration(60))
+        self.response = self.ask_user_service_get_learn_person_name('name', 3, rospy.Duration(60))
             
         # test if the name is allowed / exists
         for x in range(0,len(self.response.keys)):
@@ -456,15 +508,21 @@ class LearnPersonName(smach.State):
 
         # if no answer was found / unsupported name
         if response_answer == 'no_answer' or response_answer == 'wrong_answer':
-            if self.person_learn_failed == 2:
+            if self.person_learn_failed == 0:
                 self.robot.speech.speak("I will call you David", block=False)
                 response_answer = "david"
             if self.person_learn_failed == 1:
                 self.robot.speech.speak("I will call you Michael", block=False)
                 response_answer = "michael"
-            if self.person_learn_failed == 0:
+            if self.person_learn_failed == 2:
+                self.robot.speech.speak("I will call you Elizabeth", block=False)
+                response_answer = "elizabeth"
+            if self.person_learn_failed == 3:
                 self.robot.speech.speak("I will call you Joseph", block=False)
                 response_answer = "joseph"
+            if self.person_learn_failed == 4:
+                self.robot.speech.speak("I will call you Samantha", block=False)
+                response_answer = "samantha"
 
             self.person_learn_failed += 1
         else:
@@ -1184,6 +1242,73 @@ class AssertPickup(smach.State):
 
 #########################################################################################
 
+# TODO Use this for the prepare delivery instead of the code that is there now, and use the output keys for the name and probability!
+
+class RecognizePerson(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['no_people_found', 'no_people_recognized', 'person_recognized'],
+                                   input_keys=[],
+                                   output_keys=[])
+        self.robot = robot
+        
+        self.detect_query = Conjunction(Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                        Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")))
+        
+        self.recognize_query = Conjunction(Compound( "property_expected", "ObjectID", "class_label", "face"),
+                                           Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                           Compound( "property", "ObjectID", "name", Compound("discrete", "DomainSize", "NamePMF")))
+
+    def execute(self, userdata=None):
+        ''' Reset robot '''
+        self.robot.speech.speak("Let me see who's here", block=False)
+        self.robot.head.look_up()
+        self.robot.spindle.reset()
+   
+        cntr = 0
+        name = None
+        # TODO does the toggle needs to start both or just recognition?
+        self.robot.perception.toggle(["face_recognition", "face_segmentation"])
+
+        while (cntr < 10 and not name):
+            rospy.sleep(0.5)
+            cntr += 1
+            rospy.loginfo("Checking for the {0} time".format(cntr))
+
+            person_result = self.robot.reasoner.query(self.recognize_query)
+
+            # get the name PMF, which has the following structure: [p(0.4, exact(will)), p(0.3, exact(john)), ...]
+            if len(person_result) > 0:
+                name_pmf = person_result[0]["NamePMF"]
+
+                if len(person_result) > 1:
+                    rospy.logwarn("Multiple faces detected, only checking the first one!")
+
+                name=None
+                name_prob=0
+                for name_possibility in name_pmf:
+                    print name_possibility
+                    prob = float(name_possibility[0])
+                    if prob > 0.175 and prob > name_prob:
+                        name = str(name_possibility[1][0])
+                        #print "Updated most probable name to " + str(name)
+                        name_prob = prob
+
+        self.robot.perception.toggle([])
+        
+        if not person_result:
+            rospy.logwarn("No person names received from world model")
+            return 'no_people_found'
+        elif not name:
+            self.robot.speech.speak("I don't know who you are.", block=False)
+            return 'no_people_recognized'
+        elif name:
+            self.robot.speech.speak("Hello " + str(name), block=False)
+            #userdata.name = str(name)
+            return 'person_recognized'        
+            
+
+#########################################################################################
+
 
 # Identify the person in front of the robot and determine where his/her drink is
 class PrepareDelivery(smach.State):
@@ -1226,7 +1351,7 @@ class PrepareDelivery(smach.State):
             return 'error'
         
         # sleep while we wait for results on the recognition
-        rospy.sleep(6.0)
+        rospy.sleep(8.0)
 
         self.response_stop = self.robot.perception.toggle([])
         
@@ -1353,10 +1478,10 @@ class NavToDetectedPerson(smach.State):
         # if there is no location associated with lookout points say it
         if not detectedPerson:
             rospy.loginfo("\t\t[Cocktail Party] Visited all the persons\n")
-            return "visited_all"
+            return 'visited_all'
         else:
 
-            rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s)\n". format(len(detectedPerson)))
+            # rospy.loginfo("\t\t[Cocktail Party] Found {0} person(s)\n". format(len(detectedPerson)))
 
             # If there is more than 1 result, force a query that only returns the first result
             #   otherwise i don't know which one the nav generic will choose
@@ -1809,78 +1934,6 @@ class CheckCarriedDrinks(smach.State):
 #########################################################################################
 
 
-# Detect people standing using the laser detector
-class StandingPeopleDetector(smach.State):
-    def __init__(self, robot, distance_to_walls=0.2, time=None, room=None, point_stamped=None, length_x=None, length_y=None, length_z=None):
-        smach.State.__init__(self, outcomes=["done", "failed"])
-        self.robot = robot
-        self.time = time
-        self.room = room
-        self.point_stamped = point_stamped
-        self.length_x = length_x
-        self.length_y = length_y
-        self.length_z = length_z
-        self.distance_to_walls = distance_to_walls  # This is the distance that is retracted from the room dimensions in x and y directions.
-
-    def execute(self, userdata=None):
-
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: StandingPeopleDetector\n")
-
-        self.robot.speech.speak("Starting laser detection.", block=False)
-
-        # First check if room is given or already a point. 
-        if self.room:
-            
-            room_dimensions = Compound('room_dimensions',self.room, Compound('size', 'Xmin', 'Ymin', 'Zmin', 'Xmax', 'Ymax', 'Zmax'))
-
-            room_dimensions_answers = self.robot.reasoner.query(room_dimensions)
-
-            if not room_dimensions_answers:
-                rospy.logerr("\t\t[Cocktail Party] Dimensions for room were not found in reasoner!\n")
-                return 'failed'
-
-            # assumed is that there is only one block per room.
-            room_dimensions_answer = room_dimensions_answers[0]
-            x_min = float(room_dimensions_answer['Xmin'])
-            y_min = float(room_dimensions_answer['Ymin'])
-            z_min = float(room_dimensions_answer['Zmin'])
-            x_max = float(room_dimensions_answer['Xmax'])
-            y_max = float(room_dimensions_answer['Ymax'])
-            z_max = float(room_dimensions_answer['Zmax'])
-
-            rospy.loginfo("\t\t[Cocktail Party] room dimensions: X - [{0}, {1}], Y - [{2}, {3}], Z - [{4}, {5}]\n".format(
-                x_min, x_max, y_min, y_max, z_min, z_max))
-            
-            new_pointstamped = geometry_msgs.msg.PointStamped()
-            new_pointstamped.point.x = (x_max-x_min)*0.5 + x_min
-            new_pointstamped.point.y = (y_max-y_min)*0.5 + y_min
-            new_pointstamped.point.z = (z_max-z_min)*0.5 + z_min
-            new_pointstamped.header.frame_id = '/map'         
-
-            # print "\n new_pointstamped = ", new_pointstamped, "\n"
-
-            new_length_x = x_max-x_min - 2 * self.distance_to_walls
-            new_length_y = y_max-y_min - 2 * self.distance_to_walls
-            new_length_z = z_max-z_min - 2 * self.distance_to_walls
-
-            # print "\n new_length_x = ", new_length_x, "\n"
-            # print "\n new_length_y = ", new_length_y, "\n"
-            # print "\n new_length_z = ", new_length_z, "\n"
-
-            self.robot.perception.people_detection_torso_laser(new_pointstamped, self.time, abs(new_length_x), abs(new_length_y), abs(new_length_z))
-
-        elif self.point_stamped:
-            self.robot.perception.people_detection_torso_laser(self.point_stamped, self.time, self.length_x, self.length_y, self.length_z)
-        else:
-            rospy.logerr("\t\t[Cocktail Party]No room or point was defined for detecting people\n")
-            return 'failed'
-
-        return 'done'
-
-
-#########################################################################################
-
-
 #  State machine to take a new order, learn the name, face and drink
 class TakeNewOrder(smach.StateMachine):
     def __init__(self, robot):
@@ -2194,8 +2247,8 @@ class CocktailParty(smach.StateMachine):
                 smach.StateMachine.add('NAV_TO_LAST_KNOWN_LOCATION',
                                         NavToLastKnowLoc(robot),
                                         transitions={   'unreachable':'NAV_TO_LAST_KNOWN_LOCATION' , 
-                                                        # 'arrived':'DETECT_PEOPLE',
-                                                        'arrived':'DETECT_PEOPLE_TORSO_LASER', 
+                                                        'arrived':'DETECT_PEOPLE',
+                                                        # 'arrived':'DETECT_PEOPLE_TORSO_LASER', 
                                                         'visited_all':'NAV_TO_LOOKOUT'})
 
                 # if the request weren't all delivered continue searching on the lookout points
@@ -2206,13 +2259,13 @@ class CocktailParty(smach.StateMachine):
                                                         # 'arrived':'DETECT_PEOPLE_TORSO_LASER',
                                                         'visited_all':'aborted'})
 
-                smach.StateMachine.add( 'DETECT_PEOPLE_TORSO_LASER',
-                                        StandingPeopleDetector( robot, time=4, room='living_room'),
-                                        transitions={   'done':'DETECT_PEOPLE',
-                                                        'failed':'DETECT_PEOPLE'})
+                # smach.StateMachine.add( 'DETECT_PEOPLE_TORSO_LASER',
+                #                         StandingPeopleDetector(robot, time=4, room='living_room'),
+                #                         transitions={   'done':'DETECT_PEOPLE',
+                #                                         'failed':'DETECT_PEOPLE'})
 
                 smach.StateMachine.add( 'DETECT_PEOPLE',
-                                        DetectPeople(robot),
+                                        DetectPeople(robot, time=4, room='living_room'),
                                         transitions={   'detected':'NAV_TO_DETECTED_PERSON',
                                                         'not_detected':'NAV_TO_LAST_KNOWN_LOCATION',
                                                         'error':'NAV_TO_LAST_KNOWN_LOCATION'})
@@ -2392,7 +2445,6 @@ if __name__ == '__main__':
     machine = CocktailParty(amigo)
     
     # Testing data, automatically asserted
-
     if initial_state != None:
         amigo.reasoner.reset()
 
@@ -2410,17 +2462,18 @@ if __name__ == '__main__':
 
         amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'right_arm'))))
 
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
+        # not used anymore, delete when you are sure
+        # amigo.reasoner.query(   Compound('assert', 
+        #                         Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
 
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Sequence('4.832', '0.134', '0.0'))))
+        # amigo.reasoner.query(   Compound('assert', 
+        #                         Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Sequence('4.832', '0.134', '0.0'))))
 
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
+        # amigo.reasoner.query(   Compound('assert', 
+        #                         Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
 
-        amigo.reasoner.query(   Compound('assert', 
-                                Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
+        # amigo.reasoner.query(   Compound('assert', 
+        #                         Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
 
 
     introserver = smach_ros.IntrospectionServer('SM_TOP', machine, '/SM_ROOT_PRIMARY')
