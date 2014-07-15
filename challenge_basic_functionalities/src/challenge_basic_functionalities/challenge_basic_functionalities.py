@@ -14,6 +14,7 @@ import what_did_you_say
 from robot_smach_states import *
 from robot_skills.amigo import Amigo
 
+import smach_ros # added for using smach_viewer
 
 class Ask_continue(smach.State):
     def __init__(self, robot, tracking=True, rate=2):
@@ -89,6 +90,19 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
+            smach.StateMachine.add("RESET_HEAD_FOR_PICK_AND_PLACE",
+                                    HeadLookUp(robot),
+                                    transitions={'done':'SAY_ASK_CONTINUE_0'})
+
+            smach.StateMachine.add("SAY_ASK_CONTINUE_0", 
+                                    Say(robot, [ "Please say continue."]),
+                                    transitions={   'spoken':'ASK_CONTINUE_0'})
+
+            smach.StateMachine.add("ASK_CONTINUE_0",
+                                    Ask_continue(robot),
+                                    transitions={   'done':'PICK_AND_PLACE',
+                                                    'no_continue':'PICK_AND_PLACE'})
+
             # ToDo: additional arguments?
             smach.StateMachine.add( 'PICK_AND_PLACE',
             	                    pick_and_place.PickAndPlace(robot),
@@ -102,7 +116,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
-                                    transitions={   "arrived":"RESET_HEAD1",
+                                    transitions={   "arrived":"RESET_HEAD_FOR_AVOID_THAT",
                                                     "unreachable":'SAY_PLEASE_MOVE_2',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_PLEASE_MOVE_2'})
@@ -118,12 +132,12 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_AVOID_THAT_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_avoid, goal_area_radius=0.4),
-                                    transitions={   "arrived":"RESET_HEAD1",
+                                    transitions={   "arrived":"RESET_HEAD_FOR_AVOID_THAT",
                                                     "unreachable":'CANNOT_GOTO_CHALLENGE',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'CANNOT_GOTO_CHALLENGE'})
 
-            smach.StateMachine.add("RESET_HEAD1",
+            smach.StateMachine.add("RESET_HEAD_FOR_AVOID_THAT",
                                     HeadLookUp(robot),
                                     transitions={'done':'SAY_ASK_CONTINUE'})
 
@@ -147,7 +161,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
-                                    transitions={   "arrived":"RESET_HEAD2",
+                                    transitions={   "arrived":"RESET_HEAD_FOR_WHAT_DID_YOU_SAY",
                                                     "unreachable":'SAY_PLEASE_MOVE_3',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_PLEASE_MOVE_3'})
@@ -164,12 +178,12 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add( 'GOTO_WHAT_DID_YOU_SAY_2ND_TRY',
                                     NavigateGeneric(robot, goal_query=query_goto_what, goal_area_radius=0.4),
-                                    transitions={   "arrived":"RESET_HEAD2",
+                                    transitions={   "arrived":"RESET_HEAD_FOR_WHAT_DID_YOU_SAY",
                                                     "unreachable":'SAY_ASK_CONTINUE2',
                                                     "preempted":'Aborted',
                                                     "goal_not_defined":'SAY_ASK_CONTINUE2'})
 
-            smach.StateMachine.add("RESET_HEAD2",
+            smach.StateMachine.add("RESET_HEAD_FOR_WHAT_DID_YOU_SAY",
                                     HeadLookUp(robot),
                                     transitions={'done':'SAY_ASK_CONTINUE2'})
 
@@ -261,13 +275,13 @@ if __name__ == "__main__":
     rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
     if  len(sys.argv) > 1:
         if int(sys.argv[1]) == 1:
-            initial_state = ["PICK_AND_PLACE"]
+            initial_state = ["RESET_HEAD_FOR_PICK_AND_PLACE"]
             amigo.reasoner.reset()
         elif int(sys.argv[1]) == 2:
-            initial_state = ["AVOID_THAT"]
+            initial_state = ["RESET_HEAD_FOR_AVOID_THAT"]
             amigo.reasoner.reset()
         elif int(sys.argv[1]) == 3:
-            initial_state = ["WHAT_DID_YOU_SAY"]
+            initial_state = ["RESET_HEAD_FOR_WHAT_DID_YOU_SAY"]
             amigo.reasoner.reset()
 
     ''' Setup state machine'''
@@ -277,7 +291,13 @@ if __name__ == "__main__":
         rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
         machine.set_initial_state(initial_state)
 
+    # for using smach viewer
+    introserver = smach_ros.IntrospectionServer('server_name', machine, '/SM_ROOT_PRIMARY')
+    introserver.start() 
+
     try:
         machine.execute()
     except Exception, e:
         amigo.speech.speak(e)
+
+    introserver.stop()
