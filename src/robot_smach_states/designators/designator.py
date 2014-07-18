@@ -1,24 +1,14 @@
 #!/usr/bin/python
-"""Designators are intended to excapsulate the process of selecting goals and 
-of marking them as finished or inachievable.
+"""Designators are intended to encapsulate the process of selecting goals. 
+Additionally, the process of marking world model objects is encapsulated.
 
-TODO: Build up a family of ever complexer Designators.
-1. The simplest one only resolves to a single value at runtime.
-2. A more complex one can be Iterable and has a .next()-method. 
-    After next() is called, the designator resolves to a different value.
-3. More complex is a designator that can be refined in several ways, 
-    or which can add knowledge or annotations to their current value.
-For each designator, some class decorator can be added that will cast the current value to an object of some type.
-    This can be an Arm, a Point/Pose(Stamped), a class name for perception etc.
+TODO: 
+CollectionDesignator.next() must return a designator for a specific object. 
+This is useless with the designator is already fully resolved, with all its query's variables already unified with their values.
+There must be some way to only lock a part of each designator's variables while leaving others open. 
 
-TODO: Designators can be combined. Eg. get the closest answers to a query relative to the outcome of some other designator. 
-Eg. one designator the the look_at point and a designator for objects close to that look_at point.
-
-TODO:
-Designators can be refined by a user of it. That can be through a perception routine determining something, the answer to a question etc. 
-This means that the query for it is extended with an extra conjunction, making the answers more specific, for example. 
-Some variables in the query can also be made constants, as to make the query more specific and lock it.
-There is also no reason why designators cannot be cooperation with each other, althoug this would make thing overly complicated"""
+TODO: Define methods to manipulate queries, perhaps to simplify them when a lot of variables are locked 
+"""
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 from psi  import Conjunction, Compound, Variable
@@ -110,7 +100,6 @@ class ReasonedDesignator(Designator):
             self._decorated_query = Conjunction(conjunct, self._decorated_query)
         return self._decorated_query
 
-
     def refine(self, **kwargs):
         """Set a variable in the query to a constant.
         >>> query = Compound("some_predicate", "Object", "B")
@@ -129,6 +118,33 @@ class ReasonedDesignator(Designator):
         for variable, constant in kwargs.iteritems():
             self.extend(Compound("=", variable, constant), add_at_end=False)
         return self._decorated_query
+
+
+class CollectionDesignator(ReasonedDesignator):
+    """A CollectionDesignator designates a collection of objects, which can be iterated over.
+    Each object is itself a designator of a single object"""
+    def __init__(self, reasoner, query, identifier="Object", 
+        sort=min, key=lambda x: x, _filter=lambda x: True):
+
+        super(CollectionDesignator, self).__init__(self, reasoner, query, identifier, sort, key, _filter)
+
+        self._current = None
+
+    def resolve(self):
+        """Find all answers to a query, filter and sort them. .current() will return the current list of answers.
+        """
+        unfiltered_answers = self.reasoner.query(self.query)
+        filtered_answers = filter(self.filter, unfiltered_answers)
+        self._current  = sorted(filtered_answers, key=self.sortkey, reverse=(self.sort == max)) #If we want the max value to be first, then reverse the sort order
+        
+        return self._current 
+
+    def __iter__(self):
+        return self._current
+
+    def next(self):
+        return self._current.next()
+
 
 
 def lock(self, variables):
