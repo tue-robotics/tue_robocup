@@ -39,7 +39,7 @@ description_map = { "SAY_HI":"I'll say hi when i'm done",
                     "WALK_EGYPTIAN":"I'll walk like an egyptian",
                     "R2D2":"R2D2 coming up",
                     "TOETER":"I'll honk next",
-                    "MACARENA":"I'll do the macarena after this",
+                    "MACARENA":"I'll do the macarena for you!",
                     "GANGNAM":"Gangnam style is next",
                     "HOOFD_SCHOUDERS_KNIE_TEEN":"Next up: a children's dance"}
 
@@ -74,12 +74,12 @@ class RandomOutcome(smach.State):
         
 class CheckQRMarker(smach.State):
 
-    def __init__(self, robot):
+    def __init__(self, robot, rate=None, checks=None):
         smach.State.__init__(self, 
                              outcomes=demos+["empty"])
 
         # Get the ~private namespace parameters from command line or launch file.
-        self.rate = float(rospy.get_param('~rate', '10'))
+        self.rate = float(rospy.get_param('~rate', '10')) if not rate else rate
         topic     = rospy.get_param('~topic', 'qr_marker')
         
         self.demo = None
@@ -91,10 +91,9 @@ class CheckQRMarker(smach.State):
         rospy.loginfo('rate:  %d Hz', self.rate)
 
     def execute(self, userdata):
-        
         counter = 0
-        while (counter < self.rate and not self.demo):
-            rospy.sleep(rospy.Duration(1/self.rate))
+        while (counter < self.rate and not self.demo and not rospy.is_shutdown()):
+            rospy.sleep(rospy.Duration(0.1))
             counter += 1
         
         if self.demo:
@@ -172,11 +171,18 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "WAIT_A_SEC", 
                                     states.Wait_time(robot, waittime=1),
-                                    transitions={'waited'   :"CHECK_QR_MARKER",
+                                    transitions={'waited'   :"SAY_SHOW_QR_MARKER",
                                                  'preempted':"Aborted"})
+
+            smach.StateMachine.add( "SAY_SHOW_QR_MARKER",
+                                    states.Say(robot, [ "If you show me a QR marker, I'll do that you tell me to.", 
+                                                        "Show me one of those paddles with a QR code and I'll do your bidding.",
+                                                        "Please show me a QR marker",
+                                                        "Show me one of those paddles, please."]),
+                                    transitions={"spoken":"CHECK_QR_MARKER"})
                                                  
             smach.StateMachine.add( "CHECK_QR_MARKER",
-                                     CheckQRMarker(robot),
+                                     CheckQRMarker(robot, 100),
                                      transitions=qr_transitions)
 
             smach.StateMachine.add( "SELECT_RANDOM",
