@@ -13,6 +13,7 @@ import threading
 gangnam_poseA_left_pre_start = [-0.050, 0.200, 0.200, 0.800, -0.15, 0.000, 0.000]
 gangnam_poseA_left_start     = [-0.050, 1.500, 1.500, 0.800, -0.15, 0.000, 0.000]
 gangnam_poseA_left_end       = [-0.050, 1.500, 1.500, 0.800, 0.150, 0.000, 0.000]
+
 gangnam_poseA_right_pre_start= [-0.050, 0.200, 0.200, 0.800, -0.15, 0.000, 0.000]
 gangnam_poseA_right_start    = [-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000]
 gangnam_poseA_right_end      = [-0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000]
@@ -20,14 +21,15 @@ gangnam_poseA_right_end      = [-0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000
 gangnam_poseB_left_pre_start = [-0.050, 0.200, 0.200, 1.300, -0.15, 0.000, 0.000]
 gangnam_poseB_left_start     = [-0.050, 1.500, 1.500, 1.300, -0.15, 0.000, 0.000]
 gangnam_poseB_left_end       = [-0.050, 1.500, 1.500, 1.300, 0.150, 0.000, 0.000]
+
 gangnam_poseB_right_pre_start= [-0.050, 0.200, 0.250, 1.570, 0.250, 0.000, 0.000]
 gangnam_poseB_right_start    = [-0.050, 1.500, 0.250, 1.570, 0.250, 0.000, 0.000]
 gangnam_poseB_right_end      = [-0.050, 1.500, -0.25, 1.570, -0.25, 0.000, 0.000]
                                                                                                                                  
-gangnam_motionA_left = [gangnam_poseA_left_start, gangnam_poseA_left_end, gangnam_poseA_left_start, gangnam_poseA_left_end, gangnam_poseA_left_start, gangnam_poseA_left_end]
-gangnam_motionA_right= [gangnam_poseA_right_start, gangnam_poseA_right_end, gangnam_poseA_right_start, gangnam_poseA_right_end, gangnam_poseA_right_start, gangnam_poseA_right_end]
-gangnam_motionB_left = [gangnam_poseB_left_start, gangnam_poseB_left_end, gangnam_poseB_left_start, gangnam_poseB_left_end, gangnam_poseB_left_start, gangnam_poseB_left_end]
-gangnam_motionB_right= [gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end]
+gangnam_motionA_left = [gangnam_poseA_left_pre_start, gangnam_poseA_left_start, gangnam_poseA_left_end, gangnam_poseA_left_start, gangnam_poseA_left_end, gangnam_poseA_left_start, gangnam_poseA_left_end]
+gangnam_motionA_right= [gangnam_poseA_right_pre_start, gangnam_poseA_right_start, gangnam_poseA_right_end, gangnam_poseA_right_start, gangnam_poseA_right_end, gangnam_poseA_right_start, gangnam_poseA_right_end]
+gangnam_motionB_left = [gangnam_poseB_left_pre_start, gangnam_poseB_left_start, gangnam_poseB_left_end, gangnam_poseB_left_start, gangnam_poseB_left_end, gangnam_poseB_left_start, gangnam_poseB_left_end]
+gangnam_motionB_right= [gangnam_poseB_right_pre_start, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end]
 
 
 def spindle_up_down(robot, lower, upper, stopEvent):
@@ -41,8 +43,29 @@ def motionA(robot):
     for i in range(1):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
-        robot.leftArm.send_joint_trajectory(gangnam_motionA_left, timeout=10)
-        robot.rightArm.send_joint_trajectory(gangnam_motionA_right, timeout=10)
+        # robot.leftArm.send_joint_trajectory(gangnam_motionA_left, timeout=10)
+        # robot.rightArm.send_joint_trajectory(gangnam_motionA_right, timeout=10)
+
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_pre_start, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_pre_start, timeout=1)
+        
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_start, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_start, timeout=1)
+        
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_end, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_end, timeout=1)
+        
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_start, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_start, timeout=1)
+        
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_end, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_end, timeout=1)
+        
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_start, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_start, timeout=1)
+        
+        robot.leftArm.send_joint_goal(*gangnam_poseA_left_end, timeout=1)
+        robot.rightArm.send_joint_goal(*gangnam_poseA_right_end, timeout=1)
     
     robot.leftArm.reset_arm()
 
