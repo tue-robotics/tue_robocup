@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_final_rgo_2014')
+import roslib; roslib.load_manifest('challenge_open')
 import rospy, sys
 
 import smach
@@ -171,7 +171,7 @@ class AskChallengeObject(smach.State):
 
 #######################################################################################################################################################################################################
 
-class FinalRgo2014(smach.StateMachine):
+class OpenChallenge2014(smach.StateMachine):
 
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Failed'])
@@ -181,6 +181,10 @@ class FinalRgo2014(smach.StateMachine):
 
         object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "milk"),
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
+        placement_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "trash_bin"),
+                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+
         with self:
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
                                     states.WaitForTrigger(robot, ['start_challenge']),
@@ -297,7 +301,13 @@ class FinalRgo2014(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_UNDEFINED",
                                     states.Say(robot, ["I cannot get there, but I will try again."]),
-                                    transitions={"spoken":"SET_PARAMS"}) 
+                                    transitions={"spoken":"SET_PARAMS"})
+
+            smach.StateMachine.add( "DROP_OBJECT",
+                                     states.PlaceObjectWithoutBase(side, robot, placement_query),
+                                     transitions={'succeeded'   : 'TURN_AROUND',
+                                                  'failed'      : 'ARM_TO_DROPPOS',
+                                                  'target_lost' : 'ARM_TO_DROPPOS'})
 
             smach.StateMachine.add("ARM_TO_DROPPOS",
                                     states.ArmToJointPos(robot, side, [-0.100, 1.100, 1.100, 0.8, -0.700, 0.100, 0.000], timeout=6),
@@ -330,7 +340,7 @@ class FinalRgo2014(smach.StateMachine):
 
 
 if __name__ == "__main__":
-    rospy.init_node('final_challenge_rgo2014')
+    rospy.init_node('exec_challenge_open_2014')
 
     ''' If necessary: set initial state '''
     rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
@@ -344,6 +354,6 @@ if __name__ == "__main__":
         elif int(sys.argv[1]) == 4:
             initial_state = ["ASK_OBJECT"]
 
-        states.util.startup_final(FinalRgo2014, initial_state)            
+        states.util.startup_final(OpenChallenge2014, initial_state)            
     else:
-        states.util.startup(FinalRgo2014)            
+        states.util.startup(OpenChallenge2014)            
