@@ -1351,8 +1351,13 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
             RobotPose loc = it_del->second.second;
             if (moveBase(loc.x, loc.y, loc.phi, delivery_loc_tolerance) || moveBase(loc.x, loc.y, loc.phi, 2*delivery_loc_tolerance))
             {
-                std::string object = order_map_[it_id->second].second;
-                std::string sentence = "Here is your order!";
+				// default is left arm
+				std::string arm_side = "left";
+				if (it_del->second.first == "right") {
+					std::string arm_side = "right";
+				}                
+                std::string sentence = "Here is your order. Please take it from my " + arm_side + " arm!";
+                //std::string sentence = "Here is your order. Please take it from my " + it_del->second.first + " arm!";
                 amigoSpeak(sentence ,false); //to do add object;
             }
             else
