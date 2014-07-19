@@ -1054,6 +1054,10 @@ def setup_statemachine(robot):
         smach.StateMachine.add( 'SAY_OBJECT_NOT_GRASPED',
                                     states.Say(robot, ["I could not pick up the object you wanted", 
                                                        "I failed to grab the object you wanted."]),
+                                    transitions={   'spoken':'SAY_TAKE_OBJECT' }) 
+
+        smach.StateMachine.add( 'SAY_TAKE_OBJECT',
+                                    states.Say(robot, ["Please take the item you asked for from my hand"]),
                                     transitions={   'spoken':'HUMAN_HANDOVER' }) 
 
         smach.StateMachine.add( 'HUMAN_HANDOVER',
@@ -1130,7 +1134,7 @@ def setup_statemachine(robot):
                                                     "goal_not_defined":"SAY_ARRIVED_AT_PATIENT"})
 
         smach.StateMachine.add('SAY_ARRIVED_AT_PATIENT',
-                                    states.Say(robot, 'The patient is here, thanks for the assistance.',block=False),
+                                    states.Say(robot, 'The patient is here, thanks for the assistance. My task is done.',block=False),
                                     transitions={'spoken':'SAVE_PDF_ON_STICK_FINAL'})
 
         ######################################################
