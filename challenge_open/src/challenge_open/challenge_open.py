@@ -291,7 +291,7 @@ class OpenChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add("NAVIGATE_TO_TRASHBIN",
                                     states.NavigateWithConstraints(robot),
-                                    transitions={'arrived'          :   'ARM_TO_DROPPOS',
+                                    transitions={'arrived'          :   'DROP_OBJECT',
                                                  'unreachable'      :   'SAY_UNREACHABLE',
                                                  'goal_not_defined' :   'SAY_UNDEFINED'})        
 
