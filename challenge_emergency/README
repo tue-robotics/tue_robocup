@@ -26,7 +26,7 @@ amigo3:
     # Mount the usb stick (for example: /dev/sdc1)
     pmount /dev/sdb{???}1 usb-stick #This must *NOT* give errors, or the emergency_paper thingy will crash on startup
 
-    roslaunch challenge_emergency emergency_home_dependencies.launch #Must also *NOT* crash or segfault.
+    roslaunch challenge_emergency emergency_home_dependencies.launch #Must also *NOT* crash or segfault. There may be some params missing, no biggie.
 amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
     alsamixer
@@ -42,10 +42,11 @@ amigo3:
     rosrun challenge_emergency emergency.py
 
 SCENARIO:
-	Please see https://docs.google.com/viewer?a=v&pid=sites&srcid=cm9ib2N1cGF0aG9tZS5vcmd8cm9ib2N1cC1ob21lfGd4OjEzYWQ0MzQwYjdhYmQyODM page 48 & 49.
+	Please see the rulebook (https://docs.google.com/viewer?a=v&pid=sites&srcid=cm9ib2N1cGF0aG9tZS5vcmd8cm9ib2N1cC1ob21lfGd4OjEzYWQ0MzQwYjdhYmQyODM) page 48 & 49.
 	- A person may be wandering about in the designated room (hardcoded in the top of emergency.py)
 	- Between 30 and 60 seconads after the start, the person has an accident.
 	- After the accident, the person is sitting or lying on the ground or sitting in a chair.
+        - Amigo has the find the person and asks a few questions. One question is to bring something. The options are water, cellphone and first aid kit. 
 
 After the challenge ended, you can inspect the PDF by either getting the USB stick from amigo, or by running:
  amigo@athomeX $ scp amigo@amigo3:/media/usb-stick/emergency_paper.pdf . ; evince emergency_paper.pdf
