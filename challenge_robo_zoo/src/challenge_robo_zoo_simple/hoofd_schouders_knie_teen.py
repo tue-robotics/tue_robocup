@@ -111,10 +111,10 @@ def hoofdschoudersknieteen(robot):
         robot.leftArm.reset_arm() #Move left arm down, only use right arm to point at 'nose'
 
     try:
-        hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
-        hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
-        oren(speak=True); ogen(speak=True); puntje_van_je_neus(speak=True, turn=False)
-        #hoofd(speak=True); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
+        hoofd(speak=False); schouders(speak=False); knie(speak=False); teen(speak=False); knie(speak=False); teen(speak=False)
+        hoofd(speak=False); schouders(speak=False); knie(speak=False); teen(speak=False); knie(speak=False); teen(speak=False)
+        oren(speak=False); ogen(speak=False); puntje_van_je_neus(speak=False, turn=False)
+        #hoofd(speak=False); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
 
         robot.spindle.reset()
         robot.head.reset_position()
@@ -132,7 +132,7 @@ class HoofdSchouderKnieTeen(smach.State):
         abspath = os.path.abspath(__file__)
         dname = os.path.dirname(abspath)
         os.chdir(dname)
-        musicfile = "hoofd_schouders_knie_teen_2_extended.mp3"
+        musicfile = "Xuxa.mp3"
         self.musicfile = os.path.join(dname, musicfile)
 
     def execute(self, userdata=None):
