@@ -132,7 +132,7 @@ class HoofdSchouderKnieTeen(smach.State):
         abspath = os.path.abspath(__file__)
         dname = os.path.dirname(abspath)
         os.chdir(dname)
-        musicfile = "hoofd_schouders_knie_teen_2.mp3"
+        musicfile = "hoofd_schouders_knie_teen_2_extended.mp3"
         self.musicfile = os.path.join(dname, musicfile)
 
     def execute(self, userdata=None):
