@@ -70,7 +70,7 @@ def motionA(robot):
     robot.leftArm.reset_arm()
 
 def motionB(robot):
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     for i in range(1):
         robot.leftArm.send_joint_goal(-0.050, 0.500, 0.7150, 1.300, -0.15, 0.000, 0.000)
         robot.leftArm.send_joint_goal(-0.050, 0.500, 1.5300, 0.700, -0.15, 0.000, 0.000)
@@ -79,7 +79,9 @@ def motionB(robot):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
 
         #robot.rightArm.send_joint_goal(*gangnam_poseB_right_pre_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_start, timeout=1)
+        #Right is now in [             -0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000]
+        robot.rightArm.send_joint_goal(-0.050, 1.500, 0.000, 0.100, 0.250, 0.000, 0.000, timeout=1)
+        robot.rightArm.send_joint_goal(-0.050, 1.500, 0.000, 1.570, 0.250, 0.000, 0.000, timeout=1)
         
         robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 1.300, -0.15, 0.000, 0.000)
         
@@ -99,7 +101,6 @@ def gangnam_style(robot):
     motionA(robot)
 
     rospy.sleep(5)
-    #robot.rightArm.send_joint_goal(-0.050, 1.500, 0.000, 1.570, 0.150, 0.000, 0.000)
 
     motionB(robot)
         
