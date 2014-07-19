@@ -78,7 +78,7 @@ def motionB(robot):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
 
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_pre_start, timeout=1)
+        #robot.rightArm.send_joint_goal(*gangnam_poseB_right_pre_start, timeout=1)
         robot.rightArm.send_joint_goal(*gangnam_poseB_right_start, timeout=1)
         
         robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 1.300, -0.15, 0.000, 0.000)
