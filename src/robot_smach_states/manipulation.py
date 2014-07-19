@@ -821,7 +821,7 @@ class PlaceObjectWithoutBase(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('PREPARE_PLACEMENT', PrepareGraspSafe(self.side, self.robot, self.placement_query),
-                        transitions={'succeeded'    :   'PREPARE_ORIENTATION',
+                        transitions={'succeeded'    :   'PRE_POSITION',
                                      'failed'       :   'failed'})
             
             smach.StateMachine.add('PRE_POSITION', ArmToQueryPoint(self.robot, self.side, self.placement_query, time_out=20, pre_grasp=True, first_joint_pos_only=False),
