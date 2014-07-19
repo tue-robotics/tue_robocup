@@ -183,7 +183,8 @@ class OpenChallenge2014(smach.StateMachine):
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         placement_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "trash_bin"),
-                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
+                             Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Zreal")),
+                             Compound("is", "Z", Compound("+","Zreal","0.3")))
 
         with self:
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
