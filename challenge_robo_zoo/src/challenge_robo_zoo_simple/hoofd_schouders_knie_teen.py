@@ -136,7 +136,7 @@ class HoofdSchouderKnieTeen(smach.State):
         self.musicfile = os.path.join(dname, musicfile)
 
     def execute(self, userdata=None):
-        with music(self.musicfile, volume=30):
+        with music(self.musicfile, volume=100):
             hoofdschoudersknieteen(self.robot)
         return "Done"
 
