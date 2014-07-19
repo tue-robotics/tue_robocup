@@ -70,9 +70,11 @@ def motionA(robot):
     robot.leftArm.reset_arm()
 
 def motionB(robot):
+    import ipdb; ipdb.set_trace()
     for i in range(1):
-        robot.leftArm.send_joint_goal(-0.050, 0.200, 1.5300, 1.300, -0.15, 0.000, 0.000)
-        robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 1.300, -0.15, 0.000, 0.000)
+        robot.leftArm.send_joint_goal(-0.050, 0.500, 0.7150, 1.300, -0.15, 0.000, 0.000)
+        robot.leftArm.send_joint_goal(-0.050, 0.500, 1.5300, 1.300, -0.15, 0.000, 0.000)
+        robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 0.800, -0.15, 0.000, 0.000)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.rightArm.send_joint_trajectory(gangnam_motionB_right, timeout=10)
@@ -81,8 +83,7 @@ def gangnam_style(robot):
     stopEvent = threading.Event()
 
     up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
-    up_and_down_spindle.start()
-
+    #up_and_down_spindle.start() 
     motionA(robot)
 
     rospy.sleep(5)
@@ -107,8 +108,8 @@ class GangNamStyle(smach.State):
         self.musicfile = os.path.join(dname, musicfile)
 
     def execute(self, userdata=None):
-        with music(self.musicfile):
-            gangnam_style(self.robot)
+        #with music(self.musicfile):
+        gangnam_style(self.robot)
         return "Done"
 
 if __name__ == "__main__":
