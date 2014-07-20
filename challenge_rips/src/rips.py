@@ -105,7 +105,7 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                    states.StartChallengeRobust(robot, "initial_exit"), 
+                                    states.StartChallengeRobust(robot, "initial_exit", use_entry_points = True), 
                                     transitions={   "Done":"GO_TO_INTERMEDIATE_WAYPOINT", 
                                                     "Aborted":"GO_TO_INTERMEDIATE_WAYPOINT", 
                                                     "Failed":"GO_TO_INTERMEDIATE_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
