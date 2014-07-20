@@ -60,6 +60,26 @@ import robot_skills.util.msg_constructors as msgs
 #        
 #        return 'finished'
 
+#TODO after RWC2014: Move this to the robot_smach_states library
+class Ask_continue(smach.State):
+    def __init__(self, robot, timeout=60):
+        smach.State.__init__(self, outcomes=["done", "no_continue"])
+
+        self.robot = robot
+        self.timeout = timeout
+        self.ask_user_service_continue = rospy.ServiceProxy('interpreter/ask_user', AskUser)
+
+    def execute(self, userdata):
+        response = self.ask_user_service_continue("continue", 1 , rospy.Duration(self.timeout))
+        response_dict = dict(zip(response.keys, response.values)) #Turn the list of values and keys into a list of (key, value) tuples and convert that to a dictionary
+        if response_dict.has_key("answer") and response_dict["answer"] == "answer":
+            return "done"
+        else: 
+            return "no_continue"
+
+        rospy.loginfo("answer was not found in response of interpreter. Should not happen!!")
+        return "no_continue"
+
 
 def setup_statemachine(robot):
 
@@ -96,7 +116,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT', 
                                     states.NavigateGeneric(robot, goal_name="registration_table1"),
-                                    transitions={   'arrived':'GO_TO_EXIT', 
+                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
                                                     'preempted':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
                                                     'unreachable':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT'})
@@ -109,7 +129,7 @@ def setup_statemachine(robot):
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_SECOND_TRY', 
                                     states.NavigateGeneric(robot, goal_name="registration_table1", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'GO_TO_EXIT', 
+                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
                                                     'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY'})
@@ -117,7 +137,7 @@ def setup_statemachine(robot):
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                     states.NavigateGeneric(robot, goal_name="registration_table2", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'GO_TO_EXIT', 
+                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
                                                     'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY'})
@@ -125,10 +145,19 @@ def setup_statemachine(robot):
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                     states.NavigateGeneric(robot, goal_name="registration_table3", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'GO_TO_EXIT', 
-                                                    'preempted':'GO_TO_EXIT', 
-                                                    'unreachable':'GO_TO_EXIT', 
-                                                    'goal_not_defined':'GO_TO_EXIT'})
+                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
+                                                    'preempted':'SAY_AWAIT_CONTINUE', 
+                                                    'unreachable':'SAY_AWAIT_CONTINUE', 
+                                                    'goal_not_defined':'SAY_AWAIT_CONTINUE'})
+
+        smach.StateMachine.add( 'SAY_AWAIT_CONTINUE',
+                                states.Say(robot, ["I'll pause here until you say continue", "I'm waiting for you to say continue"]),
+                                transitions={'spoken':'ASK_CONTINUE_0'})
+
+        smach.StateMachine.add("ASK_CONTINUE_0",
+                        Ask_continue(robot),
+                        transitions={   'done':'GO_TO_EXIT',
+                                        'no_continue':'GO_TO_EXIT'})
 
         # Amigo will say that it arrives at the intermediate waypoint
         #smach.StateMachine.add('ARRIVED_AT_INTERMEDIATE_WAYPOINT',
