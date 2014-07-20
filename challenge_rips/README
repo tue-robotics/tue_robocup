@@ -25,6 +25,9 @@ amigo3:
         (lights should become green -> say 'continue')
         (if response is 'true', amigo heard you and lights become blue)
 
+    SWITCH OFF THE MICROPHONE with the switch on the back 
+        (Audio works, but we want to test the challenge for the case the speech doesn't work and the backup scenario.)
+
     say test  
         (to test speaker is working) 
 
@@ -33,10 +36,20 @@ amigo3:
     or 
 
     rosrun challenge_rips rips.py _arm:=right   !!! WATCH CAREFULLY DURING RIGHT ARM MOVEMENTS AT INTRODUCTION, need to be checked !!!
-    
-    
-    
- if tue_pocket_sphinx crashes
+
+    hear continue #Don't pree enter just yet
+
+if tue_pocket_sphinx crashes
     then launch on amigo3
 
 	roslaunch amigo_launch_files speech_recognition.launch
+
+Unplug the network cable in amigo.
+localhost:
+    sshamigo3 #Thsi will not work because amigo is unplugged
+
+During the challenge: 
+    - Amigo drives to some position and then says it will wait for 'continue' to be said. The mic is off, so we will show the backup scenario.
+    - Plug the network cable back in
+    - The sshamigo3 will connect
+    - type 'hear continue' in the sshamigo3 console.
