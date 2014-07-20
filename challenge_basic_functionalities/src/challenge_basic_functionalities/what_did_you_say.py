@@ -337,7 +337,7 @@ class WhatDidYouSay(smach.StateMachine):
                                                  'failed':'SAY_FIRST_QUESTION'})
 
             smach.StateMachine.add("PEOPLE_DETECTION",
-                                    states.StandingPeopleDetectorWithFace(robot, check_all_persons=False, time=4, room='living_room'),
+                                    states.StandingPeopleDetectorWithFace(robot, check_all_persons=False, time=4, room='bedroom'),
                                     transitions={   'succeeded':'SAY_FIRST_QUESTION',
                                                     'no_person_found':'DRIVE_TO_FIND_PERSON_LOC',
                                                     'failed':'NAVIGATE_TO_LOC_QUESTIONS_UNREACHABLE'})
