@@ -15,6 +15,7 @@
   <depend package="run_speech_files"/>
   <depend package="table_detector_2d"/>
   <depend package="wire_fitter"/>
+  <depend package="ed"/>
 
 </package>
 
