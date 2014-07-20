@@ -144,7 +144,7 @@ class AskChallengeObject(smach.State):
         self.robot.head.look_up()
         
         try:
-            self.response = self.ask_user_service("final_challenge", 4 , rospy.Duration(18))  #4 tries and within 18 seconds an answer is received. 
+            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  #4 tries and within 18 seconds an answer is received. 
 
             #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
             response_dict = dict(zip(self.response.keys, self.response.values)) 
