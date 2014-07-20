@@ -38,6 +38,11 @@ class NavigateToUnknownBlob(smach.State):
         query = SimpleQueryRequest()
 
         unknown_ids = self.ed(query).ids
+        rospy.loginfo("The {1} unknown IDs are: {0}".format(unknown_ids, len(unknown_ids)))
+        rospy.loginfo("The {1} visited IDs are: {0}".format(self.visited_ids, len(self.visited_ids)))
+
+        unknown_ids = list(set(unknown_ids) - set(self.visited_ids))
+        rospy.loginfo("The {1} REMAINING unknown IDs are: {0}".format(unknown_ids, len(unknown_ids)))
 
         # import ipdb; ipdb.set_trace()
         # #DEBUG (also run rosrun tf static_transform_publisher 5 0 0 0 0 0 /map /unknown_1 100)
@@ -46,6 +51,7 @@ class NavigateToUnknownBlob(smach.State):
 
         if unknown_ids:
             selected_id = unknown_ids[0]
+            rospy.loginfo("Selected ID: {0}".format(selected_id))
 
             self.visited_ids += [selected_id]
 
@@ -89,24 +95,17 @@ class ExploreStep(smach.State):
         #Go look at our current position from 2 meters. This involves find poses around our current position and selecting a 'best' from it. 
         #This means moving, so in effect some sort of exploration
         #import ipdb; ipdb.set_trace()
-        nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) 
+        nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) #TODO xy_dist_to_goal_tuple is not incorporated in this mode, only when its a query
         return nav.execute()
 
-class FinalChallenge2014(smach.StateMachine):
-
+class FindUnknownObject(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
         self.robot = robot
 
-        self.turn_angle = 45
+        self.turn_angle = 60
 
         with self:
-            smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'FIND_UNKNOWN',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
-                                                'abort':'Aborted'})
-
-
             find_unknown_iterator = smach.Iterator(outcomes=['found', 'not_found'],
                                                    input_keys=[],
                                                    output_keys=[],
@@ -134,39 +133,36 @@ class FinalChallenge2014(smach.StateMachine):
             
             smach.StateMachine.add('FIND_UNKNOWN', 
                                    find_unknown_iterator, 
-                                   transitions={'found':'EXPLORE', 
+                                   transitions={'found':'Done', 
                                                 'not_found':'EXPLORE'})
 
             smach.StateMachine.add('EXPLORE', 
                                     ExploreStep(robot, distance=3),
-                                    transitions={       'arrived':'FIND_UNKNOWN', 
+                                    transitions={       'arrived':'Done', 
                                                         'preempted':'Aborted', 
-                                                        'unreachable':'FIND_UNKNOWN', 
+                                                        'unreachable':'Failed', 
                                                         'goal_not_defined':'Aborted'})
 
-            smach.StateMachine.add('DRIVE_TO_WAYPOINT_2',
-                                    states.NavigateGeneric(robot, goal_name="final_waypoint_2"),
-                                    transitions={   'arrived':'WAIT_2', 
-                                                    'preempted':'Failed', 
-                                                    'unreachable':'Failed', 
-                                                    'goal_not_defined':'Failed'})
+class FinalChallenge2014(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
+        self.robot = robot
 
-            smach.StateMachine.add('WAIT_2', 
-                                    states.Wait_time(robot, 3),
-                                    transitions={   'waited':'DRIVE_TO_WAYPOINT_3', 
-                                                    'preempted':'Aborted'})
+        with self:
+            smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized':'GOTO_UNKNOWN',
+                                                'abort':'Aborted'})
 
-            smach.StateMachine.add('DRIVE_TO_WAYPOINT_3', 
-                                    states.NavigateGeneric(robot, goal_name="final_waypoint_3"),
-                                    transitions={   'arrived':'WAIT_3', 
-                                                    'preempted':'Failed', 
-                                                    'unreachable':'Failed', 
-                                                    'goal_not_defined':'Failed'})
+            smach.StateMachine.add('GOTO_UNKNOWN',
+                                FindUnknownObject(robot),
+                                transitions={   'Done':'SAY_FOUND_UNKNOWN', 
+                                                'Failed':'SAY_FOUND_UNKNOWN', 
+                                                "Aborted":'SAY_FOUND_UNKNOWN'})
 
-            smach.StateMachine.add('WAIT_3', 
-                                    states.Wait_time(robot, 3),
-                                    transitions={   'waited':'Done', 
-                                                    'preempted':'Aborted'})
+            smach.StateMachine.add( "SAY_FOUND_UNKNOWN",
+                                states.Say(robot,"I found something I don't know."),
+                                transitions={    "spoken":"GOTO_UNKNOWN"})
 
 
 if __name__ == "__main__":
