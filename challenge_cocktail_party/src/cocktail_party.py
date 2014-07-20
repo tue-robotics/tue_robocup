@@ -29,7 +29,7 @@ from pein_srvs.srv import SetObjects
 
 
 MIN_SIMULTANEOUS_ORDERS = 3   # Amigo won't fetch the drinks until he has this amount of requests
-MAX_SIMULTANEOUS_ORDERS = 3   # Amigo will fetch the drinks when he has reached this amount of requests
+MAX_SIMULTANEOUS_ORDERS = 3   # Amigo will imediatly fetch the drinks when he has reached this amount of requests
 TOTAL_ORDERS = 3              # The challenge will finish when Amigo has served this amount of requests
 
 
