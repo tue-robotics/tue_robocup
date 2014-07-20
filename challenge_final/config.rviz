@@ -6,12 +6,9 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Costmap2D1/Orientation1
-        - /path1/Namespaces1
-        - /goal_position1/Namespaces1
-        - /TF1/Frames1
-      Splitter Ratio: 0.649832
-    Tree Height: 585
+        - /PointClouds1/Namespaces1
+      Splitter Ratio: 0.5
+    Tree Height: 518
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -52,491 +49,646 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_kinect/openni_camera:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_kinect/openni_depth_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_kinect/openni_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_kinect/openni_rgb_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_kinect/openni_rgb_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_laser:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_plate:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        clavicles:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_extra_block2_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_extra_block2_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_extra_block_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_extra_block_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_link4_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        elbow_link4_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_phalanx_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_phalanx_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_tip_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_tip_phalanx_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_tip_phalanx_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger1_tip_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_phalanx_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_phalanx_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_tip_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_tip_phalanx_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_tip_phalanx_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        finger2_tip_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        fore_arm_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        fore_arm_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        fore_arm_top_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        fore_arm_top_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        grippoint_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        grippoint_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        hand_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        hand_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        head:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        head_mount:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        lasertop:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        logo:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        neck_pan:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        neck_tilt:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_link1_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_link1_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_link2_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_link2_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_mount_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_mount_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        top_kinect/openni_camera:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        top_kinect/openni_depth_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        top_kinect/openni_depth_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        top_kinect/openni_rgb_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        top_kinect/openni_rgb_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        torso:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_assist_slider_back:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_assist_slider_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_assist_slider_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_dummy:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_laser:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_lasertop:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        torso_slider:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        upper_arm_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        upper_arm_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        upper_arm_top_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        upper_arm_top_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_link6_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_link6_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_to_hand_block_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_to_hand_block_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_visual_left:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_visual_right:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-      Name: RobotModel
-      Robot Description: /amigo/robot_description
-      TF Prefix: amigo
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
-    - Alpha: 0.7
-      Class: rviz/Map
-      Draw Behind: false
-      Enabled: true
-      Name: Costmap2D
-      Topic: /base_navigation/costmap/costmap
-      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /occupied_cells_vis_array
-      Name: Octomap
+      Marker Topic: /world_model
+      Name: WorldModel
       Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: false
-      Marker Topic: /free_cells_vis_array
-      Name: Octomap Free
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /wire_volume_viz/markers
-      Name: World Model
-      Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /base_navigation/visualization/markers/global_plan_marker
-      Name: path
-      Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /base_navigation/visualization/markers/goal_positions_marker
-      Name: goal_position
-      Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /base_navigation/visualization/markers/goal_pose_marker
-      Name: end_goal_pose
-      Namespaces:
-        "": true
+        name_and_type: true
+        ns: true
+        pose: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
-      Enabled: false
-      Frame Timeout: 15
+      Enabled: true
+      Frame Timeout: 1
       Frames:
-        All Enabled: false
+        /03468fba796b22d8637c755ae41fcbcd:
+          Value: true
+        /03cbf7604b5924a28d5a7e0578e643a4:
+          Value: true
+        /04af6200c115d6277000f22fc13a5db5:
+          Value: true
+        /04d993f54fccc871666b65f1174376a8:
+          Value: true
+        /0546a77d659995a1f01f1301099860f7:
+          Value: true
+        /05c241ea26423e5932180bfea68fb01b:
+          Value: true
+        /0c4ad9f41c052439dd50e33fd21dfdc0:
+          Value: true
+        /0dc7fa02d2d29e72e888ac257b8a56b6:
+          Value: true
+        /0e5c28c793288af472176ba9602b22d3:
+          Value: true
+        /0fbe8729f0f48569be16ca9f7e567e98:
+          Value: true
+        /10dc1a671465d8de63a89747641526c3:
+          Value: true
+        /13f4bcc4fec78bb0dd7382df3fa52894:
+          Value: true
+        /20fdaa917b980b62353e845d6b24d7d0:
+          Value: true
+        /21fe8e2d4acd75ad6b3a12878cb2ceee:
+          Value: true
+        /2464ca8e171aa008b4da1d89f210af3d:
+          Value: true
+        /27a0c90238ee6e7b8ed4315c97e9d8bf:
+          Value: true
+        /2a73184426e292f5ea44ecfe729808d3:
+          Value: true
+        /37d22e50022a1adf367d2a295b3b1f14:
+          Value: true
+        /3868d8b408e658611687ad832d46e892:
+          Value: true
+        /42bf6a101c3e28b8d80659fcb1af2fa6:
+          Value: true
+        /43c216103a2a034ccbbf537bfb2b0ee4:
+          Value: true
+        /453a7ad7a2f7afe69cd23f703152d361:
+          Value: true
+        /487f62720f47d8f6b9e79715c3a5ebe3:
+          Value: true
+        /48df97eada8ce727d379397bf8ac5249:
+          Value: true
+        /49842157e5e31e55eee773c131d2f034:
+          Value: true
+        /54b54e9bcaa0d5546e1f3332995d979e:
+          Value: true
+        /5a5872f268af75d3be22e3c7e4568e8d:
+          Value: true
+        /700370036bc8fb411b839dd428fd402b:
+          Value: true
+        /746037804635c525e492706856bd0fe8:
+          Value: true
+        /751ff0346d1f43a4719c9513f6534f2b:
+          Value: true
+        /7a084606a7b7f866c0f673de8f3a50ec:
+          Value: true
+        /7a3b04af13afdbfc2945e44d45fa738e:
+          Value: true
+        /7f79dd9efc91760ac87e3a885c37b5c2:
+          Value: true
+        /831ec4276b5b6ca611f083428c9847ec:
+          Value: true
+        /84c6a0c967de49171e6b15dbee09ed47:
+          Value: true
+        /859dae828dc38f47609ab2950f45a532:
+          Value: true
+        /85f84454f82887a74338c6965c20a472:
+          Value: true
+        /885946aa40db7db8ceacac041d0706b8:
+          Value: true
+        /8ce3774e2e62ac5d29bad183ca8a26ba:
+          Value: true
+        /8d4b554a7a5aba20f6b14b9e9d6e5a1d:
+          Value: true
+        /90b6aabc6c18042e27f1a2074154e258:
+          Value: true
+        /90f07de87bd8a07c276bddf5dd32e117:
+          Value: true
+        /911730d6aab7c42724f60aebc4667040:
+          Value: true
+        /94acbcb19143a6b4f3cb6013c789652f:
+          Value: true
+        /96357610b5285c87915d49620fbb17fa:
+          Value: true
+        /983176dd09d51f3e11fa96637fee50de:
+          Value: true
+        /9840761d932deb6acc066eec78e76d70:
+          Value: true
+        /9afbc7fcb6b914fb15661e59a4bbbc04:
+          Value: true
+        /a30ffa113afa50a2eadd2920d72ecbc6:
+          Value: true
+        /a33056da3ba1030c1f04cb84da9b8c83:
+          Value: true
+        /a7bec02b9542cf902d9e3249e699a1b4:
+          Value: true
+        /ab10725597ca8baf125119475460eec9:
+          Value: true
+        /acc597739b64228155db5fe277cddec7:
+          Value: true
+        /adf5b874647e3c69cf472ec2e1886ca1:
+          Value: true
+        /ae62520ed1593d0faeffbd3eb5f370b2:
+          Value: true
+        /amigo/back_laser:
+          Value: true
+        /amigo/back_lasertop:
+          Value: true
+        /amigo/base:
+          Value: true
+        /amigo/base_kinect/openni_camera:
+          Value: true
+        /amigo/base_kinect/openni_depth_frame:
+          Value: true
+        /amigo/base_kinect/openni_depth_optical_frame:
+          Value: true
+        /amigo/base_kinect/openni_rgb_frame:
+          Value: true
+        /amigo/base_kinect/openni_rgb_optical_frame:
+          Value: true
+        /amigo/base_laser:
+          Value: true
+        /amigo/base_link:
+          Value: true
+        /amigo/base_plate:
+          Value: true
+        /amigo/clavicles:
+          Value: true
+        /amigo/elbow_extra_block2_left:
+          Value: true
+        /amigo/elbow_extra_block2_right:
+          Value: true
+        /amigo/elbow_extra_block_left:
+          Value: true
+        /amigo/elbow_extra_block_right:
+          Value: true
+        /amigo/elbow_link4_left:
+          Value: true
+        /amigo/elbow_link4_right:
+          Value: true
+        /amigo/finger1_left:
+          Value: true
+        /amigo/finger1_phalanx_left:
+          Value: true
+        /amigo/finger1_phalanx_right:
+          Value: true
+        /amigo/finger1_right:
+          Value: true
+        /amigo/finger1_tip_left:
+          Value: true
+        /amigo/finger1_tip_phalanx_left:
+          Value: true
+        /amigo/finger1_tip_phalanx_right:
+          Value: true
+        /amigo/finger1_tip_right:
+          Value: true
+        /amigo/finger2_left:
+          Value: true
+        /amigo/finger2_phalanx_left:
+          Value: true
+        /amigo/finger2_phalanx_right:
+          Value: true
+        /amigo/finger2_right:
+          Value: true
+        /amigo/finger2_tip_left:
+          Value: true
+        /amigo/finger2_tip_phalanx_left:
+          Value: true
+        /amigo/finger2_tip_phalanx_right:
+          Value: true
+        /amigo/finger2_tip_right:
+          Value: true
+        /amigo/fore_arm_left:
+          Value: true
+        /amigo/fore_arm_right:
+          Value: true
+        /amigo/fore_arm_top_left:
+          Value: true
+        /amigo/fore_arm_top_right:
+          Value: true
+        /amigo/grippoint_left:
+          Value: true
+        /amigo/grippoint_right:
+          Value: true
+        /amigo/hand_left:
+          Value: true
+        /amigo/hand_right:
+          Value: true
+        /amigo/head:
+          Value: true
+        /amigo/head_mount:
+          Value: true
+        /amigo/lasertop:
+          Value: true
+        /amigo/logo:
+          Value: true
+        /amigo/neck_pan:
+          Value: true
+        /amigo/neck_tilt:
+          Value: true
+        /amigo/odom:
+          Value: true
+        /amigo/shoulder_link1_left:
+          Value: true
+        /amigo/shoulder_link1_right:
+          Value: true
+        /amigo/shoulder_link2_left:
+          Value: true
+        /amigo/shoulder_link2_right:
+          Value: true
+        /amigo/shoulder_mount_left:
+          Value: true
+        /amigo/shoulder_mount_right:
+          Value: true
+        /amigo/top_kinect/openni_camera:
+          Value: true
+        /amigo/top_kinect/openni_depth_frame:
+          Value: true
+        /amigo/top_kinect/openni_depth_optical_frame:
+          Value: true
+        /amigo/top_kinect/openni_rgb_frame:
+          Value: true
+        /amigo/top_kinect/openni_rgb_optical_frame:
+          Value: true
+        /amigo/torso:
+          Value: true
+        /amigo/torso_assist_slider_back:
+          Value: true
+        /amigo/torso_assist_slider_left:
+          Value: true
+        /amigo/torso_assist_slider_right:
+          Value: true
+        /amigo/torso_dummy:
+          Value: true
+        /amigo/torso_laser:
+          Value: true
+        /amigo/torso_lasertop:
+          Value: true
+        /amigo/torso_slider:
+          Value: true
+        /amigo/upper_arm_left:
+          Value: true
+        /amigo/upper_arm_right:
+          Value: true
+        /amigo/upper_arm_top_left:
+          Value: true
+        /amigo/upper_arm_top_right:
+          Value: true
+        /amigo/wrist_link6_left:
+          Value: true
+        /amigo/wrist_link6_right:
+          Value: true
+        /amigo/wrist_to_hand_block_left:
+          Value: true
+        /amigo/wrist_to_hand_block_right:
+          Value: true
+        /amigo/wrist_visual_left:
+          Value: true
+        /amigo/wrist_visual_right:
+          Value: true
+        /b5ac4d4d6871ab3f51b6534db31fe339:
+          Value: true
+        /b714b0af06bde3f59610c01d751fcc78:
+          Value: true
+        /b88754b528db49b1635e53e938f618ac:
+          Value: true
+        /b9d5148affe21746c1121058815602db:
+          Value: true
+        /ba8245f0661f6e73713f98498d2dd458:
+          Value: true
+        /bab279e4469d972af36458b599423daf:
+          Value: true
+        /bb62372e6c6399279978c335dc65ced8:
+          Value: true
+        /be505560c17cad37e3d66b4fa8af88c4:
+          Value: true
+        /c0913808425a3058543b2ef7ae475742:
+          Value: true
+        /cb0df98f8719e50b72d8231b47159f05:
+          Value: true
+        /cde3c320506af486cc3d04a33a685201:
+          Value: true
+        /d4d41724f07c6e7be1381c0e08055812:
+          Value: true
+        /d6a25ba1299d7a1fcd0be8b4e451049e:
+          Value: true
+        /d9380e4cfa3d9051ec8c49209f2cae17:
+          Value: true
+        /db9a1223cd7b3979eaec61e6f198a8e7:
+          Value: true
+        /e243552268ca5d90b907635194414032:
+          Value: true
+        /e2f5915477dc453d79ab20e309e10dce:
+          Value: true
+        /e467b90a9ff256c15d72711ff6675ff4:
+          Value: true
+        /e78fb2f6800afa8cd2fd060e3bb9a808:
+          Value: true
+        /ecaf14e388254127a6d9b17f779fa2e8:
+          Value: true
+        /f0370f28884ab1315aec037e78e44a13:
+          Value: true
+        /f1237cebdb7583d5181c5116f1ef8a87:
+          Value: true
+        /f2ed64202feb24c07a500111fd887d67:
+          Value: true
+        /f482a269c3e0a55c4eeb6402f2abcd8c:
+          Value: true
+        /f5dc43ef4c1c51ba54fb6da45cecd72c:
+          Value: true
+        /f871d645f6b38db338cea3e1a814bfcb:
+          Value: true
+        /fb946f1053254a89c15599d868910eff:
+          Value: true
+        /fec7df51a1e2790e438561dfe81a6086:
+          Value: true
+        /map:
+          Value: true
+        All Enabled: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        /map:
+          /03468fba796b22d8637c755ae41fcbcd:
+            {}
+          /03cbf7604b5924a28d5a7e0578e643a4:
+            {}
+          /04af6200c115d6277000f22fc13a5db5:
+            {}
+          /04d993f54fccc871666b65f1174376a8:
+            {}
+          /0546a77d659995a1f01f1301099860f7:
+            {}
+          /05c241ea26423e5932180bfea68fb01b:
+            {}
+          /0c4ad9f41c052439dd50e33fd21dfdc0:
+            {}
+          /0dc7fa02d2d29e72e888ac257b8a56b6:
+            {}
+          /0e5c28c793288af472176ba9602b22d3:
+            {}
+          /0fbe8729f0f48569be16ca9f7e567e98:
+            {}
+          /10dc1a671465d8de63a89747641526c3:
+            {}
+          /13f4bcc4fec78bb0dd7382df3fa52894:
+            {}
+          /20fdaa917b980b62353e845d6b24d7d0:
+            {}
+          /21fe8e2d4acd75ad6b3a12878cb2ceee:
+            {}
+          /2464ca8e171aa008b4da1d89f210af3d:
+            {}
+          /27a0c90238ee6e7b8ed4315c97e9d8bf:
+            {}
+          /2a73184426e292f5ea44ecfe729808d3:
+            {}
+          /37d22e50022a1adf367d2a295b3b1f14:
+            {}
+          /3868d8b408e658611687ad832d46e892:
+            {}
+          /42bf6a101c3e28b8d80659fcb1af2fa6:
+            {}
+          /43c216103a2a034ccbbf537bfb2b0ee4:
+            {}
+          /453a7ad7a2f7afe69cd23f703152d361:
+            {}
+          /487f62720f47d8f6b9e79715c3a5ebe3:
+            {}
+          /48df97eada8ce727d379397bf8ac5249:
+            {}
+          /49842157e5e31e55eee773c131d2f034:
+            {}
+          /54b54e9bcaa0d5546e1f3332995d979e:
+            {}
+          /5a5872f268af75d3be22e3c7e4568e8d:
+            {}
+          /700370036bc8fb411b839dd428fd402b:
+            {}
+          /746037804635c525e492706856bd0fe8:
+            {}
+          /751ff0346d1f43a4719c9513f6534f2b:
+            {}
+          /7a084606a7b7f866c0f673de8f3a50ec:
+            {}
+          /7a3b04af13afdbfc2945e44d45fa738e:
+            {}
+          /7f79dd9efc91760ac87e3a885c37b5c2:
+            {}
+          /831ec4276b5b6ca611f083428c9847ec:
+            {}
+          /84c6a0c967de49171e6b15dbee09ed47:
+            {}
+          /859dae828dc38f47609ab2950f45a532:
+            {}
+          /85f84454f82887a74338c6965c20a472:
+            {}
+          /885946aa40db7db8ceacac041d0706b8:
+            {}
+          /8ce3774e2e62ac5d29bad183ca8a26ba:
+            {}
+          /8d4b554a7a5aba20f6b14b9e9d6e5a1d:
+            {}
+          /90b6aabc6c18042e27f1a2074154e258:
+            {}
+          /90f07de87bd8a07c276bddf5dd32e117:
+            {}
+          /911730d6aab7c42724f60aebc4667040:
+            {}
+          /94acbcb19143a6b4f3cb6013c789652f:
+            {}
+          /96357610b5285c87915d49620fbb17fa:
+            {}
+          /983176dd09d51f3e11fa96637fee50de:
+            {}
+          /9840761d932deb6acc066eec78e76d70:
+            {}
+          /9afbc7fcb6b914fb15661e59a4bbbc04:
+            {}
+          /a30ffa113afa50a2eadd2920d72ecbc6:
+            {}
+          /a33056da3ba1030c1f04cb84da9b8c83:
+            {}
+          /a7bec02b9542cf902d9e3249e699a1b4:
+            {}
+          /ab10725597ca8baf125119475460eec9:
+            {}
+          /acc597739b64228155db5fe277cddec7:
+            {}
+          /adf5b874647e3c69cf472ec2e1886ca1:
+            {}
+          /ae62520ed1593d0faeffbd3eb5f370b2:
+            {}
+          /amigo/odom:
+            /amigo/base_link:
+              /amigo/base:
+                /amigo/back_laser:
+                  /amigo/back_lasertop:
+                    {}
+                /amigo/base_kinect/openni_camera:
+                  /amigo/base_kinect/openni_depth_frame:
+                    /amigo/base_kinect/openni_depth_optical_frame:
+                      {}
+                  /amigo/base_kinect/openni_rgb_frame:
+                    /amigo/base_kinect/openni_rgb_optical_frame:
+                      {}
+                /amigo/base_laser:
+                  /amigo/lasertop:
+                    {}
+                  /amigo/logo:
+                    {}
+                /amigo/torso_slider:
+                  /amigo/torso:
+                    /amigo/clavicles:
+                      {}
+                    /amigo/head_mount:
+                      /amigo/neck_pan:
+                        /amigo/neck_tilt:
+                          /amigo/head:
+                            /amigo/top_kinect/openni_camera:
+                              /amigo/top_kinect/openni_depth_frame:
+                                /amigo/top_kinect/openni_depth_optical_frame:
+                                  {}
+                              /amigo/top_kinect/openni_rgb_frame:
+                                /amigo/top_kinect/openni_rgb_optical_frame:
+                                  {}
+                    /amigo/shoulder_mount_left:
+                      /amigo/shoulder_link1_left:
+                        /amigo/shoulder_link2_left:
+                          /amigo/upper_arm_left:
+                            /amigo/elbow_extra_block2_left:
+                              {}
+                            /amigo/elbow_extra_block_left:
+                              {}
+                            /amigo/elbow_link4_left:
+                              /amigo/fore_arm_left:
+                                /amigo/fore_arm_top_left:
+                                  {}
+                                /amigo/wrist_link6_left:
+                                  /amigo/hand_left:
+                                    /amigo/finger1_left:
+                                      /amigo/finger1_phalanx_left:
+                                        {}
+                                      /amigo/finger1_tip_left:
+                                        /amigo/finger1_tip_phalanx_left:
+                                          {}
+                                    /amigo/finger2_left:
+                                      /amigo/finger2_phalanx_left:
+                                        {}
+                                      /amigo/finger2_tip_left:
+                                        /amigo/finger2_tip_phalanx_left:
+                                          {}
+                                    /amigo/grippoint_left:
+                                      {}
+                                  /amigo/wrist_to_hand_block_left:
+                                    {}
+                                  /amigo/wrist_visual_left:
+                                    {}
+                            /amigo/upper_arm_top_left:
+                              {}
+                    /amigo/shoulder_mount_right:
+                      /amigo/shoulder_link1_right:
+                        /amigo/shoulder_link2_right:
+                          /amigo/upper_arm_right:
+                            /amigo/elbow_extra_block2_right:
+                              {}
+                            /amigo/elbow_extra_block_right:
+                              {}
+                            /amigo/elbow_link4_right:
+                              /amigo/fore_arm_right:
+                                /amigo/fore_arm_top_right:
+                                  {}
+                                /amigo/wrist_link6_right:
+                                  /amigo/hand_right:
+                                    /amigo/finger1_right:
+                                      /amigo/finger1_phalanx_right:
+                                        {}
+                                      /amigo/finger1_tip_right:
+                                        /amigo/finger1_tip_phalanx_right:
+                                          {}
+                                    /amigo/finger2_right:
+                                      /amigo/finger2_phalanx_right:
+                                        {}
+                                      /amigo/finger2_tip_right:
+                                        /amigo/finger2_tip_phalanx_right:
+                                          {}
+                                    /amigo/grippoint_right:
+                                      {}
+                                  /amigo/wrist_to_hand_block_right:
+                                    {}
+                                  /amigo/wrist_visual_right:
+                                    {}
+                            /amigo/upper_arm_top_right:
+                              {}
+                    /amigo/torso_assist_slider_back:
+                      {}
+                    /amigo/torso_assist_slider_left:
+                      {}
+                    /amigo/torso_assist_slider_right:
+                      {}
+                    /amigo/torso_dummy:
+                      /amigo/torso_laser:
+                        /amigo/torso_lasertop:
+                          {}
+              /amigo/base_plate:
+                {}
+          /b5ac4d4d6871ab3f51b6534db31fe339:
+            {}
+          /b714b0af06bde3f59610c01d751fcc78:
+            {}
+          /b88754b528db49b1635e53e938f618ac:
+            {}
+          /b9d5148affe21746c1121058815602db:
+            {}
+          /ba8245f0661f6e73713f98498d2dd458:
+            {}
+          /bab279e4469d972af36458b599423daf:
+            {}
+          /bb62372e6c6399279978c335dc65ced8:
+            {}
+          /be505560c17cad37e3d66b4fa8af88c4:
+            {}
+          /c0913808425a3058543b2ef7ae475742:
+            {}
+          /cb0df98f8719e50b72d8231b47159f05:
+            {}
+          /cde3c320506af486cc3d04a33a685201:
+            {}
+          /d4d41724f07c6e7be1381c0e08055812:
+            {}
+          /d6a25ba1299d7a1fcd0be8b4e451049e:
+            {}
+          /d9380e4cfa3d9051ec8c49209f2cae17:
+            {}
+          /db9a1223cd7b3979eaec61e6f198a8e7:
+            {}
+          /e243552268ca5d90b907635194414032:
+            {}
+          /e2f5915477dc453d79ab20e309e10dce:
+            {}
+          /e467b90a9ff256c15d72711ff6675ff4:
+            {}
+          /e78fb2f6800afa8cd2fd060e3bb9a808:
+            {}
+          /ecaf14e388254127a6d9b17f779fa2e8:
+            {}
+          /f0370f28884ab1315aec037e78e44a13:
+            {}
+          /f1237cebdb7583d5181c5116f1ef8a87:
+            {}
+          /f2ed64202feb24c07a500111fd887d67:
+            {}
+          /f482a269c3e0a55c4eeb6402f2abcd8c:
+            {}
+          /f5dc43ef4c1c51ba54fb6da45cecd72c:
+            {}
+          /f871d645f6b38db338cea3e1a814bfcb:
+            {}
+          /fb946f1053254a89c15599d868910eff:
+            {}
+          /fec7df51a1e2790e438561dfe81a6086:
+            {}
       Update Interval: 0
-      Value: false
-    - Class: rviz/Camera
-      Enabled: false
-      Image Rendering: background and overlay
-      Image Topic: /amigo/top_kinect/rgb/image_color
-      Name: Camera
-      Overlay Alpha: 0.5
-      Queue Size: 2
-      Transport Hint: raw
-      Value: false
-      Visibility:
-        Costmap2D: true
-        Grid: true
-        Octomap: true
-        Octomap Free: true
-        RobotModel: true
-        TF: true
-        Value: true
-        World Model: true
-        WorldModel Text: true
-        end_goal_pose: true
-        goal_position: true
-        path: true
-      Zoom Factor: 1
-    - Class: rviz/MarkerArray
+      Value: true
+    - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /wire_volume_viz/markers_text
-      Name: WorldModel Text
+      Marker Topic: /ed/point_normal/vis_markers
+      Name: PointClouds
       Namespaces:
-        "": true
+        residual_npcl: true
+        sensor_npcl: true
+        world_model_npcl: true
       Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
-    Background Color: 68; 68; 68
+    Background Color: 48; 48; 48
     Fixed Frame: /map
   Name: root
   Tools:
@@ -547,7 +699,7 @@ Visualization Manager:
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
     - Class: rviz/SetInitialPose
-      Topic: /amigo/initialpose
+      Topic: /initialpose
     - Class: rviz/SetGoal
       Topic: /move_base_simple/goal
     - Class: rviz/PublishPoint
@@ -557,27 +709,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.4975
+      Distance: 2.71146
       Focal Point:
-        X: 2.00992
-        Y: 4.35437
-        Z: -2.15054
+        X: 4.76071
+        Y: 4.10467
+        Z: 1.78755
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.784797
+      Pitch: 0.674798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.24998
+      Yaw: 2.43027
     Saved: ~
 Window Geometry:
-  Camera:
-    collapsed: false
   Displays:
     collapsed: false
-  Height: 823
+  Height: 824
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001f2000002d8fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df000002f2000000a2fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000000c00430061006d0065007200610000000041000000d00000001600fffffffb000000100044006900730070006c0061007900730000000041000002d8000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610200000009000002dc000001fb000001a5000000010000010f00000405fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000004100000405000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005e70000003efc0100000002fb0000000800540069006d00650000000000000005e7000002f600fffffffb0000000800540069006d006501000000000000045000000000000000000000063e000002d800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000013c00000295fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004100000295000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000295fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000004100000295000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000006400000003efc0100000002fb0000000800540069006d0065010000000000000640000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000003e90000029500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -586,6 +736,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1598
+  Width: 1600
   X: 0
   Y: 24
