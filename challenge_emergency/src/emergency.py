@@ -22,14 +22,16 @@ from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
 room = 'living_room'
-manipulation_location = {'water' : 'nightstand',  #If no location is defined for an object here, the default is 'bar' 
+manipulation_location = {'water' : 'nightstand',  #If no location is defined for an object here, the default is $default_search_location
                          'firstaidkit' : 'bar', #TODO: What object is this? 
                          'cellphone' : 'nightstand'} #TODO: What object is this? 
+default_search_location = 'bar'
 
 # ToDo move to locations, region of interest for person xyz_min, xyz_max
-room_dimension = {'living_room' : [1.99, -1.13, 0.0, 6.37, 2.6, 1.2],
-                  'bedroom' : [4.37, -3.04, 0.0, 6.25, -1.36, 1.2],
-                  'kitchen' : [-0.44, 0.73, 0.0, 1.76, 2.67, 1.2]}
+room_dimension = {  "living_room": [3.788,  2.421, 0.0, 8.480, 9.202, 2.0],
+                    "bedroom":     [3.717, -0.519, 0.0, 8.562, 2.604, 2.0],
+                    "hallway":     [0.463, -0.544, 0.0, 3.788, 2.421, 2.0],
+                    "kitchen":     [0.447,  2.430, 0.0, 3.775, 9.192, 2.0]}
 
 
 ''' TO DO:
@@ -322,12 +324,12 @@ class LookForObject(smach.State):
 
         # Check if the object is defined in the manipulation locations (SEE TOP)
         if serving_drink not in manipulation_location:
-            storage_room = 'bar'
+            storage_room = default_search_location
 
         else:
             storage_room = manipulation_location[serving_drink]
             if not storage_room:
-                storage_room = 'bar' 
+                storage_room = default_search_location 
         
 
         rospy.loginfo('I am looking for a object {0}, at hardcoded location {1}'.format(serving_drink,storage_room))
