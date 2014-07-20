@@ -11,5 +11,5 @@
         <param name="max_ang" type="double" value="1.57" />
     </node>
 
-    <node pkg="tf" type="static_transform_publisher" name="external_laser_broadcaster" args="2.3 8.5 0.90 -1.57 0 0 /map /external/laser 100"/> 
+    <node pkg="tf" type="static_transform_publisher" name="external_laser_broadcaster" args="0.5 5.2 0.90 0 0 0 /map /external/laser 100"/> 
 </launch>
