@@ -61,7 +61,7 @@ class DeleteModels(smach.State):
 
 #########################################################################################
 
-# Uses the human_tracking to detect people while turning the head arround. Wave not implemented yet.
+# Uses the human_tracking to detect people while rotating the head. Wave not implemented yet.
 class DetectWavingPeople(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -401,6 +401,7 @@ class WaitForPerson(smach.State):
 
 #########################################################################################
 
+
 # Double-check if there is a face in front of the robot, using face_segmentation, and look at it
 class ConfirmPersonDetection(smach.State):
     def __init__(self, robot):
@@ -509,20 +510,20 @@ class LearnPersonName(smach.State):
         # if no answer was found / unsupported name
         if response_answer == 'no_answer' or response_answer == 'wrong_answer':
             if self.person_learn_failed == 0:
-                self.robot.speech.speak("I will call you David", block=False)
-                response_answer = "david"
+                self.robot.speech.speak("I will call you Richard", block=False)
+                response_answer = "richard"
             if self.person_learn_failed == 1:
-                self.robot.speech.speak("I will call you Michael", block=False)
-                response_answer = "michael"
+                self.robot.speech.speak("I will call you Jennifer", block=False)
+                response_answer = "jennifer"
             if self.person_learn_failed == 2:
-                self.robot.speech.speak("I will call you Elizabeth", block=False)
-                response_answer = "elizabeth"
+                self.robot.speech.speak("I will call you Charles", block=False)
+                response_answer = "charles"
             if self.person_learn_failed == 3:
-                self.robot.speech.speak("I will call you Joseph", block=False)
-                response_answer = "joseph"
+                self.robot.speech.speak("I will call you Kimberly", block=False)
+                response_answer = "kimberly"
             if self.person_learn_failed == 4:
-                self.robot.speech.speak("I will call you Samantha", block=False)
-                response_answer = "samantha"
+                self.robot.speech.speak("I will call you Luis", block=False)
+                response_answer = "luis"
 
             self.person_learn_failed += 1
         else:
@@ -564,20 +565,20 @@ class AskDrink(smach.State):
         # if the answer is not allwed just assume another possible drink
         if response_answer == 'no_answer' or  response_answer == 'wrong_answer':
             if self.drink_learn_failed == 2:
-                self.robot.speech.speak("I will just bring you a seven up")
-                response_answer = 'seven_up'
+                self.robot.speech.speak("I will just bring you a Orange Juice")
+                response_answer = 'orange_juice'
                 self.drink_learn_failed = 3
             elif self.drink_learn_failed == 1:
-                self.robot.speech.speak("I will just bring you a milk")
-                response_answer = "milk"
+                self.robot.speech.speak("I will just bring you a Energy Drink")
+                response_answer = "energy_drink"
                 self.drink_learn_failed = 2
             elif self.drink_learn_failed == 0:
-                self.robot.speech.speak("I will just bring you a coke")
-                response_answer = 'coke'
+                self.robot.speech.speak("I will just bring you a water")
+                response_answer = 'water'
                 self.drink_learn_failed = 1
             else:
-                self.robot.speech.speak("I will just bring you a coke")
-                response_answer = 'coke'
+                self.robot.speech.speak("I will just bring you a cola")
+                response_answer = 'cola'
 
         # get Amigo's current location and rotation
         amigoPose = self.robot.base.location
@@ -648,8 +649,6 @@ class NavToLookout(smach.State):
 
     def execute(self, userdata=None):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavToLookout\n")
-
-        # import ipdb; ipdb.set_trace()
 
         # get the waypoint of where to search, party_room_lookout
         lookoutPoints = self.robot.reasoner.query(self.lookoutPointsQ)
@@ -876,7 +875,7 @@ class NavToLastKnowLoc(smach.State):
 #########################################################################################
 
 
-# Check how many people have been successfully served
+# Check how many people have been successfully and determine if the challenge is compelte or not
 class ServedStatus(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
@@ -959,7 +958,7 @@ class CheckPendingOrders(smach.State):
             self.robot.reasoner.query(Compound('retractall', Compound('approached', 'X')))
             self.robot.reasoner.query(Compound('retractall', Compound('confirmed', 'X')))
             
-            self.robot.speech.speak("Please step aside so i can go and get the drinks.")
+            self.robot.speech.speak("Please step aside so I can go and get the drinks.")
             rospy.sleep(1.0)
             
             self.robot.reasoner.reset()
@@ -2450,6 +2449,7 @@ if __name__ == '__main__':
 
         machine.set_initial_state([initial_state])
 
+        # simulate requests
         amigo.reasoner.query(   Compound('assert', 
                                 Compound('goal',
                                 Compound('serve', 'david_milk', 'david', 'milk', Compound('pose_2d', '2.829', '2.030', '-1.514')))))
@@ -2458,22 +2458,14 @@ if __name__ == '__main__':
                                 Compound('goal',
                                 Compound('serve', 'william_coke', 'william', 'coke',  Compound('pose_2d', '2.829', '2.030', '-1.514')))))
 
-        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'milk', 'basket'))))
+        # simulate picked up drinks
+        # amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'milk', 'basket'))))
 
-        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'right_arm'))))
+        # amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'right_arm'))))
 
-        # not used anymore, delete when you are sure
+        # simulate last know locations of people
         # amigo.reasoner.query(   Compound('assert', 
         #                         Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Sequence('2.756', '0.857', '0.0'))))
-
-        # amigo.reasoner.query(   Compound('assert', 
-        #                         Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Sequence('4.832', '0.134', '0.0'))))
-
-        # amigo.reasoner.query(   Compound('assert', 
-        #                         Compound('waypoint', Compound('last_known_location', '2.756_0.857_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
-
-        # amigo.reasoner.query(   Compound('assert', 
-        #                         Compound('waypoint', Compound('last_known_location', '4.832_0.134_0.0'), Compound('pose_2d', '2.829', '2.030', '-1.514'))))
 
 
     introserver = smach_ros.IntrospectionServer('SM_TOP', machine, '/SM_ROOT_PRIMARY')
