@@ -13,6 +13,8 @@ Als geen unknown objecten in WM, stukje draaien en weer checken of er unknowns z
 import roslib; roslib.load_manifest('challenge_final')
 import rospy, sys
 
+from math import radians
+
 import smach
 
 from robot_skills.reasoner  import Conjunction, Compound, Sequence
@@ -40,17 +42,17 @@ class NavigateToUnknownBlob(smach.State):
 
         unknown_ids = self.ed(query).ids
 
-        import ipdb; ipdb.set_trace()
-        #DEBUG (also run rosrun tf static_transform_publisher 5 0 0 0 0 0 /map /unknown_1 100)
-        if not unknown_ids: unknown_ids = ["unknown_1"]
-        #END DEBUG
+        # import ipdb; ipdb.set_trace()
+        # #DEBUG (also run rosrun tf static_transform_publisher 5 0 0 0 0 0 /map /unknown_1 100)
+        # if not unknown_ids: unknown_ids = ["unknown_1"]
+        # #END DEBUG
 
         if unknown_ids:
             selected_id = unknown_ids[0]
 
             self.visited_ids += [selected_id]
 
-            point_in_unknown_blob_tf = msgs.PointStamped(0,0,1, frame_id="/"+selected_id)
+            point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/"+selected_id) #TF of object is in center of object
             map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
             map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
 
@@ -60,15 +62,18 @@ class NavigateToUnknownBlob(smach.State):
             return "goal_not_defined"
 
 class TurnDegrees(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, degrees, outcomes=["Done", "Aborted", "Failed"])
+    def __init__(self, robot, degrees, turnspeed=0.5):
+        smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
+        self.degrees = degrees
+        self.turnspeed = turnspeed
 
     def execute(self, userdata=None):
         b = self.robot.base
-        #b.force_drive(0.25, 0, 0, 3)
-        b.force_drive(0, 0, 0.5, 6.28) #turn yourself around, 0.5*2PI rads = 1 pi rads = 180 degrees
-        #b.force_drive(-0.25, 0, 0, 3)
+
+        angle_in_rads = radians(self.degrees)
+        duration = angle_in_rads / self.turnspeed
+        b.force_drive(0, 0, self.turnspeed, duration) #turn yourself around, 0.5*2PI rads = 1 pi rads = 180 degrees
         return "Done"
 
 class FinalChallenge2014(smach.StateMachine):
@@ -77,18 +82,44 @@ class FinalChallenge2014(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
         self.robot = robot
 
+        self.turn_angle = 45
+
         with self:
             smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'DRIVE_TO_UNKNOWN_1',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
+                                transitions={   'initialized':'FIND_UNKNOWN',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
                                                 'abort':'Aborted'})
 
-            smach.StateMachine.add('DRIVE_TO_UNKNOWN_1',
-                                    NavigateToUnknownBlob(robot),
-                                    transitions={   'arrived':'WAIT_1', 
-                                                    'preempted':'Failed', 
-                                                    'unreachable':'Failed', 
-                                                    'goal_not_defined':'Failed'})
+
+            find_unknown_iterator = smach.Iterator(outcomes=['found', 'not_found'],
+                                                   input_keys=[],
+                                                   output_keys=[],
+                                                   it=lambda: range(360/self.turn_angle), 
+                                                   it_label='confirmation_try', 
+                                                   exhausted_outcome='not_found')
+            
+            with find_unknown_iterator:
+                find_unknown = smach.StateMachine(outcomes=['found', 'not_found'])
+                with find_unknown:
+                    smach.StateMachine.add('DRIVE_TO_UNKNOWN_1',
+                                        NavigateToUnknownBlob(robot),
+                                        transitions={   'arrived':'found', 
+                                                        'preempted':'not_found', 
+                                                        'unreachable':'not_found', 
+                                                        'goal_not_defined':'TURN'})
+                    smach.StateMachine.add('TURN', 
+                                        TurnDegrees(robot, self.turn_angle),
+                                        transitions={'Done':'not_found'})
+
+                find_unknown_iterator.set_contained_state('FIND_UNKNOWN', 
+                                          find_unknown, 
+                                          loop_outcomes=['not_found'], 
+                                          break_outcomes=['found'])
+            
+            smach.StateMachine.add('FIND_UNKNOWN', 
+                                   find_unknown_iterator, 
+                                   transitions={'found':'WAIT_1', 
+                                                'not_found':'WAIT_1'})
 
             smach.StateMachine.add('WAIT_1', 
                                     states.Wait_time(robot, 3),
