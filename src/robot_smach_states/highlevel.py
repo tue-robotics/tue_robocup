@@ -39,7 +39,7 @@ class Check_object_found_before(smach.State):
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
-    def __init__(self, robot, initial_pose):
+    def __init__(self, robot, initial_pose, use_entry_points = False):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"]) 
         assert hasattr(robot, "base")
         assert hasattr(robot, "reasoner")
@@ -92,7 +92,7 @@ class StartChallengeRobust(smach.StateMachine):
 
             # Enter the arena with force drive as back-up
             smach.StateMachine.add('ENTER_ROOM',
-                                    EnterArena(robot),
+                                    EnterArena(robot, initial_pose, use_entry_points),
                                     transitions={   "done":"Done" })
             
 
@@ -100,30 +100,40 @@ class StartChallengeRobust(smach.StateMachine):
 class EnterArena(smach.StateMachine):
 
     class GotoEntryPoint(smach.State):
-        def __init__(self, robot):
+        def __init__(self, robot, initial_pose, use_entry_points = False):
             smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
             self.robot = robot
-            self.goto_query = Compound("waypoint", Compound("entry_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
+            self.initial_pose = initial_pose
+            self.use_entry_points = use_entry_points
 
         def execute(self, userdata=None):
-            # Move to the next waypoint in the storage room        
-            reachable_goal_answers = self.robot.reasoner.query(
-                                        Conjunction(
-                                            Compound("waypoint", Compound("entry_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
-                                            Compound("not", Compound("unreachable", Compound("entry_point", "Waypoint")))))
+
+            if not self.use_entry_points:
+                rospy.loginfo("No entry points are desired.")
+                return "no_goal"
+
+            if self.initial_pose == "initial":
+                rospy.loginfo("Initial pose is at the normal start. Entry points are used.")
+                # Move to the next waypoint in the storage room        
+                reachable_goal_answers = self.robot.reasoner.query(
+                                            Conjunction(
+                                                Compound("waypoint", Compound("entry_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
+                                                Compound("not", Compound("unreachable", Compound("entry_point", "Waypoint")))))
+            elif self.initial_pose == "initial_exit":
+                rospy.loginfo("Initial pose is at the exit. Entry points are used.")
+                # Move to the next waypoint in the storage room        
+                reachable_goal_answers = self.robot.reasoner.query(
+                                            Conjunction(
+                                                Compound("waypoint", Compound("entry_point_exit", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
+                                                Compound("not", Compound("unreachable", Compound("entry_point", "Waypoint")))))
+            else:
+                return "no_goal"
 
             if not reachable_goal_answers:
-                # check if there are any entry points (someone may have forgotten to specify them)            
-                all_goal_answers = self.robot.reasoner.query(self.goto_query)
-                if not all_goal_answers:
-                    #self.robot.speech.speak("No-one has specified entry_point locations. Please do so in the locations file!")
-                    rospy.loginfo("There are no entry points defined. Do so in the locations file!")
-                    return "all_unreachable"
-                else:
-                    #self.robot.speech.speak("There are a couple of entry points, but they are all unreachable. Sorry.")
-                    rospy.loginfo("Entry points are all unreachable.")
+                #self.robot.speech.speak("There are a couple of entry points, but they are all unreachable. Sorry.")
+                rospy.loginfo("Entry points are all unreachable.")
 
-                    return "all_unreachable"
+                return "all_unreachable"
 
             # for now, take the first goal found
             goal_answer = reachable_goal_answers[0]
@@ -160,7 +170,7 @@ class EnterArena(smach.StateMachine):
             self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
             return "done"
 
-    def __init__(self, robot):
+    def __init__(self, robot, initial_pose, use_entry_points = False):
         smach.StateMachine.__init__(self,outcomes=['done'])
         self.robot = robot
 
@@ -170,18 +180,18 @@ class EnterArena(smach.StateMachine):
                                     human_interaction.Say(robot, "I will start my task now", block=False),
                                     transitions={   "spoken":"FORCE_DRIVE_THROUGH_DOOR"}) 
 
-            smach.StateMachine.add('ENTER_ROOM',
-                                    self.GotoEntryPoint(robot),
-                                    transitions={   "found":"done", 
-                                                    "not_found":"ENTER_ROOM", 
-                                                    "no_goal":"FORCE_DRIVE_THROUGH_DOOR",
-                                                    "all_unreachable":"FORCE_DRIVE_THROUGH_DOOR"})
-
             smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
                                     self.ForceDrive(robot),
-                                    transitions={   "done":"done"})            
+                                    transitions={   "done":"GO_TO_ENTRY_POINT"})
 
+            smach.StateMachine.add('GO_TO_ENTRY_POINT',
+                                    self.GotoEntryPoint(robot, initial_pose, use_entry_points),
+                                    transitions={   "found":"done", 
+                                                    "not_found":"GO_TO_ENTRY_POINT", 
+                                                    "no_goal":"done",
+                                                    "all_unreachable":"done"})
 
+                        
 class GotoMeetingPoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
