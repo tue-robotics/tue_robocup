@@ -11,16 +11,13 @@ Als geen unknown objecten in WM, stukje draaien en weer checken of er unknowns z
 
 """
 import roslib; roslib.load_manifest('challenge_final')
-import rospy, sys
+import rospy
 
 from math import radians
 
 import smach
 
-from robot_skills.reasoner  import Conjunction, Compound, Sequence
-from wire_fitter.srv import *
 from ed.srv import SimpleQuery, SimpleQueryRequest
-from tf import TransformListener
 import robot_skills.util.msg_constructors as msgs
 
 import robot_smach_states as states
@@ -33,7 +30,7 @@ class NavigateToUnknownBlob(smach.State):
 
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
-        self.tf = TransformListener()
+        self.tf = robot.tf_listener
 
         self.visited_ids = []
 
@@ -56,7 +53,7 @@ class NavigateToUnknownBlob(smach.State):
             map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
             map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
 
-            nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(1.5, 0)) #Look from 1.5m distance to the unknown ubject
+            nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(1.0, 0)) #Look from X distance to the unknown ubject
             return nav.execute()
         else:
             return "goal_not_defined"
@@ -75,6 +72,25 @@ class TurnDegrees(smach.State):
         duration = angle_in_rads / self.turnspeed
         b.force_drive(0, 0, self.turnspeed, duration) #turn yourself around, 0.5*2PI rads = 1 pi rads = 180 degrees
         return "Done"
+
+class ExploreStep(smach.State):
+    """Drive to a random pose relatively close to the current position"""
+    def __init__(self, robot, distance=2):
+        smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined'])
+        self.robot = robot
+        self.distance = distance
+        self.tf = robot.tf_listener
+
+    def execute(self, userdata=None):
+        point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/amigo/base_link") #TF of object is in center of object
+        map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
+        map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
+
+        #Go look at our current position from 2 meters. This involves find poses around our current position and selecting a 'best' from it. 
+        #This means moving, so in effect some sort of exploration
+        #import ipdb; ipdb.set_trace()
+        nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) 
+        return nav.execute()
 
 class FinalChallenge2014(smach.StateMachine):
 
@@ -118,13 +134,15 @@ class FinalChallenge2014(smach.StateMachine):
             
             smach.StateMachine.add('FIND_UNKNOWN', 
                                    find_unknown_iterator, 
-                                   transitions={'found':'WAIT_1', 
-                                                'not_found':'WAIT_1'})
+                                   transitions={'found':'EXPLORE', 
+                                                'not_found':'EXPLORE'})
 
-            smach.StateMachine.add('WAIT_1', 
-                                    states.Wait_time(robot, 3),
-                                    transitions={   'waited':'DRIVE_TO_WAYPOINT_2', 
-                                                    'preempted':'Aborted'})
+            smach.StateMachine.add('EXPLORE', 
+                                    ExploreStep(robot, distance=3),
+                                    transitions={       'arrived':'FIND_UNKNOWN', 
+                                                        'preempted':'Aborted', 
+                                                        'unreachable':'FIND_UNKNOWN', 
+                                                        'goal_not_defined':'Aborted'})
 
             smach.StateMachine.add('DRIVE_TO_WAYPOINT_2',
                                     states.NavigateGeneric(robot, goal_name="final_waypoint_2"),
