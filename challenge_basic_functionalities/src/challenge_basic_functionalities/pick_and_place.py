@@ -73,7 +73,7 @@ class PickAndPlace(smach.StateMachine):
                                     Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
                                     Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
-        query_dropoff_loc_backup = Compound("dropoff_point", Compound("trash_bin","Loc"), Compound("point_3d", "X", "Y", "Z"))
+        query_dropoff_loc_backup = Compound("dropoff_point", Compound("waste_bin","Loc"), Compound("point_3d", "X", "Y", "Z"))
 
         with self:
             smach.StateMachine.add('INIT',
@@ -99,10 +99,10 @@ class PickAndPlace(smach.StateMachine):
                         dropoff = answers[0]["Disposal_type"]
                         return "I will bring this {0} to the {1}".format(_type, dropoff).replace("_", " ")
                     else:
-                        return "I will throw this in the trashbin"
+                        return "I will throw this in the wastebin"
                 except Exception, e:
                     rospy.logerr(e)
-                    return "I'll throw this in the trashbin. I don't know what I'm actually doing"
+                    return "I'll throw this in the wastebin. I don't know what I'm actually doing"
             smach.StateMachine.add('SAY_DROPOFF',
                                     Say_generated(robot, sentence_creator=generate_drop_object_sentence, block=False),
                                     transitions={ 'spoken':'CHECK_FOR_ANSWERS_DROPOFF' })
