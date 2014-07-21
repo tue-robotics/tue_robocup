@@ -16,6 +16,7 @@
   <depend package="table_detector_2d"/>
   <depend package="wire_fitter"/>
   <depend package="ed"/>
+  <depend package="tue_serialization"/>
 
 </package>
 
