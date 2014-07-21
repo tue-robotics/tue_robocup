@@ -101,6 +101,7 @@ class Wait_query_true(smach.State):
         while (rospy.Time.now()-starttime) < self.timeout:
             answers = self.robot.reasoner.query(self.query)
             if answers:
+                rospy.loginfo("answers to query: '{0}' = {1}".format(self.query, answers))
                 return 'query_true'
             else:
                 if self.preempt_requested():
