@@ -7,12 +7,15 @@ make sure amiddle is running
 
 connect a LRF and a kinect to an external laptop
 
-run the challenge with amigo-core
+run the challenge with *amigo-core*
 
-**amigo1:**
+Starting the challenge
+----------------------
+
+**external laptop:**
 
 - start the webserver for this challenge:
-    `roslaunch challenge_demo start_real.launch`
+    `roslaunch challenge_demo start.launch`
 
 - if the Hokuyo node gives an error:
     - read the error and try to fix it
@@ -26,3 +29,7 @@ run the challenge with amigo-core
 **amigo3:**
 
 - `rosrun rosrun challenge_demo external_trigger.py`
+
+The story
+---------
+TODO
