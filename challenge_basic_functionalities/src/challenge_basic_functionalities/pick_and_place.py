@@ -69,7 +69,7 @@ class PickAndPlace(smach.StateMachine):
 
         query_dropoff_loc = Conjunction(
                                     Compound("current_object", "Obj_to_Dispose"), #Of the current object
-                                    Compound("instance_of",    "Obj_to_Dispose",   "ObjectType"), #Gets its type
+                                    Compound("direct_subclass_of",    "Obj_to_Dispose",   "ObjectType"), #Gets its type
                                     Compound("storage_class",  "ObjectType",       "Disposal_type"), #Find AT what sort of thing it should be disposed, e.g. a trash_bin
                                     Compound("dropoff_point",  "Disposal_type", Compound("point_3d", "X", "Y", "Z")))
 
