@@ -167,7 +167,7 @@ class EnterArena(smach.StateMachine):
         def execute(self, userdata=None):            
             #self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)  # Amigo should not say that it uses force drive, looks stupid.
             rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
-            self.robot.base.force_drive(0.25, 0, 0, 6.0)    # x, y, z, time in seconds
+            self.robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
             return "done"
 
     def __init__(self, robot, initial_pose, use_entry_points = False):
