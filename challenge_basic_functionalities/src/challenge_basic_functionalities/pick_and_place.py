@@ -63,9 +63,9 @@ class PickAndPlace(smach.StateMachine):
         # query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
         #                                 Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
 
-        # query_current_object_class = Conjunction(
-        #                         Compound("current_object",      "Obj_to_Dispose"), #Of the current object
-        #                         Compound("instance_of",         "Obj_to_Dispose",   Compound("exact", "ObjectType")))
+        query_current_object_class = Conjunction(
+                                Compound("current_object",      "Obj_to_Dispose"), #Of the current object
+                                Compound("instance_of",         "Obj_to_Dispose",   "ObjectType"))
 
         query_dropoff_loc = Conjunction(
                                     Compound("current_object", "Obj_to_Dispose"), #Of the current object
@@ -105,10 +105,16 @@ class PickAndPlace(smach.StateMachine):
                     return "I'll throw this in the wastebin. I don't know what I'm actually doing"
             smach.StateMachine.add('SAY_DROPOFF',
                                     Say_generated(robot, sentence_creator=generate_drop_object_sentence, block=False),
-                                    transitions={ 'spoken':'CHECK_FOR_ANSWERS_DROPOFF' })
+                                    transitions={ 'spoken':'CHECK_FOR_ANSWERS_OBJECT_CLASS' })
+
+            smach.StateMachine.add( "CHECK_FOR_ANSWERS_OBJECT_CLASS",
+                                    Wait_query_true(robot, query_current_object_class, timeout=2),
+                                    transitions={   "query_true":"CHECK_FOR_ANSWERS_DROPOFF",
+                                                    "timed_out":"CHECK_FOR_ANSWERS_DROPOFF",
+                                                    "preempted":"CHECK_FOR_ANSWERS_DROPOFF"})
 
             smach.StateMachine.add( "CHECK_FOR_ANSWERS_DROPOFF",
-                                    Wait_query_true(robot, query_dropoff_loc, timeout=1),
+                                    Wait_query_true(robot, query_dropoff_loc, timeout=2),
                                     transitions={   "query_true":"DROPOFF_OBJECT",
                                                     "timed_out":"DROPOFF_OBJECT_TRASHBIN",
                                                     "preempted":"DROPOFF_OBJECT_TRASHBIN"})
