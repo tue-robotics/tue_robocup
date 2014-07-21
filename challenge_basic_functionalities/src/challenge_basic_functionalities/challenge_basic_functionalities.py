@@ -180,8 +180,6 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
             	                    transitions={	"Done":		"RESET_HEAD_FOR_WHAT_DID_YOU_SAY", 
             	                                    "Aborted":	"Aborted"})
 
-
-
             smach.StateMachine.add("RESET_HEAD_FOR_WHAT_DID_YOU_SAY",
                                     HeadLookUp(robot),
                                     transitions={'done':'SAY_ASK_CONTINUE2'})
@@ -233,11 +231,21 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add("SAY_GO_TO_EXIT", 
                                     Say(robot, [ "I will now go to the exit"]),
-                                    transitions={   'spoken':'GO_TO_EXIT_1'})
+                                    transitions={   'spoken':'GO_TO_FRONT_OF_EXIT'})
+
+            navigate_exit_3 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "c")),
+                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
+
+            smach.StateMachine.add('GO_TO_FRONT_OF_EXIT', 
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_3),
+                                    transitions={   'arrived':'GO_TO_EXIT_1', 
+                                                    'preempted':'GO_TO_EXIT_1', 
+                                                    'unreachable':'GO_TO_EXIT_1', 
+                                                    'goal_not_defined':'GO_TO_EXIT_1'})
 
             navigate_exit_1 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "a")),
                                             Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
-
+            
             smach.StateMachine.add('GO_TO_EXIT_1', 
                                     states.NavigateGeneric(robot, goal_query=navigate_exit_1),
                                     transitions={   'arrived':'AT_EXIT', 
@@ -254,9 +262,6 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                                     'preempted':'GO_TO_EXIT_3', 
                                                     'unreachable':'GO_TO_EXIT_3', 
                                                     'goal_not_defined':'GO_TO_EXIT_3'})
-
-            navigate_exit_3 = Conjunction(  Compound("=", "Waypoint", Compound("exit", "c")),
-                                            Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")))
 
             smach.StateMachine.add('GO_TO_EXIT_3', 
                                     states.NavigateGeneric(robot, goal_query=navigate_exit_3),
