@@ -26,6 +26,9 @@ amigo3:
     # Mount the usb stick (for example: /dev/sdc1)
     pmount /dev/sdb{???}1 usb-stick #This must *NOT* give errors, or the emergency_paper thingy will crash on startup
 
+    #Check whether the USB stick is properly mounted
+    ls /media/media/usb-stick #Should not give errors
+
     roslaunch challenge_emergency emergency_home_dependencies.launch #Must also *NOT* crash or segfault. There may be some params missing, no biggie.
 amigo3:
     (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
