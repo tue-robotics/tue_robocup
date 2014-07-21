@@ -35,14 +35,14 @@ class AskChallengeDestination(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.locations = ["bar","bar","table"] #Go to the bar twice! The bar will be moved, tracked and then we must go there again, to its new location
+        self.locations = ["chair","chair","table"] #Go to the chair twice! The chair will be moved, tracked and then we must go there again, to its new location
 
     def execute(self, userdata=None):
 
         self.robot.head.set_pan_tilt(0,0.2)
         
         try:
-            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
+            self.response = self.ask_user_service("challenge_open_locs", 4, rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
 
             #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
             response_dict = dict(zip(self.response.keys, self.response.values)) 
@@ -103,7 +103,7 @@ class AskAndNavigate(smach.StateMachine):
                 #toggle dynamic update
                 try:
                     service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStop)
-                    service(FitterStartStopRequest(False, "bar"))
+                    service(FitterStartStopRequest(False, "chair"))
                 except Exception, e:
                     robot.speech.speak("I could not track the object")
                     rospy.logerr("/wire_fitter/fitter_start_stop not called succesfully: {0}".format(e))
@@ -137,14 +137,14 @@ class AskChallengeObject(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.objects = self.objects = ["milk", "cup", "fruit_juice"]
+        self.objects = self.objects = ["beer", "pringles"]
 
     def execute(self, userdata=None):
 
         self.robot.head.look_up()
         
         try:
-            self.response = self.ask_user_service("challenge_open_2014", 4 , rospy.Duration(18))  #4 tries and within 18 seconds an answer is received. 
+            self.response = self.ask_user_service("challenge_open_transport", 4 , rospy.Duration(18))  #4 tries and within 18 seconds an answer is received. 
 
             #self.response is an object with 2 members. It can be represented as a dict, but isn't. Here we make it a dict ourselves
             response_dict = dict(zip(self.response.keys, self.response.values)) 
@@ -164,7 +164,7 @@ class AskChallengeObject(smach.State):
 
         except Exception, e:
             rospy.logerr(e)
-            target = "milk"
+            target = "beer"
             self.robot.speech.speak("There is something wrong with my ears, I will get a %s"%target)
 
         return "item_selected"
@@ -179,7 +179,7 @@ class OpenChallenge2014(smach.StateMachine):
 
         side = robot.leftArm
 
-        object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "milk"),
+        object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "beer"),
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
         placement_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "trash_bin"),
@@ -193,7 +193,7 @@ class OpenChallenge2014(smach.StateMachine):
                                                     'preempted' :'ASK_AND_NAV_1'})
 
 
-            smach.StateMachine.add( "ASK_AND_NAV_1", #User must say bar
+            smach.StateMachine.add( "ASK_AND_NAV_1", #User must say chair
                                     AskAndNavigate(robot, turn_before_ask=True),
                                     transitions={   "Done"      :"TOGGLE_DYNAMIC", 
                                                     "Failed"    :"TOGGLE_DYNAMIC"})
@@ -204,8 +204,8 @@ class OpenChallenge2014(smach.StateMachine):
                                                     'preempted' :'ASK_AND_NAV_2'})
 
 
-            #Amigo arrived at the bar. 
-            smach.StateMachine.add( "ASK_AND_NAV_2", #The bar is moved and amigo is asked to go to the bar once more, after it moved and was tracked in the WM
+            #Amigo arrived at the chair. 
+            smach.StateMachine.add( "ASK_AND_NAV_2", #The chair is moved and amigo is asked to go to the chair once more, after it moved and was tracked in the WM
                                     AskAndNavigate(robot),
                                     transitions={   "Done"      :"ASK_AND_NAV_3", 
                                                     "Failed"    :"ASK_AND_NAV_3"}) 
@@ -215,7 +215,7 @@ class OpenChallenge2014(smach.StateMachine):
                 #toggle dynamic update                
                 try:
                     service = rospy.ServiceProxy("/wire_fitter/fitter_start_stop", FitterStartStop)
-                    service(FitterStartStopRequest(True, "bar"))
+                    service(FitterStartStopRequest(True, "chair"))
                 except Exception, e:
                     robot.speech.speak("I could not track the object")
                     rospy.logerr("/wire_fitter/fitter_start_stop not called succesfully: {0}".format(e))
@@ -248,11 +248,11 @@ class OpenChallenge2014(smach.StateMachine):
             def set_nav_constraints_1(*args, **kwargs):
                 #TODO: Query reasoner
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30'
-                self.robot.base2.pc.frame      = "milk" #TODO: don't ALWAYS go to the milk
+                self.robot.base2.pc.frame      = "beer" #TODO: don't ALWAYS go to the beer
 
                 self.robot.base2.oc.look_at    = Point()
                 self.robot.base2.oc.angle_offset = -0.3805063771123649
-                self.robot.base2.oc.frame      = "milk"#TODO: don't ALWAYS go to the milk
+                self.robot.base2.oc.frame      = "beer"#TODO: don't ALWAYS go to the beer
                 return "done"
 
             smach.StateMachine.add( "SET_PARAMS_1",

@@ -60,16 +60,16 @@ Navigating AMIGO around can be done using RVIZ. On your local machine:
     rviz-open-challenge
 
 1) Navigate Amigo around in RVIZ and map:
-    - 'bar' (an object you can easily move around)
+    - 'chair' (an object you can easily move around)
     - 'table' (with no objects on top)
-    - 'trash_bin'
+    - 'waste_bin'
 2) ** Click on the 'GO' button in the GUI **
-3) Tell Amigo to navigate to the 'bar'
-4) If Amigo reaches the 'bar', move the 'bar' and see the dynamic update
+3) Tell Amigo to navigate to the "chair" (it will listen to "chair" and "table")
+4) If Amigo reaches the chair, move the chair and see the dynamic update
 5) ** Click on the 'GO' button in the GUI **
-6) Tell Amigo to navigate to the 'bar'
+6) Tell Amigo to navigate to the 'chair' (it will listen to "chair" and "table" again)
 7) Tell Amigo navigate to the 'table'
-8) Put the ;milk; on top of the 'table'
-9) Map the 'milk'
+8) Put the beer on top of the 'table'
+9) Map the 'beer'
 10) ** Click on the 'GO' button in the GUI **
-11) Tell Amigo to 'move a milk to the trash_bin'
+11) Tell Amigo to 'carry a beer to the waste bin'
