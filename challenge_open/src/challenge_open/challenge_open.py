@@ -16,6 +16,9 @@ import robot_smach_states as states
 
 from speech_interpreter.srv import AskUser
 
+global drive_to_locations 
+drive_to_locations = ["chair","chair","table"] #Go to the chair twice! The chair will be moved, tracked and then we must go there again, to its new location
+
 class TurnAround(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done", "Aborted", "Failed"])
@@ -35,7 +38,7 @@ class AskChallengeDestination(smach.State):
         self.robot = robot
         self.ask_user_service = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-        self.locations = ["chair","chair","table"] #Go to the chair twice! The chair will be moved, tracked and then we must go there again, to its new location
+        #drive_to_locations = ["chair","chair","table"] #Go to the chair twice! The chair will be moved, tracked and then we must go there again, to its new location
 
     def execute(self, userdata=None):
 
@@ -51,15 +54,15 @@ class AskChallengeDestination(smach.State):
             rospy.loginfo("response_answer = {0}".format(response_answer))
 
             if response_answer in ["no_answer", "wrong_answer", ""]: #If response answer is one to these things:...
-                if self.locations:
-                    target = self.locations.pop(0) #Get the first item from the list
+                if drive_to_locations:
+                    target = drive_to_locations.pop(0) #Get the first item from the list
                     self.robot.speech.speak("I was not able to understand you but I'll drive to the %s."%target)
                 else:
                     return "all_visited"
             else:
                 target = response_answer
-                if self.locations:
-                    self.locations.pop(0) #Get the first item from the list
+                if drive_to_locations:
+                    drive_to_locations.pop(0) #Get the first item from the list
 
         except Exception, e:
             rospy.logerr(e)
@@ -182,9 +185,9 @@ class OpenChallenge2014(smach.StateMachine):
         object_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "beer"),
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Z")))
 
-        placement_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "trash_bin"),
+        placement_query = Conjunction( Compound("property_expected", "ObjectID", "class_label", "waste_bin"),
                              Compound("property_expected", "ObjectID", "position", Sequence("X","Y","Zreal")),
-                             Compound("is", "Z", Compound("+","Zreal","0.3")))
+                             Compound("is", "Z", Compound("+","Zreal","0.5")))
 
         with self:
             smach.StateMachine.add("WAIT_FOR_TRIGGER", 
@@ -280,10 +283,10 @@ class OpenChallenge2014(smach.StateMachine):
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints(*args, **kwargs):
                 self.robot.base2.pc.constraint = 'x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30' #In the pose defined in ARM_TO_DROPPOS, the object is (about) 0.45m from the center of the base. 
-                self.robot.base2.pc.frame      = "trash_bin"
+                self.robot.base2.pc.frame      = "waste_bin"
                 self.robot.base2.oc.look_at    = Point()
                 self.robot.base2.oc.angle_offset = -0.3805063771123649
-                self.robot.base2.oc.frame      = "trash_bin"
+                self.robot.base2.oc.frame      = "waste_bin"
                 return "done"
 
             smach.StateMachine.add( "SET_PARAMS",
