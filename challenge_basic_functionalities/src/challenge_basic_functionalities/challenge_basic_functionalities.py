@@ -260,10 +260,17 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add('GO_TO_EXIT_3', 
                                     states.NavigateGeneric(robot, goal_query=navigate_exit_3),
+                                    transitions={   'arrived':'GO_TO_EXIT_1_LAST_ATTEMPT', 
+                                                    'preempted':'GO_TO_EXIT_1_LAST_ATTEMPT', 
+                                                    'unreachable':'GO_TO_EXIT_1_LAST_ATTEMPT', 
+                                                    'goal_not_defined':'GO_TO_EXIT_1_LAST_ATTEMPT'})
+
+            smach.StateMachine.add('GO_TO_EXIT_1_LAST_ATTEMPT', 
+                                    states.NavigateGeneric(robot, goal_query=navigate_exit_1),
                                     transitions={   'arrived':'AT_EXIT', 
-                                                    'preempted':'NOT_AT_EXIT', 
-                                                    'unreachable':'NOT_AT_EXIT', 
-                                                    'goal_not_defined':'NOT_AT_EXIT'})
+                                                    'preempted':'AT_EXIT', 
+                                                    'unreachable':'AT_EXIT', 
+                                                    'goal_not_defined':'AT_EXIT'})
 
             smach.StateMachine.add("NOT_AT_EXIT",
                                    states.Say(robot,"I was not able to reach the exit, I am sorry. Goodbye!"),
