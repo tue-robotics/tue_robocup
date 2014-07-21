@@ -1,17 +1,14 @@
 var color_map = {};
 
 var known_objects = [
-    "dr_pepper",
-    "chewing_gum",
-    "coke",
-    "dr_pepper",
-    "fanta",
     "milk",
+    "pringles",
     "noodles",
-    "peanut_butter",
-    "pills",
-    "sprite",
-    "yoghurt",
+    "biscuits",
+    "water",
+    "baby_food",
+    "chocolate_milk",
+    "bread",
 ];
 
 $( document ).ready(function() {
