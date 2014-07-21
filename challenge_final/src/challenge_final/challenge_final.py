@@ -9,6 +9,37 @@ Vraag TF van ID op (= frame /<ID>), en beweeg naar punt in TF van blob.
 
 Als geen unknown objecten in WM, stukje draaien en weer checken of er unknowns zijn.
 
+TODO:
+- Find a way to check whether we found some object (i.e. has the right label). Without the reasoner!
+- Ask the user an item and position (this is a piece of furniture, for example)
+
+== Scenario ==
+Stage 1
+* User stands in front of Amigo
+* Speech command: “Get OBJECT from POSITION”
+* Turn around
+* Navigate to unknown entities
+** Try to label entities with use of perception routines
+*** Human contour matcher
+*** Label interface (web gui) → User interacts and labels entities
+*** ODU finder
+*** Size Matcher
+*** QR Code detector
+** When entity is labeled, fit object model in sensor data (optional)
+** Keep navigating to new unknown blobs until POSITION is specified
+* When POSITION is specified
+** Look for ITEM at POSITION
+*** Labeling will be done with use of ODU finder and Size Matcher
+** Grasp object
+* Return object to operator
+
+Stage 2 – If we have some time left
+* Do some things with the labeled world model
+** Navigate to unknown entity
+*** Amigo ask where the entity is
+*** Spatial relations can be used to label the entity
+
+
 """
 import roslib; roslib.load_manifest('challenge_final')
 import rospy
@@ -21,6 +52,7 @@ from ed.srv import SimpleQuery, SimpleQueryRequest
 import robot_skills.util.msg_constructors as msgs
 
 import robot_smach_states as states
+from psi import Compound, Sequence, Conjunction
 
 class NavigateToUnknownBlob(smach.State):
     """Ask Ed (Environment Description) what the IDs of unkown blobs are. """
@@ -143,26 +175,113 @@ class FindUnknownObject(smach.StateMachine):
                                                         'unreachable':'Failed', 
                                                         'goal_not_defined':'Aborted'})
 
+class AskObjectAndPosition(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["Done"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+
+        #User says: "Get ITEM from POSITION" Position is like table or bar
+        position = "Fridge"
+        self.robot.reasoner.assertz(Compound("goal", Compound("position", position)))
+        
+        item = "Coke"
+        self.robot.reasoner.assertz(Compound("goal", Compound("item", item)))
+
+        return "Done"
+
 class FinalChallenge2014(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
         self.robot = robot
 
-        with self:
-            smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'GOTO_UNKNOWN',
-                                                'abort':'Aborted'})
+        arm = robot.leftArm
+        position_query = Conjunction(  
+                                    Compound("goal", Compound("position", "Position")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))) 
 
-            smach.StateMachine.add('GOTO_UNKNOWN',
-                                FindUnknownObject(robot),
-                                transitions={   'Done':'SAY_FOUND_UNKNOWN', 
-                                                'Failed':'SAY_FOUND_UNKNOWN', 
-                                                "Aborted":'SAY_FOUND_UNKNOWN'})
+        #TODO
+        object_query = Conjunction(  
+                                    Compound("goal", Compound("item", "Object")),
+                                    Compound( "property_expected", "ObjectID", "class_label", "Object"),
+                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
+                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))) 
+
+        #robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
+
+        # Load database
+        robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
+
+        # Assert the current challenge.
+        robot.reasoner.query(Compound("assertz",Compound("challenge", "final")))
+
+        with self:
+            # smach.StateMachine.add('INITIALIZE',
+            #                     states.Initialize(robot),
+            #                     transitions={   'initialized':'GOTO_UNKNOWN',
+            #                                     'abort':'Aborted'})        
+            smach.StateMachine.add('GOTO_PERSON_START',  #The robot should already be here actually, but then we at least have the correct pose
+                                states.NavigateGeneric(robot, goal_name="person_position"),
+                                transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
+                                                'preempted':'Aborted', 
+                                                'unreachable':'ASK_OBJECT_AND_POSITION', 
+                                                'goal_not_defined':'Failed'})
+
+            smach.StateMachine.add( 'ASK_OBJECT_AND_POSITION',
+                                    AskObjectAndPosition(robot),
+                                    transitions={   'Done':'GOTO_UNKNOWN'})
+
+            smach.StateMachine.add( 'GOTO_UNKNOWN',
+                                    FindUnknownObject(robot),
+                                    transitions={   'Done':'SAY_FOUND_UNKNOWN', 
+                                                    'Failed':'SAY_FOUND_UNKNOWN', 
+                                                    "Aborted":'SAY_FOUND_UNKNOWN'})
 
             smach.StateMachine.add( "SAY_FOUND_UNKNOWN",
-                                states.Say(robot,"I found something I don't know."),
-                                transitions={    "spoken":"GOTO_UNKNOWN"})
+                                    states.Say(robot,"I found something I don't know."),
+                                    transitions={    "spoken":"CHECK_IF_POSITION_FOUND"})
+
+            smach.StateMachine.add( "CHECK_IF_POSITION_FOUND",
+                                    states.Ask_query_true(robot, position_query),
+                                    transitions={'query_false':'GOTO_UNKNOWN', 
+                                                 'query_true':'GOTO_POSITION', 
+                                                 'waiting':'CHECK_IF_POSITION_FOUND', 
+                                                 'preempted':'Aborted'})
+
+            #TODO: I stiiiiiiil havent found what i'm loooking for (U2)
+
+        
+            smach.StateMachine.add( "GOTO_POSITION",
+                                    states.NavigateGeneric(robot, lookat_query=position_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    transitions={   "arrived":"PICKUP_OBJECT",
+                                                    "unreachable":'PICKUP_OBJECT',
+                                                    "preempted":'PICKUP_OBJECT',
+                                                    "goal_not_defined":'PICKUP_OBJECT'})
+
+            smach.StateMachine.add( 'PICKUP_OBJECT',
+                                    states.GrabMachine(arm, robot, object_query),
+                                    transitions={   "succeeded":"RETURN_TO_PERSON",
+                                                    "failed":'SAY_OBJECT_NOT_GRASPED' })             
+
+            smach.StateMachine.add('RETURN_TO_PERSON',
+                                    states.NavigateGeneric(robot, goal_name="person_position"),
+                                    transitions={   'arrived':'GOTO_EXIT', 
+                                                    'preempted':'Aborted', 
+                                                    'unreachable':'GOTO_EXIT', 
+                                                    'goal_not_defined':'Failed'})
+
+            smach.StateMachine.add( "SAY_OBJECT_NOT_GRASPED",
+                                    states.Say(robot,"I could not grasp the object, sorry guys."),
+                                    transitions={    "spoken":"GOTO_EXIT"})            
+
+            smach.StateMachine.add('GOTO_EXIT',
+                                    states.NavigateGeneric(robot, goal_name="exit"),
+                                    transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
+                                                    'preempted':'Aborted', 
+                                                    'unreachable':'ASK_OBJECT_AND_POSITION', 
+                                                    'goal_not_defined':'Failed'})
+
 
 
 if __name__ == "__main__":
