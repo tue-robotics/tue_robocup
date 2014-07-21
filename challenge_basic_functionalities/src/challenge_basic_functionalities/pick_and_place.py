@@ -21,7 +21,7 @@ class PickAndPlace(smach.StateMachine):
 
         ## if only certain types of objects are possible to be recognized, use understanding code
         self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
-        response = self.set_objects(['beer','orange_juice', 'milk', 'noodles', 'coffee', 'unknown'])
+        response = self.set_objects(['beer','orange_juice', 'milk', 'noodles', 'unknown'])
 
         if grasp_arm == "left":
             arm = robot.leftArm
