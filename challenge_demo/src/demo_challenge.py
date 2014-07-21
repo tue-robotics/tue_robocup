@@ -211,10 +211,11 @@ class FetchObject(smach.StateMachine):
         with self:
             # ToDo: don't hardcode the following four states and do it a bit more intelligent
             smach.StateMachine.add("WAIT_FOR_ORDER",
-                                    states.WaitForTrigger(robot, ['coke', 'sprite', 'fanta']),
-                                    transitions={   'coke'      : 'ASSERT_COKE',
-                                                    'sprite'    : 'ASSERT_SPRITE',
-                                                    'fanta'     : 'ASSERT_FANTA',
+                                    states.WaitForTrigger(robot, ['milk', 'pringles', 'noodles', 'biscuits']),
+                                    transitions={   'milk'      : 'ASSERT_MILK',
+                                                    'pringles'    : 'ASSERT_PRINGLES',
+                                                    'noodles'     : 'ASSERT_NOODLES',
+                                                    'biscuits'     : 'ASSERT_BISCUITS',
                                                     'preempted' : 'failed'})
 
             @smach.cb_interface(input_keys=[],
@@ -228,16 +229,20 @@ class FetchObject(smach.StateMachine):
 
                 return 'succeeded'
 
-            smach.StateMachine.add('ASSERT_COKE', smach.CBState(assert_object,
-                                    cb_args=['coke']),
+            smach.StateMachine.add('ASSERT_MILK', smach.CBState(assert_object,
+                                    cb_args=['milk']),
                                     transitions={   'succeeded' : 'IS_PRESENT'})
 
-            smach.StateMachine.add('ASSERT_SPRITE', smach.CBState(assert_object,
-                                    cb_args=['sprite']),
+            smach.StateMachine.add('ASSERT_PRINGLES', smach.CBState(assert_object,
+                                    cb_args=['pringles']),
                                     transitions={   'succeeded' : 'IS_PRESENT'})
 
-            smach.StateMachine.add('ASSERT_FANTA', smach.CBState(assert_object,
-                                    cb_args=['fanta']),
+            smach.StateMachine.add('ASSERT_NOODLES', smach.CBState(assert_object,
+                                    cb_args=['noodles']),
+                                    transitions={   'succeeded' : 'IS_PRESENT'})
+
+            smach.StateMachine.add('ASSERT_BISCUITS', smach.CBState(assert_object,
+                                    cb_args=['biscuits']),
                                     transitions={   'succeeded' : 'IS_PRESENT'})
 
             smach.StateMachine.add('IS_PRESENT', WaitForExternalCamera(robot, camera_object_query),
