@@ -27,7 +27,7 @@ amigo3:
     pmount /dev/sdb{???}1 usb-stick #This must *NOT* give errors, or the emergency_paper thingy will crash on startup
 
     #Check whether the USB stick is properly mounted
-    ls /media/media/usb-stick #Should not give errors
+    ls /media/usb-stick #Should not give errors
 
     roslaunch challenge_emergency emergency_home_dependencies.launch #Must also *NOT* crash or segfault. There may be some params missing, no biggie.
 amigo3:
