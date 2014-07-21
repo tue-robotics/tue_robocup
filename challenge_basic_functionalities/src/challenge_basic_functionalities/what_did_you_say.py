@@ -47,7 +47,7 @@ class AskQuestions(smach.State):
         rospy.loginfo("-- How many countries are in europe?-----------------------------------------------------")
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
-        self.response = self.ask_user_service_questions("questions_grammar", 10 , rospy.Duration(60))
+        self.response = self.ask_user_service_questions("questions_grammar", 3 , rospy.Duration(60))
 
         if self.response.keys[0] == "answer":
             return "succeeded"
