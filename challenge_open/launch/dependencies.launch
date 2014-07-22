@@ -14,7 +14,9 @@
     </include>
 
     <!-- Insert the map to the world model -->
-    <node name="wall_loader" pkg="wire_volume" type="load_from_file" args="$(find amigo_maps)/wire_volume/$(env ROBOT_ENV)_thick_walls.vwm"/>
+    <!--<node name="wall_loader" pkg="wire_volume" type="load_from_file" args="$(find amigo_maps)/wire_volume/$(env ROBOT_ENV)_thick_walls.vwm"/>-->
+
+    <node name="wall_loader" pkg="wire_fitter" type="height_map_to_world_model" args="$(find amigo_maps)/wire_volume/rwc2014_thick_walls.pgm 0.025 3 -1.8334000 -0.645000"/>
 
     <!-- Vis Plugin Wire Volume loader -->
     <node name="vis_plugin_loader" pkg="wire_volume" type="load_plugin" args="wire_volume_viz viz_plugin" output="screen"/>
