@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-	<node pkg="laser_ppl_detection" type="ppl_detection_node" name="ppl_detection_external" output="screen" respawn="false">
+	<node pkg="laser_ppl_detection" type="ppl_detection_node" name="ppl_detection_external" respawn="false">
 		<param name="threshold" type="double" value="0.06"/>
 		<param name="hypotheses_filename" type="string" value="$(find laser_ppl_detection)/data/generated/hypo_with_arms_full.dat"/>
 		<param name="input_scan_topic" type="string" value="/external/laser"/>
