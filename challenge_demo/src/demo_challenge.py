@@ -17,6 +17,62 @@ from robot_smach_states.util.startup import startup
 from psi import *
 
 grasp_arm = "left"
+class_names = ['milk', 'pringles', 'noodles', 'biscuits']
+
+class AwaitTriggerAndAssertValue(smach.State):
+    '''
+    This state will block execution until a suitable trigger command is received on the channel /trigger
+    It will receive std_msgs.String and will compare it to the strings in the array that is given.
+
+    Example to wait for one of the strings 'allow' or 'deny' (could be sent from a gui):
+
+        AwaitTriggerAndAssertValue(robot, ['allow', 'deny'], assert_as='some_unary_predicate', retract_first=False), 
+                       transitions={    'allow':     'DO_SOMETHING',
+                                        'deny':      'DO_SOMETHING',
+                                        'preempted': 'failed'})
+    '''
+
+    def __init__(self, robot, triggers, assert_as="", retract_first=True):
+        """
+        @param assert_as: the value of the trigger will be asserted to the reasoner with this unary predicate. 
+        @retract_first to False makes it add a fact for every trigger. Default is true, so it only remembers the last"""
+        smach.State.__init__(self, outcomes=['triggered', 'preempted'])
+        self.robot = robot
+        self.triggers = triggers
+        self.assert_as = assert_as
+        self.retract_first = retract_first
+
+        # Get the ~private namespace parameters from command line or launch file.
+        self.rate = float(rospy.get_param('~rate', '1.0'))
+        topic     = rospy.get_param('~topic', 'trigger')
+        
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+
+        rospy.loginfo('topic: /%s', topic)
+        rospy.loginfo('rate:  %d Hz', self.rate)
+
+    def execute(self, userdata):
+        self.trigger_received = False
+        #rospy.logwarn("Waiting for trigger (any of {0}) on topic /trigger".format(self.triggers))
+        while not rospy.is_shutdown() and not self.trigger_received:
+            rospy.sleep(1/self.rate)
+
+        if self.trigger_received:
+            if self.retract_first:
+                self.robot.reasoner.query(Compound("retractall", Compound(self.assert_as, "X")))
+            self.robot.reasoner.assertz(Compound(self.assert_as, str(self.trigger_received)))
+
+            return 'triggered'
+        else:
+            return 'preempted'
+
+    def callback(self, data):
+        # Simply print out values in our custom message.
+        if data.data in self.triggers:
+            rospy.loginfo('trigger received: %s', data.data)
+            self.trigger_received = data.data
+        else:
+            rospy.logwarn('wrong trigger received: %s', data.data)
 
 class WaitForOwner(smach.State):
 
@@ -211,39 +267,9 @@ class FetchObject(smach.StateMachine):
         with self:
             # ToDo: don't hardcode the following four states and do it a bit more intelligent
             smach.StateMachine.add("WAIT_FOR_ORDER",
-                                    states.WaitForTrigger(robot, ['milk', 'pringles', 'noodles', 'biscuits']),
-                                    transitions={   'milk'      : 'ASSERT_MILK',
-                                                    'pringles'    : 'ASSERT_PRINGLES',
-                                                    'noodles'     : 'ASSERT_NOODLES',
-                                                    'biscuits'     : 'ASSERT_BISCUITS',
+                                    AwaitTriggerAndAssertValue(  robot, class_names, assert_as="demo_get_object"),
+                                    transitions={   'triggered' : 'IS_PRESENT',
                                                     'preempted' : 'failed'})
-
-            @smach.cb_interface(input_keys=[],
-                    output_keys=[],
-                    outcomes=['succeeded'])
-            def assert_object(ud, obj):
-                desired_object = obj
-
-                self.robot.reasoner.query(Compound("retractall", Compound("demo_get_object", "X")))
-                self.robot.reasoner.assertz(Compound("demo_get_object", str(desired_object)))
-
-                return 'succeeded'
-
-            smach.StateMachine.add('ASSERT_MILK', smach.CBState(assert_object,
-                                    cb_args=['milk']),
-                                    transitions={   'succeeded' : 'IS_PRESENT'})
-
-            smach.StateMachine.add('ASSERT_PRINGLES', smach.CBState(assert_object,
-                                    cb_args=['pringles']),
-                                    transitions={   'succeeded' : 'IS_PRESENT'})
-
-            smach.StateMachine.add('ASSERT_NOODLES', smach.CBState(assert_object,
-                                    cb_args=['noodles']),
-                                    transitions={   'succeeded' : 'IS_PRESENT'})
-
-            smach.StateMachine.add('ASSERT_BISCUITS', smach.CBState(assert_object,
-                                    cb_args=['biscuits']),
-                                    transitions={   'succeeded' : 'IS_PRESENT'})
 
             smach.StateMachine.add('IS_PRESENT', WaitForExternalCamera(robot, camera_object_query),
                                     transitions={   'present'   : 'SAY_PRESENT',
