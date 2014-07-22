@@ -184,6 +184,7 @@ void initializeMappings()
     shelf_one_objects_.push_back("yeast");
     // Drinks
     shelf_two_objects_.clear();
+    shelf_two_objects_.push_back("cola");
     shelf_two_objects_.push_back("chocolate_milk");
     shelf_two_objects_.push_back("energy_drink");
     shelf_two_objects_.push_back("milk");
