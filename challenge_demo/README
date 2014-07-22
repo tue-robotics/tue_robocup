@@ -23,12 +23,14 @@ Starting the challenge
         - run `hokuyo.sh` to fix that
 
 - open the web gui's
-  - the doorbell is at http://your-laptops-ip:8001/src/doorbell/doorbell.html
-  - the gui      is at http://your-laptops-ip:8001/src/doorbell/app.html
+  - the doorbell is at http://your-laptops-ip:8001/gui/doorbell.html
+  - the gui      is at http://your-laptops-ip:8001/gui/objects.html
+
+- open the visualisation
 
 **amigo3:**
 
-- `rosrun rosrun challenge_demo external_trigger.py`
+- `rosrun challenge_demo demo_challenge.py`
 
 The story
 ---------
