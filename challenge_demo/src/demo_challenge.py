@@ -18,6 +18,7 @@ from psi import *
 
 grasp_arm = "left"
 class_names = ['milk', 'pringles', 'noodles', 'biscuits']
+amount_of_objects = 4
 
 class AwaitTriggerAndAssertValue(smach.State):
     '''
@@ -402,18 +403,29 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add('WAIT_FOR_OWNER', # pose_2d(1.964, 8.018, 2.82)
                                     WaitForOwner(robot, timeout = 30, roi_pos_x = 2.0, roi_pos_y = 8.0, detecting_range = 1.0),
-                                    transitions={   "person_found": "FETCH_FIRST_OBJECT",
-                                                    "timed_out":    "FETCH_FIRST_OBJECT"})
+                                    transitions={   "person_found": "FETCH_OBJECTS",
+                                                    "timed_out":    "FETCH_OBJECTS"})
 
-            smach.StateMachine.add('FETCH_FIRST_OBJECT',
-                                    FetchObject(robot, arm),
-                                    transitions={   'succeeded' :   'FETCH_SECOND_OBJECT',
-                                                    'failed'    :   'FETCH_SECOND_OBJECT'})
+            fetch_object_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],
+                                                   input_keys=[],
+                                                   output_keys=[],
+                                                   it=lambda: range(amount_of_objects), 
+                                                   it_label='object_count', 
+                                                   exhausted_outcome='exhausted')
+            
+            with fetch_object_iterator:
+                fetch_one_object =  FetchObject(robot, arm)
 
-            smach.StateMachine.add('FETCH_SECOND_OBJECT',
-                                    FetchObject(robot, arm),
-                                    transitions={   'succeeded' :   'Done',
-                                                    'failed'    :   'SAY_ABORT'})
+                fetch_object_iterator.set_contained_state('FIND_UNKNOWN', 
+                                          fetch_one_object, 
+                                          loop_outcomes=['succeeded', 'failed'], 
+                                          break_outcomes=[])
+            
+            smach.StateMachine.add('FETCH_OBJECTS', 
+                                   fetch_object_iterator, 
+                                   transitions={'succeeded':'Done', 
+                                                'failed':'SAY_ABORT',
+                                                'exhausted':'Done'})
 
             smach.StateMachine.add('SAY_ABORT',
                                     states.Say(robot,
