@@ -11,6 +11,7 @@ Panels:
         - /PointClouds1/Namespaces1
         - /Marker2
         - /Marker2/Status1
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 697
   - Class: rviz/Selection
@@ -2076,13 +2077,63 @@ Visualization Manager:
       Show Names: false
       Tree:
         /map:
+          /11e273d45e5da04cad43391acb365636:
+            {}
+          /1cf143c1b42fc1fd5b76a592162a1e93:
+            {}
+          /24e5eb74f1d9be2423a223f0217ae191:
+            {}
+          /257dac62619f1d2c5678bff100ee0623:
+            {}
+          /2ead482d317d87de6f2335ea59868b0a:
+            {}
+          /36b717fea4347749e8faafc685abd891:
+            {}
+          /37d1164ac2007cb71998954e7298993d:
+            {}
+          /3864aa74b53c4a0dd95a8d4418e98dfb:
+            {}
+          /3942b773d2420e4cab20fc1d3f8a7deb:
+            {}
+          /39b90044ad25aea5e228dae36bd8be3e:
+            {}
+          /465917ad5f33219012cf4c29c697e402:
+            {}
           /486c8a807eeb4ba5b27ed53e5af9ad7e:
+            {}
+          /48b179f75d6059d3a774b2906baa529a:
+            {}
+          /5500074bd87137e013b91fd27cc09bbe:
+            {}
+          /63d2a5587ab78043b73a3586501cef84:
+            {}
+          /67643e9306dc5f083ab5ea50ccbae5c4:
             {}
           /6dae73fe2ea694c47334862e127cfea6:
             {}
+          /75ae39d153a9a90893050e9cee277caf:
+            {}
+          /8280664b4a8eacb4a08d9a865bca201a:
+            {}
+          /8e78fcd9afe5d9accc4972cdda699a82:
+            {}
+          /90b8d81780d6a726360b9d977f01a933:
+            {}
           /94a87f4c8c6e45ce1f813ae510713fed:
             {}
+          /9b8e3ab7c255a2302636c202b88338ed:
+            {}
           /9c02f3e2f0d10e9226ed5897a18c4f9e:
+            {}
+          /a4b0b5d48af9a60f5e14c42b60be0e2a:
+            {}
+          /a84fc1086372460a271ccaed1082e169:
+            {}
+          /ab86d9e3c561c6beddba8989a0c9223c:
+            {}
+          /ac72ea8386d635baf5e260cc41db07fb:
+            {}
+          /aeb77dffec5837f7ef27cce4cf568893:
             {}
           /amigo/odom:
             /amigo/base_link:
@@ -2199,9 +2250,35 @@ Visualization Manager:
                 {}
           /b543932b2c2b1f0823cbafac1281137d:
             {}
+          /b5b3eaa4814ea11599a4c453f0d536fe:
+            {}
+          /b5bdd6b26f580e91151514eea758c6b8:
+            {}
+          /b758d1b300b0f420a45b83a3b0c86712:
+            {}
           /ba0bdeddfbefa72de1a3a3b5531a3a8f:
             {}
+          /c390123290ef0e749297de89b34a80e5:
+            {}
+          /c917679d93ca1f765ee1ee3ee1df8034:
+            {}
+          /cb1a6cfed3c84eed7924d77d742ab297:
+            {}
+          /cc41e22576a15d91cb656491e6ea7743:
+            {}
+          /d4b6abe168774f14b7dc8a982ef35823:
+            {}
           /d6cce35c487a58feab29032c2621f38d:
+            {}
+          /db2371255ee9dd756a94211a54516e94:
+            {}
+          /db2a51e17434af38ce248ad3aaddc099:
+            {}
+          /e7bc86f87b960b7a0c6900cc0856069f:
+            {}
+          /f590c8e6c2b390d78c22ce843301b93a:
+            {}
+          /fcbb4a21cd56d2d6ef8be1024040a7b9:
             {}
           /floor:
             {}
@@ -2233,6 +2310,22 @@ Visualization Manager:
         frustrum_top_kinect: true
       Queue Size: 100
       Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: ""
+      Name: RobotModel
+      Robot Description: /amigo/robot_description
+      TF Prefix: amigo
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
