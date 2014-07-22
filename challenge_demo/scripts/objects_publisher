@@ -12,7 +12,8 @@ def oduCB(data):
 
 		if len(image.object_evidence) > 0:
 			obj = max(image.object_evidence, key=lambda h: h.probability)
-			objs.append(obj.object_name)
+			if obj.probability > 0.22:
+				objs.append(obj.object_name)
 
 			#string  object_name
 			#string  category
