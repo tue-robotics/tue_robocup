@@ -11,17 +11,18 @@ Als geen unknown objecten in WM, stukje draaien en weer checken of er unknowns z
 
 TODO:
 - Find a way to check whether we found some object (i.e. has the right label). Without the reasoner!
+---> the service Ed offer has a type-parameter. Filter on that!
 - Ask the user an item and position (this is a piece of furniture, for example)
 
 == Scenario ==
 Stage 1
 * User stands in front of Amigo
-* Speech command: “Get OBJECT from POSITION”
+* Speech command: "Get OBJECT from POSITION"
 * Turn around
 * Navigate to unknown entities
 ** Try to label entities with use of perception routines
 *** Human contour matcher
-*** Label interface (web gui) → User interacts and labels entities
+*** Label interface (web gui) --> User interacts and labels entities
 *** ODU finder
 *** Size Matcher
 *** QR Code detector
@@ -33,7 +34,7 @@ Stage 1
 ** Grasp object
 * Return object to operator
 
-Stage 2 – If we have some time left
+Stage 2 - If we have some time left
 * Do some things with the labeled world model
 ** Navigate to unknown entity
 *** Amigo ask where the entity is
@@ -54,11 +55,14 @@ import robot_skills.util.msg_constructors as msgs
 import robot_smach_states as states
 from psi import Compound, Sequence, Conjunction
 
-class NavigateToUnknownBlob(smach.State):
+class NavigateToBlob(smach.State):
     """Ask Ed (Environment Description) what the IDs of unkown blobs are. """
-    def __init__(self, robot):
+    def __init__(self, robot, blobtype=None):
+        """Blobtype is a string or a function that returns a string"""
         smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined'])
         self.robot = robot
+
+        self.blobtype = blobtype
 
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
@@ -67,22 +71,32 @@ class NavigateToUnknownBlob(smach.State):
         self.visited_ids = []
 
     def execute(self, userdata=None):
-        query = SimpleQueryRequest()
+        blobtype = self.blobtype() if callable(self.blobtype) else self.blobtype #If blobtype is a function, call it, otherwise use it as is.
+        query = SimpleQueryRequest(type=blobtype) #type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
+        
+        object_ids = []
+        
+        try:
+            object_ids = self.ed(query).ids
+        except Exception, e:
+            rospy.logerr(e)
 
-        unknown_ids = self.ed(query).ids
-        rospy.loginfo("The {1} unknown IDs are: {0}".format(unknown_ids, len(unknown_ids)))
+        #DEBUG (also run rosrun tf static_transform_publisher 5 0 0 0 0 0 /map /object_1 100)
+        #DEBUG (also run rosrun tf static_transform_publisher 2 -5 0 0 0 0 /map /object_2 100)
+        import ipdb; ipdb.set_trace()
+        #When we're looking for a selected object, object_ids should be one of object_1 or object_2
+        #object_ids = ["object_1", "object_2"]
+        #END DEBUG
+
+        rospy.loginfo("The {1} unknown IDs are: {0}".format(object_ids, len(object_ids)))
         rospy.loginfo("The {1} visited IDs are: {0}".format(self.visited_ids, len(self.visited_ids)))
 
-        unknown_ids = list(set(unknown_ids) - set(self.visited_ids))
-        rospy.loginfo("The {1} REMAINING unknown IDs are: {0}".format(unknown_ids, len(unknown_ids)))
+        object_ids = list(set(object_ids) - set(self.visited_ids))
+        rospy.loginfo("The {1} REMAINING unknown IDs are: {0}".format(object_ids, len(object_ids)))
 
-        # import ipdb; ipdb.set_trace()
-        # #DEBUG (also run rosrun tf static_transform_publisher 5 0 0 0 0 0 /map /unknown_1 100)
-        # if not unknown_ids: unknown_ids = ["unknown_1"]
-        # #END DEBUG
 
-        if unknown_ids:
-            selected_id = unknown_ids[0]
+        if object_ids:
+            selected_id = object_ids[0]
             rospy.loginfo("Selected ID: {0}".format(selected_id))
 
             self.visited_ids += [selected_id]
@@ -149,7 +163,7 @@ class FindUnknownObject(smach.StateMachine):
                 find_unknown = smach.StateMachine(outcomes=['found', 'not_found'])
                 with find_unknown:
                     smach.StateMachine.add('DRIVE_TO_UNKNOWN_1',
-                                        NavigateToUnknownBlob(robot),
+                                        NavigateToBlob(robot, blobtype=""), #Go to unknwowns, without a type
                                         transitions={   'arrived':'found', 
                                                         'preempted':'not_found', 
                                                         'unreachable':'not_found', 
@@ -183,10 +197,10 @@ class AskObjectAndPosition(smach.State):
     def execute(self, userdata=None):
 
         #User says: "Get ITEM from POSITION" Position is like table or bar
-        position = "Fridge"
+        position = "fridge"
         self.robot.reasoner.assertz(Compound("goal", Compound("position", position)))
         
-        item = "Coke"
+        item = "coke"
         self.robot.reasoner.assertz(Compound("goal", Compound("item", item)))
 
         return "Done"
@@ -197,9 +211,6 @@ class FinalChallenge2014(smach.StateMachine):
         self.robot = robot
 
         arm = robot.leftArm
-        position_query = Conjunction(  
-                                    Compound("goal", Compound("position", "Position")),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))) 
 
         #TODO
         object_query = Conjunction(  
@@ -220,7 +231,9 @@ class FinalChallenge2014(smach.StateMachine):
             # smach.StateMachine.add('INITIALIZE',
             #                     states.Initialize(robot),
             #                     transitions={   'initialized':'GOTO_UNKNOWN',
-            #                                     'abort':'Aborted'})        
+            #                                     'abort':'Aborted'})   
+
+
             smach.StateMachine.add('GOTO_PERSON_START',  #The robot should already be here actually, but then we at least have the correct pose
                                 states.NavigateGeneric(robot, goal_name="person_position"),
                                 transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
@@ -240,24 +253,30 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_FOUND_UNKNOWN",
                                     states.Say(robot,"I found something I don't know."),
-                                    transitions={    "spoken":"CHECK_IF_POSITION_FOUND"})
-
-            smach.StateMachine.add( "CHECK_IF_POSITION_FOUND",
-                                    states.Ask_query_true(robot, position_query),
-                                    transitions={'query_false':'GOTO_UNKNOWN', 
-                                                 'query_true':'GOTO_POSITION', 
-                                                 'waiting':'CHECK_IF_POSITION_FOUND', 
-                                                 'preempted':'Aborted'})
+                                    transitions={    "spoken":"GOTO_POSITION"})
 
             #TODO: I stiiiiiiil havent found what i'm loooking for (U2)
-
+            def determine_desired_blobtype():
+                """Query the reasoner to recall what position we were supposed to go to"""
+                answers = robot.reasoner.query(Compound('goal', Compound("position", "Position")))
+                answers_filtered = [ans for ans in answers if ans["Position"].is_constant()]
+                rospy.loginfo("Position answers_filtered: {0}".format(answers_filtered))
+                if answers_filtered:
+                    return answers_filtered[0]["Position"]
+                else:
+                    rospy.logerr("Could not recall what position to go to")
+                    return ""
         
             smach.StateMachine.add( "GOTO_POSITION",
-                                    states.NavigateGeneric(robot, lookat_query=position_query, xy_dist_to_goal_tuple=(0.8,0)),
+                                    NavigateToBlob(robot, blobtype=determine_desired_blobtype),
                                     transitions={   "arrived":"PICKUP_OBJECT",
                                                     "unreachable":'PICKUP_OBJECT',
                                                     "preempted":'PICKUP_OBJECT',
-                                                    "goal_not_defined":'PICKUP_OBJECT'})
+                                                    "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
+            
+            smach.StateMachine.add( "SAY_STILL_HAVENT_FOUND",
+                                    states.Say(robot,"I still haven't found what I'm looking for"),
+                                    transitions={    "spoken":"GOTO_UNKNOWN"})  
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
                                     states.GrabMachine(arm, robot, object_query),
