@@ -20,6 +20,10 @@ from pein_srvs.srv import SetObjects
 #import states_new as states 
 from psi import Compound, Sequence, Conjunction
 
+#DONE #TODO: Go to the exit
+#TODO: Objects will be placed at appropriate position
+#TODO: Check object names in speech files
+
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
 room = 'living_room'
 manipulation_location = {'water' : 'bar',  #If no location is defined for an object here, the default is $default_search_location
@@ -1142,13 +1146,6 @@ def setup_statemachine(robot):
         ######################################################
         #####################  GO TO EXIT  ###################
         ###################################################### 
-        # SKIPPED NOT NEEDED FOR CHALLENGE
-        smach.StateMachine.add('EXIT_APPARTMENT', 
-                                    states.NavigateGeneric(robot, goal_name="exit_1"),
-                                    transitions={   'arrived':'SUCCEED_GO_TO_EXIT', 
-                                                    'preempted':'FAILED_GO_TO_EXIT', 
-                                                    'unreachable':'FAILED_GO_TO_EXIT', 
-                                                    'goal_not_defined':'FAILED_GO_TO_EXIT'})
 
         smach.StateMachine.add('FAILED_GO_TO_EXIT',
                                     states.Say(robot, 'I was not able to go to the exit.', block=False),
@@ -1168,6 +1165,17 @@ def setup_statemachine(robot):
         ######################################################
         smach.StateMachine.add('AT_END',
                                     states.Say(robot, "Goodbye"),
+                                    transitions={'spoken':'EXIT_APPARTMENT'})
+        
+        smach.StateMachine.add('EXIT_APPARTMENT', 
+                                    states.NavigateGeneric(robot, goal_name="exit_1"),
+                                    transitions={   'arrived':'PLEASE_TAKE_USB_STICK', 
+                                                    'preempted':'PLEASE_TAKE_USB_STICK', 
+                                                    'unreachable':'PLEASE_TAKE_USB_STICK', 
+                                                    'goal_not_defined':'PLEASE_TAKE_USB_STICK'})
+
+        smach.StateMachine.add('PLEASE_TAKE_USB_STICK',
+                                    states.Say(robot, "Please take the USB stick from the computer at my back"),
                                     transitions={'spoken':'Done'})
 
     return sm
