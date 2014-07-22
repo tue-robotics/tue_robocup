@@ -26,10 +26,10 @@ from psi import Compound, Sequence, Conjunction
 
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
 room = 'living_room'
-manipulation_location = {'water' : 'bar',  #If no location is defined for an object here, the default is $default_search_location
-                         'biscuits' : 'bar', #TODO: What object is this? 
-                         'energy_drink' : 'bar'} #TODO: What object is this? 
-default_search_location = 'bar'
+manipulation_location = {'water' : 'bar',  
+                         'biscuits' : 'sideboard', 
+                         'energy_drink' : 'bar'} 
+default_search_location = 'bar'#If no location is defined for an object here, the default is $default_search_location
 
 # ToDo move to locations, region of interest for person xyz_min, xyz_max
 room_dimension = {  "living_room": [3.788,  2.421, 0.0, 8.480, 9.202, 2.0],
