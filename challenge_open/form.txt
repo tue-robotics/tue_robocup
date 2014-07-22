@@ -1,0 +1,38 @@
+== Team name == 
+
+    Tech United
+
+== Main ability == 
+
+    Human assisted geometric, semantic mapping ...
+
+== Test objective == 
+
+    Show that a service robot can perform tasks in and interact with a previously unknown environment, even in the presence of dynamics. ...
+
+== Abilities used == 
+
+    [ ] Audio Processing
+    [ ] Artificial Intelligence
+    [?] Computer Vision
+    [ ] Endurance / Strength
+    [ ] Human Robot Interaction
+    [ ] Learning
+    [X] Manipulation
+    [X] Navigation
+    [X] Other: world modeling / (semantic, geometric) mapping
+
+== Novelty and Scientific / League Contribution ==
+
+    - Peform tasks without needing hard-coded spatial knowledge besides the location of the walls
+    - Incremental learning / segmentation bootstrapping (the more you know, the easier it gets)
+    - Constrained-based planning instead of goal-based planning
+    - ..
+
+== Test description == 
+
+   AMIGO enters an environment that has not yet been explored. The only knowledge that is available to AMIGO is a map / blue print of the walls. This knowledge, and the knowledge that is incrementally added throughout the challenge, allows AMIGO to distinguish between background (known objects) and foreground (unknown object) and segment the unknown objects. A human operator sends goal commands and uses a GUI to annotate unknown objects by simply clicking them and giving them a name. Every time an object is annotated, a 3D model is generated and added to the world model. The more AMIGO knows about the world, the easier it becomes to correctly segment the objects.
+
+To demonstrate that AMIGO has correctly remembered the objects, the human operator orders AMIGO through speech to drive to several objects. Instead of sampling a single goal to drive to (which is rather brittle), AMIGO uses a contrained-based planner to drive to *a* location that fullfils the requirement of being close enough to the object. We show that AMIGO can correctly keep track of the objects, even if they are moved around. (DYNAMICS MOET STERKER WORDEN GEBRACHT!)
+
+At the end of the challenge, we ask AMIGO to grab one of the annotated objects and put it in the trash bin. AMIGO uses all information in the world model to drive to the object, grab it, drive close enough to the trash bin and drop it in. It is important to note that no hard-coded knowledge is used here: we could perform this challenge with any object layout and in any environment of which a map of the walls is available.
