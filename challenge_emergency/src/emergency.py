@@ -21,7 +21,7 @@ from pein_srvs.srv import SetObjects
 from psi import Compound, Sequence, Conjunction
 
 #DONE #TODO: Go to the exit
-#TODO: Objects will be placed at appropriate position
+#DONE #TODO: Objects will be placed at appropriate position
 #TODO: Check object names in speech files
 
 # Hardcoded emergency room {'livingroom','bedroom' or 'kitchen'}
