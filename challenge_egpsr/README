@@ -45,13 +45,16 @@ amigo3:
     -------------------
     --- FAKE SPEECH ---
     -------------------
-
+	
+	ALLOWED IN ROBOCUP:
+	Go to a browser, type : 192.168.2.91:8000 (amigo1)
+	Then in gui to "Amigo hear" and type sentence and enter.
+	The way amigo will hear it is shown.
+    
+    NOT ALLOWED IN ROBOCUP:
     In terminal type (no quotation marks are needed):
-
     hear give me a drink
-
     or 
-
     hear yes
 
 INSTRUCTIONS:
