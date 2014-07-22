@@ -4,7 +4,7 @@
 
 == Main ability == 
 
-    Human assisted geometric, semantic mapping ...
+    Human-assisted geometric, semantic world modeling
 
 == Test objective == 
 
@@ -14,18 +14,18 @@
 
     [ ] Audio Processing
     [ ] Artificial Intelligence
-    [?] Computer Vision
+    [X] Computer Vision
     [ ] Endurance / Strength
-    [ ] Human Robot Interaction
+    [X] Human Robot Interaction
     [ ] Learning
     [X] Manipulation
     [X] Navigation
-    [X] Other: world modeling / (semantic, geometric) mapping
+    [X] Other: World Modeling / (semantic, geometric) Mapping
 
 == Novelty and Scientific / League Contribution ==
 
     - Peform tasks without needing hard-coded environment knowledge besides the location of the walls.
-    - Incremental learning / segmentation bootstrapping (the more you know, the easier it gets).
+    - Incremental mapping / segmentation bootstrapping (the more you know, the easier it gets).
     - Automatically find the best pose to approach an object.
     - This experiment can instantly be repeated:
 		* for every furniture layout of this arena.
