@@ -166,30 +166,31 @@ void initializeMappings()
      * speech recognition writes these objects as one word whereas the world model
      * will contain underscores instead of spaces
      */
-    class_label_map_["vegetable_soup"] = "vegetablesoup";
-    class_label_map_["chewing_gum"] = "chewinggum";
-    class_label_map_["chicken_noodles"] = "chickennoodles";
-    class_label_map_["orange_drink"] = "orangedrink";
-    class_label_map_["seven_up"] = "sevenup";
+    class_label_map_["chocolate_milk"] = "chocolatemilk";
+    class_label_map_["energy_drink"] = "energydrink";
+    class_label_map_["orange_juice"] = "orangejuice";
+    class_label_map_["grape_juice"] = "grapejuice";
+    class_label_map_["baby_food"] = "babyfood";
     
     /**
      * Objects on shelf one and two
      */
-    // Snacks
+    // Food
     shelf_one_objects_.clear();
-    shelf_one_objects_.push_back("vegetable_soup");
-    shelf_one_objects_.push_back("remia");
-    shelf_one_objects_.push_back("chewing_gum");
-    shelf_one_objects_.push_back("chicken_noodles");
-    shelf_one_objects_.push_back("crackers");
+    shelf_one_objects_.push_back("noodles");
+    shelf_one_objects_.push_back("beans");
+    shelf_one_objects_.push_back("coffee");
+    shelf_one_objects_.push_back("baby_food");
+    shelf_one_objects_.push_back("yeast");
     // Drinks
     shelf_two_objects_.clear();
-    shelf_two_objects_.push_back("orange_drink");
-    shelf_two_objects_.push_back("seven_up");
-    shelf_two_objects_.push_back("coffee");
-    shelf_two_objects_.push_back("tea");
+    shelf_two_objects_.push_back("chocolate_milk");
+    shelf_two_objects_.push_back("energy_drink");
     shelf_two_objects_.push_back("milk");
-
+    shelf_two_objects_.push_back("water");
+    shelf_two_objects_.push_back("orange_juice");
+    shelf_two_objects_.push_back("grape_juice");
+    shelf_two_objects_.push_back("beer");
 }
 
 ////////////////////////////////////////
