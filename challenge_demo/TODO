@@ -1,13 +1,8 @@
 TODO
 =========
 
-- Remove hardcoded objects in the state machine (and the gui?)
-- Reset reasoner???
+- fix hardcoded state machine
+- loop the challenge
 
 - Amigo drives towards the wrong table, probably an error in GET_OBJECT_SHELF
-
-
-
-Make sure the ppl_detection is working
-- not a lot of false positives
 - seamless integration of two laser scanners
