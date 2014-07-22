@@ -1107,13 +1107,17 @@ def setup_statemachine(robot):
         #In case goal is given via speech interpreter:
         smach.StateMachine.add("FAILED_TASK",
                                 Failed_goal(robot),
-                                transitions={'new_task':'RESET_ARMS_SPINDLE_HEAD'})
+                                transitions={'new_task':'RESET_REASONER'})
 
 
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
-                                transitions={'new_task':'RESET_ARMS_SPINDLE_HEAD',
+                                transitions={'new_task':'RESET_REASONER',
                                               'tasks_completed':'FINISH'})
+
+        smach.StateMachine.add("RESET_REASONER",
+                                states.ResetReasoner(robot),
+                                transitions={   'done':'RESET_ARMS_SPINDLE_HEAD'})
 
         smach.StateMachine.add("RESET_ARMS_SPINDLE_HEAD",
                                 states.ResetArmsSpindleHead(robot),
