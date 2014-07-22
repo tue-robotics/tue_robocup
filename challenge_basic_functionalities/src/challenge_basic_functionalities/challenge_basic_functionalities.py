@@ -317,7 +317,7 @@ if __name__ == "__main__":
             initial_state = ["RESET_HEAD_FOR_PICK_AND_PLACE"]
             amigo.reasoner.reset()
         elif int(sys.argv[1]) == 2:
-            initial_state = ["RESET_HEAD_FOR_AVOID_THAT"]
+            initial_state = ["READY_FOR_RESET_HEAD_FOR_AVOID_THAT"]
             amigo.reasoner.reset()
         elif int(sys.argv[1]) == 3:
             initial_state = ["RESET_HEAD_FOR_WHAT_DID_YOU_SAY"]
