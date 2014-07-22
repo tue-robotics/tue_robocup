@@ -278,7 +278,7 @@ class OpenChallenge2014(smach.StateMachine):
             smach.StateMachine.add( "GRAB_OBJECT",
                                     states.GrabMachineWithoutBase(side, robot, object_query),
                                     transitions={   'succeeded' :'SET_PARAMS',
-                                                    'failed'    :'Failed' })
+                                                    'failed'    :'NAVIGATE_TO_OBJECT' })
 
             @smach.cb_interface(outcomes=["done"])
             def set_nav_constraints(*args, **kwargs):
