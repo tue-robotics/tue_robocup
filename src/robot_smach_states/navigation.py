@@ -901,19 +901,26 @@ class Execute_path(smach.State):
                 # if the nr of poses to goal is not set, there is something wrong
                 if self.robot.base.poses_to_goal != -1:
                     lookat_point = None
-                    for i in range(len(self.robot.base.path) - self.robot.base.poses_to_goal, len(self.robot.base.path)):                    
-                        dx = robot_pos.x - self.robot.base.path[i].pose.position.x
-                        dy = robot_pos.y - self.robot.base.path[i].pose.position.y
-                        if dx*dx + dy*dy > self.look_at_path_distance*self.look_at_path_distance and not lookat_point:
-                            lookat_point = self.robot.base.path[i].pose.position.x, self.robot.base.path[i].pose.position.y
+                    try:
+                        for i in range(len(self.robot.base.path) - self.robot.base.poses_to_goal, len(self.robot.base.path)):                    
+                            dx = robot_pos.x - self.robot.base.path[i].pose.position.x
+                            dy = robot_pos.y - self.robot.base.path[i].pose.position.y
+                            if dx*dx + dy*dy > self.look_at_path_distance*self.look_at_path_distance and not lookat_point:
+                                lookat_point = self.robot.base.path[i].pose.position.x, self.robot.base.path[i].pose.position.y
+                    except Exception, e:
+                        rospy.logerr("NavigateGeneric look at path distance: {0}".format(e))
 
+                    lookatresult = False
                     if lookat_point:
                         rospy.logdebug("Look at {0}".format(lookat_point))
-                        self.robot.head.send_goal(msgs.PointStamped(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.0,
+                        lookatresult = self.robot.head.send_goal(msgs.PointStamped(lookat_point[0], lookat_point[1], 0), keep_tracking=False, timeout=0.01,
                             min_pan=-0.9,max_pan=0.9,min_tilt=0.0,max_tilt=0.8)
                     else:
                         # reset head position to look down
                         #rospy.logwarn("Reset head to look down")
+                        self.robot.head.look_down()
+
+                    if not lookatresult:
                         self.robot.head.look_down()
                 else:
                     rospy.logwarn("nr of poses to goal is not set (equals {0})".format(self.robot.base.poses_to_goal))
