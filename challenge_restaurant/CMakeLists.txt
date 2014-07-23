@@ -31,4 +31,3 @@ file(GLOB_RECURSE HEADER_FILES include/*.h)
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
 rosbuild_add_executable(restaurant src/restaurant.cpp)
-rosbuild_add_executable(restaurant_2014_head src/restaurant_2014_head.cpp)

@@ -170,18 +170,21 @@ void initializeMappings()
     class_label_map_["energy_drink"] = "energydrink";
     class_label_map_["orange_juice"] = "orangejuice";
     class_label_map_["grape_juice"] = "grapejuice";
-    class_label_map_["baby_food"] = "babyfood";
+    class_label_map_["chocolate_cookies"] = "chocolatecookies";
+	class_label_map_["strawberry_cookies"] = "strawberrycookies";
     
     /**
      * Objects on shelf one and two
      */
-    // Food
+    // Snacks
     shelf_one_objects_.clear();
-    shelf_one_objects_.push_back("noodles");
-    shelf_one_objects_.push_back("beans");
-    shelf_one_objects_.push_back("coffee");
-    shelf_one_objects_.push_back("baby_food");
-    shelf_one_objects_.push_back("yeast");
+    shelf_one_objects_.push_back("pringles");
+    shelf_one_objects_.push_back("biscuits");
+    shelf_one_objects_.push_back("crackers");
+    shelf_one_objects_.push_back("bread");
+    shelf_one_objects_.push_back("chips");
+    shelf_one_objects_.push_back("chocolate_cookies");
+    shelf_one_objects_.push_back("strawberry_cookies");
     // Drinks
     shelf_two_objects_.clear();
     shelf_two_objects_.push_back("cola");
@@ -1353,12 +1356,12 @@ void deliverOrders(std::map<std::string, int> obj_id_order_id_map)
             RobotPose loc = it_del->second.second;
             if (moveBase(loc.x, loc.y, loc.phi, delivery_loc_tolerance) || moveBase(loc.x, loc.y, loc.phi, 2*delivery_loc_tolerance))
             {
-				// default is left arm
+				// default is left arm // the announcement of the correct arm is not working properly
 				std::string arm_side = "left";
 				if (it_del->second.first == "right") {
 					std::string arm_side = "right";
 				}                
-                std::string sentence = "Here is your order. Please take it from my " + arm_side + " arm!";
+                std::string sentence = "Here is your order. Please take it from my gripper!";
                 //std::string sentence = "Here is your order. Please take it from my " + it_del->second.first + " arm!";
                 amigoSpeak(sentence ,false); //to do add object;
             }
