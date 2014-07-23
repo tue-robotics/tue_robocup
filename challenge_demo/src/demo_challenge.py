@@ -18,7 +18,18 @@ from pein_srvs.srv import SetObjects
 from psi import *
 
 grasp_arm = "left"
-class_names = ['milk', 'pringles', 'noodles', 'biscuits']
+#class_names = ['milk', 'pringles', 'noodles', 'biscuits']
+class_names = [
+    "milk",
+    "pringles",
+    "noodles",
+    "biscuits",
+    "water",
+    "baby_food",
+    "chocolate_milk",
+    "bread",
+]
+
 amount_of_objects = 999
 
 class AwaitTriggerAndAssertValue(smach.State):
