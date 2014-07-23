@@ -11,10 +11,9 @@
 
 === BACKLOG ===
 
-  EXC: Ask ED for command using GetGUICommand (Loy)
-       service: /ed/gui/get_gui_command             
   ED:  Fix heavy memory usage (Sjoerd)
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
+  GUI: Highlight the clicked object.
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
   EXC: While driving, look at the clusters TFs one by ones
   PER: fit 3D models and add to ED (Sjoerd)
@@ -23,6 +22,8 @@
 
 === DONE ===
   EXC: Move to some object after we labeled it.
+  EXC: Ask ED for command using GetGUICommand (Loy)
+       service: /ed/gui/get_gui_command             
 
 == TODO CATEGORIES ==
 

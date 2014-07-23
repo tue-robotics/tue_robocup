@@ -53,6 +53,7 @@ from math import radians, pi
 import smach
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
+from ed.srv import GetGUICommand, GetGUICommandResponse 
 import robot_skills.util.msg_constructors as msgs
 
 import robot_smach_states as states
@@ -262,6 +263,7 @@ class WaitForPositionLabeled(smach.State):
         try:
             object_ids = [entity.id for entity in self.ed(query).entities]
             if object_ids:
+                self.robot.speech.speak("Thanks, boss. I'll go to the {0} after I checked this last thing out".format(blobtype).replace("_", " "),  block=False)
                 return 'label_found'
             else:
                 return 'not_found'
@@ -269,7 +271,41 @@ class WaitForPositionLabeled(smach.State):
             rospy.logerr(e)
         
         return 'not_found'
-        
+
+class GoToGuiCommandIfRequested(smach.State):
+    """Poll whether the ed gui has received a (new) command. If so, execute that command (i.e go there)"""
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined', 'no_command_given'])
+        self.robot = robot
+
+        self.command_poller = rospy.ServiceProxy('/ed/gui/get_gui_command', GetGUICommand)
+        self.last_command_id = None
+
+    def execute(self, userdata=None):
+        try:
+            response = self.command_poller()
+            rospy.loginfo(response)
+            if response.command_id != self.last_command_id:
+                self.last_command_id = response.command_id
+                
+                if response.command == "navigate":
+                    parameters = dict(zip(response.param_names, response.param_values))
+
+                    selected_id = parameters['id']
+
+                    nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
+                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point())) 
+
+                    self.robot.speech.speak("I was told to check something out, lets explore!", block=False)
+                    return nav.execute()
+            else:
+                self.last_command_id = response.command_id
+        except Exception, e:
+            rospy.logerr(e)
+        return 'no_command_given'
+
+
 class FinalChallenge2014(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
@@ -328,7 +364,7 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add( 'ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
-                                    transitions={   'Done':'GOTO_UNKNOWN_UNTIL_LABELED'})
+                                    transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
             
             #------------ Option 1: concurrency ------------------# 
             # cc = smach.Concurrence( outcomes        = ['position_labeled', 'position_not_labeled'],
@@ -355,6 +391,16 @@ class FinalChallenge2014(smach.StateMachine):
             #                                         "position_not_labeled":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
             
             #------------ Option 2: sequentially ------------------# 
+            
+            smach.StateMachine.add( "GOTO_REQUESTED_POSITION_IF_REQUESTED",
+                                    GoToGuiCommandIfRequested(robot),
+                                    transitions={   "arrived":"GOTO_UNKNOWN_UNTIL_LABELED",
+                                                    "unreachable":'GOTO_UNKNOWN_UNTIL_LABELED',
+                                                    "preempted":'GOTO_UNKNOWN_UNTIL_LABELED',
+                                                    "goal_not_defined":'GOTO_UNKNOWN_UNTIL_LABELED',
+                                                    "no_command_given":'GOTO_UNKNOWN_UNTIL_LABELED'}) #This means that the select object does not exit (anymore?)
+
+
             smach.StateMachine.add( 'GOTO_UNKNOWN_UNTIL_LABELED', #Actuall does not go until labeled but keeps going because we're not in the concurrency
                                     FindUnknownObject(robot),
                                     transitions={   'Done':'CHECK_IF_LABELED', 
@@ -378,7 +424,7 @@ class FinalChallenge2014(smach.StateMachine):
             
             smach.StateMachine.add( "SAY_STILL_HAVENT_FOUND",
                                     states.Say(robot,"I still haven't found what I'm looking for"),
-                                    transitions={    "spoken":"GOTO_UNKNOWN_UNTIL_LABELED"})  
+                                    transitions={    "spoken":"GOTO_REQUESTED_POSITION_IF_REQUESTED"})  
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
                                     states.GrabMachine(arm, robot, object_query),
@@ -401,7 +447,7 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add('GOTO_EXIT',
                                     states.NavigateWithConstraints(robot,
-                                                    position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y+1)^2 < 0.4"),
+                                                    position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y-0)^2 < 0.4"),
                                                     orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
                                     # states.NavigateGeneric(robot, goal_query=exit_query),
                                     transitions={   'arrived':'Done', 
