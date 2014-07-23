@@ -20,6 +20,7 @@
   ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
 
 === DONE ===
+  EXC: Move to some object after we labeled it.
 
 == TODO CATEGORIES ==
 

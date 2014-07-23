@@ -48,7 +48,7 @@ Stage 2 - If we have some time left
 import roslib; roslib.load_manifest('challenge_final')
 import rospy
 
-from math import radians
+from math import radians, pi
 
 import smach
 
@@ -57,6 +57,8 @@ import robot_skills.util.msg_constructors as msgs
 
 import robot_smach_states as states
 from psi import Compound, Sequence, Conjunction
+
+from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 
 explore_region_center = msgs.Point(x=4, y=5, z=0) #implicitly is in map. TODO Ed: make this a pointstamped
 explore_region_radius = 5
@@ -108,11 +110,18 @@ class NavigateToBlob(smach.State):
 
             self.visited_ids += [selected_id]
 
-            point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/"+selected_id) #TF of object is in center of object
-            map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
-            map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
+            # point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/"+selected_id) #TF of object is in center of object
+            # map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
+            # map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
 
-            nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(1.0, 0)) #Look from X distance to the unknown ubject
+            #lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(1.0, 0)
+            self.robot.base2.pc.constraint = 'x^2 + y^2 < 1.2^2'
+            self.robot.base2.pc.frame      = selected_id
+
+            self.robot.base2.oc.look_at    = msgs.Point(0, 0, 0)
+            self.robot.base2.oc.frame      = selected_id
+
+            nav = states.NavigateWithConstraints(self.robot) #Look from X distance to the unknown ubject
             return nav.execute()
         else:
             return "goal_not_defined"
@@ -141,15 +150,26 @@ class ExploreStep(smach.State):
         self.tf = robot.tf_listener
 
     def execute(self, userdata=None):
-        point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/amigo/base_link") #TF of object is in center of object
-        map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
-        map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
+        # point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/amigo/base_link") #TF of object is in center of object
+        # map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
+        # map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
 
         #Go look at our current position from 2 meters. This involves find poses around our current position and selecting a 'best' from it. 
         #This means moving, so in effect some sort of exploration
         #import ipdb; ipdb.set_trace()
-        nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) #TODO xy_dist_to_goal_tuple is not incorporated in this mode, only when its a query
+
+        self.robot.base2.pc.constraint = 'x^2 + y^2 > 1.0^2 && x^2 + y^2 < 2.0' #drive somewhere between 1 and 2 meters away
+        self.robot.base2.pc.frame      = "/amigo/base_link"
+
+        self.robot.base2.oc.look_at    = msgs.Point(0, 0, 0)
+        self.robot.base2.oc.frame      = "/amigo/base_link"
+        self.robot.base2.oc.angle      = pi / 1 #Turn 180 degrees, so look away from where we were
+
+        nav = states.NavigateWithConstraints(self.robot) #Look from X distance to the unknown ubject
         return nav.execute()
+
+        # nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) #TODO xy_dist_to_goal_tuple is not incorporated in this mode, only when its a query
+        # return nav.execute()
 
 class FindUnknownObject(smach.StateMachine):
     def __init__(self, robot):
@@ -306,11 +326,15 @@ class FinalChallenge2014(smach.StateMachine):
 
 
             smach.StateMachine.add('GOTO_PERSON_START',  #The robot should already be here actually, but then we at least have the correct pose
-                                states.NavigateGeneric(robot, goal_name="person_position"),
-                                transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
-                                                'preempted':'Aborted', 
-                                                'unreachable':'ASK_OBJECT_AND_POSITION', 
-                                                'goal_not_defined':'Failed'})
+                                    states.NavigateWithConstraints( robot,                                                          #4.682, 4.145
+                                                                    position_constraint=
+                                                                        PositionConstraint( frame="/map", 
+                                                                                            constraint="x=4.68 && y=4.14 && x^2 + y^2 > 0.25^2"),
+                                                                    orientation_constraint=None),
+                                    transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
+                                                    'preempted':'Aborted', 
+                                                    'unreachable':'ASK_OBJECT_AND_POSITION', 
+                                                    'goal_not_defined':'Failed'})
 
             smach.StateMachine.add( 'ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
@@ -372,7 +396,11 @@ class FinalChallenge2014(smach.StateMachine):
                                                     "failed":'SAY_OBJECT_NOT_GRASPED' })             
 
             smach.StateMachine.add('RETURN_TO_PERSON',
-                                    states.NavigateGeneric(robot, goal_name="person_position"),
+                                    states.NavigateWithConstraints( robot,                                                          #4.682, 4.145
+                                                                    position_constraint=
+                                                                        PositionConstraint( frame="/map", 
+                                                                                            constraint="x=4.68 && y=4.14 && x^2 + y^2 > 0.25^2"),
+                                                                    orientation_constraint=None),
                                     transitions={   'arrived':'GOTO_EXIT', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'GOTO_EXIT', 
@@ -383,13 +411,14 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={    "spoken":"GOTO_EXIT"})            
 
             smach.StateMachine.add('GOTO_EXIT',
-                                    states.NavigateGeneric(robot, goal_query=exit_query),
+                                    states.NavigateWithConstraints(robot,                                                          #4.682, 4.145
+                                                   position_constraint=PositionConstraint(frame="/map", constraint="x==0 && y==0 && x^2 + y^2 > 0.25^2"),
+                                                   orientation_constraint=None),
+                                    # states.NavigateGeneric(robot, goal_query=exit_query),
                                     transitions={   'arrived':'Done', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'Done', 
                                                     'goal_not_defined':'Failed'})
-
-
 
 if __name__ == "__main__":
     rospy.init_node('exec_challenge_final_2014')
