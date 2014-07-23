@@ -741,122 +741,6 @@ class NavToWaitingLoc(smach.State):
 #########################################################################################
 
 
-class NavResetLocRoom(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(   self, 
-                                outcomes=["unreachable" , "arrived", "visited_all"])
-        self.robot = robot
-
-        self.resetLocRoomQ = Conjunction( Compound("=", "Waypoint", Compound("failed_nav_room", "W")),
-                                        Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
-                                        Compound("not", Compound("visited", "Waypoint")))
-
-    def execute(self, userdata=None):
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: NavResetLocRoom\n")
-
-        # Reset stuff for a clean retry
-        self.robot.base.reset_costmap()
-        self.robot.reasoner.reset()
-
-        # get the waypoint of where to search, party_room_lookout
-        resetLocs = self.robot.reasoner.query(self.resetLocRoomQ)
-
-        # if there is no location associated with lookout points say it
-        if not resetLocs:
-            rospy.loginfo("\t\t[Cocktail Party] Visited all Living Room reset places.\n")
-            self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
-            return "visited_all"
-
-        # for now, take the first goal found
-        goal_answer = resetLocs[0]
-
-        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
-        waypointName = goal_answer["Waypoint"]
-
-        # navigate to the waypoint queried
-        nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
-        nav_result = nav.execute()
-
-        # assert that this location has been visited
-        self.robot.reasoner.query(Compound("assert", Compound("visited", waypointName)))
-
-        if nav_result == "unreachable":
-            rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
-            self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset_costmap()
-            return "unreachable"
-        elif nav_result == "preempted":
-            rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
-            self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset_costmap()
-            return "unreachable"
-
-        self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
-        return "arrived"
-
-
-#########################################################################################
-
-
-class NavResetLocKitchen(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(   self, 
-                                outcomes=["unreachable" , "arrived", "visited_all"])
-        self.robot = robot
-
-        self.resetLocKitchenQ = Conjunction( Compound("=", "Waypoint", Compound("failed_nav_kitchen", "W")),
-                                        Compound("waypoint", "Waypoint", Compound("pose_2d", "X", "Y", "Phi")),
-                                        Compound("not", Compound("visited", "Waypoint")))
-
-    def execute(self, userdata=None):
-        rospy.loginfo("\t\t[Cocktail Party] Entered State: NavResetLocKitchen\n")
-
-        # Reset stuff for a clean retry
-        amigo.base.reset_costmap()
-        amigo.reasoner.reset()
-
-        # get the waypoint of where to search, party_room_lookout
-        resetLocs = self.robot.reasoner.query(self.resetLocKitchenQ)
-
-        # if there is no location associated with lookout points say it
-        if not resetLocs:
-            rospy.loginfo("\t\t[Cocktail Party] Visited all Kitchen reset places.\n")
-            self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
-            return "visited_all"
-
-        self.robot.speech.speak("Going to the waiting location.", block=False)
-
-        # for now, take the first goal found
-        goal_answer = resetLocs[0]
-
-        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
-        waypointName = goal_answer["Waypoint"]
-
-        # navigate to the waypoint queried
-        nav = NavigateGeneric(self.robot, goal_pose_2d=goal)
-        nav_result = nav.execute()
-
-        # assert that this location has been visited
-        self.robot.reasoner.query(Compound("assert", Compound("visited", waypointName)))
-
-        if nav_result == "unreachable":
-            rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
-            self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset_costmap()
-            return "unreachable"
-        elif nav_result == "preempted":
-            rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
-            self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset_costmap()
-            return "unreachable"
-
-        self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
-        return "arrived"
-
-
-#########################################################################################
-
-
 # Navigate to the location of a detected person. When reached assert it as visited so the robot can iterate through several people
 class NavToWavingPerson(smach.State):
     def __init__(self, robot):
@@ -1088,11 +972,9 @@ class CheckPendingOrders(smach.State):
 class LookForDrinks(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
-                                outcomes=["looking" , "found", "visited_all", "reset_at_room", "reset_at_kitchen", "done"])
+                                outcomes=["looking" , "found", "visited_all", "done"])
 
         self.robot = robot
-
-        self.arrivedAtKitchen = False
 
         self.goalsQ = Conjunction(  Compound('goal', Compound('serve', 'ObjectID', 'Person', 'Drink', 'LastKnowPose')), 
                                     Compound('not', Compound('carrying', Compound('drink', 'Drink', 'CarryingLoc'))))
@@ -1125,15 +1007,10 @@ class LookForDrinks(smach.State):
 
         # if there are no more unvisited locations, give up
         if not storageRoomWaypts:
-            if self.arrivedAtKitchen == True:
-                rospy.logwarn("\t\t[Cocktail Party] Going to the kitchen reset location.\n")
-                self.robot.speech.speak("I'm having trouble completing my requests, let me try again.", block=False)
-                return "reset_at_kitchen"
-            else:
-                rospy.logwarn("\t\t[Cocktail Party] Going to the room reset location.\n")
-                self.robot.speech.speak("I'm having some troubles getting to the kitchen, let me try again.", block=False)
-                return "reset_at_room"
-
+            amigo.reasoner.reset()
+            rospy.logwarn("\t\t[Cocktail Party] Finish visiting all locations for drinks.\n")
+            # self.robot.speech.speak("I don't where else to search.", block=False)
+            return "visited_all"
 
         drinkNames = set([str(answer["Drink"]) for answer in goals])
         orderedDrinks = " and ".join(drinkNames)
@@ -1160,11 +1037,8 @@ class LookForDrinks(smach.State):
         self.robot.reasoner.query(Compound('assert', Compound('visited', waypointName)))
 
         # If navResult is unreachable DO NOT stop looking, there are more options, return not_found when list of Waypoints is empty
-        if navResult == 'unreachable' or navResult == 'preempted':
+        if navResult == 'unreachable' or navResult == 'preempted': 
             return 'looking'
-
-        # if the robot reaches this point it means he is probably in the kitchen
-        self.arrivedAtKitchen = True
 
         # look to points of interest, if there is any, look at it
         pointsInterest = self.robot.reasoner.query(Compound('point_of_interest', waypointName, Compound('point_3d', 'X', 'Y', 'Z')))
@@ -1188,7 +1062,7 @@ class LookForDrinks(smach.State):
         elif self.response_start.error_code == 1:
             rospy.logwarn("Object segmentation failed to start")
             self.robot.speech.speak("I was not able to start object recognition.")
-            return "reset_at_kitchen"
+            return "visited_all"
 
         wait_machine = Wait_query_true(self.robot, self.drinksOfInterestQ, 7)
         wait_result = wait_machine.execute()
@@ -1236,7 +1110,6 @@ class PreparePickup(smach.State):
                                             'no_requested_drinks_here'])
 
         self.robot = robot
-
         self.armCount = 0
 
         # get the drinks requested that were seen in this storage location AND are NOT already in the robot's posession
@@ -2255,7 +2128,7 @@ class CocktailParty(smach.StateMachine):
                                     transitions={'done':'CHECK_PENDING_ORDERS'})
 
 
-#----------------------------------------TAKE THE ORDERS-------------------------------------------------------
+#----------------------------------------TAKE THEIR ORDERS-------------------------------------------------------
 
 
             # create orders container
@@ -2302,13 +2175,11 @@ class CocktailParty(smach.StateMachine):
             with findDrinksContainer:
 
                 # Go to storage room waypoint and look for the drinks
-                smach.StateMachine.add( 'LOOK_FOR_DRINKS',
+                smach.StateMachine.add( 'LOOK_FOR_DRINK',
                                         LookForDrinks(robot),
-                                        transitions={   'looking':'LOOK_FOR_DRINKS',
+                                        transitions={   'looking':'LOOK_FOR_DRINK',
                                                         'found':'PREPARE_PICKUP',
                                                         'visited_all':'SAY_DRINK_NOT_FOUND',
-                                                        'reset_at_room':'NAV_TO_RESET_LOC_ROOM',
-                                                        'reset_at_kitchen':'NAV_TO_RESET_LOC_KITCHEN',
                                                         'done':'succeeded'})
 
                 # Pickup the drink
@@ -2317,7 +2188,7 @@ class CocktailParty(smach.StateMachine):
                                         transitions={   'pickup_left':'PICKUP_DRINK_LEFT',
                                                         'pickup_right':'PICKUP_DRINK_RIGHT',
                                                         'pickup_basket':'PICKUP_DRINK_BASKET',
-                                                        'no_requested_drinks_here':'LOOK_FOR_DRINKS',
+                                                        'no_requested_drinks_here':'LOOK_FOR_DRINK',
                                                         'grabbed_all':'succeeded'}) 
 
                 smach.StateMachine.add( 'PICKUP_DRINK_LEFT',
@@ -2341,27 +2212,15 @@ class CocktailParty(smach.StateMachine):
 
                 smach.StateMachine.add( 'RESET_SEARCHED_LOCATIONS',
                                         ResetSearchedLocations(robot),
-                                        transitions={   'done':'LOOK_FOR_DRINKS'})
+                                        transitions={   'done':'LOOK_FOR_DRINK'})
 
                 smach.StateMachine.add( 'ASSERT_PICKUP',
                                         AssertPickup(robot, grabGoalDrinkQ),
-                                        transitions={   'done':'PREPARE_PICKUP'})
+                                        transitions={   'done':'PREPARE_PICKUP'}) 
 
                 smach.StateMachine.add( 'SAY_DRINK_NOT_FOUND',
-                                        Say(robot, "I could not find all of the drinks requested. Let me try again.", block=False),
-                                        transitions={   'spoken':'aborted' })
-
-                smach.StateMachine.add( 'NAV_TO_RESET_LOC_ROOM',
-                                        NavResetLocRoom(robot),
-                                        transitions={   'unreachable':'NAV_TO_RESET_LOC_KITCHEN',
-                                                        'arrived':'LOOK_FOR_DRINKS',
-                                                        'visited_all':'NAV_TO_RESET_LOC_KITCHEN'})
-
-                smach.StateMachine.add( 'NAV_TO_RESET_LOC_KITCHEN',
-                                        NavResetLocKitchen(robot),
-                                        transitions={   'unreachable':'LOOK_FOR_DRINKS',
-                                                        'arrived':'LOOK_FOR_DRINKS',
-                                                        'visited_all':'aborted'})
+                                        Say(robot, "I could not find all of the drinks requested.", block=False),
+                                        transitions={   'spoken':'aborted' }) 
 
             # add find drinks container to the main state machine
             smach.StateMachine.add( 'FIND_DRINKS_CONTAINER',
@@ -2576,8 +2435,8 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    # initial_state = None
-    initial_state = 'FIND_DRINKS_CONTAINER'
+    initial_state = None
+    # initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
