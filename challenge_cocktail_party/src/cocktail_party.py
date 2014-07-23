@@ -755,8 +755,8 @@ class NavResetLocRoom(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavResetLocRoom\n")
 
         # Reset stuff for a clean retry
-        amigo.base.reset.costmap()
-        amigo.reasoner.reset()
+        self.robot.base.reset_costmap()
+        self.robot.reasoner.reset()
 
         # get the waypoint of where to search, party_room_lookout
         resetLocs = self.robot.reasoner.query(self.resetLocRoomQ)
@@ -764,6 +764,7 @@ class NavResetLocRoom(smach.State):
         # if there is no location associated with lookout points say it
         if not resetLocs:
             rospy.loginfo("\t\t[Cocktail Party] Visited all Living Room reset places.\n")
+            self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
             return "visited_all"
 
         # for now, take the first goal found
@@ -782,14 +783,15 @@ class NavResetLocRoom(smach.State):
         if nav_result == "unreachable":
             rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
             self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset.costmap()
+            amigo.base.reset_costmap()
             return "unreachable"
         elif nav_result == "preempted":
             rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
             self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset.costmap()
+            amigo.base.reset_costmap()
             return "unreachable"
 
+        self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
         return "arrived"
 
 
@@ -810,7 +812,7 @@ class NavResetLocKitchen(smach.State):
         rospy.loginfo("\t\t[Cocktail Party] Entered State: NavResetLocKitchen\n")
 
         # Reset stuff for a clean retry
-        amigo.base.reset.costmap()
+        amigo.base.reset_costmap()
         amigo.reasoner.reset()
 
         # get the waypoint of where to search, party_room_lookout
@@ -819,6 +821,7 @@ class NavResetLocKitchen(smach.State):
         # if there is no location associated with lookout points say it
         if not resetLocs:
             rospy.loginfo("\t\t[Cocktail Party] Visited all Kitchen reset places.\n")
+            self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
             return "visited_all"
 
         self.robot.speech.speak("Going to the waiting location.", block=False)
@@ -839,14 +842,15 @@ class NavResetLocKitchen(smach.State):
         if nav_result == "unreachable":
             rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
             self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset.costmap()
+            amigo.base.reset_costmap()
             return "unreachable"
         elif nav_result == "preempted":
             rospy.logwarn("\t\t[Cocktail Party] Could not go to the reset location.\n")
             self.robot.speech.speak("I'm unable to even go to the reset location.", block=False)
-            amigo.base.reset.costmap()
+            amigo.base.reset_costmap()
             return "unreachable"
 
+        self.robot.reasoner.query(Compound('retractall', Compound('visited', 'X')))
         return "arrived"
 
 
@@ -2572,8 +2576,8 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    initial_state = None
-    # initial_state = 'FIND_DRINKS_CONTAINER'
+    # initial_state = None
+    initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
