@@ -8,6 +8,8 @@
 === BACKLOG ===
 
   GUI: handle click events (Sjoerd)
+       - Detect which objects is clicked
+       - Set the appropriate gui command
   GUI: implement GetGUICommand service (Sjoerd)
   EXC: Ask ED for command using GetGUICommand (Loy)
        service: /ed/gui/get_gui_command             
