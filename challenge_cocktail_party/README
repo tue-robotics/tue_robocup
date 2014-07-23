@@ -15,8 +15,8 @@ SETUP:
 
 
     AMIGO1:
-        - Set 2D Navigation: 
-            - rsettings -> export AMIGO_NAV=2d -> source ~/.bashrc
+        - Set 3D Navigation: 
+            - rsettings -> export AMIGO_NAV=3d -> source ~/.bashrc
 
         - amiddle
 
