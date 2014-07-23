@@ -11,6 +11,8 @@ Panels:
         - /PointClouds1/Namespaces1
         - /Marker2
         - /RobotModel1
+        - /LaserScan1
+        - /head_Ref1
       Splitter Ratio: 0.5
     Tree Height: 517
   - Class: rviz/Selection
@@ -31,7 +33,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Visualization Manager:
   Class: ""
   Displays:
@@ -68,16 +70,6 @@ Visualization Manager:
       Enabled: true
       Frame Timeout: 1
       Frames:
-        /486c8a807eeb4ba5b27ed53e5af9ad7e:
-          Value: true
-        /48b179f75d6059d3a774b2906baa529a:
-          Value: true
-        /6dae73fe2ea694c47334862e127cfea6:
-          Value: true
-        /94a87f4c8c6e45ce1f813ae510713fed:
-          Value: true
-        /9c02f3e2f0d10e9226ed5897a18c4f9e:
-          Value: true
         /amigo/back_laser:
           Value: true
         /amigo/back_lasertop:
@@ -234,10 +226,6 @@ Visualization Manager:
           Value: true
         /amigo/wrist_visual_right:
           Value: true
-        /b543932b2c2b1f0823cbafac1281137d:
-          Value: true
-        /ba0bdeddfbefa72de1a3a3b5531a3a8f:
-          Value: true
         /d6cce35c487a58feab29032c2621f38d:
           Value: true
         /floor:
@@ -254,16 +242,6 @@ Visualization Manager:
       Show Names: false
       Tree:
         /map:
-          /486c8a807eeb4ba5b27ed53e5af9ad7e:
-            {}
-          /48b179f75d6059d3a774b2906baa529a:
-            {}
-          /6dae73fe2ea694c47334862e127cfea6:
-            {}
-          /94a87f4c8c6e45ce1f813ae510713fed:
-            {}
-          /9c02f3e2f0d10e9226ed5897a18c4f9e:
-            {}
           /amigo/odom:
             /amigo/base_link:
               /amigo/base:
@@ -377,10 +355,6 @@ Visualization Manager:
                           {}
               /amigo/base_plate:
                 {}
-          /b543932b2c2b1f0823cbafac1281137d:
-            {}
-          /ba0bdeddfbefa72de1a3a3b5531a3a8f:
-            {}
           /d6cce35c487a58feab29032c2621f38d:
             {}
           /floor:
@@ -805,6 +779,42 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/LaserScan
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: LaserScan
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.01
+      Style: Flat Squares
+      Topic: /amigo/base_front_laser
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /head_target_marker
+      Name: head_Ref
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -828,17 +838,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10.0835
+      Distance: 2.95733
       Focal Point:
-        X: 5.8319
-        Y: 8.75838
-        Z: -1.1
+        X: 1.76293
+        Y: 2.23873
+        Z: 0.539891
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.1998
+      Pitch: 0.659797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.55479
+      Yaw: 4.73979
     Saved: ~
 Window Geometry:
   Displays:

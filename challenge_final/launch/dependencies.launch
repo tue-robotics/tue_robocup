@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>  
+
   <include  file="$(find rgbd)/launch/top_kinect_server.launch"/>
 
   <node pkg="ed" type="ed_server" name="ed_server" /> 
