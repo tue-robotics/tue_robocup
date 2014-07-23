@@ -110,18 +110,8 @@ class NavigateToBlob(smach.State):
 
             self.visited_ids += [selected_id]
 
-            # point_in_unknown_blob_tf = msgs.PointStamped(0,0,0, frame_id="/"+selected_id) #TF of object is in center of object
-            # map_pointstamped = self.tf.transformPoint("/map", point_in_unknown_blob_tf)
-            # map_point_tuple = (map_pointstamped.point.x, map_pointstamped.point.y, map_pointstamped.point.z)
-
-            #lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(1.0, 0)
-            self.robot.base2.pc.constraint = 'x^2 + y^2 < 1.2^2'
-            self.robot.base2.pc.frame      = selected_id
-
-            self.robot.base2.oc.look_at    = msgs.Point(0, 0, 0)
-            self.robot.base2.oc.frame      = selected_id
-
-            nav = states.NavigateWithConstraints(self.robot) #Look from X distance to the unknown ubject
+            nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
+                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point(0, 0, 0))) 
             return nav.execute()
         else:
             return "goal_not_defined"
@@ -161,8 +151,8 @@ class ExploreStep(smach.State):
         self.robot.base2.pc.constraint = 'x^2 + y^2 > 1.0^2 && x^2 + y^2 < 2.0' #drive somewhere between 1 and 2 meters away
         self.robot.base2.pc.frame      = "/amigo/base_link"
 
-        self.robot.base2.oc.look_at    = msgs.Point(0, 0, 0)
-        self.robot.base2.oc.frame      = "/amigo/base_link"
+        self.robot.base2.oc.look_at    = msgs.Point(5, 5, 0)
+        self.robot.base2.oc.frame      = "/map"
         self.robot.base2.oc.angle      = pi / 1 #Turn 180 degrees, so look away from where we were
 
         nav = states.NavigateWithConstraints(self.robot) #Look from X distance to the unknown ubject
@@ -329,8 +319,8 @@ class FinalChallenge2014(smach.StateMachine):
                                     states.NavigateWithConstraints( robot,                                                          #4.682, 4.145
                                                                     position_constraint=
                                                                         PositionConstraint( frame="/map", 
-                                                                                            constraint="x=4.68 && y=4.14 && x^2 + y^2 > 0.25^2"),
-                                                                    orientation_constraint=None),
+                                                                                            constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
+                                                                    orientation_constraint=OrientationConstraint(frame="/map")),
                                     transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
@@ -396,11 +386,10 @@ class FinalChallenge2014(smach.StateMachine):
                                                     "failed":'SAY_OBJECT_NOT_GRASPED' })             
 
             smach.StateMachine.add('RETURN_TO_PERSON',
-                                    states.NavigateWithConstraints( robot,                                                          #4.682, 4.145
-                                                                    position_constraint=
-                                                                        PositionConstraint( frame="/map", 
-                                                                                            constraint="x=4.68 && y=4.14 && x^2 + y^2 > 0.25^2"),
-                                                                    orientation_constraint=None),
+                                    states.NavigateWithConstraints( robot,
+                                                    position_constraint=PositionConstraint( frame="/map", 
+                                                                                            constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
+                                                    orientation_constraint=OrientationConstraint(frame="/map")),
                                     transitions={   'arrived':'GOTO_EXIT', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'GOTO_EXIT', 
@@ -411,9 +400,9 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={    "spoken":"GOTO_EXIT"})            
 
             smach.StateMachine.add('GOTO_EXIT',
-                                    states.NavigateWithConstraints(robot,                                                          #4.682, 4.145
-                                                   position_constraint=PositionConstraint(frame="/map", constraint="x==0 && y==0 && x^2 + y^2 > 0.25^2"),
-                                                   orientation_constraint=None),
+                                    states.NavigateWithConstraints(robot,
+                                                    position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y+1)^2 < 0.4"),
+                                                    orientation_constraint=OrientationConstraint(frame="/map")),
                                     # states.NavigateGeneric(robot, goal_query=exit_query),
                                     transitions={   'arrived':'Done', 
                                                     'preempted':'Aborted', 
