@@ -88,7 +88,7 @@ class Head(object):
             if self._ac_head_ref_action.get_state() == GoalStatus.SUCCEEDED:
                 return True
             else:
-                rospy.logwarn("Cannot reach head target {0}".format(head_goal))
+                rospy.logwarn("Cannot reach head target {0}".format(head_goal.target_point.point))
                 ''' Cancel goal to stop publishing reference values '''
                 self.cancel_goal()
                 return False
