@@ -9,10 +9,12 @@
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
   EXC: While driving, look at the clusters TFs one by ones
+  ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
 
 == TODO CATEGORIES ==
 
     GUI: web gui server
     EXC: executive
     PER: perception / model fitting
+    ED_: Ed and its API
 
