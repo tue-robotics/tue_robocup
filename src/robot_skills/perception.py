@@ -77,11 +77,14 @@ class Perception(object):
         
         # If 'object_recognition' is called, this is replaced by the current default module
         modules = [module.replace("object_recognition", self.default_object_recognition_method) for module in modules]
+        
+        if (len(modules) == 0):
+            modules = self.always_on_modules
 
-        ''' Add always_on_modules '''
-        for module in self.always_on_modules:
-            if not module in modules:
-                modules.append(module)
+        #''' Add always_on_modules ''' --> WILL BE REINSTATED WHEN TOGGLED OFF
+        #for module in self.always_on_modules:
+        #    if not module in modules:
+        #        modules.append(module)
 
         rospy.loginfo("modules are {0}".format(modules))
         return self.sv_recognition(modules)
