@@ -431,7 +431,7 @@ class ChallengeDemo2014(smach.StateMachine):
             # ToDo : in the end stop ppl detection
 
             smach.StateMachine.add('WAIT_FOR_OWNER', # pose_2d(1.964, 8.018, 2.82)
-                                    WaitForOwner(robot, timeout = 30, roi_pos_x = 2.0, roi_pos_y = 8.0, detecting_range = 1.0),
+                                    WaitForOwner(robot, timeout = 30, roi_pos_x = 2.0, roi_pos_y = 1.0, detecting_range = 1.0),
                                     transitions={   "person_found": "FETCH_OBJECTS",
                                                     "timed_out":    "FETCH_OBJECTS"})
 
