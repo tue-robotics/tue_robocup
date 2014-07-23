@@ -19,7 +19,7 @@ from psi import *
 
 grasp_arm = "left"
 class_names = ['milk', 'pringles', 'noodles', 'biscuits']
-amount_of_objects = 4
+amount_of_objects = 999
 
 class AwaitTriggerAndAssertValue(smach.State):
     '''
@@ -320,11 +320,11 @@ class FetchObject(smach.StateMachine):
                                     transitions={   'spoken'    : 'RESET_ARMS_SPINDLE_HEAD_UPON_FAILURE'})
 
             smach.StateMachine.add('SAY_LOST_OWNER',
-                                    states.Say(robot, "Despite the additional lasers, I cannot find my boss, I will just go to the living room", block=False),
+                                    states.Say(robot, "Despite the additional lasers, I cannot find my owner, I will just go to the living room", block=False),
                                     transitions={   'spoken'    : 'NAVIGATE_TO_ROOM_OWNER'})
 
             smach.StateMachine.add('SAY_CANNOT_REACH_OWNER',
-                                    states.Say(robot, "I cannot seem to go to my boss, I will just go to the living room", block=False),
+                                    states.Say(robot, "I cannot seem to go to my owner, I will just go to the living room", block=False),
                                     transitions={   'spoken'    : 'NAVIGATE_TO_ROOM_OWNER'})
 
 
@@ -441,9 +441,9 @@ class ChallengeDemo2014(smach.StateMachine):
             
             smach.StateMachine.add('FETCH_OBJECTS', 
                                    fetch_object_iterator, 
-                                   transitions={'succeeded':'Done', 
-                                                'failed':'SAY_ABORT',
-                                                'exhausted':'Done'})
+                                   transitions={'succeeded':'FETCH_OBJECTS', 
+                                                'failed':'FETCH_OBJECTS',
+                                                'exhausted':'FETCH_OBJECTS'})
 
             smach.StateMachine.add('SAY_ABORT',
                                     states.Say(robot,
