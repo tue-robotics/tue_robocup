@@ -277,8 +277,16 @@ class FetchObject(smach.StateMachine):
                                                     'not_present':'SAY_NOT_PRESENT',
                                                     'failed'    : 'SAY_FAIL'})
 
-            smach.StateMachine.add('SAY_PRESENT', states.Say(robot, "We still have that in store, I will go and get it", block=False),
-                                    transitions={   'spoken'    : 'GET_OBJECT_SHELF'})
+            smach.StateMachine.add('SAY_PRESENT', states.Say(robot, "We still have that in stock, I will go and get it", block=False),
+                                    transitions={   'spoken'    : 'RETRACT_VISITED'})
+
+            smach.StateMachine.add("RETRACT_VISITED",
+                                    states.Retract_facts(robot, [Compound("visited", "X")]),
+                                    transitions={'retracted':'RETRACT_UNREACHABLE'})
+
+            smach.StateMachine.add("RETRACT_UNREACHABLE",
+                                    states.Retract_facts(robot, [Compound("unreachable", "X")]),
+                                    transitions={'retracted':'GET_OBJECT_SHELF'})
 
             smach.StateMachine.add('GET_OBJECT_SHELF',
                                     states.GetObject(robot, side=arm,  roi_query=roi_query, roi_identifier="ROI_Location", object_query=object_query, object_identifier=object_identifier_query, max_duration=rospy.Duration(180)),
@@ -287,7 +295,7 @@ class FetchObject(smach.StateMachine):
                                                     'Failed'    : 'SAY_FAIL',
                                                     'Timeout'   : 'SAY_FAIL' })
 
-            smach.StateMachine.add('SAY_NOT_PRESENT', states.Say(robot, "That is not in store, I better order it online", block=False),
+            smach.StateMachine.add('SAY_NOT_PRESENT', states.Say(robot, "That is not in stock, I better order it online", block=False),
                                     transitions={   'spoken'    : 'GET_OBJECT_DOOR'})
 
             smach.StateMachine.add('GET_OBJECT_DOOR',
