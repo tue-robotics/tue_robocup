@@ -5,16 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /Status1
-        - /TF1
-        - /PointClouds1
-        - /PointClouds1/Namespaces1
-        - /Marker2
-        - /RobotModel1
-        - /LaserScan1
-        - /head_Ref1
       Splitter Ratio: 0.5
-    Tree Height: 517
+    Tree Height: 697
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -33,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Visualization Manager:
   Class: ""
   Displays:
@@ -58,333 +50,12 @@ Visualization Manager:
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /world_model
-      Name: WorldModel
+      Name: "ED: World Model Entities"
       Namespaces:
         "": true
         name_and_type: true
         ns: true
         pose: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/TF
-      Enabled: true
-      Frame Timeout: 1
-      Frames:
-        /amigo/back_laser:
-          Value: true
-        /amigo/back_lasertop:
-          Value: true
-        /amigo/base:
-          Value: true
-        /amigo/base_kinect/openni_camera:
-          Value: true
-        /amigo/base_kinect/openni_depth_frame:
-          Value: true
-        /amigo/base_kinect/openni_depth_optical_frame:
-          Value: true
-        /amigo/base_kinect/openni_rgb_frame:
-          Value: true
-        /amigo/base_kinect/openni_rgb_optical_frame:
-          Value: true
-        /amigo/base_laser:
-          Value: true
-        /amigo/base_link:
-          Value: true
-        /amigo/base_plate:
-          Value: true
-        /amigo/clavicles:
-          Value: true
-        /amigo/elbow_extra_block2_left:
-          Value: true
-        /amigo/elbow_extra_block2_right:
-          Value: true
-        /amigo/elbow_extra_block_left:
-          Value: true
-        /amigo/elbow_extra_block_right:
-          Value: true
-        /amigo/elbow_link4_left:
-          Value: true
-        /amigo/elbow_link4_right:
-          Value: true
-        /amigo/finger1_left:
-          Value: true
-        /amigo/finger1_phalanx_left:
-          Value: true
-        /amigo/finger1_phalanx_right:
-          Value: true
-        /amigo/finger1_right:
-          Value: true
-        /amigo/finger1_tip_left:
-          Value: true
-        /amigo/finger1_tip_phalanx_left:
-          Value: true
-        /amigo/finger1_tip_phalanx_right:
-          Value: true
-        /amigo/finger1_tip_right:
-          Value: true
-        /amigo/finger2_left:
-          Value: true
-        /amigo/finger2_phalanx_left:
-          Value: true
-        /amigo/finger2_phalanx_right:
-          Value: true
-        /amigo/finger2_right:
-          Value: true
-        /amigo/finger2_tip_left:
-          Value: true
-        /amigo/finger2_tip_phalanx_left:
-          Value: true
-        /amigo/finger2_tip_phalanx_right:
-          Value: true
-        /amigo/finger2_tip_right:
-          Value: true
-        /amigo/fore_arm_left:
-          Value: true
-        /amigo/fore_arm_right:
-          Value: true
-        /amigo/fore_arm_top_left:
-          Value: true
-        /amigo/fore_arm_top_right:
-          Value: true
-        /amigo/grippoint_left:
-          Value: true
-        /amigo/grippoint_right:
-          Value: true
-        /amigo/hand_left:
-          Value: true
-        /amigo/hand_right:
-          Value: true
-        /amigo/head:
-          Value: true
-        /amigo/head_mount:
-          Value: true
-        /amigo/lasertop:
-          Value: true
-        /amigo/logo:
-          Value: true
-        /amigo/neck_pan:
-          Value: true
-        /amigo/neck_tilt:
-          Value: true
-        /amigo/odom:
-          Value: true
-        /amigo/shoulder_link1_left:
-          Value: true
-        /amigo/shoulder_link1_right:
-          Value: true
-        /amigo/shoulder_link2_left:
-          Value: true
-        /amigo/shoulder_link2_right:
-          Value: true
-        /amigo/shoulder_mount_left:
-          Value: true
-        /amigo/shoulder_mount_right:
-          Value: true
-        /amigo/top_kinect/openni_camera:
-          Value: true
-        /amigo/top_kinect/openni_depth_frame:
-          Value: true
-        /amigo/top_kinect/openni_depth_optical_frame:
-          Value: true
-        /amigo/top_kinect/openni_rgb_frame:
-          Value: true
-        /amigo/top_kinect/openni_rgb_optical_frame:
-          Value: true
-        /amigo/torso:
-          Value: true
-        /amigo/torso_assist_slider_back:
-          Value: true
-        /amigo/torso_assist_slider_left:
-          Value: true
-        /amigo/torso_assist_slider_right:
-          Value: true
-        /amigo/torso_dummy:
-          Value: true
-        /amigo/torso_laser:
-          Value: true
-        /amigo/torso_lasertop:
-          Value: true
-        /amigo/torso_slider:
-          Value: true
-        /amigo/upper_arm_left:
-          Value: true
-        /amigo/upper_arm_right:
-          Value: true
-        /amigo/upper_arm_top_left:
-          Value: true
-        /amigo/upper_arm_top_right:
-          Value: true
-        /amigo/wrist_link6_left:
-          Value: true
-        /amigo/wrist_link6_right:
-          Value: true
-        /amigo/wrist_to_hand_block_left:
-          Value: true
-        /amigo/wrist_to_hand_block_right:
-          Value: true
-        /amigo/wrist_visual_left:
-          Value: true
-        /amigo/wrist_visual_right:
-          Value: true
-        /d6cce35c487a58feab29032c2621f38d:
-          Value: true
-        /floor:
-          Value: true
-        /map:
-          Value: true
-        /rwc2014.walls:
-          Value: true
-        All Enabled: true
-      Marker Scale: 1
-      Name: TF
-      Show Arrows: false
-      Show Axes: true
-      Show Names: false
-      Tree:
-        /map:
-          /amigo/odom:
-            /amigo/base_link:
-              /amigo/base:
-                /amigo/back_laser:
-                  /amigo/back_lasertop:
-                    {}
-                /amigo/base_kinect/openni_camera:
-                  /amigo/base_kinect/openni_depth_frame:
-                    /amigo/base_kinect/openni_depth_optical_frame:
-                      {}
-                  /amigo/base_kinect/openni_rgb_frame:
-                    /amigo/base_kinect/openni_rgb_optical_frame:
-                      {}
-                /amigo/base_laser:
-                  /amigo/lasertop:
-                    {}
-                  /amigo/logo:
-                    {}
-                /amigo/torso_slider:
-                  /amigo/torso:
-                    /amigo/clavicles:
-                      {}
-                    /amigo/head_mount:
-                      /amigo/neck_pan:
-                        /amigo/neck_tilt:
-                          /amigo/head:
-                            /amigo/top_kinect/openni_camera:
-                              /amigo/top_kinect/openni_depth_frame:
-                                /amigo/top_kinect/openni_depth_optical_frame:
-                                  {}
-                              /amigo/top_kinect/openni_rgb_frame:
-                                /amigo/top_kinect/openni_rgb_optical_frame:
-                                  {}
-                    /amigo/shoulder_mount_left:
-                      /amigo/shoulder_link1_left:
-                        /amigo/shoulder_link2_left:
-                          /amigo/upper_arm_left:
-                            /amigo/elbow_extra_block2_left:
-                              {}
-                            /amigo/elbow_extra_block_left:
-                              {}
-                            /amigo/elbow_link4_left:
-                              /amigo/fore_arm_left:
-                                /amigo/fore_arm_top_left:
-                                  {}
-                                /amigo/wrist_link6_left:
-                                  /amigo/hand_left:
-                                    /amigo/finger1_left:
-                                      /amigo/finger1_phalanx_left:
-                                        {}
-                                      /amigo/finger1_tip_left:
-                                        /amigo/finger1_tip_phalanx_left:
-                                          {}
-                                    /amigo/finger2_left:
-                                      /amigo/finger2_phalanx_left:
-                                        {}
-                                      /amigo/finger2_tip_left:
-                                        /amigo/finger2_tip_phalanx_left:
-                                          {}
-                                    /amigo/grippoint_left:
-                                      {}
-                                  /amigo/wrist_to_hand_block_left:
-                                    {}
-                                  /amigo/wrist_visual_left:
-                                    {}
-                            /amigo/upper_arm_top_left:
-                              {}
-                    /amigo/shoulder_mount_right:
-                      /amigo/shoulder_link1_right:
-                        /amigo/shoulder_link2_right:
-                          /amigo/upper_arm_right:
-                            /amigo/elbow_extra_block2_right:
-                              {}
-                            /amigo/elbow_extra_block_right:
-                              {}
-                            /amigo/elbow_link4_right:
-                              /amigo/fore_arm_right:
-                                /amigo/fore_arm_top_right:
-                                  {}
-                                /amigo/wrist_link6_right:
-                                  /amigo/hand_right:
-                                    /amigo/finger1_right:
-                                      /amigo/finger1_phalanx_right:
-                                        {}
-                                      /amigo/finger1_tip_right:
-                                        /amigo/finger1_tip_phalanx_right:
-                                          {}
-                                    /amigo/finger2_right:
-                                      /amigo/finger2_phalanx_right:
-                                        {}
-                                      /amigo/finger2_tip_right:
-                                        /amigo/finger2_tip_phalanx_right:
-                                          {}
-                                    /amigo/grippoint_right:
-                                      {}
-                                  /amigo/wrist_to_hand_block_right:
-                                    {}
-                                  /amigo/wrist_visual_right:
-                                    {}
-                            /amigo/upper_arm_top_right:
-                              {}
-                    /amigo/torso_assist_slider_back:
-                      {}
-                    /amigo/torso_assist_slider_left:
-                      {}
-                    /amigo/torso_assist_slider_right:
-                      {}
-                    /amigo/torso_dummy:
-                      /amigo/torso_laser:
-                        /amigo/torso_lasertop:
-                          {}
-              /amigo/base_plate:
-                {}
-          /d6cce35c487a58feab29032c2621f38d:
-            {}
-          /floor:
-            {}
-          /rwc2014.walls:
-            {}
-      Update Interval: 0
-      Value: true
-    - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /ed/point_normal/vis_markers
-      Name: PointClouds
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /ed/euclidean_clustering/vis_markers
-      Name: Marker
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /ed/kinect/vis_markers
-      Name: Marker
-      Namespaces:
-        frustrum_top_kinect: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -773,46 +444,49 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-      Name: RobotModel
+      Name: Amigo Robot Model
       Robot Description: /amigo/robot_description
       TF Prefix: amigo
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/LaserScan
-      Color: 255; 255; 255
-      Color Transformer: Intensity
-      Decay Time: 0
-      Enabled: true
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: LaserScan
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.01
-      Style: Flat Squares
-      Topic: /amigo/base_front_laser
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /head_target_marker
-      Name: head_Ref
+      Name: "Head Ref: Lookat Point"
       Namespaces:
-        {}
+        head_target: true
+      Queue Size: 100
+      Value: true
+    - Alpha: 0.05
+      Class: rviz/Map
+      Draw Behind: false
+      Enabled: true
+      Name: Navigation Costmap
+      Topic: /base_navigation/costmap/costmap
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /base_navigation/visualization/markers/global_plan_marker
+      Name: "Navigation: Global Plan"
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /base_navigation/visualization/markers/goal_pose_marker
+      Name: "Navigation: Goal Pose"
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /base_navigation/visualization/markers/goal_positions_marker
+      Name: "Navigation: End Goal Constraint"
+      Namespaces:
+        "": true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -838,25 +512,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.95733
+      Distance: 13.1935
       Focal Point:
-        X: 1.76293
-        Y: 2.23873
-        Z: 0.539891
+        X: 2.81401
+        Y: 4.95261
+        Z: -5.18398
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.659797
+      Pitch: 1.5698
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.73979
+      Yaw: 3.23389
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 823
+  Height: 1003
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001e500000294fc0200000008fb0000001200530065006c0065006300740069006f006e00000000410000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000004100000294000000dd00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000294fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000004100000294000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000063e0000003efc0100000002fb0000000800540069006d006501000000000000063e000002f600fffffffb0000000800540069006d006501000000000000045000000000000000000000033e0000029400000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000010f00000348fc0200000008fb000000100044006900730070006c006100790073010000004100000348000000dd00fffffffb0000001200530065006c0065006300740069006f006e00000000410000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002d8fc0200000002fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000780000000ddfc0100000002fb0000000a005600690065007700730000000000000007800000010f00fffffffb0000000a00560069006500770073030000004e00000080000002e100000197000000030000077e0000003efc0100000002fb0000000800540069006d006501000000000000077e000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000006690000034800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -865,6 +539,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1598
+  Width: 1918
   X: 0
   Y: 24

@@ -10,7 +10,8 @@ PREPARATION:
     # Source the bashrc
     source ~/.bashrc
 
-    # Rosmake navigation
+    # Make navigation (optional)
+    tue-catkin-make
     rosmake cb_base_navigation
 
 SOFTWARE:
