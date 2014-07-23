@@ -1,0 +1,14 @@
+== TODO ==
+
+    (ranked by priority)
+
+  GUI: handle click events (Sjoerd)
+  GUI: handle SetType service calls (Sjoerd)
+  PER: fit 3D models and add to ED (Sjoerd)
+
+== TODO CATEGORIES ==
+
+    GUI: web gui server
+    EXC: executive
+    PER: perception / model fitting
+
