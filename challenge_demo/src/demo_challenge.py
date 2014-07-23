@@ -13,6 +13,7 @@ import robot_skills.util.msg_constructors as msgs
 import robot_smach_states as states
 
 from robot_smach_states.util.startup import startup
+from pein_srvs.srv import SetObjects
 
 from psi import *
 
@@ -377,6 +378,9 @@ class ChallengeDemo2014(smach.StateMachine):
             arm = robot.rightArm
         else:
             arm = robot.leftArm
+
+        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
+        response = self.set_objects(['beer','milk', 'pringles', 'noodles', 'biscuits', 'unknown'])
 
         #retract old facts
         robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
