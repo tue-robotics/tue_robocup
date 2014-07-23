@@ -379,8 +379,8 @@ class ChallengeDemo2014(smach.StateMachine):
         else:
             arm = robot.leftArm
 
-        self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
-        response = self.set_objects(['beer','milk', 'pringles', 'noodles', 'biscuits', 'unknown'])
+        #self.set_objects = rospy.ServiceProxy('/pein/set_object_models',SetObjects)
+        #response = self.set_objects(['beer','milk', 'pringles', 'noodles', 'biscuits', 'unknown'])
 
         #retract old facts
         robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
@@ -408,8 +408,14 @@ class ChallengeDemo2014(smach.StateMachine):
 
             smach.StateMachine.add("INITIALIZE",
                                     states.Initialize(robot),
-                                    transitions={   'initialized':  'WAIT_FOR_OWNER',
+                                    transitions={   'initialized':  'INIT_POSE',
                                                     'abort':        'Aborted'})
+
+            smach.StateMachine.add('INIT_POSE',
+                                states.Set_initial_pose(robot, "initial_pose_demo"),
+                                transitions={   'done':'WAIT_FOR_OWNER',
+                                                'preempted':'WAIT_FOR_OWNER',
+                                                'error':'WAIT_FOR_OWNER'})
 
             # ToDo : in the end stop ppl detection
 
