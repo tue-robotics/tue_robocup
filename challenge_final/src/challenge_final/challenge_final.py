@@ -12,7 +12,10 @@ Als geen unknown objecten in WM, stukje draaien en weer checken of er unknowns z
 TODO:
 - Find a way to check whether we found some object (i.e. has the right label). Without the reasoner!
 ---> the service Ed offer has a type-parameter. Filter on that!
-- Ask the user an item and position (this is a piece of furniture, for example)
+- Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
+- Pre-empt driving when the postion of the desired object, like table, is known.
+   Do this with a concurrent state: nav || wait for a service call or publication to a topic
+- While, driving, look at the clusters TFs one by ones
 
 == Scenario ==
 Stage 1
@@ -55,6 +58,9 @@ import robot_skills.util.msg_constructors as msgs
 import robot_smach_states as states
 from psi import Compound, Sequence, Conjunction
 
+explore_region_center = msgs.Point(x=4, y=5, z=0) #implicitly is in map. TODO Ed: make this a pointstamped
+explore_region_radius = 5
+
 class NavigateToBlob(smach.State):
     """Ask Ed (Environment Description) what the IDs of unkown blobs are. """
     def __init__(self, robot, blobtype=None):
@@ -72,27 +78,28 @@ class NavigateToBlob(smach.State):
 
     def execute(self, userdata=None):
         blobtype = self.blobtype() if callable(self.blobtype) else self.blobtype #If blobtype is a function, call it, otherwise use it as is.
-        query = SimpleQueryRequest(type=blobtype) #type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
+        query = SimpleQueryRequest(type=blobtype, center_point=explore_region_center, radius=explore_region_radius) #type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
         
         object_ids = []
         
         try:
-            object_ids = self.ed(query).ids
+            object_ids = [entity.id for entity in self.ed(query).entities]
         except Exception, e:
             rospy.logerr(e)
 
         #DEBUG (also run rosrun tf static_transform_publisher 5 0 0 0 0 0 /map /object_1 100)
         #DEBUG (also run rosrun tf static_transform_publisher 2 -5 0 0 0 0 /map /object_2 100)
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         #When we're looking for a selected object, object_ids should be one of object_1 or object_2
-        #object_ids = ["object_1", "object_2"]
+        # if blobtype: 
+        #     object_ids = ["object_1", "object_2"]
         #END DEBUG
 
-        rospy.loginfo("The {1} unknown IDs are: {0}".format(object_ids, len(object_ids)))
+        rospy.loginfo("The {1} IDs with type {2} are: {0}".format(object_ids, len(object_ids), blobtype))
         rospy.loginfo("The {1} visited IDs are: {0}".format(self.visited_ids, len(self.visited_ids)))
 
         object_ids = list(set(object_ids) - set(self.visited_ids))
-        rospy.loginfo("The {1} REMAINING unknown IDs are: {0}".format(object_ids, len(object_ids)))
+        rospy.loginfo("The {1} REMAINING IDs with type {2} are: {0}".format(object_ids, len(object_ids), blobtype))
 
 
         if object_ids:
@@ -146,7 +153,7 @@ class ExploreStep(smach.State):
 
 class FindUnknownObject(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
+        smach.StateMachine.__init__(self, outcomes=['Done','Failed', "preempted"])
         self.robot = robot
 
         self.turn_angle = 60
@@ -184,10 +191,14 @@ class FindUnknownObject(smach.StateMachine):
 
             smach.StateMachine.add('EXPLORE', 
                                     ExploreStep(robot, distance=3),
-                                    transitions={       'arrived':'Done', 
-                                                        'preempted':'Aborted', 
+                                    transitions={       'arrived':'SAY_FOUND_UNKNOWN', 
+                                                        'preempted':'preempted', 
                                                         'unreachable':'Failed', 
-                                                        'goal_not_defined':'Aborted'})
+                                                        'goal_not_defined':'preempted'})
+
+            smach.StateMachine.add( "SAY_FOUND_UNKNOWN",
+                                    states.Say(robot,"I found something I don't know."),
+                                    transitions={    "spoken":"Done"})
 
 class AskObjectAndPosition(smach.State):
     def __init__(self, robot):
@@ -205,6 +216,50 @@ class AskObjectAndPosition(smach.State):
 
         return "Done"
 
+class WaitForPositionLabeled(smach.State):
+    """This state is done when there finally is an object labeled with the label we desire.
+    The required label can be given by both an argument and a callback function"""
+
+    def __init__(self, robot, blobtype=None, rate=1):
+        """Blobtype is a string or a function that returns a string"""
+        smach.State.__init__(self, outcomes=['label_found', 'not_found', 'preempted'])
+        self.robot = robot
+
+        self.blobtype = blobtype
+
+        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+
+        self.rate = rospy.Rate(rate)
+
+    def execute(self, userdata=None):
+        if self.preempt_requested():
+            self.service_preempt()
+            return 'preempted'
+
+        self.rate.sleep()
+
+        blobtype = self.blobtype() if callable(self.blobtype) else self.blobtype #If blobtype is a function, call it, otherwise use it as is.
+        query = SimpleQueryRequest(type=blobtype, center_point=explore_region_center, radius=explore_region_radius)
+        
+        #DEBUG
+        import random
+        #if random.random() > 0.95:
+        import ipdb; ipdb.set_trace()
+            #DEBUG (also run rosrun tf static_transform_publisher 2 -5 0 0 0 0 /map /object_2 100)
+            #DEBUG object_ids = ['object_2']
+        #END DEBUG
+
+        try:
+            object_ids = [entity.id for entity in self.ed(query).entities]
+            if object_ids:
+                return 'label_found'
+            else:
+                return 'not_found'
+        except Exception, e:
+            rospy.logerr(e)
+        
+        return 'not_found'
+        
 class FinalChallenge2014(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Failed', "Aborted"])
@@ -219,18 +274,34 @@ class FinalChallenge2014(smach.StateMachine):
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))) 
 
-        #robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
+        exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
+    
+        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
+        robot.reasoner.query(Compound("retractall", Compound("goal", "X")))
 
         # Load database
         robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
 
         # Assert the current challenge.
         robot.reasoner.query(Compound("assertz",Compound("challenge", "final")))
+            
+                                    
+        #TODO: I stiiiiiiil havent found what i'm loooking for (U2)
+        def determine_desired_blobtype():
+            """Query the reasoner to recall what position we were supposed to go to"""
+            answers = robot.reasoner.query(Compound('goal', Compound("position", "Position")))
+            answers_filtered = [ans for ans in answers if ans["Position"].is_constant()]
+            rospy.loginfo("Position answers_filtered: {0}".format(answers_filtered))
+            if answers_filtered:
+                return str(answers_filtered[0]["Position"])
+            else:
+                rospy.logerr("Could not recall what position to go to")
+                return ""
 
         with self:
             # smach.StateMachine.add('INITIALIZE',
             #                     states.Initialize(robot),
-            #                     transitions={   'initialized':'GOTO_UNKNOWN',
+            #                     transitions={   'initialized':'GOTO_PERSON_START',
             #                                     'abort':'Aborted'})   
 
 
@@ -243,30 +314,47 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add( 'ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
-                                    transitions={   'Done':'GOTO_UNKNOWN'})
+                                    transitions={   'Done':'GOTO_UNKNOWN_UNTIL_LABELED'})
+            
+            #------------ Option 1: concurrency ------------------# 
+            # cc = smach.Concurrence( outcomes        = ['position_labeled', 'position_not_labeled'],
+            #                         default_outcome = 'position_not_labeled',
+            #                         outcome_map     = {'position_labeled'  :{  'CHECK_IF_ALREADY_FOUND':'position_labeled'}},
+            #                         child_termination_cb = lambda x: False) #Pre-empt all children when one fails
+            # with cc:
+            #     find_unknown = FindUnknownObject(robot)
 
-            smach.StateMachine.add( 'GOTO_UNKNOWN',
+            #     iter_waiting = smach.StateMachine(outcomes=['position_labeled', 'position_not_labeled'])
+            #     with iter_waiting:
+            #         smach.StateMachine.add( "CHECK",
+            #             WaitForPositionLabeled(robot, blobtype=determine_desired_blobtype),
+            #             transitions={    "label_found":"position_labeled",
+            #                              "not_found":'CHECK', #"CHECK",
+            #                              "preempted":'position_not_labeled'})  
+
+            #     smach.Concurrence.add('CHECK_IF_ALREADY_FOUND', iter_waiting)
+            #     smach.Concurrence.add('FIND_UNKNOWN', find_unknown)
+
+            # smach.StateMachine.add( "GOTO_UNKNOWN_UNTIL_LABELED",
+            #                         cc,
+            #                         transitions={   "position_labeled":"GOTO_POSITION",
+            #                                         "position_not_labeled":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
+            
+            #------------ Option 2: sequentially ------------------# 
+            smach.StateMachine.add( 'GOTO_UNKNOWN_UNTIL_LABELED', #Actuall does not go until labeled but keeps going because we're not in the concurrency
                                     FindUnknownObject(robot),
-                                    transitions={   'Done':'SAY_FOUND_UNKNOWN', 
-                                                    'Failed':'SAY_FOUND_UNKNOWN', 
-                                                    "Aborted":'SAY_FOUND_UNKNOWN'})
+                                    transitions={   'Done':'CHECK_IF_LABELED', 
+                                                    'Failed':'CHECK_IF_LABELED', 
+                                                    "preempted":'CHECK_IF_LABELED'})
 
-            smach.StateMachine.add( "SAY_FOUND_UNKNOWN",
-                                    states.Say(robot,"I found something I don't know."),
-                                    transitions={    "spoken":"GOTO_POSITION"})
-
-            #TODO: I stiiiiiiil havent found what i'm loooking for (U2)
-            def determine_desired_blobtype():
-                """Query the reasoner to recall what position we were supposed to go to"""
-                answers = robot.reasoner.query(Compound('goal', Compound("position", "Position")))
-                answers_filtered = [ans for ans in answers if ans["Position"].is_constant()]
-                rospy.loginfo("Position answers_filtered: {0}".format(answers_filtered))
-                if answers_filtered:
-                    return answers_filtered[0]["Position"]
-                else:
-                    rospy.logerr("Could not recall what position to go to")
-                    return ""
-        
+            smach.StateMachine.add( "CHECK_IF_LABELED",
+                WaitForPositionLabeled(robot, blobtype=determine_desired_blobtype),
+                transitions={    "label_found":"GOTO_POSITION",
+                                 "not_found":'SAY_STILL_HAVENT_FOUND', #"CHECK",
+                                 "preempted":'GOTO_POSITION'})  
+            
+            #------------ END options -----------------------------# 
+            
             smach.StateMachine.add( "GOTO_POSITION",
                                     NavigateToBlob(robot, blobtype=determine_desired_blobtype),
                                     transitions={   "arrived":"PICKUP_OBJECT",
@@ -276,7 +364,7 @@ class FinalChallenge2014(smach.StateMachine):
             
             smach.StateMachine.add( "SAY_STILL_HAVENT_FOUND",
                                     states.Say(robot,"I still haven't found what I'm looking for"),
-                                    transitions={    "spoken":"GOTO_UNKNOWN"})  
+                                    transitions={    "spoken":"GOTO_UNKNOWN_UNTIL_LABELED"})  
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
                                     states.GrabMachine(arm, robot, object_query),
@@ -295,10 +383,10 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={    "spoken":"GOTO_EXIT"})            
 
             smach.StateMachine.add('GOTO_EXIT',
-                                    states.NavigateGeneric(robot, goal_name="exit"),
-                                    transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
+                                    states.NavigateGeneric(robot, goal_query=exit_query),
+                                    transitions={   'arrived':'Done', 
                                                     'preempted':'Aborted', 
-                                                    'unreachable':'ASK_OBJECT_AND_POSITION', 
+                                                    'unreachable':'Done', 
                                                     'goal_not_defined':'Failed'})
 
 
