@@ -1,15 +1,23 @@
 == TODO ==
 
-    (ranked by priority)
+=== TEST ===
+  
+  GUI: handle SetType service calls (Sjoerd)
+  EXC: Find a way to check whether we found some object (i.e. has the right label). Without the reasoner! DONE: Ed offers a type-parameter
+
+=== BACKLOG ===
 
   GUI: handle click events (Sjoerd)
-  GUI: handle SetType service calls (Sjoerd)
-  PER: fit 3D models and add to ED (Sjoerd)
-  DONE EXC: Find a way to check whether we found some object (i.e. has the right label). Without the reasoner! DONE: Ed offers a type-parameter
+  GUI: implement GetGUICommand service (Sjoerd
+  EXC: Ask ED for command using GetGUICommand
+       service: /ed/gui/get_gui_command             
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
   EXC: While driving, look at the clusters TFs one by ones
+  PER: fit 3D models and add to ED (Sjoerd)
   ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
+
+=== DONE ===
 
 == TODO CATEGORIES ==
 
