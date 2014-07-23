@@ -111,7 +111,7 @@ class NavigateToBlob(smach.State):
             self.visited_ids += [selected_id]
 
             nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
-                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point(0, 0, 0))) 
+                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point())) 
             return nav.execute()
         else:
             return "goal_not_defined"
@@ -254,7 +254,7 @@ class WaitForPositionLabeled(smach.State):
         #DEBUG
         import random
         #if random.random() > 0.95:
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
             #DEBUG (also run rosrun tf static_transform_publisher 2 -5 0 0 0 0 /map /object_2 100)
             #DEBUG object_ids = ['object_2']
         #END DEBUG
@@ -320,7 +320,7 @@ class FinalChallenge2014(smach.StateMachine):
                                                                     position_constraint=
                                                                         PositionConstraint( frame="/map", 
                                                                                             constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
-                                                                    orientation_constraint=OrientationConstraint(frame="/map")),
+                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
                                     transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
@@ -389,7 +389,7 @@ class FinalChallenge2014(smach.StateMachine):
                                     states.NavigateWithConstraints( robot,
                                                     position_constraint=PositionConstraint( frame="/map", 
                                                                                             constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
-                                                    orientation_constraint=OrientationConstraint(frame="/map")),
+                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
                                     transitions={   'arrived':'GOTO_EXIT', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'GOTO_EXIT', 
@@ -402,7 +402,7 @@ class FinalChallenge2014(smach.StateMachine):
             smach.StateMachine.add('GOTO_EXIT',
                                     states.NavigateWithConstraints(robot,
                                                     position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y+1)^2 < 0.4"),
-                                                    orientation_constraint=OrientationConstraint(frame="/map")),
+                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
                                     # states.NavigateGeneric(robot, goal_query=exit_query),
                                     transitions={   'arrived':'Done', 
                                                     'preempted':'Aborted', 
