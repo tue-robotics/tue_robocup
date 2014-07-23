@@ -42,8 +42,8 @@ $( document ).ready(function() {
             objs = objs.split('|');
         }
 
-        known_objects = _.union(known_objects, objs);
-        known_objects.sort();
+        //known_objects = _.union(known_objects, objs);
+        //known_objects.sort();
 
         var data = known_objects.map(function (o) {
             var c;
