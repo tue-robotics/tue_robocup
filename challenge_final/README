@@ -1,0 +1,29 @@
+PREPARATION:
+
+    # Make sure hydro's costmap_2d is used
+    ln -s ~/ros/groovy/rosbuild_ws/tue/user/Rein/catkin_packages/hydro_navigation ~/ros/groovy/catkin_ws/src/
+
+    # Make sure cb_base_navigation is used
+    rospkgs; // Add this line:
+        - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
+
+    # Source the bashrc
+    source ~/.bashrc
+
+    # Rosmake navigation
+    rosmake cb_base_navigation
+
+SOFTWARE:
+    # restart ssh session
+    amiddle-final # starts custom middleware and dependencies.launch 
+
+    # start the challenge
+    rosrun challenge_final challenge_final.py <-- TODO: Not sure
+
+POSTPARATION:
+    # When you're done:
+    rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
+
+    # Remove the cb base navigation again:
+    comment or delete the following line from rospkgs: 
+        - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
