@@ -4,13 +4,13 @@
   
   GUI: handle SetType service calls (Sjoerd)
   EXC: Find a way to check whether we found some object (i.e. has the right label). Without the reasoner! DONE: Ed offers a type-parameter
-
-=== BACKLOG ===
-
   GUI: handle click events (Sjoerd)
        - Detect which objects is clicked
        - Set the appropriate gui command
   GUI: implement GetGUICommand service (Sjoerd)
+
+=== BACKLOG ===
+
   EXC: Ask ED for command using GetGUICommand (Loy)
        service: /ed/gui/get_gui_command             
   ED:  Fix heavy memory usage (Sjoerd)
