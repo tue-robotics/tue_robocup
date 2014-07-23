@@ -13,10 +13,12 @@
   GUI: implement GetGUICommand service (Sjoerd)
   EXC: Ask ED for command using GetGUICommand (Loy)
        service: /ed/gui/get_gui_command             
+  ED:  Fix heavy memory usage (Sjoerd)
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
   EXC: While driving, look at the clusters TFs one by ones
   PER: fit 3D models and add to ED (Sjoerd)
+  GUI: Fix long service calls
   ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
 
 === DONE ===
