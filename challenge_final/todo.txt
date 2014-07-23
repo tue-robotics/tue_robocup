@@ -8,8 +8,8 @@
 === BACKLOG ===
 
   GUI: handle click events (Sjoerd)
-  GUI: implement GetGUICommand service (Sjoerd
-  EXC: Ask ED for command using GetGUICommand
+  GUI: implement GetGUICommand service (Sjoerd)
+  EXC: Ask ED for command using GetGUICommand (Loy)
        service: /ed/gui/get_gui_command             
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
