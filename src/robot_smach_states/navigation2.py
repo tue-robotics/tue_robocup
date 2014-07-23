@@ -15,7 +15,7 @@ from psi import Term, Compound, Conjunction
 import actionlib
 
 class checkGoalPositionConstraint(smach.State):
-    def __init__(self, robot, position_constraint=None, orientation_constraint=None):
+    def __init__(self, robot, position_constraint, orientation_constraint):
         smach.State.__init__(self,outcomes=['unreachable','goal_not_defined','goal_ok'])
         self.robot = robot 
 
@@ -23,14 +23,14 @@ class checkGoalPositionConstraint(smach.State):
         self.orientation_constraint = orientation_constraint
 
     def execute(self, userdata):
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         #Override the current constraints. We're using global state, so need to clean that up
         if self.position_constraint:
             self.robot.base2.pc = self.position_constraint
         else:
             self.robot.base2.pc = PositionConstraint() #Override the current constraint. We're using global state, so need to clean that up
 
-        self.orientation_constraint = self.orientation_constraint if self.orientation_constraint else OrientationConstraint()
+        self.orientation_constraint = self.orientation_constraint if self.orientation_constraint else OrientationConstraint(frame="/map")
 
         # Perform some typechecks
         if not isinstance(self.robot.base2.pc, PositionConstraint) or not isinstance(self.robot.base2.oc, OrientationConstraint):
@@ -125,7 +125,7 @@ class executePlan(smach.State):
 #        return "execute"
 
 class NavigateWithConstraints(smach.StateMachine):
-    def __init__(self, robot, position_constraint=None, orientation_constraint=None):
+    def __init__(self, robot, position_constraint, orientation_constraint):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined', 'preempted'])
         self.robot = robot
 
