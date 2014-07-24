@@ -431,8 +431,8 @@ class ChallengeDemo2014(smach.StateMachine):
             # ToDo : in the end stop ppl detection
 
             smach.StateMachine.add('WAIT_FOR_OWNER', # pose_2d(1.964, 8.018, 2.82)
-                                    WaitForOwner(robot, timeout = 30, roi_pos_x = 2.0, roi_pos_y = 1.0, detecting_range = 1.0),
-                                    transitions={   "person_found": "FETCH_OBJECTS",
+                                    WaitForOwner(robot, timeout = 30, roi_pos_x = 3.0, roi_pos_y = 1.5, detecting_range = 1.0),
+                                    transitions={   "person_found": "SAY_OWNER_HOME",
                                                     "timed_out":    "FETCH_OBJECTS"})
 
             fetch_object_iterator = smach.Iterator(outcomes=['succeeded', 'failed'],
@@ -441,6 +441,12 @@ class ChallengeDemo2014(smach.StateMachine):
                                                    it=lambda: range(amount_of_objects), 
                                                    it_label='object_count', 
                                                    exhausted_outcome='exhausted')
+                                                   
+            smach.StateMachine.add('SAY_OWNER_HOME',
+                                    states.Say(robot,
+                                        "Hey, I see that my owner is at home",
+                                        block=False),
+                                    transitions={   'spoken'    :   'FETCH_OBJECTS'})
             
             with fetch_object_iterator:
                 fetch_one_object =  FetchObject(robot, arm)
