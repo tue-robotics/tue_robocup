@@ -61,6 +61,8 @@ from psi import Compound, Sequence, Conjunction
 
 from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 
+from speech_interpreter.srv import AskUser
+
 explore_region_center = msgs.Point(x=4, y=5, z=0) #implicitly is in map. TODO Ed: make this a pointstamped
 explore_region_radius = 5
 
@@ -216,15 +218,65 @@ class AskObjectAndPosition(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["Done"])
         self.robot = robot
+        self.ask_user_service_get_action = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
-    def execute(self, userdata=None):
+        self.options_used = 0
 
-        #User says: "Get ITEM from POSITION" Position is like table or bar
-        position = "fridge"
-        self.robot.reasoner.assertz(Compound("goal", Compound("position", position)))
-        
-        item = "coke"
-        self.robot.reasoner.assertz(Compound("goal", Compound("item", item)))
+    def execute(self, userdata):
+
+        self.robot.head.look_up()
+
+        try:
+            self.response = self.ask_user_service_get_action("final_2014", 3, rospy.Duration(60))  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
+            
+            for x in range(0,len(self.response.keys)):
+                if self.response.keys[x] == "object":
+                    response_object = self.response.values[x]
+                elif self.response.keys[x] == "location":
+                    response_location = self.response.values[x]
+
+            if response_object == "no_answer" or response_object == "wrong_answer":
+                if self.options_used == 0:
+                    self.robot.speech.speak("I will just get you a beer from the table", block=False)
+                    response_location = "table"
+                    response_object = "beer"
+                elif  self.options_used == 1:
+                    self.robot.speech.speak("I will just get you a milk from the sideboard", block=False)
+                    response_location = "sideboard"
+                    response_object = "milk"
+                elif  self.options_used == 2:
+                    self.robot.speech.speak("I will just get you an orange juice from the bar", block=False)
+                    response_location = "bar"
+                    response_object = "orange_juice"
+                
+                self.options_used += 1
+
+        except rospy.ServiceException, e:
+
+            rospy.loginfo("No action is heared")
+            #rospy.loginfo("Service call failed ({0})".format(e))
+
+            if self.options_used == 0:
+                self.robot.speech.speak("I will just get you a beer from the table", block=False)
+                response_location = "table"
+                response_object = "beer"
+            elif  self.options_used == 1:
+                self.robot.speech.speak("I will just get you a milk from the sideboard", block=False)
+                response_location = "sideboard"
+                response_object = "milk"
+            elif  self.options_used == 2:
+                self.robot.speech.speak("I will just get you an orange juice from the bar", block=False)
+                response_location = "bar"
+                response_object = "orange_juice"
+
+            self.options_used += 1
+
+        self.robot.reasoner.assertz(Compound("goal", Compound("position", response_location)))
+        self.robot.reasoner.assertz(Compound("goal", Compound("item", response_object)))
+
+        # Show values for action/start_location/end_location/object      
+        rospy.loginfo("Object = {0}".format(response_object))   
+        rospy.loginfo("Location = {0}".format(response_location))
 
         return "Done"
 
