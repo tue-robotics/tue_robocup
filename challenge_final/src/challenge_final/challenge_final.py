@@ -330,7 +330,7 @@ class WaitForPositionLabeled(smach.State):
         try:
             object_ids = [entity.id for entity in self.ed(query).entities]
             if object_ids:
-                self.robot.speech.speak("Thanks, boss. I'll go to the {0} after I checked this last thing out".format(blobtype).replace("_", " "),  block=False)
+                self.robot.speech.speak("Thanks, boss. I'll go to the {0} as soon as possible".format(blobtype).replace("_", " "),  block=False)
                 return 'label_found'
             else:
                 return 'not_found'
@@ -380,11 +380,7 @@ class FinalChallenge2014(smach.StateMachine):
         arm = robot.leftArm
 
         #TODO
-        object_query = Conjunction(  
-                                    Compound("goal", object_to_fetch),
-                                    Compound( "property_expected", "ObjectID", "class_label", "Object"),
-                                    Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
-                                    Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))) 
+        object_query = Compound("ed_object_of_type_position", lambda: object_to_fetch, "X", "Y", "Z")
 
         # exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
     
@@ -426,6 +422,7 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add('ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
+                                    #transitions={   'Done':'PICKUP_OBJECT'})
                                     transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
             
             #------------ Option 1: concurrency ------------------# 
@@ -485,7 +482,10 @@ class FinalChallenge2014(smach.StateMachine):
                                                     "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
             
             smach.StateMachine.add( "SAY_STILL_HAVENT_FOUND",
-                                    states.Say(robot,"I still haven't found what I'm looking for"),
+                                    states.Say(robot, [ "Searching", 
+                                                        "I'm still searching", 
+                                                        "Still looking",
+                                                        "I need to search more"], block=False),
                                     transitions={    "spoken":"GOTO_REQUESTED_POSITION_IF_REQUESTED"})  
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
