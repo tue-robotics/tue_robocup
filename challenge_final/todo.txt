@@ -8,20 +8,21 @@
        - Detect which objects is clicked
        - Set the appropriate gui command
   GUI: implement GetGUICommand service (Sjoerd)
+  PER: fit 3D models and add to ED (Sjoerd)
 
 === BACKLOG ===
 
-  ED:  Fix heavy memory usage (Sjoerd)
-  GUI: measurement service more lightweight: now every id is returned. Instead only return measurement of current id (Sjoerd)
+  GUI: remember id clicked on. Give back only this measurement in GetMeasurement. Use this id for SetLabel (Sjoerd)
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
-  GUI: Highlight the clicked object.
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
   EXC: While driving, look at the clusters TFs one by ones
-  PER: fit 3D models and add to ED (Sjoerd)
   GUI: Fix long service calls
+  ED:  Fix heavy memory usage (Sjoerd)
   ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
 
 === DONE ===
+  
+  GUI: Highlight the clicked object.
   EXC: Move to some object after we labeled it.
   EXC: Ask ED for command using GetGUICommand (Loy)
        service: /ed/gui/get_gui_command             
