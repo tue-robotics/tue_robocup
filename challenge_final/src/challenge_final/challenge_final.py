@@ -387,7 +387,10 @@ class GoToGuiCommandIfRequested(smach.State):
                 self.last_command_id = response.command_id
         except Exception, e:
             rospy.logerr(e)
-        return 'no_command_given'
+        if response.command != "wait":
+            return 'no_command_given'
+        else:
+            return 'wait'
 
 class FinalChallenge2014(smach.StateMachine):
     def __init__(self, robot):
