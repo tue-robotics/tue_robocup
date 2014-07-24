@@ -413,8 +413,8 @@ class FinalChallenge2014(smach.StateMachine):
                                     states.NavigateWithConstraints( robot,                                                          #4.682, 4.145
                                                                     position_constraint=
                                                                         PositionConstraint( frame="/map", 
-                                                                                            constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
-                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
+                                                                                            constraint="(x-1.985)^2 + (y-7.633)^2 < 0.2"),
+                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(5.0,1.0,0))),
                                     transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
