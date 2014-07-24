@@ -24,6 +24,10 @@ SOFTWARE:
 
     # start the challenge
     rosrun challenge_final challenge_final.py
+    
+START GUI: (click to navigate doesn't work yet)
+	# web page:
+	http://192.168.2.91:8000/src/final.html#final
 
 POSTPARATION:
     # When you're done:
