@@ -228,12 +228,14 @@ class AskObjectAndPosition(smach.State):
         self.options_used = 0
 
     def execute(self, userdata):
+        global object_to_fetch
+        global position_for_nav
 
         self.robot.head.look_up()
 
         try:
             self.response = self.ask_user_service_get_action("final_2014", 3, rospy.Duration(60))  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
-            
+            # import ipdb; ipdb.set_trace()
             response_object = "no_answer"
 
             for x in range(0,len(self.response.keys)):
@@ -260,7 +262,7 @@ class AskObjectAndPosition(smach.State):
 
         except rospy.ServiceException, e:
 
-            rospy.loginfo("No action is heared")
+            rospy.loginfo("No action is heared: {0}".format(e))
             #rospy.loginfo("Service call failed ({0})".format(e))
 
             if self.options_used == 0:
@@ -278,8 +280,8 @@ class AskObjectAndPosition(smach.State):
 
             self.options_used += 1
 
-        self.robot.reasoner.assertz(Compound("goal", Compound("position", response_location)))
-        self.robot.reasoner.assertz(Compound("goal", Compound("item", response_object)))
+        position_for_nav = response_location
+        object_to_fetch = response_object
 
         # Show values for action/start_location/end_location/object      
         rospy.loginfo("Object = {0}".format(response_object))   
@@ -395,6 +397,7 @@ class FinalChallenge2014(smach.StateMachine):
             
         def determine_desired_blobtype():
             """Determine where to go """
+            #import ipdb; ipdb.set_trace()
             if position_for_nav:
                 return position_for_nav
             else:
@@ -519,4 +522,4 @@ class FinalChallenge2014(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('exec_challenge_final_2014')
 
-    states.util.startup(FinalChallenge2014)
+    states.util.startup(FinalChallenge2014, initial_state=None)
