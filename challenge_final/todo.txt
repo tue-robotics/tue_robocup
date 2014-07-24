@@ -10,16 +10,17 @@
   PER: fit 3D models and add to ED (Sjoerd)
   PER: fix odu_finder (Sjoerd)
   GUI: remember id clicked on. Give back only this measurement in GetMeasurement. Use this id for SetLabel (Sjoerd)
+  GUI: Add RaiseEvent for deleting ids (Sjoerd)
 
 === BACKLOG ===
 
   PER: Create 3D models op large objects (Tim)
   EXC: check statemachine
-  ED:  implement world model reset
-  GUI: Add RaiseEvent for deleting ids
-  PER: check human detection, make nicer visualization for humans
+  ED:  implement world model reset (Sjoerd)
   ED:  ddp: extractPointCloud: image masks contain holes if scale_factor > 1. Fix this (Sjoerd)
+  PER: check human detection, make nicer visualization for humans
   GUI: wider screen (Sjoerd)
+  GUI: AMIGO view (Sjoerd)
   GUI: Fix long service calls
   ED:  Fix heavy memory usage (Sjoerd)
   ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
