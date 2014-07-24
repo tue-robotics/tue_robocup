@@ -12,7 +12,10 @@
 
 === BACKLOG ===
 
-  EXC: check statemachine (Sjoerd)
+  PER: Create 3D models op large objects (Sjoerd)
+  EXC: check statemachine
+  PER: fix odu_finder (Sjoerd)
+  PER: check human detection, make nicer visualization for humans
   GUI: remember id clicked on. Give back only this measurement in GetMeasurement. Use this id for SetLabel (Sjoerd)
   ED:  ddp: extractPointCloud: image masks contain holes if scale_factor > 1. Fix this (Sjoerd)
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
