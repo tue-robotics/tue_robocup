@@ -53,8 +53,9 @@ from math import radians, pi
 import smach
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
-from ed.srv import GetGUICommand, GetGUICommandResponse 
+from ed.srv import GetGUICommand, GetGUICommandResponse
 import robot_skills.util.msg_constructors as msgs
+from std_srvs.srv.Empty #Reset Ed
 
 import robot_smach_states as states
 from psi import Compound, Sequence, Conjunction
@@ -417,7 +418,7 @@ class FinalChallenge2014(smach.StateMachine):
                                                                     position_constraint=
                                                                         PositionConstraint( frame="/map", 
                                                                                             constraint="(x-1.985)^2 + (y-7.633)^2 < 0.2"),
-                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(5.0,1.0,0))),
+                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(5.0,7.0,0))),
                                     transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
