@@ -55,7 +55,9 @@ import smach
 from ed.srv import SimpleQuery, SimpleQueryRequest
 from ed.srv import GetGUICommand, GetGUICommandResponse
 import robot_skills.util.msg_constructors as msgs
-from std_srvs.srv.Empty #Reset Ed
+
+# Reset ed
+from std_srvs.srv import Empty
 
 import robot_smach_states as states
 from psi import Compound, Sequence, Conjunction
