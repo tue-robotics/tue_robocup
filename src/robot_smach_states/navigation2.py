@@ -95,11 +95,11 @@ class executePlan(smach.State):
         if count > 5:
             self.robot.base2.localPlannerCancelCurrentPlan()
             return "blocked"
-
-        self.robot.base2.plan = plan
         
         # Send the plan to the local_planner
-        self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
+        if not globalPlannerCheckPlan(self.robot.base2.plan):
+            self.robot.base2.plan = plan
+            self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
 
         r.sleep()
 
