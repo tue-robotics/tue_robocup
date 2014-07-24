@@ -28,3 +28,11 @@ POSTPARATION:
     # Remove the cb base navigation again:
     comment or delete the following line from rospkgs: 
         - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
+
+STORY:
+
+?? 
+
+Sentences to say if amigo asks "what can I do for you":
+"get me a (beer / milk / orangejuice) from the (table / sideboard / kitchen counter / bar)"
+
