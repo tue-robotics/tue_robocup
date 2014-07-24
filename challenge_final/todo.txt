@@ -44,26 +44,5 @@
 
 
 ERRORS:
-
-    [INFO] [WallTime: 1406176480.367839] Trying to update object pose
-    [ERROR] [WallTime: 1406176480.372101] InvalidUserCodeError: Could not execute state 'UPDATE_OBJECT_POSE' of type '<robot_smach_states.manipulation.UpdateObjectPose object at 0x7f847001a550>': Traceback (most recent call last):
-      File "/opt/ros/groovy/stacks/executive_smach/smach/src/smach/state_machine.py", line 241, in _update_once
-        self._remappings[self._current_label]))
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/tue_executioner/robot_smach_states/src/robot_smach_states/manipulation.py", line 259, in execute
-        answers = self.robot.reasoner.query(self.grabpoint_query)
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/tue_executioner/robot_skills/src/robot_skills/reasoner.py", line 48, in query
-        return self.client.query(term)
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/psi_toolkit/psi/src/psi/interface.py", line 241, in query
-        term_msg = term_to_msg(term)
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/psi_toolkit/psi/src/psi/interface.py", line 296, in term_to_msg
-        full_term_msg.root = term_to_msg2(term, full_term_msg)
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/psi_toolkit/psi/src/psi/interface.py", line 319, in term_to_msg2
-        sub_term_msg = term_to_msg2(term[i], full_term_msg)
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/psi_toolkit/psi/src/psi/interface.py", line 319, in term_to_msg2
-        sub_term_msg = term_to_msg2(term[i], full_term_msg)
-      File "/home/amigo/ros/groovy/rosbuild_ws/tue/trunk/psi_toolkit/psi/src/psi/interface.py", line 303, in term_to_msg2
-        if term.is_variable():
-    AttributeError: 'NoneType' object has no attribute 'is_variable'
-
-    [ERROR] [WallTime: 1406176480.372770] State 'PICKUP_OBJECT' failed to execute.
-    [ERROR] [WallTime: 1406176480.373309] Amigo exited with smach.exceptions.InvalidUserCodeError,<smach.exceptions.InvalidUserCodeError instance at 0x261b488>,<traceback object at 0x7f847003c950>
+- In grabmachine
+  WARNING: this predicate is not yet implemented ,(goal(None), ,(property_expected(ObjectID, class_label, Object), ,(property_expected(ObjectID, position, in_front_of(amigo)), property_expected(ObjectID, position, [X, Y, Z]))))
