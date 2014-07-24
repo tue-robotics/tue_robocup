@@ -436,8 +436,8 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add('ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
-                                    transitions={   'Done':'GOTO_OBJECT'})
-                                    # transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
+                                    #transitions={   'Done':'GOTO_OBJECT'})
+                                    transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
             
             #------------ Option 1: concurrency ------------------# 
             # cc = smach.Concurrence( outcomes        = ['position_labeled', 'position_not_labeled'],
