@@ -66,6 +66,9 @@ from speech_interpreter.srv import AskUser
 explore_region_center = msgs.Point(x=4, y=5, z=0) #implicitly is in map. TODO Ed: make this a pointstamped
 explore_region_radius = 5
 
+object_to_fetch = None
+position_for_nav = None
+
 class NavigateToBlob(smach.State):
     """Ask Ed (Environment Description) what the IDs of unkown blobs are. """
     def __init__(self, robot, blobtype=None):
@@ -83,6 +86,8 @@ class NavigateToBlob(smach.State):
 
     def execute(self, userdata=None):
         blobtype = self.blobtype() if callable(self.blobtype) else self.blobtype #If blobtype is a function, call it, otherwise use it as is.
+        rospy.loginfo("blobtype we're checking for is: '{0}'".format(str(blobtype)))
+
         query = SimpleQueryRequest(type=blobtype, center_point=explore_region_center, radius=explore_region_radius) #type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
         
         object_ids = []
@@ -114,7 +119,7 @@ class NavigateToBlob(smach.State):
             self.visited_ids += [selected_id]
 
             nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
-                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point())) 
+                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0))) 
             return nav.execute()
         else:
             return "goal_not_defined"
@@ -159,7 +164,7 @@ class ExploreStep(smach.State):
         #self.robot.base2.oc.angle      = pi / 1 #Turn 180 degrees, so look away from where we were
 
         nav = states.NavigateWithConstraints(self.robot, PositionConstraint(frame="/amigo/base_link", constraint='x^2 + y^2 > 1.0^2 && x^2 + y^2 < 2.0'),
-                                                         OrientationConstraint(frame="/map", look_at=msgs.Point(5, 5, 0))) #Look from X distance to the unknown ubject
+                                                         OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))) #Look from X distance to the unknown ubject
         return nav.execute()
 
         # nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) #TODO xy_dist_to_goal_tuple is not incorporated in this mode, only when its a query
@@ -229,6 +234,8 @@ class AskObjectAndPosition(smach.State):
         try:
             self.response = self.ask_user_service_get_action("final_2014", 3, rospy.Duration(60))  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
             
+            response_object = "no_answer"
+
             for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "object":
                     response_object = self.response.values[x]
@@ -303,6 +310,9 @@ class WaitForPositionLabeled(smach.State):
         self.rate.sleep()
 
         blobtype = self.blobtype() if callable(self.blobtype) else self.blobtype #If blobtype is a function, call it, otherwise use it as is.
+        rospy.loginfo("blobtype we're checking for is: '{0}'".format(str(blobtype)))
+        if not blobtype:
+            return "not_found"
         query = SimpleQueryRequest(type=blobtype, center_point=explore_region_center, radius=explore_region_radius)
         
         #DEBUG
@@ -348,7 +358,7 @@ class GoToGuiCommandIfRequested(smach.State):
                     selected_id = parameters['id']
 
                     nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
-                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point())) 
+                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0))) 
 
                     self.robot.speech.speak("I was told to check something out, lets explore!", block=False)
                     return nav.execute()
@@ -357,7 +367,6 @@ class GoToGuiCommandIfRequested(smach.State):
         except Exception, e:
             rospy.logerr(e)
         return 'no_command_given'
-
 
 class FinalChallenge2014(smach.StateMachine):
     def __init__(self, robot):
@@ -368,34 +377,29 @@ class FinalChallenge2014(smach.StateMachine):
 
         #TODO
         object_query = Conjunction(  
-                                    Compound("goal", Compound("item", "Object")),
+                                    Compound("goal", object_to_fetch),
                                     Compound( "property_expected", "ObjectID", "class_label", "Object"),
                                     Compound( "property_expected", "ObjectID", "position", Compound("in_front_of", "amigo")),
                                     Compound( "property_expected", "ObjectID", "position", Sequence("X", "Y", "Z"))) 
 
-        exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
+        # exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
     
-        robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
-        robot.reasoner.query(Compound("retractall", Compound("goal", "X")))
+        # robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
+        # robot.reasoner.query(Compound("retractall", Compound("goal", "X")))
 
-        # Load database
-        robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
+        # # Load database
+        # robot.reasoner.query(Compound("load_database","tue_knowledge",'prolog/locations.pl'))
 
-        # Assert the current challenge.
-        robot.reasoner.query(Compound("assertz",Compound("challenge", "final")))
+        # # Assert the current challenge.
+        # robot.reasoner.query(Compound("assertz",Compound("challenge", "final")))
             
-                                    
-        #TODO: I stiiiiiiil havent found what i'm loooking for (U2)
         def determine_desired_blobtype():
-            """Query the reasoner to recall what position we were supposed to go to"""
-            answers = robot.reasoner.query(Compound('goal', Compound("position", "Position")))
-            answers_filtered = [ans for ans in answers if ans["Position"].is_constant()]
-            rospy.loginfo("Position answers_filtered: {0}".format(answers_filtered))
-            if answers_filtered:
-                return str(answers_filtered[0]["Position"])
+            """Determine where to go """
+            if position_for_nav:
+                return position_for_nav
             else:
                 rospy.logerr("Could not recall what position to go to")
-                return ""
+                return None
 
         with self:
             # smach.StateMachine.add('INITIALIZE',
@@ -409,7 +413,7 @@ class FinalChallenge2014(smach.StateMachine):
                                                                     position_constraint=
                                                                         PositionConstraint( frame="/map", 
                                                                                             constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
-                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
+                                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
                                     transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
@@ -480,7 +484,7 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={    "spoken":"GOTO_REQUESTED_POSITION_IF_REQUESTED"})  
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
-                                    states.GrabMachine(arm, robot, object_query),
+                                    states.GrabMachineWithoutBase(arm, robot, object_query),
                                     transitions={   "succeeded":"RETURN_TO_PERSON",
                                                     "failed":'SAY_OBJECT_NOT_GRASPED' })             
 
@@ -488,7 +492,7 @@ class FinalChallenge2014(smach.StateMachine):
                                     states.NavigateWithConstraints( robot,
                                                     position_constraint=PositionConstraint( frame="/map", 
                                                                                             constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
-                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
+                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
                                     transitions={   'arrived':'SAY_BYE', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'SAY_BYE', 
@@ -505,7 +509,7 @@ class FinalChallenge2014(smach.StateMachine):
             smach.StateMachine.add('GOTO_EXIT',
                                     states.NavigateWithConstraints(robot,
                                                     position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y-0)^2 < 0.4"),
-                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
+                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
                                     # states.NavigateGeneric(robot, goal_query=exit_query),
                                     transitions={   'arrived':'Done', 
                                                     'preempted':'Aborted', 
