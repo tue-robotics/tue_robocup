@@ -358,6 +358,7 @@ class GoToGuiCommandIfRequested(smach.State):
         self.robot = robot
 
         self.command_poller = rospy.ServiceProxy('/ed/gui/get_gui_command', GetGUICommand)
+        self.last_age = None
         self.last_command_id = None
 
     def execute(self, userdata=None):
@@ -365,26 +366,28 @@ class GoToGuiCommandIfRequested(smach.State):
             response = self.command_poller()
             rospy.loginfo(response)
             #import ipdb; ipdb.set_trace()
-            if str(response.command_id) != str(self.last_command_id):
+            self.last_age = response.age.secs
+            
+            if response.command == "navigate" and response.command_id != self.last_command_id:
                 self.last_command_id = response.command_id
-                
-                if response.command == "navigate":
-                    parameters = dict(zip(response.param_names, response.param_values))
+                parameters = dict(zip(response.param_names, response.param_values))
 
-                    selected_id = parameters['id']
+                selected_id = parameters['id']
 
-                    nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
-                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0))) 
+                nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
+                                                         OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0))) 
 
-                    self.robot.speech.speak("I was told to check something out, lets explore!", block=False)
-                    return nav.execute()
-                if response.command == "explore":
-                    return 'no_command_given'
-                else:
-                    rospy.sleep(1)
-                    return 'wait'
+                self.robot.speech.speak("I was told to check something out, lets explore!", block=False)
+                return nav.execute()
+            if response.command == "explore":
+                self.last_command_id = response.command_id
+
+                return 'no_command_given'
             else:
                 self.last_command_id = response.command_id
+
+                rospy.sleep(1)
+                return 'wait'
         except Exception, e:
             rospy.logerr(e)
         if response.command != "wait":
