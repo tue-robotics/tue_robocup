@@ -97,7 +97,7 @@ class executePlan(smach.State):
             return "blocked"
         
         # Send the plan to the local_planner
-        if not globalPlannerCheckPlan(self.robot.base2.plan):
+        if not self.robot.base2.globalPlannerCheckPlan(self.robot.base2.plan):
             self.robot.base2.plan = plan
             self.robot.base2.localPlannerSetPlan(self.robot.base2.plan, self.robot.base2.oc)
 
