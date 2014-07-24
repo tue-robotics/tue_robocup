@@ -12,7 +12,9 @@
 
 === BACKLOG ===
 
+  EXC: check statemachine (Sjoerd)
   GUI: remember id clicked on. Give back only this measurement in GetMeasurement. Use this id for SetLabel (Sjoerd)
+  ED:  ddp: extractPointCloud: image masks contain holes if scale_factor > 1. Fix this (Sjoerd)
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
   EXC: While driving, look at the clusters TFs one by ones
