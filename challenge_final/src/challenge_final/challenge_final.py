@@ -354,7 +354,7 @@ class GoToGuiCommandIfRequested(smach.State):
     """Poll whether the ed gui has received a (new) command. If so, execute that command (i.e go there)"""
 
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined', 'no_command_given'])
+        smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined', 'no_command_given', 'wait'])
         self.robot = robot
 
         self.command_poller = rospy.ServiceProxy('/ed/gui/get_gui_command', GetGUICommand)
@@ -364,7 +364,8 @@ class GoToGuiCommandIfRequested(smach.State):
         try:
             response = self.command_poller()
             rospy.loginfo(response)
-            if response.command_id != self.last_command_id:
+            #import ipdb; ipdb.set_trace()
+            if str(response.command_id) != str(self.last_command_id):
                 self.last_command_id = response.command_id
                 
                 if response.command == "navigate":
@@ -377,6 +378,11 @@ class GoToGuiCommandIfRequested(smach.State):
 
                     self.robot.speech.speak("I was told to check something out, lets explore!", block=False)
                     return nav.execute()
+                if response.command == "explore":
+                    return 'no_command_given'
+                else:
+                    rospy.sleep(1)
+                    return 'wait'
             else:
                 self.last_command_id = response.command_id
         except Exception, e:
@@ -393,8 +399,8 @@ class FinalChallenge2014(smach.StateMachine):
         #TODO
         object_query = Compound("ed_object_of_type_position", lambda: object_to_fetch, "X", "Y", "Z")
 
-        # ed_reset = rospy.ServiceProxy('/ed/reset', Empty)
-        # ed_reset()
+        ed_reset = rospy.ServiceProxy('/ed/reset', Empty)
+        ed_reset()
 
         # exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
     
@@ -436,34 +442,7 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add('ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
-                                    #transitions={   'Done':'GOTO_OBJECT'})
                                     transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
-            
-            #------------ Option 1: concurrency ------------------# 
-            # cc = smach.Concurrence( outcomes        = ['position_labeled', 'position_not_labeled'],
-            #                         default_outcome = 'position_not_labeled',
-            #                         outcome_map     = {'position_labeled'  :{  'CHECK_IF_ALREADY_FOUND':'position_labeled'}},
-            #                         child_termination_cb = lambda x: False) #Pre-empt all children when one fails
-            # with cc:
-            #     find_unknown = FindUnknownObject(robot)
-
-            #     iter_waiting = smach.StateMachine(outcomes=['position_labeled', 'position_not_labeled'])
-            #     with iter_waiting:
-            #         smach.StateMachine.add( "CHECK",
-            #             WaitForPositionLabeled(robot, blobtype=determine_desired_blobtype),
-            #             transitions={    "label_found":"position_labeled",
-            #                              "not_found":'CHECK', #"CHECK",
-            #                              "preempted":'position_not_labeled'})  
-
-            #     smach.Concurrence.add('CHECK_IF_ALREADY_FOUND', iter_waiting)
-            #     smach.Concurrence.add('FIND_UNKNOWN', find_unknown)
-
-            # smach.StateMachine.add( "GOTO_UNKNOWN_UNTIL_LABELED",
-            #                         cc,
-            #                         transitions={   "position_labeled":"GOTO_POSITION",
-            #                                         "position_not_labeled":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
-            
-            #------------ Option 2: sequentially ------------------# 
             
             smach.StateMachine.add( "GOTO_REQUESTED_POSITION_IF_REQUESTED",
                                     GoToGuiCommandIfRequested(robot),
@@ -471,7 +450,8 @@ class FinalChallenge2014(smach.StateMachine):
                                                     "unreachable":'GOTO_UNKNOWN_UNTIL_LABELED',
                                                     "preempted":'GOTO_UNKNOWN_UNTIL_LABELED',
                                                     "goal_not_defined":'GOTO_UNKNOWN_UNTIL_LABELED',
-                                                    "no_command_given":'GOTO_UNKNOWN_UNTIL_LABELED'}) #This means that the select object does not exit (anymore?)
+                                                    "no_command_given":'GOTO_UNKNOWN_UNTIL_LABELED',
+                                                    "wait":"GOTO_REQUESTED_POSITION_IF_REQUESTED"}) #This means that the select object does not exit (anymore?)
 
 
             smach.StateMachine.add( 'GOTO_UNKNOWN_UNTIL_LABELED', #Actuall does not go until labeled but keeps going because we're not in the concurrency
@@ -491,7 +471,7 @@ class FinalChallenge2014(smach.StateMachine):
             smach.StateMachine.add( "GOTO_POSITION",
                                     NavigateToBlob(robot, blobtype=determine_desired_blobtype, mark_visited=False),
                                     transitions={   "arrived":"SAY_LOOKING",
-                                                    "unreachable":'SAY_LOOKING',
+                                                    "unreachable":'SAY_STILL_HAVENT_FOUND',
                                                     "preempted":'SAY_LOOKING',
                                                     "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
 
@@ -507,17 +487,24 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={    "spoken":"GOTO_REQUESTED_POSITION_IF_REQUESTED"})  
 
             smach.StateMachine.add( "GOTO_OBJECT",
-                                    NavigateToBlob(robot, blobtype=lambda: object_to_fetch, constraint='x^2 + y^2 < 0.65^2 and x^2 + y^2 > 0.30', 
-                                                                                            angle=-0.3805063771123649),
-                                    transitions={   "arrived":"PICKUP_OBJECT",
-                                                    "unreachable":'PICKUP_OBJECT',
-                                                    "preempted":'PICKUP_OBJECT',
-                                                    "goal_not_defined":'SAY_OBJECT_NOT_GRASPED'}) #This means there is no object of the desired type
+                                    NavigateToBlob(robot, blobtype=lambda: object_to_fetch),
+                                    transitions={   "arrived":"SAY_FOUND",
+                                                    "unreachable":'SAY_FOUND_UNREACHABLE',
+                                                    "preempted":'GOTO_REQUESTED_POSITION_IF_REQUESTED',
+                                                    "goal_not_defined":'GOTO_REQUESTED_POSITION_IF_REQUESTED'}) #This means there is no object of the desired type
 
-            smach.StateMachine.add( 'PICKUP_OBJECT',
-                                    states.GrabMachineWithoutBase(arm, robot, object_query),
-                                    transitions={   "succeeded":"RETURN_TO_PERSON",
-                                                    "failed":'SAY_OBJECT_NOT_GRASPED' })             
+            smach.StateMachine.add( "SAY_FOUND",
+                                    states.Say(robot, ["I Found the object!"]),
+                                    transitions={    "spoken":"RETURN_TO_PERSON"})  
+            
+            smach.StateMachine.add( "SAY_FOUND_UNREACHABLE",
+                                    states.Say(robot, ["I know which object to go to, but it is unreachable, sorry"]),
+                                    transitions={    "spoken":"RETURN_TO_PERSON"}) 
+
+            # smach.StateMachine.add( 'PICKUP_OBJECT',
+            #                         states.GrabMachineWithoutBase(arm, robot, object_query),
+            #                         transitions={   "succeeded":"RETURN_TO_PERSON",
+            #                                         "failed":'SAY_OBJECT_NOT_GRASPED' })             
 
             smach.StateMachine.add('RETURN_TO_PERSON',
                                     states.NavigateWithConstraints( robot,
@@ -527,25 +514,25 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
-                                                    'goal_not_defined':'Failed'})
+                                                    'goal_not_defined':'ASK_OBJECT_AND_POSITION'})
 
-            smach.StateMachine.add( "SAY_OBJECT_NOT_GRASPED",
-                                    states.Say(robot, ["I could not grasp the object, sorry.", "Sorry, I could not get the object."]),
-                                    transitions={    "spoken":"ASK_OBJECT_AND_POSITION"})   
+            # smach.StateMachine.add( "SAY_OBJECT_NOT_GRASPED",
+            #                         states.Say(robot, ["I could not grasp the object, sorry.", "Sorry, I could not get the object."]),
+            #                         transitions={    "spoken":"ASK_OBJECT_AND_POSITION"})   
 
-            smach.StateMachine.add( "SAY_BYE",
-                                    states.Say(robot,"Obri-gado. So long, and thanks for all the fish", block=False),
-                                    transitions={    "spoken":"GOTO_EXIT"})           
+            # smach.StateMachine.add( "SAY_BYE",
+            #                         states.Say(robot,"Obri-gado. So long, and thanks for all the fish", block=False),
+            #                         transitions={    "spoken":"GOTO_EXIT"})           
 
-            smach.StateMachine.add('GOTO_EXIT',
-                                    states.NavigateWithConstraints(robot,
-                                                    position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y-0)^2 < 0.4"),
-                                                    orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
-                                    # states.NavigateGeneric(robot, goal_query=exit_query),
-                                    transitions={   'arrived':'Done', 
-                                                    'preempted':'Aborted', 
-                                                    'unreachable':'Done', 
-                                                    'goal_not_defined':'Failed'})
+            # smach.StateMachine.add('GOTO_EXIT',
+            #                         states.NavigateWithConstraints(robot,
+            #                                         position_constraint=PositionConstraint(frame="/map", constraint="(x-0)^2 + (y-0)^2 < 0.4"),
+            #                                         orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
+            #                         # states.NavigateGeneric(robot, goal_query=exit_query),
+            #                         transitions={   'arrived':'Done', 
+            #                                         'preempted':'Aborted', 
+            #                                         'unreachable':'Done', 
+            #                                         'goal_not_defined':'Failed'})
 
 if __name__ == "__main__":
     rospy.init_node('exec_challenge_final_2014')
