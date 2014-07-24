@@ -8,7 +8,7 @@ import sys, traceback
 
 from optparse import OptionParser
 
-def startup(statemachine_creator, scenario_setup_function=None):
+def startup(statemachine_creator, scenario_setup_function=None, initial_state=None):
     '''Takes a FUNCTION that outputs a smach statemachine as input, 
     and optionally also a FUNCTION that attaches hooks for testing the statemachine as input.
     It sets up convenient ways to handle some errors, by letting the robot announce an error,
@@ -46,6 +46,8 @@ def startup(statemachine_creator, scenario_setup_function=None):
         try:
             #build the state machine
             executioner = statemachine_creator(amigo)
+            if initial_state:
+                executioner.set_initial_state(initial_state)
             introserver = smach_ros.IntrospectionServer('server_name', executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
             if options.testmode and scenario_setup_function:
