@@ -6,6 +6,10 @@ PREPARATION:
     # Make sure cb_base_navigation is used
     rospkgs; // Add this line:
         - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
+        
+    # Use Janno's robot_skills. 
+    "rospkgs" -> add this line
+		- other: {local-name: tue/user/Janno/rwc2014/robot_skills}
 
     # Source the bashrc
     source ~/.bashrc
