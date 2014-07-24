@@ -28,7 +28,7 @@
 
 === DONE ===
   
-  EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
+  EXC: Ask the user an item and position (this is a piece of furniture, for example): Done
   GUI: Highlight the clicked object.
   EXC: Move to some object after we labeled it.
   EXC: Find a way to check whether we found some object (i.e. has the right label). Without the reasoner! DONE: Ed offers a type-parameter
