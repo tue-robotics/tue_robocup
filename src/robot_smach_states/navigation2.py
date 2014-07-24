@@ -30,13 +30,12 @@ class checkGoalPositionConstraint(smach.State):
         else:
             self.robot.base2.pc = PositionConstraint() #Override the current constraint. We're using global state, so need to clean that up
 
-        self.orientation_constraint = self.orientation_constraint if self.orientation_constraint else OrientationConstraint(frame="/map")
+        self.robot.base2.oc = self.orientation_constraint if self.orientation_constraint else OrientationConstraint(frame="/map")
 
         # Perform some typechecks
         if not isinstance(self.robot.base2.pc, PositionConstraint) or not isinstance(self.robot.base2.oc, OrientationConstraint):
             rospy.loginfo("Invalid constraints given to checkGoalPositionConstraint")
             return "goal_not_defined"
-
 
         plan = self.robot.base2.globalPlannerGetPlan(self.robot.base2.pc)
 
@@ -64,9 +63,9 @@ class prepareNavigation(smach.State):
 
 class executePlan(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['arrived','blocked','navigating', 'preempted'])
-        self.robot = robot 
-	time.sleep(2)
+        smach.State.__init__(self,outcomes=['arrived','blocked','navigating', 'preempted', 'failed'])
+        self.robot = robot         
+        #import ipdb; ipdb.set_trace() #break 80
 
     def execute(self, userdate):
         if self.preempt_requested():
@@ -79,7 +78,11 @@ class executePlan(smach.State):
 
         if self.robot.base2.local_planner_status == "arrived":
             self.robot.base2.local_planner_status = "idle"
-            return "arrived"
+            return "arrived"        
+
+        if self.robot.base2.local_planner_status == "goal_not_defined":
+            self.robot.base2.local_planner_status = "idle"
+            return "failed"
 
         # Check if we can find an other plan
         plan = self.robot.base2.globalPlannerGetPlan(self.robot.base2.pc)
@@ -129,6 +132,8 @@ class NavigateWithConstraints(smach.StateMachine):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined', 'preempted'])
         self.robot = robot
 
+        rospy.loginfo("{0},{1}".format(position_constraint,orientation_constraint))
+
         with self:
 
             smach.StateMachine.add('CHECK_GOAL_POSITION_CONSTRAINT',    checkGoalPositionConstraint(self.robot, position_constraint, orientation_constraint),
@@ -143,4 +148,5 @@ class NavigateWithConstraints(smach.StateMachine):
                 transitions={'arrived'                              :   'arrived',
                              'blocked'                              :   'unreachable',
                              'navigating'                           :   'EXECUTE_PLAN',
-                             'preempted'                            :   'preempted'})
+                             'preempted'                            :   'preempted',
+                             'failed'                               :   'goal_not_defined'})
