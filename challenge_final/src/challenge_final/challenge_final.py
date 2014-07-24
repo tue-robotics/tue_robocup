@@ -424,7 +424,7 @@ class FinalChallenge2014(smach.StateMachine):
                                                     'unreachable':'ASK_OBJECT_AND_POSITION', 
                                                     'goal_not_defined':'Failed'})
 
-            smach.StateMachine.add( 'ASK_OBJECT_AND_POSITION',
+            smach.StateMachine.add('ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
                                     transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
             
@@ -498,14 +498,14 @@ class FinalChallenge2014(smach.StateMachine):
                                                     position_constraint=PositionConstraint( frame="/map", 
                                                                                             constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
                                                     orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point(0,0,0))),
-                                    transitions={   'arrived':'SAY_BYE', 
+                                    transitions={   'arrived':'ASK_OBJECT_AND_POSITION', 
                                                     'preempted':'Aborted', 
-                                                    'unreachable':'SAY_BYE', 
+                                                    'unreachable':'ASK_OBJECT_AND_POSITION', 
                                                     'goal_not_defined':'Failed'})
 
             smach.StateMachine.add( "SAY_OBJECT_NOT_GRASPED",
                                     states.Say(robot,"I could not grasp the object, sorry guys."),
-                                    transitions={    "spoken":"SAY_BYE"})   
+                                    transitions={    "spoken":"ASK_OBJECT_AND_POSITION"})   
 
             smach.StateMachine.add( "SAY_BYE",
                                     states.Say(robot,"Obri-gado. So long, and thanks for all the fish", block=False),
