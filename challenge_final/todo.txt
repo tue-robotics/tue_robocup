@@ -12,6 +12,7 @@
 === BACKLOG ===
 
   ED:  Fix heavy memory usage (Sjoerd)
+  GUI: measurement service more lightweight: now every id is returned. Instead only return measurement of current id (Sjoerd)
   EXC: Ask the user an item and position (this is a piece of furniture, for example): Erik is bezig
   GUI: Highlight the clicked object.
   EXC: Pre-empt driving when the postion of the desired object, like table, is known. Maybe use smach.Concurrence
