@@ -71,12 +71,14 @@ position_for_nav = None
 
 class NavigateToBlob(smach.State):
     """Ask Ed (Environment Description) what the IDs of unkown blobs are. """
-    def __init__(self, robot, blobtype=None):
+    def __init__(self, robot, blobtype=None, constraint='x^2 + y^2 < 1.2^2', angle=0):
         """Blobtype is a string or a function that returns a string"""
         smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined'])
         self.robot = robot
 
         self.blobtype = blobtype
+        self.constraint = constraint
+        self.angle = angle
 
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
@@ -120,8 +122,9 @@ class NavigateToBlob(smach.State):
 
             self.visited_ids += [selected_id]
 
-            nav = states.NavigateWithConstraints(self.robot, PositionConstraint(selected_id, 'x^2 + y^2 < 1.2^2'),#Look from X distance to the unknown object
-                                                             OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0))) 
+            pos = PositionConstraint(selected_id, self.constraint)
+            ori = OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0), angle_offset=self.angle)
+            nav = states.NavigateWithConstraints(self.robot, pos, ori) 
             return nav.execute()
         else:
             return "goal_not_defined"
@@ -422,7 +425,7 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add('ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
-                                    #transitions={   'Done':'PICKUP_OBJECT'})
+                                    # transitions={   'Done':'GOTO_OBJECT'})
                                     transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
             
             #------------ Option 1: concurrency ------------------# 
@@ -476,9 +479,9 @@ class FinalChallenge2014(smach.StateMachine):
             
             smach.StateMachine.add( "GOTO_POSITION",
                                     NavigateToBlob(robot, blobtype=determine_desired_blobtype),
-                                    transitions={   "arrived":"PICKUP_OBJECT",
-                                                    "unreachable":'PICKUP_OBJECT',
-                                                    "preempted":'PICKUP_OBJECT',
+                                    transitions={   "arrived":"GOTO_OBJECT",
+                                                    "unreachable":'GOTO_OBJECT',
+                                                    "preempted":'GOTO_OBJECT',
                                                     "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
             
             smach.StateMachine.add( "SAY_STILL_HAVENT_FOUND",
@@ -487,6 +490,14 @@ class FinalChallenge2014(smach.StateMachine):
                                                         "Still looking",
                                                         "I need to search more"], block=False),
                                     transitions={    "spoken":"GOTO_REQUESTED_POSITION_IF_REQUESTED"})  
+
+            smach.StateMachine.add( "GOTO_OBJECT",
+                                    NavigateToBlob(robot, blobtype=lambda: object_to_fetch, constraint='x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30', 
+                                                                                            angle=-0.3805063771123649),
+                                    transitions={   "arrived":"PICKUP_OBJECT",
+                                                    "unreachable":'PICKUP_OBJECT',
+                                                    "preempted":'PICKUP_OBJECT',
+                                                    "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
                                     states.GrabMachineWithoutBase(arm, robot, object_query),
