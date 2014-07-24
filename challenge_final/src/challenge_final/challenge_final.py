@@ -279,17 +279,17 @@ class AskObjectAndPosition(smach.State):
             #rospy.loginfo("Service call failed ({0})".format(e))
 
             if self.options_used == 0:
-                self.robot.speech.speak("I will just get you a beer from the table", block=False)
-                response_location = "table"
+                self.robot.speech.speak("I will just get you a beer from the sideboard", block=False)
+                response_location = "sideboard"
                 response_object = "beer"
             elif  self.options_used == 1:
-                self.robot.speech.speak("I will just get you a milk from the sideboard", block=False)
-                response_location = "sideboard"
+                self.robot.speech.speak("I will just get you a milk from the dinner table", block=False)
+                response_location = "dinner_table"
                 response_object = "milk"
             elif  self.options_used == 2:
-                self.robot.speech.speak("I will just get you an orange juice from the bar", block=False)
+                self.robot.speech.speak("I will just get you a beer from the bar", block=False)
                 response_location = "bar"
-                response_object = "orange_juice"
+                response_object = "beer"
 
             self.options_used += 1
 
