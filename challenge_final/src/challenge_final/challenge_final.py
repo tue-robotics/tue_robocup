@@ -56,6 +56,9 @@ from ed.srv import SimpleQuery, SimpleQueryRequest
 from ed.srv import GetGUICommand, GetGUICommandResponse
 import robot_skills.util.msg_constructors as msgs
 
+from std_srvs.srv import Empty #Reset Ed
+
+
 # Reset ed
 from std_srvs.srv import Empty
 
@@ -123,12 +126,13 @@ class NavigateToBlob(smach.State):
             selected_id = object_ids[0]
             rospy.loginfo("Selected ID: {0}".format(selected_id))
 
-            self.visited_ids += [selected_id]
-
             pos = PositionConstraint(selected_id, self.constraint)
             ori = OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0), angle_offset=self.angle)
             nav = states.NavigateWithConstraints(self.robot, pos, ori) 
-            return nav.execute()
+            result = nav.execute()
+            if result == 'arrived':
+                self.visited_ids += [selected_id]
+            return result
         else:
             return "goal_not_defined"
 
@@ -388,6 +392,9 @@ class FinalChallenge2014(smach.StateMachine):
         #TODO
         object_query = Compound("ed_object_of_type_position", lambda: object_to_fetch, "X", "Y", "Z")
 
+        ed_reset = rospy.ServiceProxy('/ed/reset', Empty)
+        ed_reset()
+
         # exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
     
         # robot.reasoner.query(Compound("retractall", Compound("challenge", "X")))
@@ -500,7 +507,7 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={   "arrived":"PICKUP_OBJECT",
                                                     "unreachable":'PICKUP_OBJECT',
                                                     "preempted":'PICKUP_OBJECT',
-                                                    "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
+                                                    "goal_not_defined":'SAY_OBJECT_NOT_GRASPED'}) #This means there is no object of the desired type
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
                                     states.GrabMachineWithoutBase(arm, robot, object_query),
@@ -518,7 +525,7 @@ class FinalChallenge2014(smach.StateMachine):
                                                     'goal_not_defined':'Failed'})
 
             smach.StateMachine.add( "SAY_OBJECT_NOT_GRASPED",
-                                    states.Say(robot,"I could not grasp the object, sorry guys."),
+                                    states.Say(robot, ["I could not grasp the object, sorry.", "Sorry, I could not get the object."]),
                                     transitions={    "spoken":"ASK_OBJECT_AND_POSITION"})   
 
             smach.StateMachine.add( "SAY_BYE",
