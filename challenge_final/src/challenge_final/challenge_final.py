@@ -154,9 +154,10 @@ class ExploreStep(smach.State):
 
         self.robot.base2.oc.look_at    = msgs.Point(5, 5, 0)
         self.robot.base2.oc.frame      = "/map"
-        self.robot.base2.oc.angle      = pi / 1 #Turn 180 degrees, so look away from where we were
+        #self.robot.base2.oc.angle      = pi / 1 #Turn 180 degrees, so look away from where we were
 
-        nav = states.NavigateWithConstraints(self.robot) #Look from X distance to the unknown ubject
+        nav = states.NavigateWithConstraints(self.robot, PositionConstraint(frame="/amigo/base_link", constraint='x^2 + y^2 > 1.0^2 && x^2 + y^2 < 2.0'),
+                                                         OrientationConstraint(frame="/map", look_at=msgs.Point(5, 5, 0))) #Look from X distance to the unknown ubject
         return nav.execute()
 
         # nav = states.NavigateGeneric(self.robot, lookat_point_3d=map_point_tuple, xy_dist_to_goal_tuple=(self.distance, 0)) #TODO xy_dist_to_goal_tuple is not incorporated in this mode, only when its a query
@@ -436,14 +437,18 @@ class FinalChallenge2014(smach.StateMachine):
                                                     position_constraint=PositionConstraint( frame="/map", 
                                                                                             constraint="(x-4.682)^2 + (y-4.145)^2 < 0.2"),
                                                     orientation_constraint=OrientationConstraint(frame="/map", look_at=msgs.Point())),
-                                    transitions={   'arrived':'GOTO_EXIT', 
+                                    transitions={   'arrived':'SAY_BYE', 
                                                     'preempted':'Aborted', 
-                                                    'unreachable':'GOTO_EXIT', 
+                                                    'unreachable':'SAY_BYE', 
                                                     'goal_not_defined':'Failed'})
 
             smach.StateMachine.add( "SAY_OBJECT_NOT_GRASPED",
                                     states.Say(robot,"I could not grasp the object, sorry guys."),
-                                    transitions={    "spoken":"GOTO_EXIT"})            
+                                    transitions={    "spoken":"SAY_BYE"})   
+
+            smach.StateMachine.add( "SAY_BYE",
+                                    states.Say(robot,"Obri-gado. So long, and thanks for all the fish", block=False),
+                                    transitions={    "spoken":"GOTO_EXIT"})           
 
             smach.StateMachine.add('GOTO_EXIT',
                                     states.NavigateWithConstraints(robot,
