@@ -19,7 +19,7 @@ SOFTWARE:
     amiddle-final # starts custom middleware and dependencies.launch 
 
     # start the challenge
-    rosrun challenge_final challenge_final.py <-- TODO: Not sure
+    rosrun challenge_final challenge_final.py
 
 POSTPARATION:
     # When you're done:
