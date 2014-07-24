@@ -18,8 +18,8 @@
   ED:  implement world model reset
   GUI: Add RaiseEvent for deleting ids
   PER: check human detection, make nicer visualization for humans
-
   ED:  ddp: extractPointCloud: image masks contain holes if scale_factor > 1. Fix this (Sjoerd)
+  GUI: wider screen (Sjoerd)
   GUI: Fix long service calls
   ED:  Fix heavy memory usage (Sjoerd)
   ED_: query.center_point should be a pointstamped instead of a bare point assumed to be in /map. Make this explicit, so we can also explore relative to /maigo/base_link
