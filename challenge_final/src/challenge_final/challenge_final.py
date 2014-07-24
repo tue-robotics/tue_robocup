@@ -77,7 +77,7 @@ position_for_nav = None
 
 class NavigateToBlob(smach.State):
     """Ask Ed (Environment Description) what the IDs of unkown blobs are. """
-    def __init__(self, robot, blobtype=None, constraint='x^2 + y^2 < 1.2^2', angle=0):
+    def __init__(self, robot, blobtype=None, constraint='x^2 + y^2 < 1.2^2', angle=0, mark_visited=True):
         """Blobtype is a string or a function that returns a string"""
         smach.State.__init__(self, outcomes=['arrived', 'unreachable', 'preempted', 'goal_not_defined'])
         self.robot = robot
@@ -85,6 +85,7 @@ class NavigateToBlob(smach.State):
         self.blobtype = blobtype
         self.constraint = constraint
         self.angle = angle
+        self.mark_visited = mark_visited
 
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
@@ -130,7 +131,7 @@ class NavigateToBlob(smach.State):
             ori = OrientationConstraint(frame=selected_id, look_at=msgs.Point(0,0,0), angle_offset=self.angle)
             nav = states.NavigateWithConstraints(self.robot, pos, ori) 
             result = nav.execute()
-            if result == 'arrived':
+            if result == 'arrived' and self.mark_visited:
                 self.visited_ids += [selected_id]
             return result
         else:
@@ -392,8 +393,8 @@ class FinalChallenge2014(smach.StateMachine):
         #TODO
         object_query = Compound("ed_object_of_type_position", lambda: object_to_fetch, "X", "Y", "Z")
 
-        ed_reset = rospy.ServiceProxy('/ed/reset', Empty)
-        ed_reset()
+        # ed_reset = rospy.ServiceProxy('/ed/reset', Empty)
+        # ed_reset()
 
         # exit_query = Compound("waypoint", Compound('exit', "E"), Compound("pose_2d", "X", "Y", "Phi"))
     
@@ -435,8 +436,8 @@ class FinalChallenge2014(smach.StateMachine):
 
             smach.StateMachine.add('ASK_OBJECT_AND_POSITION',
                                     AskObjectAndPosition(robot),
-                                    # transitions={   'Done':'GOTO_OBJECT'})
-                                    transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
+                                    transitions={   'Done':'GOTO_OBJECT'})
+                                    # transitions={   'Done':'GOTO_REQUESTED_POSITION_IF_REQUESTED'})
             
             #------------ Option 1: concurrency ------------------# 
             # cc = smach.Concurrence( outcomes        = ['position_labeled', 'position_not_labeled'],
@@ -488,11 +489,15 @@ class FinalChallenge2014(smach.StateMachine):
             #------------ END options -----------------------------# 
             
             smach.StateMachine.add( "GOTO_POSITION",
-                                    NavigateToBlob(robot, blobtype=determine_desired_blobtype),
-                                    transitions={   "arrived":"GOTO_OBJECT",
-                                                    "unreachable":'GOTO_OBJECT',
-                                                    "preempted":'GOTO_OBJECT',
+                                    NavigateToBlob(robot, blobtype=determine_desired_blobtype, mark_visited=False),
+                                    transitions={   "arrived":"SAY_LOOKING",
+                                                    "unreachable":'SAY_LOOKING',
+                                                    "preempted":'SAY_LOOKING',
                                                     "goal_not_defined":'SAY_STILL_HAVENT_FOUND'}) #This means there is no object of the desired type
+
+            smach.StateMachine.add( "SAY_LOOKING",
+                        states.Say(robot, [ "Looking for your object", "Lets see whart I can find here"], block=True),
+                        transitions={    "spoken":"GOTO_OBJECT"})  
             
             smach.StateMachine.add( "SAY_STILL_HAVENT_FOUND",
                                     states.Say(robot, [ "Searching", 
@@ -502,7 +507,7 @@ class FinalChallenge2014(smach.StateMachine):
                                     transitions={    "spoken":"GOTO_REQUESTED_POSITION_IF_REQUESTED"})  
 
             smach.StateMachine.add( "GOTO_OBJECT",
-                                    NavigateToBlob(robot, blobtype=lambda: object_to_fetch, constraint='x^2 + y^2 < 0.59^2 and x^2 + y^2 > 0.30', 
+                                    NavigateToBlob(robot, blobtype=lambda: object_to_fetch, constraint='x^2 + y^2 < 0.65^2 and x^2 + y^2 > 0.30', 
                                                                                             angle=-0.3805063771123649),
                                     transitions={   "arrived":"PICKUP_OBJECT",
                                                     "unreachable":'PICKUP_OBJECT',
