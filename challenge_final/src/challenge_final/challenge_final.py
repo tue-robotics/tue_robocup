@@ -93,7 +93,9 @@ class NavigateToBlob(smach.State):
         object_ids = []
         
         try:
-            object_ids = [entity.id for entity in self.ed(query).entities]
+            entities = self.ed(query).entities
+            entities = sorted(entities, key=lambda entity: entity.creation_time)
+            object_ids = [entity.id for entity in entities]
         except Exception, e:
             rospy.logerr(e)
 
