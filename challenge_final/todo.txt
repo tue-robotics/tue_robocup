@@ -16,8 +16,9 @@
 
   PER: Create 3D models op large objects (Tim)
   EXC: check statemachine
+  GUI: Also show sensor pose if no updates received (Sjoerd)
   EXC: If goal is received from GUI, abort current goal
-  GUI: Add 'hold' command for stopping exploration
+  GUI: Add 'hold' command for stopping exploration (Sjoerd)
   EXC: Implement hold command: wait for further instructions (e.g. exploration)
   ED:  implement world model reset (Sjoerd)
   ED:  ddp: extractPointCloud: image masks contain holes if scale_factor > 1. Fix this (Sjoerd)
