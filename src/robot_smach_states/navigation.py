@@ -1022,6 +1022,34 @@ class Recover(smach.State):
                 #self.robot.speech.speak("Oh no, I can not reach my precious goal", block=False)
                 rospy.loginfo("Oh no, I can not reach my precious goal")
                 return 'new_goal_required'
+                
+class StartAnalyzer(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, userdata):
+        self.robot.base.analyzer.start_measurement(self.robot.base.get_location())
+        return 'done'
+        
+class StopAnalyzer(smach.State):
+    def __init__(self, robot, result):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot  = robot
+        self.result = result
+        
+    def execute(self, userdata):
+        self.robot.base.analyzer.stop_measurement(self.robot.base.get_location(), self.result)
+        return 'done'
+        
+class AbortAnalyzer(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot  = robot
+        
+    def execute(self, userdata):
+        self.robot.base.analyzer.abort_measurement()
+        return 'done'
 
 # refresh_freq      Frequency of re-check of determine_goal (0 means only check at beginning)
 class NavigateGeneric(smach.StateMachine):
@@ -1075,12 +1103,15 @@ class NavigateGeneric(smach.StateMachine):
             return "done"
 
         with self:
+            
+            smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
+                                    transitions={   'done':'INITIALIZE_NAVIGATE_GENERIC'})
 
             smach.StateMachine.add('INITIALIZE_NAVIGATE_GENERIC', smach.CBState(init_navigate_generic),
                                     transitions={   'done':'DETERMINE_GOAL'})
         
             smach.StateMachine.add('DETERMINE_GOAL', self.determine_goal,
-                transitions={'failed'           : 'goal_not_defined',
+                transitions={'failed'           : 'ABORT_ANALYSIS_NOT_DEFINED',
                              'aborted'          : 'DETERMINE_GOAL_TRY_AGAIN',
                              'succeeded'        : 'GET_PLAN'})
 
@@ -1089,15 +1120,15 @@ class NavigateGeneric(smach.StateMachine):
                              'succeeded'        : 'EXECUTE'})
 
             smach.StateMachine.add('EXECUTE', Execute_path(self.robot,  self.goal_area_radius, self.look_at_path_distance, self.refresh_freq),
-                transitions={'arrived'          : 'arrived',
-                             'preempted'        : 'preempted',
+                transitions={'arrived'          : 'STOP_ANALYSIS_SUCCEED',
+                             'preempted'        : 'ABORT_ANALYSIS_PREEMPT',
                              'waiting'          : 'WAITING',
                              'refresh'          : 'DETERMINE_GOAL',
                              'aborted'          : 'RECOVER'})
 
             smach.StateMachine.add('WAITING', Waiting_to_execute(self.robot, self.look_at_path_distance),
                 transitions={'done'             : 'EXECUTE',
-                             'preempted'        : 'preempted'})
+                             'preempted'        : 'ABORT_ANALYSIS_PREEMPT'})
 
             smach.StateMachine.add('RECOVER', Recover(self.robot, self.look_at_path_distance),
                 transitions={'new_path_required': 'GET_PLAN',
@@ -1109,8 +1140,8 @@ class NavigateGeneric(smach.StateMachine):
                 goal_query = self.goal_query,
                 lookat_point_3d = self.lookat_point_3d, 
                 lookat_query = self.lookat_query),
-                transitions={'failed'           : 'goal_not_defined',
-                             'aborted'          : 'unreachable',
+                transitions={'failed'           : 'ABORT_ANALYSIS_NOT_DEFINED',
+                             'aborted'          : 'STOP_ANALYSIS_UNREACHABLE',
                              'succeeded'        : 'GET_PLAN_TRY_AGAIN'})
 
             smach.StateMachine.add('GET_PLAN_TRY_AGAIN', Get_plan(self.robot, self.goal_area_radius),
@@ -1118,19 +1149,31 @@ class NavigateGeneric(smach.StateMachine):
                              'succeeded'        : 'EXECUTE_TRY_AGAIN'})
 
             smach.StateMachine.add('EXECUTE_TRY_AGAIN', Execute_path(self.robot, self.look_at_path_distance, self.refresh_freq),
-                transitions={'arrived'          : 'arrived',
-                             'preempted'        : 'preempted',
+                transitions={'arrived'          : 'STOP_ANALYSIS_SUCCEED',
+                             'preempted'        : 'ABORT_ANALYSIS_PREEMPT',
                              'waiting'          : 'WAITING_TRY_AGAIN',
                              'refresh'          : 'DETERMINE_GOAL_TRY_AGAIN',
                              'aborted'          : 'RECOVER_TRY_AGAIN'})
 
             smach.StateMachine.add('WAITING_TRY_AGAIN', Waiting_to_execute(self.robot, self.look_at_path_distance),
                 transitions={'done'             : 'EXECUTE_TRY_AGAIN',
-                             'preempted'        : 'preempted'})
+                             'preempted'        : 'ABORT_ANALYSIS_PREEMPT'})
 
             smach.StateMachine.add('RECOVER_TRY_AGAIN', Recover(self.robot, self.look_at_path_distance),
                 transitions={'new_path_required': 'GET_PLAN_TRY_AGAIN',
                              'new_goal_required': 'DETERMINE_GOAL_TRY_AGAIN'})
+                             
+            smach.StateMachine.add('STOP_ANALYSIS_SUCCEED', StopAnalyzer(self.robot, 'succeeded'),
+                transitions={'done': 'arrived'})
+                
+            smach.StateMachine.add('STOP_ANALYSIS_UNREACHABLE', StopAnalyzer(self.robot, 'unreachable'),
+                transitions={'done': 'unreachable'})
+                
+            smach.StateMachine.add('ABORT_ANALYSIS_PREEMPT', AbortAnalyzer(self.robot),
+                transitions={'done': 'preempted'})
+                
+            smach.StateMachine.add('ABORT_ANALYSIS_NOT_DEFINED', AbortAnalyzer(self.robot),
+                transitions={'done': 'goal_not_defined'})
 
     def request_preempt(self):
         """Quit navigating"""

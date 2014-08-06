@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_cleanup')
+import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 import random
 
@@ -12,6 +12,32 @@ from robot_skills.reasoner  import Conjunction, Compound
 from robot_skills.arms import State as ArmState
 from robot_smach_states.util.startup import startup
 
+import std_msgs.msg
+
+class SelectAction(smach.State):
+    def __init__(self, outcomes=['continue', 'pause', 'stop']):
+        self.outcomes= outcomes
+        smach.State.__init__(self, outcomes=self.outcomes)
+        self.outcome = 'continue'
+        
+        self.rate = float(rospy.get_param('~rate', '1.0'))
+        topic     = rospy.get_param('~topic', '/nav_test_control')
+        
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+        
+        rospy.loginfo("Use 'navc' to continue, 'navp' to pause and 'navs' to stop this node")
+        
+    def execute(self, userdata):
+        if self.outcome == 'pause':
+            rospy.sleep(rospy.Duration(1/self.rate))
+        return self.outcome
+        
+    def callback(self, msg):
+        if msg.data in self.outcomes:
+            self.outcome = msg.data
+        else:
+            rospy.logwarn("{0} is not a possible outcome for SelectAction, possibilities are{1}".format(msg.data, self.outcomes))
+
 class RandomNav(smach.StateMachine):
 
     def __init__(self, robot):
@@ -23,6 +49,17 @@ class RandomNav(smach.StateMachine):
                                   Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi")))
         
         with self:
+            
+            smach.StateMachine.add( "WAIT_A_SEC", 
+                                    states.Wait_time(robot, waittime=1.0),
+                                    transitions={'waited'   :"SELECT_ACTION",
+                                                 'preempted':"Aborted"})
+                                                 
+            smach.StateMachine.add( "SELECT_ACTION",
+                                    SelectAction(),
+                                    transitions={   'continue'  : "DETERMINE_TARGET",
+                                                    'pause'     : "SELECT_ACTION",
+                                                    'stop'      : "Done"})
             
             @smach.cb_interface(outcomes=['target_determined', 'done'], 
                                 input_keys=[], 
@@ -50,10 +87,13 @@ class RandomNav(smach.StateMachine):
                     robot.reasoner.assertz(Compound("current_target", goal))
 
                     string_target = str(goal)
-                    target_index = str(string_target).index("(")
-
-                    speak_target = string_target[0:target_index]
-
+                    rospy.loginfo("Goal string = {0}".format(string_target))
+                    try:
+                        target_index = str(string_target).index("(")
+                        speak_target = string_target[0:target_index]
+                    except:
+                        speak_target = string_target
+                    
                     robot.speech.speak("Lets go look at the {0}".format(speak_target).replace("_", " "), block=False)
 
                     return 'target_determined'
@@ -62,25 +102,24 @@ class RandomNav(smach.StateMachine):
                                     transitions={   'target_determined':'DRIVE',
                                                     'done':'Done'})
 
-            ################################################################
             smach.StateMachine.add( 'DRIVE',
                                     states.NavigateGeneric(robot, goal_query=goal_query),
                                     transitions={   "arrived":"SAY_SUCCEEDED",
                                                     "unreachable":'SAY_UNREACHABLE',
                                                     "preempted":'Aborted',
-                                                    "goal_not_defined":'DETERMINE_TARGET'})
+                                                    "goal_not_defined":'SELECT_ACTION'})
                                                     
             smach.StateMachine.add("SAY_SUCCEEDED", 
                                     states.Say(robot, [ "I am here", 
                                                         "Goal succeeded", 
                                                         "Another target reached"]),
-                                    transitions={   'spoken':'DETERMINE_TARGET'})
+                                    transitions={   'spoken':'SELECT_ACTION'})
                                                     
             smach.StateMachine.add("SAY_UNREACHABLE", 
                                     states.Say(robot, [ "I can't find a way to my goal, better try something else", 
                                                         "This goal is unreachable, I better find somewhere else to go", 
-                                                        "I am having a hard time getting there so I will find a new target"]),
-                                    transitions={   'spoken':'DETERMINE_TARGET'})
+                                                        "I am having a hard time getting there so I will look for a new target"]),
+                                    transitions={   'spoken':'SELECT_ACTION'})
 
 if __name__ == "__main__":
     rospy.init_node('random_nav_exec')
