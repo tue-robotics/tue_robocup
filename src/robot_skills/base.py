@@ -4,6 +4,7 @@ import rospy
 import geometry_msgs.msg
 import actionlib
 from actionlib_msgs.msg import GoalStatus
+import math
 import tf
 import tf_server
 import std_msgs.msg
@@ -18,6 +19,9 @@ import octomap_msgs.srv
 
 import util.concurrent_util
 from util import transformations
+import robot_skills.util.msg_constructors as msgs
+
+from util import nav_analyzer
 
 ## TODO: Stop force drive (to prevent overshoot)
 
@@ -89,6 +93,8 @@ class Base(object):
             self.ac_move_base.wait_for_server(timeout=rospy.Duration(2.0))
 
         self.use_2d = use_2d # Necessary to switch between 2D and 3D
+        
+        self.analyzer = nav_analyzer.NavAnalyzer()
 
         self.__reset()
 
@@ -120,7 +126,13 @@ class Base(object):
         except AttributeError, ae:
             rospy.logerr("Attribute could not be set, please update to correct to move_base_msgs: {0}".format(ae))
             
+        start_time = rospy.Time.now()
         path = self._get_plan_service(path_request)
+        end_time = rospy.Time.now()
+        plan_time = (end_time-start_time).to_sec()
+        path_length = self.compute_path_length(path.path)
+        
+        self.analyzer.count_plan(self.get_location(), target_pose, plan_time, path_length)
 
         if not path:
             rospy.logwarn("No path could be found to get to target pose {0}".format(path_request.target_pose))
@@ -327,6 +339,7 @@ class Base(object):
         return self.send_goal(target_pose, timeout)
     
     def clear_costmap(self, window_size=1.0):
+        self.analyzer.count_clear(self.get_location())
         if self.use_2d:
             self.clear_service()
             rospy.sleep(rospy.Duration(1.0))
@@ -376,6 +389,7 @@ class Base(object):
             rospy.sleep(rospy.Duration(1.0))
 
     def reset_costmap(self):
+        self.analyzer.count_reset(self.get_location())
         if self.use_2d:
             try:
                 self.clear_service()
@@ -442,6 +456,15 @@ class Base(object):
         self.initial_pose_publisher.publish(initial_pose)
 
         return True
+        
+    def compute_path_length(self, path):
+        distance = 0.0
+        for index, pose in enumerate(path):
+            if not index == 0:
+                dx = path[index].pose.position.x - path[index-1].pose.position.x
+                dy = path[index].pose.position.y - path[index-1].pose.position.y
+                distance += math.sqrt( dx*dx + dy*dy)
+        return distance
 
 if __name__ == "__main__":
     rospy.init_node("amigo_base_executioner", anonymous=True)
