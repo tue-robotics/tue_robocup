@@ -28,7 +28,7 @@ from pein_srvs.srv import SetObjects
 ################################# SETUP VARIABLES ######################################
 
 
-MIN_SIMULTANEOUS_ORDERS = 3   # Amigo won't fetch the drinks until he has this amount of requests
+MIN_SIMULTANEOUS_ORDERS = 2   # Amigo won't fetch the drinks until he has this amount of requests
 MAX_SIMULTANEOUS_ORDERS = 3   # Amigo will imediatly fetch the drinks when he has reached this amount of requests
 TOTAL_ORDERS = 3              # The challenge will finish when Amigo has served this amount of requests
 
@@ -2435,8 +2435,8 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    initial_state = None
-    # initial_state = 'FIND_DRINKS_CONTAINER'
+    # initial_state = None
+    initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
@@ -2459,9 +2459,9 @@ if __name__ == '__main__':
                                 Compound('serve', 'william_coke', 'william', 'coke',  Compound('pose_2d', '2.829', '2.030', '-1.514')))))
 
         # simulate picked up drinks
-        # amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'milk', 'basket'))))
+        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'milk', 'basket'))))
 
-        # amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'right_arm'))))
+        amigo.reasoner.query(   Compound('assert', Compound('carrying', Compound('drink', 'coke', 'right_arm'))))
 
         # simulate last know locations of people
         # amigo.reasoner.query(   Compound('assert', 

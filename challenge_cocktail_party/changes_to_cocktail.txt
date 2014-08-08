@@ -1,0 +1,6 @@
+changes to cocktail:
+
+ - when amigo is not able to reach the bar in the first try, he immediatly exhausts one of the storage room locations, find a solution for this
+ - the drinks will definitly be in the bar, try a few times before giving up
+ - check if there is already someone with the same name as the current person and confirm that it is correct
+ - reset the spindle after every pickup, so that on the next search locaton amigo is in normal pose
