@@ -15,7 +15,7 @@
   <depend package="smach_ros"/>
   <!--<depend package="move_base_msgs"/>-->
   <depend package="geometry_msgs"/>
-  <depend package="object_msgs"/>
+  <!--<depend package="object_msgs"/>-->
   <depend package="std_srvs"/>
   <depend package="actionlib"/>
   <!--<depend package="amigo_arm_server"/>-->
@@ -47,7 +47,7 @@
   
   <depend package="wire_msgs"/>
 
-  <depend package="laserscan_starter"/>
+  <!--<depend package="laserscan_starter"/>-->
   
   <!-- Perception -->
   <depend package="perception_srvs"/><!-- Do we still need this???-->
