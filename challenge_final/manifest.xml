@@ -18,6 +18,7 @@
   <depend package="ed"/>
   <depend package="tue_serialization"/>
   <depend package="head_ref_ed_client"/>
+  <depend package="tue_recorder"/>
 
 </package>
 
