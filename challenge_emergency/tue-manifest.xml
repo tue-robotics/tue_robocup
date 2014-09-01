@@ -1,0 +1,3 @@
+<deps>
+    <library name="libhpdf-dev" type="system"/>
+</deps>
