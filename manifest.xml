@@ -78,7 +78,7 @@
   <!-- Whole-body planner -->
   <!--<depend package="whole_body_planner"/> CANNOT BE INCLUDED YET, STILL IN JANNO'S USERMAP--> 
   
-  <depend package="amigo_launch_files"/>
+  <depend package="amigo_rosbuild"/>
 
   <depend package="cb_planner_msgs_srvs"/>
 
