@@ -53,7 +53,6 @@
   <depend package="perception_srvs"/><!-- Do we still need this???-->
   <!--depend package="blob_clustering"/--><!-- Do we still need this???-->
   <depend package="pein_supervisor"/>
-  <depend package="pein_template_matching"/>
   <depend package="obj_in_gripper"/>
   <!--depend package="object_detector_2d"/--> 
   <depend package="pein_ar_pose"/>
