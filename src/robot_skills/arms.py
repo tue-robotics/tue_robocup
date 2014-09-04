@@ -15,8 +15,8 @@ from trajectory_msgs.msg import JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 
 # Whole-body control/planning
-from amigo_whole_body_controller.msg._ArmTaskAction import ArmTaskAction
-from amigo_whole_body_controller.msg._ArmTaskGoal import ArmTaskGoal
+#from amigo_whole_body_controller.msg._ArmTaskAction import ArmTaskAction
+#from amigo_whole_body_controller.msg._ArmTaskGoal import ArmTaskGoal
 
 import threading
 import util.concurrent_util
@@ -70,8 +70,8 @@ class ArmActionClients(object):
         self._ac_joint_traj_right = actionlib.SimpleActionClient("/joint_trajectory_action_right",  FollowJointTrajectoryAction)
 
         #Init whole body control/planner actionlibs
-        self._ac_armtask = actionlib.SimpleActionClient("whole_body_planner/motion_constraint", ArmTaskAction)
-        rospy.loginfo("waiting for whole-body planner server")
+        #self._ac_armtask = actionlib.SimpleActionClient("whole_body_planner/motion_constraint", ArmTaskAction)
+        #rospy.loginfo("waiting for whole-body planner server")
     
     def close(self):
         try:
