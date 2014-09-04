@@ -43,10 +43,12 @@ class RandomNav(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
         
-        query_exploration_target_in_room = Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
-        
+        ''' Query given to nav state '''
         goal_query = Conjunction( Compound("current_target", "Target"),
                                   Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi")))
+                                  
+        self.requested_location = None
+        rospy.Subscriber("/location_request", std_msgs.msg.String, self.requestedLocaltioncallback)
         
         with self:
             
@@ -61,17 +63,31 @@ class RandomNav(smach.StateMachine):
                                                     'pause'     : "SELECT_ACTION",
                                                     'stop'      : "Done"})
             
-            @smach.cb_interface(outcomes=['target_determined', 'done'], 
+            @smach.cb_interface(outcomes=['target_determined', 'no_targets_available'], 
                                 input_keys=[], 
                                 output_keys=[])
-            def determine_target(userdata):            
-                # Ask the reaoner for a target:
-                answers = robot.reasoner.query(query_exploration_target_in_room)
-                rospy.loginfo("Answers for {0}: {1}".format(query_exploration_target_in_room, answers))
-                #import ipdb; ipdb.set_trace()
+            def determine_target(userdata):
+                if self.requested_location != None:
+                    rospy.loginfo("I should perform a different query now")
+
+                    # The waypoint we're looking for
+                    q1 = Compound("waypoint", Compound(self.requested_location, "Ext"), Compound("pose_2d", "X", "Y", "Phi"))
+                    # All waypoints with name poored in "Target"
+                    q2 = Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
+                    # Combining these two
+                    query_targets = Conjunction(q1,q2)
+                    
+                    answers = robot.reasoner.query(query_targets)
+                    self.requested_location = None
+                else:
+                    rospy.loginfo("I'll do the random query here")
+                    query_targets = Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi"))
+                    answers = robot.reasoner.query(query_targets)
+                
+                rospy.loginfo("Answers for {0}: {1}".format(query_targets, answers))
                 if not answers:
                     # no more exporation targets found
-                    return 'done'
+                    return 'no_targets_available'
                 else:         
                     # Pick random target
                     goal = answers[random.randint(0,len(answers)-1)]["Target"]
@@ -100,7 +116,7 @@ class RandomNav(smach.StateMachine):
             
             smach.StateMachine.add('DETERMINE_TARGET', smach.CBState(determine_target),
                                     transitions={   'target_determined':'DRIVE',
-                                                    'done':'Done'})
+                                                    'no_targets_available':'SELECT_ACTION'})
 
             smach.StateMachine.add( 'DRIVE',
                                     states.NavigateGeneric(robot, goal_query=goal_query),
@@ -120,6 +136,10 @@ class RandomNav(smach.StateMachine):
                                                         "This goal is unreachable, I better find somewhere else to go", 
                                                         "I am having a hard time getting there so I will look for a new target"]),
                                     transitions={   'spoken':'SELECT_ACTION'})
+                                    
+    def requestedLocaltioncallback(self, msg):
+        self.requested_location = msg.data
+        rospy.loginfo("Requested location is {0}".format(self.requested_location))
 
 if __name__ == "__main__":
     rospy.init_node('random_nav_exec')
