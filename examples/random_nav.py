@@ -110,7 +110,25 @@ class RandomNav(smach.StateMachine):
                     except:
                         speak_target = string_target
                     
-                    robot.speech.speak("Lets go look at the {0}".format(speak_target).replace("_", " "), block=False)
+                    sentences = ["Lets go look at the {0}".format(speak_target).replace("_", " "),
+                                    "Lets have a look at the {0}".format(speak_target).replace("_", " "),
+                                    "Lets go to the {0}".format(speak_target).replace("_", " "),
+                                    "Lets move to the {0}".format(speak_target).replace("_", " "),
+                                    "I will go to the {0}".format(speak_target).replace("_", " "),
+                                    "I will now move to the {0}".format(speak_target).replace("_", " "),
+                                    "I will now drive to the {0}".format(speak_target).replace("_", " "),
+                                    "I will look the {0}".format(speak_target).replace("_", " "),
+                                    "The {0} will be my next location".format(speak_target).replace("_", " "),
+                                    "The {0} it is".format(speak_target).replace("_", " "),
+                                    "New goal, the {0}".format(speak_target).replace("_", " "),
+                                    "Going to look at the {0}".format(speak_target).replace("_", " "),
+                                    "Moving to the {0}".format(speak_target).replace("_", " "),
+                                    "Driving to the {0}".format(speak_target).replace("_", " "),
+                                    "On to the {0}".format(speak_target).replace("_", " "),
+                                    "On the move to the {0}".format(speak_target).replace("_", " "),
+                                    "Going to the {0}".format(speak_target).replace("_", " "),
+                                    ]
+                    robot.speech.speak(sentences[random.randint(0,len(sentences)-1)], block=False)
 
                     return 'target_determined'
             
@@ -128,7 +146,21 @@ class RandomNav(smach.StateMachine):
             smach.StateMachine.add("SAY_SUCCEEDED", 
                                     states.Say(robot, [ "I am here", 
                                                         "Goal succeeded", 
-                                                        "Another target reached"]),
+                                                        "Another goal succeeded",
+                                                        "Goal reached",
+                                                        "Another goal reached",
+                                                        "Target reached",
+                                                        "Another target reached",
+                                                        "Destination reached",
+                                                        "Another destination reached",
+                                                        "I have arrived",
+                                                        "I have arrived at my goal",
+                                                        "I have arrived at my target",
+                                                        "I have arrived at my destination",
+                                                        "I am at my goal",
+                                                        "I am at my target",
+                                                        "I am at my destination",
+                                                        "Here I am",]),
                                     transitions={   'spoken':'SELECT_ACTION'})
                                                     
             smach.StateMachine.add("SAY_UNREACHABLE", 
