@@ -27,7 +27,7 @@ class NavAnalyzer:
     
     def __init__(self):
         
-        self.rosbag = False       
+        self.rosbag = True       
         rospy.logwarn("Nav_analyser: Bagging = {0}".format(self.rosbag))
         
         ''' Path '''
@@ -55,13 +55,25 @@ class NavAnalyzer:
 
         ''' Bag topics '''
         if self.rosbag:
+            ''' Standard topics '''
             topics = ["/amigo/base/references", "/amigo/base/measurements", "/amcl_pose", "/amigo/base_front_laser", "/move_base_3d/AStarPlannerROS/plan"]
 
+            ''' Plantopic '''
             plantopic = "/move_base"
             if os.environ["AMIGO_NAV"] == "3d":
                 plantopic += "_3d"
             plantopic += "/AStarPlannerROS/plan"
             topics.append(plantopic)
+            
+            ''' Costmap topics '''
+            if os.environ["AMIGO_NAV"] == "3d":
+                topics.append("/distance_costmap")
+                topics.append("/probability_costmap")
+                topics.append("/octomap_binary")
+                topics.append("/move_base_3d/AmigoLocalPlanner/obs_marker")
+            else:
+                topics.append("/move_base/global_costmap")
+                
 
             #topics = ["/amigo/base/references"]
             self.base_cmd = "rosbag record "
@@ -271,4 +283,13 @@ class NavAnalyzer:
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
+                
+    def __del__ (self):
+        if self.Active:
+            rospy.loginfo("Cleaning up nav-analyzer")
+            ''' Stop rosbagging: we don't want it to go on forever '''
+            if self.rosbag: 
+                os.killpg(self.pro.pid, signal.SIGINT)  # Send the signal to all the process groups
+                
+            ''' No further data is written to a file, since we stopped for a reason '''
 
