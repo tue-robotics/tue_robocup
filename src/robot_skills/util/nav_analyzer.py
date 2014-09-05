@@ -45,6 +45,14 @@ class NavAnalyzer:
         if not os.path.isdir(self.path):
             os.makedirs(self.path)
             
+        ''' Dump parameters to file '''
+        stamp          = self.getTimeStamp()
+        paramfilename = self.path+"/params_"+stamp
+        cmd = "rosparam dump " + paramfilename + " /move_base"
+        if os.environ["AMIGO_NAV"] == "3d":
+                cmd += "_3d"
+        subprocess.call(cmd, shell=True)
+            
         self.filename = self.path+'/Summary.xml'
         
         ''' Odometry subscriber ''' 
@@ -67,9 +75,9 @@ class NavAnalyzer:
             
             ''' Costmap topics '''
             if os.environ["AMIGO_NAV"] == "3d":
-                topics.append("/distance_costmap")
-                topics.append("/probability_costmap")
-                topics.append("/octomap_binary")
+                #topics.append("/distance_costmap")
+                #topics.append("/probability_costmap")
+                #topics.append("/octomap_binary")
                 topics.append("/move_base_3d/AmigoLocalPlanner/obs_marker")
             else:
                 topics.append("/move_base/global_costmap")
