@@ -61,7 +61,7 @@ class RandomNav(smach.StateMachine):
                                     SelectAction(),
                                     transitions={   'continue'  : "DETERMINE_TARGET",
                                                     'pause'     : "SELECT_ACTION",
-                                                    'stop'      : "Done"})
+                                                    'stop'      : "SAY_DONE"})
             
             @smach.cb_interface(outcomes=['target_determined', 'no_targets_available'], 
                                 input_keys=[], 
@@ -137,7 +137,7 @@ class RandomNav(smach.StateMachine):
                                                     'no_targets_available':'SELECT_ACTION'})
 
             smach.StateMachine.add( 'DRIVE',
-                                    states.NavigateGeneric(robot, goal_query=goal_query),
+                                    states.NavigateGeneric(robot, goal_query=goal_query, look_at_path_distance=1.75, goal_area_radius=0.30),
                                     transitions={   "arrived":"SAY_SUCCEEDED",
                                                     "unreachable":'SAY_UNREACHABLE',
                                                     "preempted":'Aborted',
@@ -168,6 +168,12 @@ class RandomNav(smach.StateMachine):
                                                         "This goal is unreachable, I better find somewhere else to go", 
                                                         "I am having a hard time getting there so I will look for a new target"]),
                                     transitions={   'spoken':'SELECT_ACTION'})
+                                    
+            smach.StateMachine.add("SAY_DONE", 
+                                    states.Say(robot, [ "That's all folks",
+                                                        "I'll stay here for a while",
+                                                        "Goodbye"]),
+                                    transitions={   'spoken':'Done'})
                                     
     def requestedLocaltioncallback(self, msg):
         self.requested_location = msg.data
