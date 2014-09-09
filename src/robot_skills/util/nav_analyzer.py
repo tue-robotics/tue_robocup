@@ -79,6 +79,7 @@ class NavAnalyzer:
                 #topics.append("/probability_costmap")
                 #topics.append("/octomap_binary")
                 topics.append("/move_base_3d/AmigoLocalPlanner/obs_marker")
+                topics.append("/amigo/top_kinect/rgbd")
             else:
                 topics.append("/move_base/global_costmap")
                 
@@ -215,13 +216,14 @@ class NavAnalyzer:
         self.poseStampedToSubElement(target_pose, goalposeitem)
         
     def count_reset(self, pose):
-        self.nr_reset_costmap +=1
-        stamp    = self.getTimeStamp()
-        resetitem = ET.SubElement(self.resetitems, "reset")
-        resetitem.set("id", "{0}".format(self.nr_reset_costmap))
-        resetitem.set("stamp", stamp)
-        poseitem = ET.SubElement(resetitem, "pose")
-        self.poseStampedToSubElement(pose, poseitem)
+        if self.Active:
+            self.nr_reset_costmap +=1
+            stamp    = self.getTimeStamp()
+            resetitem = ET.SubElement(self.resetitems, "reset")
+            resetitem.set("id", "{0}".format(self.nr_reset_costmap))
+            resetitem.set("stamp", stamp)
+            poseitem = ET.SubElement(resetitem, "pose")
+            self.poseStampedToSubElement(pose, poseitem)
         
     def count_clear(self, pose):
         self.nr_clear_costmap +=1
