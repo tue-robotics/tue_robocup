@@ -43,6 +43,8 @@ class RandomNav(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
         
+        self.robot = robot
+        
         ''' Query given to nav state '''
         goal_query = Conjunction( Compound("current_target", "Target"),
                                   Compound("waypoint", "Target", Compound("pose_2d", "X", "Y", "Phi")))
@@ -177,6 +179,7 @@ class RandomNav(smach.StateMachine):
                                     
     def requestedLocaltioncallback(self, msg):
         self.requested_location = msg.data
+        self.robot.speech.speak("I got a request to go to location {0}".format(self.requested_location))
         rospy.loginfo("Requested location is {0}".format(self.requested_location))
 
 if __name__ == "__main__":
