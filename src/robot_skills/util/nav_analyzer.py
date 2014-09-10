@@ -64,7 +64,7 @@ class NavAnalyzer:
         ''' Bag topics '''
         if self.rosbag:
             ''' Standard topics '''
-            topics = ["/amigo/base/references", "/amigo/base/measurements", "/amcl_pose", "/amigo/base_front_laser", "/move_base_3d/AStarPlannerROS/plan"]
+            topics = ["/amigo/base/references", "/amigo/base/measurements", "/amcl_pose", "/amigo/base_front_laser", "/move_base_3d/AStarPlannerROS/plan", "/tf"]
 
             ''' Plantopic '''
             plantopic = "/move_base"
@@ -216,7 +216,7 @@ class NavAnalyzer:
         self.poseStampedToSubElement(target_pose, goalposeitem)
         
     def count_reset(self, pose):
-        if self.Active:
+        if self.active:
             self.nr_reset_costmap +=1
             stamp    = self.getTimeStamp()
             resetitem = ET.SubElement(self.resetitems, "reset")
@@ -295,7 +295,7 @@ class NavAnalyzer:
                 elem.tail = i
                 
     def __del__ (self):
-        if self.Active:
+        if self.active:
             rospy.loginfo("Cleaning up nav-analyzer")
             ''' Stop rosbagging: we don't want it to go on forever '''
             if self.rosbag: 
