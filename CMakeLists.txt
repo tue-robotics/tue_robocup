@@ -1,39 +1,105 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(robot_skills)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-#set(ROS_BUILD_TYPE RelWithDebInfo)
+find_package(catkin REQUIRED COMPONENTS
+    rospy
+    roscpp
+    smach
+    smach_ros
+    geometry_msgs
+    std_srvs
+    actionlib
+    tf
+    tf_server
+    amigo_msgs
+    visualization_msgs
+    amigo_head_ref
+    amigo_actions
+    tue_reasoner_core
+    psi
+    control_msgs
+    trajectory_msgs
+    tue_move_base_msgs
+    tue_costmap_msgs
+    cb_planner_msgs_srvs
+    amigo_inverse_reachability
+    wire_msgs
+    perception_srvs
+    pein_supervisor
+    obj_in_gripper
+    pein_ar_pose
+    pein_tabletop_segmentation
+    laser_ppl_detection
+    pein_wire_interface
+    pein_color_matcher
+    pein_pcl_matcher
+    pein_odufinder
+    depth_map_to_point_cloud
+    speech_interpreter
+    octomap_msgs
+    tue_recorder
+    cb_planner_msgs_srvs
+)
 
-rosbuild_init()
+# find_package(Boost REQUIRED COMPONENTS system program_options)
+# find_package(PCL REQUIRED)
+# find_package(OpenCV REQUIRED)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+# ------------------------------------------------------------------------------------------------
+#                                     ROS MESSAGES AND SERVICES
+# ------------------------------------------------------------------------------------------------
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
+# Generate messages
+# add_message_files(
+#    FILES
+#    message1.msg
+#    ...
+# )
 
-# to show header files in Qt Creator
-file(GLOB_RECURSE HEADER_FILES include/*.h)
+# Generate services
+# add_service_files(
+#    FILES
+#    service1.srv
+#    ...
+# )
 
-#common commands for building c++ executables and libraries
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-#rosbuild_add_executable(example examples/example.cpp)
-#target_link_libraries(example ${PROJECT_NAME})
+# Generate added messages and services with any dependencies listed here
+# generate_messages(
+#    DEPENDENCIES
+#    geometry_msgs
+#    ...
+# )
 
-#rosbuild_add_library(robot_skills src/Robot.cpp
-#                                  src/Amigo.cpp
-#                                  src/Skill.cpp
-#                                  src/MoveBase.cpp
-#                                  src/Grasp.cpp
-#                                  ${HEADER_FILES})
+# ------------------------------------------------------------------------------------------------
+#                                          CATKIN EXPORT
+# ------------------------------------------------------------------------------------------------
+
+catkin_package(
+#  INCLUDE_DIRS include
+#  LIBRARIES bla
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
+)
+
+# ------------------------------------------------------------------------------------------------
+#                                              BUILD
+# ------------------------------------------------------------------------------------------------
+
+include_directories(
+    include
+    ${catkin_INCLUDE_DIRS}
+)
+
+# add_library(library_name
+#     src/lib_source_file1.cpp
+#     ...
+# )
+# target_link_libraries(library_name ${catkin_LIBRARIES})
+
+# add_executable(exec_name
+#     src/source_file1.cpp
+#     ...
+# )
+# target_link_libraries(exec_name ${catkin_LIBRARIES})
+
+

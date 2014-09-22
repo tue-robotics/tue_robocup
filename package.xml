@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<package>
+  <name>robot_skills</name>
+  <version>0.0.0</version>
+  <description>No description available</description>
+
+  <maintainer email="todo@tue.nl">Janno Lunenburg</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>rospy</build_depend>
+  <run_depend>rospy</run_depend>
+
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+
+  <build_depend>smach</build_depend>
+  <run_depend>smach</run_depend>
+
+  <build_depend>smach_ros</build_depend>
+  <run_depend>smach_ros</run_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <run_depend>geometry_msgs</run_depend>
+
+  <build_depend>std_srvs</build_depend>
+  <run_depend>std_srvs</run_depend>
+
+  <build_depend>actionlib</build_depend>
+  <run_depend>actionlib</run_depend>
+
+  <build_depend>tf</build_depend>
+  <run_depend>tf</run_depend>
+
+  <build_depend>tf_server</build_depend>
+  <run_depend>tf_server</run_depend>
+
+  <build_depend>amigo_msgs</build_depend>
+  <run_depend>amigo_msgs</run_depend>
+
+  <build_depend>visualization_msgs</build_depend>
+  <run_depend>visualization_msgs</run_depend>
+
+  <build_depend>amigo_head_ref</build_depend>
+  <run_depend>amigo_head_ref</run_depend>
+
+  <build_depend>amigo_actions</build_depend>
+  <run_depend>amigo_actions</run_depend>
+
+  <build_depend>tue_reasoner_core</build_depend>
+  <run_depend>tue_reasoner_core</run_depend>
+
+  <build_depend>psi</build_depend>
+  <run_depend>psi</run_depend>
+
+  <build_depend>control_msgs</build_depend>
+  <run_depend>control_msgs</run_depend>
+
+  <build_depend>trajectory_msgs</build_depend>
+  <run_depend>trajectory_msgs</run_depend>
+
+  <build_depend>tue_move_base_msgs</build_depend>
+  <run_depend>tue_move_base_msgs</run_depend>
+
+  <build_depend>tue_costmap_msgs</build_depend>
+  <run_depend>tue_costmap_msgs</run_depend>
+
+  <build_depend>cb_planner_msgs_srvs</build_depend>
+  <run_depend>cb_planner_msgs_srvs</run_depend>
+
+  <build_depend>amigo_inverse_reachability</build_depend>
+  <run_depend>amigo_inverse_reachability</run_depend>
+
+  <build_depend>wire_msgs</build_depend>
+  <run_depend>wire_msgs</run_depend>
+
+  <build_depend>perception_srvs</build_depend>
+  <run_depend>perception_srvs</run_depend>
+
+  <build_depend>pein_supervisor</build_depend>
+  <run_depend>pein_supervisor</run_depend>
+
+  <build_depend>obj_in_gripper</build_depend>
+  <run_depend>obj_in_gripper</run_depend>
+
+  <build_depend>pein_ar_pose</build_depend>
+  <run_depend>pein_ar_pose</run_depend>
+
+  <build_depend>pein_tabletop_segmentation</build_depend>
+  <run_depend>pein_tabletop_segmentation</run_depend>
+
+  <build_depend>laser_ppl_detection</build_depend>
+  <run_depend>laser_ppl_detection</run_depend>
+
+  <build_depend>pein_wire_interface</build_depend>
+  <run_depend>pein_wire_interface</run_depend>
+
+  <build_depend>pein_color_matcher</build_depend>
+  <run_depend>pein_color_matcher</run_depend>
+
+  <build_depend>pein_pcl_matcher</build_depend>
+  <run_depend>pein_pcl_matcher</run_depend>
+
+  <build_depend>pein_odufinder</build_depend>
+  <run_depend>pein_odufinder</run_depend>
+
+  <build_depend>depth_map_to_point_cloud</build_depend>
+  <run_depend>depth_map_to_point_cloud</run_depend>
+
+  <build_depend>speech_interpreter</build_depend>
+  <run_depend>speech_interpreter</run_depend>
+
+  <build_depend>octomap_msgs</build_depend>
+  <run_depend>octomap_msgs</run_depend>
+
+  <build_depend>tue_recorder</build_depend>
+  <run_depend>tue_recorder</run_depend>
+
+  <build_depend>cb_planner_msgs_srvs</build_depend>
+  <run_depend>cb_planner_msgs_srvs</run_depend>
+
+</package>
