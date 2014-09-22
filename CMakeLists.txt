@@ -41,6 +41,8 @@ find_package(catkin REQUIRED COMPONENTS
     cb_planner_msgs_srvs
 )
 
+catkin_python_setup()
+
 # find_package(Boost REQUIRED COMPONENTS system program_options)
 # find_package(PCL REQUIRED)
 # find_package(OpenCV REQUIRED)
