@@ -25,7 +25,7 @@
   <depend package="amigo_msgs"/>
   <depend package="visualization_msgs"/>
 
-  <depend package="amigo_arm_navigation"/>
+  <!-- depend package="amigo_arm_navigation"/ -->
   <depend package="amigo_head_ref"/>
   <depend package="amigo_actions"/>
 
@@ -38,7 +38,7 @@
   <depend package="trajectory_msgs"/>
   <!-- <depend package="amigo_launch_files"/> -->
 
-  <depend package="tue_move_base"/>
+  <!-- depend package="tue_move_base"/ -->
   <depend package="tue_move_base_msgs"/>
   <depend package="tue_costmap_msgs"/>
   <depend package="cb_planner_msgs_srvs"/>
