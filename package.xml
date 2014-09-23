@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>robot_smach_states</name>
+  <version>0.0.0</version>
+  <description>No description available</description>
+
+  <maintainer email="todo@tue.nl">todo</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>robot_skills</build_depend>
+  <run_depend>robot_skills</run_depend>
+
+  <build_depend>smach</build_depend>
+  <run_depend>smach</run_depend>
+
+  <build_depend>smach_ros</build_depend>
+  <run_depend>smach_ros</run_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <run_depend>geometry_msgs</run_depend>
+
+</package>
