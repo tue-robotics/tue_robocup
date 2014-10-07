@@ -7,7 +7,6 @@ project(challenge_emergency)
 find_package(catkin REQUIRED COMPONENTS
   amigo_demo
   image_transport
-  opencv2
   perception_srvs
   person_emergency_detector
   psi
@@ -20,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(OpenCV REQUIRED)
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -102,6 +103,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -120,10 +122,12 @@ add_executable(emergency_paper_home src/pdf_create_home.cpp)
 # Specify libraries to link a library or executable target against
 target_link_libraries(emergency_paper
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
   hpdf png z
 )
 target_link_libraries(emergency_paper_home
   ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
   hpdf png z
 )
 
