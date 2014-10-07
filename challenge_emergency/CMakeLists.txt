@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   virtual_cam
+  message_generation
 )
 
 ## System dependencies are found with CMake's conventions
@@ -90,7 +91,7 @@ generate_messages(
 catkin_package(
  INCLUDE_DIRS include
 #  LIBRARIES challenge_emergency
-#  CATKIN_DEPENDS amigo_demo image_transport opencv2 perception_srvs person_emergency_detector psi robot_skills robot_smach_states roscpp rospy virtual_cam
+CATKIN_DEPENDS message_runtime#amigo_demo image_transport opencv2 perception_srvs person_emergency_detector psi robot_skills robot_smach_states roscpp rospy virtual_cam
 #  DEPENDS system_lib
 )
 
