@@ -10,12 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
   robot_skills
   robot_smach_states
   rospy
-  run_speech_files
   speech_interpreter
-  table_detector_2d
   tue_recorder
   tue_serialization
-  wire_fitter
 )
 
 ## System dependencies are found with CMake's conventions

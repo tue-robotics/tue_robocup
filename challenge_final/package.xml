@@ -45,23 +45,18 @@
   <build_depend>robot_skills</build_depend>
   <build_depend>robot_smach_states</build_depend>
   <build_depend>rospy</build_depend>
-  <build_depend>run_speech_files</build_depend>
   <build_depend>speech_interpreter</build_depend>
-  <!--<build_depend>table_detector_2d</build_depend>-->
   <build_depend>tue_recorder</build_depend>
   <build_depend>tue_serialization</build_depend>
-  <build_depend>wire_fitter</build_depend>
+  
   <run_depend>ed</run_depend>
   <run_depend>head_ref_ed_client</run_depend>
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
-  <run_depend>run_speech_files</run_depend>
   <run_depend>speech_interpreter</run_depend>
-  <!--<run_depend>table_detector_2d</run_depend>-->
   <run_depend>tue_recorder</run_depend>
   <run_depend>tue_serialization</run_depend>
-  <run_depend>wire_fitter</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
