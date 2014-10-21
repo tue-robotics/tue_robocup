@@ -12,6 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
 # find_package(PCL REQUIRED)
 # find_package(OpenCV REQUIRED)
 
+catkin_python_setup()
+
 # ------------------------------------------------------------------------------------------------
 #                                     ROS MESSAGES AND SERVICES
 # ------------------------------------------------------------------------------------------------
