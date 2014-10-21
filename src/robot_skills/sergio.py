@@ -2,6 +2,8 @@
 import roslib; roslib.load_manifest('robot_skills')
 import robot
 
+import rospy
+
 import arms
 import spindle # ToDo: get rid of this (we only need the interface for now)
 
@@ -66,9 +68,11 @@ class Sergio(robot.Robot):
             perceptionClass=PerceptionED)
         
 if __name__ == "__main__":
+    print "Starting sergio console"
+    rospy.init_node('robot_executioner', anonymous=True)
 
     ''' Import console functions '''
-    import console
+    from console import *
 
     rospy.logerr("Sergio-console not yet implemented")
 

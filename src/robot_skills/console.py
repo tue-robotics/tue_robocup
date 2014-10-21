@@ -1,11 +1,19 @@
+#!/usr/bin/env python
+import rospy
 import atexit
 import util.msg_constructors as msgs
 from reasoner import Compound, Conjunction, Sequence, Variable
 
-rospy.init_node("robot_executioner", anonymous=True)
-robot = Robot(wait_services=False)
+def set_robot(_robot):
+    global robot
+    robot = _robot
+    r = robot.reasoner
+    q = robot.reasoner.query
+    mapgo = robot.base.go
 
-atexit.register(robot.close) #When exiting the interpreter, call robot.close(), which cancels all action goals etc.
+# robot = Robot(wait_services=False)
+
+# atexit.register(robot.close) #When exiting the interpreter, call robot.close(), which cancels all action goals etc.
 
 head_reset = lambda: robot.head.reset_position()
 head_down  = lambda: robot.head.look_down()
@@ -16,11 +24,6 @@ left_open = lambda: robot.leftArm.send_gripper_goal_open()
 speak = lambda sentence: robot.speech.speak(sentence, block=False)
 praat = lambda sentence: robot.speech.speak(sentence, language='nl', block=False)
 look_at_point = lambda x, y, z: robot.head.send_goal(msgs.PointStamped(x, y, z, frame_id="base_link")) # ToDo: correct frame id
-    
-r = robot.reasoner
-q = robot.reasoner.query
-
-mapgo = robot.base.go
 
 def airgo(x,y,z, xoffset=0.5, yoffset=0.1):
     target = robot.base.point(x,y,z, stamped=True)
