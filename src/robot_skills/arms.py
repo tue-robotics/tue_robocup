@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
-from tue_manipulation.msg._GraspPrecomputeGoal import GraspPrecomputeGoal
+from amigo_arm_navigation.msg._grasp_precomputeGoal import grasp_precomputeGoal
 import actionlib
-#from tue_manipulation.msg._MoveArmAction import MoveArmAction
+from arm_navigation_msgs.msg._MoveArmAction import MoveArmAction
 from actionlib_msgs.msg._GoalStatus import GoalStatus
 import amigo_actions
 import amigo_actions.msg
-from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
+from amigo_arm_navigation.msg._grasp_precomputeAction import grasp_precomputeAction
 from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
@@ -49,10 +49,10 @@ class ArmActionClients(object):
     """Collection of action clients that are needed"""
     def __init__(self):
         #Init arm actionlibs
-        #self._ac_move_arm_right = actionlib.SimpleActionClient("move_right_arm",  MoveArmAction)
-        #rospy.loginfo("waiting for arm right server")
-        #self._ac_move_arm_left = actionlib.SimpleActionClient("move_left_arm",  MoveArmAction)
-        #rospy.loginfo("waiting for arm left server")
+        self._ac_move_arm_right = actionlib.SimpleActionClient("move_right_arm",  MoveArmAction)
+        rospy.loginfo("waiting for arm right server")
+        self._ac_move_arm_left = actionlib.SimpleActionClient("move_left_arm",  MoveArmAction)
+        rospy.loginfo("waiting for arm left server")
         
         #Init gripper actionlibs
         self._ac_gripper_right = actionlib.SimpleActionClient("gripper_server_right", amigo_actions.msg.AmigoGripperCommandAction)
@@ -61,9 +61,9 @@ class ArmActionClients(object):
         rospy.loginfo("waiting for gripper left server")
 
         #Init graps precompute actionlibs
-        self._ac_grasp_precompute_right = actionlib.SimpleActionClient("grasp_precompute_right", GraspPrecomputeAction)
+        self._ac_grasp_precompute_right = actionlib.SimpleActionClient("grasp_precompute_right", grasp_precomputeAction)
         rospy.loginfo("waiting for precompute right server")
-        self._ac_grasp_precompute_left = actionlib.SimpleActionClient("grasp_precompute_left",  GraspPrecomputeAction)
+        self._ac_grasp_precompute_left = actionlib.SimpleActionClient("grasp_precompute_left",  grasp_precomputeAction)
         rospy.loginfo("waiting for precompute left server")
         
         self._ac_joint_traj_left = actionlib.SimpleActionClient("/joint_trajectory_action_left",  FollowJointTrajectoryAction)
@@ -78,8 +78,8 @@ class ArmActionClients(object):
             rospy.loginfo("Arms cancelling all goals on all arm-related ACs on close")
         except AttributeError:
             print "Arms cancelling all goals on all arm-related ACs on close. Rospy is already deleted."
-        #self._ac_move_arm_right.cancel_all_goals()
-        #self._ac_move_arm_left.cancel_all_goals()
+        self._ac_move_arm_right.cancel_all_goals()
+        self._ac_move_arm_left.cancel_all_goals()
         
         self._ac_gripper_right.cancel_all_goals()
         self._ac_gripper_left.cancel_all_goals()
@@ -279,7 +279,7 @@ class Arms(object):
             return False
         
         # create goal:
-        grasp_precompute_goal = GraspPrecomputeGoal()
+        grasp_precompute_goal = grasp_precomputeGoal()
         grasp_precompute_goal.goal.header.frame_id = frame_id
         grasp_precompute_goal.goal.header.stamp = rospy.Time.now()
         
@@ -331,7 +331,7 @@ class Arms(object):
             raise Exception("Send_arm_goal: No side was specified..")
         
         # create goal:
-        grasp_precompute_goal = GraspPrecomputeGoal()
+        grasp_precompute_goal = grasp_precomputeGoal()
         grasp_precompute_goal.delta.header.frame_id = frame_id
         grasp_precompute_goal.delta.header.stamp = rospy.Time.now()
         
@@ -386,13 +386,13 @@ class Arms(object):
     
     def __cancel_right_goal(self):
         actionClients._ac_grasp_precompute_right.cancel_all_goals()
-        #actionClients._ac_move_arm_right.cancel_all_goals()
+        actionClients._ac_move_arm_right.cancel_all_goals()
         actionClients._ac_joint_traj_right.cancel_all_goals()
         return True
     
     def __cancel_left_goal(self):
         actionClients._ac_grasp_precompute_left.cancel_all_goals()
-        #actionClients._ac_move_arm_left.cancel_all_goals()
+        actionClients._ac_move_arm_left.cancel_all_goals()
         actionClients._ac_joint_traj_left.cancel_all_goals()
         return True
     
