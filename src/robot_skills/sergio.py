@@ -61,7 +61,9 @@ class SergioTorso(spindle.Spindle):
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, arg):
-        super(Sergio, self).__init__(armClass=SergioArm)
+        super(Sergio, self).__init__(
+            armClass=SergioArm,
+            perceptionClass=PerceptionED)
         
 if __name__ == "__main__":
 
