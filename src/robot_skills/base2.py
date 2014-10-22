@@ -37,11 +37,11 @@ class Base(object):
 #        rospy.wait_for_service("/gp/check_plan_srv")
 
         # ROS Services for global planner
-        self.get_plan_client = rospy.ServiceProxy("/base_navigation/get_plan_srv", GetPlan)
-        self.check_plan_client = rospy.ServiceProxy("/base_navigation/check_plan_srv", CheckPlan)
+        self.get_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/get_plan_srv", GetPlan)
+        self.check_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/check_plan_srv", CheckPlan)
 
         # ROS ActionLib for local planner
-        self.action_client = actionlib.SimpleActionClient('/base_navigation/action_server', LocalPlannerAction)
+        self.action_client = actionlib.SimpleActionClient('/cb_base_navigation/local_planner_interface/action_server', LocalPlannerAction)
 
         self.cmd_vel = rospy.Publisher('/' + self.robot.robot_name + '/base/references', geometry_msgs.msg.Twist)
 

@@ -53,6 +53,7 @@ class Robot(object):
 
         if self.use_ed:
             self.base = base2.Base(self, self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
+            self.base2 = self.base # Needed for now, because NavigateWithConstraints uses robot.base2
         else:
             self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
 
