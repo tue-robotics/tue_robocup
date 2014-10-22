@@ -26,7 +26,7 @@ class Initialize(smach.State):
         #self.robot.leftArm.send_gripper_goal_close()
         self.robot.rightArm.reset_arm()
         #self.robot.rightArm.send_gripper_goal_close()
-        self.robot.reasoner.reset()
+        #self.robot.reasoner.reset()
         self.robot.spindle.reset()
         self.robot.base.reset_costmap()
         self.robot.perception.toggle([])

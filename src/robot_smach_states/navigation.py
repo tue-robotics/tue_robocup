@@ -1051,8 +1051,10 @@ class AbortAnalyzer(smach.State):
         self.robot.base.analyzer.abort_measurement()
         return 'done'
 
+# ----------------------------------------------------------------------------------------------------
+
 # refresh_freq      Frequency of re-check of determine_goal (0 means only check at beginning)
-class NavigateGeneric(smach.StateMachine):
+class NavigateGenericOld(smach.StateMachine):
     def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.15, refresh_freq=0, move_torso=True,
         xy_dist_to_goal_tuple=(0.8, 0.0)):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
@@ -1185,3 +1187,48 @@ class NavigateGeneric(smach.StateMachine):
     def query(self, query):
         if query == "nr_poses_to_goal":
             return self.robot.base.poses_to_goal
+
+# ----------------------------------------------------------------------------------------------------
+
+class TestState(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, userdata):
+        rospy.logwarn("Using NavigateGenericNew!")
+        return 'done'
+
+class NavigateGenericNew(smach.StateMachine):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.15, refresh_freq=0, move_torso=True,
+        xy_dist_to_goal_tuple=(0.8, 0.0)):
+        smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','preempted','goal_not_defined'])
+
+        with self:
+            smach.StateMachine.add('TEST_STATE', TestState(robot),
+                transitions={'done': 'arrived'})            
+
+# ----------------------------------------------------------------------------------------------------
+
+class NavigateGeneric(smach.StateMachine):
+    def __init__(self, robot, goal_pose_2d=None, goal_name=None, goal_query=None, lookat_point_3d=None, lookat_query=None, look_at_path_distance=1.5, goal_area_radius=0.15, refresh_freq=0, move_torso=True,
+        xy_dist_to_goal_tuple=(0.8, 0.0)):
+        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
+
+        if robot.use_ed:
+            self.sm = NavigateGenericNew(robot, goal_pose_2d, goal_name, goal_query, lookat_point_3d, lookat_query,
+                                   look_at_path_distance, goal_area_radius, move_torso, xy_dist_to_goal_tuple)            
+        else:
+            self.sm = NavigateGenericOld(robot, goal_pose_2d, goal_name, goal_query, lookat_point_3d, lookat_query,
+                                   look_at_path_distance, goal_area_radius, move_torso, xy_dist_to_goal_tuple)
+
+        with self:
+            smach.StateMachine.add('NAVIGATE_GENERIC_OLD', self.sm,
+                transitions={'arrived' : 'arrived', 'unreachable' : 'unreachable', 'preempted' : 'preempted', 'goal_not_defined' : 'goal_not_defined'}            
+                )
+
+    def request_preempt(self):
+        self.sm.request_preempt()
+
+    def query(self, query):
+        return self.sm.query(query)
