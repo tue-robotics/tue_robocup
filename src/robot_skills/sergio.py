@@ -5,11 +5,8 @@ import robot
 import rospy
 
 import arms
+import arms_dummy
 import spindle # ToDo: get rid of this (we only need the interface for now)
-
-class SergioArms(arms.Arms):
-    def __init__(self, tf_listener):
-        super(SergioArms, self).__init__(tf_listener)
 
 class SergioTorso(spindle.Spindle):
     def __init__(self):
@@ -62,17 +59,19 @@ class SergioTorso(spindle.Spindle):
 
 class Sergio(robot.Robot):
     """docstring for Sergio"""
-    def __init__(self, arg):
-        super(Sergio, self).__init__(
-            armClass=SergioArm)
+    def __init__(self, wait_services=False):
+        super(Sergio, self).__init__(wait_services=False,armClass=arms_dummy.DummyArms)
         
 if __name__ == "__main__":
     print "Starting sergio console"
     rospy.init_node('robot_executioner', anonymous=True)
 
-    ''' Import console functions '''
-    from console import *
+    ''' Initialize robot object '''
+    robot  = Sergio('sergio')
+    sergio = robot
 
-    rospy.logerr("Sergio-console not yet implemented")
+    ''' Import console functions '''
+    #from console import *
+    #set_robot(robot)
 
     #robot.spindle.send_goal(0.35)
