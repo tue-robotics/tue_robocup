@@ -1,9 +1,11 @@
 #! /usr/bin/env python
-import perception
+#import perception
+import rospy
 
-class PerceptionED(arms.Arms):
-    def __init__(self):
-        super(PerceptionED, self).__init__()
+class PerceptionED:
+    def __init__(self, wait_service=False):
+        pass
+        #super(PerceptionED, self).__init__()
 
     def close(self):
         pass

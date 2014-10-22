@@ -64,8 +64,7 @@ class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, arg):
         super(Sergio, self).__init__(
-            armClass=SergioArm,
-            perceptionClass=PerceptionED)
+            armClass=SergioArm)
         
 if __name__ == "__main__":
     print "Starting sergio console"

@@ -9,6 +9,7 @@ import spindle
 import speech
 import arms
 import perception
+import perception_ed
 import ears
 import ebutton
 import lights
@@ -49,17 +50,26 @@ class Robot(object):
             rospy.loginfo("NOT using ED")
 
         self.head = head.Head()
-        self.base2 = base2.Base(self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
-        self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
+
+        if self.use_ed:
+            self.base = base2.Base(self, self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
+        else:
+            self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
+
         self.spindle = spindle.Spindle(wait_service=wait_services)
         self.speech = speech.Speech(wait_service=wait_services)
         self.arms =  armClass(self.tf_listener)   #arms.Arms(self.tf_listener) #TODO: use self.tf_listener here
         self.leftArm = arms.Arm(arms.Side.LEFT, self.tf_listener)
         self.rightArm = arms.Arm(arms.Side.RIGHT, self.tf_listener)
-        try:
-            self.perception = perception.Perception(wait_service=wait_services)
-        except:
-            rospy.logwarn("Perception could not be initialized. Is the providing node running?")
+
+        if self.use_ed:
+             self.perception = perception_ed.PerceptionED(wait_service=wait_services)
+        else:
+            try:
+                self.perception = perception.Perception(wait_service=wait_services)
+            except:
+                rospy.logwarn("Perception could not be initialized. Is the providing node running?")
+        
         self.ears = ears.Ears()
         self.ebutton = ebutton.EButton()
         self.lights = lights.Lights()
