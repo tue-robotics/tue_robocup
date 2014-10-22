@@ -4,6 +4,7 @@ import rospy
 import head
 #import worldmodel
 import base
+import base2
 import spindle
 import speech
 import arms
@@ -39,6 +40,13 @@ class Robot(object):
         self._get_base_goal_poses = rospy.ServiceProxy('/inverse_reachability/inverse_reachability', amigo_inverse_reachability.srv.GetBaseGoalPoses)
 
         self.tf_listener = tf_server.TFClient()
+
+        # Determine if we are using ED (world model)
+        self.use_ed = rospy.get_param('/use_ed', False)
+        if self.use_ed:
+            rospy.loginfo("Using ED")
+        else:
+            rospy.loginfo("NOT using ED")
 
         self.head = head.Head()
         self.base2 = base2.Base(self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)

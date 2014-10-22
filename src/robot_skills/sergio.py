@@ -8,8 +8,8 @@ import arms
 import spindle # ToDo: get rid of this (we only need the interface for now)
 
 class SergioArms(arms.Arms):
-    def __init__(self):
-        super(SergioArms, self).__init__()
+    def __init__(self, tf_listener):
+        super(SergioArms, self).__init__(tf_listener)
 
 class SergioTorso(spindle.Spindle):
     def __init__(self):

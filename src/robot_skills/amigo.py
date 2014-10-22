@@ -30,8 +30,8 @@ import amigo_inverse_reachability.srv
 from psi import Compound, Sequence, Conjunction
 
 class AmigoArms(arms.Arms):
-    def __init__(self):
-        super(AmigoArms, self).__init__()
+    def __init__(self, tf_listener):
+        super(AmigoArms, self).__init__(tf_listener)
 
 class Amigo(robot.Robot):
     """
