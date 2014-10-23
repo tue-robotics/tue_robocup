@@ -56,7 +56,6 @@ class SergioTorso(spindle.Spindle):
     def get_position(self):
         return 0.0
         
-
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
