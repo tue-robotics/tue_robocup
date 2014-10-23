@@ -19,6 +19,18 @@ class Base(object):
         self.global_planner = GlobalPlanner()
         self.local_planner = LocalPlanner()
 
+    def move(self, position_constraint_string, frame):
+        p = PositionConstraint()
+        p.constraint = position_constraint_string
+        p.frame = frame
+        plan = self.global_planner.getPlan(p)
+        if plan:
+            o = OrientationConstraint()
+            o.frame = frame
+            self.local_planner.setPlan(plan,o)
+
+        return plan
+
 ###########################################################################################################################
 
 class LocalPlanner():
@@ -61,22 +73,22 @@ class GlobalPlanner():
         self._check_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/check_plan_srv", CheckPlan)
         rospy.loginfo("Waiting for the global planner services ...")
 
-    def getPlan(self, pos_constraint):
+    def getPlan(self, position_constraint):
 
-        self.position_constraint = pos_constraint
+        self.position_constraint = position_constraint
 
         pcs = []
-        pcs.append(pos_constraint)
+        pcs.append(position_constraint)
 
         try:
             resp = self._get_plan_client(pcs)
         except:
             rospy.logerr("Could not get plan from global planner via service call, is the global planner running?")
-            return -2
+            return None
 
         if not resp.succes:
-            rospy.logerr("Global planner couldn't figure out your request. Are your constraints set correctly?")
-            return -1
+            rospy.logerr("Global planner couldn't plan a path to the specified constraints. Are the constraints you specified valid?")
+            return None
 
         return resp.plan
 
