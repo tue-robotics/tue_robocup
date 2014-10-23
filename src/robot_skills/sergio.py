@@ -9,7 +9,7 @@ import arms_dummy
 import spindle # ToDo: get rid of this (we only need the interface for now)
 
 class SergioTorso(spindle.Spindle):
-    def __init__(self):
+    def __init__(self, wait_service=False):
         super(SergioTorso, self).__init__()
 
     def close(self):
@@ -59,7 +59,7 @@ class SergioTorso(spindle.Spindle):
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
-        super(Sergio, self).__init__(robot_name="sergio", wait_services=False,armClass=arms_dummy.DummyArms)
+        super(Sergio, self).__init__(robot_name="sergio", wait_services=False,armClass=arms_dummy.DummyArms, torsoClass=SergioTorso)
         
 if __name__ == "__main__":
     print "Starting sergio console"

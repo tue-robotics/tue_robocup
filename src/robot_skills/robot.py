@@ -34,7 +34,7 @@ class Robot(object):
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", wait_services=False, armClass=None):
+    def __init__(self, robot_name="", wait_services=False, armClass=None, torsoClass=spindle.Spindle):
 
         self.robot_name = robot_name
         
@@ -57,7 +57,7 @@ class Robot(object):
         else:
             self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
 
-        self.spindle = spindle.Spindle(wait_service=wait_services)
+        self.spindle = torsoClass(wait_service=wait_services)
         self.speech = speech.Speech(wait_service=wait_services)
         self.arms =  armClass(self.tf_listener)   #arms.Arms(self.tf_listener) #TODO: use self.tf_listener here
         self.leftArm = arms.Arm(arms.Side.LEFT, self.tf_listener)
