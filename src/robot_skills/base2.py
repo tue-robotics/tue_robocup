@@ -2,66 +2,66 @@
 
 #
 #  Rein Appeldoorn
-#  October '14
+#  March '14
 #
 
 import roslib, rospy
 roslib.load_manifest('robot_skills')
-from geometry_msgs.msg import PoseStamped, Point, Twist
+
+from geometry_msgs.msg import PoseStamped
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 import actionlib
 
-###########################################################################################################################
+import tf
+import tf_server
 
 class Base(object):
-    def __init__(self):
-        self.global_planner = GlobalPlanner()
-        self.local_planner = LocalPlanner()
+    """Interface to the planners """
+    
+    def __init__(self, tf_listener, wait_service=True, use_2d=None):
 
-###########################################################################################################################
+        # Some member vars to store some data
+        self.plan = []
+        self.pc = PositionConstraint()
+        self.oc = OrientationConstraint()
+        self.local_planner_status = "idle"
 
-class LocalPlanner():
-    def __init__(self):
-        self._action_client = actionlib.SimpleActionClient('/cb_base_navigation/local_planner_interface/action_server', LocalPlannerAction)
+        # Wait for services to be active
+        rospy.loginfo("Waiting for the global planner services ...")
+#        rospy.wait_for_service("/gp/get_plan_srv")
+#        rospy.wait_for_service("/gp/check_plan_srv")
 
-        # Public members!
-        self.status = "idle" # idle, controlling, blocked, arrived
-        self.obstacle_point = None
-        self.dtg = None
+        # ROS Services for global planner
+        self.get_plan_client = rospy.ServiceProxy("/base_navigation/get_plan_srv", GetPlan)
+        self.check_plan_client = rospy.ServiceProxy("/base_navigation/check_plan_srv", CheckPlan)
 
-    def setPlan(self, plan, orientation_constraint):
+        # ROS ActionLib for local planner
+        self.action_client = actionlib.SimpleActionClient('/base_navigation/action_server', LocalPlannerAction)
+
+        rospy.loginfo("Navigation Interface Initialized [(base2)]")
+
+    ################### LOCAL PLANNER ############################
+
+    def localPlannerSetPlan(self, plan, orientation_constraint):
         goal = LocalPlannerGoal()
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
-        self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback) 
+        self.action_client.send_goal(goal, done_cb = self.__localPlannerDoneCallback, feedback_cb = self.__localPlannerFeedbackCallback) 
+        self.local_planner_status = "controlling"
 
-    def cancelCurrentPlan(self):
-        self._action_client.cancel_goal()
+    def localPlannerCancelCurrentPlan(self):
+        self.action_client.cancel_goal()
 
-    def __feedbackCallback(self, feedback):
-        if feedback.blocked:
-            self.status = "blocked"
-            self.obstacle_point = feedback.point_blocked
-        else:
-            self.status = "controlling" 
-            self.obstacle_point = None
-        self.dtg = feedback.dtg
+    def __localPlannerFeedbackCallback(self, feedback):
+        self.local_planner_status = "controlling" # or stuck (blocked)
 
-    def __doneCallback(self, terminal_state, result):
-        self.dtg = None
-        self.obstacle_point = None
-        self.status = "arrived"
+    def __localPlannerDoneCallback(self, terminal_state, result):
+        self.local_planner_status = "arrived"
 
-###########################################################################################################################
+    ################### GLOBAL PLANNER ###########################
 
-class GlobalPlanner():
-    def __init__(self):
-        self._get_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/get_plan_srv", GetPlan)
-        self._check_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/check_plan_srv", CheckPlan)
-        rospy.loginfo("Waiting for the global planner services ...")
-
-    def getPlan(self, pos_constraint):
+    def globalPlannerGetPlan(self, pos_constraint):
 
         self.position_constraint = pos_constraint
 
@@ -69,7 +69,7 @@ class GlobalPlanner():
         pcs.append(pos_constraint)
 
         try:
-            resp = self._get_plan_client(pcs)
+            resp = self.get_plan_client(pcs)
         except:
             rospy.logerr("Could not get plan from global planner via service call, is the global planner running?")
             return -2
@@ -80,13 +80,12 @@ class GlobalPlanner():
 
         return resp.plan
 
-    def checkPlan(self, plan):
+    def globalPlannerCheckPlan(self, plan):
+
         try:
-            resp = self._check_plan_client(plan)
+            resp = self.check_plan_client(plan)
         except:
             rospy.logerr("Could not check plan, is the global planner running?")
             return False
 
         return resp.valid
-
-###########################################################################################################################
