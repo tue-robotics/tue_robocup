@@ -247,13 +247,13 @@ class NavAnalyzer:
             datestr += "0"
         datestr += "{0}_".format(stamp.day)
         if stamp.hour < 10:
-            datestr += "{0}".format(stamp.hour)
+            datestr += "0"
         datestr += "{0}".format(stamp.hour)
         if stamp.minute < 10:
-            datestr += "{0}".format(stamp.minute)
+            datestr += "0"
         datestr += "{0}".format(stamp.minute)
         if stamp.second < 10:
-            datestr += "{0}".format(stamp.second)
+            datestr += "0"
         datestr += "{0}_{1}".format(stamp.second, stamp.microsecond)
         return datestr
 
