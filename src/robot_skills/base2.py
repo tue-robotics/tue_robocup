@@ -20,32 +20,48 @@ class LocalPlanner():
         self._action_client = actionlib.SimpleActionClient('/cb_base_navigation/local_planner_interface/action_server', LocalPlannerAction)
 
         # Public members!
-        self.status = "idle" # idle, controlling, blocked, arrived
-        self.obstacle_point = None
-        self.dtg = None
+        self._status = "idle" # idle, controlling, blocked, arrived
+        self._obstacle_point = None
+        self._dtg = None
+        self._plan = None
 
-    def setPlan(self, plan, orientation_constraint):
+    def setPlan(self, plan, position_constraint, orientation_constraint):
         goal = LocalPlannerGoal()
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
         self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback) 
+        self.__setState("controlling", None, None, plan)
 
     def cancelCurrentPlan(self):
         self._action_client.cancel_goal()
+        self.__setState("idle")
+
+    def getStatus(self):
+        return self._status
+
+    def getDistanceToGoal(self):
+        return self._dtg
+
+    def getObstaclePoint(self):
+        return self._obstacle_point
+
+    def getPlan(self):
+        return plan
 
     def __feedbackCallback(self, feedback):
         if feedback.blocked:
-            self.status = "blocked"
-            self.obstacle_point = feedback.point_blocked
+            self.__setState("blocked", feedback.point_blocked, feedback.dtg, self.plan)
         else:
-            self.status = "controlling" 
-            self.obstacle_point = None
-        self.dtg = feedback.dtg
+            self.__setState("controlling", None, feedback.dtg, self.plan)
 
     def __doneCallback(self, terminal_state, result):
-        self.dtg = None
-        self.obstacle_point = None
-        self.status = "arrived"
+        self.__setState("arrived")
+
+    def __setState(self, status, obstacle_point=None, dtg=None, plan=None):
+        self._status = status
+        self._obstacle_point = obstacle_point
+        self._dtg = dtg
+        self._plan = plan
 
 ###########################################################################################################################
 
@@ -120,7 +136,7 @@ class Base(object):
         v.linear.x = vx
         v.linear.y = vy
         v.angular.z= vth
-        while (rospy.Time.now() - start_time) < rospy.Duration(timeout):
+        while (rospy.Time.now() - t_start) < rospy.Duration(timeout):
             self._cmd_vel.publish(v)
             rospy.sleep(0.1)
         
