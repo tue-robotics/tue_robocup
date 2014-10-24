@@ -13,7 +13,7 @@ class ED:
         self._ed_simple_query_srv = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
         self._ed_reset_srv = rospy.ServiceProxy('/ed/reset', Empty)
 
-    def getEntities(self, type="", center_point=Point(), radius=0):
+    def getEntities(self, type="", center_point=Point(), radius=0, id=""):
         query = SimpleQueryRequest(type=type, center_point=center_point, radius=radius) 
 
         try:
@@ -31,6 +31,13 @@ class ED:
 
         # Sort by distance
         entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.center_point.x, center_point.y - entity.center_point.y))
+
+        return entities[0]
+
+    def getEntity(self, id):
+        entities = self.getEntities(id=id)
+        if len(entities) == 0:
+            return None
 
         return entities[0]
 
