@@ -56,6 +56,10 @@ class executePlan(smach.State):
 
         self.t_last_free = rospy.Time.now()
 
+        # Cancel head goal, we need it for navigation :)
+        if self.robot.head.getGoal():
+                self.robot.head.cancelGoal()
+
         while True:
             rospy.Rate(1.0).sleep() # 1hz
 
@@ -75,22 +79,35 @@ class executePlan(smach.State):
         return False
 
 class determineBlocked(smach.State):
-   def __init__(self, robot, timeout=2):
-       smach.State.__init__(self,outcomes=['blocked','blocked_human'])
+   def __init__(self, robot, timeout=5):
+       smach.State.__init__(self,outcomes=['blocked','blocked_human', 'free'])
        self.robot = robot 
        self.timeout = timeout
 
    def execute(self, userdata):
 
-        entity = self.robot.ed.getClosestEntity(center_point=self.robot.base.local_planner.getObstaclePoint())
+        r = rospy.Rate(1.0) # 1hz
+        t_start = rospy.Time.now()  
 
-        if not entity or entity.type != "human":
-            return "blocked"
-        else:
-            return "blocked_human"       
+        while self.robot.base.local_planner.getStatus() == "blocked":
+            entity = self.robot.ed.getClosestEntity(center_point=self.robot.base.local_planner.getObstaclePoint())
+
+            # Look at the entity
+            if entity:
+                self.robot.head.setLookAtGoal(entity.id)
+
+            if (rospy.Time.now() - t_start) > rospy.Duration(self.timeout):
+                if not entity or entity.type != "human":
+                    return "blocked"
+                else:
+                    return "blocked_human" 
+
+            r.sleep()
+
+        return "free"    
 
 class planBlocked(smach.State):
-   def __init__(self, robot, timeout = 5):
+   def __init__(self, robot, timeout = 1):
        smach.State.__init__(self,outcomes=['replan','free'])
        self.robot = robot 
        self.timeout = timeout
@@ -150,7 +167,8 @@ class NavigateWithConstraints(smach.StateMachine):
 
             smach.StateMachine.add('DETERMINE_BLOCKED',                 determineBlocked(self.robot),
                 transitions={'blocked_human'                        :   'PLAN_BLOCKED_HUMAN',
-                             'blocked'                              :   'PLAN_BLOCKED'})
+                             'blocked'                              :   'PLAN_BLOCKED',
+                             'free'                                 :   'EXECUTE_PLAN'})
 
             smach.StateMachine.add('PLAN_BLOCKED_HUMAN',                planBlockedHuman(self.robot),
                 transitions={'replan'                               :   'GET_PLAN',
