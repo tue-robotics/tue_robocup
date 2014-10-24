@@ -10,6 +10,7 @@ import speech
 import arms
 import perception
 import perception_ed
+import world_model_ed
 import ears
 import ebutton
 import lights
@@ -70,6 +71,9 @@ class Robot(object):
                 self.perception = perception.Perception(wait_service=wait_services)
             except:
                 rospy.logwarn("Perception could not be initialized. Is the providing node running?")
+
+        if self.use_ed:
+            self.ed = world_model_ed.ED(wait_service=wait_services)
         
         self.ears = ears.Ears()
         self.ebutton = ebutton.EButton()
