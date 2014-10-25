@@ -2,6 +2,7 @@
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import head
+import head2
 #import worldmodel
 import base
 import base2
@@ -10,6 +11,7 @@ import speech
 import arms
 import perception
 import perception_ed
+import world_model_ed
 import ears
 import ebutton
 import lights
@@ -49,11 +51,13 @@ class Robot(object):
         else:
             rospy.loginfo("NOT using ED")
 
-        self.head = head.Head()
+        if self.use_ed:
+            self.head = head2.Head()
+        else:
+            self.head = head.Head()
 
         if self.use_ed:
             self.base = base2.Base(self, self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
-            self.base2 = self.base # Needed for now, because NavigateWithConstraints uses robot.base2
         else:
             self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
 
@@ -70,6 +74,9 @@ class Robot(object):
                 self.perception = perception.Perception(wait_service=wait_services)
             except:
                 rospy.logwarn("Perception could not be initialized. Is the providing node running?")
+
+        if self.use_ed:
+            self.ed = world_model_ed.ED(wait_service=wait_services)
         
         self.ears = ears.Ears()
         self.ebutton = ebutton.EButton()

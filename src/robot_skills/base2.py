@@ -50,9 +50,9 @@ class LocalPlanner():
 
     def __feedbackCallback(self, feedback):
         if feedback.blocked:
-            self.__setState("blocked", feedback.point_blocked, feedback.dtg, self.plan)
+            self.__setState("blocked", feedback.point_blocked, feedback.dtg, self._plan)
         else:
-            self.__setState("controlling", None, feedback.dtg, self.plan)
+            self.__setState("controlling", None, feedback.dtg, self._plan)
 
     def __doneCallback(self, terminal_state, result):
         self.__setState("arrived")

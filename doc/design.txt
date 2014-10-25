@@ -1,0 +1,97 @@
+@startuml
+
+package robot_skills {
+    interface Robot
+    interface Base
+    interface Head
+    interface Arm
+    interface Reasoner
+    interface Perception
+    interface Ears
+    interface Speech
+    interface Lights
+    interface EmergencyStop
+    interface HeightAdjustment
+}
+
+package RoseComponents {
+    interface Gui
+    class OperatorGui
+    class ClientGui
+    class OnBoardGui
+    Gui <|-- OperatorGui
+    Gui <|-- ClientGui
+    Gui <|-- OnBoardGui
+}
+
+Amigo    --|> Robot
+Sergio   --|> Robot
+Rose --|> Robot
+
+Arm <|-- MoveItArm
+Arm <|-- ActinArm
+Arm <|-- AmigoArmNav
+
+HeightAdjustment <|-- Spindle
+HeightAdjustment <|-- Lift
+HeightAdjustment <|-- Torso
+
+Base <|-- EdBase
+Base <|-- RosNavStackBase
+
+Reasoner <|-- WireReasoner
+Reasoner <|-- EdReasoner
+
+Perception <|-- PeinPerception
+Perception <|-- EdPerception 
+note bottom of EdPerception
+    Most method are no-ops?
+end note
+
+Robot *-- Base : has-a
+Robot *-- Head
+Robot *-- Arm
+Robot o-- HeightAdjustment : might have a
+Robot *-- Reasoner
+Robot o-- Perception
+Robot o-- Ears
+Robot o-- Speech
+Robot o-- Lights
+Robot o-- EmergencyStop
+
+' Amigo *-- WireReasoner
+' Amigo *-- EdReasoner
+' Amigo *-- Spindle
+' Amigo *-- Lights
+' Amigo *-- EmergencyStop
+' Amigo *-- Ears
+' Amigo *-- Perception
+' Amigo *-- Speech
+' Amigo *-- EdBase
+' Amigo *-- RosNavStackBase
+' 
+' Sergio *-- Torso
+' Sergio *-- MoveItArm
+' Sergio *-- Perception
+' Sergio *-- WireReasoner
+' Sergio *-- EdReasoner
+' Sergio *-- Lights
+' Sergio *-- EmergencyStop
+' Sergio *-- Ears
+' Sergio *-- Perception
+' Sergio *-- Speech
+' Sergio *-- EdBase : can have
+' Sergio *-- RosNavStackBase
+
+' Rose *-- ActinArm
+' Rose *-- MoveItArm
+' Rose *-- Lift
+' Rose *-- Head
+' Rose *-- RosNavStackBase
+' Rose *-- EmergencyStop
+Rose *-- OperatorGui
+' Rose *-- ClientGui
+Rose *-- OnBoardGui
+
+@enduml
+	
