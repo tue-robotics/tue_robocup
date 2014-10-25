@@ -3,7 +3,6 @@ import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import actionlib
 from actionlib_msgs.msg import GoalStatus
-import amigo_actions.msg
 import control_msgs.msg
 import trajectory_msgs.msg
 import threading
@@ -64,6 +63,11 @@ class Spindle(object):
         spindle_goal.trajectory.joint_names.append("torso_joint")
         spindle_goal_point.positions.append(spindle_pos)
         spindle_goal.trajectory.points.append(spindle_goal_point)
+        
+        goal_tolerance = control_msgs.msg.JointTolerance()
+        goal_tolerance.name = "torso_joint"
+        goal_tolerance.position = 0.005
+        spindle_goal.goal_tolerance.append(goal_tolerance)
 
         self.ac_move_spindle.send_goal(spindle_goal)
         
