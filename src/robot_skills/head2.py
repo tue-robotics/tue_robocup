@@ -13,11 +13,11 @@ class Head(object):
         self._goal = None
         self._at_setpoint = False
 
-    def setPanTiltGoal(self, pan, tilt, end_time=0, pan_vel=0.2, tilt_vel=0.2):
-        self._setHeadReferenceGoal(1, pan_vel, tilt_vel, end_time, pan=pan, tilt=tilt)
+    def setPanTiltGoal(self, pan, tilt, end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
+        self._setHeadReferenceGoal(1, pan_vel, tilt_vel, end_time, pan=pan, tilt=tilt, wait_for_setpoint=wait_for_setpoint)
 
-    def setLookAtGoal(self, frame, point=Point(), end_time=0, pan_vel=0.2, tilt_vel=0.2):
-        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, frame=frame, point=point)
+    def setLookAtGoal(self, frame, point=Point(), end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
+        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, frame=frame, point=point, wait_for_setpoint=wait_for_setpoint)
 
     def cancelGoal(self):
         self._ac_head_ref_action.cancel_goal()
@@ -30,9 +30,9 @@ class Head(object):
     def atGoal(self):
         return self._at_setpoint
 
-    # ----
+    # ---- INTERFACING THE NODE ---
 
-    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, frame="", point=Point(), pan=0, tilt=0):
+    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, frame="", point=Point(), pan=0, tilt=0, wait_for_setpoint=False):
         self._goal = HeadReferenceGoal()
         self._goal.goal_type = goal_type
         self._goal.priority = 1 # Executives get prio 1
@@ -45,6 +45,8 @@ class Head(object):
         self._goal.tilt = tilt
         self._goal.end_time = end_time
         self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback) 
+        if wait_for_setpoint:
+            print "HEAD2.py wait for setpoint -- THIS IS NOT YET SUPPORTED"
 
     def __feedbackCallback(self, feedback):
         self._at_setpoint = feedback.at_setpoint

@@ -46,5 +46,6 @@ class ED:
 
     def reset(self):
         self._ed_reset_srv()
+        rospy.sleep(1.0)
 
 
