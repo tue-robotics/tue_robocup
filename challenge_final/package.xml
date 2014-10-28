@@ -41,6 +41,7 @@
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
+  <build_depend>roslib</build_depend>
   <build_depend>ed</build_depend>
   <build_depend>head_ref_ed_client</build_depend>
   <build_depend>robot_skills</build_depend>

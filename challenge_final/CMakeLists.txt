@@ -6,6 +6,7 @@ project(challenge_final)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  roslib
   ed
   head_ref_ed_client
   robot_skills
@@ -116,9 +117,9 @@ add_executable(send_image src/send_image.cpp)
 # add_dependencies(challenge_final_node challenge_final_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(challenge_final_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(send_image
+   ${catkin_LIBRARIES}
+ )
 
 #############
 ## Install ##
