@@ -24,7 +24,8 @@ class getPlan(smach.State):
         self.position_constraint = position_constraint
         self.orientation_constraint = orientation_constraint
 
-    def execute(self, userdata):
+    def execute(self, userdata):    
+
         # Perform some typechecks
         if not isinstance(self.position_constraint, PositionConstraint) or not isinstance(self.orientation_constraint, OrientationConstraint):
             rospy.loginfo("Invalid constraints given to getPlan()")
@@ -33,11 +34,7 @@ class getPlan(smach.State):
         plan = self.robot.base.global_planner.getPlan(self.position_constraint)
 
         if not plan or len(plan) == 0:
-            self.robot.ed.reset()
-
-        plan = self.robot.base.global_planner.getPlan(self.position_constraint)
-
-        if not plan or len(plan) == 0:
+            self.robot.base.local_planner.cancelCurrentPlan()
             return "unreachable"
 
         # Constraints and plan seem to be valid, so set the plan
@@ -89,21 +86,16 @@ class determineBlocked(smach.State):
 
         # Look at the entity
         p=self.robot.base.local_planner.getObstaclePoint()
-        p.z = 0.2
+        p.z = 1.6
         self.robot.head.setLookAtGoal("/map", p)
-        rospy.sleep(2.0)
-        p.z = 1.8
-        self.robot.head.setLookAtGoal("/map", p)
-        rospy.sleep(2.0)
+        rospy.sleep(5.0)
         self.robot.head.cancelGoal()
 
-        entity = self.robot.ed.getClosestEntity(center_point=self.robot.base.local_planner.getObstaclePoint())
-
         if self.robot.base.local_planner.getStatus() == "blocked":
-            if not entity or entity.type != "human":
-                return "blocked"
+            if len(self.robot.ed.getEntities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
+                return "blocked_human"
             else:
-                return "blocked_human" 
+                return "blocked" 
 
         return "free"    
 
@@ -135,7 +127,7 @@ class planBlockedHuman(smach.State):
 
    def execute(self, userdata):
 
-        r = rospy.Rate(2.0) # 1hz
+        r = rospy.Rate(.5) # 1hz
         t_start = rospy.Time.now()
 
         while self.robot.base.local_planner.getStatus() == "blocked":
@@ -148,7 +140,16 @@ class planBlockedHuman(smach.State):
 
         return "free"
 
-class NavigateWithConstraints(smach.StateMachine):
+class resetWorldModel(smach.State):
+   def __init__(self, robot):
+       smach.State.__init__(self,outcomes=['succeeded'])
+       self.robot = robot 
+
+   def execute(self, userdata):
+        self.robot.ed.reset()
+        return "succeeded"
+
+class NavigateWithConstraintsOnce(smach.StateMachine):
     def __init__(self, robot, position_constraint, orientation_constraint):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'])
         self.robot = robot
@@ -158,7 +159,7 @@ class NavigateWithConstraints(smach.StateMachine):
         with self:
 
             smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, position_constraint, orientation_constraint),
-                transitions={'unreachable'                          :   'unreachable',
+                transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
                              'goal_not_defined'                     :   'goal_not_defined',
                              'goal_ok'                              :   'EXECUTE_PLAN'})
 
@@ -178,6 +179,20 @@ class NavigateWithConstraints(smach.StateMachine):
             smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
                 transitions={'replan'                               :   'GET_PLAN',
                              'free'                                 :   'EXECUTE_PLAN'})
+
+            smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
+                transitions={'succeeded'                            :   'unreachable'})
+
+class NavigateWithConstraints(smach.Sequence):
+    def __init__(self, robot, position_constraint, orientation_constraint):
+        smach.Sequence.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'], connector_outcome = 'unreachable')
+        self.robot = robot
+
+        with self:
+
+            smach.Sequence.add('NAVIGATE_TRY_1', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+            smach.Sequence.add('NAVIGATE_TRY_2', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+            smach.Sequence.add('NAVIGATE_TRY_3', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
 
 ################ TESTS ##################
 

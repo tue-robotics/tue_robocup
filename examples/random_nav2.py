@@ -73,7 +73,7 @@ class RandomNav(smach.StateMachine):
                     requested_location = None
                 else:
                     # Query ED
-                    targets = [e.id for e in self.robot.ed.getEntities() if e.type != ""]
+                    targets = [e.id for e in self.robot.ed.getEntities() if e.type != "" and len(e.id) != 32]
                     target = random.choice(targets)
 
                 # Set the constraints
