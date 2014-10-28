@@ -32,10 +32,12 @@ class getPlan(smach.State):
 
         plan = self.robot.base.global_planner.getPlan(self.position_constraint)
 
-        if not plan:
-            return "goal_not_defined"
+        if not plan or len(plan) == 0:
+            self.robot.ed.reset()
 
-        if (len(plan) == 0):
+        plan = self.robot.base.global_planner.getPlan(self.position_constraint)
+
+        if not plan or len(plan) == 0:
             return "unreachable"
 
         # Constraints and plan seem to be valid, so set the plan
@@ -79,30 +81,29 @@ class executePlan(smach.State):
         return False
 
 class determineBlocked(smach.State):
-   def __init__(self, robot, timeout=5):
+   def __init__(self, robot):
        smach.State.__init__(self,outcomes=['blocked','blocked_human', 'free'])
        self.robot = robot 
-       self.timeout = timeout
 
    def execute(self, userdata):
 
-        r = rospy.Rate(1.0) # 1hz
-        t_start = rospy.Time.now()  
+        # Look at the entity
+        p=self.robot.base.local_planner.getObstaclePoint()
+        p.z = 0.2
+        self.robot.head.setLookAtGoal("/map", p)
+        rospy.sleep(2.0)
+        p.z = 1.8
+        self.robot.head.setLookAtGoal("/map", p)
+        rospy.sleep(2.0)
+        self.robot.head.cancelGoal()
 
-        while self.robot.base.local_planner.getStatus() == "blocked":
-            entity = self.robot.ed.getClosestEntity(center_point=self.robot.base.local_planner.getObstaclePoint())
+        entity = self.robot.ed.getClosestEntity(center_point=self.robot.base.local_planner.getObstaclePoint())
 
-            # Look at the entity
-            if entity:
-                self.robot.head.setLookAtGoal(entity.id)
-
-            if (rospy.Time.now() - t_start) > rospy.Duration(self.timeout):
-                if not entity or entity.type != "human":
-                    return "blocked"
-                else:
-                    return "blocked_human" 
-
-            r.sleep()
+        if self.robot.base.local_planner.getStatus() == "blocked":
+            if not entity or entity.type != "human":
+                return "blocked"
+            else:
+                return "blocked_human" 
 
         return "free"    
 
