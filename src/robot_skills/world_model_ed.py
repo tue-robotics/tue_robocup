@@ -30,7 +30,10 @@ class ED:
             return None
 
         # Sort by distance
-        entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.center_point.x, center_point.y - entity.center_point.y))
+		try:
+            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.center_point.x, center_point.y - entity.center_point.y))
+	    except:
+			return None
 
         return entities[0]
 
