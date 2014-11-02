@@ -7,7 +7,7 @@ import robot
 import head
 #import worldmodel
 import base
-import base2
+import constraint_based_base
 import spindle
 import speech
 import arms

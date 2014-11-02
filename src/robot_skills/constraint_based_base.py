@@ -159,11 +159,11 @@ class Base(object):
 ################################################################################################################################################################
 
     def go(self, x, y, phi, frame="/map", timeout=0):
-        rospy.logwarn("[base2.py] Function 'go' is obsolete.")
+        rospy.logwarn("[constraint_based_base.py] Function 'go' is obsolete.")
         return True
 
     def get_location(self):
-        rospy.logwarn("[base2.py] Function 'get_location' is obsolete.")
+        rospy.logwarn("[constraint_based_base.py] Function 'get_location' is obsolete.")
 
         try:
             #tf_listener = tf_server.TFClient()
@@ -193,7 +193,7 @@ class Base(object):
             return target_pose
 
     def set_initial_pose(self, x, y, phi):
-        rospy.logwarn("[base2.py] Function 'set_initial_pose' is obsolete.")
+        rospy.logwarn("[constraint_based_base.py] Function 'set_initial_pose' is obsolete.")
 
         initial_pose = geometry_msgs.msg.PoseWithCovarianceStamped()
         
@@ -212,10 +212,10 @@ class Base(object):
         return True     
 
     def reset_costmap(self):
-        rospy.logwarn("[base2.py] Function 'reset_costmap' is obsolete.")
+        rospy.logwarn("[constraint_based_base.py] Function 'reset_costmap' is obsolete.")
         return True
 
     def cancel_goal(self):
-        rospy.logwarn("[base2.py] Function 'cancel_goal' is obsolete.")
+        rospy.logwarn("[constraint_based_base.py] Function 'cancel_goal' is obsolete.")
         return True
 
