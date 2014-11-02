@@ -14,19 +14,13 @@ package robot_skills {
     interface HeightAdjustment
 }
 
-package RoseComponents {
-    interface Gui
-    class OperatorGui
-    class ClientGui
-    class OnBoardGui
-    Gui <|-- OperatorGui
-    Gui <|-- ClientGui
-    Gui <|-- OnBoardGui
-}
-
-Amigo    --|> Robot
-Sergio   --|> Robot
-Rose --|> Robot
+interface Gui
+class OperatorGui
+class ClientGui
+class OnBoardGui
+Gui <|-- OperatorGui
+Gui <|-- ClientGui
+Gui <|-- OnBoardGui
 
 Arm <|-- MoveItArm
 Arm <|-- ActinArm
@@ -48,6 +42,9 @@ note bottom of EdPerception
     Most method are no-ops?
 end note
 
+Speech <|-- PhilipsTTS
+Speech <|-- GoogleTTS
+
 Robot *-- Base : has-a
 Robot *-- Head
 Robot *-- Arm
@@ -59,39 +56,27 @@ Robot o-- Speech
 Robot o-- Lights
 Robot o-- EmergencyStop
 
-' Amigo *-- WireReasoner
-' Amigo *-- EdReasoner
-' Amigo *-- Spindle
-' Amigo *-- Lights
-' Amigo *-- EmergencyStop
-' Amigo *-- Ears
-' Amigo *-- Perception
-' Amigo *-- Speech
-' Amigo *-- EdBase
-' Amigo *-- RosNavStackBase
-' 
-' Sergio *-- Torso
-' Sergio *-- MoveItArm
-' Sergio *-- Perception
-' Sergio *-- WireReasoner
-' Sergio *-- EdReasoner
-' Sergio *-- Lights
-' Sergio *-- EmergencyStop
-' Sergio *-- Ears
-' Sergio *-- Perception
-' Sergio *-- Speech
-' Sergio *-- EdBase : can have
-' Sergio *-- RosNavStackBase
+Amigo    --|> Robot
+Sergio   --|> Robot
+Rose     --|> Robot
 
-' Rose *-- ActinArm
-' Rose *-- MoveItArm
-' Rose *-- Lift
-' Rose *-- Head
-' Rose *-- RosNavStackBase
-' Rose *-- EmergencyStop
-Rose *-- OperatorGui
-' Rose *-- ClientGui
-Rose *-- OnBoardGui
+Amigo *-up- Spindle
+Amigo *-up- PhilipsTTS
+Amigo *-up- RosNavStackBase
+Amigo *-up- AmigoArmNav
+
+Sergio *-up- Torso
+Sergio *-up- MoveItArm
+Sergio *-up- PhilipsTTS
+Sergio *-up- EdBase : can have
+Sergio *-up- RosNavStackBase
+
+Rose *-up- ActinArm
+Rose *-up- Lift
+Rose *-up- RosNavStackBase
+Rose *-up- OperatorGui
+Rose *-up- ClientGui
+Rose *-up- OnBoardGui
 
 @enduml
 	
