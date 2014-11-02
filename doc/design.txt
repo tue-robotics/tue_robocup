@@ -30,7 +30,7 @@ HeightAdjustment <|-- Spindle
 HeightAdjustment <|-- Lift
 HeightAdjustment <|-- Torso
 
-Base <|-- EdBase
+Base <|-- ConstraintBased
 Base <|-- RosNavStackBase
 
 Reasoner <|-- WireReasoner
@@ -68,7 +68,7 @@ Amigo *-up- AmigoArmNav
 Sergio *-up- Torso
 Sergio *-up- MoveItArm
 Sergio *-up- PhilipsTTS
-Sergio *-up- EdBase : can have
+Sergio *-up- ConstraintBased : can have
 Sergio *-up- RosNavStackBase
 
 Rose *-up- ActinArm
