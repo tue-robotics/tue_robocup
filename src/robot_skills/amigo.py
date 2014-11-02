@@ -6,7 +6,7 @@ import robot
 
 import head
 #import worldmodel
-import base
+import ros_navstack_base
 import constraint_based_base
 import spindle
 import speech

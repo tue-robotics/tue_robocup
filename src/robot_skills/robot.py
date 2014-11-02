@@ -3,7 +3,7 @@ import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import head
 #import worldmodel
-import base
+import ros_navstack_base
 import constraint_based_base
 import spindle
 import speech
@@ -54,7 +54,7 @@ class Robot(object):
         if self.use_ed:
             self.base = constraint_based_base.Base(self, self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
         else:
-            self.base = base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
+            self.base = ros_navstack_base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
 
         self.spindle = torsoClass(wait_service=wait_services)
         self.speech = speech.Speech(wait_service=wait_services)
