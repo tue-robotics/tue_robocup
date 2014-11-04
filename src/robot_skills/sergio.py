@@ -9,14 +9,14 @@ import rospy
 import arms_dummy
 
 ''' Spindle '''
-import sergo_torso
+import sergio_torso
         
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
         super(Sergio, self).__init__(robot_name="sergio", wait_services=False,
             armClass=arms_dummy.DummyArms, 
-            torsoClass=sergo_torso.SergioTorso)
+            torsoClass=sergio_torso.SergioTorso)
         
 if __name__ == "__main__":
     print "Starting sergio console"

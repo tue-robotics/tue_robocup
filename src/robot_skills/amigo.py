@@ -45,7 +45,7 @@ class Amigo(robot.Robot):
     >>> Amigo()
     """
     def __init__(self, dontInclude = [], wait_services=False):
-        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, armClass=AmigoArms)
+        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, armClass=AmigoArms, torsoClass=spindle.Spindle)
     
 
 if __name__ == "__main__":
