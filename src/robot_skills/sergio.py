@@ -10,7 +10,7 @@ import arms_dummy
 
 ''' Spindle '''
 import sergio_torso
-        
+
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
