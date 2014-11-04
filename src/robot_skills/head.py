@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
+
+import head_baseclass
+
 import geometry_msgs.msg
 import actionlib
 from actionlib_msgs.msg import GoalStatus
@@ -9,7 +12,7 @@ import random
 from sensor_msgs.msg import JointState
 import robot_skills.util.msg_constructors as msgs
 
-class Head(object):
+class Head(head_baseclass.HeadBaseclass):
     """
     An interface to amigo's head
 
@@ -35,6 +38,7 @@ class Head(object):
     NECK_TILT_JOINT = 1
 
     def __init__(self):
+        super(Head, self).__init__()
         self._ac_head_ref_action = actionlib.SimpleActionClient("head_ref_action",  HeadRefAction)
         self._search_movement_random_timer = rospy.Time.now()
         self._search_movement_random_offsets = [0,0,0]
@@ -93,38 +97,8 @@ class Head(object):
                 self.cancel_goal()
                 return False
 
-
-    def send_goal_topic(self, point_stamped):
-         """
-         Send goal on a topic, does not use the action client and therefore does not
-         wait on return
-         """
-         rospy.logwarn("head.send_goal_topic will become deprecated soon!")
-         self.send_goal(point_stamped, timeout=0, keep_tracking=True)
-
-         return True
-
     def cancel_goal(self):
         self._ac_head_ref_action.cancel_all_goals()
-
-    def point(self, x, y, z):
-        """
-        Helper method for creating a geometry_msgs Point
-        """
-        goal = geometry_msgs.msg.Point(x, y, z)
-        return goal
-
-    def point_stamped(self, x, y, z, frame_id='/map'):
-        """
-        Helper method for creating a geometry_msgs Point
-        """
-        rospy.logwarn("Please use generic helper function")
-        head_goal = geometry_msgs.msg.PointStamped()
-        head_goal.header.frame_id = frame_id
-        head_goal.point.x = x
-        head_goal.point.y = y
-        head_goal.point.z = z
-        return head_goal
 
     def set_pan_tilt(self, pan = 0.0, tilt = 0.2, pan_vel=0, tilt_vel=0, timeout=0.0):
         """Amigo rotate head based on pan/tilt, both in radius"""
@@ -154,22 +128,6 @@ class Head(object):
                 self.cancel_goal()
                 return False
 
-    def look_down(self, pan_vel=0, tilt_vel=0):
-        """
-        Amigo looks down at a predefined position
-        """
-        # previous implementation
-        # head_goal = self.point_stamped(1.0, 0.0, 0.8, '/amigo/base_link')
-        # return self.send_goal(head_goal.point, head_goal.header.frame_id, keep_tracking=False)
-
-        return self.set_pan_tilt(0.0, 0.4, pan_vel=pan_vel, tilt_vel=tilt_vel)
-
-    def look_up(self, pan_vel=0, tilt_vel=0):
-        """
-        AMIGO looks up at a predefined tilt angle
-        """
-        return self.set_pan_tilt(0.0, -0.2, pan_vel=pan_vel, tilt_vel=tilt_vel)
-
     def reset_position(self, timeout=2.0):
         """
         Reset head position
@@ -183,85 +141,7 @@ class Head(object):
         reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/amigo/torso')
 
         return self.send_goal(reset_head_goal, keep_tracking=False, timeout=timeout, pan_vel=0.75, tilt_vel=0.75)
-
-    def set_position(self, point_stamped, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0):
-        """
-        Set head goal at a specified position
-        Expects: a PointStamped
-        """
-        rospy.logwarn("Obsolete, please replace by send_goal")
-        return self.send_goal(point_stamped,
-                       keep_tracking=keep_tracking, 
-                       min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
-
-    def search_movement_old(self, target_point, updatetime, x_min=0, y_min=0, z_min=0, x_max=0, y_max=0, z_max=0):
-        """
-        Look around and search for movement
-        """
-        '''
-        search_head_goal = geometry_msgs.msg.PointStamped()
-
-        search_head_goal.header.frame_id = "/amigo/base_link"
-
-        time = rospy.Time.now()
-        sec = time.secs
-
-        search_head_goal.point.x = sqrt(sin(sec)*sin(sec))
-        search_head_goal.point.y = cos(sec)
-        search_head_goal.point.z = 1.2
-
-        self.send_goal(search_head_goal.point,
-                       search_head_goal.header.frame_id)
-        rospy.logwarn("head.search_movement has not been updated yet")
-        '''
-        #import ipdb; ipdb.set_trace()
-        # Update only after a fixed timing interval
-        if ((rospy.Time.now() - self._search_movement_random_timer)) > rospy.Duration(updatetime):
-            xoffset = x_min + random.random() * (x_max - x_min)
-            yoffset = y_min + random.random() * (y_max - y_min)
-            zoffset = z_min + random.random() * (z_max - z_min)
-            self._search_movement_random_offsets = [xoffset,yoffset,zoffset]
-            self._search_movement_random_timer = rospy.Time.now()
-
-        target_point.point.x += self._search_movement_random_offsets[0]
-        target_point.point.y += self._search_movement_random_offsets[1]
-        target_point.point.z += self._search_movement_random_offsets[2]
-
-        return self.send_goal(target_point, keep_tracking=False)
-
-    # search_movement: the robot will look at all 8 corners of a cube around the obstacle, and will then look at the obstacle again
-    #    cube_size: the size of the cube around the obstacle
-    #    step_time: the max amount of time per head movement (1 head movement = look at 1 corner)
-    def search_movement(self, target_point, cube_size=1.0, step_time=1.5, min_pan=0.0, max_pan=0.0, min_tilt=0.0, max_tilt=0.0):
-        tx = target_point.point.x
-        ty = target_point.point.y
-        tz = target_point.point.z
-        search_head_goal = geometry_msgs.msg.Point()
-
-        # first scan around the obstacle at a heigher height
-        # next, scan the ground plane
-        points = [  (tx - cube_size, ty - cube_size, tz + cube_size),
-                    (tx + cube_size, ty - cube_size, tz + cube_size),
-                    (tx + cube_size, ty + cube_size, tz + cube_size),
-                    (tx - cube_size, ty + cube_size, tz + cube_size),
-                    (tx - cube_size, ty + cube_size, tz),
-                    (tx + cube_size, ty + cube_size, tz),
-                    (tx + cube_size, ty - cube_size, tz),
-                    (tx - cube_size, ty - cube_size, tz),
-                    (tx, ty, tz) ]
-
-        for index, p in enumerate(points):
-            search_head_goal.x = p[0]
-            search_head_goal.y = p[1]
-            search_head_goal.z = p[2]
-
-            print "Search movement step {0}: looking at ".format(index) + str(p[0]) + ", " + str(p[1]) + ", " + str(p[2])
-
-            self.send_goal(search_head_goal, keep_tracking=False, timeout=step_time, min_pan=min_pan, max_pan=max_pan, min_tilt=min_tilt, max_tilt=max_tilt)
-
-        return True
-
-        
+    
     def look_at_hand(self, side, keep_tracking=True):
         """
         Look at the left or right hand, expects string "left" or "right"
