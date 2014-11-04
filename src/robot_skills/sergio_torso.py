@@ -2,6 +2,8 @@
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
+import height_adjustment
+
 import spindle
 import control_msgs.msg
 import trajectory_msgs.msg
@@ -11,7 +13,7 @@ import util.concurrent_util
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 
-class SergioTorso(spindle.Spindle):
+class SergioTorso(height_adjustment.HeightAdjustment):
     def __init__(self, wait_service=False):
         super(SergioTorso, self).__init__()
         self.joint_names = ['ankle_joint', 'knee_joint', 'hip_joint']

@@ -1,6 +1,9 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
+
+import height_adjustment
+
 import actionlib
 from actionlib_msgs.msg import GoalStatus
 import control_msgs.msg
@@ -9,7 +12,7 @@ import threading
 import util.concurrent_util
 from sensor_msgs.msg import JointState
 
-class Spindle(object):
+class Spindle(height_adjustment.HeightAdjustment):
     """Interface to Amigo's spindle or spine"""
     joint_name = 'torso_joint'
     
@@ -19,7 +22,8 @@ class Spindle(object):
         ac_joint_trajectory_action = actionlib.SimpleActionClient('/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
         rospy.loginfo("waiting for torso action server")
 
-	self.wbc = False
+        self.wbc = False
+
         if ac_move_spindle.wait_for_server(timeout=rospy.Duration(0.5)):
             self.ac_move_spindle = ac_move_spindle
             self.wbc = False
