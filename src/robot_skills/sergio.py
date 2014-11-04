@@ -43,6 +43,9 @@ class SergioTorso(spindle.Spindle):
     def send_goal(self, torso_pos, spindle_vel=0.0, spindle_acc=0.0, spindle_stop=0.0, timeout=0.0, tolerance = []):
         rospy.loginfo("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
+        if not isinstance(torso_pos, list):
+            torso_pos = [torso_pos]
+
         if (spindle_vel != 0.0 or spindle_acc != 0.0):
             rospy.logwarn('Spindle_vel {0} and spindle_acc {1} are not supported'.format(spindle_vel, spindle_acc))
 
@@ -52,9 +55,10 @@ class SergioTorso(spindle.Spindle):
         
         ''' Check limits '''
         # ToDo: make nice
-        for i in range(0, len(self.joint_names)):
-            if (torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit):
-                rospy.logwarn("Desired position {0} for joint {1} exceeds limits [{2}, {3}]".format(torso_pos[i], self.joint_names[i], self.lower_limit[i], self.upper_limit[i]))
+        # for i in range(0, len(self.joint_names)):
+        for lower, pos, upper, joint_name in zip(self.lower_limit, torso_pos, self.upper_limit, self.joint_names):
+            if pos < lower or pos > upper:
+                rospy.logwarn("Desired position {0} for joint {1} exceeds limits [{2}, {3}]".format(pos, joint_name, lower, upper))
                 return False
 
         #if not self.wbc:
