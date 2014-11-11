@@ -8,7 +8,7 @@ import head
 #import worldmodel
 import ros_navstack_base
 import constraint_based_base
-import spindle
+import torso
 import speech
 import arms
 import perception
@@ -45,7 +45,7 @@ class Amigo(robot.Robot):
     >>> Amigo()
     """
     def __init__(self, dontInclude = [], wait_services=False):
-        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, torsoClass=spindle.Spindle)
+        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, torsoClass=torso.Torso)
     
 
 if __name__ == "__main__":

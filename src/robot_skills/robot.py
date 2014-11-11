@@ -61,8 +61,8 @@ class Robot(object):
         else:
             self.base = ros_navstack_base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
 
-        if torsoClass:
-            self.spindle = torsoClass(wait_service=wait_services)
+        self.torso = torsoClass(self.robot_name,wait_service=wait_services)
+        self.spindle = self.torso
         self.speech = speech.Speech(wait_service=wait_services)
         self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)
         self.rightArm = arms.Arm(self.robot_name, "right", self.tf_listener)

@@ -2,6 +2,8 @@ torso:
     joint_names: ["ankle_joint","knee_joint","hip_joint"]
     default_configurations:
         reset: [0.87, 2.0, 2.36]
+        lower_limit: [0.0, 0.0, 0.85]
+        upper_limit: [1.059, 2.158, 2.36]
     
 arm:
     joint_names: ['shoulder_yaw_joint', 'shoulder_pitch_joint', 'shoulder_roll_joint', 'elbow_pitch_joint', 'elbow_roll_joint', 'wrist_pitch_joint', 'wrist_yaw_joint']
