@@ -64,9 +64,8 @@ class Robot(object):
         if torsoClass:
             self.spindle = torsoClass(wait_service=wait_services)
         self.speech = speech.Speech(wait_service=wait_services)
-        self.arms =  armClass(self.tf_listener)   #arms.Arms(self.tf_listener) #TODO: use self.tf_listener here
-        self.leftArm = arms.Arm(arms.Side.LEFT, self.tf_listener)
-        self.rightArm = arms.Arm(arms.Side.RIGHT, self.tf_listener)
+        self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)
+        self.rightArm = arms.Arm(self.robot_name, "right", self.tf_listener)
 
         if self.use_ed:
              self.perception = perception_ed.PerceptionED(wait_service=wait_services)
@@ -88,8 +87,6 @@ class Robot(object):
         except ImportError:
             rospy.logwarn("Reasoner could not be imported into robot")
         
-        self.leftSide = arms.Side.LEFT
-        self.rightSide = arms.Side.RIGHT
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
 
         self.base_link_frame = "/"+self.robot_name+"/base_link"

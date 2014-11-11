@@ -6,7 +6,7 @@ import rospy
 
 ''' Arms '''
 #import arms
-import arms_dummy
+import arms
 
 ''' Spindle '''
 import sergio_torso
@@ -14,8 +14,7 @@ import sergio_torso
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
-        super(Sergio, self).__init__(robot_name="sergio", wait_services=False,
-            armClass=arms_dummy.DummyArms, 
+        super(Sergio, self).__init__(robot_name="sergio", wait_services=False, 
             torsoClass=sergio_torso.SergioTorso)
         
 if __name__ == "__main__":
