@@ -1,0 +1,13 @@
+torso:
+    joint_names: ["torso_joint"]
+    default_configurations:
+        reset: [0.35]
+    
+arm:
+    joint_names: ['shoulder_yaw_joint', 'shoulder_pitch_joint', 'shoulder_roll_joint', 'elbow_pitch_joint', 'elbow_roll_joint', 'wrist_pitch_joint', 'wrist_yaw_joint']
+    default_configurations:
+        reset: [-0.1,-0.2,0.2,0.8,0.0,0.0,0.0]
+    offset:
+        left:  {x: 0.05, y: -0.03, z: 0.05, roll: 0.0, pitch: 0.0, yaw: 0.0}
+        right: {x: 0.05, y: 0.03,  z: 0.03, roll: 0.0, pitch: 0.0, yaw: 0.0}
+        marker_to_grippoint: {x: -0.03, y: 0.01, z: 0.03, roll: 0.0, pitch: 0.0, yaw: 0.0}

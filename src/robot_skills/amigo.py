@@ -29,9 +29,9 @@ from math import degrees, radians
 import amigo_inverse_reachability.srv
 from psi import Compound, Sequence, Conjunction
 
-class AmigoArms(arms.Arms):
-    def __init__(self, tf_listener):
-        super(AmigoArms, self).__init__(tf_listener)
+# class AmigoArms(arms.Arms):
+#     def __init__(self, tf_listener):
+#         super(AmigoArms, self).__init__(tf_listener)
 
 class Amigo(robot.Robot):
     """
@@ -45,7 +45,7 @@ class Amigo(robot.Robot):
     >>> Amigo()
     """
     def __init__(self, dontInclude = [], wait_services=False):
-        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, armClass=AmigoArms, torsoClass=spindle.Spindle)
+        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, torsoClass=spindle.Spindle)
     
 
 if __name__ == "__main__":
