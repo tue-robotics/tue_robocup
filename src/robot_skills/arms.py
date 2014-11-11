@@ -35,66 +35,16 @@ class State:
     """Specifies a State either OPEN or CLOSE"""
     OPEN = 0
     CLOSE = 1
-    
-class ArmActionClients(object):
-    """Collection of action clients that are needed"""
-    def __init__(self):
-        #Init arm actionlibs
-        #self._ac_move_arm_right = actionlib.SimpleActionClient("move_right_arm",  MoveArmAction)
-        #rospy.loginfo("waiting for arm right server")
-        #self._ac_move_arm_left = actionlib.SimpleActionClient("move_left_arm",  MoveArmAction)
-        #rospy.loginfo("waiting for arm left server")
-        
-        #Init gripper actionlibs
-        self._ac_gripper_right = actionlib.SimpleActionClient("gripper_server_right", amigo_actions.msg.AmigoGripperCommandAction)
-        rospy.loginfo("waiting for gripper right server")
-        self._ac_gripper_left  = actionlib.SimpleActionClient("gripper_server_left",  amigo_actions.msg.AmigoGripperCommandAction)
-        rospy.loginfo("waiting for gripper left server")
-
-        #Init graps precompute actionlibs
-        self._ac_grasp_precompute_right = actionlib.SimpleActionClient("grasp_precompute_right", GraspPrecomputeAction)
-        rospy.loginfo("waiting for precompute right server")
-        self._ac_grasp_precompute_left = actionlib.SimpleActionClient("grasp_precompute_left",  GraspPrecomputeAction)
-        rospy.loginfo("waiting for precompute left server")
-        
-        self._ac_joint_traj_left = actionlib.SimpleActionClient("/joint_trajectory_action_left",  FollowJointTrajectoryAction)
-        self._ac_joint_traj_right = actionlib.SimpleActionClient("/joint_trajectory_action_right",  FollowJointTrajectoryAction)
-
-        #Init whole body control/planner actionlibs
-        #self._ac_armtask = actionlib.SimpleActionClient("whole_body_planner/motion_constraint", ArmTaskAction)
-        #rospy.loginfo("waiting for whole-body planner server")
-    
-    def close(self):
-        try:
-            rospy.loginfo("Arms cancelling all goals on all arm-related ACs on close")
-        except AttributeError:
-            print "Arms cancelling all goals on all arm-related ACs on close. Rospy is already deleted."
-        #self._ac_move_arm_right.cancel_all_goals()
-        #self._ac_move_arm_left.cancel_all_goals()
-        
-        self._ac_gripper_right.cancel_all_goals()
-        self._ac_gripper_left.cancel_all_goals()
-        
-        self._ac_grasp_precompute_right.cancel_all_goals()
-        self._ac_grasp_precompute_left.cancel_all_goals()
-
-        self._ac_joint_traj_left.cancel_all_goals()
-        self._ac_joint_traj_right.cancel_all_goals()
-
-        self._ac_armtask.cancel_all_goals()
-    
-
-##intialize as a static class
-actionClients = ArmActionClients()
 
 class Offset(object):
-    def __init__(self, x=0.0, y=0.0, z=0.0, roll=0.0, pitch=0.0, yaw=0.0):
-        self.x=x
-        self.y=y
-        self.z=z
-        self.roll=roll
-        self.pitch=pitch
-        self.yaw=yaw
+    def __init__(self, parameter_name):
+        params = rospy.get_param(parameter_name)
+        self.x     = params['x'] 
+        self.y     = params['y']
+        self.z     = params['z']
+        self.roll  = params['roll']
+        self.pitch = params['pitch']
+        self.yaw   = params['yaw']
 
 class Arm(object):
     """
@@ -120,15 +70,15 @@ class Arm(object):
 
         self.occupied = False
 
-        # ToDo: don't hardcode: values are (x=0.05, y=-0.03, z=0.05) (left) and Offset(x=0.05, y=0.03, z=0.03) (right) for AMIGO
-        self.offset = Offset(x=0.05, y=-0.03, z=0.05)
-        self.marker_to_grippoint_offset = Offset(x=-0.03, y=0.01, z=0.03)
-
-        # ToDo: make nice
-        self.joint_names = ['shoulder_yaw_joint', 'shoulder_pitch_joint', 'shoulder_roll_joint', 'elbow_pitch_joint', 'elbow_roll_joint', 'wrist_pitch_joint', 'wrist_yaw_joint']
+        # Get stuff from the parameter server
+        self.offset = Offset('/'+self.robot_name+'/skills/arm/offset/'+self.side)
+        self.marker_to_grippoint_offset = Offset('/'+self.robot_name+'/skills/arm/offset/marker_to_grippoint/')
+        self.joint_names = rospy.get_param('/'+self.robot_name+'/skills/arm/joint_names')
         for i in range(len(self.joint_names)):
             self.joint_names[i] = self.joint_names[i] + "_" + self.side
         print self.joint_names
+        self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/arm/default_configurations')
+        print self.default_configurations
 
         # Init measurement subscriber
         self.arm_measurement_sub = rospy.Subscriber("/"+self.robot_name+"/left_arm/measurements", JointState, self._arm_measurement_callback)
@@ -209,6 +159,41 @@ class Arm(object):
             if self._ac_grasp_precompute.get_state() == GoalStatus.SUCCEEDED:
                 return True
             else:
+                return False
+
+    def send_joint_goal(self, configuration):
+        if configuration in self.default_configurations:
+            return self._send_joint_goal(self.default_configurations[configuration])
+        else:
+            rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
+            return False
+
+    def reset(self):
+        return self.send_joint_goal('reset')
+
+    def _send_joint_goal(self, joint_references, timeout=0):
+        """Send a goal to the arms in joint coordinates, using an action client"""
+        p = JointTrajectoryPoint()
+        p.positions = joint_references
+
+        if (len(joint_references) != len(self.joint_names)):
+            rospy.logwarn('Please use the correct {0} number of joint references (current = {1}'.format(len(self.joint_names),len(joint_references)))
+                
+        traj_goal = FollowJointTrajectoryGoal()
+        traj_goal.trajectory.points = [p]
+        traj_goal.trajectory.joint_names = self.joint_names
+
+        rospy.loginfo("Send {0} arm to jointcoords {1}".format(self.side,p.positions))
+        
+        self._ac_joint_traj.send_goal(traj_goal)
+        if timeout == 0.0:
+            return True
+        else:
+            self._ac_joint_traj.wait_for_result(rospy.Duration(timeout))
+            if current_ac.get_state() == GoalStatus.SUCCEEDED:
+                return True
+            else:
+                rospy.logwarn("Cannot reach joint goal {0}".format(traj_goal))
                 return False
 
     def _publish_marker(self, goal, color):
