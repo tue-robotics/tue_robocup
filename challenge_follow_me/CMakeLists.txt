@@ -1,48 +1,39 @@
-cmake_minimum_required(VERSION 2.4.6)
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+cmake_minimum_required(VERSION 2.8.3)
+project(challenge_follow_me)
 
-# Set the build type.  Options are:
-#  Coverage       : w/ debug symbols, w/o optimization, w/ code-coverage
-#  Debug          : w/ debug symbols, w/o optimization
-#  Release        : w/o debug symbols, w/ optimization
-#  RelWithDebInfo : w/ debug symbols, w/ optimization
-#  MinSizeRel     : w/o debug symbols, w/ optimization, stripped binaries
-set(ROS_BUILD_TYPE RelWithDebInfo)
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  roslib
+  wire_interface
+  actionlib
+  pein_msgs
+  pein_srvs
+  std_srvs
+  amigo_msgs
+  sensor_msgs
+  geometry_msgs
+  perception_srvs
+  tue_carrot_planner
+  tue_pocketsphinx
+  text_to_speech
+  amigo_head_ref
+)
 
-rosbuild_init()
+catkin_package(
+)
 
-#set the default path for built executables to the "bin" directory
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-#set the default path for built libraries to the "lib" directory
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
 
-#uncomment if you have defined messages
-#rosbuild_genmsg()
-#uncomment if you have defined services
-#rosbuild_gensrv()
 
 # to show include files in Qt Creator
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 # Follower as a library
-rosbuild_add_library(tue_follower src/Follower.cpp ${HEADER_FILES})
+add_library(tue_follower src/Follower.cpp ${HEADER_FILES})
+target_link_libraries(tue_follower ${catkin_LIBRARIES})
 
-#common commands for building c++ executables and libraries
-#rosbuild_add_library(${PROJECT_NAME} src/example.cpp)
-#target_link_libraries(${PROJECT_NAME} another_library)
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(${PROJECT_NAME} thread)
-
-# Old versions
-#rosbuild_add_executable(follow_me_simple src/follow_me_simple.cpp)
-#rosbuild_add_executable(follow_me_gmapping src/follow_me_gmapping.cpp)
-#rosbuild_add_executable(test_navigate src/test_navigate.cpp)
-
-
-# Test new class
-#rosbuild_add_executable(test_follower include/challenge_follow_me/Follower.h src/Follower.cpp src/test_follower.cpp ${HEADER_FILES})
-#rosbuild_add_boost_directories()
-#rosbuild_link_boost(test_follower thread signals system)
-
-# 2014 verwion
-rosbuild_add_executable(follow_me include/challenge_follow_me/Follower.h src/Follower.cpp src/follow_me.cpp ${HEADER_FILES})
+add_executable(follow_me include/challenge_follow_me/Follower.h src/Follower.cpp src/follow_me.cpp ${HEADER_FILES})
+target_link_libraries(follow_me tue_follower ${catkin_LIBRARIES})
