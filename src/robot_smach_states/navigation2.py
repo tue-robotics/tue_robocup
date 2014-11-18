@@ -194,6 +194,17 @@ class NavigateWithConstraints(smach.Sequence):
             smach.Sequence.add('NAVIGATE_TRY_2', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
             smach.Sequence.add('NAVIGATE_TRY_3', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
 
+class NavigateToObserve(smach.StateMachine):
+    """Look at an object. Depending on its geometry, several viewpoints are taken and iterated over"""
+
+    def __init__(self, robot, entityId, baseConstraintGenerator=None, finishedChecker=None):
+        """@param robot the robot with which to perform this action
+        @param entityId the entity or item to observe.
+        @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation. 
+            entityInfo is a ed/EntityInfo message. 
+        @param finishedChecker a function(robot) that checks whether the item if observed to your satisfaction. """
+        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
+
 ################ TESTS ##################
 
 def testNavigateWithConstraints(robot, constraint="x^2+y^2<1", frame="/map"):
