@@ -42,9 +42,9 @@
 
   <build_depend>visualization_msgs</build_depend>
   <run_depend>visualization_msgs</run_depend>
-
-  <build_depend>amigo_head_ref</build_depend>
-  <run_depend>amigo_head_ref</run_depend>
+  
+  <build_depend>head_ref</build_depend>
+  <run_depend>head_ref</run_depend>
 
   <build_depend>amigo_actions</build_depend>
   <run_depend>amigo_actions</run_depend>
@@ -69,9 +69,6 @@
 
   <build_depend>cb_planner_msgs_srvs</build_depend>
   <run_depend>cb_planner_msgs_srvs</run_depend>
-
-  <build_depend>amigo_inverse_reachability</build_depend>
-  <run_depend>amigo_inverse_reachability</run_depend>
 
   <build_depend>wire_msgs</build_depend>
   <run_depend>wire_msgs</run_depend>

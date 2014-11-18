@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf_server
     amigo_msgs
     visualization_msgs
-    amigo_head_ref
+    head_ref
     amigo_actions
     tue_reasoner_core
     psi
@@ -22,7 +22,6 @@ find_package(catkin REQUIRED COMPONENTS
     tue_move_base_msgs
     tue_costmap_msgs
     cb_planner_msgs_srvs
-    amigo_inverse_reachability
     wire_msgs
     perception_srvs
     pein_supervisor
