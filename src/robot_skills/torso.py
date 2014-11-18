@@ -41,7 +41,7 @@ class Torso(object):
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
     
-    def _send_goal(self, torso_pos, spindle_vel=0.0, spindle_acc=0.0, spindle_stop=0.0, timeout=0.0, tolerance = []):
+    def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
         rospy.loginfo("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
         if (spindle_vel != 0.0 or spindle_acc != 0.0):
@@ -52,23 +52,17 @@ class Torso(object):
             return False
         
         ''' Check limits '''
-        # ToDo: make nice
         for i in range(0, len(self.joint_names)):
             if (torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit):
                 rospy.logwarn("Desired position {0} for joint {1} exceeds limits [{2}, {3}]".format(torso_pos[i], self.joint_names[i], self.lower_limit[i], self.upper_limit[i]))
                 return False
 
-        #if not self.wbc:
-        #    spindle_goal = amigo_actions.msg.AmigoSpindleCommandGoal()
-        #    spindle_goal.spindle_height = spindle_pos
-        #elif self.wbc:
         torso_goal = control_msgs.msg.FollowJointTrajectoryGoal()
         torso_goal_point = trajectory_msgs.msg.JointTrajectoryPoint()
         torso_goal.trajectory.joint_names = self.joint_names
         torso_goal_point.positions = torso_pos
         torso_goal.trajectory.points.append(torso_goal_point)
         
-        # ToDo: make nice
         for i in range(0,len(self.joint_names)):
             goal_tolerance = control_msgs.msg.JointTolerance()
             goal_tolerance.name = self.joint_names[i]

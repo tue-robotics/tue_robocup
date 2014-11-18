@@ -2,17 +2,14 @@
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
-import head_baseclass
-
 import actionlib
 
 from geometry_msgs.msg import Point
 import robot_skills.util.msg_constructors as msgs
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
-class Head(head_baseclass.HeadBaseclass):
+class Head():
     def __init__(self):
-        super(Head, self).__init__()
         self._ac_head_ref_action = actionlib.SimpleActionClient("/head_reference",  HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
