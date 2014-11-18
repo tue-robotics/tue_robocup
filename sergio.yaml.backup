@@ -1,2 +1,0 @@
-torso:
-  joint_names: ["ankle_joint","knee_joint","hip_joint"]
