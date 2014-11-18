@@ -4,13 +4,6 @@ import robot
 
 import rospy
 
-''' Arms '''
-#import arms
-import arms
-
-''' Spindle '''
-import sergio_torso
-
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
