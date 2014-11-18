@@ -1,4 +1,4 @@
-import roslib; roslib.load_manifest('robot_smach_states')
+import roslib; 
 import rospy
 import geometry_msgs.msg
 import math
