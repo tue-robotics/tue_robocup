@@ -4,29 +4,14 @@ import rospy
 
 import robot
 
-import head
-#import worldmodel
-import ros_navstack_base
-import constraint_based_base
-import torso
-import speech
-import arms
-import perception
-import ears
-import ebutton
-import lights
-
 import tf
 import tf_server
 
 from util import transformations
-#from components import message_helper
 import geometry_msgs
 import std_msgs.msg
 
 from math import degrees, radians
-
-import amigo_inverse_reachability.srv
 from psi import Compound, Sequence, Conjunction
 
 # class AmigoArms(arms.Arms):
@@ -45,7 +30,7 @@ class Amigo(robot.Robot):
     >>> Amigo()
     """
     def __init__(self, dontInclude = [], wait_services=False):
-        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services, torsoClass=torso.Torso)
+        super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)
     
 
 if __name__ == "__main__":

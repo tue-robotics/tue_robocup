@@ -1,94 +1,71 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
-import head
-import head2
-#import worldmodel
-import ros_navstack_base
-import constraint_based_base
-import spindle
-import speech
+
+# Body parts
+import base
+import torso
 import arms
-import perception
-import perception_ed
-import world_model_ed
+import head
+
+# Human Robot Interaction
+import speech
 import ears
 import ebutton
 import lights
 
+# Perception
+import perception
+import perception_ed
+
+# tf
 import tf
 import tf_server
 
+# Reasoning/world modeling
+import world_model_ed
+import reasoner
+
+# Misc: do we need this???
 from util import transformations
-#from components import message_helper
 import geometry_msgs
 import std_msgs.msg
-
 from math import degrees, radians
-
-import amigo_inverse_reachability.srv # ToDo: rename service
 from psi import Compound, Sequence, Conjunction
-
-class Arm(object):
-    pass
 
 class Robot(object):
     """
     Interface to all parts of the robot.
     """
-    def __init__(self, robot_name="", wait_services=False, armClass=None, torsoClass=None):
+    def __init__(self, robot_name="", wait_services=False):
 
         self.robot_name = robot_name
-        
-        self._get_base_goal_poses = rospy.ServiceProxy('/inverse_reachability/inverse_reachability', amigo_inverse_reachability.srv.GetBaseGoalPoses)
 
         self.tf_listener = tf_server.TFClient()
 
-        # Determine if we are using ED (world model)
-        self.use_ed = rospy.get_param('/use_ed', False)
-        if self.use_ed:
-            rospy.loginfo("Using ED")
-        else:
-            rospy.loginfo("NOT using ED")
-
-        if self.use_ed:
-            self.head = head2.Head()
-        else:
-            self.head = head.Head()
-
-        if self.use_ed:
-            self.base = constraint_based_base.Base(self, self.tf_listener, wait_service=wait_services) # Added by Rein (new nav interface)
-        else:
-            self.base = ros_navstack_base.Base(self.tf_listener, wait_service=wait_services, use_2d=None) #None indicates: sort it out yourselve
-
-        self.torso = torsoClass(self.robot_name,wait_service=wait_services)
+        # Body parts
+        self.base = base.Base(self, self.tf_listener, wait_service=wait_services)
+        self.torso = torso.Torso(self.robot_name,wait_service=wait_services)
         self.spindle = self.torso
-        self.speech = speech.Speech(wait_service=wait_services)
         self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)
         self.rightArm = arms.Arm(self.robot_name, "right", self.tf_listener)
+        self.head = head.Head()
 
-        if self.use_ed:
-             self.perception = perception_ed.PerceptionED(wait_service=wait_services)
-        else:
-            try:
-                self.perception = perception.Perception(wait_service=wait_services)
-            except:
-                rospy.logwarn("Perception could not be initialized. Is the providing node running?")
-
-        if self.use_ed:
-            self.ed = world_model_ed.ED(wait_service=wait_services)
-        
+        # Human Robot Interaction
+        self.speech = speech.Speech(wait_service=wait_services)
         self.ears = ears.Ears()
         self.ebutton = ebutton.EButton()
         self.lights = lights.Lights()
-        try:
-            import reasoner
-            self.reasoner = reasoner.Reasoner()
-        except ImportError:
-            rospy.logwarn("Reasoner could not be imported into robot")
-        
-        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
 
+        # Perception: can we get rid of this???
+        self.perception = perception_ed.PerceptionED(wait_service=wait_services)
+        
+        # Reasoning/world modeling
+        self.ed = world_model_ed.ED(wait_service=wait_services)
+        self.reasoner = reasoner.Reasoner()
+        
+        # Miscellaneous
+        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
     
     def publish_target(self, x, y):

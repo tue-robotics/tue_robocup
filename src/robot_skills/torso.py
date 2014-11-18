@@ -2,9 +2,6 @@
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
-import height_adjustment
-
-import spindle
 import control_msgs.msg
 import trajectory_msgs.msg
 from sensor_msgs.msg import JointState

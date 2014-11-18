@@ -14,8 +14,7 @@ import sergio_torso
 class Sergio(robot.Robot):
     """docstring for Sergio"""
     def __init__(self, wait_services=False):
-        super(Sergio, self).__init__(robot_name="sergio", wait_services=False, 
-            torsoClass=sergio_torso.SergioTorso)
+        super(Sergio, self).__init__(robot_name="sergio", wait_services=False)
         
 if __name__ == "__main__":
     print "Starting sergio console"
