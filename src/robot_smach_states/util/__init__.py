@@ -1,5 +1,5 @@
 """Several ROS, Python, Smach, TF etc related utility functions"""
-import roslib; roslib.load_manifest('robot_smach_states')
+import roslib; 
 import rospy
 
 from startup import startup, startup_final
