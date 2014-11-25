@@ -19,28 +19,29 @@ from random import choice
 # ----------------------------------------------------------------------------------------------------
 
 class getPlan(smach.State):
-    def __init__(self, robot, position_constraint, orientation_constraint):
-        smach.State.__init__(self,outcomes=['unreachable','goal_not_defined','goal_ok'])
+    def __init__(self, robot, constraint_function):
+        smach.State.__init__(self,
+            outcomes=['unreachable','goal_not_defined','goal_ok'])
         self.robot = robot 
-
-        self.position_constraint = position_constraint
-        self.orientation_constraint = orientation_constraint
+        self.constraint_function = constraint_function
 
     def execute(self, userdata):    
 
+        pc, oc = self.constraint_function()
+
         # Perform some typechecks
-        if not isinstance(self.position_constraint, PositionConstraint) or not isinstance(self.orientation_constraint, OrientationConstraint):
+        if not pc or not oc:
             rospy.loginfo("Invalid constraints given to getPlan()")
             return "goal_not_defined"
 
-        plan = self.robot.base.global_planner.getPlan(self.position_constraint)
+        plan = self.robot.base.global_planner.getPlan(pc)
 
         if not plan or len(plan) == 0:
             self.robot.base.local_planner.cancelCurrentPlan()
             return "unreachable"
 
         # Constraints and plan seem to be valid, so set the plan
-        self.robot.base.local_planner.setPlan(plan, self.position_constraint, self.orientation_constraint)
+        self.robot.base.local_planner.setPlan(plan, pc, oc)
 
         self.robot.speech.speak(choice(["I'm on my way!","Getting there!","I will go there right away!"]))
 
@@ -161,18 +162,62 @@ class resetWorldModel(smach.State):
         self.robot.ed.reset()
         return "succeeded"
 
-# ----------------------------------------------------------------------------------------------------
+# # ----------------------------------------------------------------------------------------------------
 
-class NavigateWithConstraintsOnce(smach.StateMachine):
-    def __init__(self, robot, position_constraint, orientation_constraint):
+# class NavigateWithConstraintsOnce(smach.StateMachine):
+#     def __init__(self, robot, position_constraint, orientation_constraint):
+#         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'])
+#         self.robot = robot
+
+#         with self:
+
+#             smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot),
+#                 transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
+#                              'goal_not_defined'                     :   'goal_not_defined',
+#                              'goal_ok'                              :   'EXECUTE_PLAN'})
+
+#             smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
+#                 transitions={'arrived'                              :   'arrived',
+#                              'blocked'                              :   'DETERMINE_BLOCKED'})
+
+#             smach.StateMachine.add('DETERMINE_BLOCKED',                 determineBlocked(self.robot),
+#                 transitions={'blocked_human'                        :   'PLAN_BLOCKED_HUMAN',
+#                              'blocked'                              :   'PLAN_BLOCKED',
+#                              'free'                                 :   'EXECUTE_PLAN'})
+
+#             smach.StateMachine.add('PLAN_BLOCKED_HUMAN',                planBlockedHuman(self.robot),
+#                 transitions={'replan'                               :   'GET_PLAN',
+#                              'free'                                 :   'EXECUTE_PLAN'})
+
+#             smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
+#                 transitions={'replan'                               :   'GET_PLAN',
+#                              'free'                                 :   'EXECUTE_PLAN'})
+
+#             smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
+#                 transitions={'succeeded'                            :   'unreachable'})
+
+# # ----------------------------------------------------------------------------------------------------
+
+# class NavigateWithConstraints(smach.Sequence):
+#     def __init__(self, robot, position_constraint, orientation_constraint):
+#         smach.Sequence.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'], connector_outcome = 'unreachable')
+#         self.robot = robot
+
+#         with self:
+#             smach.Sequence.add('NAVIGATE_TRY_1', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+#             smach.Sequence.add('NAVIGATE_TRY_2', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+#             smach.Sequence.add('NAVIGATE_TRY_3', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+
+# # ----------------------------------------------------------------------------------------------------
+
+class NavigateTo(smach.StateMachine):
+    def __init__(self, robot):
         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'])
         self.robot = robot
 
-        rospy.loginfo("{0},{1}".format(position_constraint,orientation_constraint))
-
         with self:
 
-            smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, position_constraint, orientation_constraint),
+            smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint),
                 transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
                              'goal_not_defined'                     :   'goal_not_defined',
                              'goal_ok'                              :   'EXECUTE_PLAN'})
@@ -197,24 +242,119 @@ class NavigateWithConstraintsOnce(smach.StateMachine):
             smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
                 transitions={'succeeded'                            :   'unreachable'})
 
+    def generateConstraint(self):
+        pass
+
+    def breakOut(self):
+        return False
+
+
+class NavigateToPose(NavigateTo):
+    def __init__(self, robot, x, y, rz, radius = 0.15):
+        super(NavigateToPose, self).__init__(robot)
+
+        self.x = x
+        self.y = y
+        self.rz = rz
+        self.radius = radius
+
+    def generateConstraint(self):
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(self.x, self.y, self.radius), frame="/map")
+        oc = OrientationConstraint(look_at=Point(self.x+1, self.y, 0.0), angle_offset=self.rz, frame="/map")
+
+        return pc, oc
+
+    def breakOut(self):
+        if bla:
+            return True
+        else:
+            return False
+
+# class NavigateTo(smach.StateMachine):
+#     def __init__(self, robot, constraint_args={}, break_out_args={}):
+#         smach.StateMachine.__init__(sm, outcomes=['arrived','unreachable','goal_not_defined'])
+
+#         self.robot = robot
+#         self.constraint_args = constraint_args
+#         self.break_out_args  = break_out_args
+
+#     @smach.cb_interface(input_keys=['']
+#                         output_keys=['position_constraint','orientation_constraint'],
+#                         outcomes=['succeeded','failed'])
+#     def generateConstraint(self, userdata):
+#         return 'failed'
+
+#     def breakOut(self):
+#         return False
+
+#     with sm:
+#         smach.StateMachine.add('DETERMINE_CONSTRAINT', CBState(self.generateConstraint,
+#                                                         cb_kwargs=self.constraint_args),
+#                                 transitions={'succeeded'        : 'arrived',
+#                                              'failed'           : 'goal_not_defined'})
+
+#         smach.StateMachine.add('NAVIGATE', NavigateWithConstraintsOnce,
+#                                 transitions={'arrived'          : 'arrived',
+#                                              'unreachable'      : 'unreachable',
+#                                              'goal_not_defined' : 'goal_not_defined'})
+
+
+# class NavigateToPose(NavigateTo):
+#     def __init__(self, robot, x, y, rz):
+#         NavigateTo.__init__(robot, constraint_args={'x': x, 'y': y, 'rz': rz})
+
+#     def generateConstraint(self, userdata):
+#         userdata.position_constraint = PositionConstraint(constraint="(x-%d)+(x-%d)^2 < %d"%(x,y,radius), frame="/map")
+#         userdata.orientation_constraint = OrientationConstraint(look_at=Point(x+1,y), angle_offset=rz, frame="/map")
+
+#         return 'succeeded'
+
+#     def breakOut(self):
+#         if bla:
+#             return True
+#         else:
+#             return False
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # ----------------------------------------------------------------------------------------------------
 
-class NavigateWithConstraints(smach.Sequence):
-    def __init__(self, robot, position_constraint, orientation_constraint):
-        smach.Sequence.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'], connector_outcome = 'unreachable')
-        self.robot = robot
+# ToDo: move up
+def generateWaypointConstraint(robot, entityId):
+    #robot.ed.do_useful_stuff
 
-        with self:
-            smach.Sequence.add('NAVIGATE_TRY_1', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
-            smach.Sequence.add('NAVIGATE_TRY_2', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
-            smach.Sequence.add('NAVIGATE_TRY_3', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+    rospy.loginfo("Defaulting navigation to 1, 3, 0")
 
-# ----------------------------------------------------------------------------------------------------
+    position_constraint = PositionConstraint
 
-class NavigateToObserve(smach.StateMachine):
+    return position_constraint
+
+class constraintGenerator(smach.State):
+    def __init__(self):
+        smach.State.__init__(outcomes=['succeeded','failed'],
+                            input_keys=['position_constraint', 'orientation_constraint'],
+                            output_keys=['position_constraint', 'orientation_constraint'])
+
+    def execute(self, userdata):
+        return 'failed'
+
+class Navigate(smach.StateMachine):
     """Look at an object. Depending on its geometry, several viewpoints are taken and iterated over"""
 
-    def __init__(self, robot, entityId, baseConstraintGenerator=None, finishedChecker=None):
+    def __init__(self, robot, baseConstraintGenerator=None, finishedChecker=None):
         """@param robot the robot with which to perform this action
         @param entityId the entity or item to observe.
         @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation. 
