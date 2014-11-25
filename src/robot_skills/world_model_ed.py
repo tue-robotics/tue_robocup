@@ -8,19 +8,25 @@ from math import hypot
 
 from std_srvs.srv import Empty #Reset Ed
 
+import yaml
+
 class ED:
     def __init__(self, wait_service=False):
         self._ed_simple_query_srv = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
         self._ed_reset_srv = rospy.ServiceProxy('/ed/reset', Empty)
 
     def getEntities(self, type="", center_point=Point(), radius=0, id=""):
-        query = SimpleQueryRequest(type=type, center_point=center_point, radius=radius) 
+        query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius) 
 
         try:
             entities = self._ed_simple_query_srv(query).entities
         except Exception, e:
             rospy.logerr(e)
             return []
+
+        # Parse to data strings to yaml
+        for e in entities:
+            e.data = yaml.load(e.data)
 
         return entities
 
