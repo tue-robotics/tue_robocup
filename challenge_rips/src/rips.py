@@ -1,9 +1,10 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('challenge_rips')
+import roslib;
 import rospy
 import smach
 
 from robot_skills.amigo import Amigo
+from robot_skills.sergio import Sergio
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import Point
@@ -12,6 +13,8 @@ from speech_interpreter.srv import AskUser
 
 from psi import *
 import robot_skills.util.msg_constructors as msgs
+
+import sys
 
 
 ###########################
@@ -234,4 +237,7 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('rips_exec')
 
-    startup(setup_statemachine)
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+
+    startup(setup_statemachine, robot_name=robot_name)
