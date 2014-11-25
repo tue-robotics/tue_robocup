@@ -27,12 +27,14 @@ class getPlan(smach.State):
 
     def execute(self, userdata):    
 
-        pc, oc = self.constraint_function()
+        constraint = self.constraint_function()
 
         # Perform some typechecks
-        if not pc or not oc:
-            rospy.loginfo("Invalid constraints given to getPlan()")
+        if not constraint:
+            rospy.logwarn("Invalid constraints given to getPlan()")
             return "goal_not_defined"
+
+        pc, oc = constraint
 
         plan = self.robot.base.global_planner.getPlan(pc)
 
@@ -269,6 +271,45 @@ class NavigateToPose(NavigateTo):
             return True
         else:
             return False
+
+class NavigateToWaypoint(NavigateTo):
+    def __init__(self, robot, waypoint, radius = 0.15):
+        super(NavigateToWaypoint, self).__init__(robot)
+
+        self.robot    = robot
+        self.waypoint = waypoint
+        self.radius   = radius
+
+    def generateConstraint(self):
+        e = self.robot.ed.getEntity(id=self.waypoint)
+
+        print e
+
+        if not e:
+            rospy.logerr("No such entity")
+            return None
+
+        try:
+            pose = e.data["pose"]
+            x = pose["x"]
+            y = pose["y"]
+            rz= pose["z"]
+        except KeyError:
+            rospy.logerr(KeyError)
+            return None
+
+        rospy.logwarn("Should Sjoerd check the newest model data in???")
+
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
+        oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
+
+        return pc, oc
+
+    def breakOut(self):
+        if bla:
+            return True
+        else:
+            return False                       
 
 # class NavigateTo(smach.StateMachine):
 #     def __init__(self, robot, constraint_args={}, break_out_args={}):
