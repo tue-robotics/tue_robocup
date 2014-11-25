@@ -16,6 +16,8 @@ from psi import Term, Compound, Conjunction
 import actionlib
 from random import choice
 
+# ----------------------------------------------------------------------------------------------------
+
 class getPlan(smach.State):
     def __init__(self, robot, position_constraint, orientation_constraint):
         smach.State.__init__(self,outcomes=['unreachable','goal_not_defined','goal_ok'])
@@ -43,6 +45,8 @@ class getPlan(smach.State):
         self.robot.speech.speak(choice(["I'm on my way!","Getting there!","I will go there right away!"]))
 
         return "goal_ok"
+
+# ----------------------------------------------------------------------------------------------------
 
 class executePlan(smach.State):
     def __init__(self, robot, blocked_timeout = 4):
@@ -77,6 +81,8 @@ class executePlan(smach.State):
             self.t_last_free = rospy.Time.now()
         return False
 
+# ----------------------------------------------------------------------------------------------------
+
 class determineBlocked(smach.State):
    def __init__(self, robot):
        smach.State.__init__(self,outcomes=['blocked','blocked_human', 'free'])
@@ -99,6 +105,8 @@ class determineBlocked(smach.State):
 
         return "free"    
 
+# ----------------------------------------------------------------------------------------------------
+
 class planBlocked(smach.State):
    def __init__(self, robot, timeout = 1):
        smach.State.__init__(self,outcomes=['replan','free'])
@@ -118,6 +126,8 @@ class planBlocked(smach.State):
             r.sleep()
 
         return "free"
+
+# ----------------------------------------------------------------------------------------------------
 
 class planBlockedHuman(smach.State):
    def __init__(self, robot, timeout = 10):
@@ -140,6 +150,8 @@ class planBlockedHuman(smach.State):
 
         return "free"
 
+# ----------------------------------------------------------------------------------------------------
+
 class resetWorldModel(smach.State):
    def __init__(self, robot):
        smach.State.__init__(self,outcomes=['succeeded'])
@@ -148,6 +160,8 @@ class resetWorldModel(smach.State):
    def execute(self, userdata):
         self.robot.ed.reset()
         return "succeeded"
+
+# ----------------------------------------------------------------------------------------------------
 
 class NavigateWithConstraintsOnce(smach.StateMachine):
     def __init__(self, robot, position_constraint, orientation_constraint):
@@ -183,16 +197,19 @@ class NavigateWithConstraintsOnce(smach.StateMachine):
             smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
                 transitions={'succeeded'                            :   'unreachable'})
 
+# ----------------------------------------------------------------------------------------------------
+
 class NavigateWithConstraints(smach.Sequence):
     def __init__(self, robot, position_constraint, orientation_constraint):
         smach.Sequence.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'], connector_outcome = 'unreachable')
         self.robot = robot
 
         with self:
-
             smach.Sequence.add('NAVIGATE_TRY_1', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
             smach.Sequence.add('NAVIGATE_TRY_2', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
             smach.Sequence.add('NAVIGATE_TRY_3', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+
+# ----------------------------------------------------------------------------------------------------
 
 class NavigateToObserve(smach.StateMachine):
     """Look at an object. Depending on its geometry, several viewpoints are taken and iterated over"""
@@ -204,6 +221,8 @@ class NavigateToObserve(smach.StateMachine):
             entityInfo is a ed/EntityInfo message. 
         @param finishedChecker a function(robot) that checks whether the item if observed to your satisfaction. """
         smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
+
+# ----------------------------------------------------------------------------------------------------
 
 ################ TESTS ##################
 
