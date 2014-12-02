@@ -4,12 +4,13 @@ import rospy
 
 import actionlib
 
-from geometry_msgs.msg import Point
+from geometry_msgs.msg import Point, PointStamped
 import robot_skills.util.msg_constructors as msgs
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
 class Head():
-    def __init__(self):
+    def __init__(self, robot_name):
+        self.robot_name = robot_name
         self._ac_head_ref_action = actionlib.SimpleActionClient("/head_reference",  HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
@@ -48,13 +49,18 @@ class Head():
         self._goal = None
         self._at_setpoint = False
 
-    def reset_position(self, timeout=2.0):
+    def reset(self, timeout=0.01):
         """
         Reset head position
         """
-        reset_head_goal = self.point_stamped(0.214, 0.0, 1.0, '/amigo/torso')
+        reset_goal = PointStamped()
+        reset_goal.header.stamp = rospy.Time.now()
+        reset_goal.header.frame_id = "/"+self.robot_name+"/base_link"
+        reset_goal.point.x = 10
+        reset_goal.point.y = 0.0
+        reset_goal.point.z = 0.0
 
-        return self.send_goal(reset_head_goal, keep_tracking=False, timeout=timeout, pan_vel=0.75, tilt_vel=0.75)
+        return self.send_goal(reset_goal, keep_tracking=False, timeout=timeout, pan_vel=0.75, tilt_vel=0.75)
 
     def look_at_hand(self, side, keep_tracking=True):
         """
