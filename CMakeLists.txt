@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf
     tf_server
     amigo_msgs
+    tue_msgs
     visualization_msgs
     amigo_head_ref
     amigo_actions

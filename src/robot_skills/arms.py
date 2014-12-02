@@ -1,13 +1,16 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
+from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
 from tue_manipulation.msg._GraspPrecomputeGoal import GraspPrecomputeGoal
+from tue_manipulation.msg._GripperCommandAction import GripperCommandAction
+from tue_manipulation.msg._GripperCommandGoal import GripperCommandGoal
 import actionlib
 #from tue_manipulation.msg._MoveArmAction import MoveArmAction
 from actionlib_msgs.msg._GoalStatus import GoalStatus
 import amigo_actions
 import amigo_actions.msg
-from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
+
 from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
@@ -55,9 +58,9 @@ class ArmActionClients(object):
         #rospy.loginfo("waiting for arm left server")
         
         #Init gripper actionlibs
-        self._ac_gripper_right = actionlib.SimpleActionClient("gripper_server_right", amigo_actions.msg.AmigoGripperCommandAction)
+        self._ac_gripper_right = actionlib.SimpleActionClient("gripper_server_right", GripperCommandAction)
         rospy.loginfo("waiting for gripper right server")
-        self._ac_gripper_left  = actionlib.SimpleActionClient("gripper_server_left",  amigo_actions.msg.AmigoGripperCommandAction)
+        self._ac_gripper_left  = actionlib.SimpleActionClient("gripper_server_left",  GripperCommandAction)
         rospy.loginfo("waiting for gripper left server")
 
         #Init graps precompute actionlibs
@@ -422,7 +425,7 @@ class Arms(object):
         The max torque used is 10.0. Should this be an optional param
         just let us know ;)
         """
-        gripper_goal = amigo_actions.msg.AmigoGripperCommandGoal()
+        gripper_goal = GripperCommandGoal()
         
         if state == State.OPEN:
             gripper_goal.command.direction = -1

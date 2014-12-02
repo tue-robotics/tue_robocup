@@ -39,6 +39,9 @@
 
   <build_depend>amigo_msgs</build_depend>
   <run_depend>amigo_msgs</run_depend>
+  
+  <build_depend>tue_msgs</build_depend>
+  <run_depend>tue_msgs</run_depend>
 
   <build_depend>visualization_msgs</build_depend>
   <run_depend>visualization_msgs</run_depend>
