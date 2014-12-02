@@ -21,11 +21,11 @@ class Initialize(smach.State):
     def execute(self, userdata):
         self.robot.lights.set_color(0,0,1)  #be sure lights are blue
         
-        self.robot.head.reset_position(timeout=0.0)
-        self.robot.leftArm.reset_arm()
-        #self.robot.leftArm.send_gripper_goal_close()
-        self.robot.rightArm.reset_arm()
-        #self.robot.rightArm.send_gripper_goal_close()
+        self.robot.head.reset()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close',0.0)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close',0.0)
         #self.robot.reasoner.reset()
         self.robot.spindle.reset()
         self.robot.base.reset_costmap()
@@ -339,9 +339,9 @@ class ResetArms(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.leftArm.reset_arm()
+        self.robot.leftArm.reset()
         self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
-        self.robot.rightArm.reset_arm()
+        self.robot.rightArm.reset()
         self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         return "done"
 

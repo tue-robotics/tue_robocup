@@ -250,6 +250,7 @@ class NavigateTo(smach.StateMachine):
     def breakOut(self):
         return False
 
+# ----------------------------------------------------------------------------------------------------
 
 class NavigateToPose(NavigateTo):
     def __init__(self, robot, x, y, rz, radius = 0.15):
@@ -271,6 +272,8 @@ class NavigateToPose(NavigateTo):
             return True
         else:
             return False
+
+# ----------------------------------------------------------------------------------------------------
 
 class NavigateToWaypoint(NavigateTo):
     def __init__(self, robot, waypoint, radius = 0.15):
@@ -309,7 +312,39 @@ class NavigateToWaypoint(NavigateTo):
         if bla:
             return True
         else:
-            return False                       
+            return False
+
+# ----------------------------------------------------------------------------------------------------
+
+class NavigateToObserve(NavigateTo):
+    def __init__(self, robot, entity_id, radius = 1):
+        super(NavigateToObserve, self).__init__(robot)
+
+        self.robot    = robot
+        self.entity_id = entity_id
+        self.radius   = radius
+
+    def generateConstraint(self):
+        e = self.robot.ed.getEntity(id=self.entity_id)
+
+        if not e:
+            rospy.logerr("No such entity")
+            return None
+
+        x = e.pose.position.x
+        y = e.pose.position.y        
+
+        rospy.logwarn("Should Sjoerd check the newest model data in???")
+
+        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map")
+
+        return pc, oc
+
+    def breakOut(self):
+        return False   
+
+# ----------------------------------------------------------------------------------------------------              
 
 # class NavigateTo(smach.StateMachine):
 #     def __init__(self, robot, constraint_args={}, break_out_args={}):

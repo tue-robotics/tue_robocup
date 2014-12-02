@@ -9,8 +9,6 @@ from psi import Compound
 
 import geometry_msgs
 
-from robot_skills.arms import State as ArmState
-
 from human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 
@@ -943,7 +941,7 @@ class DropObject(smach.StateMachine):
 
 
 class SetGripper(smach.State):
-    def __init__(self, robot, side, gripperstate=ArmState.OPEN, drop_from_frame=None, grabpoint_query=None, timeout=10):
+    def __init__(self, robot, side, gripperstate='open', drop_from_frame=None, grabpoint_query=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.side = side
         self.robot = robot
