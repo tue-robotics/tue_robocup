@@ -2435,8 +2435,8 @@ if __name__ == '__main__':
     amigo.reasoner.assertz(Compound('challenge', 'cocktailparty'))
   
 
-    # initial_state = None
-    initial_state = 'FIND_DRINKS_CONTAINER'
+    initial_state = None
+    # initial_state = 'FIND_DRINKS_CONTAINER'
     # initial_state = 'DELIVER_DRINKS_CONTAINER'
     # initial_state = 'GOTO_WAITING_PLACE'
     # initial_state = 'LOOKOUT_CONTAINER'
