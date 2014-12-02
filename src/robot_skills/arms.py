@@ -8,8 +8,6 @@ from tue_manipulation.msg._GripperCommandGoal import GripperCommandGoal
 import actionlib
 #from tue_manipulation.msg._MoveArmAction import MoveArmAction
 from actionlib_msgs.msg._GoalStatus import GoalStatus
-import amigo_actions
-import amigo_actions.msg
 
 from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
