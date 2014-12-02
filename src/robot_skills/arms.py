@@ -2,12 +2,11 @@
 import roslib; roslib.load_manifest('robot_skills')
 import rospy
 from tue_manipulation.msg._GraspPrecomputeGoal import GraspPrecomputeGoal
+from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
+from tue_manipulation.msg._GripperCommandAction import GripperCommandAction
 import actionlib
 #from tue_manipulation.msg._MoveArmAction import MoveArmAction
 from actionlib_msgs.msg._GoalStatus import GoalStatus
-import amigo_actions
-import amigo_actions.msg
-from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
 from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
@@ -84,7 +83,7 @@ class Arm(object):
         self.arm_measurement_sub = rospy.Subscriber("/"+self.robot_name+"/left_arm/measurements", JointState, self._arm_measurement_callback)
 
         # Init gripper actionlib
-        self._ac_gripper = actionlib.SimpleActionClient("gripper_server_"+self.side, amigo_actions.msg.AmigoGripperCommandAction)
+        self._ac_gripper = actionlib.SimpleActionClient("gripper_server_"+self.side, GripperCommandAction)
 
         # Init graps precompute actionlib
         self._ac_grasp_precompute = actionlib.SimpleActionClient("grasp_precompute_"+self.side, GraspPrecomputeAction)
