@@ -34,10 +34,10 @@ class Designator(object):
     This allows to later define Designators that take a goal specification, like a query to a world model. 
 
     current is therefore a property with only a getter."""
-    def __init__(self):
+    def __init__(self, initial_value=None):
         super(Designator, self).__init__()
 
-        self._current = None
+        self._current = initial_value
 
     def resolve(self):
         """Selects a new goal and sets it as the current value."""
@@ -54,8 +54,8 @@ class VariableDesignator(Designator):
     """A VariableDesignator simply contains a variable that can be set by anyone. 
     This variable is encapsulated by a property called current. 
     You can also set current = ... """
-    def __init__(self):
-        super(VariableDesignator, self).__init__()
+    def __init__(self, initial_value=None):
+        super(VariableDesignator, self).__init__(initial_value)
 
     def _set_current(self, value):
         self._current = value
