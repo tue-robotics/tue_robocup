@@ -44,9 +44,6 @@ class Torso(object):
     def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
         rospy.loginfo("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
-        if (spindle_vel != 0.0 or spindle_acc != 0.0):
-            rospy.logwarn('Spindle_vel {0} and spindle_acc {1} are not supported'.format(spindle_vel, spindle_acc))
-
         if (len(torso_pos) != len(self.joint_names)):
             rospy.logwarn('Length of desired torso pos {0} does not correspond with number of joints {1}'.format(len(torso_pos), len(self.joint_names)))
             return False
