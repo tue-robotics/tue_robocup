@@ -16,6 +16,8 @@ import robot_skills.util.msg_constructors as msgs
 
 import sys
 
+from robot_smach_states.designators.designator import Designator, VariableDesignator
+
 # def setup_statemachine(robot):
 
 # 	sm = smach.StateMachine(outcomes=['Done','Aborted'])
@@ -41,7 +43,7 @@ if __name__ == '__main__':
         	robot = Amigo() 
 
     #testexec = states.NavigateToPose(robot, 3, 1, -1.57, 0.15)
-    testexec = states.NavigateToWaypoint(robot, "exit_1_rips")
+    testexec = states.NavigateToWaypoint(robot, Designator("exit_1_rips"))
     testexec.execute()
 
     #startup(setup_statemachine, robot_name=robot_name)
