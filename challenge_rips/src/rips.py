@@ -1,9 +1,10 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('challenge_rips')
+import roslib;
 import rospy
 import smach
 
 from robot_skills.amigo import Amigo
+from robot_skills.sergio import Sergio
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from geometry_msgs.msg import Point
@@ -12,6 +13,8 @@ from speech_interpreter.srv import AskUser
 
 from psi import *
 import robot_skills.util.msg_constructors as msgs
+
+import sys
 
 
 ###########################
@@ -115,9 +118,8 @@ def setup_statemachine(robot):
         #                            transitions={   "spoken":"GO_TO_INTERMEDIATE_WAYPOINT"})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT', 
-                                    states.NavigateGeneric(robot, goal_name="registration_table1"),
-                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
-                                                    'preempted':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
+                                    states.NavigateToWaypoint(robot, "registration_table1"),
+                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE',  
                                                     'unreachable':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT'})
 
@@ -128,25 +130,22 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_SECOND_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="registration_table1", goal_area_radius=0.5), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, "registration_table1"), # within 1m of the target
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
-                                                    'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY'})
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="registration_table2", goal_area_radius=0.5), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, "registration_table2"), # within 1m of the target
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
-                                                    'preempted':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY'})
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="registration_table3", goal_area_radius=0.5), # within 1m of the target
-                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
-                                                    'preempted':'SAY_AWAIT_CONTINUE', 
+                                    states.NavigateToWaypoint(robot, "registration_table3"), # within 1m of the target
+                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE',  
                                                     'unreachable':'SAY_AWAIT_CONTINUE', 
                                                     'goal_not_defined':'SAY_AWAIT_CONTINUE'})
 
@@ -180,9 +179,8 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.NavigateGeneric(robot, goal_name="exit_1_rips"),
+                                    states.NavigateToWaypoint(robot, "exit_1_rips"),
                                     transitions={   'arrived':'AT_END', 
-                                                    'preempted':'CLEAR_PATH_TO_EXIT', 
                                                     'unreachable':'CLEAR_PATH_TO_EXIT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
 
@@ -193,33 +191,29 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_1_rips", goal_area_radius=0.5), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, "exit_1_rips"), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
-                                                    'preempted':'GO_TO_EXIT_THIRD_TRY', 
                                                     'unreachable':'GO_TO_EXIT_THIRD_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_THIRD_TRY'})
     
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_THIRD_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_2_rips", goal_area_radius=0.5), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, "exit_2_rips"), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
-                                                    'preempted':'GO_TO_EXIT_FOURTH_TRY', 
                                                     'unreachable':'GO_TO_EXIT_FOURTH_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_FOURTH_TRY'})
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_FOURTH_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_3_rips", goal_area_radius=0.5), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, "exit_3_rips"), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
-                                                    'preempted':'GO_TO_EXIT_FIFTH_TRY', 
                                                     'unreachable':'GO_TO_EXIT_FIFTH_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_FIFTH_TRY'})
                                                     
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_FIFTH_TRY', 
-                                    states.NavigateGeneric(robot, goal_name="exit_4_rips", goal_area_radius=0.5), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, "exit_4_rips"), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
-                                                    'preempted':'AT_END', 
                                                     'unreachable':'AT_END', 
                                                     'goal_not_defined':'AT_END'})
 
@@ -234,4 +228,7 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('rips_exec')
 
-    startup(setup_statemachine)
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+
+    startup(setup_statemachine, robot_name=robot_name)
