@@ -276,15 +276,16 @@ class NavigateToPose(NavigateTo):
 # ----------------------------------------------------------------------------------------------------
 
 class NavigateToWaypoint(NavigateTo):
-    def __init__(self, robot, waypoint, radius = 0.15):
+    def __init__(self, robot, waypoint_designator, radius = 0.15):
         super(NavigateToWaypoint, self).__init__(robot)
 
-        self.robot    = robot
-        self.waypoint = waypoint
-        self.radius   = radius
+        self.robot               = robot
+        self.waypoint_designator = waypoint_designator
+        self.radius              = radius
 
     def generateConstraint(self):
-        e = self.robot.ed.getEntity(id=self.waypoint)
+        _id = self.waypoint_designator.resolve()
+        e = self.robot.ed.getEntity(id=_id)
 
         print e
 
