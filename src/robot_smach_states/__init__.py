@@ -5,7 +5,6 @@ from introduction import *
 from manipulation import *
 from motion_sequences import *
 from navigation import *
-from navigation2 import *
 from perception import *
 from reasoning import *
 from utility_states import *
