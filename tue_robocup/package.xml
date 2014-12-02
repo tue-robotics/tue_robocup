@@ -1,0 +1,36 @@
+<package>
+  <name>tue_robocup</name>
+  <version>0.0.0</version>
+  <description>
+    This meta package contains all packages directly and only related to RoboCup@Home
+  </description>
+  <maintainer email="S.v.d.Dries@tue.nl">Sjoerd van den Dries</maintainer>
+  <license>BSD</license>
+
+  <url>https://github.com/tue-robotics/tue_robocup</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>amigo_demo</run_depend>
+  <run_depend>challenge_basic_functionalities</run_depend>
+  <run_depend>challenge_cleanup</run_depend>
+  <run_depend>challenge_cocktail_party</run_depend>
+  <run_depend>challenge_demo</run_depend>
+  <run_depend>challenge_demo_2013</run_depend>
+  <run_depend>challenge_egpsr</run_depend>
+  <run_depend>challenge_emergency</run_depend>
+  <run_depend>challenge_final</run_depend>
+  <run_depend>challenge_follow_me</run_depend>
+  <run_depend>challenge_open</run_depend>
+  <run_depend>challenge_open_2013</run_depend>
+  <run_depend>challenge_r3cop</run_depend>
+  <run_depend>challenge_restaurant</run_depend>
+  <run_depend>challenge_rips</run_depend>
+  <run_depend>challenge_robo_zoo</run_depend>
+  <run_depend>challenge_robo_zoo_old</run_depend>
+  <run_depend>state_viewer</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

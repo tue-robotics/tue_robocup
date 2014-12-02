@@ -1,7 +1,0 @@
-<stack>
-  <description brief="tue_robocup">This stack contains all packages directly and only related to RoboCup@Home</description>
-  <author>Sjoerd van den Dries</author>
-  <license>BSD</license>  
-  <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/tue_robocup</url>
-</stack>
