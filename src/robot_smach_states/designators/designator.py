@@ -30,24 +30,37 @@ class NoAnswerException(Exception):
 
 class Designator(object):
     """A Designator defines a goal, which can be defined at runtime or at write-time.
-    A Designator can hold a set of goals it can choose from and finally selects one, by calling self.next.
-    After that goal is finished or cannot be finished, a next option can be selected again.
-    """
+    Its value cannot be set, it can only be get. 
+    This allows to later define Designators that take a goal specification, like a query to a world model. 
+
+    current is therefore a property with only a getter."""
     def __init__(self):
         super(Designator, self).__init__()
 
         self._current = None
 
     def resolve(self):
-        """Selects a new goal and sets it as the current goal"""
-        self._current = None
-        raise NotImplementedError("No method for goal selection implemented")
+        """Selects a new goal and sets it as the current value."""
         return self.current
 
-    @property
-    def current(self):
+    def _get_current(self):
         """The currently selected goal"""
         return self._current
+
+    current = property(_get_current)
+
+
+class VariableDesignator(Designator):
+    """A VariableDesignator simply contains a variable that can be set by anyone. 
+    This variable is encapsulated by a property called current. 
+    You can also set current = ... """
+    def __init__(self):
+        super(VariableDesignator, self).__init__()
+
+    def _set_current(self, value):
+        self._current = value
+
+    current = property(Designator._get_current, _set_current)
 
 
 class ReasonedDesignator(Designator):
@@ -87,6 +100,7 @@ class ReasonedDesignator(Designator):
         filtered = filter(self.filter, answers)
         if not filtered:
             raise NoAnswerException("No answers left for query {0} after filtering".format(self._decorated_query))
+        
         self._current = self.sort(filtered, key=self.sortkey)
         return self.current
 
