@@ -1,4 +1,0 @@
-<deps>
-    <library name="ros-groovy-rosbridge-suite" type="system"/>
-    <library name="ros-groovy-mjpeg-server" type="system"/>
-</deps>
