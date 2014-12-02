@@ -3,7 +3,9 @@ import roslib; roslib.load_manifest('robot_skills')
 import rospy
 from tue_manipulation.msg._GraspPrecomputeGoal import GraspPrecomputeGoal
 from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
+from tue_manipulation.msg._GripperCommandGoal import GripperCommandGoal
 from tue_manipulation.msg._GripperCommandAction import GripperCommandAction
+from tue_msgs.msg import GripperCommand
 import actionlib
 #from tue_manipulation.msg._MoveArmAction import MoveArmAction
 from actionlib_msgs.msg._GoalStatus import GoalStatus
@@ -29,11 +31,6 @@ import tf_server
 import visualization_msgs.msg
 
 from math import degrees, radians
-    
-class State:
-    """Specifies a State either OPEN or CLOSE"""
-    OPEN = 0
-    CLOSE = 1
 
 class Offset(object):
     def __init__(self, parameter_name):
@@ -169,6 +166,27 @@ class Arm(object):
 
     def reset(self):
         return self.send_joint_goal('reset')
+
+    def send_gripper_goal(self, state, timeout = 5.0):
+        goal = GripperCommandGoal()
+
+        if state == 'open':
+            goal.command.direction = GripperCommand.OPEN
+        elif state == 'close':
+            goal.command.direction = GripperCommand.CLOSE
+        else:
+            rospy.logerror('State shoulde be open or close, now it is {0}'.format(state))
+            return False
+
+        self._ac_gripper.send_goal(goal)
+        if timeout == 0.0:
+            return True
+        else:
+            self._ac_gripper.wait_for_result(rospy.Duration(timeout))
+            if self._ac_gripper.get_state() == GoalStatus.SUCCEEDED:
+                return True
+            else:
+                return False
 
     def _send_joint_goal(self, joint_references, timeout=0):
         """Send a goal to the arms in joint coordinates, using an action client"""
