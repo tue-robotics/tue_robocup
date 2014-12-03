@@ -34,17 +34,6 @@ import visualization_msgs.msg
 from math import degrees, radians
 
 
-class Offset(object):
-    def __init__(self, parameter_name):
-        params = rospy.get_param(parameter_name)
-        self.x     = params['x']
-        self.y     = params['y']
-        self.z     = params['z']
-        self.roll  = params['roll']
-        self.pitch = params['pitch']
-        self.yaw   = params['yaw']
-
-
 class Arm(object):
     """
     A single arm can be either left or right, extends Arms:
@@ -70,14 +59,14 @@ class Arm(object):
         self.occupied = False
 
         # Get stuff from the parameter server
-        self.offset = Offset('/'+self.robot_name+'/skills/arm/offset/'+self.side)
-        self.marker_to_grippoint_offset = Offset('/'+self.robot_name+'/skills/arm/offset/marker_to_grippoint/')
-        self.joint_names = rospy.get_param('/'+self.robot_name+'/skills/arm/joint_names')
-        for i in range(len(self.joint_names)):
-            self.joint_names[i] = self.joint_names[i] + "_" + self.side
+        self.offset = self.load_param('/skills/arm/offset/' + self.side)
+        self.marker_to_grippoint_offset = self.load_param('/skills/arm/offset/marker_to_grippoint')
+        self.joint_names = self.load_param('/skills/arm/joint_names')
+
+        self.joint_names = [name + "_" + self.side for name in self.joint_names]
         print self.joint_names
-        self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/arm/default_configurations')
-        self.default_trajectories   = rospy.get_param('/'+self.robot_name+'/skills/arm/default_trajectories')
+        self.default_configurations = self.load_param('/skills/arm/default_configurations')
+        self.default_trajectories   = self.load_param('/skills/arm/default_trajectories')
 
         # Init measurement subscriber
         self.arm_measurement_sub = rospy.Subscriber("/"+self.robot_name+"/left_arm/measurements", JointState, self._arm_measurement_callback)
@@ -102,6 +91,9 @@ class Arm(object):
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher("grasp_target", visualization_msgs.msg.Marker)
+
+    def load_param(self, param_name):
+        return rospy.get_param('/' + self.robot_name + param_name)
 
     def close(self):
         try:
