@@ -71,6 +71,7 @@ class executePlan(smach.State):
 
             if self.preempt_requested():
                 self.robot.base.local_planner.cancelCurrentPlan()
+                rospy.loginfo('execute: preempt_requested')
                 return 'preempted'
 
             status = self.robot.base.local_planner.getStatus()
@@ -223,10 +224,10 @@ class NavigateTo(smach.StateMachine):
             # gets called when ANY child state terminates
             def child_term_cb(outcome_map):
                 if outcome_map['MONITOR'] == 'preempted':
-                    return False
+                    return True
 
                 if outcome_map['MONITOR'] == 'passed':
-                    return True
+                    return False
 
             sm_con = smach.Concurrence( outcomes=['arrived','unreachable','goal_not_defined','preempted'],
                                         default_outcome='arrived',
