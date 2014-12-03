@@ -9,6 +9,8 @@ from robot_smach_states import *
 
 from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 from robot_smach_states.util.startup import startup
+import robot_skills.util.msg_constructors as msgs
+from robot_smach_states.designator.designator import Designator, VariableDesignator
 
 from pein_srvs.srv import SetObjects
 
@@ -57,8 +59,12 @@ class PickAndPlace(smach.StateMachine):
 
         rospy.logwarn("query_lookat = {0}".format(query_lookat))
 
-        #ToDo: if disposed not relevant. Rather have the Object with the highest probability!
-        query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
+        # #ToDo: if disposed not relevant. Rather have the Object with the highest probability!
+        # query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
+
+        #In the end, we just want to grab some entity with some ID. How we get this ID should not matter, so we can use a designator.
+        grab_entity_designator = Designator("dummy_entity_id") 
+
 
         # query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
         #                                 Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
@@ -85,7 +91,7 @@ class PickAndPlace(smach.StateMachine):
                                     GetObject(robot=robot, 
                                               side=arm, 
                                               roi_query=query_lookat, 
-                                              object_query=query_object),
+                                              object_query=grab_entity_designator),
                                     transitions={    'Done'   : 'SAY_DROPOFF',
                                                      'Aborted': 'SAY_FOUND_NOTHING',
                                                      'Failed' : 'HUMAN_HANDOVER',
