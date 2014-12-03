@@ -5,9 +5,6 @@ import rospy
 from dragonfly_speech_recognition.srv import GetSpeech, GetSpeechRequest
 from dragonfly_speech_recognition.msg import Choice
 
-
-## TODO: some words are appended like 'applejuice', this should be handled gracefully in some way
-## by the executive
 class Ears:
     """
     Interface to amigo Ears. 
