@@ -20,7 +20,7 @@ class NavigateToWaypoint(NavigateTo):
 
     def generateConstraint(self):
         _id = self.waypoint_designator.resolve()
-        e = self.robot.ed.getEntity(id=_id)
+        e = self.robot.ed.get_entity(id=_id)
 
         print e
 
