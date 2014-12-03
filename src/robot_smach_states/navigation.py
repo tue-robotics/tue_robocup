@@ -53,7 +53,7 @@ class getPlan(smach.State):
 
 class executePlan(smach.State):
     def __init__(self, robot, blocked_timeout = 4):
-        smach.State.__init__(self,outcomes=['arrived','blocked'])
+        smach.State.__init__(self,outcomes=['arrived','blocked','preempted'])
         self.robot = robot 
         self.t_last_free = None     
         self.blocked_timeout = blocked_timeout   
@@ -68,6 +68,10 @@ class executePlan(smach.State):
 
         while True:
             rospy.Rate(1.0).sleep() # 1hz
+
+            if self.preempt_requested():
+                self.robot.base.local_planner.cancelCurrentPlan()
+                return 'preempted'
 
             status = self.robot.base.local_planner.getStatus()
 
@@ -172,15 +176,6 @@ class breakOutState(smach.State):
 
     def execute(self, userdata):
 
-        rospy.logwarn('This is a dummy implementation')
-
-        starttime = rospy.Time.now()
-
-        while (rospy.Time.now() - starttime) < rospy.Duration(10.0):
-            rospy.sleep(rospy.Duration(1.0))
-
-        rospy.logwarn('Sleeping done')
-
         return 'passed'
         
 
@@ -194,7 +189,7 @@ class NavigateTo(smach.StateMachine):
         with self:
 
             # Create the sub SMACH state machine
-            sm_nav = smach.StateMachine(outcomes=['arrived','unreachable','goal_not_defined'])
+            sm_nav = smach.StateMachine(outcomes=['arrived','unreachable','goal_not_defined','preempted'])
 
             with sm_nav:
 
@@ -205,7 +200,8 @@ class NavigateTo(smach.StateMachine):
 
                 smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
                     transitions={'arrived'                              :   'arrived',
-                                 'blocked'                              :   'DETERMINE_BLOCKED'})
+                                 'blocked'                              :   'DETERMINE_BLOCKED',
+                                 'preempted'                            :   'preempted'})
 
                 smach.StateMachine.add('DETERMINE_BLOCKED',                 determineBlocked(self.robot),
                     transitions={'blocked_human'                        :   'PLAN_BLOCKED_HUMAN',
@@ -224,21 +220,30 @@ class NavigateTo(smach.StateMachine):
                     transitions={'succeeded'                            :   'unreachable'})
 
             # Create the concurrent state machine
-            sm_con = smach.Concurrence(outcomes=['arrived','unreachable','goal_not_defined','preempted'],
-                                   default_outcome='arrived',
-                                   outcome_map={'arrived'           :   {   'NAVIGATE'  : 'arrived',
-                                                                            'MONITOR'   : 'passed'},
-                                                'unreachable'       :   {   'NAVIGATE'  : 'unreachable',
-                                                                            'MONITOR'   : 'passed'},
-                                                'goal_not_defined'  :   {   'NAVIGATE'  : 'goal_not_defined',
-                                                                            'MONITOR'   : 'passed'},
-                                                'preempted'         :   {   'MONITOR'   : 'preempted'}})
+            # gets called when ANY child state terminates
+            def child_term_cb(outcome_map):
+                if outcome_map['MONITOR'] == 'preempted':
+                    return False
+
+                if outcome_map['MONITOR'] == 'passed':
+                    return True
+
+            sm_con = smach.Concurrence( outcomes=['arrived','unreachable','goal_not_defined','preempted'],
+                                        default_outcome='arrived',
+                                        outcome_map={   'arrived'           :   {   'NAVIGATE'  : 'arrived',
+                                                                                    'MONITOR'   : 'passed'},
+                                                        'unreachable'       :   {   'NAVIGATE'  : 'unreachable',
+                                                                                    'MONITOR'   : 'passed'},
+                                                        'goal_not_defined'  :   {   'NAVIGATE'  : 'goal_not_defined',
+                                                                                    'MONITOR'   : 'passed'},
+                                                        'preempted'         :   {   'MONITOR'   : 'preempted'}},
+                                        child_termination_cb = child_term_cb)
 
             with sm_con:
                 smach.Concurrence.add('NAVIGATE', sm_nav)
                 smach.Concurrence.add('MONITOR' , breakOutState(self.robot))
 
-            smach.StateMachine.add('NAVIGATE', sm_con,
+            smach.StateMachine.add('MONITORED_NAVIGATE', sm_con,
                 transitions={'arrived'          : 'arrived',
                              'unreachable'      : 'unreachable',
                              'goal_not_defined' : 'goal_not_defined',
