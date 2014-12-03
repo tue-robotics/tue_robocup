@@ -8,10 +8,10 @@ from geometry_msgs.msg import *
 
 import rospy
 
-# ----------------------------------------------------------------------------------------------------
 
+# ----------------------------------------------------------------------------------------------------
 class NavigateToObserve(NavigateTo):
-    def __init__(self, robot, entity_id, radius = 1):
+    def __init__(self, robot, entity_id, radius = .5):
         super(NavigateToObserve, self).__init__(robot)
 
         self.robot    = robot
@@ -25,17 +25,42 @@ class NavigateToObserve(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
-        x = e.pose.position.x
-        y = e.pose.position.y    
+        ch = e.convex_hull
 
-        print "DFGDFG" 
+        x = e.pose.position.x
+        y = e.pose.position.y      
 
         rospy.logwarn("Should Sjoerd check the newest model data in???")
 
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
+        xs, ys, rcs = [], [], []
+
+        ch.append(ch[0])
+
+        pci = ""
+
+        for i in xrange(len(ch) - 1):
+            print ch[i]
+            dx = ch[i+1].x - ch[i].x
+            dy = ch[i+1].y - ch[i].y
+
+            length = (dx * dx + dy * dy)**.5
+
+            xs = ch[i].x + (dy/length)*self.radius
+            ys = ch[i].y - (dx/length)*self.radius
+            
+            if i != 0:
+                pci = pci + ' and '
+
+            pci = pci + "-(x-%f)*%f+(y-%f)*%f > 0.0 "%(xs, dy, ys, dx)
+
+            # pci = "-(x-%f)*%f+(y-%f)*%f > 0.0 "%(xs, dy, ys, dx)
+
+        print pci
+
+        pc = PositionConstraint(constraint=pci, frame="/map")
         oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map")
 
         return pc, oc
 
     def breakOut(self):
-        return False
+        return False   
