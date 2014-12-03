@@ -193,31 +193,34 @@ class Arm(object):
             else:
                 return False
 
-    def _send_joint_trajectory(self, joints_references, timeout=0):
+    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5)):
+        time_from_start = rospy.Duration()
+        ps = []
         for joints_reference in joints_references:
             if (len(joints_reference) != len(self.joint_names)):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
                               % (len(self.joint_names), len(joint_references)))
+            time_from_start += timeout
+            ps.append(JointTrajectoryPoint(
+                positions=joints_reference,
+                time_from_start=time_from_start))
 
-            p = JointTrajectoryPoint(positions=joints_reference)
+        # TODO: send this trajectory in one go
+        joint_trajectory = JointTrajectory(
+            joint_names=self.joint_names,
+            points=ps
+            )
+        goal = FollowJointTrajectoryGoal(
+            trajectory=joint_trajectory
+            )
 
-            # TODO: send this trajectory in one go
-            joint_trajectory = JointTrajectory(
-                joint_names=self.joint_names,
-                points=[p]
-                )
-            goal = FollowJointTrajectoryGoal(
-                trajectory=joint_trajectory
-                )
-
-            rospy.loginfo("Send {0} arm to jointcoords {1}".format(self.side, p.positions))
-            self._ac_joint_traj.send_goal(goal)
-            if timeout != 0.0:
-                self._ac_joint_traj.wait_for_result(rospy.Duration(timeout))
-                if current_ac.get_state() != GoalStatus.SUCCEEDED:
-                    rospy.logwarn("Cannot reach joint goal {0}".format(traj_goal))
-                    return False
-        return True
+        rospy.loginfo("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
+        self._ac_joint_traj.send_goal(goal)
+        if timeout != 0.0:
+            done = self._ac_joint_traj.wait_for_result(timeout*len(joints_references))
+            if not done:
+                rospy.logwarn("Cannot reach joint goal {0}".format(goal))
+        return done
 
     def _publish_marker(self, goal, color):
 
