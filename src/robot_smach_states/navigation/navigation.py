@@ -256,101 +256,6 @@ class NavigateTo(smach.StateMachine):
     def breakOut(self):
         return False
 
-# ----------------------------------------------------------------------------------------------------
-
-class NavigateToPose(NavigateTo):
-    def __init__(self, robot, x, y, rz, radius = 0.15):
-        super(NavigateToPose, self).__init__(robot)
-
-        self.x = x
-        self.y = y
-        self.rz = rz
-        self.radius = radius
-
-    def generateConstraint(self):
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(self.x, self.y, self.radius), frame="/map")
-        oc = OrientationConstraint(look_at=Point(self.x+1, self.y, 0.0), angle_offset=self.rz, frame="/map")
-
-        return pc, oc
-
-    def breakOut(self):
-        if bla:
-            return True
-        else:
-            return False
-
-# ----------------------------------------------------------------------------------------------------
-
-class NavigateToWaypoint(NavigateTo):
-    def __init__(self, robot, waypoint_designator, radius = 0.15):
-        super(NavigateToWaypoint, self).__init__(robot)
-
-        self.robot               = robot
-        self.waypoint_designator = waypoint_designator
-        self.radius              = radius
-
-    def generateConstraint(self):
-        _id = self.waypoint_designator.resolve()
-        e = self.robot.ed.getEntity(id=_id)
-
-        print e
-
-        if not e:
-            rospy.logerr("No such entity")
-            return None
-
-        try:
-            pose = e.data["pose"]
-            x = pose["x"]
-            y = pose["y"]
-            rz= pose["z"]
-        except KeyError:
-            rospy.logerr(KeyError)
-            return None
-
-        rospy.logwarn("Should Sjoerd check the newest model data in???")
-
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
-        oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
-
-        return pc, oc
-
-    def breakOut(self):
-        if bla:
-            return True
-        else:
-            return False
-
-# ----------------------------------------------------------------------------------------------------
-
-class NavigateToObserve(NavigateTo):
-    def __init__(self, robot, entity_id, radius = 1):
-        super(NavigateToObserve, self).__init__(robot)
-
-        self.robot    = robot
-        self.entity_id = entity_id
-        self.radius   = radius
-
-    def generateConstraint(self):
-        e = self.robot.ed.getEntity(id=self.entity_id)
-
-        if not e:
-            rospy.logerr("No such entity")
-            return None
-
-        x = e.pose.position.x
-        y = e.pose.position.y        
-
-        rospy.logwarn("Should Sjoerd check the newest model data in???")
-
-        pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
-        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map")
-
-        return pc, oc
-
-    def breakOut(self):
-        return False   
-
 # ----------------------------------------------------------------------------------------------------              
 
 # class NavigateTo(smach.StateMachine):
@@ -380,37 +285,6 @@ class NavigateToObserve(NavigateTo):
 #                                 transitions={'arrived'          : 'arrived',
 #                                              'unreachable'      : 'unreachable',
 #                                              'goal_not_defined' : 'goal_not_defined'})
-
-
-# class NavigateToPose(NavigateTo):
-#     def __init__(self, robot, x, y, rz):
-#         NavigateTo.__init__(robot, constraint_args={'x': x, 'y': y, 'rz': rz})
-
-#     def generateConstraint(self, userdata):
-#         userdata.position_constraint = PositionConstraint(constraint="(x-%d)+(x-%d)^2 < %d"%(x,y,radius), frame="/map")
-#         userdata.orientation_constraint = OrientationConstraint(look_at=Point(x+1,y), angle_offset=rz, frame="/map")
-
-#         return 'succeeded'
-
-#     def breakOut(self):
-#         if bla:
-#             return True
-#         else:
-#             return False
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # ----------------------------------------------------------------------------------------------------
