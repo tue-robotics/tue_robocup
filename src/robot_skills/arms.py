@@ -74,7 +74,7 @@ class Arm(object):
             self.joint_names[i] = self.joint_names[i] + "_" + self.side
         print self.joint_names
         self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/arm/default_configurations')
-        print self.default_configurations
+        self.default_trajectories   = rospy.get_param('/'+self.robot_name+'/skills/arm/default_trajectories')
 
         # Init measurement subscriber
         self.arm_measurement_sub = rospy.Subscriber("/"+self.robot_name+"/left_arm/measurements", JointState, self._arm_measurement_callback)
