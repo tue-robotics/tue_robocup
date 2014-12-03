@@ -16,6 +16,8 @@ import robot_skills.util.msg_constructors as msgs
 
 import sys
 
+from robot_smach_states.designators.designator import Designator, VariableDesignator
+
 
 ###########################
 # Created by: Erik Geerts #
@@ -118,7 +120,7 @@ def setup_statemachine(robot):
         #                            transitions={   "spoken":"GO_TO_INTERMEDIATE_WAYPOINT"})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT', 
-                                    states.NavigateToWaypoint(robot, "registration_table1"),
+                                    states.NavigateToWaypoint(robot, Designator("registration_table1")),
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE',  
                                                     'unreachable':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT'})
@@ -130,21 +132,21 @@ def setup_statemachine(robot):
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_SECOND_TRY', 
-                                    states.NavigateToWaypoint(robot, "registration_table1"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("registration_table1")), # within 1m of the target
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY'})
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_THIRD_TRY', 
-                                    states.NavigateToWaypoint(robot, "registration_table2"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("registration_table2")), # within 1m of the target
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE', 
                                                     'unreachable':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
                                                     'goal_not_defined':'GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY'})
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT_FORTH_TRY', 
-                                    states.NavigateToWaypoint(robot, "registration_table3"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("registration_table3")), # within 1m of the target
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE',  
                                                     'unreachable':'SAY_AWAIT_CONTINUE', 
                                                     'goal_not_defined':'SAY_AWAIT_CONTINUE'})
@@ -179,7 +181,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT', 
-                                    states.NavigateToWaypoint(robot, "exit_1_rips"),
+                                    states.NavigateToWaypoint(robot, Designator("exit_1_rips")),
                                     transitions={   'arrived':'AT_END', 
                                                     'unreachable':'CLEAR_PATH_TO_EXIT', 
                                                     'goal_not_defined':'CLEAR_PATH_TO_EXIT'})
@@ -191,28 +193,28 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT_SECOND_TRY', 
-                                    states.NavigateToWaypoint(robot, "exit_1_rips"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("exit_1_rips")), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'unreachable':'GO_TO_EXIT_THIRD_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_THIRD_TRY'})
     
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_THIRD_TRY', 
-                                    states.NavigateToWaypoint(robot, "exit_2_rips"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("exit_2_rips")), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'unreachable':'GO_TO_EXIT_FOURTH_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_FOURTH_TRY'})
 
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_FOURTH_TRY', 
-                                    states.NavigateToWaypoint(robot, "exit_3_rips"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("exit_3_rips")), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'unreachable':'GO_TO_EXIT_FIFTH_TRY', 
                                                     'goal_not_defined':'GO_TO_EXIT_FIFTH_TRY'})
                                                     
         # Then amigo will drive to the intermediate waypoint. Defined in knowledge base. Now it is the table in the test map.
         smach.StateMachine.add('GO_TO_EXIT_FIFTH_TRY', 
-                                    states.NavigateToWaypoint(robot, "exit_4_rips"), # within 1m of the target
+                                    states.NavigateToWaypoint(robot, Designator("exit_4_rips")), # within 1m of the target
                                     transitions={   'arrived':'AT_END', 
                                                     'unreachable':'AT_END', 
                                                     'goal_not_defined':'AT_END'})
