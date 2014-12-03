@@ -327,16 +327,7 @@ class Arm(object):
 
 if __name__ == "__main__":
     rospy.init_node('amigo_arms_executioner', anonymous=True)
-    #Easy enum access
-    leftSide = Side.LEFT
-    rightSide = Side.RIGHT
-    
-    openState = State.OPEN
-    closeState = State.CLOSE
-    
     tf_listener = tf_server.TFClient()
 
-    arms = Arms(tf_listener)
-    left = Arm(leftSide, tf_listener)
-    right = Arm(rightSide, tf_listener)
-    
+    left = Arm('amigo', "left", tf_listener)
+    right = Arm('amigo', "right", tf_listener)
