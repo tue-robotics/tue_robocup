@@ -13,21 +13,21 @@
 
   <run_depend>amigo_demo</run_depend>
   <run_depend>challenge_basic_functionalities</run_depend>
-  <run_depend>challenge_cleanup</run_depend>
+  <!-- <run_depend>challenge_cleanup</run_depend> -->
   <run_depend>challenge_cocktail_party</run_depend>
   <run_depend>challenge_demo</run_depend>
-  <run_depend>challenge_demo_2013</run_depend>
+  <!-- <run_depend>challenge_demo_2013</run_depend> -->
   <run_depend>challenge_egpsr</run_depend>
-  <run_depend>challenge_emergency</run_depend>
+  <!-- <run_depend>challenge_emergency</run_depend> -->
   <run_depend>challenge_final</run_depend>
   <run_depend>challenge_follow_me</run_depend>
-  <run_depend>challenge_open</run_depend>
-  <run_depend>challenge_open_2013</run_depend>
-  <run_depend>challenge_r3cop</run_depend>
-  <run_depend>challenge_restaurant</run_depend>
+  <!-- <run_depend>challenge_open</run_depend> -->
+  <!-- <run_depend>challenge_open_2013</run_depend> -->
+  <!-- <run_depend>challenge_r3cop</run_depend> -->
+  <!-- <run_depend>challenge_restaurant</run_depend> -->
   <run_depend>challenge_rips</run_depend>
-  <run_depend>challenge_robo_zoo</run_depend>
-  <run_depend>challenge_robo_zoo_old</run_depend>
+  <!-- <run_depend>challenge_robo_zoo</run_depend> -->
+  <!-- <run_depend>challenge_robo_zoo_old</run_depend> -->
   <run_depend>state_viewer</run_depend>
 
   <export>
