@@ -167,7 +167,7 @@ class resetWorldModel(smach.State):
 class breakOutState(smach.State):
     """docstring for breakOutState"""
     def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['succeeded'])
+        smach.State.__init__(self,outcomes=['preempted','passed'])
         self.robot = robot
 
     def execute(self, userdata):
@@ -177,11 +177,11 @@ class breakOutState(smach.State):
         starttime = rospy.Time.now()
 
         while (rospy.Time.now() - starttime) < rospy.Duration(10.0):
-            sleep(rospy.Duration(1.0))
+            rospy.sleep(rospy.Duration(1.0))
 
         rospy.logwarn('Sleeping done')
 
-        return 'succeeded'
+        return 'passed'
         
 
 # # ----------------------------------------------------------------------------------------------------
@@ -223,10 +223,26 @@ class NavigateTo(smach.StateMachine):
                 smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
                     transitions={'succeeded'                            :   'unreachable'})
 
-            smach.StateMachine.add('NAVIGATE', sm_nav,
+            # Create the concurrent state machine
+            sm_con = smach.Concurrence(outcomes=['arrived','unreachable','goal_not_defined','preempted'],
+                                   default_outcome='arrived',
+                                   outcome_map={'arrived'           :   {   'NAVIGATE'  : 'arrived',
+                                                                            'MONITOR'   : 'passed'},
+                                                'unreachable'       :   {   'NAVIGATE'  : 'unreachable',
+                                                                            'MONITOR'   : 'passed'},
+                                                'goal_not_defined'  :   {   'NAVIGATE'  : 'goal_not_defined',
+                                                                            'MONITOR'   : 'passed'},
+                                                'preempted'         :   {   'MONITOR'   : 'preempted'}})
+
+            with sm_con:
+                smach.Concurrence.add('NAVIGATE', sm_nav)
+                smach.Concurrence.add('MONITOR' , breakOutState(self.robot))
+
+            smach.StateMachine.add('NAVIGATE', sm_con,
                 transitions={'arrived'          : 'arrived',
                              'unreachable'      : 'unreachable',
-                             'goal_not_defined' : 'goal_not_defined'})
+                             'goal_not_defined' : 'goal_not_defined',
+                             'preempted'        : 'arrived'})
 
     def generateConstraint(self):
         pass
