@@ -28,7 +28,6 @@ class Ears:
 
         try:
             answer = self.get_speech_client_service(req)
-            print answer
             if answer:
                 answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
         except rospy.ServiceException as e:
