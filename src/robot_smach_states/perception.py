@@ -177,12 +177,22 @@ class RecognizePerson(smach.State):
             
 
 class LookForObjectsAtROI(smach.State):
-    def __init__(self, robot, lookat_query, object_query, maxdist=0.8, modules=["object_recognition"], waittime=2.5):
+    def __init__(self, robot, 
+                    roi_designator, 
+                    type_designator, 
+                    entity_designator, 
+                    maxdist=0.8, modules=["object_recognition"], waittime=2.5):
+        """Look for an object of a certain type at the designated Region Of Interest.
+        If a matching object is found, store its entity ID in the entity_designator
+        @param roi_designator resolves to a PointStamped
+        @param type_designator resolves to a string. The string indicates what type of entity you want to look for.
+        @param entity_designator is set to the entity ID of the entity (with the correct type) we found in the ROI,
+        """
         #TODO: Remove 'looking' outcome, it is never given.
             smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
                                     input_keys=[],
                                     output_keys=[])
-            self.lookat_query = lookat_query
+            self.roi_designator = roi_designator
             self.object_query = object_query
             self.robot = robot
             self.maxdist = maxdist
@@ -201,7 +211,7 @@ class LookForObjectsAtROI(smach.State):
         # Query reasoner for position to look at
 
         try:
-            lookat_answers = self.robot.reasoner.query(self.lookat_query)
+            lookat_answers = self.robot.reasoner.query(self.roi_designator)
             basepos = self.robot.base.location.pose.position
             basepos = (basepos.x, basepos.y, basepos.z)
             selected_roi_answer = urh.select_answer(lookat_answers, 

@@ -7,6 +7,8 @@ This sound very vague, but imagine a navigation task that needs to navigate to s
 import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 
+from ed.srv import SimpleQuery, SimpleQueryRequest
+
 class Designator(object):
     """A Designator defines a goal, which can be defined at runtime or at write-time.
     Its value cannot be set, it can only be get. 
@@ -54,6 +56,48 @@ class VariableDesignator(Designator):
         self._current = value
 
     current = property(Designator._get_current, _set_current)
+
+class PointStampedOfEntityDesignator(Designator):
+    def __init__(self, entity_designator):
+        self.entity_designator
+        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+
+    def resolve(self):
+        query = SimpleQueryRequest(id=self.entity_designator.resolve()) #type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
+        entities = self.ed(query).entities
+        if entities:
+            self._current = entities[0]
+        else:
+            raise Exception("No such entity") #TODO: Make cutom exception here
+
+class PsiDesignator(Designator):
+    """A PsiDesignator encapsulates Psi queries to a reasoner.
+    A reasoner may return multiple valid answers to a query, but """
+
+    def __init__(self, query, reasoner, sortkey=None, sortorder=min, criteriafuncs=None):
+        """Define a new designator around a Psi query, to be posed to a reasoner
+        @param query the query to be posed to the given reasoner
+        @param reasoner the reasoner that should answer the query"""
+        self.query          = query
+        self.reasoner       = reasoner
+        self.sortkey        = sortkey
+        self.sortorder      = sortorder
+        self.criteriafuncs  = criteriafuncs or []
+
+    def resolve(self):
+        """Returns an answer from the reasoner that satisfies some criteria and is the best according to some function and sorting"""
+        answers = self.reasoner.query(self.query)
+
+        rospy.loginfo("{0} answers before filtering: {1}".format(len(answers), pprint.pformat(answers)))
+        for criterium in self.criteriafuncs:
+            answers = filter(criterium, answers)
+            criterium_code = inspect.getsource(criterium)
+            rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(criterium_code, len(answers), pprint.pformat(answers)))
+
+        if not answers:
+            raise ValueError("No answers matched the critera.")
+
+        return self.sortorder(answers, key=self.sortkey)[0]
 
         
 if __name__ == "__main__":
