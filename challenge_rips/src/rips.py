@@ -161,7 +161,7 @@ def setup_statemachine(robot):
                                         'no_continue':'SAY_CONTINUEING'})        
 
         smach.StateMachine.add( 'SAY_CONTINUEING',
-                                states.Say(robot, ["I heard continue, so I will move to the exit now. See you guys later!"]),
+                                states.Say(robot, ["I heard continue, so I will move to the exit now. See you guys later!"], block=False),
                                 transitions={'spoken':'GO_TO_EXIT'})
 
         # Amigo will say that it arrives at the intermediate waypoint
