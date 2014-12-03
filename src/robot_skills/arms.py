@@ -2,10 +2,10 @@
 import roslib
 roslib.load_manifest('robot_skills')
 import rospy
-from tue_manipulation.msg._GraspPrecomputeGoal import GraspPrecomputeGoal
-from tue_manipulation.msg._GraspPrecomputeAction import GraspPrecomputeAction
-from tue_manipulation.msg._GripperCommandGoal import GripperCommandGoal
-from tue_manipulation.msg._GripperCommandAction import GripperCommandAction
+from tue_manipulation.msg import GraspPrecomputeGoal
+from tue_manipulation.msg import GraspPrecomputeAction
+from tue_manipulation.msg import GripperCommandGoal
+from tue_manipulation.msg import GripperCommandAction
 from tue_msgs.msg import GripperCommand
 import actionlib
 # from tue_manipulation.msg._MoveArmAction import MoveArmAction
