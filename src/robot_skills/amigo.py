@@ -34,6 +34,20 @@ class Amigo(robot.Robot):
     
 
 if __name__ == "__main__":
+    print "     _              __"
+    print "    / `\\  (~._    ./  )"
+    print "    \\__/ __`-_\\__/ ./"
+    print "   _ \\ \\/  \\  \\ |_   __"
+    print " (   )  \\__/ -^    \\ /  \\"
+    print "  \\_/ \"  \\  | o  o  |.. /  __"
+    print "       \\\\. --' ====  /  || /  \\"
+    print "         \\   .  .  |---__.\\__/"
+    print "         /  :     /   |   |"
+    print "         /   :   /     \\_/"
+    print "      --/ ::    ("
+    print "     (  |     (  (____"
+    print "   .--  .. ----**.____)"
+    print "   \\___/          "
     import atexit
     import util.msg_constructors as msgs
     from reasoner import Compound, Conjunction, Sequence, Variable
