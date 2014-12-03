@@ -15,7 +15,7 @@ class ED:
         self._ed_simple_query_srv = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
         self._ed_reset_srv = rospy.ServiceProxy('/ed/reset', Empty)
 
-    def getEntities(self, type="", center_point=Point(), radius=0, id=""):
+    def get_entities(self, type="", center_point=Point(), radius=0, id=""):
         query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius) 
 
         try:
@@ -30,8 +30,8 @@ class ED:
 
         return entities
 
-    def getClosestEntity(self, type="", center_point=Point(), radius=0):
-        entities = self.getEntities(type=type, center_point=center_point, radius=radius)
+    def get_closest_entity(self, type="", center_point=Point(), radius=0):
+        entities = self.get_entities(type=type, center_point=center_point, radius=radius)
         if len(entities) == 0:
             return None
 
@@ -43,8 +43,8 @@ class ED:
 
         return entities[0]
 
-    def getEntity(self, id):
-        entities = self.getEntities(id=id)
+    def get_entity(self, id):
+        entities = self.get_entities(id=id)
         if len(entities) == 0:
             return None
 
