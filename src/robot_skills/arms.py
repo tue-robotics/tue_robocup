@@ -8,12 +8,11 @@ from tue_manipulation.msg import GripperCommandGoal
 from tue_manipulation.msg import GripperCommandAction
 from tue_msgs.msg import GripperCommand
 import actionlib
-# from tue_manipulation.msg._MoveArmAction import MoveArmAction
-from actionlib_msgs.msg._GoalStatus import GoalStatus
+from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
-from trajectory_msgs.msg import JointTrajectoryPoint
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 
 # Whole-body control/planning
@@ -61,10 +60,10 @@ class Arm(object):
         # Get stuff from the parameter server
         self.offset = self.load_param('/skills/arm/offset/' + self.side)
         self.marker_to_grippoint_offset = self.load_param('/skills/arm/offset/marker_to_grippoint')
-        self.joint_names = self.load_param('/skills/arm/joint_names')
 
+        self.joint_names = self.load_param('/skills/arm/joint_names')
         self.joint_names = [name + "_" + self.side for name in self.joint_names]
-        print self.joint_names
+
         self.default_configurations = self.load_param('/skills/arm/default_configurations')
         self.default_trajectories   = self.load_param('/skills/arm/default_trajectories')
 
@@ -121,6 +120,8 @@ class Arm(object):
             frame_id = "/"+self.robot_name+frame_id
             rospy.loginfo("Grasp precompute frame id = {0}".format(frame_id))
 
+
+
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
         grasp_precompute_goal.goal.header.frame_id = frame_id
@@ -154,9 +155,18 @@ class Arm(object):
 
     def send_joint_goal(self, configuration):
         if configuration in self.default_configurations:
-            return self._send_joint_goal(self.default_configurations[configuration])
+            return self._send_joint_trajectory(
+                [self.default_configurations[configuration]]
+                )
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
+            return False
+
+    def send_joint_trajectory(self, configuration):
+        if configuration in self.default_trajectories:
+            return self._send_joint_trajectory(self.default_trajectories[configuration])
+        else:
+            rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
 
     def reset(self):
@@ -183,32 +193,31 @@ class Arm(object):
             else:
                 return False
 
-    def _send_joint_goal(self, joint_references, timeout=0):
-        """Send a goal to the arms in joint coordinates, using an action client"""
-        p = JointTrajectoryPoint()
-        p.positions = joint_references
+    def _send_joint_trajectory(self, joints_references, timeout=0):
+        for joints_reference in joints_references:
+            if (len(joints_reference) != len(self.joint_names)):
+                rospy.logwarn('Please use the correct %d number of joint references (current = %d'
+                              % (len(self.joint_names), len(joint_references)))
 
-        if (len(joint_references) != len(self.joint_names)):
-            rospy.logwarn('Please use the correct {0} number of joint references (current = {1}'
-                          .format(len(self.joint_names), len(joint_references))
-                          )
+            p = JointTrajectoryPoint(positions=joints_reference)
 
-        traj_goal = FollowJointTrajectoryGoal()
-        traj_goal.trajectory.points = [p]
-        traj_goal.trajectory.joint_names = self.joint_names
+            # TODO: send this trajectory in one go
+            joint_trajectory = JointTrajectory(
+                joint_names=self.joint_names,
+                points=[p]
+                )
+            goal = FollowJointTrajectoryGoal(
+                trajectory=joint_trajectory
+                )
 
-        rospy.loginfo("Send {0} arm to jointcoords {1}".format(self.side, p.positions))
-
-        self._ac_joint_traj.send_goal(traj_goal)
-        if timeout == 0.0:
-            return True
-        else:
-            self._ac_joint_traj.wait_for_result(rospy.Duration(timeout))
-            if current_ac.get_state() == GoalStatus.SUCCEEDED:
-                return True
-            else:
-                rospy.logwarn("Cannot reach joint goal {0}".format(traj_goal))
-                return False
+            rospy.loginfo("Send {0} arm to jointcoords {1}".format(self.side, p.positions))
+            self._ac_joint_traj.send_goal(goal)
+            if timeout != 0.0:
+                self._ac_joint_traj.wait_for_result(rospy.Duration(timeout))
+                if current_ac.get_state() != GoalStatus.SUCCEEDED:
+                    rospy.logwarn("Cannot reach joint goal {0}".format(traj_goal))
+                    return False
+        return True
 
     def _publish_marker(self, goal, color):
 
