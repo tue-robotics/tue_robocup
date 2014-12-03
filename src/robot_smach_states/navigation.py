@@ -164,85 +164,69 @@ class resetWorldModel(smach.State):
         self.robot.ed.reset()
         return "succeeded"
 
-# # ----------------------------------------------------------------------------------------------------
+class breakOutState(smach.State):
+    """docstring for breakOutState"""
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['succeeded'])
+        self.robot = robot
 
-# class NavigateWithConstraintsOnce(smach.StateMachine):
-#     def __init__(self, robot, position_constraint, orientation_constraint):
-#         smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'])
-#         self.robot = robot
+    def execute(self, userdata):
 
-#         with self:
+        rospy.logwarn('This is a dummy implementation')
 
-#             smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot),
-#                 transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
-#                              'goal_not_defined'                     :   'goal_not_defined',
-#                              'goal_ok'                              :   'EXECUTE_PLAN'})
+        starttime = rospy.Time.now()
 
-#             smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
-#                 transitions={'arrived'                              :   'arrived',
-#                              'blocked'                              :   'DETERMINE_BLOCKED'})
+        while (rospy.Time.now() - starttime) < rospy.Duration(10.0):
+            sleep(rospy.Duration(1.0))
 
-#             smach.StateMachine.add('DETERMINE_BLOCKED',                 determineBlocked(self.robot),
-#                 transitions={'blocked_human'                        :   'PLAN_BLOCKED_HUMAN',
-#                              'blocked'                              :   'PLAN_BLOCKED',
-#                              'free'                                 :   'EXECUTE_PLAN'})
+        rospy.logwarn('Sleeping done')
 
-#             smach.StateMachine.add('PLAN_BLOCKED_HUMAN',                planBlockedHuman(self.robot),
-#                 transitions={'replan'                               :   'GET_PLAN',
-#                              'free'                                 :   'EXECUTE_PLAN'})
-
-#             smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
-#                 transitions={'replan'                               :   'GET_PLAN',
-#                              'free'                                 :   'EXECUTE_PLAN'})
-
-#             smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
-#                 transitions={'succeeded'                            :   'unreachable'})
-
-# # ----------------------------------------------------------------------------------------------------
-
-# class NavigateWithConstraints(smach.Sequence):
-#     def __init__(self, robot, position_constraint, orientation_constraint):
-#         smach.Sequence.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'], connector_outcome = 'unreachable')
-#         self.robot = robot
-
-#         with self:
-#             smach.Sequence.add('NAVIGATE_TRY_1', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
-#             smach.Sequence.add('NAVIGATE_TRY_2', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
-#             smach.Sequence.add('NAVIGATE_TRY_3', NavigateWithConstraintsOnce(self.robot, position_constraint, orientation_constraint))
+        return 'succeeded'
+        
 
 # # ----------------------------------------------------------------------------------------------------
 
 class NavigateTo(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self,outcomes=['arrived','unreachable','goal_not_defined'])
+        smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','goal_not_defined'])
         self.robot = robot
 
         with self:
 
-            smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint),
-                transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
-                             'goal_not_defined'                     :   'goal_not_defined',
-                             'goal_ok'                              :   'EXECUTE_PLAN'})
+            # Create the sub SMACH state machine
+            sm_nav = smach.StateMachine(outcomes=['arrived','unreachable','goal_not_defined'])
 
-            smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
-                transitions={'arrived'                              :   'arrived',
-                             'blocked'                              :   'DETERMINE_BLOCKED'})
+            with sm_nav:
 
-            smach.StateMachine.add('DETERMINE_BLOCKED',                 determineBlocked(self.robot),
-                transitions={'blocked_human'                        :   'PLAN_BLOCKED_HUMAN',
-                             'blocked'                              :   'PLAN_BLOCKED',
-                             'free'                                 :   'EXECUTE_PLAN'})
+                smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint),
+                    transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
+                                 'goal_not_defined'                     :   'goal_not_defined',
+                                 'goal_ok'                              :   'EXECUTE_PLAN'})
 
-            smach.StateMachine.add('PLAN_BLOCKED_HUMAN',                planBlockedHuman(self.robot),
-                transitions={'replan'                               :   'GET_PLAN',
-                             'free'                                 :   'EXECUTE_PLAN'})
+                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
+                    transitions={'arrived'                              :   'arrived',
+                                 'blocked'                              :   'DETERMINE_BLOCKED'})
 
-            smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
-                transitions={'replan'                               :   'GET_PLAN',
-                             'free'                                 :   'EXECUTE_PLAN'})
+                smach.StateMachine.add('DETERMINE_BLOCKED',                 determineBlocked(self.robot),
+                    transitions={'blocked_human'                        :   'PLAN_BLOCKED_HUMAN',
+                                 'blocked'                              :   'PLAN_BLOCKED',
+                                 'free'                                 :   'EXECUTE_PLAN'})
 
-            smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
-                transitions={'succeeded'                            :   'unreachable'})
+                smach.StateMachine.add('PLAN_BLOCKED_HUMAN',                planBlockedHuman(self.robot),
+                    transitions={'replan'                               :   'GET_PLAN',
+                                 'free'                                 :   'EXECUTE_PLAN'})
+
+                smach.StateMachine.add('PLAN_BLOCKED',                      planBlocked(self.robot),
+                    transitions={'replan'                               :   'GET_PLAN',
+                                 'free'                                 :   'EXECUTE_PLAN'})
+
+                smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
+                    transitions={'succeeded'                            :   'unreachable'})
+
+            smach.StateMachine.add('NAVIGATE', sm_nav,
+                transitions={'arrived'          : 'arrived',
+                             'unreachable'      : 'unreachable',
+                             'goal_not_defined' : 'goal_not_defined'})
 
     def generateConstraint(self):
         pass
