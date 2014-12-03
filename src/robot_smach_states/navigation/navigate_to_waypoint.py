@@ -43,9 +43,3 @@ class NavigateToWaypoint(NavigateTo):
         oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
 
         return pc, oc
-
-    def breakOut(self):
-        if bla:
-            return True
-        else:
-            return False
