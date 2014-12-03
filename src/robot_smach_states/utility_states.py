@@ -52,7 +52,7 @@ class Initialize(smach.State):
 
         return 'initialized'
 
-class Set_initial_pose(smach.State):
+class SetInitialPose(smach.State):
     ## To call upon this state:
     # example 1: Set_initial_pose(robot, "front_of_door"),
     # OR
@@ -66,24 +66,23 @@ class Set_initial_pose(smach.State):
         self.initial_position = init_position
     
     def location_2d(self, location):
-        #query_location = self.robot.reasoner.base_pose(location, self.robot.reasoner.pose_2d("X", "Y", "Phi"))
-        query_location = Compound("waypoint", location, Compound("pose_2d", "X", "Y", "Phi"))
-        
-        answers = self.robot.reasoner.query(query_location)
-        
-        if not answers:
-            rospy.logerr("No answers found for query {query}".format(query=query_location))
-            return []
-        else:
-            possible_locations = [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
-        
-        x, y, phi = min(possible_locations)
+        e_loc = self.robot.ed.get_entity(id=location)
 
-        return x, y, phi
+        if not e_loc:
+            rospy.logerr("SetInitialPose: ED entity '" + location + "' does not exist.")
+            return []
+
+        print e_loc
+
+        try:
+            rz = e_loc.data["rz"]
+        except KeyError:
+            rospy.logerr("SetInitialPose: ED entity '" + location + "' should contain data field 'rz' (orientation).")
+            return []
+
+        return e_loc.pose.position.x, e_loc.pose.position.y, rz
 
     def execute(self, userdata):
-        rospy.loginfo('Set initial pose')
-
         if isinstance(self.initial_position, str):
             x,y,phi = self.location_2d(self.initial_position)
         elif len(self.initial_position) == 3: #Tuple or list        
@@ -94,7 +93,9 @@ class Set_initial_pose(smach.State):
             rospy.logerr("Initial pose {0} could not be set".format(self.initial_position))
             return "error"
 
-        self.robot.base.set_initial_pose(x,y,phi)
+        rospy.loginfo('Set initial pose to {0}, {1}, {2}'.format(x, y, phi))
+
+        self.robot.base.set_initial_pose(x, y, phi)
         
         # Reset costmap: costmap is obviously entirely off if the localization was wrong before giving the initial pose
         self.robot.base.reset_costmap()

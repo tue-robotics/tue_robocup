@@ -106,7 +106,7 @@ class determineBlocked(smach.State):
         self.robot.head.cancelGoal()
 
         if self.robot.base.local_planner.getStatus() == "blocked":
-            if len(self.robot.ed.getEntities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
+            if len(self.robot.ed.get_entities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
                 return "blocked_human"
             else:
                 return "blocked" 

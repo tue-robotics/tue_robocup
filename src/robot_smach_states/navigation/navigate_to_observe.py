@@ -19,7 +19,7 @@ class NavigateToObserve(NavigateTo):
         self.radius   = radius
 
     def generateConstraint(self):
-        e = self.robot.ed.getEntity(id=self.entity_id)
+        e = self.robot.ed.get_entity(id=self.entity_id)
 
         if not e:
             rospy.logerr("No such entity")

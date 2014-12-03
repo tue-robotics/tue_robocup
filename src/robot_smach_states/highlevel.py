@@ -85,7 +85,7 @@ class StartChallengeRobust(smach.StateMachine):
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
             # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
-                                utility_states.Set_initial_pose(robot, initial_pose),
+                                utility_states.SetInitialPose(robot, initial_pose),
                                 transitions={   'done':'ENTER_ROOM',
                                                 'preempted':'Aborted',  # This transition will never happen at the moment.
                                                 'error':'ENTER_ROOM'})  # It should never go to aborted.
