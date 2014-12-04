@@ -99,16 +99,17 @@ class PickUp(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot, designator, side="left"):
+    def __init__(self, robot, designator, arm):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
         self.robot = robot
 
         with self:
 
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToObserve(self.robot, designator),
-                transitions={'done'   :   'GRAB',
-                             'failed' :   'failed'})
+                transitions={ 'unreachable' : 'failed',
+                              'goal_not_defined' : 'failed',
+                              'arrived' : "GRAB"})
 
-            smach.StateMachine.add('GRAB', PickUp(self.robot, designator, side),
-                transitions={'done'   :   'done',
+            smach.StateMachine.add('GRAB', PickUp(self.robot, designator, arm),
+                transitions={'succeeded' :   'done',
                              'failed' :   'failed'})
