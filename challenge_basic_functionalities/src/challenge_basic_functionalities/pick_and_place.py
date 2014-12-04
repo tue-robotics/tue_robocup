@@ -63,7 +63,7 @@ class PickAndPlace(smach.StateMachine):
         # query_object = Compound("position", "ObjectID", Compound("point", "X", "Y", "Z"))
 
         #In the end, we just want to grab some entity with some ID. How we get this ID should not matter, so we can use a designator.
-        grab_entity_designator = Designator("dummy_entity_id") 
+        grab_type_designator = Designator("") #TODO 3-12-2014 set desired entity type
 
 
         # query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
@@ -90,8 +90,8 @@ class PickAndPlace(smach.StateMachine):
             smach.StateMachine.add('PICKUP_OBJECT',
                                     GetObject(robot=robot, 
                                               side=arm, 
-                                              roi_query=query_lookat, 
-                                              object_query=grab_entity_designator),
+                                              #lookat_designator, #TODO 3-12-2014 use correct designator
+                                              type_designator=grab_type_designator), #TODO 3-12-2014 use correct designator
                                     transitions={    'Done'   : 'SAY_DROPOFF',
                                                      'Aborted': 'SAY_FOUND_NOTHING',
                                                      'Failed' : 'HUMAN_HANDOVER',
