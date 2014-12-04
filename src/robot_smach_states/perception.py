@@ -177,11 +177,7 @@ class RecognizePerson(smach.State):
             
 
 class LookForObjectsAtROI(smach.State):
-    def __init__(self, robot, 
-                    roi_designator, 
-                    type_designator, 
-                    entity_designator, 
-                    maxdist=0.8, modules=["object_recognition"], waittime=2.5):
+    def __init__(self, robot, roi_designator, type_designator, entity_designator, maxdist=0.8, modules=["object_recognition"], waittime=2.5):
         """Look for an object of a certain type at the designated Region Of Interest.
         If a matching object is found, store its entity ID in the entity_designator
         @param roi_designator resolves to a PointStamped
@@ -189,22 +185,22 @@ class LookForObjectsAtROI(smach.State):
         @param entity_designator is set to the entity ID of the entity (with the correct type) we found in the ROI,
         """
         #TODO: Remove 'looking' outcome, it is never given.
-            smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
-                                    input_keys=[],
-                                    output_keys=[])
-            self.roi_designator = roi_designator
-            self.object_query = object_query
-            self.robot = robot
-            self.maxdist = maxdist
-            self.modules = modules
-            self.waittime= waittime
-            assert hasattr(self.robot, "reasoner")
-            try:
-                assert hasattr(self.robot, "perception")
-            except AssertionError:
-                rospy.logerr("perception not available, but still trying without")
-                self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.", block=False)
-            assert hasattr(self.robot, "head")
+        smach.State.__init__(self, outcomes=['looking','object_found','no_object_found','abort'],
+                                input_keys=[],
+                                output_keys=[])
+        self.roi_designator = roi_designator
+        self.object_query = object_query
+        self.robot = robot
+        self.maxdist = maxdist
+        self.modules = modules
+        self.waittime= waittime
+        assert hasattr(self.robot, "reasoner")
+        try:
+            assert hasattr(self.robot, "perception")
+        except AssertionError:
+            rospy.logerr("perception not available, but still trying without")
+            self.robot.speech.speak("I can't see a thing, but I'll try to be of service anyway. Wish me luck, or stop me before I do something silly.", block=False)
+        assert hasattr(self.robot, "head")
 
     def execute(self, userdata):
 

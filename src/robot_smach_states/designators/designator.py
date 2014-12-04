@@ -8,6 +8,8 @@ import roslib; roslib.load_manifest('robot_smach_states')
 import rospy
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
+import geometry_msgs.msg as gm
+import std_msgs.msg as std
 
 class Designator(object):
     """A Designator defines a goal, which can be defined at runtime or at write-time.
@@ -38,7 +40,6 @@ class Designator(object):
 
     current = property(_get_current)
 
-
 class VariableDesignator(Designator):
     """A VariableDesignator simply contains a variable that can be set by anyone. 
     This variable is encapsulated by a property called current. 
@@ -59,6 +60,7 @@ class VariableDesignator(Designator):
 
 class PointStampedOfEntityDesignator(Designator):
     def __init__(self, entity_designator):
+        super(VariableDesignator, self).__init__()
         self.entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
@@ -66,9 +68,14 @@ class PointStampedOfEntityDesignator(Designator):
         query = SimpleQueryRequest(id=self.entity_designator.resolve()) #type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
         entities = self.ed(query).entities
         if entities:
-            self._current = entities[0]
+            entity = entities[0]
+            pointstamped = gm.PointStamped( point=entity.center_point, 
+                                            header=std.Header(entity.id, rospy.get_rostime())) #ID is also the frame ID. Ed just works that way
+            self._current = pointstamped
+            return current
         else:
             raise Exception("No such entity") #TODO: Make cutom exception here
+
 
 class PsiDesignator(Designator):
     """A PsiDesignator encapsulates Psi queries to a reasoner.
@@ -98,6 +105,22 @@ class PsiDesignator(Designator):
             raise ValueError("No answers matched the critera.")
 
         return self.sortorder(answers, key=self.sortkey)[0]
+
+class EdEntityByQueryDesignator(Designator):
+    """Resolves to an entity from an Ed query, (TODO: selected by some filter and criteria functions)"""
+
+    def __init__(self, ed_query):
+        super(EdEntityByQueryDesignator, self).__init__()
+        self.query = ed_query
+        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+
+    def resolve(self):
+        entities = self.ed.query(self.query)
+        if entities:
+            self._current = entities[0]
+            return self.current
+        else:
+            raise Exception("No entities found matching query {0}".format(self.query))
 
         
 if __name__ == "__main__":

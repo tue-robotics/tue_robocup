@@ -12,7 +12,7 @@ import reasoning
 
 from psi import Conjunction, Compound, Sequence
 import robot_skills.util.msg_constructors as msgs
-from robot_smach_states.designator.designator import Designator, VariableDesignator
+from designators.designator import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
 from robot_smach_states.designators import Designator
 
@@ -222,18 +222,16 @@ class VisitQueryPoi(smach.StateMachine):
     #                The will reduce the complexity of this beast quite a lot.  
     """Go to the outcome of a point_of_interest-query and mark that identifier as visited or unreachable.
     When all matches are visited, the outcome is all_matches_tried"""
-    def __init__(self, robot, poi_query, identifier="Poi", visit_label="currently_visiting"):
+    def __init__(self, robot, poi_designator):
+        """Go to the point that poi_designator resolves to. 
+        If that poi is unreachable, this state machine will try to go to a different point, after calling poi_designator.next()
+        @param poi_designator resolves to a point to visit. 
+        """
         smach.StateMachine.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined", "all_matches_tried"]) #visit_query_outcome also defines 'all_matches_tried'
 
         self.robot = robot
-        self.identifier = identifier
-
-        decorated_query = Conjunction(poi_query, 
-                        Compound("not", Compound("visited",     self.identifier)),
-                        Compound("not", Compound("unreachable", self.identifier)))
-
-        current_goal_query = Conjunction(Compound(visit_label, self.identifier),
-                                         Compound("point_of_interest", self.identifier, Compound("point_3d", "X", "Y", "Z")))
+        visited = VariableDesignator([])
+        unreachable = VariableDesignator([])
 
         with self:
             smach.StateMachine.add( 'SELECT_OBJECT_TO_VISIT',
@@ -277,7 +275,7 @@ class VisitQueryPoi(smach.StateMachine):
 
 
 class GetObject(smach.StateMachine):
-    def __init__(self, robot, side, lookat_designator=Designator(msgs.PointStamped(1,0,0.8, "/base_link")), 
+    def __init__(self, robot, side, lookat_designator, 
                                     type_designator=Designator(""), 
                                     max_duration=rospy.Duration(3600)):
         """
@@ -309,15 +307,15 @@ class GetObject(smach.StateMachine):
                                     transitions={   'done':'DRIVE_TO_SEARCHPOS' })            
                                                     
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
-                                    human_interaction.Say(robot, ["I should visit the next region of interest, \
-                                                                   but that is not yet implemented with designators"], block=False),
-                                    transitions={ 'spoken':'SAY_LOOK_FOR_OBJECTS' })
-                                    # VisitQueryPoi(self.robot, poi_query=self.roi_query, identifier=self.roi_identifier, visit_label="currently_visiting"),
-                                    # transitions={   'arrived'         :'SAY_LOOK_FOR_OBJECTS',
-                                    #                 'unreachable'     :'DRIVE_TO_SEARCHPOS',
-                                    #                 'preempted'       :'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
-                                    #                 'goal_not_defined':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
-                                    #                 'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})    # End State
+                                    # human_interaction.Say(robot, ["I should visit the next region of interest, \
+                                    #                                but that is not yet implemented with designators"], block=False),
+                                    # transitions={ 'spoken':'SAY_LOOK_FOR_OBJECTS' })
+                                    VisitQueryPoi(self.robot, poi_query=self.roi_query, identifier=self.roi_identifier, visit_label="currently_visiting"),
+                                    transitions={   'arrived'         :'SAY_LOOK_FOR_OBJECTS',
+                                                    'unreachable'     :'DRIVE_TO_SEARCHPOS',
+                                                    'preempted'       :'RESET_HEAD_AND_SPINDLE_UPON_ABORTED',
+                                                    'goal_not_defined':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE',
+                                                    'all_matches_tried':'RESET_HEAD_AND_SPINDLE_UPON_FAILURE'})    # End State
 
             smach.StateMachine.add("SAY_LOOK_FOR_OBJECTS", 
                                     human_interaction.Say(robot, ["Lets see what I can find here."],block=False),
