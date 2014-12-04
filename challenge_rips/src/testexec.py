@@ -43,7 +43,7 @@ if __name__ == '__main__':
         	robot = Amigo() 
 
     #testexec = states.NavigateToPose(robot, 3, 1, -1.57, 0.15)
-    testexec = states.NavigateToWaypoint(robot, Designator("exit_1_rips"))
+    testexec = states.NavigateToObserve(robot, Designator("dinner_table"))
     testexec.execute()
 
     #startup(setup_statemachine, robot_name=robot_name)
