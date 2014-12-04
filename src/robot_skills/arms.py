@@ -133,13 +133,13 @@ class Arm(object):
         grasp_precompute_goal.PERFORM_PRE_GRASP = pre_grasp
         grasp_precompute_goal.FIRST_JOINT_POS_ONLY = first_joint_pos_only
 
-        grasp_precompute_goal.goal.x = px + self.offset.x
-        grasp_precompute_goal.goal.y = py + self.offset.y
-        grasp_precompute_goal.goal.z = pz + self.offset.z
+        grasp_precompute_goal.goal.x = px + self.offset['x']
+        grasp_precompute_goal.goal.y = py + self.offset['y']
+        grasp_precompute_goal.goal.z = pz + self.offset['z']
 
-        grasp_precompute_goal.goal.roll  = roll  + self.offset.roll
-        grasp_precompute_goal.goal.pitch = pitch + self.offset.pitch
-        grasp_precompute_goal.goal.yaw   = yaw   + self.offset.yaw
+        grasp_precompute_goal.goal.roll  = roll  + self.offset['roll']
+        grasp_precompute_goal.goal.pitch = pitch + self.offset['pitch']
+        grasp_precompute_goal.goal.yaw   = yaw   + self.offset['yaw']
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 
