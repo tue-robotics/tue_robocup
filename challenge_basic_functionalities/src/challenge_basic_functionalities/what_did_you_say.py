@@ -8,9 +8,9 @@ from robot_smach_states.human_interaction import Say
 from dragonfly_speech_recognition.msg import Choice
 
 # dictionary of questions and answers
-# QA_MAP = { "Sjoerd" : "Is awesome",
-#            "Rein" : "Is quite ok",
-#            "Janno" : "Is very alright" }
+QA_MAP = { "Sjoerd" : "Is awesome",
+           "Rein" : "Is quite ok",
+           "Janno" : "Is very alright" }
 
 class AnswerQuestion(smach.State):
 
@@ -26,12 +26,7 @@ class AnswerQuestion(smach.State):
         #req = "(" + "|".join(QA_MAP.keys()) + ")"
 
         spec = "<questions>"
-        choices = [Choice("questions",{
-                          "Is Sjoerd awesome": "He has his moments",
-                          "But is Erik a king": "Hell yeah he is!",
-                         }
-                  )
-          ]
+        choices = { "questions": [ x for x in QA_MAP ] }
 
         res = self.robot.ears.recognize(spec=spec, choices=choices)
 
@@ -40,13 +35,13 @@ class AnswerQuestion(smach.State):
             return "failed"
 
         try:
-            q_answer = answers.choices["questions"]
+            q_answer = QA_MAP[res.choices["questions"]]
             #q_answer = QA_MAP[res.result]
         except KeyError:
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
             return "failed"
 
-        self.robot.speech.speak("Your question was: " + res.result + ". The answer is: " + q_answer)
+        self.robot.speech.speak("Your question was: " + res.choices["questions"] + ". The answer is: " + q_answer)
 
         return "done"
 

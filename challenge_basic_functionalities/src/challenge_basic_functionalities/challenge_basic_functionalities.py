@@ -136,13 +136,10 @@ if __name__ == "__main__":
     if  len(sys.argv) > 2:
         if int(sys.argv[2]) == 1:
             initial_state = ["INIT_PICK_AND_PLACE"]
-            robot.reasoner.reset()
         elif int(sys.argv[2]) == 2:
             initial_state = ["INIT_AVOID_THAT"]
-            robot.reasoner.reset()
         elif int(sys.argv[2]) == 3:
             initial_state = ["INIT_WHAT_DID_YOU_SAY"]
-            robot.reasoner.reset()
 
     ''' Setup state machine'''
     machine = ChallengeBasicFunctionalities(robot)
