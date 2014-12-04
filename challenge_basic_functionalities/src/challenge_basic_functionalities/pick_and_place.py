@@ -16,6 +16,7 @@ from ed.srv import SimpleQuery, SimpleQueryRequest
 
 from robot_smach_states.utility_states import Initialize
 from robot_smach_states.human_interaction import Say
+from robot_smach_states.manip.grab import Grab
 
 
 class PickAndPlace(smach.StateMachine):
@@ -24,6 +25,8 @@ class PickAndPlace(smach.StateMachine):
         # ToDo: get rid of hardcode poi lookat
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
+
+        self.entity_designator = EdEntityByQueryDesignator(SimpleQueryRequest(type=""))
 
         with self:
 
@@ -37,10 +40,10 @@ class PickAndPlace(smach.StateMachine):
             #                          transitions={   'spoken':'PICKUP_OBJECT'})
 
             smach.StateMachine.add('PICKUP_OBJECT',
-                                    PickUp(robot=robot, 
-                                                arm=robot.rightArm, 
-                                                grab_entity_designator=EdEntityByQueryDesignator(SimpleQueryRequest(type=""))),
-                                                transitions={   'succeeded'   : 'SAY_DROPOFF',
+                                    Grab(   robot=robot, 
+                                            arm=robot.rightArm, 
+                                            grab_entity_designator=self.entity_designator),
+                                            transitions={   'succeeded'   : 'SAY_DROPOFF',
                                                                 'failed'      : 'HANDOVER_FROM_HUMAN'})
 
             smach.StateMachine.add( 'HANDOVER_FROM_HUMAN', 
