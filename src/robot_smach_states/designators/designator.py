@@ -109,15 +109,22 @@ class PsiDesignator(Designator):
 class EdEntityByQueryDesignator(Designator):
     """Resolves to an entity from an Ed query, (TODO: selected by some filter and criteria functions)"""
 
-    def __init__(self, ed_query):
+    def __init__(self, ed_query, criteriafuncs=None):
         super(EdEntityByQueryDesignator, self).__init__()
         self.query = ed_query
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
+        self.criteriafuncs  = criteriafuncs or []
+
     def resolve(self):
         entities = self.ed.query(self.query)
         if entities:
-            self._current = entities[0]
+            for criterium in self.criteriafuncs:
+                entities = filter(criterium, entities)
+                criterium_code = inspect.getsource(criterium)
+                rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(criterium_code, len(entities), pprint.pformat(entities)))
+
+            self._current = entities[0] #TODO: add sortkey
             return self.current
         else:
             raise Exception("No entities found matching query {0}".format(self.query))
