@@ -21,11 +21,15 @@ from random import choice
 class getPlan(smach.State):
     def __init__(self, robot, constraint_function):
         smach.State.__init__(self,
-            outcomes=['unreachable','goal_not_defined','goal_ok'])
+            outcomes=['unreachable','goal_not_defined','goal_ok','preempted'])
         self.robot = robot 
         self.constraint_function = constraint_function
 
-    def execute(self, userdata):    
+    def execute(self, userdata):
+
+        if self.preempt_requested():
+            rospy.loginfo('Get plan: preempt_requested')
+            return 'preempted'  
 
         constraint = self.constraint_function()
 
@@ -66,7 +70,7 @@ class executePlan(smach.State):
         if self.robot.head.getGoal():
                 self.robot.head.cancelGoal()
 
-        while True:
+        while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
 
             if self.preempt_requested():
@@ -106,7 +110,7 @@ class determineBlocked(smach.State):
         self.robot.head.cancelGoal()
 
         if self.robot.base.local_planner.getStatus() == "blocked":
-            if len(self.robot.ed.getEntities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
+            if len(self.robot.ed.get_entities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
                 return "blocked_human"
             else:
                 return "blocked" 
@@ -171,11 +175,20 @@ class resetWorldModel(smach.State):
 
 class breakOutState(smach.State):
     """docstring for breakOutState"""
-    def __init__(self, robot):
+    def __init__(self, robot, breakout_function):
         smach.State.__init__(self,outcomes=['preempted','passed'])
         self.robot = robot
+        self.breakout_function = breakout_function
 
     def execute(self, userdata):
+
+        breakout = False
+        while (not rospy.is_shutdown() and not breakout):
+            rospy.sleep(rospy.Duration(0.5))
+            breakout = self.breakout_function()
+
+        if breakout:
+            return 'preempted'
 
         return 'passed'
         
@@ -190,7 +203,7 @@ class NavigateTo(smach.StateMachine):
         with self:
 
             # Create the sub SMACH state machine
-            sm_nav = smach.StateMachine(outcomes=['arrived','unreachable','goal_not_defined','preempted'])
+            sm_nav = smach.StateMachine(outcomes=['unreachable','goal_not_defined','preempted'])
 
             with sm_nav:
 
@@ -200,7 +213,7 @@ class NavigateTo(smach.StateMachine):
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
 
                 smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
-                    transitions={'arrived'                              :   'arrived',
+                    transitions={'arrived'                              :   'GET_PLAN',
                                  'blocked'                              :   'DETERMINE_BLOCKED',
                                  'preempted'                            :   'preempted'})
 
@@ -231,8 +244,8 @@ class NavigateTo(smach.StateMachine):
 
             sm_con = smach.Concurrence( outcomes=['arrived','unreachable','goal_not_defined','preempted'],
                                         default_outcome='arrived',
-                                        outcome_map={   'arrived'           :   {   'NAVIGATE'  : 'arrived',
-                                                                                    'MONITOR'   : 'passed'},
+                                        outcome_map={   'arrived'           :   {   'NAVIGATE'  : 'preempted',
+                                                                                    'MONITOR'   : 'preempted'},
                                                         'unreachable'       :   {   'NAVIGATE'  : 'unreachable',
                                                                                     'MONITOR'   : 'passed'},
                                                         'goal_not_defined'  :   {   'NAVIGATE'  : 'goal_not_defined',
@@ -242,7 +255,7 @@ class NavigateTo(smach.StateMachine):
 
             with sm_con:
                 smach.Concurrence.add('NAVIGATE', sm_nav)
-                smach.Concurrence.add('MONITOR' , breakOutState(self.robot))
+                smach.Concurrence.add('MONITOR' , breakOutState(self.robot, self.breakOut))
 
             smach.StateMachine.add('MONITORED_NAVIGATE', sm_con,
                 transitions={'arrived'          : 'arrived',
@@ -254,6 +267,15 @@ class NavigateTo(smach.StateMachine):
         pass
 
     def breakOut(self):
+        ''' 
+        Default breakout function: makes sure things go to 'arrived' if robot arrives at goal 
+        DO NOT OVERLOAD THIS IF NOT NECESSARY
+        '''
+        status = self.robot.base.local_planner.getStatus()
+
+        if status == "arrived":
+            return True      
+        
         return False
 
 # ----------------------------------------------------------------------------------------------------              

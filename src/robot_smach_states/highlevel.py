@@ -14,6 +14,8 @@ from psi import Conjunction, Compound, Sequence
 import robot_skills.util.msg_constructors as msgs
 from robot_smach_states.designator.designator import Designator, VariableDesignator
 
+from robot_smach_states.designators import Designator
+
 # Wait_for_door state thought the reasoner 
 class Check_object_found_before(smach.State):
     def __init__(self, robot, object_query):
@@ -87,7 +89,7 @@ class StartChallengeRobust(smach.StateMachine):
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
             # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
-                                utility_states.Set_initial_pose(robot, initial_pose),
+                                utility_states.SetInitialPose(robot, initial_pose),
                                 transitions={   'done':'ENTER_ROOM',
                                                 'preempted':'Aborted',  # This transition will never happen at the moment.
                                                 'error':'ENTER_ROOM'})  # It should never go to aborted.
@@ -114,36 +116,7 @@ class EnterArena(smach.StateMachine):
                 rospy.loginfo("No entry points are desired.")
                 return "no_goal"
 
-            if self.initial_pose == "initial":
-                rospy.loginfo("Initial pose is at the normal start. Entry points are used.")
-                # Move to the next waypoint in the storage room        
-                reachable_goal_answers = self.robot.reasoner.query(
-                                            Conjunction(
-                                                Compound("waypoint", Compound("entry_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
-                                                Compound("not", Compound("unreachable", Compound("entry_point", "Waypoint")))))
-            elif self.initial_pose == "initial_exit":
-                rospy.loginfo("Initial pose is at the exit. Entry points are used.")
-                # Move to the next waypoint in the storage room        
-                reachable_goal_answers = self.robot.reasoner.query(
-                                            Conjunction(
-                                                Compound("waypoint", Compound("entry_point_exit", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
-                                                Compound("not", Compound("unreachable", Compound("entry_point", "Waypoint")))))
-            else:
-                return "no_goal"
-
-            if not reachable_goal_answers:
-                #self.robot.speech.speak("There are a couple of entry points, but they are all unreachable. Sorry.")
-                rospy.loginfo("Entry points are all unreachable.")
-
-                return "all_unreachable"
-
-            # for now, take the first goal found
-            goal_answer = reachable_goal_answers[0]
-
-            goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
-            waypoint_name = goal_answer["Waypoint"]
-
-            nav = navigation.NavigateGeneric(self.robot, goal_pose_2d=goal)  #, goal_area_radius=0.5)
+            nav = navigation.NavigateToWaypoint(self.robot, Designator("entry_point"), radius=0.5)
             nav_result = nav.execute()
 
             #import ipdb; ipdb.set_trace()

@@ -20,7 +20,7 @@ class NavigateToWaypoint(NavigateTo):
 
     def generateConstraint(self):
         _id = self.waypoint_designator.resolve()
-        e = self.robot.ed.getEntity(id=_id)
+        e = self.robot.ed.get_entity(id=_id)
 
         print e
 
@@ -32,10 +32,14 @@ class NavigateToWaypoint(NavigateTo):
             pose = e.data["pose"]
             x = pose["x"]
             y = pose["y"]
-            rz= pose["z"]
         except KeyError:
             rospy.logerr(KeyError)
             return None
+
+        try:
+            rz = e.data["pose"]["rz"]
+        except KeyError:
+            rz = 0
 
         rospy.logwarn("Should Sjoerd check the newest model data in???")
 
@@ -43,9 +47,3 @@ class NavigateToWaypoint(NavigateTo):
         oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
 
         return pc, oc
-
-    def breakOut(self):
-        if bla:
-            return True
-        else:
-            return False

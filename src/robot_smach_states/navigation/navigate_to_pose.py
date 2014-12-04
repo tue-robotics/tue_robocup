@@ -25,12 +25,6 @@ class NavigateToPose(NavigateTo):
 
         return pc, oc
 
-    def breakOut(self):
-        if bla:
-            return True
-        else:
-            return False
-
 
 # class NavigateToPose(NavigateTo):
 #     def __init__(self, robot, x, y, rz):
