@@ -187,7 +187,7 @@ class Arm(object):
             return False
 
         self._ac_gripper.send_goal(goal)
-        if timeout == 0.0:
+        if timeout == 0.0 or timeout is None:
             return True
         else:
             self._ac_gripper.wait_for_result(rospy.Duration(timeout))
