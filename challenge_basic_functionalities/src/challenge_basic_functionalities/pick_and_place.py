@@ -9,6 +9,7 @@ from robot_smach_states import *
 from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 from robot_smach_states.util.startup import startup
 import robot_skills.util.msg_constructors as msgs
+import robot_skills.util.transformations as transformations
 from robot_smach_states.designators.designator import Designator, VariableDesignator, EdEntityByQueryDesignator
 
 from pein_srvs.srv import SetObjects
@@ -22,7 +23,7 @@ from robot_smach_states.manip import Grab
 # ----------------------------------------------------------------------------------------------------
 
 class SimpleDesignator:
-
+    #TODO: Replace with VariableDesignator
     def __init__(self):
         self.entity_id = None
 
@@ -38,7 +39,20 @@ class LookForObjects(smach.State):
         self.designator = designator
 
     def execute(self, userdata):
-        self.designator.entity_id = "dinner_table"   # TODO
+        roi = transformations.tf_transform(msgs.Point(0.7, 0, 0.9), "/map", "/base_link", self.robot.tf_listener)
+        entities = self.robot.ed.get_entities(type="", point=roi) #TODO Sjoerd: point should be a PointStamped here.
+
+        filtered_entities = filter(lambda ent: (ent.z_max - ent.z_min) < 0.20, entities) #Only objects smaller than 20cm
+        if filtered_entities:
+            self.designator.entity_id = filtered_entities[0].id
+            rospy.loginfo("Selected object: {0}".format(self.designator.entity_id))
+        elif entities:
+            self.designator.entity_id = entities[0].id
+            rospy.logwarn("May not be able to pick up selected object: {0}".format(self.designator.entity_id))
+        else:
+            rospy.logwarn("Could not select an object")
+            return 'failed'
+
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
@@ -59,6 +73,8 @@ class PickAndPlace(smach.StateMachine):
                                     Initialize(robot),
                                     transitions={"initialized": "LOOK_FOR_OBJECTS",
                                                  "abort":       "Aborted"})
+
+            #TODO: Insert NavigateToExplore here.
 
             smach.StateMachine.add( 'LOOK_FOR_OBJECTS',
                                     LookForObjects(robot, self.designator),
