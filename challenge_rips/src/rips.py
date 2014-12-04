@@ -113,7 +113,7 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                    states.StartChallengeRobust(robot, "initial_exit", use_entry_points = True),
+                                    states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
                                     transitions={   "Done":"GO_TO_INTERMEDIATE_WAYPOINT",
                                                     "Aborted":"GO_TO_INTERMEDIATE_WAYPOINT",
                                                     "Failed":"GO_TO_INTERMEDIATE_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
@@ -123,7 +123,7 @@ def setup_statemachine(robot):
         #                            transitions={   "spoken":"GO_TO_INTERMEDIATE_WAYPOINT"})
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                                    states.NavigateToObserve(robot, entity_id="dinner_table", radius=1.5),
+                                    states.NavigateToObserve(robot, entity_id="dinner_table", radius=0.7),
                                     transitions={   'arrived':'SAY_AWAIT_CONTINUE',
                                                     'unreachable':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT',
                                                     'goal_not_defined':'CLEAR_PATH_TO_INTERMEDIATE_WAYPOINT'})

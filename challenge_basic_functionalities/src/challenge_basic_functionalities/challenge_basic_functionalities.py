@@ -45,7 +45,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                     transitions={   'spoken':'GOTO_PICK_AND_PLACE'})
 
             smach.StateMachine.add( 'GOTO_PICK_AND_PLACE',
-                                    NavigateToObserve(robot, entity_id=PICK_AND_PLACE_TABLE_ID, radius=1.5),
+                                    NavigateToObserve(robot, entity_id=PICK_AND_PLACE_TABLE_ID, radius=0.7),
                                     transitions={   "arrived":"PICK_AND_PLACE",
                                                     "unreachable":'Aborted',
                                                     "goal_not_defined":'Aborted'})
@@ -105,7 +105,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 
             smach.StateMachine.add('GO_TO_EXIT',
                                     NavigateToWaypoint(robot, Designator("exit")),
-                                    transitions={   "arrived":"WHAT_DID_YOU_SAY",
+                                    transitions={   "arrived":"END_CHALLENGE",
                                                     "unreachable":'Aborted',
                                                     "goal_not_defined":'Aborted'})
 
