@@ -32,12 +32,12 @@ class SimpleDesignator:
 # ----------------------------------------------------------------------------------------------------
 
 class LookForObjects(smach.State):
-   def __init__(self, robot, designator):
-       smach.State.__init__(self,outcomes=['done', 'failed'])
-       self.robot = robot
-       self.designator = designator
+    def __init__(self, robot, designator):
+        smach.State.__init__(self,outcomes=['done', 'failed'])
+        self.robot = robot
+        self.designator = designator
 
-   def execute(self, userdata):
+    def execute(self, userdata):
         self.designator.entity_id = "dinner_table"   # TODO
         return 'done'
 
