@@ -110,10 +110,13 @@ class Arm(object):
                   frame_id='/base_link',
                   use_offset=False,
                   first_joint_pos_only=False):
-        """Send a arm to a goal:
-        Using a position px,py,pz. An orientation roll,pitch,yaw. A time out time_out. And a side Side.LEFT or Side.RIGHT
+        """
+        Send a arm to a goal:
 
-        Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to base_link """
+        Using a position px, py, pz and orientation roll, pitch, yaw. A time
+        out time_out. pre_grasp means go to an offset that is normally needed
+        for things such as grasping. You can also specify the frame_id which
+        defaults to base_link """
 
         # If necessary, prefix frame_id
         if frame_id.find(self.robot_name) < 0:
