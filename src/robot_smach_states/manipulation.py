@@ -11,6 +11,7 @@ import geometry_msgs
 
 from human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
+from designators.designator import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
 #TODO: Make Place_Object also use a query 
@@ -27,11 +28,14 @@ class StandardPoses:
     #RESET_POSE = [-0.3, -0.05, 0.2, 1.0, 0, 1.0, 0]
 
 class DetermineBaseGraspPose(smach.State):
-    def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
+    def __init__(self, side, robot, grab_point_designator, basepose_designator, x_offset=None, y_offset=None):
+        """The point from which to grab an entity """
         smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
         self.side = side
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_point_designator = grab_point_designator
+        self.basepose_designator = basepose_designator
+
         if x_offset == None:
             rospy.logwarn("x_offset not specified, defaulting to 0.5 for arms.")
             self.x_offset = 0.5
@@ -56,14 +60,14 @@ class DetermineBaseGraspPose(smach.State):
 
         ''' Only query the reasoner once (grasp position will not be updated anyway so there is no use in doing this more often)'''
         if self.nr_inverse_reachability_calls == 0:
-            answers = self.robot.reasoner.query(self.grabpoint_query)
+            answers = self.robot.reasoner.query(self.grab_point_designator)
 
             if answers:
                 answer = answers[0]
                 rospy.loginfo("Answer(0) = {0}".format(answer))
                 self.grasp_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
             else:
-                #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
+                #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grab_point_designator))
                 return 'target_lost'
 
         ''' Do a new inverse reachability request if nr < max_nr.
@@ -93,6 +97,7 @@ class DetermineBaseGraspPose(smach.State):
         self.desired_base_poses_MAP.pop(0)
 
         ''' Assert the goal to the reasoner such that navigate generic can use it '''
+        #TODO 3-12-2014: Instead of asserting a pose_2d to the reasoner, store it (or a constraint) in self.basepose_designator
         self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))))
         self.robot.reasoner.assertz(Compound("base_grasp_pose", Compound("pose_2d", x, y, phi)))
 
@@ -100,11 +105,11 @@ class DetermineBaseGraspPose(smach.State):
 
 
 class PrepareOrientation(smach.StateMachine):
-    def __init__(self, side, robot, grabpoint_query, x_offset=None, y_offset=None):
+    def __init__(self, side, robot, grab_entity_designator, x_offset=None, y_offset=None):
         smach.StateMachine.__init__(self, outcomes=['orientation_succeeded','orientation_failed','abort','target_lost'])
         self.side = side
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
         if x_offset == None:
             rospy.logdebug("x_offset not specified, defaulting to 0.5 for arms.")
             self.x_offset = 0.5
@@ -120,7 +125,9 @@ class PrepareOrientation(smach.StateMachine):
         else:
             self.y_offset = y_offset
 
-        self.determine_grasp_pose = DetermineBaseGraspPose(self.side, self.robot, self.grabpoint_query, self.x_offset, self.y_offset)
+        #TODO 3-12-2014: DetermineBaseGraspPose now asserts a base_grasp_pose to the reasoner. Can be replaced by a VariableDesignator
+        basepose_designator = VariableDesignator()
+        self.determine_grasp_pose = DetermineBaseGraspPose(self.side, self.robot, self.grab_entity_designator, basepose_designator, self.x_offset, self.y_offset)
 
         @smach.cb_interface(outcomes=['done'])
         def init_prepare_orientation(userdata):
@@ -138,7 +145,7 @@ class PrepareOrientation(smach.StateMachine):
                              'target_lost'  :'target_lost'})            
 
             smach.StateMachine.add('DRIVE_TO_GRASP_POSE',
-                navigation.NavigateGeneric(robot=self.robot, goal_query=Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))),
+                navigation.NavigateGeneric(self.robot, basepose_designator), #TODO 3-12-2014: Replace by new navigation state
                 transitions={'arrived'          :'orientation_succeeded',
                              'unreachable'      :'DETERMINE_GRASP_POSE',
                              'preempted'        :'abort',
@@ -167,12 +174,15 @@ class Carrying_pose(smach.State):
             return 'failed' 
 
 class PrepareGrasp(smach.State):
-    def __init__(self, arm, robot, grabpoint_query):
+    def __init__(self, arm, robot, grab_entity_designator):
+        """ 
+        @param grab_entity_designator resolves to a PointStamped
+        """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.arm = arm
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
 
     def execute(self, gl):
 
@@ -182,11 +192,10 @@ class PrepareGrasp(smach.State):
 
         # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
         # Probably do this afterwards
-        answers = self.robot.reasoner.query(self.grabpoint_query)
+        grabpoint = self.grab_entity_designator.resolve() #ToDo: 0.55 is a dirty hack, might be better
         
-        if answers:
-            answer = answers[0] #ToDo: 0.55 is a dirty hack, might be better
-            spindle_target = float(answer["Z"]) - 0.45
+        if grabpoint:
+            spindle_target = float(grabpoint.point.z) - 0.45
 
             rospy.logwarn("Temp spindle target")
             spindle_target = 0.4
@@ -199,13 +208,13 @@ class PrepareGrasp(smach.State):
         return 'succeeded'
 
 class PrepareGraspSafe(smach.State):
-    def __init__(self, arm, robot, grabpoint_query):
+    def __init__(self, arm, robot, grab_entity_designator):
         ''' Similar to PrepareGrasp but has a more elaborate joint trajectory to avoid hitting the table when standing close to it'''
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.arm = arm
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
 
     def execute(self, gl):
 
@@ -222,7 +231,7 @@ class PrepareGraspSafe(smach.State):
 
         # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
         # Probably do this afterwards
-        answers = self.robot.reasoner.query(self.grabpoint_query)
+        answers = self.robot.reasoner.query(self.grab_entity_designator)
         
         if answers:
             answer = answers[0] #ToDo: 0.55 is a dirty hack, might be better
@@ -239,12 +248,15 @@ class PrepareGraspSafe(smach.State):
         return 'succeeded'
 
 class UpdateObjectPose(smach.State):
-    def __init__(self, arm, robot, grabpoint_query):
+    def __init__(self, arm, robot, entity_center_designator):
+        """Look at an entity to get a very accurate position of it (e.g. for grasping)
+        @param entity_center_designator resolves to the PointStamped to look at in order to update the object's position
+        """
         smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
 
         self.arm = arm
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.entity_center_designator = entity_center_designator
 
     def execute(self, gl):
 
@@ -254,12 +266,10 @@ class UpdateObjectPose(smach.State):
         spindle_pos = self.robot.spindle.get_position()
 
         ''' Query reasoner '''
-        answers = self.robot.reasoner.query(self.grabpoint_query)
-        if answers:
-            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            target_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map")
-            self.robot.head.send_goal(target_point, keep_tracking=True, pan_vel=0.75, tilt_vel=0.75)
-        else:
+        try:
+            target_point = self.entity_center_designator.resolve()
+        except Exception, e:
+            rospy.logerr(e)
             return 'target_lost'
 
         spindle_target = target_point.point.z + 0.5 -0.98 #ToDo: don't hardcode
@@ -328,10 +338,11 @@ def reset_arm(userdata, side):
     return 'done'
         
 ########################################### State Grab ###############################################
+
 ''' Grab machine which will switch hand (hence the A of arbitrary), if possible
     API is kept the same as with the GrabMachine, but now side is only considered to be a preference'''
 class GrabMachineA(smach.StateMachine):
-    def __init__(self, side, robot, grabpoint_query):
+    def __init__(self, side, robot, grab_entity_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
@@ -357,7 +368,7 @@ class GrabMachineA(smach.StateMachine):
             self.side = self.robot.rightArm
             self.backupside = self.robot.leftArm
 
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
 
         with self:
             
@@ -372,7 +383,7 @@ class GrabMachineA(smach.StateMachine):
                                     transitions={'free'         : 'GRASP',
                                                  'occupied'     : 'CHECK_SECONDARY_OCCUPANCY'})
 
-            smach.StateMachine.add('GRASP', GrabMachine(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('GRASP', GrabMachine(self.side, self.robot, self.grab_entity_designator),
                                     transitions={'succeeded'    : 'succeeded',
                                                  'failed'       : 'CHECK_SECONDARY_OCCUPANCY'})
 
@@ -380,12 +391,14 @@ class GrabMachineA(smach.StateMachine):
                                     transitions={'free'         : 'GRASP_BACKUP',
                                                  'occupied'     : 'failed'})
 
-            smach.StateMachine.add('GRASP_BACKUP', GrabMachine(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('GRASP_BACKUP', GrabMachine(self.side, self.robot, self.grab_entity_designator),
                                     transitions={'succeeded'    : 'succeeded',
                                                  'failed'       : 'failed'})
 
 class GrabMachine(smach.StateMachine):
-    def __init__(self, side, robot, grabpoint_query):
+    def __init__(self, side, robot, grab_entity_designator):
+        """@param grab_entity_designator resolves to an entity to grab. 
+            Some child states require a (designator of) the PointStamped of that entity. PointStampedOfEntityDesignator does this conversion"""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
@@ -401,10 +414,12 @@ class GrabMachine(smach.StateMachine):
         else:           
             self.side = side
         
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
+        self.grab_point_designator = PointStampedOfEntityDesignator(self.grab_entity_designator)
+
         '''check check input and output keys'''
         with self:
-            smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('PREPARE_GRAB', PrepareGrasp(self.side, self.robot, self.grab_point_designator),
                         transitions={'succeeded'    :   'OPEN_GRIPPER',
                                      'failed'       :   'failed'})
 
@@ -412,25 +427,26 @@ class GrabMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'PREPARE_ORIENTATION'})
 
-            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grabpoint_query),
-                        transitions={'orientation_succeeded':'UPDATE_OBJECT_POSE','orientation_failed':'UPDATE_OBJECT_POSE','abort':'failed','target_lost':'failed'})
+            # smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grab_entity_designator),
+            #             transitions={'orientation_succeeded':'UPDATE_OBJECT_POSE','orientation_failed':'UPDATE_OBJECT_POSE','abort':'failed','target_lost':'failed'})
+            
 
             # Even if the update state fails, try to grasp anyway
-            smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grab_point_designator),
                         transitions={'succeeded'    :   'PRE_GRASP',
                                      'failed'       :   'PRE_GRASP',
                                      'target_lost'  :   'CLOSE_GRIPPER_UPON_FAIL'})
             
-            smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(self.robot, self.side, self.grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+            smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(self.robot, self.side, self.grab_point_designator, time_out=20, pre_grasp=True, first_joint_pos_only=True),
                         transitions={'succeeded'    :   'GRAB',
                                      'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
         
-            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grab_entity_designator),
                         transitions={'grab_succeeded':  'CLOSE_GRIPPER',
                                      'grab_failed'   :  'CLOSE_GRIPPER',
                                      'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, grabpoint_query=self.grabpoint_query),
+            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, grab_entity_designator=self.grab_entity_designator),
                         transitions={'succeeded'    :   'LIFT',
                                      'failed'       :   'LIFT'})
 
@@ -448,7 +464,7 @@ class GrabMachine(smach.StateMachine):
                                      'failed'       :   'failed'})
 
 class GrabMachineWithoutBase(smach.StateMachine):
-    def __init__(self, side, robot, grabpoint_query):
+    def __init__(self, side, robot, grab_entity_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
@@ -464,16 +480,16 @@ class GrabMachineWithoutBase(smach.StateMachine):
         else:           
             self.side = side
         
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
         '''check check input and output keys'''
         with self:
             
-            smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('UPDATE_OBJECT_POSE', UpdateObjectPose(self.side, self.robot, self.grab_entity_designator),
                         transitions={'succeeded'    :   'PREPARE_GRAB',
                                      'failed'       :   'PREPARE_GRAB',
                                      'target_lost'  :   'CLOSE_GRIPPER_UPON_FAIL'})
             
-            smach.StateMachine.add('PREPARE_GRAB', PrepareGraspSafe(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('PREPARE_GRAB', PrepareGraspSafe(self.side, self.robot, self.grab_entity_designator),
                         transitions={'succeeded'    :   'OPEN_GRIPPER',
                                      'failed'       :   'failed'})
 
@@ -481,16 +497,16 @@ class GrabMachineWithoutBase(smach.StateMachine):
                         transitions={'succeeded'    :   'PRE_GRASP',
                                      'failed'       :   'PRE_GRASP'})
             
-            smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(self.robot, self.side, self.grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+            smach.StateMachine.add('PRE_GRASP', ArmToQueryPoint(self.robot, self.side, self.grab_entity_designator, time_out=20, pre_grasp=True, first_joint_pos_only=True),
                         transitions={'succeeded'    :   'GRAB',
                                      'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
         
-            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grab_entity_designator),
                         transitions={'grab_succeeded':  'CLOSE_GRIPPER',
                                      'grab_failed'   :  'CLOSE_GRIPPER',
                                      'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, grabpoint_query=self.grabpoint_query),
+            smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE, grab_entity_designator=self.grab_entity_designator),
                         transitions={'succeeded'    :   'LIFT',
                                      'failed'       :   'LIFT'})
 
@@ -508,12 +524,12 @@ class GrabMachineWithoutBase(smach.StateMachine):
                                      'failed'       :   'failed'})
             
 class Grab(smach.State):
-    def __init__(self, side, robot, grabpoint_query):
+    def __init__(self, side, robot, grab_point_designator):
         smach.State.__init__(self, outcomes=['grab_succeeded','grab_failed','target_lost'])
 
         self.side = side
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_point_designator = grab_point_designator
 
         if self.side == self.robot.leftArm:
             self.end_effector_frame_id = "/amigo/grippoint_left"
@@ -523,21 +539,17 @@ class Grab(smach.State):
             self.ar_frame_id = "/hand_marker_right"
         
     def execute(self, gl):
-        
-        answers = self.robot.reasoner.query(self.grabpoint_query)
-        
-        if answers:
-            answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-            target_position = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
-        else:
-            rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
+        try:
+            target_position = self.grab_point_designator.resolve()
+        except Exception, e:
+            rospy.loginfo("Could not resolve grab_point_designator {0}: {1}".format(self.grab_point_designator, e))
             return "target_lost"
             
         ''' Keep looking at end-effector for ar marker detection '''
         self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=self.end_effector_frame_id),keep_tracking=True)
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         
-        target_position_bl = transformations.tf_transform(target_position, "/map","/amigo/base_link", tf_listener=self.robot.tf_listener)
+        target_position_bl = transformations.tf_transform(target_position.point, target_position.header.frame_id,"/amigo/base_link", tf_listener=self.robot.tf_listener)
         rospy.loginfo("[robot_smach_states] Target position in base link: {0}".format(target_position_bl))
 
         target_position_delta = geometry_msgs.msg.Point()
@@ -792,7 +804,7 @@ class DetermineDropoffPoint(smach.State):
             return 'all_points_tried'
 
         else:
-            #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grabpoint_query))
+            #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grab_entity_designator))
             return 'no_dropoff_points'
 
 
@@ -941,12 +953,12 @@ class DropObject(smach.StateMachine):
 
 
 class SetGripper(smach.State):
-    def __init__(self, robot, side, gripperstate='open', drop_from_frame=None, grabpoint_query=None, timeout=10):
+    def __init__(self, robot, side, gripperstate='open', drop_from_frame=None, grab_entity_designator=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.side = side
         self.robot = robot
         self.gripperstate = gripperstate
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
         self.timeout = timeout
         if self.side == self.robot.leftArm:
             self.end_effector_frame_id = "/amigo/grippoint_left"
@@ -954,16 +966,17 @@ class SetGripper(smach.State):
             self.end_effector_frame_id = "/amigo/grippoint_right"
 
     def execute(self, userdata):
-        ''' If needs attaching to gripper, the grabpoint_query is used '''
-        if self.grabpoint_query:
-            answers = self.robot.reasoner.query(self.grabpoint_query)
-            if answers:
-                answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
+        ''' If needs attaching to gripper, the grab_entity_designator is used '''
+        if self.grab_entity_designator:
+            try:
+                entityID = self.grab_entity_designator.resolve()
                 try:
-                    self.robot.reasoner.attach_object_to_gripper(answer["ObjectID"], self.end_effector_frame_id, True)
+                    self.robot.reasoner.attach_object_to_gripper(entityID, self.end_effector_frame_id, True)
                 except KeyError, ke:
                     rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
                 self.side.occupied = True
+            except Exception, e:
+                rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator, e))
 
         if self.side.send_gripper_goal(self.gripperstate, timeout=self.timeout):
             result = True
@@ -1106,29 +1119,30 @@ class ArmToUserPose(smach.State):
                 return 'failed'
 
 class ArmToQueryPoint(smach.State):
-    def __init__(self, robot, side, query, time_out=20, pre_grasp=False, first_joint_pos_only=False):
+    def __init__(self, robot, side, point_designator, time_out=20, pre_grasp=False, first_joint_pos_only=False):
+        """Move the arm to de designated point
+        @param point_designator resolves to a PointStamped the gripper should move to"""
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot                = robot
         self.side                 = side
-        self.query                = query
+        self.point_designator     = point_designator
         self.time_out             = time_out
         self.pre_grasp            = pre_grasp
         self.first_joint_pos_only = first_joint_pos_only
 
     def execute(self, userdata):
-        # ToDo: check query?
-        answers = self.robot.reasoner.query(self.query)
-            
-        if not answers:
-            rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
+        # ToDo: check point_designator?
+        try:
+            goal = self.point_designator.resolve()
+        except Exception, e:
+            rospy.loginfo("point_designator {0} cannot be resolved: {1}".format(self.point_designator, e))
             return 'failed'
-        answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
-        goal_map = msgs.Point(float(answer["X"]), float(answer["Y"]), float(answer["Z"]))
-        rospy.loginfo("ArmToQueryPoint: goal = {0}".format(answer))
+
+        rospy.loginfo("ArmToQueryPoint: goal = {0}".format(goal))
 
         # Note: answers are typically in "map"frame, check whether this works out
         rospy.logwarn("Transforming to base_link frame for amigo_arm_navigation")
-        goal_bl = transformations.tf_transform(goal_map, "/map", "/amigo/base_link", tf_listener=self.robot.tf_listener)
+        goal_bl = transformations.tf_transform(goal.point, goal.header.frame_id, "/amigo/base_link", tf_listener=self.robot.tf_listener)
         if goal_bl == None:
             return 'failed'
 
@@ -1169,29 +1183,29 @@ class ResetTorso(smach.State):
 ########################################### State Point ###############################################
 
 class PointMachine(smach.StateMachine):
-    def __init__(self, side, robot, grabpoint_query):
+    def __init__(self, side, robot, grab_entity_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
         self.side = side
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
         '''check check input and output keys'''
         with self:
-            smach.StateMachine.add('PREPARE_POINT', PrepareGrasp(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('PREPARE_POINT', PrepareGrasp(self.side, self.robot, self.grab_entity_designator),
                         transitions={'succeeded'    :   'PREPARE_ORIENTATION',
                                      'failed'       :   'failed'})
         
-            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('PREPARE_ORIENTATION', PrepareOrientation(self.side, self.robot, self.grab_entity_designator),
                         transitions={'orientation_succeeded':'CLOSE_GRIPPER','orientation_failed':'CLOSE_GRIPPER','abort':'failed','target_lost':'failed'})
 
             smach.StateMachine.add('CLOSE_GRIPPER', SetGripper(self.robot, self.side, gripperstate=ArmState.CLOSE),
                         transitions={'succeeded'    :   'PRE_POINT',
                                      'failed'       :   'PRE_POINT'})
             
-            smach.StateMachine.add('PRE_POINT', ArmToQueryPoint(self.robot, self.side, self.grabpoint_query, time_out=20, pre_grasp=True, first_joint_pos_only=True),
+            smach.StateMachine.add('PRE_POINT', ArmToQueryPoint(self.robot, self.side, self.grab_entity_designator, time_out=20, pre_grasp=True, first_joint_pos_only=True),
                         transitions={'succeeded'    :   'POINT',
                                      'failed'       :   'RESET_ARM_FAILED'})
         
-            smach.StateMachine.add('POINT', Point_at_object(self.side, self.robot, self.grabpoint_query),
+            smach.StateMachine.add('POINT', Point_at_object(self.side, self.robot, self.grab_entity_designator),
                         transitions={'point_succeeded':  'SAY_POINTED',
                                      'point_failed'   :  'RETRACT',
                                      'target_lost'   :  'RESET_ARM_FAILED'})
@@ -1214,12 +1228,12 @@ class PointMachine(smach.StateMachine):
                                         'failed':'failed'})
 
 class Point_at_object(smach.State):
-    def __init__(self, side, robot, grabpoint_query):
+    def __init__(self, side, robot, grab_entity_designator):
         smach.State.__init__(self, outcomes=['point_succeeded','point_failed','target_lost'])
 
         self.side = side
         self.robot = robot
-        self.grabpoint_query = grabpoint_query
+        self.grab_entity_designator = grab_entity_designator
 
         if self.side == self.robot.leftArm:
             self.end_effector_frame_id = "/amigo/grippoint_left"
@@ -1228,14 +1242,14 @@ class Point_at_object(smach.State):
         
     def execute(self, gl):
         
-        answers = self.robot.reasoner.query(self.grabpoint_query)
+        answers = self.robot.reasoner.query(self.grab_entity_designator)
         
         if answers:
             answer = answers[0] #TODO Loy/Sjoerd: sort answers by distance to gripper/base? 
             target_position = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
             rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
         else:
-            rospy.loginfo("No answers for query {0}".format(self.grabpoint_query))
+            rospy.loginfo("No answers for query {0}".format(self.grab_entity_designator))
             return "target_lost"
             
         ''' Keep looking at end-effector for ar marker detection '''

@@ -11,6 +11,8 @@ import manipulation
 import reasoning
 
 from psi import Conjunction, Compound, Sequence
+import robot_skills.util.msg_constructors as msgs
+from designators.designator import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
 from robot_smach_states.designators import Designator
 
@@ -216,20 +218,20 @@ class GotoMeetingPoint(smach.State):
 
 
 class VisitQueryPoi(smach.StateMachine):
+    #TODO 3-12-2014: We don't have to keep track of what is visited and unreachable anymore using the reasoner, we can use a VariableDesignator for that now.
+    #                The will reduce the complexity of this beast quite a lot.  
     """Go to the outcome of a point_of_interest-query and mark that identifier as visited or unreachable.
     When all matches are visited, the outcome is all_matches_tried"""
-    def __init__(self, robot, poi_query, identifier="Poi", visit_label="currently_visiting"):
+    def __init__(self, robot, poi_designator):
+        """Go to the point that poi_designator resolves to. 
+        If that poi is unreachable, this state machine will try to go to a different point, after calling poi_designator.next()
+        @param poi_designator resolves to a point to visit. 
+        """
         smach.StateMachine.__init__(self, outcomes=["arrived", "unreachable", "preempted", "goal_not_defined", "all_matches_tried"]) #visit_query_outcome also defines 'all_matches_tried'
-        
+
         self.robot = robot
-        self.identifier = identifier
-
-        decorated_query = Conjunction(poi_query, 
-                        Compound("not", Compound("visited",     self.identifier)),
-                        Compound("not", Compound("unreachable", self.identifier)))
-
-        current_goal_query = Conjunction(Compound(visit_label, self.identifier),
-                                         Compound("point_of_interest", self.identifier, Compound("point_3d", "X", "Y", "Z")))
+        visited = VariableDesignator([])
+        unreachable = VariableDesignator([])
 
         with self:
             smach.StateMachine.add( 'SELECT_OBJECT_TO_VISIT',
@@ -273,20 +275,26 @@ class VisitQueryPoi(smach.StateMachine):
 
 
 class GetObject(smach.StateMachine):
-    def __init__(self, robot, side, roi_query, roi_identifier="Poi", object_query=None, object_identifier="Object", max_duration=rospy.Duration(3600)):
+    def __init__(self, robot, side, lookat_designator, 
+                                    type_designator=Designator(""), 
+                                    max_duration=rospy.Duration(3600)):
+        """
+        @param type_designator a designator resolving to the class/type of the object we want to grab. By default, we take any type.
+        @param lookat_designator resolves to a PointStamped to look at.
+            When looking at that entity, we hope to see the actual object we want to grab.
+            Defaults to something in base_link"""
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed", "Timeout"])
 
         self.robot = robot
         self.side = side
-        self.roi_query = roi_query
-        self.object_query = object_query
-        self.roi_identifier =roi_identifier
+        self.type_designator = type_designator
 
-        rospy.logwarn("roi_query = {0}".format(roi_query))
+        self.lookat_designator = lookat_designator
+        # lookatquery = Conjunction(
+        #                         Compound("currently_visiting","ID"),
+        #                         Compound("point_of_interest", "ID", Compound("point_3d", "X", "Y", "Z")))
 
-        lookatquery = Conjunction(
-                                Compound("currently_visiting","ID"),
-                                Compound("point_of_interest", "ID", Compound("point_3d", "X", "Y", "Z")))
+        self.entity_designator = VariableDesignator("dummy_entity") #Variable because LookForObjectsAtROI writes an antity
 
         assert hasattr(robot, "base")
         assert hasattr(robot, "reasoner")
@@ -299,6 +307,9 @@ class GetObject(smach.StateMachine):
                                     transitions={   'done':'DRIVE_TO_SEARCHPOS' })            
                                                     
             smach.StateMachine.add("DRIVE_TO_SEARCHPOS",
+                                    # human_interaction.Say(robot, ["I should visit the next region of interest, \
+                                    #                                but that is not yet implemented with designators"], block=False),
+                                    # transitions={ 'spoken':'SAY_LOOK_FOR_OBJECTS' })
                                     VisitQueryPoi(self.robot, poi_query=self.roi_query, identifier=self.roi_identifier, visit_label="currently_visiting"),
                                     transitions={   'arrived'         :'SAY_LOOK_FOR_OBJECTS',
                                                     'unreachable'     :'DRIVE_TO_SEARCHPOS',
@@ -311,7 +322,7 @@ class GetObject(smach.StateMachine):
                                     transitions={   'spoken':'LOOK'})
 
             smach.StateMachine.add('LOOK',
-                                    perception.LookForObjectsAtROI(robot, lookatquery, self.object_query),
+                                    perception.LookForObjectsAtROI(robot, self.lookat_designator, self.type_designator, self.entity_designator),
                                     transitions={   'looking':'LOOK',
                                                     'object_found':'SAY_FOUND_SOMETHING',
                                                     'no_object_found':'RESET_HEAD_AND_SPINDLE',
@@ -337,10 +348,8 @@ class GetObject(smach.StateMachine):
             #                         human_interaction.Say(robot, ["I have seen the desired object before!"],block=False),
             #                         transitions={ 'spoken':'GRAB' })
 
-            query_grabpoint = Conjunction(  Compound("current_object", "ObjectID"),
-                                            Compound("position", "ObjectID", Compound("point", "X", "Y", "Z")))
             smach.StateMachine.add('GRAB',
-                                    manipulation.GrabMachine(self.side, robot, query_grabpoint),
+                                    manipulation.GrabMachine(self.side, robot, self.entity_designator),
                                     transitions={   'succeeded':'RESET_HEAD_AND_SPINDLE_UPON_SUCCES',
                                                     'failed':'SAY_FAILED_GRABBING' })  
 
@@ -355,9 +364,9 @@ class GetObject(smach.StateMachine):
                 try:
                     #robot.speech.speak("I need some debugging in cleanup, please think with me here.")
                     #import ipdb; ipdb.set_trace()
-                    objectID = robot.reasoner.query(Compound("current_object", "Disposed_ObjectID"))[0]["Disposed_ObjectID"]
-                    robot.reasoner.query(Compound("assertz", Compound("disposed", objectID)))
-                    rospy.loginfo("objectID = {0} is DISPOSED".format(objectID))
+                    entityID = self.entity_designator.resolve()
+                    robot.reasoner.query(Compound("assertz", Compound("disposed", entityID)))
+                    rospy.loginfo("objectID = {0} is DISPOSED".format(entityID))
 
                     try:
                         robot.reasoner.detach_all_from_gripper("/amigo/grippoint_left")
