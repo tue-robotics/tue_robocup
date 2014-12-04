@@ -12,6 +12,7 @@ from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
 
 from robot_skills.amigo import Amigo
+from robot_skills.sergio import Sergio
 
 from robot_smach_states.designators.designator import Designator, VariableDesignator
 
@@ -45,7 +46,7 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
                                     transitions={   'spoken':'GOTO_PICK_AND_PLACE'})
 
             smach.StateMachine.add( 'GOTO_PICK_AND_PLACE',
-                                    NavigateToObserve(robot, entity_id=PICK_AND_PLACE_TABLE_ID, radius=0.7),
+                                    NavigateToObserve(robot, Designator(PICK_AND_PLACE_TABLE_ID), radius=0.7),
                                     transitions={   "arrived":"PICK_AND_PLACE",
                                                     "unreachable":'Aborted',
                                                     "goal_not_defined":'Aborted'})
@@ -117,24 +118,35 @@ class ChallengeBasicFunctionalities(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('basic_functionalities_exec')
 
-    amigo = Amigo(wait_services=True)
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+    else:
+        print "[CHALLENGE BASIC FUNCTIONALITIES] Please provide robot name as argument."
+        exit(1)
+
+    if robot_name == 'amigo':
+        robot = Amigo(wait_services=True)
+    elif robot_name == 'sergio':
+        robot = Sergio(wait_services=True)
+    else:
+        print "[CHALLENGE BASIC FUNCTIONALITIES] Don't know robot name " + robot_name
 
     ''' If necessary: set initial state '''
     rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
-    if  len(sys.argv) > 1:
-        if int(sys.argv[1]) == 1:
+    if  len(sys.argv) > 2:
+        if int(sys.argv[2]) == 1:
             initial_state = ["INIT_PICK_AND_PLACE"]
-            amigo.reasoner.reset()
-        elif int(sys.argv[1]) == 2:
+            robot.reasoner.reset()
+        elif int(sys.argv[2]) == 2:
             initial_state = ["INIT_AVOID_THAT"]
-            amigo.reasoner.reset()
-        elif int(sys.argv[1]) == 3:
+            robot.reasoner.reset()
+        elif int(sys.argv[2]) == 3:
             initial_state = ["INIT_WHAT_DID_YOU_SAY"]
-            amigo.reasoner.reset()
+            robot.reasoner.reset()
 
     ''' Setup state machine'''
-    machine = ChallengeBasicFunctionalities(amigo)
-    if  len(sys.argv) > 1:
+    machine = ChallengeBasicFunctionalities(robot)
+    if  len(sys.argv) > 2:
         #initial_state = [str(sys.argv[1])]
         rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
         machine.set_initial_state(initial_state)
