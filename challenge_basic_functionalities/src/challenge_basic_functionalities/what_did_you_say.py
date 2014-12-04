@@ -21,14 +21,14 @@ class AnswerQuestion(smach.State):
 
     def execute(self, userdate=None):
 
-        self.robot.speak("Please ask question " + str(self.question_nr))
+        self.robot.speech.speak("Please ask question " + str(self.question_nr))
 
         #req = "(" + "|".join(QA_MAP.keys()) + ")"
 
         spec = "<questions>"
         choices = [Choice("questions",{
-                          "Is Sjoerd awesome": "He has his moments",                           
-                          "But is Erik a king": "Hell yeah he is!", 
+                          "Is Sjoerd awesome": "He has his moments",
+                          "But is Erik a king": "Hell yeah he is!",
                          }
                   )
           ]
@@ -36,7 +36,7 @@ class AnswerQuestion(smach.State):
         res = self.robot.ears.recognize(spec=spec, choices=choices)
 
         if not res:
-            self.robot.speak("I could not hear your question.")
+            self.robot.speech.speak("I could not hear your question.")
             return "failed"
 
         try:
@@ -46,7 +46,7 @@ class AnswerQuestion(smach.State):
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
             return "failed"
 
-        self.robot.speak("Your question was: " + res.result + ". The answer is: " + q_answer)
+        self.robot.speech.speak("Your question was: " + res.result + ". The answer is: " + q_answer)
 
         return "done"
 

@@ -26,7 +26,7 @@ class SimpleDesignator:
     def __init__(self):
         self.entity_id = None
 
-    def resolve():
+    def resolve(self):
         return self.entity_id
 
 # ----------------------------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ class PickAndPlace(smach.StateMachine):
                                     Grab( robot=robot,
                                           arm=robot.rightArm,
                                           designator=self.designator),
-                                          transitions={ 'succeeded'   : 'SAY_DROPOFF',
+                                          transitions={ 'done'   : 'SAY_DROPOFF',
                                                         'failed'      : 'HANDOVER_FROM_HUMAN'})
 
             smach.StateMachine.add( 'HANDOVER_FROM_HUMAN',
