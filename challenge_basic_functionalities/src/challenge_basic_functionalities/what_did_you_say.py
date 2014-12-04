@@ -66,18 +66,18 @@ class WhatDidYouSay(smach.StateMachine):
 
             smach.StateMachine.add( 'ASK_QUESTION_1',
                                     AnswerQuestion(robot, 1),
-                                    transitions={ 'done' : 'ASK_QUESTION_2'},
-                                                  'failed' : 'ASK_QUESTION_1'))
+                                    transitions={ 'done' : 'ASK_QUESTION_2',
+                                                  'failed' : 'ASK_QUESTION_1'})
 
             smach.StateMachine.add( 'ASK_QUESTION_2',
                                     AnswerQuestion(robot, 2),
-                                    transitions={ 'done' : 'ASK_QUESTION_3'},
-                                                  'failed' : 'ASK_QUESTION_2'))
+                                    transitions={ 'done' : 'ASK_QUESTION_3',
+                                                  'failed' : 'ASK_QUESTION_2'})
 
             smach.StateMachine.add( 'ASK_QUESTION_3',
                                     AnswerQuestion(robot, 3),
-                                    transitions={ 'done' : 'Done'},
-                                                  'failed' : 'ASK_QUESTION_3'))
+                                    transitions={ 'done' : 'Done',
+                                                  'failed' : 'ASK_QUESTION_3'})
 
 if __name__ == "__main__":
     rospy.init_node('what_did_you_say_exec')
