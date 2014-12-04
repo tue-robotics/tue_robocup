@@ -75,10 +75,9 @@ class SetInitialPose(smach.State):
         print e_loc
 
         try:
-            rz = e_loc.data["rz"]
+            rz = e_loc.data["pose"]["rz"]
         except KeyError:
-            rospy.logerr("SetInitialPose: ED entity '" + location + "' should contain data field 'rz' (orientation).")
-            return []
+            rz = 0
 
         return e_loc.pose.position.x, e_loc.pose.position.y, rz
 

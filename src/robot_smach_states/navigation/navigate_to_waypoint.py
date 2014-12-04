@@ -32,10 +32,14 @@ class NavigateToWaypoint(NavigateTo):
             pose = e.data["pose"]
             x = pose["x"]
             y = pose["y"]
-            rz= pose["z"]
         except KeyError:
             rospy.logerr(KeyError)
             return None
+
+        try:
+            rz = e.data["pose"]["rz"]
+        except KeyError:
+            rz = 0
 
         rospy.logwarn("Should Sjoerd check the newest model data in???")
 
