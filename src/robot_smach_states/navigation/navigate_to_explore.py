@@ -11,11 +11,12 @@ import rospy
 
 # ----------------------------------------------------------------------------------------------------
 class NavigateToExplore(NavigateTo):
-    def __init__(self, robot, entity_id, radius = .7, exclude_radius = 0.3):
+    def __init__(self, robot, constraint_designator, breakout_designator, radius = .7, exclude_radius = 0.3):
         super(NavigateToExplore, self).__init__(robot)
 
         self.robot    = robot
-        self.entity_id = entity_id
+        self.constraint_designator = constraint_designator
+        self.breakout_designator   = breakout_designator
         self.radius   = radius
         self.exclude_radius = exclude_radius
         self.visited_list = []
@@ -26,7 +27,8 @@ class NavigateToExplore(NavigateTo):
         current_pose = self.robot.base.get_location()
         self.visited_list.append(current_pose)
 
-        e = self.robot.ed.get_entity(id=self.entity_id)
+        entity_id = self.constraint_designator.resolve()
+        e = self.robot.ed.get_entity(entity_id)
 
         if not e:
             rospy.logerr("No such entity")
@@ -72,4 +74,13 @@ class NavigateToExplore(NavigateTo):
         return pc, oc
 
     def breakOut(self):
+
+        entity_id = None
+        try:
+            entity_id = self.breakout_designator.resolve()
+        except:
+            return True
+        
+        rospy.loginfo("Breakout: entity_id = {0}".format)
+
         return False
