@@ -10,9 +10,10 @@ from robot_smach_states import *
 from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 from robot_smach_states.util.startup import startup
 import robot_skills.util.msg_constructors as msgs
-from robot_smach_states.designator.designator import Designator, VariableDesignator
+from robot_smach_states.designator.designator import Designator, VariableDesignator, EdEntityByQueryDesignator
 
 from pein_srvs.srv import SetObjects
+from ed.srv import SimpleQuery, SimpleQueryRequest
 
 class PickAndPlace(smach.StateMachine):
 
@@ -87,15 +88,24 @@ class PickAndPlace(smach.StateMachine):
                                     transitions={"initialized": "PICKUP_OBJECT",
                                                  "abort":       "Aborted"})
 
+            # smach.StateMachine.add('PICKUP_OBJECT',
+            #                         GetObject(robot=robot, 
+            #                                   side=arm, 
+            #                                   #lookat_designator, #TODO 3-12-2014 use correct designator
+            #                                   type_designator=grab_type_designator), #TODO 3-12-2014 use correct designator
+            #                         transitions={    'Done'   : 'SAY_DROPOFF',
+            #                                          'Aborted': 'SAY_FOUND_NOTHING',
+            #                                          'Failed' : 'HUMAN_HANDOVER',
+            #                                          'Timeout': 'RESET'})
+
             smach.StateMachine.add('PICKUP_OBJECT',
-                                    GetObject(robot=robot, 
-                                              side=arm, 
-                                              #lookat_designator, #TODO 3-12-2014 use correct designator
-                                              type_designator=grab_type_designator), #TODO 3-12-2014 use correct designator
-                                    transitions={    'Done'   : 'SAY_DROPOFF',
-                                                     'Aborted': 'SAY_FOUND_NOTHING',
-                                                     'Failed' : 'HUMAN_HANDOVER',
-                                                     'Timeout': 'RESET'})
+                                    GrabMachine(robot=robot, 
+                                                side=arm, 
+                                                grab_entity_designator=EdEntityByQueryDesignator(SimpleQueryRequest(type="coke"))),
+                                                transitions={   'succeeded'   : 'SAY_DROPOFF',
+                                                                'failed'      : 'HUMAN_HANDOVER'})
+
+            
 
             def generate_drop_object_sentence(*args,**kwargs):
                 try:
