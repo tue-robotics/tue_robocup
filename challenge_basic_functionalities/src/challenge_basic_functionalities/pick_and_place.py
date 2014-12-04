@@ -39,7 +39,7 @@ class PickAndPlace(smach.StateMachine):
             smach.StateMachine.add('PICKUP_OBJECT',
                                     PickUp(robot=robot, 
                                                 arm=robot.rightArm, 
-                                                grab_entity_designator=EdEntityByQueryDesignator(SimpleQueryRequest(type="coke"))),
+                                                grab_entity_designator=EdEntityByQueryDesignator(SimpleQueryRequest(type=""))),
                                                 transitions={   'succeeded'   : 'SAY_DROPOFF',
                                                                 'failed'      : 'HANDOVER_FROM_HUMAN'})
 
