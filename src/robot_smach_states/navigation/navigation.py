@@ -70,7 +70,7 @@ class executePlan(smach.State):
         if self.robot.head.getGoal():
                 self.robot.head.cancelGoal()
 
-        while True:
+        while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
 
             if self.preempt_requested():
@@ -186,7 +186,6 @@ class breakOutState(smach.State):
         while (not rospy.is_shutdown() and not breakout):
             rospy.sleep(rospy.Duration(0.5))
             breakout = self.breakout_function()
-            rospy.loginfo('Breakout = {0}'.format(breakout))
 
         if breakout:
             return 'preempted'
@@ -273,7 +272,6 @@ class NavigateTo(smach.StateMachine):
         DO NOT OVERLOAD THIS IF NOT NECESSARY
         '''
         status = self.robot.base.local_planner.getStatus()
-        rospy.loginfo('Status = {0}'.format(status))
 
         if status == "arrived":
             return True      
