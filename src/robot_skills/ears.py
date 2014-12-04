@@ -13,9 +13,8 @@ class Ears:
     Function listen explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
     """
 
-    def __init__(self,entries=30):
-        rospy.wait_for_service("get_speech_client/get_speech")
-        self.get_speech_client_service = rospy.ServiceProxy('get_speech_client/get_speech', GetSpeech)
+    def __init__(self, robot_name):
+        self.get_speech_client_service = rospy.ServiceProxy("/%s/speech_client/get_speech"%robot_name, GetSpeech)
 
     #Function listens explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
     def recognize(self, spec, choices={}, time_out = rospy.Duration(10)):
@@ -39,5 +38,5 @@ class Ears:
 
 if __name__ == "__main__":
     rospy.init_node('robot_ears', anonymous=True)
-    ears = Ears()
+    ears = Ears("amigo")
 
