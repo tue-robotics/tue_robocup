@@ -9,7 +9,7 @@ from robot_smach_states import *
 from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 from robot_smach_states.util.startup import startup
 import robot_skills.util.msg_constructors as msgs
-from robot_smach_states.designator.designator import Designator, VariableDesignator, EdEntityByQueryDesignator
+from robot_smach_states.designators.designator import Designator, VariableDesignator, EdEntityByQueryDesignator
 
 from pein_srvs.srv import SetObjects
 from ed.srv import SimpleQuery, SimpleQueryRequest
@@ -32,13 +32,13 @@ class PickAndPlace(smach.StateMachine):
                                     transitions={"initialized": "PICKUP_OBJECT",
                                                  "abort":       "Aborted"})
 
-            smach.StateMachine.add( 'PICKUP_OBJECT',
-                                    Say(robot, ["Sorry, this task is not yet fully implemented. Ramon or Loy, fix me please!"]),
-                                     transitions={   'spoken':'PICKUP_OBJECT'})
+            # smach.StateMachine.add( 'PICKUP_OBJECT',
+            #                         Say(robot, ["Sorry, this task is not yet fully implemented. Ramon or Loy, fix me please!"]),
+            #                          transitions={   'spoken':'PICKUP_OBJECT'})
 
             smach.StateMachine.add('PICKUP_OBJECT',
-                                    GrabMachine(robot=robot, 
-                                                side=arm, 
+                                    PickUp(robot=robot, 
+                                                arm=robot.rightArm, 
                                                 grab_entity_designator=EdEntityByQueryDesignator(SimpleQueryRequest(type="coke"))),
                                                 transitions={   'succeeded'   : 'SAY_DROPOFF',
                                                                 'failed'      : 'HANDOVER_FROM_HUMAN'})
@@ -46,9 +46,9 @@ class PickAndPlace(smach.StateMachine):
             smach.StateMachine.add( 'HANDOVER_FROM_HUMAN', 
                                     Say(robot, [    "I am terribly sorry, but I cannot pick up the object.", 
                                                     "My apologies, but i cannot pick up the object."]),
-                                     transitions={   'spoken':'HANDOVER_TO_HUMAN'})
+                                     transitions={   'spoken':'SAY_DROPOFF'})
 
-            smach.StateMachine.add( 'HANDOVER_TO_HUMAN', 
+            smach.StateMachine.add( 'SAY_DROPOFF', 
                                     Say(robot, [    "I am terribly sorry, but I cannot place the object, please take it from me.", 
                                                     "My apologies, but i cannot place the object."]),
                                      transitions={   'spoken':'RESET'})
