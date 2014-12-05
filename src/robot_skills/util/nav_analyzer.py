@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_smach_states')
+import roslib; roslib.load_manifest('robot_skills')
 import rospy
 #import os.path
 
@@ -27,7 +27,7 @@ class NavAnalyzer:
     
     def __init__(self):
         
-        self.rosbag = True       
+        self.rosbag = False       
         rospy.logwarn("Nav_analyser: Bagging = {0}".format(self.rosbag))
         
         ''' Path '''
@@ -45,14 +45,6 @@ class NavAnalyzer:
         if not os.path.isdir(self.path):
             os.makedirs(self.path)
             
-        ''' Dump parameters to file '''
-        stamp          = self.getTimeStamp()
-        paramfilename = self.path+"/params_"+stamp
-        cmd = "rosparam dump " + paramfilename + " /move_base"
-        if os.environ["AMIGO_NAV"] == "3d":
-                cmd += "_3d"
-        subprocess.call(cmd, shell=True)
-            
         self.filename = self.path+'/Summary.xml'
         
         ''' Odometry subscriber ''' 
@@ -63,26 +55,13 @@ class NavAnalyzer:
 
         ''' Bag topics '''
         if self.rosbag:
-            ''' Standard topics '''
-            topics = ["/amigo/base/references", "/amigo/base/measurements", "/amcl_pose", "/amigo/base_front_laser", "/move_base_3d/AStarPlannerROS/plan", "/tf"]
+            topics = ["/amigo/base/references", "/amigo/base/measurements", "/amcl_pose", "/amigo/base_front_laser", "/move_base_3d/AStarPlannerROS/plan"]
 
-            ''' Plantopic '''
             plantopic = "/move_base"
             if os.environ["AMIGO_NAV"] == "3d":
                 plantopic += "_3d"
             plantopic += "/AStarPlannerROS/plan"
             topics.append(plantopic)
-            
-            ''' Costmap topics '''
-            if os.environ["AMIGO_NAV"] == "3d":
-                #topics.append("/distance_costmap")
-                #topics.append("/probability_costmap")
-                #topics.append("/octomap_binary")
-                topics.append("/move_base_3d/AmigoLocalPlanner/obs_marker")
-                topics.append("/amigo/top_kinect/rgbd")
-            else:
-                topics.append("/move_base/global_costmap")
-                
 
             #topics = ["/amigo/base/references"]
             self.base_cmd = "rosbag record "
@@ -216,14 +195,13 @@ class NavAnalyzer:
         self.poseStampedToSubElement(target_pose, goalposeitem)
         
     def count_reset(self, pose):
-        if self.active:
-            self.nr_reset_costmap +=1
-            stamp    = self.getTimeStamp()
-            resetitem = ET.SubElement(self.resetitems, "reset")
-            resetitem.set("id", "{0}".format(self.nr_reset_costmap))
-            resetitem.set("stamp", stamp)
-            poseitem = ET.SubElement(resetitem, "pose")
-            self.poseStampedToSubElement(pose, poseitem)
+        self.nr_reset_costmap +=1
+        stamp    = self.getTimeStamp()
+        resetitem = ET.SubElement(self.resetitems, "reset")
+        resetitem.set("id", "{0}".format(self.nr_reset_costmap))
+        resetitem.set("stamp", stamp)
+        poseitem = ET.SubElement(resetitem, "pose")
+        self.poseStampedToSubElement(pose, poseitem)
         
     def count_clear(self, pose):
         self.nr_clear_costmap +=1
@@ -269,13 +247,13 @@ class NavAnalyzer:
             datestr += "0"
         datestr += "{0}_".format(stamp.day)
         if stamp.hour < 10:
-            datestr += "{0}".format(stamp.hour)
+            datestr += "0"
         datestr += "{0}".format(stamp.hour)
         if stamp.minute < 10:
-            datestr += "{0}".format(stamp.minute)
+            datestr += "0"
         datestr += "{0}".format(stamp.minute)
         if stamp.second < 10:
-            datestr += "{0}".format(stamp.second)
+            datestr += "0"
         datestr += "{0}_{1}".format(stamp.second, stamp.microsecond)
         return datestr
 
@@ -293,13 +271,4 @@ class NavAnalyzer:
         else:
             if level and (not elem.tail or not elem.tail.strip()):
                 elem.tail = i
-                
-    def __del__ (self):
-        if self.active:
-            rospy.loginfo("Cleaning up nav-analyzer")
-            ''' Stop rosbagging: we don't want it to go on forever '''
-            if self.rosbag: 
-                os.killpg(self.pro.pid, signal.SIGINT)  # Send the signal to all the process groups
-                
-            ''' No further data is written to a file, since we stopped for a reason '''
 

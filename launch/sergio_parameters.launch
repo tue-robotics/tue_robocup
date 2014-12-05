@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+    
+    <arg name="robot_name" default="sergio"/>
+    
+    <!-- Loads robot specific parameters for the robot_skills to the parameter server -->
+    <rosparam command="load" file="$(find robot_skills)/parameters/$(arg robot_name).yaml" ns="/$(arg robot_name)/skills"/>
+
+</launch>

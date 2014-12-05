@@ -3,7 +3,7 @@ import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import head
 import worldmodel
-import base
+import ros_navstack_base
 import spindle
 import speech
 import arms
@@ -36,7 +36,7 @@ class Amigo(object):
         if 'head' not in dontInclude:
             self.head = head.Head()
         if 'base' not in dontInclude:
-            self.base = base.Base(self.tf_listener, wait_service=wait_services)
+            self.base = ros_navstack_base.Base(self.tf_listener, wait_service=wait_services)
         if 'spindle' not in dontInclude:
             self.spindle = spindle.Spindle(wait_service=wait_services)
         if 'arms' not in dontInclude:
