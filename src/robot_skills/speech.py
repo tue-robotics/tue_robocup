@@ -13,7 +13,7 @@ from speech_interpreter.srv import AskUser # for speech_to_text only
 class Speech(object):
     """Interface to Amigo's tts-module"""
 
-    def __init__(self, wait_service=True):
+    def __init__(self, robot_name, wait_service=True):
         self.amigo_speak_up = rospy.Publisher("/text_to_speech/input", String)
         self.amigo_speak_up_info = rospy.Publisher("/amigo_speak_up_info", String)
         self.pub_amigo_speech_sim = rospy.Publisher("/amigo_speech_sim", String)    # For using amigo's speech in simulation
@@ -42,7 +42,7 @@ class Speech(object):
 
     def speak(self, sentence, language="us", personality="kyle", voice="default", mood="excited", block=True, replace={"_":" "}):
         """
-        Send a sentence to amigo's text to speech module. 
+        Send a sentence to amigo's text to speech module.
         You can set language, personality, voice and mood for the Phiips TTS.
         When block=False, this method returns immediatly.
         With the replace-dictionary, you can specify which characters to replace with what. By default, it replace underscores with spaces.
@@ -55,7 +55,7 @@ class Speech(object):
             if language == 'nl' and not (personality in ['david', 'marjolein']):
                 personality = 'david' #kyle doesn't work for NL
             rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m") #The funny stuff around sentence is for coloring the output text in the console
-            
+
             # Also send the sentence over a topic (for simulation purposes)
             self.pub_amigo_speech_sim.publish(sentence)
 
@@ -104,7 +104,7 @@ class Speech(object):
     def get_action(self, timeout = 100.0):
         """ function to get the goal of the task - does not work yet
             To do: make it work """
-        self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(timeout))  
+        self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(timeout))
 
         for x in range(0,len(self.response.keys)):
                 if self.response.keys[x] == "action":
@@ -147,4 +147,4 @@ class Speech(object):
 
 if __name__ == "__main__":
     rospy.init_node("amigo_speech_executioner", anonymous=True)
-    speech = Speech()
+    speech = Speech("amigo")
