@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
     tue_msgs
     visualization_msgs
     amigo_head_ref
+    amigo_actions
     tue_reasoner_core
     psi
     control_msgs
