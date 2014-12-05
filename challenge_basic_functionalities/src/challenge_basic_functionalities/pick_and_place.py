@@ -18,7 +18,7 @@ from ed.srv import SimpleQuery, SimpleQueryRequest
 from robot_smach_states.utility_states import Initialize
 from robot_smach_states.human_interaction import Say
 
-from robot_smach_states.manip import Grab
+from robot_smach_states.manip.grab import Grab
 
 # ----------------------------------------------------------------------------------------------------
 
