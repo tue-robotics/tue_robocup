@@ -3,7 +3,7 @@
 import rospy
 import smach_ros
 import robot_skills
-import robot_skills.robot
+import robot_skills.amigo
 import sys, traceback
 
 from optparse import OptionParser
@@ -19,27 +19,40 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
     @param scenario_setup_function: a function that sets up a scenario to test the created statemachine with. 
         It must also take a robot and a statemachine as input'''
         
+    parser = OptionParser()
+    parser.add_option("--test", 
+        action="store", 
+        type="string", 
+        dest="testmode",
+        help="Test the listed parts: --test=head,base,perception,worldmodel,arms,... or simply --test=all")
+    options, arguments = parser.parse_args()
     
 
-    robot = None
-    robotname = rospy.get_param('~robot')
-    if robotname.lower() == "amigo":
-        import robot_skills.amigo
-        robot = robot_skills.amigo.Amigo(wait_services=True)
-    elif robotname.lower() == "sergio":
-        import robot_skills.sergio
-        robot = robot_skills.sergio.Sergio(wait_services=True)
-    
+    amigo = None
+    if options.testmode:
+        fakeparts = options.testmode
+        fakeparts = fakeparts.split(",")
+        if "all" in fakeparts:
+            fakeparts=['base','arms','perception','head', 'worldmodel']
+        rospy.logwarn("Executive started in TESTMODE, so mocking these parts of amigo: {0}".format(fakeparts))
+        from test_tools.build_amigo import build_amigo
+        amigo = build_amigo(fake=fakeparts, wait_services=True)
+    else:
+        print "If you want to test an executive, use the --test option and specify what parts you want to mock."
+        amigo = robot_skills.amigo.Amigo(wait_services=True)
     
     introserver = None
-    with robot:
+    with amigo:
         try:
             #build the state machine
-            executioner = statemachine_creator(robot)
+            executioner = statemachine_creator(amigo)
             if initial_state:
                 executioner.set_initial_state(initial_state)
             introserver = smach_ros.IntrospectionServer('server_name', executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
+            if options.testmode and scenario_setup_function:
+                #add side-effects to make testing possible without working perception
+                scenario_setup_function(amigo, executioner)
 
             #Run the statemachine
             outcome = executioner.execute()
@@ -57,7 +70,7 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
             message = message.replace(".py", "")
             
             print [fname,lineno,fn,text, e]
-            robot.speech.speak(message)
+            amigo.speech.speak(message)
         finally:
             if introserver:
                 introserver.stop()
@@ -83,29 +96,29 @@ def startup_final(statemachine_creator, initial_state, scenario_setup_function=N
     options, arguments = parser.parse_args()
     
 
-    robot = None
+    amigo = None
     if options.testmode:
         fakeparts = options.testmode
         fakeparts = fakeparts.split(",")
         if "all" in fakeparts:
             fakeparts=['base','arms','perception','head', 'worldmodel']
-        rospy.logwarn("Executive started in TESTMODE, so mocking these parts of robot: {0}".format(fakeparts))
-        from test_tools.build_robot import build_robot
-        robot = build_robot(fake=fakeparts, wait_services=True)
+        rospy.logwarn("Executive started in TESTMODE, so mocking these parts of amigo: {0}".format(fakeparts))
+        from test_tools.build_amigo import build_amigo
+        amigo = build_amigo(fake=fakeparts, wait_services=True)
     else:
         print "If you want to test an executive, use the --test option and specify what parts you want to mock."
-        robot = robot_skills.robot.Amigo(wait_services=True)
+        amigo = robot_skills.amigo.Amigo(wait_services=True)
     
     introserver = None
-    with robot:
+    with amigo:
         try:
             #build the state machine
-            executioner = statemachine_creator(robot)
+            executioner = statemachine_creator(amigo)
             introserver = smach_ros.IntrospectionServer('server_name', executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
             if options.testmode and scenario_setup_function:
                 #add side-effects to make testing possible without working perception
-                scenario_setup_function(robot, executioner)
+                scenario_setup_function(amigo, executioner)
 
             rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
             executioner.set_initial_state(initial_state)
@@ -126,7 +139,7 @@ def startup_final(statemachine_creator, initial_state, scenario_setup_function=N
             message = message.replace(".py", "")
             
             print [fname,lineno,fn,text, e]
-            robot.speech.speak(message)
+            amigo.speech.speak(message)
         finally:
             if introserver:
                 introserver.stop()
