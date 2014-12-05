@@ -3,12 +3,11 @@
 import rospy
 import smach_ros
 import robot_skills
-import robot_skills.amigo
 import sys, traceback
 
 from optparse import OptionParser
 
-def startup(statemachine_creator, scenario_setup_function=None, initial_state=None):
+def startup(statemachine_creator, scenario_setup_function=None, initial_state=None, robot_name=''):
     '''Takes a FUNCTION that outputs a smach statemachine as input, 
     and optionally also a FUNCTION that attaches hooks for testing the statemachine as input.
     It sets up convenient ways to handle some errors, by letting the robot announce an error,
@@ -27,32 +26,41 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
         help="Test the listed parts: --test=head,base,perception,worldmodel,arms,... or simply --test=all")
     options, arguments = parser.parse_args()
     
+    if robot_name == '':
+        robot_name = "amigo"   # Default
 
-    amigo = None
-    if options.testmode:
-        fakeparts = options.testmode
-        fakeparts = fakeparts.split(",")
-        if "all" in fakeparts:
-            fakeparts=['base','arms','perception','head', 'worldmodel']
-        rospy.logwarn("Executive started in TESTMODE, so mocking these parts of amigo: {0}".format(fakeparts))
-        from test_tools.build_amigo import build_amigo
-        amigo = build_amigo(fake=fakeparts, wait_services=True)
-    else:
-        print "If you want to test an executive, use the --test option and specify what parts you want to mock."
-        amigo = robot_skills.amigo.Amigo(wait_services=True)
+    rospy.loginfo("Using robot '" + robot_name + "'.")
+
+    robot = None
+    if robot_name == "amigo":
+        import robot_skills.amigo
+        if options.testmode:
+            fakeparts = options.testmode
+            fakeparts = fakeparts.split(",")
+            if "all" in fakeparts:
+                fakeparts=['base','arms','perception','head', 'worldmodel']
+            rospy.logwarn("Executive started in TESTMODE, so mocking these parts of amigo: {0}".format(fakeparts))
+            from test_tools.build_amigo import build_amigo
+            robot = build_amigo(fake=fakeparts, wait_services=True)
+        else:
+            print "If you want to test an executive, use the --test option and specify what parts you want to mock."
+            robot = robot_skills.amigo.Amigo(wait_services=True)
+    elif robot_name == "sergio":
+        import robot_skills.sergio
+        robot = robot_skills.sergio.Sergio(wait_services=True)
     
     introserver = None
-    with amigo:
+    with robot:
         try:
             #build the state machine
-            executioner = statemachine_creator(amigo)
+            executioner = statemachine_creator(robot)
             if initial_state:
                 executioner.set_initial_state(initial_state)
             introserver = smach_ros.IntrospectionServer('server_name', executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
             if options.testmode and scenario_setup_function:
                 #add side-effects to make testing possible without working perception
-                scenario_setup_function(amigo, executioner)
+                scenario_setup_function(robot, executioner)
 
             #Run the statemachine
             outcome = executioner.execute()
@@ -70,7 +78,7 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
             message = message.replace(".py", "")
             
             print [fname,lineno,fn,text, e]
-            amigo.speech.speak(message)
+            robot.speech.speak(message)
         finally:
             if introserver:
                 introserver.stop()

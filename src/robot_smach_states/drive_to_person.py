@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import roslib
-roslib.load_manifest('robot_smach_states')
 import rospy
 
 from robot_skills.reasoner import Compound, Conjunction, Sequence

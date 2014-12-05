@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest("robot_smach_states")
+import roslib; 
 import rospy
 import smach
 import util
@@ -137,6 +137,7 @@ class Execute_query(smach.State):
         return 'executed'
 
 class Select_object(smach.State):
+    #TODO 3-12-2014: Select object can be large,ly/completely replaced by a (Variable)Designator
     """Selects an object based on some optional criteria and sorting mechanism"""
 
     def __init__(self, robot, candidate_query, selection_predicate, 

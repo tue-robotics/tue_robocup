@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_smach_states')
+import roslib;
 import rospy
 import smach
 
@@ -21,12 +21,12 @@ class Initialize(smach.State):
     def execute(self, userdata):
         self.robot.lights.set_color(0,0,1)  #be sure lights are blue
         
-        self.robot.head.reset_position(timeout=0.0)
-        self.robot.leftArm.reset_arm()
-        #self.robot.leftArm.send_gripper_goal_close()
-        self.robot.rightArm.reset_arm()
-        #self.robot.rightArm.send_gripper_goal_close()
-        self.robot.reasoner.reset()
+        self.robot.head.reset()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close',0.0)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close',0.0)
+        #self.robot.reasoner.reset()
         self.robot.spindle.reset()
         self.robot.base.reset_costmap()
         self.robot.perception.toggle([])
@@ -52,7 +52,7 @@ class Initialize(smach.State):
 
         return 'initialized'
 
-class Set_initial_pose(smach.State):
+class SetInitialPose(smach.State):
     ## To call upon this state:
     # example 1: Set_initial_pose(robot, "front_of_door"),
     # OR
@@ -66,24 +66,22 @@ class Set_initial_pose(smach.State):
         self.initial_position = init_position
     
     def location_2d(self, location):
-        #query_location = self.robot.reasoner.base_pose(location, self.robot.reasoner.pose_2d("X", "Y", "Phi"))
-        query_location = Compound("waypoint", location, Compound("pose_2d", "X", "Y", "Phi"))
-        
-        answers = self.robot.reasoner.query(query_location)
-        
-        if not answers:
-            rospy.logerr("No answers found for query {query}".format(query=query_location))
-            return []
-        else:
-            possible_locations = [(float(answer["X"]), float(answer["Y"]), float(answer["Phi"])) for answer in answers]
-        
-        x, y, phi = min(possible_locations)
+        e_loc = self.robot.ed.get_entity(id=location)
 
-        return x, y, phi
+        if not e_loc:
+            rospy.logerr("SetInitialPose: ED entity '" + location + "' does not exist.")
+            return []
+
+        print e_loc
+
+        try:
+            rz = e_loc.data["pose"]["rz"]
+        except KeyError:
+            rz = 0
+
+        return e_loc.pose.position.x, e_loc.pose.position.y, rz
 
     def execute(self, userdata):
-        rospy.loginfo('Set initial pose')
-
         if isinstance(self.initial_position, str):
             x,y,phi = self.location_2d(self.initial_position)
         elif len(self.initial_position) == 3: #Tuple or list        
@@ -94,7 +92,9 @@ class Set_initial_pose(smach.State):
             rospy.logerr("Initial pose {0} could not be set".format(self.initial_position))
             return "error"
 
-        self.robot.base.set_initial_pose(x,y,phi)
+        rospy.loginfo('Set initial pose to {0}, {1}, {2}'.format(x, y, phi))
+
+        self.robot.base.set_initial_pose(x, y, phi)
         
         # Reset costmap: costmap is obviously entirely off if the localization was wrong before giving the initial pose
         self.robot.base.reset_costmap()
@@ -339,9 +339,9 @@ class ResetArms(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.leftArm.reset_arm()
+        self.robot.leftArm.reset()
         self.robot.leftArm.send_gripper_goal_close(timeout=self.timeout)
-        self.robot.rightArm.reset_arm()
+        self.robot.rightArm.reset()
         self.robot.rightArm.send_gripper_goal_close(timeout=self.timeout)
         return "done"
 
