@@ -49,6 +49,9 @@
   <build_depend>amigo_head_ref</build_depend>
   <run_depend>amigo_head_ref</run_depend>
 
+  <build_depend>amigo_actions</build_depend>
+  <run_depend>amigo_actions</run_depend>
+
   <build_depend>tue_reasoner_core</build_depend>
   <run_depend>tue_reasoner_core</run_depend>
 
