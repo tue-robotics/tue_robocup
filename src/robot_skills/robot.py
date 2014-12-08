@@ -52,7 +52,7 @@ class Robot(object):
         self.head = head.Head(self.robot_name)
 
         # Human Robot Interaction
-        self.speech = speech.Speech(wait_service=wait_services)
+        self.speech = speech.Speech(self.robot_name, wait_service=wait_services)
         self.ears = ears.Ears(self.robot_name)
         self.ebutton = ebutton.EButton()
         self.lights = lights.Lights()
