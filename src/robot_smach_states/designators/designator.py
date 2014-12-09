@@ -10,9 +10,12 @@ import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest
 import geometry_msgs.msg as gm
 import std_msgs.msg as std
+import inspect
+import pprint
 
 
 class Designator(object):
+
     """
     A Designator defines a goal, which can be defined at runtime or at write-
     time. Its value cannot be set, it can only be get.  This allows to later
@@ -28,6 +31,7 @@ class Designator(object):
     Traceback (most recent call last):
      ...
     AttributeError: can't set attribute"""
+
     def __init__(self, initial_value=None):
         super(Designator, self).__init__()
 
@@ -45,6 +49,7 @@ class Designator(object):
 
 
 class VariableDesignator(Designator):
+
     """
     A VariableDesignator simply contains a variable that can be set by anyone.
     This variable is encapsulated by a property called current.
@@ -56,6 +61,7 @@ class VariableDesignator(Designator):
     >>> v.current
     'Works'
     """
+
     def __init__(self, initial_value=None):
         super(VariableDesignator, self).__init__(initial_value)
 
@@ -66,27 +72,32 @@ class VariableDesignator(Designator):
 
 
 class PointStampedOfEntityDesignator(Designator):
+
     def __init__(self, entity_designator):
         super(VariableDesignator, self).__init__()
         self.entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
     def resolve(self):
-        # type is a reserved keyword. Maybe unpacking a dict as kwargs is cleaner
+        # type is a reserved keyword. Maybe unpacking a dict as kwargs is
+        # cleaner
         query = SimpleQueryRequest(id=self.entity_designator.resolve())
         entities = self.ed(query).entities
         if entities:
             entity = entities[0]
             pointstamped = gm.PointStamped(point=entity.center_point,
-                                           header=std.Header(entity.id, rospy.get_rostime())
+                                           header=std.Header(
+                                               entity.id, rospy.get_rostime())
                                            )  # ID is also the frame ID. Ed just works that way
             self._current = pointstamped
-            return current
+            return self.current
         else:
-            raise Exception("No such entity")  # TODO: Make cutom exception here
+            # TODO: Make cutom exception here
+            raise Exception("No such entity")
 
 
 class PsiDesignator(Designator):
+
     """A PsiDesignator encapsulates Psi queries to a reasoner.
     A reasoner may return multiple valid answers to a query, but """
 
@@ -94,11 +105,11 @@ class PsiDesignator(Designator):
         """Define a new designator around a Psi query, to be posed to a reasoner
         @param query the query to be posed to the given reasoner
         @param reasoner the reasoner that should answer the query"""
-        self.query          = query
-        self.reasoner       = reasoner
-        self.sortkey        = sortkey
-        self.sortorder      = sortorder
-        self.criteriafuncs  = criteriafuncs or []
+        self.query = query
+        self.reasoner = reasoner
+        self.sortkey = sortkey
+        self.sortorder = sortorder
+        self.criteriafuncs = criteriafuncs or []
 
     def resolve(self):
         """
@@ -123,16 +134,18 @@ class PsiDesignator(Designator):
 
 
 class EdEntityByQueryDesignator(Designator):
+
     """
     Resolves to an entity from an Ed query, (TODO: selected by some filter and
     criteria functions)
     """
+
     def __init__(self, ed_query, criteriafuncs=None):
         super(EdEntityByQueryDesignator, self).__init__()
         self.query = ed_query
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
-        self.criteriafuncs  = criteriafuncs or []
+        self.criteriafuncs = criteriafuncs or []
 
     def resolve(self):
         entities = self.ed.query(self.query)
@@ -147,10 +160,12 @@ class EdEntityByQueryDesignator(Designator):
             self._current = entities[0]  # TODO: add sortkey
             return self.current
         else:
-            raise Exception("No entities found matching query {0}".format(self.query))
+            raise Exception(
+                "No entities found matching query {0}".format(self.query))
 
 
 class AttrDesignator(Designator):
+
     """Get some attribute of the object a wrapped designator resolves to.
     For example: 
     >>> d = Designator(object())
