@@ -68,6 +68,10 @@ class Robot(object):
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
 
+        #Grasp offsets
+        #TODO: Don't hardcode, load from parameter server to make robot independent.
+        self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
+
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
 
