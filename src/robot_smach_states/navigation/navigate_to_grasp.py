@@ -47,16 +47,17 @@ class NavigateToGrasp(NavigateTo):
             return None
 
         try:
-            pose = e.data["pose"]
-            x = pose["x"]
-            y = pose["y"]
-        except KeyError:
-            rospy.logerr(KeyError)
+            pose = e.pose #TODO Janno: Not all entities have pose information
+            x = pose.position.x
+            y = pose.position.y
+        except KeyError, ke:
+            rospy.logerr("Could not determine pose: ".format(ke))
             return None
 
         try:
-            rz = e.data["pose"]["rz"]
-        except KeyError:
+            rz = e.pose.orientation.z
+        except KeyError, ke:
+            rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0
 
         rospy.logwarn("Should Sjoerd check the newest model data in???")

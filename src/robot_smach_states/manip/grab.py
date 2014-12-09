@@ -19,7 +19,7 @@ from psi import Term, Compound, Conjunction
 import actionlib
 from random import choice
 
-from robot_smach_states.navigation import NavigateToObserve
+from robot_smach_states.navigation import NavigateToGrasp
 from robot_smach_states.designators.designator import AttrDesignator
 
 # ----------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ class PickUp(smach.State):
         goal_map = msgs.Point(0, 0, 0)
 
         # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, entity_id, "/amigo/base_link", tf_listener=self._robot.tf_listener)
+        goal_bl = transformations.tf_transform(goal_map, entity_id, self._robot.robot_name+"/base_link", tf_listener=self._robot.tf_listener)
         if goal_bl == None:
             return 'failed'
 
@@ -58,7 +58,7 @@ class PickUp(smach.State):
 
         # Pre-grasp
         if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-                             frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
+                             frame_id=self._robot.robot_name+"/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
             print "Pre-grasp failed"
             
             self.arm.reset()
@@ -66,7 +66,7 @@ class PickUp(smach.State):
             return 'failed'
 
         # Grasp
-        if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=120, pre_grasp = True):
+        if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id=self._robot.robot_name+"/base_link", timeout=120, pre_grasp = True):
             self._robot.speech.speak("I am sorry but I cannot move my arm to the object position", block=False)
             print "Grasp failed"
             self.arm.reset()
@@ -77,15 +77,15 @@ class PickUp(smach.State):
         self.arm.send_gripper_goal('close')
 
         # Lift
-        if not self.arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/amigo/base_link"):
+        if not self.arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id=self._robot.robot_name+"/base_link"):
             print "Failed lift"
 
         # Retract
-        if not self.arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/amigo/base_link"):
+        if not self.arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id=self._robot.robot_name+"/base_link"):
             print "Failed retract"
 
         # Carrying pose
-        if side == "left":
+        if self.arm.side == "left":
             y_home = 0.2
         else:
             y_home = -0.2
@@ -111,7 +111,7 @@ class Grab(smach.StateMachine):
 
         with self:
             #AttrDesignator because the designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToObserve(self.robot, AttrDesignator(designator, 'id')), 
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, AttrDesignator(designator, 'id'), arm.side), 
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : "GRAB"})
