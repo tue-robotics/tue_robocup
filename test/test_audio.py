@@ -26,37 +26,39 @@ s = Speech(robot_name)
 
 # data
 drinks = ["coke","fanta","beer","milk","yoghurt","pepsi","orangejuice","sevenup"]
-names = ["james","john","robert","michael","william","david","richard","charles","joseph","thomas","mary","patricia","linda","barbara","elizabeth","jennifer","maria","susan","margret","dorothy"]
+names = ["christopher","james","john","robert","michael","william","david","richard","charles","joseph","thomas","mary","patricia","linda","barbara","elizabeth","jennifer","maria","susan","margret","dorothy"]
 places = ['bedroom','livingroom', 'hallway', 'kitchen']
 object_category = [ 'drink', 'snack', 'food', 'cleaningstuff']
 location_category = ['utensil','shelf','seating','table','trashbin','appliance']
 actions = ['transport','bring','carry','bring','get','give','point','look','detect','find','move','go','navigate']
+sides = ["left","right","front","back"]
+numbers = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+restaurant_locations = ["ordering location","food location", "drink location"]
 
-while True:
-    s.speak("What would you like to drink?")
-    r = e.recognize("<drink>",{"drink":drinks})
+def ask(question, spec, choices, answer):
+    s.speak(question)
+    r = e.recognize(spec, choices)
+
+    print "Choices are: " + str(choices)
+
     if r:
-        s.speak(random.choice(["Nice, I also like %s","%s, that's an excellent choice!","Realy, %s?","Ok, I will get you a %s"])%r.choices["drink"])
+        for k,v in r.choices.iteritems():
+            answer = answer.replace("<%s>"%k,v)
+        s.speak(answer)
     else:
         s.speak("I don't understand, sorry")
 
     time.sleep(1)
 
-    s.speak("Ask me a difficult Erik double GPSR question")
-    r = e.recognize("<action> (me) (a|an|the) <object> (from|of) (the|a|an) <location> (to|of|from) (the|a|an) <location2> ",{"action":actions,"object":object_category,"location":location_category+places,"location2":location_category+places})
+while not rospy.is_shutdown():
+    ask("What would you like to drink?", "<drink>", {"drink":drinks}, random.choice(["Nice, I also like <drink>","<drink>, that's an excellent choice!","Realy, <drink>?","Ok, I will get you a <drink>"]))
 
-    if r:
-        s.speak("Ok, I will %s a %s from the %s to the %s"%(r.choices["action"],r.choices["object"],r.choices["location"],r.choices["location2"]))
-    else:
-        s.speak("I don't understand, sorry")
+    ask("Ask me a EGPSR question", "<action> (me) (a|an|the) <object> (from|of) (the|a|an) <location> (to|of|from) (the|a|an) <location2> ", {"action":actions,"object":object_category,"location":location_category+places,"location2":location_category+places}, "Ok, I will <action> a <object> from the <location> to the <location>")
 
-    time.sleep(1)
+    ask(random.choice(["What is your name?","Hey, how should I call you?"]), "<name>", {"name":names}, random.choice(["Nice, I will call you <name>","<name>, that's an beautiful name!","Realy, <name>?","Ok, from now on, you are <name>"]))
 
-    s.speak(random.choice(["What is your name?","Hey, how should I call you?"]))
-    r = e.recognize("<name>",{"name":names})
-    if r:
-        s.speak(random.choice(["Nice, I will call you %s","%s, that's an beautiful name!","Realy, %s?","Ok, from now on, you are %s"])%r.choices["name"])
-    else:
-        s.speak("I don't understand, sorry")
+    for i in range(0,10):
+    	ask("Waiting for restaurant speech command","(<side> <number>|<location>)", {"side":sides,"number":numbers,"location":restaurant_locations}, "<side> <number> <location>")
 
-    time.sleep(1)
+
+    
