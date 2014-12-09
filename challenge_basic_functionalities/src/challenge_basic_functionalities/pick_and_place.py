@@ -20,35 +20,41 @@ from robot_smach_states.human_interaction import Say
 
 from robot_smach_states.manip.grab import Grab
 
-# ----------------------------------------------------------------------------------------------------
-
-class SimpleDesignator:
-    #TODO: Replace with VariableDesignator
-    def __init__(self):
-        self.entity_id = None
-
-    def resolve(self):
-        return self.entity_id
+import inspect
 
 # ----------------------------------------------------------------------------------------------------
 
 class LookForObjects(smach.State):
+    """Sets a VariableDesignator to an Entity that matches some criteria."""
     def __init__(self, robot, designator):
         smach.State.__init__(self,outcomes=['done', 'failed'])
         self.robot = robot
         self.designator = designator
 
     def execute(self, userdata):
-        roi = transformations.tf_transform(msgs.Point(0.7, 0, 0.9), "/map", "/base_link", self.robot.tf_listener)
-        entities = self.robot.ed.get_entities(type="", point=roi) #TODO Sjoerd: point should be a PointStamped here.
+        roi = transformations.tf_transform(msgs.Point(0.7, 0, 0.9), self.robot.robot_name+"/base_link", "/map", self.robot.tf_listener)
+            
+        # import ipdb; ipdb.set_trace()
+        entities = self.robot.ed.get_entities(type="", center_point=roi, radius=0.5) #TODO Sjoerd: point should be a PointStamped here.
+        rospy.loginfo("Found {0} objects".format(len(entities)))
 
-        filtered_entities = filter(lambda ent: (ent.z_max - ent.z_min) < 0.20, entities) #Only objects smaller than 20cm
-        if filtered_entities:
-            self.designator.entity_id = filtered_entities[0].id
-            rospy.loginfo("Selected object: {0}".format(self.designator.entity_id))
+        max_size = lambda ent: (ent.z_max - ent.z_min) < 0.20 #Only objects smaller than 20cm
+        min_size = lambda ent: (ent.z_max - ent.z_min) > 0.05 #Only objects larger than 5cm
+        min_height = lambda ent: (ent.z_min) > 0.70 #Only objects higher than 70cm
+        max_height = lambda ent: (ent.z_min) < 1.20 #Only objects lower than 1.2m
+        filters = [max_size, min_size, min_height, max_height]
+
+        for filter_index, filterfunc in enumerate(filters):
+            entities = filter(filterfunc, entities) 
+            filter_code = str(inspect.getsource(filterfunc).strip())
+            rospy.loginfo("{0} objects remaining after filterfunc #{1}: {2}".format(len(entities), filter_index, filter_code))
+
+        if entities:
+            self.designator.current = entities[0]
+            rospy.loginfo("Selected object: {0}".format(self.designator.current.id))
         elif entities:
-            self.designator.entity_id = entities[0].id
-            rospy.logwarn("May not be able to pick up selected object: {0}".format(self.designator.entity_id))
+            self.designator.current = entities[0]
+            rospy.logwarn("May not be able to pick up selected object: {0}".format(self.designator.current.id))
         else:
             rospy.logwarn("Could not select an object")
             return 'failed'
@@ -63,7 +69,7 @@ class PickAndPlace(smach.StateMachine):
         # ToDo: get rid of hardcode poi lookat
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
-        self.designator = SimpleDesignator()
+        self.designator = VariableDesignator()
 
         # self.entity_designator = EdEntityByQueryDesignator(SimpleQueryRequest(type=""))
 
@@ -79,7 +85,7 @@ class PickAndPlace(smach.StateMachine):
             smach.StateMachine.add( 'LOOK_FOR_OBJECTS',
                                     LookForObjects(robot, self.designator),
                                     transitions={"done":   "PICKUP_OBJECT",
-                                                 "failed": "LOOK_FOR_OBJECTS"})
+                                                 "failed": "HANDOVER_FROM_HUMAN"})
 
             smach.StateMachine.add('PICKUP_OBJECT',
                                     Grab( robot=robot,
