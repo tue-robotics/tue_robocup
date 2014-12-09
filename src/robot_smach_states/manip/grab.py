@@ -8,6 +8,9 @@ import ed
 
 from math import cos, sin
 from geometry_msgs.msg import *
+import robot_skills.util.msg_constructors as msgs
+import robot_skills.util.transformations as transformations
+
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 
@@ -17,6 +20,7 @@ import actionlib
 from random import choice
 
 from robot_smach_states.navigation import NavigateToObserve
+from robot_smach_states.designators.designator import AttrDesignator
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -32,8 +36,8 @@ class PickUp(smach.State):
 
         try:
             entity_id = self.grab_entity_designator.resolve().id
-        except Exception:
-            rospy.logerr("No entity found")
+        except Exception, e:
+            rospy.logerr("No entity found: {0}".format(e))
             return 'failed'
 
         # goal in map frame
@@ -59,7 +63,7 @@ class PickUp(smach.State):
             
             self.arm.reset()
             self.arm.send_gripper_goal('close', timeout=None)
-            return
+            return 'failed'
 
         # Grasp
         if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=120, pre_grasp = True):
@@ -67,7 +71,7 @@ class PickUp(smach.State):
             print "Grasp failed"
             self.arm.reset()
             self.arm.send_gripper_goal('close', timeout=None)
-            return
+            return 'failed'
 
         # Close gripper
         self.arm.send_gripper_goal('close')
@@ -90,7 +94,9 @@ class PickUp(smach.State):
         
         rospy.loginfo("start moving to carrying pose")        
         if not self.arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0, 60):            
-            print 'Failed carrying pose'                 
+            print 'Failed carrying pose' 
+        
+        return 'succeeded'                
 
 
         #machine = robot_smach_states.manipulation.GrabMachineWithoutBase(side=side, robot=self._robot, grabpoint_query=query)
@@ -104,12 +110,12 @@ class Grab(smach.StateMachine):
         self.robot = robot
 
         with self:
-
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToObserve(self.robot, designator),
+            #AttrDesignator because the designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToObserve(self.robot, AttrDesignator(designator, 'id')), 
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : "GRAB"})
 
-            smach.StateMachine.add('GRAB', PickUp(self.robot, designator, arm),
+            smach.StateMachine.add('GRAB', PickUp(self.robot, arm, designator),
                 transitions={'succeeded' :   'done',
                              'failed' :   'failed'})

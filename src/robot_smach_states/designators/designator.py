@@ -129,6 +129,23 @@ class EdEntityByQueryDesignator(Designator):
         else:
             raise Exception("No entities found matching query {0}".format(self.query))
 
+class AttrDesignator(Designator):
+    """Get some attribute of the object a wrapped designator resolves to.
+    For example: 
+    >>> d = Designator(object())
+    >>> wrapped = AttrDesignator(d, '__class__') #Get the __class__ attribute of the object that d resolves to
+    >>> wrapped.resolve() == object
+    True
+    """
+
+    def __init__(self, orig, attribute):
+        super(AttrDesignator, self).__init__()
+        self.orig = orig
+        self.attribute = attribute
+
+    def resolve(self):
+        return self.orig.resolve().__getattribute__(self.attribute)
+
         
 if __name__ == "__main__":
     rospy.init_node('Designator_test', log_level=rospy.INFO)
