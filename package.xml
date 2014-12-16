@@ -73,39 +73,6 @@
   <build_depend>wire_msgs</build_depend>
   <run_depend>wire_msgs</run_depend>
 
-  <build_depend>perception_srvs</build_depend>
-  <run_depend>perception_srvs</run_depend>
-
-  <build_depend>pein_supervisor</build_depend>
-  <run_depend>pein_supervisor</run_depend>
-
-  <build_depend>obj_in_gripper</build_depend>
-  <run_depend>obj_in_gripper</run_depend>
-
-  <build_depend>pein_ar_pose</build_depend>
-  <run_depend>pein_ar_pose</run_depend>
-
-  <build_depend>pein_tabletop_segmentation</build_depend>
-  <run_depend>pein_tabletop_segmentation</run_depend>
-
-  <build_depend>laser_ppl_detection</build_depend>
-  <run_depend>laser_ppl_detection</run_depend>
-
-  <build_depend>pein_wire_interface</build_depend>
-  <run_depend>pein_wire_interface</run_depend>
-
-  <build_depend>pein_color_matcher</build_depend>
-  <run_depend>pein_color_matcher</run_depend>
-
-  <build_depend>pein_pcl_matcher</build_depend>
-  <run_depend>pein_pcl_matcher</run_depend>
-
-  <build_depend>pein_odufinder</build_depend>
-  <run_depend>pein_odufinder</run_depend>
-
-  <build_depend>depth_map_to_point_cloud</build_depend>
-  <run_depend>depth_map_to_point_cloud</run_depend>
-
   <build_depend>speech_interpreter</build_depend>
   <run_depend>speech_interpreter</run_depend>
 
