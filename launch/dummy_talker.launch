@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <include file="$(find amigo_machine_files)/machines/athome2.machine" />
+
+   <node pkg="robot_skills" type="dummy_talker.py" respawn="false" name="dummy_talker" output="screen" machine="athome2">
+   </node>
+        
+  
+</launch>
