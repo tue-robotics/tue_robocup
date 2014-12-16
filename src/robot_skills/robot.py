@@ -81,54 +81,6 @@ class Robot(object):
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
 
-    def store_position_knowledge(self, label, dx=0.78, z=0.75, drop_dz=0.13, filename='/tmp/locations.pl'):
-
-        # Query reasoner for environment name
-        ans_env = self.reasoner.query(Compound("environment", "Env"))
-
-        if not ans_env:
-            rospy.logerr("Could not get environment name from reasoner.")
-            return
-
-        env_name = ans_env[0]["Env"]
-
-        # Determine base position as (x, y, phi)
-        pose = self.base.location
-        (pos, quat) = pose.pose.position, pose.pose.orientation
-        phi = self.base.phi(quat)
-
-        base_pose = Compound("waypoint", env_name, "Challenge", label, Compound("pose_2d", round(pos.x, 3), round(pos.y, 3), round(phi, 3)))
-        print base_pose
-
-        # Determine lookat point (point of interest)
-
-        time = rospy.Time.now()
-
-        ps = geometry_msgs.msg.PointStamped()
-        ps.header.stamp = time
-        ps.header.frame_id = self.base_link_frame
-        ps.point.x = dx # dx meter in front of robot
-        ps.point.y = 0.0
-        ps.point.z = z
-
-        self.tf_listener.waitForTransform("/map", ps.header.frame_id, time, rospy.Duration(2.0))
-        ps_MAP = self.tf_listener.transformPoint("/map", ps)
-
-        poi = Compound("point_of_interest", env_name, "Challenge", label, Compound("point_3d", round(ps_MAP.point.x, 3), round(ps_MAP.point.y, 3), round(ps_MAP.point.z, 3)))
-        print poi
-
-        dropoff = Compound("dropoff_point", env_name, "Challenge", label, Compound("point_3d", round(ps_MAP.point.x, 3), round(ps_MAP.point.y, 3), round(ps_MAP.point.z + drop_dz, 3)))
-        print dropoff
-
-        with open(filename, "a") as myfile:
-            myfile.write(str(base_pose) + ".\n")
-            myfile.write(str(poi) + ".\n")
-            myfile.write(str(dropoff) + ".\n")
-
-        # assert the facts to the reasoner
-        #self.reasoner.query(Compound("assert", base_pose))
-        #self.reasoner.query(Compound("assert", poi))
-
     def close(self):
         try:
             self.head.close()
