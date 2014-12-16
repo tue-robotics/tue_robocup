@@ -33,27 +33,52 @@ class Say(smach.State):
 
 ##########################################################################################################################################
 
+class Hear(smach.State):
+    def __init__(self, robot, spec, time_out = rospy.Duration(10)):
+        smach.State.__init__(self, outcomes=["heard", "not_heard"])
+        self.robot = robot
+        self.time_out = time_out
+        self.spec = spec
 
+    def execute(self):
+        answer = self.robot.ears.recognize(spec, {}, self.time_out)
 
+        if answer:
+            if answer.result:
+                return "heard"
+        else:
+            self.robot.speech.speak("Something is wrong with my ears, please take a look!")
 
+        return "not_heard"
 
+class HearOptions(smach.State):
+    def __init__(self, robot, options, time_out = rospy.Duration(10)):
+        smach.State.__init__(self, outcomes=options.append("no_result"))
+        self.robot = robot
+        self.time_out = time_out
+        self.options = options
+
+    def execute(self):
+        answer = self.robot.ears.recognize("<option>", {"option":self.options}, self.time_out)
+
+        if answer:
+            if answer.result:
+                return answer.choices["option"]
+        else:
+            self.robot.speech.speak("Something is wrong with my ears, please take a look!")
+
+        return "no_result"
 
 ##########################################################################################################################################
-    
-class AskContinue(smach.State):
-    def __init__(self, robot, timeout=10):
-        smach.State.__init__(self, outcomes=["continue", "no_response"])
+
+class AskContinue(smach.StateMachine):
+    def __init__(self, robot, timeout=rospy.Duration(10)):
+        smach.StateMachine.__init__(self, outcomes=['continue','no_response'])
         self.robot = robot
+        self.timeout = timeout
 
-    def execute(self):
-        return "yes"
-
-class AskYesNo(smach.State):
-    def __init__(self, robot, timeout=10):
-        smach.State.__init__(self, outcomes=["yes", "no"])
-        self.robot = robot
-
-    def execute(self):
-        return "yes"
+        with self:
+            smach.StateMachine.add('ASK',  Say(self.robot, random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])), transitions={'spoken':'HEAR'})
+            smach.StateMachine.add('HEAR', Hear(self.robot, 'continue', self.timeout), transitions={'heard':'continue','not_heard':'no_response'})
 
 ##########################################################################################################################################
