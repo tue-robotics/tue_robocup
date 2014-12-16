@@ -30,13 +30,12 @@ class Ears:
             if answer:
                 answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
         except rospy.ServiceException as e:
-            rospy.logerr("Service exeption: %s"%e)
+            rospy.logerr("Service exception: %s"%e)
         except:
-            rospy.logerr("Something else went wrong, please notify Rein")
+            rospy.logerr("Something else went wrong, please notify Rein ...")
 
         return answer
 
 if __name__ == "__main__":
     rospy.init_node('robot_ears', anonymous=True)
     ears = Ears("amigo")
-
