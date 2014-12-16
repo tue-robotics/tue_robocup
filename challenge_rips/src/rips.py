@@ -68,27 +68,6 @@ from robot_smach_states.designators.designator import Designator, VariableDesign
 #
 #        return 'finished'
 
-#TODO after RWC2014: Move this to the robot_smach_states library
-class Ask_continue(smach.State):
-    def __init__(self, robot, timeout=60):
-        smach.State.__init__(self, outcomes=["done", "no_continue"])
-
-        self.robot = robot
-        self.timeout = timeout
-        self.ask_user_service_continue = rospy.ServiceProxy('interpreter/ask_user', AskUser)
-
-    def execute(self, userdata):
-        response = self.ask_user_service_continue("continue", 1 , rospy.Duration(self.timeout))
-        response_dict = dict(zip(response.keys, response.values)) #Turn the list of values and keys into a list of (key, value) tuples and convert that to a dictionary
-        if response_dict.has_key("answer") and response_dict["answer"] == "answer":
-            return "done"
-        else:
-            return "no_continue"
-
-        rospy.loginfo("answer was not found in response of interpreter. Should not happen!!")
-        return "no_continue"
-
-
 def setup_statemachine(robot):
 
     #retract old facts
@@ -124,18 +103,14 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
                                     states.NavigateToObserve(robot, Designator("dinner_table"), radius=0.7),
-                                    transitions={   'arrived':'SAY_AWAIT_CONTINUE',
-                                                    'unreachable':'SAY_AWAIT_CONTINUE',
-                                                    'goal_not_defined':'SAY_AWAIT_CONTINUE'})
+                                    transitions={   'arrived':'ASK_CONTINUE',
+                                                    'unreachable':'ASK_CONTINUE',
+                                                    'goal_not_defined':'ASK_CONTINUE'})
 
-        smach.StateMachine.add( 'SAY_AWAIT_CONTINUE',
-                                states.Say(robot, ["I'll pause here until you say continue", "I'm waiting for you to say continue"]),
-                                transitions={'spoken':'ASK_CONTINUE_0'})
-
-        smach.StateMachine.add("ASK_CONTINUE_0",
-                        Ask_continue(robot),
-                        transitions={   'done':'SAY_CONTINUEING',
-                                        'no_continue':'SAY_CONTINUEING'})
+        smach.StateMachine.add("ASK_CONTINUE",
+                        states.human_interaction.AskContinue(robot),
+                        transitions={   'continue':'SAY_CONTINUEING',
+                                        'no_response':'SAY_CONTINUEING'})
 
         smach.StateMachine.add( 'SAY_CONTINUEING',
                                 states.Say(robot, ["I heard continue, so I will move to the exit now. See you guys later!"], block=False),
