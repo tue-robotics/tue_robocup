@@ -72,25 +72,6 @@ if __name__ == "__main__":
     q = amigo.reasoner.query
 
     mapgo = amigo.base.go
-
-    def airgo(x,y,z, xoffset=0.5, yoffset=0.1):
-        target = amigo.base.point(x,y,z, stamped=True)
-        ik_poses = amigo.base.get_base_goal_poses(target, xoffset, yoffset)
-        amigo.base.send_goal(ik_poses[0])
-        amigo.head.send_goal(msgs.PointStamped(x,y,z))
-
-    def namego(name):
-        """Go to the waypoint with the given name. 
-        When there re multiple locations with the samen name, shame on you for having messed up locations, and Amigo will go to the first query result"""
-        query = Compound("waypoint", name, Compound("pose_2d", "X", "Y", "Phi"))
-        answers = amigo.reasoner.query(query)
-        try:
-            selected = answers[0]
-        except IndexError:
-            rospy.logerr("No named location {0} (name = {1})".format(query, name))
-            return None
-        x,y,phi = float(selected["X"]), float(selected["Y"]), float(selected["Phi"])
-        return amigo.base.go(x,y,phi)
     
     def basego(x,y,phi):
         return amigo.base.go(x,y,phi,frame="/amigo/base_link")
@@ -149,8 +130,6 @@ if __name__ == "__main__":
     WARNING: When the console exits, it cancels ALL arm and base goals.
     There are handy shortcuts, such as: 
         - mapgo/basego(x,y,phi), 
-        - airgo(x,y,z) for AmigoInverseReachability, 
-        - namego(<waypoint name>)
         - speak/praat/(sentence), save_sentence(sentence) saves the .wav file to /tmp/<sentence_you_typed>.wav
         - head_down, head_reset, left/right_close/open, look_at_point(x,y,z), 
         - get_pose_2d()

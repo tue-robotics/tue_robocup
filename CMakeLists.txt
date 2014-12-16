@@ -24,15 +24,8 @@ find_package(catkin REQUIRED COMPONENTS
     cb_planner_msgs_srvs
     wire_msgs
     perception_srvs
-    pein_supervisor
     obj_in_gripper
-    pein_ar_pose
-    pein_tabletop_segmentation
     laser_ppl_detection
-    pein_wire_interface
-    pein_color_matcher
-    pein_pcl_matcher
-    pein_odufinder
     depth_map_to_point_cloud
     speech_interpreter
     octomap_msgs
