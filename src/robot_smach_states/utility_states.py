@@ -29,10 +29,26 @@ class Initialize(smach.State):
         #self.robot.reasoner.reset()
         self.robot.spindle.reset()
         self.robot.base.reset_costmap()
+        self.robot.perception.toggle([])
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
         rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
         self.robot.base.get_location()
+
+        ''' Load template matching config '''
+
+        # load template config data into reasoner
+        self.robot.reasoner.query(Compound("load_database", "tue_knowledge", "prolog/template_matching.pl"))
+
+        query_template_config = Compound("template_matching_config", "Config")
+        answers = self.robot.reasoner.query(query_template_config)
+        rospy.loginfo("Linemod config answers: {0}".format(answers))
+        if answers:
+            self.robot.perception.load_template_matching_config(str(answers[0]["Config"]))
+        else:
+            rospy.logerr("No linemod config file loaded")
+            # Sleep to emphasize the error above
+            rospy.sleep(1.0)
 
         return 'initialized'
 
