@@ -22,7 +22,7 @@ class Say(smach.State):
         self.mood = mood
         self.block = block
         
-    def execute(self):
+    def execute(self, userdata):
         if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
             sentence = random.choice(self.sentence)
         else:
@@ -40,7 +40,7 @@ class Hear(smach.State):
         self.time_out = time_out
         self.spec = spec
 
-    def execute(self):
+    def execute(self, userdata):
         answer = self.robot.ears.recognize(spec, {}, self.time_out)
 
         if answer:
@@ -58,7 +58,7 @@ class HearOptions(smach.State):
         self.time_out = time_out
         self.options = options
 
-    def execute(self):
+    def execute(self, userdata):
         answer = self.robot.ears.recognize("<option>", {"option":self.options}, self.time_out)
 
         if answer:
@@ -78,7 +78,7 @@ class AskContinue(smach.StateMachine):
         self.timeout = timeout
 
         with self:
-            smach.StateMachine.add('ASK',  Say(self.robot, random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])), transitions={'spoken':'HEAR'})
+            smach.StateMachine.add('ASK',  Say(self.robot, ["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."]), transitions={'spoken':'HEAR'})
             smach.StateMachine.add('HEAR', Hear(self.robot, 'continue', self.timeout), transitions={'heard':'continue','not_heard':'no_response'})
 
 ##########################################################################################################################################
