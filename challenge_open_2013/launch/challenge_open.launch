@@ -1,7 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-
-    <include file="$(find speech_interpreter)/launch/start_magdeburg2013.launch" />
-
-</launch>

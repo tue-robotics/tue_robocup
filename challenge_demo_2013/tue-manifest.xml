@@ -1,8 +1,0 @@
-<deps>
-    <stack name="maluuba_ros"
-           type="git"
-           source="https://github.com/yol/maluuba_ros"
-           local-path="yol-ros-pkg"/>
-</deps>
-
-
