@@ -22,7 +22,7 @@ class Say(smach.State):
         self.mood = mood
         self.block = block
         
-    def execute(self):
+    def execute(self, userdata):
         if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
             sentence = random.choice(self.sentence)
         else:
@@ -40,8 +40,8 @@ class Hear(smach.State):
         self.time_out = time_out
         self.spec = spec
 
-    def execute(self):
-        answer = self.robot.ears.recognize(spec, {}, self.time_out)
+    def execute(self, userdata):
+        answer = self.robot.ears.recognize(self.spec, {}, self.time_out)
 
         if answer:
             if answer.result:
@@ -58,7 +58,7 @@ class HearOptions(smach.State):
         self.time_out = time_out
         self.options = options
 
-    def execute(self):
+    def execute(self, userdata):
         answer = self.robot.ears.recognize("<option>", {"option":self.options}, self.time_out)
 
         if answer:
