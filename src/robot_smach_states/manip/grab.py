@@ -36,6 +36,7 @@ class PickUp(smach.State):
         # Transform to base link frame
         goal_bl = transformations.tf_transform(goal_map, entity_id, self._robot.robot_name+'/base_link', tf_listener=self._robot.tf_listener)
         if goal_bl == None:
+            rospy.logerr('Transformation of goal to base failed')
             return 'failed'
 
         rospy.loginfo(goal_bl)
@@ -47,9 +48,10 @@ class PickUp(smach.State):
         self.arm.send_gripper_goal('open')
 
         # Pre-grasp
+        rospy.loginfo('Starting Pre-grasp')
         if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
                              frame_id=self._robot.robot_name+'/base_link', timeout=20, pre_grasp=True, first_joint_pos_only=True):
-            rospy.logerr('Pre-grasp failed')
+            rospy.logerr('Pre-grasp failed:')
             
             self.arm.reset()
             self.arm.send_gripper_goal('close', timeout=None)
