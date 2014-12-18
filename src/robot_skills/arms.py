@@ -118,6 +118,9 @@ class Arm(object):
         for things such as grasping. You can also specify the frame_id which
         defaults to base_link """
 
+        # save the arguments for debugging later
+        myargs = locals()
+
         # If necessary, prefix frame_id
         if frame_id.find(self.robot_name) < 0:
             frame_id = "/"+self.robot_name+frame_id
@@ -146,14 +149,20 @@ class Arm(object):
         self._publish_marker(grasp_precompute_goal, "red")
 
         # Send goal:
-        self._ac_grasp_precompute.send_goal(grasp_precompute_goal)
+
         if timeout == 0.0:
+            self._ac_grasp_precompute.send_goal(grasp_precompute_goal)
             return True
         else:
-            self._ac_grasp_precompute.wait_for_result(rospy.Duration(timeout))
-            if self._ac_grasp_precompute.get_state() == GoalStatus.SUCCEEDED:
+            result = self._ac_grasp_precompute.send_goal_and_wait(
+                grasp_precompute_goal,
+                execute_timeout=rospy.Duration(timeout)
+            )
+            if result == GoalStatus.SUCCEEDED:
                 return True
             else:
+                # failure
+                rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
     def send_joint_goal(self, configuration):
