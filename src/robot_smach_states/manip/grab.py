@@ -50,7 +50,7 @@ class PickUp(smach.State):
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
         if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-                             frame_id=self._robot.robot_name+'/base_link', timeout=20, pre_grasp=True, first_joint_pos_only=True):
+                             frame_id='/'+self._robot.robot_name+'/base_link', timeout=20, pre_grasp=True, first_joint_pos_only=True):
             rospy.logerr('Pre-grasp failed:')
             
             self.arm.reset()
@@ -58,7 +58,7 @@ class PickUp(smach.State):
             return 'failed'
 
         # Grasp
-        if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id=self._robot.robot_name+'/base_link', timeout=120, pre_grasp = True):
+        if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id='/'+self._robot.robot_name+'/base_link', timeout=120, pre_grasp = True):
             self._robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             self.arm.reset()
@@ -69,11 +69,11 @@ class PickUp(smach.State):
         self.arm.send_gripper_goal('close')
 
         # Lift
-        if not self.arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id=self._robot.robot_name+'/base_link'):
+        if not self.arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+self._robot.robot_name+'/base_link'):
             rospy.logerr('Failed lift')
 
         # Retract
-        if not self.arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id=self._robot.robot_name+'/base_link'):
+        if not self.arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+self._robot.robot_name+'/base_link'):
             rospy.logerr('Failed retract')
 
         # Carrying pose
