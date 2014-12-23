@@ -35,30 +35,28 @@ sides = ["left","right","front","back"]
 numbers = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
 restaurant_locations = ["ordering location","food location", "drink location"]
 
-def ask(question, spec, choices, answer):
+def ask(question, spec, choices):
     s.speak(question)
     r = e.recognize(spec, choices)
 
     print "Choices are: " + str(choices)
 
     if r:
-        for k,v in r.choices.iteritems():
-            answer = answer.replace("<%s>"%k,v)
-        s.speak(answer)
+        s.speak("You said: %s"%r.result)
     else:
         s.speak("I don't understand, sorry")
 
     time.sleep(1)
 
 while not rospy.is_shutdown():
-    ask("What would you like to drink?", "<drink>", {"drink":drinks}, random.choice(["Nice, I also like <drink>","<drink>, that's an excellent choice!","Realy, <drink>?","Ok, I will get you a <drink>"]))
+    ask("What would you like to drink?", "<drink>", {"drink":drinks})
 
-    ask("Ask me a EGPSR question", "<action> (me) (a|an|the) <object> (from|of) (the|a|an) <location> (to|of|from) (the|a|an) <location2> ", {"action":actions,"object":object_category,"location":location_category+places,"location2":location_category+places}, "Ok, I will <action> a <object> from the <location> to the <location>")
+    ask("Ask me a EGPSR question", "<action> (me) (a|an|the) <object> (from|of) (the|a|an) <location> (to|of|from) (the|a|an) <location2> ", {"action":actions,"object":object_category,"location":location_category+places,"location2":location_category+places})
 
-    ask(random.choice(["What is your name?","Hey, how should I call you?"]), "<name>", {"name":names}, random.choice(["Nice, I will call you <name>","<name>, that's an beautiful name!","Realy, <name>?","Ok, from now on, you are <name>"]))
+    ask(random.choice(["What is your name?","Hey, how should I call you?"]), "<name>", {"name":names})
 
     for i in range(0,10):
-    	ask("Waiting for restaurant speech command","(<side> <number>|<location>)", {"side":sides,"number":numbers,"location":restaurant_locations}, "<side> <number> <location>")
+    	ask("Waiting for restaurant speech command","(<number> <side>|<location>)", {"side":sides,"number":numbers,"location":restaurant_locations})
 
 
-    
+
