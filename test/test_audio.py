@@ -37,9 +37,9 @@ restaurant_locations = ["ordering location","food location", "drink location"]
 
 def ask(question, spec, choices):
     s.speak(question)
+    print "Choices are: " + str(choices)
     r = e.recognize(spec, choices)
 
-    print "Choices are: " + str(choices)
 
     if r:
         s.speak("You said: %s"%r.result)
