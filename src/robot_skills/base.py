@@ -11,10 +11,9 @@ from geometry_msgs.msg import PoseStamped, Point, Twist, PoseWithCovarianceStamp
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 import actionlib
-#from util import transformations
+from util import transformations
 import tf
 import tf_server
-#import robot_skills.util.nav_analyzer
 from util import nav_analyzer
 import math
 
@@ -172,6 +171,24 @@ class Base(object):
 
     def get_location(self):
         return get_location(self._robot_name, self._tf_listener)
+        
+    def set_initial_pose(self, x, y, phi):
+
+        initial_pose = geometry_msgs.msg.PoseWithCovarianceStamped()
+        
+        initial_pose.header.frame_id = "/map"
+        
+        initial_pose.pose.pose.position.x = x
+        initial_pose.pose.pose.position.y = y
+        initial_pose.pose.pose.position.z = 0.0
+        initial_pose.pose.pose.orientation = transformations.euler_z_to_quaternion(phi) 
+        initial_pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853891945200942, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+        #rospy.loginfo("initalpose = {0}".format(initial_pose))
+
+        self._initial_pose_publisher.publish(initial_pose)
+
+        return True 
 
 ###########################################################################################################################
 
@@ -225,25 +242,6 @@ def compute_path_length(path):
     def go(self, x, y, phi, frame="/map", timeout=0):
         rospy.logwarn("[constraint_based_base.py] Function 'go' is obsolete.")
         return True
-
-    def set_initial_pose(self, x, y, phi):
-        rospy.logwarn("[constraint_based_base.py] Function 'set_initial_pose' is obsolete.")
-
-        initial_pose = geometry_msgs.msg.PoseWithCovarianceStamped()
-        
-        initial_pose.header.frame_id = "/map"
-        
-        initial_pose.pose.pose.position.x = x
-        initial_pose.pose.pose.position.y = y
-        initial_pose.pose.pose.position.z = 0.0
-        initial_pose.pose.pose.orientation = transformations.euler_z_to_quaternion(phi) 
-        initial_pose.pose.covariance = [0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06853891945200942, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
-        #rospy.loginfo("initalpose = {0}".format(initial_pose))
-
-        self._initial_pose_publisher.publish(initial_pose)
-
-        return True     
 
     def reset_costmap(self):
         rospy.logwarn("[constraint_based_base.py] Function 'reset_costmap' is obsolete.")
