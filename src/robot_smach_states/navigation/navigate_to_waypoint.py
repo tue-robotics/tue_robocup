@@ -22,8 +22,6 @@ class NavigateToWaypoint(NavigateTo):
         _id = self.waypoint_designator.resolve()
         e = self.robot.ed.get_entity(id=_id)
 
-        print e
-
         if not e:
             rospy.logerr("No such entity")
             return None
@@ -40,8 +38,6 @@ class NavigateToWaypoint(NavigateTo):
             rz = e.data["pose"]["rz"]
         except KeyError:
             rz = 0
-
-        rospy.logwarn("Should Sjoerd check the newest model data in???")
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
         oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
