@@ -13,36 +13,18 @@ amigo1:
     amiddle
 
 amigo3:
-    (You can store and restore alsamixer settings with 'sudo alsactl store 0' and 'sudo alsactl restore 0', where 0 is the sound card number)
-    alsamixer
-        Mic Boost -> 22
-        Capture -> 44
-        Digital -> 29
-        Mic on mute!!! (Should be muted already)
-        
-    amigo-console        
-	test_audio()
-        (lights should become green -> say 'continue')
-        (if response is 'true', amigo heard you and lights become blue)
+     
+    Test audio:
+    
+    rosrun robot_skills test_audio.py [robot_name]
+    
+    asdf
 
-    SWITCH OFF THE MICROPHONE with the switch on the back 
-        (Audio works, but we want to test the challenge for the case the speech doesn't work and the backup scenario.)
-
-    say test  
-        (to test speaker is working) 
-
-    rosrun challenge_rips rips.py _arm:=left
+    rosrun challenge_rips rips.py [robot_name]
 
     or 
 
-    rosrun challenge_rips rips.py _arm:=right   !!! WATCH CAREFULLY DURING RIGHT ARM MOVEMENTS AT INTRODUCTION, need to be checked !!!
-
     hear continue #Don't pree enter just yet
-
-if tue_pocket_sphinx crashes
-    then launch on amigo3
-
-	roslaunch amigo_launch_files speech_recognition.launch
 
 Unplug the network cable in amigo.
 localhost:
