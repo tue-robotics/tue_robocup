@@ -18,6 +18,40 @@ from random import choice
 
 # ----------------------------------------------------------------------------------------------------
 
+class StartAnalyzer(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot = robot
+        
+    def execute(self, userdata):
+        self.robot.base.analyzer.start_measurement(self.robot.base.get_location())
+        return 'done'
+
+# ----------------------------------------------------------------------------------------------------
+        
+class StopAnalyzer(smach.State):
+    def __init__(self, robot, result):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot  = robot
+        self.result = result
+        
+    def execute(self, userdata):
+        self.robot.base.analyzer.stop_measurement(self.robot.base.get_location(), self.result)
+        return 'done'
+
+# ----------------------------------------------------------------------------------------------------
+
+class AbortAnalyzer(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot  = robot
+        
+    def execute(self, userdata):
+        self.robot.base.analyzer.abort_measurement()
+        return 'done'
+
+# ----------------------------------------------------------------------------------------------------
+
 class getPlan(smach.State):
     def __init__(self, robot, constraint_function):
         smach.State.__init__(self,
@@ -82,16 +116,6 @@ class executePlan(smach.State):
 
             if status == "arrived":
                 return "arrived"      
-            elif self.isBlocked(status):
-                return "blocked"
-
-    def isBlocked(self, status):
-        if status == "blocked":
-            if (rospy.Time.now() - self.t_last_free) > rospy.Duration(self.blocked_timeout):
-                return True
-        else:
-            self.t_last_free = rospy.Time.now()
-        return False
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -102,11 +126,23 @@ class determineBlocked(smach.State):
 
    def execute(self, userdata):
 
+        rospy.logwarn("Plan blocked");
+
         # Look at the entity
         p=self.robot.base.local_planner.getObstaclePoint()
         p.z = 1.6
         self.robot.head.setLookAtGoal("/map", p)
-        rospy.sleep(5.0)
+
+        # Wait for 5 seconds but continue if the path is free
+        wait_start = rospy.Time.now()
+        while ( (rospy.Time.now() - wait_start) < rospy.Duration(5.0) ):
+            rospy.sleep(0.5)
+            if not self.robot.base.local_planner.getStatus == "blocked":
+                self.robot.head.cancelGoal()
+                rospy.logwarn("Plan free again")
+                return "free"
+        
+        # Else: take other actions
         self.robot.head.cancelGoal()
 
         if self.robot.base.local_planner.getStatus() == "blocked":
@@ -257,11 +293,23 @@ class NavigateTo(smach.StateMachine):
                 smach.Concurrence.add('NAVIGATE', sm_nav)
                 smach.Concurrence.add('MONITOR' , breakOutState(self.robot, self.breakOut))
 
+            smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
+                transitions={'done'                                 :'MONITORED_NAVIGATE'})
+
             smach.StateMachine.add('MONITORED_NAVIGATE', sm_con,
-                transitions={'arrived'          : 'arrived',
-                             'unreachable'      : 'unreachable',
-                             'goal_not_defined' : 'goal_not_defined',
-                             'preempted'        : 'arrived'})
+                transitions={'arrived'                              : 'STOP_ANALYSIS_SUCCEED',
+                             'unreachable'                          : 'STOP_ANALYSIS_UNREACHABLE',
+                             'goal_not_defined'                     : 'ABORT_ANALYSIS_NOT_DEFINED',
+                             'preempted'                            : 'STOP_ANALYSIS_SUCCEED'})
+
+            smach.StateMachine.add('STOP_ANALYSIS_SUCCEED', StopAnalyzer(self.robot, 'succeeded'),
+                transitions={'done'                                 : 'arrived'})
+                
+            smach.StateMachine.add('STOP_ANALYSIS_UNREACHABLE', StopAnalyzer(self.robot, 'unreachable'),
+                transitions={'done'                                 : 'unreachable'})
+                
+            smach.StateMachine.add('ABORT_ANALYSIS_NOT_DEFINED', AbortAnalyzer(self.robot),
+                transitions={'done'                                 : 'goal_not_defined'})
 
     def generateConstraint(self):
         pass
