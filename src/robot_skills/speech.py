@@ -14,14 +14,14 @@ class Speech(object):
     """Interface to Amigo's tts-module"""
 
     def __init__(self, robot_name, wait_service=True):
-        self.amigo_speak_up = rospy.Publisher("/text_to_speech/input", String)
+        self.amigo_speak_up = rospy.Publisher("/%s/text_to_speech/input"%robot_name, String)
         self.amigo_speak_up_info = rospy.Publisher("/amigo_speak_up_info", String)
         self.pub_amigo_speech_sim = rospy.Publisher("/amigo_speech_sim", String)    # For using amigo's speech in simulation
 
         if wait_service:
             rospy.loginfo("Waiting for service amigo_speakup_advanced")
-            rospy.wait_for_service('/text_to_speech/speak', timeout=2)
-        self.speech_service = rospy.ServiceProxy('/text_to_speech/speak', Speak)
+            rospy.wait_for_service('/%s/text_to_speech/speak'%robot_name, timeout=2)
+        self.speech_service = rospy.ServiceProxy('/%s/text_to_speech/speak'%robot_name, Speak)
 
         """Interface to Amigo's stt-module
            To do: better integration with other Speech code"""
