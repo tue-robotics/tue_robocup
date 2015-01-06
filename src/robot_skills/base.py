@@ -11,12 +11,20 @@ from geometry_msgs.msg import PoseStamped, Point, Twist, PoseWithCovarianceStamp
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 import actionlib
-from util import transformations
+#from util import transformations
+import tf
+import tf_server
+#import robot_skills.util.nav_analyzer
+from util import nav_analyzer
+import math
 
 ###########################################################################################################################
 
 class LocalPlanner():
-    def __init__(self):
+    def __init__(self, robot_name, tf_listener, analyzer):
+        self.analyzer = analyzer
+        self._robot_name = robot_name
+        self._tf_listener = tf_listener
         self._action_client = actionlib.SimpleActionClient('/cb_base_navigation/local_planner_interface/action_server', LocalPlannerAction)
 
         # Public members!
@@ -66,7 +74,10 @@ class LocalPlanner():
 ###########################################################################################################################
 
 class GlobalPlanner():
-    def __init__(self):
+    def __init__(self, robot_name, tf_listener, analyzer):
+        self.analyzer = analyzer
+        self._robot_name = robot_name
+        self._tf_listener = tf_listener
         self._get_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/get_plan_srv", GetPlan)
         self._check_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/check_plan_srv", CheckPlan)
         rospy.loginfo("Waiting for the global planner services ...")
@@ -78,6 +89,8 @@ class GlobalPlanner():
         pcs = []
         pcs.append(position_constraint)
 
+        start_time = rospy.Time.now()
+
         try:
             resp = self._get_plan_client(pcs)
         except:
@@ -87,6 +100,13 @@ class GlobalPlanner():
         if not resp.succes:
             rospy.logerr("Global planner couldn't plan a path to the specified constraints. Are the constraints you specified valid?")
             return None
+
+        end_time = rospy.Time.now()
+        plan_time = (end_time-start_time).to_sec()
+        
+        path_length = compute_path_length(resp.plan)
+        
+        self.analyzer.count_plan(resp.plan[0], resp.plan[-1], plan_time, path_length)
 
         return resp.plan
 
@@ -102,15 +122,17 @@ class GlobalPlanner():
 ###########################################################################################################################
 
 class Base(object):
-    def __init__(self, robot, tf_listener, wait_service=True, use_2d=None):
+    def __init__(self, robot_name, tf_listener, wait_service=True, use_2d=None):
         self._tf_listener = tf_listener
-        self._robot = robot
-        self._cmd_vel = rospy.Publisher('/' + self._robot.robot_name + '/base/references', Twist)
-        self._initial_pose_publisher = rospy.Publisher('/' + self._robot.robot_name + '/initialpose', PoseWithCovarianceStamped)
+        self._robot_name = robot_name
+        self._cmd_vel = rospy.Publisher('/' + self._robot_name + '/base/references', Twist)
+        self._initial_pose_publisher = rospy.Publisher('/' + self._robot_name + '/initialpose', PoseWithCovarianceStamped)
+        
+        self.analyzer = nav_analyzer.NavAnalyzer(self._robot_name)
 
         # The plannners
-        self.global_planner = GlobalPlanner()
-        self.local_planner = LocalPlanner()
+        self.global_planner = GlobalPlanner(self._robot_name, self._tf_listener, self.analyzer)
+        self.local_planner = LocalPlanner(self._robot_name, self._tf_listener, self.analyzer)
 
     def move(self, position_constraint_string, frame):
         p = PositionConstraint()
@@ -149,32 +171,46 @@ class Base(object):
         return True
 
     def get_location(self):
+        return get_location(self._robot_name, self._tf_listener)
 
-        try:
-            time = rospy.Time.now()
-            self._tf_listener.waitForTransform("/map", "/" + self._robot.robot_name + "/base_link", time, rospy.Duration(20.0))
-            (ro_trans, ro_rot) = self._tf_listener.lookupTransform("/map", "/" + self._robot.robot_name + "/base_link", time)
-            
-            position = geometry_msgs.msg.Point()
-            orientation = geometry_msgs.msg.Quaternion()
-            
-            position.x = ro_trans[0]
-            position.y = ro_trans[1]
-            orientation.x = ro_rot[0]
-            orientation.y = ro_rot[1]
-            orientation.z = ro_rot[2]
-            orientation.w = ro_rot[3]
+###########################################################################################################################
 
-            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-            target_pose.header.frame_id = "/map"
-            target_pose.header.stamp = time
-            return target_pose
+def get_location(robot_name, tf_listener):
+
+    try:
+        time = rospy.Time.now()
+        tf_listener.waitForTransform("/map", "/" + robot_name + "/base_link", time, rospy.Duration(20.0))
+        (ro_trans, ro_rot) = tf_listener.lookupTransform("/map", "/" + robot_name + "/base_link", time)
         
-        except (tf.LookupException, tf.ConnectivityException):
-            rospy.logerr("tf request failed!!!")        
-            target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
-            target_pose.header.frame_id = "/map"
-            return target_pose    
+        position = geometry_msgs.msg.Point()
+        orientation = geometry_msgs.msg.Quaternion()
+        
+        position.x = ro_trans[0]
+        position.y = ro_trans[1]
+        orientation.x = ro_rot[0]
+        orientation.y = ro_rot[1]
+        orientation.z = ro_rot[2]
+        orientation.w = ro_rot[3]
+
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose.header.frame_id = "/map"
+        target_pose.header.stamp = time
+        return target_pose
+    
+    except (tf.LookupException, tf.ConnectivityException):
+        rospy.logerr("tf request failed!!!")        
+        target_pose =  geometry_msgs.msg.PoseStamped(pose=geometry_msgs.msg.Pose(position=position, orientation=orientation))
+        target_pose.header.frame_id = "/map"
+        return target_pose
+
+def compute_path_length(path):
+    distance = 0.0
+    for index, pose in enumerate(path):
+        if not index == 0:
+            dx = path[index].pose.position.x - path[index-1].pose.position.x
+            dy = path[index].pose.position.y - path[index-1].pose.position.y
+            distance += math.sqrt( dx*dx + dy*dy)
+    return distance
 
 ################################################################################################################################################################
 ################################################################################################################################################################

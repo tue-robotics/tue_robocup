@@ -44,7 +44,7 @@ class Robot(object):
         self.tf_listener = tf_server.TFClient()
 
         # Body parts
-        self.base = base.Base(self, self.tf_listener, wait_service=wait_services)
+        self.base = base.Base(self.robot_name, self.tf_listener, wait_service=wait_services)
         self.torso = torso.Torso(self.robot_name,wait_service=wait_services)
         self.spindle = self.torso
         self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)

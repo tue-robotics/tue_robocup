@@ -25,8 +25,9 @@ import transformations
 
 class NavAnalyzer:
     
-    def __init__(self):
+    def __init__(self, robot_name):
         
+        self._robot_name = robot_name
         self.rosbag = False       
         rospy.logwarn("Nav_analyser: Bagging = {0}".format(self.rosbag))
         
@@ -48,22 +49,25 @@ class NavAnalyzer:
         self.filename = self.path+'/Summary.xml'
         
         ''' Odometry subscriber ''' 
-        self.odom_sub = rospy.Subscriber("/amigo/base/measurements", nav_msgs.msg.Odometry, self.odomCallback)
+        self.odom_sub = rospy.Subscriber("/"+self._robot_name+"/base/measurements", nav_msgs.msg.Odometry, self.odomCallback)
         
         ''' Indicates whether measuring or not '''
         self.active = False
 
         ''' Bag topics '''
         if self.rosbag:
-            topics = ["/amigo/base/references", "/amigo/base/measurements", "/amcl_pose", "/amigo/base_front_laser", "/move_base_3d/AStarPlannerROS/plan"]
+            topics = ["/"+self._robot_name+"/base/references", 
+                      "/"+self._robot_name+"/base/measurements", 
+                      "/amcl_pose", 
+                      "/"+self._robot_name+"/base_front_laser", 
+                      "/move_base_3d/AStarPlannerROS/plan"]
 
-            plantopic = "/move_base"
-            if os.environ["AMIGO_NAV"] == "3d":
-                plantopic += "_3d"
-            plantopic += "/AStarPlannerROS/plan"
-            topics.append(plantopic)
+            #plantopic = "/move_base"
+            #if os.environ["AMIGO_NAV"] == "3d":
+            #    plantopic += "_3d"
+            #plantopic += "/AStarPlannerROS/plan"
+            #topics.append(plantopic)
 
-            #topics = ["/amigo/base/references"]
             self.base_cmd = "rosbag record "
             for topic in topics:
                 self.base_cmd += (topic + " ")
