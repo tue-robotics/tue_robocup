@@ -49,17 +49,14 @@ def ask(question, spec, choices):
     time.sleep(1)
 
 while not rospy.is_shutdown():
-    try:
-        ask("What would you like to drink?", "<drink>", {"drink":drinks})
+    ask("What would you like to drink?", "<drink>", {"drink":drinks})
 
-        ask("Ask me a EGPSR question", "<action> (me) (a|an|the) <object> (from|of) (the|a|an) <location> (to|of|from) (the|a|an) <location2> ", {"action":actions,"object":object_category,"location":location_category+places,"location2":location_category+places})
+    ask("Ask me a EGPSR question", "<action> (me) (a|an|the) <object> (from|of) (the|a|an) <location> (to|of|from) (the|a|an) <location2> ", {"action":actions,"object":object_category,"location":location_category+places,"location2":location_category+places})
 
-        ask(random.choice(["What is your name?","Hey, how should I call you?"]), "<name>", {"name":names})
+    ask(random.choice(["What is your name?","Hey, how should I call you?"]), "<name>", {"name":names})
 
-        for i in range(0,4):
-            ask("Waiting for restaurant speech command","(<number> <side>|<location>)", {"side":sides,"number":numbers,"location":restaurant_locations})
-    except KeyboardInterrupt:
-        break
+    for i in range(0,4):
+        ask("Waiting for restaurant speech command","(<number> <side>|<location>)", {"side":sides,"number":numbers,"location":restaurant_locations})
 
 
 

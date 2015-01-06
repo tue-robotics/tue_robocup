@@ -7,7 +7,7 @@ from dragonfly_speech_recognition.msg import Choice
 
 class Ears:
     """
-    Interface to amigo Ears. 
+    Interface to amigo Ears.
     Works with dragonfly speech recognition (as of december 2014)
 
     Function listen explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
@@ -31,8 +31,6 @@ class Ears:
                 answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
         except rospy.ServiceException as e:
             rospy.logerr("Service exception: %s"%e)
-        except:
-            rospy.logerr("Something else went wrong, please notify Rein ...")
 
         return answer
 
