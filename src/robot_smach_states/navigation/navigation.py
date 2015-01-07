@@ -219,7 +219,7 @@ class breakOutState(smach.State):
     def execute(self, userdata):
 
         breakout = False
-        while (not rospy.is_shutdown() and not breakout):
+        while (not rospy.is_shutdown() and not breakout and not self.preempt_requested()):
             rospy.sleep(rospy.Duration(0.5))
             breakout = self.breakout_function()
 
@@ -277,6 +277,9 @@ class NavigateTo(smach.StateMachine):
 
                 if outcome_map['MONITOR'] == 'passed':
                     return False
+
+                if outcome_map['NAVIGATE'] == 'unreachable':
+                    return True
 
             sm_con = smach.Concurrence( outcomes=['arrived','unreachable','goal_not_defined','preempted'],
                                         default_outcome='arrived',
