@@ -105,7 +105,8 @@ class GlobalPlanner():
         
         path_length = compute_path_length(resp.plan)
         
-        self.analyzer.count_plan(resp.plan[0], resp.plan[-1], plan_time, path_length)
+        if path_length > 0:
+            self.analyzer.count_plan(resp.plan[0], resp.plan[-1], plan_time, path_length)
 
         return resp.plan
 
