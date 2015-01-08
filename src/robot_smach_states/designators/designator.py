@@ -216,7 +216,7 @@ class FuncDesignator(Designator):
 
 
 if __name__ == "__main__":
-    rospy.init_node('Designator_test', log_level=rospy.INFO)
+    #rospy.init_node('Designator_test', log_level=rospy.INFO)
 
     import doctest
     doctest.testmod()
