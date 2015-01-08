@@ -36,6 +36,7 @@ class LocalPlanner():
         goal = LocalPlannerGoal()
         goal.plan = plan
         goal.orientation_constraint = orientation_constraint
+        self._orientation_constraint = orientation_constraint
         self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback) 
         self.__setState("controlling", None, None, plan)
 
@@ -54,6 +55,9 @@ class LocalPlanner():
 
     def getPlan(self):
         return plan
+
+    def getCurrentOrientationConstraint(self):
+        return self._orientation_constraint
 
     def __feedbackCallback(self, feedback):
         if feedback.blocked:
@@ -103,7 +107,7 @@ class GlobalPlanner():
         end_time = rospy.Time.now()
         plan_time = (end_time-start_time).to_sec()
         
-        path_length = compute_path_length(resp.plan)
+        path_length = self.computePathLength(resp.plan)
         
         if path_length > 0:
             self.analyzer.count_plan(resp.plan[0], resp.plan[-1], plan_time, path_length)
@@ -118,6 +122,18 @@ class GlobalPlanner():
             return False
 
         return resp.valid
+
+    def getCurrentPositionConstraint(self):
+        return self.position_constraint
+
+    def computePathLength(self, path):
+        distance = 0.0
+        for index, pose in enumerate(path):
+            if not index == 0:
+                dx = path[index].pose.position.x - path[index-1].pose.position.x
+                dy = path[index].pose.position.y - path[index-1].pose.position.y
+                distance += math.sqrt( dx*dx + dy*dy)
+        return distance
 
 ###########################################################################################################################
 
@@ -240,11 +256,4 @@ def get_location(robot_name, tf_listener):
         target_pose.header.frame_id = "/map"
         return target_pose
 
-def compute_path_length(path):
-    distance = 0.0
-    for index, pose in enumerate(path):
-        if not index == 0:
-            dx = path[index].pose.position.x - path[index-1].pose.position.x
-            dy = path[index].pose.position.y - path[index-1].pose.position.y
-            distance += math.sqrt( dx*dx + dy*dy)
-    return distance
+
