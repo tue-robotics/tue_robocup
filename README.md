@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tue-robototics/robot_smach_states.svg?branch=master)](https://travis-ci.org/tue-robototics/robot_smach_states)
+[![Build Status](https://travis-ci.org/tue-robotics/robot_smach_states.svg?branch=master)](https://travis-ci.org/tue-robotics/robot_smach_states)
 
 robot_smach_states
 ==================
