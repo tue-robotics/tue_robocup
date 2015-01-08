@@ -201,7 +201,7 @@ class FuncDesignator(Designator):
     """Apply a function to the object a wrapped designator resolves to
     For example: 
     >>> d = Designator("Hello")
-    >>> wrapped = FuncDesignator(d, len) #Determine the len of whatever d resiolves to
+    >>> wrapped = FuncDesignator(d, len) #Determine the len of whatever d resolves to
     >>> wrapped.resolve()
     5
     """
