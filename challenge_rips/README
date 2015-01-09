@@ -1,16 +1,16 @@
 # Responsible: Erik
 
-amigo1:
+amigo1/sergio1: 
 
-    astart # (if not already running)
+    astart/sstart # (if not already running)
 
-amigo2:
+amigo2/sergio1:
 
-    hardware: base, spindle, arms (left-arm is used) head
+    ahardware/shardware: base, spindle, arms (left-arm is used) head
 
-amigo1:
+amigo1/sergio1:
 
-    amiddle
+    amiddle/smiddle
 
 amigo3:
      
@@ -28,7 +28,7 @@ amigo3:
 
 Unplug the network cable in amigo.
 localhost:
-    sshamigo3 #Thsi will not work because amigo is unplugged
+    sshamigo3 #This will not work because amigo is unplugged
 
 During the challenge: 
     - Amigo drives to some position and then says it will wait for 'continue' to be said. The mic is off, so we will show the backup scenario.
