@@ -30,4 +30,4 @@ before_script:
 
 script:
   - catkin_make
-  - python src/robot_smach_states/designators/designator.py
+  - rosrun robot_smach_states designator.py
