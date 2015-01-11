@@ -30,7 +30,4 @@ before_script:
 
 script:
   - catkin_make
-  - catkin_make install   # installing the package
-  - catkin_make tests     # build the tests
-  - catkin_make run_tests # and run them
   - python src/robot_smach_states/designators/designator.py
