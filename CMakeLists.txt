@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
     smach
     smach_ros
     geometry_msgs
+    ed
 )
 
 # find_package(Boost REQUIRED COMPONENTS system program_options)
