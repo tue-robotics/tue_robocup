@@ -185,7 +185,7 @@ class AttrDesignator(Designator):
     """Get some attribute of the object a wrapped designator resolves to.
     For example:
     >>> d = Designator(object())
-    #Get the __class__ attribute of the object that d resolves to
+    >>> #Get the __class__ attribute of the object that d resolves to
     >>> wrapped = AttrDesignator(d, '__class__')
     >>> wrapped.resolve() == object
     True
@@ -217,6 +217,41 @@ class FuncDesignator(Designator):
 
     def resolve(self):
         return self.func(self.orig.resolve())
+
+
+def test_visited_and_unreachable():
+    """In our RoboCup executives, we keep track of which items are 'processed' or visited,
+    and which cannot be processed because they are unreachable.
+
+    One way to do this, is to mark objectIDs as visited and unreachable in the reasoner,
+    e.g. a global blackboard that can be manipulated an queried through Prolog.
+
+    This gets messy with complex queries. With designators, it should be a lot simpler"""
+    import random
+    success = lambda: bool(random.randint(0, 1))
+
+    target_list = [str(i) for i in range(10)] + [str(i) for i in range(10)]  # all are in twice!
+    targets = Designator(target_list)
+
+    unreachable_set = set()
+    unreachable = VariableDesignator(unreachable_set)
+
+    visited_set = set()
+    visited = VariableDesignator(visited_set)
+
+    for target in target_list:
+        if target not in unreachable.resolve() and target not in visited.resolve():
+            print "Processing target {0}".format(target)
+            if success():
+                visited.current.add(target)  # This is a set so no += [...]
+                print "Target {0} was successfull, its visited".format(target)
+            else:
+                unreachable.current.add(target)  # This is a set so no += [...]
+                print "Target {0} failed, its unreachable".format(target)
+
+    print "##### Done #####"
+    print "These are unreachable: {0}".format(unreachable.resolve())
+    print "These are visited: {0}".format(visited.resolve())
 
 
 if __name__ == "__main__":

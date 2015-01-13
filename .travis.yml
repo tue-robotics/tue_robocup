@@ -31,3 +31,4 @@ before_script:
 script:
   - catkin_make
   - rosrun robot_smach_states designator.py
+  - nosetests
