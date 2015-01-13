@@ -2,7 +2,7 @@ robot_console () {
     depcheck ipython
     ROBOT_PARTS_DIR=`rospack find robot_smach_states`/src/robot_smach_states
     echo -e "launching robot console...\n${ROBOT_PARTS_DIR} ..."
-    ipython -i --no-banner --autocall 2 "${ROBOT_PARTS_DIR}/console.py" "${@}"
+    ipython -i --no-banner --autocall 2 "${ROBOT_PARTS_DIR}/console.py" -- $*
 }
 
 # bash completion
