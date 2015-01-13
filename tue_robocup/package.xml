@@ -16,7 +16,7 @@
   <!-- <run_depend>challenge_cleanup</run_depend> -->
   <run_depend>challenge_cocktail_party</run_depend>
   <run_depend>challenge_demo</run_depend>
-  <run_depend>challenge_egpsr</run_depend>
+  <run_depend>challenge_gpsr</run_depend>
   <!-- <run_depend>challenge_emergency</run_depend> -->
   <run_depend>challenge_final</run_depend>
   <run_depend>challenge_follow_me</run_depend>
