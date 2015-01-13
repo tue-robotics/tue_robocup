@@ -223,14 +223,13 @@ def test_visited_and_unreachable():
     """In our RoboCup executives, we keep track of which items are 'processed' or visited,
     and which cannot be processed because they are unreachable.
 
-    One way to do this, is to mark objectIDs as visited and unreachable in the reasoner,
+    One way to do this, is to mark objectIDs (targets) as visited and unreachable in the reasoner,
     e.g. a global blackboard that can be manipulated an queried through Prolog.
 
     This gets messy with complex queries. With designators, it should be a lot simpler"""
-    import random
-    success = lambda: bool(random.randint(0, 1))
+    success = lambda goal: goal % 2  # Even targets will fail
 
-    target_list = [str(i) for i in range(10)] + [str(i) for i in range(10)]  # all are in twice!
+    target_list = [i for i in range(10)] + [i for i in range(10)]  # all are in twice!
     targets = Designator(target_list)
 
     unreachable_set = set()
@@ -242,17 +241,21 @@ def test_visited_and_unreachable():
     for target in target_list:
         if target not in unreachable.resolve() and target not in visited.resolve():
             print "Processing target {0}".format(target)
-            if success():
+            if success(target):
                 visited.current.add(target)  # This is a set so no += [...]
                 print "Target {0} was successfull, its visited".format(target)
             else:
                 unreachable.current.add(target)  # This is a set so no += [...]
                 print "Target {0} failed, its unreachable".format(target)
+        else:
+            print "NOT processing target {0}: its unreachable or already visited".format(target)
 
     print "##### Done #####"
     print "These are unreachable: {0}".format(unreachable.resolve())
     print "These are visited: {0}".format(visited.resolve())
 
+    assert len(unreachable.resolve())   == 5
+    assert len(visited.resolve())       == 5
 
 if __name__ == "__main__":
     import doctest
