@@ -10,6 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
     ed
 )
 
+# add robot-console
+catkin_add_env_hooks(60.robot_smach_states SHELLS sh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
+
 catkin_python_setup()
 
 catkin_package()
