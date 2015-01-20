@@ -29,18 +29,31 @@ class bcolors:
     ENDC = '\033[0m'
 
 def load_robot(robot_name, parts=None):
-    try:
-        module = importlib.import_module('robot_skills.' + robot_name)
-        robot = module.__getattribute__(robot_name.title())(wait_services=False)
-    except (ImportError, AttributeError) as e:
-        msg = '\nrobot "%s" could not be found!!!\n' % robot_name
-        msg += '\nException:\n' + str(e) + '\n'
-        raise DocoptExit(msg)
+    modules = [robot_name] if not parts else parts
 
-    # register as global
-    globals()[robot_name] = robot
+    loaded = []
+    for name in modules:
+        try:
+            print bcolors.OKBLUE + '\tloading %s' % name + bcolors.ENDC
+            module = importlib.import_module('robot_skills.' + name)
+            constructor = module.__getattribute__(name.title())
 
-    print bcolors.OKGREEN+'\tSuccesfully loaded robot "%s"' % robot_name +bcolors.ENDC
+            if parts:
+                instance = constructor(robot_name)
+            else:
+                instance = constructor(wait_services=False)
+
+            loaded.append(instance)
+            # register as global
+            globals()[name] = instance
+            print bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC
+        except (ImportError, AttributeError, TypeError) as e:
+            msg = '\n"%s" could not be found!!!\n' % name
+            msg += '\n%s:\n%s\n' % (type(e), str(e))
+            print bcolors.WARNING+msg+bcolors.ENDC
+
+    if not len(loaded):
+        raise DocoptExit("error: no robots or parts loaded")
 
 if __name__ == '__main__':
     try:
@@ -55,6 +68,7 @@ if __name__ == '__main__':
         print bcolors.OKGREEN+'\tSuccesfully loaded statemachines as "state_machine"'+bcolors.ENDC
 
         parts = arguments['--part']
+        parts = parts.split(',') if parts else None
         for robot in arguments['<robot>']:
             load_robot(robot, parts=parts)
 
