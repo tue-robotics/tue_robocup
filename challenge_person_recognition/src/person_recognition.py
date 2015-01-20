@@ -2,9 +2,7 @@
 import rospy
 import sys
 
-import avoid_that
-import pick_and_place
-import what_did_you_say
+import person_recognition_states
 
 from robot_smach_states.highlevel import StartChallengeRobust
 from robot_smach_states.navigation import NavigateToObserve

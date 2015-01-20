@@ -21,3 +21,18 @@ from robot_smach_states.human_interaction import Say
 from robot_smach_states.manip.grab import Grab
 
 import inspect
+
+
+# ----------------------------------------------------------------------------------------------------
+
+class Test(smach.State):
+    """Sets a VariableDesignator to an Entity that matches some criteria."""
+    def __init__(self, robot, designator):
+        smach.State.__init__(self,outcomes=['done', 'failed'])
+        self.robot = robot
+        self.designator = designator
+
+    def execute(self, userdata):
+
+
+        return 'done'
