@@ -229,7 +229,7 @@ class planBlocked(smach.State):
         self.robot.speech.speak(choice(["An obstacle is blocking my plan!","I cannot get through here!"]))
 
         while self.robot.base.local_planner.getStatus() == "blocked":
-            if (rospy.Time.now() - t_start) > rospy.Duration(self.timeout):
+            if (rospy.Time.now() - self._t_start) > rospy.Duration(self.timeout):
                 return "replan"
             r.sleep()
 
