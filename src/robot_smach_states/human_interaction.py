@@ -40,15 +40,14 @@ class SayFormatted(smach.State):
 
     >>> from mock import MagicMock
     >>> robot = MagicMock()
-    >>> speech = MagicMock()
-    >>> robot.speech = speech
-    >>> speech.speak = MagicMock()
+    >>> robot.speech = MagicMock()
+    >>> robot.speech.speak = MagicMock()
     >>> 
-    >>> sf = SayFormatted(robot, ['This is a {adj} {0}'], [Designator('test')], {'adj':Designator("silly")})
+    >>> sf = SayFormatted(robot, ['This is a {adj} {0} that works with{1} designators too'], [Designator('test'), 'out'], {'adj':Designator("silly")})
     >>> sf.execute()
     'spoken'
     >>> 
-    >>> speech.speak.assert_called_with('This is a silly test', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> robot.speech.speak.assert_called_with('This is a silly test that works without designators too', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, fmt_args=None, fmt_kwargs=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         smach.State.__init__(self, outcomes=["spoken"])
         self.robot = robot
