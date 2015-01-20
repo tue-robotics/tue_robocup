@@ -24,9 +24,6 @@ class Head():
         self.setPanTiltGoal(pan, tilt, pan_vel=pan_vel, tilt_vel=tilt_vel)
         return True
 
-    def setPanTiltGoal(self, pan, tilt, end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
-        self._setHeadReferenceGoal(1, pan_vel, tilt_vel, end_time, pan=pan, tilt=tilt, wait_for_setpoint=wait_for_setpoint)
-
     #Maps HeadBaseclass method names to already used names here
     def send_goal(self, point_stamped, timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0, pan_vel=0, tilt_vel=0):
         """
@@ -38,16 +35,8 @@ class Head():
         self.setLookAtGoal(point_stamped.header.frame_id, point=point_stamped.point, pan_vel=pan_vel, tilt_vel=tilt_vel)
         return True
 
-    def setLookAtGoal(self, frame, point=Point(), end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
-        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, frame=frame, point=point, wait_for_setpoint=wait_for_setpoint)
-
     def cancel_goal(self):
         self.cancelGoal()
-
-    def cancelGoal(self):
-        self._ac_head_ref_action.cancel_goal()
-        self._goal = None
-        self._at_setpoint = False
 
     def reset(self, timeout=0.01):
         """
@@ -109,6 +98,20 @@ class Head():
             frame=goal.header.frame_id,
             point=goal.point,
             wait_for_setpoint=False)
+
+    # -- Functionality --
+
+    def setPanTiltGoal(self, pan, tilt, end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
+        self._setHeadReferenceGoal(1, pan_vel, tilt_vel, end_time, pan=pan, tilt=tilt, wait_for_setpoint=wait_for_setpoint)
+
+    def setLookAtGoal(self, frame, point=Point(), end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
+        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, frame=frame, point=point, wait_for_setpoint=wait_for_setpoint)
+
+    def cancelGoal(self):
+        self._ac_head_ref_action.cancel_goal()
+        self._goal = None
+        self._at_setpoint = False
+
 
     # ---- INTERFACING THE NODE ---
 
