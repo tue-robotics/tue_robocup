@@ -211,7 +211,7 @@ class Arm(object):
         for joints_reference in joints_references:
             if (len(joints_reference) != len(self.joint_names)):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
-                              % (len(self.joint_names), len(joint_references)))
+                              % (len(self.joint_names), len(joints_references)))
             time_from_start += timeout
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,

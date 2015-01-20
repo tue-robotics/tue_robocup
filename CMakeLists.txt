@@ -23,10 +23,6 @@ find_package(catkin REQUIRED COMPONENTS
     tue_costmap_msgs
     cb_planner_msgs_srvs
     wire_msgs
-    perception_srvs
-    obj_in_gripper
-    laser_ppl_detection
-    depth_map_to_point_cloud
     speech_interpreter
     octomap_msgs
     tue_recorder

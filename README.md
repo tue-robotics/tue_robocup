@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tue-robotics/robot_skills.svg?branch=master)](https://travis-ci.org/tue-robotics/robot_skills) 
+
 robot_skills
 ============
 
