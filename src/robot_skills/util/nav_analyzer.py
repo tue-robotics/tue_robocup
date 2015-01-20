@@ -42,7 +42,7 @@ class NavAnalyzer:
             datestr += "0"
         datestr += "{0}".format(date.day)
 
-        self.path = os.environ["HOME"]+"/ros/data/recorded/rosbags/nav_data/"+datestr
+        self.path = os.environ["HOME"]+"/ros/data/private/recorded/rosbags/nav_data/"+datestr
         if not os.path.isdir(self.path):
             os.makedirs(self.path)
             
