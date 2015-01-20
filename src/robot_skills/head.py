@@ -19,7 +19,7 @@ class Head():
         self._ac_head_ref_action.cancel_all_goals()
 
     #Maps HeadBaseclass method names to already used names here
-    def set_pan_tilt(self, pan = 0.0, tilt = 0.2, pan_vel=0, tilt_vel=0, timeout=0.0): 
+    def set_pan_tilt(self, pan = 0.0, tilt = 0.2, pan_vel=0, tilt_vel=0, timeout=0.0):
         #TODO: also add end_time and wait_for_setpoint to interface
         self.setPanTiltGoal(pan, tilt, pan_vel=pan_vel, tilt_vel=tilt_vel)
         return True
@@ -68,16 +68,16 @@ class Head():
         Optionally, keep tracking can be disabled (keep_tracking=False)
         """
         if (side == "left"):
-            return self.send_goal(msgs.PointStamped(0,0,0,frame_id="/amigo/grippoint_left"), keep_tracking=keep_tracking)
+            return self.send_goal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"), keep_tracking=keep_tracking)
         elif (side == "right"):
-            return self.set_position(msgs.PointStamped(0,0,0,frame_id="/amigo/grippoint_right"), keep_tracking=keep_tracking)
+            return self.set_position(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"), keep_tracking=keep_tracking)
         else:
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
             return False
 
     def wait(self, timeout=10):
         self._ac_head_ref_action.wait_for_result(rospy.Duration(timeout))
-        
+
         if self._ac_head_ref_action.get_state() == GoalStatus.SUCCEEDED:
             rospy.loginfo("Head target reached")
             return True
@@ -90,6 +90,25 @@ class Head():
 
     def atGoal(self):
         return self._at_setpoint
+
+    def lookAtStandingPerson(self, timeout=0):
+        """
+        Gives a target at z = 1.75 at 1 m in front of the robot
+        """
+        goal = PointStamped()
+        goal.header.stamp = rospy.Time.now()
+        goal.header.frame_id = "/"+self.robot_name+"/base_link"
+        goal.point.x = 1.0
+        goal.point.y = 0.0
+        goal.point.z = 1.75
+
+        return self._setHeadReferenceGoal(goal_type=0,
+            pan_vel=0.75,
+            tilt_vel=0.75,
+            end_time=0,
+            frame=goal.header.frame_id,
+            point=goal.point,
+            wait_for_setpoint=False)
 
     # ---- INTERFACING THE NODE ---
 
@@ -105,7 +124,7 @@ class Head():
         self._goal.pan = pan
         self._goal.tilt = tilt
         self._goal.end_time = end_time
-        self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback) 
+        self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
         if wait_for_setpoint:
             print "HEAD2.py wait for setpoint -- THIS IS NOT YET SUPPORTED"
 
