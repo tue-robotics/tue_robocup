@@ -29,6 +29,9 @@ import std_msgs.msg as std
 import inspect
 import pprint
 
+class DesignatorResolvementError(Exception):
+    """This error is raised when a designator cannot be resolved."""
+
 
 class Designator(object):
 
@@ -217,6 +220,39 @@ class FuncDesignator(Designator):
 
     def resolve(self):
         return self.func(self.orig.resolve())
+
+
+class ArmDesignator(Designator):
+    """Resolves to an instance of the Arm-class in robot_skills.
+    >>> left, right = "left", "right" #Just strings in this test, but must be robot_skills.Arm-instances
+    >>> a = ArmDesignator([left, right], left)
+    >>> a.resolve()
+    'left'
+    """
+
+    def __init__(self, all_arms, preferred_arm):
+        """Initialize a new ArmDesignator with a collection of arms available on the robot and an arm that is preferred for the given operations.
+        @param all_arms a collection of arms available on the robot
+        @param preferred_arm the arm that is preferred for the operations that use this designator"""
+
+        self.all_arms = all_arms
+        self.preferred_arm = preferred_arm
+        if not preferred_arm in all_arms:
+            raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
+
+    def resolve(self):
+        if self.available(self.preferred_arm):
+            return self.preferred_arm
+        else:
+            available_arms = filter(self.available, self.all_arms)
+            if any(available_arms):
+                return available_arms[0]
+            else:
+                raise DesignatorResolvementError("ArmDesignator {0} could not resolve to an arm".format(self))
+
+    def available(self, arm):
+        """Check whether the given arm is available for some function."""
+        return True
 
 
 def test_visited_and_unreachable():
