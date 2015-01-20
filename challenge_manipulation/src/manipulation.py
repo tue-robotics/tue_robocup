@@ -1,4 +1,15 @@
 #!/usr/bin/python
+
+"""This challenge is defined in https://raw.githubusercontent.com/RoboCupAtHome/RuleBook/master/Manipulation.tex
+
+In short, the robot starts at 1-1.5m from a bookcase and must wait until started by an operator (by voice or a start button)
+
+This bookcase has a couple of shelves on which some items are placed. 
+**The middle shelve starts empty**, this is where the objects need to be placed. 
+
+The robot must take objects form the shelves and place them on the middle shelve and indicate the class of each grasped object. 
+"""
+
 import rospy
 import smach
 import sys
