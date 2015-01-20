@@ -37,13 +37,13 @@ class ManipRecogSingleItem(smach.StateMachine):
     - Say the class of the grabbed item
     - Place the item in an open spot on the middle shelve. """
 
-    def __init__(self, robot):
+    def __init__(self, robot, placed_items):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         bookcase = Designator("bookcase")  #TODO: Get the entityID of the bookcase
 
-        item_to_grasp = Designator()  # Some item to grasp from the bookcase that is _not_ on the empty placement-shelve
-        place_position = Designator()  # Designates an empty spot on the empty placement-shelve. 
+        item_to_grasp = Designator(placed_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
+        place_position = Designator()  # TODO: Designates an empty spot on the empty placement-shelve. 
 
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
@@ -78,10 +78,6 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     states.HandoverToHuman(robot),
                                     transitions={   'succeeded'         :'succeeded',
                                                     'failed'            :'failed'})
-
-
-
-
 
 
 def setup_statemachine(robot):
