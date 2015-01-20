@@ -1,7 +1,4 @@
 #!/usr/bin/python
-import rospy
-import smach
-import sys
 
 from markdown import markdown
 from xhtml2pdf import pisa
