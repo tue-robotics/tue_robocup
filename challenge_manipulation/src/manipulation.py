@@ -25,6 +25,8 @@ import sys
 
 from robot_smach_states.designators.designator import Designator
 import robot_smach_states as states
+from robot_smach_states.manip.grab import Grab
+from robot_smach_states.manip.grab import Place
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
@@ -57,12 +59,13 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
-                                    states.Grab(robot, item_to_grasp),
+                                    Grab(robot, item_to_grasp, robot.leftArm),  # TODO: Use ArmDesignator
                                     transitions={   'done'              :'ANNOUNCE_CLASS',
                                                     'failed'            :'NAV_TO_OBSERVE_BOOKCASE'})
 
+            import ipdb; ipdb.set_trace()
             smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.SayFormatted(robot, ["This is a {0.type}."], [item_to_grasp], blocking=False),
+                                    states.SayFormatted(robot, ["This is a {0.type}."], [item_to_grasp], block=False),
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
@@ -83,16 +86,40 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+    start_waypoint = Designator("manipulation_start_waypoint")  # TODO: select proper waypoint
+    placed_items = Designator([])
 
     with sm:
 
         # Start challenge via StartChallengeRobust
-        smach.StateMachine.add("START_CHALLENGE_ROBUST",
-                               states.StartChallengeRobust(
-                            robot, "initial_pose", use_entry_points=True),
-                               transitions={"Done": "AT_END",
-                                            "Aborted": "AT_END",
-                                            "Failed": "AT_END"})
+        smach.StateMachine.add("AWAIT_START",
+                               states.AskContinue(robot),
+                               transitions={'continue'                  :'NAV_TO_START',
+                                            'no_response'               :'AWAIT_START'})
+
+        smach.StateMachine.add("NAV_TO_START",
+                                states.NavigateToWaypoint(robot, start_waypoint),
+                                transitions={'arrived'                  :'LOOKAT_BOOKCASE',
+                                             'unreachable'              :'LOOKAT_BOOKCASE',
+                                             'goal_not_defined'         :'LOOKAT_BOOKCASE'})
+
+        # Begin setup iterator
+        range_iterator = smach.Iterator(    outcomes = ['succeeded','failed'],
+                                            input_keys=[], output_keys=[],
+                                            it = lambda: range(5),
+                                            it_label = 'index',
+                                            exhausted_outcome = 'exhausted')
+
+        single_item = ManipRecogSingleItem(robot, placed_items)
+
+        smach.Iterator.set_contained_state( 'SINGLE_ITEM', 
+                                            single_item, 
+                                            loop_outcomes=['succeeded','failed'])
+
+        StateMachine.add('RANGE_ITERATOR', range_iterator,
+                        {   'exhausted'                                 :'AT_END',
+                            'failed'                                    :'failed'})
+        # End setup iterator
 
         smach.StateMachine.add('AT_END',
                                states.Say(robot, "Goodbye"),
