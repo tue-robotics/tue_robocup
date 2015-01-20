@@ -24,6 +24,7 @@
   <run_depend>challenge_follow_me</run_depend>
   <!-- <run_depend>challenge_open</run_depend> -->
   <!-- <run_depend>challenge_restaurant</run_depend> -->
+  <run_depend>challenge_person_recognition</run_depend>
   <run_depend>challenge_rips</run_depend>
   <!-- <run_depend>challenge_robo_zoo</run_depend> -->
   <run_depend>state_viewer</run_depend>
