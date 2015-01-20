@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>challenge_basic_functionalities</name>
+  <name>challenge_person_recognition</name>
   <version>1.0.0</version>
   <description>Person Recognition challenge from Robocup 2015 rulebook</description>
 
