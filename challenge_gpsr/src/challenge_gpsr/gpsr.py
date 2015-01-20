@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import roslib; roslib.load_manifest('challenge_egpsr')
+import roslib; roslib.load_manifest('challenge_gpsr')
 import rospy
 #import robot_parts.speech
 from std_msgs.msg import String
@@ -60,17 +60,12 @@ from robot_smach_states.util.startup import startup
 
 class Ask_action(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done", "no_action"])
-
+        smach.State.__init__(self, outcomes=["done", "failed"])
         self.robot = robot
-        self.ask_user_service_get_action = rospy.ServiceProxy('interpreter/ask_user', AskUser)
 
     def execute(self, userdata):
 
-        self.robot.head.look_up()
-
-
-
+        #self.robot.head.look_up()
 
         # spec = '<actionCategory> (an|a|some) <objectCategory> (from|to) (an|a|some) <locationCategory1> (from|to) (an|a|some) <locationCategory2>'
 
@@ -83,7 +78,7 @@ class Ask_action(smach.State):
         # spec = '<actionCategory> (an|a|some) <objectCategory> (from|to) (an|a|some) <locationCategory1> (from|to) (an|a|some) <locationCategory2>'
 
 
-
+        ### SENTENCES stated in new conceptual rulebook.
         # Go to the bedroom, find a person and tell the time (missing object-interaction part).
         # Go to the kitchen, find a person and follow her (missing object-interaction part).
         # Go to the dinner-table, grasp the crackers, and take them to the TV.
@@ -93,14 +88,42 @@ class Ask_action(smach.State):
         # Offer a drink to the person at the door.
 
 
-        spec = '(<action_go> to (a|an|the) <location>)|
-                (<action_) |'
+        self.robot.speech.speak("Say it!")
 
+        spec = "(<action_go> to (a|an|the) <location>) || (<action_transport> (a|an|the) <object> to (a|an|the) <location>)"
 
-        locations = ["rooms", 
+        locations = ["bed", "shelf", "table", "trashbin", "bin", "appliance"]
+        objects = ["beer", "orange_juice", "milk", "sevenup"]
         rooms = ["kitchen", "hallway", "livingroom", "bedroom", "corridor"]
-        {"action_go" : ["go", "navigate"],
-         "location"  : [[x for x in locations], [ x for x in rooms] ]
+
+        choices = {"action_go" : ["go", "navigate"],
+         "action_transport" : ["transport", "bring"],
+         "location"  : [x for x in locations],
+         "object": [x for x in objects]}
+
+
+        # spec = "<questions>"
+        # choices = { "questions": [ x for x in QA_MAP ] }
+
+        res = self.robot.ears.recognize(spec=spec, choices=choices)
+
+        if not res:
+            self.robot.speech.speak("I could not hear your question.")
+            return "failed"
+
+        try:
+            print "jaja ", res
+            #q_answer = QA_MAP[res.choices["questions"]]
+            #q_answer = QA_MAP[res.result]
+        except KeyError:
+            print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
+            return "failed"
+
+        print res
+
+        #self.robot.speech.speak("Your question was: " + res.choices["questions"] + ". The answer is: " + q_answer)
+
+        return "done"
 
 
 
@@ -131,7 +154,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'INTRODUCE_SHORT',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
+                                transitions={   'initialized':'ASK_ACTION',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
                                                 'abort':'Aborted'})
 
 
@@ -142,21 +165,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("INTRODUCE_SHORT",
                                states.Say(robot,"Hi! I will just wait here and wonder if I can do something for you", block=False),
-                               transitions={'spoken':'INIT_POSE'})
+                               transitions={'spoken':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
-                                transitions={'done':'RESET_HEAD_SPINDLE',
-                                             'no_action':'ASK_ACTION'})
-
-        smach.StateMachine.add("GIVE_ACTION_WITHOUT_MIC",
-                                Ask_action_without_mic(robot),
-                                transitions={'done':'RESET_HEAD_SPINDLE',
-                                             'no_action':'INTRODUCE_SHORT'})
-
-        smach.StateMachine.add("RESET_HEAD_SPINDLE",
-                                states.ResetHeadSpindle(robot),
-                                transitions={'done':'INTRODUCE_SHORT'})
+                                transitions={'done':'ASK_ACTION',
+                                             'failed':'ASK_ACTION'})
 
 
     return sm
