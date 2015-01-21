@@ -22,6 +22,9 @@ def html2pdf(sourceHtml, outputFilename):
                                     dest=resultFile)
     return pisaStatus.err
 
+def items2markdown(itemIDs):
+    print "TODO: Exporting PDF"
+
 if __name__ == '__main__':
     pisa.showLogging()
 

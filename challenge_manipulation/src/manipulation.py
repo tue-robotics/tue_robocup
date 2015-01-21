@@ -26,7 +26,9 @@ import sys
 from robot_smach_states.designators.designator import Designator
 import robot_smach_states as states
 from robot_smach_states.manip.grab import Grab
-from robot_smach_states.manip.grab import Place
+from robot_smach_states.manip.place import Place
+
+import pdf
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
@@ -39,12 +41,13 @@ class ManipRecogSingleItem(smach.StateMachine):
     - Say the class of the grabbed item
     - Place the item in an open spot on the middle shelve. """
 
-    def __init__(self, robot, placed_items):
+    def __init__(self, robot, manipulated_items):
+        """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         bookcase = Designator("bookcase")  #TODO: Get the entityID of the bookcase
 
-        item_to_grasp = Designator(placed_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
+        item_to_grasp = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
         place_position = Designator()  # TODO: Designates an empty spot on the empty placement-shelve. 
 
         with self:
@@ -60,16 +63,24 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "GRAB_ITEM",
                                     Grab(robot, item_to_grasp, robot.leftArm),  # TODO: Use ArmDesignator
-                                    transitions={   'done'              :'ANNOUNCE_CLASS',
+                                    transitions={   'done'              :'STORE_ITEM',
                                                     'failed'            :'NAV_TO_OBSERVE_BOOKCASE'})
 
-            import ipdb; ipdb.set_trace()
+            @smach.cb_interface(outcomes=['stored'])
+            def store(userdata):
+                manipulated_items.current += [item_to_grasp.current]
+                return 'stored'
+
+            smach.StateMachine.add('STORE_ITEM',
+                                   smach.CBState(store),
+                                   transitions={'stored':'ANNOUNCE_CLASS'})
+
             smach.StateMachine.add( "ANNOUNCE_CLASS",
                                     states.SayFormatted(robot, ["This is a {0.type}."], [item_to_grasp], block=False),
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
-                                    states.Place(robot, item_to_grasp, place_position),
+                                    Place(robot, item_to_grasp, place_position),
                                     transitions={   'done'              :'succeeded',
                                                     'failed'            :'SAY_HANDOVER_TO_HUMAN'})
 
@@ -116,10 +127,18 @@ def setup_statemachine(robot):
                                             single_item, 
                                             loop_outcomes=['succeeded','failed'])
 
-        StateMachine.add('RANGE_ITERATOR', range_iterator,
-                        {   'exhausted'                                 :'AT_END',
+        smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
+                        {   'exhausted'                                 :'EXPORT_PDF',
                             'failed'                                    :'failed'})
         # End setup iterator
+
+        @smach.cb_interface(outcomes=["exported"])
+        def export_to_pdf(userdata):
+            pdf.items2markdown(placed_items)
+            return "exported"
+        smach.StateMachine.add('EXPORT_PDF',
+                                smach.CBState(export_to_pdf),
+                                transitions={'exported':'AT_END'})
 
         smach.StateMachine.add('AT_END',
                                states.Say(robot, "Goodbye"),
