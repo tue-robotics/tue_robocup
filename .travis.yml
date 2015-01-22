@@ -30,5 +30,6 @@ before_script:
 
 script:
   - catkin_make ed_generate_messages_py
+  - catkin_make psi_generate_messages_py
   #- rosrun robot_smach_states designator.py #Done by nosetests too
   - nosetests --with-doctest 
