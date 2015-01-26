@@ -9,7 +9,9 @@ import tf
 import mock
 
 class Arm(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, robot_name, side, tf_listener):
+        self.side = side
+
         self.default_configurations = mock.MagicMock()
         self.default_trajectories = mock.MagicMock()
         self.load_param = mock.MagicMock()
@@ -133,7 +135,7 @@ class Speech(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
         self.speak = mock.MagicMock()
-        self._amigo_speak = mock.MagicMock()
+        self.__speak = mock.MagicMock()
         self.speak_info = mock.MagicMock()
         self.get_info = mock.MagicMock()
         self.get_action = mock.MagicMock()
@@ -177,13 +179,14 @@ class Mockbot(object):
     >>> Mockbot()
     """
     def __init__(self, *args, **kwargs):
+        self.robot_name = "mockbot"
         self.tf_listener = mock.MagicMock()
 
         # Body parts
         self.base = Base()
         self.torso = Torso()
-        self.leftArm = Arm()
-        self.rightArm = Arm()
+        self.leftArm = Arm(self.robot_name, self.tf_listener, "left")
+        self.rightArm = Arm(self.robot_name, self.tf_listener, "right")
         self.head = Head()
 
         # Human Robot Interaction
@@ -201,7 +204,7 @@ class Mockbot(object):
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
-        self.base_link_frame = "/base_link"
+        self.base_link_frame = "/"+self.robot_name+"base_link"
 
         #Grasp offsets
         #TODO: Don't hardcode, load from parameter server to make robot independent.
@@ -210,9 +213,15 @@ class Mockbot(object):
         self.publish_target = mock.MagicMock()
         self.tf_transform_pose = mock.MagicMock()
         self.close = mock.MagicMock()
-        self.__enter__ = mock.MagicMock()
-        self.__exit__ = mock.MagicMock()
         self.get_base_goal_poses = mock.MagicMock()
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exception_type, exception_val, trace):
+        if any((exception_type, exception_val, trace)):
+            rospy.logerr("Robot exited with {0},{1},{2}".format(exception_type, exception_val, trace))
+        self.close()
 
 if __name__ == "__main__":
     print "     _              __"
