@@ -23,7 +23,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.designators.designator import Designator
+from robot_smach_states.designators.designator import Designator, ArmDesignator
 import robot_smach_states as states
 from robot_smach_states.manip.grab import Grab
 from robot_smach_states.manip.place import Place
@@ -47,8 +47,9 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         bookcase = Designator("bookcase")  #TODO: Get the entityID of the bookcase
 
-        item_to_grasp = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
+        current_item = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
         place_position = Designator()  # TODO: Designates an empty spot on the empty placement-shelve. 
+        arm_designator = ArmDesignator([robot.leftArm, robot.rightArm], robot.leftArm) #ArmDesignator(current_item)  # TODO: this arm designator needs to take into account that we only want an empty arm when grasping, and the arm holding the item when placing.
 
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
@@ -62,13 +63,13 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
-                                    Grab(robot, item_to_grasp, robot.leftArm),  # TODO: Use ArmDesignator
+                                    Grab(robot, current_item, robot.leftArm),  # TODO: Use ArmDesignator
                                     transitions={   'done'              :'STORE_ITEM',
                                                     'failed'            :'NAV_TO_OBSERVE_BOOKCASE'})
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
-                manipulated_items.current += [item_to_grasp.current]
+                manipulated_items.current += [current_item.current]
                 return 'stored'
 
             smach.StateMachine.add('STORE_ITEM',
@@ -76,11 +77,11 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'stored':'ANNOUNCE_CLASS'})
 
             smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.SayFormatted(robot, ["This is a {0.type}."], [item_to_grasp], block=False),
+                                    states.SayFormatted(robot, ["This is a {0.type}."], [current_item], block=False),
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
-                                    Place(robot, item_to_grasp, place_position),
+                                    Place(robot, current_item, place_position, arm_designator),
                                     transitions={   'done'              :'succeeded',
                                                     'failed'            :'SAY_HANDOVER_TO_HUMAN'})
 
