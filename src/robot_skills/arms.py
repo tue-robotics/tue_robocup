@@ -32,6 +32,11 @@ import visualization_msgs.msg
 
 from math import degrees, radians
 
+class ArmState:      
+    """Specifies a State either OPEN or CLOSE"""       
+    OPEN = 0       
+    CLOSE = 1
+
 
 class Arm(object):
     """
