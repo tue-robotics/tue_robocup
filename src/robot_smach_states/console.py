@@ -1,43 +1,77 @@
 #!/usr/bin/ipython -i
 
-# ROS
-import roslib; roslib.load_manifest('robot_console')
-import rospy
+"""Robot console
+
+Usage:
+  robot-console <robot>...
+  robot-console <robot>... [--part=<parts>]
+
+Examples:
+  robot-console amigo
+  robot-console sergio --part=arms,head
+  robot-console amigo sergio
+"""
+
 import sys
+import importlib
+import rospy
+from docopt import docopt, DocoptExit
 
-# Robot interfaces
-from robot_skills import robot, amigo, sergio
-
-# State machines
+# load state machines
 import robot_smach_states as state_machine
 
-def loadRobot(robot_name):
-    if robot_name == "amigo":
-        globals()[robot_name] = amigo.Amigo(wait_services=False)
-    elif robot_name == "sergio":
-        globals()[robot_name] = sergio.Sergio(wait_services=False)
-    else:
-        return None
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
 
-    print """\033[92m
-    Succesfully loaded robot '%s'\033[1;m"""%robot_name
+def load_robot(robot_name, parts=None):
+    modules = [robot_name] if not parts else parts
 
-if __name__ == "__main__":
-    rospy.init_node("robot_console", anonymous=True)
+    loaded = []
+    for name in modules:
+        try:
+            print bcolors.OKBLUE + '\tloading %s' % name + bcolors.ENDC
+            module = importlib.import_module('robot_skills.' + name)
+            constructor = module.__getattribute__(name.title())
 
-    print """
-    \033[1;33m-------------------------------------------------------------------
-    | TU/e Robot Console - version 0.1                                |
-    |                                                                 |
-    | use loadRobot([robot_name]) to load robot ; available robots:   |
-    |    - amigo                                                      |
-    |    - sergio                                                     |
-    |                                                                 |
-    | Robots can be automatically loaded with arguments.              |
-    -------------------------------------------------------------------\033[1;m"""
+            if parts:
+                instance = constructor(robot_name)
+            else:
+                instance = constructor(wait_services=False)
 
-    for arg in sys.argv:
-        loadRobot(arg)
+            loaded.append(instance)
+            # register as global
+            globals()[name] = instance
+            print bcolors.OKGREEN+'\tSuccesfully loaded "%s"' % name +bcolors.ENDC
+        except (ImportError, AttributeError, TypeError) as e:
+            msg = '\n"%s" could not be found!!!\n' % name
+            msg += '\n%s:\n%s\n' % (type(e), str(e))
+            print bcolors.WARNING+msg+bcolors.ENDC
 
-    print """\033[92m
-    Succesfully loaded statemachines  as 'state_machine'\033[1;m"""
+    if not len(loaded):
+        raise DocoptExit("error: no robots or parts loaded")
+
+if __name__ == '__main__':
+    try:
+        arguments = docopt(__doc__)
+        rospy.init_node("robot_console", anonymous=True)
+
+        print """
+        \033[1;33m-------------------------------------------------------------------
+        | TU/e Robot Console - version 0.1                                |
+        -------------------------------------------------------------------\033[1;m"""
+
+        print bcolors.OKGREEN+'\tSuccesfully loaded statemachines as "state_machine"'+bcolors.ENDC
+
+        parts = arguments['--part']
+        parts = parts.split(',') if parts else None
+        for robot in arguments['<robot>']:
+            load_robot(robot, parts=parts)
+
+    except DocoptExit as e:
+        print bcolors.FAIL + str(e) + bcolors.ENDC
+        exit() # quit ipython

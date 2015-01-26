@@ -98,6 +98,8 @@ class executePlan(smach.State):
 
     def execute(self, userdata):
 
+        # ToDo: check for alternative plans???
+
         self.t_last_free = rospy.Time.now()
 
         # Cancel head goal, we need it for navigation :)
@@ -115,7 +117,9 @@ class executePlan(smach.State):
             status = self.robot.base.local_planner.getStatus()
 
             if status == "arrived":
-                return "arrived"      
+                return "arrived"
+            elif status == "blocked":
+                return "blocked"
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -126,7 +130,9 @@ class determineBlocked(smach.State):
 
    def execute(self, userdata):
 
-        rospy.logwarn("Plan blocked");
+        rospy.loginfo("Plan blocked");
+
+        # ToDo: move this to execute???
 
         # Look at the entity
         p=self.robot.base.local_planner.getObstaclePoint()
@@ -137,7 +143,32 @@ class determineBlocked(smach.State):
         wait_start = rospy.Time.now()
         while ( (rospy.Time.now() - wait_start) < rospy.Duration(5.0) ):
             rospy.sleep(0.5)
-            if not self.robot.base.local_planner.getStatus == "blocked":
+
+            # Get alternative plan
+            pc = self.robot.base.global_planner.getCurrentPositionConstraint()
+            if pc:
+                plan = self.robot.base.global_planner.getPlan(pc)
+
+            # Compare plan
+            if (plan and len(plan) > 0):
+                dtgap = self.robot.base.global_planner.computePathLength(plan)     # Distance To Goal Alternative Plan
+                rospy.loginfo('Distance original = {0}, distance alternative = {1}'.format(self.robot.base.local_planner.getDistanceToGoal(), dtgap))
+
+                if (dtgap/self.robot.base.local_planner.getDistanceToGoal() < 1.2):
+                    rospy.loginfo("Executing alternative path!")
+                    oc = self.robot.base.local_planner.getCurrentOrientationConstraint()
+
+                    if oc:
+                        # Constraints and plan seem to be valid, so set the plan
+                        self.robot.base.local_planner.setPlan(plan, pc, oc)
+                        return "free"
+                    else:
+                        rospy.logerr("Cannot execute alternative plan due to absence of orientation constraint")
+
+                else:
+                    rospy.loginfo("Alternative path too long...")
+
+            if not self.robot.base.local_planner.getStatus() == "blocked":
                 self.robot.head.cancelGoal()
                 rospy.logwarn("Plan free again")
                 return "free"
@@ -156,24 +187,134 @@ class determineBlocked(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class planBlocked(smach.State):
-   def __init__(self, robot, timeout = 1):
+    def __init__(self, robot, timeout = 1):
        smach.State.__init__(self,outcomes=['replan','free'])
        self.robot = robot 
        self.timeout = timeout
 
-   def execute(self, userdata):
+    def execute(self, userdata):
+
+        rospy.loginfo("Robot is properly blocked, trying to recover")
+
+        self._reset()
 
         r = rospy.Rate(1.0) # 1hz
-        t_start = rospy.Time.now()
 
+        ''' Determine possible recovery behaviors:
+            -   replan
+            -   people: ask them to step aside
+            -   object: push or remove (not yet implemented)
+            -   wait
+            -   clearing costmap
+            -   resetting ED
+            -   giving up...
+        '''
+        self._init_dummy()
+        self._init_replan()
+        self._init_human()
+        #self._reset()
+        #self._init_move_object()
+
+        ''' Order possible recovery behaviors '''
+        self._options = sorted(self._options, key=lambda k: k['cost'])
+
+        ''' Loop through the options to see what we can really do '''
+        for option in self._options:
+            if option['method']():
+                return "free"
+
+        ''' If nothing else works: wait a little longer and ask for a replan
+            Note that returning 'replan' may result in an updated position constraint, which is different from the replanning considered here!
+        '''
         self.robot.speech.speak(choice(["An obstacle is blocking my plan!","I cannot get through here!"]))
 
         while self.robot.base.local_planner.getStatus() == "blocked":
-            if (rospy.Time.now() - t_start) > rospy.Duration(self.timeout):
+            if (rospy.Time.now() - self._t_start) > rospy.Duration(self.timeout):
                 return "replan"
             r.sleep()
 
         return "free"
+
+    def _reset(self):
+
+        ''' Resets all variables '''
+        # Cost is estimated time in seconds to execute
+        self._options = []
+        self._t_start = rospy.Time.now()
+
+        self._pc = None
+        self._plan = None
+
+    # ToDo: put in separate classes (don't screw around with method...)
+
+    def _init_dummy(self):
+        self._options.append({'name': 'dummy', 'cost': 0.01, 'method': self._execute_dummy})
+        
+    def _execute_dummy(self):
+        rospy.loginfo('Recovery: executing dummy')
+        return False
+
+    def _init_replan(self):
+        # Get alternative plan
+        self._pc = self.robot.base.global_planner.getCurrentPositionConstraint()
+        if self._pc:
+            self._plan = self.robot.base.global_planner.getPlan(self._pc)
+
+        # Compare plan
+        if (self._plan and len(self._plan) > 0):
+            dtgap = self.robot.base.global_planner.computePathLength(self._plan)     # Distance To Goal Alternative Plan
+            cost = dtgap/0.5 # Time is distance/velocity
+
+            self._options.append({'name': 'replan', 'cost': cost, 'method': self._execute_replan})
+
+    def _execute_replan(self):
+        rospy.loginfo('Recovery: executing replan')
+        oc = self.robot.base.local_planner.getCurrentOrientationConstraint()
+
+        if oc:
+            # Constraints and plan seem to be valid, so set the plan
+            self.robot.base.local_planner.setPlan(self._plan, self._pc, oc)
+            return True
+        else:
+            rospy.logerr("Cannot execute alternative plan due to absence of orientation constraint")
+            return False
+
+
+    def _init_human(self):
+        if len(self.robot.ed.get_entities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
+            self._options.append({'name': 'human', 'cost': 5.0, 'method': self._execute_human}) # Estimated time to step aside is 5 seconds
+
+    def _execute_human(self):
+        rospy.loginfo('Recovery: asking person to step aside')
+        r = rospy.Rate(.5) # 1hz
+        t_start = rospy.Time.now()
+
+        while self.robot.base.local_planner.getStatus() == "blocked":
+            self.robot.speech.speak(choice(["Please, get out of my way!",
+                                            "Please step aside",
+                                            "Please let me through",
+                                            "Would you please get out of my way",
+                                            "Would you please step aside",
+                                            "Would you please let me through",
+                                            "Can I please get through", 
+                                            "Excuse me, I can't get through!",
+                                            "Excuse me, I would like to pass through here",
+                                            "Excuse me, can I go through",
+                                            ]), block=False)
+            if (rospy.Time.now() - t_start) > rospy.Duration(self.timeout):
+                return False
+            r.sleep()
+
+        self.robot.speech.speak(choice(["Thank you!","Thanks a lot bro!","Delightful!"]))
+        return True
+
+    def _init_reset(self):
+        rospy.loginfo('Reset costmap not yet implemented')
+
+    def _init_move_object(self):
+        rospy.loginfo('Moving object not yet implemented as recovery behavior')
+
+
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -189,7 +330,17 @@ class planBlockedHuman(smach.State):
         t_start = rospy.Time.now()
 
         while self.robot.base.local_planner.getStatus() == "blocked":
-            self.robot.speech.speak(choice(["Please, get out of my way!","Excuse me, I can't get through!","Please step aside!"]))
+            self.robot.speech.speak(choice(["Please, get out of my way!",
+                                            "Please step aside",
+                                            "Please let me through",
+                                            "Would you please get out of my way",
+                                            "Would you please step aside",
+                                            "Would you please let me through",
+                                            "Can I please get through", 
+                                            "Excuse me, I can't get through!",
+                                            "Excuse me, I would like to pass through here",
+                                            "Excuse me, can I go through",
+                                            ]), block=False)
             if (rospy.Time.now() - t_start) > rospy.Duration(self.timeout):
                 return "replan"
             r.sleep()

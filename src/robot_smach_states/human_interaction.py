@@ -5,6 +5,8 @@ import smach
 import random
 import util
 
+from designators.designator import Designator, DesignatorResolvementError
+
 # Say: Immediate say
 # Hear: Immediate hear
 # Ask: Interaction, say + hear
@@ -27,6 +29,57 @@ class Say(smach.State):
             sentence = random.choice(self.sentence)
         else:
             sentence = self.sentence
+        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
+
+        return "spoken"
+
+class SayFormatted(smach.State):
+    """Say a sentence (or pick a random one from a list) that has a python format string.
+    The format is filled in with the fmt_args and fmt_kwargs parameters that can also be designators.
+    These are resolved every time this state is executed
+
+    >>> from mock import MagicMock
+    >>> robot = MagicMock()
+    >>> robot.speech = MagicMock()
+    >>> robot.speech.speak = MagicMock()
+    >>> 
+    >>> sf = SayFormatted(robot, ['This is a {adj} {0} that works with{1} designators too'], [Designator('test'), 'out'], {'adj':Designator("silly")})
+    >>> sf.execute()
+    'spoken'
+    >>> 
+    >>> robot.speech.speak.assert_called_with('This is a silly test that works without designators too', 'us', 'kyle', 'default', 'excited', True)"""
+    def __init__(self, robot, sentence=None, fmt_args=None, fmt_kwargs=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
+        smach.State.__init__(self, outcomes=["spoken"])
+        self.robot = robot
+        self.sentence = sentence
+        self.format_args = fmt_args
+        self.format_kwargs = fmt_kwargs
+        self.language = language
+        self.personality = personality
+        self.voice = voice
+        self.mood = mood
+        self.block = block
+        
+    def execute(self, userdata=None):
+        if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
+            sentence = random.choice(self.sentence)
+        else:
+            sentence = self.sentence
+
+        try:
+            #Resolve designators if there are any in the format
+            def resolve_if_desig(fmt):
+                if isinstance(fmt, Designator):
+                    return fmt.resolve()
+                else:
+                    return fmt
+            concrete_format_args = map(resolve_if_desig, self.format_args)
+            concrete_format_kwargs = {key:resolve_if_desig(value) for key, value in self.format_kwargs.iteritems()}
+            sentence = sentence.format(*concrete_format_args, **concrete_format_kwargs)
+        except DesignatorResolvementError, e:
+            rospy.logerr(e)
+            pass
+
         self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
 
         return "spoken"
@@ -82,3 +135,7 @@ class AskContinue(smach.StateMachine):
             smach.StateMachine.add('HEAR', Hear(self.robot, 'continue', self.timeout), transitions={'heard':'continue','not_heard':'no_response'})
 
 ##########################################################################################################################################
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

@@ -29,6 +29,9 @@ import std_msgs.msg as std
 import inspect
 import pprint
 
+class DesignatorResolvementError(Exception):
+    """This error is raised when a designator cannot be resolved."""
+
 
 class Designator(object):
 
@@ -219,18 +222,50 @@ class FuncDesignator(Designator):
         return self.func(self.orig.resolve())
 
 
+class ArmDesignator(Designator):
+    """Resolves to an instance of the Arm-class in robot_skills.
+    >>> left, right = "left", "right" #Just strings in this test, but must be robot_skills.Arm-instances
+    >>> a = ArmDesignator([left, right], left)
+    >>> a.resolve()
+    'left'
+    """
+
+    def __init__(self, all_arms, preferred_arm):
+        """Initialize a new ArmDesignator with a collection of arms available on the robot and an arm that is preferred for the given operations.
+        @param all_arms a collection of arms available on the robot
+        @param preferred_arm the arm that is preferred for the operations that use this designator"""
+
+        self.all_arms = all_arms
+        self.preferred_arm = preferred_arm
+        if not preferred_arm in all_arms:
+            raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
+
+    def resolve(self):
+        if self.available(self.preferred_arm):
+            return self.preferred_arm
+        else:
+            available_arms = filter(self.available, self.all_arms)
+            if any(available_arms):
+                return available_arms[0]
+            else:
+                raise DesignatorResolvementError("ArmDesignator {0} could not resolve to an arm".format(self))
+
+    def available(self, arm):
+        """Check whether the given arm is available for some function."""
+        return True
+
+
 def test_visited_and_unreachable():
     """In our RoboCup executives, we keep track of which items are 'processed' or visited,
     and which cannot be processed because they are unreachable.
 
-    One way to do this, is to mark objectIDs as visited and unreachable in the reasoner,
+    One way to do this, is to mark objectIDs (targets) as visited and unreachable in the reasoner,
     e.g. a global blackboard that can be manipulated an queried through Prolog.
 
     This gets messy with complex queries. With designators, it should be a lot simpler"""
-    import random
-    success = lambda: bool(random.randint(0, 1))
+    success = lambda goal: goal % 2  # Even targets will fail
 
-    target_list = [str(i) for i in range(10)] + [str(i) for i in range(10)]  # all are in twice!
+    target_list = [i for i in range(10)] + [i for i in range(10)]  # all are in twice!
     targets = Designator(target_list)
 
     unreachable_set = set()
@@ -242,17 +277,21 @@ def test_visited_and_unreachable():
     for target in target_list:
         if target not in unreachable.resolve() and target not in visited.resolve():
             print "Processing target {0}".format(target)
-            if success():
+            if success(target):
                 visited.current.add(target)  # This is a set so no += [...]
                 print "Target {0} was successfull, its visited".format(target)
             else:
                 unreachable.current.add(target)  # This is a set so no += [...]
                 print "Target {0} failed, its unreachable".format(target)
+        else:
+            print "NOT processing target {0}: its unreachable or already visited".format(target)
 
     print "##### Done #####"
     print "These are unreachable: {0}".format(unreachable.resolve())
     print "These are visited: {0}".format(visited.resolve())
 
+    assert len(unreachable.resolve())   == 5
+    assert len(visited.resolve())       == 5
 
 if __name__ == "__main__":
     import doctest
