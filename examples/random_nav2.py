@@ -67,21 +67,21 @@ class RandomNav(smach.StateMachine):
                                 input_keys=[], 
                                 output_keys=[])
             def determine_target(userdata):
-                if self.requested_location != None:
-                    # Query nav interface ramon
-                    target = self.requested_location
-                    requested_location = None
-                else:
-                    # Query ED
-                    targets = [e.id for e in self.robot.ed.getEntities() if e.type != "" and len(e.id) != 32]
-                    target = random.choice(targets)
+                # if self.requested_location != None:
+                #     # Query nav interface ramon
+                #     target = self.requested_location
+                #     requested_location = None
+                # else:
+                #     # Query ED
+                #     targets = [e.id for e in self.robot.ed.getEntities() if e.type != "" and len(e.id) != 32]
+                #     target = random.choice(targets)
 
-                # Set the constraints
-                self.position_constraint.frame = target
-                self.orientation_constraint.frame = target
+                # # Set the constraints
+                # self.position_constraint.frame = target
+                # self.orientation_constraint.frame = target
                 
-                sentences = ["Lets go look at the %s", "Lets have a look at the %s", "Lets go to the %s", "Lets move to the %s" ,"I will go to the %s", "I will now move to the %s", "I will now drive to the %s", "I will look the %s", "The %s will be my next location", "The %s it is", "New goal, the %s", "Going to look at the %s", "Moving to the %s", "Driving to the %s", "On to the %s", "On the move to the %s", "Going to the %s"]
-                robot.speech.speak(random.choice(sentences)%target, block=False)
+                # sentences = ["Lets go look at the %s", "Lets have a look at the %s", "Lets go to the %s", "Lets move to the %s" ,"I will go to the %s", "I will now move to the %s", "I will now drive to the %s", "I will look the %s", "The %s will be my next location", "The %s it is", "New goal, the %s", "Going to look at the %s", "Moving to the %s", "Driving to the %s", "On to the %s", "On the move to the %s", "Going to the %s"]
+                # robot.speech.speak(random.choice(sentences)%target, block=False)
 
                 return 'target_determined'
             
@@ -90,7 +90,7 @@ class RandomNav(smach.StateMachine):
                                                     'no_targets_available':'SELECT_ACTION'})
 
             smach.StateMachine.add( 'DRIVE',
-                                    states.NavigateWithConstraints(robot, self.position_constraint, self.orientation_constraint),
+                                    states.NavigateToRoom(robot, room_designator = None),
                                     transitions={   "arrived":"SAY_SUCCEEDED",
                                                     "unreachable":'SAY_UNREACHABLE',
                                                     "goal_not_defined":'SELECT_ACTION'})
