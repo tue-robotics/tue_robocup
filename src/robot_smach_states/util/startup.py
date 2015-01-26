@@ -48,9 +48,9 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
     elif robot_name == "sergio":
         import robot_skills.sergio
         robot = robot_skills.sergio.Sergio(wait_services=True)    
-    elif robot_name == "magicmock":
+    elif robot_name == "mockbot":
         import robot_skills.mocked_robot
-        robot = robot_skills.mocked_robot.MockBot(wait_services=True)
+        robot = robot_skills.mocked_robot.Mockbot(wait_services=True)
     
     introserver = None
     with robot:
