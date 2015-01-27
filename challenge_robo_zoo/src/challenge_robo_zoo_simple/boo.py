@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_robo_zoo')
 import rospy
 
 from robot_smach_states.util.startup import startup

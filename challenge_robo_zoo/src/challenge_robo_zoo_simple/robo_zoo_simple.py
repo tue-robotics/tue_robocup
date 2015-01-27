@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('challenge_robo_zoo')
 import rospy
 
 import smach
@@ -21,11 +20,11 @@ from sounds import R2D2, Toeter
 from macarana import Macarena
 from hoofd_schouders_knie_teen import HoofdSchouderKnieTeen
 
-from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
+# from demo_executioner import wave_lights #amigo_demo package is not using the recommended package layout with amigo_demo/src/amigo-demo
 
 # list of available demo challanges:
 colormap = {    "SAY_HI":(1,0,1),
-                "WAVE_LIGHTS":(1,1,1), #All colors together 
+                #"WAVE_LIGHTS":(1,1,1), #All colors together 
                 "WALK_EGYPTIAN":(1,1,0), #Pyramids are yellow :-S?
                 "R2D2":(0,0,1), #R2D2 is partly blue, so Amigo will as well
                 "TOETER":(0,1,0), 
@@ -35,7 +34,7 @@ colormap = {    "SAY_HI":(1,0,1),
 demos = list(colormap.keys())
 
 description_map = { "SAY_HI":"I'll say hi when i'm done",
-                    "WAVE_LIGHTS":"Wave and blink is coming up",
+                    #"WAVE_LIGHTS":"Wave and blink is coming up",
                     "WALK_EGYPTIAN":"I'll walk like an egyptian",
                     "R2D2":"R2D2 coming up",
                     "TOETER":"I'll honk next",
@@ -218,13 +217,13 @@ class RoboZooSimple(smach.StateMachine):
                                     LookAtPerson(robot),
                                     transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
             
-            @smach.cb_interface(outcomes=['done'])
-            def wave_lights_wrapped(*args, **kwargs):
-                wave_lights(robot)
-                return 'done'
-            smach.StateMachine.add( "WAVE_LIGHTS",
-                                    smach.CBState(wave_lights_wrapped),
-                                    transitions={"done":"RESET_ALL"})
+            # @smach.cb_interface(outcomes=['done'])
+            # def wave_lights_wrapped(*args, **kwargs):
+            #     wave_lights(robot)
+            #     return 'done'
+            # smach.StateMachine.add( "WAVE_LIGHTS",
+            #                         smach.CBState(wave_lights_wrapped),
+            #                         transitions={"done":"RESET_ALL"})
 
 
             smach.StateMachine.add( "FLASH_LIGHTS",
