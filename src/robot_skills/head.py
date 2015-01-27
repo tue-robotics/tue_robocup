@@ -32,7 +32,7 @@ class Head():
         And optional frame_id and timeout, frame_id defaults to /map
         By default, it does not keep tracking
         """
-        self.setLookAtGoal(point_stamped.header.frame_id, point=point_stamped.point, pan_vel=pan_vel, tilt_vel=tilt_vel)
+        self.setLookAtGoal(point_stamped, pan_vel=pan_vel, tilt_vel=tilt_vel)
         return True
 
     def cancel_goal(self):
@@ -57,9 +57,9 @@ class Head():
         Optionally, keep tracking can be disabled (keep_tracking=False)
         """
         if (side == "left"):
-            return self.send_goal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"), keep_tracking=keep_tracking)
+            return self.setLookAtGoal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"), keep_tracking=keep_tracking)
         elif (side == "right"):
-            return self.set_position(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"), keep_tracking=keep_tracking)
+            return self.setLookAtGoal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"), keep_tracking=keep_tracking)
         else:
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
             return False
@@ -104,8 +104,8 @@ class Head():
     def setPanTiltGoal(self, pan, tilt, end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
         self._setHeadReferenceGoal(1, pan_vel, tilt_vel, end_time, pan=pan, tilt=tilt, wait_for_setpoint=wait_for_setpoint)
 
-    def setLookAtGoal(self, frame, point=Point(), end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
-        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, frame=frame, point=point, wait_for_setpoint=wait_for_setpoint)
+    def setLookAtGoal(self, point_stamped, end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
+        self._setHeadReferenceGoal(0, pan_vel, tilt_vel, end_time, point_stamped, wait_for_setpoint=wait_for_setpoint)
 
     def cancelGoal(self):
         self._ac_head_ref_action.cancel_goal()
@@ -115,15 +115,13 @@ class Head():
 
     # ---- INTERFACING THE NODE ---
 
-    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, frame="", point=Point(), pan=0, tilt=0, wait_for_setpoint=False):
+    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, point_stamped, pan=0, tilt=0, wait_for_setpoint=False):
         self._goal = HeadReferenceGoal()
         self._goal.goal_type = goal_type
         self._goal.priority = 1 # Executives get prio 1
         self._goal.pan_vel = pan_vel
         self._goal.tilt_vel = tilt_vel
-        self._goal.target_point.header.frame_id = frame
-        self._goal.target_point.header.stamp = rospy.Time.now()
-        self._goal.target_point.point = point
+        self._goal.target_point = point_stamped
         self._goal.pan = pan
         self._goal.tilt = tilt
         self._goal.end_time = end_time
