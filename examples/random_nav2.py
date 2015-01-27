@@ -23,6 +23,7 @@ class RandomNavDesignator(Designator):
         self.entity_id = None
 
         # Publisher and subriber
+        self.locations_pub = rospy.Publisher("/locations_list", std_msgs.msg.String)
         rospy.Subscriber("/nav_goal", std_msgs.msg.String, self.goalCallback)
 
     def resolve(self):
@@ -51,8 +52,21 @@ class RandomNavDesignator(Designator):
         # If still entities
         if entities:
 
+            # Publish a comma separated list with possible locations
+            msg = std_msgs.msg.String()
+
             for entity in entities:
+
+                # If necessary: add comma
+                if msg.data != "":
+                    msg.data += ","
+
+                # Add entity
+                msg.data += entity.id
+
                 print "ID = {0}, type = {1}".format(entity.id, entity.type)
+
+            self.locations_pub.publish(msg)
 
             # Select random object
             entity    = random.choice(entities)
