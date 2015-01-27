@@ -88,9 +88,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "SAY_HANDOVER_TO_HUMAN",
                                     states.Say(robot, ["I'm can't get rid of this item  myself, can somebody help me maybe?"]),
                                     transitions={   'spoken'            :'HANDOVER_TO_HUMAN'})
-
+    
             smach.StateMachine.add( "HANDOVER_TO_HUMAN",
-                                    states.HandoverToHuman(robot),
+                                    states.HandoverToHuman("left", robot),  # TODO: Use arm_designator for arm
                                     transitions={   'succeeded'         :'succeeded',
                                                     'failed'            :'failed'})
 
