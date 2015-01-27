@@ -52,7 +52,7 @@ class PickUp(smach.State):
         if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
                              frame_id='/'+self._robot.robot_name+'/base_link', timeout=20, pre_grasp=True, first_joint_pos_only=True):
             rospy.logerr('Pre-grasp failed:')
-            
+
             self.arm.reset()
             self.arm.send_gripper_goal('close', timeout=None)
             return 'failed'
@@ -83,17 +83,17 @@ class PickUp(smach.State):
             y_home = -0.2
 
         rospy.loginfo('y_home = ' + str(y_home))
-        
-        rospy.loginfo('start moving to carrying pose')        
-        if not self.arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0, 60):            
+
+        rospy.loginfo('start moving to carrying pose')
+        if not self.arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0, 60):
             rospy.logerr('Failed carrying pose')
-        
-        return 'succeeded'                
+
+        return 'succeeded'
 
 
         #machine = robot_smach_states.manipulation.GrabMachineWithoutBase(side=side, robot=self._robot, grabpoint_query=query)
-        #machine.execute()             
-        
+        #machine.execute()
+
 # ----------------------------------------------------------------------------------------------------
 
 class Grab(smach.StateMachine):
@@ -103,7 +103,7 @@ class Grab(smach.StateMachine):
 
         with self:
             #AttrDesignator because the designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, AttrDesignator(designator, 'id'), arm.side), 
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, AttrDesignator(designator, 'id'), arm.side),
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'GRAB'})

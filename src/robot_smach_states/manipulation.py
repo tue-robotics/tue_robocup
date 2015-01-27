@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-import roslib
 import rospy
 import smach
 import navigation
@@ -11,7 +9,6 @@ import geometry_msgs
 
 from human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
-from designators.designator import Designator, VariableDesignator, PointStampedOfEntityDesignator
 from robot_skills.arms import ArmState
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
