@@ -6,6 +6,8 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
+from robot_smach_states.designators.designator import Designator
+
 import rospy
 
 import math
@@ -13,23 +15,25 @@ import math
 
 # ----------------------------------------------------------------------------------------------------
 class NavigateToGrasp(NavigateTo):
-    def __init__(self, robot, designator, side):
+    def __init__(self, robot, designator, arm_designator=None):
         super(NavigateToGrasp, self).__init__(robot)
 
         self.robot    = robot
         self.designator = designator
-        if side == 'left' or side == 'right':
-            self.side = side
-        else:
-            rospy.logerr('NavigateToGrasp: side = {0}. Please specify left or right, will default to left'.format(side))
-            self.side = 'left'
+
+        self.arm_designator = arm_designator
+        if not arm_designator:
+            rospy.logerr('NavigateToGrasp: side should be determined by designator. Please specify left or right, will default to left')
+            self.arm_designator = Designator(robot.leftArm)
 
     def generateConstraint(self):
+        arm = self.arm_designator.resolve()
+        side = arm.side
 
         x_offset = self.robot.grasp_offset.x
-        if self.side == 'left':
+        if side == 'left':
             y_offset = self.robot.grasp_offset.y
-        elif self.side == 'right':
+        elif side == 'right':
             y_offset = -self.robot.grasp_offset.y
         radius = math.sqrt(x_offset*x_offset + y_offset*y_offset)
 
