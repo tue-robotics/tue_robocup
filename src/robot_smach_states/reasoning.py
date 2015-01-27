@@ -1,20 +1,21 @@
 #! /usr/bin/env python
-import roslib; 
+import roslib;
 import rospy
 import smach
-import util
+
 import util.reasoning_helpers as urh
 
 from psi import Compound, Conjunction, Sequence
+from robot_skills.util.decorators import deprecated
 
 # Wait_for_door state thought the reasoner
-@util.deprecated
+@deprecated
 class Wait_for_door_reasoner(smach.State):
     def __init__(self, robot=None):
         smach.State.__init__(self, outcomes=['door_open'])
-        
+
         self.robot = robot
-        
+
     def execute(self,userdata=None):
         r = self.robot.reasoner
         query = Compound("state", "door1", "open")  # maybe change door1 to entrance_door would be better
@@ -23,17 +24,17 @@ class Wait_for_door_reasoner(smach.State):
             rospy.Rate(5).sleep()
             answer = r.query(query)
             if answer:
-                return 'door_open'        
+                return 'door_open'
 
-# Wait_for_door state thought the reasoner 
+# Wait_for_door state thought the reasoner
 class Ask_query_true(smach.State):
     def __init__(self, robot, query):
         smach.State.__init__(self, outcomes=['query_false','query_true','waiting','preempted'])
-        
+
         self.robot = robot
 
         self.preempted = False
-        
+
         self.defined_query = query
 
         # time before query should be true:
@@ -50,7 +51,7 @@ class Ask_query_true(smach.State):
 
         ## Plot try nr.
         #rospy.loginfo("Try nr. {0} ".format(self.tries))
-        
+
         if self.tries > 1200 : #= about 120 seconds
             self.tries = 0
             return 'waiting'
@@ -59,7 +60,7 @@ class Ask_query_true(smach.State):
             rospy.Rate(5).sleep()
             answer = self.robot.reasoner.query(self.defined_query)
             time2 = rospy.Time.now()
-            
+
             if answer:
                 self.tries = 0
                 return 'query_true'
@@ -87,7 +88,7 @@ class Wait_query_true(smach.State):
                     pre_callback(*args, **kwargs)
 
                 output = func(*args, **kwargs)
-                
+
                 if callable(post_callback):
                     post_callback(*args, **kwargs)
 
@@ -140,11 +141,11 @@ class Select_object(smach.State):
     #TODO 3-12-2014: Select object can be large,ly/completely replaced by a (Variable)Designator
     """Selects an object based on some optional criteria and sorting mechanism"""
 
-    def __init__(self, robot, candidate_query, selection_predicate, 
-        sortkey=lambda answer: 1, 
-        minmax=min, 
-        criteria=None, 
-        retract_previous=True, 
+    def __init__(self, robot, candidate_query, selection_predicate,
+        sortkey=lambda answer: 1,
+        minmax=min,
+        criteria=None,
+        retract_previous=True,
         object_variable="ObjectID"):
         smach.State.__init__(self, outcomes=['selected', 'no_answers'])
         """Select an answer from an object_query and assert it to the reasoner as being the selected object, using the selection_predicate.
@@ -166,11 +167,11 @@ class Select_object(smach.State):
     def execute(self, userdata=None):
         #Get all answers. object_answers will be a list of dictionaries
         object_answers = self.robot.reasoner.query(self.candidate_query)
-        
+
         try:
             #delegate the actual selection to the reasoning_helpers
-            selected_answer = urh.select_answer(object_answers, 
-                                                    keyfunc=self.sortkey, 
+            selected_answer = urh.select_answer(object_answers,
+                                                    keyfunc=self.sortkey,
                                                     minmax=self.minmax,
                                                     criteria=self.criteria)
 
@@ -214,7 +215,7 @@ class Select_object(smach.State):
                         Compound("object", "ObjectID", Compound("position", Sequence("X", "Y", "Z"))),
                         Compound("not", Compound("ignored", "ObjectID")))
         selected_candidate_query = Compound("selected_id", "ObjectID")
-        
+
         #This state selects an object that is not ignored.
         selector = Select_object(robot, candidates_query, "selected_id", sortkey=lambda answer: str(answer["ObjectID"]))
         ignorer = Select_object(robot, selected_candidate_query, "ignored", retract_previous=False) #
@@ -223,30 +224,30 @@ class Select_object(smach.State):
 
         selector.execute()
         assert len(robot.reasoner.query(Compound("selected_id", "id1"))) == 1 #The selector should select the first object. Only one object may be selected at a time
-        
+
         ignorer.execute()
-         #The first object should be ignored. On each selector-ignorer iteration, we should have more ignored object as we do not retract them 
+         #The first object should be ignored. On each selector-ignorer iteration, we should have more ignored object as we do not retract them
         assert len(robot.reasoner.query(Compound("ignored", "X"))) == 1+1 #1 extra for making sure the predicate exists
 
         selector.execute()
         assert len(robot.reasoner.query(Compound("selected_id", "id2"))) == 1
-        
+
         ignorer.execute()
         assert len(robot.reasoner.query(Compound("ignored", "X"))) == 2+1 #1 extra for making sure the predicate exists
 
         selector.execute()
         assert len(robot.reasoner.query(Compound("selected_id", "id3"))) == 1
-        
+
         ignorer.execute()
         assert len(robot.reasoner.query(Compound("ignored", "X"))) == 3+1 #1 extra for making sure the predicate exists
 
         selector.execute()
         assert len(robot.reasoner.query(Compound("selected_id", "id4"))) == 1
-        
+
         ignorer.execute()
         assert len(robot.reasoner.query(Compound("ignored", "X"))) == 4+1 #1 extra for making sure the predicate exists
 
         rospy.loginfo("DEAR TESTER: There are 4 objects, but this is the 5th select-call. Will fail as intended in this test")
         assert selector.execute() == "no_answers"
-        
+
         return "success!"

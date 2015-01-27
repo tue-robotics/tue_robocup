@@ -1,1 +1,1 @@
-from grab import Grab
+from grab import *
