@@ -31,6 +31,7 @@ class LocalPlanner():
         self._obstacle_point = None
         self._dtg = None
         self._plan = None
+        self._goal_handle = None
 
     def setPlan(self, plan, position_constraint, orientation_constraint):
         goal = LocalPlannerGoal()
@@ -38,11 +39,16 @@ class LocalPlanner():
         goal.orientation_constraint = orientation_constraint
         self._orientation_constraint = orientation_constraint
         self._action_client.send_goal(goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback) 
+        self._goal_handle = self._action_client.gh
+        rospy.loginfo("Goal handle = {0}".format(self._goal_handle))
         self.__setState("controlling", None, None, plan)
 
     def cancelCurrentPlan(self):
         self._action_client.cancel_goal()
         self.__setState("idle")
+
+    def getGoalHandle(self):
+        return self._goal_handle
 
     def getStatus(self):
         return self._status
