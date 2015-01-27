@@ -31,8 +31,6 @@ class NavigateToObserve(NavigateTo):
         x = e.pose.position.x
         y = e.pose.position.y      
 
-        rospy.logwarn("Should Sjoerd check the newest model data in???")
-
         ch.append(ch[0])
 
         pci = ""
