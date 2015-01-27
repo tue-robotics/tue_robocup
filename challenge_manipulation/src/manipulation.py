@@ -25,8 +25,8 @@ import sys
 
 from robot_smach_states.designators.designator import Designator, ArmDesignator
 import robot_smach_states as states
-from robot_smach_states.manip.grab import Grab
-from robot_smach_states.manip.place import Place
+from robot_smach_states import Grab
+from robot_smach_states import Place
 
 import pdf
 
