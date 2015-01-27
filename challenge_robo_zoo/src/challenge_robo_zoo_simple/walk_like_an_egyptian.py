@@ -24,8 +24,8 @@ def walk_like_an_egyptian(robot):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
         robot.rightArm._send_joint_trajectory(egyptian_motion_right, timeout=rospy.Duration(10))  # TODO: Make work with different robots.
 
-    robot.rightArm.reset_arm()
-    robot.leftArm.reset_arm()
+    robot.rightArm.reset()
+    robot.leftArm.reset()
     robot.head.reset_position()
 
 def music():

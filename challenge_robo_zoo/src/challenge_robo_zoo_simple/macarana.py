@@ -40,8 +40,8 @@ import threading
 def spindle_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.spindle.send_goal(lower, timeout=4.0)
-        robot.spindle.send_goal(upper, timeout=4.0)
+        robot.spindle.send_goal(lower) #, timeout=4.0
+        robot.spindle.send_goal(upper) #, timeout=4.0
 
 
 def head_up_down(robot, stopEvent):
@@ -72,45 +72,45 @@ def macarena(robot):
 
     try:
         for i in range(1):
-            right(*arm_straight_1, timeout=10)
-            _left(*arm_straight_1, timeout=10)
+            right([[arm_straight_1]], timeout=rospy.Duration(10))
+            _left([[arm_straight_1]], timeout=rospy.Duration(10))
 
-            right(*arm_straight_2, timeout=5)
-            _left(*arm_straight_2, timeout=5)
+            right([[arm_straight_2]], timeout=rospy.Duration(5))
+            _left([[arm_straight_2]], timeout=rospy.Duration(5))
 
-            right(*right_hand_to_left_shoulder, timeout=10)
-            _left(*left_hand_to_right_shoulder, timeout=10)
+            right([[right_hand_to_left_shoulder]], timeout=rospy.Duration(10))
+            _left([[left_hand_to_right_shoulder]], timeout=rospy.Duration(10))
 
-            right(*right_arm_to_head_1, timeout=10) 
-            #right(*right_arm_to_head_2, timeout=10) 
+            right([[right_arm_to_head_1]], timeout=rospy.Duration(10)) 
+            #right(*right_arm_to_head_2, timeout=rospy.Duration(10)) 
 
-            #_left(*left_arm_to_head_1, timeout=5) #?
-            #_left(*left_arm_to_head_2, timeout=5) #?
-            #_left(*left_arm_to_head_3, timeout=5)
-            _left(*left_arm_to_head_4, timeout=5)
+            #_left(*left_arm_to_head_1, timeout=rospy.Duration(5)) #?
+            #_left(*left_arm_to_head_2, timeout=rospy.Duration(5)) #?
+            #_left(*left_arm_to_head_3, timeout=rospy.Duration(5))
+            _left([[left_arm_to_head_4]], timeout=rospy.Duration(5))
 
-            right(*arm_to_hips_1, timeout=10)
-            _left(*arm_to_hips_1, timeout=10)
-            right(*arm_to_hips_2, timeout=5)
-            _left(*arm_to_hips_2, timeout=5)
-            right(*arm_to_hips_3, timeout=5)
-            _left(*arm_to_hips_3, timeout=5)
-            right(*arm_to_hips_4, timeout=5)
-            _left(*arm_to_hips_4, timeout=5)
-            right(*arm_to_hips_1, timeout=15)
-            _left(*arm_to_hips_1, timeout=15)
+            right([[arm_to_hips_1]], timeout=rospy.Duration(10))
+            _left([[arm_to_hips_1]], timeout=rospy.Duration(10))
+            right([[arm_to_hips_2]], timeout=rospy.Duration(5))
+            _left([[arm_to_hips_2]], timeout=rospy.Duration(5))
+            right([[arm_to_hips_3]], timeout=rospy.Duration(5))
+            _left([[arm_to_hips_3]], timeout=rospy.Duration(5))
+            right([[arm_to_hips_4]], timeout=rospy.Duration(5))
+            _left([[arm_to_hips_4]], timeout=rospy.Duration(5))
+            right([[arm_to_hips_1]], timeout=rospy.Duration(15))
+            _left([[arm_to_hips_1]], timeout=rospy.Duration(15))
 
         stopEvent.set()
         up_and_down_spindle.join()
         #up_and_down_head.join()
-        robot.rightArm.reset_arm()
-        robot.leftArm.reset_arm()
+        robot.rightArm.reset()
+        robot.leftArm.reset()
         robot.head.reset_position()
     except Exception, e:
         robot.speech.speak("Guys, could you help me, i'm stuck in the maca-rena")
         rospy.logerr(e)
-            # right(*zero, timeout=10)
-            # _left(*zero, timeout=10)
+            # right(*zero, timeout=rospy.Duration(10))
+            # _left(*zero, timeout=rospy.Duration(10))
 
 class Macarena(smach.State):
     def __init__(self, robot):
