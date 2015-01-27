@@ -54,7 +54,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_B'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_B',
-                                states.NavigateToObserve(robot, Designator("dinner_table"), radius=0.7),
+                                states.NavigateToObserve(robot, Designator("operator_table1"), radius=0.7),
                                 transitions={   'arrived'           :   'SAY_WAYPOINT_B_REACHED',
                                                 'unreachable'       :   'SAY_WAYPOINT_B_FAILED',
                                                 'goal_not_defined'  :   'SAY_WAYPOINT_B_FAILED'})
