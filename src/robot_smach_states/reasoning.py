@@ -2,13 +2,14 @@
 import roslib; 
 import rospy
 import smach
-import util
+
 import util.reasoning_helpers as urh
 
 from psi import Compound, Conjunction, Sequence
+from robot_skills.util.decorators import deprecated
 
 # Wait_for_door state thought the reasoner
-@util.deprecated
+@deprecated
 class Wait_for_door_reasoner(smach.State):
     def __init__(self, robot=None):
         smach.State.__init__(self, outcomes=['door_open'])
