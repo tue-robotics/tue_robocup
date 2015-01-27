@@ -34,11 +34,14 @@ def Header(frame_id="/map", stamp=None):
 
     return header
 
-def PointStamped(x=0, y=0, z=0, frame_id="/map", stamp=None):
+def PointStamped(x=0, y=0, z=0, frame_id="/map", stamp=None, point=None):
     if not stamp:
         stamp = rospy.get_rostime()
+    if not point:
+      return gm.PointStamped(header=Header(frame_id, stamp), point=Point(x,y,z))
+    else:
+      return gm.PointStamped(header=Header(frame_id, stamp), point=point)
 
-    return gm.PointStamped(header=Header(frame_id, stamp), point=Point(x,y,z))
 
 def Quaternion(x=0, y=0, z=0, w=0, roll=0, pitch=0, yaw=0):
     """Supply either at least one of x, y, z, w 
