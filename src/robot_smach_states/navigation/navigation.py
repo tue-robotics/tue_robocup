@@ -474,7 +474,7 @@ class NavigateTo(smach.StateMachine):
                 con_state.recall_preempt()
                 return 'done'
             
-            smach.StateMachine.add('RESET_SM_NAV', smach.CBState(reset_sm_con,
+            smach.StateMachine.add('RESET_SM_NAV', smach.CBState(reset_sm_nav,
                                     cb_kwargs={'con_state': sm_nav}),
                                     transitions={   'done':'MONITORED_NAVIGATE' })
 
