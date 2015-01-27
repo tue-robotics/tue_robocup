@@ -4,7 +4,7 @@ import rospy
 import smach
 import navigation
 import reasoning
-from util import transformations
+from robot_skills.util import transformations
 from psi import Compound
 
 import geometry_msgs
