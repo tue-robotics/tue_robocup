@@ -23,7 +23,7 @@ class RandomNavDesignator(Designator):
         self.entity_id = None
 
         # Publisher and subriber
-        #rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+        rospy.Subscriber("/nav_goal", std_msgs.msg.String, self.goalCallback)
 
     def resolve(self):
         if self.entity_id:
@@ -33,6 +33,11 @@ class RandomNavDesignator(Designator):
             return eid
 
     def getRandomGoal(self):
+
+        # If a goal is already defined by the used, return
+        if not self.entity_id == None:
+            return
+
         # Get all entities
         #entities = self.ed(type="").entities
         entities = self._robot.ed.get_entities(type="")
@@ -62,6 +67,11 @@ class RandomNavDesignator(Designator):
             return self.entity_id
         else:
             raise Exception("No entities with convex hulls")
+
+    def goalCallback(self, msg):
+        self.entity_id = msg.data
+        rospy.loginfo("Next goal: {0}".format(self.entity_id))
+        return
 
 class SelectAction(smach.State):
     def __init__(self, outcomes=['continue', 'pause', 'stop']):
