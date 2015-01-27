@@ -88,9 +88,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "SAY_HANDOVER_TO_HUMAN",
                                     states.Say(robot, ["I'm can't get rid of this item  myself, can somebody help me maybe?"]),
                                     transitions={   'spoken'            :'HANDOVER_TO_HUMAN'})
-
+    
             smach.StateMachine.add( "HANDOVER_TO_HUMAN",
-                                    states.HandoverToHuman(robot),
+                                    states.HandoverToHuman("left", robot),  # TODO: Use arm_designator for arm
                                     transitions={   'succeeded'         :'succeeded',
                                                     'failed'            :'failed'})
 
@@ -111,26 +111,27 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("NAV_TO_START",
                                 states.NavigateToWaypoint(robot, start_waypoint),
-                                transitions={'arrived'                  :'LOOKAT_BOOKCASE',
-                                             'unreachable'              :'LOOKAT_BOOKCASE',
-                                             'goal_not_defined'         :'LOOKAT_BOOKCASE'})
+                                transitions={'arrived'                  :'RANGE_ITERATOR',
+                                             'unreachable'              :'RANGE_ITERATOR',
+                                             'goal_not_defined'         :'RANGE_ITERATOR'})
 
         # Begin setup iterator
-        range_iterator = smach.Iterator(    outcomes = ['succeeded','failed'],
+        range_iterator = smach.Iterator(    outcomes = ['succeeded','failed'], #Outcomes of the iterator state
                                             input_keys=[], output_keys=[],
                                             it = lambda: range(5),
                                             it_label = 'index',
-                                            exhausted_outcome = 'exhausted')
+                                            exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
-        single_item = ManipRecogSingleItem(robot, placed_items)
+        with range_iterator:
+            single_item = ManipRecogSingleItem(robot, placed_items)
 
-        smach.Iterator.set_contained_state( 'SINGLE_ITEM', 
-                                            single_item, 
-                                            loop_outcomes=['succeeded','failed'])
+            smach.Iterator.set_contained_state( 'SINGLE_ITEM', 
+                                                single_item, 
+                                                loop_outcomes=['succeeded','failed'])
 
         smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-                        {   'exhausted'                                 :'EXPORT_PDF',
-                            'failed'                                    :'failed'})
+                        {   'succeeded'                                     :'EXPORT_PDF',
+                            'failed'                                        :'Aborted'})
         # End setup iterator
 
         @smach.cb_interface(outcomes=["exported"])

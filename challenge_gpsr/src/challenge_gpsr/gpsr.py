@@ -90,7 +90,7 @@ class Ask_action(smach.State):
 
         self.robot.speech.speak("Say it!")
 
-        spec = "(<action_go> to (a|an|the) <location>) || (<action_transport> (a|an|the) <object> to (a|an|the) <location>)"
+        spec = "(<action_go> to (a|an|the) <location>) | (<action_transport> (a|an|the) <object> to (a|an|the) <location>)"
 
         locations = ["bed", "shelf", "table", "trashbin", "bin", "appliance"]
         objects = ["beer", "orange_juice", "milk", "sevenup"]
