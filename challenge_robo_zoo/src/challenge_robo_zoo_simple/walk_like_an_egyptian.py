@@ -18,11 +18,11 @@ def walk_like_an_egyptian(robot):
     for i in range(2):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
-        robot.leftArm.send_joint_trajectory(egyptian_motion_left, timeout=10)
+        robot.leftArm._send_joint_trajectory(egyptian_motion_left, timeout=rospy.Duration(10))  # TODO: Make work with different robots.
 
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
-        robot.rightArm.send_joint_trajectory(egyptian_motion_right, timeout=10)
+        robot.rightArm._send_joint_trajectory(egyptian_motion_right, timeout=rospy.Duration(10))  # TODO: Make work with different robots.
 
     robot.rightArm.reset_arm()
     robot.leftArm.reset_arm()

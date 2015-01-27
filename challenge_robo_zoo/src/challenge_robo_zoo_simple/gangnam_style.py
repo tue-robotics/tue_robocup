@@ -33,63 +33,63 @@ gangnam_motionB_right= [gangnam_poseB_right_pre_start, gangnam_poseB_right_start
 def spindle_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.spindle.send_goal(lower, timeout=4.0)
-        robot.spindle.send_goal(upper, timeout=4.0)
+        robot.spindle.send_goal(lower, timeout=rospy.Duration(4.0))
+        robot.spindle.send_goal(upper, timeout=rospy.Duration(4.0))
 
 def motionA(robot):
-    robot.rightArm.send_joint_goal(-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000, timeout=1)
+    robot.rightArm._send_joint_trajectory([[-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000]], timeout=rospy.Duration(1))
     for i in range(1):
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
-        # robot.leftArm.send_joint_trajectory(gangnam_motionA_left, timeout=10)
-        # robot.rightArm.send_joint_trajectory(gangnam_motionA_right, timeout=10)
+        # robot.leftArm.send_joint_trajectory([gangnam_motionA_left], timeout=rospy.Duration(10))
+        # robot.rightArm.send_joint_trajectory([gangnam_motionA_right], timeout=rospy.Duration(10))
 
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_pre_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_pre_start, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_pre_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_pre_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_start, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_end, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_end, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_start, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_end, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_end, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_start, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(*gangnam_poseA_left_end, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseA_right_end, timeout=1)
+        robot.leftArm._send_joint_trajectory([gangnam_poseA_left_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseA_right_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
     
-    robot.leftArm.reset_arm()
+    robot.leftArm.reset()
 
 def motionB(robot):
     #import ipdb; ipdb.set_trace()
     for i in range(1):
-        robot.leftArm.send_joint_goal(-0.050, 0.500, 0.7150, 1.300, -0.15, 0.000, 0.000, timeout=10)
-        robot.leftArm.send_joint_goal(-0.050, 0.500, 1.5300, 0.700, -0.15, 0.000, 0.000, timeout=1)
-        robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 0.700, -0.15, 0.000, 0.000, timeout=1)
+        robot.leftArm._send_joint_trajectory([[-0.050, 0.500, 0.7150, 1.300, -0.15, 0.000, 0.000]], timeout=rospy.Duration(10))
+        robot.leftArm._send_joint_trajectory([[-0.050, 0.500, 1.5300, 0.700, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
+        robot.leftArm._send_joint_trajectory([[-0.050, 1.500, 1.5300, 0.700, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
         robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
 
-        #robot.rightArm.send_joint_goal(*gangnam_poseB_right_pre_start, timeout=1)
+        #robot.rightArm._send_joint_trajectory([gangnam_poseB_right_pre_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         #Right is now in [             -0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000]
-        robot.rightArm.send_joint_goal(-0.050, 1.500, 0.000, 0.100, 0.250, 0.000, 0.000, timeout=10)
-        robot.rightArm.send_joint_goal(-0.050, 1.500, 0.000, 1.570, 0.250, 0.000, 0.000, timeout=1)
+        robot.rightArm._send_joint_trajectory([[-0.050, 1.500, 0.000, 0.100, 0.250, 0.000, 0.000]], timeout=rospy.Duration(10))
+        robot.rightArm._send_joint_trajectory([[-0.050, 1.500, 0.000, 1.570, 0.250, 0.000, 0.000]], timeout=rospy.Duration(1))
         
-        robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 1.300, -0.15, 0.000, 0.000)
+        robot.leftArm._send_joint_trajectory([[-0.050, 1.500, 1.5300, 1.300, -0.15, 0.000, 0.000]])
         
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_end, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_end, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_start, timeout=1)
-        robot.rightArm.send_joint_goal(*gangnam_poseB_right_end, timeout=1)
+        robot.rightArm._send_joint_trajectory([gangnam_poseB_right_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseB_right_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseB_right_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseB_right_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
+        robot.rightArm._send_joint_trajectory([gangnam_poseB_right_end], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         
-        robot.leftArm.send_joint_goal(-0.050, 1.500, 1.5300, 0.800, -0.15, 0.000, 0.000, timeout=1)
+        robot.leftArm._send_joint_trajectory([[-0.050, 1.500, 1.5300, 0.800, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
 
 def gangnam_style(robot):    
     stopEvent = threading.Event()
@@ -104,9 +104,9 @@ def gangnam_style(robot):
     motionB(robot)
         
     stopEvent.set()
-    robot.leftArm.reset_arm()
-    robot.rightArm.reset_arm()
-    robot.head.reset_position()
+    robot.leftArm.reset()
+    robot.rightArm.reset()
+    robot.head.reset()
 
 class GangNamStyle(smach.State):
     def __init__(self, robot):

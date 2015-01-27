@@ -42,7 +42,7 @@ def head_up_down(robot, stopEvent):
     while not rospy.is_shutdown() and not stopEvent.is_set():
         robot.head.look_down(tilt_vel=0.5)
         robot.head.look_up(tilt_vel=0.5)
-    robot.head.reset_position()
+    robot.head.reset()
 
 def hoofdschoudersknieteen(robot):
     #TODO: Look at hand at given times
@@ -115,7 +115,7 @@ def hoofdschoudersknieteen(robot):
         #hoofd(speak=False); schouders(speak=True); knie(speak=True); teen(speak=True); knie(speak=True); teen(speak=True)
 
         robot.spindle.reset()
-        robot.head.reset_position()
+        robot.head.reset()
         robot.rightArm.reset_arm()
         robot.leftArm.reset_arm()
     except Exception, e:
