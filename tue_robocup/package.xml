@@ -18,6 +18,7 @@
   <run_depend>challenge_demo</run_depend>
   <run_depend>challenge_gpsr</run_depend>
   <run_depend>challenge_manipulation</run_depend>
+  <run_depend>challenge_navigation</run_depend>
 
   <!-- <run_depend>challenge_emergency</run_depend> -->
   <run_depend>challenge_final</run_depend>
@@ -28,6 +29,7 @@
   <run_depend>challenge_rips</run_depend>
   <!-- <run_depend>challenge_robo_zoo</run_depend> -->
   <run_depend>state_viewer</run_depend>
+  <run_depend>challenge_navigation</run_depend>
 
   <export>
     <metapackage/>
