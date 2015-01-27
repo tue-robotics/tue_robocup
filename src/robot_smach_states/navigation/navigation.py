@@ -15,6 +15,7 @@ import math
 from psi import Term, Compound, Conjunction
 import actionlib
 from random import choice
+import robot_skills.util.msg_constructors as msgs
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -135,9 +136,9 @@ class determineBlocked(smach.State):
         # ToDo: move this to execute???
 
         # Look at the entity
-        p=self.robot.base.local_planner.getObstaclePoint()
-        p.z = 1.6
-        self.robot.head.setLookAtGoal("/map", p)
+        ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
+        ps.pose.position.z = 1.6
+        self.robot.head.setLookAtGoal(ps)
 
         # Wait for 5 seconds but continue if the path is free
         wait_start = rospy.Time.now()
