@@ -69,6 +69,9 @@ class NavigateToRoom(NavigateTo):
 
         ''' Orientation constraint is not too relevant, but we'll look at the center...'''
         #oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
+
+        # ToDo: check if orientationconstraint present
+        # Else: do this:
         oc = OrientationConstraint(look_at=Point((xmin+xmax)/2, (ymin+ymax)/2, 0.0), angle_offset = 3.0, frame="/map")
 
         return pc, oc
