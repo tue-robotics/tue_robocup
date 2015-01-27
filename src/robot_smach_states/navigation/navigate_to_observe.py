@@ -28,6 +28,10 @@ class NavigateToObserve(NavigateTo):
 
         ch = e.convex_hull
 
+        if len(ch) == 0:
+            rospy.logerr("{0} has no convex hull so cannot NavigateToObserve there".format(entity_id))
+            return None
+
         x = e.pose.position.x
         y = e.pose.position.y      
 

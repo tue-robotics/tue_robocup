@@ -62,6 +62,7 @@ class getPlan(smach.State):
 
     def execute(self, userdata):
 
+        rospy.sleep(rospy.Duration(0.1))
         if self.preempt_requested():
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'  
@@ -371,10 +372,10 @@ class breakOutState(smach.State):
     def execute(self, userdata):
 
         # Wait for some time before checking
-        #t_start = rospy.Time.now()
-        #while (not rospy.is_shutdown() and (rospy.Time.now() - t_start) < rospy.Duration(0.5)):
-        #   rospy.sleep(0.1)
-        #rospy.logwarn("Starting breakout check")
+        t_start = rospy.Time.now()
+        while (not rospy.is_shutdown() and (rospy.Time.now() - t_start) < rospy.Duration(0.5)):
+          rospy.sleep(0.1)
+        rospy.logwarn("Starting breakout check")
 
         breakout = False
         while (not rospy.is_shutdown() and not breakout and not self.preempt_requested()):
@@ -439,10 +440,10 @@ class NavigateTo(smach.StateMachine):
                 if outcome_map['NAVIGATE'] == 'unreachable':
                     return True
 
-                if outcome_map['NAVIGATE'] == 'preempted':
-                    rospy.logwarn("Is this a good idea???")
-                    # Does not help...
-                    return False
+                # if outcome_map['NAVIGATE'] == 'preempted':
+                #     rospy.logwarn("Is this a good idea???")
+                #     # Does not help...
+                #     return False
 
                 if outcome_map['NAVIGATE'] == 'goal_not_defined':
                     return True
