@@ -41,6 +41,7 @@ def spindle_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
         robot.spindle.send_goal(lower) #, timeout=4.0
+        rospy.sleep(1.)
         robot.spindle.send_goal(upper) #, timeout=4.0
 
 
@@ -48,13 +49,14 @@ def head_up_down(robot, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
         robot.head.look_down(tilt_vel=0.5)
+        rospy.sleep(1.)
         robot.head.look_up(tilt_vel=0.5)
     robot.head.reset_position()
 
 def macarena(robot):
     stopEvent = threading.Event()
 
-    up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
+    up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, "lower", "upper", stopEvent))
     up_and_down_spindle.start()
     #robot.spindle.send_goal(0.3)
     up_and_down_head = threading.Thread(target=head_up_down, args=(robot, stopEvent))

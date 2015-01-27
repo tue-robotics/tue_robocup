@@ -26,7 +26,7 @@ def walk_like_an_egyptian(robot):
 
     robot.rightArm.reset()
     robot.leftArm.reset()
-    robot.head.reset_position()
+    robot.head.reset()
 
 def music():
     abspath = os.path.abspath(__file__)

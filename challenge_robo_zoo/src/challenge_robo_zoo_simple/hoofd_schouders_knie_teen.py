@@ -29,21 +29,6 @@ arm_to_toes_1 =                [-0.200, -0.200, 0.200, 0.800, 0.000, 0.000, 0.00
 zero =                          [-0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.000]
 #7a. Left arm down to the hips
 
-
-def spindle_up_down(robot, lower, upper, stopEvent):
-    """Loop the robot's spindle between the lower and upper heights given here"""
-    while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.spindle.send_goal(lower, timeout=4.0)
-        robot.spindle.send_goal(upper, timeout=4.0)
-
-
-def head_up_down(robot, stopEvent):
-    """Loop the robot's spindle between the lower and upper heights given here"""
-    while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.head.look_down(tilt_vel=0.5)
-        robot.head.look_up(tilt_vel=0.5)
-    robot.head.reset()
-
 def hoofdschoudersknieteen(robot):
     #TODO: Look at hand at given times
 
