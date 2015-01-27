@@ -22,11 +22,14 @@ class RandomNavDesignator(Designator):
         self._robot = robot
         self.entity_id = None
 
+        # Publisher and subriber
+        #rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
+
     def resolve(self):
         if self.entity_id:
             eid = self.entity_id
             rospy.logwarn("Resolved ID = {0}".format(eid))
-            entity_id = None
+            self.entity_id = None
             return eid
 
     def getRandomGoal(self):
@@ -36,7 +39,7 @@ class RandomNavDesignator(Designator):
 
         # If entities found: only take entities with convex hulls, that have a type and are not floor...
         if entities:
-            entities = [entity for entity in entities if ( len(entity.convex_hull) > 0 and not entity.type == "" and not entity.type == "floor" )]
+            entities = [entity for entity in entities if ( len(entity.convex_hull) > 0 and not entity.type == "" and not entity.type == "floor" and not entity.type == "walls")]
         else:
             raise Exception("No entities in this model")
 
