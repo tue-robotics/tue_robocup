@@ -504,10 +504,10 @@ class NavigateTo(smach.StateMachine):
         status = self.robot.base.local_planner.getStatus()
         goal_handle = self.robot.base.local_planner.getGoalHandle()
 
-        if hasattr(self, 'breakout_goal_handle'):
-            rospy.logwarn("Status = {0}, goal_handle = {1}, stored = {2}".format(status, goal_handle, self.breakout_goal_handle))
-        else:
-            rospy.logwarn("Status = {0}, goal_handle = {1}".format(status, goal_handle))
+        # if hasattr(self, 'breakout_goal_handle'):
+        #     rospy.logwarn("Status = {0}, goal_handle = {1}, stored = {2}".format(status, goal_handle, self.breakout_goal_handle))
+        # else:
+        #     rospy.logwarn("Status = {0}, goal_handle = {1}".format(status, goal_handle))
 
         if status == "arrived":
 
