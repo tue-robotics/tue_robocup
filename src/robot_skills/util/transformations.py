@@ -89,9 +89,10 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
         return target_position
         """
       
-def tf_transform(coordinates, inputframe, outputframe, tf_listener=None):
-    if not tf_listener: 
-        tf_listener = tf_server.TFClient()
+
+
+def tf_transform(coordinates, inputframe, outputframe, tf_listener):
+    # Should probably be called transform_point
     
     if isinstance(coordinates, geometry_msgs.msg.Point):
         ps = geometry_msgs.msg.PointStamped(point=coordinates) 

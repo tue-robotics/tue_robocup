@@ -44,8 +44,11 @@ class LocalPlanner():
         self.__setState("controlling", None, None, plan)
 
     def cancelCurrentPlan(self):
-        self._action_client.cancel_goal()
-        self.__setState("idle")
+        state = self._action_client.get_state()
+        # Only cancel goal when pending or active
+        if (state ==0 or state == 1):
+            self._action_client.cancel_goal()
+            self.__setState("idle")
 
     def getGoalHandle(self):
         return self._goal_handle
