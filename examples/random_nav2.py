@@ -12,6 +12,81 @@ from cb_planner_msgs_srvs.msg import PositionConstraint, OrientationConstraint
 from robot_smach_states.util.startup import startup
 import std_msgs.msg
 
+from robot_smach_states.designators.designator import Designator
+from ed.srv import SimpleQuery, SimpleQueryRequest
+
+class RandomNavDesignator(Designator):
+
+    def __init__(self, robot):
+        super(Designator, self).__init__()
+        self._robot = robot
+        self.entity_id = None
+
+        # Publisher and subriber
+        self.locations_pub = rospy.Publisher("/locations_list", std_msgs.msg.String)
+        rospy.Subscriber("/nav_goal", std_msgs.msg.String, self.goalCallback)
+
+    def resolve(self):
+        if self.entity_id:
+            eid = self.entity_id
+            rospy.logwarn("Resolved ID = {0}".format(eid))
+            self.entity_id = None
+            return eid
+
+    def getRandomGoal(self):
+
+        # If a goal is already defined by the used, return
+        if not self.entity_id == None:
+            return self.entity_id
+
+        # Get all entities
+        #entities = self.ed(type="").entities
+        entities = self._robot.ed.get_entities(type="")
+
+        # If entities found: only take entities with convex hulls, that have a type and are not floor...
+        if entities:
+            entities = [entity for entity in entities if ( len(entity.convex_hull) > 0 and not entity.type == "" and not entity.type == "floor" and not entity.type == "walls")]
+        else:
+            raise Exception("No entities in this model")
+
+        # If still entities
+        if entities:
+
+            # Publish a comma separated list with possible locations
+            msg = std_msgs.msg.String()
+
+            for entity in entities:
+
+                # If necessary: add comma
+                if msg.data != "":
+                    msg.data += ","
+
+                # Add entity
+                msg.data += entity.id
+
+                print "ID = {0}, type = {1}".format(entity.id, entity.type)
+
+            self.locations_pub.publish(msg)
+
+            # Select random object
+            entity    = random.choice(entities)
+            entity_id = entity.id
+
+            # Get rid of prefix + slash???
+            #index = entity_id.find("/")
+            #entity_id = entity_id[index+1:]
+            rospy.loginfo("Entity:\n\tid = {0},\n\ttype = {1}".format(entity.id, entity.type))
+
+            self.entity_id = entity_id
+            return self.entity_id
+        else:
+            raise Exception("No entities with convex hulls")
+
+    def goalCallback(self, msg):
+        self.entity_id = msg.data
+        rospy.loginfo("Next goal: {0}".format(self.entity_id))
+        return
+
 class SelectAction(smach.State):
     def __init__(self, outcomes=['continue', 'pause', 'stop']):
         self.outcomes= outcomes
@@ -49,6 +124,8 @@ class RandomNav(smach.StateMachine):
                                   
         self.requested_location = None
         rospy.Subscriber("/location_request", std_msgs.msg.String, self.requestedLocationcallback)
+
+        self.random_nav_designator = RandomNavDesignator(self.robot)
         
         with self:
             
@@ -66,31 +143,22 @@ class RandomNav(smach.StateMachine):
             @smach.cb_interface(outcomes=['target_determined', 'no_targets_available'], 
                                 input_keys=[], 
                                 output_keys=[])
-            def determine_target(userdata):
-                if self.requested_location != None:
-                    # Query nav interface ramon
-                    target = self.requested_location
-                    requested_location = None
-                else:
-                    # Query ED
-                    targets = [e.id for e in self.robot.ed.getEntities() if e.type != "" and len(e.id) != 32]
-                    target = random.choice(targets)
+            def determine_target(userdata, designator):
 
-                # Set the constraints
-                self.position_constraint.frame = target
-                self.orientation_constraint.frame = target
+                entity_id = designator.getRandomGoal()
                 
                 sentences = ["Lets go look at the %s", "Lets have a look at the %s", "Lets go to the %s", "Lets move to the %s" ,"I will go to the %s", "I will now move to the %s", "I will now drive to the %s", "I will look the %s", "The %s will be my next location", "The %s it is", "New goal, the %s", "Going to look at the %s", "Moving to the %s", "Driving to the %s", "On to the %s", "On the move to the %s", "Going to the %s"]
-                robot.speech.speak(random.choice(sentences)%target, block=False)
+                robot.speech.speak(random.choice(sentences)%entity_id, block=False)
 
                 return 'target_determined'
             
-            smach.StateMachine.add('DETERMINE_TARGET', smach.CBState(determine_target),
+            smach.StateMachine.add('DETERMINE_TARGET', smach.CBState(determine_target,
+                                    cb_kwargs={'designator': self.random_nav_designator}),
                                     transitions={   'target_determined':'DRIVE',
                                                     'no_targets_available':'SELECT_ACTION'})
 
             smach.StateMachine.add( 'DRIVE',
-                                    states.NavigateWithConstraints(robot, self.position_constraint, self.orientation_constraint),
+                                    states.NavigateToObserve(robot, self.random_nav_designator),
                                     transitions={   "arrived":"SAY_SUCCEEDED",
                                                     "unreachable":'SAY_UNREACHABLE',
                                                     "goal_not_defined":'SELECT_ACTION'})

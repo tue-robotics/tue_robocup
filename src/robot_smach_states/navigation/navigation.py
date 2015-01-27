@@ -370,6 +370,13 @@ class breakOutState(smach.State):
 
     def execute(self, userdata):
 
+        # Wait for some time before checking
+        #t_start = rospy.Time.now()
+        #while (not rospy.is_shutdown() and (rospy.Time.now() - t_start) < rospy.Duration(1.0)):
+        #    rospy.sleep(0.1)
+        #    return 'passed'
+        #rospy.logerr("Starting breakout check")
+
         breakout = False
         while (not rospy.is_shutdown() and not breakout and not self.preempt_requested()):
             rospy.sleep(rospy.Duration(0.5))
@@ -433,6 +440,14 @@ class NavigateTo(smach.StateMachine):
                 if outcome_map['NAVIGATE'] == 'unreachable':
                     return True
 
+                if outcome_map['NAVIGATE'] == 'preempted':
+                    rospy.logwarn("Is this a good idea???")
+                    # Does not help...
+                    return False
+
+                if outcome_map['NAVIGATE'] == 'goal_not_defined':
+                    return True
+
             sm_con = smach.Concurrence( outcomes=['arrived','unreachable','goal_not_defined','preempted'],
                                         default_outcome='arrived',
                                         outcome_map={   'arrived'           :   {   'NAVIGATE'  : 'preempted',
@@ -449,7 +464,20 @@ class NavigateTo(smach.StateMachine):
                 smach.Concurrence.add('MONITOR' , breakOutState(self.robot, self.breakOut))
 
             smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
-                transitions={'done'                                 :'MONITORED_NAVIGATE'})
+                transitions={'done'                                 :'RESET_SM_NAV'})
+
+            @smach.cb_interface(outcomes=['done'], 
+                                input_keys=[], 
+                                output_keys=[])
+            def reset_sm_nav(userdata, con_state):
+                rospy.logwarn("CB function")
+                #import ipdb; ipdb.set_trace();
+                con_state.recall_preempt()
+                return 'done'
+            
+            smach.StateMachine.add('RESET_SM_NAV', smach.CBState(reset_sm_nav,
+                                    cb_kwargs={'con_state': sm_nav}),
+                                    transitions={   'done':'MONITORED_NAVIGATE' })
 
             smach.StateMachine.add('MONITORED_NAVIGATE', sm_con,
                 transitions={'arrived'                              : 'STOP_ANALYSIS_SUCCEED',
@@ -475,9 +503,35 @@ class NavigateTo(smach.StateMachine):
         DO NOT OVERLOAD THIS IF NOT NECESSARY
         '''
         status = self.robot.base.local_planner.getStatus()
+        goal_handle = self.robot.base.local_planner.getGoalHandle()
+
+        if hasattr(self, 'breakout_goal_handle'):
+            rospy.logwarn("Status = {0}, goal_handle = {1}, stored = {2}".format(status, goal_handle, self.breakout_goal_handle))
+        else:
+            rospy.logwarn("Status = {0}, goal_handle = {1}".format(status, goal_handle))
 
         if status == "arrived":
-            return True      
+
+            if not hasattr(self, 'breakout_goal_handle'):
+
+                # If no breakout goal handle exists (hasn't arrived yet), make one and return breakout
+                rospy.logwarn("Breaking out for the first time")
+                self.breakout_goal_handle = goal_handle
+                return True
+
+
+            elif self.breakout_goal_handle != goal_handle:
+
+                # If the existing goal handle is unequal to the current one, the local planner has arrived at a new goal
+                # Hence, store this one and return true
+                rospy.logwarn("Breaking out")
+                self.breakout_goal_handle = goal_handle
+                return True
+
+            else:
+
+                # Breakout function has already returned true on this goalhandle
+                return False
         
         return False
 
