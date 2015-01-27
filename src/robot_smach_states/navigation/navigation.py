@@ -137,7 +137,7 @@ class determineBlocked(smach.State):
 
         # Look at the entity
         ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
-        ps.pose.position.z = 1.6
+        ps.point.z = 1.6
         self.robot.head.setLookAtGoal(ps)
 
         # Wait for 5 seconds but continue if the path is free
@@ -372,10 +372,9 @@ class breakOutState(smach.State):
 
         # Wait for some time before checking
         #t_start = rospy.Time.now()
-        #while (not rospy.is_shutdown() and (rospy.Time.now() - t_start) < rospy.Duration(1.0)):
-        #    rospy.sleep(0.1)
-        #    return 'passed'
-        #rospy.logerr("Starting breakout check")
+        #while (not rospy.is_shutdown() and (rospy.Time.now() - t_start) < rospy.Duration(0.5)):
+        #   rospy.sleep(0.1)
+        #rospy.logwarn("Starting breakout check")
 
         breakout = False
         while (not rospy.is_shutdown() and not breakout and not self.preempt_requested()):
