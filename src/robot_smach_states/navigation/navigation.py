@@ -62,6 +62,9 @@ class getPlan(smach.State):
 
     def execute(self, userdata):
 
+        # Sleep for 0.1 s (breakOut sleep) to prevent synchronization errors between monitor state and nav state
+        rospy.sleep(rospy.Duration(0.1))
+
         if self.preempt_requested():
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'  
@@ -378,7 +381,7 @@ class breakOutState(smach.State):
 
         breakout = False
         while (not rospy.is_shutdown() and not breakout and not self.preempt_requested()):
-            rospy.sleep(rospy.Duration(0.5))
+            rospy.sleep(rospy.Duration(0.1))
             breakout = self.breakout_function()
 
         if breakout:
