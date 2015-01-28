@@ -57,9 +57,9 @@ class Head():
         Optionally, keep tracking can be disabled (keep_tracking=False)
         """
         if (side == "left"):
-            return self.setLookAtGoal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"), keep_tracking=keep_tracking)
+            return self.setLookAtGoal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_left"))
         elif (side == "right"):
-            return self.setLookAtGoal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"), keep_tracking=keep_tracking)
+            return self.setLookAtGoal(msgs.PointStamped(0,0,0,frame_id="/"+self.robot_name+"/grippoint_right"))
         else:
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
             return False
