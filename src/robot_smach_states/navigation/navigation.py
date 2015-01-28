@@ -62,7 +62,6 @@ class getPlan(smach.State):
 
     def execute(self, userdata):
 
-        rospy.sleep(rospy.Duration(0.1))
         if self.preempt_requested():
             rospy.loginfo('Get plan: preempt_requested')
             return 'preempted'  
@@ -85,7 +84,7 @@ class getPlan(smach.State):
         # Constraints and plan seem to be valid, so set the plan
         self.robot.base.local_planner.setPlan(plan, pc, oc)
 
-        self.robot.speech.speak(choice(["I'm on my way!","Getting there!","I will go there right away!"]))
+        self.robot.speech.speak(choice(["I'm on my way!","Getting there!","I will go there right away!"]), block=False)
 
         return "goal_ok"
 
@@ -470,8 +469,11 @@ class NavigateTo(smach.StateMachine):
                                 input_keys=[], 
                                 output_keys=[])
             def reset_sm_nav(userdata, con_state):
-                rospy.logwarn("CB function")
-                #import ipdb; ipdb.set_trace();
+                # Recall preempt on concurrency container and all children
+                children = con_state.get_children()
+                for state in children:
+                    children[state].recall_preempt()
+
                 con_state.recall_preempt()
                 return 'done'
             
@@ -524,13 +526,14 @@ class NavigateTo(smach.StateMachine):
 
                 # If the existing goal handle is unequal to the current one, the local planner has arrived at a new goal
                 # Hence, store this one and return true
-                rospy.logwarn("Breaking out")
+                rospy.logwarn("Breaking out!!")
                 self.breakout_goal_handle = goal_handle
                 return True
 
             else:
 
                 # Breakout function has already returned true on this goalhandle
+                rospy.logerr("Executing should never be here. If this is the case, this function can be made a lot simpler!")
                 return False
         
         return False
