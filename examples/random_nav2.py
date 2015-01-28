@@ -91,6 +91,16 @@ class RandomNavDesignator(Designator):
     def goalCallback(self, msg):
         self.entity_id = msg.data
         rospy.loginfo("Next goal: {0}".format(self.entity_id))
+        self._robot.speech.speak(random.choice(["I am asked to go to the {0}".format(self.entity_id),
+                                                "My next goal will be the {0}".format(self.entity_id),
+                                                "My next target will be the {0}".format(self.entity_id),
+                                                "Next, I will go to the {0}".format(self.entity_id),
+                                                "After this, I will go to the {0}".format(self.entity_id),
+                                                "I will soon go to the {0}".format(self.entity_id),
+                                                "I will go to the {0} after I have reached this goal".format(self.entity_id),
+                                                "I will show you the {0} in a minute".format(self.entity_id),
+                                                "I will show you the {0} in a second".format(self.entity_id),
+                                                ]))
         return
 
 class SelectAction(smach.State):
