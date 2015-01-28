@@ -45,7 +45,13 @@ class RandomNavDesignator(Designator):
 
         # If entities found: only take entities with convex hulls, that have a type and are not floor...
         if entities:
-            entities = [entity for entity in entities if ( len(entity.convex_hull) > 0 and not entity.type == "" and not entity.type == "floor" and not entity.type == "walls")]
+            entities = [entity for entity in entities if ( len(entity.convex_hull) > 0 
+                and not entity.type == "" 
+                and not entity.id == "floor" 
+                and not entity.id == "walls"
+                and not entity.id == "desks-support"
+                and not entity.id == "desks-top"
+                )]
         else:
             raise Exception("No entities in this model")
 
@@ -147,7 +153,22 @@ class RandomNav(smach.StateMachine):
 
                 entity_id = designator.getRandomGoal()
                 
-                sentences = ["Lets go look at the %s", "Lets have a look at the %s", "Lets go to the %s", "Lets move to the %s" ,"I will go to the %s", "I will now move to the %s", "I will now drive to the %s", "I will look the %s", "The %s will be my next location", "The %s it is", "New goal, the %s", "Going to look at the %s", "Moving to the %s", "Driving to the %s", "On to the %s", "On the move to the %s", "Going to the %s"]
+                sentences = [   "Lets go look at the %s", 
+                                "Lets have a look at the %s", 
+                                "Lets go to the %s", 
+                                "Lets move to the %s",
+                                "I will go to the %s", 
+                                "I will now move to the %s", 
+                                "I will now drive to the %s", 
+                                "I will look the %s", 
+                                "The %s will be my next location", 
+                                "The %s it is", "New goal, the %s", 
+                                "Going to look at the %s", 
+                                "Moving to the %s", 
+                                "Driving to the %s", 
+                                "On to the %s", 
+                                "On the move to the %s", 
+                                "Going to the %s"]
                 robot.speech.speak(random.choice(sentences)%entity_id, block=False)
 
                 return 'target_determined'
@@ -164,11 +185,29 @@ class RandomNav(smach.StateMachine):
                                                     "goal_not_defined":'SELECT_ACTION'})
                                                     
             smach.StateMachine.add("SAY_SUCCEEDED", 
-                                    states.Say(robot, [ "I am here", "Goal succeeded", "Another goal succeeded", "Goal reached", "Another goal reached","Target reached", "Another target reached", "Destination reached","Another destination reached",  "I have arrived", "I have arrived at my goal", "I have arrived at my target", "I have arrived at my destination", "I am at my goal", "I am at my target", "I am at my destination", "Here I am",]),
+                                    states.Say(robot, [ "I am here", 
+                                                        "Goal succeeded", 
+                                                        "Another goal succeeded", 
+                                                        "Goal reached", 
+                                                        "Another goal reached",
+                                                        "Target reached", 
+                                                        "Another target reached", 
+                                                        "Destination reached",
+                                                        "Another destination reached",  
+                                                        "I have arrived", 
+                                                        "I have arrived at my goal", 
+                                                        "I have arrived at my target", 
+                                                        "I have arrived at my destination", 
+                                                        "I am at my goal", 
+                                                        "I am at my target", 
+                                                        "I am at my destination", 
+                                                        "Here I am",]),
                                     transitions={   'spoken':'SELECT_ACTION'})
                                                     
             smach.StateMachine.add("SAY_UNREACHABLE", 
-                                    states.Say(robot, [ "I can't find a way to my goal, better try something else", "This goal is unreachable, I better find somewhere else to go", "I am having a hard time getting there so I will look for a new target"]),
+                                    states.Say(robot, [ "I can't find a way to my goal, better try something else", 
+                                                        "This goal is unreachable, I better find somewhere else to go", 
+                                                        "I am having a hard time getting there so I will look for a new target"]),
                                     transitions={   'spoken':'SELECT_ACTION'})
                                     
             smach.StateMachine.add("SAY_DONE", 
