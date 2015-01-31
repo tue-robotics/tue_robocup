@@ -225,26 +225,31 @@ class FuncDesignator(Designator):
 class ArmDesignator(Designator):
     """Resolves to an instance of the Arm-class in robot_skills.
     >>> left, right = "left", "right" #Just strings in this test, but must be robot_skills.Arm-instances
-    >>> a = ArmDesignator([left, right], left)
+    >>> a = ArmDesignator({"left":left, "right":right}, left)
     >>> a.resolve()
     'left'
     """
 
-    def __init__(self, all_arms, preferred_arm):
+    def __init__(self, all_arms, preferred_arm=None):
         """Initialize a new ArmDesignator with a collection of arms available on the robot and an arm that is preferred for the given operations.
-        @param all_arms a collection of arms available on the robot
+        @param all_arms a dictionary of arms available on the robot
         @param preferred_arm the arm that is preferred for the operations that use this designator"""
 
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
-        if not preferred_arm in all_arms:
+
+        if not self.preferred_arm:
+            self.preferred_arm = self.all_arms.values()[0]
+
+        if not preferred_arm in self.all_arms.values():
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
     def resolve(self):
+        # import ipdb; ipdb.set_trace()
         if self.available(self.preferred_arm):
             return self.preferred_arm
         else:
-            available_arms = filter(self.available, self.all_arms)
+            available_arms = filter(self.available, self.all_arms.values())
             if any(available_arms):
                 return available_arms[0]
             else:
@@ -253,6 +258,51 @@ class ArmDesignator(Designator):
     def available(self, arm):
         """Check whether the given arm is available for some function."""
         return True
+
+
+class UnoccupiedArmDesignator(ArmDesignator):
+    """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
+    .resolve() raises an DesignatorResolvementError when no such arm can be found
+    >>> from mock import MagicMock
+    >>> leftArm = MagicMock()
+    >>> leftArm.occupied_by = None
+    >>> rightArm = MagicMock()
+    >>> rightArm.occupied_by = None
+    >>> arms = {"left":leftArm, "right":rightArm}
+    >>> empty_arm_designator = UnoccupiedArmDesignator(arms, rightArm)
+    >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
+    >>> assert(arm_to_use_for_first_grab == rightArm)
+    >>> 
+    >>> rightArm.occupied_by = "entity1"
+    >>> arm_to_use_for_second_grab = empty_arm_designator.resolve()
+    >>> assert(arm_to_use_for_second_grab == leftArm)
+    >>> 
+    >>> leftArm.occupied_by = "entity2"
+    >>> #You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
+    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    Traceback (most recent call last):
+      ...
+    DesignatorResolvementError: ...
+    """
+    def __init__(self, all_arms, preferred_arm):
+        super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm)
+    
+    def available(self, arm):
+        """Check that there is no entity occupying the arm"""
+        return arm.occupied_by == None
+
+
+class ArmHoldingEntityDesignator(ArmDesignator):
+    """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
+    .resolve() raises an DesignatorResolvementError when no such arm can be found"""
+    def __init__(self, all_arms, entity_designator):
+        super(ArmHoldingEntityDesignator, self).__init__(all_arms)
+
+        self.entity_designator = entity_designator
+    
+    def available(self, arm):
+        """Check that the arm is occupied by the entity refered to by the entity_designator"""
+        return arm.occupied_by == self.entity_designator.resolve()
 
 
 def test_visited_and_unreachable():
