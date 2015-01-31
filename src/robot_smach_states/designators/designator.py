@@ -241,7 +241,7 @@ class ArmDesignator(Designator):
         if not self.preferred_arm:
             self.preferred_arm = self.all_arms.values()[0]
 
-        if not preferred_arm in self.all_arms.values():
+        if not self.preferred_arm in self.all_arms.values():
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
     def resolve(self):
@@ -273,10 +273,12 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_first_grab == rightArm)
     >>> 
+    >>> #Grab the 1st item with the rightArm
     >>> rightArm.occupied_by = "entity1"
     >>> arm_to_use_for_second_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_second_grab == leftArm)
     >>> 
+    >>> #Grab the 2nd item with the rightArm
     >>> leftArm.occupied_by = "entity2"
     >>> #You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
@@ -294,7 +296,26 @@ class UnoccupiedArmDesignator(ArmDesignator):
 
 class ArmHoldingEntityDesignator(ArmDesignator):
     """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
-    .resolve() raises an DesignatorResolvementError when no such arm can be found"""
+    .resolve() raises an DesignatorResolvementError when no such arm can be found
+    >>> from mock import MagicMock
+    >>> leftArm = MagicMock()
+    >>> leftArm.occupied_by = None
+    >>> rightArm = MagicMock()
+    >>> rightArm.occupied_by = "entity3"
+    >>> arms = {"left":leftArm, "right":rightArm}
+    >>> entity_designator = Designator("entity3")
+    >>> holding_arm_designator = ArmHoldingEntityDesignator(arms, entity_designator)
+    >>> arm_to_use_for_placing_entity3 = holding_arm_designator.resolve()
+    >>> assert(arm_to_use_for_placing_entity3 == rightArm)
+    >>>
+    >>> #place the object
+    >>> rightArm.occupied_by = None
+    >>> 
+    >>> #After placing the item, there is no arm holding the item anymore
+    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    Traceback (most recent call last):
+      ...
+    DesignatorResolvementError: ..."""
     def __init__(self, all_arms, entity_designator):
         super(ArmHoldingEntityDesignator, self).__init__(all_arms)
 
