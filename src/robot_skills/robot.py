@@ -33,6 +33,8 @@ import std_msgs.msg
 from math import degrees, radians
 from psi import Compound, Sequence, Conjunction
 
+from collections import OrderedDict
+
 class Robot(object):
     """
     Interface to all parts of the robot.
@@ -49,7 +51,7 @@ class Robot(object):
         self.spindle = self.torso
         self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)
         self.rightArm = arms.Arm(self.robot_name, "right", self.tf_listener)
-        self.arms = {"left":self.leftArm, "right":self.rightArm}
+        self.arms = OrderedDict(left=self.leftArm, right=self.rightArm)
 
         self.head = head.Head(self.robot_name)
 
@@ -82,6 +84,35 @@ class Robot(object):
         self.tf_listener.waitForTransform(frame, ps.header.frame_id, rospy.Time(), rospy.Duration(2.0))
         output_pose = self.tf_listener.transformPose(frame, ps)
         return output_pose
+
+    def get_arm(self, side):
+        """Get an arm object and a backup for that arm by giving a side as either a string or an Arm-object
+        @param side Either string from robot.arms.keys() or Arm from robot.arms.values()"""
+        preferred_side = None
+        backup_side = None
+
+        #Define which arm is which's backup arm (left backs up for right etc)
+        backup_arms = self.arms.values() #Get a *list* of arms i.e. the values of the arm-dict, not the keys
+        backup_arms.insert(0, backup_arms.pop()) #Make the last arm the first in the list, so we shift by 1
+        backup_str_dict = dict(self.backup_arms.keys(), backup_arms) #Create a dict again that maps strings to backup-arms
+        backup_obj_dict = {self.arms[side]:backup_str_dict[side] for side in self.arms.keys()} #Create a dict that maps e.g. self.LeftArm to self.rightArm
+
+        if isinstance(side, basestring):
+            try:
+                preferred_side = self.robot.arms[side]
+                backup_side = backup_str_dict[side]
+            except KeyError:
+                print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+                self.side = self.robot.rightArm
+        elif isinstance(side, arms.Arm):
+            preferred_side = side
+            backup_side = backup_obj_dict[side]
+        else:
+            print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
+            preferred_side = self.robot.rightArm
+            backup_side = self.robot.leftArm
+
+        return preferred_side, backup_side
 
     def close(self):
         try:
