@@ -88,30 +88,26 @@ class Robot(object):
     def get_arm(self, side):
         """Get an arm object and a backup for that arm by giving a side as either a string or an Arm-object
         @param side Either string from robot.arms.keys() or Arm from robot.arms.values()"""
-        preferred_side = None
-        backup_side = None
+        preferred_side = self.arms[self.arms.keys()[0]]
 
         #Define which arm is which's backup arm (left backs up for right etc)
         backup_arms = self.arms.values() #Get a *list* of arms i.e. the values of the arm-dict, not the keys
         backup_arms.insert(0, backup_arms.pop()) #Make the last arm the first in the list, so we shift by 1
-        backup_str_dict = dict(self.backup_arms.keys(), backup_arms) #Create a dict again that maps strings to backup-arms
+        backup_str_dict = dict(zip(self.arms.keys(), backup_arms)) #Create a dict again that maps strings to backup-arms
         backup_obj_dict = {self.arms[side]:backup_str_dict[side] for side in self.arms.keys()} #Create a dict that maps e.g. self.LeftArm to self.rightArm
 
         if isinstance(side, basestring):
             try:
-                preferred_side = self.robot.arms[side]
-                backup_side = backup_str_dict[side]
+                preferred_side = self.arms[side]
             except KeyError:
                 print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
-                self.side = self.robot.rightArm
+                preferred_side = self.arms[self.arms.keys()[0]]
         elif isinstance(side, arms.Arm):
             preferred_side = side
-            backup_side = backup_obj_dict[side]
         else:
-            print "Unknown arm side:" + str(side) + ". Defaulting to 'right'"
-            preferred_side = self.robot.rightArm
-            backup_side = self.robot.leftArm
+            print "Unknown arm side:" + str(side) + ". Defaulting to '{0}'".format(preferred_side.side)
 
+        backup_side = backup_obj_dict[preferred_side]
         return preferred_side, backup_side
 
     def close(self):
