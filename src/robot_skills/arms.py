@@ -60,7 +60,7 @@ class Arm(object):
             raise Exception("Side should be either: left or right")
         self.tf_listener = tf_listener
 
-        self.occupied = False
+        self._occupied_by = None
 
         # Get stuff from the parameter server
         self.offset = self.load_param('/skills/arm/offset/' + self.side)
@@ -188,6 +188,20 @@ class Arm(object):
 
     def reset(self):
         return self.send_joint_goal('reset')
+
+    @property
+    def occupied_by(self):
+        """An arm can be occupied by an entity that the arm's gripper is holding."""
+        return self._occupied_by
+
+    @occupied_by.setter
+    def set_occupied_by(self, value):
+        """Set which entity this arm is holding. Implemented as a property so it can be extended later"""
+        self._occupied_by = value
+
+    @occupied_by.deleter
+    def del_occupied_by(self):
+        del self._occupied_by
 
     def send_gripper_goal(self, state, timeout=5.0):
         goal = GripperCommandGoal()
