@@ -49,6 +49,8 @@ class Robot(object):
         self.spindle = self.torso
         self.leftArm = arms.Arm(self.robot_name, "left", self.tf_listener)
         self.rightArm = arms.Arm(self.robot_name, "right", self.tf_listener)
+        self.arms = {"left":self.leftArm, "right":self.rightArm}
+
         self.head = head.Head(self.robot_name)
 
         # Human Robot Interaction
