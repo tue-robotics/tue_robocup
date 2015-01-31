@@ -10,6 +10,8 @@ import geometry_msgs
 from human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
+from ed.srv import SimpleQueryRequest
+from robot_smach_states.designators.designator import EdEntityByQueryDesignator
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
 #TODO: Make Place_Object also use a query
@@ -372,7 +374,7 @@ class GrabMachineA(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['free', 'occupied'])
             def check_occupancy(userdata, arm):
-                if arm.occupied:
+                if arm.occupied_by:
                     return 'occupied'
                 else:
                     return 'free'
@@ -972,7 +974,10 @@ class SetGripper(smach.State):
                     self.robot.reasoner.attach_object_to_gripper(entityID, self.end_effector_frame_id, True)
                 except KeyError, ke:
                     rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
-                self.side.occupied = True
+
+                #TODO: the designator required by this state should resolve to an entity and not to its ID.
+                entity = EdEntityByQueryDesignator(SimpleQueryRequest(id=entityID))
+                self.side.occupied_by = entity.resolve()
             except Exception, e:
                 rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator, e))
 
@@ -984,7 +989,7 @@ class SetGripper(smach.State):
         # ToDo: make sure things can get attached to the gripper in this state. Use userdata?
         if self.gripperstate == ArmState.OPEN:
             self.robot.reasoner.detach_all_from_gripper(self.end_effector_frame_id)
-            self.side.occupied = False
+            self.side.occupied_by = None
 
         # ToDo: check for failed in other states
         if result:
