@@ -87,7 +87,11 @@ class Robot(object):
 
     def get_arm(self, side):
         """Get an arm object and a backup for that arm by giving a side as either a string or an Arm-object
-        @param side Either string from robot.arms.keys() or Arm from robot.arms.values()"""
+        @param side Either string from robot.arms.keys() or Arm from robot.arms.values()
+        >>> robot = Robot("dummy")
+        >>> arm, backup_arm = robot.get_arm("left")
+        >>> assert(arm == robot.leftArm)
+        >>> assert(backup_arm == robot.rightArm)"""
         preferred_side = self.arms[self.arms.keys()[0]]
 
         #Define which arm is which's backup arm (left backs up for right etc)
@@ -240,5 +244,7 @@ class Robot(object):
         return base_goal_poses
 
 if __name__ == "__main__":
-
-    pass
+    rospy.init_node("robot")
+    
+    import doctest
+    doctest.testmod()
