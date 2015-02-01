@@ -23,7 +23,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.designators.designator import Designator, ArmDesignator
+from robot_smach_states.designators.designator import Designator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator
 import robot_smach_states as states
 from robot_smach_states import Grab
 from robot_smach_states import Place
@@ -49,7 +49,8 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         current_item = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
         place_position = Designator()  # TODO: Designates an empty spot on the empty placement-shelve. 
-        arm_designator = ArmDesignator([robot.leftArm, robot.rightArm], robot.leftArm) #ArmDesignator(current_item)  # TODO: this arm designator needs to take into account that we only want an empty arm when grasping, and the arm holding the item when placing.
+        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
@@ -63,7 +64,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
-                                    Grab(robot, current_item, robot.leftArm),  # TODO: Use ArmDesignator
+                                    Grab(robot, current_item, empty_arm_designator),
                                     transitions={   'done'              :'STORE_ITEM',
                                                     'failed'            :'NAV_TO_OBSERVE_BOOKCASE'})
 
@@ -81,7 +82,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
-                                    Place(robot, current_item, place_position, arm_designator),
+                                    Place(robot, current_item, place_position, arm_with_item_designator),
                                     transitions={   'done'              :'succeeded',
                                                     'failed'            :'SAY_HANDOVER_TO_HUMAN'})
 
