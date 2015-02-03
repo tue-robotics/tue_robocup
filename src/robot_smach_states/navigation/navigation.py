@@ -112,6 +112,9 @@ class executePlan(smach.State):
 
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
+            
+            # Check for the presence of a better plan
+            self.checkBetterPlan()
 
             if self.preempt_requested():
                 self.robot.base.local_planner.cancelCurrentPlan()
@@ -124,6 +127,33 @@ class executePlan(smach.State):
                 return "arrived"
             elif status == "blocked":
                 return "blocked"
+    
+    def checkBetterPlan(self):
+        # Get alternative plan
+        pc = self.robot.base.global_planner.getCurrentPositionConstraint()
+        if pc:
+            plan = self.robot.base.global_planner.getPlan(pc)
+
+        # Compare plan
+        if (plan and len(plan) > 0):
+            dtgcp = self.robot.base.local_planner.getDistanceToGoal()           # Distance To Goal Current Plan
+            if dtgcp == None:
+                return
+                
+            dtgap = self.robot.base.global_planner.computePathLength(plan)      # Distance To Goal Alternative Plan
+            rospy.logdebug('Distance original = {0}, distance alternative = {1}'.format(dtgcp, dtgap))
+
+            # Path should be at least 20% and 1 m shorter
+            if (dtgap/dtgcp < 0.8 and (dtgcp - dtgap) > 1.0):
+                rospy.logwarn("Executing alternative path!")
+                oc = self.robot.base.local_planner.getCurrentOrientationConstraint()
+
+                if oc:
+                    # Constraints and plan seem to be valid, so set the plan
+                    self.robot.base.local_planner.setPlan(plan, pc, oc)
+                else:
+                    rospy.logerr("Cannot execute alternative plan due to absence of orientation constraint")
+        
 
 # ----------------------------------------------------------------------------------------------------
 
