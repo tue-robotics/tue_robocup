@@ -49,7 +49,7 @@ class Amigo(object):
             self.ebutton = ebutton.EButton()
         self.leftSide = arms.Side.LEFT
         self.rightSide = arms.Side.RIGHT
-        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
+        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
 
 if __name__ == "__main__":
     rospy.init_node("amigo_stopper", anonymous=True)

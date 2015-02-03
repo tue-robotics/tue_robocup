@@ -203,7 +203,7 @@ class Mockbot(object):
         self.reasoner = Reasoner()
 
         # Miscellaneous
-        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
+        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"base_link"
 
         #Grasp offsets
@@ -283,7 +283,7 @@ if __name__ == "__main__":
        return (loc.x, loc.y, rot3[0]) 
 
     def hear(text):
-        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String)
+        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)
         rospy.logdebug("Telling Mockbot '{0}'".format(text))
         pub.publish(std_msgs.msg.String(text))
 

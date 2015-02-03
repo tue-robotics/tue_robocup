@@ -14,9 +14,9 @@ class Speech(object):
     """Interface to Amigo's tts-module"""
 
     def __init__(self, robot_name, wait_service=True):
-        self.amigo_speak_up = rospy.Publisher("/%s/text_to_speech/input"%robot_name, String)
-        self.amigo_speak_up_info = rospy.Publisher("/amigo_speak_up_info", String)
-        self.pub_amigo_speech_sim = rospy.Publisher("/amigo_speech_sim", String)    # For using amigo's speech in simulation
+        self.amigo_speak_up = rospy.Publisher("/%s/text_to_speech/input"%robot_name, String, queue_size=10)
+        self.amigo_speak_up_info = rospy.Publisher("/amigo_speak_up_info", String, queue_size=10)
+        self.pub_amigo_speech_sim = rospy.Publisher("/amigo_speech_sim", String, queue_size=10)    # For using amigo's speech in simulation
 
         if wait_service:
             rospy.loginfo("Waiting for service amigo_speakup_advanced")

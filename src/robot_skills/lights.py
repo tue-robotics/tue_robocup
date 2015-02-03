@@ -10,7 +10,7 @@ class Lights:
     """
     
     def __init__(self):
-        self._topic = rospy.Publisher('user_set_rgb_lights', RGBLightCommand)
+        self._topic = rospy.Publisher('user_set_rgb_lights', RGBLightCommand, queue_size=10)
 
     def close(self):
         pass

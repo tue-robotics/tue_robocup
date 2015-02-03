@@ -50,7 +50,7 @@ class Perception(object):
         self.sv_template_config = rospy.ServiceProxy("/template_matching/srv_input", pein_srvs.srv.StartStop)
 
         ''' Publisher for signaling image recording '''
-        self.pub_rec = rospy.Publisher('/recorder/start', tue_recorder.msg.Start)
+        self.pub_rec = rospy.Publisher('/recorder/start', tue_recorder.msg.Start, queue_size=10)
 
         '''People detection ROI'''
         self.ppl_detection_laser = rospy.ServiceProxy('ppl_detection_generic/start_with_roi', pein_srvs.srv.StartStopWithROIArray)

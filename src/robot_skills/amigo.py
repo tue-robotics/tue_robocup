@@ -93,7 +93,7 @@ if __name__ == "__main__":
        return (loc.x, loc.y, rot3[0]) 
 
     def hear(text):
-        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String)
+        pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)
         rospy.logdebug("Telling Amigo '{0}'".format(text))
         pub.publish(std_msgs.msg.String(text))
 

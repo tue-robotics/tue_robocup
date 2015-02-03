@@ -150,8 +150,8 @@ class Base(object):
     def __init__(self, robot_name, tf_listener, wait_service=True, use_2d=None):
         self._tf_listener = tf_listener
         self._robot_name = robot_name
-        self._cmd_vel = rospy.Publisher('/' + self._robot_name + '/base/references', Twist)
-        self._initial_pose_publisher = rospy.Publisher('/' + self._robot_name + '/initialpose', PoseWithCovarianceStamped)
+        self._cmd_vel = rospy.Publisher('/' + self._robot_name + '/base/references', Twist, queue_size=10)
+        self._initial_pose_publisher = rospy.Publisher('/' + self._robot_name + '/initialpose', PoseWithCovarianceStamped, queue_size=10)
         
         self.analyzer = nav_analyzer.NavAnalyzer(self._robot_name)
 

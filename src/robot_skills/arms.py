@@ -94,7 +94,7 @@ class Arm(object):
             rospy.logwarn("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
-        self._marker_publisher = rospy.Publisher("grasp_target", visualization_msgs.msg.Marker)
+        self._marker_publisher = rospy.Publisher("grasp_target", visualization_msgs.msg.Marker, queue_size=10)
 
     def load_param(self, param_name):
         return rospy.get_param('/' + self.robot_name + param_name)
