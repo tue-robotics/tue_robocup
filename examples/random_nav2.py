@@ -42,6 +42,16 @@ class RandomNavDesignator(Designator):
         # Get all entities
         #entities = self.ed(type="").entities
         entities = self._robot.ed.get_entities(type="")
+        
+        # Temp: only pick close targets
+        if entities:
+            entities = [entity for entity in entities if (
+            entity.id == "elevator" 
+            or entity.id == "lecture_room_1"
+            or entity.id == "lecture_room_2"
+            or entity.id == "copier"
+            or entity.id == "stairway"
+            )]
 
         # If entities found: only take entities with convex hulls, that have a type and are not floor...
         if entities:
@@ -89,7 +99,15 @@ class RandomNavDesignator(Designator):
             raise Exception("No entities with convex hulls")
 
     def goalCallback(self, msg):
-        self.entity_id = msg.data
+        
+        # Check if already present
+        if msg.data == self.entity_id:
+            return
+        elif msg.data == "":
+            return
+        else:
+            self.entity_id = msg.data
+            
         rospy.loginfo("Next goal: {0}".format(self.entity_id))
         self._robot.speech.speak(random.choice(["I am asked to go to the {0}".format(self.entity_id),
                                                 "My next goal will be the {0}".format(self.entity_id),
