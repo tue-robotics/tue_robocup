@@ -28,7 +28,7 @@ class NavAnalyzer:
     def __init__(self, robot_name):
         
         self._robot_name = robot_name
-        self.rosbag = False       
+        self.rosbag = True       
         rospy.logwarn("Nav_analyser: Bagging = {0}".format(self.rosbag))
         
         ''' Path '''
@@ -56,10 +56,23 @@ class NavAnalyzer:
 
         ''' Bag topics '''
         if self.rosbag:
-            topics = ["/"+self._robot_name+"/base/references", 
+            topics = ["/tf",
+                      "/"+self._robot_name+"/base/references", 
                       "/"+self._robot_name+"/base/measurements", 
+                      "/"+self._robot_name+"/initialpose",
+                      "/"+self._robot_name+"/joint_states",
                       "/amcl_pose", 
                       "/"+self._robot_name+"/base_front_laser", 
+                      "/"+self._robot_name+"/base_front_laser_raw", 
+                      "/"+self._robot_name+"/torso_laser",
+                      "/"+self._robot_name+"/torso_laser_raw", 
+                      "/"+self._robot_name+"/top_kinect/rgbd",
+                      "/ed/gui/entities",
+                      "/ed/profile/ed",
+                      "/cb_base_navigation/local_planner_interface/visualization/markers/goal_pose_marker",
+                      "/cb_base_navigation/global_planner_interface/visualization/markers/global_plan",
+                      "/cb_base_navigation/local_planner_interface/DWAPlannerROS/local_traj",
+                      "/cb_base_navigation/local_planner_interface/dwa_planner/cost_cloud",
                       "/move_base_3d/AStarPlannerROS/plan"]
 
             #plantopic = "/move_base"
