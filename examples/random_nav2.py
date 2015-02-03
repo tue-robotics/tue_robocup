@@ -56,7 +56,7 @@ class RandomNavDesignator(Designator):
         # If entities found: only take entities with convex hulls, that have a type and are not floor...
         if entities:
             entities = [entity for entity in entities if ( len(entity.convex_hull) > 0 
-                and not entity.type == "" 
+                and "library" in entity.type
                 and not entity.id == "floor" 
                 and not entity.id == "walls"
                 and not entity.id == "desks-support"
