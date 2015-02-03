@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import Float32
 
 def opener():
-    pub = rospy.Publisher('/middle_point', Float32)
+    pub = rospy.Publisher('/middle_point', Float32, queue_size=10)
     
     for distance in [10, 100]:
         rospy.sleep(1.0)

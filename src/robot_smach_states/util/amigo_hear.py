@@ -23,10 +23,10 @@ def talker(sentence = None, keep_looping = False, component = None):
     # /speech_yesno/output
 
     if component == None:
-        pub = rospy.Publisher('/speech/output', String)
+        pub = rospy.Publisher('/speech/output', String, queue_size=10)
     else:
         topic = '/speech_' + component +'/output'
-        pub = rospy.Publisher(topic, String)
+        pub = rospy.Publisher(topic, String, queue_size=10)
 
     rospy.init_node('talker')
     if not sentence:
