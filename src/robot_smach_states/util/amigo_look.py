@@ -5,7 +5,7 @@ from geometry_msgs.msg import PointStamped
 import sys
 
 def talker(x,y, z=1, frame="/base"):
-	pub = rospy.Publisher('head_target', PointStamped)
+	pub = rospy.Publisher('head_target', PointStamped, queue_size=10)
 	rospy.init_node('head_target_sender')
 	
 	rospy.sleep(0.5);

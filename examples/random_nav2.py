@@ -23,7 +23,7 @@ class RandomNavDesignator(Designator):
         self.entity_id = None
 
         # Publisher and subriber
-        self.locations_pub = rospy.Publisher("/locations_list", std_msgs.msg.String)
+        self.locations_pub = rospy.Publisher("/locations_list", std_msgs.msg.String, queue_size=10)
         rospy.Subscriber("/nav_goal", std_msgs.msg.String, self.goalCallback)
 
     def resolve(self):
