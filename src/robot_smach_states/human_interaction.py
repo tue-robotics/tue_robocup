@@ -14,26 +14,6 @@ from designators.designator import Designator, DesignatorResolvementError
 ##########################################################################################################################################
 
 class Say(smach.State):
-    def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
-        smach.State.__init__(self, outcomes=["spoken"])
-        self.robot = robot
-        self.sentence = sentence
-        self.language = language
-        self.personality = personality
-        self.voice = voice
-        self.mood = mood
-        self.block = block
-        
-    def execute(self, userdata):
-        if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
-            sentence = random.choice(self.sentence)
-        else:
-            sentence = self.sentence
-        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
-
-        return "spoken"
-
-class SayFormatted(smach.State):
     """Say a sentence (or pick a random one from a list) that has a python format string.
     The format is filled in with the fmt_args and fmt_kwargs parameters that can also be designators.
     These are resolved every time this state is executed
@@ -43,7 +23,7 @@ class SayFormatted(smach.State):
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
     >>> 
-    >>> sf = SayFormatted(robot, ['This is a {adj} {0} that works with{1} designators too'], [Designator('test'), 'out'], {'adj':Designator("silly")})
+    >>> sf = Say(robot, ['This is a {adj} {0} that works with{1} designators too'], [Designator('test'), 'out'], {'adj':Designator("silly")})
     >>> sf.execute()
     'spoken'
     >>> 
