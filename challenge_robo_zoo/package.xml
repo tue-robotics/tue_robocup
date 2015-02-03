@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>challenge_manipulation</name>
+  <name>challenge_robo_zoo</name>
   <version>0.0.0</version>
   <description>RoboCup RoboZoo-challenge implementation</description>
 

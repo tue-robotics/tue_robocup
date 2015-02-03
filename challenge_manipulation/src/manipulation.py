@@ -23,10 +23,12 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.designators.designator import Designator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator
+from ed.srv import SimpleQuery, SimpleQueryRequest
+from robot_smach_states.designators.designator import Designator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator, EdEntityByQueryDesignator
 import robot_smach_states as states
 from robot_smach_states import Grab
 from robot_smach_states import Place
+from robot_skills.util import msg_constructors as gm
 
 import pdf
 
@@ -45,10 +47,10 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        bookcase = Designator("bookcase")  #TODO: Get the entityID of the bookcase
+        bookcase = EdEntityByQueryDesignator(SimpleQueryRequest(type="plastic_cabinet"))  #TODO: Get the entityID of the bookcase
 
         current_item = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
-        place_position = Designator()  # TODO: Designates an empty spot on the empty placement-shelve. 
+        place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet"))  # TODO: Designates an empty spot on the empty placement-shelve. 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
