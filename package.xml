@@ -16,6 +16,7 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>ed</run_depend>
   <run_depend>python-docopt</run_depend>
+  <run_depend>python-mock</run_depend>
   <run_depend>ipython</run_depend>
 
 </package>
