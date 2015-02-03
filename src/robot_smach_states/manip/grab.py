@@ -15,10 +15,10 @@ from robot_smach_states.designators.designator import AttrDesignator
 # ----------------------------------------------------------------------------------------------------
 
 class PickUp(smach.State):
-    def __init__(self, robot, arm, grab_entity_designator):
+    def __init__(self, robot, arm_designator, grab_entity_designator):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self._robot = robot
-        self.arm = arm
+        self.arm_designator = arm_designator
         self.grab_entity_designator = grab_entity_designator
 
     def execute(self, userdata=None):
@@ -29,6 +29,8 @@ class PickUp(smach.State):
         except Exception, e:
             rospy.logerr('No entity found: {0}'.format(e))
             return 'failed'
+
+        arm = self.arm_designator.resolve()
 
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
@@ -42,42 +44,42 @@ class PickUp(smach.State):
         rospy.loginfo(goal_bl)
 
         # Arm to position in a safe way
-        self.arm.send_joint_trajectory('prepare_grasp')
+        arm.send_joint_trajectory('prepare_grasp')
 
         # Open gripper
-        self.arm.send_gripper_goal('open')
+        arm.send_gripper_goal('open')
 
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
-        if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
                              frame_id='/'+self._robot.robot_name+'/base_link', timeout=20, pre_grasp=True, first_joint_pos_only=True):
             rospy.logerr('Pre-grasp failed:')
 
-            self.arm.reset()
-            self.arm.send_gripper_goal('close', timeout=None)
+            arm.reset()
+            arm.send_gripper_goal('close', timeout=None)
             return 'failed'
 
         # Grasp
-        if not self.arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id='/'+self._robot.robot_name+'/base_link', timeout=120, pre_grasp = True):
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id='/'+self._robot.robot_name+'/base_link', timeout=120, pre_grasp = True):
             self._robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
-            self.arm.reset()
-            self.arm.send_gripper_goal('close', timeout=None)
+            arm.reset()
+            arm.send_gripper_goal('close', timeout=None)
             return 'failed'
 
         # Close gripper
-        self.arm.send_gripper_goal('close')
+        arm.send_gripper_goal('close')
 
         # Lift
-        if not self.arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+self._robot.robot_name+'/base_link'):
+        if not arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+self._robot.robot_name+'/base_link'):
             rospy.logerr('Failed lift')
 
         # Retract
-        if not self.arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+self._robot.robot_name+'/base_link'):
+        if not arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+self._robot.robot_name+'/base_link'):
             rospy.logerr('Failed retract')
 
         # Carrying pose
-        if self.arm.side == 'left':
+        if arm.side == 'left':
             y_home = 0.2
         else:
             y_home = -0.2
@@ -85,7 +87,7 @@ class PickUp(smach.State):
         rospy.loginfo('y_home = ' + str(y_home))
 
         rospy.loginfo('start moving to carrying pose')
-        if not self.arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0, 60):
+        if not arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0, 60):
             rospy.logerr('Failed carrying pose')
 
         return 'succeeded'
@@ -97,17 +99,17 @@ class PickUp(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class Grab(smach.StateMachine):
-    def __init__(self, robot, designator, arm):
+    def __init__(self, robot, item_designator, arm_designator):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
         self.robot = robot
 
         with self:
-            #AttrDesignator because the designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, AttrDesignator(designator, 'id'), arm.side),
+            #AttrDesignator because the item_designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, AttrDesignator(item_designator, 'id'), arm_designator),
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'GRAB'})
 
-            smach.StateMachine.add('GRAB', PickUp(self.robot, arm, designator),
+            smach.StateMachine.add('GRAB', PickUp(self.robot, arm_designator, item_designator),
                 transitions={'succeeded' :   'done',
                              'failed' :   'failed'})
