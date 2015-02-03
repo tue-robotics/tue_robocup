@@ -69,7 +69,7 @@ class Robot(object):
         self.reasoner = reasoner.Reasoner()
 
         # Miscellaneous
-        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D)
+        self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
         self.base_link_frame = "/"+self.robot_name+"/base_link"
 
         #Grasp offsets
