@@ -167,7 +167,7 @@ class EdEntityByQueryDesignator(Designator):
         self.criteriafuncs = criteriafuncs or []
 
     def resolve(self):
-        entities = self.ed.query(self.query)
+        entities = self.ed(self.query)
         if entities:
             for criterium in self.criteriafuncs:
                 entities = filter(criterium, entities)
@@ -176,6 +176,7 @@ class EdEntityByQueryDesignator(Designator):
                               criterium_code, len(entities), pprint.pformat(entities))
                               )
 
+            import ipdb; ipdb.set_trace()
             self._current = entities[0]  # TODO: add sortkey
             return self.current
         else:
