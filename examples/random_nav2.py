@@ -21,6 +21,7 @@ class RandomNavDesignator(Designator):
         super(Designator, self).__init__()
         self._robot = robot
         self.entity_id = None
+        self.last_entity_id = None
 
         # Publisher and subriber
         self.locations_pub = rospy.Publisher("/locations_list", std_msgs.msg.String, queue_size=10)
@@ -30,6 +31,7 @@ class RandomNavDesignator(Designator):
         if self.entity_id:
             eid = self.entity_id
             rospy.logwarn("Resolved ID = {0}".format(eid))
+            self.last_entity_id = self.entity_id
             self.entity_id = None
             return eid
 
@@ -40,8 +42,7 @@ class RandomNavDesignator(Designator):
             return self.entity_id
 
         # Get all entities
-        #entities = self.ed(type="").entities
-        entities = self._robot.ed.get_entities(type="")
+        entities = self._robot.ed.get_entities(type="", parse=False)
         
         # Temp: only pick close targets
         if entities:
@@ -85,8 +86,11 @@ class RandomNavDesignator(Designator):
             self.locations_pub.publish(msg)
 
             # Select random object
-            entity    = random.choice(entities)
-            entity_id = entity.id
+            entity_id = None
+            while entity_id == None:
+                entity    = random.choice(entities)
+                if entity.id != self.last_entity_id:
+                    entity_id = entity.id
 
             # Get rid of prefix + slash???
             #index = entity_id.find("/")
