@@ -10,9 +10,10 @@ class RobotState(smach.State):
         print "Resolving .... "
         resolved_arguments = [(value.resolve() if hasattr(value, "resolve") else value) for value in self.__dict__['init_arguments'][0].iteritems()]
         print resolved_arguments
+        resolved_arguments_dict = dict(resolved_arguments[1:] )
         print "Done .... "
 
-        return self.run( *resolved_arguments[1:] )
+        return self.run( **resolved_arguments_dict )
 
 # Wait_for_door state thought the reasoner 
 class TestState(RobotState):
