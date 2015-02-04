@@ -15,7 +15,7 @@ class ED:
         self._ed_simple_query_srv = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
         self._ed_reset_srv = rospy.ServiceProxy('/ed/reset', Empty)
 
-    def get_entities(self, type="", center_point=Point(), radius=0, id=""):
+    def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
         query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius) 
 
         try:
@@ -25,9 +25,10 @@ class ED:
             return []
 
         # Parse to data strings to yaml
-        for e in entities:
-            e.data = yaml.load(e.data)
-
+        if parse:
+            for e in entities:
+                e.data = yaml.load(e.data)
+        
         return entities
 
     def get_closest_entity(self, type="", center_point=Point(), radius=0):
