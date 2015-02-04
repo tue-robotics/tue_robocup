@@ -187,8 +187,12 @@ class determineBlocked(smach.State):
             if (plan and len(plan) > 0):
                 dtgap = self.robot.base.global_planner.computePathLength(plan)     # Distance To Goal Alternative Plan
                 rospy.loginfo('Distance original = {0}, distance alternative = {1}'.format(self.robot.base.local_planner.getDistanceToGoal(), dtgap))
+                
+                dtgcp = self.robot.base.local_planner.getDistanceToGoal()
 
-                if (dtgap/self.robot.base.local_planner.getDistanceToGoal() < 1.2):
+                if (dtgcp == None):
+                    rospy.logdebug("Current distance to goal not available")
+                elif (dtgap/dtgcp < 1.2):
                     rospy.loginfo("Executing alternative path!")
                     oc = self.robot.base.local_planner.getCurrentOrientationConstraint()
 
