@@ -6,15 +6,26 @@ class RobotState(smach.State):
         smach.State.__init__(self, outcomes=kwargs['outcomes'])
         self.__dict__['init_arguments'] = args
 
-    def execute(self, userdata):
-        resolved_arguments = [(value.resolve() if hasattr(value, "resolve") else value) for value 
-            in self.__dict__['init_arguments'][0].iteritems()]
-        resolved_arguments_dict = dict(resolved_arguments[1:] )
+    def execute(self, userdata=None):
+        resolved_arguments = {key:(value.resolve() if hasattr(value, "resolve") else value) for key,value 
+            in self.__dict__['init_arguments'][0].iteritems()}
+        del resolved_arguments['self']
 
-        return self.run( **resolved_arguments_dict )
+        return self.run( **resolved_arguments )
 
-# Wait_for_door state thought the reasoner 
+
 class TestState(RobotState):
+    """
+    >>> teststate = TestState("Yes", "this", "works")
+    >>> teststate.execute()
+    Yes this works
+    'yes'
+
+    >>> from robot_smach_states.designators.designator import Designator
+    >>> teststate2 = TestState(Designator("Also"), "works", Designator("with designators"))
+    >>> teststate2.execute()
+    Also works with designators
+    'yes'"""
     def __init__(self, robot, sentence, blaat):
         RobotState.__init__(self, locals(), outcomes=['yes', 'no'])
         
@@ -27,9 +38,17 @@ class Test(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
-            smach.StateMachine.add( 'TEST_STATE', 
+            smach.StateMachine.add( 'TEST_STATE1', 
                                     TestState("Yes", "this", "works"),
+                                    transitions={'yes':'TEST_STATE2', 'no':'failed'})
+            
+            smach.StateMachine.add( 'TEST_STATE2', 
+                                    TestState(Designator("Also"), "works", Designator("with designators")),
                                     transitions={'yes':'succeeded', 'no':'failed'})
 
-sm = Test()
-sm.execute()
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
+
+    # sm = Test()
+    # sm.execute()
