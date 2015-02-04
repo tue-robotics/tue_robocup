@@ -7,11 +7,9 @@ class RobotState(smach.State):
         self.__dict__['init_arguments'] = args
 
     def execute(self, userdata):
-        print "Resolving .... "
-        resolved_arguments = [(value.resolve() if hasattr(value, "resolve") else value) for value in self.__dict__['init_arguments'][0].iteritems()]
-        print resolved_arguments
+        resolved_arguments = [(value.resolve() if hasattr(value, "resolve") else value) for value 
+            in self.__dict__['init_arguments'][0].iteritems()]
         resolved_arguments_dict = dict(resolved_arguments[1:] )
-        print "Done .... "
 
         return self.run( **resolved_arguments_dict )
 
@@ -21,16 +19,17 @@ class TestState(RobotState):
         RobotState.__init__(self, locals(), outcomes=['yes', 'no'])
         
     def run(self, robot, sentence, blaat):
-
         print robot, sentence, blaat
         return "yes"
 
 class Test(smach.StateMachine):
     def __init__(self):
-        smach.StateMachine.__init__(self, outcomes=['yes','no'])
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
-            smach.StateMachine.add('TEST_STATE', TestState("banana", "sentence, hoi ik werk", "bladiabla"))
+            smach.StateMachine.add( 'TEST_STATE', 
+                                    TestState("Yes", "this", "works"),
+                                    transitions={'yes':'succeeded', 'no':'failed'})
 
 sm = Test()
 sm.execute()
