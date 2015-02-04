@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import smach
+from robot_smach_states.designators.designator import Designator
 
 class RobotState(smach.State):
     def __init__(self, *args, **kwargs):
@@ -21,7 +22,6 @@ class TestState(RobotState):
     Yes this works
     'yes'
 
-    >>> from robot_smach_states.designators.designator import Designator
     >>> teststate2 = TestState(Designator("Also"), "works", Designator("with designators"))
     >>> teststate2.execute()
     Also works with designators
@@ -50,5 +50,5 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-    # sm = Test()
-    # sm.execute()
+    sm = Test()
+    sm.execute()
