@@ -26,6 +26,7 @@ class RandomNavDesignator(Designator):
         # Publisher and subriber
         self.locations_pub = rospy.Publisher("/locations_list", std_msgs.msg.String, queue_size=10)
         rospy.Subscriber("/nav_goal", std_msgs.msg.String, self.goalCallback)
+        self.stop_pub = rospy.Publisher("/nav_test_control", std_msgs.msg.String)
 
     def resolve(self):
         if self.entity_id:
@@ -33,6 +34,11 @@ class RandomNavDesignator(Designator):
             rospy.logwarn("Resolved ID = {0}".format(eid))
             self.last_entity_id = self.entity_id
             self.entity_id = None
+            
+            if eid == "stairway":
+                msg = std_msgs.msg.String("stop")
+                self.stop_pub.publish(msg)
+            
             return eid
 
     def getRandomGoal(self):
@@ -45,14 +51,14 @@ class RandomNavDesignator(Designator):
         entities = self._robot.ed.get_entities(type="", parse=False)
         
         # Temp: only pick close targets
-        if entities:
-            entities = [entity for entity in entities if (
-            entity.id == "elevator" 
-            or entity.id == "lecture_room_1"
-            or entity.id == "lecture_room_2"
-            or entity.id == "copier"
-            or entity.id == "stairway"
-            )]
+        #if entities:
+        #    entities = [entity for entity in entities if (
+        #    entity.id == "elevator" 
+        #    or entity.id == "lecture_room_1"
+        #    or entity.id == "lecture_room_2"
+        #    or entity.id == "copier"
+        #    or entity.id == "stairway"
+        #    )]
 
         # If entities found: only take entities with convex hulls, that have a type and are not floor...
         if entities:
