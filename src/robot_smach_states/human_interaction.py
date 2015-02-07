@@ -14,6 +14,21 @@ from designators.designator import Designator, DesignatorResolvementError
 ##########################################################################################################################################
 
 class Say(smach.State):
+    """Say a sentence or pick a random one from a list.
+
+    >>> from mock import MagicMock
+    >>> robot = MagicMock()
+    >>> robot.speech = MagicMock()
+    >>> robot.speech.speak = MagicMock()
+    >>> 
+    >>> sf = Say(robot, ["a", "b", "c"])
+    >>> outcomes = [sf.execute() for i in range(50)]
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>> #After many calls, all options in the list will very likely have been called at least one. 
+    >>> robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
+    >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
+    >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         smach.State.__init__(self, outcomes=["spoken"])
         self.robot = robot
@@ -24,7 +39,7 @@ class Say(smach.State):
         self.mood = mood
         self.block = block
         
-    def execute(self, userdata):
+    def execute(self, userdata=None):
         if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
             sentence = random.choice(self.sentence)
         else:
