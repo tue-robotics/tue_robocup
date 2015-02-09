@@ -72,9 +72,6 @@ class Arm(object):
         self.default_configurations = self.load_param('/skills/arm/default_configurations')
         self.default_trajectories   = self.load_param('/skills/arm/default_trajectories')
 
-        # Init measurement subscriber
-        self.arm_measurement_sub = rospy.Subscriber("/"+self.robot_name+"/left_arm/measurements", JointState, self._arm_measurement_callback)
-
         # Init gripper actionlib
         self._ac_gripper = actionlib.SimpleActionClient("gripper_server_"+self.side, GripperCommandAction)
 
@@ -277,13 +274,6 @@ class Arm(object):
 
         self._marker_publisher.publish(marker)
 
-    # ToDo: why is this here???
-    _lock = threading.RLock()
-
-    @util.concurrent_util.synchronized(_lock)
-    def _arm_measurement_callback(self, jointstate):
-        self._joint_pos = jointstate.position
-
     # @add_side_argument
     # def send_goal(self, *args, **kwargs):
     #     """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a timeout
@@ -354,11 +344,6 @@ class Arm(object):
     # def get_pose(self, root_frame_id):
     #     """ Get the pose of the end-effector with respect to the specified root_frame_id"""
     #     return super(Arm, self).get_pose(root_frame_id,self.side)
-
-    # @property
-    # def joint_pos(self):
-    #     """The joint positions for all joints. Index individual joints via Arms.SHOULDER_..., ELBOW_.. and WRIST_..."""
-    #     return self._joint_pos[self.side]
 
 if __name__ == "__main__":
     rospy.init_node('amigo_arms_executioner', anonymous=True)
