@@ -14,7 +14,7 @@ amigo1/sergio1:
 
 amigo3:
 
-    rosrun challenge_navigation navigation.py [robot_name]
+    rosrun challenge_navigation challenge_navigation.py [robot_name]
 
 During a real competition:
 On the dev PC:
