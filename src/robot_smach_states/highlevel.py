@@ -3,6 +3,8 @@ import roslib;
 import rospy
 import smach
 
+from state import State
+
 import utility_states
 import human_interaction
 import perception
@@ -13,32 +15,6 @@ import reasoning
 from psi import Conjunction, Compound, Sequence
 import robot_skills.util.msg_constructors as msgs
 from designators.designator import Designator, VariableDesignator, PointStampedOfEntityDesignator
-
-from robot_smach_states.designators import Designator
-
-# Wait_for_door state thought the reasoner 
-class Check_object_found_before(smach.State):
-    def __init__(self, robot, object_query):
-        smach.State.__init__(self, outcomes=['object_found','no_object_found'])
-        
-        self.robot = robot
-        self.object_query = object_query
-        
-    def execute(self,userdata):
-
-        # Query reasoner for objects
-        object_answers = self.robot.reasoner.query(self.object_query)
-
-        if not object_answers:
-
-            return 'no_object_found'
-        else:
-             # TODO Loy: Go to object closest to amigo 
-             # and 
-             # TODO ERIK: has not been picked up yet! Since Amigo does not removes objects after transporting.
-             #           This should be asserted to reasoner object_picked_up(ObjectID) and checked with object_query
-            return 'object_found'     
-
 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
@@ -103,46 +79,22 @@ class StartChallengeRobust(smach.StateMachine):
 # Enter the arena with force drive as back-up
 class EnterArena(smach.StateMachine):
 
-    class GotoEntryPoint(smach.State):
+    class GotoEntryPoint(State):
         def __init__(self, robot, initial_pose, use_entry_points = False):
-            smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
-            self.robot = robot
-            self.initial_pose = initial_pose
-            self.use_entry_points = use_entry_points
+            State.__init__(self, locals(), outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
 
-        def execute(self, userdata=None):
+        def run(self, robot, initial_pose, use_entry_points):
+            print "TODO: IMPLEMENT THIS STATE"
+            return "no_goal"
 
-            if not self.use_entry_points:
-                rospy.loginfo("No entry points are desired.")
-                return "no_goal"
-
-            nav = navigation.NavigateToWaypoint(self.robot, Designator("entry_point"), radius=0.5)
-            nav_result = nav.execute()
-
-            #import ipdb; ipdb.set_trace()
-
-            if nav_result == "unreachable":  #Compound("entry_point", waypoint_name)
-                self.robot.reasoner.query(Compound("assert", Compound("unreachable", Compound("entry_point", waypoint_name))))
-                return "not_found"
-            elif nav_result == "preempted":
-                return "not_found"
-            elif nav_result == "arrived":
-                rospy.logdebug("AMIGO should be in the arena")
-                self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
-                return "found"
-            else: #goal not defined
-                self.robot.speech.speak("I really don't know where to go, oops.")
-                return "no_goal"
-
-    class ForceDrive(smach.State):
+    class ForceDrive(State):
         def __init__(self, robot):
-            smach.State.__init__(self, outcomes=["done"])
-            self.robot = robot
+            State.__init__(self, locals(), outcomes=["done"])
 
-        def execute(self, userdata=None):            
+        def execute(self, robot):            
             #self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)  # Amigo should not say that it uses force drive, looks stupid.
             rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
-            self.robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
+            robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
             return "done"
 
     def __init__(self, robot, initial_pose, use_entry_points = False):
@@ -167,54 +119,13 @@ class EnterArena(smach.StateMachine):
                                                     "all_unreachable":"done"})
 
                         
-class GotoMeetingPoint(smach.State):
+class GotoMeetingPoint(State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
-        self.robot = robot
-        self.goto_query = Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi"))
+        State.__init__(self, locals(), outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
 
-    def execute(self, userdata=None):
-        # Move to the next waypoint in the storage room        
-        reachable_goal_answers = self.robot.reasoner.query(
-                                    Conjunction(
-                                        Compound("waypoint", Compound("meeting_point", "Waypoint"), Compound("pose_2d", "X", "Y", "Phi")),
-                                        Compound("not", Compound("unreachable", Compound("meeting_point", "Waypoint")))))
-
-        if not reachable_goal_answers:
-            # check if there are any meeting points (someone may have forgotten to specify them)            
-            all_goal_answers = self.robot.reasoner.query(self.goto_query)
-            if not all_goal_answers:
-                self.robot.speech.speak("No-one has specified meeting locations. Please do so in the locations file!")
-                return "all_unreachable"
-            else:
-                self.robot.speech.speak("There are a couple of meeting points, but they are all unreachable. Sorry.")
-                return "all_unreachable"
-
-        # for now, take the first goal found
-        goal_answer = reachable_goal_answers[0]
-
-        self.robot.speech.speak("I'm coming to the meeting point!", block=False)
-
-        goal = (float(goal_answer["X"]), float(goal_answer["Y"]), float(goal_answer["Phi"]))
-        waypoint_name = goal_answer["Waypoint"]
-
-        nav = navigation.NavigateGeneric(self.robot, goal_pose_2d=goal)
-        nav_result = nav.execute()
-
-        #import ipdb; ipdb.set_trace()
-
-        if nav_result == "unreachable":  #Compound("meeting_point", waypoint_name)
-            self.robot.reasoner.query(Compound("assert", Compound("unreachable", Compound("meeting_point", waypoint_name))))
-            return "not_found"
-        elif nav_result == "preempted":
-            return "not_found"
-        elif nav_result == "arrived":
-            #self.robot.speech.speak("I reached a meeting point", block=False)
-            self.robot.reasoner.query(Compound("retractall", Compound("unreachable", "X")))
-            return "found"
-        else: #goal not defined
-            self.robot.speech.speak("I really don't know where to go, oops.")
-            return "no_goal"
+    def run(self, robot):
+        print "TODO: IMPLEMENT THIS STATE!"
+        return "no_goal"
 
 
 class VisitQueryPoi(smach.StateMachine):
