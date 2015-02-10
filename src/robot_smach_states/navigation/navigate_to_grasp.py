@@ -15,15 +15,15 @@ import math
 
 # ----------------------------------------------------------------------------------------------------
 class NavigateToGrasp(NavigateTo):
-    def __init__(self, robot, designator, arm_designator=None):
+    def __init__(self, robot, entity_designator, arm_designator=None):
         super(NavigateToGrasp, self).__init__(robot)
 
         self.robot    = robot
-        self.designator = designator
+        self.entity_designator = entity_designator
 
         self.arm_designator = arm_designator
         if not arm_designator:
-            rospy.logerr('NavigateToGrasp: side should be determined by designator. Please specify left or right, will default to left')
+            rospy.logerr('NavigateToGrasp: side should be determined by entity_designator. Please specify left or right, will default to left')
             self.arm_designator = Designator(robot.leftArm)
 
     def generateConstraint(self):
@@ -37,21 +37,20 @@ class NavigateToGrasp(NavigateTo):
             y_offset = -self.robot.grasp_offset.y
         radius = math.sqrt(x_offset*x_offset + y_offset*y_offset)
 
-        entity_id = self.designator.resolve()
-        e = self.robot.ed.get_entity(entity_id)
+        entity = self.entity_designator.resolve()
 
-        if not e:
+        if not entity:
             rospy.logerr("No such entity")
             return None
 
-        print e
+        print entity
 
-        if not e:
+        if not entity:
             rospy.logerr("No such entity")
             return None
 
         try:
-            pose = e.pose #TODO Janno: Not all entities have pose information
+            pose = entity.pose #TODO Janno: Not all entities have pose information
             x = pose.position.x
             y = pose.position.y
         except KeyError, ke:
@@ -59,7 +58,7 @@ class NavigateToGrasp(NavigateTo):
             return None
 
         try:
-            rz = e.pose.orientation.z
+            rz = entity.pose.orientation.z
         except KeyError, ke:
             rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0

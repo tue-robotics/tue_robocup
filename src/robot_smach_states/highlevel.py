@@ -275,9 +275,9 @@ class GetObject(smach.StateMachine):
                 try:
                     #robot.speech.speak("I need some debugging in cleanup, please think with me here.")
                     #import ipdb; ipdb.set_trace()
-                    entityID = self.entity_designator.resolve()
-                    robot.reasoner.query(Compound("assertz", Compound("disposed", entityID)))
-                    rospy.loginfo("objectID = {0} is DISPOSED".format(entityID))
+                    entity = self.entity_designator.resolve()
+                    robot.reasoner.query(Compound("assertz", Compound("disposed", entity.id)))
+                    rospy.loginfo("objectID = {0} is DISPOSED".format(entity.id))
 
                     try:
                         robot.reasoner.detach_all_from_gripper("/amigo/grippoint_left")

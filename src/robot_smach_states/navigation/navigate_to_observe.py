@@ -11,16 +11,16 @@ import rospy
 
 # ----------------------------------------------------------------------------------------------------
 class NavigateToObserve(NavigateTo):
-    def __init__(self, robot, designator, radius = .7):
+    def __init__(self, robot, entity_designator, radius = .7):
+        """@param entity_designator resolves to the entity the robot should observe"""
         super(NavigateToObserve, self).__init__(robot)
 
         self.robot    = robot
-        self.designator = designator
+        self.entity_designator = entity_designator
         self.radius   = radius
 
     def generateConstraint(self):
-        entity_id = self.designator.resolve()
-        e = self.robot.ed.get_entity(entity_id)
+        e = self.entity_designator.resolve()
 
         if not e:
             rospy.logerr("No such entity")
@@ -29,7 +29,7 @@ class NavigateToObserve(NavigateTo):
         ch = e.convex_hull
 
         if len(ch) == 0:
-            rospy.logerr("{0} has no convex hull so cannot NavigateToObserve there".format(entity_id))
+            rospy.logerr("{0} has no convex hull so cannot NavigateToObserve there".format(e.id))
             return None
 
         x = e.pose.position.x
