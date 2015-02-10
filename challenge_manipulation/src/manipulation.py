@@ -23,14 +23,26 @@ import rospy
 import smach
 import sys
 
-from ed.srv import SimpleQuery, SimpleQueryRequest
-from robot_smach_states.designators.designator import Designator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator, EdEntityByQueryDesignator
+from robot_smach_states.util.designators import Designator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator, EdEntityDesignator
 import robot_smach_states as states
+from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_skills.util import msg_constructors as gm
 
 import pdf
+
+class FormattedSentenceDesignator(Designator):
+    """docstring for FormattedSentenceDesignator"""
+    def __init__(self, fmt, **kwargs):
+        super(FormattedSentenceDesignator, self).__init__()
+        self.fmt = fmt
+        self.kwargs = kwargs
+    
+    def resolve():
+        kwargs_resolved = {key:value.resolve() for key,value in self.kwargs.iteritems()}
+        return self.fmt.format(**kwargs_resolved)
+
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
@@ -47,7 +59,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        bookcase = EdEntityByQueryDesignator(SimpleQueryRequest(type="plastic_cabinet"))  #TODO: Get the entityID of the bookcase
+        bookcase = EdEntityDesignator(robot, type="plastic_cabinet")  #TODO: Get the entityID of the bookcase
 
         current_item = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
         place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet"))  # TODO: Designates an empty spot on the empty placement-shelve. 
@@ -80,7 +92,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'stored':'ANNOUNCE_CLASS'})
 
             smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.SayFormatted(robot, ["This is a {0.type}."], [current_item], block=False),
+                                    states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=current_item), block=False),
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
@@ -101,7 +113,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = Designator("manipulation_start_waypoint")  # TODO: select proper waypoint
+    start_waypoint = EdEntityDesignator(robot, id="living_room")  # TODO: select proper waypoint
     placed_items = Designator([])
 
     with sm:
@@ -161,4 +173,4 @@ if __name__ == '__main__':
         print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
         exit(1)
 
-    states.util.startup(setup_statemachine, robot_name=robot_name)
+    startup(setup_statemachine, robot_name=robot_name)
