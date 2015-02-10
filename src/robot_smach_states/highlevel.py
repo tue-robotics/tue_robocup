@@ -14,7 +14,7 @@ import reasoning
 
 from psi import Conjunction, Compound, Sequence
 import robot_skills.util.msg_constructors as msgs
-from designators.designator import Designator, VariableDesignator, PointStampedOfEntityDesignator
+from util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""

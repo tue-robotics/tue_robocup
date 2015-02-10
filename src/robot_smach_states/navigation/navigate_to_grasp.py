@@ -6,7 +6,7 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
-from robot_smach_states.designators.designator import Designator
+from util.designators import Designator
 
 import rospy
 

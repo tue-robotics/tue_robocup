@@ -7,7 +7,7 @@ import util
 
 from state import State
 
-from designators.designator import Designator, DesignatorResolvementError
+from util.designators import Designator, DesignatorResolvementError
 
 # Say: Immediate say
 # Hear: Immediate hear

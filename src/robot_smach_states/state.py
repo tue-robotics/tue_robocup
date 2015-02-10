@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import smach
-from robot_smach_states.designators.designator import Designator
+from util.designators import Designator
 
 class State(smach.State):
     def __init__(self, *args, **kwargs):

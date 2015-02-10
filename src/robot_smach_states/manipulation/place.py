@@ -70,15 +70,15 @@ class Put(State):
 
 class Place(smach.StateMachine):
 
-    def __init__(self, robot, item_to_place_designator, place_pose_designator, arm_designator):
+    def __init__(self, robot, item_to_place, place_pose, arm):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToGrasp(robot, place_pose_designator, arm_designator),  # TODO: Navigate to place
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToGrasp(robot, place_pose, arm),  # TODO: Navigate to place
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'PUT'})
 
-            smach.StateMachine.add('PUT', Put(robot, item_to_place_designator, place_pose_designator, arm_designator),
+            smach.StateMachine.add('PUT', Put(robot, item_to_place, place_pose, arm),
                 transitions={'succeeded' :   'done',
                              'failed' :   'failed'})

@@ -11,7 +11,7 @@ from human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
 from ed.srv import SimpleQueryRequest
-from robot_smach_states.designators.designator import EdEntityByQueryDesignator
+from util.designators import EdEntityByQueryDesignator
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
 #TODO: Make Place_Object also use a query
