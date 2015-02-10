@@ -32,7 +32,7 @@ class Say(State):
     >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
-        smach.State.__init__(self, locals(), outcomes=["spoken"])
+        State.__init__(self, locals(), outcomes=["spoken"])
         
     def run(self, robot, sentence, language, personality, voice, mood, block):
         if not isinstance(sentence, str) and isinstance(sentence, list):
@@ -46,7 +46,7 @@ class Say(State):
 
 class Hear(State):
     def __init__(self, robot, spec, time_out = rospy.Duration(10)):
-        smach.State.__init__(self, locals(), outcomes=["heard", "not_heard"])
+        State.__init__(self, locals(), outcomes=["heard", "not_heard"])
 
     def run(self, robot, spec, time_out):
         answer = robot.ears.recognize(spec, {}, time_out)
@@ -61,7 +61,7 @@ class Hear(State):
 
 class HearOptions(State):
     def __init__(self, robot, options, time_out = rospy.Duration(10)):
-        smach.State.__init__(self, locals(), outcomes=options.append("no_result"))
+        State.__init__(self, locals(), outcomes=options.append("no_result"))
 
     def run(self, robot, options, time_out):
         answer = robot.ears.recognize("<option>", {"option":options}, time_out)
