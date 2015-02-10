@@ -969,15 +969,14 @@ class SetGripper(smach.State):
         ''' If needs attaching to gripper, the grab_entity_designator is used '''
         if self.grab_entity_designator:
             try:
-                entityID = self.grab_entity_designator.resolve()
+                entity = self.grab_entity_designator.resolve()
                 try:
-                    self.robot.reasoner.attach_object_to_gripper(entityID, self.end_effector_frame_id, True)
+                    self.robot.reasoner.attach_object_to_gripper(entity.id, self.end_effector_frame_id, True)
                 except KeyError, ke:
                     rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
 
                 #TODO: the designator required by this state should resolve to an entity and not to its ID.
-                entity = EdEntityByQueryDesignator(SimpleQueryRequest(id=entityID))
-                self.side.occupied_by = entity.resolve()
+                self.side.occupied_by = entity
             except Exception, e:
                 rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator, e))
 
