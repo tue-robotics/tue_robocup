@@ -83,6 +83,6 @@ class NavigateToExplore(NavigateTo):
         except:
             return True
         
-        rospy.loginfo("Breakout: entity_id = {0}".format(entity.id)
+        rospy.loginfo("Breakout: entity_id = {0}".format(entity.id))
 
         return False
