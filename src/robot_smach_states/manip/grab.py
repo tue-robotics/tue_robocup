@@ -25,7 +25,7 @@ class PickUp(smach.State):
         rospy.loginfo('PickUp!')
 
         try:
-            entity_id = self.grab_entity_designator.resolve().id
+            entity = self.grab_entity_designator.resolve()
         except Exception, e:
             rospy.logerr('No entity found: {0}'.format(e))
             return 'failed'
@@ -36,7 +36,7 @@ class PickUp(smach.State):
         goal_map = msgs.Point(0, 0, 0)
 
         # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, entity_id, self._robot.robot_name+'/base_link', tf_listener=self._robot.tf_listener)
+        goal_bl = transformations.tf_transform(goal_map, entity.id, self._robot.robot_name+'/base_link', tf_listener=self._robot.tf_listener)
         if goal_bl == None:
             rospy.logerr('Transformation of goal to base failed')
             return 'failed'
