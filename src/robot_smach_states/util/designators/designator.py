@@ -24,6 +24,7 @@ The library here defines a couple of standard designators:
 import rospy
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
+from robot_skills.world_model_ed import ED
 import geometry_msgs.msg as gm
 import std_msgs.msg as std
 import inspect
@@ -115,59 +116,26 @@ class PointStampedOfEntityDesignator(Designator):
             raise Exception("No such entity")
 
 
-class PsiDesignator(Designator):
-
-    """A PsiDesignator encapsulates Psi queries to a reasoner.
-    A reasoner may return multiple valid answers to a query, but """
-
-    def __init__(self, query, reasoner, sortkey=None, sortorder=min, criteriafuncs=None):
-        """Define a new designator around a Psi query, to be posed to a reasoner
-        @param query the query to be posed to the given reasoner
-        @param reasoner the reasoner that should answer the query"""
-        self.query = query
-        self.reasoner = reasoner
-        self.sortkey = sortkey
-        self.sortorder = sortorder
-        self.criteriafuncs = criteriafuncs or []
-
-    def resolve(self):
-        """
-        Returns an answer from the reasoner that satisfies some criteria and
-        is the best according to some function and sorting      """
-        answers = self.reasoner.query(self.query)
-
-        rospy.loginfo("{0} answers before filtering: {1}".format(
-                      len(answers), pprint.pformat(answers))
-                      )
-        for criterium in self.criteriafuncs:
-            answers = filter(criterium, answers)
-            criterium_code = inspect.getsource(criterium)
-            rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(
-                          criterium_code, len(answers), pprint.pformat(answers))
-                          )
-
-        if not answers:
-            raise ValueError("No answers matched the critera.")
-
-        return self.sortorder(answers, key=self.sortkey)[0]
-
-
-class EdEntityByQueryDesignator(Designator):
+class EdEntityDesignator(Designator):
 
     """
     Resolves to an entity from an Ed query, (TODO: selected by some filter and
     criteria functions)
     """
 
-    def __init__(self, ed_query, criteriafuncs=None):
-        super(EdEntityByQueryDesignator, self).__init__()
-        self.query = ed_query
-        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None):
+        super(EdEntityDesignator, self).__init__()
+        self.ed = robot.ed
+        self.type = ""
+        self.center_point = gm.Point()
+        self.radius = 0
+        self.id = ""
+        self.parse = True
 
         self.criteriafuncs = criteriafuncs or []
 
     def resolve(self):
-        entities = self.ed(self.query)
+        entities = self.ed.get_entities(self.type, self.center_point, self.radius, self.id, self.parse)
         if entities:
             for criterium in self.criteriafuncs:
                 entities = filter(criterium, entities)
@@ -175,8 +143,7 @@ class EdEntityByQueryDesignator(Designator):
                 rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
                               criterium_code, len(entities), pprint.pformat(entities))
                               )
-
-            import ipdb; ipdb.set_trace()
+                
             self._current = entities[0]  # TODO: add sortkey
             return self.current
         else:

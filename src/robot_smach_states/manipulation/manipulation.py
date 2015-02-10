@@ -1,7 +1,6 @@
 import rospy
 import smach
 import robot_smach_states.navigation
-import robot_smach_states.reasoning
 from robot_skills.util import transformations
 from psi import Compound
 
@@ -11,7 +10,6 @@ from robot_smach_states.human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
 from ed.srv import SimpleQueryRequest
-from robot_smach_states.util.designators import EdEntityByQueryDesignator
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
 #TODO: Make Place_Object also use a query
@@ -441,7 +439,7 @@ class GrabMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'GRAB',
                                      'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
 
-            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grab_entity_designator),
+            smach.StateMachine.add('GRAB', GrabOld(self.side, self.robot, self.grab_entity_designator),
                         transitions={'grab_succeeded':  'CLOSE_GRIPPER',
                                      'grab_failed'   :  'CLOSE_GRIPPER',
                                      'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
@@ -501,7 +499,7 @@ class GrabMachineWithoutBase(smach.StateMachine):
                         transitions={'succeeded'    :   'GRAB',
                                      'failed'       :   'CLOSE_GRIPPER_UPON_FAIL'})
 
-            smach.StateMachine.add('GRAB', Grab(self.side, self.robot, self.grab_entity_designator),
+            smach.StateMachine.add('GRAB', GrabOld(self.side, self.robot, self.grab_entity_designator),
                         transitions={'grab_succeeded':  'CLOSE_GRIPPER',
                                      'grab_failed'   :  'CLOSE_GRIPPER',
                                      'target_lost'   :  'CLOSE_GRIPPER_UPON_FAIL'})
@@ -523,11 +521,11 @@ class GrabMachineWithoutBase(smach.StateMachine):
                         transitions={'succeeded'    :   'failed',
                                      'failed'       :   'failed'})
 
-class Grab(smach.State):
+class GrabOld(smach.State):
     def __init__(self, side, robot, grab_point_designator):
         smach.State.__init__(self, outcomes=['grab_succeeded','grab_failed','target_lost'])
 
-        self.side = side
+        self.side = side.resolve() if hasattr(side, "resolve") else side
         self.robot = robot
         self.grab_point_designator = grab_point_designator
 

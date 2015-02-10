@@ -89,11 +89,11 @@ class Grab(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm_designator),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'GRAB'})
 
-            smach.StateMachine.add('GRAB', PickUp(robot, arm_designator, item_designator),
+            smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
                 transitions={'succeeded' :   'done',
                              'failed' :   'failed'})
