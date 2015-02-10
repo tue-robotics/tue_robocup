@@ -115,7 +115,7 @@ class Head():
 
     # ---- INTERFACING THE NODE ---
 
-    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, point_stamped, pan=0, tilt=0, wait_for_setpoint=False):
+    def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, point_stamped=PointStamped(), pan=0, tilt=0, wait_for_setpoint=False):
         self._goal = HeadReferenceGoal()
         self._goal.goal_type = goal_type
         self._goal.priority = 1 # Executives get prio 1
