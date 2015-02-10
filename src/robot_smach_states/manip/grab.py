@@ -105,7 +105,7 @@ class Grab(smach.StateMachine):
 
         with self:
             #AttrDesignator because the item_designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
-            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, AttrDesignator(item_designator, 'id'), arm_designator),
+            smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(self.robot, item_designator, arm_designator),
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'GRAB'})
