@@ -4,7 +4,7 @@ DONE: navigation/navigate_to_explore.py:80:   entity_id = self.breakout_designat
 DONE: navigation/navigate_to_waypoint.py:22:  _id = self.waypoint_designator.resolve()
 DONE: navigation/navigate_to_observe.py:22:   entity_id = self.designator.resolve()
 DONE: navigation/navigate_to_grasp.py:40:     entity_id = self.designator.resolve()
-navigation/navigate_to_room.py:21:      # _id = self.room_designator.resolve()
+DONE: navigation/navigate_to_room.py:21:      # _id = self.room_designator.resolve()
 highlevel.py:367:                    	entityID = self.entity_designator.resolve()
 manip/grab.py:28:            			entity_id = self.grab_entity_designator.resolve().id
 manip/grab.py:107:            			#AttrDesignator because the item_designator only returns the Entity, but not the id. AttrDesignator resolves to the id attribute of whatever comes out of $designator
