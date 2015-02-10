@@ -1,6 +1,6 @@
 DONE: manipulation.py:972:                	entityID = self.grab_entity_designator.resolve()
-navigation/navigate_to_explore.py:30:   entity_id = self.constraint_designator.resolve()
-navigation/navigate_to_explore.py:80:   entity_id = self.breakout_designator.resolve()
+DONE: navigation/navigate_to_explore.py:30:   entity_id = self.constraint_designator.resolve()
+DONE: navigation/navigate_to_explore.py:80:   entity_id = self.breakout_designator.resolve()
 navigation/navigate_to_waypoint.py:22:  _id = self.waypoint_designator.resolve()
 navigation/navigate_to_observe.py:22:   entity_id = self.designator.resolve()
 DONE: navigation/navigate_to_grasp.py:40:     entity_id = self.designator.resolve()

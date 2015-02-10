@@ -12,6 +12,9 @@ import rospy
 # ----------------------------------------------------------------------------------------------------
 class NavigateToExplore(NavigateTo):
     def __init__(self, robot, constraint_designator, breakout_designator, radius = .7, exclude_radius = 0.3):
+        """@param constraint_designator a Designator that resolves to the entity to explore
+        @param breakout_designator when this Designator successfully resolves, the state signals it is done. 
+                For example, it could resolve to an item of a class you are looking for."""
         super(NavigateToExplore, self).__init__(robot)
 
         self.robot    = robot
@@ -27,8 +30,7 @@ class NavigateToExplore(NavigateTo):
         current_pose = self.robot.base.get_location()
         self.visited_list.append(current_pose)
 
-        entity_id = self.constraint_designator.resolve()
-        e = self.robot.ed.get_entity(entity_id)
+        e = self.constraint_designator.resolve()
 
         if not e:
             rospy.logerr("No such entity")
@@ -75,12 +77,12 @@ class NavigateToExplore(NavigateTo):
 
     def breakOut(self):
 
-        entity_id = None
+        entity = None
         try:
-            entity_id = self.breakout_designator.resolve()
+            entity = self.breakout_designator.resolve()
         except:
             return True
         
-        rospy.loginfo("Breakout: entity_id = {0}".format)
+        rospy.loginfo("Breakout: entity_id = {0}".format(entity.id)
 
         return False
