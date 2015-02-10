@@ -1,4 +1,4 @@
-manipulation.py:972:                	entityID = self.grab_entity_designator.resolve()
+DONE: manipulation.py:972:                	entityID = self.grab_entity_designator.resolve()
 navigation/navigate_to_explore.py:30:   entity_id = self.constraint_designator.resolve()
 navigation/navigate_to_explore.py:80:   entity_id = self.breakout_designator.resolve()
 navigation/navigate_to_waypoint.py:22:  _id = self.waypoint_designator.resolve()
