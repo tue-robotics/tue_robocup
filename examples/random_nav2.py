@@ -39,7 +39,9 @@ class RandomNavDesignator(Designator):
                 msg = std_msgs.msg.String("stop")
                 self.stop_pub.publish(msg)
             
-            return eid
+            ed_service = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+            entities = ed_service(eid)
+            return entities[0]
 
     def getRandomGoal(self):
 
