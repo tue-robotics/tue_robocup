@@ -12,6 +12,7 @@ import rospy
 
 class NavigateToWaypoint(NavigateTo):
     def __init__(self, robot, waypoint_designator, radius = 0.15):
+        """@param waypoint_designator resolves to a waypoint stored in ED"""
         super(NavigateToWaypoint, self).__init__(robot)
 
         self.robot               = robot
@@ -19,8 +20,7 @@ class NavigateToWaypoint(NavigateTo):
         self.radius              = radius
 
     def generateConstraint(self):
-        _id = self.waypoint_designator.resolve()
-        e = self.robot.ed.get_entity(id=_id)
+        e = self.waypoint_designator.resolve()
 
         if not e:
             rospy.logerr("No such entity")
