@@ -1,17 +1,17 @@
 import rospy
 import smach
-import navigation
-import reasoning
+import robot_smach_states.navigation
+import robot_smach_states.reasoning
 from robot_skills.util import transformations
 from psi import Compound
 
 import geometry_msgs
 
-from human_interaction import Say
+from robot_smach_states.human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
 from ed.srv import SimpleQueryRequest
-from util.designators import EdEntityByQueryDesignator
+from robot_smach_states.util.designators import EdEntityByQueryDesignator
 
 #TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
 #TODO: Make Place_Object also use a query

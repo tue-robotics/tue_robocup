@@ -3,11 +3,10 @@ import roslib;
 import rospy
 import smach
 import random
-import util
 
-from state import State
+from robot_smach_states.state import State
 
-from util.designators import Designator, DesignatorResolvementError
+from robot_smach_states.util.designators import Designator, DesignatorResolvementError
 
 # Say: Immediate say
 # Hear: Immediate hear

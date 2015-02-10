@@ -6,12 +6,12 @@ import smach
 import robot_skills.util.msg_constructors as msgs
 import robot_skills.util.transformations as transformations
 
-from state import State
+from robot_smach_states.state import State
 
 # from cb_planner_msgs_srvs.srv import *
 # from cb_planner_msgs_srvs.msg import *
 
-from navigation import NavigateToGrasp
+from robot_smach_states.navigation import NavigateToGrasp
 
 # ----------------------------------------------------------------------------------------------------
 

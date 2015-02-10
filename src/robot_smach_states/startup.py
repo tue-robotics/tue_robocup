@@ -3,7 +3,7 @@ import roslib;
 import rospy
 import smach
 
-from state import State
+from robot_smach_states.state import State
 
 import utility_states
 import human_interaction
@@ -13,7 +13,7 @@ import manipulation
 import reasoning
 
 import robot_skills.util.msg_constructors as msgs
-from util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
 
 class StartChallengeRobust(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""

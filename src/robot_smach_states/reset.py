@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from state import State
+from robot_smach_states.state import State
 
 ############################## Atomic Reset States ##############################
 
