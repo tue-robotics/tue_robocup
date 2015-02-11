@@ -36,7 +36,7 @@ class Say(State):
         
     def run(self, robot, sentence, language, personality, voice, mood, block):
         if not isinstance(sentence, str) and isinstance(sentence, list):
-            sentence = random.choice(self.sentence)
+            sentence = random.choice(sentence)
 
         robot.speech.speak(sentence, language, personality, voice, mood, block)
 

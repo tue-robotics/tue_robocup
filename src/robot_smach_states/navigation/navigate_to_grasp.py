@@ -28,12 +28,11 @@ class NavigateToGrasp(NavigateTo):
 
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
-        side = arm.side
-
+        
         x_offset = self.robot.grasp_offset.x
-        if side == 'left':
+        if arm == self.robot.arms['left']:
             y_offset = self.robot.grasp_offset.y
-        elif side == 'right':
+        elif arm == self.robot.arms['right']:
             y_offset = -self.robot.grasp_offset.y
         radius = math.sqrt(x_offset*x_offset + y_offset*y_offset)
 
