@@ -31,13 +31,16 @@ class Arm(object):
 
 class Base(object):
     def __init__(self, *args, **kwargs):
-        self.move = mock.MagicMock
-        self.force_drive = mock.MagicMock
-        self.get_location = mock.MagicMock
-        self.set_initial_pose = mock.MagicMock
-        self.go = mock.MagicMock
-        self.reset_costmap = mock.MagicMock
-        self.cancel_goal = mock.MagicMock
+        self.move = mock.MagicMock()
+        self.force_drive = mock.MagicMock()
+        self.get_location = mock.MagicMock()
+        self.set_initial_pose = mock.MagicMock()
+        self.go = mock.MagicMock()
+        self.reset_costmap = mock.MagicMock()
+        self.cancel_goal = mock.MagicMock()
+        self.analyzer = mock.MagicMock()
+        self.global_planner = mock.MagicMock()
+        self.local_planner = mock.MagicMock()
 
 class Ears(object):
     def __init__(self, *args, **kwargs):
@@ -186,6 +189,7 @@ class Mockbot(object):
         self.torso = Torso()
         self.leftArm = Arm(self.robot_name, self.tf_listener, "left")
         self.rightArm = Arm(self.robot_name, self.tf_listener, "right")
+        self.arms = {"left":self.leftArm, "right":self.rightArm}
         self.head = Head()
 
         # Human Robot Interaction
