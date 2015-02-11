@@ -28,6 +28,7 @@ class Arm(object):
         self.send_gripper_goal = mock.MagicMock()
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
+        self.occupied_by = mock.MagicMock()
 
 class Base(object):
     def __init__(self, *args, **kwargs):
