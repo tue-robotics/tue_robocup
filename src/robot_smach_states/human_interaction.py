@@ -29,7 +29,14 @@ class Say(smach.State):
     >>> #After many calls, all options in the list will very likely have been called at least one. 
     >>> robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
     >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)
+
+    Most uses from tue_robocup:
+    >>> s = Say(robot, 'Please put the gripper in the hand that I close', block=False)
+    >>> s.execute()
+    'spoken'
+    >>> robot.speech.speak.assert_any_call('Please put the gripper in the hand that I close', 'us', 'kyle', 'default', 'excited', False)
+    """
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         smach.State.__init__(self, outcomes=["spoken"])
         self.robot = robot
@@ -63,13 +70,29 @@ class SayFormatted(smach.State):
     >>> sf.execute()
     'spoken'
     >>> 
-    >>> robot.speech.speak.assert_called_with('This is a silly test that works without designators too', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> robot.speech.speak.assert_called_with('This is a silly test that works without designators too', 'us', 'kyle', 'default', 'excited', True)
+
+    Test 2 to check whether this is a replacement for Say
+    >>> from mock import MagicMock
+    >>> robot = MagicMock()
+    >>> robot.speech = MagicMock()
+    >>> robot.speech.speak = MagicMock()
+    >>> 
+    >>> sf = SayFormatted(robot, ["a", "b", "c"])
+    >>> #Repeat command 50 times, every time it should succeed and return "spoken"
+    >>> outcomes = [sf.execute() for i in range(50)]
+    >>> assert all(outcome == "spoken" for outcome in outcomes)
+    >>>
+    >>> #After many calls, all options in the list will very likely have been called at least one. 
+    >>> robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
+    >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
+    >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, fmt_args=None, fmt_kwargs=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         smach.State.__init__(self, outcomes=["spoken"])
         self.robot = robot
         self.sentence = sentence
-        self.format_args = fmt_args
-        self.format_kwargs = fmt_kwargs
+        self.format_args = fmt_args if fmt_args else list()
+        self.format_kwargs = fmt_kwargs if fmt_kwargs else dict()
         self.language = language
         self.personality = personality
         self.voice = voice
