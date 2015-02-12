@@ -66,6 +66,12 @@ class ManipRecogSingleItem(smach.StateMachine):
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
+        print "{0} = bookcase".format(bookcase)
+        print "{0} = current_item".format(current_item)
+        print "{0} = place_position".format(place_position)
+        print "{0} = empty_arm_designator".format(empty_arm_designator)
+        print "{0} = arm_with_item_designator".format(arm_with_item_designator)
+
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
                                     states.NavigateToObserve(robot, bookcase),
@@ -80,10 +86,15 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "GRAB_ITEM",
                                     Grab(robot, current_item, empty_arm_designator),
                                     transitions={   'done'              :'STORE_ITEM',
-                                                    'failed'            :'NAV_TO_OBSERVE_BOOKCASE'})
+                                                    'failed'            :'SAY_GRAB_FAILED'})
+
+            smach.StateMachine.add( "SAY_GRAB_FAILED",
+                                    states.Say(robot, ["I couldn't grab this thing"], mood="sad"),
+                                    transitions={   'spoken'            :'failed'}) # should be NAV_TO_OBSERVE_BOOKCASE but thats makes an infinite loop
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
+                import ipdb; ipdb.set_trace()
                 manipulated_items.current += [current_item.current]
                 return 'stored'
 
@@ -114,7 +125,7 @@ def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     start_waypoint = EdEntityDesignator(robot, id="living_room")  # TODO: select proper waypoint
-    placed_items = Designator([])
+    placed_items = []
 
     with sm:
 
