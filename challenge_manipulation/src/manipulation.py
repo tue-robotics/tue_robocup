@@ -44,6 +44,21 @@ class FormattedSentenceDesignator(Designator):
         return self.fmt.format(**kwargs_resolved)
 
 
+class EntityNotOnListDesignator(EdEntityDesignator):
+    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id_="", parse=True, criteriafuncs=None, exclude_list_designator=None):
+        super(EntityNotOnListDesignator, self).__init__(robot, type, center_point, radius, id_, parse, criteriafuncs)
+        self.exclude_list_designator = exclude_list_designator
+
+    def resolve(self):
+        entity = super(EntityNotOnListDesignator, self).resolve()
+        import mock #TEST, #TODO
+        entity = mock.MagicMock() #TEST, #TODO
+        if entity in self.exclude_list_designator.resolve():
+            raise DesignatorResolvementError(
+                "Matching entity found but was on exclude list".format(self.query))
+        return entity
+
+
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
     - Stand of front of the bookcase
@@ -61,7 +76,9 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         bookcase = EdEntityDesignator(robot, type="plastic_cabinet")  #TODO: Get the entityID of the bookcase
 
-        current_item = Designator(manipulated_items)  # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
+        # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
+        current_item = EntityNotOnListDesignator(robot, type="plastic_cabinet",
+                                                        exclude_list_designator=Designator(manipulated_items))  
         place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet"))  # TODO: Designates an empty spot on the empty placement-shelve. 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
