@@ -147,7 +147,7 @@ class EdEntityDesignator(Designator):
             self._current = entities[0]  # TODO: add sortkey
             return self.current
         else:
-            raise Exception(
+            raise DesignatorResolvementError(
                 "No entities found matching query {0}".format(self.query))
 
 
