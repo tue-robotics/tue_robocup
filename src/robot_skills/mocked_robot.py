@@ -42,6 +42,8 @@ class Base(object):
         self.analyzer = mock.MagicMock()
         self.global_planner = mock.MagicMock()
         self.local_planner = mock.MagicMock()
+        self.local_planner.getStatus = mock.MagicMock(return_value="arrived") #always arrive for now
+        self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"]) #always arrive for now
 
 class Ears(object):
     def __init__(self, *args, **kwargs):
