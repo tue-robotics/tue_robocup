@@ -23,7 +23,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.util.designators import Designator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator, EdEntityDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator, EdEntityDesignator
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -39,7 +39,7 @@ class FormattedSentenceDesignator(Designator):
         self.fmt = fmt
         self.kwargs = kwargs
     
-    def resolve():
+    def resolve(self):
         kwargs_resolved = {key:value.resolve() for key,value in self.kwargs.iteritems()}
         return self.fmt.format(**kwargs_resolved)
 
@@ -78,7 +78,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
         current_item = EntityNotOnListDesignator(robot, type="plastic_cabinet",
-                                                        exclude_list_designator=Designator(manipulated_items))  
+                                                        exclude_list_designator=manipulated_items)  
         place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet"))  # TODO: Designates an empty spot on the empty placement-shelve. 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
@@ -111,7 +111,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
-                import ipdb; ipdb.set_trace()
+                # import ipdb; ipdb.set_trace()
                 manipulated_items.current += [current_item.current]
                 return 'stored'
 
@@ -166,7 +166,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, placed_items)
+            single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM', 
                                                 single_item, 
