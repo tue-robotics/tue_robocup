@@ -40,33 +40,37 @@ class Put(State):
 
         x = 0.2
         while x <= dx:
-            if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.name)):
+            if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
                 print "Failed pre-drop"
-                return
+                return 'failed'
             x += 0.1
 
-        if not arm.send_goal(dx, goal_y, height + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.name)):
+        if not arm.send_goal(dx, goal_y, height + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
             print "drop"
-            return
+            return 'failed'
 
         # Open gripper
         arm.send_gripper_goal('open')
 
+        arm.occupied_by = None
+
         x = dx
         while x > 0.3:
-            if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.name)):
+            if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
                 print "Failed pre-drop"
-                return
+                return 'failed'
             x -= 0.1
 
-        if not arm.send_goal(0.2, goal_y, height + 0.05, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.name)):
+        if not arm.send_goal(0.2, goal_y, height + 0.05, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
             print "Failed after-drop"
-            return
+            return 'failed'
 
         # Close gripper
         arm.send_gripper_goal('close')
 
         arm.reset()
+        
+        return 'succeeded'
 
 class Place(smach.StateMachine):
 

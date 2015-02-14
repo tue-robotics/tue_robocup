@@ -213,10 +213,10 @@ class ArmDesignator(Designator):
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
     def resolve(self):
-        # import ipdb; ipdb.set_trace()
         if self.available(self.preferred_arm):
             return self.preferred_arm
         else:
+            # import ipdb; ipdb.set_trace()
             available_arms = filter(self.available, self.all_arms.values())
             if any(available_arms):
                 return available_arms[0]

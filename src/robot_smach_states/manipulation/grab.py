@@ -60,6 +60,8 @@ class PickUp(State):
         # Close gripper
         arm.send_gripper_goal('close')
 
+        arm.occupied_by = grab_entity
+
         # Lift
         if not arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+robot.robot_name+'/base_link'):
             rospy.logerr('Failed lift')
