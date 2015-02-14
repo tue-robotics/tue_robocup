@@ -49,10 +49,12 @@ class EntityNotOnListDesignator(EdEntityDesignator):
         super(EntityNotOnListDesignator, self).__init__(robot, type, center_point, radius, id_, parse, criteriafuncs)
         self.exclude_list_designator = exclude_list_designator
 
+        import mock #TEST, #TODO
+        self.mockvalue = mock.MagicMock() #TEST, #TODO
+
     def resolve(self):
         entity = super(EntityNotOnListDesignator, self).resolve()
-        import mock #TEST, #TODO
-        entity = mock.MagicMock() #TEST, #TODO
+        entity = self.mockvalue
         if entity in self.exclude_list_designator.resolve():
             raise DesignatorResolvementError(
                 "Matching entity found but was on exclude list".format(self.query))
