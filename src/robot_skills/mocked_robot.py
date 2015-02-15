@@ -139,12 +139,14 @@ class Reasoner(object):
 class Speech(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
-        self.speak = mock.MagicMock()
         self.__speak = mock.MagicMock()
         self.speak_info = mock.MagicMock()
         self.get_info = mock.MagicMock()
         self.get_action = mock.MagicMock()
         self.buildList = mock.MagicMock()
+        
+    def speak(self, sentence, *args, **kwargs):
+        rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m")
 
 class Torso(object):
     def __init__(self, *args, **kwargs):
