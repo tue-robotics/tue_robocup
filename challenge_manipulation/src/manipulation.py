@@ -78,10 +78,18 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         bookcase = EdEntityDesignator(robot, type="plastic_cabinet")  #TODO: Get the entityID of the bookcase
 
-        # TODO: Some item to grasp from the bookcase that is _not_ already placed or on the placement-shelve.
-        current_item = EntityNotOnListDesignator(robot, type="plastic_cabinet",
-                                                        exclude_list_designator=manipulated_items)  
-        place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet"))  # TODO: Designates an empty spot on the empty placement-shelve. 
+        # TODO: Designate items that are
+        # inside bookcase 
+        # and are _not_:
+        #   already placed 
+        #   on the placement-shelve.
+        current_item = EntityNotOnListDesignator(robot, exclude_list_designator=manipulated_items)  
+
+        # TODO: Designates an empty spot on the empty placement-shelve. 
+        # We can do this by queying ED for entities that occupy some space. 
+        # If the result is no entities, then we found an open spot. 
+        place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet")) 
+        
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
