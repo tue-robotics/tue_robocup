@@ -109,7 +109,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad"),
-                                    transitions={   'spoken'            :'failed'}) # should be NAV_TO_OBSERVE_BOOKCASE but thats makes an infinite loop
+                                    transitions={   'spoken'            :'NAV_TO_OBSERVE_BOOKCASE'})
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
