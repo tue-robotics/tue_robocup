@@ -43,8 +43,7 @@ def items2markdown(entities):
     md = md.replace("<", '').replace(">", '') #May not be needed when not using mocks
 
     html = markdown(md)
-    import ipdb; ipdb.set_trace()
-    
+        
     pdfFilename = "manipulation_challenge.pdf"
     html2pdf(html, pdfFilename)
 
