@@ -13,6 +13,7 @@
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>python-markdown</run_depend>
   <run_depend>python-xhtml2pdf</run_depend>
 
 </package>
