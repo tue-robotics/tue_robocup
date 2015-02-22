@@ -91,6 +91,71 @@ class VariableDesignator(Designator):
     current = property(Designator._get_current, _set_current)
 
 
+class LockingDesignator(Designator):
+    """A designator's resolve() method may return a different object everytime.
+    For some cases, this may be unwanted because a process has to be done with the same object.
+    In that case, a designator resolving to a different object every time is not usable. 
+    A LockingDesignator will resolve to the same object after a call to .lock() and 
+    will only resolve to a different value after an unlock() call.
+
+    >>> varying = VariableDesignator(0)
+    >>> locking = LockingDesignator(varying)
+    >>> assert(varying.resolve() == 0)
+    >>> assert(locking.resolve() == 0)
+    >>>
+    >>> locking.lock()
+    >>>
+    >>> varying.current = 1
+    >>> assert(varying.resolve() == 1)  # The value changed
+    >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
+    >>>
+    >>> varying.current = 2
+    >>> assert(varying.resolve() == 2)  # The value changed
+    >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
+    >>> 
+    >>> locking.unlock()
+    >>>
+    >>> varying.current = 3
+    >>> assert(varying.resolve() == 3)  # The value changed
+    >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
+    >>>
+    >>> locking.lock()
+    >>>
+    >>> varying.current = 4
+    >>> assert(varying.resolve() == 4)  # The value changed
+    >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
+    >>>
+    >>> varying.current = 5
+    >>> assert(varying.resolve() == 5)  # The value changed
+    >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
+    >>> 
+    >>> locking.unlock()
+    >>>
+    >>> varying.current = 6
+    >>> assert(varying.resolve() == 6)  # The value changed
+    >>> assert(locking.resolve() == 6)  # This one sticks to the value it had when locked
+    """
+
+    def __init__(self, to_be_locked):
+        self.to_be_locked = to_be_locked
+        self._locked = False
+
+    def lock(self):
+        self._locked = True
+
+    def unlock(self):
+        self._locked = False
+
+    def resolve(self):
+        if self._locked:
+            if self._current == None:
+                self._current = self.to_be_locked.resolve()
+            return self._current
+        else:
+            self._current = self.to_be_locked.resolve()
+            return self._current
+
+
 class PointStampedOfEntityDesignator(Designator):
 
     def __init__(self, entity_designator):
