@@ -23,12 +23,13 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.util.designators import Designator, VariableDesignator, ArmHoldingEntityDesignator, UnoccupiedArmDesignator, EdEntityDesignator
+from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_skills.util import msg_constructors as gm
+from robot_skills.util import transformations
 
 import pdf
 
@@ -61,6 +62,35 @@ class EntityNotOnListDesignator(EdEntityDesignator):
         return entity
 
 
+class EmptySpotDesignator(Designator):
+    """Designates an empty spot on the empty placement-shelve. 
+    It does this by queying ED for entities that occupy some space. 
+        If the result is no entities, then we found an open spot."""
+    def __init__(self, robot, closet_designator):
+        self.robot = robot
+        self.closet_designator = closet_designator
+
+    def resolve(self):
+        closet_id = self.closet_designator.resolve().id
+        points_of_interest = []
+        #TODO define REAL potential locations
+        spacing = 0.15
+        start, end = -0.3, 0.31
+        steps = int((end-start)//spacing) + 1
+        points_of_interest = [gm.PointStamped(start+(spacing*i), 0, 1, frame_id=closet_id) for i in range(steps)]
+
+        import ipdb; ipdb.set_trace()
+
+        def is_poi_occupied(poi):
+            poi_in_map = transformations.tf_transform(poi.point, poi.header.frame_id, "/map", self.robot.tf_listener)
+            return any(self.robot.ed.get_entities(center_point=poi_in_map, radius=spacing))
+
+        open_POIs = filter(is_poi_occupied, points_of_interest)
+        if any(open_POIs):
+            return open_POIs[0]
+        else:
+            raise DesignatorResolvementError("Could not find an empty spot")
+
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
     - Stand of front of the bookcase
@@ -85,10 +115,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         #   on the placement-shelve.
         current_item = EntityNotOnListDesignator(robot, exclude_list_designator=manipulated_items)  
 
-        # TODO: Designates an empty spot on the empty placement-shelve. 
-        # We can do this by queying ED for entities that occupy some space. 
-        # If the result is no entities, then we found an open spot. 
-        place_position = Designator(gm.PoseStamped(x=0, y=0, z=0.8, frame_id="/plastic_cabinet")) 
+        place_position = EmptySpotDesignator(robot, bookcase) 
         
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
@@ -134,7 +161,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
-                                    Place(robot, current_item, place_position, arm_with_item_designator),
+                                    Place(robot, current_item, place_position, arm_with_item_designator), #TODO: Place uses NavigateToGrasp (which should be NavigateToPlace), that wants an EntityDesignator...
                                     transitions={   'done'              :'succeeded',
                                                     'failed'            :'SAY_HANDOVER_TO_HUMAN'})
 
