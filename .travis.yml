@@ -31,5 +31,7 @@ before_script:
 script:
   - catkin_make ed_generate_messages_py
   - catkin_make psi_generate_messages_py
+  - catkin_make tf_server_generate_messages_py
+  - catkin_make cb_planner_msgs_srvs_generate_messages_py
   - rosrun robot_smach_states designator.py
   - rosrun robot_smach_states human_interaction.py

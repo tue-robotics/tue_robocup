@@ -24,6 +24,7 @@ The library here defines a couple of standard designators:
 import rospy
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
+from robot_skills.world_model_ed import ED
 import geometry_msgs.msg as gm
 import std_msgs.msg as std
 import inspect
@@ -90,6 +91,71 @@ class VariableDesignator(Designator):
     current = property(Designator._get_current, _set_current)
 
 
+class LockingDesignator(Designator):
+    """A designator's resolve() method may return a different object everytime.
+    For some cases, this may be unwanted because a process has to be done with the same object.
+    In that case, a designator resolving to a different object every time is not usable. 
+    A LockingDesignator will resolve to the same object after a call to .lock() and 
+    will only resolve to a different value after an unlock() call.
+
+    >>> varying = VariableDesignator(0)
+    >>> locking = LockingDesignator(varying)
+    >>> assert(varying.resolve() == 0)
+    >>> assert(locking.resolve() == 0)
+    >>>
+    >>> locking.lock()
+    >>>
+    >>> varying.current = 1
+    >>> assert(varying.resolve() == 1)  # The value changed
+    >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
+    >>>
+    >>> varying.current = 2
+    >>> assert(varying.resolve() == 2)  # The value changed
+    >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
+    >>> 
+    >>> locking.unlock()
+    >>>
+    >>> varying.current = 3
+    >>> assert(varying.resolve() == 3)  # The value changed
+    >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
+    >>>
+    >>> locking.lock()
+    >>>
+    >>> varying.current = 4
+    >>> assert(varying.resolve() == 4)  # The value changed
+    >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
+    >>>
+    >>> varying.current = 5
+    >>> assert(varying.resolve() == 5)  # The value changed
+    >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
+    >>> 
+    >>> locking.unlock()
+    >>>
+    >>> varying.current = 6
+    >>> assert(varying.resolve() == 6)  # The value changed
+    >>> assert(locking.resolve() == 6)  # This one sticks to the value it had when locked
+    """
+
+    def __init__(self, to_be_locked):
+        self.to_be_locked = to_be_locked
+        self._locked = False
+
+    def lock(self):
+        self._locked = True
+
+    def unlock(self):
+        self._locked = False
+
+    def resolve(self):
+        if self._locked:
+            if self._current == None:
+                self._current = self.to_be_locked.resolve()
+            return self._current
+        else:
+            self._current = self.to_be_locked.resolve()
+            return self._current
+
+
 class PointStampedOfEntityDesignator(Designator):
 
     def __init__(self, entity_designator):
@@ -115,59 +181,26 @@ class PointStampedOfEntityDesignator(Designator):
             raise Exception("No such entity")
 
 
-class PsiDesignator(Designator):
-
-    """A PsiDesignator encapsulates Psi queries to a reasoner.
-    A reasoner may return multiple valid answers to a query, but """
-
-    def __init__(self, query, reasoner, sortkey=None, sortorder=min, criteriafuncs=None):
-        """Define a new designator around a Psi query, to be posed to a reasoner
-        @param query the query to be posed to the given reasoner
-        @param reasoner the reasoner that should answer the query"""
-        self.query = query
-        self.reasoner = reasoner
-        self.sortkey = sortkey
-        self.sortorder = sortorder
-        self.criteriafuncs = criteriafuncs or []
-
-    def resolve(self):
-        """
-        Returns an answer from the reasoner that satisfies some criteria and
-        is the best according to some function and sorting      """
-        answers = self.reasoner.query(self.query)
-
-        rospy.loginfo("{0} answers before filtering: {1}".format(
-                      len(answers), pprint.pformat(answers))
-                      )
-        for criterium in self.criteriafuncs:
-            answers = filter(criterium, answers)
-            criterium_code = inspect.getsource(criterium)
-            rospy.loginfo("Criterium {0} leaves {1} answers: {2}".format(
-                          criterium_code, len(answers), pprint.pformat(answers))
-                          )
-
-        if not answers:
-            raise ValueError("No answers matched the critera.")
-
-        return self.sortorder(answers, key=self.sortkey)[0]
-
-
-class EdEntityByQueryDesignator(Designator):
+class EdEntityDesignator(Designator):
 
     """
     Resolves to an entity from an Ed query, (TODO: selected by some filter and
     criteria functions)
     """
 
-    def __init__(self, ed_query, criteriafuncs=None):
-        super(EdEntityByQueryDesignator, self).__init__()
-        self.query = ed_query
-        self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
+    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None):
+        super(EdEntityDesignator, self).__init__()
+        self.ed = robot.ed
+        self.type = ""
+        self.center_point = gm.Point()
+        self.radius = 0
+        self.id = ""
+        self.parse = True
 
         self.criteriafuncs = criteriafuncs or []
 
     def resolve(self):
-        entities = self.ed(self.query)
+        entities = self.ed.get_entities(self.type, self.center_point, self.radius, self.id, self.parse)
         if entities:
             for criterium in self.criteriafuncs:
                 entities = filter(criterium, entities)
@@ -175,12 +208,11 @@ class EdEntityByQueryDesignator(Designator):
                 rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
                               criterium_code, len(entities), pprint.pformat(entities))
                               )
-
-            import ipdb; ipdb.set_trace()
+                
             self._current = entities[0]  # TODO: add sortkey
             return self.current
         else:
-            raise Exception(
+            raise DesignatorResolvementError(
                 "No entities found matching query {0}".format(self.query))
 
 
@@ -246,10 +278,10 @@ class ArmDesignator(Designator):
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
     def resolve(self):
-        # import ipdb; ipdb.set_trace()
         if self.available(self.preferred_arm):
             return self.preferred_arm
         else:
+            # import ipdb; ipdb.set_trace()
             available_arms = filter(self.available, self.all_arms.values())
             if any(available_arms):
                 return available_arms[0]
