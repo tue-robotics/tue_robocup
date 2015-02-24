@@ -191,11 +191,11 @@ class EdEntityDesignator(Designator):
     def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None):
         super(EdEntityDesignator, self).__init__()
         self.ed = robot.ed
-        self.type = ""
-        self.center_point = gm.Point()
-        self.radius = 0
-        self.id = ""
-        self.parse = True
+        self.type = type
+        self.center_point = center_point
+        self.radius = radius
+        self.id = id
+        self.parse = parse
 
         self.criteriafuncs = criteriafuncs or []
 
@@ -213,7 +213,15 @@ class EdEntityDesignator(Designator):
             return self.current
         else:
             raise DesignatorResolvementError(
-                "No entities found matching query {0}".format(self.query))
+                "No entities found in {0}".format(self))
+
+    def __repr__(self):
+        return "EdEntityDesignator(robot, type={0},"+\
+            " center_point={1},"+\
+            " radius={2},"+\
+            " id={3},"+\
+            " parse={4},"+\
+            " criteriafuncs={5})".format(self.type, self.center_point, self.radius, self.id, self.parse, self.criteriafuncs)
 
 
 class AttrDesignator(Designator):
