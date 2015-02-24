@@ -4,6 +4,9 @@ import rospy
 from markdown import markdown
 from xhtml2pdf import pisa
 
+from ed_gui_server.srv import *
+
+
 report = '''
 # H1
 
@@ -25,10 +28,19 @@ def html2pdf(sourceHtml, outputFilename):
                                     dest=resultFile)
     return pisaStatus.err
 
+get_entity_info = rospy.ServiceProxy('/ed/gui/get_entity_info', GetEntityInfo)
+
 def save_entity_image_to_file(entityID):
-    #TODO: Get measurements of entityID and save to image
-    return entityID+".png"
-    # return "/home/loy/Pictures/screenshot.png"
+
+    # ed request
+    info = get_entity_info(entityID)
+
+    # write bytes to file
+    file_name = entityID+".jpg"
+    with open(file_name , 'wb') as f:
+        f.write(info.measurement_image)
+
+    return file_name
 
 def items2markdown(entities):
     rospy.logdebug("TODO: Exporting PDF")
@@ -39,11 +51,11 @@ def items2markdown(entities):
     for entity in entities:
         md += fmt.format(title=entity.type, path=save_entity_image_to_file(entity.id))
         md += "\n"
-    
+
     md = md.replace("<", '').replace(">", '') #May not be needed when not using mocks
 
     html = markdown(md)
-        
+
     pdfFilename = "manipulation_challenge.pdf"
     html2pdf(html, pdfFilename)
 
