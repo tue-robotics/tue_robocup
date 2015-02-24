@@ -101,7 +101,6 @@ class executePlan(smach.State):
         self.blocked_timeout = blocked_timeout   
 
     def execute(self, userdata):
-
         # ToDo: check for alternative plans???
 
         self.t_last_free = rospy.Time.now()

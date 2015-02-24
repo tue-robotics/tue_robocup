@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 import smach
-from robot_smach_states.designators.designator import Designator
+from robot_smach_states.util.designators import Designator
 
-class RobotState(smach.State):
+class State(smach.State):
     def __init__(self, *args, **kwargs):
         smach.State.__init__(self, outcomes=kwargs['outcomes'])
         self.__dict__['init_arguments'] = args
@@ -15,7 +15,7 @@ class RobotState(smach.State):
         return self.run( **resolved_arguments )
 
 
-class TestState(RobotState):
+class TestState(State):
     """
     >>> teststate = TestState("Yes", "this", "works")
     >>> teststate.execute()
@@ -27,7 +27,7 @@ class TestState(RobotState):
     Also works with designators
     'yes'"""
     def __init__(self, robot, sentence, blaat):
-        RobotState.__init__(self, locals(), outcomes=['yes', 'no'])
+        State.__init__(self, locals(), outcomes=['yes', 'no'])
         
     def run(self, robot, sentence, blaat):
         print robot, sentence, blaat

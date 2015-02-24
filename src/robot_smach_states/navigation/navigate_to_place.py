@@ -14,16 +14,20 @@ import math
 
 
 # ----------------------------------------------------------------------------------------------------
-class NavigateToGrasp(NavigateTo):
-    def __init__(self, robot, entity_designator, arm_designator=None):
-        super(NavigateToGrasp, self).__init__(robot)
+class NavigateToPlace(NavigateTo):
+    def __init__(self, robot, place_pose_designator, arm_designator=None):
+        """Navigate so that the arm can reach the place point
+        @param place_pose_designator designator that resolves to a geometry_msgs.msg.PoseStamped
+        @param arm which arm to eventually place with?
+        """
+        super(NavigateToPlace, self).__init__(robot)
 
         self.robot    = robot
-        self.entity_designator = entity_designator
+        self.place_pose_designator = place_pose_designator
 
         self.arm_designator = arm_designator
         if not arm_designator:
-            rospy.logerr('NavigateToGrasp: side should be determined by entity_designator. Please specify left or right, will default to left')
+            rospy.logerr('NavigateToPlace: side should be determined by arm_designator. Please specify left or right, will default to left')
             self.arm_designator = Designator(robot.leftArm)
 
     def generateConstraint(self):
@@ -36,31 +40,24 @@ class NavigateToGrasp(NavigateTo):
             y_offset = -self.robot.grasp_offset.y
         radius = math.sqrt(x_offset*x_offset + y_offset*y_offset)
 
-        entity = self.entity_designator.resolve()
+        place_pose = self.place_pose_designator.resolve()
 
-        if not entity:
-            rospy.logerr("No such entity")
+        if not place_pose:
+            rospy.logerr("No such place_pose")
             return None
 
-        print entity
+        print place_pose
 
-        if not entity:
-            rospy.logerr("No such entity")
+        if not place_pose:
+            rospy.logerr("No such place_pose")
             return None
 
         try:
-            pose = entity.pose #TODO Janno: Not all entities have pose information
-            x = pose.position.x
-            y = pose.position.y
+            x = place_pose.pose.position.x
+            y = place_pose.pose.position.y
         except KeyError, ke:
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
-
-        try:
-            rz = entity.pose.orientation.z
-        except KeyError, ke:
-            rospy.logerr("Could not determine pose.rz: ".format(ke))
-            rz = 0
 
         rospy.logwarn("Should Sjoerd check the newest model data in???")
 
