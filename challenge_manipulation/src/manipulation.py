@@ -50,12 +50,8 @@ class EntityNotOnListDesignator(EdEntityDesignator):
         super(EntityNotOnListDesignator, self).__init__(robot, type, center_point, radius, id_, parse, criteriafuncs)
         self.exclude_list_designator = exclude_list_designator
 
-        import mock #TEST, #TODO
-        self.mockvalue = mock.MagicMock() #TEST, #TODO
-
     def resolve(self):
         entity = super(EntityNotOnListDesignator, self).resolve()
-        entity = self.mockvalue
         if entity in self.exclude_list_designator.resolve():
             raise DesignatorResolvementError(
                 "Matching entity found but was on exclude list".format(self.query))
@@ -84,7 +80,6 @@ class EmptySpotDesignator(Designator):
             return any(self.robot.ed.get_entities(center_point=poi_in_map, radius=spacing))
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
-        open_POIs = points_of_interest #TODO: for testing
         if any(open_POIs):
             return gm.PoseStamped(pointstamped=open_POIs[0])
         else:
@@ -148,7 +143,6 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
-                # import ipdb; ipdb.set_trace()
                 manipulated_items.current += [current_item.current]
                 return 'stored'
 
@@ -161,7 +155,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
-                                    Place(robot, current_item, place_position, arm_with_item_designator), #TODO: Place uses NavigateToGrasp (which should be NavigateToPlace), that wants an EntityDesignator...
+                                    Place(robot, current_item, place_position, arm_with_item_designator),
                                     transitions={   'done'              :'succeeded',
                                                     'failed'            :'SAY_HANDOVER_TO_HUMAN'})
 
