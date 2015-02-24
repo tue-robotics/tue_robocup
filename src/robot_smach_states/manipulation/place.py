@@ -3,7 +3,7 @@ import rospy
 import smach
 
 import robot_skills.util.transformations as transformations
-from robot_smach_states.navigation import NavigateToGrasp
+from robot_smach_states.navigation import NavigateToPlace
 
 from robot_smach_states.state import State
 
@@ -78,7 +78,7 @@ class Place(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToGrasp(robot, place_pose, arm),  # TODO: Navigate to place
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_pose, arm),  # TODO: Navigate to place
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'PUT'})
