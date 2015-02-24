@@ -79,7 +79,7 @@ class Arm(object):
         self._ac_grasp_precompute = actionlib.SimpleActionClient("grasp_precompute_"+self.side, GraspPrecomputeAction)
 
         # Init joint trajectory action server
-        self._ac_joint_traj = actionlib.SimpleActionClient("/joint_trajectory_action_"+self.side,  FollowJointTrajectoryAction)
+        self._ac_joint_traj = actionlib.SimpleActionClient("/amigo/"+self.side+"_arm/joint_trajectory_action",  FollowJointTrajectoryAction)
 
         # ToDo: don't hardcode?
         server_timeout = 1.0
