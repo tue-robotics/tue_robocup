@@ -79,17 +79,17 @@ class EmptySpotDesignator(Designator):
         steps = int((end-start)//spacing) + 1
         points_of_interest = [gm.PointStamped(start+(spacing*i), 0, 1, frame_id=closet_id) for i in range(steps)]
 
-        import ipdb; ipdb.set_trace()
-
         def is_poi_occupied(poi):
             poi_in_map = transformations.tf_transform(poi.point, poi.header.frame_id, "/map", self.robot.tf_listener)
             return any(self.robot.ed.get_entities(center_point=poi_in_map, radius=spacing))
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
+        open_POIs = points_of_interest #TODO: for testing
         if any(open_POIs):
-            return open_POIs[0]
+            return gm.PoseStamped(pointstamped=open_POIs[0])
         else:
             raise DesignatorResolvementError("Could not find an empty spot")
+
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
