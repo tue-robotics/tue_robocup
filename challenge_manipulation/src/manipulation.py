@@ -33,6 +33,7 @@ from robot_skills.util import transformations
 
 import pdf
 
+
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
     def __init__(self, fmt, **kwargs):
@@ -101,7 +102,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        bookcase = EdEntityDesignator(robot, type="plastic_cabinet")  #TODO: Get the entityID of the bookcase
+        bookcase = EdEntityDesignator(robot, id="plastic_cabinet")  #TODO: Get the entityID of the bookcase
 
         # TODO: Designate items that are
         # inside bookcase 
