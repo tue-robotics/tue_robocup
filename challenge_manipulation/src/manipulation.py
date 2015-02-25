@@ -33,6 +33,7 @@ from robot_skills.util import transformations
 
 import pdf
 
+BOOKCASE = "plastic_cabinet"
 
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
@@ -77,8 +78,7 @@ class EmptySpotDesignator(Designator):
         points_of_interest = [gm.PointStamped(start+(spacing*i), 0, 1, frame_id=closet_id) for i in range(steps)]
 
         def is_poi_occupied(poi):
-            poi_in_map = transformations.tf_transform(poi.point, poi.header.frame_id, "/map", self.robot.tf_listener)
-            return any(self.robot.ed.get_entities(center_point=poi_in_map, radius=spacing))
+            return any(self.robot.ed.get_entities(center_point=poi, radius=spacing))
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
         if any(open_POIs):
@@ -102,14 +102,29 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        bookcase = EdEntityDesignator(robot, id="plastic_cabinet")  #TODO: Get the entityID of the bookcase
+        bookcase = EdEntityDesignator(robot, id=BOOKCASE)
 
         # TODO: Designate items that are
         # inside bookcase 
         # and are _not_:
         #   already placed 
         #   on the placement-shelve.
-        current_item = EntityNotOnListDesignator(robot, exclude_list_designator=manipulated_items)  
+        not_waypoint = lambda entity: entity.type != "waypoint"
+        size = lambda entity: (entity.z_max - entity.z_min) < 0.2
+        def inside(entity):
+            container_entity = bookcase.resolve()
+            xs = [point.x for point in container_entity.convex_hull]
+            ys = [point.x for point in container_entity.convex_hull]
+            zs = [point.z for point in container_entity.convex_hull]
+            return min(xs) < entity.pose.position.x <= max(xs) and \
+                min(ys) < entity.pose.position.y <= max(ys) and \
+                min(zs) < entity.pose.position.z <= max(zs)
+
+        # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
+        current_item = EntityNotOnListDesignator(robot, 
+            center_point=gm.PointStamped(frame_id="/"+BOOKCASE), radius=0.75,
+            exclude_list_designator=manipulated_items, 
+            criteriafuncs=[not_waypoint, size, inside])
 
         place_position = EmptySpotDesignator(robot, bookcase) 
         
@@ -131,6 +146,10 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "LOOKAT_BOOKCASE",
                                     states.Say(robot, ["I'm looking at the bookcase to see what items I can find"]),
+                                    transitions={   'spoken'            :'ANNOUNCE_ITEM'})
+
+            smach.StateMachine.add( "ANNOUNCE_ITEM",
+                                    states.Say(robot, FormattedSentenceDesignator("I'm trying to grab item {item.id} which is a {item.type}.", item=current_item), block=False),
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
@@ -140,7 +159,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad"),
-                                    transitions={   'spoken'            :'NAV_TO_OBSERVE_BOOKCASE'})
+                                    transitions={   'spoken'            :'failed'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
@@ -211,6 +230,7 @@ def setup_statemachine(robot):
 
         @smach.cb_interface(outcomes=["exported"])
         def export_to_pdf(userdata):
+            rospy.loginfo("Placed_items: {0}".format([e.id for e in placed_items]))
             pdf.items2markdown(placed_items)
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
