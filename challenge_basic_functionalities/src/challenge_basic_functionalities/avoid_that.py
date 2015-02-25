@@ -6,7 +6,7 @@ import smach
 from robot_smach_states.navigation import NavigateToWaypoint
 from robot_smach_states.human_interaction import Say
 
-from robot_smach_states.designators.designator import Designator, VariableDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator
 
 
 class AvoidThat(smach.StateMachine):

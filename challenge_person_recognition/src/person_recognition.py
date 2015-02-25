@@ -12,7 +12,7 @@ from robot_smach_states.human_interaction import Say
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 
-from robot_smach_states.designators.designator import Designator, VariableDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator
 
 import smach
 import smach_ros
@@ -208,6 +208,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add('END_CHALLENGE',
                                    Say(robot,"My work here is done, goodbye!"),
                                    transitions={'spoken':'Done'})
+
 
 # ----------------------------------------------------------------------------------------------------
 

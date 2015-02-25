@@ -4,7 +4,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.designators.designator import Designator
+from robot_smach_states.util.designators import Designator
 import robot_smach_states as states
 
 def setup_statemachine(robot):
