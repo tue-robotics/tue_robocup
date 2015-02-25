@@ -5,12 +5,9 @@ import smach
 
 from robot_smach_states.state import State
 
-import utility_states
+import utility
 import human_interaction
-import perception
-import navigation
-import manipulation
-import reasoning
+
 
 import robot_skills.util.msg_constructors as msgs
 from robot_smach_states.util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
@@ -21,41 +18,50 @@ class StartChallengeRobust(smach.StateMachine):
     def __init__(self, robot, initial_pose, use_entry_points = False):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"]) 
         assert hasattr(robot, "base")
-        assert hasattr(robot, "reasoner")
+        # assert hasattr(robot, "reasoner")
         assert hasattr(robot, "speech")
 
         with self:
             smach.StateMachine.add( "INITIALIZE", 
-                                    utility_states.Initialize(robot), 
+                                    utility.Initialize(robot), 
                                     transitions={   "initialized"   :"INSTRUCT_WAIT_FOR_DOOR",
                                                     "abort"         :"Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
                                     human_interaction.Say(robot, [  "Hi there, I will now wait until the door is opened"], block=False),
-                                    transitions={   "spoken":"ASSESS_DOOR"})
+                                    #transitions={   "spoken":"ASSESS_DOOR"})
+                                    transitions={   "spoken":"DOOR_OPEN"}) # FOR NOW SKIP LASER PART
 
 
-             # Start laser sensor that may change the state of the door if the door is open:
-            smach.StateMachine.add( "ASSESS_DOOR", 
-                                    perception.Read_laser(robot, "entrance_door"),
-                                    transitions={   "laser_read":"WAIT_FOR_DOOR"})       
+
+            ## !!!!!!!!!!! DOES NOT WORK: 
+            rospy.logerr("TODO LOY startup.py: Add check if door is open with designators, NOW DOOR IS OPEN IS ASSUMED!! WATCH OUT!!")
+            rospy.sleep(2)
+
+            #perception.py is not there anymore
+            #same for reasoning.py
+
+            #  # Start laser sensor that may change the state of the door if the door is open:
+            # smach.StateMachine.add( "ASSESS_DOOR", 
+            #                         perception.Read_laser(robot, "entrance_door"),
+            #                         transitions={   "laser_read":"WAIT_FOR_DOOR"})       
             
-            # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-            dooropen_query = robot.reasoner.state("entrance_door","open")
+            # # define query for the question wether the door is open in the state WAIT_FOR_DOOR
+            # dooropen_query = robot.reasoner.state("entrance_door","open")
         
-            # Query if the door is open:
-            smach.StateMachine.add( "WAIT_FOR_DOOR", 
-                                    reasoning.Ask_query_true(robot, dooropen_query),
-                                    transitions={   "query_false":"ASSESS_DOOR",
-                                                    "query_true":"DOOR_OPEN",
-                                                    "waiting":"DOOR_CLOSED",
-                                                    "preempted":"Aborted"})
+            # # Query if the door is open:
+            # smach.StateMachine.add( "WAIT_FOR_DOOR", 
+            #                         reasoning.Ask_query_true(robot, dooropen_query),
+            #                         transitions={   "query_false":"ASSESS_DOOR",
+            #                                         "query_true":"DOOR_OPEN",
+            #                                         "waiting":"DOOR_CLOSED",
+            #                                         "preempted":"Aborted"})
 
             # If the door is still closed after certain number of iterations, defined in Ask_query_true 
             # in perception.py, amigo will speak and check again if the door is open
-            smach.StateMachine.add( "DOOR_CLOSED",
-                                    human_interaction.Say(robot, "Door is closed, please open the door"),
-                                    transitions={   "spoken":"ASSESS_DOOR"}) 
+            # smach.StateMachine.add( "DOOR_CLOSED",
+            #                         human_interaction.Say(robot, "Door is closed, please open the door"),
+            #                         transitions={   "spoken":"ASSESS_DOOR"}) 
 
             smach.StateMachine.add( "DOOR_OPEN",
                                     human_interaction.Say(robot, "Door is open!", block=False),
@@ -64,7 +70,7 @@ class StartChallengeRobust(smach.StateMachine):
             # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
             # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
             smach.StateMachine.add('INIT_POSE',
-                                utility_states.SetInitialPose(robot, initial_pose),
+                                utility.SetInitialPose(robot, initial_pose),
                                 transitions={   'done':'ENTER_ROOM',
                                                 'preempted':'Aborted',  # This transition will never happen at the moment.
                                                 'error':'ENTER_ROOM'})  # It should never go to aborted.
@@ -90,7 +96,7 @@ class EnterArena(smach.StateMachine):
         def __init__(self, robot):
             State.__init__(self, locals(), outcomes=["done"])
 
-        def execute(self, robot):            
+        def run(self, robot):            
             #self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)  # Amigo should not say that it uses force drive, looks stupid.
             rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
             robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
