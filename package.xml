@@ -39,13 +39,13 @@
 
   <build_depend>amigo_msgs</build_depend>
   <run_depend>amigo_msgs</run_depend>
-  
+
   <build_depend>tue_msgs</build_depend>
   <run_depend>tue_msgs</run_depend>
 
   <build_depend>visualization_msgs</build_depend>
   <run_depend>visualization_msgs</run_depend>
-  
+
   <build_depend>head_ref</build_depend>
   <run_depend>head_ref</run_depend>
 
@@ -72,9 +72,6 @@
 
   <build_depend>wire_msgs</build_depend>
   <run_depend>wire_msgs</run_depend>
-
-  <build_depend>speech_interpreter</build_depend>
-  <run_depend>speech_interpreter</run_depend>
 
   <build_depend>octomap_msgs</build_depend>
   <run_depend>octomap_msgs</run_depend>
