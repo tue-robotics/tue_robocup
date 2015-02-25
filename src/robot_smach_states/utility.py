@@ -1,16 +1,14 @@
 #! /usr/bin/env python
-import roslib;
 import rospy
 import smach
 
 ''' For siren demo challenge '''
 import thread
 
-from robot_smach_states.reasoning import Wait_query_true
-
 from psi import Compound
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
+
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -269,19 +267,6 @@ class CheckTime(smach.State):
             return "timeout"
         else:
             return "ok"
-
-class Wait_queried_perception(Wait_query_true):
-    """Toggle the given perception module(s) and wait for its perceptions to match the given query
-    E.g. toggle the people detection and wait until a person is perceived. Then toggle the module off again."""
-
-    def __init__(self, robot, modules, query, timeout=5):
-        """init the superstate with custom pre/post callbacks dependent on these args"""
-        if isinstance(modules, str):
-            modules = [modules] #Make it a list
-
-        pre = lambda *args, **kwargs: robot.perception.toggle(modules)
-        post = lambda *args, **kwargs: robot.perception.toggle([])
-        Wait_query_true.__init__(self, robot, query, timeout=timeout, pre_callback=pre, post_callback=post)
 
 class LookAtHand(smach.State):
     def __init__(self, robot, side, keep_tracking=False, timeout=0.0):
