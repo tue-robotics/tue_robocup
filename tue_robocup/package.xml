@@ -24,6 +24,7 @@
   <!-- <run_depend>challenge_restaurant</run_depend> -->
   <run_depend>challenge_rips</run_depend>
   <!-- <run_depend>challenge_robo_zoo</run_depend> -->
+  <run_depend>challenge_speech_recognition</run_depend>
 
   <export>
     <metapackage/>
