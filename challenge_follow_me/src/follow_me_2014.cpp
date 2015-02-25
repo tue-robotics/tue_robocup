@@ -790,7 +790,7 @@ int main(int argc, char **argv) {
     cmd_vel_pub_ = nh.advertise<geometry_msgs::Twist>("/amigo/base/references", 1);
 
     //! Laser data
-    sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_front_laser", 10, laserCallback);
+    sub_laser_ = nh.subscribe<sensor_msgs::LaserScan>("/amigo/base_laser/scan", 10, laserCallback);
 
 	//! Create follower (which connects with WIRE)
 	//! Construct the follower

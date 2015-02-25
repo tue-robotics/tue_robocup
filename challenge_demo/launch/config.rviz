@@ -613,7 +613,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.01
       Style: Flat Squares
-      Topic: /amigo/base_front_laser
+      Topic: /amigo/base_laser/scan
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
