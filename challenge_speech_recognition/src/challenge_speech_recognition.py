@@ -18,6 +18,7 @@ class HearQuestion(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
+        #self.robot.head.lookAtStandingPerson()
 
         res = self.robot.ears.recognize(spec=self.spec, choices=self.choices, time_out=self.time_out)
 
@@ -26,8 +27,12 @@ class HearQuestion(smach.State):
             return "not_heard"
 
         try:
-            rospy.loginfo("Question was: '{0}'?".format(res.result))
-            self.robot.speech.speak("The answer is '{0}'".format(data.answers[list(res.choices.keys())[0]][0]))
+            if res.result:
+                rospy.loginfo("Question was: '{0}'?".format(res.result))
+                self.robot.speech.speak("The answer is '{0}'".format(data.answers[list(res.choices.keys())[0]][0]))
+            else:                
+                self.robot.speech.speak("I did not hear you")
+                return "not_heard"
 
         except KeyError:
             rospy.logwarn("Amigo did not understand user")
@@ -53,7 +58,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["I will go to the interrogation point now",
                                                     "I will now go to the interrogation point",
                                                     "Lets go to the interrogation point",
-                                                    "Going to the interrogation point"], block=False),
+                                                    "Going to the interrogation point"], block=True),
                                 #transitions={   'spoken'            :   'GOTO_INTERROGATION_POINT_1'})
                                 transitions={   'spoken'            :   'HEAR_QUESTION_1'})
 
@@ -83,51 +88,91 @@ def setup_statemachine(robot):
         smach.StateMachine.add( 'HEAR_QUESTION_1',
                                 HearQuestion(robot, spec=data.spec, choices=data.choices),
                                 transitions={   'heard'            :   'SAY_NEXT_QUESTION_1',
+                                                'not_heard'        :   'SAY_REPEAT_QUESTION_1'}) 
+        
+        smach.StateMachine.add( 'SAY_REPEAT_QUESTION_1',
+                                states.Say(robot, ["Please repeat your question"], block=True),
+                                transitions={   'spoken'            :   'HEAR_QUESTION_1_2ND_ATTEMPT'})
+        
+        smach.StateMachine.add( 'HEAR_QUESTION_1_2ND_ATTEMPT',
+                                HearQuestion(robot, spec=data.spec, choices=data.choices),
+                                transitions={   'heard'            :   'SAY_NEXT_QUESTION_1',
                                                 'not_heard'        :   'SAY_NEXT_QUESTION_1'}) 
 
         smach.StateMachine.add( 'SAY_NEXT_QUESTION_1',
                                 states.Say(robot, ["What is your next question?"], block=True),
-                                #transitions={   'spoken'            :   'GO_TO_EXIT'})
                                 transitions={   'spoken'            :   'HEAR_QUESTION_2'})
 
         smach.StateMachine.add( 'HEAR_QUESTION_2',
+                                HearQuestion(robot, spec=data.spec, choices=data.choices),
+                                transitions={   'heard'            :   'SAY_NEXT_QUESTION_2',
+                                                'not_heard'        :   'SAY_REPEAT_QUESTION_2'}) 
+        
+        smach.StateMachine.add( 'SAY_REPEAT_QUESTION_2',
+                                states.Say(robot, ["Please repeat your question"], block=True),
+                                transitions={   'spoken'            :   'HEAR_QUESTION_2_2ND_ATTEMPT'})
+        
+        smach.StateMachine.add( 'HEAR_QUESTION_2_2ND_ATTEMPT',
                                 HearQuestion(robot, spec=data.spec, choices=data.choices),
                                 transitions={   'heard'            :   'SAY_NEXT_QUESTION_2',
                                                 'not_heard'        :   'SAY_NEXT_QUESTION_2'}) 
 
         smach.StateMachine.add( 'SAY_NEXT_QUESTION_2',
                                 states.Say(robot, ["What is your next question?"], block=True),
-                                #transitions={   'spoken'            :   'GO_TO_EXIT'})
                                 transitions={   'spoken'            :   'HEAR_QUESTION_3'})
 
         smach.StateMachine.add( 'HEAR_QUESTION_3',
+                                HearQuestion(robot, spec=data.spec, choices=data.choices),
+                                transitions={   'heard'            :   'SAY_NEXT_QUESTION_3',
+                                                'not_heard'        :   'SAY_REPEAT_QUESTION_3'}) 
+        
+        smach.StateMachine.add( 'SAY_REPEAT_QUESTION_3',
+                                states.Say(robot, ["Please repeat your question"], block=True),
+                                transitions={   'spoken'            :   'HEAR_QUESTION_3_2ND_ATTEMPT'})
+        
+        smach.StateMachine.add( 'HEAR_QUESTION_3_2ND_ATTEMPT',
                                 HearQuestion(robot, spec=data.spec, choices=data.choices),
                                 transitions={   'heard'            :   'SAY_NEXT_QUESTION_3',
                                                 'not_heard'        :   'SAY_NEXT_QUESTION_3'}) 
 
         smach.StateMachine.add( 'SAY_NEXT_QUESTION_3',
                                 states.Say(robot, ["What is your next question?"], block=True),
-                                #transitions={   'spoken'            :   'GO_TO_EXIT'})
                                 transitions={   'spoken'            :   'HEAR_QUESTION_4'})
 
         smach.StateMachine.add( 'HEAR_QUESTION_4',
+                                HearQuestion(robot, spec=data.spec, choices=data.choices),
+                                transitions={   'heard'            :   'SAY_NEXT_QUESTION_4',
+                                                'not_heard'        :   'SAY_REPEAT_QUESTION_4'}) 
+        
+        smach.StateMachine.add( 'SAY_REPEAT_QUESTION_4',
+                                states.Say(robot, ["Please repeat your question"], block=True),
+                                transitions={   'spoken'            :   'HEAR_QUESTION_4_2ND_ATTEMPT'})
+        
+        smach.StateMachine.add( 'HEAR_QUESTION_4_2ND_ATTEMPT',
                                 HearQuestion(robot, spec=data.spec, choices=data.choices),
                                 transitions={   'heard'            :   'SAY_NEXT_QUESTION_4',
                                                 'not_heard'        :   'SAY_NEXT_QUESTION_4'}) 
 
         smach.StateMachine.add( 'SAY_NEXT_QUESTION_4',
                                 states.Say(robot, ["What is your next question?"], block=True),
-                                #transitions={   'spoken'            :   'GO_TO_EXIT'})
                                 transitions={   'spoken'            :   'HEAR_QUESTION_5'})
 
         smach.StateMachine.add( 'HEAR_QUESTION_5',
                                 HearQuestion(robot, spec=data.spec, choices=data.choices),
                                 transitions={   'heard'            :   'SAY_GOTO_EXIT',
-                                                'not_heard'        :   'SAY_GOTO_EXIT'}) 
+                                                'not_heard'        :   'SAY_REPEAT_QUESTION_5'}) 
+        
+        smach.StateMachine.add( 'SAY_REPEAT_QUESTION_5',
+                                states.Say(robot, ["Please repeat your question"], block=True),
+                                transitions={   'spoken'            :   'HEAR_QUESTION_5_2ND_ATTEMPT'})
+        
+        smach.StateMachine.add( 'HEAR_QUESTION_5_2ND_ATTEMPT',
+                                HearQuestion(robot, spec=data.spec, choices=data.choices),
+                                transitions={   'heard'            :   'SAY_GOTO_EXIT',
+                                                'not_heard'        :   'SAY_GOTO_EXIT'})  
 
         smach.StateMachine.add( 'SAY_GOTO_EXIT',
                                 states.Say(robot, ["I will move to the exit now. See you guys later!"], block=True),
-                                #transitions={   'spoken'            :   'GO_TO_EXIT'})
                                 transitions={   'spoken'            :   'Done'})
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
