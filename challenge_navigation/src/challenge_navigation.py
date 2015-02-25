@@ -36,21 +36,21 @@ def setup_statemachine(robot):
         smach.StateMachine.add( 'SAY_WAYPOINT_A_REACHED',
                                 states.Say(robot, ["Reached waypoint a",
                                                     "I have arrived at waypoint a",
-                                                    "I am now at waypoint a"], block=False),
+                                                    "I am now at waypoint a"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_WAYPOINT_B'})
 
         # Should we mention that we failed???
         smach.StateMachine.add( 'SAY_WAYPOINT_A_FAILED',
                                 states.Say(robot, ["I am not able to reach waypoint a",
                                                     "I cannot reach waypoint a",
-                                                    "Waypoint a is unreachable"], block=False),
+                                                    "Waypoint a is unreachable"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_WAYPOINT_B'})
 
         smach.StateMachine.add( 'SAY_GOTO_WAYPOINT_B',
                                 states.Say(robot, ["I will go to waypoint B now",
                                                     "I will now go to waypoint B",
                                                     "Lets go to waypoint B",
-                                                    "Going to waypoint B"], block=False),
+                                                    "Going to waypoint B"], block=True),
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_B'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_B',
@@ -62,18 +62,18 @@ def setup_statemachine(robot):
         smach.StateMachine.add( 'SAY_WAYPOINT_B_REACHED',
                                 states.Say(robot, ["Reached waypoint B",
                                                     "I have arrived at waypoint B",
-                                                    "I am now at waypoint B"], block=False),
+                                                    "I am now at waypoint B"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
 
         # Should we mention that we failed???
         smach.StateMachine.add( 'SAY_WAYPOINT_B_FAILED',
                                 states.Say(robot, ["I am not able to reach waypoint B",
                                                     "I cannot reach waypoint B",
-                                                    "Waypoint B is unreachable"], block=False),
+                                                    "Waypoint B is unreachable"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
 
         smach.StateMachine.add( 'SAY_GOTO_EXIT',
-                                states.Say(robot, ["I heard continue, so I will move to the exit now. See you guys later!"], block=False),
+                                states.Say(robot, ["I heard continue, so I will move to the exit now. See you guys later!"], block=True),
                                 transitions={   'spoken'            :   'GO_TO_EXIT'})
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
