@@ -15,47 +15,51 @@ def term_to_point(term):
     return ()
 
 class Reasoner(object):
-    """Interface to Amigo's reasoner. 
+    """Interface to Amigo's reasoner.
     Converts __getattr__-calls into terms"""
     def __init__(self, wait_service=False):
-        self._lock = threading.RLock()      
+        self._lock = threading.RLock()
         if wait_service:
             rospy.loginfo("waiting for reasoner service in reasoner.__init__")
-            # Sjoerd: Client _init_ already waits for service  
+            # Sjoerd: Client _init_ already waits for service
             #rospy.wait_for_service('reasoner/query',timeout=2)#rospy.Duration(2.0))
             rospy.loginfo("service connected.")
-            
+
             # Object in gripper service
             rospy.loginfo("Waiting for obj_in_gripper service")
             rospy.wait_for_service("/obj_in_gripper", timeout=2.0)
 
-        self.client = Client("/reasoner")
-            
+        #self.client = Client("/reasoner")
+
         #self.query              = rospy.ServiceProxy('/reasoner/query', tue_reasoner_msgs.srv.Query)
         #self.assert_knowledge   = rospy.ServiceProxy('/reasoner/assert', tue_reasoner_msgs.srv.Assert)
         self.sv_reset            = rospy.ServiceProxy('/wire/reset', std_srvs.srv.Empty)
 
         #self.q = self.QueryConstructor()
-        
+
         self.sv_object_in_gripper = rospy.ServiceProxy("/obj_in_gripper", ObjectInGripper)
-        
+
         self.attached_IDs = {}
 
     def close(self):
         pass
 
     def query(self, term):
-        return self.client.query(term)
+        rospy.logerr("REASONER CLIENT CURRENTLY NOT SUPPORTED!")
+        # return self.client.query(term)
+        return None
 
     def assertz(self, *facts):
-        for fact in facts:
-            self.client.query(Compound("assert", fact))
+        rospy.logerr("REASONER CLIENT CURRENTLY NOT SUPPORTED!")
+
+        #for fact in facts:
+        #    self.client.query(Compound("assert", fact))
 
         # reasoning_assert = tue_reasoner_msgs.srv.AssertRequest()
         # for fact in facts:
         #     reasoning_assert.facts += [term_to_msg(fact)]
         # reasoning_assert.action = tue_reasoner_msgs.srv.AssertRequest.ASSERTZ
-        
+
         # #print reasoning_assert
         # #import ipdb; ipdb.set_trace()
         # result = self.assert_knowledge(reasoning_assert)
@@ -70,13 +74,13 @@ class Reasoner(object):
 
     def __getattr__(self, name):
         """The __getattr__-magic method of objects overrides the . operator, like the . in someobject.do_something.
-        For someobject, Python internally calls the __getattr__(self, name)-method on someobject, 
+        For someobject, Python internally calls the __getattr__(self, name)-method on someobject,
         passing do_something to the variable name, and someobject to self.
         Overriding this method allows you to define attributes for an object that it does not really have!
-        This feature is used here for Reasoner. 
+        This feature is used here for Reasoner.
         A Reasoner-object may not have a method defined for the predicate-name you want to use,
-        but it *generates* a function or object based on the predicate-name you passed. 
-        This function or object is then returned by __getattr__, and that way, 
+        but it *generates* a function or object based on the predicate-name you passed.
+        This function or object is then returned by __getattr__, and that way,
         the generated function *acts* like it is a real method or attribute of Reasoner."""
         replacers = {"_class":"class", "_not":"not"}
         if replacers.has_key(name):
@@ -87,17 +91,17 @@ class Reasoner(object):
             compound.reasoner = self #TODO: make this a keyword argument?
             return compound
         return term
-        
+
     def attach_object_to_gripper(self, ID, frame_id, grasp):
         rospy.loginfo("Attach object {0} to frame {1} = {2}".format(ID, frame_id, grasp))
 
-        ID = str(ID)	
+        ID = str(ID)
 
         request = ObjectInGripperRequest()
         request.ID = ID
         request.frame = frame_id
         request.grasp = grasp
-        
+
         self.attached_IDs[ID] = frame_id
         try:
             result = self.sv_object_in_gripper(request)
@@ -105,10 +109,10 @@ class Reasoner(object):
             rospy.logerr("ObjectInGripperRequest failed, ignoring and continuing without")
             return False
         return result
-    
+
     def detach_all_from_gripper(self, frame_id):
         rospy.loginfo("Detaching all objects from gripper. Attached IDs are: {0}".format(self.attached_IDs))
-        
+
         #import ipdb; ipdb.set_trace()
         #try:
         #    IDs_at_frame = [ID for ID,frame in self.attached_IDs.iteritems() if frame == frame_id]
@@ -117,7 +121,7 @@ class Reasoner(object):
         #        request.ID = ID
         #        request.frame = frame_id
         #        request.grasp = False
-        #    
+        #
         #        result = self.sv_object_in_gripper(request)
         #except:
         #    rospy.loginfo("Passing")
@@ -136,7 +140,7 @@ class Reasoner(object):
         if not res:
             rospy.logerr("No time marker found with name '" + str(name) + "'")
             return None
-        
+
         t_secs = float(res[0]["Time"])
         return rospy.Time.now() - rospy.Time(t_secs)
 
@@ -147,7 +151,7 @@ class Reasoner(object):
 
 if __name__ == "__main__":
     rospy.init_node("amigo_reasoner_executioner", log_level=rospy.DEBUG)
-    reasoner = Reasoner()  
+    reasoner = Reasoner()
 
     #q = reasoner.QueryConstructor()
 
@@ -156,26 +160,26 @@ if __name__ == "__main__":
     term3 = Compound("object_at_coordinates", "obj1", Compound("pose", "X", "Y", "Phi"))
     term4 = Compound("object_at_coordinates", "obj2", Compound("pose", "X", "Y", "Phi"))
     term5 = Conjunction(Compound("class", "Object", "coke"), Compound("object_at_coordinates", "Object", Compound("pose", "X", "Y", "Phi")))
-    
+
     term6 = Compound("visited", "obj1")
-    term7 = Conjunction(Compound("class", "Object", "coke"), 
-                        Compound("object_at_coordinates", "Object", 
+    term7 = Conjunction(Compound("class", "Object", "coke"),
+                        Compound("object_at_coordinates", "Object",
                             Compound("pose", "X", "Y", "Phi")
                                 ),
                         Compound('not', Compound('visited', 'Object')))
 
     term8 = Compound("class", "Object", "coke") & \
-            Compound("object_at_coordinates", "Object", 
+            Compound("object_at_coordinates", "Object",
                             Compound("pose", "X", "Y", "Phi")) & \
             Compound('not', Compound('visited', 'Object'))
 
     term9 = reasoner._class("Object", "coke") & \
-            reasoner.object_at_coordinates("Object", 
+            reasoner.object_at_coordinates("Object",
                             reasoner.pose("X", "Y", "Phi")) & \
-            reasoner._not(reasoner.visited('Object'))    
+            reasoner._not(reasoner.visited('Object'))
 
     term10 = (reasoner._class("Object", "coke") | reasoner._class("Object", "sandwich")) & \
-            reasoner.object_at_coordinates("Object", 
+            reasoner.object_at_coordinates("Object",
                             reasoner.pose("X", "Y", "Phi")) & \
             reasoner._not(reasoner.visited('Object'))
 
@@ -209,7 +213,7 @@ if __name__ == "__main__":
     print answer10
     print assert11
     #print answer12
-    #print answer12a 
+    #print answer12a
     #print answer13
 
     assert answer8 == answer7
