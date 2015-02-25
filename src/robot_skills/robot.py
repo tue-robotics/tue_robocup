@@ -65,7 +65,7 @@ class Robot(object):
         self.perception = perception_ed.PerceptionED(wait_service=wait_services)
 
         # Reasoning/world modeling
-        self.ed = world_model_ed.ED(wait_service=wait_services)
+        self.ed = world_model_ed.ED(self.tf_listener, wait_service=wait_services)
         self.reasoner = reasoner.Reasoner()
 
         # Miscellaneous
