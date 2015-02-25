@@ -24,7 +24,7 @@ class LocalPlanner():
         self.analyzer = analyzer
         self._robot_name = robot_name
         self._tf_listener = tf_listener
-        self._action_client = actionlib.SimpleActionClient('/cb_base_navigation/local_planner_interface/action_server', LocalPlannerAction)
+        self._action_client = actionlib.SimpleActionClient('/'+ robot_name +'/local_planner/action_server', LocalPlannerAction)
 
         # Public members!
         self._status = "idle" # idle, controlling, blocked, arrived
@@ -91,8 +91,8 @@ class GlobalPlanner():
         self.analyzer = analyzer
         self._robot_name = robot_name
         self._tf_listener = tf_listener
-        self._get_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/get_plan_srv", GetPlan)
-        self._check_plan_client = rospy.ServiceProxy("/cb_base_navigation/global_planner_interface/check_plan_srv", CheckPlan)
+        self._get_plan_client = rospy.ServiceProxy("/" + robot_name + "/global_planner/get_plan_srv", GetPlan)
+        self._check_plan_client = rospy.ServiceProxy("/" + robot_name +"/global_planner/check_plan_srv", CheckPlan)
         rospy.loginfo("Waiting for the global planner services ...")
 
     def getPlan(self, position_constraint):
