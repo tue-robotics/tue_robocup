@@ -208,11 +208,12 @@ class EdEntityDesignator(Designator):
                 rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
                               criterium_code, len(entities), pprint.pformat(entities))
                               )
-                
-            self._current = entities[0]  # TODO: add sortkey
-            return self.current
-        else:
-            raise DesignatorResolvementError(
+            
+            if entities:
+                self._current = entities[0]  # TODO: add sortkey
+                return self.current
+
+        raise DesignatorResolvementError(
                 "No entities found in {0}".format(self))
 
     def __repr__(self):
