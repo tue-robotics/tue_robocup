@@ -16,7 +16,7 @@ import robot_skills.util.msg_constructors as msgs
 
 import sys
 
-from robot_smach_states.designators.designator import Designator, VariableDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator
 
 # def setup_statemachine(robot):
 
