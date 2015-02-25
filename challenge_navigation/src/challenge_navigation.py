@@ -4,7 +4,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators import EdEntityDesignator
 import robot_smach_states as states
 
 def setup_statemachine(robot):
@@ -28,7 +28,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_A'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_A',
-                                states.NavigateToObserve(robot, Designator("dinner_table"), radius=0.7),
+                                states.NavigateToObserve(robot, EdEntityDesignator(robot, id="dinner_table"), radius=1.5),
                                 transitions={   'arrived'           :   'SAY_WAYPOINT_A_REACHED',
                                                 'unreachable'       :   'SAY_WAYPOINT_A_FAILED',
                                                 'goal_not_defined'  :   'SAY_WAYPOINT_A_FAILED'})
@@ -54,7 +54,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_B'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_B',
-                                states.NavigateToObserve(robot, Designator("black_cabinet2"), radius=0.7),
+                                states.NavigateToObserve(robot, EdEntityDesignator(robot, id="black_cabinet2"), radius=0.7),
                                 transitions={   'arrived'           :   'SAY_WAYPOINT_B_REACHED',
                                                 'unreachable'       :   'SAY_WAYPOINT_B_FAILED',
                                                 'goal_not_defined'  :   'SAY_WAYPOINT_B_FAILED'})
@@ -78,7 +78,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
-                                states.NavigateToWaypoint(robot, Designator("exit_1_rips"), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'AT_END',
                                                 'goal_not_defined'  :   'AT_END'})
