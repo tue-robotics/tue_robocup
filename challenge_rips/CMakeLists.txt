@@ -5,7 +5,6 @@ find_package(catkin REQUIRED COMPONENTS
     rospy
     robot_skills
     robot_smach_states
-    psi
 )
 
 # find_package(Boost REQUIRED COMPONENTS system program_options)

@@ -19,7 +19,4 @@
   <build_depend>robot_smach_states</build_depend>
   <run_depend>robot_smach_states</run_depend>
 
-  <build_depend>psi</build_depend>
-  <run_depend>psi</run_depend>
-
 </package>

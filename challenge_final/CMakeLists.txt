@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   robot_skills
   robot_smach_states
   rospy
-  speech_interpreter
   tue_recorder
   tue_serialization
 )

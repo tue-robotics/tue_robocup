@@ -6,11 +6,9 @@ project(challenge_demo)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
-  psi
   robot_skills
   robot_smach_states
   rospy
-  speech_interpreter
   tf
 )
 

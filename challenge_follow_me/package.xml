@@ -12,15 +12,12 @@
 
   <build_depend>roscpp</build_depend>
   <build_depend>roslib</build_depend>
-  <build_depend>wire_interface</build_depend>
+
   <build_depend>actionlib</build_depend>
-  <build_depend>pein_msgs</build_depend>
-  <build_depend>pein_srvs</build_depend>
   <build_depend>std_srvs</build_depend>
   <build_depend>amigo_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>geometry_msgs</build_depend>
-  <build_depend>perception_srvs</build_depend>
   <build_depend>tue_carrot_planner</build_depend>
 
   <build_depend>text_to_speech</build_depend>
@@ -29,15 +26,12 @@
 
   <run_depend>roscpp</run_depend>
   <run_depend>roslib</run_depend>
-  <run_depend>wire_interface</run_depend>
+
   <run_depend>actionlib</run_depend>
-  <run_depend>pein_msgs</run_depend>
-  <run_depend>pein_srvs</run_depend>
   <run_depend>std_srvs</run_depend>
   <run_depend>amigo_msgs</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
-  <run_depend>perception_srvs</run_depend>
   <run_depend>tue_carrot_planner</run_depend>
 
   <run_depend>text_to_speech</run_depend>
