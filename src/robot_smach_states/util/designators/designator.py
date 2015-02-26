@@ -206,22 +206,19 @@ class EdEntityDesignator(Designator):
                 entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
                 rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
-                              criterium_code, len(entities), pprint.pformat(entities))
+                              criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
                               )
-                
-            self._current = entities[0]  # TODO: add sortkey
-            return self.current
-        else:
-            raise DesignatorResolvementError(
+            
+            if entities:
+                self._current = entities[0]  # TODO: add sortkey
+                return self.current
+
+        raise DesignatorResolvementError(
                 "No entities found in {0}".format(self))
 
     def __repr__(self):
-        return "EdEntityDesignator(robot, type={0},"+\
-            " center_point={1},"+\
-            " radius={2},"+\
-            " id={3},"+\
-            " parse={4},"+\
-            " criteriafuncs={5})".format(self.type, self.center_point, self.radius, self.id, self.parse, self.criteriafuncs)
+        return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
 
 
 class AttrDesignator(Designator):

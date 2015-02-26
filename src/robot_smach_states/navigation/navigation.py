@@ -394,7 +394,7 @@ class resetWorldModel(smach.State):
        self.robot = robot 
 
    def execute(self, userdata):
-        self.robot.ed.reset()
+        # self.robot.ed.reset()  # TODO Sjoerd: outcommended because it makes ed_server crash
         return "succeeded"
 
 class breakOutState(smach.State):
