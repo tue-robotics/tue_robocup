@@ -30,40 +30,18 @@ class StartChallengeRobust(smach.StateMachine):
                                                     "abort"         :"Aborted"})
 
             smach.StateMachine.add("INSTRUCT_WAIT_FOR_DOOR",
-                                    human_interaction.Say(robot, [  "Hi there, I will now wait until the door is opened"], block=False),
-                                    #transitions={   "spoken":"ASSESS_DOOR"})
-                                    transitions={   "spoken":"DOOR_OPEN"}) # FOR NOW SKIP LASER PART
+                                    human_interaction.Say(robot, [  "Hi there, I will now wait until the door is opened", "I'm waiting for the door"], block=False),
+                                    transitions={   "spoken":"WAIT_FOR_DOOR"})
 
+             # Start laser sensor that may change the state of the door if the door is open:
+            smach.StateMachine.add( "WAIT_FOR_DOOR", 
+                                    WaitForDoorOpen(robot, timeout=10),
+                                    transitions={   "closed":"DOOR_CLOSED",
+                                                    "open":"DOOR_OPEN"})
 
-
-            ## !!!!!!!!!!! DOES NOT WORK: 
-            rospy.logerr("TODO LOY startup.py: Add check if door is open with designators, NOW DOOR IS OPEN IS ASSUMED!! WATCH OUT!!")
-            rospy.sleep(2)
-
-            #perception.py is not there anymore
-            #same for reasoning.py
-
-            #  # Start laser sensor that may change the state of the door if the door is open:
-            # smach.StateMachine.add( "ASSESS_DOOR", 
-            #                         perception.Read_laser(robot, "entrance_door"),
-            #                         transitions={   "laser_read":"WAIT_FOR_DOOR"})       
-            
-            # # define query for the question wether the door is open in the state WAIT_FOR_DOOR
-            # dooropen_query = robot.reasoner.state("entrance_door","open")
-        
-            # # Query if the door is open:
-            # smach.StateMachine.add( "WAIT_FOR_DOOR", 
-            #                         reasoning.Ask_query_true(robot, dooropen_query),
-            #                         transitions={   "query_false":"ASSESS_DOOR",
-            #                                         "query_true":"DOOR_OPEN",
-            #                                         "waiting":"DOOR_CLOSED",
-            #                                         "preempted":"Aborted"})
-
-            # If the door is still closed after certain number of iterations, defined in Ask_query_true 
-            # in perception.py, amigo will speak and check again if the door is open
-            # smach.StateMachine.add( "DOOR_CLOSED",
-            #                         human_interaction.Say(robot, "Door is closed, please open the door"),
-            #                         transitions={   "spoken":"ASSESS_DOOR"}) 
+            smach.StateMachine.add( "DOOR_CLOSED",
+                                    human_interaction.Say(robot, ["Door is closed, please open the door", "I'd start, if only you'd let me in", "Please let me in"]),
+                                    transitions={   "spoken":"WAIT_FOR_DOOR"}) 
 
             smach.StateMachine.add( "DOOR_OPEN",
                                     human_interaction.Say(robot, "Door is open!", block=False),
@@ -144,7 +122,9 @@ class WaitForDoorOpen(State):
             self.distances += [distance_to_door] #store all distances
 
             avg_distance_at_start = self.avg(self.distances[:5]) #Get the first 5 distances
-            avg_distance_now = self.avg(self.distances[5:]) #And the latest 5
+            avg_distance_now = self.avg(self.distances[-5:]) #And the latest 5
+            
+            print "d_start = {0}, d_now = {1}, curr = {2}".format(avg_distance_at_start, avg_distance_now, distance_to_door)
             if len(self.distances) > 40: #Get at least 40 samples before checking the difference
                 #The current distance should be more than a meter more than what we started with, then assume the door is open
                 if avg_distance_now > (avg_distance_at_start + 1.0):
@@ -158,11 +138,11 @@ class WaitForDoorOpen(State):
         rospy.loginfo("Waiting for door...")
         opened_before_timout = self.door_open.wait(timeout)
         self.door_open.clear()
-        self.laser_sub.unregister()
-        self.distances = []
         if opened_before_timout:
-            rospy.loginfo("Door is open")
-            return "opened"
+            self.laser_sub.unregister()
+            self.distances = []
+            rospy.loginfo("Door is open, unregistering laser listerner and clearing data")
+            return "open"
         
         rospy.loginfo("Timed out with door still closed")
         return "closed"
