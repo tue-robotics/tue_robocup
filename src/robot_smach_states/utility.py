@@ -8,7 +8,7 @@ import thread
 from psi import Compound
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
-
+from robot_smach_states.util.designators import DesignatorResolvementError
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -300,7 +300,7 @@ class WaitForDesignator(smach.State):
         counter = 0
 
         while counter <= self.attempts:
-            print "WaitForDesignator: waiting {0}/{1}".format(counter, attempts)
+            print "WaitForDesignator: waiting {0}/{1}".format(counter, self.attempts)
 
             try:
                 result = self.designator.resolve()
