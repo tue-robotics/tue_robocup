@@ -7,6 +7,7 @@ import random
 from robot_smach_states.state import State
 
 from robot_smach_states.util.designators import Designator, DesignatorResolvementError
+from robot_smach_states.util.utility import WaitForDesignator
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -85,6 +86,20 @@ class AskContinue(smach.StateMachine):
         with self:
             smach.StateMachine.add('SAY',  Say(self.robot, random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])), transitions={'spoken':'HEAR'})
             smach.StateMachine.add('HEAR', Hear(self.robot, 'continue', self.timeout), transitions={'heard':'continue','not_heard':'no_response'})
+
+##########################################################################################################################################
+
+class WaitForHumanInFront(WaitForDesignator):
+    """
+    Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
+    """
+
+    def __init__(self, robot, attempts = 1, sleep_interval = 1000):
+        # TODO: add center_point in front of the robot and radius of the search on EdEntityDesignator
+        human_entity = EdEntityDesignator(robot, id="human") # center_point=?, radius=0
+        WaitForDesignator.__init__(self, human_entity, attempts, sleep_interval, outcomes=["succeed", "failed"])
+
+
 
 ##########################################################################################################################################
 
