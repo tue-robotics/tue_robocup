@@ -73,13 +73,13 @@ class Arm(object):
         self.default_trajectories   = self.load_param('/skills/arm/default_trajectories')
 
         # Init gripper actionlib
-        self._ac_gripper = actionlib.SimpleActionClient("gripper_server_"+self.side, GripperCommandAction)
+        self._ac_gripper = actionlib.SimpleActionClient("/" + robot_name + "/gripper_server_"+self.side, GripperCommandAction)
 
         # Init graps precompute actionlib
-        self._ac_grasp_precompute = actionlib.SimpleActionClient("grasp_precompute_"+self.side, GraspPrecomputeAction)
+        self._ac_grasp_precompute = actionlib.SimpleActionClient("/" + robot_name + "/grasp_precompute_" + self.side, GraspPrecomputeAction)
 
         # Init joint trajectory action server
-        self._ac_joint_traj = actionlib.SimpleActionClient("/amigo/"+self.side+"_arm/joint_trajectory_action",  FollowJointTrajectoryAction)
+        self._ac_joint_traj = actionlib.SimpleActionClient("/" + robot_name + "/" + self.side + "_arm/joint_trajectory_action",  FollowJointTrajectoryAction)
 
         # ToDo: don't hardcode?
         server_timeout = 1.0
@@ -91,7 +91,7 @@ class Arm(object):
             rospy.logwarn("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
-        self._marker_publisher = rospy.Publisher("grasp_target", visualization_msgs.msg.Marker, queue_size=10)
+        self._marker_publisher = rospy.Publisher("/" + robot_name + "/grasp_target", visualization_msgs.msg.Marker, queue_size=10)
 
     def load_param(self, param_name):
         return rospy.get_param('/' + self.robot_name + param_name)
