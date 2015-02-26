@@ -23,13 +23,14 @@ class door(object):
         self.door = W.add_object("door-" + self.id, "robotics_testlabs.door",  self.x, self.y, 0.0, 0.0, 0.0, self.th )
 
     def toggleOpen(self):
-    	print "Toggling door"
         if self.dooropen:
             self.door.set_position(self.x, self.y, 0.0, 0.0, 0.0, self.th)
             self.dooropen = False
+            print "Door " + self.id + " is closed"
         else:
             self.door.set_position(self.x, self.y,-3.0, 0.0, 0.0, self.th ) # TODO: make door swing open instead of move down by 3 meters
             self.dooropen = True
+            print "Door " + self.id + " is opened"
 
 
 if __name__ == "__main__":
@@ -38,10 +39,6 @@ if __name__ == "__main__":
     settings = termios.tcgetattr(sys.stdin)
 
     W = client.SimWorld()
-    # import ipdb; ipdb.set_trace()
-    # door1 = W.add_object("door-1", "robotics_testlabs.door",  1.20, 3.80, 0.0, 0.0, 0.0, 1.57)
-    # door2 = W.add_object("door-2", "robotics_testlabs.door",  1.40, 3.30, 0.0, 0.0, 0.0, 0.0)
-    # door3 = W.add_object("door-3", "robotics_testlabs.door",  -0.50, -0.40, 0.0, 0.0, 0.0, 1.57)
 
     door1 = door(W, "1", 1.2, 3.8, 1.57)
     door2 = door(W, "2", 1.4, 3.3, 0.0 )
