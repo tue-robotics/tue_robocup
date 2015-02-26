@@ -60,8 +60,8 @@ class Ask_action(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
+        self.robot.head.lookAtStandingPerson()
 
-        #self.robot.head.look_up()
 
         # spec = '<actionCategory> (an|a|some) <objectCategory> (from|to) (an|a|some) <locationCategory1> (from|to) (an|a|some) <locationCategory2>'
 
@@ -129,9 +129,10 @@ class Ask_action(smach.State):
         # choices = { "questions": [ x for x in QA_MAP ] }
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices)
-
+        self.robot.head.cancelGoal()
         if not res:
             self.robot.speech.speak("I could not hear your question.")
+            
             return "failed"
 
         try:
@@ -146,7 +147,6 @@ class Ask_action(smach.State):
         print res
 
         #self.robot.speech.speak("Your question was: " + res.choices["questions"] + ". The answer is: " + q_answer)
-
         return "done"
 
 
@@ -204,5 +204,13 @@ if __name__ == "__main__":
     rospy.loginfo("-------------------------- GPSR --------------------------")
     rospy.loginfo("- See README_SPEECH_POSSIBILITIES for input possibilities -")
     rospy.loginfo("----------------------------------------------------------")
-    startup(setup_statemachine)
+    
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+    else:
+        print "[CHALLENGE SPEECH RECOGNITION] Please provide robot name as argument."
+        exit(1)
+
+    states.util.startup(setup_statemachine, robot_name=robot_name)
+
 
