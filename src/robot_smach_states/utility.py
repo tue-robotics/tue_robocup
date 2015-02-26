@@ -295,3 +295,34 @@ class LookAtHand(smach.State):
         side_string = {self.robot.leftArm:"left", self.robot.rightArm:"right"}[self.side]
         self.robot.head.look_at_hand(side_string, keep_tracking=self.keep_tracking) #TODO: Unify side as string or/and object
         return "done"
+
+
+############################## Wait for designator ##############################
+class WaitForDesignator(smach.State):
+    '''
+        Waits for a given designator to answer. It will retry to resolve the 
+            designator a given number of times, with given sleep intervals (in miliseconds)
+    '''
+
+    def __init__(self, robot, designator, attempts = 1, sleep_interval = 1000):
+        smach.State.__init__(self, designator)
+        self.robot = robot
+        self.designator = designator
+        self.attempts = attempts
+        self.sleep_interval = sleep_interval
+
+    def execute(self, userdata):
+        counter = 0
+
+        while counter <= self.attempts:
+            print "WaitForDesignator: waiting {0}/{1}".format(counter, attempts)
+
+            try:
+                result = self.designator.resolve()
+                return "succeeded"
+            except DesignatorResolvementError:
+                pass
+
+            rospy.sleep(self.sleep_interval)
+
+        return "failed"
