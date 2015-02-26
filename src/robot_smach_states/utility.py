@@ -289,8 +289,8 @@ class WaitForDesignator(smach.State):
             designator a given number of times, with given sleep intervals (in miliseconds)
     '''
 
-    def __init__(self, robot, designator, attempts = 1, sleep_interval = 1000):
-        smach.State.__init__(self, designator)
+    def __init__(self, robot, designator, attempts = 1, sleep_interval = 1000, outcomes=['success','failed']):
+        smach.State.__init__(self, outcomes=["success", "failed"])
         self.robot = robot
         self.designator = designator
         self.attempts = attempts
@@ -304,7 +304,7 @@ class WaitForDesignator(smach.State):
 
             try:
                 result = self.designator.resolve()
-                return "succeeded"
+                return "success"
             except DesignatorResolvementError:
                 pass
 

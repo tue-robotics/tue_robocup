@@ -6,8 +6,9 @@ import random
 
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, DesignatorResolvementError
-from robot_smach_states.util.utility import WaitForDesignator
+from robot_smach_states.util.designators import Designator, DesignatorResolvementError, EdEntityDesignator
+from robot_smach_states.utility import WaitForDesignator
+
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -94,10 +95,10 @@ class WaitForHumanInFront(WaitForDesignator):
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
     """
 
-    def __init__(self, robot, attempts = 1, sleep_interval = 1000):
+    def __init__(self, robot, attempts = 1, sleep_interval = 1000 ):
         # TODO: add center_point in front of the robot and radius of the search on EdEntityDesignator
         human_entity = EdEntityDesignator(robot, id="human") # center_point=?, radius=0
-        WaitForDesignator.__init__(self, human_entity, attempts, sleep_interval, outcomes=["succeed", "failed"])
+        WaitForDesignator.__init__(self, human_entity, attempts)
 
 
 
