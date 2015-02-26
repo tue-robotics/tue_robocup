@@ -13,8 +13,10 @@ class Ears:
     Function listen explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
     """
 
-    def __init__(self, robot_name):
+    def __init__(self, robot_name, pre_hook=None, post_hook=None):
         self.get_speech_client_service = rospy.ServiceProxy("/%s/speech_client/get_speech"%robot_name, GetSpeech)
+        self.pre_hook = pre_hook
+        self.post_hook = post_hook
 
     #Function listens explained on wiki: http://servicerobot.cstwiki.wtb.tue.nl/index.php?title=Using_the_dragonfly_speech_recognition
     def recognize(self, spec, choices={}, time_out = rospy.Duration(10)):
@@ -22,6 +24,9 @@ class Ears:
         req.spec = spec
         req.choices = [ Choice(id=k, values=v) for k, v in choices.iteritems() ]
         req.time_out = time_out
+
+        if hasattr(self.pre_hook, '__call__'):
+            self.pre_hook()
 
         answer = None
 
@@ -31,6 +36,9 @@ class Ears:
                 answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
         except rospy.ServiceException as e:
             rospy.logerr("Service exception: %s"%e)
+
+        if hasattr(self.post_hook, '__call__'):
+            self.post_hook()
 
         return answer
 

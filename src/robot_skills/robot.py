@@ -56,10 +56,10 @@ class Robot(object):
         self.head = head.Head(self.robot_name)
 
         # Human Robot Interaction
-        self.speech = speech.Speech(self.robot_name, wait_service=wait_services)
-        self.ears = ears.Ears(self.robot_name)
-        self.ebutton = ebutton.EButton()
         self.lights = lights.Lights()
+        self.speech = speech.Speech(self.robot_name, wait_service=wait_services)
+        self.ears = ears.Ears(self.robot_name, lambda: self.lights.set_color(0,1,0), lambda: self.lights.set_color(0,0,0))
+        self.ebutton = ebutton.EButton()
 
         # Perception: can we get rid of this???
         self.perception = perception_ed.PerceptionED(wait_service=wait_services)
@@ -245,6 +245,6 @@ class Robot(object):
 
 if __name__ == "__main__":
     rospy.init_node("robot")
-    
+
     import doctest
     doctest.testmod()
