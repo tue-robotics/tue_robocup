@@ -54,24 +54,7 @@ import data
 
 
 
-class Ask_action(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done", "failed"])
-        self.robot = robot
 
-    def execute(self, userdata):
-        self.robot.head.lookAtStandingPerson()
-
-
-        # spec = '<actionCategory> (an|a|some) <objectCategory> (from|to) (an|a|some) <locationCategory1> (from|to) (an|a|some) <locationCategory2>'
-
-        # {"locationCategory1": ["door","shelf","seating", "table", "trashbin","appliance"], 
-        #  "locationCategory2": ["door","shelf","seating", "table", "trashbin","appliance"], 
-        #  "actionCategory": ["bring","carry","get", "give", "move"], 
-        #  "objectCategory" : ["drink", "food", "tool", "bathroomstuff", "snack"]}
-
-
-        # spec = '<actionCategory> (an|a|some) <objectCategory> (from|to) (an|a|some) <locationCategory1> (from|to) (an|a|some) <locationCategory2>'
 
 
         ### EXAMPLE SENTENCES stated in new conceptual rulebook.
@@ -85,69 +68,49 @@ class Ask_action(smach.State):
         # Offer a drink to the person at the door.
 
 
-        self.robot.speech.speak("Say it!")
-
-        # #spec = "(<action_go> to (a|an|the) <location>) | (<action_transport> (a|an|the) <object> to (a|an|the) <location>)"
-
-        # ## spec2: is able to retrieve the first 4 example sentences 
-        # spec2 = """
-        # (<1_action> to (((a|the) <1_locations_rest>)|((an|the) <1_locations_aeuoi>)|(the <1_locations_rooms>)), 
-        #         ((<2_action_person> <2_person>) | (<2_action_count> the <2_objects_types_plural>) | (<2_action> ((the <2_objects_plural>) | (an <2_objects_aeuoi>) | (a <2_objects_rest_singular>))))
-        #             and (<3_action_special> | (<3_action> (them|it) to <3_location_person>) | (<3_action> to <3_location_person>) | (<3_action_person> to <3_person>))
-        # )"""
 
 
 
-        # # choices = {"action_go" : ["go", "navigate", "move","advance"],
-        # #  "action_transport" : ["transport", "bring"],
-        # #  "location"  : [x for x in locations],
-        # #  "object": [x for x in objects]}
 
-        # choices2 = {"1_action":["go","navigate","move","advance"],
-        #  "1_locations_aeuoi":locations_aeuoi,
-        #  "1_locations_rest":locations_rest,
-        #  "1_locations_rooms":rooms,
+class Ask_action(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done", "failed"])
+        self.robot = robot
 
-        #  "2_action_person": ["follow","find"],
-        #  "2_person":persons,
-        #  "2_action":["grasp","get","take","find"],
-        #  "2_action_count":["count"],
-        #  "2_objects_plural":objects + object_types_plural,
-        #  "2_objects_types_plural":object_types_plural,
-        #  "2_objects_aeuoi":objects_aeuoi,
-        #  "2_objects_rest_singular":objects_rest + object_types_singular,
+    def execute(self, userdata):
+        self.robot.head.lookAtStandingPerson()
 
-        #  "3_action_special":["tell the time","follow her","follow him"],
-        #  "3_action":["take","move","bring",""],
-        #  "3_location_person":locations + rooms + persons,
-        #  "3_action_person":["report"],
-        #  "3_person":persons}
+        self.robot.speech.speak("What can I do for you?")
 
-
-
-        # spec = "<questions>"
-        # choices = { "questions": [ x for x in QA_MAP ] }
-
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices)
+        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out = rospy.Duration(10))
         self.robot.head.cancelGoal()
         if not res:
-            self.robot.speech.speak("I could not hear your question.")
-            
+            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
-
         try:
-            print "jaja ", res
-            #q_answer = QA_MAP[res.choices["questions"]]
-            #q_answer = QA_MAP[res.result]
-            self.robot.speech.speak(res.result)
+            if res.result:
+                self.robot.speech.speak("Okay I will {0}".format(res.result))
+                print res
+
+                # save_action(res)
+
+            else:
+                self.robot.speech.speak("Sorry, could you please repeat?")
         except KeyError:
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
             return "failed"
 
-        print res
-
-        #self.robot.speech.speak("Your question was: " + res.choices["questions"] + ". The answer is: " + q_answer)
         return "done"
+
+    # def save_action(self,res):
+    #     res.choices['1_action']
+    #   todo: 
+    #       - First get for first action the simple action (for now only navigating to location, room or object, later also direct grabbing object)
+    #       - Then get action 2
+    #       - Then action 3. (mainly dropoff, report, follow, answer question (including tell time))
+    #
+
+
 
 
 
