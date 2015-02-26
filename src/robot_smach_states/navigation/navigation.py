@@ -385,16 +385,8 @@ class planBlockedHuman(smach.State):
 
         return "free"
 
+
 # ----------------------------------------------------------------------------------------------------
-
-class resetWorldModel(smach.State):
-   def __init__(self, robot):
-       smach.State.__init__(self,outcomes=['succeeded'])
-       self.robot = robot
-
-   def execute(self, userdata):
-        # self.robot.ed.reset()  # TODO Sjoerd: outcommended because it makes ed_server crash
-        return "succeeded"
 
 class breakOutState(smach.State):
     """docstring for breakOutState"""
@@ -437,7 +429,7 @@ class NavigateTo(smach.StateMachine):
             with sm_nav:
 
                 smach.StateMachine.add('GET_PLAN',                          getPlan(self.robot, self.generateConstraint),
-                    transitions={'unreachable'                          :   'RESET_WORLD_MODEL',
+                    transitions={'unreachable'                          :   'unreachable',
                                  'goal_not_defined'                     :   'goal_not_defined',
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
 
@@ -459,8 +451,6 @@ class NavigateTo(smach.StateMachine):
                     transitions={'replan'                               :   'GET_PLAN',
                                  'free'                                 :   'EXECUTE_PLAN'})
 
-                smach.StateMachine.add('RESET_WORLD_MODEL',                 resetWorldModel(self.robot),
-                    transitions={'succeeded'                            :   'unreachable'})
 
             # Create the concurrent state machine
             # gets called when ANY child state terminates
