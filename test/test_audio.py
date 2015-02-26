@@ -6,6 +6,7 @@ from robot_skills.speech import Speech
 
 import random
 import time
+from robot_skills.amigo import Amigo
 
 import sys
 
@@ -16,13 +17,18 @@ if len(sys.argv) < 2:
     sys.exit()
 
 robot_name = sys.argv[1]
-if robot_name is not "amigo" and not "sergio":
+
+rospy.init_node("audio_test")
+if robot_name == "amigo":
+    robot = Amigo()
+elif robot_name == "sergio":
+    robot = Sergio()
+else:
     print "Unknown robot '%s'"%robot_name
     sys.exit()
 
-rospy.init_node("audio_test")
-e = Ears(robot_name)
-s = Speech(robot_name)
+e = robot.ears
+s = robot.speech
 
 # data
 drinks = ["coke","fanta","beer","milk","yoghurt","pepsi","orangejuice","sevenup"]
