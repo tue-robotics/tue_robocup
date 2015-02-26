@@ -7,7 +7,7 @@ import thread
 
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
-
+from robot_smach_states.util.designators import DesignatorResolvementError
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -287,10 +287,10 @@ class LookAtHand(smach.State):
 class WaitForDesignator(smach.State):
     '''
         Waits for a given designator to answer. It will retry to resolve the
-            designator a given number of times, with given sleep intervals (in miliseconds)
+            designator a given number of times, with given sleep intervals (in seconds)
     '''
 
-    def __init__(self, robot, designator, attempts = 1, sleep_interval = 1000, outcomes=['success','failed']):
+    def __init__(self, robot, designator, attempts = 1, sleep_interval = 1, outcomes=['success','failed']):
         smach.State.__init__(self, outcomes=["success", "failed"])
         self.robot = robot
         self.designator = designator
@@ -300,8 +300,8 @@ class WaitForDesignator(smach.State):
     def execute(self, userdata):
         counter = 0
 
-        while counter <= self.attempts:
-            print "WaitForDesignator: waiting {0}/{1}".format(counter, attempts)
+        while counter < self.attempts:
+            print "WaitForDesignator: waiting {0}/{1}".format(counter, self.attempts)
 
             try:
                 result = self.designator.resolve()
@@ -309,6 +309,7 @@ class WaitForDesignator(smach.State):
             except DesignatorResolvementError:
                 pass
 
+            counter += 1
             rospy.sleep(self.sleep_interval)
 
         return "failed"
