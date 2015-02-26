@@ -80,7 +80,7 @@ class Head():
     def atGoal(self):
         return self._at_setpoint
 
-    def lookAtStandingPerson(self):
+    def lookAtStandingPerson(self, wait_for_setpoint=False):
         """
         Gives a target at z = 1.75 at 1 m in front of the robot
         """
@@ -91,7 +91,7 @@ class Head():
         goal.point.y = 0.0
         goal.point.z = 1.7
 
-        return self.setLookAtGoal(goal)
+        return self.setLookAtGoal(goal, wait_for_setpoint=False)
 
     # -- Functionality --
 
