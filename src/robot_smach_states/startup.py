@@ -7,7 +7,9 @@ from robot_smach_states.state import State
 
 import utility
 import human_interaction
+from sensor_msgs.msg import LaserScan
 
+from threading import Event
 
 import robot_skills.util.msg_constructors as msgs
 from robot_smach_states.util.designators import Designator, VariableDesignator, PointStampedOfEntityDesignator
@@ -122,3 +124,45 @@ class EnterArena(smach.StateMachine):
                                                     "not_found":"GO_TO_ENTRY_POINT", 
                                                     "no_goal":"done",
                                                     "all_unreachable":"done"})
+
+
+class WaitForDoorOpen(State):
+    def __init__(self, robot, timeout=None):
+        State.__init__(self, locals(), outcomes=["open", "closed"])
+        self.laser_sub = rospy.Subscriber("/"+robot.robot_name+"/base_laser/scan", LaserScan, self.process_scan)
+        self.distances = [] #TODO Loy: Keeping all of these is quite ugly. Would a ring buffer or collections.deque suffice?
+        self.door_open = Event()
+
+    def avg(self, lst):
+        return sum(lst)/max(len(lst), 1)
+
+    def process_scan(self, scan_msg):   
+        try:     
+            middle_index = len(scan_msg.ranges)/2  # Get the middle point
+            ranges_at_center = scan_msg.ranges[middle_index-2:middle_index+2]  # Get some points around the middle
+            distance_to_door = self.avg(ranges_at_center)  # and the average of the middle range and use it as the distance to the door
+            self.distances += [distance_to_door] #store all distances
+
+            avg_distance_at_start = self.avg(self.distances[:5]) #Get the first 5 distances
+            avg_distance_now = self.avg(self.distances[5:]) #And the latest 5
+            if len(self.distances) > 40: #Get at least 40 samples before checking the difference
+                #The current distance should be more than a meter more than what we started with, then assume the door is open
+                if avg_distance_now > (avg_distance_at_start + 1.0):
+                    rospy.loginfo("Distance to door jumped by a meter")
+                    self.door_open.set() #Then set a threading Event that run is waiting for.
+        except Exception, e:
+            rospy.logerr("Receiving laser failed so unsubscribing: {0}".format(e))
+            self.laser_sub.unregister()
+
+    def run(self, robot, timeout):
+        rospy.loginfo("Waiting for door...")
+        opened_before_timout = self.door_open.wait(timeout)
+        self.door_open.clear()
+        self.laser_sub.unregister()
+        self.distances = []
+        if opened_before_timout:
+            rospy.loginfo("Door is open")
+            return "opened"
+        
+        rospy.loginfo("Timed out with door still closed")
+        return "closed"
