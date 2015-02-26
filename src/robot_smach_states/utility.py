@@ -5,7 +5,6 @@ import smach
 ''' For siren demo challenge '''
 import thread
 
-from psi import Compound
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
 from robot_smach_states.util.designators import DesignatorResolvementError
@@ -18,7 +17,7 @@ class Initialize(smach.State):
 
     def execute(self, userdata):
         self.robot.lights.set_color(0,0,1)  #be sure lights are blue
-        
+
         self.robot.head.reset()
         self.robot.leftArm.reset()
         #self.robot.leftArm.send_gripper_goal('close',0.0)
@@ -57,14 +56,14 @@ class SetInitialPose(smach.State):
     # example 1: Set_initial_pose(robot, "front_of_door"),
     # OR
     # Set_initial_pose(robot, [1,0,0])
-    def __init__(self, robot, init_position):       
+    def __init__(self, robot, init_position):
         smach.State.__init__(self, outcomes=["done", "preempted", "error"])
 
         self.robot = robot
         self.preempted = False
 
         self.initial_position = init_position
-    
+
     def location_2d(self, location):
         e_loc = self.robot.ed.get_entity(id=location)
 
@@ -84,7 +83,7 @@ class SetInitialPose(smach.State):
     def execute(self, userdata):
         if isinstance(self.initial_position, str):
             x,y,phi = self.location_2d(self.initial_position)
-        elif len(self.initial_position) == 3: #Tuple or list        
+        elif len(self.initial_position) == 3: #Tuple or list
             x = self.initial_position[0]
             y = self.initial_position[1]
             phi = self.initial_position[2]
@@ -95,7 +94,7 @@ class SetInitialPose(smach.State):
         rospy.loginfo('Set initial pose to {0}, {1}, {2}'.format(x, y, phi))
 
         self.robot.base.set_initial_pose(x, y, phi)
-        
+
         # Reset costmap: costmap is obviously entirely off if the localization was wrong before giving the initial pose
         # self.robot.base.reset_costmap()
         # Wait 0.5 s just to be sure
@@ -118,7 +117,7 @@ class WaitForTrigger(smach.State):
     '''
 
     def __init__(self, robot, triggers):
-        smach.State.__init__(self, 
+        smach.State.__init__(self,
                              outcomes=triggers+['preempted'])
         self.robot = robot
         self.triggers = triggers
@@ -126,7 +125,7 @@ class WaitForTrigger(smach.State):
         # Get the ~private namespace parameters from command line or launch file.
         self.rate = float(rospy.get_param('~rate', '1.0'))
         topic     = rospy.get_param('~topic', 'trigger')
-        
+
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
         rospy.loginfo('topic: /%s', topic)
@@ -157,7 +156,7 @@ class Wait_time(smach.State):
         smach.State.__init__(self, outcomes=['waited','preempted'])
         self.robot = robot
         self.waittime = waittime
-    
+
     def execute(self, *args, **kwargs):
         total_sleep = 0
         sleep_interval = 0.1
@@ -172,7 +171,7 @@ class Wait_time(smach.State):
         return 'waited'
 
 class Wait_Condition(smach.State):
-    '''Wait until a condition is satisfied, possible on a robot. 
+    '''Wait until a condition is satisfied, possible on a robot.
     When the condtion is satisfied, the value that matched the condition is stored in the userdata.
     The callback must return that value or something that evaluates to False otherwise.
     The arguments to the callback are userdata, robot'''
@@ -205,20 +204,20 @@ class Finish(smach.State):
         smach.State.__init__(self,
                                    outcomes=['stop'])
         self.robot = robot
-    
+
     def execute(self, gl):
-        
+
         print "Finished executing task."
         return 'stop'
-    
+
 # class FinishOld(smach.State):
 #     def __init__(self, robot=None):
 #         smach.State.__init__(self,
 #                                    outcomes=['stop'],input_keys=['challenge','start_time'])
 #         self.robot = robot
-    
+
 #     def execute(self, gl):
-        
+
 #         duration = calculate_duration(gl.start_time)
 #         print "Finished executing task", gl.challenge, "in", duration, "seconds."
 #         return 'stop'
@@ -228,7 +227,7 @@ class PlaySound(smach.State):
         smach.State.__init__(self, outcomes=['played','error'])
         self.file = filename
         self.blocking = blocking
-        
+
     def execute(self, ud):
         import os
         extension = os.path.splitext(self.file)[1]
@@ -285,7 +284,7 @@ class LookAtHand(smach.State):
 ############################## Wait for designator ##############################
 class WaitForDesignator(smach.State):
     '''
-        Waits for a given designator to answer. It will retry to resolve the 
+        Waits for a given designator to answer. It will retry to resolve the
             designator a given number of times, with given sleep intervals (in miliseconds)
     '''
 

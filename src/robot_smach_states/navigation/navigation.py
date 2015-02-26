@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; 
+import roslib;
 import rospy
 import smach
 import geometry_msgs.msg
@@ -12,7 +12,6 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 
 import math
-from psi import Term, Compound, Conjunction
 import actionlib
 from random import choice
 import robot_skills.util.msg_constructors as msgs
@@ -23,19 +22,19 @@ class StartAnalyzer(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,outcomes=['done'])
         self.robot = robot
-        
+
     def execute(self, userdata):
         self.robot.base.analyzer.start_measurement(self.robot.base.get_location())
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
-        
+
 class StopAnalyzer(smach.State):
     def __init__(self, robot, result):
         smach.State.__init__(self,outcomes=['done'])
         self.robot  = robot
         self.result = result
-        
+
     def execute(self, userdata):
         self.robot.base.analyzer.stop_measurement(self.robot.base.get_location(), self.result)
         return 'done'
@@ -46,7 +45,7 @@ class AbortAnalyzer(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,outcomes=['done'])
         self.robot  = robot
-        
+
     def execute(self, userdata):
         self.robot.base.analyzer.abort_measurement()
         return 'done'
@@ -57,7 +56,7 @@ class getPlan(smach.State):
     def __init__(self, robot, constraint_function):
         smach.State.__init__(self,
             outcomes=['unreachable','goal_not_defined','goal_ok','preempted'])
-        self.robot = robot 
+        self.robot = robot
         self.constraint_function = constraint_function
 
     def execute(self, userdata):
@@ -67,7 +66,7 @@ class getPlan(smach.State):
 
         if self.preempt_requested():
             rospy.loginfo('Get plan: preempt_requested')
-            return 'preempted'  
+            return 'preempted'
 
         constraint = self.constraint_function()
 
@@ -96,9 +95,9 @@ class getPlan(smach.State):
 class executePlan(smach.State):
     def __init__(self, robot, blocked_timeout = 4):
         smach.State.__init__(self,outcomes=['arrived','blocked','preempted'])
-        self.robot = robot 
-        self.t_last_free = None     
-        self.blocked_timeout = blocked_timeout   
+        self.robot = robot
+        self.t_last_free = None
+        self.blocked_timeout = blocked_timeout
 
     def execute(self, userdata):
         # ToDo: check for alternative plans???
@@ -111,7 +110,7 @@ class executePlan(smach.State):
 
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
-            
+
             # Check for the presence of a better plan
             self.checkBetterPlan()
 
@@ -126,7 +125,7 @@ class executePlan(smach.State):
                 return "arrived"
             elif status == "blocked":
                 return "blocked"
-    
+
     def checkBetterPlan(self):
         # Get alternative plan
         pc = self.robot.base.global_planner.getCurrentPositionConstraint()
@@ -138,7 +137,7 @@ class executePlan(smach.State):
             dtgcp = self.robot.base.local_planner.getDistanceToGoal()           # Distance To Goal Current Plan
             if dtgcp == None:
                 return
-                
+
             dtgap = self.robot.base.global_planner.computePathLength(plan)      # Distance To Goal Alternative Plan
             rospy.logdebug('Distance original = {0}, distance alternative = {1}'.format(dtgcp, dtgap))
 
@@ -152,14 +151,14 @@ class executePlan(smach.State):
                     self.robot.base.local_planner.setPlan(plan, pc, oc)
                 else:
                     rospy.logerr("Cannot execute alternative plan due to absence of orientation constraint")
-        
+
 
 # ----------------------------------------------------------------------------------------------------
 
 class determineBlocked(smach.State):
    def __init__(self, robot):
        smach.State.__init__(self,outcomes=['blocked','blocked_human', 'free'])
-       self.robot = robot 
+       self.robot = robot
 
    def execute(self, userdata):
 
@@ -186,7 +185,7 @@ class determineBlocked(smach.State):
             if (plan and len(plan) > 0):
                 dtgap = self.robot.base.global_planner.computePathLength(plan)     # Distance To Goal Alternative Plan
                 rospy.loginfo('Distance original = {0}, distance alternative = {1}'.format(self.robot.base.local_planner.getDistanceToGoal(), dtgap))
-                
+
                 dtgcp = self.robot.base.local_planner.getDistanceToGoal()
 
                 if (dtgcp == None):
@@ -209,7 +208,7 @@ class determineBlocked(smach.State):
                 self.robot.head.cancelGoal()
                 rospy.logwarn("Plan free again")
                 return "free"
-        
+
         # Else: take other actions
         self.robot.head.cancelGoal()
 
@@ -217,16 +216,16 @@ class determineBlocked(smach.State):
             if len(self.robot.ed.get_entities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:
                 return "blocked_human"
             else:
-                return "blocked" 
+                return "blocked"
 
-        return "free"    
+        return "free"
 
 # ----------------------------------------------------------------------------------------------------
 
 class planBlocked(smach.State):
     def __init__(self, robot, timeout = 1):
        smach.State.__init__(self,outcomes=['replan','free'])
-       self.robot = robot 
+       self.robot = robot
        self.timeout = timeout
 
     def execute(self, userdata):
@@ -286,7 +285,7 @@ class planBlocked(smach.State):
 
     def _init_dummy(self):
         self._options.append({'name': 'dummy', 'cost': 0.01, 'method': self._execute_dummy})
-        
+
     def _execute_dummy(self):
         rospy.loginfo('Recovery: executing dummy')
         return False
@@ -333,7 +332,7 @@ class planBlocked(smach.State):
                                             "Would you please get out of my way",
                                             "Would you please step aside",
                                             "Would you please let me through",
-                                            "Can I please get through", 
+                                            "Can I please get through",
                                             "Excuse me, I can't get through!",
                                             "Excuse me, I would like to pass through here",
                                             "Excuse me, can I go through",
@@ -358,7 +357,7 @@ class planBlocked(smach.State):
 class planBlockedHuman(smach.State):
    def __init__(self, robot, timeout = 10):
        smach.State.__init__(self,outcomes=['replan','free'])
-       self.robot = robot 
+       self.robot = robot
        self.timeout = timeout
 
    def execute(self, userdata):
@@ -373,7 +372,7 @@ class planBlockedHuman(smach.State):
                                             "Would you please get out of my way",
                                             "Would you please step aside",
                                             "Would you please let me through",
-                                            "Can I please get through", 
+                                            "Can I please get through",
                                             "Excuse me, I can't get through!",
                                             "Excuse me, I would like to pass through here",
                                             "Excuse me, can I go through",
@@ -391,7 +390,7 @@ class planBlockedHuman(smach.State):
 class resetWorldModel(smach.State):
    def __init__(self, robot):
        smach.State.__init__(self,outcomes=['succeeded'])
-       self.robot = robot 
+       self.robot = robot
 
    def execute(self, userdata):
         # self.robot.ed.reset()  # TODO Sjoerd: outcommended because it makes ed_server crash
@@ -421,7 +420,7 @@ class breakOutState(smach.State):
             return 'preempted'
 
         return 'passed'
-        
+
 
 # # ----------------------------------------------------------------------------------------------------
 
@@ -501,8 +500,8 @@ class NavigateTo(smach.StateMachine):
             smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
                 transitions={'done'                                 :'RESET_SM_NAV'})
 
-            @smach.cb_interface(outcomes=['done'], 
-                                input_keys=[], 
+            @smach.cb_interface(outcomes=['done'],
+                                input_keys=[],
                                 output_keys=[])
             def reset_sm_nav(userdata, con_state):
                 # Recall preempt on concurrency container and all children
@@ -512,7 +511,7 @@ class NavigateTo(smach.StateMachine):
 
                 con_state.recall_preempt()
                 return 'done'
-            
+
             smach.StateMachine.add('RESET_SM_NAV', smach.CBState(reset_sm_nav,
                                     cb_kwargs={'con_state': sm_nav}),
                                     transitions={   'done':'MONITORED_NAVIGATE' })
@@ -525,10 +524,10 @@ class NavigateTo(smach.StateMachine):
 
             smach.StateMachine.add('STOP_ANALYSIS_SUCCEED', StopAnalyzer(self.robot, 'succeeded'),
                 transitions={'done'                                 : 'arrived'})
-                
+
             smach.StateMachine.add('STOP_ANALYSIS_UNREACHABLE', StopAnalyzer(self.robot, 'unreachable'),
                 transitions={'done'                                 : 'unreachable'})
-                
+
             smach.StateMachine.add('ABORT_ANALYSIS_NOT_DEFINED', AbortAnalyzer(self.robot),
                 transitions={'done'                                 : 'goal_not_defined'})
 
@@ -536,8 +535,8 @@ class NavigateTo(smach.StateMachine):
         pass
 
     def breakOut(self):
-        ''' 
-        Default breakout function: makes sure things go to 'arrived' if robot arrives at goal 
+        '''
+        Default breakout function: makes sure things go to 'arrived' if robot arrives at goal
         DO NOT OVERLOAD THIS IF NOT NECESSARY
         '''
         status = self.robot.base.local_planner.getStatus()
@@ -571,10 +570,10 @@ class NavigateTo(smach.StateMachine):
                 # Breakout function has already returned true on this goalhandle
                 rospy.logerr("Executing should never be here. If this is the case, this function can be made a lot simpler!")
                 return False
-        
+
         return False
 
-# ----------------------------------------------------------------------------------------------------              
+# ----------------------------------------------------------------------------------------------------
 
 # class NavigateTo(smach.StateMachine):
 #     def __init__(self, robot, constraint_args={}, break_out_args={}):
@@ -632,8 +631,8 @@ class Navigate(smach.StateMachine):
     def __init__(self, robot, baseConstraintGenerator=None, finishedChecker=None):
         """@param robot the robot with which to perform this action
         @param entityId the entity or item to observe.
-        @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation. 
-            entityInfo is a ed/EntityInfo message. 
+        @param baseConstraintGenerator a function func(robot, entityInfo) that returns a (PositionConstraint, OrientationConstraint)-tuple for cb_navigation.
+            entityInfo is a ed/EntityInfo message.
         @param finishedChecker a function(robot) that checks whether the item if observed to your satisfaction. """
         smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','preempted','goal_not_defined'])
 
@@ -646,7 +645,7 @@ def testNavigateWithConstraints(robot, constraint="x^2+y^2<1", frame="/map"):
     p.constraint = constraint
     p.frame = frame
 
-    o = OrientationConstraint()   
+    o = OrientationConstraint()
     o.frame = frame
 
     nwc = NavigateWithConstraints(robot, p, o)
