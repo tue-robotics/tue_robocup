@@ -1,25 +1,28 @@
 #! /usr/bin/env python
+import roslib; 
 import rospy
 import smach
 import subprocess
 import inspect
+import random
 
 from robot_skills.amigo import Amigo
 from robot_smach_states import *
 
-from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
-from robot_smach_states.util.startup import startup
-import robot_skills.util.msg_constructors as msgs
-import robot_skills.util.transformations as transformations
-from robot_smach_states.util.designators import Designator, VariableDesignator, EdEntityByQueryDesignator
+# from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
+# from robot_smach_states.util.startup import startup
+# import robot_skills.util.msg_constructors as msgs
+# import robot_skills.util.transformations as transformations
+# from robot_smach_states.util.designators import Designator, VariableDesignator
 
-from pein_srvs.srv import SetObjects
-from ed.srv import SimpleQuery, SimpleQueryRequest
+# from pein_srvs.srv import SetObjects
+# from ed.srv import SimpleQuery, SimpleQueryRequest
 
-from robot_smach_states.utility_states import Initialize
-from robot_smach_states.human_interaction import Say
+# from robot_smach_states.utility import Initialize
+# from robot_smach_states.human_interaction import Say
 
-from robot_smach_states import Grab
+# from robot_smach_states import Grab
+
 
 
 
@@ -69,6 +72,22 @@ class LearnPerson(smach.State):
 
         return 'success'
 
+# ----------------------------------------------------------------------------------------------------
+
+class LookAtPersonInFront(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.WARNING + "LookAtPersonInFront" + bcolors.ENDC
+
+        # get location of the person and make sure the camera points to the head and body
+
+        # self.robot.head.set_pan_tilt(pan=0.0, tilt=-0.2, timeout=3.0)
+
+        return 'done'
+
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -80,6 +99,14 @@ class FindCrowd(smach.State):
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.WARNING + "FindCrowd" + bcolors.ENDC
+
+        # turn head to one side to start the swipping the room
+        self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0, timeout=3.0)
+        # turn head to the center
+        self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=0.0, timeout=3.0)
+        # turn head to the other side
+        self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0, timeout=5.0)
+
 
         # Get location of people and determine if the proximity makes them a crowd
 
@@ -112,6 +139,20 @@ class DescribeCrowd(smach.State):
         print OUT_PREFIX + bcolors.WARNING + "DescribeCrowd" + bcolors.ENDC
 
         # Get information about the crowd using the Designator
+
+        return 'success'
+
+# ----------------------------------------------------------------------------------------------------
+
+class PointAtOperator(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['success', 'failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.WARNING + "PointAtOperator" + bcolors.ENDC
+
+        # Get information about the operator and point at the location
 
         return 'success'
 
