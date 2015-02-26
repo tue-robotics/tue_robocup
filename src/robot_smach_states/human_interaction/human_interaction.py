@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; 
+import roslib;
 import rospy
 import smach
 import random
@@ -24,24 +24,28 @@ class Say(State):
     >>> robot = MagicMock()
     >>> robot.speech = MagicMock()
     >>> robot.speech.speak = MagicMock()
-    >>> 
+    >>>
     >>> sf = Say(robot, ["a", "b", "c"])
     >>> #Repeat command 50 times, every time it should succeed and return "spoken"
     >>> outcomes = [sf.execute() for i in range(50)]
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
-    >>> #After many calls, all options in the list will very likely have been called at least one. 
+    >>> #After many calls, all options in the list will very likely have been called at least one.
     >>> robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
     >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         State.__init__(self, locals(), outcomes=["spoken"])
-        
+
     def run(self, robot, sentence, language, personality, voice, mood, block):
+        robot.head.lookAtStandingPerson()
+
         if not isinstance(sentence, str) and isinstance(sentence, list):
             sentence = random.choice(sentence)
 
         robot.speech.speak(sentence, language, personality, voice, mood, block)
+
+        robot.head.cancelGoal()
 
         return "spoken"
 
@@ -52,7 +56,11 @@ class Hear(State):
         State.__init__(self, locals(), outcomes=["heard", "not_heard"])
 
     def run(self, robot, spec, time_out):
+        robot.head.lookAtStandingPerson()
+
         answer = robot.ears.recognize(spec, {}, time_out)
+
+        robot.head.cancelGoal()
 
         if answer:
             if answer.result:
@@ -67,7 +75,11 @@ class HearOptions(State):
         State.__init__(self, locals(), outcomes=options.append("no_result"))
 
     def run(self, robot, options, time_out):
+        robot.head.lookAtStandingPerson()
+
         answer = robot.ears.recognize("<option>", {"option":options}, time_out)
+
+        robot.head.cancelGoal()
 
         if answer:
             if answer.result:
