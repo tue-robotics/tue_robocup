@@ -126,9 +126,9 @@ class ManipRecogSingleItem(smach.StateMachine):
         min_height = lambda entity: entity.min_z > 0.3
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
-        current_item = EdEntityDesignator(robot, 
+        current_item = LockingDesignator(EdEntityDesignator(robot, 
             # center_point=gm.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
-            criteriafuncs=[not_ignored, size, not_manipulated, has_type], debug=False)
+            criteriafuncs=[not_ignored, size, not_manipulated, has_type], debug=False))
 
         place_position = EmptySpotDesignator(robot, bookcase) 
         
@@ -150,7 +150,15 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "LOOKAT_BOOKCASE",
                                     states.Say(robot, ["I'm looking at the bookcase to see what items I can find"]),
-                                    transitions={   'spoken'            :'ANNOUNCE_ITEM'})
+                                    transitions={   'spoken'            :'LOCK_ITEM'})
+
+            @smach.cb_interface(outcomes=['locked'])
+            def lock(userdata):
+                current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again. 
+                return 'locked'
+            smach.StateMachine.add('LOCK_ITEM',
+                                   smach.CBState(lock),
+                                   transitions={'locked':'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add( "ANNOUNCE_ITEM",
                                     states.Say(robot, FormattedSentenceDesignator("I'm trying to grab item {item.id} which is a {item.type}.", item=current_item), block=False),
@@ -163,7 +171,15 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad"),
-                                    transitions={   'spoken'            :'failed'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
+                                    transitions={   'spoken'            :'UNLOCK_ITEM2'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
+
+            @smach.cb_interface(outcomes=['unlocked'])
+            def unlock(userdata):
+                current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
+                return 'unlocked'
+            smach.StateMachine.add('UNLOCK_ITEM2',
+                                   smach.CBState(unlock),
+                                   transitions={'unlocked'              :'failed'})
 
             @smach.cb_interface(outcomes=['stored'])
             def store(userdata):
@@ -181,7 +197,11 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "PLACE_ITEM",
                                     Place(robot, current_item, place_position, arm_with_item_designator),
                                     transitions={   'done'              :'succeeded',
-                                                    'failed'            :'SAY_HANDOVER_TO_HUMAN'})
+                                                    'failed'            :'UNLOCK_ITEM1'})
+
+            smach.StateMachine.add('UNLOCK_ITEM1',
+                                   smach.CBState(unlock),
+                                   transitions={'unlocked'              :'SAY_HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add( "SAY_HANDOVER_TO_HUMAN",
                                     states.Say(robot, ["I'm can't get rid of this item  myself, can somebody help me maybe?"]),
