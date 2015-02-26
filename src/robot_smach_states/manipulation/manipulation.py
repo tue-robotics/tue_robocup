@@ -2,7 +2,7 @@ import rospy
 import smach
 import robot_smach_states.navigation
 from robot_skills.util import transformations
-from psi import Compound
+
 
 import geometry_msgs
 
