@@ -91,7 +91,7 @@ class Head():
         goal.point.y = 0.0
         goal.point.z = 1.7
 
-        return self.setLookAtGoal(goal, wait_for_setpoint=False)
+        return self.setLookAtGoal(goal)
 
     # -- Functionality --
 
@@ -121,8 +121,7 @@ class Head():
         self._goal.end_time = end_time
         self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
         if wait_for_setpoint:
-            while not self.atGoal:
-                rospy.sleep(0.1)
+            print "TODO IMPLEMENT wait for setpoint"
 
     def __feedbackCallback(self, feedback):
         self._at_setpoint = feedback.at_setpoint
