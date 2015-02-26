@@ -11,7 +11,7 @@ from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 class Head():
     def __init__(self, robot_name):
         self.robot_name = robot_name
-        self._ac_head_ref_action = actionlib.SimpleActionClient("/"+robot_name+"/head_reference",  HeadReferenceAction)
+        self._ac_head_ref_action = actionlib.SimpleActionClient("/"+robot_name+"/head_ref/action_server",  HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
 
@@ -80,7 +80,7 @@ class Head():
     def atGoal(self):
         return self._at_setpoint
 
-    def lookAtStandingPerson(self, timeout=0):
+    def lookAtStandingPerson(self, wait_for_setpoint=False):
         """
         Gives a target at z = 1.75 at 1 m in front of the robot
         """
@@ -89,15 +89,9 @@ class Head():
         goal.header.frame_id = "/"+self.robot_name+"/base_link"
         goal.point.x = 1.0
         goal.point.y = 0.0
-        goal.point.z = 1.75
+        goal.point.z = 1.7
 
-        return self._setHeadReferenceGoal(goal_type=0,
-            pan_vel=0.75,
-            tilt_vel=0.75,
-            end_time=0,
-            frame=goal.header.frame_id,
-            point=goal.point,
-            wait_for_setpoint=False)
+        return self.setLookAtGoal(goal)
 
     # -- Functionality --
 
@@ -127,7 +121,7 @@ class Head():
         self._goal.end_time = end_time
         self._ac_head_ref_action.send_goal(self._goal, done_cb = self.__doneCallback, feedback_cb = self.__feedbackCallback)
         if wait_for_setpoint:
-            print "HEAD2.py wait for setpoint -- THIS IS NOT YET SUPPORTED"
+            print "TODO IMPLEMENT wait for setpoint"
 
     def __feedbackCallback(self, feedback):
         self._at_setpoint = feedback.at_setpoint
