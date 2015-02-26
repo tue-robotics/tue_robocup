@@ -137,6 +137,7 @@ class LockingDesignator(Designator):
     """
 
     def __init__(self, to_be_locked):
+        super(LockingDesignator, self).__init__()
         self.to_be_locked = to_be_locked
         self._locked = False
 
