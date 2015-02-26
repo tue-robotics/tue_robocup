@@ -56,9 +56,9 @@ class Robot(object):
         self.head = head.Head(self.robot_name)
 
         # Human Robot Interaction
-        self.lights = lights.Lights()
-        self.speech = speech.Speech(self.robot_name, wait_service=wait_services)
-        self.ears = ears.Ears(self.robot_name, lambda: self.lights.set_color(0,1,0), lambda: self.lights.set_color(0,0,0))
+        self.lights = lights.Lights(self.robot_name)
+        self.speech = speech.Speech(self.robot_name, wait_services, lambda: self.lights.set_color(1,0,0), lambda: self.lights.set_color(0,0,1))
+        self.ears = ears.Ears(self.robot_name, lambda: self.lights.set_color(0,1,0), lambda: self.lights.set_color(0,0,1))
         self.ebutton = ebutton.EButton()
 
         # Perception: can we get rid of this???
