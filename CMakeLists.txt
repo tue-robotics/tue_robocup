@@ -15,17 +15,10 @@ find_package(catkin REQUIRED COMPONENTS
     tue_msgs
     visualization_msgs
     head_ref
-    tue_reasoner_core
-    psi
     control_msgs
     trajectory_msgs
     tue_move_base_msgs
     tue_costmap_msgs
-    cb_planner_msgs_srvs
-    wire_msgs
-    speech_interpreter
-    octomap_msgs
-    tue_recorder
     cb_planner_msgs_srvs
 )
 

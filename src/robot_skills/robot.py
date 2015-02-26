@@ -31,7 +31,6 @@ from util import transformations
 import geometry_msgs
 import std_msgs.msg
 from math import degrees, radians
-from psi import Compound, Sequence, Conjunction
 
 from collections import OrderedDict
 

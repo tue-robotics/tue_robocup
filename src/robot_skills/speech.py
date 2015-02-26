@@ -7,9 +7,6 @@ from math import sqrt
 
 import thread
 
-from speech_interpreter.srv import AskUser # for speech_to_text only
-
-
 class Speech(object):
     """Interface to TTS-module"""
 

@@ -4,11 +4,6 @@ import rospy
 
 import actionlib
 
-# Perception
-from perception_srvs.srv import StartPerception
-from pein_msgs.msg import LearnAction, LearnGoal, ROI
-import pein_srvs.srv
-
 import collections
 
 import tue_recorder.msg
@@ -74,10 +69,10 @@ class Perception(object):
         # start recording
         if modules:
             self.rec_start("amigo_top_kinect", "perception-toggle", 5, 2.0)
-        
+
         # If 'object_recognition' is called, this is replaced by the current default module
         modules = [module.replace("object_recognition", self.default_object_recognition_method) for module in modules]
-        
+
         if (len(modules) == 0):
             modules = self.always_on_modules
 
@@ -306,8 +301,8 @@ class Perception(object):
         msg.context = context
         msg.max_duration = rospy.Duration(duration)
         msg.frequency = freq
-        
-        self.pub_rec.publish(msg)        
+
+        self.pub_rec.publish(msg)
 
 
     def people_detection_torso_laser(self, pointstamped, time=4.0, length_x=3.0, length_y=3.0, length_z=1.0):
@@ -315,7 +310,7 @@ class Perception(object):
         ''' Starts people detection '''
         request = pein_srvs.srv.StartStopWithROIArrayRequest()
         request.status = True
-        
+
         roi_ppl = ROI()
         roi_ppl.x = pointstamped.point.x
         roi_ppl.y = pointstamped.point.y
@@ -343,7 +338,7 @@ class Perception(object):
         self.ppl_detection_laser(request)
 
         return response
-        
+
 
 if __name__ == "__main__":
     rospy.init_node("amigo_perception_executioner", anonymous=True)
