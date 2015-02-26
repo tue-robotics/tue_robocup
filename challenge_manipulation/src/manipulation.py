@@ -33,7 +33,9 @@ from robot_skills.util import transformations
 
 import pdf
 
-BOOKCASE = "plastic_cabinet"
+ignore_ids = ['robotics_testlabs']
+ignore_types = ['waypoint', 'floor']
+BOOKCASE = "hallway_couch"
 
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
@@ -109,22 +111,24 @@ class ManipRecogSingleItem(smach.StateMachine):
         # and are _not_:
         #   already placed 
         #   on the placement-shelve.
-        not_waypoint = lambda entity: entity.type != "waypoint"
-        size = lambda entity: (entity.z_max - entity.z_min) < 0.2
+        not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
+        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.2
         def inside(entity):
             container_entity = bookcase.resolve()
             xs = [point.x for point in container_entity.convex_hull]
             ys = [point.x for point in container_entity.convex_hull]
-            zs = [point.z for point in container_entity.convex_hull]
-            return min(xs) < entity.pose.position.x <= max(xs) and \
-                min(ys) < entity.pose.position.y <= max(ys) and \
-                min(zs) < entity.pose.position.z <= max(zs)
+            # zs = [point.z for point in container_entity.convex_hull]
+            return min(xs) < entity.pose.position.x <= max(xs) \
+                and min(ys) < entity.pose.position.y <= max(ys)
+                # and min(zs) < entity.pose.position.z <= max(zs)
+        not_manipulated = lambda entity: not entity in manipulated_items.resolve()
+        has_type = lambda entity: entity.type != ""
+        min_height = lambda entity: entity.min_z > 0.3
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
-        current_item = EntityNotOnListDesignator(robot, 
-            center_point=gm.PointStamped(frame_id="/"+BOOKCASE), radius=0.75,
-            exclude_list_designator=manipulated_items, 
-            criteriafuncs=[not_waypoint, size, inside])
+        current_item = EdEntityDesignator(robot, 
+            # center_point=gm.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
+            criteriafuncs=[not_ignored, size, not_manipulated, has_type], debug=False)
 
         place_position = EmptySpotDesignator(robot, bookcase) 
         
@@ -196,8 +200,11 @@ def setup_statemachine(robot):
     placed_items = []
 
     with sm:
+        smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized':'AWAIT_START',
+                                                'abort':'Aborted'})
 
-        # Start challenge via StartChallengeRobust
         smach.StateMachine.add("AWAIT_START",
                                states.AskContinue(robot),
                                transitions={'continue'                  :'NAV_TO_START',
