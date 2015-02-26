@@ -12,9 +12,9 @@ from std_srvs.srv import Empty #Reset Ed
 import yaml
 
 class ED:
-    def __init__(self, tf_listener, wait_service=False):
-        self._ed_simple_query_srv = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
-        self._ed_reset_srv = rospy.ServiceProxy('/ed/reset', Empty)
+    def __init__(self, robot_name, tf_listener, wait_service=False):
+        self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
+        self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
         self.tf_listener = tf_listener
 
