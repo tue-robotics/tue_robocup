@@ -124,7 +124,7 @@ class WaitForDoorOpen(State):
             avg_distance_at_start = self.avg(self.distances[:5]) #Get the first 5 distances
             avg_distance_now = self.avg(self.distances[-5:]) #And the latest 5
             
-            print "d_start = {0}, d_now = {1}, curr = {2}".format(avg_distance_at_start, avg_distance_now, distance_to_door)
+            # print "d_start = {0}, d_now = {1}, curr = {2}".format(avg_distance_at_start, avg_distance_now, distance_to_door)
             if len(self.distances) > 40: #Get at least 40 samples before checking the difference
                 #The current distance should be more than a meter more than what we started with, then assume the door is open
                 if avg_distance_now > (avg_distance_at_start + 1.0):
