@@ -61,7 +61,10 @@ class ED:
         return entities[0]
 
     def reset(self):
-        self._ed_reset_srv()
+        try:
+            self._ed_reset_srv()
+        except rospy.ServiceException, e:
+            rospy.logerr("Could not reset ED: {0}".format(e))
         rospy.sleep(1.0)
 
     def _transform_center_point_to_map(self, pointstamped):
