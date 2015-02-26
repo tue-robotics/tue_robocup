@@ -188,7 +188,7 @@ class EdEntityDesignator(Designator):
     criteria functions)
     """
 
-    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None):
+    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None, debug=False):
         super(EdEntityDesignator, self).__init__()
         self.ed = robot.ed
         self.type = type
@@ -196,11 +196,14 @@ class EdEntityDesignator(Designator):
         self.radius = radius
         self.id = id
         self.parse = parse
-
         self.criteriafuncs = criteriafuncs or []
+
+        self.debug = debug
 
     def resolve(self):
         entities = self.ed.get_entities(self.type, self.center_point, self.radius, self.id, self.parse)
+        if self.debug:
+            import ipdb; ipdb.set_trace()
         if entities:
             for criterium in self.criteriafuncs:
                 entities = filter(criterium, entities)
