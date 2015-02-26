@@ -5,9 +5,8 @@ import sys
 import person_recognition_states as PersonRecStates
 
 from robot_smach_states.highlevel import StartChallengeRobust
-from robot_smach_states.navigation import NavigateToObserve
-from robot_smach_states.navigation import NavigateToWaypoint
-from robot_smach_states.human_interaction import Say
+from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint
+from robot_smach_states.human_interaction import Say, WaitForHumanInFront
 
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
@@ -53,33 +52,38 @@ class ChallengePersonRecognition(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            learnOperatorContainer = smach.StateMachine(  outcomes = ['success_container', 'failed_container'])
+            learnOperatorContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
             with learnOperatorContainer:
 
                 smach.StateMachine.add("SAY_WAITING_OPERATOR",
-                                       Say(robot,"I will wait here for my operator.", block=False),
-                                       transitions={'spoken':'WAIT_FOR_OPERATOR'})
+                                        Say(robot,"I'm waiting for the operator to stand in front of me.", block=False),
+                                        transitions={'spoken':'WAIT_FOR_OPERATOR'})
 
-                smach.StateMachine.add('WAIT_FOR_OPERATOR',
-                                       PersonRecStates.WaitForOperator(robot),
-                                       transitions={'success':'LEARN_PERSON',
-                                                    'failed':'failed_container'})
+                smach.StateMachine.add("WAIT_FOR_OPERATOR",
+                                        WaitForHumanInFront(robot, attempts=3, sleep_interval=1000),
+                                        transitions={'success':'LEARN_PERSON',
+                                                    'failed':'container_failed'})
+
+                # smach.StateMachine.add('WAIT_FOR_OPERATOR',
+                #                        PersonRecStates.WaitForOperator(robot),
+                #                        transitions={'success':'LEARN_PERSON',
+                #                                     'failed':'container_failed'})
 
                 smach.StateMachine.add('LEARN_PERSON',
                                        PersonRecStates.LearnPerson(robot, name="Mister Operator"),
                                        transitions={'success':'SAY_OPERATOR_LEARNED',
-                                                    'failed':'failed_container'})
+                                                    'failed':'container_failed'})
 
                 smach.StateMachine.add('SAY_OPERATOR_LEARNED',
                                        Say(robot,"Now i know how you look like. Please go mix with the crowd."),
-                                       transitions={'spoken':'success_container'})
+                                       transitions={'spoken':'container_success'})
 
 
             #add container to the main state machine
             smach.StateMachine.add( 'LEARN_OPERATOR_CONTAINER',
                                     learnOperatorContainer,
-                                    transitions={   'success_container':'FIND_CROWD_CONTAINER',
-                                                    'failed_container':'SAY_FAILED_LEARNING'})
+                                    transitions={   'container_success':'FIND_CROWD_CONTAINER',
+                                                    'container_failed':'SAY_FAILED_LEARNING'})
 
             smach.StateMachine.add('SAY_FAILED_LEARNING',
                                    Say(robot,"Could not learn my operator's face. Let's try that again.", block=False),
@@ -93,7 +97,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            findCrowndContainer = smach.StateMachine(  outcomes = ['success_container', 'failed_container'])
+            findCrowndContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
             with findCrowndContainer:
 
                 smach.StateMachine.add( 'GO_TO_LIVING_ROOM_1',
@@ -120,18 +124,18 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add( 'FIND_CROWD_2',
                                         PersonRecStates.FindCrowd(robot, Designator('crowd')),
                                         transitions={   'success':'SAY_FOUND_CROWD',
-                                                        'failed':'failed_container'})
+                                                        'failed':'container_failed'})
 
                 smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                         Say(robot,"I think I found it.", block=False),
-                                        transitions={   'spoken':'success_container'})
+                                        transitions={   'spoken':'container_success'})
 
 
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_CROWD_CONTAINER',
                                     findCrowndContainer,
-                                    transitions={   'success_container':'FIND_OPERATOR_CONTAINER',
-                                                    'failed_container':'SAY_FAILED_FIND_CROWD'})
+                                    transitions={   'container_success':'FIND_OPERATOR_CONTAINER',
+                                                    'container_failed':'SAY_FAILED_FIND_CROWD'})
 
             smach.StateMachine.add('SAY_FAILED_FIND_CROWD',
                                    Say(robot,"Still Searching for the crowd", block=False),
@@ -144,7 +148,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            findOperatorContainer = smach.StateMachine(  outcomes = ['success_container', 'failed_container'])
+            findOperatorContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
             with findOperatorContainer:
 
                 smach.StateMachine.add('SAY_LOOKING_OPERATOR',
@@ -154,14 +158,14 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add('SAY_FOUND_OPERATOR',
                                         Say(robot,"I found my operator!", block=False),
-                                        transitions={'spoken':'success_container'})
+                                        transitions={'spoken':'container_success'})
 
 
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_OPERATOR_CONTAINER',
                                     findOperatorContainer,
-                                    transitions={   'success_container':'DESCRIBE_CROWD_CONTAINER',
-                                                    'failed_container':'DESCRIBE_CROWD_CONTAINER'})
+                                    transitions={   'container_success':'DESCRIBE_CROWD_CONTAINER',
+                                                    'container_failed':'DESCRIBE_CROWD_CONTAINER'})
 
 
 
@@ -170,7 +174,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            describeCrowdContainer = smach.StateMachine(  outcomes = ['success_container', 'failed_container'])
+            describeCrowdContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
 
 
             with describeCrowdContainer:
@@ -182,7 +186,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add( 'DESCRIBE_OPERATOR',
                                         PersonRecStates.DescribeOperator(robot, Designator('operator')),
                                         transitions={   'success':'SAY_DESCRIBE_CROWD',
-                                                        'failed':'failed_container'})
+                                                        'failed':'container_failed'})
 
                 smach.StateMachine.add('SAY_DESCRIBE_CROWD',
                                         Say(robot,"I see several humans in this crowd!", block=False),
@@ -190,14 +194,14 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'DESCRIBE_CROWD',
                                         PersonRecStates.DescribeCrowd(robot, Designator('crowd')),
-                                        transitions={   'success':'success_container',
-                                                        'failed':'failed_container'})
+                                        transitions={   'success':'container_success',
+                                                        'failed':'container_failed'})
 
             #add container to the main state machine
             smach.StateMachine.add( 'DESCRIBE_CROWD_CONTAINER',
                                     describeCrowdContainer,
-                                    transitions={   'success_container':'END_CHALLENGE',
-                                                    'failed_container':'END_CHALLENGE'})
+                                    transitions={   'container_success':'END_CHALLENGE',
+                                                    'container_failed':'END_CHALLENGE'})
 
 
 

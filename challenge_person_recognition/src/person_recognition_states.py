@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 import rospy
-
 import smach
+import subprocess
+import inspect
 
 from robot_skills.amigo import Amigo
 from robot_smach_states import *
@@ -20,7 +21,7 @@ from robot_smach_states.human_interaction import Say
 
 from robot_smach_states import Grab
 
-import inspect
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -63,6 +64,8 @@ class LearnPerson(smach.State):
 
         # Do a service call to initate learning
         print OUT_PREFIX + "Learning with name " + self.name
+
+        subprocess.Popen("rosservice call /face_learning/learn " + self.name)
 
         return 'success'
 
