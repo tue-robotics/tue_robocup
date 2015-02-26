@@ -11,28 +11,26 @@ import data
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(10)):
-        smach.State.__init__(self, outcomes=["answered","not_answered"])
+        smach.State.__init__(self, outcomes=["answered"])
         self.robot = robot
         self.time_out = time_out
 
     def execute(self, userdata):
-        #self.robot.head.lookAtStandingPerson()
-        print data.spec
-        print data.choices
+        self.robot.head.lookAtStandingPerson()
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
-            return "not_answered"
 
-        if "question" not in res.choices:
-            self.robot.speech.speak("Sorry, I do not understand your question")
-            return "not_answered"
+        if res:
+            if "question" in res.choices:
+                rospy.loginfo("Question was: '%s'?"%res.result)
+                self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
+            else:
+                self.robot.speech.speak("Sorry, I do not understand your question")
 
-        rospy.loginfo("Question was: '%s'?"%res.result)
-        self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-
+        self.robot.head.cancelGoal()
         return "answered"
 
 class Turn(smach.State):
@@ -41,7 +39,7 @@ class Turn(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        # TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely) 
+        # TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely)
 
         print "TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely) "
 
@@ -55,10 +53,10 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
+                                states.Initialize(robot, "initial_pose", use_entry_points = True),
                                 transitions={   "Done"              :   "SAY_1",
                                                 "Aborted"           :   "SAY_1",
-                                                "Failed"            :   "SAY_1"})  
+                                                "Failed"            :   "SAY_1"})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', HearQuestion(robot), transitions={ 'answered' :'SAY_2', 'not_answered': 'TURN_1'})

@@ -16,23 +16,21 @@ class HearQuestion(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
-        #self.robot.head.lookAtStandingPerson()
-        print data.spec
-        print data.choices
+        self.robot.head.lookAtStandingPerson()
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
-            return "answered"
 
-        if "question" not in res.choices:
-            self.robot.speech.speak("Sorry, I do not understand your question")
-            return "answered"
+        if res:
+            if "question" in res.choices:
+                rospy.loginfo("Question was: '%s'?"%res.result)
+                self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
+            else:
+                self.robot.speech.speak("Sorry, I do not understand your question")
 
-        rospy.loginfo("Question was: '%s'?"%res.result)
-        self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-
+        self.robot.head.cancelGoal()
         return "answered"
 
 
@@ -44,10 +42,9 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
-                                transitions={   "Done"              :   "SAY_1",
-                                                "Aborted"           :   "SAY_1",
-                                                "Failed"            :   "SAY_1"})  
+                                states.Initialize(robot),
+                                transitions={   'initialized'      :   "SAY_1",
+                                                "abort"            :   "Aborted"})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', HearQuestion(robot), transitions={ 'answered' :'SAY_2'})
