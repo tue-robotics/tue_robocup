@@ -190,12 +190,12 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'unlocked'              :'failed'})
 
             @smach.cb_interface(outcomes=['stored'])
-            def store(userdata):
+            def store_as_manipulated(userdata):
                 manipulated_items.current += [current_item.current]
                 return 'stored'
 
             smach.StateMachine.add('STORE_ITEM',
-                                   smach.CBState(store),
+                                   smach.CBState(store_as_manipulated),
                                    transitions={'stored':'ANNOUNCE_CLASS'})
 
             smach.StateMachine.add( "ANNOUNCE_CLASS",
