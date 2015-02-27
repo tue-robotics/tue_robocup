@@ -37,7 +37,6 @@ def hoofdschoudersknieteen(robot):
             raise Exception("Arms did not reach goal,  need help")
     
     def right(trajectory, timeout=10.0): 
-        import ipdb; ipdb.set_trace()
         if not robot.rightArm._send_joint_trajectory(trajectory):
             raise Exception("Arms did not reach goal,  need help")
     #Defined shortcuts above
