@@ -86,7 +86,8 @@ class LookAtPersonInFront(smach.State):
 
         # get location of the person and make sure the camera points to the head and body
         #self.robot.head.lookAtStandingPerson()
-	self.robot.head.set_pan_tilt(0,0)
+	    
+        self.robot.head.set_pan_tilt(0,0)
 
         return 'done'
 
@@ -125,10 +126,14 @@ class FindCrowd(smach.State):
         # turn head to the other side
         self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0, timeout=5.0)
 
+        rospy.sleep(3)
+
         # query world model
         crowdDesignator = EdEntityDesignator(self.robot, id="crowd")
         humanDesignator = EdEntityDesignator(self.robot, id="human")
 
+        result = None
+        
         try:
             result = crowdDesignator.resolve()
         except DesignatorResolvementError:
