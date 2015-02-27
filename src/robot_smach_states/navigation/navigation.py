@@ -173,7 +173,7 @@ class determineBlocked(smach.State):
 
         # Wait for 5 seconds but continue if the path is free
         wait_start = rospy.Time.now()
-        while ( (rospy.Time.now() - wait_start) < rospy.Duration(5.0) ):
+        while ( (rospy.Time.now() - wait_start) < rospy.Duration(5.0) and not rospy.is_shutdown()):
             rospy.sleep(0.5)
 
             # Get alternative plan
@@ -264,7 +264,7 @@ class planBlocked(smach.State):
         '''
         self.robot.speech.speak(choice(["An obstacle is blocking my plan!","I cannot get through here!"]))
 
-        while self.robot.base.local_planner.getStatus() == "blocked":
+        while self.robot.base.local_planner.getStatus() == "blocked" and not rospy.is_shutdown():
             if (rospy.Time.now() - self._t_start) > rospy.Duration(self.timeout):
                 return "replan"
             r.sleep()
@@ -365,7 +365,7 @@ class planBlockedHuman(smach.State):
         r = rospy.Rate(.5) # 1hz
         t_start = rospy.Time.now()
 
-        while self.robot.base.local_planner.getStatus() == "blocked":
+        while self.robot.base.local_planner.getStatus() == "blocked"  and not rospy.is_shutdown():
             self.robot.speech.speak(choice(["Please, get out of my way!",
                                             "Please step aside",
                                             "Please let me through",

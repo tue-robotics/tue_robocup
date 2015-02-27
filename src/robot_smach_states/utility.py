@@ -8,6 +8,7 @@ import thread
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
 from robot_smach_states.util.designators import DesignatorResolvementError
+from robot_smach_states.state import State
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -313,3 +314,36 @@ class WaitForDesignator(smach.State):
             rospy.sleep(self.sleep_interval)
 
         return "failed"
+
+class CallFunction(State):
+    """Call a (lambda) function with the given arguments
+
+    >>> def p2(robot, val1, val2): print robot, val1, val2
+    >>> l = CallFunction("amigo_dummy_str", p2, "hello", "world")
+    >>> l.execute()
+    amigo_dummy_str hello world
+    'succeeded'
+
+    >>> def faal(robot, val1, val2): raise Exception("Fail on purpose")
+    >>> l2 = CallFunction("amigo_dummy_str", faal, "hello", "world")
+    >>> l2.execute()
+    ...
+    'failed'
+    """
+    def __init__(self, robot, function, *args, **kwargs):
+        State.__init__(self, locals(), outcomes=["succeeded", "failed"])
+
+    def run(self, robot, function, *args, **kwargs):
+        args = kwargs['args'] #This is because of the State-class that passes on its contructor variables
+        kwargs = kwargs['kwargs'] #This is because of the State-class that passes on its contructor variables
+        try:
+            function(robot, *args, **kwargs)
+            return 'succeeded'
+        except Exception, e:
+            rospy.logerr(e)
+            return 'failed'
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
