@@ -85,7 +85,8 @@ class LookAtPersonInFront(smach.State):
         print OUT_PREFIX + bcolors.WARNING + "LookAtPersonInFront" + bcolors.ENDC
 
         # get location of the person and make sure the camera points to the head and body
-        self.robot.head.lookAtStandingPerson()
+        #self.robot.head.lookAtStandingPerson()
+	self.robot.head.set_pan_tilt(0,0)
 
         return 'done'
 
@@ -128,6 +129,8 @@ class FindCrowd(smach.State):
         crowdDesignator = EdEntityDesignator(self.robot, id="crowd")
         humanDesignator = EdEntityDesignator(self.robot, id="human")
 
+        result = None
+        
         try:
             result = crowdDesignator.resolve()
         except DesignatorResolvementError:
