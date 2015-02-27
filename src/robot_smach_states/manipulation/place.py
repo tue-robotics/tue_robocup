@@ -26,13 +26,13 @@ class Put(State):
         # Torso to highest position
         robot.spindle.high()
 
-        if arm.side == "left":
+        if arm == robot.arms["left"]:
             goal_y = 0.2
         else:
             goal_y = -0.2
 
         try:
-            height = placement_in_baselink.pose.position.z
+            height = placement_in_baselink.z
         except KeyError:
             height = 0.8
 
