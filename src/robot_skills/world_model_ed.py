@@ -17,18 +17,18 @@ class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
         self._get_constraint_srv = rospy.ServiceProxy('/%s/ed/navigation/get_constraint'%robot_name, GetGoalConstraint)
 
-    def get_position_constraint(self, entity_id, area_name):
+    def get_position_constraint(self, entity_id_area_name_map):
         try:
-            goal_constraint = self._get_constraint_srv(entity_id=entity_id, area_name=area_name)
+            res = self._get_constraint_srv(entity_ids=[ k for k in entity_id_area_name_map ], area_names=[ v for k,v in entity_id_area_name_map.iteritems() ])
         except Exception, e:
             rospy.logerr(e)
             return None
 
-        if goal_constraint.error_msg != '':
-            rospy.logerr(goal_constraint.error_msg)
+        if res.error_msg != '':
+            rospy.logerr(res.error_msg)
             return None
 
-        return PositionConstraint(constraint=goal_constraint.position_constraint, frame=goal_constraint.frame_id)
+        return PositionConstraint(constraint=res.position_constraint_map_frame, frame="/map")
 
 class ED:
     def __init__(self, robot_name, tf_listener, wait_service=False):
