@@ -108,11 +108,11 @@ class WaitForHumanInFront(WaitForDesignator):
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
     """
 
-    def __init__(self, robot, attempts = 1, sleep_interval = 1 ):
+    def __init__(self, robot, attempts = 1, sleep_interval = 1):
         # TODO: add center_point in front of the robot and radius of the search on EdEntityDesignator
         # human_entity = EdEntityDesignator(robot, center_point=gm.PointStamped(x=1.0, frame_id="base_link"), radius=1, id="human")
         human_entity = EdEntityDesignator(robot, id="human")
-        WaitForDesignator.__init__(self, robot, human_entity, attempts)
+        WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
 
 
 
