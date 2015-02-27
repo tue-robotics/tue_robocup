@@ -19,6 +19,8 @@ class NavigateToObserve(NavigateTo):
         self.entity_designator = entity_designator
         self.radius   = radius
 
+        rospy.logerr('NavigateToObserve --> THIS NAVIGATE STATEMACHINE IS DEPRECATED, Use NavigateToSymbolic instead! Check the challenge_navigation for an example!')
+
     def generateConstraint(self):
         e = self.entity_designator.resolve()
 
