@@ -44,6 +44,12 @@ if __name__ == "__main__":
     door2 = door(W, "2", 1.4, 3.3, 0.0 )
     door3 = door(W, "3",-0.5,-0.4, 1.57)
 
+    print "Dynamic door simulator"
+    print "Usage: press keys 1, 2 or 3 to open or close doors one two and three, respectively"
+    print "door 1: arena entrance"
+    print "door 2: living room entrance"
+    print "door 3: living room exit"
+
     while not rospy.is_shutdown():
 
         key = getKey()
