@@ -89,10 +89,11 @@ class Ask_action(smach.State):
             return "failed"
         try:
             if res.result:
-                self.robot.speech.speak("Okay I will {0}".format(res.result))
-                print res
+                say_result = res.result.replace("me","you")
+                self.robot.speech.speak("Okay I will {0}".format(say_result))
+                #print res
 
-                # save_action(res)
+                #save_action(res)
 
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
@@ -103,7 +104,13 @@ class Ask_action(smach.State):
         return "done"
 
     # def save_action(self,res):
-    #     res.choices['1_action']
+    #     a= res.choices['1_action']
+    #     for 
+
+    #     for k,v in res.choices.iteritems()
+
+    #     print "a =", a
+
     #   todo: 
     #       - First get for first action the simple action (for now only navigating to location, room or object, later also direct grabbing object)
     #       - Then get action 2
