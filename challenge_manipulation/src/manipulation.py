@@ -22,6 +22,7 @@ Afterwards, a PDF report has to be made:
 import rospy
 import smach
 import sys
+import random
 
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
@@ -49,17 +50,22 @@ class FormattedSentenceDesignator(Designator):
         return self.fmt.format(**kwargs_resolved)
 
 
-class EntityNotOnListDesignator(EdEntityDesignator):
-    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id_="", parse=True, criteriafuncs=None, exclude_list_designator=None):
-        super(EntityNotOnListDesignator, self).__init__(robot, type, center_point, radius, id_, parse, criteriafuncs)
-        self.exclude_list_designator = exclude_list_designator
-
+class EntityDescriptionDesignator(Designator):
+    """EntityDescriptionDesignator"""
+    def __init__(self, formats, entity_designator):
+        super(EntityDescriptionDesignator, self).__init__()
+        self.entity_designator = entity_designator
+        self.formats = formats
+    
     def resolve(self):
-        entity = super(EntityNotOnListDesignator, self).resolve()
-        if entity in self.exclude_list_designator.resolve():
-            raise DesignatorResolvementError(
-                "Matching entity found but was on exclude list".format(self.query))
-        return entity
+        entity = self.entity_designator.resolve()
+        short_id = entity.id[:5]
+        typ = entity.type
+        fmt = self.formats
+        if not isinstance(fmt, str) and isinstance(fmt, list):
+            fmt = random.choice(fmt)
+        sentence = fmt.format(type=typ, id=short_id)
+        return sentence
 
 
 class EmptySpotDesignator(Designator):
@@ -71,6 +77,7 @@ class EmptySpotDesignator(Designator):
         self.closet_designator = closet_designator
 
     def resolve(self):
+        import ipdb; ipdb.set_trace()
         closet_id = self.closet_designator.resolve().id
         points_of_interest = []
         #TODO define REAL potential locations
@@ -80,7 +87,8 @@ class EmptySpotDesignator(Designator):
         points_of_interest = [gm.PointStamped(start+(spacing*i), 0, 1, frame_id=closet_id) for i in range(steps)]
 
         def is_poi_occupied(poi):
-            return any(self.robot.ed.get_entities(center_point=poi, radius=spacing))
+            entsitie_at_poi = self.robot.ed.get_entities(center_point=poi, radius=spacing)
+            return not any(entities_at_poi)
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
         if any(open_POIs):
@@ -161,7 +169,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'locked':'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add( "ANNOUNCE_ITEM",
-                                    states.Say(robot, FormattedSentenceDesignator("I'm trying to grab item {item.id} which is a {item.type}.", item=current_item), block=False),
+                                    states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", current_item), block=False),
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
