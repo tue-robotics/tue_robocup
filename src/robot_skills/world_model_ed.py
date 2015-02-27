@@ -2,6 +2,8 @@
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest
 from ed.srv import GetGUICommand, GetGUICommandResponse
+from ed_navigation.srv import GetGoalConstraint
+from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.util import transformations
@@ -11,12 +13,31 @@ from std_srvs.srv import Empty #Reset Ed
 
 import yaml
 
+class Navigation:
+    def __init__(self, robot_name, tf_listener, wait_service=False):
+        self._get_constraint_srv = rospy.ServiceProxy('/%s/ed/navigation/get_constraint'%robot_name, GetGoalConstraint)
+
+    def get_position_constraint(self, entity_id, area_name):
+        try:
+            goal_constraint = self._get_constraint_srv(entity_id=entity_id, area_name=area_name)
+        except Exception, e:
+            rospy.logerr(e)
+            return None
+
+        if goal_constraint.error_msg != '':
+            rospy.logerr(goal_constraint.error_msg)
+            return None
+
+        return PositionConstraint(constraint=goal_constraint.position_constraint, frame=goal_constraint.frame_id)
+
 class ED:
     def __init__(self, robot_name, tf_listener, wait_service=False):
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
-        self.tf_listener = tf_listener
+        self._tf_listener = tf_listener
+
+        self.navigation = Navigation(robot_name, tf_listener, wait_service)
 
     def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
         if isinstance(center_point, PointStamped):
