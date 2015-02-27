@@ -145,15 +145,18 @@ class LockingDesignator(Designator):
         self._locked = True
 
     def unlock(self):
+        self._current = None
         self._locked = False
 
     def resolve(self):
         if self._locked:
             if self._current == None:
                 self._current = self.to_be_locked.resolve()
+                rospy.loginfo("{0} locked to {1}".format(self, self._current))
             return self._current
         else:
             self._current = self.to_be_locked.resolve()
+            rospy.loginfo("{0} not resolved to, but is not locked to {1}".format(self, self._current))
             return self._current
 
 
