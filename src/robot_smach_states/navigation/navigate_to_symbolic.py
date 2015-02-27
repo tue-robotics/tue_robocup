@@ -20,7 +20,7 @@ class NavigateToSymbolic(NavigateTo):
 
     def generateConstraint(self):
         ''' PositionConstraint '''
-        entity_id_area_name_map = { k.resolve().id: v for k,v self.entity_designator_area_name_map.iteritems() }
+        entity_id_area_name_map = { k.resolve().id: v for k,v in self.entity_designator_area_name_map.iteritems() }
         pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
 
         ''' Orientation constraint is the entity itself...'''
