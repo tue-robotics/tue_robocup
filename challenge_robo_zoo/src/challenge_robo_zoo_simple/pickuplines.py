@@ -3,7 +3,7 @@ import rospy
 import smach
 
 import robot_smach_states as states
-from look_at_person import LookAtPerson
+# from look_at_person import LookAtPerson
 
 from psi import Compound, Conjunction, Sequence
 
@@ -24,10 +24,10 @@ class Pickup(smach.StateMachine):
                                           
         with self:
             smach.StateMachine.add("LOOK_AT_PERSON",
-                    LookAtPerson(robot),
-                    transitions={   'Done'      :'SAY_HI',
-                                    'Aborted'   :'SAY_HI',
-                                    'Failed'    :'SAY_HI'})
+                    # LookAtPerson(robot),
+                    # transitions={   'Done'      :'SAY_HI',
+                    #                 'Aborted'   :'SAY_HI',
+                    #                 'Failed'    :'SAY_HI'})
 
             # smach.StateMachine.add("WAIT_FOR_PERSON",
             #         states.Wait_queried_perception(self.robot, ["face_recognition"], self.query_detect_face, timeout=10),

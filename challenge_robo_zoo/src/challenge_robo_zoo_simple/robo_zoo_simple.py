@@ -9,13 +9,13 @@ import random
 import std_msgs.msg
 
 from part1 import TurnAround
-from look_at_person import LookAtPerson
+# from look_at_person import LookAtPerson
 from flash_lights import FlashLights
 from walk_like_an_egyptian import WalkLikeAnEgyptian
 from gangnam_style import GangNamStyle
-from boo import Boo
+# from boo import Boo
 from make_jokes import MakeJokes
-from pickuplines import Pickup
+# from pickuplines import Pickup
 from sounds import R2D2, Toeter
 from macarana import Macarena
 from hoofd_schouders_knie_teen import HoofdSchouderKnieTeen
@@ -213,9 +213,9 @@ class RoboZooSimple(smach.StateMachine):
                                     TurnAround(robot),
                                     transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
 
-            smach.StateMachine.add( "LOOK_AT_PERSON",
-                                    LookAtPerson(robot),
-                                    transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
+            # smach.StateMachine.add( "LOOK_AT_PERSON",
+            #                         LookAtPerson(robot),
+            #                         transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
             
             # @smach.cb_interface(outcomes=['done'])
             # def wave_lights_wrapped(*args, **kwargs):
@@ -234,13 +234,13 @@ class RoboZooSimple(smach.StateMachine):
                                     WalkLikeAnEgyptian(robot),
                                     transitions={"Done":"RESET_ALL"})
             
-            smach.StateMachine.add( "BOO",
-                                    Boo(robot),
-                                    transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
+            # smach.StateMachine.add( "BOO",
+            #                         Boo(robot),
+            #                         transitions={"Done":"RESET_ALL", "Aborted":"RESET_ALL", "Failed":"RESET_ALL"})
 
-            smach.StateMachine.add( "PICKUP_LINES",
-                                    Pickup(robot),
-                                    transitions={"Done":"RESET_ALL"})
+            # smach.StateMachine.add( "PICKUP_LINES",
+            #                         Pickup(robot),
+            #                         transitions={"Done":"RESET_ALL"})
             
             smach.StateMachine.add( "R2D2",
                                     R2D2(robot),

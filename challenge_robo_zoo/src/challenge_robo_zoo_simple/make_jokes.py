@@ -3,7 +3,7 @@ import rospy
 import smach
 
 import robot_smach_states as states
-from look_at_person import LookAtPerson
+# from look_at_person import LookAtPerson
 
 jokes = ["Two robots walk into a bar. Hahahahaha, robots can't walk that well",
          "A computer programmer holds up his newly born baby, the mother asks: 'is it a boy or a girl?' He answers: 'yes'."]
@@ -15,11 +15,11 @@ class MakeJokes(smach.StateMachine):
         self.robot = robot
         
         with self:
-            smach.StateMachine.add("LOOK_AT_PERSON",
-                    LookAtPerson(robot),
-                    transitions={   'Done'      :'SAY_HI',
-                                    'Aborted'   :'SAY_HI',
-                                    'Failed'    :'SAY_HI'})
+            # smach.StateMachine.add("LOOK_AT_PERSON",
+            #         LookAtPerson(robot),
+            #         transitions={   'Done'      :'SAY_HI',
+            #                         'Aborted'   :'SAY_HI',
+            #                         'Failed'    :'SAY_HI'})
 
             smach.StateMachine.add( "SAY_HI",
                                     states.Say(robot, ["Howdy, I got a joke for you", "Hi there, I have a joke for you"]),

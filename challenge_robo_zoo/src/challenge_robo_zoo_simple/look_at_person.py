@@ -13,7 +13,7 @@ class LookAtPerson(smach.StateMachine):
 
         with self:
             smach.StateMachine.add("RESET_SPINDLE_HEAD_UP",
-                    states.ResetSpindle_HeadUp(robot),
+                    states.ResetSpindleHeadUp(robot),
                     transitions={'done':'RESET_REASONER'})
                     
             @smach.cb_interface(outcomes=['done'])
