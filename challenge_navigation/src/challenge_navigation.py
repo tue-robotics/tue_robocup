@@ -28,7 +28,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_A'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_A',
-                                states.NavigateToObserve(robot, EdEntityDesignator(robot, id="dinner_table"), radius=0.7),
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="dinner_table") : "near", EdEntityDesignator(robot, id="room_living_room") : "in" }, EdEntityDesignator(robot, id="dinner_table")),
                                 transitions={   'arrived'           :   'SAY_WAYPOINT_A_REACHED',
                                                 'unreachable'       :   'SAY_WAYPOINT_A_FAILED',
                                                 'goal_not_defined'  :   'SAY_WAYPOINT_A_FAILED'})
@@ -54,7 +54,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_B'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_B',
-                                states.NavigateToObserve(robot, EdEntityDesignator(robot, id="black_cabinet2"), radius=0.7),
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="black_cabinet1") : "near", EdEntityDesignator(robot, id="room_living_room") : "in" }, EdEntityDesignator(robot, id="black_cabinet")),
                                 transitions={   'arrived'           :   'SAY_WAYPOINT_B_REACHED',
                                                 'unreachable'       :   'SAY_WAYPOINT_B_FAILED',
                                                 'goal_not_defined'  :   'SAY_WAYPOINT_B_FAILED'})
