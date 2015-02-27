@@ -9,6 +9,8 @@ import random
 from robot_skills.amigo import Amigo
 from robot_smach_states import *
 
+from robot_smach_states.util.designators import DesignatorResolvementError
+
 # from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 # from robot_smach_states.util.startup import startup
 # import robot_skills.util.msg_constructors as msgs
@@ -83,7 +85,8 @@ class LookAtPersonInFront(smach.State):
         print OUT_PREFIX + bcolors.WARNING + "LookAtPersonInFront" + bcolors.ENDC
 
         # get location of the person and make sure the camera points to the head and body
-        self.robot.head.lookAtStandingPerson()
+        #self.robot.head.lookAtStandingPerson()
+	self.robot.head.set_pan_tilt(0,0)
 
         return 'done'
 
@@ -105,13 +108,15 @@ class CancelHeadGoals(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class FindCrowd(smach.State):
-    def __init__(self, robot, designator):
+    def __init__(self, robot):
         smach.State.__init__(self,outcomes=['success', 'failed'])
         self.robot = robot
-        self.designator = designator
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.WARNING + "FindCrowd" + bcolors.ENDC
+
+        foundCrowd = False
+        foundHuman = False
 
         # turn head to one side to start the swipping the room
         self.robot.head.set_pan_tilt(pan=-1.1, tilt=0.0, timeout=3.0)
@@ -120,18 +125,44 @@ class FindCrowd(smach.State):
         # turn head to the other side
         self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=0.0, timeout=5.0)
 
+        # query world model
+        crowdDesignator = EdEntityDesignator(self.robot, id="crowd")
+        humanDesignator = EdEntityDesignator(self.robot, id="human")
 
-        # Get location of people and determine if the proximity makes them a crowd
+        try:
+            result = crowdDesignator.resolve()
+        except DesignatorResolvementError:
+            foundCrowd = False
+            pass
 
-        return 'success'
+        if result:
+            foundCrowd = True
+        else:
+            foundCrowd = False
+
+        if not foundCrowd:
+            try:
+                result = humanDesignator.resolve()
+            except DesignatorResolvementError:
+                pass
+
+            if result:
+                foundCrowd = True
+            else:
+                foundCrowd = False
+
+
+        if foundCrowd or foundHuman:
+            return 'success'
+        else:
+            return 'failed'
 
 # ----------------------------------------------------------------------------------------------------
 
 class DescribeOperator(smach.State):
-    def __init__(self, robot, designator):
+    def __init__(self, robot):
         smach.State.__init__(self,outcomes=['success', 'failed'])
         self.robot = robot
-        self.designator = designator
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.WARNING + "DescribeOperator" + bcolors.ENDC
