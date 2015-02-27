@@ -27,4 +27,6 @@ class NavigateToSymbolic(NavigateTo):
         entity_lookat_id = self.entity_lookat_designator.resolve().id
         oc = OrientationConstraint(frame=entity_lookat_id)
 
+        print pc, oc
+
         return pc, oc
