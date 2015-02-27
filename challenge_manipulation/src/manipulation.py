@@ -38,6 +38,7 @@ ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor']
 BOOKCASE = "hallway_couch"
 
+
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
     def __init__(self, fmt, **kwargs):
@@ -110,7 +111,7 @@ class ManipRecogSingleItem(smach.StateMachine):
     def __init__(self, robot, manipulated_items):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
-
+        
         bookcase = EdEntityDesignator(robot, id=BOOKCASE)
 
         # TODO: Designate items that are
@@ -161,7 +162,8 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
-                current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again. 
+                current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
+                rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
@@ -181,11 +183,15 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'UNLOCK_ITEM2'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
 
             @smach.cb_interface(outcomes=['unlocked'])
-            def unlock(userdata):
+            def unlock_and_ignore(userdata):
+                global ignore_ids
+                # import ipdb; ipdb.set_trace()
+                ignore_ids += [current_item.resolve().id]
+                rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
                 current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
                 return 'unlocked'
             smach.StateMachine.add('UNLOCK_ITEM2',
-                                   smach.CBState(unlock),
+                                   smach.CBState(unlock_and_ignore),
                                    transitions={'unlocked'              :'failed'})
 
             @smach.cb_interface(outcomes=['stored'])
@@ -207,7 +213,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                     'failed'            :'UNLOCK_ITEM1'})
 
             smach.StateMachine.add('UNLOCK_ITEM1',
-                                   smach.CBState(unlock),
+                                   smach.CBState(unlock_and_ignore),
                                    transitions={'unlocked'              :'SAY_HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add( "SAY_HANDOVER_TO_HUMAN",
