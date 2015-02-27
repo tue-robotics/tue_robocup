@@ -29,7 +29,7 @@ class Initialize(smach.State):
         #self.robot.base.reset_costmap()
         rospy.logwarn('ToDo: Reset costmap and reasoner')
 
-        self.robot.ed.reset()
+        # self.robot.ed.reset()
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
         rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
