@@ -129,6 +129,8 @@ class FindCrowd(smach.State):
         crowdDesignator = EdEntityDesignator(self.robot, id="crowd")
         humanDesignator = EdEntityDesignator(self.robot, id="human")
 
+        result = None
+        
         try:
             result = crowdDesignator.resolve()
         except DesignatorResolvementError:

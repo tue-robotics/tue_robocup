@@ -168,7 +168,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add( 'FIND_CROWD_2',
                                         PersonRecStates.FindCrowd(robot),
                                         transitions={   'success':  'SAY_FOUND_CROWD',
-                                                        'failed':   'GOTO_LIVING_ROOM_2'})
+                                                        'failed':   'GOTO_LIVING_ROOM_3'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
                                         NavigateToWaypoint(robot, waypoint_living_room_2),
