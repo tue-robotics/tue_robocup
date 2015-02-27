@@ -77,7 +77,6 @@ class EmptySpotDesignator(Designator):
         self.closet_designator = closet_designator
 
     def resolve(self):
-        import ipdb; ipdb.set_trace()
         closet_id = self.closet_designator.resolve().id
         points_of_interest = []
         #TODO define REAL potential locations
@@ -87,7 +86,7 @@ class EmptySpotDesignator(Designator):
         points_of_interest = [gm.PointStamped(start+(spacing*i), 0, 1, frame_id=closet_id) for i in range(steps)]
 
         def is_poi_occupied(poi):
-            entsitie_at_poi = self.robot.ed.get_entities(center_point=poi, radius=spacing)
+            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=spacing)
             return not any(entities_at_poi)
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
