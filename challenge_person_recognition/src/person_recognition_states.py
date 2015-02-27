@@ -83,8 +83,21 @@ class LookAtPersonInFront(smach.State):
         print OUT_PREFIX + bcolors.WARNING + "LookAtPersonInFront" + bcolors.ENDC
 
         # get location of the person and make sure the camera points to the head and body
+        self.robot.head.lookAtStandingPerson()
 
-        # self.robot.head.set_pan_tilt(pan=0.0, tilt=-0.2, timeout=3.0)
+        return 'done'
+
+# ----------------------------------------------------------------------------------------------------
+
+class CancelHeadGoals(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.WARNING + "CancelHeadGoals" + bcolors.ENDC
+
+        self.robot.head.cancelGoal()
 
         return 'done'
 

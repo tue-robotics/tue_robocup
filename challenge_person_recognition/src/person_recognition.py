@@ -30,15 +30,15 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add( 'START_CHALLENGE',
                                     StartChallengeRobust(robot, 'initial_pose'),
-                                    transitions={   'Done':'SAY_GOTO_ENTRY',
+                                    transitions={   'Done':'GOTO_ENTRY',
                                                     'Aborted':'Aborted',
-                                                    'Failed':'SAY_GOTO_ENTRY'})
+                                                    'Failed':'GOTO_ENTRY'})
 
-            smach.StateMachine.add('SAY_GOTO_ENTRY',
-                                    Say(robot, [    "Going to the entrance.",
-                                                    "Entering the room.",
-                                                    "Here we go."], block=False),
-                                    transitions={   'spoken':'GOTO_ENTRY'})
+            # smach.StateMachine.add('SAY_GOTO_ENTRY',
+            #                         Say(robot, [    "Going to the entrance.",
+            #                                         "Entering the room.",
+            #                                         "Here we go."], block=False),
+            #                         transitions={   'spoken':'GOTO_ENTRY'})
 
             smach.StateMachine.add('GOTO_ENTRY',
                                     NavigateToWaypoint(robot, waypoint_learning),
@@ -57,35 +57,23 @@ class ChallengePersonRecognition(smach.StateMachine):
             with learnOperatorContainer:
 
                 smach.StateMachine.add("SAY_WAITING_OPERATOR",
-                                        Say(robot,"I'm waiting for the operator to stand in front of me.", block=False),
-                                        transitions={'spoken':'WAIT_FOR_OPERATOR'})
+                                        Say(robot,[ "I'm waiting for the operator to stand in front of me.",
+                                                    "Would the operator please stand in front of me.",
+                                                    "I need an operator, please stand in front of me."], block=False),
+                                        transitions={'spoken':'LOOK_AT_OPERATOR'})
 
-                # smach.StateMachine.add('LOOK_AT_OPERATOR',
-                #                         PersonRecStates.LookAtPersonInFront(robot),
-                #                         transitions={'done':'LEARN_PERSON'})
-
-                smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                                        WaitForHumanInFront(robot, attempts=3, sleep_interval=1000),
-                                        transitions={'success':'LOOK_AT_OPERATOR',
-                                                    'failed':'container_failed'})
-
-                # smach.StateMachine.add('WAIT_FOR_OPERATOR',
-                #                        PersonRecStates.WaitForOperator(robot),
-                #                        transitions={'success':'LOOK_AT_OPERATOR',
-                #                                     'failed':'container_failed'})
-                
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
                                         PersonRecStates.LookAtPersonInFront(robot),
-                                        transitions={'done':'LEARN_PERSON'})
+                                        transitions={'done':'WAIT_FOR_OPERATOR'})
 
-                # smach.StateMachine.add('LEARN_PERSON',
-                #                        PersonRecStates.LearnPerson(robot, name="Mister Operator"),
-                #                        transitions={'success':  'SAY_OPERATOR_LEARNED',
-                #                                     'failed':   'container_failed'})
+                smach.StateMachine.add("WAIT_FOR_OPERATOR",
+                                        WaitForHumanInFront(robot, attempts=5, sleep_interval=1),
+                                        transitions={'success':'LEARN_PERSON',
+                                                    'failed':'SAY_WAITING_OPERATOR'})
 
                 # import ipdb; ipdb.set_trace()
                 smach.StateMachine.add('LEARN_PERSON',
-                                        smach_ros.ServiceState('/face_recognition/learn',
+                                        smach_ros.ServiceState('/' + robot_name + '/ed/face_recognition/learn',
                                         LearnPerson,
                                         request = LearnPersonRequest("Operator")),
                                         transitions={   'succeeded':'SAY_OPERATOR_LEARNED',
@@ -101,11 +89,15 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'LEARN_OPERATOR_CONTAINER',
                                     learnOperatorContainer,
                                     transitions={   'container_success':'WAIT_CONTINUE_ITERATOR',
-                                                    'container_failed': 'SAY_FAILED_LEARNING'})
+                                                    'container_failed': 'CANCEL_HEAD_GOALS_1'})
 
-            smach.StateMachine.add('SAY_FAILED_LEARNING',
-                                   Say(robot,"Could not learn my operator's face. Let's try that again.", block=False),
-                                   transitions={    'spoken':'LEARN_OPERATOR_CONTAINER'})
+            smach.StateMachine.add( 'CANCEL_HEAD_GOALS_1',
+                                    PersonRecStates.CancelHeadGoals(robot),
+                                    transitions={    'done':'SAY_FAILED_LEARNING'})
+
+            smach.StateMachine.add( 'SAY_FAILED_LEARNING',
+                                    Say(robot,"Could not learn my operator's face. Let's try that again.", block=True),
+                                    transitions={    'spoken':'LEARN_OPERATOR_CONTAINER'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
