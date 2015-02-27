@@ -220,10 +220,21 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     states.Say(robot, ["I'm can't get rid of this item  myself, can somebody help me maybe?"]),
                                     transitions={   'spoken'            :'HANDOVER_TO_HUMAN'})
     
-            smach.StateMachine.add( "HANDOVER_TO_HUMAN",
-                                    states.HandoverToHuman("left", robot),  # TODO: Use arm_designator for arm
-                                    transitions={   'succeeded'         :'succeeded',
-                                                    'failed'            :'failed'})
+
+            #TODO: Fix this state in manipulation smach states
+            @smach.cb_interface(outcomes=['succeeded', 'failed'])
+            def handover(userdata):
+                try:
+                    arm_with_item_designator.resolve().send_joint_goal('handover')
+                    return 'succeeded'
+                except Exception, e:
+                    rospy.logerr(e)
+                    return 'failed'
+
+            smach.StateMachine.add('HANDOVER_TO_HUMAN',
+                                   smach.CBState(handover),
+                                   transitions={   'succeeded'         :'succeeded',
+                                                    'failed'           :'failed'})
 
 
 def setup_statemachine(robot):
