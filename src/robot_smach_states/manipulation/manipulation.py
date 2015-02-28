@@ -788,17 +788,6 @@ class TorsoToUserPos(smach.State):
         else:
             return 'failed'
 
-class ResetTorso(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
-        self.robot = robot
-
-    def execute(self, userdata):
-        if self.robot.spindle.reset():
-            return 'succeeded'
-        else:
-            return 'failed'
-
 ########################################### State Point ###############################################
 
 class PointMachine(smach.StateMachine):
