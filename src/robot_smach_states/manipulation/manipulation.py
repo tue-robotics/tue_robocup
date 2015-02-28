@@ -315,42 +315,37 @@ class HandoverToHuman(smach.StateMachine):
 
 
 class SetGripper(smach.State):
-    def __init__(self, robot, side, gripperstate='open', drop_from_frame=None, grab_entity_designator=None, timeout=10):
+    def __init__(self, robot, arm_designator, gripperstate='open', drop_from_frame=None, grab_entity_designator=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
-        self.side = side
+        self.arm_designator = arm_designator
         self.robot = robot
         self.gripperstate = gripperstate
         self.grab_entity_designator = grab_entity_designator
         self.timeout = timeout
-        if self.side == self.robot.leftArm:
-            self.end_effector_frame_id = "/amigo/grippoint_left"
-        elif self.side == self.robot.rightArm:
-            self.end_effector_frame_id = "/amigo/grippoint_right"
 
     def execute(self, userdata):
+        arm = self.arm_designator.resolve()
+        if arm == self.robot.arms["left"]:
+            self.end_effector_frame_id = "/amigo/grippoint_left"
+        elif arm == self.robot.arms["right"]:
+            self.end_effector_frame_id = "/amigo/grippoint_right"
+
         ''' If needs attaching to gripper, the grab_entity_designator is used '''
         if self.grab_entity_designator:
             try:
                 entity = self.grab_entity_designator.resolve()
-                try:
-                    self.robot.reasoner.attach_object_to_gripper(entity.id, self.end_effector_frame_id, True)
-                except KeyError, ke:
-                    rospy.logerr("Could not attach object to gripper, do not know which ID: {0}".format(ke))
-
-                #TODO: the designator required by this state should resolve to an entity and not to its ID.
-                self.side.occupied_by = entity
+                arm.occupied_by = entity
             except Exception, e:
                 rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator, e))
 
-        if self.side.send_gripper_goal(self.gripperstate, timeout=self.timeout):
+        if arm.send_gripper_goal(self.gripperstate, timeout=self.timeout):
             result = True
         else:
             result = False
 
         # ToDo: make sure things can get attached to the gripper in this state. Use userdata?
         if self.gripperstate == ArmState.OPEN:
-            self.robot.reasoner.detach_all_from_gripper(self.end_effector_frame_id)
-            self.side.occupied_by = None
+            arm.occupied_by = None
 
         # ToDo: check for failed in other states
         if result:
