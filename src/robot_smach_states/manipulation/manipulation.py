@@ -1,6 +1,5 @@
 import rospy
 import smach
-import robot_smach_states.navigation
 from robot_skills.util import transformations
 
 
@@ -9,123 +8,7 @@ import geometry_msgs
 from robot_smach_states.human_interaction import Say
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
-from ed.srv import SimpleQueryRequest
-
-#TODO: Replace Point_location_hardcoded with a ArmToJointPos-sequence.
-#TODO: Make Place_Object also use a query
-
-#Enum class.
-# ToDo: move to robot_skills because this is robot specific
-class StandardPoses:
-    POINT_AT_OBJECT_BACKWARD = [-0.4 ,-0.750 , 0.50 , 1.50 , 0.000 , 0.7500 , 0.000]
-    POINT_AT_OBJECT_FORWARD = [-0.2 ,-0.250 , 0.40 , 1.25 , 0.000 ,0.500 , 0.000]
-    HOLD_TRAY_POSE = [-0.1, 0.13, 0.4, 1.5, 0, 0.5, 0]
-    SUPPORT_PERSON_POSE = [-0.1, -1.57, 0, 1.57, 0,0,0]
-    RESET_POSE = [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0] # This is the usual
-    #RESET_POSE = [-0.1, 0.13, 0, 0.3, 0, 0.3, 0]
-    #RESET_POSE = [-0.3, -0.05, 0.2, 1.0, 0, 1.0, 0]
-
-class DetermineBaseGraspPose(smach.State):
-    def __init__(self, side, robot, grab_point_designator, basepose_designator, x_offset=None, y_offset=None):
-        """The point from which to grab an entity """
-        smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
-        self.side = side
-        self.robot = robot
-        self.grab_point_designator = grab_point_designator
-        self.basepose_designator = basepose_designator
-
-        if x_offset == None:
-            rospy.logwarn("x_offset not specified, defaulting to 0.5 for arms.")
-            self.x_offset = 0.5
-        else:
-            self.x_offset = x_offset
-
-        if y_offset == None:
-            rospy.logwarn("y_offset not specified, defaulting to (-)0.2 for ... arm.")
-            if self.side == self.robot.leftArm:
-                self.y_offset = 0.2
-            elif self.side == self.robot.rightArm:
-                self.y_offset = -0.2
-        else:
-            self.y_offset = y_offset
-
-        self.nr_inverse_reachability_calls = 0
-        self.max_nr_inverse_reachability_calls = 2
-        self.desired_base_poses_MAP = []
-        self.grasp_point = geometry_msgs.msg.PointStamped()
-
-    def execute(self, userdata):
-
-        ''' Only query the reasoner once (grasp position will not be updated anyway so there is no use in doing this more often)'''
-        if self.nr_inverse_reachability_calls == 0:
-            answers = self.robot.reasoner.query(self.grab_point_designator)
-
-            if answers:
-                answer = answers[0]
-                rospy.loginfo("Answer(0) = {0}".format(answer))
-                self.grasp_point = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
-            else:
-                #rospy.logerr("Cannot get target from reasoner, query = {0}".format(self.grab_point_designator))
-                return 'target_lost'
-
-        ''' Do a new inverse reachability request if nr < max_nr.
-            This way, the grasp pose will be optimal (and the first few tries the change of new information is the highest)
-            If nr == max_nr: check all entries of the latest call to increase robustness'''
-        #rospy.loginfo('Nr of calls = {0} of {1}'.format(self.nr_inverse_reachability_calls,self.max_nr_inverse_reachability_calls))
-        if self.nr_inverse_reachability_calls < self.max_nr_inverse_reachability_calls:
-            self.nr_inverse_reachability_calls += 1
-            #grasp_point_BASE_LINK = transformations.tf_transform(grasp_point, "/map", "/base_link", self.robot.tf_listener)
-            #rospy.loginfo('Grasp point base link = {0}'.format(grasp_point_BASE_LINK))
-            self.desired_base_poses_MAP = self.robot.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)
-            #rospy.loginfo('Grasp poses base in map = {0}'.format(self.desired_base_poses_MAP))
-
-            ''' If there are no base poses, reset costmap and retry '''
-            if not self.desired_base_poses_MAP:
-                self.robot.base.reset_costmap()
-                self.desired_base_poses_MAP = self.robot.get_base_goal_poses(self.grasp_point, self.x_offset, self.y_offset)
-
-        ''' Sanity check: if the orientation is all zero, no feasible base pose has been found '''
-        if not self.desired_base_poses_MAP:
-            self.robot.speech.speak("I am very sorry but the goal point is out of my reach",mood="sad", block=False)
-            return 'failed'
-
-        x   = self.desired_base_poses_MAP[0].pose.position.x
-        y   = self.desired_base_poses_MAP[0].pose.position.y
-        phi = transformations.euler_z_from_quaternion(self.desired_base_poses_MAP[0].pose.orientation)
-        self.desired_base_poses_MAP.pop(0)
-
-        ''' Assert the goal to the reasoner such that navigate generic can use it '''
-        #TODO 3-12-2014: Instead of asserting a pose_2d to the reasoner, store it (or a constraint) in self.basepose_designator
-        self.robot.reasoner.query(Compound("retractall", Compound("base_grasp_pose", Compound("pose_2d", "X", "Y", "Phi"))))
-        self.robot.reasoner.assertz(Compound("base_grasp_pose", Compound("pose_2d", x, y, phi)))
-
-        return 'succeeded'
-
-
-class PrepareOrientation(smach.StateMachine):
-    def __init__(self, side, robot, grab_entity_designator, x_offset=None, y_offset=None):
-        smach.StateMachine.__init__(self, outcomes=['orientation_succeeded','orientation_failed','abort','target_lost'])
-        self.side = side
-        self.robot = robot
-        self.grab_entity_designator = grab_entity_designator
-        if x_offset == None:
-            rospy.logdebug("x_offset not specified, defaulting to 0.5 for arms.")
-            self.x_offset = 0.5
-        else:
-            self.x_offset = x_offset
-
-        if y_offset == None:
-            rospy.logdebug("y_offset not specified, defaulting to (-)0.2 for ... arm.")
-            if self.side == self.robot.leftArm:
-                self.y_offset = 0.2
-            elif self.side == self.robot.rightArm:
-                self.y_offset = -0.2
-        else:
-            self.y_offset = y_offset
-
-        #TODO 3-12-2014: DetermineBaseGraspPose now asserts a base_grasp_pose to the reasoner. Can be replaced by a VariableDesignator
-        basepose_designator = VariableDesignator()
-        self.determine_grasp_pose = DetermineBaseGraspPose(self.side, self.robot, self.grab_entity_designator, basepose_designator, self.x_offset, self.y_offset)
+from robot_smach_states.util.designators import PointStampedOfEntityDesignator
 
         @smach.cb_interface(outcomes=['done'])
         def init_prepare_orientation(userdata):
