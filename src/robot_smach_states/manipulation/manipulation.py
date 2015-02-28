@@ -10,83 +10,28 @@ import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
 from robot_smach_states.util.designators import PointStampedOfEntityDesignator
 
-        @smach.cb_interface(outcomes=['done'])
-        def init_prepare_orientation(userdata):
-            self.determine_grasp_pose.nr_inverse_reachability_calls = 0
-            return "done"
 
-        with self:
+# TODO: poses to move to robot_description:
+# carrying_pose: 0.18, y_home, 0.75, 0, 0, 0, 60
+# handover_pose: 0.6, y_home, 0.966, 0, 0, 0, 30
+# handover_to_human: 
+# prepare_grasp: -0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42
+# 
+# 
 
-            smach.StateMachine.add('INITIALIZE_PREPARE_ORIENTATION', smach.CBState(init_prepare_orientation),
-                                    transitions={   'done':'DETERMINE_GRASP_POSE'})
-
-            smach.StateMachine.add('DETERMINE_GRASP_POSE', self.determine_grasp_pose,
-                transitions={'succeeded'    :'DRIVE_TO_GRASP_POSE',
-                             'failed'       :'orientation_failed',
-                             'target_lost'  :'target_lost'})
-
-            smach.StateMachine.add('DRIVE_TO_GRASP_POSE',
-                navigation.NavigateGeneric(self.robot, basepose_designator), #TODO 3-12-2014: Replace by new navigation state
-                transitions={'arrived'          :'orientation_succeeded',
-                             'unreachable'      :'DETERMINE_GRASP_POSE',
-                             'preempted'        :'abort',
-                             'goal_not_defined' :'DETERMINE_GRASP_POSE'})
-
-########################################### State Prepare grab###############################################
-class Carrying_pose(smach.State):
-    def __init__(self, arm, robot=None):
+class ArmToJointConfig(smach.State):
+    def __init__(self, robot, arm_designator, configuration):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
-        self.arm = arm
+        self.arm_designator = arm_designator
+        self.configuration = configuration
 
-    def execute(self, gl):
-        if self.arm == self.robot.leftArm:
-            y_home = 0.2
-        elif self.arm == self.robot.rightArm:
-            y_home = -0.2
-
-        rospy.loginfo("start moving to carrying pose")
-        if self.arm.send_goal(0.18, y_home, 0.75, 0, 0, 0, 60):
-            rospy.loginfo("arm at carrying pose")
+    def execute(self, userdata=None):
+        arm = self.arm_designator.resolve()
+        if arm.send_joint_goal(self.configuration):
             return 'succeeded'
-        else:
-            rospy.logerr("failed to go to the approach pose")
-            return 'failed'
-
-class PrepareGrasp(smach.State):
-    def __init__(self, arm, robot, grab_entity_designator):
-        """
-        @param grab_entity_designator resolves to a PointStamped
-        """
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
-
-        self.arm = arm
-        self.robot = robot
-        self.grab_entity_designator = grab_entity_designator
-
-    def execute(self, gl):
-
-        # Move arm to desired joint coordinates (no need to wait)
-        # ToDo: don't hardcode
-        self.arm.send_joint_trajectory([[-0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42]])
-
-        # If the z-position of the object is above a suitable threshold, move the spindle so that the object position can later be updated using the laser
-        # Probably do this afterwards
-        grabpoint = self.grab_entity_designator.resolve() #ToDo: 0.55 is a dirty hack, might be better
-
-        if grabpoint:
-            spindle_target = float(grabpoint.point.z) - 0.45
-
-            rospy.logwarn("Temp spindle target")
-            spindle_target = 0.4
-
-            # ToDo: parameterize
-            if (spindle_target > self.robot.spindle.lower_limit):
-                self.robot.spindle.send_goal(spindle_target,timeout=5.0)
-            # Else: there's no point in doing it any other way
-
-        return 'succeeded'
+        return "failed"
 
 class PrepareGraspSafe(smach.State):
     def __init__(self, arm, robot, grab_entity_designator):
