@@ -17,7 +17,13 @@ from robot_smach_states.util.designators import PointStampedOfEntityDesignator
 # handover_to_human: 
 # prepare_grasp: -0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42
 # 
-# 
+# TODO: trajectories to move to robot_description:
+#
+#
+#
+#
+#
+#
 
 class ArmToJointConfig(smach.State):
     def __init__(self, robot, arm_designator, configuration):
@@ -30,6 +36,20 @@ class ArmToJointConfig(smach.State):
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
         if arm.send_joint_goal(self.configuration):
+            return 'succeeded'
+        return "failed"
+
+class ArmToJointTrajectory(smach.State):
+    def __init__(self, robot, arm_designator, trajectory):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+
+        self.robot = robot
+        self.arm_designator = arm_designator
+        self.trajectory = trajectory
+
+    def execute(self, userdata=None):
+        arm = self.arm_designator.resolve()
+        if arm.send_joint_trajectory(self.trajectory):
             return 'succeeded'
         return "failed"
 
