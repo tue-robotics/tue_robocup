@@ -16,6 +16,7 @@ from robot_smach_states.util.designators import PointStampedOfEntityDesignator
 # handover_pose: 0.6, y_home, 0.966, 0, 0, 0, 30
 # handover_to_human: 
 # prepare_grasp: -0.2, -0.044, 0.69, 1.4, -0.13, 0.38, 0.42
+# retract: -0.1, 0.0, 0.0, 0.0, 0.0, 0.0
 # 
 # TODO: trajectories to move to robot_description:
 #
@@ -353,63 +354,6 @@ class SetGripper(smach.State):
         else:
             return 'failed'
 
-class Gripper_to_query_position(smach.StateMachine):
-    def __init__(self, robot, side, point_query):
-        smach.StateMachine.__init__(self, outcomes=['succeeded','failed', 'target_lost'])
-        self.side = side
-        self.robot = robot
-        self.point_query = point_query
-
-        with self:
-            smach.StateMachine.add("PREPARE",
-                                    PrepareOrientation(side, robot, point_query),
-                                    transitions={   'orientation_succeeded':'MOVE_ARM',
-                                                    'orientation_failed':'failed',
-                                                    'abort':'failed',
-                                                    'target_lost':'target_lost'})
-
-            @smach.cb_interface(outcomes=['succeeded', 'failed', 'target_lost'])
-            def move_to_point(userdata):
-                answers = self.robot.reasoner.query(self.point_query)
-
-                if not answers:
-                    rospy.loginfo("No answers for query {0}".format(self.point_query))
-                    return "target_lost"
-                else:
-                    answer = answers[0]
-                    target_position = msgs.PointStamped(float(answer["X"]), float(answer["Y"]), float(answer["Z"]), frame_id = "/map", stamp = rospy.Time())
-                    # Question: why is pre_grasp per definition true?
-                    if self.side.send_goal(target_position.point.x, target_position.point.y, target_position.point.z, 0, 0, 0, 120,
-                                            pre_grasp=True,
-                                            frame_id="/map"):
-                        return 'succeeded'
-                    else:
-                        return 'failed'
-            smach.StateMachine.add('MOVE_ARM', smach.CBState(move_to_point),
-                                transitions={   'succeeded':'succeeded',
-                                                'failed':'failed',
-                                                'target_lost':'target_lost'})
-
-class ArmToJointPos(smach.State):
-    def __init__(self, robot, side, jointgoal, timeout=0, delta=False):
-        smach.State.__init__(self, outcomes=['done', "failed"])
-        self.side = side
-        self.robot = robot
-        self.jointgoal = jointgoal
-        self.timeout = timeout
-        self.delta = delta
-
-    def execute(self, userdata):
-        if not self.delta:
-            result = self.side.send_joint_goal(*self.jointgoal, timeout=self.timeout)
-        if self.delta:
-            result = self.side.send_delta_joint_goal(*self.jointgoal, timeout=self.timeout)
-        if result:
-            return "done"
-        else:
-            return "failed"
-
-ArmToPose = ArmToJointPos
 
 class ArmFollowTrajectory(smach.State):
     def __init__(self, robot, side, trajectory, timeout=0):
@@ -562,16 +506,16 @@ class PointMachine(smach.StateMachine):
                                     Say(robot, "I hope this is the object you were looking for."),
                         transitions={ 'spoken':'RETRACT' })
 
-            smach.StateMachine.add('RETRACT', ArmToUserPose(self.side, -0.1, 0.0, 0.0, 0.0, 0.0, 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
+            smach.StateMachine.add('RETRACT', ArmToJointConfig(self.side, 'retract', time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=True),
                         transitions={'succeeded':'RESET_ARM_SUCCEEDED','failed':'RESET_ARM_SUCCEEDED'})
 
             smach.StateMachine.add('RESET_ARM_SUCCEEDED',
-                                    ArmToJointPos(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),
+                                    ArmToJointConfig(robot, robot.leftArm, 'reset'),
                         transitions={   'done':'succeeded',
                                         'failed':'succeeded'})
 
             smach.StateMachine.add('RESET_ARM_FAILED',
-                                    ArmToJointPos(robot, robot.leftArm, (-0.0830 , -0.2178 , 0.0000 , 0.5900 , 0.3250 , 0.0838 , 0.0800)),
+                                    ArmToJointConfig(robot, robot.leftArm, 'reset'),
                         transitions={   'done':'failed',
                                         'failed':'failed'})
 
