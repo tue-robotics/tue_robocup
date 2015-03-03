@@ -29,7 +29,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
-from robot_skills.util import msg_constructors as gm
+from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 
 import pdf
@@ -80,11 +80,11 @@ class EmptySpotDesignator(Designator):
     def resolve(self):
         closet_id = self.closet_designator.resolve().id
         points_of_interest = []
-        #TODO define REAL potential locations
+        #TODO define REAL potential locations, maybe in entity.data via its yaml file
         spacing = 0.15
         start, end = -0.3, 0.31
         steps = int((end-start)//spacing) + 1
-        points_of_interest = [gm.PointStamped(start+(spacing*i), 0, 1, frame_id=closet_id) for i in range(steps)]
+        points_of_interest = [geom.PointStamped(0, start+(spacing*i), 1, frame_id=closet_id) for i in range(steps)]
 
         def is_poi_occupied(poi):
             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=spacing)
@@ -92,7 +92,9 @@ class EmptySpotDesignator(Designator):
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
         if any(open_POIs):
-            return gm.PoseStamped(pointstamped=open_POIs[0])
+            placement = geom.PoseStamped(pointstamped=open_POIs[0])
+            rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+            return placement
         else:
             raise DesignatorResolvementError("Could not find an empty spot")
 
@@ -135,9 +137,9 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
         current_item = LockingDesignator(EdEntityDesignator(robot, 
-            # center_point=gm.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
+            center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
             criteriafuncs=[not_ignored, size, not_manipulated, has_type], debug=False))
-
+        
         place_position = EmptySpotDesignator(robot, bookcase) 
         
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
