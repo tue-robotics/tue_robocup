@@ -26,9 +26,6 @@ class HearQuestion(smach.State):
         if res:
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
-                if res.result == "what time is it":
-                    rospy.logerr("TODO: implement refering to time!")
-                    self.robot.speech.speak("I don't know the time yet, but it is definetly %s"%data.choice_answer_mapping[res.choices['question']])    
                 self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
             else:
                 self.robot.speech.speak("Sorry, I do not understand your question")
