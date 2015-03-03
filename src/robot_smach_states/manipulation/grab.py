@@ -5,6 +5,7 @@ import smach
 # from geometry_msgs.msg import *
 import robot_skills.util.msg_constructors as msgs
 import robot_skills.util.transformations as transformations
+import tf
 
 from robot_smach_states.state import State
 
@@ -25,10 +26,14 @@ class PickUp(State):
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
 
-        # Transform to base link frame
-        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, robot.robot_name+'/base_link', tf_listener=robot.tf_listener)
-        if goal_bl == None:
-            rospy.logerr('Transformation of goal to base failed')
+        try:
+            # Transform to base link frame
+            goal_bl = transformations.tf_transform(goal_map, grab_entity.id, robot.robot_name+'/base_link', tf_listener=robot.tf_listener)
+            if goal_bl == None:
+                rospy.logerr('Transformation of goal to base failed')
+                return 'failed'
+        except tf.Exception, tfe:
+            rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
             return 'failed'
 
         rospy.loginfo(goal_bl)
