@@ -89,7 +89,7 @@ class ED:
         rospy.sleep(1.0)
 
     def _transform_center_point_to_map(self, pointstamped):
-        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self.tf_listener)
+        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
         return point_in_map
 
 
