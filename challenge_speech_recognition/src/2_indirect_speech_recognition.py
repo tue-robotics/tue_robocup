@@ -11,7 +11,7 @@ import data
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(10)):
-        smach.State.__init__(self, outcomes=["answered"])
+        smach.State.__init__(self, outcomes=["answered","not_answered"])
         self.robot = robot
         self.time_out = time_out
 
@@ -53,10 +53,9 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                states.Initialize(robot, "initial_pose", use_entry_points = True),
-                                transitions={   "Done"              :   "SAY_1",
-                                                "Aborted"           :   "SAY_1",
-                                                "Failed"            :   "SAY_1"})
+                                states.Initialize(robot),
+                                transitions={   'initialized'      :   "SAY_1",
+                                                "abort"            :   "Aborted"})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', HearQuestion(robot), transitions={ 'answered' :'SAY_2', 'not_answered': 'TURN_1'})
