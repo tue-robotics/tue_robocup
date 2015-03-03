@@ -10,8 +10,8 @@ locations_aeuoi = ["appliance"]
 locations_rest = ["bed", "shelf", "table", "trash bin", "bin", "workbench","desk","bar","tulip","plant","dinner table","couch table", "kitchen counter","nightstand"]
 locations = locations_aeuoi + locations_rest
 rooms = ["kitchen", "hallway", "living room", "bedroom", "corridor", "workshop"]
-persons_men = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
-persons_women = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
+persons_women = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
+persons_men = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 persons_general = ["me","a person"] 
 persons = persons_general + persons_men + persons_women
 

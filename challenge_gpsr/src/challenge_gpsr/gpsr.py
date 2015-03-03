@@ -89,11 +89,10 @@ class Ask_action(smach.State):
             return "failed"
         try:
             if res.result:
-                say_result = res.result.replace("me","you")
+                say_result = self.replace_word(res.result,"me","you")
                 self.robot.speech.speak("Okay I will {0}".format(say_result))
-                #print res
-
-                #save_action(res)
+                print say_result
+                self.save_action(res)
 
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
@@ -103,20 +102,97 @@ class Ask_action(smach.State):
 
         return "done"
 
-    # def save_action(self,res):
-    #     a= res.choices['1_action']
-    #     for 
+    def replace_word(self,string,word_in,word_out):
+        try:
+            if string[:2] == word_in:
+                string = string.replace(string[:2],word_out)
 
-    #     for k,v in res.choices.iteritems()
+            if string[(len(string)-2):] == word_in:
+                string = string.replace(string[(len(string)-2):],word_out)
 
-    #     print "a =", a
+            string = string.replace(" "+word_in+" "," "+word_out+" ")
 
+        except KeyError:
+            print "[gpsr] Received action is to short."
+
+        return string
+
+    def save_action(self,res):
+        #a= res.choices['1_action']
+
+        for choice_key, choice_value in res.choices.iteritems():
+            print "choice_key = ", self.add_underscores(str(choice_key))
+            print "choice_value = ", self.add_underscores(str(choice_value))
+
+            self.robot.reasoner.assertz("action_info('"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
+
+       
     #   todo: 
     #       - First get for first action the simple action (for now only navigating to location, room or object, later also direct grabbing object)
     #       - Then get action 2
     #       - Then action 3. (mainly dropoff, report, follow, answer question (including tell time))
     #
+    def add_underscores(self, string):
+        return str(string.replace(" ","_"))
 
+class Query_specific_action(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        action_nr = self.robot.reasoner.query("current_action(A)")
+        #print action_nr
+        if action_nr:
+            #print action_nr[0]['A']
+            current_action = str(action_nr[0]['A'])
+
+        else:
+            self.robot.reasoner.assertz("current_action('1')")
+            current_action = str("1")
+        #print current_action
+            
+
+
+
+        # print answers[0]
+
+        # print answers[0]['A']
+
+        # answers = self.robot.reasoner.query("retractall(action_info(_,_))")
+        # print "test"
+        # print self.robot.reasoner.query("action_info(A,B)")
+
+class Finished_goal(smach.State):
+    # Checks how many tasks have been done and if another task is needed
+    # Does this check with the database in the reasoner
+    def __init__(self,robot):
+        smach.State.__init__(self, outcomes=["new_task", "tasks_completed"])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+
+
+        action_nr = self.robot.reasoner.query("current_action(A)")
+        print action_nr
+        if action_nr:
+            print "finish"
+            print int(action_nr[0]['A'])
+            print str(int(action_nr[0]['A'])+1)
+            self.robot.reasoner.query("retractall(current_action(_))")
+            self.robot.reasoner.assertz("current_action("+str(int(action_nr[0]['A'])+1)+")")
+            action_nr = self.robot.reasoner.query("current_action('A')")
+            print "query after = ", action_nr
+
+        else:
+            print "[gpsr] current_action not found. This should not happen."
+
+        #rospy.sleep(2)
+        return "new_task"
+            
+            
 
 
 
@@ -129,13 +205,15 @@ class Ask_action(smach.State):
 def setup_statemachine(robot):
 
     # Define arm used.    
-    robot = Amigo()
+    # robot = Amigo()
     # arm = rospy.get_param('~arm', 'left')
     # if arm == 'left':
     #     selectedArm = robot.leftArm
     # else:
     #     selectedArm = robot.rightArm
 
+    robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
+    robot.reasoner.query("retractall(current_action(_))")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -163,10 +241,30 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
-                                transitions={'done':'ASK_ACTION',
+                                transitions={'done':'QUERY_SPECIFIC_ACTION',
                                              'failed':'ASK_ACTION'})
 
+        smach.StateMachine.add("QUERY_SPECIFIC_ACTION",
+                                Query_specific_action(robot),
+                                transitions={   'test':'FINISHED_TASK'})
+        #                                         # 'action_get':'SUB_SM_GET',
+        #                                         # 'action_transport':'SUB_SM_TRANSPORT',
+        #                                         # 'action_point':'SUB_SM_POINT',
+        #                                         # 'action_find':'SUB_SM_FIND',
+        #                                         # 'action_navigate':'SUB_SM_NAVIGATE',
+        #                                         # 'action_leave':'SUB_SM_LEAVE',
+        #                                         # 'error':'FINISHED_TASK'})
 
+        # #In case goal is given via speech interpreter:
+        # smach.StateMachine.add("FAILED_TASK",
+        #                         Failed_goal(robot),
+        #                         transitions={'new_task':'RESET_REASONER'})
+
+
+        smach.StateMachine.add("FINISHED_TASK",
+                                Finished_goal(robot),
+                                transitions={'new_task':'ASK_ACTION',
+                                              'tasks_completed':'ASK_ACTION'})
     return sm
 
 if __name__ == "__main__":
