@@ -54,8 +54,15 @@ class ResetSpindle(State):
         State.__init__(self, locals(), outcomes=["done"])
 
     def run(self, robot, timeout):
-
         robot.spindle.reset()
+        return "done"
+
+class ResetTorso(State):
+    def __init__(self, robot, timeout=0.0):
+        State.__init__(self, locals(), outcomes=["done"])
+
+    def run(self, robot, timeout):
+        robot.torso.reset()
         return "done"
 
 class SetSpindle(State):
