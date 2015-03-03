@@ -1,5 +1,6 @@
+from datetime import datetime
 choice_answer_mapping = {
-	"what time is it":"time to buy a watch",
+	"what time is it":"It is %s"%datetime.now().strftime("%I %M %p"),
 	"what is the capital of germany":"berlin",
 	"what is the heaviest animal in the world":"The blue whale",
 	"who is the president of america":"barack obama",
