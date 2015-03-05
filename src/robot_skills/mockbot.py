@@ -5,8 +5,11 @@ import rospy
 import geometry_msgs
 import std_msgs.msg
 import tf
+import robot
 
 import mock
+
+from collections import namedtuple
 
 class Arm(object):
     def __init__(self, robot_name, side, tf_listener):
@@ -47,7 +50,12 @@ class Base(object):
 
 class Ears(object):
     def __init__(self, *args, **kwargs):
-        self.recognize = mock.MagicMock()
+        Answer = namedtuple("Answer", ["result", "choices"])  # A namedtuple is a simple class
+        answer = Answer("I will go to the desk in the kitchen", {})
+        answer.choices["room"] = "kitchen"
+        answer.choices["table"] = "desk"
+
+        self.recognize = lambda spec, choices, time_out: answer
 
 class EButton(object):
     def __init__(self, *args, **kwargs):
@@ -174,7 +182,7 @@ class ED(object):
 #     def __init__(self, tf_listener):
 #         super(MockbotArms, self).__init__(tf_listener)
 
-class Mockbot(object):
+class Mockbot(robot.Robot):
     """
     Interface to all parts of Mockbot. When initializing Mockbot, you can choose a list of components
     which wont be needed
@@ -249,7 +257,7 @@ if __name__ == "__main__":
     print "   \\___/          "
     import atexit
     import util.msg_constructors as msgs
-    from reasoner import Compound, Conjunction, Sequence, Variable
+    # from reasoner import Compound, Conjunction, Sequence, Variable
 
     rospy.init_node("mockbot_executioner", anonymous=True)
     mockbot = Mockbot(wait_services=False)
