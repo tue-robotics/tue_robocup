@@ -89,6 +89,49 @@ class HearOptions(State):
 
         return "no_result"
 
+class HearOptionsExtra(smach.State):
+    """
+    >>> from robot_skills.mockbot import Mockbot
+    >>> mockbot = Mockbot()
+    >>> from robot_smach_states.util.designators import Designator, VariableDesignator
+    >>> spec = Designator("I will go to the <table> in the <room>")
+    >>> choices = Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
+    >>> answer = VariableDesignator()
+    >>> state = HearOptionsExtra(mockbot, spec, choices, answer)
+    >>> outcome = state.execute()
+    """
+    def __init__(self, robot, spec_designator, 
+                        choices_designator, 
+                        speech_result_designator, 
+                        time_out=rospy.Duration(10)):
+        smach.State.__init__(self, outcomes=["heard", "no_result"])
+
+        self.robot = robot
+        self.spec_designator = spec_designator
+        self.choices_designator = choices_designator
+        self.speech_result_designator = speech_result_designator
+        self.time_out = time_out
+
+    def execute(self, userdata=None):
+        spec = self.spec_designator.resolve()
+        choices = self.choices_designator.resolve()
+
+        self.robot.head.lookAtStandingPerson()
+
+        answer = self.robot.ears.recognize(spec, choices, self.time_out)
+
+        self.robot.head.cancelGoal()
+
+        if answer:
+            if answer.result:
+                self.speech_result_designator.current = answer
+                return "heard"
+        else:
+            self.robot.speech.speak("Something is wrong with my ears, please take a look!")
+
+        return "no_result"
+
+
 ##########################################################################################################################################
 
 class AskContinue(smach.StateMachine):
