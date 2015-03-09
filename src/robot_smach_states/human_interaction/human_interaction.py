@@ -141,12 +141,18 @@ class AskContinue(smach.StateMachine):
         self.timeout = timeout
 
         with self:
-            smach.StateMachine.add('SAY',  Say(self.robot, random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])), transitions={'spoken':'HEAR'})
-            smach.StateMachine.add('HEAR', Hear(self.robot, 'continue', self.timeout), transitions={'heard':'continue','not_heard':'no_response'})
+            smach.StateMachine.add('SAY',
+                                    Say(self.robot, 
+                                        random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])), 
+                                    transitions={'spoken':'HEAR'})
+            
+            smach.StateMachine.add('HEAR', 
+                                    Hear(self.robot, 'continue', self.timeout), 
+                                    transitions={'heard':'continue','not_heard':'no_response'})
 
 ##########################################################################################################################################
 
-class WaitForHumanInFront(WaitForDesignator):
+class WaitForPersonInFront(WaitForDesignator):
     """
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
     """
