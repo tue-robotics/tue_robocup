@@ -67,7 +67,7 @@ class Head():
     def wait(self, timeout=10):
         self._ac_head_ref_action.wait_for_result(rospy.Duration(timeout))
 
-        if self._ac_head_ref_action.get_state() == GoalStatus.SUCCEEDED:
+        if self._ac_head_ref_action.get_state() == actionlib.GoalStatus.SUCCEEDED:
             rospy.loginfo("Head target reached")
             return True
         else:
