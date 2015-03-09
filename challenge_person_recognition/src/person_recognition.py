@@ -64,26 +64,31 @@ class ChallengePersonRecognition(smach.StateMachine):
             with learnOperatorContainer:
 
                 smach.StateMachine.add("SAY_WAITING_OPERATOR",
-                                        states.Say(robot,[ "I'm waiting for the operator to stand in front of me.",
-                                                    "Would the operator please come forward.",
-                                                    "I need an operator, please stand in front of me."], block=False),
+                                        states.Say(robot,[  "I'm waiting for the operator to stand in front of me.",
+                                                            "Would the operator please come forward.",
+                                                            "I need an operator, please stand in front of me."], block=False),
                                         transitions={   'spoken':'LOOK_AT_OPERATOR'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
                                         PersonRecStates.LookAtPersonInFront(robot),
-                                        transitions={   'done':'WAIT_FOR_OPERATOR'})
+                                        transitions={   'succeded':'WAIT_FOR_OPERATOR',
+                                                        'failed':'WAIT_FOR_OPERATOR'})
 
                 smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                                        states.WaitForHumanInFront(robot, attempts=8, sleep_interval=1),
+                                        states.WaitForPersonInFront(robot, attempts=8, sleep_interval=1),
                                         transitions={   'success':'ASK_PERSON_NAME',
                                                         'failed':'SAY_WAITING_OPERATOR'})
 
                 smach.StateMachine.add('ASK_PERSON_NAME',
                                         PersonRecStates.AskPersonName(robot),
                                         remapping={     'personName_out':'personName_userData'},
-                                        transitions={   'succeded':'LEARN_PERSON',
+                                        transitions={   'succeded':'LOOK_AT_OPERATOR_2',
                                                         'failed':'SAY_LEARN_NAME_FAILED'})
-                # import ipdb; ipdb.set_trace()
+
+                smach.StateMachine.add('LOOK_AT_OPERATOR_2',
+                                        PersonRecStates.LookAtPersonInFront(robot),
+                                        transitions={   'succeded':'LEARN_PERSON',
+                                                        'failed':'LEARN_PERSON'})
 
                 smach.StateMachine.add('LEARN_PERSON',
                                         PersonRecStates.LearnPerson(robot),
@@ -92,7 +97,8 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed_learning':'SAY_LEARN_FACE_FAILED'})
 
                 smach.StateMachine.add('SAY_LEARN_NAME_FAILED',
-                                       states.Say(robot,"I did not understand your name, could you repeat it?"),
+                                       states.Say(robot, [  "I did not understand your name, could you repeat it?",
+                                                            "Could you repeat your name?"]),
                                        transitions={    'spoken':'ASK_PERSON_NAME'})
 
                 smach.StateMachine.add('SAY_LEARN_FACE_FAILED',
@@ -201,8 +207,9 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':   'container_failed'})
 
                 smach.StateMachine.add( 'SAY_FOUND_CROWD',
-                                        states.Say(robot,"I think I found it.", block=False),
-                                        transitions={   'spoken':'container_success'})
+                                        states.Say(robot,[  "I think I found it.",
+                                                            "I think I saw several people over there"], block=False),
+                                        transitions={   'spoken':'GOTO_CROWD'})
 
 
                 smach.StateMachine.add('GOTO_CROWD',
