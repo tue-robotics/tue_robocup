@@ -34,8 +34,8 @@ from math import degrees, radians
 
 class ArmState:      
     """Specifies a State either OPEN or CLOSE"""       
-    OPEN = 0       
-    CLOSE = 1
+    OPEN = "open"      
+    CLOSE = "close"
 
 
 class Arm(object):
@@ -212,10 +212,14 @@ class Arm(object):
 
         self._ac_gripper.send_goal(goal)
         if timeout == 0.0 or timeout is None:
+            if state == 'open':
+                self.occupied_by = None
             return True
         else:
             self._ac_gripper.wait_for_result(rospy.Duration(timeout))
             if self._ac_gripper.get_state() == GoalStatus.SUCCEEDED:
+                if state == 'open':
+                    self.occupied_by = None
                 return True
             else:
                 return False
