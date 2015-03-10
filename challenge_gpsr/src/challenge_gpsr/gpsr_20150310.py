@@ -12,6 +12,7 @@ import robot_smach_states as states
 import robot_skills.util.msg_constructors as msgs
 
 from robot_smach_states.util.startup import startup
+from robot_smach_states.util.designators import EdEntityDesignator
 
 import data
 
@@ -104,11 +105,11 @@ class Ask_action(smach.State):
 
     def replace_word(self,string,word_in,word_out):
         try:
-            if string[:len(word_in)] == word_in:
-                string = string.replace(string[:len(word_in)],word_out)
+            if string[:2] == word_in:
+                string = string.replace(string[:2],word_out)
 
-            if string[(len(string)-len(word_in)):] == word_in:
-                string = string.replace(string[(len(string)-len(word_in)):],word_out)
+            if string[(len(string)-2):] == word_in:
+                string = string.replace(string[(len(string)-2):],word_out)
 
             string = string.replace(" "+word_in+" "," "+word_out+" ")
 
@@ -118,13 +119,21 @@ class Ask_action(smach.State):
         return string
 
     def save_action(self,res):
-        #a= res.choices['1_action']
-
+        
         for choice_key, choice_value in res.choices.iteritems():
             print "choice_key = ", self.add_underscores(str(choice_key))
             print "choice_value = ", self.add_underscores(str(choice_value))
 
-            self.robot.reasoner.assertz("action_info('"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
+            
+            if not choice_key[:1].find("1"):
+                print " 1 = ", choice_key[:1]             
+                self.robot.reasoner.assertz("action_info('1','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
+            if not choice_key[:1].find("2") : 
+                print " 2 = ", choice_key[:1] 
+                self.robot.reasoner.assertz("action_info('2','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")  
+            if not choice_key[:1].find("3"):
+                print " 3 = ", choice_key[:1]   
+                self.robot.reasoner.assertz("action_info('3','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
 
        
     #   todo: 
@@ -137,7 +146,7 @@ class Ask_action(smach.State):
 
 class Query_specific_action(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
+        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -151,8 +160,38 @@ class Query_specific_action(smach.State):
         else:
             self.robot.reasoner.assertz("current_action('1')")
             current_action = str("1")
-        #print current_action
-            
+        print current_action
+
+        if current_action == "1":
+            action = self.robot.reasoner.query("action_info('1',A,B)")
+
+            for x in action:
+                for choice_key, choice_value in x.iteritems():
+                    print "choice_value = ", str(choice_value)
+
+                    if str(choice_value) == "1_locations_rooms":
+                        print "locations_rooms = ", self.robot.reasoner.query("action_info('1','1_locations_rooms',B)")[0]['B']
+                        return "navigate_room"
+                    if str(choice_value) == "1_locations_aeuoi":
+                        print "1_locations_aeuoi = ", self.robot.reasoner.query("action_info('1','1_locations_aeuoi',B)")[0]
+                        self.robot.reasoner.retractall("action_info('1','1_locations_aeuoi',A")
+                        self.robot.reasoner.assertz("action_info('1','1_location',"+choice_value+")")
+
+                        return "navigate_location"
+                    if str(choice_value) == "1_locations_rest":
+                        print "1_locations_rest = ", self.robot.reasoner.query("action_info('1','1_locations_rest',B)")[0]
+                        self.robot.reasoner.retractall("action_info('1','1_locations_rest',A)")
+                        self.robot.reasoner.assertz("action_info('1','1_location',"+choice_value+")")
+
+                        print "testingggg =", self.robot.reasoner.query("action_info('1','1_location',A)")[0]
+
+                        return "navigate_location"            
+
+        elif current_action == "2":
+            print self.robot.reasoner.query("action_info('1',A,B)")
+
+        elif current_action == "3":
+            print self.robot.reasoner.query("action_info('1',A,B)")
 
 
 
@@ -215,6 +254,8 @@ def setup_statemachine(robot):
 
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
     robot.reasoner.query("retractall(current_action(_))")
+    robot.reasoner.query("retractall(action_info(_,_,_))")
+            
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
@@ -247,7 +288,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("QUERY_SPECIFIC_ACTION",
                                 Query_specific_action(robot),
-                                transitions={   'test':'FINISHED_TASK'})
+                                transitions={   'navigate_room':'ACTION_NAVIGATE_TO_ROOM',
+                                                'navigate_location':'ACTION_NAVIGATE_TO_LOCATION',
+                                                'test':'FINISHED_TASK'})
+
         #                                         # 'action_get':'SUB_SM_GET',
         #                                         # 'action_transport':'SUB_SM_TRANSPORT',
         #                                         # 'action_point':'SUB_SM_POINT',
@@ -261,6 +305,20 @@ def setup_statemachine(robot):
         #                         Failed_goal(robot),
         #                         transitions={'new_task':'RESET_REASONER'})
 
+        smach.StateMachine.add('ACTION_NAVIGATE_TO_LOCATION',
+                                states.NavigateToSymbolic(robot, 
+                                    {EdEntityDesignator(robot, id="plastic_cabinet") : "in_front_of"}, EdEntityDesignator(robot, id="plastic_cabinet")),
+                                transitions={   'arrived'           :   'FINISHED_TASK',
+                                                'unreachable'       :   'FINISHED_TASK',
+                                                'goal_not_defined'  :   'FINISHED_TASK'}) 
+
+        smach.StateMachine.add('ACTION_NAVIGATE_TO_ROOM',
+                                states.NavigateToSymbolic(robot, 
+                                    {EdEntityDesignator(robot, id=("room_"+str(robot.reasoner.query("action_info('1','1_locations_rooms',A)")[0]['A']))) : "in" }, 
+                                    EdEntityDesignator(robot, id=("room_"+str(robot.reasoner.query("action_info('1','1_locations_rooms',A)")[0]['A'])))),
+                                transitions={   'arrived'           :   'FINISHED_TASK',
+                                                'unreachable'       :   'FINISHED_TASK',
+                                                'goal_not_defined'  :   'FINISHED_TASK'}) 
 
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
