@@ -207,7 +207,7 @@ class Arm(object):
         elif state == 'close':
             goal.command.direction = GripperCommand.CLOSE
         else:
-            rospy.logerror('State shoulde be open or close, now it is {0}'.format(state))
+            rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
             return False
 
         self._ac_gripper.send_goal(goal)
