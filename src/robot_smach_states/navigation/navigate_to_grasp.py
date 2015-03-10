@@ -42,11 +42,7 @@ class NavigateToGrasp(NavigateTo):
             rospy.logerr("No such entity")
             return None
 
-        print entity
-
-        if not entity:
-            rospy.logerr("No such entity")
-            return None
+        rospy.loginfo("Navigating to grasp entity id:{0}".format(entity.id))
 
         try:
             pose = entity.pose #TODO Janno: Not all entities have pose information

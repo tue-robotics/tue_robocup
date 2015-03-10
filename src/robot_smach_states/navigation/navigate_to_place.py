@@ -46,11 +46,7 @@ class NavigateToPlace(NavigateTo):
             rospy.logerr("No such place_pose")
             return None
 
-        print place_pose
-
-        if not place_pose:
-            rospy.logerr("No such place_pose")
-            return None
+        rospy.loginfo("Navigating to place at {0}".format(place_pose).replace('\n', ' '))
 
         try:
             x = place_pose.pose.position.x
