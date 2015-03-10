@@ -3,6 +3,7 @@ import roslib;
 import rospy
 import smach
 import sys
+import random
 
 import robot_smach_states as states
 from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator
@@ -27,11 +28,13 @@ class HearQuestion(smach.State):
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
                 self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
+                self.robot.head.cancelGoal()
+                return "answered"
             else:
                 self.robot.speech.speak("Sorry, I do not understand your question")
 
         self.robot.head.cancelGoal()
-        return "answered"
+        return "not_answered"
 
 class Turn(smach.State):
     def __init__(self, robot):
@@ -40,8 +43,10 @@ class Turn(smach.State):
 
     def execute(self, userdata):
         # TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely)
-
-        print "TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely) "
+        vth = 0.5
+        th = 3.1415 * (2.0/3.0) 
+        print "Turning %f radians with force drive" % th
+        self.robot.base.force_drive(0, 0, random.choice([-1.0, 1.0]) * vth, th / vth)
 
         return "turned"
 
