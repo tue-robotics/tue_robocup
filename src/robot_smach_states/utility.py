@@ -343,6 +343,26 @@ class CallFunction(State):
             rospy.logerr(e)
             return 'failed'
 
+class LockDesignator(smach.State):
+    def __init__(self, locking_designator):
+        smach.State.__init__(self, outcomes=['locked'])
+        self.locking_designator = locking_designator
+
+    def execute(self, userdata=None):
+        self.locking_designator.lock()
+        rospy.loginfo("locking_designator {1} is now locked to {0}".format(str(self.locking_designator.resolve())[10:], self.locking_designator))
+        return 'locked'
+
+class UnlockDesignator(smach.State):
+    def __init__(self, locking_designator):
+        smach.State.__init__(self, outcomes=['unlocked'])
+        self.locking_designator = locking_designator
+
+    def execute(self, userdata=None):
+        rospy.loginfo("locking_designator {1} is going to unlock from {0}".format(str(self.locking_designator.resolve())[10:], self.locking_designator))
+        self.locking_designator.unlock()
+        return 'unlocked'
+
 
 if __name__ == "__main__":
     import doctest

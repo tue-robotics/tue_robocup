@@ -7,9 +7,10 @@ import geometry_msgs
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetTorso
+from robot_smach_states.utility import LockDesignator, UnlockDesignator
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
-from robot_smach_states.util.designators import PointStampedOfEntityDesignator, DesignatorResolvementError
+from robot_smach_states.util.designators import PointStampedOfEntityDesignator, DesignatorResolvementError, LockingDesignator
 
 
 # TODO: poses to move to robot_description:
@@ -277,14 +278,20 @@ class HandoverToHuman(smach.StateMachine):
     def __init__(self, robot, arm_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
+        #A designator can resolve to a different item every time its resolved. We don't want that here, so lock
+        locked_arm = LockingDesignator(arm_designator) 
+
         with self:
+            smach.StateMachine.add("LOCK_ARM",
+                        LockDesignator(locked_arm),
+                        transitions={'locked'         :'SPINDLE_MEDIUM'})
 
             smach.StateMachine.add("SPINDLE_MEDIUM",
                         ResetTorso(robot),
                         transitions={'done'         :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
 
             smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL",
-                        ArmToJointConfig(robot, arm_designator, 'handover_to_human'),
+                        ArmToJointConfig(robot, locked_arm, 'handover_to_human'),
                         transitions={   'succeeded' :'SAY_OPEN_GRIPPER',
                                       'failed'      :'SAY_OPEN_GRIPPER'})
             #smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
@@ -294,22 +301,26 @@ class HandoverToHuman(smach.StateMachine):
                         Say(robot, [ "Be careful, I will open my gripper now"]),
                         transitions={   'spoken'    :'OPEN_GRIPPER_HANDOVER'})
 
-            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, arm_designator, gripperstate=ArmState.OPEN),
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.OPEN),
                         transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
                                      'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, arm_designator, gripperstate=ArmState.CLOSE, timeout=0.0),
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.CLOSE, timeout=0.0),
                         transitions={'succeeded'    :   'RESET_ARM',
                                      'failed'       :   'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
-                        ArmToJointConfig(robot, arm_designator, 'reset'),
+                        ArmToJointConfig(robot, locked_arm, 'reset'),
                         transitions={'succeeded'    :'RESET_TORSO',
                                       'failed'      :'RESET_TORSO'    })
 
             smach.StateMachine.add('RESET_TORSO',
                         ResetTorso(robot),
-                        transitions={'done':'succeeded'})
+                        transitions={'done':'UNLOCK_ARM'})
+
+            smach.StateMachine.add("UNLOCK_ARM",
+                        UnlockDesignator(locked_arm),
+                        transitions={'unlocked'         :'succeeded'})
 
 
 class SetGripper(smach.State):
