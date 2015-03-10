@@ -11,6 +11,7 @@ import actionlib
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import TwistStamped, Twist, Quaternion
 
+from diagnostic_msgs.msg import DiagnosticStatus, DiagnosticArray
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
@@ -61,6 +62,7 @@ class Arm(object):
         self.tf_listener = tf_listener
 
         self._occupied_by = None
+        self._operational = None
 
         # Get stuff from the parameter server
         self.offset = self.load_param('/skills/arm/offset/' + self.side)
@@ -71,6 +73,9 @@ class Arm(object):
 
         self.default_configurations = self.load_param('/skills/arm/default_configurations')
         self.default_trajectories   = self.load_param('/skills/arm/default_trajectories')
+
+        # listen to the hardware status to determine if the arm is available
+        rospy.Subscriber("/amigo/hardware_status", DiagnosticArray, self.cb_hardware_status)
 
         # Init gripper actionlib
         self._ac_gripper = actionlib.SimpleActionClient("/" + robot_name + "/" + self.side + "_arm/gripper/action", GripperCommandAction)
@@ -105,6 +110,37 @@ class Arm(object):
         self._ac_gripper.cancel_all_goals()
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
+
+    def get_operational(self):
+        return self._operational
+
+    def set_operational(self, value):
+        self._operational = value
+
+    def del_operational(self):
+        del self._operational
+
+    operational = property(get_operational, set_operational, del_operational, "Is the arm operational?")
+
+    def cb_hardware_status(self, msg):
+        diags = [diag for diag in msg.status if diag.name == self.side + '_arm']
+        
+        if len(diags) == 0:
+            rospy.logwarn('no diagnostic msg received for the %s arm' % self.side)
+        elif len(diags) != 1:
+            rospy.logwarn('multiple diagnostic msgs received for the %s arm' % self.side)
+        else:
+            level = diags[0].level
+
+            # 0. Stale
+            # 1. Idle
+            # 2. Operational
+            # 3. Homing
+            # 4. Error
+            if level != 2:
+                self.operational = False
+            else:
+                self.operational = True
 
     def send_goal(self, px, py, pz, roll, pitch, yaw,
                   timeout=30,
@@ -207,7 +243,7 @@ class Arm(object):
         elif state == 'close':
             goal.command.direction = GripperCommand.CLOSE
         else:
-            rospy.logerror('State shoulde be open or close, now it is {0}'.format(state))
+            rospy.logerr('State shoulde be open or close, now it is {0}'.format(state))
             return False
 
         self._ac_gripper.send_goal(goal)
