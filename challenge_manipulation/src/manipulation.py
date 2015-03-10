@@ -37,6 +37,7 @@ import pdf
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor']
 BOOKCASE = "hallway_couch"
+PLACE_HEIGHT = 1.0
 
 
 class FormattedSentenceDesignator(Designator):
@@ -84,7 +85,7 @@ class EmptySpotDesignator(Designator):
         spacing = 0.15
         start, end = -0.3, 0.31
         steps = int((end-start)//spacing) + 1
-        points_of_interest = [geom.PointStamped(0, start+(spacing*i), 1, frame_id=closet_id) for i in range(steps)]
+        points_of_interest = [geom.PointStamped(0, start+(spacing*i), PLACE_HEIGHT, frame_id=closet_id) for i in range(steps)]
 
         def is_poi_occupied(poi):
             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=spacing)

@@ -1,10 +1,12 @@
 # Manipulation and Object recognition
 
-Responsible: Sjoerd & Ramon
-
-
+Responsible: Loy & Ramon
 
 ## Startup
+
+1. Place the robot near or in front of the bookcase, cabinet or closet it is supposed to grasp from. This is currently hardcoded into variable BOOKCASE.
+2. Place 5 items in the bookcase
+3. In this bookcase, there should be 1 empty shelve at height PLACE_HEIGHT. 
 
 amigo1/sergio1:
 
@@ -26,19 +28,24 @@ amigo3:
 
     asdf
 
-    rosrun challenge_rips rips.py [robot_name]
+    rosrun challenge_manipulation manipulation.py [robot_name]
 
     or
 
-    hear continue #Don't pree enter just yet
+    hear continue #Don't press enter just yet
 
 Unplug the network cable in amigo.
 localhost:
     sshamigo3 #This will not work because amigo is unplugged
 
-
-
 # Notes
 
-During the challenge:
-    - some stuff here
+During the challenge
+--------------------
+
+    Nothing to do, just tay out the way :-)
+
+After the challenge
+-------------------
+
+    - Get the USB stick and inspect the classes in the file manipulation.pdf
