@@ -37,6 +37,7 @@ import pdf
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor']
 BOOKCASE = "hallway_couch"
+ROOM = "room_hallway"
 PLACE_HEIGHT = 1.0
 
 
@@ -154,7 +155,8 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
-                                    states.NavigateToObserve(robot, bookcase),
+                                    #states.NavigateToObserve(robot, bookcase),
+                                    states.NavigateToSymbolic(robot, {bookcase:"near", EdEntityDesignator(robot, id=ROOM):"in"}, bookcase),
                                     transitions={   'arrived'           :'LOOKAT_BOOKCASE',
                                                     'unreachable'       :'LOOKAT_BOOKCASE',
                                                     'goal_not_defined'  :'LOOKAT_BOOKCASE'})
