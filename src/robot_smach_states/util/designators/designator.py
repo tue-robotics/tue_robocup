@@ -156,7 +156,7 @@ class LockingDesignator(Designator):
             return self._current
         else:
             self._current = self.to_be_locked.resolve()
-            rospy.loginfo("{0} not resolved to, but is not locked to {1}".format(self, self._current))
+            rospy.loginfo("{0} not resolved to, but is not locked to {1}".format(self, str(self._current)[:10]))
             return self._current
 
 

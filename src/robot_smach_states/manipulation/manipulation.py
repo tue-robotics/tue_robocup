@@ -281,19 +281,18 @@ class HandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add("SPINDLE_MEDIUM",
                         ResetTorso(robot),
-                        transitions={'succeeded':'MOVE_HUMAN_HANDOVER_JOINT_GOAL',
-                                     'failed'   :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
+                        transitions={'done'         :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
 
             smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL",
                         ArmToJointConfig(robot, arm_designator, 'handover_to_human'),
-                        transitions={   'done':'SAY_OPEN_GRIPPER',
-                                      'failed':'SAY_OPEN_GRIPPER'})
+                        transitions={   'succeeded' :'SAY_OPEN_GRIPPER',
+                                      'failed'      :'SAY_OPEN_GRIPPER'})
             #smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
             #            transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
 
             smach.StateMachine.add("SAY_OPEN_GRIPPER",
                         Say(robot, [ "Be careful, I will open my gripper now"]),
-                        transitions={   'spoken':'OPEN_GRIPPER_HANDOVER'})
+                        transitions={   'spoken'    :'OPEN_GRIPPER_HANDOVER'})
 
             smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, arm_designator, gripperstate=ArmState.OPEN),
                         transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
@@ -305,13 +304,12 @@ class HandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add('RESET_ARM',
                         ArmToJointConfig(robot, arm_designator, 'reset'),
-                        transitions={   'done':'RESET_TORSO',
-                                      'failed':'RESET_TORSO'    })
+                        transitions={'succeeded'    :'RESET_TORSO',
+                                      'failed'      :'RESET_TORSO'    })
 
             smach.StateMachine.add('RESET_TORSO',
                         ResetTorso(robot),
-                        transitions={'succeeded':'succeeded',
-                                     'failed'   :'succeeded'})
+                        transitions={'done':'succeeded'})
 
 
 class SetGripper(smach.State):
