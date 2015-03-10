@@ -37,6 +37,7 @@ import pdf
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor']
 BOOKCASE = "hallway_couch"
+ROOM = "room_hallway"
 PLACE_HEIGHT = 1.0
 
 
@@ -154,7 +155,8 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
-                                    states.NavigateToObserve(robot, bookcase),
+                                    #states.NavigateToObserve(robot, bookcase),
+                                    states.NavigateToSymbolic(robot, {bookcase:"near", EdEntityDesignator(robot, id=ROOM):"in"}, bookcase),
                                     transitions={   'arrived'           :'LOOKAT_BOOKCASE',
                                                     'unreachable'       :'LOOKAT_BOOKCASE',
                                                     'goal_not_defined'  :'LOOKAT_BOOKCASE'})
@@ -183,7 +185,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad"),
-                                    transitions={   'spoken'            :'UNLOCK_ITEM2'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
+                                    transitions={   'spoken'            :'UNLOCK_ITEM_AFTER_FAILED_GRAB'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
 
             @smach.cb_interface(outcomes=['unlocked'])
             def unlock_and_ignore(userdata):
@@ -193,7 +195,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                 rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
                 current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
                 return 'unlocked'
-            smach.StateMachine.add('UNLOCK_ITEM2',
+            smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
                                    smach.CBState(unlock_and_ignore),
                                    transitions={'unlocked'              :'failed'})
 
@@ -212,32 +214,25 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "PLACE_ITEM",
                                     Place(robot, current_item, place_position, arm_with_item_designator),
-                                    transitions={   'done'              :'succeeded',
-                                                    'failed'            :'UNLOCK_ITEM1'})
+                                    transitions={   'done'              :'UNLOCK_ITEM_AFTER_SUCCESSFUL_PLACE',
+                                                    'failed'            :'SAY_HANDOVER_TO_HUMAN'})
 
-            smach.StateMachine.add('UNLOCK_ITEM1',
+            smach.StateMachine.add('UNLOCK_ITEM_AFTER_SUCCESSFUL_PLACE',
                                    smach.CBState(unlock_and_ignore),
-                                   transitions={'unlocked'              :'SAY_HANDOVER_TO_HUMAN'})
+                                   transitions={'unlocked'              :'succeeded'})
 
             smach.StateMachine.add( "SAY_HANDOVER_TO_HUMAN",
                                     states.Say(robot, ["I'm can't get rid of this item  myself, can somebody help me maybe?"]),
                                     transitions={   'spoken'            :'HANDOVER_TO_HUMAN'})
-    
-
-            #TODO: Fix this state in manipulation smach states
-            @smach.cb_interface(outcomes=['succeeded', 'failed'])
-            def handover(userdata):
-                try:
-                    arm_with_item_designator.resolve().send_joint_goal('handover')
-                    return 'succeeded'
-                except Exception, e:
-                    rospy.logerr(e)
-                    return 'failed'
 
             smach.StateMachine.add('HANDOVER_TO_HUMAN',
-                                   smach.CBState(handover),
-                                   transitions={   'succeeded'         :'succeeded',
-                                                    'failed'           :'failed'})
+                                   states.HandoverToHuman(robot, arm_with_item_designator),
+                                   transitions={   'succeeded'         :'UNLOCK_AFTER_HANDOVER',
+                                                    'failed'           :'UNLOCK_AFTER_HANDOVER'})
+
+            smach.StateMachine.add('UNLOCK_AFTER_HANDOVER',
+                                   smach.CBState(unlock_and_ignore),
+                                   transitions={'unlocked'              :'failed'})
 
 
 def setup_statemachine(robot):
