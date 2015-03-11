@@ -12,7 +12,7 @@ amigo1:
 ### HOW TO TEST:
 
 Run speech generator to get several sentences that amigo should be able to hear:
-    3. rosrun challenge_gpsr speech_generator.py
+    3. rosrun challenge_gpsr generate_random_sentence.py
 
 This file can be re-executed to get new sentence.
 Sentences can sometimes be unclear or not logic. Please mention in test report.
