@@ -2,10 +2,10 @@
 
 ### STARTUP:
 
-amigo2:
+amigo1:
     1. ahardware
 
-amigo1:   
+amigo1:
     2. amiddle
 
 
@@ -18,10 +18,10 @@ This file can be re-executed to get new sentence.
 Sentences can sometimes be unclear or not logic. Please mention in test report.
 
 Then run on the same amigo pc:
-    4. rosrun swi_prolog swipl_server 
+    4. rosrun swi_prolog swipl_server
     5. rosrun challenge_gpsr gpsr.py amigo
 
-Amigo will say "What can I do for you?" and then you can say your sentence. 
+Amigo will say "What can I do for you?" and then you can say your sentence.
 
 !!! Please mention in your test results how many times amigo was able to understand you !!!
 !!! Also mention weird actions to say to amigo !!!
@@ -38,7 +38,7 @@ Amigo will say "What can I do for you?" and then you can say your sentence.
 
 
 
-    
+
     -------------------
     --- FAKE SPEECH ---
     -------------------
@@ -48,18 +48,18 @@ Amigo will say "What can I do for you?" and then you can say your sentence.
 	Go to a browser, type : 192.168.2.91:8000 (amigo1)
 	Then in gui to "Amigo hear" and type sentence and enter.
 	The way amigo will hear it is shown.
-    
+
     NOT ALLOWED IN ROBOCUP:
     In terminal type (no quotation marks are needed):
     hear give me a drink
-    or 
+    or
     hear yes
 
 INSTRUCTIONS:
 Amigo will go to the initial position (meeting point) and ask for a task.
 
 Amigo should give feedback during getting the action. At the moment he will
-try to get the action directly two times. 
+try to get the action directly two times.
 
 Please give feedback about speech interpreter. If you might think it should
 be different.
