@@ -8,11 +8,16 @@ object_types = object_types_plural + object_types_singular
 
 locations_aeuoi = ["appliance"]
 locations_rest = ["bed", "shelf", "table", "trash bin", "bin", "workbench","desk","bar","tulip","plant","dinner table","couch table", "kitchen counter","nightstand"]
-locations = locations_aeuoi + locations_rest
-rooms = ["kitchen", "hallway", "living room", "bedroom", "corridor", "workshop"]
+rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
 persons_women = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
 persons_men = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 persons_general = ["me","a person"] 
+
+# for testing:
+#locations_aeuoi = []
+#locations_rest = ["plastic cabinet"]
+#rooms = []
+locations = locations_aeuoi + locations_rest
 persons = persons_general + persons_men + persons_women
 
 spec123_1 = "(<1_action> to the <1_locations_rooms> <2_action_person> ((<2_person_men> and (<3_action_follow_men>|<3_action_interact>))|(<2_person_women> and (<3_action_follow_women>|<3_action_interact>))|(<2_person_me> and (<3_action_follow_me>|<3_action_interact>))|(<2_person_general> and <3_action_interact>)))"
