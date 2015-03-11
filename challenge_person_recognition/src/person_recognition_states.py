@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import roslib; 
 import rospy
-import ipdb;
 import smach
 import subprocess
 import inspect
@@ -30,7 +29,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-OUT_PREFIX = bcolors.WARNING + "[CHALLENGE BASIC FUNCTIONALITIES] " + bcolors.ENDC
+OUT_PREFIX = bcolors.WARNING + "[CHALLENGE PERSON RECOGNITION] " + bcolors.ENDC
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -81,9 +80,16 @@ class LookAtPersonInFront(smach.State):
             # try to resolve the designator
             try:
                 entityData = dataDesignator.resolve()
-            except DesignatorResolvementError:
-                pass            
+                faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
+                #faces_front = {'y': 182, 'width': 195, 'height': 195, 'x': 318}
 
+            except DesignatorResolvementError:
+                pass
+            except KeyError, ke:
+                pass
+            except IndexError, ke:
+                pass
+                
             # print entityData
             # TODO: look at the person's face, and slightly down
 
@@ -279,7 +285,9 @@ class AskPersonName(smach.State):
         name = "Mr. Operator"
         userdata.personName_out = name
 
-        self.robot.speech.speak("I shall call you " + name + "!", mood='excited', block=False)
+        self.robot.speech.speak("What is your name?", block=True)
+
+        self.robot.speech.speak("I shall call you " + name + "!", block=False)
 
         return 'succeded'
 
@@ -295,18 +303,22 @@ class LearnPerson(smach.StateMachine):
                                     outcomes=['succeded_learning', 'failed_learning'],
                                     input_keys=['personName_in'])
         self.robot = robot
+        self.service_name = "/" + robot.robot_name + "/ed/face_recognition/learn_face"
 
         with self:
 
+            # Callback when a result is received
             def learn_result_cb(userdata, status, result):
                 print OUT_PREFIX + bcolors.WARNING + "learn_result_cb" + bcolors.ENDC
 
-                # ipdb.set_trace()
+                print "Received result from the learning service"
 
                 # test the result and parse the message
                 if status == actionlib.GoalStatus.SUCCEEDED:
                     if result.result_info == "Learning complete":
                         print "Face learning complete! result: " + result.result_info
+                        # self.robot.speech.speak("Learning complete.", block=False)
+
                         return 'succeeded'
                     else:
                         return 'aborted'
@@ -314,15 +326,30 @@ class LearnPerson(smach.StateMachine):
                     print "Face learning aborted! result: " + result.result_info
                     return 'aborted'
 
+            # Callback when a result is sent
+            def learn_goal_cb(userdata, goal):
+                print OUT_PREFIX + bcolors.WARNING + "goal_result_cb" + bcolors.ENDC
+                # import ipdb; ipdb.set_trace()
+
+                self.robot.speech.speak("Please look at me while I learn your face", block=True)
+
+                learn_goal = FaceLearningGoal()
+                learn_goal.person_name = userdata.person_name_goal
+
+                print "Goal sent to the learning service, with name '" + learn_goal.person_name + "'"
+
+                return learn_goal
+
             # Create Simple Action Client
             smach.StateMachine.add( 'LEARN_PERSON',
-                                    SimpleActionState('/amigo/ed/face_recognition/learn_face',
-                                                    ed_perception.msg.FaceLearningAction,
-                                                    result_cb = learn_result_cb,
-                                                    goal_slots = ['person_name'],
-                                                    output_keys=['result_info_output']),
-                                                    # result_slots=['result_info']),
+                                    SimpleActionState(  self.service_name,
+                                                        ed_perception.msg.FaceLearningAction,
+                                                        result_cb = learn_result_cb,
+                                                        goal_cb = learn_goal_cb,            # create a goal inside the callback
+                                                        input_keys=['person_name_goal'],
+                                                        output_keys=['result_info_out']),
+                                                        # goal_slots = ['person_name_goal'],# or create it here directly
                                     transitions={   'succeeded':'succeded_learning',
                                                     'aborted': 'failed_learning',
                                                     'preempted': 'failed_learning'},
-                                    remapping={     'person_name':'personName_in'})
+                                    remapping={     'person_name_goal':'personName_in'})

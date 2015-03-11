@@ -213,7 +213,9 @@ class ChallengePersonRecognition(smach.StateMachine):
 
 
                 smach.StateMachine.add('GOTO_CROWD',
-                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, type="crowd"), radius=1.5),
+                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, 
+                                            criteriafuncs=[lambda entity: entity.type in ["crowd", "person"]]), 
+                                        radius=1.5),
                                         transitions={   'arrived':          'container_success',
                                                         'unreachable':      'container_success',
                                                         'goal_not_defined': 'container_success'})
