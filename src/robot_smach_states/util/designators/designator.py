@@ -24,7 +24,6 @@ The library here defines a couple of standard designators:
 import rospy
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
-from robot_skills.world_model_ed import ED
 import geometry_msgs.msg as gm
 import std_msgs.msg as std
 import inspect
