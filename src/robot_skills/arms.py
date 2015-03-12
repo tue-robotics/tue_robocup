@@ -90,9 +90,9 @@ class Arm(object):
         server_timeout = 1.0
         if not self._ac_gripper.wait_for_server(timeout=rospy.Duration(server_timeout)):
             rospy.logwarn("Cannot find gripper {0} server".format(self.side))
-        elif not self._ac_grasp_precompute.wait_for_server(timeout=rospy.Duration(server_timeout)):
+        if not self._ac_grasp_precompute.wait_for_server(timeout=rospy.Duration(server_timeout)):
             rospy.logwarn("Cannot find grasp precompute {0} server".format(self.side))
-        elif not self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(server_timeout)):
+        if not self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(server_timeout)):
             rospy.logwarn("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
