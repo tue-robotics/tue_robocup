@@ -8,14 +8,13 @@ import random
 import ed_perception.msg
 import actionlib
 import actionlib_msgs
+import robot_skills.util.msg_constructors as msgs
 
 from smach_ros import SimpleActionState
-
 from robot_skills.amigo import Amigo
-
 from robot_smach_states.util.designators import DesignatorResolvementError, EdEntityDesignator, AttrDesignator
-
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult
+
 
 
 class bcolors:
@@ -56,72 +55,73 @@ class LookAtPersonInFront(smach.State):
     def execute(self, robot):
         print OUT_PREFIX + bcolors.WARNING + "LookAtPersonInFront" + bcolors.ENDC
 
-        # create designator
-        humanDesignator = EdEntityDesignator(self.robot, type="human")
-        dataDesignator = AttrDesignator(humanDesignator, 'data')
+        # initialize variables
+        foundFace = False
+        result = None
+        entityData = None
+        faces_front = None
 
         # set robots pose
         self.robot.spindle.high()
         self.robot.head.set_pan_tilt(0, -0.2)
+        self.robot.head.set_pan_tilt(0, -0.2)   # doing this twice because once does not work, bug?
+        rospy.sleep(1)    # to give time to the head to go to place and the perception to get results
 
-        # initialize result
-        result = None
+        # create designator
+        humanDesignator = EdEntityDesignator(self.robot, type="human")
+        dataDesignator = AttrDesignator(humanDesignator, 'data')
 
         # try to resolve the designator
         try:
             result = humanDesignator.resolve()
         except DesignatorResolvementError:
+            print OUT_PREFIX + "Could not resolve humanDesignator"
             pass
 
         # if there is a person in front, try to look at the face
         if result:
             print "Got a result"
     
-            # try to resolve the designator
+            # resolve the data designator
             try:
                 entityData = dataDesignator.resolve()
-                faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
-                #faces_front = {'y': 182, 'width': 195, 'height': 195, 'x': 318}
-
             except DesignatorResolvementError:
+                print OUT_PREFIX + "Could not resolve dataDesignator"
                 pass
-            except KeyError, ke:
-                pass
-            except IndexError, ke:
-                pass
-                
-            # print entityData
-            # TODO: look at the person's face, and slightly down
 
-            # setLookAtGoal(self, point_stamped, end_time=0, pan_vel=0.2, tilt_vel=0.2, wait_for_setpoint=False):
-            # send_goal(self, point_stamped, timeout=4.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0, pan_vel=0, tilt_vel=0):
-            
-            # center_point: 
-            #   x: 1.56504058838
-            #   y: 4.42022323608
-            #   z: 1.07198965549
+            # extract information from data
+            if entityData:
+                try:
+                    # get information on the first face found (cant guarantee its the closest in case there are many)
+                    faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
+                except KeyError, ke:
+                    print OUT_PREFIX + "KeyError faces_front: " + ke
+                    pass
+                except IndexError, ke:
+                    print OUT_PREFIX + "IndexError faces_front: " + ke
+                    pass
 
-            # self.robot.head.send_goal(point_stamped = ) #keep_tracking=False
-            
-            # import ipdb; ipdb.set_trace()
+                if faces_front:
+                    # TODO: look at the person's face, and slightly down
+                    headGoal = msgs.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map")
+                    # import ipdb; ipdb.set_trace()
 
-            """
-            Example of the output:
-            {'type': 'human', 
-            'perception_result': {
-                'face_recognizer': {'fisher': {'score': 1435.45, 'name': 'luis'}, 'lbph': {'score': 46.8702, 'name': 'luis'}, 'score': 0, 'label': None}, 
-                'human_contour_matcher': {'deviation': 2348.98, 'score': 0, 'error': 2191.49, 'stance': 'side_left', 'label': 'human_shape'}, 
-                'face_detector': {'score': 1, 'faces_front': [{'y': 182, 'width': 195, 'height': 195, 'x': 318}], 'label': 'face'}, 
-                'type_aggregator': {'score': 1, 'type': 'human'}, 'histogram': [{'amount': 0.910328, 'type': 'chewing_gum_white'}, {'amount': 0.149846, 'type': 'coffee_pads'}, {'amount': 0.456642, 'type': 'cola'}, {'amount': 0.357733, 'type': 'cup'}, {'amount': 0.173658, 'type': 'deodorant'}, {'amount': 0.796962, 'type': 'fanta'}, {'amount': 0.154168, 'type': 'tea'}], 'size_matcher': {'score': 1, 'label': 'large_size', 'size': {'width': 1.36362, 'height': 0.673354}}, 
-                'odu_finder': None, 
-                'color_matcher': {'colors': [{'name': 'black', 'value': 0.0292143}, {'name': 'blue', 'value': 0.0013802}, {'name': 'brown', 'value': 0.0357389}, {'name': 'green', 'value': 0.00255129}, {'name': 'grey', 'value': 0.0462578}, {'name': 'orange', 'value': 4.18244e-05}, {'name': 'pink', 'value': 0.00280223}, {'name': 'purple', 'value': 0.0041197}, {'name': 'red', 'value': 0.000543717}, {'name': 'white', 'value': 0.876785}, {'name': 'yellow', 'value': 0.000564629}], 'hypothesis': [{'score': 0.910328, 'name': 'chewing_gum_white'}, {'score': 0.149846, 'name': 'coffee_pads'}, {'score': 0.456642, 'name': 'cola'}, {'score': 0.357733, 'name': 'cup'}, {'score': 0.173658, 'name': 'deodorant'}, {'score': 0.796962, 'name': 'fanta'}, {'score': 0.154168, 'name': 'tea'}]}}}
-            """
+                    print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
 
+                    self.robot.head.send_goal(point_stamped = headGoal)
+
+                    foundFace == True            
+                else:
+                    print OUT_PREFIX + "Could not find anyone in front of the robot. It will just look in front and up."
+                    return 'failed'
+
+        
+        if foundFace == True:
+            return 'succeded'
         else:
-            print "Could not find anyone in front of the robot. It will just look in front and up."
+            print OUT_PREFIX + "Could not find anyone in front of the robot. It will just look in front and up."
             return 'failed'
 
-        return 'succeded'
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -143,7 +143,9 @@ class CancelHeadGoals(smach.State):
 
 class FindCrowd(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['success', 'failed'])
+        smach.State.__init__(   self,
+                                outcomes=['success', 'failed'],
+                                output_keys=['locations_out'])
         self.robot = robot
 
     def execute(self, userdata):
@@ -153,14 +155,19 @@ class FindCrowd(smach.State):
 
         foundCrowd = False
         foundHuman = False
+        crowds = None
+        humans = None
+        locationsToVistit = None
         
         # create designators
         crowdDesignator = EdEntityDesignator(self.robot, type="crowd")
         humanDesignator = EdEntityDesignator(self.robot, type="human")
 
+        # "scan" the room with the head
         print "starting scan"
         # turn head to one side to start the swipping the room
         # self.robot.head.set_pan_tilt(pan=-1.1, tilt=-0.2, timeout=3.0)
+        self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
         self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
         # self.robot.head.wait()
         rospy.sleep(3)
@@ -169,6 +176,7 @@ class FindCrowd(smach.State):
         # turn head to the center
         # self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=-0.2, timeout=3.0)
         self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
+        self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
         # self.robot.head.wait()
         rospy.sleep(3)
 
@@ -176,41 +184,49 @@ class FindCrowd(smach.State):
         # turn head to the other side
         # self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=-0.2, timeout=5.0)
         self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
+        self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
         # self.robot.head.wait()
         rospy.sleep(2)
 
-        
         print "canceling goal"
         self.robot.head.cancelGoal()
 
-        result = None
-        
+
+        # interpret results
         try:
-            result = crowdDesignator.resolve()
+            crowds = crowdDesignator.resolve()
         except DesignatorResolvementError:
             foundCrowd = False
             pass
 
-        if result:
-            print "Hey i found a crowd"
+        if crowds:
+            print OUT_PREFIX + "Found a crowd"
+            # print crowds
+
+            locationsToVistit.extend(crowds)
             foundCrowd = True
         else:
-            print "Didnt find a crowd"
+            print OUT_PREFIX + "Didnt find a crowd"
             foundCrowd = False
 
-        if not foundCrowd:
-            result = None
-            try:
-                result = humanDesignator.resolve()
-            except DesignatorResolvementError:
-                pass
+        try:
+            humans = humanDesignator.resolve()
+        except DesignatorResolvementError:
+            pass
 
-            if result:
-                print "Hey i found a human"
-                foundCrowd = True
-            else:
-                print "Didnt find anything"
-                foundCrowd = False
+        if humans:
+            print OUT_PREFIX + "Found a human"
+            # print humans
+
+            locationsToVistit.extend(humans)
+            foundHuman = True
+        else:
+            print OUT_PREFIX + "Didnt find no one"
+            foundHuman = False
+
+
+        print OUT_PREFIX + "To visit:"
+        print locationsToVistit
 
         if foundCrowd or foundHuman:
             return 'success'
@@ -353,3 +369,23 @@ class LearnPerson(smach.StateMachine):
                                                     'aborted': 'failed_learning',
                                                     'preempted': 'failed_learning'},
                                     remapping={     'person_name_goal':'personName_in'})
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+# Ask the persons name
+class VisitLocations(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(   self, 
+                                outcomes=['succeded', 'failed'],
+                                input_keys=['locations_in'])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.WARNING + "VisitLocations" + bcolors.ENDC
+
+        import ipdb; ipdb.set_trace()
+
+        return 'succeded'

@@ -166,7 +166,8 @@ class ChallengePersonRecognition(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            findCrowndContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
+            findCrowndContainer = smach.StateMachine(   outcomes = ['container_success', 'container_failed'],
+                                                        output_keys = ['locations'])
             with findCrowndContainer:
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
@@ -181,6 +182,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'FIND_CROWD',
                                         PersonRecStates.FindCrowd(robot),
+                                        remapping={     'locations_out':'locations'},
                                         transitions={   'success':  'SAY_FOUND_CROWD',
                                                         'failed':   'GOTO_LIVING_ROOM_2'})
 
@@ -192,6 +194,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'FIND_CROWD_2',
                                         PersonRecStates.FindCrowd(robot),
+                                        remapping={     'locations_out':'locations'},
                                         transitions={   'success':  'SAY_FOUND_CROWD',
                                                         'failed':   'GOTO_LIVING_ROOM_3'})
 
@@ -203,6 +206,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'FIND_CROWD_3',
                                         PersonRecStates.FindCrowd(robot),
+                                        remapping={     'locations_out':'locations'},
                                         transitions={   'success':  'SAY_FOUND_CROWD',
                                                         'failed':   'container_failed'})
 
@@ -215,13 +219,14 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add('GOTO_CROWD',
                                         states.NavigateToObserve(robot, EdEntityDesignator(robot, 
                                             criteriafuncs=[lambda entity: entity.type in ["crowd", "person"]]), 
-                                        radius=1.5),
+                                            radius=1.5),
                                         transitions={   'arrived':          'container_success',
                                                         'unreachable':      'container_success',
                                                         'goal_not_defined': 'container_success'})
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_CROWD_CONTAINER',
                                     findCrowndContainer,
+                                    remapping={     'locations_out':'locations'},
                                     transitions={   'container_success':'FIND_OPERATOR_CONTAINER',
                                                     'container_failed': 'SAY_FAILED_FIND_CROWD'})
 
@@ -236,7 +241,8 @@ class ChallengePersonRecognition(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            findOperatorContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
+            findOperatorContainer = smach.StateMachine( outcomes = ['container_success', 'container_failed'],
+                                                        input_keys = ['locations_in'])
             with findOperatorContainer:
 
                 smach.StateMachine.add( 'SAY_LOOKING_OPERATOR',
@@ -260,6 +266,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_OPERATOR_CONTAINER',
                                     findOperatorContainer,
+                                    remapping={     'locations_in':'locations'},
                                     transitions={   'container_success':'DESCRIBE_CROWD_CONTAINER',
                                                     'container_failed':'DESCRIBE_CROWD_CONTAINER'})
 
