@@ -200,7 +200,7 @@ class EdEntityDesignator(Designator):
         @param radius combined with center_point: a sphere to search an entity in
         @param id the ID of the object to get info about
         @param parse whether to parse the data string associated with the object model or entity
-        @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)
+        @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)"""
         super(EdEntityDesignator, self).__init__()
         self.ed = robot.ed
         self.type = type
