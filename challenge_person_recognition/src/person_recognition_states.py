@@ -16,6 +16,7 @@ from robot_smach_states.util.designators import DesignatorResolvementError, EdEn
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult
 
 
+# import ipdb; ipdb.set_trace()
 
 class bcolors:
     HEADER = '\033[95m'
@@ -157,7 +158,7 @@ class FindCrowd(smach.State):
         foundHuman = False
         crowds = None
         humans = None
-        locationsToVistit = None
+        locationsToVistit = []
         
         # create designators
         crowdDesignator = EdEntityDesignator(self.robot, type="crowd")
@@ -170,7 +171,7 @@ class FindCrowd(smach.State):
         self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
         self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
         # self.robot.head.wait()
-        rospy.sleep(3)
+        rospy.sleep(2)
 
         print "center position"
         # turn head to the center
@@ -178,7 +179,7 @@ class FindCrowd(smach.State):
         self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
         self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
         # self.robot.head.wait()
-        rospy.sleep(3)
+        rospy.sleep(2)
 
         print "side position"
         # turn head to the other side
@@ -186,7 +187,7 @@ class FindCrowd(smach.State):
         self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
         self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
         # self.robot.head.wait()
-        rospy.sleep(2)
+        rospy.sleep(1)
 
         print "canceling goal"
         self.robot.head.cancelGoal()
@@ -203,7 +204,7 @@ class FindCrowd(smach.State):
             print OUT_PREFIX + "Found a crowd"
             # print crowds
 
-            locationsToVistit.extend(crowds)
+            # locationsToVistit.extend(crowds)
             foundCrowd = True
         else:
             print OUT_PREFIX + "Didnt find a crowd"
@@ -218,7 +219,7 @@ class FindCrowd(smach.State):
             print OUT_PREFIX + "Found a human"
             # print humans
 
-            locationsToVistit.extend(humans)
+            # locationsToVistit.extend(humans)
             foundHuman = True
         else:
             print OUT_PREFIX + "Didnt find no one"
@@ -228,7 +229,10 @@ class FindCrowd(smach.State):
         print OUT_PREFIX + "To visit:"
         print locationsToVistit
 
+        
+
         if foundCrowd or foundHuman:
+            import ipdb; ipdb.set_trace()
             return 'success'
         else:
             return 'failed'
@@ -272,7 +276,7 @@ class DescribeCrowd(smach.State):
 
 class PointAtOperator(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['success', 'failed'])
+        smach.State.__init__(self, outcomes=['succeded', 'failed'])
         self.robot = robot
 
     def execute(self, robot):
@@ -280,7 +284,7 @@ class PointAtOperator(smach.State):
 
         # Get information about the operator and point at the location
 
-        return 'success'
+        return 'succeded'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -386,6 +390,7 @@ class VisitLocations(smach.State):
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.WARNING + "VisitLocations" + bcolors.ENDC
 
+        print "Locations still available to visit: "
         import ipdb; ipdb.set_trace()
 
         return 'succeded'
