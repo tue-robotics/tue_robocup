@@ -145,7 +145,7 @@ class CancelHeadGoals(smach.State):
 class FindCrowd(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self,
-                                outcomes=['success', 'failed'],
+                                outcomes=['succeded', 'failed'],
                                 output_keys=['locations_out'])
         self.robot = robot
 
@@ -162,13 +162,12 @@ class FindCrowd(smach.State):
         
         # create designators
         crowdDesignator = EdEntityDesignator(self.robot, type="crowd")
-        humanDesignator = EdEntityDesignator(self.robot, type="human")
+        humanDesignator = EdEntityDesignator(self.robot, type="human")        
 
         # "scan" the room with the head
         print "starting scan"
         # turn head to one side to start the swipping the room
         # self.robot.head.set_pan_tilt(pan=-1.1, tilt=-0.2, timeout=3.0)
-        self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
         self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
         # self.robot.head.wait()
         rospy.sleep(2)
@@ -177,14 +176,12 @@ class FindCrowd(smach.State):
         # turn head to the center
         # self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=-0.2, timeout=3.0)
         self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
-        self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
         # self.robot.head.wait()
         rospy.sleep(2)
 
         print "side position"
         # turn head to the other side
         # self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=-0.2, timeout=5.0)
-        self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
         self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
         # self.robot.head.wait()
         rospy.sleep(1)
@@ -193,7 +190,7 @@ class FindCrowd(smach.State):
         self.robot.head.cancelGoal()
 
 
-        # interpret results
+        # resolve crowds designator
         try:
             crowds = crowdDesignator.resolve()
         except DesignatorResolvementError:
@@ -201,41 +198,91 @@ class FindCrowd(smach.State):
             pass
 
         if crowds:
-            print OUT_PREFIX + "Found a crowd"
-            # print crowds
-
-            # locationsToVistit.extend(crowds)
+            # print OUT_PREFIX + "Found a crowd"
             foundCrowd = True
         else:
             print OUT_PREFIX + "Didnt find a crowd"
             foundCrowd = False
 
+        # resolve humans designator
         try:
             humans = humanDesignator.resolve()
         except DesignatorResolvementError:
             pass
 
         if humans:
-            print OUT_PREFIX + "Found a human"
-            # print humans
-
-            # locationsToVistit.extend(humans)
+            # print OUT_PREFIX + "Found a human"
             foundHuman = True
         else:
-            print OUT_PREFIX + "Didnt find no one"
+            print OUT_PREFIX + "Didn't find humans"
             foundHuman = False
 
-
-        print OUT_PREFIX + "To visit:"
-        print locationsToVistit
-
-        
-
-        if foundCrowd or foundHuman:
-            import ipdb; ipdb.set_trace()
-            return 'success'
-        else:
+        # if no one was found, return failed, else add locations to list
+        if not foundCrowd and not foundHuman:
+            print OUT_PREFIX + "Could not find anyone in the room"
             return 'failed'
+        else:
+
+            # TODO: RETRIEVE CURRENT LIST OF LOCATIONS TO VISIT
+
+            # resolve crowd locations
+            if foundCrowd:
+                try:
+                    dataDesignator = AttrDesignator(crowdDesignator, 'center_point')
+                    entityData = dataDesignator.resolve()
+                    # import ipdb; ipdb.set_trace()
+                    print OUT_PREFIX + "Crowd found at:\n" + str(entityData)
+                except DesignatorResolvementError:
+                    print OUT_PREFIX + "Could not resolve dataDesignator"
+                    pass
+
+                print OUT_PREFIX + "Crowd found at:\n" + str(entityData)
+
+                try:
+                    locationsToVistit.extend((entityData.x, entityData.y, entityData.z))
+                except KeyError, ke:
+                    print OUT_PREFIX + "KeyError faces_front: " + ke
+                    pass
+                except IndexError, ke:
+                    print OUT_PREFIX + "IndexError faces_front: " + ke
+                    pass
+
+                # for location in entityData:
+                #     print OUT_PREFIX + "Crowd found at: " + location['x'], location['y'], location['z']
+
+            # resolve human locations
+            if foundHuman:
+                # resolve the data designator
+                try:
+                    dataDesignator = AttrDesignator(humanDesignator, 'center_point')
+                    entityData = dataDesignator.resolve()
+                except DesignatorResolvementError:
+                    print OUT_PREFIX + "Could not resolve dataDesignator"
+                    pass
+
+                print OUT_PREFIX + "Human found at:\n" + str(entityData)
+
+                try:
+                    locationsToVistit.extend((entityData.x, entityData.y, entityData.z))
+                except KeyError, ke:
+                    print OUT_PREFIX + "KeyError faces_front: " + ke
+                    pass
+                except IndexError, ke:
+                    print OUT_PREFIX + "IndexError faces_front: " + ke
+                    pass
+
+                # for location in entityData:
+                #     print OUT_PREFIX + "Human found at: " + location['x'], location['y'], location['z']
+
+
+            # import ipdb; ipdb.set_trace()
+            
+            print OUT_PREFIX + "Updated locations to visit:" + str(locationsToVistit)
+
+            # TODO: UPDATE LIST OF CURRENT LOCATIONS TO VISIT, probably filter it too
+
+            print OUT_PREFIX + "New locations added to the list"
+            return 'succeded'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -383,14 +430,15 @@ class VisitLocations(smach.State):
     def __init__(self, robot):
         smach.State.__init__(   self, 
                                 outcomes=['succeded', 'failed'],
-                                input_keys=['locations_in'])
+                                input_keys=['locations_in', 'personName_in'])
 
         self.robot = robot
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.WARNING + "VisitLocations" + bcolors.ENDC
 
+        import ipdb; ipdb.set_trace();
         print "Locations still available to visit: "
-        import ipdb; ipdb.set_trace()
+
 
         return 'succeded'
