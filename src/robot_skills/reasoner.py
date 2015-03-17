@@ -7,16 +7,16 @@ import swi_prolog.srv
 import rospkg
 
 class Reasoner(object):
-    """Interface to Amigo's reasoner.
+    """Interface to the robot's reasoner.
     Converts __getattr__-calls into terms"""
-    def __init__(self, wait_service=False):
+    def __init__(self, robot_name, wait_service=False):
         self._lock = threading.RLock()
         if wait_service:
             rospy.loginfo("Waiting for /reasoner/query service")
-            rospy.wait_for_service("/reasoner/query", timeout=2.0)
+            rospy.wait_for_service("/"+robot_name+"/reasoner/query", timeout=2.0)
             rospy.loginfo("service connected.")
 
-        self.sv_reasoner = rospy.ServiceProxy("/reasoner/query", swi_prolog.srv.Query)
+        self.sv_reasoner = rospy.ServiceProxy("/"+robot_name+"/reasoner/query", swi_prolog.srv.Query)
 
 
     def close(self):
@@ -47,7 +47,7 @@ class Reasoner(object):
         self.query("consult('" + str(full_filename) + "')")
 
 if __name__ == "__main__":
-    rospy.init_node("amigo_reasoner_executioner", log_level=rospy.DEBUG)
+    rospy.init_node("reasoner_executioner", log_level=rospy.DEBUG)
     reasoner = Reasoner()
 
     reasoner.query("retractall(foo(_, _))")

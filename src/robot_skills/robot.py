@@ -65,7 +65,7 @@ class Robot(object):
 
         # Reasoning/world modeling
         self.ed = world_model_ed.ED(self.robot_name, self.tf_listener, wait_service=wait_services)
-        self.reasoner = reasoner.Reasoner()
+        self.reasoner = reasoner.Reasoner(self.robot_name)
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
