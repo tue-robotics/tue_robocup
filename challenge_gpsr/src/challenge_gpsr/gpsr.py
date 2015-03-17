@@ -23,53 +23,20 @@ import data
 ##### TODO LIST!! #####
 #### NA EINDHOVEN  ####
 #######################
-
 # - dropoff points in eindhoven definieren.
 # - remove timeout of 5 minutes -> DID YOU SAY SOMETHING, IN ANY CASE, I DID NOT HEAR YOU!
 
-##########################################
-############## What to run: ##############
-############ updated 15-4-2013 ###########
-##########################################
-# - see README file
-
-#############################################################
-## Locations that must be defined in database on forehand: ##
-##################### updated 15-4-2013 #####################
-#############################################################
-# - initial
-# - meeting_point
-# - exit_1
-# - exit_2
-
-############################
-### Action possibilities ###
-#### updated 15-4-2013 #####
-############################
-
-# See /challenge_egpsr/input_speech_not_used/sentences.corpus for available sentences to say during questioning.
-# Available locations and objects can be found in /challenge_egpsr/input_speech_not_used/tue_test_lab/
-
-# If speech files for tue_test_lab are used ONLY DRINKS AND BATHROOMSTUFF can be questioned at this point!
 
 
+### EXAMPLE SENTENCES stated in new conceptual rulebook.
+# Go to the bedroom, find a person and tell the time (missing object-interaction part).
+# Go to the kitchen, find a person and follow her (missing object-interaction part).
+# Go to the dinner-table, grasp the crackers, and take them to the TV.
+# Go to the shelf, count the drinks and report to me.
 
-
-
-
-        ### EXAMPLE SENTENCES stated in new conceptual rulebook.
-        # Go to the bedroom, find a person and tell the time (missing object-interaction part).
-        # Go to the kitchen, find a person and follow her (missing object-interaction part).
-        # Go to the dinner-table, grasp the crackers, and take them to the TV.
-        # Go to the shelf, count the drinks and report to me.
-
-        # Take this object and bring it to Susan at the hall.
-        # Bring a coke to the person in the living room and answer him a question.
-        # Offer a drink to the person at the door.
-
-
-
-
+# Take this object and bring it to Susan at the hall.
+# Bring a coke to the person in the living room and answer him a question.
+# Offer a drink to the person at the door.
 
 
 class Ask_action(smach.State):
@@ -104,10 +71,10 @@ class Ask_action(smach.State):
 
     def replace_word(self,string,word_in,word_out):
         try:
-            if string[:len(word_in)] == word_in:
+            if string[:(len(word_in)+1)] == (word_in+" "):
                 string = string.replace(string[:len(word_in)],word_out)
 
-            if string[(len(string)-len(word_in)):] == word_in:
+            if string[(len(string)-len(word_in)-1):] == (" "+word_in):
                 string = string.replace(string[(len(string)-len(word_in)):],word_out)
 
             string = string.replace(" "+word_in+" "," "+word_out+" ")
@@ -155,7 +122,6 @@ class Query_specific_action(smach.State):
             
 
 
-
         # print answers[0]
 
         # print answers[0]['A']
@@ -193,9 +159,6 @@ class Finished_goal(smach.State):
         #rospy.sleep(2)
         return "new_task"
             
-            
-
-
 
 
 ########################
@@ -205,21 +168,12 @@ class Finished_goal(smach.State):
 
 def setup_statemachine(robot):
 
-    # Define arm used.    
-    # robot = Amigo()
-    # arm = rospy.get_param('~arm', 'left')
-    # if arm == 'left':
-    #     selectedArm = robot.leftArm
-    # else:
-    #     selectedArm = robot.rightArm
-
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
     robot.reasoner.query("retractall(current_action(_))")
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
     with sm:
-        # DURING A CHALLENGE, AMIGO STARTS AT A DESIGNATED POSITION, NOT IN FRONT OF A DOOR
 
         ######################################################
         ##################### INITIALIZE #####################             
@@ -270,8 +224,8 @@ def setup_statemachine(robot):
 
 if __name__ == "__main__":
     rospy.init_node('gpsr_exec')
-    rospy.loginfo("-------------------------- GPSR --------------------------")
-    rospy.loginfo("- See README_SPEECH_POSSIBILITIES for input possibilities -")
+    rospy.loginfo("----------------------------------------------------------")
+    rospy.loginfo("----------------------- GPSR 2015 ------------------------")
     rospy.loginfo("----------------------------------------------------------")
     
     if len(sys.argv) > 1:
