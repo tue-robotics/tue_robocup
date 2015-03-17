@@ -18,13 +18,12 @@ This file can be re-executed to get new sentence.
 Sentences can sometimes be unclear or not logic. Please mention in test report.
 
 Then run on the same amigo pc:
-    4. rosrun swi_prolog swipl_server
-    5. rosrun challenge_gpsr gpsr.py amigo
+    4. rosrun challenge_gpsr gpsr.py amigo
 
-Amigo will say "What can I do for you?" and then you can say your sentence.
+The robot will say "What can I do for you?" and then you can say your sentence.
 
 !!! Please mention in your test results how many times amigo was able to understand you !!!
-!!! Also mention weird actions to say to amigo !!!
+!!! Also mention weird actions to say to the robot !!!
 
 
 
