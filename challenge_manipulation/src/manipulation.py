@@ -128,7 +128,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         def inside(entity):
             container_entity = bookcase.resolve()
             xs = [point.x for point in container_entity.convex_hull]
-            ys = [point.x for point in container_entity.convex_hull]
+            ys = [point.y for point in container_entity.convex_hull]
             # zs = [point.z for point in container_entity.convex_hull]
             return min(xs) < entity.pose.position.x <= max(xs) \
                 and min(ys) < entity.pose.position.y <= max(ys)
