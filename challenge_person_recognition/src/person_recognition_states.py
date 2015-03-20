@@ -9,11 +9,14 @@ import ed_perception.msg
 import actionlib
 import actionlib_msgs
 import robot_skills.util.msg_constructors as msgs
+import geometry_msgs.msg as gm
 
+from collections import namedtuple
 from smach_ros import SimpleActionState
 from robot_skills.amigo import Amigo
-from robot_smach_states.util.designators import DesignatorResolvementError, EdEntityDesignator, AttrDesignator
+from robot_smach_states.util.designators import DesignatorResolvementError, EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult
+from ed.msg import EntityInfo
 
 
 # import ipdb; ipdb.set_trace()
@@ -31,7 +34,45 @@ class bcolors:
 
 OUT_PREFIX = bcolors.WARNING + "[CHALLENGE PERSON RECOGNITION] " + bcolors.ENDC
 
+
 # ----------------------------------------------------------------------------------------------------
+
+
+class Location(object):
+    def __init__(self, point_stamped, visited, attempts):
+        self.point_stamped = point_stamped
+        self.visited = visited
+        self.attempts = attempts
+
+class FaceAnalysed(object):
+    def __init__(self, point_stamped, name, score):
+        self.point_stamped = point_stamped
+        self.name = name
+        self.score = score
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class PointDesignator(Designator):
+    """ Returns a more or less hardcoded designator"""
+    def __init__(self, point_stamped=None):
+        super(Designator, self).__init__()
+        
+        self.entity = EntityInfo()
+
+        if not point_stamped == None:
+            self.entity.pose.position = point_stamped.point
+
+    def setPoint(self, point_stamped):
+        self.entity.pose.position = point_stamped.point
+    
+    def resolve(self):
+        return self.entity
+
+
+# ----------------------------------------------------------------------------------------------------
+
 
 class WaitForOperator(smach.State):
     def __init__(self, robot):
@@ -61,11 +102,11 @@ class LookAtPersonInFront(smach.State):
         result = None
         entityData = None
         faces_front = None
+        desgnResult = None
 
         # set robots pose
         self.robot.spindle.high()
         self.robot.head.set_pan_tilt(0, -0.2)
-        self.robot.head.set_pan_tilt(0, -0.2)   # doing this twice because once does not work, bug?
         rospy.sleep(1)    # to give time to the head to go to place and the perception to get results
 
         # create designator
@@ -74,13 +115,13 @@ class LookAtPersonInFront(smach.State):
 
         # try to resolve the designator
         try:
-            result = humanDesignator.resolve()
+            desgnResult = humanDesignator.resolve()
         except DesignatorResolvementError:
             print OUT_PREFIX + "Could not resolve humanDesignator"
             pass
 
         # if there is a person in front, try to look at the face
-        if result:
+        if desgnResult:
             print "Got a result"
     
             # resolve the data designator
@@ -143,11 +184,10 @@ class CancelHeadGoals(smach.State):
 
 
 class FindCrowd(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(   self,
-                                outcomes=['succeded', 'failed'],
-                                output_keys=['locations_out'])
+    def __init__(self, robot, locations):
+        smach.State.__init__(   self, outcomes=['succeded', 'failed'])
         self.robot = robot
+        self.locations = locations
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.WARNING + "FindCrowd" + bcolors.ENDC
@@ -165,30 +205,15 @@ class FindCrowd(smach.State):
         humanDesignator = EdEntityDesignator(self.robot, type="human")        
 
         # "scan" the room with the head
-        print "starting scan"
         # turn head to one side to start the swipping the room
-        # self.robot.head.set_pan_tilt(pan=-1.1, tilt=-0.2, timeout=3.0)
-        self.robot.head.setPanTiltGoal(pan=-1.1, tilt=-0.2)
+        self.robot.head.send_goal(msgs.PointStamped(3,-5,2,"amigo/base_link"))
         # self.robot.head.wait()
-        rospy.sleep(2)
+        rospy.sleep(2)  # TODO: remove this when timeouts work in send_goal
 
-        print "center position"
-        # turn head to the center
-        # self.robot.head.set_pan_tilt(pan=0.0, pan_vel=0.1, tilt=-0.2, timeout=3.0)
-        self.robot.head.setPanTiltGoal(pan=0.0, pan_vel=0.1, tilt=-0.2)
-        # self.robot.head.wait()
-        rospy.sleep(2)
+        self.robot.head.send_goal(msgs.PointStamped(3,5,2,"amigo/base_link"))        
+        rospy.sleep(3) # TODO: remove this when timeouts work in send_goal
 
-        print "side position"
-        # turn head to the other side
-        # self.robot.head.set_pan_tilt(pan=1.1, pan_vel=0.1, tilt=-0.2, timeout=5.0)
-        self.robot.head.setPanTiltGoal(pan=1.1, pan_vel=0.1, tilt=-0.2)
-        # self.robot.head.wait()
-        rospy.sleep(1)
-
-        print "canceling goal"
         self.robot.head.cancelGoal()
-
 
         # resolve crowds designator
         try:
@@ -222,33 +247,32 @@ class FindCrowd(smach.State):
             print OUT_PREFIX + "Could not find anyone in the room"
             return 'failed'
         else:
+        # if a person or crowd was found, add their positions to the list
 
-            # TODO: RETRIEVE CURRENT LIST OF LOCATIONS TO VISIT
+            print OUT_PREFIX + "Current list of locations: " + str(self.locations.resolve())
+            # import ipdb; ipdb.set_trace()
 
             # resolve crowd locations
             if foundCrowd:
                 try:
                     dataDesignator = AttrDesignator(crowdDesignator, 'center_point')
                     entityData = dataDesignator.resolve()
-                    # import ipdb; ipdb.set_trace()
                     print OUT_PREFIX + "Crowd found at:\n" + str(entityData)
                 except DesignatorResolvementError:
                     print OUT_PREFIX + "Could not resolve dataDesignator"
                     pass
 
-                print OUT_PREFIX + "Crowd found at:\n" + str(entityData)
-
+                # add point to locations to visit
                 try:
-                    locationsToVistit.extend((entityData.x, entityData.y, entityData.z))
+                    self.locations.current += [Location(point_stamped = msgs.PointStamped(x=entityData.x, y=entityData.y, z=entityData.z, frame_id="/map"),
+                                                        visited = False,
+                                                        attempts = 0)]
                 except KeyError, ke:
                     print OUT_PREFIX + "KeyError faces_front: " + ke
                     pass
                 except IndexError, ke:
                     print OUT_PREFIX + "IndexError faces_front: " + ke
                     pass
-
-                # for location in entityData:
-                #     print OUT_PREFIX + "Crowd found at: " + location['x'], location['y'], location['z']
 
             # resolve human locations
             if foundHuman:
@@ -256,32 +280,26 @@ class FindCrowd(smach.State):
                 try:
                     dataDesignator = AttrDesignator(humanDesignator, 'center_point')
                     entityData = dataDesignator.resolve()
+                    print OUT_PREFIX + "Human found at:\n" + str(entityData)
                 except DesignatorResolvementError:
                     print OUT_PREFIX + "Could not resolve dataDesignator"
                     pass
 
-                print OUT_PREFIX + "Human found at:\n" + str(entityData)
-
+                # add point to locations to visit
                 try:
-                    locationsToVistit.extend((entityData.x, entityData.y, entityData.z))
+                    self.locations.current += [Location(point_stamped = msgs.PointStamped(x=entityData.x, y=entityData.y, z=entityData.z, frame_id="/map"),
+                                                        visited = False, 
+                                                        attempts = 0)]
                 except KeyError, ke:
                     print OUT_PREFIX + "KeyError faces_front: " + ke
                     pass
                 except IndexError, ke:
                     print OUT_PREFIX + "IndexError faces_front: " + ke
                     pass
-
-                # for location in entityData:
-                #     print OUT_PREFIX + "Human found at: " + location['x'], location['y'], location['z']
-
-
-            # import ipdb; ipdb.set_trace()
             
-            print OUT_PREFIX + "Updated locations to visit:" + str(locationsToVistit)
+            # TODO: Filter the list so there are no dupliacte locations
+            print OUT_PREFIX + "Updated locations to visit:" + str(self.locations.resolve())
 
-            # TODO: UPDATE LIST OF CURRENT LOCATIONS TO VISIT, probably filter it too
-
-            print OUT_PREFIX + "New locations added to the list"
             return 'succeded'
 
 
@@ -362,6 +380,126 @@ class AskPersonName(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
+class GoToOperator(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['unreachable', 'goal_not_defined', 'arrived'])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.WARNING + "GoToOperator" + bcolors.ENDC
+
+        return 'arrived'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class AnalyzePerson(smach.State):
+    def __init__(self, robot, facesAnalysed):
+        smach.State.__init__(self, outcomes=['succeded', 'failed'])
+
+        self.robot = robot
+        self.facesAnalysed = facesAnalysed
+
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.WARNING + "AnalyzePerson" + bcolors.ENDC
+        
+        # initialize variables
+        analysed = False
+        result = None
+        entityData = None
+        recognition_label = None
+        recognition_score = None
+        desgnResult = None
+
+        # set robots pose
+        # self.robot.spindle.high()
+        # self.robot.head.set_pan_tilt(0, -0.2)
+        rospy.sleep(1)    # to give time to the head to go to place and the perception to get results
+
+        # create designator
+        humanDesignator = EdEntityDesignator(self.robot, type="human")
+        dataDesignator = AttrDesignator(humanDesignator, 'data')
+
+        # try to resolve the designator with the head facing up
+        try:
+            desgnResult = humanDesignator.resolve()
+        except DesignatorResolvementError:
+            print OUT_PREFIX + "Could not resolve humanDesignator"
+            pass
+
+        # If there is no result it might mean that the person is sitting down, so look down
+        if not desgnResult:
+            # set robots pose
+            self.robot.spindle.high()
+            self.robot.head.set_pan_tilt(0, 0.3)
+            rospy.sleep(1)    # to give time to the head to go to place and the perception to get results            
+
+            # try to resolve the designator with the head facing down
+            try:
+                desgnResult = humanDesignator.resolve()
+            except DesignatorResolvementError:
+                print OUT_PREFIX + "Could not resolve humanDesignator"
+                pass
+
+        # if a person was found, save the results from face recognition
+        if desgnResult:
+            print "Got a result"
+    
+            # resolve the data designator
+            try:
+                entityData = dataDesignator.resolve()
+            except DesignatorResolvementError:
+                print OUT_PREFIX + "Could not resolve dataDesignator"
+                pass
+
+            # extract name, score and face location
+            if entityData:
+                try:
+                    # print "Entity data: " + str(entityData)
+
+                    # get information on the first face found (cant guarantee its the closest in case there are many)
+                    recognition_label = entityData["perception_result"]["face_recognizer"]["label"]
+                    recognition_score = entityData["perception_result"]["face_recognizer"]["score"]
+
+                    # get location
+                    faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
+
+                except KeyError, ke:
+                    print OUT_PREFIX + "KeyError recognition_label/recognition_score: " + ke
+                    pass
+                except IndexError, ke:
+                    print OUT_PREFIX + "IndexError recognition_label/recognition_score: " + ke
+                    pass
+
+                # import ipdb; ipdb.set_trace()
+
+                #  if information is valid
+                if not recognition_label == None and not recognition_score == None:
+                    print OUT_PREFIX + "Recognition result: " + recognition_label + "(score: " + str(recognition_score) + ")"
+
+                    if recognition_score == 0:
+                        recognition_label = "?"
+
+                    analysed == True
+                    self.facesAnalysed += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map"),
+                                                         name = recognition_label, 
+                                                         score = recognition_score))]
+                else:
+                    print OUT_PREFIX + "Label and/or score empty"
+
+        if analysed:
+            print OUT_PREFIX + "Faces Analysed so far: " + self.facesAnalysed
+            return 'succeded'
+        else:
+            print OUT_PREFIX + "Could not find anyone in front of the robot"
+            return 'failed'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
 # SimpleAction state machine to learn a new face
 class LearnPerson(smach.StateMachine):
     # tutorial  for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
@@ -425,20 +563,54 @@ class LearnPerson(smach.StateMachine):
 # ----------------------------------------------------------------------------------------------------
 
 
-# Ask the persons name
-class VisitLocations(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(   self, 
-                                outcomes=['succeded', 'failed'],
-                                input_keys=['locations_in', 'personName_in'])
+class GetNextLocation(smach.State):
+    """
+    From a list of locations to visit, choose the next one and go there
+    """
+    def __init__(self, robot, locations, nextLocation, locTemp):
+        smach.State.__init__(   self, outcomes=['done', 'visited_all'])
 
         self.robot = robot
+        self.locations = locations
+        self.nextLocation = nextLocation
+
+        self.locTemp = locTemp
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.WARNING + "VisitLocations" + bcolors.ENDC
+        print OUT_PREFIX + bcolors.WARNING + "GetNextLocation" + bcolors.ENDC
 
-        import ipdb; ipdb.set_trace();
-        print "Locations still available to visit: "
+        availableLocations = self.locations.resolve()
+        
+        # if there are locations not visited yet, choose one
+        if availableLocations:
+            
+            print OUT_PREFIX + "Locations still available to visit:\n" + str(availableLocations)
+            
+            chosenLocation = None
+            # TODO: CHOOSE CLOSEST LOCATION
+            for loc in availableLocations:
+                print OUT_PREFIX + "Testing location:\n" + str(loc)
 
+                if loc.visited == False:
+                    print OUT_PREFIX + "Going to this one!"
+                    chosenLocation = loc.point_stamped
+                    loc.attempts +=1
+                    break
 
-        return 'succeded'
+            if not chosenLocation:
+                print OUT_PREFIX + 'All locations are marked as visited'
+                return 'visited_all'
+            else:
+                self.locTemp.current = chosenLocation
+                self.nextLocation.current.setPoint(point_stamped = chosenLocation)
+                print OUT_PREFIX + "Next location: " + str(self.nextLocation.resolve())
+
+                return 'done'
+            
+        # If there are not more loactions to visit then report back to the operator
+        else:
+
+            # TODO: CONFIRM EVERY LOCATION WAS VISIT OR RETRY UNREACHABLE LOCATIONS
+
+            print OUT_PREFIX + "Visited all locations"
+            return 'visited_all'
