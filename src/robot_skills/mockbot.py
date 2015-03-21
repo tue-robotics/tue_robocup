@@ -176,6 +176,8 @@ class ED(object):
         self.get_closest_entity = mock.MagicMock()
         self.get_entity = mock.MagicMock()
         self.reset = mock.MagicMock()
+        self.navigation = mock.MagicMock()
+        self.navigation.get_position_constraint = mock.MagicMock()
 
 
 # class MockbotArms(arms.Arms):
