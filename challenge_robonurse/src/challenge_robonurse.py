@@ -1,6 +1,15 @@
 #!/usr/bin/python
 
 """This challenge is defined in https://raw.githubusercontent.com/RoboCupAtHome/RuleBook/master/RoboNurse.tex
+
+In short, the robot goes from it start in the corner of the room to Granny.
+Granny, instructs the robot to get some pills for her.
+At the shelf, there are a bunch of bottles with pills.
+The robot must describe the bottles and let Granny choose a bottle.
+The robot must grab the bottle and bring it to Granny.
+
+Then, part 2 start which involves action recognition.
+Granny does 1 of 3 things to which the robot must respond.
 """
 
 import rospy
