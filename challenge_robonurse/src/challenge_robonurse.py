@@ -31,8 +31,10 @@ class RoboNurse(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "INTRO",
-                                    states.Say(robot, ["I will be your RoboNurse"]), 
+                                    states.Say(robot, ["I will be your RoboNurse today!", "I'm your RoboNurse, I'll be right there"]), 
                                     transitions={"spoken":"Done"})
+
+            
 
 
 ############################## initializing program ######################
