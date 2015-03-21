@@ -49,8 +49,8 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
         import robot_skills.sergio
         robot = robot_skills.sergio.Sergio(wait_services=True)    
     elif robot_name == "mockbot":
-        import robot_skills.mocked_robot
-        robot = robot_skills.mocked_robot.Mockbot(wait_services=True)
+        import robot_skills.mockbot
+        robot = robot_skills.mockbot.Mockbot(wait_services=True)
     
     introserver = None
     with robot:
