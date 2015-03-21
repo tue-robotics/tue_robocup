@@ -21,7 +21,8 @@ class RoboNurse(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         with self:
-            smach.StateMachine.add( states.Say(robot, ["I will be your RoboNurse"]), 
+            smach.StateMachine.add( "INTRO",
+                                    states.Say(robot, ["I will be your RoboNurse"]), 
                                     transitions={"spoken":"Done"})
 
 
