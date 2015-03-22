@@ -27,12 +27,32 @@ from robot_skills.util import transformations
 
 ROOM = "room_livingroom"
 
+class DetectAction(smach.State):
+    def __init__(self, robot, person_to_analyse):
+        smach.State.__init__(self, outcomes=["drop_blanket", "fall", "walk_and_sit"])
+        self.robot = robot
+        self.person_to_analyse = person_to_analyse
+
+    def execute(self, userdata):
+        which = int(raw_input("Which action has been performed? : {0}".format({i:v for i, v in enumerate(self.registered_outcomes)})))
+        return self.registered_outcomes[which]
+
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
         granny = EdEntityDesignator(robot, type='person')
         shelf = EdEntityDesignator(robot, id='shelf') #TODO: determine ID of shelf
+
+        def described_by_granny(entity):
+            #TODO: Check whether the entity matches the description given by Granny
+            return True
+
+        described_bottle = LockingDesignator(EdEntityDesignator(robot, 
+            criteriafuncs=[described_by_granny], debug=False))
+        
+        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, described_bottle)
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -42,9 +62,9 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "INTRO",
                                     states.Say(robot, ["I will be your RoboNurse today!", "I'm your RoboNurse, I'll be right there"]), 
-                                    transitions={"spoken":"GOTO_TO_GRANNY"})
+                                    transitions={"spoken":"GOTO_GRANNY"})
 
-            smach.StateMachine.add( "GOTO_TO_GRANNY",
+            smach.StateMachine.add( "GOTO_GRANNY",
                                     states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
                                     transitions={   'arrived'           :'ASK_GRANNY',
                                                     'unreachable'       :'ASK_GRANNY',
@@ -66,6 +86,58 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     states.Say(robot, "TODO: Tell about the bottles"),
+                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
+
+            smach.StateMachine.add( "ASK_WHICH_BOTTLE",
+                                    states.Say(robot, "TODO: Ask which bottle do you want?"),
+                                    transitions={   'spoken'            :'GRAB_BOTTLE'})
+
+            smach.StateMachine.add( "GRAB_BOTTLE",
+                                    Grab(robot, described_bottle, empty_arm_designator),
+                                    transitions={   'done'              :'GOTO_GRANNY_WITH_BOTTLE',
+                                                    'failed'            :'SAY_GRAB_FAILED'})
+
+            smach.StateMachine.add( "SAY_GRAB_FAILED",
+                                    states.Say(robot, "I couldn't grab the bottle, sorry"),
+                                    transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
+
+            smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
+                                    states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+                                    transitions={   'arrived'           :'DETECT_ACTION',
+                                                    'unreachable'       :'DETECT_ACTION',
+                                                    'goal_not_defined'  :'DETECT_ACTION'})
+
+            smach.StateMachine.add( "GOTO_GRANNY_WITH_BOTTLE",
+                                    states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+                                    transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
+                                                    'unreachable'       :'DETECT_ACTION',
+                                                    'goal_not_defined'  :'DETECT_ACTION'})
+
+            smach.StateMachine.add( "SAY_HANDOVER_BOTTLE",
+                                    states.Say(robot, ["Here are your pills, Granny.", "Granny, here are your pills."]),
+                                    transitions={   'spoken'            :'HANDOVER_TO_GRANNY'})
+
+            smach.StateMachine.add('HANDOVER_TO_GRANNY',
+                                   states.HandoverToHuman(robot, arm_with_item_designator),
+                                   transitions={   'succeeded'          :'DETECT_ACTION',
+                                                    'failed'            :'DETECT_ACTION'})
+
+            smach.StateMachine.add('DETECT_ACTION',
+                                   DetectAction(robot, granny),
+                                   transitions={    "drop_blanket"      :"PICKUP_BLANKET", 
+                                                    "fall"              :"BRING_PHONE",
+                                                    "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
+
+            smach.StateMachine.add( "PICKUP_BLANKET",
+                                    states.Say(robot, ["I will pick up your blanket"]),
+                                    transitions={   'spoken'            :'Done'})
+
+            smach.StateMachine.add( "BRING_PHONE",
+                                    states.Say(robot, ["I will bring you a phone"]),
+                                    transitions={   'spoken'            :'Done'})
+
+            smach.StateMachine.add( "FOLLOW_TAKE_CANE",
+                                    states.Say(robot, ["I will hold your cane"]),
                                     transitions={   'spoken'            :'Done'})
 
 
