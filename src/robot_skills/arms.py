@@ -132,7 +132,8 @@ class Arm(object):
                   timeout=30,
                   pre_grasp=False,
                   frame_id='/base_link',
-                  first_joint_pos_only=False):
+                  first_joint_pos_only=False,
+                  allowed_touch_objects=[]):
         """
         Send a arm to a goal:
 
@@ -164,6 +165,8 @@ class Arm(object):
         grasp_precompute_goal.goal.roll  = roll  + self.offset['roll']
         grasp_precompute_goal.goal.pitch = pitch + self.offset['pitch']
         grasp_precompute_goal.goal.yaw   = yaw   + self.offset['yaw']
+
+        grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 
