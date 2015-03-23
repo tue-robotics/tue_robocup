@@ -76,15 +76,15 @@ class PickUp(State):
 
         # Lift
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
-                             frame_id='/'+robot.robot_name+'/base_link'
-                             timeout=20, pre_grasp=False,
+                             frame_id='/'+robot.robot_name+'/base_link',
+                             timeout=20, pre_grasp=False
                              ):
             rospy.logerr('Failed lift')
 
         # Retract
         if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
-                             frame_id='/'+robot.robot_name+'/base_link'
-                             timeout=20, pre_grasp=False,
+                             frame_id='/'+robot.robot_name+'/base_link',
+                             timeout=20, pre_grasp=False
                              ):
             rospy.logerr('Failed retract')
 
