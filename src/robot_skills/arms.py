@@ -132,7 +132,6 @@ class Arm(object):
                   timeout=30,
                   pre_grasp=False,
                   frame_id='/base_link',
-                  use_offset=False,
                   first_joint_pos_only=False):
         """
         Send a arm to a goal:
