@@ -1,41 +1,21 @@
 #! /usr/bin/env python
-import roslib
-roslib.load_manifest('robot_skills')
+
 import rospy
-from tue_manipulation.msg import GraspPrecomputeGoal
-from tue_manipulation.msg import GraspPrecomputeAction
-from tue_manipulation.msg import GripperCommandGoal
-from tue_manipulation.msg import GripperCommandAction
-from tue_msgs.msg import GripperCommand
-import actionlib
-from actionlib_msgs.msg import GoalStatus
-from geometry_msgs.msg import TwistStamped, Twist, Quaternion
-
-from diagnostic_msgs.msg import DiagnosticStatus, DiagnosticArray
-from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
-from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from sensor_msgs.msg import JointState
-
-# Whole-body control/planning
-# from amigo_whole_body_controller.msg._ArmTaskAction import ArmTaskAction
-# from amigo_whole_body_controller.msg._ArmTaskGoal import ArmTaskGoal
-
-import threading
-import util.concurrent_util
-
-"""TF"""
-import tf
-from tf.transformations import euler_from_quaternion
 import tf_server
-
-"""Marker publisher"""
 import visualization_msgs.msg
 
-from math import degrees, radians
+from actionlib import SimpleActionClient, GoalStatus
+from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
+from diagnostic_msgs.msg import DiagnosticArray
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from tue_manipulation.msg import GraspPrecomputeGoal, GraspPrecomputeAction
+from tue_manipulation.msg import GripperCommandGoal, GripperCommandAction
+from tue_msgs.msg import GripperCommand
 
-class ArmState:      
-    """Specifies a State either OPEN or CLOSE"""       
-    OPEN = "open"      
+
+class ArmState:
+    """Specifies a State either OPEN or CLOSE"""
+    OPEN = "open"
     CLOSE = "close"
 
 
@@ -78,13 +58,16 @@ class Arm(object):
         rospy.Subscriber("/amigo/hardware_status", DiagnosticArray, self.cb_hardware_status)
 
         # Init gripper actionlib
-        self._ac_gripper = actionlib.SimpleActionClient("/" + robot_name + "/" + self.side + "_arm/gripper/action", GripperCommandAction)
+        self._ac_gripper = SimpleActionClient(
+            "/" + robot_name + "/" + self.side + "_arm/gripper/action", GripperCommandAction)
 
         # Init graps precompute actionlib
-        self._ac_grasp_precompute = actionlib.SimpleActionClient("/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
+        self._ac_grasp_precompute = SimpleActionClient(
+            "/" + robot_name + "/" + self.side + "_arm/grasp_precompute", GraspPrecomputeAction)
 
         # Init joint trajectory action server
-        self._ac_joint_traj = actionlib.SimpleActionClient("/" + robot_name + "/" + self.side + "_arm/joint_trajectory_action",  FollowJointTrajectoryAction)
+        self._ac_joint_traj = SimpleActionClient(
+            "/" + robot_name + "/" + self.side + "_arm/joint_trajectory_action", FollowJointTrajectoryAction)
 
         # ToDo: don't hardcode?
         server_timeout = 1.0
@@ -96,7 +79,10 @@ class Arm(object):
             rospy.logwarn("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
-        self._marker_publisher = rospy.Publisher("/" + robot_name + "/" + self.side + "_arm/grasp_target", visualization_msgs.msg.Marker, queue_size=10)
+        self._marker_publisher = rospy.Publisher(
+            "/" + robot_name + "/" + self.side + "_arm/grasp_target",
+            visualization_msgs.msg.Marker, queue_size=10
+        )
 
     def load_param(self, param_name):
         return rospy.get_param('/' + self.robot_name + param_name)
@@ -124,7 +110,7 @@ class Arm(object):
 
     def cb_hardware_status(self, msg):
         diags = [diag for diag in msg.status if diag.name == self.side + '_arm']
-        
+
         if len(diags) == 0:
             rospy.logwarn('no diagnostic msg received for the %s arm' % self.side)
         elif len(diags) != 1:
@@ -163,8 +149,6 @@ class Arm(object):
         if frame_id.find(self.robot_name) < 0:
             frame_id = "/"+self.robot_name+frame_id
             rospy.loginfo("Grasp precompute frame id = {0}".format(frame_id))
-
-
 
         # Create goal:
         grasp_precompute_goal = GraspPrecomputeGoal()
@@ -272,14 +256,9 @@ class Arm(object):
                 positions=joints_reference,
                 time_from_start=time_from_start))
 
-        # TODO: send this trajectory in one go
-        joint_trajectory = JointTrajectory(
-            joint_names=self.joint_names,
-            points=ps
-            )
-        goal = FollowJointTrajectoryGoal(
-            trajectory=joint_trajectory
-            )
+        joint_trajectory = JointTrajectory(joint_names=self.joint_names,
+                                           points=ps)
+        goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory)
 
         rospy.loginfo("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
         self._ac_joint_traj.send_goal(goal)
