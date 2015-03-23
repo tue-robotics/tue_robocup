@@ -61,7 +61,8 @@ class PickUp(State):
         # Grasp
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
                              frame_id='/'+robot.robot_name+'/base_link',
-                             timeout=120, pre_grasp=True
+                             timeout=120, pre_grasp=True,
+                             allowed_touch_objects=[grab_entity.id]
                              ):
             robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
@@ -77,14 +78,14 @@ class PickUp(State):
         # Lift
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
                              frame_id='/'+robot.robot_name+'/base_link',
-                             timeout=20, pre_grasp=False
+                             timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
             rospy.logerr('Failed lift')
 
         # Retract
         if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
                              frame_id='/'+robot.robot_name+'/base_link',
-                             timeout=20, pre_grasp=False
+                             timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
             rospy.logerr('Failed retract')
 
