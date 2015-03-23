@@ -14,11 +14,10 @@ from robot_smach_states.state import State
 
 from robot_smach_states.navigation import NavigateToGrasp
 
-# ----------------------------------------------------------------------------------------------------
 
 class PickUp(State):
     def __init__(self, robot, arm, grab_entity):
-        State.__init__(self, locals(), outcomes=['succeeded','failed'])
+        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
     def run(self, robot, arm, grab_entity):
         rospy.loginfo('PickUp!')
@@ -28,8 +27,11 @@ class PickUp(State):
 
         try:
             # Transform to base link frame
-            goal_bl = transformations.tf_transform(goal_map, grab_entity.id, robot.robot_name+'/base_link', tf_listener=robot.tf_listener)
-            if goal_bl == None:
+            goal_bl = transformations.tf_transform(
+                goal_map, grab_entity.id, robot.robot_name+'/base_link',
+                tf_listener=robot.tf_listener
+            )
+            if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
                 return 'failed'
         except tf.Exception, tfe:
@@ -47,7 +49,9 @@ class PickUp(State):
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
-                             frame_id='/'+robot.robot_name+'/base_link', timeout=20, pre_grasp=True, first_joint_pos_only=True):
+                             frame_id='/'+robot.robot_name+'/base_link',
+                             timeout=20, pre_grasp=True, first_joint_pos_only=True
+                             ):
             rospy.logerr('Pre-grasp failed:')
 
             arm.reset()
@@ -55,7 +59,10 @@ class PickUp(State):
             return 'failed'
 
         # Grasp
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id='/'+robot.robot_name+'/base_link', timeout=120, pre_grasp = True):
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+                             frame_id='/'+robot.robot_name+'/base_link',
+                             timeout=120, pre_grasp=True
+                             ):
             robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
@@ -68,11 +75,17 @@ class PickUp(State):
         arm.occupied_by = grab_entity
 
         # Lift
-        if not arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+robot.robot_name+'/base_link'):
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
+                             frame_id='/'+robot.robot_name+'/base_link'
+                             timeout=20, pre_grasp=False,
+                             ):
             rospy.logerr('Failed lift')
 
         # Retract
-        if not arm.send_goal( goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id='/'+robot.robot_name+'/base_link'):
+        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
+                             frame_id='/'+robot.robot_name+'/base_link'
+                             timeout=20, pre_grasp=False,
+                             ):
             rospy.logerr('Failed retract')
 
         # Carrying pose
@@ -84,12 +97,13 @@ class PickUp(State):
         rospy.loginfo('y_home = ' + str(y_home))
 
         rospy.loginfo('start moving to carrying pose')
-        if not arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0, 60):
+        if not arm.send_goal(0.18, y_home, goal_bl.z + 0.1, 0, 0, 0,
+                             timeout=60
+                             ):
             rospy.logerr('Failed carrying pose')
 
         return 'succeeded'
 
-# ----------------------------------------------------------------------------------------------------
 
 class Grab(smach.StateMachine):
     def __init__(self, robot, item, arm):
@@ -97,10 +111,10 @@ class Grab(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
-                transitions={ 'unreachable' : 'failed',
-                              'goal_not_defined' : 'failed',
-                              'arrived' : 'GRAB'})
+                                   transitions={'unreachable':      'failed',
+                                                'goal_not_defined': 'failed',
+                                                'arrived':          'GRAB'})
 
             smach.StateMachine.add('GRAB', PickUp(robot, arm, item),
-                transitions={'succeeded' :   'done',
-                             'failed' :   'failed'})
+                                   transitions={'succeeded': 'done',
+                                                'failed':    'failed'})
