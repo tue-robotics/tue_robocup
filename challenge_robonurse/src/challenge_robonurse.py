@@ -65,7 +65,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={"spoken":"GOTO_GRANNY"})
 
             smach.StateMachine.add( "GOTO_GRANNY",
-                                    states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+                                    states.NavigateToSymbolic(robot, { granny:"near", EdEntityDesignator(robot, id=ROOM): "in"}, granny),
                                     transitions={   'arrived'           :'ASK_GRANNY',
                                                     'unreachable'       :'ASK_GRANNY',
                                                     'goal_not_defined'  :'ASK_GRANNY'})
@@ -75,7 +75,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'spoken'            :'GOTO_SHELF'})
 
             smach.StateMachine.add( "GOTO_SHELF",
-                                    states.NavigateToSymbolic(robot, {shelf:"front", EdEntityDesignator(robot, id=ROOM):"in"}, shelf),
+                                    states.NavigateToSymbolic(robot, { shelf:"front", EdEntityDesignator(robot, id=ROOM) : "in"}, shelf),
                                     transitions={   'arrived'           :'LOOKAT_SHELF',
                                                     'unreachable'       :'LOOKAT_SHELF',
                                                     'goal_not_defined'  :'LOOKAT_SHELF'})
