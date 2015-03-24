@@ -42,7 +42,7 @@ class AskChallengeDestination(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.head.set_pan_tilt(0,0.2)
+        self.robot.head.look_at_standing_person()
         
         try:
             self.response = self.ask_user_service("challenge_open_locs", 4, rospy.Duration(18))  # This means that within 4 tries and within 60 seconds an answer is received. 
@@ -144,7 +144,7 @@ class AskChallengeObject(smach.State):
 
     def execute(self, userdata=None):
 
-        self.robot.head.look_up()
+        self.robot.head.look_at_standing_person()
         
         try:
             self.response = self.ask_user_service("challenge_open_transport", 4 , rospy.Duration(18))  #4 tries and within 18 seconds an answer is received. 
@@ -269,7 +269,7 @@ class OpenChallenge2014(smach.StateMachine):
                                                  'goal_not_defined' :   'SAY_UNDEFINED'})        
             @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
-                robot.head.look_down()
+                robot.head.reset()
                 return "done"
             smach.StateMachine.add( "LOOK_FOR_DRINK",
                                     smach.CBState(look_down), 

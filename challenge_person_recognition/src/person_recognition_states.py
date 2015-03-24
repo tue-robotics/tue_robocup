@@ -106,7 +106,7 @@ class LookAtPersonInFront(smach.State):
 
         # set robots pose
         self.robot.spindle.high()
-        self.robot.head.set_pan_tilt(0, -0.2)
+        self.robot.head.look_at_standing_person()
         rospy.sleep(1)    # to give time to the head to go to place and the perception to get results
 
         # create designator
@@ -150,7 +150,7 @@ class LookAtPersonInFront(smach.State):
 
                     print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
 
-                    self.robot.head.send_goal(point_stamped = headGoal)
+                    self.robot.head.look_at_point(headGoal)
 
                     foundFace == True            
                 else:
@@ -175,7 +175,7 @@ class CancelHeadGoals(smach.State):
     def execute(self, robot):
         print OUT_PREFIX + bcolors.WARNING + "CancelHeadGoals" + bcolors.ENDC
 
-        self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
 
         return 'done'
 
@@ -206,14 +206,14 @@ class FindCrowd(smach.State):
 
         # "scan" the room with the head
         # turn head to one side to start the swipping the room
-        self.robot.head.send_goal(msgs.PointStamped(3,-5,2,"amigo/base_link"))
+        self.robot.head.look_at_point(msgs.PointStamped(3,-5,2,"amigo/base_link"))
         # self.robot.head.wait()
         rospy.sleep(2)  # TODO: remove this when timeouts work in send_goal
 
-        self.robot.head.send_goal(msgs.PointStamped(3,5,2,"amigo/base_link"))        
+        self.robot.head.look_at_point(msgs.PointStamped(3,5,2,"amigo/base_link"))        
         rospy.sleep(3) # TODO: remove this when timeouts work in send_goal
 
-        self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
 
         # resolve crowds designator
         try:
@@ -433,7 +433,7 @@ class AnalyzePerson(smach.State):
         if not desgnResult:
             # set robots pose
             self.robot.spindle.high()
-            self.robot.head.set_pan_tilt(0, 0.3)
+            self.robot.head.look_at_standing_person()
             rospy.sleep(1)    # to give time to the head to go to place and the perception to get results            
 
             # try to resolve the designator with the head facing down

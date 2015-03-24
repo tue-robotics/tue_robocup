@@ -30,7 +30,7 @@ class WaitForFetchCarry(smach.State):
         self.robot.reasoner.query(Compound("assertz",Compound("starting_pose", starting_pose.pose.position.x, starting_pose.pose.position.y, starting_pose.pose.orientation.z)))
 
         # Here you can define how many times you want to try to listen and want the maximum duration is to listen to operator.
-        self.robot.head.set_pan_tilt(tilt=-0.2)
+        self.robot.head.look_at_standing_person()
         self.response = self.ask_user_service_fetch_carry("fetch_carry", 10, rospy.Duration(10))
         if self.response:
             if self.response.keys[0] == "answer":
@@ -105,7 +105,7 @@ class LookForDrink(smach.State):
             rospy.loginfo("Looking at {0}".format(roi_answers))
             roi_answer = roi_answers[0]
             lookat_point = self.robot.head.point(float(roi_answer["X"]),float(roi_answer["Y"]),float(roi_answer["Z"]))
-            self.robot.head.send_goal(lookat_point,timeout=0)
+            self.robot.head.look_at_point(lookat_point,timeout=0)
 
         else:
             rospy.loginfo("Failed to find a region")

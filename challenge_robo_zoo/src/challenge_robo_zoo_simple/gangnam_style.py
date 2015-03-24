@@ -39,8 +39,8 @@ def spindle_up_down(robot, lower, upper, stopEvent):
 def motionA(robot):
     robot.rightArm._send_joint_trajectory([[-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000]], timeout=rospy.Duration(1))
     for i in range(1):
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), pan_vel=1.0, tilt_vel=1.0)
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
+        robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"))
+        robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_left"))
         # robot.leftArm.send_joint_trajectory([gangnam_motionA_left], timeout=rospy.Duration(10))
         # robot.rightArm.send_joint_trajectory([gangnam_motionA_right], timeout=rospy.Duration(10))
 
@@ -73,8 +73,8 @@ def motionB(robot):
         robot.leftArm._send_joint_trajectory([[-0.050, 0.500, 0.7150, 1.300, -0.15, 0.000, 0.000]], timeout=rospy.Duration(10))
         robot.leftArm._send_joint_trajectory([[-0.050, 0.500, 1.5300, 0.700, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
         robot.leftArm._send_joint_trajectory([[-0.050, 1.500, 1.5300, 0.700, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
-        robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
+        robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
+        robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
 
         #robot.rightArm._send_joint_trajectory([gangnam_poseB_right_pre_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         #Right is now in [             -0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000]
