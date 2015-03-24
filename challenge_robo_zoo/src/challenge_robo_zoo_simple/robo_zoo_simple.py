@@ -170,7 +170,7 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "WAIT_A_SEC", 
                                     states.Wait_time(robot, waittime=1),
-                                    transitions={'waited'   :"SAY_SHOW_QR_MARKER",
+                                    transitions={'waited'   :"SELECT_RANDOM",
                                                  'preempted':"Aborted"})
 
             smach.StateMachine.add( "SAY_SHOW_QR_MARKER",
@@ -251,7 +251,7 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"Done":"RESET_ALL"})
             
             smach.StateMachine.add( "MACARENA",
-                                    Macarena(robot),
+                                    R2D2(robot),
                                     transitions={"Done":"RESET_ALL"})
             
             smach.StateMachine.add( "GANGNAM",
@@ -259,7 +259,7 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"Done":"RESET_ALL"})
             
             smach.StateMachine.add( "HOOFD_SCHOUDERS_KNIE_TEEN",
-                                    HoofdSchouderKnieTeen(robot),
+                                    Toeter(robot),
                                     transitions={"Done":"RESET_ALL"})
 if __name__ == "__main__":
     rospy.init_node("challenge_robo_zoo_exec")
