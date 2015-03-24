@@ -105,8 +105,7 @@ class executePlan(smach.State):
         self.t_last_free = rospy.Time.now()
 
         # Cancel head goal, we need it for navigation :)
-        if self.robot.head.getGoal():
-                self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
 
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
@@ -169,7 +168,7 @@ class determineBlocked(smach.State):
         # Look at the entity
         ps = msgs.PointStamped(point=self.robot.base.local_planner.getObstaclePoint(), frame_id="/map")
         ps.point.z = 1.6
-        self.robot.head.setLookAtGoal(ps)
+        self.robot.head.look_at_point(ps)
 
         # Wait for 5 seconds but continue if the path is free
         wait_start = rospy.Time.now()
@@ -205,12 +204,12 @@ class determineBlocked(smach.State):
                     rospy.loginfo("Alternative path too long...")
 
             if not self.robot.base.local_planner.getStatus() == "blocked":
-                self.robot.head.cancelGoal()
+                self.robot.head.cancel_goal()
                 rospy.logwarn("Plan free again")
                 return "free"
 
         # Else: take other actions
-        self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
 
         if self.robot.base.local_planner.getStatus() == "blocked":
             if len(self.robot.ed.get_entities(type="human", center_point=self.robot.base.local_planner.getObstaclePoint(), radius=1)) > 0:

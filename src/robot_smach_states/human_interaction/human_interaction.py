@@ -38,14 +38,14 @@ class Say(State):
         State.__init__(self, locals(), outcomes=["spoken"])
 
     def run(self, robot, sentence, language, personality, voice, mood, block):
-        robot.head.lookAtStandingPerson()
+        robot.head.look_at_standing_person()
 
         if not isinstance(sentence, str) and isinstance(sentence, list):
             sentence = random.choice(sentence)
 
         robot.speech.speak(sentence, language, personality, voice, mood, block)
 
-        robot.head.cancelGoal()
+        robot.head.cancel_goal()
 
         return "spoken"
 
@@ -56,11 +56,11 @@ class Hear(State):
         State.__init__(self, locals(), outcomes=["heard", "not_heard"])
 
     def run(self, robot, spec, time_out):
-        robot.head.lookAtStandingPerson()
+        robot.head.look_at_standing_person()
 
         answer = robot.ears.recognize(spec, {}, time_out)
 
-        robot.head.cancelGoal()
+        robot.head.cancel_goal()
 
         if answer:
             if answer.result:
@@ -75,11 +75,11 @@ class HearOptions(State):
         State.__init__(self, locals(), outcomes=options.append("no_result"))
 
     def run(self, robot, options, time_out):
-        robot.head.lookAtStandingPerson()
+        robot.head.look_at_standing_person()
 
         answer = robot.ears.recognize("<option>", {"option":options}, time_out)
 
-        robot.head.cancelGoal()
+        robot.head.cancel_goal()
 
         if answer:
             if answer.result:
@@ -116,11 +116,11 @@ class HearOptionsExtra(smach.State):
         spec = self.spec_designator.resolve()
         choices = self.choices_designator.resolve()
 
-        self.robot.head.lookAtStandingPerson()
+        self.robot.head.look_at_standing_person()
 
         answer = self.robot.ears.recognize(spec, choices, self.time_out)
 
-        self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
 
         if answer:
             if answer.result:

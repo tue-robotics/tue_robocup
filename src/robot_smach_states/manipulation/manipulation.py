@@ -170,7 +170,7 @@ class GrabWithVisualServoing(smach.State):
             return "target_lost"
 
         # Keep looking at end-effector for ar marker detection 
-        self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=end_effector_frame_id),keep_tracking=True)
+        self.robot.head.look_at_goal(msgs.PointStamped(0,0,0,frame_id=end_effector_frame_id))
         rospy.loginfo("[robot_smach_states:grasp] Target position: {0}".format(target_position))
 
         target_position_bl = transformations.tf_transform(target_position.point, target_position.header.frame_id,"/amigo/base_link", tf_listener=self.robot.tf_listener)
@@ -508,7 +508,7 @@ class Point_at_object(smach.State):
         rospy.loginfo("[robot_smach_states:Point_at_object] Target position: {0}".format(target_position))
 
         # Keep looking at end-effector for ar marker detection 
-        self.robot.head.set_position(msgs.PointStamped(0,0,0,frame_id=end_effector_frame_id),keep_tracking=True)
+        self.robot.head.look_at_point(msgs.PointStamped(0,0,0,frame_id=end_effector_frame_id))
 
         # Transform to base link 
         target_position_bl = transformations.tf_transform(target_position, "/map","/amigo/base_link", tf_listener=self.robot.tf_listener)
@@ -520,6 +520,6 @@ class Point_at_object(smach.State):
         else:
             rospy.loginfo("Arm cannot reach object")
 
-        self.robot.head.reset_position()
+        self.robot.head.reset()
         return 'point_succeeded'
 
