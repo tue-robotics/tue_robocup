@@ -2,6 +2,6 @@
 
 :- dynamic action_info/3.
 
-a(a,b).
-a(a,'b c').
-actie('1').
+%a(a,b).
+%a(a,'b c').
+%actie('1').

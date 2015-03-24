@@ -105,11 +105,11 @@ class Ask_action(smach.State):
 
     def replace_word(self,string,word_in,word_out):
         try:
-            if string[:2] == word_in:
-                string = string.replace(string[:2],word_out)
+            if string[:(len(word_in)+1)] == (word_in+" "):
+                string = string.replace(string[:len(word_in)],word_out)
 
-            if string[(len(string)-2):] == word_in:
-                string = string.replace(string[(len(string)-2):],word_out)
+            if string[(len(string)-len(word_in)-1):] == (" "+word_in):
+                string = string.replace(string[(len(string)-len(word_in)):],word_out)
 
             string = string.replace(" "+word_in+" "," "+word_out+" ")
 
@@ -273,7 +273,7 @@ def setup_statemachine(robot):
 
 
         ######################################################
-        #################### INSTRUCTIONS ####################             
+        #################### INSTRUCTIONS ####################
         ######################################################
 
 

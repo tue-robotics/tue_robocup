@@ -90,19 +90,15 @@ class Ask_action(smach.State):
         for choice_key, choice_value in res.choices.iteritems():
             print "choice_key = ", self.add_underscores(str(choice_key))
             print "choice_value = '",self.add_underscores(str(choice_value)),"'"
-            print "choice_value[0] = '",str(choice_value)[0],"'"
-
-            print "choice_value empty string = '", self.remove_empty_string(str(choice_value)), "'"
-            
 
             if not choice_key[:1].find("1"):
-                print " 1 = ", choice_key[:1]             
+                #print " 1 = ", choice_key[:1]             
                 self.robot.reasoner.assertz("action_info('1','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
             if not choice_key[:1].find("2") : 
-                print " 2 = ", choice_key[:1] 
+                #print " 2 = ", choice_key[:1] 
                 self.robot.reasoner.assertz("action_info('2','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")  
             if not choice_key[:1].find("3"):
-                print " 3 = ", choice_key[:1]   
+                #print " 3 = ", choice_key[:1]   
                 self.robot.reasoner.assertz("action_info('3','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
 
        
@@ -114,17 +110,14 @@ class Ask_action(smach.State):
     def add_underscores(self, string):
         return str(string.replace(" ","_"))
 
-    # removes empty string at front and end of string if there is an empty string.
-    def remove_empty_string(self, string):
-        print "test = ", string.find(" ")
-        return str(string.replace(" ","")) 
-
 class Query_specific_action(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
         self.robot = robot
 
     def execute(self, userdata):
+
+
 
         action_nr = self.robot.reasoner.query("current_action(A)")
         #print action_nr
@@ -135,6 +128,10 @@ class Query_specific_action(smach.State):
         else:
             self.robot.reasoner.assertz("current_action('1')")
             current_action = str("1")
+        
+        rospy.logwarn("HACK TO GO DIRECTLY TO ACTION 2!")
+        current_action = "2"
+
         print current_action
 
         if current_action == "1":
@@ -167,10 +164,15 @@ class Query_specific_action(smach.State):
                         return "navigate_location"            
 
         elif current_action == "2":
-            print self.robot.reasoner.query("action_info('1',A,B)")
+            action_2 = self.robot.reasoner.query("action_info('2',A,B)")
+            for x in action_2:
+                for choice_key, choice_value in x.iteritems():
+                    print "hiiiierrr"
+                    print "choice_key = ", str(choice_key)
+                    print "choice_value = ", str(choice_value)
 
         elif current_action == "3":
-            print self.robot.reasoner.query("action_info('1',A,B)")
+            print self.robot.reasoner.query("action_info('3',A,B)")
 
 
 
