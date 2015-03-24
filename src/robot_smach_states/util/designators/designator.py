@@ -24,10 +24,12 @@ The library here defines a couple of standard designators:
 import rospy
 
 from ed.srv import SimpleQuery, SimpleQueryRequest
+from ed.msg import EntityInfo
 import geometry_msgs.msg as gm
 import std_msgs.msg as std
 import inspect
 import pprint
+from robot_skills.arms import Arm
 
 class DesignatorResolvementError(Exception):
     """This error is raised when a designator cannot be resolved."""
@@ -49,12 +51,18 @@ class Designator(object):
     >>> d.current = 'Error'
     Traceback (most recent call last):
      ...
-    AttributeError: can't set attribute"""
+    AttributeError: can't set attribute
+    
+    >>> assert(d.resolve_type == str)"""
 
-    def __init__(self, initial_value=None):
+    def __init__(self, initial_value=None, resolve_type=None):
         super(Designator, self).__init__()
 
         self._current = initial_value
+        if not resolve_type:
+            self._resolve_type = type(initial_value)
+        else:
+            self._resolve_type = resolve_type
 
     def resolve(self):
         """Selects a new goal and sets it as the current value."""
@@ -64,7 +72,12 @@ class Designator(object):
         """The currently selected goal"""
         return self._current
 
+    def _get_resolve_type(self):
+        """The currently selected goal"""
+        return self._resolve_type
+
     current = property(_get_current)
+    resolve_type = property(_get_resolve_type)
 
 
 class VariableDesignator(Designator):
@@ -133,10 +146,13 @@ class LockingDesignator(Designator):
     >>> varying.current = 6
     >>> assert(varying.resolve() == 6)  # The value changed
     >>> assert(locking.resolve() == 6)  # This one sticks to the value it had when locked
+    
+    >>> assert(varying.resolve_type == int)
+    >>> assert(locking.resolve_type == int)
     """
 
     def __init__(self, to_be_locked):
-        super(LockingDesignator, self).__init__()
+        super(LockingDesignator, self).__init__(resolve_type=to_be_locked.resolve_type)
         self.to_be_locked = to_be_locked
         self._locked = False
 
@@ -162,7 +178,7 @@ class LockingDesignator(Designator):
 class PointStampedOfEntityDesignator(Designator):
 
     def __init__(self, entity_designator):
-        super(VariableDesignator, self).__init__()
+        super(VariableDesignator, self).__init__(resolve_type=gm.PointStamped)
         self.entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
@@ -201,7 +217,7 @@ class EdEntityDesignator(Designator):
         @param id the ID of the object to get info about
         @param parse whether to parse the data string associated with the object model or entity
         @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)"""
-        super(EdEntityDesignator, self).__init__()
+        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo)
         self.ed = robot.ed
         self.type = type
         self.center_point = center_point
@@ -288,6 +304,7 @@ class ArmDesignator(Designator):
         @param all_arms a dictionary of arms available on the robot
         @param preferred_arm the arm that is preferred for the operations that use this designator"""
 
+        super(ArmDesignator, self).__init__(resolve_type=Arm)
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
 
