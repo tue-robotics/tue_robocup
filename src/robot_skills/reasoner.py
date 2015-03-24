@@ -34,6 +34,18 @@ class Reasoner(object):
 
         return res
 
+    def query_first_answer(self, term):
+        res=[]
+        res_msg = self.sv_reasoner(term)
+
+        for bindings_msg in res_msg.bindings:
+            #bindings[bindings_msg.variables[0]] = bindings_msg.values[0]
+            res = bindings_msg.values[0]
+
+#        res = res_msg.bindings.values[0]
+
+        return res
+
     def assertz(self, *facts):
         for fact in facts:
             self.query("assertz(" + str(fact) + ")")
