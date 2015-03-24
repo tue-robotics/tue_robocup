@@ -12,7 +12,7 @@ import robot_smach_states as states
 import robot_skills.util.msg_constructors as msgs
 
 from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.util.designators import Designator, EdEntityDesignator
 
 import data
 
@@ -219,6 +219,15 @@ class Finished_goal(smach.State):
 ##### STATEMACHINE #####
 ########################
 
+class GpsrRoomDesignator(Designator):
+    def __init__(self, robot, reasoner_query):
+        self.robot = robot
+        self.reasoner_query = reasoner_query
+
+    def resolve(self):
+        first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
+        return "room_"+str(first_answer)
+
 
 def setup_statemachine(robot):
 
@@ -280,11 +289,15 @@ def setup_statemachine(robot):
                                                 'unreachable'       :   'FINISHED_TASK',
                                                 'goal_not_defined'  :   'FINISHED_TASK'}) 
 
-
+        #When this state executes, it will resolve the EdEntityDesignators.
+        #They in turn are built with a GpsrRoomDesignator, so they need to be resolved first. 
+        #The definition is above, but basically, they execute the same code you had here first.
+        #(TODO Loy: create a designator that just calls any function you give it)
+        #So, the query is executed and the result is passed to EdEntityDesignator's id and used in that query. 
         smach.StateMachine.add('ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id=("room_"+str(robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)")))) : "in" }, 
-                                    EdEntityDesignator(robot, id=("room_"+str(robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))))),
+                                    {EdEntityDesignator(robot, id=GpsrRoomDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
+                                    EdEntityDesignator(robot, id=GpsrRoomDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
                                     #{EdEntityDesignator(robot, id="room_hallway") : "in" },
                                     #EdEntityDesignator(robot, id="room_hallway")),
                                 transitions={   'arrived'           :   'FINISHED_TASK',
