@@ -41,7 +41,7 @@ class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
-        granny = EdEntityDesignator(robot, type='person')
+        granny = EdEntityDesignator(robot, type='human')
         shelf = EdEntityDesignator(robot, id='shelf') #TODO: determine ID of shelf
 
         def described_by_granny(entity):
@@ -65,7 +65,8 @@ class RoboNurse(smach.StateMachine):
                                     transitions={"spoken":"GOTO_GRANNY"})
 
             smach.StateMachine.add( "GOTO_GRANNY",
-                                    states.NavigateToSymbolic(robot, { granny:"near", EdEntityDesignator(robot, id=ROOM): "in"}, granny),
+                                    #states.NavigateToPose(robot, 0, 0, 0),
+                                    states.NavigateToSymbolic(robot, { granny:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, granny),
                                     transitions={   'arrived'           :'ASK_GRANNY',
                                                     'unreachable'       :'ASK_GRANNY',
                                                     'goal_not_defined'  :'ASK_GRANNY'})
