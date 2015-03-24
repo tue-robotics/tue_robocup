@@ -267,15 +267,15 @@ if __name__ == "__main__":
 
     atexit.register(mockbot.close) #When exiting the interpreter, call mockbot.close(), which cancels all action goals etc.
 
-    head_reset = lambda: mockbot.head.reset_position()
-    head_down  = lambda: mockbot.head.look_down()
+    head_reset = lambda: mockbot.head.reset()
+    head_down  = lambda: mockbot.head.reset()
     right_close = lambda: mockbot.rightArm.send_gripper_goal_close()
     left_close = lambda: mockbot.leftArm.send_gripper_goal_close()
     right_open = lambda: mockbot.rightArm.send_gripper_goal_open()
     left_open = lambda: mockbot.leftArm.send_gripper_goal_open()
     speak = lambda sentence: mockbot.speech.speak(sentence, block=False)
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
-    look_at_point = lambda x, y, z: mockbot.head.send_goal(msgs.PointStamped(x, y, z, frame_id="/mockbot/base_link"))
+    look_at_point = lambda x, y, z: mockbot.head.look_at_point(msgs.PointStamped(x, y, z, frame_id="/mockbot/base_link"))
         
     r = mockbot.reasoner
     q = mockbot.reasoner.query

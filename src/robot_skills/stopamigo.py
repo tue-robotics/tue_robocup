@@ -57,5 +57,5 @@ if __name__ == "__main__":
     amigo.base.cancel_goal()
     amigo.leftArm.cancel_goal()
     amigo.rightArm.cancel_goal()
-    amigo.head.reset_position()
+    amigo.head.reset()
     

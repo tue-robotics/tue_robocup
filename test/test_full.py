@@ -53,7 +53,7 @@ def test_head(amigo):
     p.point.x = 0.4
     p.point.y = 0
     p.point.z = 10
-    amigo.head.send_goal(p, timeout=10.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0)
+    amigo.head.look_at_point(p)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])   
     show_test("head straight",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                                 and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
@@ -62,7 +62,7 @@ def test_head(amigo):
     p.point.x = 0.5
     p.point.y = 0
     p.point.z = 1
-    amigo.head.send_goal(p, timeout=10.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0)
+    amigo.head.look_at_point(p)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head up",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                           and in_bounds(joint_positions['neck_tilt_joint'], -0.26, max_err))
@@ -71,7 +71,7 @@ def test_head(amigo):
     p.point.x = -0.4
     p.point.y = 0
     p.point.z = 1
-    amigo.head.send_goal(p, timeout=10.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0)
+    amigo.head.look_at_point(p)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head down",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                             and in_bounds(joint_positions['neck_tilt_joint'], 0.54, max_err))
@@ -80,7 +80,7 @@ def test_head(amigo):
     p.point.x = 0.4
     p.point.y = 100
     p.point.z = 1
-    amigo.head.send_goal(p, timeout=10.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0)
+    amigo.head.look_at_point(p)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head right",      in_bounds(joint_positions['neck_pan_joint'], -1.547, max_err)
                             and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
@@ -89,7 +89,7 @@ def test_head(amigo):
     p.point.x = 0.4
     p.point.y = -100
     p.point.z = 1
-    amigo.head.send_goal(p, timeout=10.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0)
+    amigo.head.look_at_point(p)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head left",      in_bounds(joint_positions['neck_pan_joint'], 1.547, max_err)
                              and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
@@ -98,7 +98,7 @@ def test_head(amigo):
     p.point.x = 0.4
     p.point.y = 0
     p.point.z = 10
-    amigo.head.send_goal(p, timeout=10.0, keep_tracking=False, min_pan=0, max_pan=0, min_tilt=0, max_tilt=0)
+    amigo.head.look_at_point(p)
     # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head straight",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                                 and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
