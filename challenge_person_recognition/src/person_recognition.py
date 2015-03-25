@@ -48,28 +48,36 @@ class ChallengePersonRecognition(smach.StateMachine):
         facesAnalyzedDes = VariableDesignator()
         facesAnalyzedDes.current = []
 
-        locDes = VariableDesignator()
+        # print PersonRecStates.OUT_PREFIX + "Adding fake locations."
+        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
+        #                                                             visited = False, 
+        #                                                             attempts = 0)]
+
+        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.452, y=0.363, z=1.248, frame_id="/map"),
+        #                                                             visited = False, 
+        #                                                             attempts = 0)]
 
         #  -----------------------------------------------------------------
-
 
         @smach.cb_interface(outcomes=['done'])
         def removeLocation(userdatam):
             # import ipdb; ipdb.set_trace()
             locationsList = locationsToVisitDes.resolve()
             locToRemove = nextLocationDes.resolve().resolve()
+            updated = False
 
-            print PersonRecStates.OUT_PREFIX + "Loc: " + str(locDes.resolve())
+            print PersonRecStates.OUT_PREFIX + "removeLocationCB"
 
+            #  iterate through all locations on the list and update the correct one
             for loc in locationsList:
-                print PersonRecStates.OUT_PREFIX + "Testing locations:\n" + str(locToRemove.pose.position) + " AGAINST " + str(loc.point_stamped.point)
-
                 if locToRemove.pose.position == loc.point_stamped.point:
+                    print PersonRecStates.OUT_PREFIX + "Updading this one to visited:\n" + str(loc)
                     loc.visited = True
+                    updated = True
                     break
-                else:
-                    print PersonRecStates.OUT_PREFIX + "not the same!"
 
+            if not updated:
+                print PersonRecStates.OUT_PREFIX + "Location not found in the list!"
 
             return 'done'
 
@@ -112,7 +120,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'LOOK_AT_OPERATOR'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
-                                        PersonRecStates.LookAtPersonInFront(robot),
+                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
                                         transitions={   'succeded':'WAIT_FOR_OPERATOR',
                                                         'failed':'WAIT_FOR_OPERATOR'})
 
@@ -128,7 +136,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'SAY_LEARN_NAME_FAILED'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR_2',
-                                        PersonRecStates.LookAtPersonInFront(robot),
+                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
                                         transitions={   'succeded':'LEARN_PERSON',
                                                         'failed':'LEARN_PERSON'})
 
@@ -153,7 +161,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add( 'LEARN_OPERATOR_CONTAINER',
                                     learnOperatorContainer,
-                                    transitions={   'container_success':'FIND_OPERATOR_CONTAINER',
+                                    transitions={   'container_success':'WAIT_CONTINUE_ITERATOR',
                                                     'container_failed': 'CANCEL_HEAD_GOALS_1'})
 
             smach.StateMachine.add( 'CANCEL_HEAD_GOALS_1',
@@ -278,7 +286,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'GET_NEXT_LOCATION'})
                 
                 smach.StateMachine.add( 'GET_NEXT_LOCATION',
-                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, nextLocationDes, locDes),
+                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, nextLocationDes),
                                         transitions={   'done':'GOTO_LOCATION',
                                                         'visited_all':'GO_TO_OPERATOR'})
 
@@ -299,29 +307,29 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'LOOK_AT_PERSON'})
 
                 smach.StateMachine.add("LOOK_AT_PERSON",
-                                        PersonRecStates.LookAtPersonInFront(robot),
+                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=True),
                                         transitions={   'succeded':'ANALYSE_ITERATOR',
                                                         'failed':'ANALYSE_ITERATOR'})
 
-                waitContinueIterator = smach.Iterator(  outcomes=['container_success', 'container_failed'], 
-                                                        it = lambda:range(0, 3),
+                analyzeIterator = smach.Iterator(  outcomes=['container_success', 'container_failed'], 
+                                                        it = lambda:range(0, 5),
                                                         it_label='counter',
                                                         input_keys=[],
                                                         output_keys=[],
                                                         exhausted_outcome = 'container_failed')
-                with waitContinueIterator:
+                with analyzeIterator:
 
-                    waitContinueContainer = smach.StateMachine( outcomes = ['container_success', 'container_failed'])
+                    analyzeIterator = smach.StateMachine( outcomes = ['container_success', 'container_failed'])
 
-                    with waitContinueContainer:
+                    with analyzeIterator:
 
                         smach.StateMachine.add( 'ANALYZE_PERSON',
                                                 PersonRecStates.AnalyzePerson(robot, facesAnalyzedDes),
                                                 transitions={   'succeded':'container_success',
                                                                 'failed':'container_failed'})
 
-                    smach.Iterator.set_contained_state( 'WAIT_CONTINUE_CONTAINER', 
-                                                         waitContinueContainer, 
+                    smach.Iterator.set_contained_state( 'ANALYZE_CONTAINER',
+                                                         analyzeIterator,
                                                          loop_outcomes=['container_failed'],
                                                          break_outcomes=['container_success'])
 
@@ -415,6 +423,8 @@ class ChallengePersonRecognition(smach.StateMachine):
                                    transitions={'spoken':'Done'})
 
 
+        
+
 # ----------------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
@@ -445,16 +455,8 @@ if __name__ == "__main__":
         initial_state = [sys.argv[2]]
         machine.set_initial_state(initial_state)
 
-        if str(sys.argv[2]) == 'FIND_OPERATOR_CONTAINER':
-            print PersonRecStates.OUT_PREFIX + "Adding fake locations."
+        # if str(sys.argv[2]) == 'FIND_OPERATOR_CONTAINER':
             # import ipdb; ipdb.set_trace()
-            # locationsToVisitDes.current += [PersonRecStates.Location(point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
-            #                                             visited = False, 
-            #                                             attempts = 0)]
-
-            # locationsToVisitDes.current += [PersonRecStates.Location(point_stamped = msgs.PointStamped(x=0.452, y=0.363, z=1.248, frame_id="/map"),
-            #                                             visited = False, 
-            #                                             attempts = 0)]
 
 
     # for using smach viewer
