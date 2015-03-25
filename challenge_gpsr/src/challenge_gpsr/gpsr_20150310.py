@@ -79,12 +79,12 @@ class Ask_action(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.head.lookAtStandingPerson()
+        self.robot.head.look_at_standing_person()
 
         self.robot.speech.speak("What can I do for you?")
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out = rospy.Duration(10))
-        self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"

@@ -40,7 +40,7 @@ def hoofdschoudersknieteen(robot):
         if not robot.rightArm._send_joint_trajectory(trajectory):
             raise Exception("Arms did not reach goal,  need help")
     #Defined shortcuts above
-    robot.head.look_at_hand("right", keep_tracking=True)
+    robot.head.look_at_hand("right")
     
     def hoofd(speak=False):
         rospy.loginfo("hoofd")

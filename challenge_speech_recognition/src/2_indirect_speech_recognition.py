@@ -17,7 +17,7 @@ class HearQuestion(smach.State):
         self.time_out = time_out
 
     def execute(self, userdata):
-        self.robot.head.lookAtStandingPerson()
+        self.robot.head.look_at_standing_person()
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
@@ -28,12 +28,12 @@ class HearQuestion(smach.State):
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
                 self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-                self.robot.head.cancelGoal()
+                self.robot.head.cancel_goal()
                 return "answered"
             else:
                 self.robot.speech.speak("Sorry, I do not understand your question")
 
-        self.robot.head.cancelGoal()
+        self.robot.head.cancel_goal()
         return "not_answered"
 
 class Turn(smach.State):

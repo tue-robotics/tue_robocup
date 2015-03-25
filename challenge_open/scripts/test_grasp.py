@@ -94,7 +94,7 @@ class FinalRgo2014(smach.StateMachine):
                                                     "Failed"    :"Failed"}) 
             @smach.cb_interface(outcomes=["done"])
             def look_down(*args, **kwargs):
-                robot.head.look_down()
+                robot.head.reset()
                 return "done"
 
             smach.StateMachine.add( "LOOK_FOR_DRINK",
