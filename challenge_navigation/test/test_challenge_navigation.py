@@ -40,9 +40,9 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    door1 = door(W, "1", 1.2, 3.8, 1.57)
-    door2 = door(W, "2", 1.4, 3.3, 0.0 )
-    door3 = door(W, "3",-0.5,-0.4, 1.57)
+    door1 = door(W, "1", 1.4, 3.7, 1.57)
+    door2 = door(W, "2", 1.5, 3.1, 0.0 )
+    door3 = door(W, "3",-0.4,-0.5, 1.57)
 
     print "Dynamic door simulator"
     print "Usage: press keys 1, 2 or 3 to open or close doors one two and three, respectively"
