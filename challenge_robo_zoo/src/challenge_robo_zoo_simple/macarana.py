@@ -48,10 +48,10 @@ def spindle_up_down(robot, lower, upper, stopEvent):
 def head_up_down(robot, stopEvent):
     """Loop the robot's spindle between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.head.look_down(tilt_vel=0.5)
+        robot.head.reset()
         rospy.sleep(1.)
-        robot.head.look_up(tilt_vel=0.5)
-    robot.head.reset_position()
+        robot.head.look_at_standing_person()
+    robot.head.reset()
 
 def macarena(robot):
     stopEvent = threading.Event()
@@ -61,7 +61,7 @@ def macarena(robot):
     #robot.spindle.send_goal(0.3)
     up_and_down_head = threading.Thread(target=head_up_down, args=(robot, stopEvent))
     #up_and_down_head.start()
-    robot.head.send_goal(msgs.PointStamped(0.2, 0, 1.3, frame_id="/amigo/base"), keep_tracking=True)
+    robot.head.look_at_point(msgs.PointStamped(0.2, 0, 1.3, frame_id="/amigo/base"))
     
     def _left(trajectory, timeout=10.0): #The underscore  makes the outlining below easier to read
         if not robot.leftArm._send_joint_trajectory(trajectory):
@@ -107,7 +107,7 @@ def macarena(robot):
         #up_and_down_head.join()
         robot.rightArm.reset()
         robot.leftArm.reset()
-        robot.head.reset_position()
+        robot.head.reset()
     except Exception, e:
         robot.speech.speak("Guys, could you help me, i'm stuck in the maca-rena")
         rospy.logerr(e)

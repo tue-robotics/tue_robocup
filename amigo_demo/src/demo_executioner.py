@@ -171,7 +171,7 @@ def grasp(robot):
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"][1])
 
     #One option is to let Amigo look to his hands directly using a point relative to it:
-    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(4.0))
 
@@ -181,7 +181,7 @@ def grasp(robot):
     robot.rightArm.send_joint_goal(*poses["RIGHT_GRASP1"][1])
 
     #Look at finger again
-    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
 @dec.register_robot_key("e")
 def pickup(robot):
@@ -190,15 +190,15 @@ def pickup(robot):
     #rospy.sleep(rospy.Duration(2.0))
 
     robot.rightArm.send_joint_goal(*poses["PICK_UP"][1])
-    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
     robot.rightArm.send_joint_goal(*poses["RIGHT_PRE_GRASP1"][1])
-    robot.head.send_goal(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
+    robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/finger1_right"))
 
     #rospy.sleep(rospy.Duration(2.0))
 
-    robot.head.reset_position()
+    robot.head.reset()
 
 @dec.register_robot_key("t")
 def give(robot):
@@ -214,7 +214,7 @@ def give(robot):
 @dec.register_robot_key("y")
 def home(robot):
     print "joints = HOME"
-    robot.head.reset_position()
+    robot.head.reset()
     robot.rightArm.send_joint_goal() #defaults to 0, 0....
     robot.rightArm.send_gripper_goal_close()
 
@@ -745,7 +745,7 @@ def recognize_face(robot):
     #import smach
 
     robot.speech.speak("Let me see who I can find here...")
-    robot.head.set_pan_tilt(tilt=-0.2)
+    robot.head.look_at_standing_person()
     robot.spindle.reset()
 
     robot.perception.toggle(["face_segmentation"])
@@ -838,7 +838,7 @@ def cancel_actions(robot):
 def selfie_pose(robot):
     robot.leftArm.send_joint_goal( -1.57, -0.42, -0.15, 0.90, 1.83, -0.07, -0.55 )
     robot.rightArm.send_joint_goal( -1.57, 1.47, -0.15, 0.50, 1.82, -0.08, -0.55)
-    robot.head.reset_position()
+    robot.head.reset()
 
 @dec.register_key("L")
 def next_language():
@@ -878,8 +878,8 @@ def close_gripper(robot, arm):
     arm.send_gripper_goal_close()
 
 dec.register_key(" ", "exit")(exit)
-dec.register_robot_key("-", "Head down")(lambda robot: robot.head.look_down())
-dec.register_robot_key("+", "Head straight")(lambda robot: robot.head.reset_position())
+dec.register_robot_key("-", "Head down")(lambda robot: robot.head.reset())
+dec.register_robot_key("+", "Head straight")(lambda robot: robot.head.reset())
 
 ############################## callback speech ###################################
 def callback_speech(data):

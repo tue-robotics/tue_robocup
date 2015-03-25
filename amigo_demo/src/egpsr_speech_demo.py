@@ -84,7 +84,7 @@ class Ask_action(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.head.look_up()
+        self.robot.head.look_at_standing_person()
 
         try:
             self.response = self.ask_user_service_get_action("action", 1 , rospy.Duration(3600))  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr
