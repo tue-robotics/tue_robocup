@@ -107,15 +107,12 @@ class LookAtPersonInFront(smach.State):
 
         # set robots pose
         self.robot.spindle.high()
-<<<<<<< HEAD
         
         # look front, 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,"amigo/base_link"), end_time=0, timeout=4)
-        # rospy.sleep(2)    # to give time to the head to go to place and the perception to get results
-=======
+        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,"amigo/base_link"), end_time=0, timeout=4)
+
         self.robot.head.look_at_standing_person()
-        rospy.sleep(1)    # to give time to the head to go to place and the perception to get results
->>>>>>> 5d2b1ac366d6e40254ab4f14e4736a04efc3b2f5
+
 
         # create designator
         humanDesignator = EdEntityDesignator(self.robot, type="human")
@@ -164,13 +161,8 @@ class LookAtPersonInFront(smach.State):
                     print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
                     self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
-<<<<<<< HEAD
-                    foundFace = True            
-=======
-                    self.robot.head.look_at_point(headGoal)
-
                     foundFace == True            
->>>>>>> 5d2b1ac366d6e40254ab4f14e4736a04efc3b2f5
+
                 else:
                     print OUT_PREFIX + "Could not find anyone in front of the robot. It will just look in front and up."
                     return 'failed'
@@ -222,30 +214,18 @@ class FindCrowd(smach.State):
         humanDesignator = EdEntityDesignator(self.robot, type="human")        
 
         # "scan" the room with the head
-<<<<<<< HEAD
-
         # look at 3 meters front, 5 meters right and 2 meters high
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,"amigo/base_link"), end_time=0, timeout=4)
-=======
-        # turn head to one side to start the swipping the room
-        self.robot.head.look_at_point(msgs.PointStamped(3,-5,2,"amigo/base_link"))
->>>>>>> 5d2b1ac366d6e40254ab4f14e4736a04efc3b2f5
         # self.robot.head.wait()
         # rospy.sleep(2)  
 
-<<<<<<< HEAD
+
         # look at 3 meters front, 5 meters left and 2 meters high
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,"amigo/base_link"), end_time=0, timeout=4)
         # rospy.sleep(3)
 
         #  clear head goals
         self.robot.head.cancelGoal()
-=======
-        self.robot.head.look_at_point(msgs.PointStamped(3,5,2,"amigo/base_link"))        
-        rospy.sleep(3) # TODO: remove this when timeouts work in send_goal
-
-        self.robot.head.cancel_goal()
->>>>>>> 5d2b1ac366d6e40254ab4f14e4736a04efc3b2f5
 
         # resolve crowds designator
         try:
@@ -459,21 +439,21 @@ class AnalyzePerson(smach.State):
             print OUT_PREFIX + "Could not resolve humanDesignator. No humans found"
             pass
 
-<<<<<<< HEAD
+
         # try to resolve the crowd designator
         try:
             crowdDesgnResult = crowdDesignator.resolve()
         except DesignatorResolvementError:
             print OUT_PREFIX + "Could not resolve crowdDesignator. No crowds found"
             pass
-=======
+
         # If there is no result it might mean that the person is sitting down, so look down
         if not desgnResult:
             # set robots pose
             self.robot.spindle.high()
             self.robot.head.look_at_standing_person()
-            rospy.sleep(1)    # to give time to the head to go to place and the perception to get results            
->>>>>>> 5d2b1ac366d6e40254ab4f14e4736a04efc3b2f5
+            # rospy.sleep(1)    # to give time to the head to go to place and the perception to get results            
+
 
 
         import ipdb; ipdb.set_trace()
