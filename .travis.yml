@@ -7,6 +7,8 @@ compiler:
   - gcc
 env:
   - ROS_DISTRO=hydro
+notifications:
+  email: false
 
 before_install:
   - export CI_SOURCE_PATH=$(pwd)
