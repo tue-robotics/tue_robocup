@@ -5,6 +5,7 @@ from robot_smach_states.navigation import NavigateTo
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
+import ed.msg
 
 import rospy
 
