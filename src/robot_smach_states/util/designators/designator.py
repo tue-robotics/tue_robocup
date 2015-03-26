@@ -97,6 +97,12 @@ class VariableDesignator(Designator):
     >>> v.current = 'Works'
     >>> v.current
     'Works'
+
+    >>> v.current = 666  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
+    >>> assert(v.current == 'Works') #Unchanged
     """
 
     def __init__(self, initial_value=None, resolve_type=None):
@@ -105,7 +111,8 @@ class VariableDesignator(Designator):
         super(VariableDesignator, self).__init__(initial_value, resolve_type)
 
     def _set_current(self, value):
-        assert(type(value) == self.resolve_type)
+        if not type(value) == self.resolve_type:
+            raise TypeError("Assigned value does not match resolve_type for {0}".format(self))
         self._current = value
 
     current = property(Designator._get_current, _set_current)
