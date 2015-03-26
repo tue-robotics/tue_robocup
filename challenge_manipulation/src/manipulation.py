@@ -46,7 +46,7 @@ PLACE_HEIGHT = 1.0
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
     def __init__(self, fmt, **kwargs):
-        super(FormattedSentenceDesignator, self).__init__()
+        super(FormattedSentenceDesignator, self).__init__(resolve_type=str)
         self.fmt = fmt
         self.kwargs = kwargs
     
@@ -58,7 +58,7 @@ class FormattedSentenceDesignator(Designator):
 class EntityDescriptionDesignator(Designator):
     """EntityDescriptionDesignator"""
     def __init__(self, formats, entity_designator):
-        super(EntityDescriptionDesignator, self).__init__()
+        super(EntityDescriptionDesignator, self).__init__(resolve_type=str)
         self.entity_designator = entity_designator
         self.formats = formats
     
