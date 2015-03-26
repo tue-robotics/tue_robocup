@@ -35,6 +35,13 @@ class Say(State):
     >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
+        assert((hasattr(sentence, "resolve_type") and sentence.resolve_type in (str, list)) or type(sentence) in (str, list)) 
+        assert((hasattr(language, "resolve_type") and language.resolve_type == str) or type(language) == str) 
+        assert((hasattr(personality, "resolve_type") and personality.resolve_type == str) or type(personality) == str) 
+        assert((hasattr(voice, "resolve_type") and voice.resolve_type == str) or type(voice) == str) 
+        assert((hasattr(mood, "resolve_type") and mood.resolve_type == str) or type(mood) == str) 
+        assert((hasattr(block, "resolve_type") and block.resolve_type == bool) or type(block) == bool) 
+        
         State.__init__(self, locals(), outcomes=["spoken"])
 
     def run(self, robot, sentence, language, personality, voice, mood, block):
