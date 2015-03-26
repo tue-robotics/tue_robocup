@@ -7,11 +7,20 @@ from robot_smach_states.navigation import NavigateToPlace
 
 from robot_smach_states.state import State
 
+import ed.msg
+from robot_skills.arms import Arm
+from geometry_msgs.msg import PoseStamped
+
 # ----------------------------------------------------------------------------------------------------
 
 class Put(State):
 
     def __init__(self, robot, item_to_place, placement_pose, arm):
+        #Check types or designator resolve types
+        assert(item_to_place.resolve_type == ed.msg.EntityInfo or type(item_to_place) == ed.msg.EntityInfo)
+        assert(placement_pose.resolve_type == PoseStamped or type(placement_pose) == PoseStamped)
+        assert(arm.resolve_type == Arm or type(arm) == Arm) 
+
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
     def run(self, robot, item_to_place, placement_pose, arm):
@@ -76,6 +85,11 @@ class Place(smach.StateMachine):
 
     def __init__(self, robot, item_to_place, place_pose, arm):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
+
+        #Check types or designator resolve types
+        assert(item_to_place.resolve_type == ed.msg.EntityInfo or type(item_to_place) == ed.msg.EntityInfo)
+        assert(place_pose.resolve_type == PoseStamped or type(place_pose) == PoseStamped)
+        assert(arm.resolve_type == Arm or type(arm) == Arm) 
 
         with self:
             smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_pose, arm),  # TODO: Navigate to place

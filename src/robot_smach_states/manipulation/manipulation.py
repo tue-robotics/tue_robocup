@@ -12,6 +12,8 @@ import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
 from robot_smach_states.util.designators import PointStampedOfEntityDesignator, DesignatorResolvementError, LockingDesignator
 
+from robot_skills.arms import Arm
+
 
 # TODO: poses to move to robot_description:
 # carrying_pose: 0.18, y_home, 0.75, 0, 0, 0, 60
@@ -33,6 +35,7 @@ class ArmToJointConfig(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.configuration = configuration
 
@@ -47,6 +50,7 @@ class ArmToJointTrajectory(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.trajectory = trajectory
 
@@ -62,6 +66,7 @@ class PrepareGraspSafe(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.grab_entity_designator = grab_entity_designator
 
@@ -104,6 +109,8 @@ class GrabMachine(smach.StateMachine):
         """@param grab_entity_designator resolves to an entity to grab.
             Some child states require a (designator of) the PointStamped of that entity. PointStampedOfEntityDesignator does this conversion"""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+        
+        assert(arm_designator.resolve_type == Arm)
 
         # check check input and output keys
         with self:
@@ -149,6 +156,8 @@ class GrabWithVisualServoing(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
 
         self.robot = robot
+
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.grab_point_designator = grab_point_designator
 
@@ -258,6 +267,8 @@ class HandoverFromHuman(smach.StateMachine):
     def __init__(self, robot, arm_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
+        assert(arm_designator.resolve_type == Arm)
+
         with self:
             smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, "carrying_pose"),
                             transitions={'succeeded':'OPEN_BEFORE_INSERT','failed':'OPEN_BEFORE_INSERT'})
@@ -279,6 +290,7 @@ class HandoverToHuman(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         #A designator can resolve to a different item every time its resolved. We don't want that here, so lock
+        assert(arm_designator.resolve_type == Arm)
         locked_arm = LockingDesignator(arm_designator) 
 
         with self:
@@ -326,6 +338,8 @@ class HandoverToHuman(smach.StateMachine):
 class SetGripper(smach.State):
     def __init__(self, robot, arm_designator, gripperstate='open', drop_from_frame=None, grab_entity_designator=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
+
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.robot = robot
         self.gripperstate = gripperstate
@@ -450,6 +464,8 @@ class TorsoToUserPos(smach.State):
 class PointMachine(smach.StateMachine):
     def __init__(self, robot, arm_designator, grab_entity_designator):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+        
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.robot = robot
         self.grab_entity_designator = grab_entity_designator
@@ -490,6 +506,7 @@ class Point_at_object(smach.State):
     def __init__(self, robot, arm_designator, point_entity_designator):
         smach.State.__init__(self, outcomes=['point_succeeded','point_failed','target_lost'])
 
+        assert(arm_designator.resolve_type == Arm)
         self.arm_designator = arm_designator
         self.robot = robot
         self.point_entity_designator = point_entity_designator
