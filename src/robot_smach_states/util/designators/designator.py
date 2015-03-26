@@ -88,16 +88,24 @@ class VariableDesignator(Designator):
 
     You can also set current = ...
 
-    >>> v = VariableDesignator()
+    >>> v = VariableDesignator()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
+
+    >>> v = VariableDesignator(resolve_type=str)
     >>> v.current = 'Works'
     >>> v.current
     'Works'
     """
 
     def __init__(self, initial_value=None, resolve_type=None):
+        if not resolve_type:
+            raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
         super(VariableDesignator, self).__init__(initial_value, resolve_type)
 
     def _set_current(self, value):
+        assert(type(value) == self.resolve_type)
         self._current = value
 
     current = property(Designator._get_current, _set_current)
@@ -110,7 +118,7 @@ class LockingDesignator(Designator):
     A LockingDesignator will resolve to the same object after a call to .lock() and 
     will only resolve to a different value after an unlock() call.
 
-    >>> varying = VariableDesignator(0)
+    >>> varying = VariableDesignator(0, int)
     >>> locking = LockingDesignator(varying)
     >>> assert(varying.resolve() == 0)
     >>> assert(locking.resolve() == 0)
@@ -262,8 +270,7 @@ class AttrDesignator(Designator):
     >>> wrapped.resolve() == 'The most base type'
     True
 
-    >>> wrapped.resolve_type == str
-    True
+    >>> assert(wrapped.resolve_type == str)
     """
 
     def __init__(self, orig, attribute, resolve_type=None):
@@ -280,13 +287,15 @@ class FuncDesignator(Designator):
     """Apply a function to the object a wrapped designator resolves to
     For example:
     >>> d = Designator("Hello")
-    >>> wrapped = FuncDesignator(d, len) #Determine the len of whatever d resolves to
+    >>> wrapped = FuncDesignator(d, len, resolve_type=int) #Determine the len of whatever d resolves to
     >>> wrapped.resolve()
     5
+
+    >>> assert(wrapped.resolve_type == int)
     """
 
-    def __init__(self, orig, func):
-        super(FuncDesignator, self).__init__()
+    def __init__(self, orig, func, resolve_type=None):
+        super(FuncDesignator, self).__init__(resolve_type=resolve_type)
         self.orig = orig
         self.func = func
 
