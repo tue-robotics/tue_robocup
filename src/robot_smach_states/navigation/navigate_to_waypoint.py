@@ -16,6 +16,8 @@ class NavigateToWaypoint(NavigateTo):
         super(NavigateToWaypoint, self).__init__(robot)
 
         self.robot               = robot
+
+        assert(waypoint_designator.resolve_type == ed.msg.EntityInfo) #Check that the waypoint_designator resolves to an Entity
         self.waypoint_designator = waypoint_designator
         self.radius              = radius
 

@@ -23,6 +23,7 @@ class NavigateToPlace(NavigateTo):
         super(NavigateToPlace, self).__init__(robot)
 
         self.robot    = robot
+        assert(place_pose_designator.resolve_type == PoseStamped) #Check that place_pose_designator actually returns a PoseStamped
         self.place_pose_designator = place_pose_designator
 
         self.arm_designator = arm_designator
