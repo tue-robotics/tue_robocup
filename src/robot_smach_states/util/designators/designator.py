@@ -53,7 +53,7 @@ class Designator(object):
      ...
     AttributeError: can't set attribute
     
-    >>> assert(d.resolve_type == str)"""
+    >>> assert(issubclass(d.resolve_type, str))"""
 
     def __init__(self, initial_value=None, resolve_type=None):
         super(Designator, self).__init__()
@@ -111,7 +111,7 @@ class VariableDesignator(Designator):
         super(VariableDesignator, self).__init__(initial_value, resolve_type)
 
     def _set_current(self, value):
-        if not type(value) == self.resolve_type:
+        if not issubclass(type(value), self.resolve_type):
             raise TypeError("Assigned value does not match resolve_type for {0}".format(self))
         self._current = value
 
@@ -277,7 +277,7 @@ class AttrDesignator(Designator):
     >>> wrapped.resolve() == 'The most base type'
     True
 
-    >>> assert(wrapped.resolve_type == str)
+    >>> assert(issubclass(wrapped.resolve_type, str))
     """
 
     def __init__(self, orig, attribute, resolve_type=None):
@@ -298,7 +298,7 @@ class FuncDesignator(Designator):
     >>> wrapped.resolve()
     5
 
-    >>> assert(wrapped.resolve_type == int)
+    >>> assert(issubclass(wrapped.resolve_type, int))
     """
 
     def __init__(self, orig, func, resolve_type=None):
