@@ -94,8 +94,8 @@ class VariableDesignator(Designator):
     'Works'
     """
 
-    def __init__(self, initial_value=None):
-        super(VariableDesignator, self).__init__(initial_value)
+    def __init__(self, initial_value=None, resolve_type=None):
+        super(VariableDesignator, self).__init__(initial_value, resolve_type)
 
     def _set_current(self, value):
         self._current = value
@@ -256,15 +256,18 @@ class AttrDesignator(Designator):
 
     """Get some attribute of the object a wrapped designator resolves to.
     For example:
-    >>> d = Designator(object())
-    >>> #Get the __class__ attribute of the object that d resolves to
-    >>> wrapped = AttrDesignator(d, '__class__')
-    >>> wrapped.resolve() == object
+    >>> d = Designator(object(), resolve_type=object)
+    >>> #Get the __doc__ attribute of the object that d resolves to. d is an object and d.__doc__ is 'The most base type'
+    >>> wrapped = AttrDesignator(d, '__doc__', resolve_type=str)
+    >>> wrapped.resolve() == 'The most base type'
+    True
+
+    >>> wrapped.resolve_type == str
     True
     """
 
-    def __init__(self, orig, attribute):
-        super(AttrDesignator, self).__init__()
+    def __init__(self, orig, attribute, resolve_type=None):
+        super(AttrDesignator, self).__init__(resolve_type=resolve_type)
         self.orig = orig
         self.attribute = attribute
 
