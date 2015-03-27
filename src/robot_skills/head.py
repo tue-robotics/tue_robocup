@@ -86,7 +86,7 @@ class Head():
         start = rospy.Time.now()
         if timeout != 0:
             print "Waiting for %d seconds to reach target ..."%timeout
-            while (rospy.Time.now() - start) < rospy.Duration(timeout) and not self.atGoal():
+            while (rospy.Time.now() - start) < rospy.Duration(timeout) and not self._at_setpoint:
                 rospy.sleep(0.1)
 
     def __feedbackCallback(self, feedback):
