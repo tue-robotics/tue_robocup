@@ -17,6 +17,7 @@ before_install:
 
 install:
   - export TUE_ENV=$ROS_DISTRO
+  - mkdir -p ~/ros/$TUE_ENV
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap)
   - tue-get install ros-${REPOSITORY_NAME}
 
