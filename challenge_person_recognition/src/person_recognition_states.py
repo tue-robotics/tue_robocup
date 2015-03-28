@@ -65,7 +65,7 @@ class FaceAnalysed(object):
 class PointDesignator(Designator):
     """ Returns a more or less hardcoded designator"""
     def __init__(self, point_stamped=None):
-        super(PointDesignator, self).__init__(resolve_type=gm.Point)
+        super(PointDesignator, self).__init__(resolve_type=EntityInfo)
         
         self.entity = EntityInfo()
 
