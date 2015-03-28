@@ -6,6 +6,9 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
+from robot_smach_states.util.designators import check_resolve_type
+import ed.msg
+
 import rospy
 
 
@@ -16,6 +19,7 @@ class NavigateToObserve(NavigateTo):
         super(NavigateToObserve, self).__init__(robot)
 
         self.robot    = robot
+        check_resolve_type(entity_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
         self.radius   = radius
 
@@ -36,7 +40,7 @@ class NavigateToObserve(NavigateTo):
         #    return None
 
         x = e.pose.position.x
-        y = e.pose.position.y      
+        y = e.pose.position.y
 
         if len(ch) > 0:
 
@@ -52,7 +56,7 @@ class NavigateToObserve(NavigateTo):
 
                 xs = ch[i].x + (dy/length)*self.radius
                 ys = ch[i].y - (dx/length)*self.radius
-                
+
                 if i != 0:
                     pci = pci + ' and '
 

@@ -6,6 +6,9 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
+from robot_smach_states.util.designators import check_resolve_type
+import ed.msg
+
 import rospy
 
 # ----------------------------------------------------------------------------------------------------
@@ -16,6 +19,8 @@ class NavigateToWaypoint(NavigateTo):
         super(NavigateToWaypoint, self).__init__(robot)
 
         self.robot               = robot
+
+        check_resolve_type(waypoint_designator, ed.msg.EntityInfo) #Check that the waypoint_designator resolves to an Entity
         self.waypoint_designator = waypoint_designator
         self.radius              = radius
 
