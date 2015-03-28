@@ -93,8 +93,8 @@ class VariableDesignator(Designator):
 class LockingDesignator(Designator):
     """A designator's resolve() method may return a different object everytime.
     For some cases, this may be unwanted because a process has to be done with the same object.
-    In that case, a designator resolving to a different object every time is not usable. 
-    A LockingDesignator will resolve to the same object after a call to .lock() and 
+    In that case, a designator resolving to a different object every time is not usable.
+    A LockingDesignator will resolve to the same object after a call to .lock() and
     will only resolve to a different value after an unlock() call.
 
     >>> varying = VariableDesignator(0)
@@ -111,7 +111,7 @@ class LockingDesignator(Designator):
     >>> varying.current = 2
     >>> assert(varying.resolve() == 2)  # The value changed
     >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
-    >>> 
+    >>>
     >>> locking.unlock()
     >>>
     >>> varying.current = 3
@@ -127,7 +127,7 @@ class LockingDesignator(Designator):
     >>> varying.current = 5
     >>> assert(varying.resolve() == 5)  # The value changed
     >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
-    >>> 
+    >>>
     >>> locking.unlock()
     >>>
     >>> varying.current = 6
@@ -192,7 +192,7 @@ class EdEntityDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None, debug=False):
-        """Designates an entity of some type, within a radius of some center_point, with some id, 
+        """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
         @param type the type of the entity to resolve to (default: any type)
@@ -220,10 +220,10 @@ class EdEntityDesignator(Designator):
             for criterium in self.criteriafuncs:
                 entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
-                rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
+                rospy.logdebug("Criterium {0} leaves {1} entities: {2}".format(
                               criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
                               )
-            
+
             if entities:
                 self._current = entities[0]  # TODO: add sortkey
                 return self.current
@@ -325,23 +325,23 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> empty_arm_designator = UnoccupiedArmDesignator(arms, rightArm)
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_first_grab == rightArm)
-    >>> 
+    >>>
     >>> #Grab the 1st item with the rightArm
     >>> rightArm.occupied_by = "entity1"
     >>> arm_to_use_for_second_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_second_grab == leftArm)
-    >>> 
+    >>>
     >>> #Grab the 2nd item with the rightArm
     >>> leftArm.occupied_by = "entity2"
     >>> #You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
-    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     DesignatorResolvementError: ...
     """
     def __init__(self, all_arms, preferred_arm):
         super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm)
-    
+
     def available(self, arm):
         """Check that there is no entity occupying the arm"""
         return arm.occupied_by == None
@@ -363,9 +363,9 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>>
     >>> #place the object
     >>> rightArm.occupied_by = None
-    >>> 
+    >>>
     >>> #After placing the item, there is no arm holding the item anymore
-    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     DesignatorResolvementError: ..."""
@@ -373,7 +373,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         super(ArmHoldingEntityDesignator, self).__init__(all_arms)
 
         self.entity_designator = entity_designator
-    
+
     def available(self, arm):
         """Check that the arm is occupied by the entity refered to by the entity_designator"""
         return arm.occupied_by == self.entity_designator.resolve()
