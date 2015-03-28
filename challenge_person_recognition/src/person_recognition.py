@@ -58,17 +58,17 @@ class ChallengePersonRecognition(smach.StateMachine):
         # ------------------ SIMULATION ------------------------------------
 
         # print PersonRecStates.OUT_PREFIX + PersonRecStates.bcolors.WARNING + "Adding simulated knowledge!" + PersonRecStates.bcolors.ENDC
-        locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
-                                                                    visited = False, 
-                                                                    attempts = 0)]
+        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
+        #                                                             visited = False, 
+        #                                                             attempts = 0)]
 
-        locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.452, y=0.363, z=1.248, frame_id="/map"),
-                                                                    visited = False, 
-                                                                    attempts = 0)]
+        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.452, y=0.363, z=1.248, frame_id="/map"),
+        #                                                             visited = False, 
+        #                                                             attempts = 0)]
 
-        locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.234, y=0.912, z=1.248, frame_id="/map"),
-                                                                    visited = False, 
-                                                                    attempts = 0)]
+        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.234, y=0.912, z=1.248, frame_id="/map"),
+        #                                                             visited = False, 
+        #                                                             attempts = 0)]
 
         # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.439086, y=0.786736, z=1.6135, frame_id="/map"),
         #                                                             name = "Mr. Operator",
