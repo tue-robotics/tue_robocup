@@ -53,7 +53,7 @@ def check_resolve_type(designator, *allowed_types):
     TypeError: ...
     """
     if not designator.resolve_type in allowed_types:
-        raise TypeError("{0} resolves to {1} but should resolve to {2}".format(designator, designator.resolve_type, allowed_types))
+        raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
 
 def check_type(designator_or_value, *allowed_types):
     """
