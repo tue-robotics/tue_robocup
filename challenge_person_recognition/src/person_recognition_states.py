@@ -279,8 +279,6 @@ class FindCrowd(smach.State):
         print OUT_PREFIX + bcolors.OKBLUE + "FindCrowd" + bcolors.ENDC
 
         foundFace = False
-        entityDataList = []
-        locationsToVistit = []
         centerPointRes = None
         humanDesignatorRes = None
         entityDataRes = None
@@ -311,12 +309,10 @@ class FindCrowd(smach.State):
 
         if not humanDesignatorRes == None:
 
-            # import ipdb; ipdb.set_trace()
 
             # resolve data from entities
             try:
                 entityDataRes = dataDesignator.resolve()
-                entityDataList += [(entityDataRes)]
             except DesignatorResolvementError:
                 print OUT_PREFIX + "Could not resolve dataDesignator"
                 pass
@@ -332,6 +328,10 @@ class FindCrowd(smach.State):
                 print OUT_PREFIX + "IndexError faces_front: " + str(ke)
                 pass
 
+
+            foundFace = False # FORCING THIS TO FALSE, BECAUSE THERE SEEMS TO BE A PROBLEM WITH THE MAP COORDINATES
+
+            import ipdb; ipdb.set_trace()
 
             if foundFace:
                 for face in faceList:
@@ -349,76 +349,13 @@ class FindCrowd(smach.State):
                     print OUT_PREFIX + "Could not resolve centerPointDes"
                     pass
 
-                if not center_point == None:
+                if not centerPointRes == None:
                     self.locations.current += [Location(point_stamped = msgs.PointStamped(x=centerPointRes.x, y=centerPointRes.y, z=centerPointRes.z, frame_id="/map"),
                                                         visited = False,
                                                         attempts = 0)]
 
                     print OUT_PREFIX + "Added center point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z)
                     return 'succeded'
-
-
-            '''
-            if entityDataList:
-                #  iterate through entitities found
-                for entityData in entityDataList:
-                    import ipdb; ipdb.set_trace()
-
-                    try:
-                        # iterate through faces found in this entity
-                        for faceInfo in entityData['perception_result']['face_recognizer']['face']:
-                            if entityData['type'] == "crowd":
-                                #  get the corresponding location of the face
-                                for face_detector_loc in entityData['perception_result']['face_detector']['faces_front']:
-                                    if face_idx == face_detector_loc['index']:
-                                        # get location
-                                        face_loc = face_detector_loc
-                                        break
-                            elif entityData['type'] == "human":
-                                face_loc = entityData['perception_result']['face_detector']['faces_front'][0]
-                            else:
-                                print OUT_PREFIX + bcolors.FAIL + "Uknown entity type. Unable to get face location" + bcolors.ENDC
-
-                            self.locations.current += [Location(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
-                                                            visited = False,
-                                                            attempts = 0)]
-                    except KeyError, ke:
-                        print OUT_PREFIX + "KeyError recognition_label/recognition_score: " + str(ke)
-                        pass
-                    except IndexError, ke:
-                        print OUT_PREFIX + "IndexError recognition_label/recognition_score: " + str(ke)
-                        pass
-
-                print OUT_PREFIX + "Updated locations to visit:" + str(self.locations.resolve())
-                import ipdb; ipdb.set_trace()
-
-                return 'succeded'
-
-            else:
-                print OUT_PREFIX + bcolors.WARNING + "Could not get entity data" + bcolors.ENDC
-
-
-            #     if not entityData == None:
-            #         # add point to locations to visit
-            #         try:
-            #             self.locations.current += [Location(point_stamped = msgs.PointStamped(x=entityData.x, y=entityData.y, z=entityData.z, frame_id="/map"),
-            #                                                 visited = False,
-            #                                                 attempts = 0)]
-            #         except KeyError, ke:
-            #             print OUT_PREFIX + "KeyError faces_front: " + ke
-            #             pass
-            #         except IndexError, ke:
-            #             print OUT_PREFIX + "IndexError faces_front: " + ke
-            #             pass
-            #     else:
-            #         print OUT_PREFIX + bcolors.WARNING + "Unable to get entity center_point" + bcolors.ENDC
-            # else:  
-            #     print OUT_PREFIX + bcolors.WARNING + "Unable to get data from entity" + bcolors.ENDC
-            
-            # TODO: Filter the list so there are no dupliacte locations
-            # print OUT_PREFIX + "Updated locations to visit:" + str(self.locations.resolve())
-            # return 'succeded'
-        '''
         else:
             print OUT_PREFIX + bcolors.WARNING + "Could not find anyone in the room." + bcolors.ENDC
 
