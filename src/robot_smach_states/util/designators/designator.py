@@ -31,6 +31,50 @@ import inspect
 import pprint
 from robot_skills.arms import Arm
 
+def check_resolve_type(designator, *allowed_types):
+    """
+    >>> d1 = Designator("a", resolve_type=str)
+    >>> check_resolve_type(d1, str)
+    >>> d2 = Designator("a", resolve_type=str)
+    >>> check_resolve_type(d2, int, str)
+
+    >>> d3 = Designator("a", resolve_type=str)
+    >>> #The resolve_type is actually str but we check for int, thus get an exception
+    >>> check_resolve_type(d3, int)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
+
+    >>> d4 = Designator("a", resolve_type=str)
+    >>> #The resolve_type is actually str but we check for int, thus get an exception
+    >>> check_resolve_type(d4, float, int)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
+    """
+    if not designator.resolve_type in allowed_types:
+        raise TypeError("{0} resolves to {1} but should resolve to {2}".format(designator, designator.resolve_type, allowed_types))
+
+def check_type(designator_or_value, *allowed_types):
+    """
+    >>> d = Designator("a", resolve_type=str)
+    >>> check_type(d, str)
+    >>> c = "a"
+    >>> check_type(c, int, str)
+
+    >>> c2 = "string"
+    >>> #The type is str but we check for int, thus get an exception
+    >>> check_type(c2, int)  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
+    """
+    if hasattr(designator_or_value, "resolve_type"): #If its a designator: ...
+        check_resolve_type(designator_or_value, *allowed_types)
+    else:
+        if not type(designator_or_value) in allowed_types:
+            raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+
 class DesignatorResolvementError(Exception):
     """This error is raised when a designator cannot be resolved."""
 
@@ -52,7 +96,7 @@ class Designator(object):
     Traceback (most recent call last):
      ...
     AttributeError: can't set attribute
-    
+
     >>> assert(issubclass(d.resolve_type, str))"""
 
     def __init__(self, initial_value=None, resolve_type=None):
@@ -88,7 +132,7 @@ class VariableDesignator(Designator):
 
     You can also set current = ...
 
-    >>> v = VariableDesignator()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    >>> v = VariableDesignator()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     TypeError: ...
@@ -98,7 +142,7 @@ class VariableDesignator(Designator):
     >>> v.current
     'Works'
 
-    >>> v.current = 666  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    >>> v.current = 666  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     TypeError: ...
@@ -121,8 +165,8 @@ class VariableDesignator(Designator):
 class LockingDesignator(Designator):
     """A designator's resolve() method may return a different object everytime.
     For some cases, this may be unwanted because a process has to be done with the same object.
-    In that case, a designator resolving to a different object every time is not usable. 
-    A LockingDesignator will resolve to the same object after a call to .lock() and 
+    In that case, a designator resolving to a different object every time is not usable.
+    A LockingDesignator will resolve to the same object after a call to .lock() and
     will only resolve to a different value after an unlock() call.
 
     >>> varying = VariableDesignator(0, int)
@@ -139,7 +183,7 @@ class LockingDesignator(Designator):
     >>> varying.current = 2
     >>> assert(varying.resolve() == 2)  # The value changed
     >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
-    >>> 
+    >>>
     >>> locking.unlock()
     >>>
     >>> varying.current = 3
@@ -155,13 +199,13 @@ class LockingDesignator(Designator):
     >>> varying.current = 5
     >>> assert(varying.resolve() == 5)  # The value changed
     >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
-    >>> 
+    >>>
     >>> locking.unlock()
     >>>
     >>> varying.current = 6
     >>> assert(varying.resolve() == 6)  # The value changed
     >>> assert(locking.resolve() == 6)  # This one sticks to the value it had when locked
-    
+
     >>> assert(varying.resolve_type == int)
     >>> assert(locking.resolve_type == int)
     """
@@ -223,7 +267,7 @@ class EdEntityDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None, debug=False):
-        """Designates an entity of some type, within a radius of some center_point, with some id, 
+        """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
         @param type the type of the entity to resolve to (default: any type)
@@ -254,7 +298,7 @@ class EdEntityDesignator(Designator):
                 rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
                               criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
                               )
-            
+
             if entities:
                 self._current = entities[0]  # TODO: add sortkey
                 return self.current
@@ -361,23 +405,23 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> empty_arm_designator = UnoccupiedArmDesignator(arms, rightArm)
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_first_grab == rightArm)
-    >>> 
+    >>>
     >>> #Grab the 1st item with the rightArm
     >>> rightArm.occupied_by = "entity1"
     >>> arm_to_use_for_second_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_second_grab == leftArm)
-    >>> 
+    >>>
     >>> #Grab the 2nd item with the rightArm
     >>> leftArm.occupied_by = "entity2"
     >>> #You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
-    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     DesignatorResolvementError: ...
     """
     def __init__(self, all_arms, preferred_arm):
         super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm)
-    
+
     def available(self, arm):
         """Check that there is no entity occupying the arm"""
         return arm.occupied_by == None
@@ -399,9 +443,9 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>>
     >>> #place the object
     >>> rightArm.occupied_by = None
-    >>> 
+    >>>
     >>> #After placing the item, there is no arm holding the item anymore
-    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL 
+    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     DesignatorResolvementError: ..."""
@@ -409,7 +453,7 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         super(ArmHoldingEntityDesignator, self).__init__(all_arms)
 
         self.entity_designator = entity_designator
-    
+
     def available(self, arm):
         """Check that the arm is occupied by the entity refered to by the entity_designator"""
         return arm.occupied_by == self.entity_designator.resolve()

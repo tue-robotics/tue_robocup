@@ -6,7 +6,7 @@ import random
 
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, DesignatorResolvementError, EdEntityDesignator
+from robot_smach_states.util.designators import Designator, DesignatorResolvementError, EdEntityDesignator, check_type
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 
@@ -35,13 +35,14 @@ class Say(State):
     >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
-        assert((hasattr(sentence, "resolve_type") and sentence.resolve_type in (str, list)) or type(sentence) in (str, list)) 
-        assert((hasattr(language, "resolve_type") and language.resolve_type == str) or type(language) == str) 
-        assert((hasattr(personality, "resolve_type") and personality.resolve_type == str) or type(personality) == str) 
-        assert((hasattr(voice, "resolve_type") and voice.resolve_type == str) or type(voice) == str) 
-        assert((hasattr(mood, "resolve_type") and mood.resolve_type == str) or type(mood) == str) 
-        assert((hasattr(block, "resolve_type") and block.resolve_type == bool) or type(block) == bool) 
-        
+        check_type(sentence, str, list)
+        check_type(sentence, str, list)
+        check_type(language, str)
+        check_type(personality, str)
+        check_type(voice, str)
+        check_type(mood, str)
+        check_type(block, bool)
+
         State.__init__(self, locals(), outcomes=["spoken"])
 
     def run(self, robot, sentence, language, personality, voice, mood, block):
@@ -107,9 +108,9 @@ class HearOptionsExtra(smach.State):
     >>> state = HearOptionsExtra(mockbot, spec, choices, answer)
     >>> outcome = state.execute()
     """
-    def __init__(self, robot, spec_designator, 
-                        choices_designator, 
-                        speech_result_designator, 
+    def __init__(self, robot, spec_designator,
+                        choices_designator,
+                        speech_result_designator,
                         time_out=rospy.Duration(10)):
         smach.State.__init__(self, outcomes=["heard", "no_result"])
 
@@ -149,12 +150,12 @@ class AskContinue(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('SAY',
-                                    Say(self.robot, 
-                                        random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])), 
+                                    Say(self.robot,
+                                        random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])),
                                     transitions={'spoken':'HEAR'})
-            
-            smach.StateMachine.add('HEAR', 
-                                    Hear(self.robot, 'continue', self.timeout), 
+
+            smach.StateMachine.add('HEAR',
+                                    Hear(self.robot, 'continue', self.timeout),
                                     transitions={'heard':'continue','not_heard':'no_response'})
 
 ##########################################################################################################################################
