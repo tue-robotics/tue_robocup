@@ -37,7 +37,7 @@ class ChallengePersonRecognition(smach.StateMachine):
         waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_2")
         waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_3")
 
-        operatorNameDes = VariableDesignator()
+        operatorNameDes = VariableDesignator(resolve_type=str)  # @LBFereirra: you can use VariableDesignator("Mr. Operator") directly
         # operatorNameDes.current = ""
         operatorNameDes.current = "Mr. Operator"
 
@@ -53,7 +53,7 @@ class ChallengePersonRecognition(smach.StateMachine):
         facesAnalyzedDes = VariableDesignator(resolve_type=list)
         facesAnalyzedDes.current = []
 
-        operatorLocationDes = VariableDesignator()
+        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) # @LBFereirra: a designator that resolves to another designator is a bit weird
         operatorLocationDes.current = PersonRecStates.PointDesignator()
 
         # ------------------ SIMULATION ------------------------------------
