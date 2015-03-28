@@ -7,6 +7,7 @@ from robot_smach_states.navigation import NavigateToPlace
 
 from robot_smach_states.state import State
 
+from robot_smach_states.util.designators import check_type
 import ed.msg
 from robot_skills.arms import Arm
 from geometry_msgs.msg import PoseStamped
@@ -17,9 +18,10 @@ class Put(State):
 
     def __init__(self, robot, item_to_place, placement_pose, arm):
         #Check types or designator resolve types
-        assert(item_to_place.resolve_type == ed.msg.EntityInfo or type(item_to_place) == ed.msg.EntityInfo)
-        assert(placement_pose.resolve_type == PoseStamped or type(placement_pose) == PoseStamped)
-        assert(arm.resolve_type == Arm or type(arm) == Arm) 
+
+        check_type(item_to_place, ed.msg.EntityInfo)
+        check_type(placement_pose, PoseStamped)
+        check_type(arm, Arm)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -78,7 +80,7 @@ class Put(State):
         arm.send_gripper_goal('close')
 
         arm.reset()
-        
+
         return 'succeeded'
 
 class Place(smach.StateMachine):
@@ -89,7 +91,7 @@ class Place(smach.StateMachine):
         #Check types or designator resolve types
         assert(item_to_place.resolve_type == ed.msg.EntityInfo or type(item_to_place) == ed.msg.EntityInfo)
         assert(place_pose.resolve_type == PoseStamped or type(place_pose) == PoseStamped)
-        assert(arm.resolve_type == Arm or type(arm) == Arm) 
+        assert(arm.resolve_type == Arm or type(arm) == Arm)
 
         with self:
             smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_pose, arm),  # TODO: Navigate to place

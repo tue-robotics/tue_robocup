@@ -9,6 +9,7 @@ import tf
 
 from robot_smach_states.state import State
 
+from robot_smach_states.util.designators import check_type
 import ed.msg
 from robot_skills.arms import Arm
 
@@ -18,10 +19,10 @@ from robot_smach_states.navigation import NavigateToGrasp
 class PickUp(State):
     def __init__(self, robot, arm, grab_entity):
         #Check that the entity_designator resolves to an Entity or is an entity
-        assert(grab_entity.resolve_type == ed.msg.EntityInfo or type(grab_entity) == ed.msg.EntityInfo)
-        
+        check_type(grab_entity, ed.msg.EntityInfo)
+
         #Check that the arm is a designator that resolves to an Arm or is an Arm
-        assert(arm.resolve_type == Arm or type(arm) == Arm) 
+        check_type(arm, Arm)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -117,8 +118,8 @@ class Grab(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         #Check types or designator resolve types
-        assert(item.resolve_type == ed.msg.EntityInfo or type(item) == ed.msg.EntityInfo)
-        assert(arm.resolve_type == Arm or type(arm) == Arm) 
+        check_type(item, ed.msg.EntityInfo)
+        check_type(arm, Arm)
 
 
         with self:

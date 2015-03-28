@@ -6,7 +6,7 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators import Designator, check_resolve_type
 import ed.msg
 from robot_skills.arms import Arm
 
@@ -21,10 +21,10 @@ class NavigateToGrasp(NavigateTo):
         super(NavigateToGrasp, self).__init__(robot)
 
         self.robot    = robot
-        assert(entity_designator.resolve_type == ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
+        check_resolve_type(entity_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
 
-        assert(arm_designator.resolve_type == Arm) #Check that the arm_designator resolves to an Arm
+        check_resolve_type(arm_designator, Arm) #Check that the arm_designator resolves to an Arm
         self.arm_designator = arm_designator
         if not arm_designator:
             rospy.logerr('NavigateToGrasp: side should be determined by entity_designator. Please specify left or right, will default to left')
@@ -32,7 +32,7 @@ class NavigateToGrasp(NavigateTo):
 
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
-        
+
         if arm == self.robot.arms['left']:
             angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         elif arm == self.robot.arms['right']:

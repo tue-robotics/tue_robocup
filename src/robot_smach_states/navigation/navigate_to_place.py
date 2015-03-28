@@ -6,7 +6,7 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators import Designator, check_resolve_type
 
 import rospy
 
@@ -23,7 +23,7 @@ class NavigateToPlace(NavigateTo):
         super(NavigateToPlace, self).__init__(robot)
 
         self.robot    = robot
-        assert(place_pose_designator.resolve_type == PoseStamped) #Check that place_pose_designator actually returns a PoseStamped
+        check_resolve_type(place_pose_designator, PoseStamped) #Check that place_pose_designator actually returns a PoseStamped
         self.place_pose_designator = place_pose_designator
 
         self.arm_designator = arm_designator
@@ -33,7 +33,7 @@ class NavigateToPlace(NavigateTo):
 
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
-        
+
         x_offset = self.robot.grasp_offset.x
         if arm == self.robot.arms['left']:
             y_offset = self.robot.grasp_offset.y
