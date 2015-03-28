@@ -65,6 +65,7 @@ class EButton(object):
 
 class Head(object):
     def __init__(self, *args, **kwargs):
+        self.reset = mock.MagicMock()
         self.close = mock.MagicMock()
         self.set_pan_tilt = mock.MagicMock()
         self.send_goal = mock.MagicMock()
@@ -76,7 +77,8 @@ class Head(object):
         self.wait = mock.MagicMock()
         self.getGoal = mock.MagicMock()
         self.atGoal = mock.MagicMock()
-        self.lookAtStandingPerson = mock.MagicMock()
+        self.look_at_standing_person = mock.MagicMock()
+        self.look_at_point = mock.MagicMock()
         self.setPanTiltGoal = mock.MagicMock()
         self.setLookAtGoal = mock.MagicMock()
         self.cancelGoal = mock.MagicMock()
