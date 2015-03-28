@@ -16,6 +16,7 @@ from actionlib.msg import *
 
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
+from robot_skills.mockbot import Mockbot
 from smach_ros import SimpleActionState
 
 from ed_perception.srv import LearnPerson, LearnPersonRequest
@@ -36,23 +37,23 @@ class ChallengePersonRecognition(smach.StateMachine):
         waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_2")
         waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_3")
 
-        operatorNameDes = VariableDesignator()
+        operatorNameDes = VariableDesignator(resolve_type=str)  # @LBFereirra: you can use VariableDesignator("Mr. Operator") directly
         # operatorNameDes.current = ""
         operatorNameDes.current = "Mr. Operator"
 
         learning_goal = ed_perception.msg.FaceLearningGoal("Mister Operator")
         learning_result = ed_perception.msg.FaceLearningResult()
         
-        nextLocationDes = VariableDesignator()
+        nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator)
         nextLocationDes.current = PersonRecStates.PointDesignator()
 
-        locationsToVisitDes = VariableDesignator()
+        locationsToVisitDes = VariableDesignator(resolve_type=list)
         locationsToVisitDes.current = []
 
-        facesAnalyzedDes = VariableDesignator()
+        facesAnalyzedDes = VariableDesignator(resolve_type=list)
         facesAnalyzedDes.current = []
 
-        operatorLocationDes = VariableDesignator()
+        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) # @LBFereirra: a designator that resolves to another designator is a bit weird
         operatorLocationDes.current = PersonRecStates.PointDesignator()
 
         # ------------------ SIMULATION ------------------------------------
@@ -505,6 +506,8 @@ if __name__ == "__main__":
         robot = Amigo(wait_services=True)
     elif robot_name == 'sergio':
         robot = Sergio(wait_services=True)
+    elif robot_name == 'mockbot':
+        robot = Mockbot(wait_services=True)
     else:
         print "[CHALLENGE PERSON RECOGNITION] Don't know robot name " + robot_name
 

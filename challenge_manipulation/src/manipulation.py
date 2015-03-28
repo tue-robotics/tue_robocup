@@ -31,6 +31,8 @@ from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
+import geometry_msgs.msg as gm
+
 
 import pdf
 
@@ -44,7 +46,7 @@ PLACE_HEIGHT = 1.0
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
     def __init__(self, fmt, **kwargs):
-        super(FormattedSentenceDesignator, self).__init__()
+        super(FormattedSentenceDesignator, self).__init__(resolve_type=str)
         self.fmt = fmt
         self.kwargs = kwargs
     
@@ -56,7 +58,7 @@ class FormattedSentenceDesignator(Designator):
 class EntityDescriptionDesignator(Designator):
     """EntityDescriptionDesignator"""
     def __init__(self, formats, entity_designator):
-        super(EntityDescriptionDesignator, self).__init__()
+        super(EntityDescriptionDesignator, self).__init__(resolve_type=str)
         self.entity_designator = entity_designator
         self.formats = formats
     
@@ -76,6 +78,7 @@ class EmptySpotDesignator(Designator):
     It does this by queying ED for entities that occupy some space. 
         If the result is no entities, then we found an open spot."""
     def __init__(self, robot, closet_designator):
+        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
         self.robot = robot
         self.closet_designator = closet_designator
 
@@ -266,7 +269,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items))
+            single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items, list))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM', 
                                                 single_item, 

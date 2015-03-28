@@ -4,7 +4,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators import EdEntityDesignator
 import robot_smach_states as states
 
 def setup_statemachine(robot):
@@ -21,7 +21,7 @@ def setup_statemachine(robot):
                                                     "Failed":"GO_TO_INTERMEDIATE_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
         smach.StateMachine.add('GO_TO_INTERMEDIATE_WAYPOINT',
-                                    states.NavigateToObserve(robot, Designator("dinner_table"), radius=0.7),
+                                    states.NavigateToObserve(robot, EdEntityDesignator(robot, id="dinner_table"), radius=0.7),
                                     transitions={   'arrived':'ASK_CONTINUE',
                                                     'unreachable':'ASK_CONTINUE',
                                                     'goal_not_defined':'ASK_CONTINUE'})
@@ -37,7 +37,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, Designator("exit_1_rips"), radius = 0.5),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
                                     transitions={   'arrived':'AT_END',
                                                     'unreachable':'AT_END',
                                                     'goal_not_defined':'AT_END'})
