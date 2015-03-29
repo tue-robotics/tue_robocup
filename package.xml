@@ -82,6 +82,9 @@
   <build_depend>tue_manipulation</build_depend>
   <run_depend>tue_manipulation</run_depend>
 
+  <build_depend>text_to_speech</build_depend>
+  <run_depend>text_to_speech</run_depend>
+
   <run_depend>python-mock</run_depend>
 
 </package>

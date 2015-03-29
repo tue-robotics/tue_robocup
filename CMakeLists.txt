@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
     tue_costmap_msgs
     cb_planner_msgs_srvs
     tue_manipulation
+    text_to_speech
 )
 
 catkin_python_setup()
