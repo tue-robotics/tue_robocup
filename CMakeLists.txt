@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
     tue_manipulation
     text_to_speech
     ed
+    swi_prolog
 )
 
 catkin_python_setup()
