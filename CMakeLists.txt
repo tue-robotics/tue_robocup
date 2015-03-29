@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
     tue_move_base_msgs
     tue_costmap_msgs
     cb_planner_msgs_srvs
+    tue_manipulation
 )
 
 catkin_python_setup()
