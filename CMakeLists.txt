@@ -23,6 +23,7 @@ find_package(catkin REQUIRED COMPONENTS
     tue_manipulation
     text_to_speech
     ed
+    ed_navigation
     swi_prolog
 )
 

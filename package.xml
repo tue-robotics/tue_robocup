@@ -88,6 +88,9 @@
   <build_depend>ed</build_depend>
   <run_depend>ed</run_depend>
 
+  <build_depend>ed_navigation</build_depend>
+  <run_depend>ed_navigation</run_depend>
+
   <build_depend>swi_prolog</build_depend>
   <run_depend>swi_prolog</run_depend>
 
