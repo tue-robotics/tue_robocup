@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-import roslib; 
+import roslib;
 import rospy
 import smach
 import subprocess
@@ -66,7 +66,7 @@ class PointDesignator(Designator):
     """ Returns a more or less hardcoded designator"""
     def __init__(self, point_stamped=None):
         super(PointDesignator, self).__init__(resolve_type=EntityInfo)
-        
+
         self.entity = EntityInfo()
 
         if not point_stamped == None:
@@ -74,7 +74,7 @@ class PointDesignator(Designator):
 
     def setPoint(self, point_stamped):
         self.entity.pose.position = point_stamped.point
-    
+
     def resolve(self):
         return self.entity
 
@@ -82,12 +82,12 @@ class PointDesignator(Designator):
 def points_distance(p1, p2):
     print OUT_PREFIX + bcolors.OKBLUE + "points_distance" + bcolors.ENDC
 
-    deltaX = p2[0] - p1[0];
-    deltaY = p2[1] - p1[1];
-    deltaZ = p2[2] - p1[2];
+    deltaX = p2[0] - p1[0]
+    deltaY = p2[1] - p1[1]
+    deltaZ = p2[2] - p1[2]
 
-    distance = math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ);
-    print OUT_PREFIX + "Testing ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance)
+    distance = math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
+    print OUT_PREFIX + "Distance ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance)
 
     # import ipdb; ipdb.set_Ptrace()
     return distance
@@ -132,7 +132,7 @@ class EdEntityListDesignator(Designator):
                 rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
                               criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
                               )
-            
+
             if entities:
                 self._current = entities  # TODO: add sortkey
                 return self.current
@@ -180,7 +180,7 @@ class LookAtPersonInFront(smach.State):
 
         # set robots pose
         self.robot.spindle.high()
-        
+
         # look front, 2 meters high
         # self.robot.head.look_at_standing_person(timeout=4)
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,"amigo/base_link"), end_time=0, timeout=4)
@@ -213,7 +213,7 @@ class LookAtPersonInFront(smach.State):
         # if there is a person in front, try to look at the face
         if desgnResult:
             print OUT_PREFIX + "Found a human!"
-    
+
             # resolve the data designator
             try:
                 entityData = dataDesignator.resolve()
@@ -282,7 +282,7 @@ class FindCrowd(smach.State):
         centerPointRes = None
         humanDesignatorRes = None
         entityDataRes = None
-        
+
         # create designators
         humanDesignator = EdEntityDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
         centerPointDes = AttrDesignator(humanDesignator, 'center_point')
@@ -400,14 +400,15 @@ class DescribePeople(smach.State):
                     str(face.gender),
                     str(face.inMainCrowd))
 
-                if face.gender == Gender.Male:
-                    numberMale += 1
-                else:
-                    numberFemale += 1
+                if face.inMainCrowd == True:
+                    if face.gender == Gender.Male:
+                        numberMale += 1
+                    else:
+                        numberFemale += 1
 
-            self.robot.speech.speak("I counted {0} persons in this crowd. {1} males and {2} females.".format( \
-                len(faceList), 
-                numberMale if numberMale > 0 else "no", 
+            self.robot.speech.speak("I counted {0} persons in this crowd. {1} males and {2} females.".format(
+                str(numberMale + numberFemale),
+                numberMale if numberMale > 0 else "no",
                 numberFemale if numberFemale > 0 else "no"),
                 block=False)
 
@@ -415,7 +416,7 @@ class DescribePeople(smach.State):
                 self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
                     gender = "man" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "woman",
                     pronoun = "he" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "she",
-                    pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == Pose.Sitting_down else "standing up"),
+                    pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == Pose.Standing else "sitting down"),
                     block=True)
             except KeyError, ke:
                     print OUT_PREFIX + "KeyError userdata.operatorIdx_in:" + str(ke)
@@ -488,7 +489,7 @@ class GetOperatorLocation(smach.State):
         print OUT_PREFIX + bcolors.OKBLUE + "GetOperatorLocation" + bcolors.ENDC
 
         lowest_score = 1    # scores are between 0 and 1
-        chosen = False
+        chosenOperator = False
         faceList = None
 
         # try to resolve the crowd designator
@@ -514,17 +515,26 @@ class GetOperatorLocation(smach.State):
                     operatorIdx = idx
                     self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, y=face.point_stamped.point.y, z=face.point_stamped.point.z, frame_id="/map"))
 
-                    chosen = True
+                    chosenOperator = True
 
                 # TODO: MARK PEOPLE THERE ARE CLOSE TO THE OPERATOR, IN THE "MAIN CROWD" face.inMainCrowd
 
-            if chosen:
-                print OUT_PREFIX + "Operator is ({0}): {1} ({2}), Location: ({3},{4},{5})".format(
-                    str(operatorIdx),
+            if chosenOperator:
+                print OUT_PREFIX + "Operator is: {1} ({2}), Location: ({3},{4},{5})".format(
                     str(faceList[operatorIdx].name),
                     str(faceList[operatorIdx].score),
                     str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z))
-                
+
+                # Operators face location
+                p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
+
+                # Update who belongs to the main crowd, close to the operator
+                for face in faceList:
+                    p2 = (faces.point_stamped.point.x, faces.point_stamped.point.y, faces.point_stamped.point.z)
+
+                    if points_distance(p1=p1, p2=p2) < 5.0:
+                        face.inMainCrowd = True
+
                 userdata.operatorIdx_out = operatorIdx
                 return 'succeeded'
             else:
@@ -548,7 +558,7 @@ class AnalyzePerson(smach.State):
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.OKBLUE + "AnalyzePerson" + bcolors.ENDC
-        
+
         # initialize variables
         entityDataList = []
         recognition_label = None
@@ -591,7 +601,7 @@ class AnalyzePerson(smach.State):
                             if recognition_score == 0:
                                 recognition_label = ""
                                 print OUT_PREFIX + "Unrecognized person"
-                                
+
 
                             if entityData['type'] == "crowd":
                                 #  get the corresponding location of the face
@@ -607,9 +617,9 @@ class AnalyzePerson(smach.State):
 
                             #  test if a face in this location is already present in the list
                             sameFace = False
-                            for faces in self.facesAnalysedDes.current:
+                            for face in self.faceAnalysedDes.current:
                                 p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
-                                p2 = (faces.point_stamped.point.x,faces.point_stamped.point.y, faces.point_stamped.point.z)
+                                p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
 
                                 if points_distance(p1=p1, p2=p2) < 1.0:
                                     sameFace = True
@@ -621,14 +631,22 @@ class AnalyzePerson(smach.State):
                             #  if information is valid, add it to the list of analysed faces
                             if not recognition_label == None and not recognition_score == None and not sameFace:
                                 # import ipdb; ipdb.set_trace()
-                                print OUT_PREFIX + "Adding face to list: '{0}'' (score:{1}) @ ({2},{3},{4})".format(
+                                if face_loc["map_z"] > 1.5:
+                                    pose = Pose.Standing
+                                else:
+                                    pose = Pose.Sitting_down
+
+                                print OUT_PREFIX + "Adding face to list: '{0}'' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
                                     str(recognition_label),
                                     str(recognition_score),
+                                    "standing up" if pose == Pose.Standing else "sitting down",
                                     face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
+
 
                                 self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
                                                                                 name = recognition_label, 
-                                                                                score = recognition_score))]                            
+                                                                                score = recognition_score,
+                                                                                pose = pose))]
                             else:
                                 print OUT_PREFIX + bcolors.WARNING + "Did not add face to the list" + bcolors.ENDC
 
@@ -647,7 +665,7 @@ class AnalyzePerson(smach.State):
 
         else:
             print OUT_PREFIX + "Could not find anyone in front of the robot."
-    
+
         return 'failed'
 
 
@@ -658,7 +676,7 @@ class AnalyzePerson(smach.State):
 class LearnPerson(smach.StateMachine):
     # tutorial  for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, 
+        smach.StateMachine.__init__(self,
                                     outcomes=['succeded_learning', 'failed_learning'],
                                     input_keys=['personName_in'])
         self.robot = robot
@@ -732,12 +750,12 @@ class GetNextLocation(smach.State):
         print OUT_PREFIX + bcolors.OKBLUE + "GetNextLocation" + bcolors.ENDC
 
         availableLocations = self.locations.resolve()
-        
+
         # if there are locations not visited yet, choose one
         if availableLocations:
-            
+
             print OUT_PREFIX + str(len(availableLocations)) + " locations in the list"
-            
+
             chosenLocation = None
             # TODO: CHOOSE CLOSEST LOCATION
             for loc in availableLocations:
@@ -745,7 +763,7 @@ class GetNextLocation(smach.State):
                 if loc.visited == False:
                     if loc.attempts < 5:
                         chosenLocation = loc.point_stamped
-                        loc.attempts +=1
+                        loc.attempts += 1
                         break
                     else:
                         print OUT_PREFIX + 'Tried to visit this location several times and it never worked. Ignoring it'
@@ -758,7 +776,7 @@ class GetNextLocation(smach.State):
                 print OUT_PREFIX + "Next location: " + str(chosenLocation.point)
 
                 return 'done'
-            
+
         # If there are not more loactions to visit then report back to the operator
         else:
 
