@@ -29,6 +29,7 @@ before_script:
   - ln -s $CI_SOURCE_PATH .
   - ls -l
   - cd .. # go to the catkin workspace
+  - rospack list
 
 script:
   - catkin_make
