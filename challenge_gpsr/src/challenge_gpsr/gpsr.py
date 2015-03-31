@@ -129,8 +129,8 @@ class Query_specific_action(smach.State):
             self.robot.reasoner.assertz("current_action('1')")
             current_action = str("1")
         
-        rospy.logwarn("HACK TO GO DIRECTLY TO ACTION 2!")
-        current_action = "2"
+        # rospy.logwarn("HACK TO GO DIRECTLY TO ACTION 2!")
+        # current_action = "2"
 
         print current_action
 
@@ -142,26 +142,16 @@ class Query_specific_action(smach.State):
                     print "choice_value = ", str(choice_value)
 
                     if str(choice_value) == "1_locations_rooms":
-                        #print "locations_rooms = ", str(self.robot.reasoner.query("action_info('1','1_locations_rooms',B)")[0]['B'])
-                        print "locations_rooms = '", str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',B)")), "'"
-                        a = ("room_"+str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)")))
-                        print a
+                        room=str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
+                        self.robot.reasoner.query("retractall(action_info('1','1_locations_rooms',A))")
+                        self.robot.reasoner.assertz("action_info('1','1_locations_rooms',"+"room_"+str(room)+")")
                         return "navigate_room"
 
-                    if str(choice_value) == "1_locations_aeuoi":
-                        print "1_locations_aeuoi = ", self.robot.reasoner.query("action_info('1','1_locations_aeuoi',B)")[0]
-                        self.robot.reasoner.query("retractall(action_info('1','1_locations_aeuoi',A))")
-                        self.robot.reasoner.assertz("action_info('1','1_location',"+choice_value+")")
-
+                    if (str(choice_value) == "1_locations_aeuoi") or (str(choice_value) == "1_locations_rest") :
+                        location=str(self.robot.reasoner.query_first_answer("action_info('1','"+str(choice_value)+"',A)"))
+                        self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
+                        self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
                         return "navigate_location"
-                    if str(choice_value) == "1_locations_rest":
-                        print "1_locations_rest = ", self.robot.reasoner.query("action_info('1','1_locations_rest',B)")[0]
-                        self.robot.reasoner.query("retractall(action_info('1','1_locations_rest',A))")
-                        self.robot.reasoner.assertz("action_info('1','1_location',"+choice_value+")")
-
-                        print "testingggg =", self.robot.reasoner.query("action_info('1','1_location',A)")
-
-                        return "navigate_location"            
 
         elif current_action == "2":
             action_2 = self.robot.reasoner.query("action_info('2',A,B)")
@@ -170,6 +160,18 @@ class Query_specific_action(smach.State):
                     print "hiiiierrr"
                     print "choice_key = ", str(choice_key)
                     print "choice_value = ", str(choice_value)
+
+
+                    if str(choice_value) == "2_action":
+                        print "1_locations_aeuoi = ", self.robot.reasoner.query("action_info('1','1_locations_aeuoi',B)")[0]
+                        self.robot.reasoner.query("retractall(action_info('1','1_locations_aeuoi',A))")
+                        self.robot.reasoner.assertz("action_info('1','1_location',"+choice_value+")")
+
+                    if (str(choice_value) == "2_objects_plural") or (str(choice_value) == "2_objects_types_plural") or (str(choice_value) == "2_objects_aeuoi") or (str(choice_value) == "2_objects_rest_singular") :
+                        object_action=str(self.robot.reasoner.query_first_answer("action_info('1','"+str(choice_value)+"',A)"))
+                        self.robot.reasoner.query("retractall(action_info('2','"+str(choice_value)+"',A))")
+                        self.robot.reasoner.assertz("action_info('2','2_object','"+str(object_action)+"')")
+                        #return "navigate_location"
 
         elif current_action == "3":
             print self.robot.reasoner.query("action_info('3',A,B)")
@@ -219,14 +221,16 @@ class Finished_goal(smach.State):
 ##### STATEMACHINE #####
 ########################
 
-class GpsrRoomDesignator(Designator):
+class QueryFirstAnswerDesignator(Designator):
     def __init__(self, robot, reasoner_query):
+        super(QueryFirstAnswerDesignator, self).__init__(resolve_type=str)
         self.robot = robot
         self.reasoner_query = reasoner_query
 
     def resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
-        return "room_"+str(first_answer)
+        
+        return str(first_answer)
 
 
 def setup_statemachine(robot):
@@ -282,22 +286,25 @@ def setup_statemachine(robot):
         #                         Failed_goal(robot),
         #                         transitions={'new_task':'RESET_REASONER'})
 
+        # smach.StateMachine.add('ACTION_NAVIGATE_TO_LOCATION',
+        #                         states.NavigateToSymbolic(robot, 
+        #                             {EdEntityDesignator(robot, id="plastic_cabinet") : "in_front_of"}, EdEntityDesignator(robot, id="plastic_cabinet")),
+        #                         transitions={   'arrived'           :   'FINISHED_TASK',
+        #                                         'unreachable'       :   'FINISHED_TASK',    
+        #                                         'goal_not_defined'  :   'FINISHED_TASK'}) 
+
         smach.StateMachine.add('ACTION_NAVIGATE_TO_LOCATION',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id="plastic_cabinet") : "in_front_of"}, EdEntityDesignator(robot, id="plastic_cabinet")),
+                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of" }, 
+                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
                                 transitions={   'arrived'           :   'FINISHED_TASK',
                                                 'unreachable'       :   'FINISHED_TASK',
-                                                'goal_not_defined'  :   'FINISHED_TASK'}) 
+                                                'goal_not_defined'  :   'FINISHED_TASK'})
 
-        #When this state executes, it will resolve the EdEntityDesignators.
-        #They in turn are built with a GpsrRoomDesignator, so they need to be resolved first. 
-        #The definition is above, but basically, they execute the same code you had here first.
-        #(TODO Loy: create a designator that just calls any function you give it)
-        #So, the query is executed and the result is passed to EdEntityDesignator's id and used in that query. 
         smach.StateMachine.add('ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id=GpsrRoomDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
-                                    EdEntityDesignator(robot, id=GpsrRoomDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
+                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
+                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
                                     #{EdEntityDesignator(robot, id="room_hallway") : "in" },
                                     #EdEntityDesignator(robot, id="room_hallway")),
                                 transitions={   'arrived'           :   'FINISHED_TASK',
@@ -323,4 +330,3 @@ if __name__ == "__main__":
         exit(1)
 
     states.util.startup(setup_statemachine, robot_name=robot_name)
-
