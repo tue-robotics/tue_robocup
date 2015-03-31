@@ -266,7 +266,7 @@ class EdEntityDesignator(Designator):
     criteria functions)
     """
 
-    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None,
+    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
         type_designator=None, center_point_designator=None, id_designator=None, debug=False):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
@@ -286,6 +286,8 @@ class EdEntityDesignator(Designator):
             raise TypeError("Specify either type or type_designator, not both")
         if center_point != None and center_point_designator != None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
+        elif center_point == None and center_point_designator == None:
+            center_point = gm.PointStamped()
         if id != "" and id_designator != None:
             raise TypeError("Specify either id or id_designator, not both")
 
