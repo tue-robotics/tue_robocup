@@ -6,18 +6,17 @@ import subprocess
 import inspect
 import random
 import ed_perception.msg
-import actionlib
-import actionlib_msgs
+# import actionlib
+# import actionlib_msgs
 import robot_skills.util.msg_constructors as msgs
 import geometry_msgs.msg as gm
 import math
 
-from collections import namedtuple
-# from enum import Enum
+# from collections import namedtuple
 from smach_ros import SimpleActionState
 from robot_skills.amigo import Amigo
 from robot_smach_states.util.designators import DesignatorResolvementError, EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
-from ed_perception.msg import FaceLearningGoal, FaceLearningResult
+# from ed_perception.msg import FaceLearningGoal, FaceLearningResult
 from ed.msg import EntityInfo
 
 
@@ -143,21 +142,6 @@ class EdEntityListDesignator(Designator):
     def __repr__(self):
         return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
             self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
-
-# ----------------------------------------------------------------------------------------------------
-
-
-class WaitForOperator(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['success', 'failed'])
-        self.robot = robot
-
-    def execute(self):
-        print OUT_PREFIX + bcolors.OKBLUE + "WaitForOperator" + bcolors.ENDC
-
-        # Return sucess only when a person is seen in front of the robot, or time-out after a minute
-
-        return 'success'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -292,11 +276,11 @@ class FindCrowd(smach.State):
 
         # "scan" the room with the head
         # look at 3 meters front, 5 meters right and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,"amigo/base_link"), end_time=0, timeout=4)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,"amigo/base_link"), end_time=0, timeout=6)
         rospy.sleep(2)
 
         # look at 3 meters front, 5 meters left and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,"amigo/base_link"), end_time=0, timeout=4)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,"amigo/base_link"), end_time=0, timeout=6)
         rospy.sleep(2)
 
         # resolve crowd designator
@@ -330,8 +314,6 @@ class FindCrowd(smach.State):
 
 
             foundFace = False # FORCING THIS TO FALSE, BECAUSE THERE SEEMS TO BE A PROBLEM WITH THE MAP COORDINATES
-
-            import ipdb; ipdb.set_trace()
 
             if foundFace:
                 for face in faceList:
@@ -389,7 +371,6 @@ class DescribePeople(smach.State):
 
         if not faceList == None:
             # Compute crowd details
-            # import ipdb; ipdb.set_trace()
 
             for face in faceList:
                 print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}".format(
@@ -413,11 +394,15 @@ class DescribePeople(smach.State):
                 block=False)
 
             try:
-                self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
-                    gender = "man" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "woman",
-                    pronoun = "he" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "she",
-                    pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == Pose.Standing else "sitting down"),
-                    block=True)
+                if userdata.operatorIdx_in == None:
+                    print OUT_PREFIX + bcolors.FAIL "Operator index from the list is invalid." + bcolors.ENDC
+                    self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
+                else:
+                    self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
+                        gender = "man" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "woman",
+                        pronoun = "he" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "she",
+                        pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == Pose.Standing else "sitting down"),
+                        block=True)
             except KeyError, ke:
                     print OUT_PREFIX + "KeyError userdata.operatorIdx_in:" + str(ke)
                     pass
@@ -514,13 +499,14 @@ class GetOperatorLocation(smach.State):
                     lowest_score = face.score
                     operatorIdx = idx
                     self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, y=face.point_stamped.point.y, z=face.point_stamped.point.z, frame_id="/map"))
-
                     chosenOperator = True
 
                 # TODO: MARK PEOPLE THERE ARE CLOSE TO THE OPERATOR, IN THE "MAIN CROWD" face.inMainCrowd
 
             if chosenOperator:
-                print OUT_PREFIX + "Operator is: {1} ({2}), Location: ({3},{4},{5})".format(
+
+
+                print OUT_PREFIX + "Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
                     str(faceList[operatorIdx].name),
                     str(faceList[operatorIdx].score),
                     str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z))
@@ -530,7 +516,7 @@ class GetOperatorLocation(smach.State):
 
                 # Update who belongs to the main crowd, close to the operator
                 for face in faceList:
-                    p2 = (faces.point_stamped.point.x, faces.point_stamped.point.y, faces.point_stamped.point.z)
+                    p2 = (face.point_stamped.point.x, face.point_stamped.point.y, face.point_stamped.point.z)
 
                     if points_distance(p1=p1, p2=p2) < 5.0:
                         face.inMainCrowd = True
@@ -581,7 +567,7 @@ class AnalyzePerson(smach.State):
             try:
                 humanDataRes = humanDataDesignator.resolve()
                 entityDataList += [(humanDataRes)]
-                print OUT_PREFIX + "Added " + str(len(humanDataRes)) + " entities to the list"
+                print OUT_PREFIX + "Found " + str(len(humanDataRes)) + " entities"
             except DesignatorResolvementError:
                 print OUT_PREFIX + "Could not resolve dataDesignator"
                 pass
@@ -617,26 +603,26 @@ class AnalyzePerson(smach.State):
 
                             #  test if a face in this location is already present in the list
                             sameFace = False
-                            for face in self.faceAnalysedDes.current:
-                                p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
-                                p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
+                            # for face in self.facesAnalysedDes.current:
+                            #     p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
+                            #     p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
 
-                                if points_distance(p1=p1, p2=p2) < 1.0:
-                                    sameFace = True
-                                    break
+                            #     if points_distance(p1=p1, p2=p2) < 1.0:
+                            #         sameFace = True
+                            #         break
 
                             if sameFace:
                                 print OUT_PREFIX + "Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current))
 
                             #  if information is valid, add it to the list of analysed faces
                             if not recognition_label == None and not recognition_score == None and not sameFace:
-                                # import ipdb; ipdb.set_trace()
-                                if face_loc["map_z"] > 1.5:
+
+                                if face_loc["map_z"] > 0.8:
                                     pose = Pose.Standing
                                 else:
                                     pose = Pose.Sitting_down
 
-                                print OUT_PREFIX + "Adding face to list: '{0}'' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
+                                print OUT_PREFIX + "Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
                                     str(recognition_label),
                                     str(recognition_score),
                                     "standing up" if pose == Pose.Standing else "sitting down",
@@ -667,69 +653,6 @@ class AnalyzePerson(smach.State):
             print OUT_PREFIX + "Could not find anyone in front of the robot."
 
         return 'failed'
-
-
-# ----------------------------------------------------------------------------------------------------
-
-
-# SimpleAction state machine to learn a new face
-class LearnPerson(smach.StateMachine):
-    # tutorial  for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self,
-                                    outcomes=['succeded_learning', 'failed_learning'],
-                                    input_keys=['personName_in'])
-        self.robot = robot
-        self.service_name = "/" + robot.robot_name + "/ed/face_recognition/learn_face"
-
-        with self:
-
-            # Callback when a result is received
-            def learn_result_cb(userdata, status, result):
-                print OUT_PREFIX + bcolors.OKBLUE + "learn_result_cb" + bcolors.ENDC
-
-                print "Received result from the learning service"
-
-                # test the result and parse the message
-                if status == actionlib.GoalStatus.SUCCEEDED:
-                    if result.result_info == "Learning complete":
-                        print "Face learning complete! result: " + result.result_info
-                        # self.robot.speech.speak("Learning complete.", block=False)
-
-                        return 'succeeded'
-                    else:
-                        return 'aborted'
-                else:
-                    print "Face learning aborted! result: " + result.result_info
-                    return 'aborted'
-
-            # Callback when a result is sent
-            def learn_goal_cb(userdata, goal):
-                print OUT_PREFIX + bcolors.OKBLUE + "goal_result_cb" + bcolors.ENDC
-                # import ipdb; ipdb.set_trace()
-
-                self.robot.speech.speak("Please look at me while I learn your face", block=True)
-
-                learn_goal = FaceLearningGoal()
-                learn_goal.person_name = userdata.person_name_goal
-
-                print "Goal sent to the learning service, with name '" + learn_goal.person_name + "'"
-
-                return learn_goal
-
-            # Create Simple Action Client
-            smach.StateMachine.add( 'LEARN_PERSON',
-                                    SimpleActionState(  self.service_name,
-                                                        ed_perception.msg.FaceLearningAction,
-                                                        result_cb = learn_result_cb,
-                                                        goal_cb = learn_goal_cb,            # create a goal inside the callback
-                                                        input_keys=['person_name_goal'],
-                                                        output_keys=['result_info_out']),
-                                                        # goal_slots = ['person_name_goal'],# or create it here directly
-                                    transitions={   'succeeded':'succeded_learning',
-                                                    'aborted': 'failed_learning',
-                                                    'preempted': 'failed_learning'},
-                                    remapping={     'person_name_goal':'personName_in'})
 
 
 # ----------------------------------------------------------------------------------------------------

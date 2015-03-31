@@ -7,19 +7,18 @@ import smach
 import smach_ros
 import person_recognition_states as PersonRecStates
 import robot_smach_states as states
-import ed_perception.msg
 import geometry_msgs.msg as gm
 import robot_skills.util.msg_constructors as msgs
 
-from actionlib import *
-from actionlib.msg import *
+# from actionlib import *
+# from actionlib.msg import *
 
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
-from smach_ros import SimpleActionState
+# from smach_ros import SimpleActionState
 
-from ed_perception.srv import LearnPerson, LearnPersonRequest
+# from ed_perception.srv import LearnPerson, LearnPersonRequest
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator
 
 
@@ -41,8 +40,8 @@ class ChallengePersonRecognition(smach.StateMachine):
         # operatorNameDes.current = ""
         operatorNameDes.current = "Mr. Operator"
 
-        learning_goal = ed_perception.msg.FaceLearningGoal("Mr_Operator")
-        learning_result = ed_perception.msg.FaceLearningResult()
+        # learning_goal = ed_perception.msg.FaceLearningGoal("Mr_Operator")
+        # learning_result = ed_perception.msg.FaceLearningResult()
         
         nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator)
         nextLocationDes.current = PersonRecStates.PointDesignator()
@@ -170,7 +169,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'LEARN_PERSON'})
 
                 smach.StateMachine.add('LEARN_PERSON',
-                                        PersonRecStates.LearnPerson(robot),
+                                        states.LearnPerson(robot, name_over_userdata = True),
                                         remapping={     'personName_in':'personName_userData'},
                                         transitions={   'succeded_learning':'SAY_OPERATOR_LEARNED',
                                                         'failed_learning':'SAY_LEARN_FACE_FAILED'})
@@ -308,7 +307,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     'container_failed': 'SAY_FAILED_FIND_CROWD'})
                 
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
-                                    states.Say(robot,[  "I think I found some poeple.",
+                                    states.Say(robot,[  "I think I found some people.",
                                                         "I think I saw several people over there"], block=False),
                                     transitions={   'spoken':'FIND_OPERATOR_CONTAINER'})
 
