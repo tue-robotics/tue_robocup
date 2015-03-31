@@ -261,7 +261,6 @@ class FindCrowd(smach.State):
 
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.OKBLUE + "FindCrowd" + bcolors.ENDC
-
         foundFace = False
         centerPointRes = None
         humanDesignatorRes = None
@@ -276,11 +275,11 @@ class FindCrowd(smach.State):
 
         # "scan" the room with the head
         # look at 3 meters front, 5 meters right and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,"amigo/base_link"), end_time=0, timeout=6)
-        rospy.sleep(2)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,"amigo/base_link"), end_time=0, timeout=8)
+        rospy.sleep(1)
 
         # look at 3 meters front, 5 meters left and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,"amigo/base_link"), end_time=0, timeout=6)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,"amigo/base_link"), end_time=0, timeout=8)
         rospy.sleep(2)
 
         # resolve crowd designator
@@ -395,7 +394,7 @@ class DescribePeople(smach.State):
 
             try:
                 if userdata.operatorIdx_in == None:
-                    print OUT_PREFIX + bcolors.FAIL "Operator index from the list is invalid." + bcolors.ENDC
+                    print OUT_PREFIX + bcolors.FAIL + "Operator index from the list is invalid." + bcolors.ENDC
                     self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
                 else:
                     self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
