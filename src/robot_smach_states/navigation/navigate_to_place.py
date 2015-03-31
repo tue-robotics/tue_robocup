@@ -56,8 +56,6 @@ class NavigateToPlace(NavigateTo):
             rospy.logerr("Could not determine pose: ".format(ke))
             return None
 
-        rospy.logwarn("Should Sjoerd check the newest model data in???")
-
         # Outer radius
         ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
