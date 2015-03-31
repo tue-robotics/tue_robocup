@@ -266,7 +266,8 @@ class EdEntityDesignator(Designator):
     criteria functions)
     """
 
-    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None, debug=False):
+    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
+        type_designator=None, center_point_designator=None, id_designator=None, debug=False):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -275,9 +276,21 @@ class EdEntityDesignator(Designator):
         @param radius combined with center_point: a sphere to search an entity in
         @param id the ID of the object to get info about
         @param parse whether to parse the data string associated with the object model or entity
-        @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)"""
+        @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)
+        @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
+        @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
+        @param id_designator same as id but dynamically resolved trhough a designator. Mutually exclusive with id"""
         super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo)
         self.ed = robot.ed
+        if type != "" and type_designator != None:
+            raise TypeError("Specify either type or type_designator, not both")
+        if center_point != None and center_point_designator != None:
+            raise TypeError("Specify either center_point or center_point_designator, not both")
+        elif center_point == None and center_point_designator == None:
+            center_point = gm.PointStamped()
+        if id != "" and id_designator != None:
+            raise TypeError("Specify either id or id_designator, not both")
+
         self.type = type
         self.center_point = center_point
         self.radius = radius
@@ -285,14 +298,33 @@ class EdEntityDesignator(Designator):
         self.parse = parse
         self.criteriafuncs = criteriafuncs or []
 
+        if type_designator: check_resolve_type(type_designator, str, list) #the resolve type of type_designator can be either st or list
+        self.type_designator = type_designator
+
+        if center_point_designator: check_resolve_type(center_point_designator, gm.PointStamped) #the resolve type of type_designator can be either st or list
+        self.center_point_designator = center_point_designator
+
+        if id_designator: check_resolve_type(id_designator, str)
+        self.id_designator = id_designator
+
         self.debug = debug
 
     def resolve(self):
-        entities = self.ed.get_entities(self.type, self.center_point, self.radius, self.id, self.parse)
+        _type = self.type_designator.resolve() if self.type_designator else self.type
+        _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
+        _id = self.id_designator.resolve() if self.id_designator else self.id
+        _criteria = self.criteriafuncs
+
+        if isinstance(_type, list):
+            _type = "" #Do the check not in Ed but in code here
+            typechecker = lambda entity: entity.type in _type
+            _criteria += [typechecker]
+
+        entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
         if self.debug:
             import ipdb; ipdb.set_trace()
         if entities:
-            for criterium in self.criteriafuncs:
+            for criterium in _criteria:
                 entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
                 rospy.logdebug("Criterium {0} leaves {1} entities: {2}".format(
