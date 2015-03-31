@@ -6,7 +6,9 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.util.designators import Designator, check_resolve_type
+import ed.msg
+from robot_skills.arms import Arm
 
 import rospy
 
@@ -19,8 +21,10 @@ class NavigateToGrasp(NavigateTo):
         super(NavigateToGrasp, self).__init__(robot)
 
         self.robot    = robot
+        check_resolve_type(entity_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity
         self.entity_designator = entity_designator
 
+        check_resolve_type(arm_designator, Arm) #Check that the arm_designator resolves to an Arm
         self.arm_designator = arm_designator
         if not arm_designator:
             rospy.logerr('NavigateToGrasp: side should be determined by entity_designator. Please specify left or right, will default to left')
@@ -28,13 +32,12 @@ class NavigateToGrasp(NavigateTo):
 
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
-        
-        x_offset = self.robot.grasp_offset.x
+
         if arm == self.robot.arms['left']:
-            y_offset = self.robot.grasp_offset.y
+            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         elif arm == self.robot.arms['right']:
-            y_offset = -self.robot.grasp_offset.y
-        radius = math.sqrt(x_offset*x_offset + y_offset*y_offset)
+            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+        radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
         entity = self.entity_designator.resolve()
 
@@ -58,12 +61,10 @@ class NavigateToGrasp(NavigateTo):
             rospy.logerr("Could not determine pose.rz: ".format(ke))
             rz = 0
 
-        rospy.logwarn("Should Sjoerd check the newest model data in???")
-
         # Outer radius
         ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
         pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
-        oc = OrientationConstraint(look_at=Point(x_offset, y_offset, 0.0), frame="/map")
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
 
         return pc, oc

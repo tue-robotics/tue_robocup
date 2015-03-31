@@ -6,6 +6,9 @@ from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
 from geometry_msgs.msg import *
 
+from robot_smach_states.util.designators import check_resolve_type
+import ed.msg
+
 import rospy
 
 
@@ -13,12 +16,16 @@ import rospy
 class NavigateToExplore(NavigateTo):
     def __init__(self, robot, constraint_designator, breakout_designator, radius = .7, exclude_radius = 0.3):
         """@param constraint_designator a Designator that resolves to the entity to explore
-        @param breakout_designator when this Designator successfully resolves, the state signals it is done. 
+        @param breakout_designator when this Designator successfully resolves, the state signals it is done.
                 For example, it could resolve to an item of a class you are looking for."""
         super(NavigateToExplore, self).__init__(robot)
 
         self.robot    = robot
+
+        check_resolve_type(constraint_designator, ed.msg.EntityInfo) #Check that the constraint designator resolves to an Entity
         self.constraint_designator = constraint_designator
+
+        check_resolve_type(breakout_designator, ed.msg.EntityInfo) #Check that the constraint designator resolves to an Entity
         self.breakout_designator   = breakout_designator
         self.radius   = radius
         self.exclude_radius = exclude_radius
@@ -54,7 +61,7 @@ class NavigateToExplore(NavigateTo):
 
             xs = ch[i].x + (dy/length)*self.radius
             ys = ch[i].y - (dx/length)*self.radius
-            
+
             if i != 0:
                 pci = pci + ' and '
 
@@ -82,7 +89,7 @@ class NavigateToExplore(NavigateTo):
             entity = self.breakout_designator.resolve()
         except:
             return True
-        
+
         rospy.loginfo("Breakout: entity_id = {0}".format(entity.id))
 
         return False

@@ -134,5 +134,5 @@ class ResetSpindleHeadUp(State):
     def run(self, robot, timeout):
 
         robot.spindle.reset()
-        robot.head.look_up()
+        robot.head.reset()
         return "done"
