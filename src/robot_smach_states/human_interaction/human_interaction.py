@@ -221,7 +221,7 @@ class LearnPerson(smach.StateMachine):
             def learn_goal_cb(userdata, goal):
                 # import ipdb; ipdb.set_trace()
 
-                self.robot.speech.speak("Please look at me while I learn your face.", block=True)
+                # self.robot.speech.speak("Please look at me while I learn your face.", block=True)
 
                 learn_goal = FaceLearningGoal()
                 learn_goal.person_name = userdata.person_name_goal
@@ -232,7 +232,7 @@ class LearnPerson(smach.StateMachine):
 
             # --------------------------------------------------------------------------------
 
-            # Create Simple Action Client
+            # Create Simple Action ClientS
             smach.StateMachine.add( 'LEARN_PERSON',
                                     SimpleActionState(  self.service_name,
                                                         ed_perception.msg.FaceLearningAction,
