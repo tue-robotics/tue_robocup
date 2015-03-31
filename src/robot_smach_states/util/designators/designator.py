@@ -491,6 +491,25 @@ class ArmHoldingEntityDesignator(ArmDesignator):
         return arm.occupied_by == self.entity_designator.resolve()
 
 
+class DeferToRuntime(Designator):
+    """Run the given function at runtime. Using Python closures, you can use any variable in scope in this function.
+    For example:
+    >>> d1 = Designator("world") #Create a designator and assign it to a variable
+    >>> prefix = "Hello" #Create a string variable
+    >>> def prepend(): return prefix + " " + d1.resolve() #This function takes prefix and d1 as variables from the outer scope!
+    >>> d = DeferToRuntime(prepend, resolve_type=str) #A designator to execute the prepend-function
+    >>> d.resolve()
+    'Hello world'
+    """
+
+    def __init__(self, func, resolve_type):
+        super(DeferToRuntime, self).__init__(resolve_type=resolve_type)
+        self.func = func
+
+    def resolve(self):
+        return self.func()
+
+
 def test_visited_and_unreachable():
     """In our RoboCup executives, we keep track of which items are 'processed' or visited,
     and which cannot be processed because they are unreachable.
