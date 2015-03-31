@@ -34,11 +34,12 @@ def save_entity_image_to_file(robot, entityID):
 
     # ed request
     info = get_entity_info(entityID)
-
+    # import ipdb;ipdb.set_trace()
     # write bytes to file
     file_name = entityID+".jpg"
     with open(file_name , 'wb') as f:
-        f.write(info.measurement_image)
+        newFileByteArray = bytearray(info.measurement_image)
+        f.write(newFileByteArray)
 
     return file_name
 
@@ -58,8 +59,6 @@ def items2markdown(robot, entities):
 
     pdfFilename = "manipulation_challenge.pdf"
     html2pdf(html, pdfFilename)
-
-
 
 if __name__ == '__main__':
     pisa.showLogging()
