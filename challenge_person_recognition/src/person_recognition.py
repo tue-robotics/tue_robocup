@@ -38,7 +38,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         operatorNameDes = VariableDesignator(resolve_type=str)
         # operatorNameDes.current = ""
-        operatorNameDes.current = "Mr. Operator"
+        operatorNameDes.current = ""
 
         # learning_goal = ed_perception.msg.FaceLearningGoal("Mr_Operator")
         # learning_result = ed_perception.msg.FaceLearningResult()
@@ -160,8 +160,12 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add('ASK_PERSON_NAME',
                                         PersonRecStates.AskPersonName(robot, operatorNameDes),
                                         remapping={     'personName_out':'personName_userData'},
-                                        transitions={   'succeded':'LOOK_AT_OPERATOR_2',
+                                        transitions={   'succeded':'SAY_LOOK_AT_ME',
                                                         'failed':'SAY_LEARN_NAME_FAILED'})
+
+                smach.StateMachine.add( 'SAY_LOOK_AT_ME',
+                                    states.Say(robot,"Please look at me while I learn your face".format(str(operatorNameDes.current)), block=False),
+                                    transitions={    'spoken':'LOOK_AT_OPERATOR_2'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR_2',
                                         PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
@@ -368,7 +372,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'ANALYZE_PERSON'})
                         
                         smach.StateMachine.add( 'ANALYZE_PERSON',
-                                                PersonRecStates.AnalyzePerson(robot, facesAnalyzedDes),
+                                                PersonRecStates.AnalysePerson(robot, facesAnalyzedDes),
                                                 transitions={   'succeded':'CANCEL_HEAD_GOALS',
                                                                 'failed':'container_failed'})
 
@@ -447,13 +451,15 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         PersonRecStates.PointAtOperator(robot),
                                         transitions={   'succeeded':'GREET_OPERATOR',
                                                         'failed':'SAY_CANT_POINT'})
-                
+
                 smach.StateMachine.add( 'SAY_CANT_POINT',
                                         states.Say(robot,"Sorry but i can't point at my operator!", block=False),
                                         transitions={   'spoken':'container_success'})
 
+                
+
                 smach.StateMachine.add( 'GREET_OPERATOR',
-                                        states.Say(robot,"Hello " + operatorNameDes.resolve() + ".", block=False),
+                                        states.Say(robot, PersonRecStates.DummyDesig(operatorNameDes), block=False),
                                         transitions={   'spoken':'DESCRIBE_PEOPLE'})
 
                 smach.StateMachine.add( 'DESCRIBE_PEOPLE',
