@@ -100,18 +100,17 @@ class Arm(object):
         self._ac_grasp_precompute.cancel_all_goals()
         self._ac_joint_traj.cancel_all_goals()
 
-    def get_operational(self):
+    @property
+    def operational(self):
+        '''
+        The 'operational' property reflects the current hardware status of the arm.
+        '''
         return self._operational
 
-    def set_operational(self, value):
-        self._operational = value
-
-    def del_operational(self):
-        del self._operational
-
-    operational = property(get_operational, set_operational, del_operational, "Is the arm operational?")
-
     def cb_hardware_status(self, msg):
+        '''
+        hardware_status callback to determine if the arms are operational
+        '''
         diags = [diag for diag in msg.status if diag.name == self.side + '_arm']
 
         if len(diags) == 0:
@@ -193,6 +192,9 @@ class Arm(object):
                 return False
 
     def send_joint_goal(self, configuration):
+        '''
+        Send a named joint goal (pose) defined in the parameter default_configurations to the arm
+        '''
         if configuration in self.default_configurations:
             return self._send_joint_trajectory(
                 [self.default_configurations[configuration]]
@@ -202,6 +204,10 @@ class Arm(object):
             return False
 
     def send_joint_trajectory(self, configuration):
+        '''
+        Send a named joint trajectory (sequence of poses) defined in the default_trajectories to
+        the arm
+        '''
         if configuration in self.default_trajectories:
             return self._send_joint_trajectory(self.default_trajectories[configuration])
         else:
@@ -209,22 +215,26 @@ class Arm(object):
             return False
 
     def reset(self):
+        '''
+        Put the arm into the 'reset' pose
+        '''
         return self.send_joint_goal('reset')
 
-    def get_occupied_by(self):
-        """An arm can be occupied by an entity that the arm's gripper is holding."""
+    @property
+    def occupied_by(self):
+        '''
+        The 'occupied_by' property will return the current entity that is in the gripper of this arm.
+        '''
         return self._occupied_by
 
-    def set_occupied_by(self, value):
-        """Set which entity this arm is holding. Implemented as a property so it can be extended later"""
+    @occupied_by.setter
+    def occupied_by(self, value):
         self._occupied_by = value
 
-    def del_occupied_by(self):
-        del self._occupied_by
-
-    occupied_by = property(get_occupied_by, set_occupied_by, del_occupied_by, "Which entity is in the arm's gripper?")
-
     def send_gripper_goal(self, state, timeout=5.0):
+        '''
+        Send a GripperCommand to the gripper of this arm and wait for finishing
+        '''
         goal = GripperCommandGoal()
 
         if state == 'open':
@@ -250,6 +260,13 @@ class Arm(object):
                 return False
 
     def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5)):
+        '''
+        Low level method that sends a array of joint references to the arm.
+
+        If timeout is defined, it will wait for timeout*len(joints_reference) seconds for the
+        completion of the actionlib goal. It will return True as soon as possible when the goal
+        succeeded. On timeout, it will return False.
+        '''
         time_from_start = rospy.Duration()
         ps = []
         for joints_reference in joints_references:
@@ -274,7 +291,6 @@ class Arm(object):
         return done
 
     def _publish_marker(self, goal, color):
-
         marker = visualization_msgs.msg.Marker()
         marker.header.frame_id = goal.goal.header.frame_id
         marker.header.stamp = rospy.Time.now()
@@ -297,76 +313,6 @@ class Arm(object):
 
         self._marker_publisher.publish(marker)
 
-    # @add_side_argument
-    # def send_goal(self, *args, **kwargs):
-    #     """Send arm to a goal: using a position px,py,pz and orientation roll,pitch,yaw and a timeout
-    #     Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
-    #     return super(Arm, self).send_goal(*args, **kwargs)
-
-    # @add_side_argument
-    # def send_delta_goal(self, *args, **kwargs):
-    #     """Send arm to an offset with respect to current position: using a position px,py,pz and orientation roll,pitch,yaw and a time out time_out
-    #     Optional parameters are if a pre_grasp should be performed and a frame_id which defaults to /amigo/base_link """
-    #     return super(Arm, self).send_delta_goal(*args, **kwargs)
-
-    # def send_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
-    #     """Send a goal to the arms in joint coordinates"""
-    #     return super(Arm, self).send_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
-
-    # def send_joint_trajectory(self, positions, timeout=0):
-    #     """Send a goal to the arms in joint coordinates"""
-    #     return super(Arm, self).send_joint_trajectory(positions,self.side, timeout=timeout)
-
-    # def send_delta_joint_goal(self, q1=0, q2=0, q3=0, q4=0, q5=0, q6=0, q7=0, timeout=0):
-    #     """Move the arm joints by some angle (in radians)
-    #     >>> from math import radians
-    #     >>> some_arm.send_delta_joint_goal(q1=radians(-20)) #e.g. amigo.leftArm.send_delta_joint_goal(q1=radians(-20))"""
-    #     return super(Arm, self).send_delta_joint_goal(q1,q2,q3,q4,q5,q6,q7,self.side, timeout=timeout)
-
-    # def send_delta_joint_trajectory(self, delta_dict_list, timeout=5.0, origin=None):
-    #     """@param delta_dict_list is a list of dictionaries with deltas per joint, per step, e.g. [{q1=-0.1, q4=0.4}, {q6=1.57}]
-    #     @param origin The joint position list to start from, in order to optionally have a defined start. If empty, uses the current position"""
-    #     return super(Arm, self).send_delta_joint_trajectory(delta_dict_list,self.side, timeout=timeout, origin=origin)
-
-    # def send_arm_task(self, *args, **kwargs):
-    #     """Send a goal to the whole-body planner"""
-    #     return super(Arm, self).send_arm_task(*args, **kwargs)
-
-    # def reset_arm(self):
-    #     """Send the arm to a suitable (natural looking) (driving) position"""
-    #     #return super(Arm, self).send_joint_goal(-0.1,-0.2,0.2,0.8,0.0,0.0,0.0,self.side)
-    #     return super(Arm, self).send_joint_goal(side=self.side,*(self.RESET_POSE))
-
-    # def cancel_goal(self):
-    #      """Cancel arm goal """
-    #      return super(Arm, self).cancel_goal(self.side)
-
-    # def send_gripper_goal(self, state, timeout=10):
-    #     """Generic open or close gripper goal method. Expects a state: State.OPEN or State.CLOSE and a time_out"""
-    #     return super(Arm, self).send_gripper_goal(state, self.side, timeout)
-
-    # def send_gripper_goal_open(self, timeout=10):
-    #      """ Open gripper, expects a time_out parameter"""
-    #      return self.send_gripper_goal(State.OPEN, timeout)
-
-    # def send_gripper_goal_close(self,  timeout=10):
-    #      """ Close gripper, expects a time_out parameter"""
-    #      return self.send_gripper_goal(State.CLOSE, timeout)
-
-    # def check_gripper_content(self):
-    #     """ Check if the gripper has successfully grasped something """
-    #     return super(Arm, self).check_gripper_content(self.side)
-
-    # def send_twist(self, twist, duration):
-    #     super(Arm, self).send_twist(twist, duration, self.side)
-
-    # def update_correction(self):
-    #     """ Update correction factor """
-    #     return super(Arm, self).update_correction(self.side)
-
-    # def get_pose(self, root_frame_id):
-    #     """ Get the pose of the end-effector with respect to the specified root_frame_id"""
-    #     return super(Arm, self).get_pose(root_frame_id,self.side)
 
 if __name__ == "__main__":
     rospy.init_node('amigo_arms_executioner', anonymous=True)
