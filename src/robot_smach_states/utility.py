@@ -26,7 +26,7 @@ class Initialize(smach.State):
         self.robot.rightArm.reset()
         #self.robot.rightArm.send_gripper_goal('close',0.0)
         rospy.logwarn('ToDo: Close grippers')
-        #self.robot.reasoner.reset()
+        self.robot.ed.reset()
         self.robot.torso.reset()
         #self.robot.base.reset_costmap()
         rospy.logwarn('ToDo: Reset costmap and reasoner')
