@@ -283,7 +283,8 @@ def setup_statemachine(robot):
         @smach.cb_interface(outcomes=["exported"])
         def export_to_pdf(userdata):
             rospy.loginfo("Placed_items: {0}".format([e.id for e in placed_items]))
-            pdf.items2markdown(placed_items)
+            import ipdb; ipdb.set_trace()
+            pdf.items2markdown(robot, placed_items)
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
                                 smach.CBState(export_to_pdf),
