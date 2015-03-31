@@ -156,7 +156,7 @@ class VariableDesignator(Designator):
 
     def _set_current(self, value):
         if not issubclass(type(value), self.resolve_type):
-            raise TypeError("Assigned value does not match resolve_type for {0}".format(self))
+            raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
 
     current = property(Designator._get_current, _set_current)
