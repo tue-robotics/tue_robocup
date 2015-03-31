@@ -9,6 +9,6 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    W.add_object("loy-2", "loy", 0.0, 0.0, 0.000)
+    W.add_object("loy-2", "loy", 0.01, 0.01, 0.000)
 
     #loy, erik, tim, sjoerd, rob
