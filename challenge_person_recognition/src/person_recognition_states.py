@@ -6,21 +6,17 @@ import subprocess
 import inspect
 import random
 import ed_perception.msg
-# import actionlib
-# import actionlib_msgs
 import robot_skills.util.msg_constructors as msgs
 import geometry_msgs.msg as gm
 import math
-
-# from collections import namedtuple
 from smach_ros import SimpleActionState
 from robot_skills.amigo import Amigo
 from robot_smach_states.util.designators import DesignatorResolvementError, EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
-# from ed_perception.msg import FaceLearningGoal, FaceLearningResult
+from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 
-# import ipdb; ipdb.set_trace()
 
 class bcolors:
     HEADER = '\033[95m'
@@ -39,12 +35,6 @@ class Pose:
 class Gender:
     Male = 0
     Female = 1
-
-OUT_PREFIX = bcolors.OKBLUE + "[CHALLENGE PERSON RECOGNITION] " + bcolors.ENDC
-
-
-# ----------------------------------------------------------------------------------------------------
-
 
 class Location(object):
     def __init__(self, point_stamped, visited, attempts):
@@ -77,6 +67,15 @@ class PointDesignator(Designator):
     def resolve(self):
         return self.entity
 
+# TODO RESOLVE THE WHOLE SENTENCE, NOT JUST THE NAME!
+class DummyDesig(Designator):
+    def __init__(self, other):
+        super(DummyDesig, self).__init__(resolve_type=str)
+        self.other = other
+
+    def resolve(self):
+        return "Hello " + self.other.resolve() + "."
+
 
 def points_distance(p1, p2):
     print OUT_PREFIX + bcolors.OKBLUE + "points_distance" + bcolors.ENDC
@@ -92,59 +91,17 @@ def points_distance(p1, p2):
     return distance
 
 
-class EdEntityListDesignator(Designator):
+# ----------------------------------------------------------------------------------------------------
 
-    """
-    Resolves to an entity from an Ed query, (TODO: selected by some filter and
-    criteria functions)
-    """
+# import ipdb; ipdb.set_trace()
 
-    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None, debug=False):
-        """Designates an entity of some type, within a radius of some center_point, with some id, 
-        that match some given criteria functions.
-        @param robot the robot to use for Ed queries
-        @param type the type of the entity to resolve to (default: any type)
-        @param center_point combined with radius: a sphere to search an entity in
-        @param radius combined with center_point: a sphere to search an entity in
-        @param id the ID of the object to get info about
-        @param parse whether to parse the data string associated with the object model or entity
-        @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)"""
-        super(EdEntityListDesignator, self).__init__()
-        self.ed = robot.ed
-        self.type = type
-        self.center_point = center_point
-        self.radius = radius
-        self.id = id
-        self.parse = parse
-        self.criteriafuncs = criteriafuncs or []
+OUT_PREFIX = bcolors.OKBLUE + "[CHALLENGE PERSON RECOGNITION] " + bcolors.ENDC
 
-        self.debug = debug
-
-    def resolve(self):
-        entities = self.ed.get_entities(self.type, self.center_point, self.radius, self.id, self.parse)
-        if self.debug:
-            import ipdb; ipdb.set_trace()
-        if entities:
-            for criterium in self.criteriafuncs:
-                entities = filter(criterium, entities)
-                criterium_code = inspect.getsource(criterium)
-                rospy.loginfo("Criterium {0} leaves {1} entities: {2}".format(
-                              criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
-                              )
-
-            if entities:
-                self._current = entities  # TODO: add sortkey
-                return self.current
-
-        raise DesignatorResolvementError(
-                "No entities found in {0}".format(self))
-
-    def __repr__(self):
-        return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
-
+names_women = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
+names_men = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 
 # ----------------------------------------------------------------------------------------------------
+
 
 class LookAtPersonInFront(smach.State):
     def __init__(self, robot, lookDown = False):
@@ -445,12 +402,35 @@ class AskPersonName(smach.State):
     def execute(self, userdata):
         print OUT_PREFIX + bcolors.OKBLUE + "AskPersonName" + bcolors.ENDC
 
-        name = "Mr. Operator"
+        self.robot.speech.speak("What is your name?", block=False)
+
+        spec = Designator("((<pre> <name>)|<name>)")
+
+        choices = Designator({"name"  : names_women + names_men,
+                              "pre": ["my name is", "I'm called"]})
+
+        answer = VariableDesignator(resolve_type=GetSpeechResponse)
+
+        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        outcome = state.execute()
+
+
+        if outcome == "heard":
+            try:
+                name = answer.resolve().choices["name"]
+                print OUT_PREFIX + "Result from speech recognition is " + name + bcolors.ENDC
+            except KeyError, ke:
+                print OUT_PREFIX + "KeyError  answer.resolve().choices['name']: " + str(ke)
+                pass
+        else:
+            print OUT_PREFIX + bcolors.FAIL + "Speech recognition outcome was not successful" + bcolors.ENDC
+            return 'failed'
+
+        # name = "Mr. Operator"
         userdata.personName_out = name
         self.operatorNameDes.current = name
 
-        self.robot.speech.speak("What is your name?", block=True)
-        self.robot.speech.speak("I shall call you " + name + "!", block=False)
+        self.robot.speech.speak("Ok " + name, block=False)
 
         return 'succeded'
 
@@ -534,7 +514,7 @@ class GetOperatorLocation(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
-class AnalyzePerson(smach.State):
+class AnalysePerson(smach.State):
     def __init__(self, robot, facesAnalysedDes):
         smach.State.__init__(self, outcomes=['succeded', 'failed'])
 
@@ -606,11 +586,13 @@ class AnalyzePerson(smach.State):
                             #     p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
                             #     p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
 
-                            #     if points_distance(p1=p1, p2=p2) < 1.0:
+                            #     if points_distance(p1=p1, p2=p2) < 0.2:
                             #         sameFace = True
                             #         break
+                            # TODO: COMMENTED FOR NOW SINCE I CAN ONLY GET ENTITIES CENTER POINT AND THAT IS SHARED FOR FACES IN CROWD
 
                             if sameFace:
+                                # TODO: COMPARE SCORES FROM THE FACE RECOGNITION, IF ITS BETTER, REPLACE
                                 print OUT_PREFIX + "Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current))
 
                             #  if information is valid, add it to the list of analysed faces
@@ -627,11 +609,17 @@ class AnalyzePerson(smach.State):
                                     "standing up" if pose == Pose.Standing else "sitting down",
                                     face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
 
+                                #  "predict" gender, in a hacky way
+                                if recognition_label[:-1] == 'a':
+                                    personGender = Gender.Female
+                                else:
+                                    personGender = Gender.Male
 
                                 self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
                                                                                 name = recognition_label, 
                                                                                 score = recognition_score,
-                                                                                pose = pose))]
+                                                                                pose = pose,
+                                                                                gender = personGender))]
                             else:
                                 print OUT_PREFIX + bcolors.WARNING + "Did not add face to the list" + bcolors.ENDC
 
