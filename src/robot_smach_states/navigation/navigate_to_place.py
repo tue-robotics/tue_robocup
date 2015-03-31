@@ -34,12 +34,11 @@ class NavigateToPlace(NavigateTo):
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
 
-        x_offset = self.robot.grasp_offset.x
         if arm == self.robot.arms['left']:
-            y_offset = self.robot.grasp_offset.y
+            angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
         elif arm == self.robot.arms['right']:
-            y_offset = -self.robot.grasp_offset.y
-        radius = math.sqrt(x_offset*x_offset + y_offset*y_offset)
+            angle_offset = math.atan2(self.robot.grasp_offset.y, self.robot.grasp_offset.x)
+        radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
 
         place_pose = self.place_pose_designator.resolve()
 
@@ -59,7 +58,7 @@ class NavigateToPlace(NavigateTo):
         # Outer radius
         ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
         ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-        pc = PositionConstraint(constraint=ri+" and "+ro, frame=place_pose.header.frame_id)
-        oc = OrientationConstraint(look_at=Point(x_offset, y_offset, 0.0), frame=place_pose.header.frame_id)
+        pc = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+        oc = OrientationConstraint(look_at=Point(x, y, 0.0), frame="/map", angle_offset=angle_offset)
 
         return pc, oc
