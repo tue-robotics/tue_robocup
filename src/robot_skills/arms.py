@@ -45,14 +45,14 @@ class Arm(object):
         self._operational = None
 
         # Get stuff from the parameter server
-        self.offset = self.load_param('/skills/arm/offset/' + self.side)
-        self.marker_to_grippoint_offset = self.load_param('/skills/arm/offset/marker_to_grippoint')
+        self.offset = self.load_param('skills/arm/offset/' + self.side)
+        self.marker_to_grippoint_offset = self.load_param('skills/arm/offset/marker_to_grippoint')
 
-        self.joint_names = self.load_param('/skills/arm/joint_names')
+        self.joint_names = self.load_param('skills/arm/joint_names')
         self.joint_names = [name + "_" + self.side for name in self.joint_names]
 
-        self.default_configurations = self.load_param('/skills/arm/default_configurations')
-        self.default_trajectories   = self.load_param('/skills/arm/default_trajectories')
+        self.default_configurations = self.load_param('skills/arm/default_configurations')
+        self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
 
         # listen to the hardware status to determine if the arm is available
         rospy.Subscriber("/amigo/hardware_status", DiagnosticArray, self.cb_hardware_status)
@@ -85,7 +85,10 @@ class Arm(object):
         )
 
     def load_param(self, param_name):
-        return rospy.get_param('/' + self.robot_name + param_name)
+        '''
+        Loads a parameter from the parameter server, namespaced by robot name
+        '''
+        return rospy.get_param('/' + self.robot_name + '/' + param_name)
 
     def close(self):
         try:
