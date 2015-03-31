@@ -126,9 +126,9 @@ class Arm(object):
             # 3. Homing
             # 4. Error
             if level != 2:
-                self.operational = False
+                self._operational = False
             else:
-                self.operational = True
+                self._operational = True
 
     def send_goal(self, px, py, pz, roll, pitch, yaw,
                   timeout=30,
