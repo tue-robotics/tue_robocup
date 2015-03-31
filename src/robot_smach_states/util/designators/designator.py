@@ -266,9 +266,9 @@ class EdEntityDesignator(Designator):
     criteria functions)
     """
 
-    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None, 
+    def __init__(self, robot, type="", center_point=gm.Point(), radius=0, id="", parse=True, criteriafuncs=None,
         type_designator=None, center_point_designator=None, id_designator=None, debug=False):
-        """Designates an entity of some type, within a radius of some center_point, with some id, 
+        """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
         @param type the type of the entity to resolve to (default: any type)
@@ -315,7 +315,7 @@ class EdEntityDesignator(Designator):
 
         if isinstance(_type, list):
             _type = "" #Do the check not in Ed but in code here
-            typechecker = lambda entity: entity in _type
+            typechecker = lambda entity: entity.type in _type
             _criteria += [typechecker]
 
         entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
