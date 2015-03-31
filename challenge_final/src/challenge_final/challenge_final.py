@@ -244,7 +244,7 @@ class AskObjectAndPosition(smach.State):
         global object_to_fetch
         global position_for_nav
 
-        self.robot.head.look_up()
+        self.robot.head.look_at_standing_person()
 
         try:
             self.response = self.ask_user_service_get_action("final_2014", 3, rospy.Duration(60))  # = 1 hour because amigo has to be on standby to receive an action in e-gpsr

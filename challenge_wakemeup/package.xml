@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>challenge_robo_zoo</name>
+  <name>challenge_wakemeup</name>
   <version>0.0.0</version>
-  <description>RoboCup RoboZoo-challenge implementation</description>
+  <description>No description available</description>
 
-  <maintainer email="Loy.vanbeek@gmail.com">Loy van Beek</maintainer>
+  <maintainer email="rayman747@hotmail.com">Ramon Wijnands</maintainer>
 
   <license>BSD</license>
 
@@ -13,6 +13,7 @@
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
   <run_depend>rospy</run_depend>
-  <run_depend>qr_detector_zbar</run_depend>
+  <run_depend>python-markdown</run_depend>
+  <run_depend>python-xhtml2pdf</run_depend>
 
 </package>
