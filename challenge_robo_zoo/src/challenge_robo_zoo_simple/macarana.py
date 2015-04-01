@@ -40,9 +40,9 @@ import threading
 def torso_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's torso between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.torso.send_goal("lower") #, timeout=4.0
+        robot.torso.send_goal("lower", timeout=4.0) #, timeout=4.0
         rospy.sleep(1.)
-        robot.torso.send_goal("upper") #, timeout=4.0
+        robot.torso.send_goal("upper", timeout=4.0) #, timeout=4.0
 
 
 def head_up_down(robot, stopEvent):

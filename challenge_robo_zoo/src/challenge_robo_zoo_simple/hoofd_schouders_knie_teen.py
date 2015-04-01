@@ -44,14 +44,14 @@ def hoofdschoudersknieteen(robot):
     
     def hoofd(speak=False):
         rospy.loginfo("hoofd")
-        robot.torso.send_goal('upper') # timeout=0.0
+        robot.torso.send_goal('upper', timeout=4.0) # timeout=0.0
         right(right_arm_to_head_1) #Dont wait, both arms should move in sync # timeout=0.0
         if speak: robot.speech.speak("Head", language='en', block=True)
         _left(left_arm_to_head_1, timeout=10)
 
     def schouders(speak=False):
         rospy.loginfo("schouders")
-        robot.torso.send_goal('upper') # timeout=0.0
+        robot.torso.send_goal('upper',timeout=4.0) # timeout=0.0
         right(right_hand_to_left_shoulder) #Wait, otherwise arms collide # timeout=0.0
         if speak: robot.speech.speak("Shoulders", language='en', block=True)
         _left(left_hand_to_right_shoulder, timeout=10)
@@ -65,21 +65,21 @@ def hoofdschoudersknieteen(robot):
     
     def teen(speak=False):
         rospy.loginfo("teen") #TODO: tune poses
-        robot.torso.send_goal('lower',  timeout=1.0)
+        robot.torso.send_goal('lower',  timeout=4.0)
         right(arm_to_knees_1)#Dont wait, both arms should move in sync # timeout=0.0
         if speak: robot.speech.speak("and Toes", language='en', block=True)
         _left(arm_to_knees_1, timeout=10)
 
     def oren(speak=False):
         rospy.loginfo("oren")
-        robot.torso.send_goal('upper') # timeout=0.0
+        robot.torso.send_goal('upper', timeout=4.0) # timeout=0.0
         right(right_arm_to_head_1) #Dont wait, both arms should move in sync # timeout=0.0
         if speak: robot.speech.speak("Ears", language='en', block=True)
         _left(left_arm_to_head_1, timeout=10)
 
     def ogen(speak=False):
         rospy.loginfo("ogen")
-        robot.torso.send_goal('upper') # timeout=0.0
+        robot.torso.send_goal('upper', timeout=4.0) # timeout=0.0
         right(right_arm_to_eyes_1) #Dont wait, both arms should move in sync # timeout=0.0
         if speak: robot.speech.speak("and Eyes", language='en', block=True)
         _left(left_arm_to_eyes_1, timeout=10)
@@ -89,7 +89,7 @@ def hoofdschoudersknieteen(robot):
         if speak: robot.speech.speak("and mouth and nose!", language='en', block=False)
         if turn:
             robot.base.force_drive(0, 0, TURNSPEED, (2*math.pi)/TURNSPEED) #Turn a full circle at TURNSPEED rad/sec
-        robot.torso.send_goal('upper') # timeout=0.0
+        robot.torso.send_goal('upper', timout=4.0) # timeout=0.0
         right(right_arm_to_nose_1) #Dont wait, both arms should move in syn, timeout=10c
         robot.leftArm.reset_arm() #Move left arm down, only use right arm to point at 'nose'
 
