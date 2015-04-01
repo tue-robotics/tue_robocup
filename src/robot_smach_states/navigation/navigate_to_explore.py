@@ -84,10 +84,8 @@ class NavigateToExplore(NavigateTo):
 
     def breakOut(self):
 
-        entity = None
-        try:
-            entity = self.breakout_designator.resolve()
-        except:
+        entity = self.breakout_designator.resolve()
+        if not entity:
             return True
 
         rospy.loginfo("Breakout: entity_id = {0}".format(entity.id))
