@@ -255,8 +255,7 @@ class PointStampedOfEntityDesignator(Designator):
             self._current = pointstamped
             return self.current
         else:
-            # TODO: Make cutom exception here
-            raise Exception("No such entity")
+            return None
 
 
 class ListElementDesignator(Designator):
@@ -314,7 +313,8 @@ class ListElementDesignator(Designator):
                     self._current = self.minmax(elements)
                 return self.current
 
-        raise DesignatorResolvementError("No elements found in {0}".format(self))
+        rospy.logerr("No elements found in {0}".format(self))
+        return None
 
 
 class EdEntityDesignator(Designator):
@@ -394,8 +394,8 @@ class EdEntityDesignator(Designator):
                 self._current = entities[0]  # TODO: add sortkey
                 return self.current
 
-        raise DesignatorResolvementError(
-                "No entities found in {0}".format(self))
+        rospy.logerr("No entities found in {0}".format(self))
+        return None
 
     def __repr__(self):
         return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
@@ -477,7 +477,8 @@ class ArmDesignator(Designator):
             if any(available_arms):
                 return available_arms[0]
             else:
-                raise DesignatorResolvementError("ArmDesignator {0} could not resolve to an arm".format(self))
+                rospy.logerr("ArmDesignator {0} could not resolve to an arm".format(self))
+                return None
 
     def available(self, arm):
         """Check whether the given arm is available for some function."""
@@ -505,10 +506,8 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> #Grab the 2nd item with the rightArm
     >>> leftArm.occupied_by = "entity2"
     >>> #You can't do 3 grabs with a 2 arms robot without placing an entity first, so this will fail to resolve for a 3rd time
-    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    DesignatorResolvementError: ...
+    >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
+    >>> assert arm_to_use_for_third_grab == None
     """
     def __init__(self, all_arms, preferred_arm):
         super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm)
@@ -536,10 +535,9 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> rightArm.occupied_by = None
     >>>
     >>> #After placing the item, there is no arm holding the item anymore
-    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    DesignatorResolvementError: ..."""
+    >>> arm_to_use_for_second_place = holding_arm_designator.resolve()
+    >>> assert arm_to_use_for_second_place == None
+    """
     def __init__(self, all_arms, entity_designator):
         super(ArmHoldingEntityDesignator, self).__init__(all_arms)
 
