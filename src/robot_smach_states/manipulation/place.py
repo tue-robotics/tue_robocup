@@ -26,6 +26,17 @@ class Put(State):
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
     def run(self, robot, item_to_place, placement_pose, arm):
+        if not item_to_place:
+            rospy.logerr("Could not resolve item_to_place")
+            return "failed"
+        if not placement_pose:
+            rospy.logerr("Could not resolve placement_pose")
+            return "failed"
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+
         rospy.loginfo("Placing")
 
         # placement_pose is a PoseStamped
