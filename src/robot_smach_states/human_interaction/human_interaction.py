@@ -9,7 +9,7 @@ import actionlib #
 # import actionlib_msgs
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, DesignatorResolvementError, EdEntityDesignator, check_type
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, check_type
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState

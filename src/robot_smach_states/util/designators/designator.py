@@ -75,10 +75,6 @@ def check_type(designator_or_value, *allowed_types):
         if not type(designator_or_value) in allowed_types:
             raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
 
-class DesignatorResolvementError(Exception):
-    """This error is raised when a designator cannot be resolved."""
-
-
 class Designator(object):
 
     """
@@ -487,7 +483,7 @@ class ArmDesignator(Designator):
 
 class UnoccupiedArmDesignator(ArmDesignator):
     """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
-    .resolve() raises an DesignatorResolvementError when no such arm can be found
+    .resolve() returns None when no such arm can be found
     >>> from mock import MagicMock
     >>> leftArm = MagicMock()
     >>> leftArm.occupied_by = None
@@ -519,7 +515,7 @@ class UnoccupiedArmDesignator(ArmDesignator):
 
 class ArmHoldingEntityDesignator(ArmDesignator):
     """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
-    .resolve() raises an DesignatorResolvementError when no such arm can be found
+    .resolve() returns None when no such arm can be found
     >>> from mock import MagicMock
     >>> leftArm = MagicMock()
     >>> leftArm.occupied_by = None

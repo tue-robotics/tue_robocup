@@ -10,7 +10,7 @@ from robot_smach_states.reset import ResetTorso
 from robot_smach_states.utility import LockDesignator, UnlockDesignator
 import robot_skills.util.msg_constructors as msgs
 from robot_skills.arms import ArmState
-from robot_smach_states.util.designators import PointStampedOfEntityDesignator, DesignatorResolvementError, LockingDesignator
+from robot_smach_states.util.designators import PointStampedOfEntityDesignator, LockingDesignator
 
 from robot_smach_states.util.designators import check_type
 from robot_skills.arms import Arm
@@ -173,10 +173,9 @@ class GrabWithVisualServoing(smach.State):
             end_effector_frame_id = "/"+self.robot.robot_name+"/grippoint_right"
             ar_frame_id = "/hand_marker_right"
 
-        try:
-            target_position = self.grab_point_designator.resolve()
-        except DesignatorResolvementError, e:
-            rospy.loginfo("Could not resolve grab_point_designator {0}: {1}".format(self.grab_point_designator, e))
+        target_position = self.grab_point_designator.resolve()
+        if not target_position:
+            rospy.loginfo("Could not resolve grab_point_designator {0}: {1}".format(self.grab_point_designator))
             return "target_lost"
 
         # Keep looking at end-effector for ar marker detection
@@ -352,11 +351,11 @@ class SetGripper(smach.State):
 
         # If needs attaching to gripper, the grab_entity_designator is used
         if self.grab_entity_designator:
-            try:
-                entity = self.grab_entity_designator.resolve()
-                arm.occupied_by = entity
-            except DesignatorResolvementError, e:
-                rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator, e))
+            entity = self.grab_entity_designator.resolve()
+            if not entity:
+                rospy.logerr("Could not resolve {0}: {1}".format(self.grab_entity_designator))
+
+            arm.occupied_by = entity
 
         if arm.send_gripper_goal(self.gripperstate, timeout=self.timeout):
             result = True
@@ -423,10 +422,9 @@ class ArmToQueryPoint(smach.State):
 
     def execute(self, userdata):
         # ToDo: check point_designator?
-        try:
-            goal = self.point_designator.resolve()
-        except DesignatorResolvementError, e:
-            rospy.loginfo("point_designator {0} cannot be resolved: {1}".format(self.point_designator, e))
+        goal = self.point_designator.resolve()
+        if not goal:
+            rospy.loginfo("point_designator {0} cannot be resolved: {1}".format(self.point_designator))
             return 'failed'
 
         rospy.loginfo("ArmToQueryPoint: goal = {0}".format(goal))
