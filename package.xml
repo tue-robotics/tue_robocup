@@ -10,6 +10,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <run_depend>rospy</run_depend>
   <run_depend>robot_skills</run_depend>
   <run_depend>smach</run_depend>
   <run_depend>smach_ros</run_depend>
@@ -18,5 +19,10 @@
   <run_depend>python-docopt</run_depend>
   <run_depend>python-mock</run_depend>
   <run_depend>ipython</run_depend>
+  <run_depend>ed_perception</run_depend>
+  <run_depend>ed_navigation</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>cb_planner_msgs_srvs</run_depend>
 
 </package>
