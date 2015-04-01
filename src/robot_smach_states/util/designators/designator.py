@@ -287,7 +287,7 @@ class EdEntityDesignator(Designator):
         if center_point != None and center_point_designator != None:
             raise TypeError("Specify either center_point or center_point_designator, not both")
         elif center_point == None and center_point_designator == None:
-            center_point = gm.PointStamped()
+            center_point = gm.Point()
         if id != "" and id_designator != None:
             raise TypeError("Specify either id or id_designator, not both")
 
