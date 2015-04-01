@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import smach
+import rospy
 from robot_smach_states.util.designators import Designator
 
 class State(smach.State):
@@ -8,9 +9,13 @@ class State(smach.State):
         self.__dict__['init_arguments'] = args
 
     def execute(self, userdata=None):
-        resolved_arguments = {key:(value.resolve() if hasattr(value, "resolve") else value) for key,value 
+        resolved_arguments = {key:(value.resolve() if hasattr(value, "resolve") else value) for key,value
             in self.__dict__['init_arguments'][0].iteritems()}
         del resolved_arguments['self']
+
+        if not all(resolved_arguments):
+            unresolved_arguments = filter(lambda x: not x, resolved_arguments) #Make a list of all keys that resolve to None (because not None == True)
+            rospy.logerr("Values for {0} could not be resolved".format(unresolved_arguments))
 
         return self.run( **resolved_arguments )
 
@@ -28,7 +33,7 @@ class TestState(State):
     'yes'"""
     def __init__(self, robot, sentence, blaat):
         State.__init__(self, locals(), outcomes=['yes', 'no'])
-        
+
     def run(self, robot, sentence, blaat):
         print robot, sentence, blaat
         return "yes"
@@ -38,11 +43,11 @@ class Test(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
-            smach.StateMachine.add( 'TEST_STATE1', 
+            smach.StateMachine.add( 'TEST_STATE1',
                                     TestState("Yes", "this", "works"),
                                     transitions={'yes':'TEST_STATE2', 'no':'failed'})
-            
-            smach.StateMachine.add( 'TEST_STATE2', 
+
+            smach.StateMachine.add( 'TEST_STATE2',
                                     TestState(Designator("Also"), "works", Designator("with designators")),
                                     transitions={'yes':'succeeded', 'no':'failed'})
 
