@@ -101,7 +101,8 @@ class EmptySpotDesignator(Designator):
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
-            raise DesignatorResolvementError("Could not find an empty spot")
+            rospy.logerr("Could not find an empty spot")
+            return None
 
 
 class ManipRecogSingleItem(smach.StateMachine):
