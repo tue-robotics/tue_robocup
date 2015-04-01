@@ -532,6 +532,9 @@ class Point_at_object(smach.State):
             rospy.logerr("Could not resolve arm")
             return "point_failed"
         entity = self.point_entity_designator.resolve()
+        if not entity:
+            rospy.logerr("Could not resolve entity")
+            return "target_lost"
 
         if arm == self.robot.leftArm:
             end_effector_frame_id = "/amigo/grippoint_left"
