@@ -11,7 +11,7 @@ from musicmanager import music
 #0. Arms are in reset pose
 #1. Right arm straight forward and hand up
 arm_straight_1 =                [[0.000, 1.500, 0.000, 0.000, 0.000, 0.000, 0.000]]
-#2. Move up and down (spindle)
+#2. Move up and down (torso)
 #3. Turn the right hand upside down,  move the left arm up as wel
 arm_straight_2 =                [[0.000, 1.500, 1.500, 0.000, 1.500, 0.000, 0.000]]
 #4. Right hand to the left shoulder
@@ -37,16 +37,16 @@ zero =                          [[-0.000, 0.000, 0.000, 0.000, 0.000, 0.000, 0.0
 
 import threading
 
-def spindle_up_down(robot, lower, upper, stopEvent):
-    """Loop the robot's spindle between the lower and upper heights given here"""
+def torso_up_down(robot, lower, upper, stopEvent):
+    """Loop the robot's torso between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.spindle.send_goal(lower) #, timeout=4.0
+        robot.torso.send_goal("lower") #, timeout=4.0
         rospy.sleep(1.)
-        robot.spindle.send_goal(upper) #, timeout=4.0
+        robot.torso.send_goal("upper") #, timeout=4.0
 
 
 def head_up_down(robot, stopEvent):
-    """Loop the robot's spindle between the lower and upper heights given here"""
+    """Loop the robot's torso between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
         robot.head.reset()
         rospy.sleep(1.)
@@ -56,9 +56,9 @@ def head_up_down(robot, stopEvent):
 def macarena(robot):
     stopEvent = threading.Event()
 
-    up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, "lower", "upper", stopEvent))
-    up_and_down_spindle.start()
-    #robot.spindle.send_goal(0.3)
+    up_and_down_torso = threading.Thread(target=torso_up_down, args=(robot, "lower", "upper", stopEvent))
+    up_and_down_torso.start()
+    #robot.torso.send_goal(0.3)
     up_and_down_head = threading.Thread(target=head_up_down, args=(robot, stopEvent))
     #up_and_down_head.start()
     robot.head.look_at_point(msgs.PointStamped(0.2, 0, 1.3, frame_id="/amigo/base"))
@@ -103,7 +103,7 @@ def macarena(robot):
             _left(arm_to_hips_1, timeout=rospy.Duration(15))
 
         stopEvent.set()
-        up_and_down_spindle.join()
+        up_and_down_torso.join()
         #up_and_down_head.join()
         robot.rightArm.reset()
         robot.leftArm.reset()
