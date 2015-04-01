@@ -130,6 +130,7 @@ class LookAtPersonInFront(smach.State):
         # create designator
         humanDesignator = EdEntityDesignator(self.robot, type="human")
         dataDesignator = AttrDesignator(humanDesignator, 'data')
+        centerDesignator = AttrDesignator(humanDesignator, 'center_point')
 
         # try to resolve the designator
         try:
@@ -179,6 +180,10 @@ class LookAtPersonInFront(smach.State):
 
                     print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
                     self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
+
+                    # DEBUG STUFF
+                    centerPoint = centerDesignator.resolve()
+                    import ipdb; ipdb.set_trace()
 
                     foundFace == True            
                 else:
@@ -404,10 +409,10 @@ class AskPersonName(smach.State):
 
         self.robot.speech.speak("What is your name?", block=False)
 
-        spec = Designator("((<pre> <name>)|<name>)")
+        spec = Designator("((<prefix> <name>)|<name>)")
 
         choices = Designator({"name"  : names_women + names_men,
-                              "pre": ["my name is", "I'm called"]})
+                              "prefix": ["My name is", "I'm called"]})
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 

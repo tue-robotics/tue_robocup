@@ -19,7 +19,7 @@ from robot_skills.mockbot import Mockbot
 # from smach_ros import SimpleActionState
 
 # from ed_perception.srv import LearnPerson, LearnPersonRequest
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime
 
 
 
@@ -31,18 +31,15 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         # ------------------------ INITIALIZATIONS ------------------------
 
+
         waypoint_learning = EdEntityDesignator(robot, id="person_rec_learning")
         waypoint_living_room_1 = EdEntityDesignator(robot, id="person_rec_living_room_1")
         waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_2")
         waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_3")
 
         operatorNameDes = VariableDesignator(resolve_type=str)
-        # operatorNameDes.current = ""
         operatorNameDes.current = ""
 
-        # learning_goal = ed_perception.msg.FaceLearningGoal("Mr_Operator")
-        # learning_result = ed_perception.msg.FaceLearningResult()
-        
         nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator)
         nextLocationDes.current = PersonRecStates.PointDesignator()
 
@@ -54,6 +51,9 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) # @LBFereirra: a designator that resolves to another designator is a bit weird
         operatorLocationDes.current = PersonRecStates.PointDesignator()
+
+        def helloOperator(): return "Hello " + operatorNameDes.resolve()
+        helloOperatorDes = DeferToRuntime(helloOperator, resolve_type=str)
 
         # ------------------ SIMULATION ------------------------------------
 
@@ -160,11 +160,15 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add('ASK_PERSON_NAME',
                                         PersonRecStates.AskPersonName(robot, operatorNameDes),
                                         remapping={     'personName_out':'personName_userData'},
-                                        transitions={   'succeded':'SAY_LOOK_AT_ME',
+                                        transitions={   'succeded':'SAY_HELLO',
                                                         'failed':'SAY_LEARN_NAME_FAILED'})
 
+                smach.StateMachine.add( 'SAY_HELLO',
+                                    states.Say(robot, helloOperatorDes.resolve(), block=False),
+                                    transitions={    'spoken':'SAY_LOOK_AT_ME'})
+
                 smach.StateMachine.add( 'SAY_LOOK_AT_ME',
-                                    states.Say(robot,"Please look at me while I learn your face".format(str(operatorNameDes.current)), block=False),
+                                    states.Say(robot,"Please look at me while I learn your face.", block=False),
                                     transitions={    'spoken':'LOOK_AT_OPERATOR_2'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR_2',
