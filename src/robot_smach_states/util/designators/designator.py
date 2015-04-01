@@ -320,7 +320,8 @@ class EdEntityDesignator(Designator):
             typechecker = lambda entity: entity.type in _type
             _criteria += [typechecker]
 
-        entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
+        #entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
+        entities = self.ed.get_entities(id=_id, parse=self.parse)
         if self.debug:
             import ipdb; ipdb.set_trace()
         if entities:
