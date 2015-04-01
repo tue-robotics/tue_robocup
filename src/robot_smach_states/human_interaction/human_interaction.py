@@ -103,7 +103,26 @@ class HearOptions(State):
         return "no_result"
 
 class HearOptionsExtra(smach.State):
-    """
+    """Listen to what the user said, based on a pre-constructed sentence
+
+    Keyword arguments:
+    spec_designator -- sentence that is supposed to be heard
+    choices_designator -- list of choices for words in the sentence
+    speech_result_designator -- variable where the result is stored
+    time_out -- timeout in case nothing is heard
+
+    Example of usage:
+        from dragonfly_speech_recognition.srv import GetSpeechResponse
+        spec = Designator("((<prefix> <name>)|<name>)")
+        choices = Designator({"name"  : names_list,
+                              "prefix": ["My name is", "I'm called"]})
+        answer = VariableDesignator(resolve_type = GetSpeechResponse)
+        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        outcome = state.execute()
+
+        if outcome == "heard":
+            name = answer.resolve().choices["name"]
+
     >>> from robot_skills.mockbot import Mockbot
     >>> mockbot = Mockbot()
     >>> from robot_smach_states.util.designators import Designator, VariableDesignator
