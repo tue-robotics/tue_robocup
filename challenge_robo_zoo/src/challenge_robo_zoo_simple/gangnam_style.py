@@ -74,7 +74,7 @@ def motionB(robot):
         robot.leftArm._send_joint_trajectory([[-0.050, 0.500, 1.5300, 0.700, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
         robot.leftArm._send_joint_trajectory([[-0.050, 1.500, 1.5300, 0.700, -0.15, 0.000, 0.000]], timeout=rospy.Duration(1))
         robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
-        robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), keep_tracking=True, pan_vel=1.0, tilt_vel=1.0)
+        robot.head.look_at_point(msgs.PointStamped(0,0,0, frame_id="/amigo/grippoint_right"), pan_vel=1.0, tilt_vel=1.0)
 
         #robot.rightArm._send_joint_trajectory([gangnam_poseB_right_pre_start], timeout=rospy.Duration(1))  # TODO: Make work with different robots.
         #Right is now in [             -0.050, 1.500, 1.500, 0.100, -0.15, 0.000, 0.000]
