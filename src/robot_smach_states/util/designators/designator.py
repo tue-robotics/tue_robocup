@@ -259,6 +259,47 @@ class PointStampedOfEntityDesignator(Designator):
             raise Exception("No such entity")
 
 
+class ListElementDesignator(Designator):
+    """Wraps a designator(resolve_type=[X]) (i.e.) a list of objects with type X and reduces that to a single item of type X.
+    The reduction takes some criteria and sorting into account
+    >>> l = Designator([1,2,3,4,5], resolve_type=[int])
+    >>> reduce = ListElementDesignator(l, sortkey=lambda elem: elem)
+    >>> reduce.resolve()
+    1
+
+    >>> l = Designator(["noot", "broer", "aap"], resolve_type=[str]) #
+    >>> reduc = ListElementDesignator(l, sortkey=lambda elem: len(elem), minmax=max) #Get the element with the max length
+    >>> reduc.resolve()
+    'broer'
+    """
+
+    def __init__(self, list_designator, sortkey=None, criteriafuncs=None, minmax=min):
+        if not len(list_designator.resolve_type) == 1:
+            raise TypeError("The list_designator should indicate the type of the list elements, e.g. [str] for a list of str's")
+        element_type = list_designator.resolve_type[0]
+        super(ListElementDesignator, self).__init__(self, resolve_type=element_type)
+
+        self.list_designator = list_designator
+        self.sortkey = sortkey
+        self.minmax = minmax
+        self.criteriafuncs = criteriafuncs or []
+
+    def resolve(self):
+        elements = self.list_designator.resolve()
+        if elements:
+            for criterium in self.criteriafuncs:
+                elements = filter(criterium, elements)
+                criterium_code = inspect.getsource(criterium)
+                rospy.logdebug("Criterium {0} leaves {1} elements: {2}".format(criterium_code, len(elements),
+                    pprint.pformat([elem for elem in elements])))
+
+            if elements:
+                self._current = self.minmax(elements, key=self.sortkey)
+                return self.current
+
+        raise DesignatorResolvementError("No elements found in {0}".format(self))
+
+
 class EdEntityDesignator(Designator):
 
     """
@@ -279,7 +320,7 @@ class EdEntityDesignator(Designator):
         @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
-        @param id_designator same as id but dynamically resolved trhough a designator. Mutually exclusive with id"""
+        @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
         super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo)
         self.ed = robot.ed
         if type != "" and type_designator != None:
