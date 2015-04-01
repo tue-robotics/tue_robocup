@@ -410,7 +410,7 @@ class NavigateTo(smach.StateMachine):
         with self:
 
             # Create the sub SMACH state machine
-            sm_nav = smach.StateMachine(outcomes=['unreachable','goal_not_defined','preempted'])
+            sm_nav = smach.StateMachine(outcomes=['arrived','unreachable','goal_not_defined','preempted'])
 
             with sm_nav:
 
@@ -420,7 +420,8 @@ class NavigateTo(smach.StateMachine):
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
 
                 smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut),
-                    transitions={'arrived'                              :   'GET_PLAN',
+                    transitions={'succeeded'                            :   'arrived',
+                                 'arrived'                              :   'GET_PLAN',
                                  'blocked'                              :   'DETERMINE_BLOCKED',
                                  'preempted'                            :   'preempted'})
 
@@ -439,7 +440,7 @@ class NavigateTo(smach.StateMachine):
 
 
             smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
-                transitions={'done'                                 :'RESET_SM_NAV'})
+                transitions={'done'                                 :'NAVIGATE'})
 
 
             smach.StateMachine.add('NAVIGATE', sm_nav,
