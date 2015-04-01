@@ -11,7 +11,7 @@ import geometry_msgs.msg as gm
 import math
 from smach_ros import SimpleActionState
 from robot_skills.amigo import Amigo
-from robot_smach_states.util.designators import DesignatorResolvementError, EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
+from robot_smach_states.util.designators import EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
@@ -133,9 +133,8 @@ class LookAtPersonInFront(smach.State):
         centerDesignator = AttrDesignator(humanDesignator, 'center_point')
 
         # try to resolve the designator
-        try:
-            desgnResult = humanDesignator.resolve()
-        except DesignatorResolvementError:
+        desgnResult = humanDesignator.resolve()
+        if not desgnResult:
             print OUT_PREFIX + "Could not find a human while looking up"
             pass
 
@@ -146,9 +145,8 @@ class LookAtPersonInFront(smach.State):
             rospy.sleep(2)    # give time for the percetion algorithms to add the entity
 
             # try to resolve the designator
-            try:
-                desgnResult = humanDesignator.resolve()
-            except DesignatorResolvementError:
+            desgnResult = humanDesignator.resolve()
+            if not desgnResult:
                 print OUT_PREFIX + "Could not find a human while looking down"
                 pass
 
@@ -157,9 +155,8 @@ class LookAtPersonInFront(smach.State):
             print OUT_PREFIX + "Found a human!"
 
             # resolve the data designator
-            try:
-                entityData = dataDesignator.resolve()
-            except DesignatorResolvementError:
+            entityData = dataDesignator.resolve()
+            if not entityData:
                 print OUT_PREFIX + "Could not resolve dataDesignator"
                 pass
 
@@ -245,9 +242,8 @@ class FindCrowd(smach.State):
         rospy.sleep(2)
 
         # resolve crowd designator
-        try:
-            humanDesignatorRes = humanDesignator.resolve()
-        except DesignatorResolvementError:
+        humanDesignatorRes = humanDesignator.resolve()
+        if not humanDesignatorRes:
             print OUT_PREFIX + "Could not resolve humanDesignator"
             pass
 
@@ -256,9 +252,8 @@ class FindCrowd(smach.State):
 
 
             # resolve data from entities
-            try:
-                entityDataRes = dataDesignator.resolve()
-            except DesignatorResolvementError:
+            entityDataRes = dataDesignator.resolve()
+            if not entityDataRes:
                 print OUT_PREFIX + "Could not resolve dataDesignator"
                 pass
 
@@ -286,9 +281,8 @@ class FindCrowd(smach.State):
                     return 'succeded'
             else:
                 # resolve data from entities
-                try:
-                    centerPointRes = centerPointDes.resolve()
-                except DesignatorResolvementError:
+                centerPointRes = centerPointDes.resolve()
+                if not centerPointRes:
                     print OUT_PREFIX + "Could not resolve centerPointDes"
                     pass
 
@@ -324,9 +318,8 @@ class DescribePeople(smach.State):
         faceList = None
 
         # try to resolve the crowd designator
-        try:
-            faceList = self.facesAnalyzedDes.resolve()
-        except DesignatorResolvementError:
+        faceList = self.facesAnalyzedDes.resolve()
+        if not faceList:
             print OUT_PREFIX + bcolors.FAIL + "Could not resolve facesAnalyzedDes" + bcolors.ENDC
             pass
 
@@ -462,9 +455,8 @@ class GetOperatorLocation(smach.State):
         faceList = None
 
         # try to resolve the crowd designator
-        try:
-            faceList = self.facesAnalysedDes.resolve()
-        except DesignatorResolvementError:
+        faceList = self.facesAnalysedDes.resolve()
+        if not faceList:
             print OUT_PREFIX + "Could not resolve faces analysed"
             pass
 
@@ -539,22 +531,20 @@ class AnalysePerson(smach.State):
         humanDesignator = EdEntityDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
         humanDataDesignator = AttrDesignator(humanDesignator, 'data')
 
-        try:
-            humanDesignatorRes = humanDesignator.resolve()
-        except DesignatorResolvementError:
+        humanDesignatorRes = humanDesignator.resolve()
+        if not humanDesignatorRes:
             print OUT_PREFIX + "Could not resolve humanDesgnResult."
             pass
 
         # Add data from the result of the designator to the list
         if humanDesignatorRes:
             # resolve the data designator
-            try:
-                humanDataRes = humanDataDesignator.resolve()
+            humanDataRes = humanDataDesignator.resolve()
+            if not humanDataRes:
+                print OUT_PREFIX + "Could not resolve dataDesignator"
+            else:
                 entityDataList += [(humanDataRes)]
                 print OUT_PREFIX + "Found " + str(len(humanDataRes)) + " entities"
-            except DesignatorResolvementError:
-                print OUT_PREFIX + "Could not resolve dataDesignator"
-                pass
 
             if entityDataList:
                 #  iterate through entitities found
