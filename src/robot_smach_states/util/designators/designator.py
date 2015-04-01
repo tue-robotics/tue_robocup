@@ -278,6 +278,13 @@ class ListElementDesignator(Designator):
     >>> reduc = ListElementDesignator(l, sortkey=lambda elem: len(elem), minmax=min, criteriafuncs=[lambda elem: not 'e' in elem])
     >>> reduc.resolve()
     'aap'
+
+    >>> l = Designator(["noot", "broer", "aap", "mies"], resolve_type=[str])
+    >>> #The criterium removes all elements with an e
+    >>> #Get the element with the min length
+    >>> reduc = ListElementDesignator(l) #Not sorting or selecting will just return the 'smallest' element (because min is the default for minmax)
+    >>> reduc.resolve()
+    'aap'
     """
 
     def __init__(self, list_designator, sortkey=None, criteriafuncs=None, minmax=min):
@@ -301,7 +308,10 @@ class ListElementDesignator(Designator):
                     pprint.pformat([elem for elem in elements])))
 
             if elements:
-                self._current = self.minmax(elements, key=self.sortkey)
+                if self.sortkey:
+                    self._current = self.minmax(elements, key=self.sortkey)
+                else:
+                    self._current = self.minmax(elements)
                 return self.current
 
         raise DesignatorResolvementError("No elements found in {0}".format(self))
