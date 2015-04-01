@@ -34,9 +34,9 @@ class Torso(object):
         rospy.loginfo("Torso cancelling all goals on close")
         self.ac_move_torso.cancel_all_goals()
 
-    def send_goal(self, configuration):
+    def send_goal(self, configuration, timeout=0.0, tolerance = []):
         if configuration in self.default_configurations:
-            return self._send_goal(self.default_configurations[configuration])
+            return self._send_goal(self.default_configurations[configuration], timeout=timeout, tolerance=tolerance)
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
