@@ -74,8 +74,8 @@ class ED:
 
         return entities[0]
 
-    def get_entity(self, id):
-        entities = self.get_entities(id=id)
+    def get_entity(self, id, parse=True):
+        entities = self.get_entities(id=id, parse=parse)
         if len(entities) == 0:
             return None
 
