@@ -93,14 +93,20 @@ class getPlan(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class executePlan(smach.State):
-    def __init__(self, robot, blocked_timeout = 4):
-        smach.State.__init__(self,outcomes=['arrived','blocked','preempted'])
+    def __init__(self, robot, breakout_function, blocked_timeout = 4):
+        smach.State.__init__(self,outcomes=['succeeded','arrived','blocked','preempted'])
         self.robot = robot
         self.t_last_free = None
         self.blocked_timeout = blocked_timeout
+        self.breakout_function = breakout_function
 
     def execute(self, userdata):
-        # ToDo: check for alternative plans???
+        '''
+        Possible outcomes (when overloading)
+        - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
+        - 'checking': the condition has not been met. Upon arrival at a goal, the statemachine will return to 'GetPlan' to get the next goal_not_defined
+        - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded' 
+        '''
 
         self.t_last_free = rospy.Time.now()
 
@@ -109,6 +115,13 @@ class executePlan(smach.State):
 
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
+
+            ''' If the breakoutfunction returns preempt, 
+                navigation has succeeded and the robot can stop'''
+            breakout_status = self.breakout_function()
+            if breakout_status == "breakout":
+                self.robot.base.local_planner.cancelCurrentPlan()
+                return "succeeded"
 
             # Check for the presence of a better plan
             self.checkBetterPlan()
@@ -120,8 +133,10 @@ class executePlan(smach.State):
 
             status = self.robot.base.local_planner.getStatus()
 
-            if status == "arrived":
+            if status == "arrived" and breakout_status == "checking":
                 return "arrived"
+            elif status == "arrived" and breakout_status == "passed":
+                return "succeeded"
             elif status == "blocked":
                 return "blocked"
 
@@ -385,34 +400,6 @@ class planBlockedHuman(smach.State):
         return "free"
 
 
-# ----------------------------------------------------------------------------------------------------
-
-class breakOutState(smach.State):
-    """docstring for breakOutState"""
-    def __init__(self, robot, breakout_function):
-        smach.State.__init__(self,outcomes=['preempted','passed'])
-        self.robot = robot
-        self.breakout_function = breakout_function
-
-    def execute(self, userdata):
-
-        # Wait for some time before checking
-        t_start = rospy.Time.now()
-        while (not rospy.is_shutdown() and (rospy.Time.now() - t_start) < rospy.Duration(0.5)):
-          rospy.sleep(0.1)
-        rospy.logwarn("Starting breakout check")
-
-        breakout = False
-        while (not rospy.is_shutdown() and not breakout and not self.preempt_requested()):
-            rospy.sleep(rospy.Duration(0.1))
-            breakout = self.breakout_function()
-
-        if breakout:
-            return 'preempted'
-
-        return 'passed'
-
-
 # # ----------------------------------------------------------------------------------------------------
 
 class NavigateTo(smach.StateMachine):
@@ -432,7 +419,7 @@ class NavigateTo(smach.StateMachine):
                                  'goal_not_defined'                     :   'goal_not_defined',
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
 
-                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot),
+                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut),
                     transitions={'arrived'                              :   'GET_PLAN',
                                  'blocked'                              :   'DETERMINE_BLOCKED',
                                  'preempted'                            :   'preempted'})
@@ -451,61 +438,11 @@ class NavigateTo(smach.StateMachine):
                                  'free'                                 :   'EXECUTE_PLAN'})
 
 
-            # Create the concurrent state machine
-            # gets called when ANY child state terminates
-            def child_term_cb(outcome_map):
-                if outcome_map['MONITOR'] == 'preempted':
-                    return True
-
-                if outcome_map['MONITOR'] == 'passed':
-                    return False
-
-                if outcome_map['NAVIGATE'] == 'unreachable':
-                    return True
-
-                # if outcome_map['NAVIGATE'] == 'preempted':
-                #     rospy.logwarn("Is this a good idea???")
-                #     # Does not help...
-                #     return False
-
-                if outcome_map['NAVIGATE'] == 'goal_not_defined':
-                    return True
-
-            sm_con = smach.Concurrence( outcomes=['arrived','unreachable','goal_not_defined','preempted'],
-                                        default_outcome='arrived',
-                                        outcome_map={   'arrived'           :   {   'NAVIGATE'  : 'preempted',
-                                                                                    'MONITOR'   : 'preempted'},
-                                                        'unreachable'       :   {   'NAVIGATE'  : 'unreachable',
-                                                                                    'MONITOR'   : 'passed'},
-                                                        'goal_not_defined'  :   {   'NAVIGATE'  : 'goal_not_defined',
-                                                                                    'MONITOR'   : 'passed'},
-                                                        'preempted'         :   {   'MONITOR'   : 'preempted'}},
-                                        child_termination_cb = child_term_cb)
-
-            with sm_con:
-                smach.Concurrence.add('NAVIGATE', sm_nav)
-                smach.Concurrence.add('MONITOR' , breakOutState(self.robot, self.breakOut))
-
             smach.StateMachine.add('START_ANALYSIS', StartAnalyzer(self.robot),
                 transitions={'done'                                 :'RESET_SM_NAV'})
 
-            @smach.cb_interface(outcomes=['done'],
-                                input_keys=[],
-                                output_keys=[])
-            def reset_sm_nav(userdata, con_state):
-                # Recall preempt on concurrency container and all children
-                children = con_state.get_children()
-                for state in children:
-                    children[state].recall_preempt()
 
-                con_state.recall_preempt()
-                return 'done'
-
-            smach.StateMachine.add('RESET_SM_NAV', smach.CBState(reset_sm_nav,
-                                    cb_kwargs={'con_state': sm_nav}),
-                                    transitions={   'done':'MONITORED_NAVIGATE' })
-
-            smach.StateMachine.add('MONITORED_NAVIGATE', sm_con,
+            smach.StateMachine.add('NAVIGATE', sm_nav,
                 transitions={'arrived'                              : 'STOP_ANALYSIS_SUCCEED',
                              'unreachable'                          : 'STOP_ANALYSIS_UNREACHABLE',
                              'goal_not_defined'                     : 'ABORT_ANALYSIS_NOT_DEFINED',
@@ -525,73 +462,51 @@ class NavigateTo(smach.StateMachine):
 
     def breakOut(self):
         '''
-        Default breakout function: makes sure things go to 'arrived' if robot arrives at goal
+        Default breakout function: makes sure things go to 'succeeded' if robot arrives at goal
         DO NOT OVERLOAD THIS IF NOT NECESSARY
+
+        Possible outcomes (when overloading)
+        - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
+        - 'checking': the condition has not been met. Upon arrival at a goal, the statemachine will return to 'GetPlan' to get the next goal_not_defined
+        - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded' 
+
         '''
-        status = self.robot.base.local_planner.getStatus()
-        goal_handle = self.robot.base.local_planner.getGoalHandle()
 
-        # if hasattr(self, 'breakout_goal_handle'):
-        #     rospy.logwarn("Status = {0}, goal_handle = {1}, stored = {2}".format(status, goal_handle, self.breakout_goal_handle))
-        # else:
-        #     rospy.logwarn("Status = {0}, goal_handle = {1}".format(status, goal_handle))
+        return 'passed'
 
-        if status == "arrived":
+        # status = self.robot.base.local_planner.getStatus()
+        # goal_handle = self.robot.base.local_planner.getGoalHandle()
 
-            if not hasattr(self, 'breakout_goal_handle'):
+        # # if hasattr(self, 'breakout_goal_handle'):
+        # #     rospy.logwarn("Status = {0}, goal_handle = {1}, stored = {2}".format(status, goal_handle, self.breakout_goal_handle))
+        # # else:
+        # #     rospy.logwarn("Status = {0}, goal_handle = {1}".format(status, goal_handle))
 
-                # If no breakout goal handle exists (hasn't arrived yet), make one and return breakout
-                rospy.logwarn("Breaking out for the first time")
-                self.breakout_goal_handle = goal_handle
-                return True
+        # if status == "arrived":
+
+        #     if not hasattr(self, 'breakout_goal_handle'):
+
+        #         # If no breakout goal handle exists (hasn't arrived yet), make one and return breakout
+        #         rospy.logwarn("Breaking out for the first time")
+        #         self.breakout_goal_handle = goal_handle
+        #         return True
 
 
-            elif self.breakout_goal_handle != goal_handle:
+        #     elif self.breakout_goal_handle != goal_handle:
 
-                # If the existing goal handle is unequal to the current one, the local planner has arrived at a new goal
-                # Hence, store this one and return true
-                rospy.logwarn("Breaking out!!")
-                self.breakout_goal_handle = goal_handle
-                return True
+        #         # If the existing goal handle is unequal to the current one, the local planner has arrived at a new goal
+        #         # Hence, store this one and return true
+        #         rospy.logwarn("Breaking out!!")
+        #         self.breakout_goal_handle = goal_handle
+        #         return True
 
-            else:
+        #     else:
 
-                # Breakout function has already returned true on this goalhandle
-                rospy.logerr("Executing should never be here. If this is the case, this function can be made a lot simpler!")
-                return False
+        #         # Breakout function has already returned true on this goalhandle
+        #         rospy.logerr("Executing should never be here. If this is the case, this function can be made a lot simpler!")
+        #         return False
 
-        return False
-
-# ----------------------------------------------------------------------------------------------------
-
-# class NavigateTo(smach.StateMachine):
-#     def __init__(self, robot, constraint_args={}, break_out_args={}):
-#         smach.StateMachine.__init__(sm, outcomes=['arrived','unreachable','goal_not_defined'])
-
-#         self.robot = robot
-#         self.constraint_args = constraint_args
-#         self.break_out_args  = break_out_args
-
-#     @smach.cb_interface(input_keys=['']
-#                         output_keys=['position_constraint','orientation_constraint'],
-#                         outcomes=['succeeded','failed'])
-#     def generateConstraint(self, userdata):
-#         return 'failed'
-
-#     def breakOut(self):
-#         return False
-
-#     with sm:
-#         smach.StateMachine.add('DETERMINE_CONSTRAINT', CBState(self.generateConstraint,
-#                                                         cb_kwargs=self.constraint_args),
-#                                 transitions={'succeeded'        : 'arrived',
-#                                              'failed'           : 'goal_not_defined'})
-
-#         smach.StateMachine.add('NAVIGATE', NavigateWithConstraintsOnce,
-#                                 transitions={'arrived'          : 'arrived',
-#                                              'unreachable'      : 'unreachable',
-#                                              'goal_not_defined' : 'goal_not_defined'})
-
+        # return False
 
 # ----------------------------------------------------------------------------------------------------
 
