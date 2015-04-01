@@ -27,6 +27,13 @@ class PickUp(State):
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
     def run(self, robot, arm, grab_entity):
+        if not grab_entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
         rospy.loginfo('PickUp!')
 
         # goal in map frame
