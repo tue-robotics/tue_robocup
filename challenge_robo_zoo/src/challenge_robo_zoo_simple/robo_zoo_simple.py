@@ -259,7 +259,7 @@ class RoboZooSimple(smach.StateMachine):
                                     transitions={"Done":"RESET_ALL"})
             
             smach.StateMachine.add( "HOOFD_SCHOUDERS_KNIE_TEEN",
-                                    HoofdSchoudersKnieTeen(robot),
+                                    HoofdSchouderKnieTeen(robot),
                                     transitions={"Done":"RESET_ALL"})
 if __name__ == "__main__":
     rospy.init_node("challenge_robo_zoo_exec")
