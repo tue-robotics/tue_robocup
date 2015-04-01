@@ -16,6 +16,7 @@ class Torso(object):
         self.robot_name  = robot_name  
         self.joint_names = rospy.get_param('/'+self.robot_name+'/skills/torso/joint_names')
         self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/torso/default_configurations')
+        self.default_tolerance = rospy.get_param('/'+self.robot_name+'/skills/torso/default_tolerance')
         self.lower_limit = self.default_configurations['lower_limit']
         self.upper_limit = self.default_configurations['upper_limit']
 
@@ -24,11 +25,6 @@ class Torso(object):
         
         # Init joint measurement subscriber
         self.torso_sub = rospy.Subscriber('/'+self.robot_name+'/sergio/torso/measurements', JointState, self._receive_torso_measurement)
-
-        # Properties: can we get these from parameter server or urdf?
-        # ToDo: what do we do with constraints???
-        # ToDo: update numbers
-        self.default_tolerance = [0.1, 3.14, 0.1] #Knee joint has a very high tolerance since it depends on ankle joint
 
     def close(self):
         rospy.loginfo("Torso cancelling all goals on close")
@@ -69,6 +65,8 @@ class Torso(object):
                 goal_tolerance.position = self.default_tolerance[i]
             torso_goal.goal_tolerance.append(goal_tolerance)
 
+        print "Sending torso goal: "
+        print torso_goal
         self.ac_move_torso.send_goal(torso_goal)
         
         if timeout == 0.0:
