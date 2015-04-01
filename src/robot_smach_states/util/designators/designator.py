@@ -271,6 +271,13 @@ class ListElementDesignator(Designator):
     >>> reduc = ListElementDesignator(l, sortkey=lambda elem: len(elem), minmax=max) #Get the element with the max length
     >>> reduc.resolve()
     'broer'
+
+    >>> l = Designator(["noot", "broer", "aap", "mies"], resolve_type=[str])
+    >>> #The criterium removes all elements with an e
+    >>> #Get the element with the min length
+    >>> reduc = ListElementDesignator(l, sortkey=lambda elem: len(elem), minmax=min, criteriafuncs=[lambda elem: not 'e' in elem])
+    >>> reduc.resolve()
+    'aap'
     """
 
     def __init__(self, list_designator, sortkey=None, criteriafuncs=None, minmax=min):
