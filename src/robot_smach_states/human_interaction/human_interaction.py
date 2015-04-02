@@ -37,9 +37,9 @@ class Say(State):
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
     >>> #After many calls, all options in the list will very likely have been called at least one.
-    >>> robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
-    >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
+    >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
+    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         check_type(sentence, str, list)
         check_type(sentence, str, list)
