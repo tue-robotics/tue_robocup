@@ -23,6 +23,7 @@ import rospy
 import smach
 import sys
 import random
+import math
 
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
@@ -65,6 +66,8 @@ class EntityDescriptionDesignator(Designator):
     
     def resolve(self):
         entity = self.entity_designator.resolve()
+        if not entity:
+            return None
         short_id = entity.id[:5]
         typ = entity.type
         fmt = self.formats
@@ -82,21 +85,23 @@ class EmptySpotDesignator(Designator):
         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
         self.robot = robot
         self.closet_designator = closet_designator
+        self._edge_distance = 0.1                   # Distance to table edge
+        self._spacing = 0.15
 
     def resolve(self):
-        closet_id = self.closet_designator.resolve().id
-        points_of_interest = []
-        #TODO define REAL potential locations, maybe in entity.data via its yaml file
-        spacing = 0.15
-        start, end = -0.3, 0.31
-        steps = int((end-start)//spacing) + 1
-        points_of_interest = [geom.PointStamped(0, start+(spacing*i), PLACE_HEIGHT, frame_id=closet_id) for i in range(steps)]
+        closet = self.closet_designator.resolve()
+
+        # points_of_interest = []
+        points_of_interest = self.determinePointsOfInterest(closet)
 
         def is_poi_occupied(poi):
-            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=spacing)
+            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
             return not any(entities_at_poi)
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
+
+        # ToDo: best POI, e.g., based on distance???
+
         if any(open_POIs):
             placement = geom.PoseStamped(pointstamped=open_POIs[0])
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
@@ -104,6 +109,44 @@ class EmptySpotDesignator(Designator):
         else:
             rospy.logerr("Could not find an empty spot")
             return None
+
+    def determinePointsOfInterest(self, e):
+
+        points = []
+
+        ch = e.convex_hull
+        x = e.pose.position.x
+        y = e.pose.position.y
+
+        if len(ch) == 0:
+            return []
+
+        ''' Loop over hulls '''
+        ch.append(ch[0])
+        for i in xrange(len(ch) - 1):
+                dx = ch[i+1].x - ch[i].x
+                dy = ch[i+1].y - ch[i].y
+                length = math.hypot(dx, dy)
+
+                d = self._edge_distance
+                while d < (length-self._edge_distance):
+
+                    ''' Point on edge '''
+                    xs = ch[i].x + d/length*dx
+                    ys = ch[i].y + d/length*dy
+
+                    ''' Shift point inwards and fill message'''
+                    ps = geom.PointStamped()
+                    ps.header.frame_id = "/map"
+                    ps.point.x = xs - dy/length * self._edge_distance
+                    ps.point.y = ys + dx/length * self._edge_distance
+                    ps.point.z = e.z_max
+                    points.append(ps)
+
+                    # ToDo: check if still within hull???
+                    d += self._spacing
+
+        return points
 
 
 class ManipRecogSingleItem(smach.StateMachine):
@@ -138,8 +181,10 @@ class ManipRecogSingleItem(smach.StateMachine):
             return onTopOff(entity, container_entity)
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
+        # current_item = LockingDesignator(EdEntityDesignator(robot, 
+        #     center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
+        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot, 
-            center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
             criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         
         place_position = EmptySpotDesignator(robot, bookcase) 
@@ -156,7 +201,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         with self:
             smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
                                     #states.NavigateToObserve(robot, bookcase),
-                                    states.NavigateToSymbolic(robot, {bookcase:"near", EdEntityDesignator(robot, id=ROOM):"in"}, bookcase),
+                                    states.NavigateToSymbolic(robot, {bookcase:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, bookcase),
                                     transitions={   'arrived'           :'LOOKAT_BOOKCASE',
                                                     'unreachable'       :'LOOKAT_BOOKCASE',
                                                     'goal_not_defined'  :'LOOKAT_BOOKCASE'})
@@ -168,7 +213,8 @@ class ManipRecogSingleItem(smach.StateMachine):
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
                 current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
-                rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
+                if current_item.resolve():
+                    rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
@@ -191,8 +237,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             def unlock_and_ignore(userdata):
                 global ignore_ids
                 # import ipdb; ipdb.set_trace()
-                ignore_ids += [current_item.resolve().id]
-                rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
+                if current_item.resolve():
+                    ignore_ids += [current_item.resolve().id]
+                    rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
                 current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
                 return 'unlocked'
             smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
