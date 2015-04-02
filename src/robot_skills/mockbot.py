@@ -11,6 +11,8 @@ import mock
 
 from collections import namedtuple
 
+from dragonfly_speech_recognition.srv import GetSpeechResponse
+
 class Arm(object):
     def __init__(self, robot_name, side, tf_listener):
         self.side = side
@@ -50,8 +52,7 @@ class Base(object):
 
 class Ears(object):
     def __init__(self, *args, **kwargs):
-        Answer = namedtuple("Answer", ["result", "choices"])  # A namedtuple is a simple class
-        answer = Answer("I will go to the desk in the kitchen", {})
+        answer = GetSpeechResponse(result="I will go to the desk in the kitchen")
         answer.choices["room"] = "kitchen"
         answer.choices["table"] = "desk"
 
