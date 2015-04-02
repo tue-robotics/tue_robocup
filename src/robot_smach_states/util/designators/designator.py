@@ -466,7 +466,8 @@ class EdEntityDesignator(Designator):
                 weights = [self.weight_function(entity) for entity in entities]
                 names = [entity.id for entity in entities]
 
-                rospy.loginfo('choosing best entity from this list (name->weight):\n\t%s', zip(names, weights))
+                if len(entities) > 1:
+                    rospy.loginfo('choosing best entity from this list (name->weight):\n\t%s', zip(names, weights))
                 self._current = min(entities, key=self.weight_function)
                 return self.current
 
