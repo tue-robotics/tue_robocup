@@ -313,6 +313,72 @@ class ListElementDesignator(Designator):
         return None
 
 
+class EdEntityCollectionDesignator(Designator):
+    """
+    Resolves to a collection of Ed entities
+    """
+
+    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True,
+        type_designator=None, center_point_designator=None, id_designator=None, debug=False):
+        """Designates a collection of entities of some type, within a radius of some center_point, with some id,
+        that match some given criteria functions.
+        @param robot the robot to use for Ed queries
+        @param type the type of the entity to resolve to (default: any type)
+        @param center_point combined with radius: a sphere to search an entity in
+        @param radius combined with center_point: a sphere to search an entity in
+        @param id the ID of the object to get info about
+        @param parse whether to parse the data string associated with the object model or entity
+        @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
+        @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
+        @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
+        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[EntityInfo])
+        self.ed = robot.ed
+        if type != "" and type_designator != None:
+            raise TypeError("Specify either type or type_designator, not both")
+        if center_point != None and center_point_designator != None:
+            raise TypeError("Specify either center_point or center_point_designator, not both")
+        elif center_point == None and center_point_designator == None:
+            center_point = gm.Point()
+        if id != "" and id_designator != None:
+            raise TypeError("Specify either id or id_designator, not both")
+
+        self.type = type
+        self.center_point = center_point
+        self.radius = radius
+        self.id = id
+        self.parse = parse
+
+        if type_designator: check_resolve_type(type_designator, str)
+        self.type_designator = type_designator
+
+        if center_point_designator: check_resolve_type(center_point_designator, gm.PointStamped)
+        self.center_point_designator = center_point_designator
+
+        if id_designator: check_resolve_type(id_designator, str)
+        self.id_designator = id_designator
+
+        self.debug = debug
+
+    def resolve(self):
+        _type = self.type_designator.resolve() if self.type_designator else self.type
+        _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
+        _id = self.id_designator.resolve() if self.id_designator else self.id
+
+        #entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
+        entities = self.ed.get_entities(id=_id, parse=self.parse)
+        if self.debug:
+            import ipdb; ipdb.set_trace()
+        if entities:
+            self._current = entities
+            return self.current
+
+        rospy.logerr("No entities found in {0}".format(self))
+        return None
+
+    def __repr__(self):
+        return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse)
+
 class EdEntityDesignator(Designator):
 
     """
