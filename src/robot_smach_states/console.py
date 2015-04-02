@@ -19,6 +19,7 @@ from docopt import docopt, DocoptExit
 
 # load state machines
 import robot_smach_states as state_machine
+import robot_skills.util.msg_constructors as msgs
 
 class bcolors:
     HEADER = '\033[95m'
