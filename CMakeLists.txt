@@ -1,18 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(robot_smach_states)
 
-find_package(catkin REQUIRED COMPONENTS
-  rospy
-  robot_skills
-  smach
-  smach_ros
-  geometry_msgs
-  std_msgs
-  ed
-  ed_perception
-  ed_navigation
-  actionlib
-  cb_planner_msgs_srvs)
+find_package(catkin REQUIRED)
 
 # add robot-console
 catkin_add_env_hooks(60.robot_smach_states SHELLS sh DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/env-hooks)
