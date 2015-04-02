@@ -179,13 +179,18 @@ class ManipRecogSingleItem(smach.StateMachine):
         def on_top(entity):
             container_entity = bookcase.resolve()
             return onTopOff(entity, container_entity)
+            
+        def weight_function(entity):
+            rospy.logwarn('implement determine weight function')
+            # TODO: return x coordinate of entity.center_point in base_link frame
+            return 0
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
         # current_item = LockingDesignator(EdEntityDesignator(robot, 
         #     center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot, 
-            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
+            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], weight_function=weight_function, debug=False))
         
         place_position = EmptySpotDesignator(robot, bookcase) 
         
