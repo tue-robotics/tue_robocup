@@ -166,20 +166,20 @@ class LookAtPersonInFront(smach.State):
                     # get information on the first face found (cant guarantee its the closest in case there are many)
                     faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
                 except KeyError, ke:
-                    print OUT_PREFIX + "KeyError faces_front: " + ke
+                    print OUT_PREFIX + "KeyError faces_front: " + str(ke)
                     pass
                 except IndexError, ke:
-                    print OUT_PREFIX + "IndexError faces_front: " + ke
+                    print OUT_PREFIX + "IndexError faces_front: " + str(ke)
                     pass
 
                 if faces_front:
                     headGoal = msgs.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map")
 
                     print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
-                    # self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
+                    self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
                     # DEBUG STUFF
-                    centerPoint = centerDesignator.resolve()
+                    # centerPoint = centerDesignator.resolve()
                     # import ipdb; ipdb.set_trace()
 
                     foundFace == True            
@@ -269,7 +269,7 @@ class FindCrowd(smach.State):
                 pass
 
 
-            foundFace = False # FORCING THIS TO FALSE, BECAUSE THERE SEEMS TO BE A PROBLEM WITH THE MAP COORDINATES
+            # foundFace = False # FORCING THIS TO FALSE, BECAUSE THERE SEEMS TO BE A PROBLEM WITH THE MAP COORDINATES
 
             if foundFace:
                 for face in faceList:
