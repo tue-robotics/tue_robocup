@@ -10,7 +10,7 @@ import robot_skills.util.msg_constructors as msgs
 import geometry_msgs.msg as gm
 import math
 from smach_ros import SimpleActionState
-from robot_smach_states.util.designators import EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
+from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
@@ -118,6 +118,11 @@ class LookAtPersonInFront(smach.State):
         faces_front = None
         desgnResult = None
 
+        # create designators
+        humanDesignator = EdEntityDesignator(self.robot, type="human")
+        dataDesignator = AttrDesignator(humanDesignator, 'data')
+        centerDesignator = AttrDesignator(humanDesignator, 'center_point')
+
         # set robots pose
         self.robot.spindle.high()
 
@@ -125,11 +130,6 @@ class LookAtPersonInFront(smach.State):
         # self.robot.head.look_at_standing_person(timeout=4)
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
         rospy.sleep(2)  # give time for the percetion algorithms to add the entity
-
-        # create designator
-        humanDesignator = EdEntityDesignator(self.robot, type="human")
-        dataDesignator = AttrDesignator(humanDesignator, 'data')
-        centerDesignator = AttrDesignator(humanDesignator, 'center_point')
 
         # try to resolve the designator
         desgnResult = humanDesignator.resolve()
@@ -177,10 +177,6 @@ class LookAtPersonInFront(smach.State):
                     print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
                     self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
-                    # DEBUG STUFF
-                    # centerPoint = centerDesignator.resolve()
-                    # import ipdb; ipdb.set_trace()
-
                     foundFace == True            
                 else:
                     print OUT_PREFIX + "Could not find anyone in front of the robot. It will just look in front and up."
@@ -223,11 +219,11 @@ class FindCrowd(smach.State):
         centerPointRes = None
         humanDesignatorRes = None
         entityDataRes = None
+        faceList = None
 
         # create designators
-        humanDesignator = EdEntityDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+        humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
         centerPointDes = AttrDesignator(humanDesignator, 'center_point')
-        dataDesignator = AttrDesignator(humanDesignator, 'data')
 
         self.robot.spindle.high()
 
@@ -240,6 +236,8 @@ class FindCrowd(smach.State):
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
         rospy.sleep(2)
 
+        self.robot.spindle.medium()
+
         # resolve crowd designator
         humanDesignatorRes = humanDesignator.resolve()
         if not humanDesignatorRes:
@@ -248,48 +246,68 @@ class FindCrowd(smach.State):
 
 
         if not humanDesignatorRes == None:
-            # resolve data from entities
-            entityDataRes = dataDesignator.resolve()
-            if not entityDataRes:
-                print OUT_PREFIX + "Could not resolve dataDesignator"
-                pass
+            print OUT_PREFIX + "Iterating through the {0} humans found".format(len(humanDesignatorRes))
 
-            # resolve faces in the entity
-            try:
-                faceList = entityDataRes['perception_result']['face_detector']['faces_front']
-                foundFace = True
-            except KeyError, ke:
-                print OUT_PREFIX + "KeyError faces_front: " + str(ke)
-                pass
-            except IndexError, ke:
-                print OUT_PREFIX + "IndexError faces_front: " + str(ke)
-                pass
-
-
-            # foundFace = False # FORCING THIS TO FALSE, BECAUSE THERE SEEMS TO BE A PROBLEM WITH THE MAP COORDINATES
-
-            if foundFace:
-                for face in faceList:
-                    self.locations.current += [Location(point_stamped = msgs.PointStamped(x=face["map_x"], y=face["map_y"], z=face["map_z"], frame_id="/map"),
-                                                        visited = False,
-                                                        attempts = 0)]
-
-                    print OUT_PREFIX + "Added face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"])
-                    return 'succeded'
-            else:
-                # resolve data from entities
-                centerPointRes = centerPointDes.resolve()
-                if not centerPointRes:
-                    print OUT_PREFIX + "Could not resolve centerPointDes"
+            for humanEntity in humanDesignatorRes:
+                try:
+                    faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
+                    print OUT_PREFIX + "Found {0} faces in this entity".format(len(faceList))
+                except KeyError, ke:
+                    # import ipdb; ipdb.set_trace()
+                    print OUT_PREFIX + "Could not resolve humanEntity.data[...]:" + str(ke)
                     pass
+                # faceList = [human['perception_result']['face_detector']['faces_front'] for human in humanDesignatorRes]
 
-                if not centerPointRes == None:
-                    self.locations.current += [Location(point_stamped = msgs.PointStamped(x=centerPointRes.x, y=centerPointRes.y, z=centerPointRes.z, frame_id="/map"),
-                                                        visited = False,
-                                                        attempts = 0)]
+                if not faceList == None:
+                    for face in faceList:
 
-                    print OUT_PREFIX + "Added center point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z)
-                    return 'succeded'
+                        alreadyExists = False
+                        for loc in self.locations.current:
+                            p1 = (face["map_x"], face["map_y"], face["map_z"])
+                            p2 = (loc.point_stamped.point.x, loc.point_stamped.point.y, loc.point_stamped.point.z)
+
+                            if points_distance(p1=p1, p2=p2) < 0.1:
+                                alreadyExists = True
+                                break
+
+                        if not alreadyExists:
+                            self.locations.current += [Location(point_stamped = msgs.PointStamped(x=face["map_x"], y=face["map_y"], z=face["map_z"], frame_id="/map"),
+                                                                visited = False,
+                                                                attempts = 0)]
+
+                            print OUT_PREFIX + "Added face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"])
+                        else:
+                            print OUT_PREFIX + "Location closeby already exists in the list"
+
+                else:
+                    # resolve data from entitie
+                    try:
+                        centerPointRes = humanEntity.center_point
+                    except KeyError, ke:
+                        print OUT_PREFIX + "Could not resolve humanEntity.center_point" + str(ke)
+                        pass
+
+                    if not centerPointRes == None:
+                        alreadyExists = False
+                        for loc in self.locations.current:
+                            p1 = (centerPointRes.x, centerPointRes.y, centerPointRes.z)
+                            p2 = (loc.point_stamped.point.x, loc.point_stamped.point.y, loc.point_stamped.point.z)
+
+                            if points_distance(p1=p1, p2=p2) < 0.1:
+                                alreadyExists = True
+                                break
+
+                        if not alreadyExists:
+                            self.locations.current += [Location(point_stamped = msgs.PointStamped(x=centerPointRes.x, y=centerPointRes.y, z=centerPointRes.z, frame_id="/map"),
+                                                                visited = False,
+                                                                attempts = 0)]
+
+                            print OUT_PREFIX + "Added center_point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z)
+                        else:
+                            print OUT_PREFIX + "Location closeby already exists in the list"
+
+            return 'succeded'
+
         else:
             print OUT_PREFIX + bcolors.WARNING + "Could not find anyone in the room." + bcolors.ENDC
 
@@ -461,9 +479,9 @@ class GetOperatorLocation(smach.State):
 
         if not faceList == None:
             for idx, face in enumerate(faceList):
-                print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4})".format( \
-                    str(face.name), \
-                    str(face.score), \
+                print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4})".format(
+                    str(face.name),
+                    str(face.score),
                     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z))
 
                 # score of 0 is for unidentifies people
@@ -513,7 +531,7 @@ class AnalysePerson(smach.State):
         self.facesAnalysedDes = facesAnalysedDes
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "AnalyzePerson" + bcolors.ENDC
+        print OUT_PREFIX + bcolors.OKBLUE + "AnalysePerson" + bcolors.ENDC
 
         # initialize variables
         entityDataList = []
@@ -522,7 +540,7 @@ class AnalysePerson(smach.State):
         humanDesignatorRes = None
 
         # create designators
-        humanDesignator = EdEntityDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+        humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
         humanDataDesignator = AttrDesignator(humanDesignator, 'data')
 
         humanDesignatorRes = humanDesignator.resolve()
@@ -530,6 +548,96 @@ class AnalysePerson(smach.State):
             print OUT_PREFIX + "Could not resolve humanDesgnResult."
             pass
 
+        if not humanDesignatorRes == None:
+            print OUT_PREFIX + "Iterating through the {0} humans found".format(len(humanDesignatorRes))
+
+            for humanEntity in humanDesignatorRes:
+
+                try:
+                    # import ipdb; ipdb.set_trace()
+                    faceList = [human.data['perception_result']['face_recognizer']['face'] for human in humanDesignatorRes][0]
+
+                    # faceList = humanEntity.data['perception_result']['face_recognizer']['face']
+                    print OUT_PREFIX + "Found {0} faces in this entity".format(len(faceList))
+
+                    for faceInfo in faceList: #entityData['perception_result']['face_recognizer']['face']:
+
+                        recognition_label = faceInfo['label']
+                        recognition_score = faceInfo['score']
+                        face_idx = faceInfo['index']
+
+                        # initialize label as empty string if the recogniton didnt conclude anything
+                        if recognition_score == 0:
+                            recognition_label = ""
+                            print OUT_PREFIX + "Unrecognized person"
+
+
+                        # if entityData['type'] == "crowd":
+                            #  get the corresponding location of the face
+                        for face_detector_loc in humanEntity.data['perception_result']['face_detector']['faces_front']:
+                            if face_idx == face_detector_loc['index']:
+                                # get location
+                                face_loc = face_detector_loc
+                                break
+
+                        # elif entityData['type'] == "human":
+                        #     face_loc = entityData['perception_result']['face_detector']['faces_front'][0]
+                        # else:
+                        #     print OUT_PREFIX + bcolors.FAIL + "Uknown entity type. Unable to get face location" + bcolors.ENDC
+
+                        #  test if a face in this location is already present in the list
+                        sameFace = False
+                        for face in self.facesAnalysedDes.current:
+                            p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
+                            p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
+
+                            if points_distance(p1=p1, p2=p2) < 0.1:
+                                sameFace = True
+                                break
+
+                        if sameFace:
+                            # TODO: COMPARE SCORES FROM THE FACE RECOGNITION, IF ITS BETTER, REPLACE
+                            print OUT_PREFIX + "Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current))
+
+                        #  if information is valid, add it to the list of analysed faces
+                        if not recognition_label == None and not recognition_score == None and not sameFace:
+
+                            # "predict" pose in a hacky way
+                            if face_loc["map_z"] > 0.8:
+                                pose = Pose.Standing
+                            else:
+                                pose = Pose.Sitting_down
+
+                            #  "predict" gender, in a hacky way
+                            if recognition_label[:-1] == 'a':
+                                personGender = Gender.Female
+                            else:
+                                personGender = Gender.Male
+
+                            print OUT_PREFIX + "Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
+                                str(recognition_label),
+                                str(recognition_score),
+                                "standing up" if pose == Pose.Standing else "sitting down",
+                                face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
+
+                            self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
+                                                                            name = recognition_label, 
+                                                                            score = recognition_score,
+                                                                            pose = pose,
+                                                                            gender = personGender))]
+                        else:
+                            print OUT_PREFIX + bcolors.WARNING + "Did not add face to the list" + bcolors.ENDC
+
+                except KeyError, ke:
+                    print OUT_PREFIX + "KeyError faceList:" + str(ke)
+                    pass
+
+            return 'succeded'
+        else:
+            print OUT_PREFIX + "Could not find anyone in front of the robot."
+            return 'failed'
+
+'''
         # Add data from the result of the designator to the list
         if humanDesignatorRes:
             # resolve the data designator
@@ -629,7 +737,7 @@ class AnalysePerson(smach.State):
             print OUT_PREFIX + "Could not find anyone in front of the robot."
 
         return 'failed'
-
+'''
 
 # ----------------------------------------------------------------------------------------------------
 

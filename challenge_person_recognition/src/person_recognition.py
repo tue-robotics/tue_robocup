@@ -31,7 +31,6 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         # ------------------------ INITIALIZATIONS ------------------------
 
-
         waypoint_learning = EdEntityDesignator(robot, id="person_rec_learning")
         waypoint_living_room_1 = EdEntityDesignator(robot, id="person_rec_living_room_1")
         waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_2")
@@ -498,7 +497,6 @@ class ChallengePersonRecognition(smach.StateMachine):
                                    transitions={'spoken':'Done'})
 
 
-        
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -525,15 +523,12 @@ if __name__ == "__main__":
 
     ''' Setup state machine'''
     machine = ChallengePersonRecognition(robot)
-    
+
     if  len(sys.argv) > 2:
         print PersonRecStates.OUT_PREFIX + PersonRecStates.bcolors.WARNING + "Overriding initial_state to '" + sys.argv[2] +  "'" + PersonRecStates.bcolors.ENDC
 
         initial_state = [sys.argv[2]]
         machine.set_initial_state(initial_state)
-
-        # if str(sys.argv[2]) == 'FIND_OPERATOR_CONTAINER':
-            # import ipdb; ipdb.set_trace()
 
 
     # for using smach viewer
