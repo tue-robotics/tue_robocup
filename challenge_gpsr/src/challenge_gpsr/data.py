@@ -1,5 +1,7 @@
-objects_aeuoi = ["orange drink", "energy drink"]
-objects_rest = ["coke", "fanta", "milk", "beer", "seven up", "coffee", "tea", "frutas"]
+#objects_aeuoi = ["orange drink", "energy drink"]
+#objects_rest = ["coke", "fanta", "milk", "beer", "seven up", "coffee", "tea", "frutas"]
+objects_aeuoi = []
+objects_rest = ["cup", "beer", "cola", "chewing gum white", "deodorant", "sprite", "coffee pads", "fanta", "tea"]
 objects = objects_aeuoi + objects_rest
 
 object_types_plural = ["drinks","snacks","cleaning stuff", "food"]
@@ -26,8 +28,8 @@ spec1 = "(<1_action> to (((a|the) <1_locations_rest>)|((an|the) <1_locations_aeu
 spec23_1 = "((<2_action> ((the <2_objects_plural>)|(an <2_objects_aeuoi>)|(a <2_objects_rest_singular>))) (and <3_action> (them|it) to ((the <3_location>)|<3_person_me>)))"
 spec23_2 = "(<2_action_count> the <2_objects_types_plural> and <3_action_report> to me)"
 
-#spec = "("+spec123_1+"|("+spec1+"("+spec23_1+"|"+spec23_2+")))"
-spec = spec1+spec23_1
+spec = "("+spec123_1+"|("+spec1+"("+spec23_1+"|"+spec23_2+")))"
+#spec = spec1+spec23_1
 
 choices = {"1_action":["go","navigate","move","advance"],	
  "1_locations_aeuoi":locations_aeuoi,
