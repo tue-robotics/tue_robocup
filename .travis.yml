@@ -38,17 +38,18 @@ script:
   - catkin_make run_tests # and run them
   - roscore >> /dev/null & #Obvisousle we need a roscore
   - rosrun tf_server tf_server >> /dev/null & #Robot keeps waiting for this
-  - rostopic pub /mockbot/base_laser/scan sensor_msgs/LaserScan -f laser_door_open.yaml -l >> /dev/null & #Make it look that the door is open so we candrive in. Its a hack
+  - roscd tue_robocup
+  - ./open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
   - roscd challenge_manipulation
   - rosrun challenge_manipulation manipulation.py mockbot
   - roscd challenge_navigation
-  - rosrun challenge_navigation challenge_navigation.py mockbot 
+  - rosrun challenge_navigation challenge_navigation.py mockbot
   - roscd challenge_person_recognition
   - rosrun challenge_person_recognition person_recognition mockbot
   - roscd challenge_rips
   - rosrun challenge_rips rips.py mockbot
   - roscd challenge_robonurse
-  - rosrun challenge_robonurse challenge_robonurse.py mockbot 
+  - rosrun challenge_robonurse challenge_robonurse.py mockbot
   - roscd challenge_speech_recognition
   - rosrun challenge_speech_recognition 1_direct_speech_recognition.py mockbot
   - roscd challenge_speech_recognition

@@ -6,10 +6,10 @@ import robot_skills.util.msg_constructors as msgs
 import os
 import signal
 
-egyptian_pose_start     = [-1.570, 0.000, -1.50, 1.800, 0.000, -0.55, 0.000]
-egyptian_pose_center    = [-1.570, 0.000, -1.50, 1.570, 0.000, -0.30, 0.000]
-egyptian_pose_end       = [-1.570, 0.000, -1.50, 1.177, 0.000, -0.15, 0.000]
-egyptian_pose_down      = [-1.570, 0.000, 1.57, 1.177, 0.000, -0.30, 0.000]
+egyptian_pose_start     = [-1.470, 0.000, -1.45, 1.800, 0.000, -0.55, 0.000]
+egyptian_pose_center    = [-1.470, 0.000, -1.45, 1.570, 0.000, -0.30, 0.000]
+egyptian_pose_end       = [-1.470, 0.000, -1.45, 1.177, 0.000, -0.15, 0.000]
+egyptian_pose_down      = [-1.470, 0.000, 1.45, 1.177, 0.000, -0.30, 0.000]
                                                                                                                                  #Also moving the arms down is way too slow
 egyptian_motion_left = [egyptian_pose_center, egyptian_pose_start, egyptian_pose_center, egyptian_pose_end, egyptian_pose_center]#, egyptian_pose_down]
 egyptian_motion_right= [egyptian_pose_center, egyptian_pose_end, egyptian_pose_center, egyptian_pose_start, egyptian_pose_center]#, egyptian_pose_down]

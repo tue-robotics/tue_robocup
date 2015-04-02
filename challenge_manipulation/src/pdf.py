@@ -28,28 +28,29 @@ def html2pdf(sourceHtml, outputFilename):
                                     dest=resultFile)
     return pisaStatus.err
 
-get_entity_info = rospy.ServiceProxy('/ed/gui/get_entity_info', GetEntityInfo)
 
-def save_entity_image_to_file(entityID):
+def save_entity_image_to_file(robot, entityID):
+    get_entity_info = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot.robot_name, GetEntityInfo)
 
     # ed request
     info = get_entity_info(entityID)
-
+    # import ipdb;ipdb.set_trace()
     # write bytes to file
     file_name = entityID+".jpg"
     with open(file_name , 'wb') as f:
-        f.write(info.measurement_image)
+        newFileByteArray = bytearray(info.measurement_image)
+        f.write(newFileByteArray)
 
     return file_name
 
-def items2markdown(entities):
+def items2markdown(robot, entities):
     rospy.logdebug("TODO: Exporting PDF")
 
     md = ""
 
     fmt = "#{title}: ![{title}]({path})"
     for entity in entities:
-        md += fmt.format(title=entity.type, path=save_entity_image_to_file(entity.id))
+        md += fmt.format(title=entity.type, path=save_entity_image_to_file(robot, entity.id))
         md += "\n"
 
     md = md.replace("<", '').replace(">", '') #May not be needed when not using mocks
@@ -58,8 +59,6 @@ def items2markdown(entities):
 
     pdfFilename = "manipulation_challenge.pdf"
     html2pdf(html, pdfFilename)
-
-
 
 if __name__ == '__main__':
     pisa.showLogging()
