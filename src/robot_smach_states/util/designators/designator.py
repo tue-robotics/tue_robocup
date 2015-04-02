@@ -318,7 +318,7 @@ class EdEntityCollectionDesignator(Designator):
     Resolves to a collection of Ed entities
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True,
+    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
         type_designator=None, center_point_designator=None, id_designator=None, debug=False):
         """Designates a collection of entities of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
@@ -347,6 +347,7 @@ class EdEntityCollectionDesignator(Designator):
         self.radius = radius
         self.id = id
         self.parse = parse
+        self.criteriafuncs = criteriafuncs or []
 
         if type_designator: check_resolve_type(type_designator, str)
         self.type_designator = type_designator
@@ -363,21 +364,29 @@ class EdEntityCollectionDesignator(Designator):
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
         _id = self.id_designator.resolve() if self.id_designator else self.id
+        _criteria = self.criteriafuncs
 
-        #entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
-        entities = self.ed.get_entities(id=_id, parse=self.parse)
+        entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
         if self.debug:
             import ipdb; ipdb.set_trace()
         if entities:
-            self._current = entities
-            return self.current
+            for criterium in _criteria:
+                entities = filter(criterium, entities)
+                criterium_code = inspect.getsource(criterium)
+                rospy.logdebug("Criterium {0} leaves {1} entities: {2}".format(
+                              criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
+                              )
+
+            if entities:
+                self._current = entities
+                return self.current
 
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
     def __repr__(self):
-        return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse)
+        return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
 
 class EdEntityDesignator(Designator):
 
