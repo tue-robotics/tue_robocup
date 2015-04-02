@@ -38,7 +38,7 @@ class Torso(object):
             return False
     
     def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
-        rospy.loginfo("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
+        rospy.logdebug("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
         if (len(torso_pos) != len(self.joint_names)):
             rospy.logwarn('Length of desired torso pos {0} does not correspond with number of joints {1}'.format(len(torso_pos), len(self.joint_names)))
@@ -93,7 +93,7 @@ class Torso(object):
     def wait(self, timeout=10):
         self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
         if self.ac_move_torso.get_state() == GoalStatus.SUCCEEDED:
-            rospy.loginfo("Torso target reached")
+            rospy.logdebug("Torso target reached")
             return True
         else:
             rospy.loginfo("Reaching torso target failed")

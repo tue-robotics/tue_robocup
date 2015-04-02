@@ -282,7 +282,7 @@ class Arm(object):
                                            points=ps)
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory)
 
-        rospy.loginfo("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
+        rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
         self._ac_joint_traj.send_goal(goal)
         if timeout != 0.0:
             done = self._ac_joint_traj.wait_for_result(timeout*len(joints_references))
