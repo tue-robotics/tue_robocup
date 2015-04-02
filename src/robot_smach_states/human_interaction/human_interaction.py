@@ -14,6 +14,7 @@ from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult #
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 
 # Say: Immediate say
@@ -128,7 +129,7 @@ class HearOptionsExtra(smach.State):
     >>> from robot_smach_states.util.designators import Designator, VariableDesignator
     >>> spec = Designator("I will go to the <table> in the <room>")
     >>> choices = Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
-    >>> answer = VariableDesignator()
+    >>> answer = VariableDesignator(resolve_type=GetSpeechResponse)
     >>> state = HearOptionsExtra(mockbot, spec, choices, answer)
     >>> outcome = state.execute()
     """
