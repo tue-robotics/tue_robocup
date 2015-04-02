@@ -29,6 +29,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
+from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 import geometry_msgs.msg as gm
@@ -129,22 +130,17 @@ class ManipRecogSingleItem(smach.StateMachine):
         #   on the placement-shelve.
         not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
         size = lambda entity: abs(entity.z_max - entity.z_min) < 0.2
-        def inside(entity):
-            container_entity = bookcase.resolve()
-            xs = [point.x for point in container_entity.convex_hull]
-            ys = [point.y for point in container_entity.convex_hull]
-            # zs = [point.z for point in container_entity.convex_hull]
-            return min(xs) < entity.pose.position.x <= max(xs) \
-                and min(ys) < entity.pose.position.y <= max(ys)
-                # and min(zs) < entity.pose.position.z <= max(zs)
         not_manipulated = lambda entity: not entity in manipulated_items.resolve()
         has_type = lambda entity: entity.type != ""
         min_height = lambda entity: entity.min_z > 0.3
+        def on_top(entity):
+            container_entity = bookcase.resolve()
+            return onTopOff(entity, container_entity)
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
         current_item = LockingDesignator(EdEntityDesignator(robot, 
             center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
-            criteriafuncs=[not_ignored, size, not_manipulated, has_type], debug=False))
+            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         
         place_position = EmptySpotDesignator(robot, bookcase) 
         
