@@ -88,15 +88,8 @@ class EmptySpotDesignator(Designator):
 
     def resolve(self):
         closet = self.closet_designator.resolve()
-        closet_id = closet.id
 
-        points_of_interest = []
-        #TODO define REAL potential locations, maybe in entity.data via its yaml file
-        #This does not work: you don't know where the cabinet is w.r.t. the frame_id...
-        #For all you know the point(0,0,0) in frame "cabinet" is at a corner point or even a bigger offset...
-        # start, end = -0.3, 0.31
-        # steps = int((end-start)//self._spacing) + 1
-        # points_of_interest = [geom.PointStamped(0, start+(self._spacing*i), PLACE_HEIGHT, frame_id=closet_id) for i in range(steps)]
+        # points_of_interest = []
         points_of_interest = self.determinePointsOfInterest(closet)
 
         def is_poi_occupied(poi):
@@ -104,6 +97,9 @@ class EmptySpotDesignator(Designator):
             return not any(entities_at_poi)
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
+
+        # ToDo: best POI, e.g., based on distance???
+
         if any(open_POIs):
             placement = geom.PoseStamped(pointstamped=open_POIs[0])
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
@@ -122,8 +118,6 @@ class EmptySpotDesignator(Designator):
 
         if len(ch) == 0:
             return []
-
-        rospy.loginfo("Convex hull: {0}".format(ch))
 
         ''' Loop over hulls '''
         ch.append(ch[0])
@@ -146,7 +140,6 @@ class EmptySpotDesignator(Designator):
                     ps.point.y = ys + dx/length * self._edge_distance
                     ps.point.z = e.z_max
                     points.append(ps)
-                    rospy.loginfo("Point: {0}".format(ps.point))
 
                     # ToDo: check if still within hull???
                     d += self._spacing
@@ -216,7 +209,8 @@ class ManipRecogSingleItem(smach.StateMachine):
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
                 current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
-                rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
+                if current_item.resolve().id:
+                    rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
