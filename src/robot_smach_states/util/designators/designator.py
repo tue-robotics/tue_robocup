@@ -483,7 +483,11 @@ class AttrDesignator(Designator):
         self.attribute = attribute
 
     def resolve(self):
-        return self.orig.resolve().__getattribute__(self.attribute)
+        orig = self.orig.resolve()
+        if orig:
+            return orig.__getattribute__(self.attribute)
+        else:
+            return None
 
 
 class FuncDesignator(Designator):
@@ -504,7 +508,15 @@ class FuncDesignator(Designator):
         self.func = func
 
     def resolve(self):
-        return self.func(self.orig.resolve())
+        orig = self.orig.resolve()
+        if orig:
+            try:
+                return self.func(orig)
+            except Exception, e:
+                rospy.logerr("Cannot apply function {0} on {1}: {2}".format(self.func, orig, e))
+                return None
+        else:
+            return None
 
 
 class ArmDesignator(Designator):
