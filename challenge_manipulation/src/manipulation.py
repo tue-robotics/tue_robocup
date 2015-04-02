@@ -181,8 +181,10 @@ class ManipRecogSingleItem(smach.StateMachine):
             return onTopOff(entity, container_entity)
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
+        # current_item = LockingDesignator(EdEntityDesignator(robot, 
+        #     center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
+        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot, 
-            center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
             criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         
         place_position = EmptySpotDesignator(robot, bookcase) 
