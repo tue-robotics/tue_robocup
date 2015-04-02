@@ -179,11 +179,11 @@ class LookAtPersonInFront(smach.State):
                     headGoal = msgs.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map")
 
                     print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
-                    self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
+                    # self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
                     # DEBUG STUFF
                     centerPoint = centerDesignator.resolve()
-                    import ipdb; ipdb.set_trace()
+                    # import ipdb; ipdb.set_trace()
 
                     foundFace == True            
                 else:
