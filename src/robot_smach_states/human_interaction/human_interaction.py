@@ -52,7 +52,7 @@ class Say(State):
         State.__init__(self, locals(), outcomes=["spoken"])
 
     def run(self, robot, sentence, language, personality, voice, mood, block):
-        robot.head.look_at_standing_person()
+        #robot.head.look_at_standing_person()
 
         if not sentence:
             rospy.logerr("sentence = None, not saying anything...")
@@ -63,7 +63,7 @@ class Say(State):
 
         robot.speech.speak(sentence, language, personality, voice, mood, block)
 
-        robot.head.cancel_goal()
+        #robot.head.cancel_goal()
 
         return "spoken"
 
