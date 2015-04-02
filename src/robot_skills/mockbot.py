@@ -12,6 +12,7 @@ import mock
 from collections import namedtuple
 
 from dragonfly_speech_recognition.srv import GetSpeechResponse
+from dragonfly_speech_recognition.msg import Choice
 
 class Arm(object):
     def __init__(self, robot_name, side, tf_listener):
@@ -53,8 +54,8 @@ class Base(object):
 class Ears(object):
     def __init__(self, *args, **kwargs):
         answer = GetSpeechResponse(result="I will go to the desk in the kitchen")
-        answer.choices["room"] = "kitchen"
-        answer.choices["table"] = "desk"
+        answer.choices += [Choice(id="room", values=["kitchen"])]
+        answer.choices += [Choice(id="table", values=["desk"])]
 
         self.recognize = lambda spec, choices, time_out: answer
 
