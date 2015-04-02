@@ -34,6 +34,7 @@ from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 import geometry_msgs.msg as gm
+from robot_skills.util import transformations 
 
 
 import pdf
@@ -179,11 +180,12 @@ class ManipRecogSingleItem(smach.StateMachine):
         def on_top(entity):
             container_entity = bookcase.resolve()
             return onTopOff(entity, container_entity)
-            
+        
+        # select the entity closest in x direction to the robot in base_link frame            
         def weight_function(entity):
-            rospy.logwarn('implement determine weight function')
             # TODO: return x coordinate of entity.center_point in base_link frame
-            return 0
+            p = transformations.tf_transform(entity.center_point, robot.robot_name+"/base_link", "/map", robot.tf_listener) 
+            return p.x*p.x
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
         # current_item = LockingDesignator(EdEntityDesignator(robot, 
