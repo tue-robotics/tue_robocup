@@ -444,7 +444,11 @@ class FuncDesignator(Designator):
     def resolve(self):
         orig = self.orig.resolve()
         if orig:
-            return self.func(orig)
+            try:
+                return self.func(orig)
+            except Exception, e:
+                rospy.logerr("Cannot apply function {0} on {1}: {2}".format(self.func, orig, e))
+                return None
         else:
             return None
 
