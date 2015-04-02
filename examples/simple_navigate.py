@@ -7,7 +7,7 @@ import robot_skills
 from robot_smach_states import navigation
 
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, check_resolve_type
-from robot_smach_states.navigation import NavigateToPose, NavigateToObserve
+from robot_smach_states.navigation import NavigateToPose, NavigateToObserve, NavigateToSymbolic
 
 if __name__ == "__main__":
     rospy.init_node('simple_navigate')
@@ -28,6 +28,10 @@ if __name__ == "__main__":
     #nav_state = NavigateToPose(robot, 1, 0, 0)
     #nav_state.execute()
 
-    nav_state = NavigateToObserve(robot, EdEntityDesignator(robot=robot, id="operator_table2"))
-    nav_state.execute()
+    #nav_state = NavigateToObserve(robot, EdEntityDesignator(robot=robot, id="operator_table2"))
+    #nav_state.execute()
 
+    nav_state = NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="dinner_table"):"near", 
+                                            EdEntityDesignator(robot, id="room_living_room"):"in"}, 
+                                            EdEntityDesignator(robot, id="dinner_table"))
+    nav_state.execute()

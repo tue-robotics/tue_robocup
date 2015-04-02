@@ -32,7 +32,7 @@ class NavigateToSymbolic(NavigateTo):
         pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
 
         ''' Orientation constraint is the entity itself...'''
-        entity_lookat_id = self.entity_lookat_designator.resolve().id
-        oc = OrientationConstraint(frame=entity_lookat_id)
+        lookat_entity = self.entity_lookat_designator.resolve()
+        oc = OrientationConstraint(look_at=lookat_entity.center_point, frame="/map")
 
         return pc, oc

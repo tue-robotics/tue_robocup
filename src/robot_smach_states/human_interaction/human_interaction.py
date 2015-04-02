@@ -14,6 +14,7 @@ from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult #
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 
 # Say: Immediate say
@@ -36,9 +37,9 @@ class Say(State):
     >>> assert all(outcome == "spoken" for outcome in outcomes)
     >>>
     >>> #After many calls, all options in the list will very likely have been called at least one.
-    >>> robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
-    >>> robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
-    >>> robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
+    >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
+    >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
+    >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
         check_type(sentence, str, list)
         check_type(sentence, str, list)
@@ -128,7 +129,7 @@ class HearOptionsExtra(smach.State):
     >>> from robot_smach_states.util.designators import Designator, VariableDesignator
     >>> spec = Designator("I will go to the <table> in the <room>")
     >>> choices = Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
-    >>> answer = VariableDesignator()
+    >>> answer = VariableDesignator(resolve_type=GetSpeechResponse)
     >>> state = HearOptionsExtra(mockbot, spec, choices, answer)
     >>> outcome = state.execute()
     """
