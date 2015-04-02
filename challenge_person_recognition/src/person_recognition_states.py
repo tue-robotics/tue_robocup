@@ -151,8 +151,8 @@ class LookAtPersonInFront(smach.State):
                 pass
 
         # if there is a person in front, try to look at the face
-        if desgnResult:
-            print OUT_PREFIX + "Found a human!"
+        if not desgnResult == None:
+            print OUT_PREFIX + "Designator resolved a Human!"
 
             # resolve the data designator
             entityData = dataDesignator.resolve()
@@ -161,7 +161,7 @@ class LookAtPersonInFront(smach.State):
                 pass
 
             # extract information from data
-            if entityData:
+            if not entityData == None:
                 try:
                     # get information on the first face found (cant guarantee its the closest in case there are many)
                     faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
@@ -249,8 +249,6 @@ class FindCrowd(smach.State):
 
 
         if not humanDesignatorRes == None:
-
-
             # resolve data from entities
             entityDataRes = dataDesignator.resolve()
             if not entityDataRes:
@@ -464,11 +462,10 @@ class GetOperatorLocation(smach.State):
 
         if not faceList == None:
             for idx, face in enumerate(faceList):
-                # print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4})".format( \
-                #     str(face.name), \
-                #     str(face.score), \
-                #     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z))
-
+                print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4})".format( \
+                    str(face.name), \
+                    str(face.score), \
+                    str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z))
 
                 # score of 0 is for unidentifies people
                 if face.score > 0 and face.score < lowest_score and self.operatorNameDes.resolve() == face.name:
@@ -480,8 +477,6 @@ class GetOperatorLocation(smach.State):
                 # TODO: MARK PEOPLE THERE ARE CLOSE TO THE OPERATOR, IN THE "MAIN CROWD" face.inMainCrowd
 
             if chosenOperator:
-
-
                 print OUT_PREFIX + "Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
                     str(faceList[operatorIdx].name),
                     str(faceList[operatorIdx].score),
