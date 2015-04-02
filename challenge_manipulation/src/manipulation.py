@@ -37,7 +37,7 @@ import geometry_msgs.msg as gm
 import pdf
 
 ignore_ids = ['robotics_testlabs']
-ignore_types = ['waypoint', 'floor']
+ignore_types = ['waypoint', 'floor','room']
 BOOKCASE = "hallway_couch"
 ROOM = "room_hallway"
 PLACE_HEIGHT = 1.0
