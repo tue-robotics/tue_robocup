@@ -10,7 +10,6 @@ import robot_skills.util.msg_constructors as msgs
 import geometry_msgs.msg as gm
 import math
 from smach_ros import SimpleActionState
-from robot_skills.amigo import Amigo
 from robot_smach_states.util.designators import EdEntityDesignator, AttrDesignator, VariableDesignator, Designator
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
@@ -124,7 +123,7 @@ class LookAtPersonInFront(smach.State):
 
         # look front, 2 meters high
         # self.robot.head.look_at_standing_person(timeout=4)
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,"amigo/base_link"), end_time=0, timeout=4)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
         rospy.sleep(2)  # give time for the percetion algorithms to add the entity
 
         # create designator
@@ -141,7 +140,7 @@ class LookAtPersonInFront(smach.State):
         # if no person was seen at 2 meters high, look down, because the person might be sitting
         if desgnResult == None and self.lookDown == True:
             # look front, 2 meters high
-            self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 0,"amigo/base_link"), end_time=0, timeout=4)
+            self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 0,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
             rospy.sleep(2)    # give time for the percetion algorithms to add the entity
 
             # try to resolve the designator
@@ -234,11 +233,11 @@ class FindCrowd(smach.State):
 
         # "scan" the room with the head
         # look at 3 meters front, 5 meters right and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,"amigo/base_link"), end_time=0, timeout=8)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
         rospy.sleep(1)
 
         # look at 3 meters front, 5 meters left and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,"amigo/base_link"), end_time=0, timeout=8)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
         rospy.sleep(2)
 
         # resolve crowd designator
