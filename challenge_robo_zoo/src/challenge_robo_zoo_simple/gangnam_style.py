@@ -30,11 +30,11 @@ gangnam_motionB_left = [gangnam_poseB_left_pre_start, gangnam_poseB_left_start, 
 gangnam_motionB_right= [gangnam_poseB_right_pre_start, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end, gangnam_poseB_right_start, gangnam_poseB_right_end]
 
 
-def spindle_up_down(robot, lower, upper, stopEvent):
-    """Loop the robot's spindle between the lower and upper heights given here"""
+def torso_up_down(robot, lower, upper, stopEvent):
+    """Loop the robot's torso between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.spindle.send_goal(lower, timeout=rospy.Duration(4.0))
-        robot.spindle.send_goal(upper, timeout=rospy.Duration(4.0))
+        robot.torso.send_goal("lower", timeout=4.0)
+        robot.torso.send_goal("upper", timeout=4.0)
 
 def motionA(robot):
     robot.rightArm._send_joint_trajectory([[-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000]], timeout=rospy.Duration(1))
@@ -94,8 +94,8 @@ def motionB(robot):
 def gangnam_style(robot):    
     stopEvent = threading.Event()
 
-    up_and_down_spindle = threading.Thread(target=spindle_up_down, args=(robot, 0.3, 0.4, stopEvent))
-    up_and_down_spindle.start() 
+    up_and_down_torso = threading.Thread(target=torso_up_down, args=(robot, 0.3, 0.4, stopEvent))
+    up_and_down_torso.start() 
     #import ipdb; ipdb.set_trace()
     motionA(robot)
 
