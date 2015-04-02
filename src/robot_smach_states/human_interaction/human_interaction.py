@@ -54,6 +54,10 @@ class Say(State):
     def run(self, robot, sentence, language, personality, voice, mood, block):
         robot.head.look_at_standing_person()
 
+        if not sentence:
+            rospy.logerr("sentence = None, not saying anything...")
+            return "spoken"
+
         if not isinstance(sentence, str) and isinstance(sentence, list):
             sentence = random.choice(sentence)
 
