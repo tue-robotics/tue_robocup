@@ -395,7 +395,7 @@ class EdEntityDesignator(Designator):
     criteria functions)
     """
 
-    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
+    def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None, weight_function=None,
         type_designator=None, center_point_designator=None, id_designator=None, debug=False):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
@@ -406,6 +406,7 @@ class EdEntityDesignator(Designator):
         @param id the ID of the object to get info about
         @param parse whether to parse the data string associated with the object model or entity
         @param criteriafuncs a list of functions that take an entity and return a bool (True if criterium met)
+        @param weight_function returns a weight for each entity, the one with the lowest weight will be selected (could be a distance calculation)
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
@@ -426,6 +427,7 @@ class EdEntityDesignator(Designator):
         self.id = id
         self.parse = parse
         self.criteriafuncs = criteriafuncs or []
+        self.weight_function = weight_function or (lambda entity: 0)
 
         if type_designator: check_resolve_type(type_designator, str, list) #the resolve type of type_designator can be either st or list
         self.type_designator = type_designator
@@ -461,7 +463,11 @@ class EdEntityDesignator(Designator):
                               )
 
             if entities:
-                self._current = entities[0]  # TODO: add sortkey
+                weights = [self.weight_function(entity) for entity in entities]
+                names = [entity.id for entity in entities]
+
+                rospy.loginfo('choosing best entity from this list (name->weight):\n\t%s', zip(names, weights))
+                self._current = min(entities, key=self.weight_function)
                 return self.current
 
         rospy.logerr("No entities found in {0}".format(self))
