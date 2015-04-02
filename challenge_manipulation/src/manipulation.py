@@ -66,6 +66,8 @@ class EntityDescriptionDesignator(Designator):
     
     def resolve(self):
         entity = self.entity_designator.resolve()
+        if not entity:
+            return None
         short_id = entity.id[:5]
         typ = entity.type
         fmt = self.formats
@@ -209,7 +211,7 @@ class ManipRecogSingleItem(smach.StateMachine):
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
                 current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
-                if current_item.resolve().id:
+                if current_item.resolve():
                     rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
@@ -233,8 +235,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             def unlock_and_ignore(userdata):
                 global ignore_ids
                 # import ipdb; ipdb.set_trace()
-                ignore_ids += [current_item.resolve().id]
-                rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
+                if current_item.resolve():
+                    ignore_ids += [current_item.resolve().id]
+                    rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
                 current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
                 return 'unlocked'
             smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
