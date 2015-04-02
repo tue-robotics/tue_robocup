@@ -42,6 +42,9 @@ class ArmToJointConfig(smach.State):
 
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
         if arm.send_joint_goal(self.configuration):
             return 'succeeded'
         return "failed"
@@ -57,6 +60,9 @@ class ArmToJointTrajectory(smach.State):
 
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
         if arm.send_joint_trajectory(self.trajectory):
             return 'succeeded'
         return "failed"
@@ -73,6 +79,9 @@ class PrepareGraspSafe(smach.State):
 
     def execute(self, gl):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
         # Move arm to desired joint coordinates (no need to wait)
         # ToDo: don't hardcode
         arm.send_joint_trajectory([
@@ -165,6 +174,9 @@ class GrabWithVisualServoing(smach.State):
 
     def execute(self, userdata=None):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
 
         if arm == self.robot.arms["left"]:
             end_effector_frame_id = "/"+self.robot.robot_name+"/grippoint_left"
@@ -348,6 +360,9 @@ class SetGripper(smach.State):
 
     def execute(self, userdata):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
 
         # If needs attaching to gripper, the grab_entity_designator is used
         if self.grab_entity_designator:
@@ -513,7 +528,13 @@ class Point_at_object(smach.State):
 
     def execute(self, gl):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "point_failed"
         entity = self.point_entity_designator.resolve()
+        if not entity:
+            rospy.logerr("Could not resolve entity")
+            return "target_lost"
 
         if arm == self.robot.leftArm:
             end_effector_frame_id = "/amigo/grippoint_left"

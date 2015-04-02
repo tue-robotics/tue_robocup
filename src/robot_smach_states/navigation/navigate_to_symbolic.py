@@ -28,11 +28,20 @@ class NavigateToSymbolic(NavigateTo):
 
     def generateConstraint(self):
         ''' PositionConstraint '''
-        entity_id_area_name_map = { k.resolve().id: v for k,v in self.entity_designator_area_name_map.iteritems() }
+        entity_id_area_name_map = {}
+        try:
+            entity_id_area_name_map = { k.resolve().id: v for k,v in self.entity_designator_area_name_map.iteritems() }
+        except AttributeError, e:
+            rospy.logerr("One or more of entity_designator_area_name_map could not be resolved and resolved to None: {0}".format(e))
+            return None
+
         pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
 
-        ''' Orientation constraint is the entity itself...'''
-        lookat_entity = self.entity_lookat_designator.resolve()
-        oc = OrientationConstraint(look_at=lookat_entity.center_point, frame="/map")
+        #Orientation constraint is the entity itself...
+        entity_lookat = self.entity_lookat_designator.resolve()
+        if not entity_lookat:
+            rospy.logerr("Could not resolve entity_lookat_designator".format(self.entity_lookat_designator))
+            return None
+        oc = OrientationConstraint(frame=entity_lookat.id)
 
         return pc, oc

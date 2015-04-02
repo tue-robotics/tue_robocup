@@ -105,7 +105,7 @@ class executePlan(smach.State):
         Possible outcomes (when overloading)
         - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
         - 'checking': the condition has not been met. Upon arrival at a goal, the statemachine will return to 'GetPlan' to get the next goal_not_defined
-        - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded' 
+        - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded'
         '''
 
         self.t_last_free = rospy.Time.now()
@@ -116,7 +116,7 @@ class executePlan(smach.State):
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
 
-            ''' If the breakoutfunction returns preempt, 
+            ''' If the breakoutfunction returns preempt,
                 navigation has succeeded and the robot can stop'''
             breakout_status = self.breakout_function()
             if breakout_status == "breakout":
@@ -469,7 +469,7 @@ class NavigateTo(smach.StateMachine):
         Possible outcomes (when overloading)
         - 'breakout': when a condition has been met and navigation should stop because the goal has succeeded
         - 'checking': the condition has not been met. Upon arrival at a goal, the statemachine will return to 'GetPlan' to get the next goal_not_defined
-        - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded' 
+        - 'passed'  : checking a condition is not necessary. Upon arrival at the current goal, the state machine will return 'succeeded'
 
         '''
 

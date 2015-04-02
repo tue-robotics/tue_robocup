@@ -149,6 +149,13 @@ class HearOptionsExtra(smach.State):
         spec = self.spec_designator.resolve()
         choices = self.choices_designator.resolve()
 
+        if not spec:
+            rospy.logerr("Could not resolve spec")
+            return "no_result"
+        if not choices:
+            rospy.logerr("Could not resolve choices")
+            return "no_result"
+
         self.robot.head.look_at_standing_person()
 
         answer = self.robot.ears.recognize(spec, choices, self.time_out)

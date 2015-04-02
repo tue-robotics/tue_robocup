@@ -33,6 +33,9 @@ class NavigateToPlace(NavigateTo):
 
     def generateConstraint(self):
         arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return None
 
         if arm == self.robot.arms['left']:
             angle_offset = math.atan2(-self.robot.grasp_offset.y, self.robot.grasp_offset.x)
