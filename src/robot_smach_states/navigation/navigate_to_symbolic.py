@@ -29,11 +29,18 @@ class NavigateToSymbolic(NavigateTo):
     def generateConstraint(self):
         ''' PositionConstraint '''
         entity_id_area_name_map = {}
-        try:
-            entity_id_area_name_map = { k.resolve().id: v for k,v in self.entity_designator_area_name_map.iteritems() }
-        except AttributeError, e:
-            rospy.logerr("One or more of entity_designator_area_name_map could not be resolved and resolved to None: {0}".format(e))
+        for desig, area_name in self.entity_designator_area_name_map.iteritems():
+            entity = desig.resolve()
+            if entity:
+                entity_id_area_name_map[entity.id] = area_name
+            else:
+                rospy.logerr("Designator {0} in entity_designator_area_name_map resolved to {1}.".format(desig, entity))
+                entity_id_area_name_map[entity] = area_name #Put a None item in the dict. We check on that and if there's a None, something failed.
+
+        if None in entity_id_area_name_map:
+            rospy.logerr("At least 1 designator in self.entity_designator_area_name_map failed")
             return None
+
 
         pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
 

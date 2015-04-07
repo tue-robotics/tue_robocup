@@ -441,10 +441,19 @@ class EdEntityDesignator(Designator):
         self.debug = debug
 
     def resolve(self):
+        if self.debug:
+            import ipdb; ipdb.set_trace()
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
         _id = self.id_designator.resolve() if self.id_designator else self.id
         _criteria = self.criteriafuncs
+
+        if self.type_designator and not _type:
+            rospy.logwarn("type_designator {0} failed to resolve: {1}".format(self.type_designator, _type))
+        if self.center_point_designator and not _center_point:
+            rospy.logwarn("center_point_designator {0} failed to resolve: {1}".format(self.center_point_designator, _center_point))
+        if self.id_designator and not _id:
+            rospy.logwarn("id_designator {0} failed to resolve: {1}".format(self.id_designator, _id))
 
         if isinstance(_type, list):
             _type = "" #Do the check not in Ed but in code here
@@ -452,8 +461,6 @@ class EdEntityDesignator(Designator):
             _criteria += [typechecker]
 
         entities = self.ed.get_entities(_type, _center_point, self.radius, _id, self.parse)
-        if self.debug:
-            import ipdb; ipdb.set_trace()
         if entities:
             for criterium in _criteria:
                 entities = filter(criterium, entities)
