@@ -267,7 +267,8 @@ class QueryFirstAnswerDesignator(Designator):
 
     def resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
-        
+        if not first_answer:
+            return None
         return str(first_answer)
 
 class ObjectTypeDesignator(Designator):
@@ -324,7 +325,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("QUERY_SPECIFIC_ACTION",
                                 Query_specific_action(robot),
-                                transitions={   'navigate_room':'1_ACTION_NAVIGATE_TO_LOCATION',
+                                transitions={   'navigate_room':'1_ACTION_NAVIGATE_TO_ROOM',
                                                 'navigate_location':'1_ACTION_NAVIGATE_TO_LOCATION',
                                                 'grasp_object':'GRAB_ITEM', # TODO: assuming for now that you navigate directly to a location. 
                                                                                       # If you are in a room, amigo should explore all locations in room.
