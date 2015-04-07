@@ -170,7 +170,7 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "WAIT_A_SEC", 
                                     states.Wait_time(robot, waittime=1),
-                                    transitions={'waited'   :"SELECT_RANDOM",
+                                    transitions={'waited'   :"SAY_SHOW_QR_MARKER",
                                                  'preempted':"Aborted"})
 
             smach.StateMachine.add( "SAY_SHOW_QR_MARKER",

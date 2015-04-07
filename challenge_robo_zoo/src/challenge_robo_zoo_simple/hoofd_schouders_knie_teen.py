@@ -91,7 +91,7 @@ def hoofdschoudersknieteen(robot):
             robot.base.force_drive(0, 0, TURNSPEED, (2*math.pi)/TURNSPEED) #Turn a full circle at TURNSPEED rad/sec
         robot.torso.send_goal('upper', timeout=4.0) # timeout=0.0
         right(right_arm_to_nose_1) #Dont wait, both arms should move in syn, timeout=10c
-        robot.leftArm.reset_arm() #Move left arm down, only use right arm to point at 'nose'
+        robot.leftArm.reset() #Move left arm down, only use right arm to point at 'nose'
 
     try:
         hoofd(speak=False); schouders(speak=False); knie(speak=False); teen(speak=False); knie(speak=False); teen(speak=False)
@@ -101,8 +101,8 @@ def hoofdschoudersknieteen(robot):
 
         robot.torso.reset()
         robot.head.reset()
-        robot.rightArm.reset_arm()
-        robot.leftArm.reset_arm()
+        robot.rightArm.reset()
+        robot.leftArm.reset()
     except Exception, e:
         robot.speech.speak("Guys, could you help me, my dance stopped suddenly")
         rospy.logerr(e)
