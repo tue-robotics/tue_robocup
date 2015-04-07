@@ -65,8 +65,7 @@ class Torso(object):
                 goal_tolerance.position = self.default_tolerance[i]
             torso_goal.goal_tolerance.append(goal_tolerance)
 
-        print "Sending torso goal: "
-        print torso_goal
+        rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
         self.ac_move_torso.send_goal(torso_goal)
         
         if timeout == 0.0:
