@@ -35,6 +35,7 @@ from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 import geometry_msgs.msg as gm
 from robot_skills.util import transformations 
+from cb_planner_msgs_srvs.msg import PositionConstraint
 
 
 import pdf
@@ -101,10 +102,26 @@ class EmptySpotDesignator(Designator):
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
 
-        # ToDo: best POI, e.g., based on distance???
+        def distance_to_poi_area(poi):
+            #Derived from navigate_to_place
+            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+            x = poi.point.x
+            y = poi.point.y
+            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
+            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+            
+            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+            
+            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
+            if plan_to_poi:
+                distance = len(plan_to_poi)
+            print "Distance: %s"%distance
+            return distance
 
         if any(open_POIs):
-            placement = geom.PoseStamped(pointstamped=open_POIs[0])
+            best_poi = min(open_POIs, key=distance_to_poi_area)
+            placement = geom.PoseStamped(pointstamped=best_poi)
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
