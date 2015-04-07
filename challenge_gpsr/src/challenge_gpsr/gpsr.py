@@ -289,6 +289,21 @@ class ObjectTypeDesignator(Designator):
 
         return grab_item_designator.resolve()
 
+# class PersonTypeDesignator(Designator):
+#     def __init__(self, robot):
+#         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
+#         self.robot = robot
+
+#     def resolve(self):
+#         has_type = lambda entity: entity.type == "person"
+#         location = str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
+#         ## FOR TESTING:
+#         #location = "hallway_couch"
+#         grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
+#                                                                 criteriafuncs=[has_type], debug=False)
+
+#         return grab_item_designator.resolve()
+
 def setup_statemachine(robot):
 
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
@@ -377,6 +392,13 @@ def setup_statemachine(robot):
                                     transitions={   'done'              :'GO_TO_INITIAL_POINT',
                                                     'failed'            :'GO_TO_INITIAL_POINT'})
 
+        
+        # smach.StateMachine.add( "FIND_PERSON",
+        #                             Grab(robot, ObjectTypeDesignator(robot), UnoccupiedArmDesignator(robot.arms, robot.leftArm)),
+        #                             transitions={   'done'              :'GO_TO_INITIAL_POINT',
+        #                                             'failed'            :'GO_TO_INITIAL_POINT'})
+
+
         smach.StateMachine.add('GO_TO_INITIAL_POINT',
                                 states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="initial_pose"), radius = 0.5),
                                 transitions={   'arrived'           :   'FINISHED_TASK',
@@ -401,4 +423,7 @@ if __name__ == "__main__":
         print "[CHALLENGE GPSR] Please provide robot name as argument."
         exit(1)
 
+    rospy.logwarn("[CHALLENGE GPSR] Please test with a cola on the hallway table!!!!")
+    rospy.logwarn("[CHALLENGE GPSR] Amigo will try to grab it en then get back to begin location.")
+    rospy.sleep(5)
     states.util.startup(setup_statemachine, robot_name=robot_name)
