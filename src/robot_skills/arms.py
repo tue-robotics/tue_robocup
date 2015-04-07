@@ -273,14 +273,14 @@ class Arm(object):
             if (len(joints_reference) != len(self.joint_names)):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
                               % (len(self.joint_names), len(joints_references)))
-            time_from_start += timeout
+
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
                 time_from_start=time_from_start))
 
         joint_trajectory = JointTrajectory(joint_names=self.joint_names,
                                            points=ps)
-        goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory)
+        goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
         rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
         self._ac_joint_traj.send_goal(goal)
