@@ -33,8 +33,9 @@ if __name__ == "__main__":
         table = W.add_object("table-1", "table", table_x, table_y, 0)
 
     elif env == "robotics_testlab_B":
-        coke1 = W.add_object("coke-1", "coke", 3.102, 0.0, 0.81)    
-        coke2 = W.add_object("coke-2", "coke", 3.502, -0.5, 0.81)    
+        #coke1 = W.add_object("coke-1", "coke", 3.102, 0.0, 0.81)    
+        #coke2 = W.add_object("coke-2", "coke", 3.502, -0.5, 0.81) 
+        W.add_object("loy-1", "loy", 1.114, 4.233, 0)   
 
     elif env == "robotics_testlab_A":
         coke2 = W.add_object("coke-2", "coke", 4.8, 2, 0.8)    

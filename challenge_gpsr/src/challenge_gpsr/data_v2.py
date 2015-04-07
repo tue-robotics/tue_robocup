@@ -1,22 +1,14 @@
-#objects_aeuoi = ["orange drink", "energy drink"]
-#objects_rest = ["coke", "fanta", "milk", "beer", "seven up", "coffee", "tea", "frutas"]
-objects_aeuoi = ["cola"]
-#objects_rest = ["cup", "beer", "cola", "chewing gum white", "deodorant", "sprite", "coffee pads", "fanta", "tea"]
-objects_rest = ["cola"]
+objects_aeuoi = []
+objects_rest = ["cup", "beer", "cola", "chewing gum white", "deodorant", "sprite", "coffee pads", "fanta", "tea"]
 objects = objects_aeuoi + objects_rest
 
-#object_types_plural = ["drinks","snacks","cleaning stuff", "food"]
-object_types_plural = ["cola"]
-#object_types_singular = ["drink","snack"]
-object_types_singular = ["cola"]
+object_types_plural = ["drinks","snacks","cleaning stuff", "food"]
+object_types_singular = ["drink","snack"]
 object_types = object_types_plural + object_types_singular
 
-#locations_aeuoi = ["appliance"]
-locations_aeuoi = ["hallway couch"]
-#locations_rest = ["bed", "shelf", "table", "trash bin", "bin", "workbench","desk","bar","tulip","plant","dinner table","couch table", "kitchen counter","nightstand"]
-locations_rest = ["hallway couch"]
-#rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
-rooms = ["hallway"]
+locations_aeuoi = ["appliance"]
+locations_rest = ["bed", "shelf", "table", "trash bin", "bin", "workbench","desk","bar","tulip","plant","dinner table","couch table", "kitchen counter","nightstand"]
+rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
 persons_women = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
 persons_men = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 persons_general = ["me","a person"] 
@@ -37,7 +29,7 @@ spec23_2 = "(<2_action_count> the <2_objects_types_plural> and <3_action_report>
 #spec = "("+spec123_1+"|("+spec1+"("+spec23_1+"|"+spec23_2+")))"
 spec = spec1+spec23_1
 
-choices = {"1_action":["go","navigate","move","advance"],	
+choices = {"1_action":["go","navigate","move","advance"],   
  "1_locations_aeuoi":locations_aeuoi,
  "1_locations_rest":locations_rest,
  "1_locations_rooms":rooms,
