@@ -211,7 +211,8 @@ class ManipRecogSingleItem(smach.StateMachine):
         current_item = LockingDesignator(EdEntityDesignator(robot, 
             criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], weight_function=weight_function, debug=False))
         
-        place_position = EmptySpotDesignator(robot, bookcase) 
+        #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
+        place_position = LockingDesignator(EmptySpotDesignator(robot, bookcase))
         
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
@@ -239,6 +240,8 @@ class ManipRecogSingleItem(smach.StateMachine):
                 current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
                 if current_item.resolve():
                     rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
+
+                place_position.lock() #This determines that place_position will lock/cache its result after its resolved the first time.
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
@@ -264,7 +267,8 @@ class ManipRecogSingleItem(smach.StateMachine):
                 if current_item.resolve():
                     ignore_ids += [current_item.resolve().id]
                     rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
-                current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
+                current_item.unlock() #This determines that current_item can now resolve to a new value on the next call
+                place_position.unlock() #This determines that place_position can now resolve to a new position on the next call
                 return 'unlocked'
             smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
                                    smach.CBState(unlock_and_ignore),
