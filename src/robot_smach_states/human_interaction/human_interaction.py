@@ -4,9 +4,7 @@ import rospy
 import smach
 import random
 import ed_perception.msg
-# from ed_perception.srv import LearnPerson, LearnPersonRequest
-import actionlib #
-# import actionlib_msgs
+import actionlib
 from robot_smach_states.state import State
 
 from robot_smach_states.util.designators import Designator, EdEntityDesignator, check_type
@@ -212,15 +210,15 @@ class WaitForPersonInFront(WaitForDesignator):
 
 
 class LearnPerson(smach.StateMachine):
-    '''
-    State that provides an interface to learn a person's face.
+    """
+    State that provides an interface to learn a person's face through actionlib call
 
-    person_name - name of the person to be learned
-    name_over_userdata - Enables the passing of the name through userdata. If set to true, person_name is ignored
+    Keyword arguments:
+    person_name -- name of the person to be learned
 
     tutorial for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
-    '''
-    def __init__(self, robot, person_name = "", name_over_userdata = False):
+    """
+    def __init__(self, robot, person_name = ""):
         smach.StateMachine.__init__(self,
                                     outcomes=['succeded_learning', 'failed_learning'],
                                     input_keys=['personName_in'])
@@ -230,7 +228,7 @@ class LearnPerson(smach.StateMachine):
         with self:
 
             # Callback when a result is received
-            def learn_result_cb(userdata, status, result):
+            def get_result_cb(userdata, status, result):
                 print "Received result from the learning service"
 
                 # test the result and parse the message
@@ -238,7 +236,6 @@ class LearnPerson(smach.StateMachine):
                     if result.result_info == "Learning complete":
                         print "Face learning complete! result: " + result.result_info
                         # self.robot.speech.speak("Learning complete.", block=False)
-
                         return 'succeeded'
                     else:
                         return 'aborted'
@@ -249,7 +246,7 @@ class LearnPerson(smach.StateMachine):
             # --------------------------------------------------------------------------------
 
             # Callback when a result is sent
-            def learn_goal_cb(userdata, goal):
+            def send_goal_cb(userdata, goal):
                 # import ipdb; ipdb.set_trace()
 
                 # self.robot.speech.speak("Please look at me while I learn your face.", block=True)
@@ -267,8 +264,8 @@ class LearnPerson(smach.StateMachine):
             smach.StateMachine.add( 'LEARN_PERSON',
                                     SimpleActionState(  self.service_name,
                                                         ed_perception.msg.FaceLearningAction,
-                                                        result_cb = learn_result_cb,
-                                                        goal_cb = learn_goal_cb,            # create a goal inside the callback
+                                                        result_cb = get_result_cb,
+                                                        goal_cb = send_goal_cb,            # create a goal inside the callback
                                                         input_keys=['person_name_goal'],
                                                         output_keys=['result_info_out']),
                                                         # goal_slots = ['person_name_goal'],# or create it here directly
