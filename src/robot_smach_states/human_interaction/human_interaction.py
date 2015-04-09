@@ -254,7 +254,7 @@ class LearnPerson(smach.StateMachine):
                 learn_goal = FaceLearningGoal()
                 learn_goal.person_name = userdata.person_name_goal
 
-                print "Goal sent to the learning service, with name '" + learn_goal.person_name + "'"
+                print "Goal sent to the learning service (" + self.service_name + "), with name '" + learn_goal.person_name + "'"
 
                 return learn_goal
 
