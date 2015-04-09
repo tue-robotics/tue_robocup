@@ -565,11 +565,14 @@ class ArmDesignator(Designator):
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
     def resolve(self):
-        if self.available(self.preferred_arm):
+        if self.available(self.preferred_arm) and self.preferred_arm.operational:
             return self.preferred_arm
         else:
             # import ipdb; ipdb.set_trace()
             available_arms = filter(self.available, self.all_arms.values())
+            rospy.loginfo("Found %d available arms" % len(available_arms))
+            available_arms = filter(lambda arm: arm.operational, self.all_arms.values())
+            rospy.loginfo("For those arms, there are %d arms operational" % len(available_arms))
             if any(available_arms):
                 return available_arms[0]
             else:
