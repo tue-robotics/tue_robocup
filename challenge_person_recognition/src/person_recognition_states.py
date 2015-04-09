@@ -125,6 +125,7 @@ class LookAtPersonInFront(smach.State):
 
         # set robots pose
         self.robot.spindle.high()
+        self.robot.head.cancel_goal()
 
         # look front, 2 meters high
         # self.robot.head.look_at_standing_person(timeout=4)
@@ -236,7 +237,7 @@ class FindCrowd(smach.State):
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
         rospy.sleep(2)
 
-        self.robot.spindle.medium()
+        # self.robot.spindle.medium()
 
         # resolve crowd designator
         humanDesignatorRes = humanDesignator.resolve()
@@ -427,19 +428,22 @@ class AskPersonName(smach.State):
         state = HearOptionsExtra(self.robot, spec, choices, answer)
         outcome = state.execute()
 
+        if not outcome == "heard":
+            name = "Mister Operator Fallback"
+            userdata.personName_out = name
+            self.operatorNameDes.current = name
 
-        if outcome == "heard":
+            print OUT_PREFIX + bcolors.WARNING + "Speech recognition outcome was not successful (outcome: " + str(outcome) + \
+                    "). Using default name" + self.operatorNameDes.resolve() + bcolors.ENDC
+            return 'failed'
+        else:
             try:
                 name = answer.resolve().choices["name"]
-                print OUT_PREFIX + "Result from speech recognition is " + name + bcolors.ENDC
+                print OUT_PREFIX + "Result received from speech recognition is '" + name + "'" + bcolors.ENDC
             except KeyError, ke:
-                print OUT_PREFIX + "KeyError  answer.resolve().choices['name']: " + str(ke)
+                print OUT_PREFIX + "KeyError resolving the name heard: " + str(ke)
                 pass
-        else:
-            print OUT_PREFIX + bcolors.FAIL + "Speech recognition outcome was not successful" + bcolors.ENDC
-            return 'failed'
 
-        # name = "Mr. Operator"
         userdata.personName_out = name
         self.operatorNameDes.current = name
 
