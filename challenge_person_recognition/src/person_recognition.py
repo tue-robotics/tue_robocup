@@ -163,7 +163,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add("WAIT_FOR_OPERATOR",
                                         states.WaitForPersonInFront(robot, attempts=8, sleep_interval=1),
                                         transitions={   'success':'LEARN_NAME_ITERATOR',
-                                                        'failed':'LEARN_NAME_ITERATOR'}) #'SAY_WAITING_OPERATOR'})
+                                                        'failed':'SAY_WAITING_OPERATOR'})
 
                 # ----------------------------------------
 
