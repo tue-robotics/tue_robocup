@@ -482,8 +482,10 @@ class EdEntityDesignator(Designator):
         return None
 
     def __repr__(self):
+        criteria_code = [inspect.getsource(criterium).strip() for criterium in self.criteriafuncs]
+    
         return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
+            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, criteria_code)
 
 
 class AttrDesignator(Designator):
