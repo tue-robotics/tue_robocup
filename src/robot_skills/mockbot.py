@@ -35,6 +35,7 @@ class Arm(object):
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
         self.occupied_by = None
+        self.operational = True
 
 class Base(object):
     def __init__(self, *args, **kwargs):
