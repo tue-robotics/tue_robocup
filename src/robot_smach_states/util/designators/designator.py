@@ -316,6 +316,11 @@ class ListElementDesignator(Designator):
 class EdEntityCollectionDesignator(Designator):
     """
     Resolves to a collection of Ed entities
+
+    >>> from robot_skills.mockbot import Mockbot
+    >>> robot = Mockbot()
+    >>> entities = EdEntityCollectionDesignator(robot)
+    >>> check_resolve_type(entities, [EntityInfo]) #This is more a test for check_resolve_type to be honest :-/
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
