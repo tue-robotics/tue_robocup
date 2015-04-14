@@ -48,8 +48,13 @@ class DetectAction(smach.State):
     def execute(self, userdata):
         which = raw_input_timeout("Which action has been performed? : {0}".format({i:v for i, v in enumerate(self.get_registered_outcomes())}))
         if which != None:
-            return self.get_registered_outcomes()[int(which)]
+            try:
+                return self.get_registered_outcomes()[int(which)]
+            except:
+                rospy.logerr("No valid input received, picking a random action")
+                return random.choice(self.get_registered_outcomes())
         else:
+            rospy.logerr("No valid input received, picking a random action")
             return random.choice(self.get_registered_outcomes())
 
 class RoboNurse(smach.StateMachine):
