@@ -42,7 +42,7 @@ class Arm(object):
         self.tf_listener = tf_listener
 
         self._occupied_by = None
-        self._operational = None
+        self._operational = True  # In simulation, there will be no hardware cb
 
         # Get stuff from the parameter server
         self.offset = self.load_param('skills/arm/offset/' + self.side)
