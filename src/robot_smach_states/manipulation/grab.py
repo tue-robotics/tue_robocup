@@ -1,27 +1,25 @@
 #! /usr/bin/env python
 import rospy
 import smach
-
-# from geometry_msgs.msg import *
-import robot_skills.util.msg_constructors as msgs
-import robot_skills.util.transformations as transformations
 import tf
 
-from robot_smach_states.state import State
-
-from robot_smach_states.util.designators import check_type
 import ed.msg
+import robot_skills.util.msg_constructors as msgs
+import robot_skills.util.transformations as transformations
+
 from robot_skills.arms import Arm
+from robot_smach_states.state import State
+from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
 
 
 class PickUp(State):
     def __init__(self, robot, arm, grab_entity):
-        #Check that the entity_designator resolves to an Entity or is an entity
+        # Check that the entity_designator resolves to an Entity or is an entity
         check_type(grab_entity, ed.msg.EntityInfo)
 
-        #Check that the arm is a designator that resolves to an Arm or is an Arm
+        # Check that the arm is a designator that resolves to an Arm or is an Arm
         check_type(arm, Arm)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
@@ -124,10 +122,9 @@ class Grab(smach.StateMachine):
     def __init__(self, robot, item, arm):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
-        #Check types or designator resolve types
+        # Check types or designator resolve types
         check_type(item, ed.msg.EntityInfo)
         check_type(arm, Arm)
-
 
         with self:
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
