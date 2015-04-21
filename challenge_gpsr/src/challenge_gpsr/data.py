@@ -1,14 +1,22 @@
-objects_aeuoi = ["orange drink", "energy drink"]
-objects_rest = ["coke", "fanta", "milk", "beer", "seven up", "coffee", "tea", "frutas"]
+#objects_aeuoi = ["orange drink", "energy drink"]
+#objects_rest = ["coke", "fanta", "milk", "beer", "seven up", "coffee", "tea", "frutas"]
+objects_aeuoi = ["cola"]
+#objects_rest = ["cup", "beer", "cola", "chewing gum white", "deodorant", "sprite", "coffee pads", "fanta", "tea"]
+objects_rest = ["cola"]
 objects = objects_aeuoi + objects_rest
 
-object_types_plural = ["drinks","snacks","cleaning stuff", "food"]
-object_types_singular = ["drink","snack"]
+#object_types_plural = ["drinks","snacks","cleaning stuff", "food"]
+object_types_plural = ["cola"]
+#object_types_singular = ["drink","snack"]
+object_types_singular = ["cola"]
 object_types = object_types_plural + object_types_singular
 
-locations_aeuoi = ["appliance"]
-locations_rest = ["bed", "shelf", "table", "trash bin", "bin", "workbench","desk","bar","tulip","plant","dinner table","couch table", "kitchen counter","nightstand"]
-rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
+#locations_aeuoi = ["appliance"]
+locations_aeuoi = ["hallway couch"]
+#locations_rest = ["bed", "shelf", "table", "trash bin", "bin", "workbench","desk","bar","tulip","plant","dinner table","couch table", "kitchen counter","nightstand"]
+locations_rest = ["hallway couch"]
+#rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
+rooms = ["hallway"]
 persons_women = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
 persons_men = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
 persons_general = ["me","a person"] 
@@ -26,7 +34,8 @@ spec1 = "(<1_action> to (((a|the) <1_locations_rest>)|((an|the) <1_locations_aeu
 spec23_1 = "((<2_action> ((the <2_objects_plural>)|(an <2_objects_aeuoi>)|(a <2_objects_rest_singular>))) (and <3_action> (them|it) to ((the <3_location>)|<3_person_me>)))"
 spec23_2 = "(<2_action_count> the <2_objects_types_plural> and <3_action_report> to me)"
 
-spec = "("+spec123_1+"|("+spec1+"("+spec23_1+"|"+spec23_2+")))"
+#spec = "("+spec123_1+"|("+spec1+"("+spec23_1+"|"+spec23_2+")))"
+spec = spec1+spec23_1
 
 choices = {"1_action":["go","navigate","move","advance"],	
  "1_locations_aeuoi":locations_aeuoi,

@@ -54,7 +54,8 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_WAYPOINT_B'})
 
         smach.StateMachine.add('GOTO_WAYPOINT_B',
-                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="black_cabinet1") : "near", EdEntityDesignator(robot, id="room_living_room") : "in" }, EdEntityDesignator(robot, id="black_cabinet1")),
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="black_cabinet1") : "near", EdEntityDesignator(robot, id="room_living_room") : "in" }, 
+                                    EdEntityDesignator(robot, id="black_cabinet1")),
                                 transitions={   'arrived'           :   'SAY_WAYPOINT_B_REACHED',
                                                 'unreachable'       :   'SAY_WAYPOINT_B_FAILED',
                                                 'goal_not_defined'  :   'SAY_WAYPOINT_B_FAILED'})

@@ -35,14 +35,16 @@ from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 import geometry_msgs.msg as gm
 from robot_skills.util import transformations 
+from cb_planner_msgs_srvs.msg import PositionConstraint
 
 
 import pdf
 
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor','room']
-BOOKCASE = "hallway_couch"
-ROOM = "room_hallway"
+PICK_SHELF = "plastic_cabinet_shelf_1"
+PLACE_SHELF = "plastic_cabinet_shelf_2"
+ROOM = "room_living_room"
 PLACE_HEIGHT = 1.0
 
 
@@ -101,10 +103,26 @@ class EmptySpotDesignator(Designator):
 
         open_POIs = filter(is_poi_occupied, points_of_interest)
 
-        # ToDo: best POI, e.g., based on distance???
+        def distance_to_poi_area(poi):
+            #Derived from navigate_to_place
+            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+            x = poi.point.x
+            y = poi.point.y
+            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
+            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+            
+            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+            
+            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
+            if plan_to_poi:
+                distance = len(plan_to_poi)
+            print "Distance: %s"%distance
+            return distance
 
         if any(open_POIs):
-            placement = geom.PoseStamped(pointstamped=open_POIs[0])
+            best_poi = min(open_POIs, key=distance_to_poi_area)
+            placement = geom.PoseStamped(pointstamped=best_poi)
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
@@ -149,6 +167,25 @@ class EmptySpotDesignator(Designator):
 
         return points
 
+class InspectEntity(smach.State):
+    """Inspect an entity, i.e. look at all points that make up some entity"""
+
+    def __init__(self, robot, entity_designator):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.entity_designator = entity_designator
+
+    def execute(self, userdata=None):
+        entity = self.entity_designator.resolve()
+
+        if not entity:
+            return "failed"
+
+        for point in entity.convex_hull:
+            point_stamped = geom.PointStamped(point=point, frame_id=entity.id)
+            self.robot.head.look_at_point(point_stamped, timeout=1)
+
+        return "succeeded"
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
@@ -165,10 +202,11 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
         
-        bookcase = EdEntityDesignator(robot, id=BOOKCASE)
+        pick_shelf = EdEntityDesignator(robot, id=PICK_SHELF)
+        place_shelf = EdEntityDesignator(robot, id=PLACE_SHELF)
 
         # TODO: Designate items that are
-        # inside bookcase 
+        # inside pick_shelf 
         # and are _not_:
         #   already placed 
         #   on the placement-shelve.
@@ -178,7 +216,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         has_type = lambda entity: entity.type != ""
         min_height = lambda entity: entity.min_z > 0.3
         def on_top(entity):
-            container_entity = bookcase.resolve()
+            container_entity = pick_shelf.resolve()
             return onTopOff(entity, container_entity)
         
         # select the entity closest in x direction to the robot in base_link frame            
@@ -189,32 +227,33 @@ class ManipRecogSingleItem(smach.StateMachine):
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
         # current_item = LockingDesignator(EdEntityDesignator(robot, 
-        #     center_point=geom.PointStamped(frame_id="/"+BOOKCASE), radius=2.0,
+        #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot, 
             criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], weight_function=weight_function, debug=False))
         
-        place_position = EmptySpotDesignator(robot, bookcase) 
+        #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
+        place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))
         
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
-        print "{0} = bookcase".format(bookcase)
+        print "{0} = pick_shelf".format(pick_shelf)
         print "{0} = current_item".format(current_item)
         print "{0} = place_position".format(place_position)
         print "{0} = empty_arm_designator".format(empty_arm_designator)
         print "{0} = arm_with_item_designator".format(arm_with_item_designator)
 
         with self:
-            smach.StateMachine.add( "NAV_TO_OBSERVE_BOOKCASE",
-                                    #states.NavigateToObserve(robot, bookcase),
-                                    states.NavigateToSymbolic(robot, {bookcase:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, bookcase),
-                                    transitions={   'arrived'           :'LOOKAT_BOOKCASE',
-                                                    'unreachable'       :'LOOKAT_BOOKCASE',
-                                                    'goal_not_defined'  :'LOOKAT_BOOKCASE'})
+            smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
+                                    #states.NavigateToObserve(robot, pick_shelf),
+                                    states.NavigateToSymbolic(robot, {pick_shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, pick_shelf),
+                                    transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
+                                                    'unreachable'       :'LOOKAT_PICK_SHELF',
+                                                    'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
-            smach.StateMachine.add( "LOOKAT_BOOKCASE",
-                                    states.Say(robot, ["I'm looking at the bookcase to see what items I can find"]),
+            smach.StateMachine.add( "LOOKAT_PICK_SHELF",
+                                    states.Say(robot, ["I'm looking at the pick_shelf to see what items I can find"]),
                                     transitions={   'spoken'            :'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
@@ -222,6 +261,8 @@ class ManipRecogSingleItem(smach.StateMachine):
                 current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
                 if current_item.resolve():
                     rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
+
+                place_position.lock() #This determines that place_position will lock/cache its result after its resolved the first time.
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
@@ -238,7 +279,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad"),
-                                    transitions={   'spoken'            :'UNLOCK_ITEM_AFTER_FAILED_GRAB'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_BOOKCASE
+                                    transitions={   'spoken'            :'UNLOCK_ITEM_AFTER_FAILED_GRAB'}) # Not sure whether to fail or keep looping with NAV_TO_OBSERVE_PICK_SHELF
 
             @smach.cb_interface(outcomes=['unlocked'])
             def unlock_and_ignore(userdata):
@@ -247,7 +288,8 @@ class ManipRecogSingleItem(smach.StateMachine):
                 if current_item.resolve():
                     ignore_ids += [current_item.resolve().id]
                     rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
-                current_item.unlock() #This determines that current_item can now resolve to a new value on the next call 
+                current_item.unlock() #This determines that current_item can now resolve to a new value on the next call
+                place_position.unlock() #This determines that place_position can now resolve to a new position on the next call
                 return 'unlocked'
             smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
                                    smach.CBState(unlock_and_ignore),

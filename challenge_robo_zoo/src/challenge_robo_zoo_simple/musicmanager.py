@@ -19,7 +19,7 @@ def stop_music(music_process):
     os.killpg(music_process.pid, signal.SIGTERM)  # Send the signal to all the process groups
 
 @contextmanager
-def music(filename, volume=100):
+def music(filename, volume=100/6): # lowered the volume to bring out amigo's voice 
     pid = start_music(filename, volume)
     yield
     stop_music(pid)

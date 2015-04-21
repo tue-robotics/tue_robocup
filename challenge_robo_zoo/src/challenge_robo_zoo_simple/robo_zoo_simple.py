@@ -170,7 +170,7 @@ class RoboZooSimple(smach.StateMachine):
 
             smach.StateMachine.add( "WAIT_A_SEC", 
                                     states.Wait_time(robot, waittime=1),
-                                    transitions={'waited'   :"SELECT_RANDOM",
+                                    transitions={'waited'   :"SAY_SHOW_QR_MARKER",
                                                  'preempted':"Aborted"})
 
             smach.StateMachine.add( "SAY_SHOW_QR_MARKER",
@@ -185,24 +185,12 @@ class RoboZooSimple(smach.StateMachine):
                                      transitions=qr_transitions)
 
             smach.StateMachine.add( "SELECT_RANDOM",
-                                    RandomOutcome(robot, demos), #["1","5","6","9","10", "11", "12", "13"]),
+                                    RandomOutcome(robot, demos),
                                     transitions= random_transitions)
-                                                 #{"1":"SAY_HI",
-                                                 #"2":"MAKE_JOKES",
-                                                 #"3":"LOOK_AT_PERSON",
-                                                 #"4":"FLASH_LIGHTS",
-                                                 #"5":"WAVE_LIGHTS",
-                                                 #"6":"WALK_EGYPTIAN",
-                                                 #"7":"BOO",
-                                                 #"8":"PICKUP_LINES",
-                                                 #"9":"R2D2",
-                                                 #"10":"TOETER",
-                                                 #"11":"MACARENA",
-                                                 #"12":"GANGNAM",
-                                                 #"13":"HOOFD_SCHOUDERS_KNIE_TEEN"})
 
             smach.StateMachine.add( "SAY_HI",
-                                    states.Say(robot, ["Howdy", "Hi there"]),
+                                    states.Say(robot, ["Hello, , , My name is AMIGO. . ., I am the care robot of Eindhoven university of technology. Have a nice day!", 
+						       "Hi There! , . What a beautiful day it is. I am happy to show my autonomous care robot skills to the people of Magdenburg!"]),
                                     transitions={"spoken":"RESET_ALL"})
 
             smach.StateMachine.add( "MAKE_JOKES",

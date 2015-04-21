@@ -17,15 +17,89 @@ import smach
 import sys
 import random
 
-from robot_smach_states.util.designators import *
+from robot_smach_states.util.designators import EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
+from collections import OrderedDict
+from ed.msg import EntityInfo
 
 ROOM = "room_livingroom"
+
+def raw_input_timeout(prompt, timeout=10):
+    from select import select
+
+    print prompt
+    rlist, _, _ = select([sys.stdin], [], [], timeout)
+    if rlist:
+        s = sys.stdin.readline()
+        return s
+    else:
+        print "No input. Moving on..."
+
+class BottleDescription(object):
+    def __init__(self, size=None, color=None, label=None):
+        self.size = size
+        self.color = color
+        self.label = label
+
+class DescribeBottles(smach.State):
+    def __init__(self, robot, bottle_collection_designator): #, spec_designator):
+        """ 
+        @param robot the robot to run this with
+        @bottle_collection_designator designates a bunch of bottles/entities
+        @param spec_designator based on the descriptions read aloud by the robot, a spec for speech interpretation is created and stored in this VariableDesignator
+        """
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+        self.robot = robot
+        check_resolve_type(bottle_collection_designator, [EntityInfo])
+        self.bottle_collection_designator = bottle_collection_designator
+        # self.spec_designator = spec_designator 
+
+    def execute(self, userdata=None):
+        bottles = self.bottle_collection_designator.resolve()
+        if not bottles:
+            return "failed"
+
+        #TODO: Sort bottles by their Y-coord wrt base_link. We go from large to small, so the leftmost if first
+        bottle_to_y_dict = {}
+        for bottle in bottles:
+            in_map = geom.PointStamped(point=bottle.center_point, frame_id=bottle.id)
+            in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
+            bottle_to_y_dict[bottle] = in_base_link.y
+
+        import operator
+        sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1)) #Sort dict by value, i.e. the bottle's Y
+
+        descriptions = OrderedDict()
+        for bottle in sorted_bottles:
+            descriptions[bottle] = self.describe_bottle(bottle)
+
+        self.robot.speech.speak("Which bottle do you want?")
+        self.robot.speech.speak("From left to right, I have a")
+        for bottle, description in descriptions.iteritems():
+            desc_sentence = "a {size}, {color} one".format(size=description.size, color=description.color)
+            if description.label:
+                desc_sentence += " labeled {label}".format(label=description.label)
+            self.robot.speech.speak(desc_sentence)
+        self.robot.speech.speak("Which do you want?")
+
+        colors = set([desc.color for desc in descriptions.values()])
+        sizes = set([desc.size for desc in descriptions.values()])
+        labels = set([desc.label for desc in descriptions.values()])
+        choices = {"color":colors, "size":sizes, "label":labels}
+
+        import ipdb; ipdb.set_trace()
+        return "succeeded"
+
+    def describe_bottle(self, bottle):
+        return BottleDescription(   size=random.choice(["small", "normal sized", "big"]),
+                                    color=random.choice(["red", "yellow", "blue", "green", "white", "black", "purple", "pink"]),
+                                    label=random.choice(["aspirin", "ibuprofen", ""]))
+
 
 class DetectAction(smach.State):
     def __init__(self, robot, person_to_analyse):
@@ -34,8 +108,16 @@ class DetectAction(smach.State):
         self.person_to_analyse = person_to_analyse
 
     def execute(self, userdata):
-        which = int(raw_input("Which action has been performed? : {0}".format({i:v for i, v in enumerate(self.registered_outcomes)})))
-        return self.registered_outcomes[which]
+        which = raw_input_timeout("Which action has been performed? : {0}".format({i:v for i, v in enumerate(self.get_registered_outcomes())}))
+        if which != None:
+            try:
+                return self.get_registered_outcomes()[int(which)]
+            except:
+                rospy.logerr("No valid input received, picking a random action")
+                return random.choice(self.get_registered_outcomes())
+        else:
+            rospy.logerr("No valid input received, picking a random action")
+            return random.choice(self.get_registered_outcomes())
 
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
@@ -85,9 +167,12 @@ class RoboNurse(smach.StateMachine):
                                     states.Say(robot, "TODO: Look at shelf"),
                                     transitions={   'spoken'            :'DESCRIBE_OBJECTS'})
 
+            def small(entity):
+                return abs(entity.z_min - entity.z_max) < 0.20
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
-                                    states.Say(robot, "TODO: Tell about the bottles"),
-                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
+                                    DescribeBottles(robot, EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small])), #Type should be bottle or only check position+size/volume
+                                    transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
+                                                    'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
                                     states.Say(robot, "TODO: Ask which bottle do you want?"),
