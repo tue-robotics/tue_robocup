@@ -1,13 +1,13 @@
 <package>
-  <description brief="challenge_restaurant">
+  <description brief="challenge_restaurant_2014">
 
-     challenge_restaurant
+     challenge_restaurant_2014
 
   </description>
   <author>Jos Elfring</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/challenge_restaurant</url>
+  <url>http://ros.org/wiki/challenge_restaurant_2014</url>
   <depend package="roscpp"/>
   <depend package="roslib"/>
   <depend package="wire_interface"/>

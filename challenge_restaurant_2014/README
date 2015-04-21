@@ -25,7 +25,7 @@ amigo3:
     amigo-console
         test_audio
 
-    rosrun challenge_restaurant restaurant
+    rosrun challenge_restaurant_2014 restaurant
 
 GUIDING PHASE:
 - The guide should stand in front of the robot, then the robot starts following. If the robot turns pink, he lost the guide, stand in front of the robot.

@@ -11,7 +11,7 @@ import smach
 import robot_smach_states as states
 
 from std_msgs.msg import String
-import challenge_restaurant.srv
+import challenge_restaurant_2014.srv
 
 from math import sin
 
@@ -110,7 +110,7 @@ def lookat_objects_roi(robot):
 
 
 def process_request(request):
-    response = challenge_restaurant.srv.SmachStatesResponse()
+    response = challenge_restaurant_2014.srv.SmachStatesResponse()
     if request.state == "grasp":
         response.outcome = grab_item(robot)
     elif request.state == "lookatroi":
@@ -124,7 +124,7 @@ def process_request(request):
 
 def main():
     
-    server_ = rospy.Service('smach_states', challenge_restaurant.srv.SmachStates, process_request)
+    server_ = rospy.Service('smach_states', challenge_restaurant_2014.srv.SmachStates, process_request)
 
     rospy.init_node('robot_smach_states')
 

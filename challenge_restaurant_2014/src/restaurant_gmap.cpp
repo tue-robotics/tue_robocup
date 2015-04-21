@@ -29,7 +29,7 @@
 #include <std_srvs/Empty.h>
 #include "perception_srvs/StartPerception.h"
 #include "speech_interpreter/GetInfo.h"
-#include "challenge_restaurant/SmachStates.h"
+#include "challenge_restaurant_2014/SmachStates.h"
 
 // Problib conversions
 #include "problib/conversions.h"
@@ -1358,7 +1358,7 @@ void checkOrderWithWorldModelAtShelf(map<string, pair<geometry_msgs::Point, stri
 
                 // Call service to python grab machine
                 string arm_used;
-                challenge_restaurant::SmachStates ss_srv;
+                challenge_restaurant_2014::SmachStates ss_srv;
                 ss_srv.request.state = "grasp";
                 bool suc = false;
                 if (!grab_machine_client_.call(ss_srv)) {
@@ -1696,7 +1696,7 @@ int main(int argc, char **argv) {
     ROS_INFO("Service /wire/reset");
 
     //! Connect to grab machine
-    grab_machine_client_ = nh.serviceClient<challenge_restaurant::SmachStates>("/smach_states");
+    grab_machine_client_ = nh.serviceClient<challenge_restaurant_2014::SmachStates>("/smach_states");
 
     //! Wait for start signal
     speech_client_.waitForExistence(ros::Duration(5.0));
