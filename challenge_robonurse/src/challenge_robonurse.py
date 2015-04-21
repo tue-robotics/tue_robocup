@@ -26,6 +26,7 @@ from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 from collections import OrderedDict
 from ed.msg import EntityInfo
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 ROOM = "room_livingroom"
 
@@ -47,7 +48,7 @@ class BottleDescription(object):
         self.label = label
 
 class DescribeBottles(smach.State):
-    def __init__(self, robot, bottle_collection_designator): #, spec_designator):
+    def __init__(self, robot, bottle_collection_designator, spec_designator, choices_designator):
         """ 
         @param robot the robot to run this with
         @bottle_collection_designator designates a bunch of bottles/entities
@@ -57,7 +58,9 @@ class DescribeBottles(smach.State):
         self.robot = robot
         check_resolve_type(bottle_collection_designator, [EntityInfo])
         self.bottle_collection_designator = bottle_collection_designator
-        # self.spec_designator = spec_designator 
+
+        self.spec_designator = spec_designator
+        self.choices_designator = choices_designator
 
     def execute(self, userdata=None):
         bottles = self.bottle_collection_designator.resolve()
@@ -93,6 +96,9 @@ class DescribeBottles(smach.State):
         choices = {"color":colors, "size":sizes, "label":labels}
 
         import ipdb; ipdb.set_trace()
+        self.spec_designator = Designator("Give me the <size> <color> bottle labeled <label>")  # TODO: allow more sentences
+        self.choices_designator = Designator(choices)
+
         return "succeeded"
 
     def describe_bottle(self, bottle):
@@ -169,14 +175,26 @@ class RoboNurse(smach.StateMachine):
 
             def small(entity):
                 return abs(entity.z_min - entity.z_max) < 0.20
+
+            ask_bottles_spec = VariableDesignator(resolve_type=str)
+            ask_bottles_choices = VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
-                                    DescribeBottles(robot, EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small])), #Type should be bottle or only check position+size/volume
+                                    DescribeBottles(robot, 
+                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small]), #Type should be bottle or only check position+size/volume
+                                        spec_designator=ask_bottles_spec,
+                                        choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
                                                     'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
+            ask_bottles_answer = VariableDesignator(resolve_type=GetSpeechResponse)
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
-                                    states.Say(robot, "TODO: Ask which bottle do you want?"),
-                                    transitions={   'spoken'            :'GRAB_BOTTLE'})
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
+                                    transitions={   'heard'             :'GRAB_BOTTLE',
+                                                    'no_result'         :'ASK_WHICH_BOTTLE'}) #TODO: Yell at Granny :-)
+
+            # smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
+            #                         smach.CBState(),
+            #                         transitions={})
 
             smach.StateMachine.add( "GRAB_BOTTLE",
                                     Grab(robot, described_bottle, empty_arm_designator),
