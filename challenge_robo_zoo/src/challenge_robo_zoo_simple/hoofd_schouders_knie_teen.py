@@ -33,10 +33,10 @@ def hoofdschoudersknieteen(robot):
     #TODO: Look at hand at given times
 
     def _left(trajectory, timeout=10.0): #The underscore  makes the outlining below easier to read
-        robot.leftArm._send_joint_trajectory(trajectory):
+        robot.leftArm._send_joint_trajectory(trajectory, timeout=rospy.Duration(7)):
 
     def right(trajectory, timeout=10.0):
-        robot.rightArm._send_joint_trajectory(trajectory):
+        robot.rightArm._send_joint_trajectory(trajectory, timeout=rospy.Duration(7)):
 
     #Defined shortcuts above
     robot.head.look_at_hand("right")
