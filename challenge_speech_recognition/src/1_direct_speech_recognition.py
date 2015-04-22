@@ -7,7 +7,8 @@ import sys
 import robot_smach_states as states
 from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator
 
-import data
+from robocup_knowledge import load_knowledge
+data = load_knowledge('challenge_speech_recognition')
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(10)):
