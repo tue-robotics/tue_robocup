@@ -62,14 +62,12 @@ def macarena(robot):
     up_and_down_head = threading.Thread(target=head_up_down, args=(robot, stopEvent))
     #up_and_down_head.start()
     robot.head.look_at_point(msgs.PointStamped(0.2, 0, 1.3, frame_id="/amigo/base"))
-    
+
     def _left(trajectory, timeout=10.0): #The underscore  makes the outlining below easier to read
-        if not robot.leftArm._send_joint_trajectory(trajectory):
-            raise Exception("Arms did not reach goal,  need help")
-    
-    def right(trajectory, timeout=10.0): 
-        if not robot.rightArm._send_joint_trajectory(trajectory):
-            raise Exception("Arms did not reach goal,  need help")
+        robot.leftArm._send_joint_trajectory(trajectory):
+
+    def right(trajectory, timeout=10.0):
+        robot.rightArm._send_joint_trajectory(trajectory):
     #Defined shortcuts above
 
     try:
