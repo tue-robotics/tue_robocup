@@ -88,6 +88,7 @@ class Hear(State):
 
 class HearOptions(State):
     def __init__(self, robot, options, time_out = rospy.Duration(10)):
+        check_type(options, dict)
         State.__init__(self, locals(), outcomes=options.append("no_result"))
 
     def run(self, robot, options, time_out):
