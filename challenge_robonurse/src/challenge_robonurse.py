@@ -136,11 +136,7 @@ class RoboNurse(smach.StateMachine):
         granny = EdEntityDesignator(robot, type='human')
         shelf = EdEntityDesignator(robot, id='shelf')  # TODO: determine ID of shelf
 
-        def described_by_granny(entity):
-            #TODO: Check whether the entity matches the description given by Granny
-            return True
-
-        described_bottle = LockingDesignator(EdEntityDesignator(robot, criteriafuncs=[described_by_granny], debug=False))
+        described_bottle = LockingDesignator(EdEntityDesignator(robot, debug=False)) #Criteria funcs will be added based on what granny says
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, described_bottle)
@@ -178,12 +174,14 @@ class RoboNurse(smach.StateMachine):
 
             def small(entity):
                 return abs(entity.z_min - entity.z_max) < 0.20
+            def minimal_height_from_floor(entity):
+                return entity.z_min > 0.50
 
             ask_bottles_spec = VariableDesignator(resolve_type=str)
             ask_bottles_choices = VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small]), #Type should be bottle or only check position+size/volume
+                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small, minimal_height_from_floor]),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
