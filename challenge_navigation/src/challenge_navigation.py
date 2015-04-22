@@ -7,6 +7,9 @@ import sys
 from robot_smach_states.util.designators import EdEntityDesignator
 import robot_smach_states as states
 
+from robocup_knowledge import load_knowledge
+challenge_knowledge = load_knowledge('challenge_navigation')
+
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
@@ -16,61 +19,61 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
                                 states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
-                                transitions={   "Done"              :   "SAY_GOTO_WAYPOINT_A",
-                                                "Aborted"           :   "SAY_GOTO_WAYPOINT_A",
-                                                "Failed"            :   "SAY_GOTO_WAYPOINT_A"})  
+                                transitions={   "Done"              :   "SAY_GOTO_TARGET1",
+                                                "Aborted"           :   "SAY_GOTO_TARGET1",
+                                                "Failed"            :   "SAY_GOTO_TARGET1"})
 
-        smach.StateMachine.add( 'SAY_GOTO_WAYPOINT_A',
-                                states.Say(robot, ["I will go to waypoint a now",
-                                                    "I will now go to waypoint a",
-                                                    "Lets go to waypoint a",
-                                                    "Going to waypoint a"], block=False),
-                                transitions={   'spoken'            :   'GOTO_WAYPOINT_A'})
+        smach.StateMachine.add( 'SAY_GOTO_TARGET1',
+                                states.Say(robot, ["I will go to my first target now",
+                                                    "I will now go to my first target",
+                                                    "Lets go to my first target",
+                                                    "Going to target 1"], block=False),
+                                transitions={   'spoken'            :   'GOTO_TARGET1'})
 
-        smach.StateMachine.add('GOTO_WAYPOINT_A',
-                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="dinner_table") : "near", EdEntityDesignator(robot, id="room_living_room") : "in" }, EdEntityDesignator(robot, id="dinner_table")),
-                                transitions={   'arrived'           :   'SAY_WAYPOINT_A_REACHED',
-                                                'unreachable'       :   'SAY_WAYPOINT_A_FAILED',
-                                                'goal_not_defined'  :   'SAY_WAYPOINT_A_FAILED'})
+        smach.StateMachine.add('GOTO_TARGET1',
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id=challenge_knowledge.target1['near']) : "near", EdEntityDesignator(robot, id=challenge_knowledge.target1['in']) : "in" }, EdEntityDesignator(robot, id=challenge_knowledge.target1['lookat'])),
+                                transitions={   'arrived'           :   'SAY_TARGET1_REACHED',
+                                                'unreachable'       :   'SAY_TARGET1_FAILED',
+                                                'goal_not_defined'  :   'SAY_TARGET1_FAILED'})
 
-        smach.StateMachine.add( 'SAY_WAYPOINT_A_REACHED',
-                                states.Say(robot, ["Reached waypoint a",
-                                                    "I have arrived at waypoint a",
-                                                    "I am now at waypoint a"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_WAYPOINT_B'})
+        smach.StateMachine.add( 'SAY_TARGET1_REACHED',
+                                states.Say(robot, ["Reached target 1",
+                                                    "I have arrived at target 1",
+                                                    "I am now at target 1"], block=True),
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET2'})
 
         # Should we mention that we failed???
-        smach.StateMachine.add( 'SAY_WAYPOINT_A_FAILED',
-                                states.Say(robot, ["I am not able to reach waypoint a",
-                                                    "I cannot reach waypoint a",
-                                                    "Waypoint a is unreachable"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_WAYPOINT_B'})
+        smach.StateMachine.add( 'SAY_TARGET1_FAILED',
+                                states.Say(robot, ["I am not able to reach target 1",
+                                                    "I cannot reach target 1",
+                                                    "Target 1 is unreachable"], block=True),
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET2'})
 
-        smach.StateMachine.add( 'SAY_GOTO_WAYPOINT_B',
-                                states.Say(robot, ["I will go to waypoint B now",
-                                                    "I will now go to waypoint B",
-                                                    "Lets go to waypoint B",
-                                                    "Going to waypoint B"], block=False),
-                                transitions={   'spoken'            :   'GOTO_WAYPOINT_B'})
+        smach.StateMachine.add( 'SAY_GOTO_TARGET2',
+                                states.Say(robot, ["I will go to target 2 now",
+                                                    "I will now go to target 2",
+                                                    "Lets go to target 2",
+                                                    "Going to target 2"], block=False),
+                                transitions={   'spoken'            :   'GOTO_TARGET2'})
 
-        smach.StateMachine.add('GOTO_WAYPOINT_B',
-                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="black_cabinet1") : "near", EdEntityDesignator(robot, id="room_living_room") : "in" }, 
-                                    EdEntityDesignator(robot, id="black_cabinet1")),
-                                transitions={   'arrived'           :   'SAY_WAYPOINT_B_REACHED',
-                                                'unreachable'       :   'SAY_WAYPOINT_B_FAILED',
-                                                'goal_not_defined'  :   'SAY_WAYPOINT_B_FAILED'})
+        smach.StateMachine.add('GOTO_TARGET2',
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id=challenge_knowledge.target2['near']) : "near", EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
+                                    EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
+                                transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
+                                                'unreachable'       :   'SAY_TARGET2_FAILED',
+                                                'goal_not_defined'  :   'SAY_TARGET2_FAILED'})
 
-        smach.StateMachine.add( 'SAY_WAYPOINT_B_REACHED',
-                                states.Say(robot, ["Reached waypoint B",
-                                                    "I have arrived at waypoint B",
-                                                    "I am now at waypoint B"], block=True),
+        smach.StateMachine.add( 'SAY_TARGET2_REACHED',
+                                states.Say(robot, ["Reached target 2",
+                                                    "I have arrived at target 2",
+                                                    "I am now at target 2"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
 
         # Should we mention that we failed???
-        smach.StateMachine.add( 'SAY_WAYPOINT_B_FAILED',
-                                states.Say(robot, ["I am unable to reach waypoint B",
-                                                    "I cannot reach waypoint B",
-                                                    "Waypoint B is unreachable"], block=True),
+        smach.StateMachine.add( 'SAY_TARGET2_FAILED',
+                                states.Say(robot, ["I am unable to reach target 2",
+                                                    "I cannot reach target 2",
+                                                    "Target 2 is unreachable"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
 
         smach.StateMachine.add( 'SAY_GOTO_EXIT',
