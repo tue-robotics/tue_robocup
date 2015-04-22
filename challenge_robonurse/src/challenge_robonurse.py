@@ -17,7 +17,7 @@ import smach
 import sys
 import random
 
-from robot_smach_states.util.designators import EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -30,6 +30,7 @@ from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 ROOM = "room_livingroom"
 
+
 def raw_input_timeout(prompt, timeout=10):
     from select import select
 
@@ -41,15 +42,17 @@ def raw_input_timeout(prompt, timeout=10):
     else:
         print "No input. Moving on..."
 
+
 class BottleDescription(object):
     def __init__(self, size=None, color=None, label=None):
         self.size = size
         self.color = color
         self.label = label
 
+
 class DescribeBottles(smach.State):
     def __init__(self, robot, bottle_collection_designator, spec_designator, choices_designator):
-        """ 
+        """
         @param robot the robot to run this with
         @bottle_collection_designator designates a bunch of bottles/entities
         @param spec_designator based on the descriptions read aloud by the robot, a spec for speech interpretation is created and stored in this VariableDesignator
@@ -75,13 +78,13 @@ class DescribeBottles(smach.State):
             bottle_to_y_dict[bottle] = in_base_link.y
 
         import operator
-        sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1)) #Sort dict by value, i.e. the bottle's Y
+        sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         descriptions = OrderedDict()
         for bottle in sorted_bottles:
             descriptions[bottle] = self.describe_bottle(bottle)
 
-        self.robot.speech.speak("Which bottle do you want?")
+        self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
         for bottle, description in descriptions.iteritems():
             desc_sentence = "a {size}, {color} one".format(size=description.size, color=description.color)
@@ -93,7 +96,7 @@ class DescribeBottles(smach.State):
         colors = set([desc.color for desc in descriptions.values()])
         sizes = set([desc.size for desc in descriptions.values()])
         labels = set([desc.label for desc in descriptions.values()])
-        choices = {"color":colors, "size":sizes, "label":labels}
+        choices = {"color": colors, "size": sizes, "label": labels}
 
         # import ipdb; ipdb.set_trace()
         self.spec_designator = Designator("Give me the <size> <color> bottle labeled <label>")  # TODO: allow more sentences
@@ -115,7 +118,7 @@ class DetectAction(smach.State):
 
     def execute(self, userdata):
         which = raw_input_timeout("Which action has been performed? : {0}".format({i:v for i, v in enumerate(self.get_registered_outcomes())}))
-        if which != None:
+        if which is not None:
             try:
                 return self.get_registered_outcomes()[int(which)]
             except:
@@ -125,20 +128,20 @@ class DetectAction(smach.State):
             rospy.logerr("No valid input received, picking a random action")
             return random.choice(self.get_registered_outcomes())
 
+
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         granny = EdEntityDesignator(robot, type='human')
-        shelf = EdEntityDesignator(robot, id='shelf') #TODO: determine ID of shelf
+        shelf = EdEntityDesignator(robot, id='shelf')  # TODO: determine ID of shelf
 
         def described_by_granny(entity):
             #TODO: Check whether the entity matches the description given by Granny
             return True
 
-        described_bottle = LockingDesignator(EdEntityDesignator(robot, 
-            criteriafuncs=[described_by_granny], debug=False))
-        
+        described_bottle = LockingDesignator(EdEntityDesignator(robot, criteriafuncs=[described_by_granny], debug=False))
+
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, described_bottle)
 
@@ -149,7 +152,7 @@ class RoboNurse(smach.StateMachine):
                                                 'abort':'Aborted'})
 
             smach.StateMachine.add( "INTRO",
-                                    states.Say(robot, ["I will be your RoboNurse today!", "I'm your RoboNurse, I'll be right there"]), 
+                                    states.Say(robot, ["I will be your RoboNurse today!", "I'm your RoboNurse, I'll be right there"]),
                                     transitions={"spoken":"GOTO_GRANNY"})
 
             smach.StateMachine.add( "GOTO_GRANNY",
