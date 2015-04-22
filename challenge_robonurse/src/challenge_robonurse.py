@@ -17,7 +17,7 @@ import smach
 import sys
 import random
 
-from robot_smach_states.util.designators import EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -81,7 +81,7 @@ class DescribeBottles(smach.State):
         for bottle in sorted_bottles:
             descriptions[bottle] = self.describe_bottle(bottle)
 
-        self.robot.speech.speak("Which bottle do you want?")
+        self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
         for bottle, description in descriptions.iteritems():
             desc_sentence = "a {size}, {color} one".format(size=description.size, color=description.color)
