@@ -95,7 +95,7 @@ class DescribeBottles(smach.State):
         labels = set([desc.label for desc in descriptions.values()])
         choices = {"color":colors, "size":sizes, "label":labels}
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         self.spec_designator = Designator("Give me the <size> <color> bottle labeled <label>")  # TODO: allow more sentences
         self.choices_designator = Designator(choices)
 
@@ -192,9 +192,16 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'heard'             :'GRAB_BOTTLE',
                                                     'no_result'         :'ASK_WHICH_BOTTLE'}) #TODO: Yell at Granny :-)
 
-            # smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
-            #                         smach.CBState(),
-            #                         transitions={})
+            @smach.cb_interface(outcomes=['described'])
+            def designate_bottle(userdata):
+                # import ipdb; ipdb.set_trace()
+                described_bottle.criteriafuncs += lambda entity: entity.data["color"] == ask_bottles_answer['color']
+                described_bottle.criteriafuncs += lambda entity: entity.data["size"] == ask_bottles_answer['size']              
+                described_bottle.criteriafuncs += lambda entity: entity.data["label"] == ask_bottles_answer['label']
+                return 'described'
+            smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
+                                    smach.CBState(designate_bottle),
+                                    transitions={'described'            :"GRAB_BOTTLE"})
 
             smach.StateMachine.add( "GRAB_BOTTLE",
                                     Grab(robot, described_bottle, empty_arm_designator),
