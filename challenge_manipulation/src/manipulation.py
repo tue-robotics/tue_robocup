@@ -40,11 +40,17 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 import pdf
 
+from robocup_knowledge import load_knowledge
+challenge_knowledge = load_knowledge('challenge_manipulation')
+PICK_SHELF = challenge_knowledge.grasp_shelf
+PLACE_SHELF = challenge_knowledge.place_shelf
+ROOM = challenge_knowledge.room
+
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor','room']
-PICK_SHELF = "plastic_cabinet_shelf_1"
-PLACE_SHELF = "plastic_cabinet_shelf_2"
-ROOM = "room_living_room"
+#PICK_SHELF = "plastic_cabinet_shelf_1"
+#PLACE_SHELF = "plastic_cabinet_shelf_2"
+#ROOM = "room_living_room"
 PLACE_HEIGHT = 1.0
 
 
@@ -334,7 +340,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = EdEntityDesignator(robot, id="living_room")  # TODO: select proper waypoint
+    start_waypoint = EdEntityDesignator(robot, id="manipulation_init_pose")  
     placed_items = []
 
     with sm:
