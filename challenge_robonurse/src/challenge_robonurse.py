@@ -171,7 +171,19 @@ class RoboNurse(smach.StateMachine):
         grannies_table = EdEntityDesignator(robot, id="dinner_table")
         shelf = EdEntityDesignator(robot, id='plastic_cabinet_shelf_1')
 
-        described_bottle = LockingDesignator(EdEntityDesignator(robot, debug=False)) #Criteria funcs will be added based on what granny says
+
+        def small(entity):
+            return abs(entity.z_min - entity.z_max) < 0.20
+
+        def minimal_height_from_floor(entity):
+            return entity.z_min > 0.50
+
+        def type_unknown_or_not_room(entity):
+            return entity.type == "" or entity.type not in ["room"] or "shelf" not in entity.type
+
+        bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room]
+
+        described_bottle = LockingDesignator(EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False)) #Criteria funcs will be added based on what granny says
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, described_bottle)
@@ -207,16 +219,11 @@ class RoboNurse(smach.StateMachine):
                                     states.Say(robot, "TODO: Look at shelf"),
                                     transitions={   'spoken'            :'DESCRIBE_OBJECTS'})
 
-            def small(entity):
-                return abs(entity.z_min - entity.z_max) < 0.20
-            def minimal_height_from_floor(entity):
-                return entity.z_min > 0.50
-
             ask_bottles_spec = VariableDesignator(resolve_type=str)
             ask_bottles_choices = VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small, minimal_height_from_floor]),  # Type should be bottle or only check position+size/volume
+                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
