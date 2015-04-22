@@ -1,8 +1,10 @@
 #!/usr/bin/python
 
-import data
 import re
 import random
+
+from robocup_knowledge import load_knowledge
+data = load_knowledge('challenge_speech_recognition')
 
 # Pick random group if available
 while re.search('\([^\)]+\)', data.spec):

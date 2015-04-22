@@ -8,7 +8,8 @@ import random
 import robot_smach_states as states
 from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator
 
-import data
+from robocup_knowledge import load_knowledge
+data = load_knowledge('challenge_speech_recognition')
 
 class HearQuestion(smach.State):
     def __init__(self, robot, time_out=rospy.Duration(10)):
@@ -44,7 +45,7 @@ class Turn(smach.State):
     def execute(self, userdata):
         # TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely)
         vth = 0.5
-        th = 3.1415 * (2.0/3.0) 
+        th = 3.1415 * (2.0/3.0)
         print "Turning %f radians with force drive" % th
         self.robot.base.force_drive(0, 0, random.choice([-1.0, 1.0]) * vth, th / vth)
 
