@@ -50,6 +50,7 @@ class BottleDescription(object):
         self.color = color
         self.label = label
 
+
 def get_entity_color(entity):
         try:
             return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
@@ -59,6 +60,7 @@ def get_entity_color(entity):
         except TypeError, te:
             rospy.logwarn(te)
             return ""
+
 
 def get_entity_size(entity):
     size = ""
@@ -166,7 +168,8 @@ class RoboNurse(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         granny = EdEntityDesignator(robot, type='human')
-        shelf = EdEntityDesignator(robot, id='shelf')  # TODO: determine ID of shelf
+        grannies_table = EdEntityDesignator(robot, id="dinner_table")
+        shelf = EdEntityDesignator(robot, id='plastic_cabinet_shelf_1')
 
         described_bottle = LockingDesignator(EdEntityDesignator(robot, debug=False)) #Criteria funcs will be added based on what granny says
 
@@ -185,7 +188,7 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_GRANNY",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, { granny:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, granny),
+                                    states.NavigateToSymbolic(robot, { grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'ASK_GRANNY',
                                                     'unreachable'       :'ASK_GRANNY',
                                                     'goal_not_defined'  :'ASK_GRANNY'})
@@ -195,7 +198,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'spoken'            :'GOTO_SHELF'})
 
             smach.StateMachine.add( "GOTO_SHELF",
-                                    states.NavigateToSymbolic(robot, { shelf:"front", EdEntityDesignator(robot, id=ROOM) : "in"}, shelf),
+                                    states.NavigateToSymbolic(robot, { shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM) : "in"}, shelf),
                                     transitions={   'arrived'           :'LOOKAT_SHELF',
                                                     'unreachable'       :'LOOKAT_SHELF',
                                                     'goal_not_defined'  :'LOOKAT_SHELF'})
