@@ -3,6 +3,7 @@ import roslib; roslib.load_manifest('robot_skills')
 
 from robot_skills.ears import Ears
 from robot_skills.speech import Speech
+from robot_skills.head import Head
 
 import random
 import time
@@ -30,6 +31,7 @@ else:
 
 e = robot.ears
 s = robot.speech
+robot.head.look_at_standing_person()
 
 # data
 drinks = ["coke","fanta","beer","milk","yoghurt","pepsi","orangejuice","sevenup"]
