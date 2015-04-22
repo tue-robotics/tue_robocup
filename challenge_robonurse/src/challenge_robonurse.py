@@ -27,6 +27,7 @@ from robot_skills.util import transformations
 from collections import OrderedDict
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
+import operator
 
 ROOM = "room_living_room"
 
@@ -48,6 +49,14 @@ class BottleDescription(object):
         self.size = size
         self.color = color
         self.label = label
+
+def get_entity_color(entity):
+        try:
+            return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
+        except KeyError, ke:
+            import ipdb; ipdb.set_trace()
+            rospy.logwarn(ke)
+            return None
 
 
 class DescribeBottles(smach.State):
@@ -77,12 +86,11 @@ class DescribeBottles(smach.State):
             in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
             bottle_to_y_dict[bottle] = in_base_link.y
 
-        import operator
         sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         descriptions = OrderedDict()
-        for bottle in sorted_bottles:
-            descriptions[bottle] = self.describe_bottle(bottle)
+        for bottle_at_y in sorted_bottles:
+            descriptions[bottle_at_y] = self.describe_bottle(bottle_at_y)
 
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
@@ -104,9 +112,15 @@ class DescribeBottles(smach.State):
 
         return "succeeded"
 
-    def describe_bottle(self, bottle):
+    def describe_bottle(self, bottle_at_y):
+        bottle_entity, y = bottle_at_y
+
+        # import ipdb; ipdb.set_trace()
+        most_probable_color = get_entity_color(bottle_entity)
+        if not most_probable_color: most_probable_color = ""
+
         return BottleDescription(   size=random.choice(["small", "normal sized", "big"]),
-                                    color=random.choice(["red", "yellow", "blue", "green", "white", "black", "purple", "pink"]),
+                                    color=most_probable_color,
                                     label=random.choice(["aspirin", "ibuprofen", ""]))
 
 
@@ -191,7 +205,7 @@ class RoboNurse(smach.StateMachine):
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
                                     states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
                                     transitions={   'heard'             :'GRAB_BOTTLE',
-                                                    'no_result'         :'SAY_NOTHING_HEARD'}) #TODO: Yell at Granny :-)
+                                                    'no_result'         :'SAY_NOTHING_HEARD'})
 
             smach.StateMachine.add( "SAY_NOTHING_HEARD",
                                     states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
@@ -200,7 +214,7 @@ class RoboNurse(smach.StateMachine):
             @smach.cb_interface(outcomes=['described'])
             def designate_bottle(userdata):
                 # import ipdb; ipdb.set_trace()
-                described_bottle.criteriafuncs += lambda entity: entity.data["color"] == ask_bottles_answer['color']
+                described_bottle.criteriafuncs += lambda entity: get_entity_color(entity) == ask_bottles_answer['color']
                 described_bottle.criteriafuncs += lambda entity: entity.data["size"] == ask_bottles_answer['size']              
                 described_bottle.criteriafuncs += lambda entity: entity.data["label"] == ask_bottles_answer['label']
                 return 'described'
