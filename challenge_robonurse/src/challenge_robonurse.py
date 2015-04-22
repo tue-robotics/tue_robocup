@@ -27,8 +27,9 @@ from robot_skills.util import transformations
 from collections import OrderedDict
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
+import operator
 
-ROOM = "room_livingroom"
+ROOM = "room_living_room"
 
 
 def raw_input_timeout(prompt, timeout=10):
@@ -48,6 +49,34 @@ class BottleDescription(object):
         self.size = size
         self.color = color
         self.label = label
+
+
+def get_entity_color(entity):
+        try:
+            return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
+        except KeyError, ke:
+            rospy.logwarn(ke)
+            return ""
+        except TypeError, te:
+            rospy.logwarn(te)
+            return ""
+
+
+def get_entity_size(entity):
+    size = ""
+    try:
+        height = abs(entity.z_min - entity.z_max)
+        if height < 0.05:
+            size = "small"
+        elif 0.05 <= height < 0.10:
+            size = "normal sized"
+        elif 0.10 <= height:
+            size = "big"
+        rospy.loginfo("Height of object {0} is {1} so classifying as {2}".format(entity.id, height, size))
+    except:
+        pass
+
+    return size
 
 
 class DescribeBottles(smach.State):
@@ -77,12 +106,11 @@ class DescribeBottles(smach.State):
             in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
             bottle_to_y_dict[bottle] = in_base_link.y
 
-        import operator
         sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         descriptions = OrderedDict()
-        for bottle in sorted_bottles:
-            descriptions[bottle] = self.describe_bottle(bottle)
+        for bottle_at_y in sorted_bottles:
+            descriptions[bottle_at_y] = self.describe_bottle(bottle_at_y)
 
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
@@ -104,9 +132,15 @@ class DescribeBottles(smach.State):
 
         return "succeeded"
 
-    def describe_bottle(self, bottle):
-        return BottleDescription(   size=random.choice(["small", "normal sized", "big"]),
-                                    color=random.choice(["red", "yellow", "blue", "green", "white", "black", "purple", "pink"]),
+    def describe_bottle(self, bottle_at_y):
+        bottle_entity, y = bottle_at_y
+
+        # import ipdb; ipdb.set_trace()
+        most_probable_color = get_entity_color(bottle_entity)
+        size = get_entity_size(bottle_entity)
+
+        return BottleDescription(   size=size,
+                                    color=most_probable_color,
                                     label=random.choice(["aspirin", "ibuprofen", ""]))
 
 
@@ -134,13 +168,10 @@ class RoboNurse(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         granny = EdEntityDesignator(robot, type='human')
-        shelf = EdEntityDesignator(robot, id='shelf')  # TODO: determine ID of shelf
+        grannies_table = EdEntityDesignator(robot, id="dinner_table")
+        shelf = EdEntityDesignator(robot, id='plastic_cabinet_shelf_1')
 
-        def described_by_granny(entity):
-            #TODO: Check whether the entity matches the description given by Granny
-            return True
-
-        described_bottle = LockingDesignator(EdEntityDesignator(robot, criteriafuncs=[described_by_granny], debug=False))
+        described_bottle = LockingDesignator(EdEntityDesignator(robot, debug=False)) #Criteria funcs will be added based on what granny says
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, described_bottle)
@@ -157,7 +188,7 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_GRANNY",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, { granny:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, granny),
+                                    states.NavigateToSymbolic(robot, { grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'ASK_GRANNY',
                                                     'unreachable'       :'ASK_GRANNY',
                                                     'goal_not_defined'  :'ASK_GRANNY'})
@@ -167,7 +198,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'spoken'            :'GOTO_SHELF'})
 
             smach.StateMachine.add( "GOTO_SHELF",
-                                    states.NavigateToSymbolic(robot, { shelf:"front", EdEntityDesignator(robot, id=ROOM) : "in"}, shelf),
+                                    states.NavigateToSymbolic(robot, { shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM) : "in"}, shelf),
                                     transitions={   'arrived'           :'LOOKAT_SHELF',
                                                     'unreachable'       :'LOOKAT_SHELF',
                                                     'goal_not_defined'  :'LOOKAT_SHELF'})
@@ -178,12 +209,14 @@ class RoboNurse(smach.StateMachine):
 
             def small(entity):
                 return abs(entity.z_min - entity.z_max) < 0.20
+            def minimal_height_from_floor(entity):
+                return entity.z_min > 0.50
 
             ask_bottles_spec = VariableDesignator(resolve_type=str)
             ask_bottles_choices = VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small]), #Type should be bottle or only check position+size/volume
+                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=[small, minimal_height_from_floor]),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
@@ -193,13 +226,17 @@ class RoboNurse(smach.StateMachine):
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
                                     states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
                                     transitions={   'heard'             :'GRAB_BOTTLE',
-                                                    'no_result'         :'ASK_WHICH_BOTTLE'}) #TODO: Yell at Granny :-)
+                                                    'no_result'         :'SAY_NOTHING_HEARD'})
+
+            smach.StateMachine.add( "SAY_NOTHING_HEARD",
+                                    states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
+                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
 
             @smach.cb_interface(outcomes=['described'])
             def designate_bottle(userdata):
                 # import ipdb; ipdb.set_trace()
-                described_bottle.criteriafuncs += lambda entity: entity.data["color"] == ask_bottles_answer['color']
-                described_bottle.criteriafuncs += lambda entity: entity.data["size"] == ask_bottles_answer['size']              
+                described_bottle.criteriafuncs += lambda entity: get_entity_color(entity) == ask_bottles_answer['color']
+                described_bottle.criteriafuncs += lambda entity: get_entity_size(entity) == ask_bottles_answer['size']              
                 described_bottle.criteriafuncs += lambda entity: entity.data["label"] == ask_bottles_answer['label']
                 return 'described'
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
