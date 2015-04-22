@@ -127,8 +127,8 @@ class DescribeBottles(smach.State):
         choices = {"color": colors, "size": sizes, "label": labels}
 
         # import ipdb; ipdb.set_trace()
-        self.spec_designator = Designator("Give me the <size> <color> bottle labeled <label>")  # TODO: allow more sentences
-        self.choices_designator = Designator(choices)
+        self.spec_designator.current = "Give me the <size> <color> bottle labeled <label>"  # TODO: allow more sentences
+        self.choices_designator.current = choices
 
         return "succeeded"
 
