@@ -33,15 +33,14 @@ def hoofdschoudersknieteen(robot):
     #TODO: Look at hand at given times
 
     def _left(trajectory, timeout=10.0): #The underscore  makes the outlining below easier to read
-        if not robot.leftArm._send_joint_trajectory(trajectory):
-            raise Exception("Arms did not reach goal,  need help")
-    
-    def right(trajectory, timeout=10.0): 
-        if not robot.rightArm._send_joint_trajectory(trajectory):
-            raise Exception("Arms did not reach goal,  need help")
+        robot.leftArm._send_joint_trajectory(trajectory, timeout=rospy.Duration(7)):
+
+    def right(trajectory, timeout=10.0):
+        robot.rightArm._send_joint_trajectory(trajectory, timeout=rospy.Duration(7)):
+
     #Defined shortcuts above
     robot.head.look_at_hand("right")
-    
+
     def hoofd(speak=False):
         rospy.loginfo("hoofd")
         robot.torso.send_goal('upper', timeout=4.0) # timeout=0.0
@@ -62,7 +61,7 @@ def hoofdschoudersknieteen(robot):
         right(arm_to_knees_1)#Dont wait, both arms should move in sync # timeout=0.0
         if speak: robot.speech.speak("Knees", language='en', block=True)
         _left(arm_to_knees_1, timeout=10)
-    
+
     def teen(speak=False):
         rospy.loginfo("teen") #TODO: tune poses
         robot.torso.send_goal('lower',  timeout=4.0)
