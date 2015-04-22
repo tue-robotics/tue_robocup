@@ -6,7 +6,6 @@ from robot_skills.speech import Speech
 
 import random
 import time
-from robot_skills.amigo import Amigo
 
 import sys
 
@@ -20,8 +19,10 @@ robot_name = sys.argv[1]
 
 rospy.init_node("audio_test")
 if robot_name == "amigo":
+    from robot_skills.amigo import Amigo
     robot = Amigo()
 elif robot_name == "sergio":
+    from robot_skills.sergio import Sergio
     robot = Sergio()
 else:
     print "Unknown robot '%s'"%robot_name
