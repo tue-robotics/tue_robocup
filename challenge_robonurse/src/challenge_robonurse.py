@@ -54,9 +54,27 @@ def get_entity_color(entity):
         try:
             return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
         except KeyError, ke:
-            import ipdb; ipdb.set_trace()
             rospy.logwarn(ke)
-            return None
+            return ""
+        except TypeError, te:
+            rospy.logwarn(te)
+            return ""
+
+def get_entity_size(entity):
+    size = ""
+    try:
+        height = abs(entity.z_min - entity.z_max)
+        if height < 0.05:
+            size = "small"
+        elif 0.05 <= height < 0.10:
+            size = "normal sized"
+        elif 0.10 <= height:
+            size = "big"
+        rospy.loginfo("Height of object {0} is {1} so classifying as {2}".format(entity.id, height, size))
+    except:
+        pass
+
+    return size
 
 
 class DescribeBottles(smach.State):
@@ -117,9 +135,9 @@ class DescribeBottles(smach.State):
 
         # import ipdb; ipdb.set_trace()
         most_probable_color = get_entity_color(bottle_entity)
-        if not most_probable_color: most_probable_color = ""
+        size = get_entity_size(bottle_entity)
 
-        return BottleDescription(   size=random.choice(["small", "normal sized", "big"]),
+        return BottleDescription(   size=size,
                                     color=most_probable_color,
                                     label=random.choice(["aspirin", "ibuprofen", ""]))
 
@@ -215,7 +233,7 @@ class RoboNurse(smach.StateMachine):
             def designate_bottle(userdata):
                 # import ipdb; ipdb.set_trace()
                 described_bottle.criteriafuncs += lambda entity: get_entity_color(entity) == ask_bottles_answer['color']
-                described_bottle.criteriafuncs += lambda entity: entity.data["size"] == ask_bottles_answer['size']              
+                described_bottle.criteriafuncs += lambda entity: get_entity_size(entity) == ask_bottles_answer['size']              
                 described_bottle.criteriafuncs += lambda entity: entity.data["label"] == ask_bottles_answer['label']
                 return 'described'
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
