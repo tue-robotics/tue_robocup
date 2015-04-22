@@ -25,6 +25,7 @@ choice_answer_mapping = {
 	"which country grows the most potatoes":"russia",
 	"which country grew the first orange":"china",
 	"how many countries are in europe":"fifty",
+	"Who is the banana king?":"Sjoerd van den Dries",
 	"which fish can hold objects in its tail":"sea horse"
 }
 
