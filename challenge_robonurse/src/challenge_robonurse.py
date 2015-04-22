@@ -28,7 +28,7 @@ from collections import OrderedDict
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 
-ROOM = "room_livingroom"
+ROOM = "room_living_room"
 
 
 def raw_input_timeout(prompt, timeout=10):
@@ -191,7 +191,11 @@ class RoboNurse(smach.StateMachine):
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
                                     states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
                                     transitions={   'heard'             :'GRAB_BOTTLE',
-                                                    'no_result'         :'ASK_WHICH_BOTTLE'}) #TODO: Yell at Granny :-)
+                                                    'no_result'         :'SAY_NOTHING_HEARD'}) #TODO: Yell at Granny :-)
+
+            smach.StateMachine.add( "SAY_NOTHING_HEARD",
+                                    states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
+                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
 
             @smach.cb_interface(outcomes=['described'])
             def designate_bottle(userdata):
