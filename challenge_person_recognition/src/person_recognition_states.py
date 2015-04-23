@@ -124,7 +124,7 @@ class LookAtPersonInFront(smach.State):
         centerDesignator = AttrDesignator(humanDesignator, 'center_point')
 
         # set robots pose
-        self.robot.spindle.high()
+        # self.robot.spindle.high()
         self.robot.head.cancel_goal()
 
         # look front, 2 meters high
@@ -226,7 +226,7 @@ class FindCrowd(smach.State):
         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
         centerPointDes = AttrDesignator(humanDesignator, 'center_point')
 
-        self.robot.spindle.high()
+        # self.robot.spindle.high()
 
         # "scan" the room with the head
         # look at 3 meters front, 5 meters right and 2 meters high
