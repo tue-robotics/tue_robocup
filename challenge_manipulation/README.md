@@ -6,7 +6,7 @@ Responsible: Loy & Ramon
 
 1. Place the robot near or in front of the bookcase, cabinet or closet it is supposed to grasp from. This is currently hardcoded into variable BOOKCASE.
 2. Place 5 items in the bookcase
-3. In this bookcase, there should be 1 empty shelve at height PLACE_HEIGHT. 
+3. In this bookcase, there should be 1 empty shelve at height PLACE_HEIGHT.
 
 amigo1/sergio1:
 
@@ -21,6 +21,14 @@ amigo1/sergio1:
     amiddle/smiddle
 
 amigo3:
+
+    Mount usb stick:
+
+    sudo mount /dev/sdXX /home/amigo/usb -o umask=000 #Where XX is the usb stick device
+
+    Check if it's properly mounted:
+
+    touch /home/amigo/usb/test
 
     Test audio:
 
