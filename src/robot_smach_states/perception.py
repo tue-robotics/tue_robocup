@@ -19,18 +19,16 @@ class LookAtEntity(State):
 
     def run(self, robot, entity, keep_following=False):
         if keep_following:
-            center_point = Point()
-            frame_id = '/'+entity
-        else:
-            center_point = entity.center_point
-            frame_id = "/map"
+            rospy.logerr("Look at stuff: keep_following is obsolete")
+
+        center_point = entity.center_point
+        frame_id = "/map"
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
         robot.head.look_at_point(point_stamped)
         return "succeeded"
-
 
 # Testing
 

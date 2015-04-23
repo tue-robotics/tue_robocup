@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import rospy
 from robot_smach_states.state import State
 
 ############################## Atomic Reset States ##############################
@@ -8,7 +9,17 @@ class ResetHead(State):
         State.__init__(self, locals(), outcomes=["done"])
 
     def run(self, robot, timeout):
+        rospy.logwarn("Better use another function, what do you want to achieve, straight or cancel???")
         robot.head.reset(timeout=timeout)
+        return "done"
+
+class CancelHead(State):
+    def __init__(self, robot, timeout=0.0):
+        State.__init__(self, locals(), outcomes=["done"])
+
+    def run(self, robot, timeout):
+        rospy.logwarn("Better use another function, what do you want to achieve, straight or cancel???")
+        robot.head.cancel_goal()
         return "done"
 
 class ResetLeftArm(State):
