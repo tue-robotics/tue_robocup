@@ -31,7 +31,9 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_TARGET1'})
 
         smach.StateMachine.add('GOTO_TARGET1',
-                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id=challenge_knowledge.target1['near']) : "near", EdEntityDesignator(robot, id=challenge_knowledge.target1['in']) : "in" }, EdEntityDesignator(robot, id=challenge_knowledge.target1['lookat'])),
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id=challenge_knowledge.target1['near']) : "near", 
+                                                                  EdEntityDesignator(robot, id=challenge_knowledge.target1['in']) : "in" }, 
+                                                                  EdEntityDesignator(robot, id=challenge_knowledge.target1['lookat'])),
                                 transitions={   'arrived'           :   'SAY_TARGET1_REACHED',
                                                 'unreachable'       :   'SAY_TARGET1_FAILED',
                                                 'goal_not_defined'  :   'SAY_TARGET1_FAILED'})
@@ -57,8 +59,9 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_TARGET2'})
 
         smach.StateMachine.add('GOTO_TARGET2',
-                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id=challenge_knowledge.target2['near']) : "near", EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
-                                    EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
+                                states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id=challenge_knowledge.target2['near']) : "near", 
+                                                                  EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
+                                                                  EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
                                                 'unreachable'       :   'SAY_TARGET2_FAILED',
                                                 'goal_not_defined'  :   'SAY_TARGET2_FAILED'})
