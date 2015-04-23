@@ -75,7 +75,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('RESET_ED_TARGET',
                                 states.ResetED(robot),
-                                transitions={   'done'              :   'GO_TO_EXIT_1'})
+                                transitions={   'done'              :   'GO_TO_EXIT'})
 
         # Finally amigo will stop and says 'goodbye' to show that he's done.
         smach.StateMachine.add('AT_END',
