@@ -49,19 +49,19 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
                                     transitions={   'arrived':'AT_END',
                                                     'unreachable':'GO_TO_EXIT_2',
                                                     'goal_not_defined':'GO_TO_EXIT_2'})
 
         smach.StateMachine.add('GO_TO_EXIT_2',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_2_rips"), radius = 0.5),
                                     transitions={   'arrived':'AT_END',
                                                     'unreachable':'GO_TO_EXIT_3',
                                                     'goal_not_defined':'GO_TO_EXIT_3'})
 
         smach.StateMachine.add('GO_TO_EXIT_3',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_3_rips"), radius = 0.5),
                                     transitions={   'arrived':'AT_END',
                                                     'unreachable':'AT_END',
                                                     'goal_not_defined':'AT_END'})
