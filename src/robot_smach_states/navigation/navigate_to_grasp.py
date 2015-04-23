@@ -18,7 +18,7 @@ import math
 # ----------------------------------------------------------------------------------------------------
 class NavigateToGrasp(NavigateTo):
     def __init__(self, robot, entity_designator, arm_designator=None):
-        super(NavigateToGrasp, self).__init__(robot)
+        super(NavigateToGrasp, self).__init__(robot, reset_head=False)
 
         self.robot    = robot
         check_resolve_type(entity_designator, ed.msg.EntityInfo) #Check that the entity_designator resolves to an Entity

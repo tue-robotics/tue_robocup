@@ -93,12 +93,13 @@ class getPlan(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class executePlan(smach.State):
-    def __init__(self, robot, breakout_function, blocked_timeout = 4):
+    def __init__(self, robot, breakout_function, blocked_timeout = 4, reset_head=True):
         smach.State.__init__(self,outcomes=['succeeded','arrived','blocked','preempted'])
         self.robot = robot
         self.t_last_free = None
         self.blocked_timeout = blocked_timeout
         self.breakout_function = breakout_function
+        self.reset_head = reset_head
 
     def execute(self, userdata):
         '''
@@ -111,7 +112,8 @@ class executePlan(smach.State):
         self.t_last_free = rospy.Time.now()
 
         # Cancel head goal, we need it for navigation :)
-        self.robot.head.cancel_goal()
+        if self.reset_head:
+            self.robot.head.cancel_goal()
 
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
@@ -403,7 +405,7 @@ class planBlockedHuman(smach.State):
 # # ----------------------------------------------------------------------------------------------------
 
 class NavigateTo(smach.StateMachine):
-    def __init__(self, robot):
+    def __init__(self, robot, reset_head=True):
         smach.StateMachine.__init__(self, outcomes=['arrived','unreachable','goal_not_defined'])
         self.robot = robot
 
@@ -419,7 +421,7 @@ class NavigateTo(smach.StateMachine):
                                  'goal_not_defined'                     :   'goal_not_defined',
                                  'goal_ok'                              :   'EXECUTE_PLAN'})
 
-                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut),
+                smach.StateMachine.add('EXECUTE_PLAN',                      executePlan(self.robot, self.breakOut, reset_head=reset_head),
                     transitions={'succeeded'                            :   'arrived',
                                  'arrived'                              :   'GET_PLAN',
                                  'blocked'                              :   'DETERMINE_BLOCKED',
