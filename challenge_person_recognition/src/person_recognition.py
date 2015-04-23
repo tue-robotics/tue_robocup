@@ -384,7 +384,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'visited_all':'container_success'})
 
                 smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.0),
+                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.7),
                                         transitions={   'arrived'           :   'REMOVE_LOCATION',
                                                         'unreachable'       :   'SAY_FAILED_GOTO',
                                                         'goal_not_defined'  :   'SAY_FAILED_GOTO'})
@@ -475,7 +475,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'SAY_CANT_CHOOSE_OPERATOR'})
 
                 smach.StateMachine.add( 'GOTO_OPERATOR',
-                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.current, radius = 0.7),
+                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.current, radius = 1.3),
                                         transitions={   'arrived'           :   'SAY_FOUND_OPERATOR',
                                                         'unreachable'       :   'SAY_CANT_REACH',
                                                         'goal_not_defined'  :   'SAY_CANT_REACH'})
@@ -523,11 +523,15 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'DESCRIBE_CROWD_CONTAINER',
                                     describeCrowdContainer,
                                     transitions={   'container_success':'END_CHALLENGE',
-                                                    'container_failed':'SAY_FIND_CROWD_AGAIN'})
+                                                    'container_failed':'RESET_SEARCH'})
+
+            smach.StateMachine.add( 'RESET_SEARCH',
+                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes),
+                                    transitions={   'done':'SAY_FIND_CROWD_AGAIN'})
 
             smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',
                                         states.Say(robot,"I will search again!", block=False),
-                                        transitions={   'spoken':'FIND_OPERATOR_CONTAINER'})
+                                        transitions={   'spoken':'FIND_CROWD_CONTAINER'})
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                             END CHALLENGE
