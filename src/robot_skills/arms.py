@@ -160,15 +160,27 @@ class Arm(object):
         grasp_precompute_goal.PERFORM_PRE_GRASP = pre_grasp
         grasp_precompute_goal.FIRST_JOINT_POS_ONLY = first_joint_pos_only
 
-        grasp_precompute_goal.goal.x = px + self.offset['x']
-        grasp_precompute_goal.goal.y = py + self.offset['y']
-        grasp_precompute_goal.goal.z = pz + self.offset['z']
-
-        grasp_precompute_goal.goal.roll  = roll  + self.offset['roll']
-        grasp_precompute_goal.goal.pitch = pitch + self.offset['pitch']
-        grasp_precompute_goal.goal.yaw   = yaw   + self.offset['yaw']
-
         grasp_precompute_goal.allowed_touch_objects = allowed_touch_objects
+
+        grasp_precompute_goal.goal.x = px
+        grasp_precompute_goal.goal.y = py
+        grasp_precompute_goal.goal.z = pz
+
+        grasp_precompute_goal.goal.roll  = roll
+        grasp_precompute_goal.goal.pitch = pitch
+        grasp_precompute_goal.goal.yaw   = yaw
+
+        self._publish_marker(grasp_precompute_goal, "blue", 1)
+
+        # Add tunable parameters
+
+        grasp_precompute_goal.goal.x += self.offset['x']
+        grasp_precompute_goal.goal.y += self.offset['y']
+        grasp_precompute_goal.goal.z += self.offset['z']
+
+        grasp_precompute_goal.goal.roll  += self.offset['roll']
+        grasp_precompute_goal.goal.pitch +=  self.offset['pitch']
+        grasp_precompute_goal.goal.yaw   += self.offset['yaw']
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 
@@ -290,7 +302,7 @@ class Arm(object):
                 rospy.logwarn("Cannot reach joint goal {0}".format(goal))
         return done
 
-    def _publish_marker(self, goal, color):
+    def _publish_marker(self, goal, color, marker_id = 0):
         marker = visualization_msgs.msg.Marker()
         marker.header.frame_id = goal.goal.header.frame_id
         marker.header.stamp = rospy.Time.now()
@@ -306,6 +318,7 @@ class Arm(object):
         marker.color.g = 0
         marker.color.b = 0
         marker.color.a = 1
+        marker.id = marker_id
         if color == "red":
             marker.color.r = 1
         elif color == "blue":
