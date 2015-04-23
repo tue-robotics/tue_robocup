@@ -21,36 +21,15 @@ class Initialize(smach.State):
 
         self.robot.head.reset()
         self.robot.leftArm.reset()
-        #self.robot.leftArm.send_gripper_goal('close',0.0)
+        self.robot.leftArm.send_gripper_goal('close',0.0)
         self.robot.rightArm.reset()
-        #self.robot.rightArm.send_gripper_goal('close',0.0)
-        rospy.logwarn('ToDo: Close grippers')
+        self.robot.rightArm.send_gripper_goal('close',0.0)
         self.robot.ed.reset()
         self.robot.torso.reset()
-        #self.robot.base.reset_costmap()
-        rospy.logwarn('ToDo: Reset costmap and reasoner')
-
-        # self.robot.ed.reset()
 
         ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
         rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
         self.robot.base.get_location()
-
-        ''' Load template matching config '''
-        rospy.logwarn('ToDo: Load correct perception config???')
-        # load template config data into reasoner
-        #
-        #self.robot.reasoner.query(Compound("load_database", "tue_knowledge", "prolog/template_matching.pl"))
-        #
-        #query_template_config = Compound("template_matching_config", "Config")
-        #answers = self.robot.reasoner.query(query_template_config)
-        #rospy.loginfo("Linemod config answers: {0}".format(answers))
-        #if answers:
-        #    self.robot.perception.load_template_matching_config(str(answers[0]["Config"]))
-        #else:
-        #    rospy.logerr("No linemod config file loaded")
-        #    # Sleep to emphasize the error above
-        #    rospy.sleep(1.0)
 
         return 'initialized'
 
