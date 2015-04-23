@@ -641,107 +641,6 @@ class AnalysePerson(smach.State):
             print OUT_PREFIX + "Could not find anyone in front of the robot."
             return 'failed'
 
-'''
-        # Add data from the result of the designator to the list
-        if humanDesignatorRes:
-            # resolve the data designator
-            humanDataRes = humanDataDesignator.resolve()
-            if not humanDataRes:
-                print OUT_PREFIX + "Could not resolve dataDesignator"
-            else:
-                entityDataList += [(humanDataRes)]
-                print OUT_PREFIX + "Found " + str(len(humanDataRes)) + " entities"
-
-            if entityDataList:
-                #  iterate through entitities found
-                for entityData in entityDataList:
-                    try:
-                        # iterate through faces found in this entity
-                        for faceInfo in entityData['perception_result']['face_recognizer']['face']:
-
-                            recognition_label = faceInfo['label']
-                            recognition_score = faceInfo['score']
-                            face_idx = faceInfo['index']
-
-                            # initialize label as empty string if the recogniton didnt conclude anything
-                            if recognition_score == 0:
-                                recognition_label = ""
-                                print OUT_PREFIX + "Unrecognized person"
-
-
-                            if entityData['type'] == "crowd":
-                                #  get the corresponding location of the face
-                                for face_detector_loc in entityData['perception_result']['face_detector']['faces_front']:
-                                    if face_idx == face_detector_loc['index']:
-                                        # get location
-                                        face_loc = face_detector_loc
-                                        break
-                            elif entityData['type'] == "human":
-                                face_loc = entityData['perception_result']['face_detector']['faces_front'][0]
-                            else:
-                                print OUT_PREFIX + bcolors.FAIL + "Uknown entity type. Unable to get face location" + bcolors.ENDC
-
-                            #  test if a face in this location is already present in the list
-                            sameFace = False
-                            # for face in self.facesAnalysedDes.current:
-                            #     p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
-                            #     p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
-
-                            #     if points_distance(p1=p1, p2=p2) < 0.2:
-                            #         sameFace = True
-                            #         break
-                            # TODO: COMMENTED FOR NOW SINCE I CAN ONLY GET ENTITIES CENTER POINT AND THAT IS SHARED FOR FACES IN CROWD
-
-                            if sameFace:
-                                # TODO: COMPARE SCORES FROM THE FACE RECOGNITION, IF ITS BETTER, REPLACE
-                                print OUT_PREFIX + "Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current))
-
-                            #  if information is valid, add it to the list of analysed faces
-                            if not recognition_label == None and not recognition_score == None and not sameFace:
-
-                                if face_loc["map_z"] > 0.8:
-                                    pose = Pose.Standing
-                                else:
-                                    pose = Pose.Sitting_down
-
-                                print OUT_PREFIX + "Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
-                                    str(recognition_label),
-                                    str(recognition_score),
-                                    "standing up" if pose == Pose.Standing else "sitting down",
-                                    face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
-
-                                #  "predict" gender, in a hacky way
-                                if recognition_label[:-1] == 'a':
-                                    personGender = Gender.Female
-                                else:
-                                    personGender = Gender.Male
-
-                                self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
-                                                                                name = recognition_label, 
-                                                                                score = recognition_score,
-                                                                                pose = pose,
-                                                                                gender = personGender))]
-                            else:
-                                print OUT_PREFIX + bcolors.WARNING + "Did not add face to the list" + bcolors.ENDC
-
-                    except KeyError, ke:
-                        print OUT_PREFIX + "KeyError recognition_label/recognition_score: " + str(ke)
-                        pass
-                    except IndexError, ke:
-                        print OUT_PREFIX + "IndexError recognition_label/recognition_score: " + str(ke)
-                        pass
-
-                print OUT_PREFIX + "Analysed all faces successfully"
-                return 'succeded'
-
-            else:
-                print OUT_PREFIX + "Could not get data from entity"
-
-        else:
-            print OUT_PREFIX + "Could not find anyone in front of the robot."
-
-        return 'failed'
-'''
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -793,3 +692,25 @@ class GetNextLocation(smach.State):
 
             print OUT_PREFIX + "Visited all locations"
             return 'visited_all'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class ResetSearch(smach.State):
+    """
+    Reset variables related to the operator searching
+    """
+    def __init__(self, robot, locations):
+        smach.State.__init__(   self, outcomes=['done'])
+
+        self.robot = robot
+        self.locations = locations
+        
+    def execute(self, userdata):
+        print OUT_PREFIX + bcolors.OKBLUE + "ResetSearch" + bcolors.ENDC
+
+        # Reset locations to visit
+        self.locations.current = []
+        
+        return 'done'
