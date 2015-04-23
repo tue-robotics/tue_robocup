@@ -42,9 +42,19 @@ import pdf
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_manipulation')
+OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
 ROOM = challenge_knowledge.room
+
+''' Sanity check '''
+if PLACE_SHELF in OBJECT_SHELVES:
+    rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
+    # ToDo
+    import ipdb; ipdb.set_trace()
+if not PICK_SHELF in OBJECT_SHELVES:
+    rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
+    OBJECT_SHELVES.append(PICK_SHELF)
 
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor','room']
@@ -173,6 +183,44 @@ class EmptySpotDesignator(Designator):
 
         return points
 
+class InspectShelves(smach.State):
+    """ Inspect all object shelves """
+
+    def __init__(self, robot, object_shelves):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.object_shelves = object_shelves
+
+    def execute(self, userdata):
+
+        ''' Loop over shelves '''
+        for shelf in self.object_shelves:
+            
+            rospy.loginfo("Shelf: {0}".format(shelf))
+
+            ''' Get entities '''
+            entity = self.robot.ed.get_entity(id=shelf, parse=False)
+
+            if entity:
+
+                ''' Extract center point '''
+                cp = entity.center_point
+
+                ''' Look at target '''
+                self.robot.head.look_at_point(geom.PointStamped(cp.x,cp.y,cp.z,"/map"))
+
+                ''' Move spindle
+                    Implemented only for AMIGO (hence the hardcoding)
+                    Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
+                # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
+                height = min(0.4, max(0.1, cp.z-0.55))
+                self.robot.torso._send_goal([height], timeout=5.0)
+
+                ''' Sleep for 1 second ''' 
+                rospy.sleep(1.0)
+
+        return 'succeeded'
+
 class InspectEntity(smach.State):
     """Inspect an entity, i.e. look at all points that make up some entity"""
 
@@ -292,17 +340,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
-                                   transitions={'locked':'EXPORT_PDF'})
-
-            @smach.cb_interface(outcomes=["exported"])
-            def export_to_pdf(userdata):
-                rospy.loginfo("Placed_items: {0}".format([e.id for e in placed_items]))
-                pdf.entities_to_pdf(robot.ed, placed_items, "manipulation_challenge")
-                return "exported"
-            smach.StateMachine.add('EXPORT_PDF',
-                                    smach.CBState(export_to_pdf),
-                                    transitions={'exported':'ANNOUNCE_ITEM'})
-
+                                   transitions={'locked':'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add( "ANNOUNCE_ITEM",
                                     states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", current_item), block=False),
@@ -396,15 +434,37 @@ def setup_statemachine(robot):
                                transitions={'continue'                  :'NAV_TO_START',
                                             'no_response'               :'AWAIT_START'})
 
-        smach.StateMachine.add("NAV_TO_START",
-                                states.NavigateToWaypoint(robot, start_waypoint),
-                                transitions={'arrived'                  :'RESET_ED',
-                                             'unreachable'              :'RESET_ED',
-                                             'goal_not_defined'         :'RESET_ED'})
+        smach.StateMachine.add( "NAV_TO_START",
+                                #states.NavigateToObserve(robot, pick_shelf),
+                                states.NavigateToSymbolic(robot, 
+                                                          {EdEntityDesignator(robot, id=PICK_SHELF):"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, 
+                                                          EdEntityDesignator(robot, id=PICK_SHELF)),
+                                transitions={   'arrived'           :'RESET_ED',
+                                                'unreachable'       :'RESET_ED',
+                                                'goal_not_defined'  :'RESET_ED'})
+
+        # smach.StateMachine.add("NAV_TO_START",
+        #                         states.NavigateToWaypoint(robot, start_waypoint),
+        #                         transitions={'arrived'                  :'RESET_ED',
+        #                                      'unreachable'              :'RESET_ED',
+        #                                      'goal_not_defined'         :'RESET_ED'})
 
         smach.StateMachine.add("RESET_ED",
                                 states.ResetED(robot),
-                                transitions={'done'                     :'RANGE_ITERATOR'})
+                                transitions={'done'                     :'INSPECT_SHELVES'})
+
+        smach.StateMachine.add("INSPECT_SHELVES",
+                                InspectShelves(robot, OBJECT_SHELVES),
+                                transitions={'succeeded'                :'EXPORT_PDF',
+                                             'failed'                   :'EXPORT_PDF'})
+
+        @smach.cb_interface(outcomes=["exported"])
+        def export_to_pdf(userdata):
+            pdf.entities_to_pdf(robot.ed, robot.ed.get_entities(), "manipulation_challenge")
+            return "exported"
+        smach.StateMachine.add('EXPORT_PDF',
+                                smach.CBState(export_to_pdf),
+                                transitions={'exported':'RANGE_ITERATOR'})
 
         # Begin setup iterator
         range_iterator = smach.Iterator(    outcomes = ['succeeded','failed'], #Outcomes of the iterator state

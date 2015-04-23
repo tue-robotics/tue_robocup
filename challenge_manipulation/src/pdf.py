@@ -65,7 +65,7 @@ def save_entity_image_to_file(world_model_ed, entityID):
 
     return file_name
 
-def entities_to_pdf(world_model_ed, entities, name):
+def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb"):
     rospy.logdebug("TODO: Exporting PDF")
 
     html = "<html>"
@@ -95,7 +95,7 @@ def entities_to_pdf(world_model_ed, entities, name):
     html += "</html>"
 
     filename = "%s_%d.pdf"%(name, int(time.time()))
-    html2pdf(html, filename)
+    html2pdf(html, "%s/%s"%(directory, filename))
 
 if __name__ == '__main__':
     pisa.showLogging()
