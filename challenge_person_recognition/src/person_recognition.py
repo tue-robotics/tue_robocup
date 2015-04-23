@@ -485,8 +485,8 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'POINT_AT_OPERATOR'})
 
                 smach.StateMachine.add( 'SAY_CANT_CHOOSE_OPERATOR',
-                                        states.Say(robot,"I'm sorry but I don't know who my operator is.", block=False),
-                                        transitions={   'spoken':'DESCRIBE_PEOPLE'})
+                                        states.Say(robot,"I couldn't find my operator.", block=False),
+                                        transitions={   'spoken':'container_failed'})
 
                 smach.StateMachine.add( 'SAY_CANT_REACH',
                                         states.Say(robot,"I could not reach my operator but i will point at anyway.", block=False),
@@ -500,8 +500,6 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add( 'SAY_CANT_POINT',
                                         states.Say(robot,"Sorry but i can't point at my operator!", block=False),
                                         transitions={   'spoken':'container_success'})
-
-                
 
                 smach.StateMachine.add( 'GREET_OPERATOR',
                                         states.Say(robot, PersonRecStates.DummyDesig(operatorNameDes), block=False),
@@ -525,10 +523,11 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'DESCRIBE_CROWD_CONTAINER',
                                     describeCrowdContainer,
                                     transitions={   'container_success':'END_CHALLENGE',
-                                                    'container_failed':'END_CHALLENGE'})
+                                                    'container_failed':'SAY_FIND_CROWD_AGAIN'})
 
-            
-
+            smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',
+                                        states.Say(robot,"I will search again!", block=False),
+                                        transitions={   'spoken':'FIND_OPERATOR_CONTAINER'})
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                             END CHALLENGE
