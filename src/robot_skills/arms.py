@@ -310,7 +310,7 @@ class Arm(object):
         marker.pose.position.x = goal.goal.x
         marker.pose.position.y = goal.goal.y
         marker.pose.position.z = goal.goal.z
-        marker.lifetime = rospy.Duration(5.0)
+        marker.lifetime = rospy.Duration(20.0)
         marker.scale.x = 0.05
         marker.scale.y = 0.05
         marker.scale.z = 0.05
