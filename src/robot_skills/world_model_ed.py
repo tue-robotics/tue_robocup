@@ -2,6 +2,7 @@
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest
 from ed.srv import GetGUICommand, GetGUICommandResponse
+from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
@@ -33,6 +34,8 @@ class Navigation:
 class ED:
     def __init__(self, robot_name, tf_listener, wait_service=False):
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
+        self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
+
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
         self._tf_listener = tf_listener
@@ -43,7 +46,7 @@ class ED:
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
-        query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius) 
+        query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
 
         try:
             entities = self._ed_simple_query_srv(query).entities
@@ -55,13 +58,13 @@ class ED:
         if parse:
             for e in entities:
                 e.data = yaml.load(e.data)
-        
+
         return entities
 
     def get_closest_entity(self, type="", center_point=Point(), radius=0):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
-            
+
         entities = self.get_entities(type=type, center_point=center_point, radius=radius)
         if len(entities) == 0:
             return None
@@ -80,6 +83,9 @@ class ED:
             return None
 
         return entities[0]
+
+    def get_entity_info(self, id):
+        return self._ed_entity_info_query_srv(id)
 
     def reset(self):
         try:
