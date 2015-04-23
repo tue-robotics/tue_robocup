@@ -222,6 +222,19 @@ class ManipRecogSingleItem(smach.StateMachine):
         has_type = lambda entity: entity.type != ""
         min_height = lambda entity: entity.min_z > 0.3
         min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+        def max_width(entity):
+            max_bb_x = max(ch.x for ch in entity.convex_hull)
+            min_bb_x = min(ch.x for ch in entity.convex_hull)
+            max_bb_y = max(ch.y for ch in entity.convex_hull)
+            min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+            x_size = abs(max_bb_x - min_bb_x)
+            y_size = abs(max_bb_y - min_bb_y)
+
+            x_ok = 0.04 < x_size < 0.10
+            y_ok = 0.04 < y_size < 0.10
+
+            return x_ok and y_ok
 
         def on_top(entity):
             container_entity = pick_shelf.resolve()
@@ -238,7 +251,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot, 
-            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height], weight_function=weight_function, debug=False))
+            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
         
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))
