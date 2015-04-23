@@ -1,13 +1,16 @@
 # COMMON KNOWLEDGE FILE RGO2015
 
-names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah","Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+female_names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
+male_names = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+names = female_names + male_names
 
 locations = [ 'kitchen', 'livingroom', 'hall', 'bedroom', 'office']
 
-objects = {
-    "tool" : ['filler','wd40', 'twine', 'tape'],
-    "drink" : ["beer", "coke", "coffee", "red_bull", "ice-tea", "coffeepads", "fanta"],
-    "decoration" : ["candle", "yellow candle"],
-    "leisure" : ["cup", "deodorant", "cigarettes"],
-    "food" : ["oblates", "chocosticks", "peanut", "pringles", "mints"]
-}
+objects = [{'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'bubblegum'}, {'category': 'decoration', 'placement': 'couchtable', 'group': 'known', 'name': 'candle'}, {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'cup'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'beer'}, {'category': 'tool', 'placement': 'counter', 'group': 'known', 'name': 'wd40'}, {'category': 'tool', 'placement': 'counter', 'group': 'known', 'name': 'filler'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'chocolate_cereals'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'coke'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'chocosticks'}, {'category': 'decoration', 'placement': 'couchtable', 'group': 'known', 'name': 'yellow candle'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'noodles'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'coffee'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'cranberry_cereals'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'muesli_cereals'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'bubblemint'}, {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'deodorant'}, {'category': 'tool', 'placement': 'counter', 'group': 'known', 'name': 'brush'}, {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'cigarettes'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'red_bull'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'meadow_milk'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'ice-tea'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'mints'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'pringles'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'fresh_milk'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'oblates'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'known', 'name': 'coffeepads'}, {'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'peanut'}, {'category': 'food', 'placement': 'stove', 'group': 'alike', 'name': 'mandarine'}, {'category': 'tool', 'placement': 'counter', 'group': 'alike', 'name': 'tape'}, {'category': 'food', 'placement': 'stove', 'group': 'alike', 'name': 'lemon'}, {'category': 'tool', 'placement': 'counter', 'group': 'alike', 'name': 'twine'}, {'category': 'drink', 'placement': 'cabinet', 'group': 'alike', 'name': 'fanta'}, {'category': 'food', 'placement': 'stove', 'group': 'alike', 'name': 'apple'}, {'category': 'bowl', 'placement': '', 'group': 'containers', 'name': 'bowl'}, {'category': 'tray', 'placement': '', 'group': 'containers', 'name': 'tray'}]
+
+object_names = [ o["name"] for o in objects ]
+object_categories = [ o["category"] for o in objects ]
+object_groups = [ o["group"] for o in objects ]
+object_placements = [ o["placement"] for o in objects ]
+
+
