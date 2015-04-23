@@ -258,7 +258,12 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                     'unreachable'       :'LOOKAT_PICK_SHELF',
                                                     'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
-            smach.StateMachine.add( "LOOKAT_PICK_SHELF",
+            ''' Look at pick shelf '''
+            smach.StateMachine.add("LOOKAT_PICK_SHELF", 
+                                     states.LookAtEntity(robot, pick_shelf, keep_following=True),
+                                     transitions={  'succeeded'         :'SAY_LOOKAT_PICK_SHELF'})
+
+            smach.StateMachine.add( "SAY_LOOKAT_PICK_SHELF",
                                     states.Say(robot, ["I'm looking at the pick_shelf to see what items I can find"]),
                                     transitions={   'spoken'            :'LOCK_ITEM'})
 
@@ -312,12 +317,24 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add( "ANNOUNCE_CLASS",
                                     states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=current_item), block=False),
-                                    transitions={   'spoken'            :'PLACE_ITEM'})
+                                    transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
+
+            smach.StateMachine.add("LOOKAT_PLACE_SHELF", 
+                                     states.LookAtEntity(robot, pick_shelf, keep_following=True),
+                                     transitions={  'succeeded'         :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
                                     Place(robot, current_item, place_position, arm_with_item_designator),
-                                    transitions={   'done'              :'UNLOCK_ITEM_AFTER_SUCCESSFUL_PLACE',
-                                                    'failed'            :'SAY_HANDOVER_TO_HUMAN'})
+                                    transitions={   'done'              :'RESET_HEAD_PLACE',
+                                                    'failed'            :'RESET_HEAD_HUMAN'})
+
+            smach.StateMachine.add( "RESET_HEAD_PLACE",
+                                    states.CancelHead(robot),
+                                    transitions={   'done'              :'UNLOCK_ITEM_AFTER_SUCCESSFUL_PLACE'})
+
+            smach.StateMachine.add( "RESET_HEAD_HUMAN",
+                                    states.CancelHead(robot),
+                                    transitions={   'done'               :'SAY_HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add('UNLOCK_ITEM_AFTER_SUCCESSFUL_PLACE',
                                    smach.CBState(unlock_and_ignore),
