@@ -125,7 +125,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'RESET_ED_EXIT',
                                                 'goal_not_defined'  :   'RESET_ED_EXIT'})
@@ -135,7 +135,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'RESET_ED_EXIT2',
                                                 'goal_not_defined'  :   'RESET_ED_EXIT2'})
@@ -155,7 +155,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP3'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP3',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'AT_END',
                                                 'goal_not_defined'  :   'AT_END'})
