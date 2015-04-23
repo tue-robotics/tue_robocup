@@ -45,6 +45,6 @@ class NavigateToWaypoint(NavigateTo):
             rz = 0
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
-        oc = OrientationConstraint(look_at=Point(x+1, y, 0.0), angle_offset=rz, frame="/map")
+        oc = OrientationConstraint(look_at=Point(x+10, y, 0.0), angle_offset=rz, frame="/map")
 
         return pc, oc
