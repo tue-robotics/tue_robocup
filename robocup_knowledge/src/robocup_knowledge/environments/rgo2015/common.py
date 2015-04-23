@@ -1,17 +1,13 @@
 # COMMON KNOWLEDGE FILE RGO2015
 
-drinks = ["coke","fanta","beer","milk","yoghurt","pepsi","orangejuice","sevenup"]
+names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah","Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
 
-names = ["christopher","james","john","robert","michael","william","david","richard","charles","joseph","thomas","mary","patricia","linda","barbara","elizabeth","jennifer","maria","susan","margret","dorothy"]
+locations = [ 'kitchen', 'livingroom', 'hall', 'bedroom', 'office']
 
-places = ['bedroom','livingroom', 'hallway', 'kitchen']
-
-object_category = [ 'drink', 'snack', 'food', 'cleaningstuff']
-
-location_category = ['utensil','shelf','seating','table','trashbin','appliance']
-
-actions = ['transport','bring','carry','bring','get','give','point','look','detect','find','move','go','navigate']
-
-sides = ["left","right","front","back"]
-
-numbers = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+objects = {
+    "tool" : ['filler','wd40', 'twine', 'tape'],
+    "drink" : ["beer", "coke", "coffee", "red_bull", "ice-tea", "coffeepads", "fanta"],
+    "decoration" : ["candle", "yellow candle"],
+    "leisure" : ["cup", "deodorant", "cigarettes"],
+    "food" : ["oblates", "chocosticks", "peanut", "pringles", "mints"]
+}
