@@ -88,10 +88,10 @@ class ResetED(State):
     def __init__(self, robot):
         State.__init__(self, locals(), outcomes=["done"])
 
-    def run(self, userdata):
-        self.robot.lights.set_color(r=1.0,g=0.0,b=0.0,a=1.0) # Red
-        self.robot.ed.reset()                                # Reset ed
-        self.robot.lights.set_color(r=0.0,g=0.0,b=1.0,a=1.0) # Blue
+    def run(self, robot):
+        robot.lights.set_color(r=1.0,g=0.0,b=0.0,a=1.0) # Red
+        robot.ed.reset()                                # Reset ed
+        robot.lights.set_color(r=0.0,g=0.0,b=1.0,a=1.0) # Blue
         return 'done'
 ############################## Combination Reset States ##############################
 
