@@ -24,11 +24,7 @@ amigo3:
 
     Mount usb stick:
 
-    sudo mount /dev/sdXX /home/amigo/usb -o umask=000 #Where XX is the usb stick device
-
-    Check if it's properly mounted:
-
-    touch /home/amigo/usb/test
+    rosrun challenge_manipulation mount_usb # usb dir in /home/amigo should be green
 
     Test audio:
 
