@@ -170,7 +170,7 @@ class Arm(object):
         grasp_precompute_goal.goal.pitch = pitch
         grasp_precompute_goal.goal.yaw   = yaw
 
-        self._publish_marker(grasp_precompute_goal, "blue", "grasp_point")
+        self._publish_marker(grasp_precompute_goal, [1, 0, 0], "grasp_point")
 
         # Add tunable parameters
 
@@ -184,7 +184,7 @@ class Arm(object):
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 
-        self._publish_marker(grasp_precompute_goal, "blue", "grasp_point_corrected")
+        self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
 
         # Send goal:
 
@@ -314,15 +314,12 @@ class Arm(object):
         marker.scale.x = 0.05
         marker.scale.y = 0.05
         marker.scale.z = 0.05
-        marker.color.r = 0
-        marker.color.g = 0
-        marker.color.b = 0
-        marker.color.a = 1
         marker.ns = ns
-        if color == "red":
-            marker.color.r = 1
-        elif color == "blue":
-            marker.color.b = 1
+
+        marker.color.a = 1
+        marker.color.r = color[0]
+        marker.color.g = color[1]
+        marker.color.b = color[2]
 
         self._marker_publisher.publish(marker)
 
