@@ -4,17 +4,17 @@
 
 In short, the robot starts at 1-1.5m from a bookcase and must wait until started by an operator (by voice or a start button)
 
-This bookcase has a couple of shelves on which some items are placed. 
-**The middle shelve starts empty**, this is where the objects need to be placed. 
+This bookcase has a couple of shelves on which some items are placed.
+**The middle shelve starts empty**, this is where the objects need to be placed.
 
-The robot must take objects form the shelves and place them on the middle shelve and indicate the class of each grasped object. 
+The robot must take objects form the shelves and place them on the middle shelve and indicate the class of each grasped object.
 
-After the robot is started by voice or a button, 
-    the ManipRecogSingleItem state machine is repeated at least 5 times (for 5 objects). 
+After the robot is started by voice or a button,
+    the ManipRecogSingleItem state machine is repeated at least 5 times (for 5 objects).
 Afterwards, a PDF report has to be made:
-'After the test is completed or the time has run out, 
+'After the test is completed or the time has run out,
     the robot may upload a single PDF report file including the list of recognized objects with a picture showing:
-    - the object, 
+    - the object,
     - the object name,
     - the bounding box of the object.'
 """
@@ -34,7 +34,7 @@ from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
 import geometry_msgs.msg as gm
-from robot_skills.util import transformations 
+from robot_skills.util import transformations
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
 
@@ -60,7 +60,7 @@ class FormattedSentenceDesignator(Designator):
         super(FormattedSentenceDesignator, self).__init__(resolve_type=str)
         self.fmt = fmt
         self.kwargs = kwargs
-    
+
     def resolve(self):
         kwargs_resolved = {key:value.resolve() for key,value in self.kwargs.iteritems()}
         return self.fmt.format(**kwargs_resolved)
@@ -72,7 +72,7 @@ class EntityDescriptionDesignator(Designator):
         super(EntityDescriptionDesignator, self).__init__(resolve_type=str)
         self.entity_designator = entity_designator
         self.formats = formats
-    
+
     def resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
@@ -87,8 +87,8 @@ class EntityDescriptionDesignator(Designator):
 
 
 class EmptySpotDesignator(Designator):
-    """Designates an empty spot on the empty placement-shelve. 
-    It does this by queying ED for entities that occupy some space. 
+    """Designates an empty spot on the empty placement-shelve.
+    It does this by queying ED for entities that occupy some space.
         If the result is no entities, then we found an open spot."""
     def __init__(self, robot, closet_designator):
         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
@@ -117,9 +117,9 @@ class EmptySpotDesignator(Designator):
             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
-            
+
             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
-            
+
             distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
             if plan_to_poi:
                 distance = len(plan_to_poi)
@@ -197,7 +197,7 @@ class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
     - Stand of front of the bookcase
     - Look at the bookcase
-    - Select an item, which is: 
+    - Select an item, which is:
         - inside the bookcase
         - not yet grasped/not on the middle shelve
     - Grab that item
@@ -207,14 +207,14 @@ class ManipRecogSingleItem(smach.StateMachine):
     def __init__(self, robot, manipulated_items):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
-        
+
         pick_shelf = EdEntityDesignator(robot, id=PICK_SHELF)
         place_shelf = EdEntityDesignator(robot, id=PLACE_SHELF)
 
         # TODO: Designate items that are
-        # inside pick_shelf 
+        # inside pick_shelf
         # and are _not_:
-        #   already placed 
+        #   already placed
         #   on the placement-shelve.
         not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
         size = lambda entity: abs(entity.z_max - entity.z_min) < 0.2
@@ -239,23 +239,23 @@ class ManipRecogSingleItem(smach.StateMachine):
         def on_top(entity):
             container_entity = pick_shelf.resolve()
             return onTopOff(entity, container_entity)
-        
-        # select the entity closest in x direction to the robot in base_link frame            
+
+        # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
             # TODO: return x coordinate of entity.center_point in base_link frame
-            p = transformations.tf_transform(entity.center_point, "/map", robot.robot_name+"/base_link", robot.tf_listener) 
+            p = transformations.tf_transform(entity.center_point, "/map", robot.robot_name+"/base_link", robot.tf_listener)
             return p.x*p.x
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
-        # current_item = LockingDesignator(EdEntityDesignator(robot, 
+        # current_item = LockingDesignator(EdEntityDesignator(robot,
         #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
-        current_item = LockingDesignator(EdEntityDesignator(robot, 
+        current_item = LockingDesignator(EdEntityDesignator(robot,
             criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
-        
+
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))
-        
+
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
@@ -274,7 +274,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                     'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
             ''' Look at pick shelf '''
-            smach.StateMachine.add("LOOKAT_PICK_SHELF", 
+            smach.StateMachine.add("LOOKAT_PICK_SHELF",
                                      states.LookAtEntity(robot, pick_shelf, keep_following=True),
                                      transitions={  'succeeded'         :'SAY_LOOKAT_PICK_SHELF'})
 
@@ -292,7 +292,17 @@ class ManipRecogSingleItem(smach.StateMachine):
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
-                                   transitions={'locked':'ANNOUNCE_ITEM'})
+                                   transitions={'locked':'EXPORT_PDF'})
+
+            @smach.cb_interface(outcomes=["exported"])
+            def export_to_pdf(userdata):
+                rospy.loginfo("Placed_items: {0}".format([e.id for e in placed_items]))
+                pdf.entities_to_pdf(robot.ed, placed_items, "manipulation_challenge")
+                return "exported"
+            smach.StateMachine.add('EXPORT_PDF',
+                                    smach.CBState(export_to_pdf),
+                                    transitions={'exported':'ANNOUNCE_ITEM'})
+
 
             smach.StateMachine.add( "ANNOUNCE_ITEM",
                                     states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", current_item), block=False),
@@ -334,7 +344,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=current_item), block=False),
                                     transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
 
-            smach.StateMachine.add("LOOKAT_PLACE_SHELF", 
+            smach.StateMachine.add("LOOKAT_PLACE_SHELF",
                                      states.LookAtEntity(robot, pick_shelf, keep_following=True),
                                      transitions={  'succeeded'         :'PLACE_ITEM'})
 
@@ -372,7 +382,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = EdEntityDesignator(robot, id="manipulation_init_pose")  
+    start_waypoint = EdEntityDesignator(robot, id="manipulation_init_pose")
     placed_items = []
 
     with sm:
@@ -406,23 +416,15 @@ def setup_statemachine(robot):
         with range_iterator:
             single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items, list))
 
-            smach.Iterator.set_contained_state( 'SINGLE_ITEM', 
-                                                single_item, 
+            smach.Iterator.set_contained_state( 'SINGLE_ITEM',
+                                                single_item,
                                                 loop_outcomes=['succeeded','failed'])
 
         smach.StateMachine.add('RANGE_ITERATOR', range_iterator,
-                        {   'succeeded'                                     :'EXPORT_PDF',
+                        {   'succeeded'                                     :'AT_END',
                             'failed'                                        :'Aborted'})
         # End setup iterator
 
-        @smach.cb_interface(outcomes=["exported"])
-        def export_to_pdf(userdata):
-            rospy.loginfo("Placed_items: {0}".format([e.id for e in placed_items]))
-            pdf.items2markdown(robot, placed_items)
-            return "exported"
-        smach.StateMachine.add('EXPORT_PDF',
-                                smach.CBState(export_to_pdf),
-                                transitions={'exported':'AT_END'})
 
         smach.StateMachine.add('AT_END',
                                states.Say(robot, "Goodbye"),
