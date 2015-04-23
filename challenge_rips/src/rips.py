@@ -70,8 +70,12 @@ def setup_statemachine(robot):
         smach.StateMachine.add('GO_TO_EXIT_3',
                                     states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=EXIT_3), radius = 0.5),
                                     transitions={   'arrived':'AT_END',
-                                                    'unreachable':'AT_END',
+                                                    'unreachable':'RESET_ED_TARGET',
                                                     'goal_not_defined':'AT_END'})
+
+        smach.StateMachine.add('RESET_ED_TARGET',
+                                states.ResetED(robot),
+                                transitions={   'done'              :   'GO_TO_EXIT_1'})
 
         # Finally amigo will stop and says 'goodbye' to show that he's done.
         smach.StateMachine.add('AT_END',
