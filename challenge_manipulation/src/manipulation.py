@@ -373,9 +373,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("NAV_TO_START",
                                 states.NavigateToWaypoint(robot, start_waypoint),
-                                transitions={'arrived'                  :'RANGE_ITERATOR',
-                                             'unreachable'              :'RANGE_ITERATOR',
-                                             'goal_not_defined'         :'RANGE_ITERATOR'})
+                                transitions={'arrived'                  :'RESET_ED',
+                                             'unreachable'              :'RESET_ED',
+                                             'goal_not_defined'         :'RESET_ED'})
+
+        smach.StateMachine.add("RESET_ED",
+                                states.ResetED(robot),
+                                transitions={'done'                     :'RANGE_ITERATOR'})
 
         # Begin setup iterator
         range_iterator = smach.Iterator(    outcomes = ['succeeded','failed'], #Outcomes of the iterator state
