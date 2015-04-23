@@ -5,6 +5,7 @@ from markdown import markdown
 from xhtml2pdf import pisa
 
 from ed_gui_server.srv import *
+import time
 
 
 report = '''
@@ -57,7 +58,7 @@ def items2markdown(robot, entities):
 
     html = markdown(md)
 
-    pdfFilename = "manipulation_challenge.pdf"
+    pdfFilename = "manipulation_challenge_%d.pdf"%int(time.time())
     html2pdf(html, pdfFilename)
 
 if __name__ == '__main__':
