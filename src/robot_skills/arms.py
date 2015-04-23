@@ -170,7 +170,7 @@ class Arm(object):
         grasp_precompute_goal.goal.pitch = pitch
         grasp_precompute_goal.goal.yaw   = yaw
 
-        self._publish_marker(grasp_precompute_goal, "blue", 1)
+        self._publish_marker(grasp_precompute_goal, "blue", "grasp_point")
 
         # Add tunable parameters
 
@@ -184,7 +184,7 @@ class Arm(object):
 
         # rospy.loginfo("Arm goal: {0}".format(grasp_precompute_goal))
 
-        self._publish_marker(grasp_precompute_goal, "red")
+        self._publish_marker(grasp_precompute_goal, "blue", "grasp_point_corrected")
 
         # Send goal:
 
@@ -302,7 +302,7 @@ class Arm(object):
                 rospy.logwarn("Cannot reach joint goal {0}".format(goal))
         return done
 
-    def _publish_marker(self, goal, color, marker_id = 0):
+    def _publish_marker(self, goal, color, ns = ""):
         marker = visualization_msgs.msg.Marker()
         marker.header.frame_id = goal.goal.header.frame_id
         marker.header.stamp = rospy.Time.now()
@@ -311,14 +311,14 @@ class Arm(object):
         marker.pose.position.y = goal.goal.y
         marker.pose.position.z = goal.goal.z
         marker.lifetime = rospy.Duration(5.0)
-        marker.scale.x = 0.1
-        marker.scale.y = 0.1
-        marker.scale.z = 0.1
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
         marker.color.r = 0
         marker.color.g = 0
         marker.color.b = 0
         marker.color.a = 1
-        marker.id = marker_id
+        marker.ns = ns
         if color == "red":
             marker.color.r = 1
         elif color == "blue":
