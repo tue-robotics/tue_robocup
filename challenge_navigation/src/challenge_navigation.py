@@ -10,17 +10,6 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
 
-class ResetED(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self,outcomes=['done'])
-        self.robot = robot
-
-    def execute(self, userdata):
-        self.robot.lights.set_color(r=1.0,g=0.0,b=0.0,a=1.0) # Red
-        self.robot.ed.reset()                                # Reset ed
-        self.robot.lights.set_color(r=0.0,g=0.0,b=1.0,a=1.0) # Blue
-        return 'done'
-
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
@@ -57,7 +46,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'SAY_GOTO_TARGET2'})
 
         smach.StateMachine.add('RESET_ED_TARGET1', 
-                                ResetED(robot),
+                                states.ResetED(robot),
                                 transitions={   'done'              :   'GOTO_TARGET1_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET1_BACKUP',
@@ -99,7 +88,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
 
         smach.StateMachine.add('RESET_ED_TARGET2', 
-                                ResetED(robot),
+                                states.ResetED(robot),
                                 transitions={   'done'              :   'GOTO_TARGET2_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET2_BACKUP',
@@ -131,7 +120,7 @@ def setup_statemachine(robot):
                                                 'goal_not_defined'  :   'RESET_ED_EXIT'})
 
         smach.StateMachine.add('RESET_ED_EXIT', 
-                                ResetED(robot),
+                                states.ResetED(robot),
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP',
@@ -141,7 +130,7 @@ def setup_statemachine(robot):
                                                 'goal_not_defined'  :   'RESET_ED_EXIT2'})
 
         smach.StateMachine.add('RESET_ED_EXIT2', 
-                                ResetED(robot),
+                                states.ResetED(robot),
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP2'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP2',
@@ -151,7 +140,7 @@ def setup_statemachine(robot):
                                                 'goal_not_defined'  :   'RESET_ED_EXIT3'})
 
         smach.StateMachine.add('RESET_ED_EXIT3', 
-                                ResetED(robot),
+                                states.ResetED(robot),
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP3'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP3',
