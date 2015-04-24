@@ -8,8 +8,8 @@ import math
 import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.util.startup import startup
-from robot_skills.util import msg_constructors as geom
-import geometry_msgs.msg as gm
+from robot_skills.util import msg_constructors as msgs
+from robot_smach_states.util.geometry_helpers import *
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_open')
@@ -17,6 +17,49 @@ CABINET = challenge_knowledge.cabinet
 TABLE1 = challenge_knowledge.table1
 TABLE2 = challenge_knowledge.table2
 OBJECT_SHELVES = challenge_knowledge.object_shelves
+
+class CiteItems(smach.State):
+    """ Cite all items that have been found """
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        entities = self.robot.ed.get_entities()
+        if len(entities) == 0:
+            rospy.logerr("Something went terribly wrong, I have not found any entities")
+            self.robot.speech.speak("I must be blind")
+            return 'failed'
+
+        self.robot.speech.speak("I have found some items that I don't know")
+
+        surface = self.robot.ed.get_entity(id=TABLE1)
+        if surface:
+            count = 0
+            for entity in entities:
+                if (onTopOff(entity, surface)):
+                    count += 1
+            self.robot.speech.speak("I have found {0} items on the {1}".format(count, TABLE1))
+
+        count = 0
+        for shelf in OBJECT_SHELVES:
+            surface = self.robot.ed.get_entity(id=shelf)
+            if surface:
+                for entity in entities:
+                    if (onTopOff(entity, surface)):
+                        count += 1
+        self.robot.speech.speak("I have found {0} items in the bookcase".format(count))
+
+        surface = self.robot.ed.get_entity(id=TABLE2)
+        if surface:
+            count = 0
+            for entity in entities:
+                if (onTopOff(entity, surface)):
+                    count += 1
+        self.robot.speech.speak("I have found {0} items on the {1}".format(count, TABLE2))
+
+        return 'succeeded'
 
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
@@ -42,7 +85,7 @@ class InspectShelves(smach.State):
                 cp = entity.center_point
 
                 ''' Look at target '''
-                self.robot.head.look_at_point(geom.PointStamped(cp.x,cp.y,cp.z,"/map"))
+                self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,cp.z,"/map"))
 
                 ''' Move spindle
                     Implemented only for AMIGO (hence the hardcoding)
@@ -141,9 +184,14 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GOTO_OPERATOR',
                                 states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
-                                transitions={   'arrived'           :   'Done',
-                                                'unreachable'       :   'Done',
-                                                'goal_not_defined'  :   'Done'})
+                                transitions={   'arrived'           :   'CITE_UNKNOWN_ITEMS',
+                                                'unreachable'       :   'CITE_UNKNOWN_ITEMS',
+                                                'goal_not_defined'  :   'CITE_UNKNOWN_ITEMS'})
+
+        smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
+                                CiteItems(robot),
+                                transitions={   'succeeded'         :   'Done',
+                                                'failed'            :   'Done'} )
 
     return sm
 
