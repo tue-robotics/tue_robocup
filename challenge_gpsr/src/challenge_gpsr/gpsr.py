@@ -446,8 +446,18 @@ def setup_statemachine(robot):
                                 transitions={'spoken':'SAY_GO_BACK'})
 
         smach.StateMachine.add( 'SAY_GO_BACK',
-                                states.Say(robot, ["I can not do the last two actions, I will go back to the meeting point."], block=False),
-                                transitions={'spoken':'QUERY_SPECIFIC_ACTION'})
+                                states.Say(robot, ["I can not do the last two actions, I will go to the exit now."], block=False),
+                                transitions={'spoken':'GO_TO_EXIT'})
+
+        smach.StateMachine.add('GO_TO_EXIT',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id='exit_gpsr'), radius = 0.4),
+                                    transitions={   'arrived':'SAY_GOODBYE',
+                                                    'unreachable':'SAY_GOODBYE',
+                                                    'goal_not_defined':'SAY_GOODBYE'})
+
+        smach.StateMachine.add( 'SAY_GOODBYE',
+                                states.Say(robot, ["Goodbye"], block=True),
+                                transitions={'spoken':'Done'})
 
         # smach.StateMachine.add( "FIND_PERSON",
         #                             Grab(robot, ObjectTypeDesignator(robot), UnoccupiedArmDesignator(robot.arms, robot.leftArm)),
@@ -472,11 +482,11 @@ def setup_statemachine(robot):
                                 transitions={'new_task':'ASK_ACTION',
                                               'tasks_completed':'GO_TO_EXIT'})
 
-        smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit"), radius=0.7),
-                                    transitions={   'arrived':'Done',
-                                                    'unreachable':'Done',
-                                                    'goal_not_defined':'Done'})
+        # smach.StateMachine.add('GO_TO_EXIT',
+        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit"), radius=0.7),
+        #                             transitions={   'arrived':'Done',
+        #                                             'unreachable':'Done',
+        #                                             'goal_not_defined':'Done'})
 
     return sm
 
@@ -492,7 +502,5 @@ if __name__ == "__main__":
         print "[CHALLENGE GPSR] Please provide robot name as argument."
         exit(1)
 
-    rospy.logwarn("[CHALLENGE GPSR] Please test with a cola on the hallway table!!!!")
-    rospy.logwarn("[CHALLENGE GPSR] Amigo will try to grab it en then get back to begin location.")
     rospy.sleep(5)
     states.util.startup(setup_statemachine, robot_name=robot_name)
