@@ -162,6 +162,7 @@ class LookAtPersonInFront(smach.State):
             # extract information from data
             if not entityData == None:
                 try:
+                	# import ipdb; ipdb.set_trace()
                     # get information on the first face found (cant guarantee its the closest in case there are many)
                     faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
                 except KeyError, ke:
@@ -498,6 +499,11 @@ class GetOperatorLocation(smach.State):
 
                 # TODO: MARK PEOPLE THERE ARE CLOSE TO THE OPERATOR, IN THE "MAIN CROWD" face.inMainCrowd
 
+            # HAAAAAAAAAAAAAAAAAAACK
+            if not chosenOperator:
+            	operatorIdx = random.randint(0, len(faceList)-1)
+            	chosenOperator = True
+
             if chosenOperator:
                 print OUT_PREFIX + "Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
                     str(faceList[operatorIdx].name),
@@ -517,7 +523,8 @@ class GetOperatorLocation(smach.State):
                 userdata.operatorIdx_out = operatorIdx
                 return 'succeeded'
             else:
-                operatorIdx_out = 0
+                userdata.operatorIdx_out = 0
+
                 print OUT_PREFIX + bcolors.FAIL + "Could not choose an operator from the list!" + bcolors.ENDC
                 return 'failed'
         else:
@@ -560,12 +567,14 @@ class AnalysePerson(smach.State):
 
                 try:
                     # import ipdb; ipdb.set_trace()
-                    faceList = [human.data['perception_result']['face_recognizer']['face'] for human in humanDesignatorRes][0]
+                    # faceList = [human.data['perception_result']['face_recognizer']['face'] for human in humanDesignatorRes][0]
+                    faceList = humanEntity.data['perception_result']['face_recognizer']['face']
 
                     # faceList = humanEntity.data['perception_result']['face_recognizer']['face']
                     print OUT_PREFIX + "Found {0} faces in this entity".format(len(faceList))
+                    print OUT_PREFIX + str(faceList)
 
-                    for faceInfo in faceList: #entityData['perception_result']['face_recognizer']['face']:
+                    for faceInfo in faceList:
 
                         recognition_label = faceInfo['label']
                         recognition_score = faceInfo['score']
@@ -605,7 +614,8 @@ class AnalysePerson(smach.State):
                             print OUT_PREFIX + "Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current))
 
                         #  if information is valid, add it to the list of analysed faces
-                        if not recognition_label == None and not recognition_score == None and not sameFace:
+                        # if not recognition_label == None and not recognition_score == None and not sameFace:
+                        if not sameFace:
 
                             # "predict" pose in a hacky way
                             if face_loc["map_z"] > 0.8:
