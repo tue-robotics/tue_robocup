@@ -7,7 +7,7 @@ def start_music(filepath, volume=100):
     print "Playing music: {0}".format(filepath)
     # The os.setsid() is passed in the argument preexec_fn so
     # it's run after the fork() and before  exec() to run the shell.
-    max_volume = 32768/6
+    max_volume = 32768
     current_volume = int((max_volume / 100) * volume)
 
     music_process = subprocess.Popen("mpg123 --scale {1} '{0}'".format(filepath, current_volume), stdout=subprocess.PIPE, 
