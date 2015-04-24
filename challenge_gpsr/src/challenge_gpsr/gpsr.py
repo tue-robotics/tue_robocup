@@ -55,7 +55,7 @@ class Ask_action(smach.State):
 
         self.robot.speech.speak("What can I do for you?")
 
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out = rospy.Duration(10))
+        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out = rospy.Duration(30))
         self.robot.head.cancel_goal()
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
@@ -69,6 +69,7 @@ class Ask_action(smach.State):
 
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
+                return "failed"
         except KeyError:
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
             return "failed"
@@ -320,11 +321,24 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'ASK_ACTION',    ###### IN CASE NEXT STATE IS NOT "GO_TO_DOOR" SOMETHING IS SKIPPED
-                                                'abort':'Aborted'})
+        # Start challenge via StartChallengeRobust
+        smach.StateMachine.add( "START_CHALLENGE_ROBUST",
+                                    states.StartChallengeRobust(robot, data.starting_point, use_entry_points = True),
+                                    transitions={   "Done":"GO_TO_MEETING_WAYPOINT",
+                                                    "Aborted":"GO_TO_MEETING_WAYPOINT",
+                                                    "Failed":"GO_TO_MEETING_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
+        smach.StateMachine.add('GO_TO_MEETING_WAYPOINT',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    transitions={   'arrived':'INTRODUCE_SHORT',
+                                                    'unreachable':'GO_TO_MEETING_WAYPOINT_BACKUP',
+                                                    'goal_not_defined':'GO_TO_MEETING_WAYPOINT_BACKUP'})
+
+        smach.StateMachine.add('GO_TO_MEETING_WAYPOINT_BACKUP',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    transitions={   'arrived':'INTRODUCE_SHORT',
+                                                    'unreachable':'INTRODUCE_SHORT_FAILED',
+                                                    'goal_not_defined':'INTRODUCE_SHORT_FAILED'})
 
         ######################################################
         #################### INSTRUCTIONS ####################             
@@ -333,6 +347,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("INTRODUCE_SHORT",
                                states.Say(robot,"Hi! I will just wait here and wonder if I can do something for you", block=False),
+                               transitions={'spoken':'ASK_ACTION'})
+
+        smach.StateMachine.add("INTRODUCE_SHORT_FAILED",
+                               states.Say(robot,"Hi! I could not reach the meeint point, but I will just wait here and wonder if I can do something for you", block=False),
                                transitions={'spoken':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
@@ -402,15 +420,28 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('GO_TO_INITIAL_POINT',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="initial_pose"), radius = 0.5),
-                                transitions={   'arrived'           :   'FINISHED_TASK',
-                                                'unreachable'       :   'FINISHED_TASK',
-                                                'goal_not_defined'  :   'FINISHED_TASK'})
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    transitions={   'arrived':'FINISHED_TASK',
+                                                    'unreachable':'GO_TO_INITIAL_POINT_BACKUP',
+                                                    'goal_not_defined':'GO_TO_INITIAL_POINT_BACKUP'})
+
+        smach.StateMachine.add('GO_TO_INITIAL_POINT_BACKUP',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    transitions={   'arrived':'FINISHED_TASK',
+                                                    'unreachable':'FINISHED_TASK',
+                                                    'goal_not_defined':'FINISHED_TASK'})
 
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
                                 transitions={'new_task':'ASK_ACTION',
-                                              'tasks_completed':'ASK_ACTION'})
+                                              'tasks_completed':'GO_TO_EXIT'})
+
+        smach.StateMachine.add('GO_TO_EXIT',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit"), radius=0.7),
+                                    transitions={   'arrived':'Done',
+                                                    'unreachable':'Done',
+                                                    'goal_not_defined':'Done'})
+
     return sm
 
 if __name__ == "__main__":

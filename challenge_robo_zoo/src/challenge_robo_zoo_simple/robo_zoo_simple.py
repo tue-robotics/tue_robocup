@@ -174,7 +174,7 @@ class RoboZooSimple(smach.StateMachine):
                                                  'preempted':"Aborted"})
 
             smach.StateMachine.add( "SAY_SHOW_QR_MARKER",
-                                    states.Say(robot, [ "If you show me a QR marker, I'll do that you tell me to.", 
+                                    states.Say(robot, [ "If you show me a QR marker, I will dance with you! ", 
                                                         "Show me one of those paddles with a QR code and I'll do your bidding.",
                                                         "Please show me a QR marker",
                                                         "Show me one of those paddles, please."]),

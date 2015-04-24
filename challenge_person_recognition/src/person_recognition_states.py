@@ -501,7 +501,8 @@ class GetOperatorLocation(smach.State):
 
             # HAAAAAAAAAAAAAAAAAAACK
             if not chosenOperator:
-            	operatorIdx = random.randint(0, len(faceList)-1)
+                operatorIdx = 0
+                #operatorIdx = random.randint(0, len(faceList)-1)
             	chosenOperator = True
 
             if chosenOperator:
