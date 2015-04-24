@@ -16,7 +16,6 @@ from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 
-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -86,7 +85,7 @@ def points_distance(p1, p2):
     distance = math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
     print OUT_PREFIX + "Distance ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance)
 
-    # import ipdb; ipdb.set_Ptrace()
+
     return distance
 
 
@@ -96,8 +95,8 @@ def points_distance(p1, p2):
 
 OUT_PREFIX = bcolors.OKBLUE + "[CHALLENGE PERSON RECOGNITION] " + bcolors.ENDC
 
-names_women = ["anna", "beth", "carmen", "jennifer", "jessica","kimberly", "kristina", "laura", "mary", "sarah"]
-names_men = ["alfred", "charles", "daniel", "james", "john", "luis", "paul", "richard", "robert", "steve"]
+names_women = ['Anna', 'Beth', 'Carmen', 'Jennifer', 'Jessica', 'Kimberly', 'Kristina', 'Laura', 'Mary', 'Sarah']
+names_men = ['Alfred', 'Charles', 'Daniel', 'James', 'John', 'Luis', 'Paul', 'Richard', 'Robert', 'Steve']
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -129,7 +128,7 @@ class LookAtPersonInFront(smach.State):
 
         # look front, 2 meters high
         # self.robot.head.look_at_standing_person(timeout=4)
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 2,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 1,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
         rospy.sleep(2)  # give time for the percetion algorithms to add the entity
 
         # try to resolve the designator
@@ -396,6 +395,8 @@ class PointAtOperator(smach.State):
         print OUT_PREFIX + bcolors.OKBLUE + "PointAtOperator" + bcolors.ENDC
 
         # Get information about the operator and point at the location
+
+        self.robot.rightArm.send_goal(0.5, -0.3, 0.9, 0, 0, 0, 60)
 
         return 'succeeded'
 
