@@ -16,13 +16,16 @@ knowledge = load_knowledge("challenge_restaurant")
 
 class FollowOperatorAndStoreWaypoints(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done",'aborted'])
+        smach.State.__init__(self, outcomes=["done",'aborted','lost_operator'])
 
         self._robot = robot
         self._speech_recognition_thread = None
         self._speech_recognition_result = None
         
         self._waypoint_dict = {}
+        
+    def _save_kitchen(self):
+        print "Saving kitchen"
 
     def _speech_recognition_thread_function(self):
         print "restarting speech recognition thread"
@@ -97,19 +100,19 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         return operator
         
     def _update_navigation(self, operator):
-        self._robot.base.move(knowledge.navigation_position_constraint, operator.id)
+        self._robot.base.move(knowledge.navigation_position_constraint_operator, operator.id)
         
          
     def execute(self, userdata):
         while not rospy.is_shutdown():
             
-            # TODO: umcomment Blocking if not operator present
+            # TODO: uncomment Blocking if not operator present
             #operator = self._get_operator()
 
             # Check the speech result
             self._check_speech_result()
             
-            # TODO: umcomment Update navigation
+            # TODO: uncomment Update navigation
             #self._update_navigation(operator)
 
             # Check if we have all knowledge already

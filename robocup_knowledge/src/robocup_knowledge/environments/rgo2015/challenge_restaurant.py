@@ -1,8 +1,7 @@
 # Do not alter the keys please :)
-guiding_spec = "amigo <location> <side>"
+guiding_spec = "(amigo <location> <side>|Please follow me)"
 
 # Do not alter keys or side values
-guiding_choices = {"location" : ["restaurant_table_1", "restaurant_table_2", "restaurant_table_3"], "side" : ["left", "right", "front"]}
+guiding_choices = {"location" : ["restaurant table one", "restaurant table two", "restaurant table three"], "side" : ["left", "right", "front"]}
 
-operator_id = "operator"
-navigation_position_constraint = "x^2 + y^2 < 1^2"
+navigation_position_constraint_operator = "x^2 + y^2 < 1^2"
