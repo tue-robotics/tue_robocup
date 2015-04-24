@@ -195,7 +195,7 @@ class InspectShelves(smach.State):
 
         ''' Loop over shelves '''
         for shelf in self.object_shelves:
-            
+
             rospy.loginfo("Shelf: {0}".format(shelf))
 
             ''' Get entities '''
@@ -216,7 +216,7 @@ class InspectShelves(smach.State):
                 height = min(0.4, max(0.1, cp.z-0.55))
                 self.robot.torso._send_goal([height], timeout=5.0)
 
-                ''' Sleep for 1 second ''' 
+                ''' Sleep for 1 second '''
                 rospy.sleep(1.0)
 
         return 'succeeded'
@@ -436,8 +436,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "NAV_TO_START",
                                 #states.NavigateToObserve(robot, pick_shelf),
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=PICK_SHELF):"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, 
+                                states.NavigateToSymbolic(robot,
+                                                          {EdEntityDesignator(robot, id=PICK_SHELF):"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"},
                                                           EdEntityDesignator(robot, id=PICK_SHELF)),
                                 transitions={   'arrived'           :'RESET_ED',
                                                 'unreachable'       :'RESET_ED',
@@ -460,7 +460,13 @@ def setup_statemachine(robot):
 
         @smach.cb_interface(outcomes=["exported"])
         def export_to_pdf(userdata):
-            pdf.entities_to_pdf(robot.ed, robot.ed.get_entities(), "manipulation_challenge")
+            all_entities = robot.ed.get_entities()
+            pdf_entities = []
+            for object_shelf in OBJECT_SHELVES:
+                container_entity = robot.ed.get_entity(id=object_shelf, parse=False)
+                pdf_entities += [ e for e in all_entities if onTopOff(e, container_entity) ]
+
+            pdf.entities_to_pdf(robot.ed, pdf_entities, "manipulation_challenge")
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
                                 smach.CBState(export_to_pdf),
