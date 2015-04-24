@@ -25,14 +25,14 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         self._operator_id = None
         
         self._waypoint_dict = {}
+
+        self._said_has_all_knowledge = False
         
     def _save_kitchen(self):
-        self._robot.ed.add_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
+        self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
 
     def _speech_recognition_thread_function(self):
         print "restarting speech recognition thread"
-        
-        self._speech_recognition_result = None
         
         # Filter if we heard number already
         choices = knowledge.guiding_choices
@@ -55,10 +55,13 @@ class FollowOperatorAndStoreWaypoints(smach.State):
     def _check_speech_result(self, result, has_operator):
         # Check speech result
         if self._speech_recognition_result:
+            print self._speech_recognition_result
             if has_operator and result.result != "Please follow me":
                 self._heard_location(result.choices)
             elif not has_operator and result.result == "Please follow me":
                 self._register_operator()
+
+        self._speech_recognition_result = None
             
     def _heard_location(self, choices):
         # Stop the base
@@ -72,9 +75,9 @@ class FollowOperatorAndStoreWaypoints(smach.State):
             side = choices["side"]
             
             if side == "left":
-                base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.orientation) + math.pi / 2)
+                base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
             elif side == "right":
-                base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.orientation) - math.pi / 2)
+                base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
 
             # Get position of the base
             self._waypoint_dict[choices["location"]] = base_pose
@@ -95,7 +98,11 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         for waypoint_id, waypoint in self._waypoint_dict.iteritems():
             print "Asserting waypoint %s to world model"%waypoint_id    
             # Adding entity does not work yet, should crash here
-            self._robot.ed.add_entity(id=waypoint_id, posestamped=waypoint, type="waypoint")
+            self._robot.ed.update_entity(id=waypoint_id, posestamped=waypoint, type="waypoint")
+
+        if not self._said_has_all_knowledge:
+            self._robot.speech.speak("I stored all places, please bring me back to the kitchen! ")
+            self._said_has_all_knowledge = True
             
         return True
         
@@ -114,8 +121,21 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         
     def _update_navigation(self, operator):
         self._robot.base.move(knowledge.navigation_position_constraint_operator, operator.id)
+
+    def _back_in_kitchen(self):
+        # Get the robot pose and compare if we are close enough to the kitchen waypoint
+        kitchen = self._robot.ed.get_entity(id="kitchen")
+        if kitchen:
+            current = self._robot.base.get_location() 
+            if math.hypot(current.pose.position.x - kitchen.pose.position.x, current.pose.position.y - kitchen.pose.position.y) < knowledge.kitchen_radius:
+                return True
+        else:
+            print "NO KITCHEN IN ED???"
+        return False
+
         
     def execute(self, userdata):
+        self._save_kitchen()
         while not rospy.is_shutdown():
             
             # Check if operator present still present
@@ -128,15 +148,16 @@ class FollowOperatorAndStoreWaypoints(smach.State):
                 self._update_navigation(operator)
 
             # Check if we have all knowledge already
-            if self._check_all_knowledge():
-                return "done"
-
-            # (Re)Start the speech recognition thread if not running 
-            self._restart_speech_recognition_thread()
+            if not self._check_all_knowledge():
+                # (Re)Start the speech recognition thread if not running 
+                self._restart_speech_recognition_thread()
+            else:
+                if self._back_in_kitchen():
+                    break
 
             rospy.sleep(1)
 
-        return "aborted"
+        return "done"
 
 # testing purposes
 def setup_statemachine(robot):
