@@ -72,7 +72,6 @@ class FollowOperatorAndStoreWaypoints(smach.State):
     def _check_all_knowledge(self):
         for c in knowledge.guiding_choices['location']:
             if c not in self._waypoint_dict:
-                print '%s not yet in waypoint dict, continue guidance'%c
                 return False
                 
         # Assert data to the world model
