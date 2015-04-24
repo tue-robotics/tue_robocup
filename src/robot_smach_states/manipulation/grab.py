@@ -88,11 +88,13 @@ class PickUp(State):
         arm.occupied_by = grab_entity
 
         # Lift
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.0, 0.0, 0.0,
                              frame_id='/'+robot.robot_name+'/base_link',
                              timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
             rospy.logerr('Failed lift')
+
+	robot.base.force_drive(-0.125,0,0,3)
 
         # Retract
         if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,

@@ -64,17 +64,19 @@ class Put(State):
         while x <= dx:
             if not arm.send_goal(x, goal_y, height + 0.2, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
                 print "Failed pre-drop"
-                return 'failed'
-            x += 0.1
+                #return 'failed'
+            x += 0.05
 
-        if not arm.send_goal(dx, goal_y, height + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
-            print "drop"
-            return 'failed'
+        if not arm.send_goal(dx, goal_y, height + 0.15, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/{0}/base_link".format(robot.robot_name)):
+            print "drop failed"
+            #return 'failed'
 
         # Open gripper
         arm.send_gripper_goal('open')
 
         arm.occupied_by = None
+
+	robot.base.force_drive(-0.125, 0, 0, 3)
 
         x = dx
         while x > 0.3:
