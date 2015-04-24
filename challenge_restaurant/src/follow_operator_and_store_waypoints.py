@@ -5,12 +5,14 @@ import robot_smach_states as states
 import threading
 import time
 
+import math
+
 from cb_planner_msgs_srvs.msg import *
+
+from robot_skills.util import transformations
 
 from robocup_knowledge import load_knowledge
 knowledge = load_knowledge("challenge_restaurant")
-
-WAYPOINT_DICT = {}
 
 class FollowOperatorAndStoreWaypoints(smach.State):
     def __init__(self, robot):
@@ -19,6 +21,8 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         self._robot = robot
         self._speech_recognition_thread = None
         self._speech_recognition_result = None
+        
+        self._waypoint_dict = {}
 
     def _speech_recognition_thread_function(self):
         print "restarting speech recognition thread"
@@ -27,7 +31,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         
         # Filter if we heard number already
         choices = knowledge.guiding_choices
-        choices["number"] = [ c for c in choices["number"] if c not in WAYPOINT_DICT ]
+        choices["location"] = [ c for c in choices["location"] if c not in self._waypoint_dict ]
         
         self._speech_recognition_result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(100)) # Wait 100 secs
         
@@ -40,21 +44,41 @@ class FollowOperatorAndStoreWaypoints(smach.State):
             # Stop the base
             self._robot.base.local_planner.cancelCurrentPlan()
             
-            self._robot.speech.speak("I heard %s %s, is this allright?"%(self._speech_recognition_result.choices["number"], self._speech_recognition_result.choices["side"]))
+            self._robot.speech.speak("I heard %s %s, is this allright?"%(self._speech_recognition_result.choices["location"], self._speech_recognition_result.choices["side"]))
             yes_no_result = self._robot.ears.recognize("<banana>", {"banana": ["yes", "no"]})
             if yes_no_result and yes_no_result.choices["banana"] == "yes":
+                base_pose = self._robot.base.get_location().pose
+                
+                side = self._speech_recognition_result.choices["side"]
+                
+                if side == "left":
+                    base_pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.orientation) + math.pi / 2)
+                elif side == "right":
+                    base_pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.orientation) - math.pi / 2)
+
                 # Get position of the base
-                WAYPOINT_DICT[self._speech_recognition_result.choices["number"]] = self._robot.base.get_location()
+                self._waypoint_dict[self._speech_recognition_result.choices["location"]] = base_pose
                 
                 print "Current waypoint dictionary:"
-                print WAYPOINT_DICT
+                print self._waypoint_dict
                 
                 self._robot.speech.speak("Very well, moving on!")
             else:
                 self._robot.speech.speak("I am sorry, moving on!")
                 
     def _check_all_knowledge(self):
-        return "one" in WAYPOINT_DICT and "two" in WAYPOINT_DICT and "three" in WAYPOINT_DICT
+        for c in knowledge.guiding_choices['location']:
+            if c not in self._waypoint_dict:
+                print '%s not yet in waypoint dict, continue guidance'%c
+                return False
+                
+        # Assert data to the world model
+        for waypoint_id, waypoint in self._waypoint_dict.iteritems():
+            print "Asserting waypoint %s to world model"%waypoint_id    
+            # Adding entity does not work yet, should crash here
+            self._robot.ed.add_entity(id=waypoint_id, pose=waypoint, type=waypoint)
+            
+        return True
         
     def _restart_speech_recognition_thread(self):
         if not self._speech_recognition_thread:
@@ -72,21 +96,21 @@ class FollowOperatorAndStoreWaypoints(smach.State):
                 
         return operator
         
-    def __update_navigation(self):
-        self._robot.base.move(knowledge.navigation_position_constraint, knowledge.operator_id)
+    def _update_navigation(self, operator):
+        self._robot.base.move(knowledge.navigation_position_constraint, operator.id)
         
          
     def execute(self, userdata):
         while not rospy.is_shutdown():
             
-            # Blocking if not operator present
-            operator = self._get_operator()
+            # TODO: umcomment Blocking if not operator present
+            #operator = self._get_operator()
 
             # Check the speech result
             self._check_speech_result()
             
-            # Update navigation
-            self._update_navigation()
+            # TODO: umcomment Update navigation
+            #self._update_navigation(operator)
 
             # Check if we have all knowledge already
             if self._check_all_knowledge():
@@ -99,6 +123,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
 
         return "aborted"
 
+# testing purposes
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
