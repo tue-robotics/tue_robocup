@@ -72,7 +72,7 @@ class ED:
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
         
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type != "" ]
+        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" ]
 
         if len(entities) == 0:
             return None
