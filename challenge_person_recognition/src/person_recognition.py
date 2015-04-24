@@ -33,8 +33,8 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         waypoint_learning = EdEntityDesignator(robot, id="person_rec_learning")
         waypoint_living_room_1 = EdEntityDesignator(robot, id="person_rec_living_room_1")
-        waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_2")
-        waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_3")
+        waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_1")
+        waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_1")
 
         operatorNameDes = VariableDesignator(resolve_type=str)
         operatorNameDes.current = ""
@@ -318,7 +318,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'CANCEL_HEAD_GOALS_2',
                                         PersonRecStates.CancelHeadGoals(robot),
-                                        transitions={    'done':'GOTO_LIVING_ROOM_2'})
+                                        transitions={    'done':'container_success'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
                                         states.NavigateToWaypoint(robot, waypoint_living_room_2),

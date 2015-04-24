@@ -129,7 +129,7 @@ class LookAtPersonInFront(smach.State):
         # look front, 2 meters high
         # self.robot.head.look_at_standing_person(timeout=4)
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 1,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
-        rospy.sleep(2)  # give time for the percetion algorithms to add the entity
+        rospy.sleep(3)  # give time for the percetion algorithms to add the entity
 
         # try to resolve the designator
         desgnResult = humanDesignator.resolve()
@@ -141,7 +141,7 @@ class LookAtPersonInFront(smach.State):
         if desgnResult == None and self.lookDown == True:
             # look front, 2 meters high
             self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 0,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
-            rospy.sleep(2)    # give time for the percetion algorithms to add the entity
+            rospy.sleep(3)    # give time for the percetion algorithms to add the entity
 
             # try to resolve the designator
             desgnResult = humanDesignator.resolve()
