@@ -7,7 +7,7 @@ import inspect
 import random
 import ed_perception.msg
 import robot_skills.util.msg_constructors as msgs
-import geometry_msgs.msg as gm
+# import geometry_msgs.msg as gm
 import math
 from smach_ros import SimpleActionState
 from robot_smach_states.util.designators import *

@@ -10,15 +10,10 @@ import robot_smach_states as states
 import geometry_msgs.msg as gm
 import robot_skills.util.msg_constructors as msgs
 
-# from actionlib import *
-# from actionlib.msg import *
-
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
-# from smach_ros import SimpleActionState
 
-# from ed_perception.srv import LearnPerson, LearnPersonRequest
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime
 
 
