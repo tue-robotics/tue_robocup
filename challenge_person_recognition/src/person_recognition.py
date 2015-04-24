@@ -121,17 +121,22 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add( 'START_CHALLENGE',
-                                    states.StartChallengeRobust(robot, 'initial_pose'),
-                                    transitions={   'Done':'GOTO_ENTRY',
-                                                    'Aborted':'Aborted',
-                                                    'Failed':'GOTO_ENTRY'})
+            # smach.StateMachine.add( 'START_CHALLENGE',
+            #                         states.StartChallengeRobust(robot, 'initial_pose'),
+            #                         transitions={   'Done':'GOTO_ENTRY',
+            #                                         'Aborted':'Aborted',
+            #                                         'Failed':'GOTO_ENTRY'})
 
-            smach.StateMachine.add('GOTO_ENTRY',
-                                    states.NavigateToWaypoint(robot, waypoint_learning),
-                                    transitions={   'arrived':'LEARN_OPERATOR_CONTAINER',
-                                                    'unreachable':'LEARN_OPERATOR_CONTAINER',
-                                                    'goal_not_defined':'LEARN_OPERATOR_CONTAINER'})
+            # smach.StateMachine.add('GOTO_ENTRY',
+            #                         states.NavigateToWaypoint(robot, waypoint_learning),
+            #                         transitions={   'arrived':'LEARN_OPERATOR_CONTAINER',
+            #                                         'unreachable':'LEARN_OPERATOR_CONTAINER',
+            #                                         'goal_not_defined':'LEARN_OPERATOR_CONTAINER'})
+
+            smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized':'LEARN_OPERATOR_CONTAINER',
+                                                'abort':'Aborted'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
