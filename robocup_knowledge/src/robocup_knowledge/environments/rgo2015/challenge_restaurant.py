@@ -1,5 +1,5 @@
 # Do not alter the keys please :)
-guiding_spec = "(amigo <location> <side>|Please follow me)"
+guiding_spec = "(<location> <side>|Please follow me)"
 
 # Do not alter keys or side values
 guiding_choices = {"location" : ["restaurant location one", "restaurant location two", "restaurant location three"], "side" : ["left", "right", "front"]}
