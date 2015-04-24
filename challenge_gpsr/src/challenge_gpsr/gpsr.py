@@ -178,7 +178,7 @@ class Query_specific_action(smach.State):
                     if str(choice_value) == "1_location":
                         location=str(self.robot.reasoner.query_first_answer("action_info('1','"+str(choice_value)+"',A)"))
                         self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
-                        self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
+                        self.robot.reasoner.assertz("action_info('1','1_location','"+"gpsr_"+str(location)+"')")
                         print self.robot.reasoner.query_first_answer("action_info('1','1_location',A)")
                         return "navigate_location"
 
@@ -400,14 +400,20 @@ def setup_statemachine(robot):
         #                         transitions={'new_task':'RESET_REASONER'})
 
 
+        # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
+        #                         states.NavigateToSymbolic(robot, 
+        #                             {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")):"near"},
+        #                             #EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot,"room_location(Room)")) : "in"},
+        #                             EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+        #                         transitions={   'arrived'           :   'SAY_ARRIVED',
+        #                                         'unreachable'       :   'SAY_NOT_ARRIVED',
+        #                                         'goal_not_defined'  :   'SAY_NOT_ARRIVED'})
+
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
-                                states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")):"near"},
-                                    #EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot,"room_location(Room)")) : "in"},
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
-                                transitions={   'arrived'           :   'SAY_ARRIVED',
-                                                'unreachable'       :   'SAY_NOT_ARRIVED',
-                                                'goal_not_defined'  :   'SAY_NOT_ARRIVED'})
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.3),
+                                    transitions={   'arrived':'SAY_ARRIVED',
+                                                    'unreachable':'SAY_NOT_ARRIVED',
+                                                    'goal_not_defined':'SAY_NOT_ARRIVED'})
 
 
         # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
@@ -433,10 +439,14 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( 'SAY_ARRIVED',
                                 states.Say(robot, ["I have arrived at the desired location."], block=True),
-                                transitions={'spoken':'QUERY_SPECIFIC_ACTION'})
+                                transitions={'spoken':'SAY_GO_BACK'})
 
         smach.StateMachine.add( 'SAY_NOT_ARRIVED',
                                 states.Say(robot, ["I have not arrived at the desired location, I'm sorry."], block=True),
+                                transitions={'spoken':'SAY_GO_BACK'})
+
+        smach.StateMachine.add( 'SAY_GO_BACK',
+                                states.Say(robot, ["I can not do the last two actions, I will go back to the meeting point."], block=False),
                                 transitions={'spoken':'QUERY_SPECIFIC_ACTION'})
 
         # smach.StateMachine.add( "FIND_PERSON",
