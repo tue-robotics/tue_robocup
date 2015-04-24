@@ -169,7 +169,7 @@ class Base(object):
         if plan:
             o = OrientationConstraint()
             o.frame = frame
-            self.local_planner.setPlan(plan,o)
+            self.local_planner.setPlan(plan, p, o)
 
         return plan
 
