@@ -205,35 +205,35 @@ def setup_statemachine(robot):
 
     with sm:
         
-        # smach.StateMachine.add('SET_INITIAL_POSE',
-        #                         states.SetInitialPose(robot, "open_challenge_start"),
-        #                         transitions={   'done'          :'INITIALIZE',
-        #                                         'preempted'     :'Aborted',
-        #                                         'error'         :'Aborted'})
+        smach.StateMachine.add('SET_INITIAL_POSE',
+                                states.SetInitialPose(robot, "open_challenge_start"),
+                                transitions={   'done'          :'INITIALIZE',
+                                                'preempted'     :'Aborted',
+                                                'error'         :'Aborted'})
 
-        # smach.StateMachine.add('INITIALIZE',
-        #                         states.Initialize(robot),
-        #                         transitions={   'initialized'   :'SAY_EXPLORE',
-        #                                         'abort'         :'Aborted'})
+        smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized'   :'SAY_EXPLORE',
+                                                'abort'         :'Aborted'})
 
-        # smach.StateMachine.add('SAY_EXPLORE',
-        #                         states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
-        #                         transitions={   'spoken'        :'EXPLORE'})
+        smach.StateMachine.add('SAY_EXPLORE',
+                                states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
+                                transitions={   'spoken'        :'EXPLORE'})
 
-        # smach.StateMachine.add('EXPLORE',
-        #                         ExporeScenario(robot),
-        #                         transitions={   'done'        :'GOTO_OPERATOR'})
+        smach.StateMachine.add('EXPLORE',
+                                ExporeScenario(robot),
+                                transitions={   'done'        :'GOTO_OPERATOR'})
 
-        # smach.StateMachine.add('GOTO_OPERATOR',
-        #                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
-        #                         transitions={   'arrived'           :   'CITE_UNKNOWN_ITEMS',
-        #                                         'unreachable'       :   'CITE_UNKNOWN_ITEMS',
-        #                                         'goal_not_defined'  :   'CITE_UNKNOWN_ITEMS'})
+        smach.StateMachine.add('GOTO_OPERATOR',
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
+                                transitions={   'arrived'           :   'CITE_UNKNOWN_ITEMS',
+                                                'unreachable'       :   'CITE_UNKNOWN_ITEMS',
+                                                'goal_not_defined'  :   'CITE_UNKNOWN_ITEMS'})
 
-        # smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
-        #                         CiteItems(robot),
-        #                         transitions={   'succeeded'         :   'ASK_ITEMS1',
-        #                                         'failed'            :   'ASK_ITEMS1'} )
+        smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
+                                CiteItems(robot),
+                                transitions={   'succeeded'         :   'ASK_ITEMS1',
+                                                'failed'            :   'ASK_ITEMS1'} )
 
         smach.StateMachine.add('ASK_ITEMS1',
                                 AskItems(robot),
