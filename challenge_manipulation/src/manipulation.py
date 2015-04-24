@@ -265,7 +265,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         #   already placed
         #   on the placement-shelve.
         not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
-        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.2
+        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
         not_manipulated = lambda entity: not entity in manipulated_items.resolve()
         has_type = lambda entity: entity.type != ""
         min_height = lambda entity: entity.min_z > 0.3
@@ -279,8 +279,8 @@ class ManipRecogSingleItem(smach.StateMachine):
             x_size = abs(max_bb_x - min_bb_x)
             y_size = abs(max_bb_y - min_bb_y)
 
-            x_ok = 0.04 < x_size < 0.10
-            y_ok = 0.04 < y_size < 0.10
+            x_ok = 0.02 < x_size < 0.15
+            y_ok = 0.02 < y_size < 0.15
 
             return x_ok and y_ok
 
