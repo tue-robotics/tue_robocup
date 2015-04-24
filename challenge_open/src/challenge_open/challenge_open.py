@@ -18,6 +18,48 @@ TABLE1 = challenge_knowledge.table1
 TABLE2 = challenge_knowledge.table2
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 
+
+class AskItems(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.head.look_at_standing_person()
+
+        self.robot.speech.speak("What can you tell me?")
+
+        res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
+        self.robot.head.cancel_goal()
+        if not res:
+            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
+            return "failed"
+        try:
+            if res.result:
+                # ToDo: make nice
+                location = res.choices['location']
+                if 'object3' in res.choices:
+                    object1  = res.choices['object1']
+                    object2  = res.choices['object2']
+                    object3  = res.choices['object3']
+                    self.robot.speech.speak("All right, so I can find {0}, {1} and {2} on the {3}".format(object1, object2, object3, location))
+                elif 'object2' in res.choices:
+                    object1  = res.choices['object1']
+                    object2  = res.choices['object2']
+                    self.robot.speech.speak("All right, so I can find {0} and {1} on the {2}".format(object1, object2, location))
+                else:
+                    object1  = res.choices['object1']
+                    self.robot.speech.speak("All right, so I can find {0} on the {1}".format(object1, location))
+            else:
+                self.robot.speech.speak("Sorry, could you please repeat?")
+                return "failed"
+        except KeyError:
+            print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
+            return "failed"
+
+        return "succeeded"
+
+
 class CiteItems(smach.State):
     """ Cite all items that have been found """
     def __init__(self, robot):
@@ -163,33 +205,38 @@ def setup_statemachine(robot):
 
     with sm:
         
-        smach.StateMachine.add('SET_INITIAL_POSE',
-                                states.SetInitialPose(robot, "open_challenge_start"),
-                                transitions={   'done'          :'INITIALIZE',
-                                                'preempted'     :'Aborted',
-                                                'error'         :'Aborted'})
+        # smach.StateMachine.add('SET_INITIAL_POSE',
+        #                         states.SetInitialPose(robot, "open_challenge_start"),
+        #                         transitions={   'done'          :'INITIALIZE',
+        #                                         'preempted'     :'Aborted',
+        #                                         'error'         :'Aborted'})
 
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized'   :'SAY_EXPLORE',
-                                                'abort'         :'Aborted'})
+        # smach.StateMachine.add('INITIALIZE',
+        #                         states.Initialize(robot),
+        #                         transitions={   'initialized'   :'SAY_EXPLORE',
+        #                                         'abort'         :'Aborted'})
 
-        smach.StateMachine.add('SAY_EXPLORE',
-                                states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
-                                transitions={   'spoken'        :'EXPLORE'})
+        # smach.StateMachine.add('SAY_EXPLORE',
+        #                         states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
+        #                         transitions={   'spoken'        :'EXPLORE'})
 
-        smach.StateMachine.add('EXPLORE',
-                                ExporeScenario(robot),
-                                transitions={   'done'        :'GOTO_OPERATOR'})
+        # smach.StateMachine.add('EXPLORE',
+        #                         ExporeScenario(robot),
+        #                         transitions={   'done'        :'GOTO_OPERATOR'})
 
-        smach.StateMachine.add('GOTO_OPERATOR',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
-                                transitions={   'arrived'           :   'CITE_UNKNOWN_ITEMS',
-                                                'unreachable'       :   'CITE_UNKNOWN_ITEMS',
-                                                'goal_not_defined'  :   'CITE_UNKNOWN_ITEMS'})
+        # smach.StateMachine.add('GOTO_OPERATOR',
+        #                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
+        #                         transitions={   'arrived'           :   'CITE_UNKNOWN_ITEMS',
+        #                                         'unreachable'       :   'CITE_UNKNOWN_ITEMS',
+        #                                         'goal_not_defined'  :   'CITE_UNKNOWN_ITEMS'})
 
-        smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
-                                CiteItems(robot),
+        # smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
+        #                         CiteItems(robot),
+        #                         transitions={   'succeeded'         :   'ASK_ITEMS1',
+        #                                         'failed'            :   'ASK_ITEMS1'} )
+
+        smach.StateMachine.add('ASK_ITEMS1',
+                                AskItems(robot),
                                 transitions={   'succeeded'         :   'Done',
                                                 'failed'            :   'Done'} )
 
@@ -201,10 +248,5 @@ if __name__ == '__main__':
 
     ''' Now, we will use AMIGO, but in the future we might change that '''
     robot_name = 'amigo'
-    # if len(sys.argv) > 1:
-    #     robot_name = sys.argv[1]
-    # else:
-    #     print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
-    #     exit(1)
 
     startup(setup_statemachine, robot_name=robot_name)
