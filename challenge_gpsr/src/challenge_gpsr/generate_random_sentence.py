@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-import data
+from robocup_knowledge import load_knowledge
+data = load_knowledge('challenge_gpsr')
+
 import re
 import random
 
