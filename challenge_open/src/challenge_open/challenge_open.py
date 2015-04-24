@@ -4,11 +4,14 @@ import smach
 import sys
 import random
 import math
+import numpy
+import operator
 
 import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.util.startup import startup
 from robot_skills.util import msg_constructors as msgs
+from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
 
 from robocup_knowledge import load_knowledge
@@ -17,7 +20,18 @@ CABINET = challenge_knowledge.cabinet
 TABLE1 = challenge_knowledge.table1
 TABLE2 = challenge_knowledge.table2
 OBJECT_SHELVES = challenge_knowledge.object_shelves
+LOOK_POSES = {}
 
+class StorePose(smach.State):
+    def __init__(self, robot, id):
+        smach.State.__init__(self, outcomes=['stored'])
+        self.robot = robot
+        self.id = id
+
+    def execute(self, userdata):
+        pose = self.robot.base.get_location()
+        LOOK_POSES[id] = pose
+        return 'stored'
 
 class AskItems(smach.State):
     def __init__(self, robot):
@@ -36,20 +50,7 @@ class AskItems(smach.State):
             return "failed"
         try:
             if res.result:
-                # ToDo: make nice
-                location = res.choices['location']
-                if 'object3' in res.choices:
-                    object1  = res.choices['object1']
-                    object2  = res.choices['object2']
-                    object3  = res.choices['object3']
-                    self.robot.speech.speak("All right, so I can find {0}, {1} and {2} on the {3}".format(object1, object2, object3, location))
-                elif 'object2' in res.choices:
-                    object1  = res.choices['object1']
-                    object2  = res.choices['object2']
-                    self.robot.speech.speak("All right, so I can find {0} and {1} on the {2}".format(object1, object2, location))
-                else:
-                    object1  = res.choices['object1']
-                    self.robot.speech.speak("All right, so I can find {0} on the {1}".format(object1, location))
+                self.speak(res)
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
                 return "failed"
@@ -58,6 +59,61 @@ class AskItems(smach.State):
             return "failed"
 
         return "succeeded"
+
+    def addToED(self, res):
+        ''' Find entities on location '''
+        entities = self.robot.ed.get_entities(parse=False)
+
+        ''' Check numbers??? '''
+        ''' Backup scenario is difficult, operator should take care!!! '''
+
+        ''' Transform to robot pose '''
+        y_bl = {}
+        mat = self.pose_to_mat(pose_bl.pose)
+        #t_result = R1_inv * t2 + t1_inv
+
+        for entity in entities:
+            if onTopOff(entity, self.robot.ed.get_entity(id=res.choices['location'])):
+                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]) - mat[0:3, 3]
+                y_bl[entity.id] = vec_bl.item(1)
+
+        ''' Sort on y coordinate '''
+        sorted_y_bl = sorted(y_bl.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
+
+        ''' Assert to world model '''
+        updates = zip(sorted_y_bl, res.choices)
+        for update in updates:
+            self.robot.ed.update_entity(id=update[0], type=update[1])
+
+    def pose_to_mat(self, pose):
+        '''Convert a pose message to a 4x4 numpy matrix.
+
+        Args:
+            pose (geometry_msgs.msg.Pose): Pose rospy message class.
+        Returns:
+            mat (numpy.matrix): 4x4 numpy matrix
+        '''
+        quat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+        pos = numpy.matrix([pose.position.x, pose.position.y, pose.position.z]).T
+        mat = numpy.matrix(tf.transformations.quaternion_matrix(quat))
+        mat[0:3, 3] = pos
+        return mat
+
+    def speak(self, res):
+        # ToDo: make nice
+        location = res.choices['location']
+        if 'object3' in res.choices:
+            object1  = res.choices['object1']
+            object2  = res.choices['object2']
+            object3  = res.choices['object3']
+            self.robot.speech.speak("All right, so I can find {0}, {1} and {2} on the {3}".format(object1, object2, object3, location))
+        elif 'object2' in res.choices:
+            object1  = res.choices['object1']
+            object2  = res.choices['object2']
+            self.robot.speech.speak("Okay, so there is {0} and {1} on the {2}".format(object1, object2, location))
+        else:
+            object1  = res.choices['object1']
+            self.robot.speech.speak("So I guess I see {0} on the {1}".format(object1, location))
 
 
 class CiteItems(smach.State):
@@ -142,7 +198,7 @@ class InspectShelves(smach.State):
         return 'succeeded'
 
 ############################## explore state machine #####################
-class ExporeScenario(smach.StateMachine):
+class ExploreScenario(smach.StateMachine):
     
     def __init__(self, robot):
 
@@ -153,13 +209,22 @@ class ExporeScenario(smach.StateMachine):
                                 states.NavigateToSymbolic(robot, 
                                                           {EdEntityDesignator(robot, id=TABLE1):"in_front_of"}, 
                                                           EdEntityDesignator(robot, id=TABLE1)),
-                                transitions={   'arrived'           :   'LOOKAT_TABLE1',
-                                                'unreachable'       :   'LOOKAT_TABLE1',
-                                                'goal_not_defined'  :   'LOOKAT_TABLE1'})
+                                transitions={   'arrived'           :   'STORE_TABLE1',
+                                                'unreachable'       :   'STORE_TABLE1',
+                                                'goal_not_defined'  :   'STORE_TABLE1'})
+
+            smach.StateMachine.add("STORE_TABLE1",
+                                    StorePose(robot, TABLE1),
+                                    transitions={  'stored'         :   'LOOKAT_TABLE1'})
 
             smach.StateMachine.add("LOOKAT_TABLE1",
                                      states.LookAtEntity(robot, EdEntityDesignator(robot, id=TABLE1), keep_following=True),
-                                     transitions={  'succeeded'         :'RESET_HEAD_TABLE1'})
+                                     transitions={  'succeeded'         :'ASK_ITEMS1'})
+
+            smach.StateMachine.add('ASK_ITEMS1',
+                                AskItems(robot),
+                                transitions={   'succeeded'         :   'RESET_HEAD_TABLE1',
+                                                'failed'            :   'RESET_HEAD_TABLE1'} )
 
             smach.StateMachine.add( "RESET_HEAD_TABLE1",
                                     states.CancelHead(robot),
@@ -169,14 +234,23 @@ class ExporeScenario(smach.StateMachine):
                                 states.NavigateToSymbolic(robot, 
                                                           {EdEntityDesignator(robot, id=CABINET):"in_front_of"}, 
                                                           EdEntityDesignator(robot, id=CABINET)),
-                                transitions={   'arrived'           :   'LOOKAT_CABINET',
-                                                'unreachable'       :   'LOOKAT_CABINET',
-                                                'goal_not_defined'  :   'LOOKAT_CABINET'})
+                                transitions={   'arrived'           :   'STORE_CABINET',
+                                                'unreachable'       :   'STORE_CABINET',
+                                                'goal_not_defined'  :   'STORE_CABINET'})
+
+            smach.StateMachine.add("STORE_CABINET",
+                                StorePose(robot, TABLE1),
+                                transitions={  'stored'         :   'LOOKAT_CABINET'})
 
             smach.StateMachine.add("LOOKAT_CABINET",
                                 InspectShelves(robot, OBJECT_SHELVES),
-                                transitions={'succeeded'                :'RESET_HEAD_CABINET',
-                                             'failed'                   :'RESET_HEAD_CABINET'})
+                                transitions={'succeeded'                :'ASK_ITEMS2',
+                                             'failed'                   :'ASK_ITEMS2'})
+
+            smach.StateMachine.add('ASK_ITEMS2',
+                                AskItems(robot),
+                                transitions={   'succeeded'         :   'RESET_HEAD_CABINET',
+                                                'failed'            :   'RESET_HEAD_CABINET'} )
 
             smach.StateMachine.add( "RESET_HEAD_CABINET",
                                     states.CancelHead(robot),
@@ -186,13 +260,22 @@ class ExporeScenario(smach.StateMachine):
                                 states.NavigateToSymbolic(robot, 
                                                           {EdEntityDesignator(robot, id=TABLE2):"in_front_of"}, 
                                                           EdEntityDesignator(robot, id=TABLE2)),
-                                transitions={   'arrived'           :   'LOOKAT_TABLE2',
-                                                'unreachable'       :   'LOOKAT_TABLE2',
-                                                'goal_not_defined'  :   'LOOKAT_TABLE2'})
+                                transitions={   'arrived'           :   'STORE_TABLE2',
+                                                'unreachable'       :   'STORE_TABLE2',
+                                                'goal_not_defined'  :   'STORE_TABLE2'})
+
+            smach.StateMachine.add("STORE_TABLE2",
+                                    StorePose(robot, TABLE2),
+                                    transitions={  'stored'         :   'LOOKAT_TABLE2'})
 
             smach.StateMachine.add("LOOKAT_TABLE2",
                                      states.LookAtEntity(robot, EdEntityDesignator(robot, id=TABLE2), keep_following=True),
-                                     transitions={  'succeeded'         :'RESET_HEAD_TABLE2'})
+                                     transitions={  'succeeded'         :'ASK_ITEMS3'})
+
+            smach.StateMachine.add('ASK_ITEMS3',
+                                AskItems(robot),
+                                transitions={   'succeeded'         :   'RESET_HEAD_TABLE2',
+                                                'failed'            :   'RESET_HEAD_TABLE2'} )
 
             smach.StateMachine.add( "RESET_HEAD_TABLE2",
                                     states.CancelHead(robot),
@@ -221,24 +304,19 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'        :'EXPLORE'})
 
         smach.StateMachine.add('EXPLORE',
-                                ExporeScenario(robot),
+                                ExploreScenario(robot),
                                 transitions={   'done'        :'GOTO_OPERATOR'})
 
         smach.StateMachine.add('GOTO_OPERATOR',
                                 states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
-                                transitions={   'arrived'           :   'CITE_UNKNOWN_ITEMS',
-                                                'unreachable'       :   'CITE_UNKNOWN_ITEMS',
-                                                'goal_not_defined'  :   'CITE_UNKNOWN_ITEMS'})
+                                transitions={   'arrived'           :   'Done',
+                                                'unreachable'       :   'Done',
+                                                'goal_not_defined'  :   'Done'})
 
-        smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
-                                CiteItems(robot),
-                                transitions={   'succeeded'         :   'ASK_ITEMS1',
-                                                'failed'            :   'ASK_ITEMS1'} )
-
-        smach.StateMachine.add('ASK_ITEMS1',
-                                AskItems(robot),
-                                transitions={   'succeeded'         :   'Done',
-                                                'failed'            :   'Done'} )
+        # smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
+        #                         CiteItems(robot),
+        #                         transitions={   'succeeded'         :   'ASK_ITEMS1',
+        #                                         'failed'            :   'ASK_ITEMS1'} )
 
     return sm
 
