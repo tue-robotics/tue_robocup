@@ -29,8 +29,11 @@ from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 import operator
 
-ROOM = "room_living_room"
-
+from robocup_knowledge import load_knowledge
+challenge_knowledge = load_knowledge('challenge_robonurse')
+ROOM = challenge_knowledge.room
+GRANNIES_TABLE = challenge_knowledge.grannies_table
+BOTTLE_SHELF = challenge_knowledge.bottle_shelf
 
 def raw_input_timeout(prompt, timeout=10):
     from select import select
@@ -168,9 +171,8 @@ class RoboNurse(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
         granny = EdEntityDesignator(robot, type='human')
-        grannies_table = EdEntityDesignator(robot, id="dinner_table")
-        shelf = EdEntityDesignator(robot, id='plastic_cabinet_shelf_1')
-
+        grannies_table = EdEntityDesignator(robot, id=GRANNIES_TABLE)
+        shelf = EdEntityDesignator(robot, id=BOTTLE_SHELF)
 
         def small(entity):
             return abs(entity.z_min - entity.z_max) < 0.20
