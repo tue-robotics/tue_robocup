@@ -1,16 +1,19 @@
 #! /usr/bin/env python
 import rospy
-from ed.srv import SimpleQuery, SimpleQueryRequest
+from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv
 from ed.srv import GetGUICommand, GetGUICommandResponse
 from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
 import robot_skills.util.msg_constructors as msgs
-from robot_skills.util import transformations
 from math import hypot
 
+from robot_skills.util import transformations
+
 from std_srvs.srv import Empty #Reset Ed
+
+import tf
 
 import yaml
 
@@ -35,6 +38,7 @@ class ED:
     def __init__(self, robot_name, tf_listener, wait_service=False):
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
         self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
+        self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
@@ -97,5 +101,17 @@ class ED:
     def _transform_center_point_to_map(self, pointstamped):
         point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
         return point_in_map
+
+    def update_entity(self, id, type = None, posestamped = None):
+        json_entity = '"id" : "%s"' % id
+        if type:
+            json_entity += ', "type": "%s"' % type
+        if posestamped:
+            X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
+            t = posestamped.pose.position
+            json_entity += ', "pose": { "x": %d, "y": %d, "z": %d, "X": %d, "Y": %d, "Z": %d }' % (t.x, t.y, t.z, X, Y, Z)
+
+        json = '{"entities":[{%s}]}'%json_entity
+        return self._ed_update_srv(request=json)
 
 
