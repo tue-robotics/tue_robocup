@@ -50,7 +50,7 @@ class FoodType:
     Milk = 2
 
 def parseFoodType(item, got_fruit, got_cereal, got_milk):
-    print prefix + bcolors.OKBLUE + "parseFoodType" + bcolors.ENDC
+    # print prefix + bcolors.OKBLUE + "parseFoodType" + bcolors.ENDC
 
     # if a fruit has not been picked, you can search there
     if not got_fruit and item in names_fruit:
@@ -229,7 +229,7 @@ class GetOrder(smach.State):
         else:
             heard_correctly = False
 
-        rospy.sleep(2)
+        # rospy.sleep(2)
 
         if heard_correctly:
             return 'succeeded'
