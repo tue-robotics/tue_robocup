@@ -152,7 +152,7 @@ class WakeMeUp(smach.StateMachine):
             with takeOrderContainer:
 
                 smach.StateMachine.add( "SAY_GOODMORNING",
-                                        states.Say(robot, [ "What would you like to have for breakfast?" ], block=False),
+                                        states.Say(robot, [ "What would you like to have for breakfast?" ], block=True),
                                         transitions={   'spoken' :'GET_BREAKFAST_ORDER'})
 
 
