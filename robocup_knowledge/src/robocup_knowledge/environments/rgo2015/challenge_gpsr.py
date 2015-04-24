@@ -1,5 +1,10 @@
 # GERMAN OPEN 2015
 
+#locations:
+starting_point = "initial_pose_door_A"
+meeting_point = "gpsr_meeting_point"
+
+#data for speech recognition
 objects_known = ["ice-tea", "oblates", "bubblegum", "candle", "cup", "beer", "wd40", "filler", "chocolate cereals", "coke",
                  "chocosticks", "yellow candle", "noodles", "coffee", "cranberry cereals", "muesli cereals", "bubblemint",
                  "deodorant", "brush", "cigarettes", "red bull", "meadow milk", "mints", "pringles", "fresh milk", "coffeepads",
