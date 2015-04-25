@@ -19,6 +19,7 @@ challenge_knowledge = load_knowledge('challenge_open')
 CABINET = challenge_knowledge.cabinet
 TABLE1 = challenge_knowledge.table1
 TABLE2 = challenge_knowledge.table2
+TABLE3 = challenge_knowledge.table3
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 LOOK_POSES = {}
 
@@ -116,86 +117,118 @@ class AskItems(smach.State):
             self.robot.speech.speak("So I guess I see {0} on the {1}".format(object1, location))
 
 
-class CiteItems(smach.State):
-    """ Cite all items that have been found """
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
-        self.robot = robot
+# class CiteItems(smach.State):
+#     """ Cite all items that have been found """
+#     def __init__(self, robot):
+#         smach.State.__init__(self, outcomes=['succeeded','failed'])
+#         self.robot = robot
 
-    def execute(self, userdata):
+#     def execute(self, userdata):
 
-        entities = self.robot.ed.get_entities()
-        if len(entities) == 0:
-            rospy.logerr("Something went terribly wrong, I have not found any entities")
-            self.robot.speech.speak("I must be blind")
-            return 'failed'
+#         entities = self.robot.ed.get_entities()
+#         if len(entities) == 0:
+#             rospy.logerr("Something went terribly wrong, I have not found any entities")
+#             self.robot.speech.speak("I must be blind")
+#             return 'failed'
 
-        self.robot.speech.speak("I have found some items that I don't know")
+#         self.robot.speech.speak("I have found some items that I don't know")
 
-        surface = self.robot.ed.get_entity(id=TABLE1)
-        if surface:
-            count = 0
-            for entity in entities:
-                if (onTopOff(entity, surface)):
-                    count += 1
-            self.robot.speech.speak("I have found {0} items on the {1}".format(count, TABLE1))
+#         surface = self.robot.ed.get_entity(id=TABLE1)
+#         if surface:
+#             count = 0
+#             for entity in entities:
+#                 if (onTopOff(entity, surface)):
+#                     count += 1
+#             self.robot.speech.speak("I have found {0} items on the {1}".format(count, TABLE1))
 
-        count = 0
-        for shelf in OBJECT_SHELVES:
-            surface = self.robot.ed.get_entity(id=shelf)
-            if surface:
-                for entity in entities:
-                    if (onTopOff(entity, surface)):
-                        count += 1
-        self.robot.speech.speak("I have found {0} items in the bookcase".format(count))
+#         count = 0
+#         for shelf in OBJECT_SHELVES:
+#             surface = self.robot.ed.get_entity(id=shelf)
+#             if surface:
+#                 for entity in entities:
+#                     if (onTopOff(entity, surface)):
+#                         count += 1
+#         self.robot.speech.speak("I have found {0} items in the bookcase".format(count))
 
-        surface = self.robot.ed.get_entity(id=TABLE2)
-        if surface:
-            count = 0
-            for entity in entities:
-                if (onTopOff(entity, surface)):
-                    count += 1
-        self.robot.speech.speak("I have found {0} items on the {1}".format(count, TABLE2))
+#         surface = self.robot.ed.get_entity(id=TABLE2)
+#         if surface:
+#             count = 0
+#             for entity in entities:
+#                 if (onTopOff(entity, surface)):
+#                     count += 1
+#         self.robot.speech.speak("I have found {0} items on the {1}".format(count, TABLE2))
 
-        return 'succeeded'
+#         return 'succeeded'
 
-class InspectShelves(smach.State):
-    """ Inspect all object shelves """
+# class InspectShelves(smach.State):
+#     """ Inspect all object shelves """
 
-    def __init__(self, robot, object_shelves):
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
-        self.robot = robot
-        self.object_shelves = object_shelves
+#     def __init__(self, robot, object_shelves):
+#         smach.State.__init__(self, outcomes=['succeeded','failed'])
+#         self.robot = robot
+#         self.object_shelves = object_shelves
 
-    def execute(self, userdata):
+#     def execute(self, userdata):
 
-        ''' Loop over shelves '''
-        for shelf in self.object_shelves:
+#         ''' Loop over shelves '''
+#         for shelf in self.object_shelves:
 
-            rospy.loginfo("Shelf: {0}".format(shelf))
+#             rospy.loginfo("Shelf: {0}".format(shelf))
 
-            ''' Get entities '''
-            entity = self.robot.ed.get_entity(id=shelf, parse=False)
+#             ''' Get entities '''
+#             entity = self.robot.ed.get_entity(id=shelf, parse=False)
 
-            if entity:
+#             if entity:
 
-                ''' Extract center point '''
-                cp = entity.center_point
+#                 ''' Extract center point '''
+#                 cp = entity.center_point
 
-                ''' Look at target '''
-                self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,cp.z,"/map"))
+#                 ''' Look at target '''
+#                 self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,cp.z,"/map"))
 
-                ''' Move spindle
-                    Implemented only for AMIGO (hence the hardcoding)
-                    Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
-                # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
-                height = min(0.4, max(0.1, cp.z-0.55))
-                self.robot.torso._send_goal([height], timeout=5.0)
+#                 ''' Move spindle
+#                     Implemented only for AMIGO (hence the hardcoding)
+#                     Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
+#                 # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
+#                 height = min(0.4, max(0.1, cp.z-0.55))
+#                 self.robot.torso._send_goal([height], timeout=5.0)
 
-                ''' Sleep for 1 second '''
-                rospy.sleep(1.0)
+#                 ''' Sleep for 1 second '''
+#                 rospy.sleep(1.0)
 
-        return 'succeeded'
+#         return 'succeeded'
+
+class ExploreTable(smach.StateMachine):
+
+    def __init__(self, robot, table_id):
+
+        smach.StateMachine.__init__(self, outcomes=['done'])
+
+        with self:
+            smach.StateMachine.add('GOTO_TABLE',
+                                states.NavigateToSymbolic(robot, 
+                                                          {EdEntityDesignator(robot, id=table_id):"in_front_of"}, 
+                                                          EdEntityDesignator(robot, id=table_id)),
+                                transitions={   'arrived'           :   'STORE_TABLE',
+                                                'unreachable'       :   'STORE_TABLE',
+                                                'goal_not_defined'  :   'STORE_TABLE'})
+
+            smach.StateMachine.add("STORE_TABLE",
+                                    StorePose(robot, table_id),
+                                    transitions={  'stored'         :   'LOOKAT_TABLE'})
+
+            smach.StateMachine.add("LOOKAT_TABLE",
+                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id=table_id), keep_following=True),
+                                     transitions={  'succeeded'         :'ASK_ITEMS'})
+
+            smach.StateMachine.add('ASK_ITEMS',
+                                AskItems(robot),
+                                transitions={   'succeeded'         :   'RESET_HEAD_TABLE',
+                                                'failed'            :   'RESET_HEAD_TABLE'} )
+
+            smach.StateMachine.add( "RESET_HEAD_TABLE",
+                                    states.CancelHead(robot),
+                                    transitions={   'done'              :'done'})
 
 ############################## explore state machine #####################
 class ExploreScenario(smach.StateMachine):
@@ -205,81 +238,17 @@ class ExploreScenario(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done'])
 
         with self:
-            smach.StateMachine.add('GOTO_TABLE1',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=TABLE1):"in_front_of"}, 
-                                                          EdEntityDesignator(robot, id=TABLE1)),
-                                transitions={   'arrived'           :   'STORE_TABLE1',
-                                                'unreachable'       :   'STORE_TABLE1',
-                                                'goal_not_defined'  :   'STORE_TABLE1'})
+            smach.StateMachine.add('EXPLORE_TABLE1',
+                                    ExploreTable(robot, TABLE1),
+                                    transitions={   'done'          :   'EXPLORE_TABLE2'})
 
-            smach.StateMachine.add("STORE_TABLE1",
-                                    StorePose(robot, TABLE1),
-                                    transitions={  'stored'         :   'LOOKAT_TABLE1'})
+            smach.StateMachine.add('EXPLORE_TABLE2',
+                                    ExploreTable(robot, TABLE2),
+                                    transitions={   'done'          :   'EXPLORE_TABLE3'})
 
-            smach.StateMachine.add("LOOKAT_TABLE1",
-                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id=TABLE1), keep_following=True),
-                                     transitions={  'succeeded'         :'ASK_ITEMS1'})
-
-            smach.StateMachine.add('ASK_ITEMS1',
-                                AskItems(robot),
-                                transitions={   'succeeded'         :   'RESET_HEAD_TABLE1',
-                                                'failed'            :   'RESET_HEAD_TABLE1'} )
-
-            smach.StateMachine.add( "RESET_HEAD_TABLE1",
-                                    states.CancelHead(robot),
-                                    transitions={   'done'              :'GOTO_CABINET'})
-
-            smach.StateMachine.add('GOTO_CABINET',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=CABINET):"in_front_of"}, 
-                                                          EdEntityDesignator(robot, id=CABINET)),
-                                transitions={   'arrived'           :   'STORE_CABINET',
-                                                'unreachable'       :   'STORE_CABINET',
-                                                'goal_not_defined'  :   'STORE_CABINET'})
-
-            smach.StateMachine.add("STORE_CABINET",
-                                StorePose(robot, TABLE1),
-                                transitions={  'stored'         :   'LOOKAT_CABINET'})
-
-            smach.StateMachine.add("LOOKAT_CABINET",
-                                InspectShelves(robot, OBJECT_SHELVES),
-                                transitions={'succeeded'                :'ASK_ITEMS2',
-                                             'failed'                   :'ASK_ITEMS2'})
-
-            smach.StateMachine.add('ASK_ITEMS2',
-                                AskItems(robot),
-                                transitions={   'succeeded'         :   'RESET_HEAD_CABINET',
-                                                'failed'            :   'RESET_HEAD_CABINET'} )
-
-            smach.StateMachine.add( "RESET_HEAD_CABINET",
-                                    states.CancelHead(robot),
-                                    transitions={   'done'              :'GOTO_TABLE2'})
-
-            smach.StateMachine.add('GOTO_TABLE2',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=TABLE2):"in_front_of"}, 
-                                                          EdEntityDesignator(robot, id=TABLE2)),
-                                transitions={   'arrived'           :   'STORE_TABLE2',
-                                                'unreachable'       :   'STORE_TABLE2',
-                                                'goal_not_defined'  :   'STORE_TABLE2'})
-
-            smach.StateMachine.add("STORE_TABLE2",
-                                    StorePose(robot, TABLE2),
-                                    transitions={  'stored'         :   'LOOKAT_TABLE2'})
-
-            smach.StateMachine.add("LOOKAT_TABLE2",
-                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id=TABLE2), keep_following=True),
-                                     transitions={  'succeeded'         :'ASK_ITEMS3'})
-
-            smach.StateMachine.add('ASK_ITEMS3',
-                                AskItems(robot),
-                                transitions={   'succeeded'         :   'RESET_HEAD_TABLE2',
-                                                'failed'            :   'RESET_HEAD_TABLE2'} )
-
-            smach.StateMachine.add( "RESET_HEAD_TABLE2",
-                                    states.CancelHead(robot),
-                                    transitions={   'done'              :'done'})
+            smach.StateMachine.add('EXPLORE_TABLE3',
+                                    ExploreTable(robot, TABLE3),
+                                    transitions={   'done'          :   'done'})
 
 ############################## state machine #############################
 def setup_statemachine(robot):
