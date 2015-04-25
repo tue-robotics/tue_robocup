@@ -46,6 +46,21 @@ class SayFinal(smach.State):
 
         return "spoken"
 
+class GrabFinal(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done","failed"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        empty_arm_designator = UnoccupiedArmDesignator(self.robot.arms, self.robot.leftArm)
+        drink = EdEntityDesignator(self.robot, type=OBJECTS_LIST[0])
+
+        grab_coke = states.Grab(self.robot, drink, empty_arm_designator)
+
+        status = grab_coke.execute(None)
+
+        return status
 
 ############################## main statemachine ######################
 def setup_statemachine(robot):
@@ -53,29 +68,24 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
     with sm:
-        smach.StateMachine.add("INITIALIZE",
-                                states.StartChallengeRobust(robot, INITIAL_POSE, use_entry_points = True),
-                                transitions={   "Done"              :   "WAIT_FOR_TRIGGER_TO_START",
-                                                "Aborted"           :   "WAIT_FOR_TRIGGER_TO_START",
-                                                "Failed"            :   "WAIT_FOR_TRIGGER_TO_START"})
-       
         smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
                                     AwaitTriggerAndSave(robot),
-                                    transitions={   'done'              :'SAY_GET_OBJECT',
-                                                    'failed'            :'SAY_GET_OBJECT'})
+                                    transitions={   'done'              :'INITIALIZE',
+                                                    'failed'            :'INITIALIZE'})
+        smach.StateMachine.add("INITIALIZE",
+                                states.StartChallengeRobust(robot, INITIAL_POSE, use_entry_points = True),
+                                transitions={   "Done"              :   "SAY_GET_OBJECT",
+                                                "Aborted"           :   "SAY_GET_OBJECT",
+                                                "Failed"            :   "SAY_GET_OBJECT"})
 
-        #object_type_to_grab = 
         smach.StateMachine.add( 'SAY_GET_OBJECT',
                                 SayFinal(robot),
-                                transitions={'spoken':'Done'})
+                                transitions={'spoken':'GRAB_OBJECT'})
 
-        # empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        # drink = EdEntityDesignator(robot, type="object_type_to_grab")
-
-        # smach.StateMachine.add( "GRAB_PHONE",
-        #                             Grab(robot, phone, empty_arm_designator),
-        #                             transitions={   'done'              :'SAY_PHONE_TAKEN',
-        #                                             'failed'            :'SAY_PHONE_TAKEN_FAILED'})
+        smach.StateMachine.add( "GRAB_OBJECT",
+                                    GrabFinal(robot),
+                                    transitions={   'done'              :'Done',
+                                                    'failed'            :'Done'})
 
     return sm
 
