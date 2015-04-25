@@ -12,7 +12,7 @@ navigation_position_constraint_operator = "x^2 + y^2 < 0.2^2"
 kitchen_radius = 2
 
 # Do not alter the keys please :)
-order_spec = "(<beverage>|<food1> and <food2>)"
+order_spec = "(<beverage>|<food1> and [(a|an)] <food2>)"
 
 # Do not alter keys or side values
 drinks = [ o["name"] for o in common.objects if o["category"] == "drink" ] 
