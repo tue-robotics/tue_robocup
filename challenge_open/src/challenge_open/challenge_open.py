@@ -113,10 +113,16 @@ class AskItems(smach.State):
         mat = self.pose_to_mat(pose_bl.pose)
         #t_result = R1_inv * t2 + t1_inv
 
+        # Calculate inverse of robot pose
+        mat_inv = mat.copy()
+        mat_inv[0:3,0:3] = mat[0:3,0:3].getT()
+        mat_inv[0:3, 3:] = mat_inv[0:3,0:3] * -mat[0:3, 3:]
+
         for entity in entities:
             if onTopOff(entity, self.robot.ed.get_entity(id=self.table_id)):
-                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]).T - mat[0:3, 3]
-                y_bl[entity.id] = vec_bl.item(1)
+                entity_pose_mat_MAP = self.pose_to_mat(entity.pose)
+                entity_pose_mat_BL = mat_inv * entity_pose_mat_MAP
+                y_bl[entity.id] = entity_pose_mat_BL[1, 3]
 
         ''' Sort on y coordinate '''
         sorted_y_bl = sorted(y_bl.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
