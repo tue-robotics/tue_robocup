@@ -362,8 +362,8 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined'  :'RED_LOOKAT_SHELF'})
 
             smach.StateMachine.add("RED_LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'WAIT_TIME_RED'})
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'WAIT_TIME_RED'})
 
             smach.StateMachine.add( "WAIT_TIME_RED",
                                     states.Wait_time(robot, waittime=4),
@@ -379,8 +379,8 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined'  :'WHITE_LOOKAT_SHELF'})
 
             smach.StateMachine.add("WHITE_LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'WAIT_TIME_WHITE'})
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'WAIT_TIME_WHITE'})
 
             smach.StateMachine.add( "WAIT_TIME_WHITE",
                                     states.Wait_time(robot, waittime=4),
@@ -396,8 +396,8 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined'  :'BLUE_LOOKAT_SHELF'})
 
             smach.StateMachine.add("BLUE_LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'WAIT_TIME_BLUE'})
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'WAIT_TIME_BLUE'})
 
             smach.StateMachine.add( "WAIT_TIME_BLUE",
                                     states.Wait_time(robot, waittime=4),
