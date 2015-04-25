@@ -5,155 +5,108 @@ import smach
 import sys
 import random
 import math
-import smach
-import smach_ros
+
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
-from robot_skills.amigo import Amigo
-from robot_skills.sergio import Sergio
-from robot_skills.mockbot import Mockbot
+
 from robocup_knowledge import load_knowledge
+challenge_knowledge = load_knowledge('challenge_final')
+INITIAL_POSE = challenge_knowledge.initial_pose_sergio
 
+class ExploreWaypoint(smach.StateMachine):
+    def __init__(self, robot, waypoint):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-class FinalChallengeSergio(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
-
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        #                                   VARIABLES
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        
-        challenge_knowledge = load_knowledge('challenge_final')
-        initial_pose = challenge_knowledge.initial_pose_sergio
-        waypoint_list = challenge_knowledge.explore_locations_part_1
-
-        # next_loc_des = VariableDesignator(resolve_type=EdEntityDesignator)
-        # next_loc_des.current = EdEntityDesignator(robot)
-        next_loc_des  = VariableDesignator(resolve_type=PointDesignator) #Here next_loc_des is a VaribleDesigntor or
-        next_loc_des.current = PointDesignator() # To which you assign another designator??
-    
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        #                                   CALLBACKS
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-        @smach.cb_interface(outcomes=['successed', 'failed'])
-        def getNextWaypoint(userdata):
-            # import ipdb; ipdb.set_trace()
-            print "removeWaypoint callback"
-
-            if waypoint_list:
-                print "Waypoints available: " + str(waypoint_list)
-
-                next_loc_des = EdEntityDesignator(robot, id=waypoint_list.pop(0)) 
-
-
-                return 'successed'
-            else:
-                print "No more waypoints to visit!"
-                return 'failed'
-
-
-
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        #                                   MAIN STATE MACHINE
-        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        waypoint_designator = EdEntityDesignator(robot, id=waypoint)
 
         with self:
+            smach.StateMachine.add("GOTO_WAYPOINT",
+                                    states.NavigateToWaypoint(robot, waypoint_designator),
+                                    transitions={   'arrived'                  :'succeeded',
+                                                    'unreachable'              :'succeeded',
+                                                    'goal_not_defined'         :'succeeded'})
 
-            smach.StateMachine.add( 'START_CHALLENGE',
-                                    states.StartChallengeRobust(robot, initial_pose),
-                                    transitions={   'Done':'EXPLORE_CONTAINER',
-                                                    'Aborted':'Aborted',
-                                                    'Failed':'EXPLORE_CONTAINER'})
+            ''' Look at thing '''
 
-            # smach.StateMachine.add('INITIALIZE',
-            #                     states.Initialize(robot),
-            #                     transitions={   'initialized':'LEARN_OPERATOR_CONTAINER',
-            #                                     'abort':'Aborted'})
+            ''' Take snapshot '''
 
+            ''' Look to side '''
 
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                                 EXPLORE_CONTAINER
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            ''' Ask for entity '''
 
+            ''' Assert entity (or in previous???) '''
 
-            # container for this stage
-            wakeupContainer = smach.StateMachine(outcomes = ['container_successed', 'container_failed'])
+############################## main statemachine ######################
+def setup_statemachine(robot):
 
-            with wakeupContainer:
+    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
-                smach.StateMachine.add('GET_NEXT_WAYPOINT',
-                                        smach.CBState(getNextWaypoint),
-                                        transitions={   'successed':'GOTO_LOCATION',
-                                                        'failed':'container_successed'})
+    with sm:
+    	smach.StateMachine.add("INITIALIZE",
+    							states.StartChallengeRobust(robot, INITIAL_POSE, use_entry_points = False),
+                                transitions={   "Done"              :   "EXPLORE1",
+                                                "Aborted"           :   "EXPLORE1",
+                                                "Failed"            :   "EXPLORE1"})
 
-                smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToWaypoint(robot, next_loc_des.resolve()),
-                                        transitions={   'arrived':          'GET_NEXT_WAYPOINT',
-                                                        'unreachable':      'GET_NEXT_WAYPOINT',
-                                                        'goal_not_defined': 'GET_NEXT_WAYPOINT'})
+        smach.StateMachine.add("EXPLORE1",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_1),
+                                transitions={   "succeeded"        :   "EXPLORE2",
+                                                "failed"           :   "EXPLORE2"})
 
-            smach.StateMachine.add( 'EXPLORE_CONTAINER',
-                                    wakeupContainer,
-                                    transitions={   'container_successed':'END_CHALLENGE',
-                                                    'container_failed': 'END_CHALLENGE'})
+        smach.StateMachine.add("EXPLORE2",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_2),
+                                transitions={   "succeeded"        :   "EXPLORE3",
+                                                "failed"           :   "EXPLORE3"})
 
+        smach.StateMachine.add("EXPLORE3",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_3),
+                                transitions={   "succeeded"        :   "EXPLORE4",
+                                                "failed"           :   "EXPLORE4"})
 
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                             END CHALLENGE
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        smach.StateMachine.add("EXPLORE4",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_4),
+                                transitions={   "succeeded"        :   "EXPLORE5",
+                                                "failed"           :   "EXPLORE5"})
 
-            smach.StateMachine.add('END_CHALLENGE',
+        smach.StateMachine.add("EXPLORE5",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_5),
+                                transitions={   "succeeded"        :   "EXPLORE6",
+                                                "failed"           :   "EXPLORE6"})
+
+        smach.StateMachine.add("EXPLORE6",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_6),
+                                transitions={   "succeeded"        :   "EXPLORE7",
+                                                "failed"           :   "EXPLORE7"})
+
+        smach.StateMachine.add("EXPLORE7",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_7),
+                                transitions={   "succeeded"        :   "EXPLORE8",
+                                                "failed"           :   "EXPLORE8"})
+
+        smach.StateMachine.add("EXPLORE8",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_8),
+                                transitions={   "succeeded"        :   "EXPLORE9",
+                                                "failed"           :   "EXPLORE9"})
+
+        smach.StateMachine.add("EXPLORE9",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_9),
+                                transitions={   "succeeded"        :   "EXPLORE10",
+                                                "failed"           :   "EXPLORE10"})
+
+        smach.StateMachine.add("EXPLORE10",
+                                ExploreWaypoint(robot, challenge_knowledge.explore_location_10),
+                                transitions={   "succeeded"        :   "END_CHALLENGE",
+                                                "failed"           :   "END_CHALLENGE"})
+
+    	smach.StateMachine.add('END_CHALLENGE',
                                    states.Say(robot,"My work here is done, goodbye!"),
                                    transitions={'spoken':'Done'})
 
+    return sm
 
 ############################## initializing program ######################
-
 if __name__ == '__main__':
-    rospy.init_node('wakemeup_exec')
+    rospy.init_node('final_exec_sergio')
 
-
-    # if len(sys.argv) > 1:
-    #     robot_name = sys.argv[1]
-    # else:
-    #     print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
-    #     exit(1)
-
-    # Force robot name
-    robot_name = 'sergio'
-
-    if robot_name == 'amigo':
-        robot = Amigo(wait_services=True)
-    elif robot_name == 'sergio':
-        robot = Sergio(wait_services=True)
-    elif robot_name == 'mockbot':
-        robot = Mockbot(wait_services=True)
-    else:
-        print "Don't recognize that robot name: " + robot_name
-
-    ''' If necessary: set initial state '''
-    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
-
-    ''' Setup state machine'''
-    machine = FinalChallengeSergio(robot)
-
-    # Force initial state
-    if  len(sys.argv) > 1:
-        print "Overriding initial_state to '" + sys.argv[1] +  "'" 
-        initial_state = [sys.argv[1]]
-        machine.set_initial_state(initial_state)
-
-    # for using smach viewer
-    introserver = smach_ros.IntrospectionServer('server_name', machine, '/SM_ROOT_PRIMARY')
-    introserver.start()
-
-    try:
-        machine.execute()
-    except Exception, e:
-        print "Exception occurred on state machine execution"
-
-    introserver.stop()
+    startup(setup_statemachine, robot_name='sergio')
