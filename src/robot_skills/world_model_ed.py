@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv
-from ed.srv import GetGUICommand, GetGUICommandResponse, LockEntities
+from ed.srv import GetGUICommand, GetGUICommandResponse
+from ed_sensor_integration.srv import LockEntities
 from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
