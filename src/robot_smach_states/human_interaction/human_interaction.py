@@ -86,23 +86,27 @@ class Hear(State):
 
         return "not_heard"
 
-class HearOptions(State):
-    def __init__(self, robot, options, time_out = rospy.Duration(10)):
-        check_type(options, dict)
-        State.__init__(self, locals(), outcomes=options.append("no_result"))
+class HearOptions(smach.State):
+    def __init__(self, robot, options, timeout = rospy.Duration(10)):
+        outcomes = options
+        outcomes.append("no_result")
+        smach.State.__init__(self, outcomes=outcomes)
+        self._options = options
+        self._robot = robot
+        self._timeout = timeout
 
-    def run(self, robot, options, time_out):
-        robot.head.look_at_standing_person()
+    def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
 
-        answer = robot.ears.recognize("<option>", {"option":options}, time_out)
+        answer = self._robot.ears.recognize("<option>", {"option":self._options}, self._timeout)
 
-        robot.head.cancel_goal()
+        self._robot.head.cancel_goal()
 
         if answer:
             if answer.result:
                 return answer.choices["option"]
         else:
-            robot.speech.speak("Something is wrong with my ears, please take a look!")
+            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
 
         return "no_result"
 
