@@ -126,9 +126,9 @@ class WakeMeUp(smach.StateMachine):
 
                 smach.StateMachine.add( "SAY_GOODMORNING",
                                         states.Say(robot, [ "Are you awake?", 
-                                                            "Rise and shine!", 
+                                                            "Rise and shine, and look at me!", 
                                                             "Wakey wakey!", 
-                                                            "Hello there sleepy head!", 
+                                                            "Hello there sleepy head! Please face me", 
                                                             "Time for breakfast!"]),
                                         transitions={   'spoken' :'LOOK_AT_BED'})
 
@@ -201,6 +201,7 @@ class WakeMeUp(smach.StateMachine):
             smach.StateMachine.add( "SAY_ILL_CHOOSE_BREAKFAST",
                                     states.Say(robot, "I couldn't understand the breakfast order. I'll choose something for you.", block=False),
                                     transitions={   'spoken' :'PREP_BREAKFAST_CONTAINER'})
+
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                                 PREP_BREAKFAST_CONTAINER
