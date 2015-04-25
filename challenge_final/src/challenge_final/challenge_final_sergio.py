@@ -9,10 +9,32 @@ import math
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
+from robot_skills.util import msg_constructors as msgs
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_sergio
+
+class LookBaseLinkPoint(smach.State):
+    def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0):
+        """ 
+        Sends a goal to the head in base link frame of the robot_name
+        x, y, z: coordinates
+        timeout: timeout of the call to the head ref action (hence is a maximum)
+        waittime: additional waiting time 
+        """
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.x = x
+        self.y = y
+        self.z = z
+        self.timeout = timeout
+        self.waittime = waittime
+
+    def execute(self, userdata):
+        self.robot.head.look_at_point(msgs.PointStamped(x=self.x, y=self.y, z=self.z, frame_id=self.robot.robot_name+"/base_link"), self.timeout)
+        rospy.sleep(rospy.Duration(self.waittime))
+        return 'succeeded'
 
 class ExploreWaypoint(smach.StateMachine):
     def __init__(self, robot, waypoint):
@@ -23,11 +45,15 @@ class ExploreWaypoint(smach.StateMachine):
         with self:
             smach.StateMachine.add("GOTO_WAYPOINT",
                                     states.NavigateToWaypoint(robot, waypoint_designator),
-                                    transitions={   'arrived'                  :'succeeded',
-                                                    'unreachable'              :'succeeded',
-                                                    'goal_not_defined'         :'succeeded'})
+                                    transitions={   'arrived'                  :'LOOK_AT_MESH',
+                                                    'unreachable'              :'LOOK_AT_MESH',
+                                                    'goal_not_defined'         :'LOOK_AT_MESH'})
 
             ''' Look at thing '''
+            smach.StateMachine.add("LOOK_AT_MESH",
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=2.5, waittime=1.5),
+                                    transitions={   'succeeded'                 :'succeeded',
+                                                    'failed'                    :'succeeded'})
 
             ''' Take snapshot '''
 
