@@ -1,7 +1,7 @@
 cabinet = "right_bookcase"
 table1  = "dinnertable"
-table2  = "counter"
-table3  = "bookcase"
+table2  = "bookcase"
+table3  = "counter"
 object_shelves=["bookcase","bookcase","bookcase"]
 
 objects = ["coke", "meadow_milk", "pringles","oblates","chocosticks","cup"]
