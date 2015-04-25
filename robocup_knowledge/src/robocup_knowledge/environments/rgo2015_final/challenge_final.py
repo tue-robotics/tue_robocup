@@ -28,11 +28,13 @@ end_location_sergio = "final_last_position_sergio"
 
 
 #SPECS + CHOICES for speech recognition
-mesh_spec = "((it is (a|an) <object>)|(a <object>)|(an <object>)|<object>)"
+#mesh_spec = "((it is (a|an) <object>)|(a <object>)|(an <object>)|<object>)"
+mesh_spec = "(<object>)"
 mesh_choices = {'object':['cupboard','dinnertable','desk','sidetable','tv','kitchencounter','cabinet','bartable','couch','chair','coathanger','left_bedside_table','right_bedside_table']}
 
-object_spec = "((it is a <object>)|(a <object>)|(an <object>))"
+#object_spec = "((it is a <object>)|(a <object>)|(an <object>))"
+object_spec = "(<object>)"
 object_choices = {'object':['coke','beer','sevenup','icetea']}
 
-operator_object_spec = "(Can you give me (a|an) <object>|<object>)"
+operator_object_spec = "((Can you give me a <object>)|<object>)"
 operator_object_choices = {'object':['coke','beer','sevenup','icetea']}
