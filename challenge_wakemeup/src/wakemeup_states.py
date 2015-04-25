@@ -32,10 +32,11 @@ class bcolors:
 
 prefix = bcolors.OKBLUE + "[WAKE ME UP] " + bcolors.ENDC
 
+# load item names
 default_milk = "fresh milk"
 common = load_knowledge('common')
-# load item names
 knowledge_objs= load_knowledge('common').objects
+
 names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
 names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
 names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
@@ -48,6 +49,7 @@ class FoodType:
     Cereal = 0
     Fruit = 1
     Milk = 2
+
 
 def parseFoodType(item, got_fruit, got_cereal, got_milk):
     # print prefix + bcolors.OKBLUE + "parseFoodType" + bcolors.ENDC
@@ -67,9 +69,8 @@ def parseFoodType(item, got_fruit, got_cereal, got_milk):
         # print prefix + item + " its a milk!"
         return FoodType.Milk
 
-    print prefix + item + " was not matched!"
+    # print prefix + item + " was not matched!"
     return None
-
 
     
 # ----------------------------------------------------------------------------------------------------
@@ -105,13 +106,12 @@ class GetOrder(smach.State):
         word_item3 = ""
 
         self.breakfastFruit.current = ""
-        self.breakfastFruit.current = ""
-        self.breakfastFruit.current = ""
+        self.breakfastCereal.current = ""
+        self.breakfastMilk.current = ""
 
-        sentence = Designator("((<beginning> <item1> <preposition> <item2> <preposition> <item3>) | \
-                                (<item1> <preposition> <item2> <preposition> <item3>) | \
-                                (<beginning> <item1> <preposition> <item2>) | \
-                                (<item1> <preposition> <item2>))")
+        # define allowed sentences, [] means optional
+        sentence = Designator("(([<beginning>] <item1> [<preposition>] <item2> [<preposition>] <item3>) | \
+                                ([<beginning>] <item1> [<preposition>] <item2>))")
 
         choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
                                 "preposition" : ["and", "and a", "and an", "with a", "with a"],
@@ -121,7 +121,7 @@ class GetOrder(smach.State):
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, sentence, choices, answer)
+        state = HearOptionsExtra(self.robot, sentence, choices, answer, time_out=rospy.Duration(20))
         outcome = state.execute()
 
         # process response
@@ -131,13 +131,13 @@ class GetOrder(smach.State):
             try:
                 word_beginning = answer.resolve().choices["beginning"]
             except KeyError, ke:
-                print prefix + bcolors.FAIL + "KeyError resolving 'word_beginning': " + str(ke) + bcolors.ENDC
+                print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
                 pass
 
             try:
                 word_item3 = answer.resolve().choices["item3"]
             except KeyError, ke:
-                print prefix + bcolors.FAIL + "KeyError resolving 'item3': " + str(ke) + bcolors.ENDC
+                print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
                 pass
 
             try:
@@ -145,12 +145,10 @@ class GetOrder(smach.State):
                 word_item1 = answer.resolve().choices["item1"]
                 word_item2 = answer.resolve().choices["item2"]
             except KeyError, ke:
-                print prefix + bcolors.FAIL + "KeyError resolving words from breakfast request: " + str(ke) + bcolors.ENDC
+                print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
                 pass
 
             print "{}What was heard: {} {} {} {} {} {}".format(prefix, word_beginning , word_item1 , word_preposition ,  word_item2 , word_preposition , word_item3)
-
-            # print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
 
             # find first item's type
             if parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
@@ -168,8 +166,6 @@ class GetOrder(smach.State):
             else:
                 print "{}Could not get a match with word_item1 = {}".format(prefix, word_item1)
 
-            # print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
-
             # find second item's type
             if parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
                 self.breakfastFruit.current = word_item2
@@ -185,8 +181,6 @@ class GetOrder(smach.State):
                 print "{}Second item Milk".format(prefix)
             else:
                 print "{}Could not get a match with word_item2 = {}".format(prefix, word_item2)
-
-            # print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
 
             # third type might not exist if its milk
             if word_item3 :
@@ -207,12 +201,10 @@ class GetOrder(smach.State):
                 else:
                     print "{}Could not get a match with word_item3 = {}".format(prefix, word_item3)
 
-                # print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
-
                 # just a consistency check
                 if not got_milk:
-                    print prefix + "Still don't know what type of milk it is!! Reseting to 'fresh milk'" + bcolors.ENDC
-                    self.breakfastMilk.current = "fresh milk"
+                    print prefix + "Still don't know what type of milk it is! Reseting to " + default_milk + bcolors.ENDC
+                    self.breakfastMilk.current = default_milk
 
             else:
                 self.breakfastMilk.current = default_milk
@@ -222,7 +214,7 @@ class GetOrder(smach.State):
             
             if not self.breakfastCereal.resolve() or not self.breakfastFruit.resolve() or not self.breakfastMilk.resolve() :
                 heard_correctly = False
-                print prefix + bcolors.FAIL + "One of the food types was empty"+ bcolors.ENDC
+                print prefix + bcolors.FAIL + "One of the food types was empty" + bcolors.ENDC
             else:
                 heard_correctly = True
 
@@ -242,14 +234,12 @@ class GetOrder(smach.State):
 # Ask the persons name
 class RepeatOrderToPerson(smach.State):
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
-        smach.State.__init__(   self, 
-                                outcomes=['done'])
+        smach.State.__init__(   self, outcomes=['done'])
 
         self.robot = robot
         self.breakfastCereal = breakfastCerealDes
         self.breakfastFruit = breakfastFruitDes
         self.breakfastMilk = breakfastMilkDes
-
 
     def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "RepeatOrderToPerson" + bcolors.ENDC
