@@ -98,15 +98,15 @@ class WaitForTrigger(smach.State):
                                         'preempted': 'failed'})
     '''
 
-    def __init__(self, robot, triggers):
+    def __init__(self, robot, triggers, topic, rate = 1.0):
         smach.State.__init__(self,
                              outcomes=triggers+['preempted'])
         self.robot = robot
         self.triggers = triggers
 
         # Get the ~private namespace parameters from command line or launch file.
-        self.rate = float(rospy.get_param('~rate', '1.0'))
-        topic     = rospy.get_param('~topic', 'trigger')
+        self.rate = rate
+        topic     = topic
 
         rospy.Subscriber(topic, std_msgs.msg.String, self.callback)
 
