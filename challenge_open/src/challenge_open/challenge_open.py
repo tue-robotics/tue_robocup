@@ -7,6 +7,7 @@ import math
 import numpy
 import operator
 
+import tf
 import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.util.startup import startup
@@ -53,7 +54,7 @@ class LockEntities(smach.State):
                 self.robot.ed.lock_entities(lock_ids=[entity.id], unlock_ids=[])
                 lock_entities.append(entity)
 
-        LOCKED_ITEMS['table_id'] = lock_entities
+        LOCKED_ITEMS[self.table_id] = lock_entities
 
         return 'locked'
 
@@ -99,6 +100,7 @@ class AskItems(smach.State):
 
     def addToED(self, res):
         ''' Find entities on location '''
+
         #entities = self.robot.ed.get_entities(parse=False)
         entities = LOCKED_ITEMS[res.choices['location']]
 
@@ -107,22 +109,26 @@ class AskItems(smach.State):
 
         ''' Transform to robot pose '''
         y_bl = {}
+        pose_bl = self.robot.base.get_location()
         mat = self.pose_to_mat(pose_bl.pose)
         #t_result = R1_inv * t2 + t1_inv
 
         for entity in entities:
             if onTopOff(entity, self.robot.ed.get_entity(id=res.choices['location'])):
-                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]) - mat[0:3, 3]
+                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]).T - mat[0:3, 3]
                 y_bl[entity.id] = vec_bl.item(1)
 
         ''' Sort on y coordinate '''
         sorted_y_bl = sorted(y_bl.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         ''' Assert to world model '''
-        updates = zip(sorted_y_bl, res.choices)
+        values = [ v for k,v in res.choices.iteritems() if "object" in k]
+
+        updates = zip(sorted_y_bl, values)
         for update in updates:
-            rospy.loginfo("Updating entity: {0} is {1}".format(update[0], update[1]))
-            self.robot.ed.update_entity(id=update[0], type=update[1])
+            rospy.loginfo("Updating entity: {0} is {1}".format(update[0][0], update[1]))
+
+            self.robot.ed.update_entity(id=update[0][0], type=update[1])
 
     def pose_to_mat(self, pose):
         '''Convert a pose message to a 4x4 numpy matrix.
