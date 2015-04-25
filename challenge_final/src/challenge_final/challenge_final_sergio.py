@@ -11,13 +11,15 @@ import std_msgs
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
+from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as msgs
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_sergio
 
-MESH_IDS = []
+MESH_IDS = [] #''' List with the IDs of the meshes of which a snapshot has been taken '''
+SMALL_MESH_IDS = [] #''' List with the IDs of the small meshes which have been locked '''
 
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0):
@@ -175,6 +177,60 @@ class HumanRobotInteraction(smach.StateMachine):
                                     ConversationWithOperator(robot),
                                     transitions={   'succeeded'                 :'succeeded',
                                                     'failed'                    :'succeeded'})
+
+class CheckSmallObject(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['object_found','no_object_found'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        ''' For now, assume the ID of the mesh is always the latest that has been snapshot '''
+        table_entity = self.robot.ed.get_entity(id=MESH_IDS[-1])
+
+        ''' Get all entities and check which one is on the table '''
+        entities = self.robot.ed.get_entities()
+        entities_on_table = []
+        for entity in entities:
+            if onTopOff(entity, table_entity):
+                entities_on_table.append(entity)
+
+        ''' If exactly one entity: perfect! '''
+        small_mesh_id = None
+        if len(entities_on_table) == 0:
+            rospy.logwarn('No objects found on this table')
+            return 'no_object_found'
+        elif len(entities_on_table) == 1:
+            small_mesh_id = entities_on_table[0].id
+        else:
+            rospy.logwarn("Found multiple entities on this table, will assert the first one in my list...")
+            # ToDo: do something smarter
+            small_mesh_id = entities_on_table[0].id
+
+        self.robot.ed.lock_entities(lock_ids=[small_mesh_id], unlock_ids=[])
+        SMALL_MESH_IDS.append(small_mesh_id)
+        return 'object_found'
+
+class SmallObjectHandling(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        with self:
+            ''' Look at thing '''
+            smach.StateMachine.add("LOOK_AT_MESH",
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=2.5, waittime=1.5),
+                                    transitions={   'succeeded'                 :'CHECK_SMALL_OBJECT',
+                                                    'failed'                    :'CHECK_SMALL_OBJECT'})
+
+            ''' Check if object present and assert '''
+            smach.StateMachine.add("CHECK_SMALL_OBJECT",
+                                    CheckSmallObject(robot),
+                                    transitions={   'object_found'              :'succeeded',
+                                                    'no_object_found'           :'succeeded'})
+
+            ''' If asserted, turn head '''
+
+            ''' If asserted, ask what it is '''
+
 
 ############################## main statemachine ######################
 def setup_statemachine(robot):
