@@ -27,7 +27,12 @@ explore_locations_part_2 = [explore_location_4, explore_location_5, explore_loca
 end_location_sergio = "final_last_position_sergio"
 
 
-mesh_spec = "((It is a <object>)|(a <object>)|(an <object>))"
-mesh_choices = {'object':['cupboard','dinnertable','desk','sidetable','coke','beer','sevenup','icetea']}
+#SPECS + CHOICES for speech recognition
+mesh_spec = "((it is (a|an) <object>)|(a <object>)|(an <object>)|<object>)"
+mesh_choices = {'object':['cupboard','dinnertable','desk','sidetable','tv','kitchencounter','cabinet','bartable','couch','chair','coathanger','left_bedside_table','right_bedside_table']}
 
+object_spec = "((it is a <object>)|(a <object>)|(an <object>))"
+object_choices = {'object':['coke','beer','sevenup','icetea']}
 
+operator_object_spec = "(Can you give me (a|an) <object>|<object>)"
+operator_object_choices = {'object':['coke','beer','sevenup','icetea']}
