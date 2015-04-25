@@ -101,7 +101,6 @@ class Look_point(smach.State):
         goal.point.z = self.z
 
         self.robot.head.look_at_point(goal)
-        self.robot.head.look_at_standing_person()
         rospy.sleep(2)
         return "looking"
 
@@ -329,7 +328,12 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_FOUND_OBJECTS",
                                     states.Say(robot, "I see a red bottle, a blue bottle and a white bottle", block=True),
-                                    transitions={   'spoken'            :'STOP_LOOKING_STRAIGHT'})
+                                    transitions={   'spoken'            :'WAIT_TIME_SHELF'})
+
+            smach.StateMachine.add( "WAIT_TIME_SHELF",
+                                    states.Wait_time(robot, waittime=2),
+                                    transitions={   'waited'    : 'STOP_LOOKING_STRAIGHT',
+                                                    'preempted' : 'STOP_LOOKING_STRAIGHT'})
 
             smach.StateMachine.add("STOP_LOOKING_STRAIGHT",
                                      Stop_looking(robot),
@@ -569,7 +573,7 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined':'LOOKAT_COUCHTABLE'})
 
             smach.StateMachine.add("LOOKAT_COUCHTABLE",
-                                     Look_point(robot,8.055, 6.662, 0.6),
+                                     Look_point(robot,8.055, 6.662, 0.4),
                                      transitions={  'looking'         :'SAY_TRY_GRAB_PHONE'})
 
             smach.StateMachine.add( "SAY_TRY_GRAB_PHONE",
