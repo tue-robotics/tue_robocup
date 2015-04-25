@@ -78,7 +78,9 @@ class AskItems(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.speech.speak(["What object do I see?", "What are those objects?"])
+	self.robot.head.look_at_standing_person()
+
+        self.robot.speech.speak("What object do I see here?")
 
         res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
 
