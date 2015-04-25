@@ -1,13 +1,13 @@
 cabinet = "right_bookcase"
 table1  = "dinnertable"
 table2  = "counter"
-table3  = "right_bookcase/shelf3"
-object_shelves=["right_bookcase/shelf3","right_bookcase/shelf4","right_bookcase/shelf5"]
+table3  = "bookcase"
+object_shelves=["bookcase","bookcase","bookcase"]
 
 objects = ["coke", "meadow_milk", "pringles","oblates","chocosticks","cup"]
 
 #spec find a person and talk with
-spec = "( (on|in|at) the <location> ((there is)|(you can find)|(you saw)) <object1> | (on|in|at) the <location> ((there is)|(you can find)|(you saw)) <object1> and <object2> | (on|in|at) the <location> ((there is)|(you can find)|(you saw)) <object1>, <object2> and <object3> ) "
+spec = "( (on|in|at) the <location> (there is|you can find|you saw) <object1> | (on|in|at) the <location> (there is|you can find|you saw) <object1> and <object2> | (on|in|at) the <location> (there is|you can find|you saw) <object1> <object2> and <object3> )"
 
 choices = {'location':[table1, table2, table3],
 'object1':objects,
