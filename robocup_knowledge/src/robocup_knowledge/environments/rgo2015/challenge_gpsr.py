@@ -36,6 +36,7 @@ spec_goroom_findobj = "(<1_vb_goto> the <1_room> and <2_vb_find> the <2_object>)
 spec_findperson_talk = "(<2_vb_find> a person in the <1_room> and ((answer a <3_question>)|(<3_vb_speak> <3_name_time_date>)))"
 
 spec = "("+spec_get_deliver+"|"+spec_goroom_findobj+"|"+spec_findperson_talk+")"
+#spec = spec_get_deliver
 
 choices = {'1_location':location_placement,
 '2_vb_take':['take', 'grasp', 'get'],   

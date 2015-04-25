@@ -14,50 +14,25 @@ In short:
 import rospy
 import smach
 import sys
-import random
-import math
 
-from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
-from robot_smach_states import Grab
-from robot_smach_states import Place
-from robot_smach_states.util.geometry_helpers import *
-from robot_skills.util import msg_constructors as geom
-from robot_skills.util import transformations
-import geometry_msgs.msg as gm
-from robot_skills.util import transformations 
-from cb_planner_msgs_srvs.msg import PositionConstraint
 
-class GUIDING_PHASE(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(10)):
-        smach.State.__init__(self, outcomes=["answered"])
-        self.robot = robot
-        self.time_out = time_out
-
-    def execute(self, userdata):
-        # add while guiding
-        res = amigo.ears.recognize("<choice>",{"choice":["TABLE A","TABLE B","TABLE C"]})
-        
-        if res:
-            if "question" in res.choices:
-                rospy.loginfo("Is this talble: '%s'?"%res.result)
-                self.robot.speech.speak("Is this talble %s"%res.choice['question'])
-        return "answered"
+import follow_operator_and_store_waypoints
 
 def setup_statemachine(robot):
 
-    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+    sm = smach.StateMachine(outcomes=['done', 'aborted'])
 
     with sm:
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'Done',
-                                                'abort':'Aborted'})
-        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi Guide, Show me your restaurant please"), transitions={ 'spoken' :'GUIDING_PHASE'})
-        
-    
-    
+        smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'FOLLOW_OPERATOR_AND_STORE_WAYPOINTS', 'abort':'aborted'})
+        smach.StateMachine.add('FOLLOW_OPERATOR_AND_STORE_WAYPOINTS', follow_operator_and_store_waypoints.FollowOperatorAndStoreWaypoints(robot), transitions={ 'done':'done', 'aborted':'aborted'})
+        smach.StateMachine.add('GOTO', states.Initialize(robot), transitions={   'initialized':'FOLLOW_OPERATOR_AND_STORE_WAYPOINTS', 'abort':'aborted'})
+
+#        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi Guide, Show me your restaurant please"), transitions={ 'spoken' :'GUIDING_PHASE'})
+
+
+
     return sm
 
 

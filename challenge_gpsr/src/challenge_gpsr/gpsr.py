@@ -20,6 +20,7 @@ from robot_smach_states import Grab
 #import data
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_gpsr')
+#common_kb = load_knowledge('challenge_gpsr')
 
 ###########################
 # Created by: Erik Geerts #
@@ -147,24 +148,40 @@ class Query_specific_action(smach.State):
             action_1 = self.robot.reasoner.query("action_info('1',A,B)")
             for x in action_1:
                 for choice_key, choice_value in x.iteritems():
-                    print "action 2: choice_key = ", str(choice_key)
-                    print "action 2: choice_value = ", str(choice_value)
+                    print "action 1: choice_key = ", str(choice_key)
+                    print "action 1: choice_value = ", str(choice_value)
 
-                    if str(choice_value) == "1_locations_rooms":
-                        room=str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
+                    # if str(choice_value) == "1_locations_rooms":
+                    #     room=str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
+                    #     self.robot.reasoner.query("retractall(action_info('1','1_locations_rooms',A))")
+                    #     self.robot.reasoner.assertz("action_info('1','1_locations_rooms',"+"room_"+str(room)+")")
+                    #     print "a"
+                    #     print self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)")
+                    #     return "navigate_room"
+
+                    # if (str(choice_value) == "1_locations_aeuoi") or (str(choice_value) == "1_locations_rest") :
+                    #     location=str(self.robot.reasoner.query_first_answer("action_info('1','"+str(choice_value)+"',A)"))
+                    #     self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
+                    #     self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
+                    #     print "b"
+                    #     print self.robot.reasoner.query_first_answer("action_info('1','1_location',A)")
+                    #     return "navigate_location"
+
+                    if str(choice_value) == "1_room":
+                        room=str(self.robot.reasoner.query_first_answer("action_info('1','1_room',A)"))
+                        print "room =", room
                         self.robot.reasoner.query("retractall(action_info('1','1_locations_rooms',A))")
-                        self.robot.reasoner.assertz("action_info('1','1_locations_rooms',"+"room_"+str(room)+")")
-                        print "a"
+                        self.robot.reasoner.assertz("action_info('1','1_locations_rooms',"+str(room)+")")
                         print self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)")
                         return "navigate_room"
 
-                    if (str(choice_value) == "1_locations_aeuoi") or (str(choice_value) == "1_locations_rest") :
+                    if str(choice_value) == "1_location":
                         location=str(self.robot.reasoner.query_first_answer("action_info('1','"+str(choice_value)+"',A)"))
                         self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
-                        self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
-                        print "b"
+                        self.robot.reasoner.assertz("action_info('1','1_location','"+"gpsr_"+str(location)+"')")
                         print self.robot.reasoner.query_first_answer("action_info('1','1_location',A)")
                         return "navigate_location"
+
 
         elif current_action == 2:
             action_2 = self.robot.reasoner.query("action_info('2',A,B)")
@@ -272,6 +289,7 @@ class QueryFirstAnswerDesignator(Designator):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
+        print "first_answer is:", str(first_answer)
         return str(first_answer)
 
 class ObjectTypeDesignator(Designator):
@@ -382,13 +400,20 @@ def setup_statemachine(robot):
         #                         transitions={'new_task':'RESET_REASONER'})
 
 
+        # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
+        #                         states.NavigateToSymbolic(robot, 
+        #                             {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")):"near"},
+        #                             #EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot,"room_location(Room)")) : "in"},
+        #                             EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+        #                         transitions={   'arrived'           :   'SAY_ARRIVED',
+        #                                         'unreachable'       :   'SAY_NOT_ARRIVED',
+        #                                         'goal_not_defined'  :   'SAY_NOT_ARRIVED'})
+
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
-                                states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of" }, 
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
-                                transitions={   'arrived'           :   'QUERY_SPECIFIC_ACTION',
-                                                'unreachable'       :   'QUERY_SPECIFIC_ACTION',
-                                                'goal_not_defined'  :   'QUERY_SPECIFIC_ACTION'})
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.3),
+                                    transitions={   'arrived':'SAY_ARRIVED',
+                                                    'unreachable':'SAY_NOT_ARRIVED',
+                                                    'goal_not_defined':'SAY_NOT_ARRIVED'})
 
 
         # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
@@ -403,16 +428,37 @@ def setup_statemachine(robot):
                                 states.NavigateToSymbolic(robot, 
                                     {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
                                     EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
-                                transitions={   'arrived'           :   'FINISHED_TASK',
-                                                'unreachable'       :   'FINISHED_TASK',
-                                                'goal_not_defined'  :   'FINISHED_TASK'}) 
+                                transitions={   'arrived'           :   'SAY_ARRIVED',
+                                                'unreachable'       :   'SAY_NOT_ARRIVED',
+                                                'goal_not_defined'  :   'SAY_NOT_ARRIVED'}) 
 
         smach.StateMachine.add( "GRAB_ITEM",
                                     Grab(robot, ObjectTypeDesignator(robot), UnoccupiedArmDesignator(robot.arms, robot.leftArm)),
                                     transitions={   'done'              :'GO_TO_INITIAL_POINT',
                                                     'failed'            :'GO_TO_INITIAL_POINT'})
 
-        
+        smach.StateMachine.add( 'SAY_ARRIVED',
+                                states.Say(robot, ["I have arrived at the desired location."], block=True),
+                                transitions={'spoken':'SAY_GO_BACK'})
+
+        smach.StateMachine.add( 'SAY_NOT_ARRIVED',
+                                states.Say(robot, ["I have not arrived at the desired location, I'm sorry."], block=True),
+                                transitions={'spoken':'SAY_GO_BACK'})
+
+        smach.StateMachine.add( 'SAY_GO_BACK',
+                                states.Say(robot, ["I can not do the last two actions, I will go to the exit now."], block=False),
+                                transitions={'spoken':'GO_TO_EXIT'})
+
+        smach.StateMachine.add('GO_TO_EXIT',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id='exit_gpsr'), radius = 0.4),
+                                    transitions={   'arrived':'SAY_GOODBYE',
+                                                    'unreachable':'SAY_GOODBYE',
+                                                    'goal_not_defined':'SAY_GOODBYE'})
+
+        smach.StateMachine.add( 'SAY_GOODBYE',
+                                states.Say(robot, ["Goodbye"], block=True),
+                                transitions={'spoken':'Done'})
+
         # smach.StateMachine.add( "FIND_PERSON",
         #                             Grab(robot, ObjectTypeDesignator(robot), UnoccupiedArmDesignator(robot.arms, robot.leftArm)),
         #                             transitions={   'done'              :'GO_TO_INITIAL_POINT',
@@ -436,11 +482,11 @@ def setup_statemachine(robot):
                                 transitions={'new_task':'ASK_ACTION',
                                               'tasks_completed':'GO_TO_EXIT'})
 
-        smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit"), radius=0.7),
-                                    transitions={   'arrived':'Done',
-                                                    'unreachable':'Done',
-                                                    'goal_not_defined':'Done'})
+        # smach.StateMachine.add('GO_TO_EXIT',
+        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit"), radius=0.7),
+        #                             transitions={   'arrived':'Done',
+        #                                             'unreachable':'Done',
+        #                                             'goal_not_defined':'Done'})
 
     return sm
 
@@ -456,7 +502,5 @@ if __name__ == "__main__":
         print "[CHALLENGE GPSR] Please provide robot name as argument."
         exit(1)
 
-    rospy.logwarn("[CHALLENGE GPSR] Please test with a cola on the hallway table!!!!")
-    rospy.logwarn("[CHALLENGE GPSR] Amigo will try to grab it en then get back to begin location.")
     rospy.sleep(5)
     states.util.startup(setup_statemachine, robot_name=robot_name)
