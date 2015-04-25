@@ -77,11 +77,11 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         side = choices["side"]
         location = choices["location"]
 
-        self._robot.speech.speak("%s %s?"%(location, side))
-        result = self._robot.ears.recognize("(yes|no)",{})
-        if not result or result.result == "no":
-            self._robot.speech.speak("Sorry, moving on!", block=False)
-            return
+#        self._robot.speech.speak("%s %s?"%(location, side))
+#        result = self._robot.ears.recognize("(yes|no)",{})
+#        if not result or result.result == "no":
+#            self._robot.speech.speak("Sorry, moving on!", block=False)
+#            return
 
         self._robot.speech.speak("%s %s, it is, moving on!"%(side, location))
         
