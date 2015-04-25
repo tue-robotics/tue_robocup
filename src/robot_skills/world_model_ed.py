@@ -2,7 +2,7 @@
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv
 from ed.srv import GetGUICommand, GetGUICommandResponse
-from ed_sensor_integration.srv import LockEntities
+from ed_sensor_integration.srv import LockEntities, MeshEntityInView
 from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -41,6 +41,7 @@ class ED:
         self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
         self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
         self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
+        self._ed_mesh_entity_in_view_srv = rospy.ServiceProxy('/%s/ed/kinect/mesh_entity_in_view'%robot_name, MeshEntityInView)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
@@ -122,3 +123,7 @@ class ED:
 
     def lock_entities(self, lock_ids, unlock_ids):
         return self._ed_lock_entities_srv(lock_ids=lock_ids, unlock_ids=unlock_ids)
+
+    def mesh_entity_in_view(self, id, type=""):
+        # Takes the biggest one in view
+        return self._ed_mesh_entity_in_view_srv(id=id, type=type)
