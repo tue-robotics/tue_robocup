@@ -42,7 +42,7 @@ class LockEntities(smach.State):
         self.table_id = table_id
 
     def execute(self, userdata):
-        
+
         ''' Get table entity '''
         table_entity = self.robot.ed.get_entity(id=self.table_id, parse=False)
 
@@ -76,12 +76,11 @@ class AskItems(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.head.look_at_standing_person()
 
-        self.robot.speech.speak("What can you tell me?")
+        self.robot.speech.speak(["What object do I see?", "What are those objects?"])
 
         res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
-        
+
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
@@ -250,8 +249,8 @@ class ExploreTable(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('GOTO_TABLE',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=table_id):"in_front_of"}, 
+                                states.NavigateToSymbolic(robot,
+                                                          {EdEntityDesignator(robot, id=table_id):"in_front_of"},
                                                           EdEntityDesignator(robot, id=table_id)),
                                 transitions={   'arrived'           :   'STORE_TABLE',
                                                 'unreachable'       :   'STORE_TABLE',
@@ -284,7 +283,7 @@ class ExploreTable(smach.StateMachine):
 
 ############################## explore state machine #####################
 class ExploreScenario(smach.StateMachine):
-    
+
     def __init__(self, robot):
 
         smach.StateMachine.__init__(self, outcomes=['done'])
@@ -308,7 +307,7 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
     with sm:
-        
+
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 states.SetInitialPose(robot, "open_challenge_start"),
                                 transitions={   'done'          :'INITIALIZE',
