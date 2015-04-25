@@ -83,25 +83,22 @@ def get_entity_size(entity):
 
 class Ask_pills(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done", "failed"])
+        smach.State.__init__(self, outcomes=["red", "white", "blue", "failed"])
         self.robot = robot
 
     def execute(self, userdata):
 
         self.robot.speech.speak("Which color of pills would you like to have?")
 
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out = rospy.Duration(30))
-        self.robot.head.cancel_goal()
+        res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
         try:
             if res.result:
-                say_result = self.replace_word(res.result,"me","you")
-                self.robot.speech.speak("Okay I will {0}".format(say_result))
-                print say_result
-                self.save_action(res)
-
+                print "res =", res
+                self.robot.speech.speak("Okay I will get the {0} pills".format(res.choices['color']))
+                return res.choices['color']
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
                 return "failed"
@@ -109,41 +106,7 @@ class Ask_pills(smach.State):
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
             return "failed"
 
-        return "done"
-
-    def replace_word(self,string,word_in,word_out):
-        try:
-            if string[:(len(word_in)+1)] == (word_in+" "):
-                string = string.replace(string[:len(word_in)],word_out)
-
-            if string[(len(string)-len(word_in)-1):] == (" "+word_in):
-                string = string.replace(string[(len(string)-len(word_in)):],word_out)
-
-            string = string.replace(" "+word_in+" "," "+word_out+" ")
-
-        except KeyError:
-            print "[gpsr] Received action is to short."
-
-        return string
-
-    def save_action(self,res):
-        
-        self.robot.reasoner.query("retractall(action_info(A,B,C))")
-        self.robot.reasoner.query("retractall(current_action(A))")
-
-        for choice_key, choice_value in res.choices.iteritems():
-            print "choice_key = ", self.add_underscores(str(choice_key))
-            print "choice_value = '",self.add_underscores(str(choice_value)),"'"
-
-            if not choice_key[:1].find("1"):
-                #print " 1 = ", choice_key[:1]             
-                self.robot.reasoner.assertz("action_info('1','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
-            if not choice_key[:1].find("2") : 
-                #print " 2 = ", choice_key[:1] 
-                self.robot.reasoner.assertz("action_info('2','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")  
-            if not choice_key[:1].find("3"):
-                #print " 3 = ", choice_key[:1]   
-                self.robot.reasoner.assertz("action_info('3','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
+        return "red"
 
 
 class DescribeBottles(smach.State):
