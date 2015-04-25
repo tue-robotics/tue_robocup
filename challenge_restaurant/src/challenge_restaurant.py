@@ -106,7 +106,7 @@ def setup_statemachine(robot):
                     transitions={'arrived': '%d_ASK_ORDER_TABLE_3'%i, 'unreachable':'%d_NAVIGATE_TO_WAYPOINT_TABLE_1'%i, 'goal_not_defined':'%d_NAVIGATE_TO_WAYPOINT_TABLE_1'%i})
             smach.StateMachine.add('%d_SAY_IF_ORDER_TABLE_3'%i, states.Say(robot, "Would you like to order something?"), transitions={ 'spoken' :'%d_HEAR_IF_ORDER_TABLE_3'%i})
             smach.StateMachine.add('%d_HEAR_IF_ORDER_TABLE_3'%i, states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), transitions={ 'no_result' :'%d_NAVIGATE_TO_WAYPOINT_TABLE_1'%i, 'yes':'%d_ASK_ORDER_TABLE_3'%i,'no':'%d_NAVIGATE_TO_WAYPOINT_TABLE_1'%i})
-            smach.StateMachine.add('%d_ASK_ORDER_TABLE_3'%i, AskOrder(robot, "three")), transitions={'next_order':'%d_NAVIGATE_TO_WAYPOINT_TABLE_1'%i, 'orders_done' : 'SAY_ORDERS_DONE'})
+            smach.StateMachine.add('%d_ASK_ORDER_TABLE_3'%i, AskOrder(robot, "three"), transitions={'next_order':'%d_NAVIGATE_TO_WAYPOINT_TABLE_1'%i, 'orders_done' : 'SAY_ORDERS_DONE'})
 
         smach.StateMachine.add('SAY_ORDERS_DONE', states.Say(robot, "I received enough orders for now, going back to the kitchen!", block=False), transitions={ 'spoken' :'NAVIGATE_BACK_TO_THE_KITCHEN'})
 
