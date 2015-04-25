@@ -14,25 +14,26 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_amigo
 
-class Ask_what_do_i_see(smach.State):
+class ConversationWithOperator(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "failed"])
         self.robot = robot
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("What do I see here?")
+        self.robot.speech.speak("What can I do for you?")
 
-        res = self.robot.ears.recognize(spec=challenge_knowledge.mesh_spec, choices=challenge_knowledge.mesh_choices, time_out = rospy.Duration(20))
+        res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
         try:
             if res.result:
-                self.robot.speech.speak("Okay")
-                name_object = res.choices['object']
-                print "name_object = ", name_object
-                # JANNO, hier kun je mee doen wat je er mee wilt.
+                self.robot.speech.speak("Hmm, I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(res.choices['object']))
+                self.robot.speech.speak("Amigo, please bring my boss a {0}".format(res.choices['object']))
+                
+                # we kunnen hier eventueel publishen op het trigger topic van Amigo wat we nodig hebben, welk drankje.
+
                 return "done"
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
@@ -60,11 +61,17 @@ def setup_statemachine(robot):
                                                     'preempted'  :'SAY_YES'})
 
         smach.StateMachine.add( 'SAY_YES',
-                                states.Say(robot, ["I have arrived at the desired location."], block=True),
+                                states.Say(robot, ["I have understood that I should give you a coke"], block=False),
                                 transitions={'spoken':'ASK_WHICH_PILLS'})     
 
+        # smach.StateMachine.add('GOTO_SHELF_BACKUP',
+        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_cupboard"), radius=0.2),
+        #                             transitions={   'arrived':'LOOKAT_SHELF',
+        #                                             'unreachable':'LOOKAT_SHELF',
+        #                                             'goal_not_defined':'LOOKAT_SHELF'})
+        
         smach.StateMachine.add("ASK_WHICH_PILLS",
-                                    Ask_what_do_i_see(robot),
+                                    ConversationWithOperator(robot),
                                     transitions={'done':'Done',
                                                 'failed':'Done'})
 
