@@ -264,9 +264,15 @@ class RoboNurse(smach.StateMachine):
         # Don't pass the weight_function, might screw up if phone is not near the robot
         phone = EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
 
+        def in_box(entity):
+            x_ok = 5.57 < entity.center_point.x < 6.32
+            y_ok = 8.2 < entity.center_point.y < 8.48
 
+            return x_ok and y_ok
 
-
+        red_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="coke")
+        blue_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="mints")
+        white_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="bubblemint")
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -406,9 +412,9 @@ class RoboNurse(smach.StateMachine):
 
             #####################################
 
-            red_pills = EdEntityDesignator(robot, type="coke")
-            blue_pills = EdEntityDesignator(robot, type="mints")
-            white_pills = EdEntityDesignator(robot, type="bubblemint")
+            # red_pills = EdEntityDesignator(robot, type="coke")
+            # blue_pills = EdEntityDesignator(robot, type="mints")
+            # white_pills = EdEntityDesignator(robot, type="bubblemint")
 
             #####################################
 
