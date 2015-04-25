@@ -12,6 +12,8 @@ if __name__ == "__main__":
     # person at the door 
     person = W.add_object("loy-1", "loy", 1.5, 0, 0, 0, 0, 0.7)
 
+    rospy.sleep(5)
+
     person.set_path([   [1.540, -0.021, 0.000],
                         [7.031, -0.024, 0.000],
                         [7.834, 2.987, 0.000],
@@ -23,4 +25,4 @@ if __name__ == "__main__":
                         [2.987, 2.681, 0.000],
                         [3.901, 1.687, 0.000],
                         [3.229, -0.079, 0.000],
-                        [1.084, -0.038, 0.000]], 0.5)  # Last number is path velocity in m/s
+                        [-3.084, -0.038, 0.000]], 0.2)  # Last number is path velocity in m/s

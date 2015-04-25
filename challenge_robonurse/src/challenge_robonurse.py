@@ -265,14 +265,15 @@ class RoboNurse(smach.StateMachine):
         phone = EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
 
         def in_box(entity):
-            x_ok = 5.57 < entity.center_point.x < 6.32
-            y_ok = 8.2 < entity.center_point.y < 8.48
+            print entity
+            x_ok = 5.5 < entity.center_point.x < 6.4
+            y_ok = 8.1 < entity.center_point.y < 8.5
 
             return x_ok and y_ok
 
-        red_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="coke")
-        blue_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="bubblemint")
-        white_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="mints")
+        red_pills = EdEntityDesignator(robot, type="coke")#, criteriafuncs=[in_box])
+        blue_pills = EdEntityDesignator(robot, type="bubblemint")#, criteriafuncs=[in_box])
+        white_pills = EdEntityDesignator(robot, type="mints")#, criteriafuncs=[in_box])
 
         with self:
             smach.StateMachine.add('INITIALIZE',
