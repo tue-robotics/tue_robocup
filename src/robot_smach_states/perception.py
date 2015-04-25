@@ -17,7 +17,7 @@ class LookAtEntity(State):
 
         State.__init__(self, locals(), outcomes=['succeeded'])
 
-    def run(self, robot, entity, keep_following=False):
+    def run(self, robot, entity, keep_following, waittime):
         if keep_following:
             rospy.logerr("Look at stuff: keep_following is obsolete")
 
