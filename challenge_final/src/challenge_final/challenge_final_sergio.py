@@ -24,7 +24,7 @@ def setup_statemachine(robot):
     							states.StartChallengeRobust(robot, INITIAL_POSE, use_entry_points = True),
                                 transitions={   "Done"              :   "Done",
                                                 "Aborted"           :   "Done",
-                                                "Failed"            :   "Done"}))
+                                                "Failed"            :   "Done"})
 
     return sm
 
