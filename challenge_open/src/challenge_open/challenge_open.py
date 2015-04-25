@@ -7,6 +7,7 @@ import math
 import numpy
 import operator
 
+import tf
 import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.util.startup import startup
@@ -22,6 +23,41 @@ TABLE2 = challenge_knowledge.table2
 TABLE3 = challenge_knowledge.table3
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 LOOK_POSES = {}
+LOCKED_ITEMS = {}
+
+class LookRight(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.head.look_at_point(msgs.PointStamped(x=0.2, y=1.0, z=1.8, frame_id=self.robot.robot_name+"/base_link"))
+        return 'done'
+
+class LockEntities(smach.State):
+    """docstring for LockEntities"""
+    def __init__(self, robot, table_id):
+        smach.State.__init__(self, outcomes=['locked'])
+        self.robot = robot
+        self.table_id = table_id
+
+    def execute(self, userdata):
+        
+        ''' Get table entity '''
+        table_entity = self.robot.ed.get_entity(id=self.table_id, parse=False)
+
+        ''' Get all entities '''
+        entities = self.robot.ed.get_entities(parse=False)
+        lock_entities = []
+        for entity in entities:
+            if onTopOff(entity, table_entity):
+                self.robot.ed.lock_entities(lock_ids=[entity.id], unlock_ids=[])
+                lock_entities.append(entity)
+
+        LOCKED_ITEMS[self.table_id] = lock_entities
+
+        return 'locked'
+
 
 class StorePose(smach.State):
     def __init__(self, robot, id):
@@ -45,13 +81,14 @@ class AskItems(smach.State):
         self.robot.speech.speak("What can you tell me?")
 
         res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
-        self.robot.head.cancel_goal()
+        
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
         try:
             if res.result:
                 self.speak(res)
+                self.addToED(res)
             else:
                 self.robot.speech.speak("Sorry, could you please repeat?")
                 return "failed"
@@ -63,28 +100,35 @@ class AskItems(smach.State):
 
     def addToED(self, res):
         ''' Find entities on location '''
-        entities = self.robot.ed.get_entities(parse=False)
+
+        #entities = self.robot.ed.get_entities(parse=False)
+        entities = LOCKED_ITEMS[res.choices['location']]
 
         ''' Check numbers??? '''
         ''' Backup scenario is difficult, operator should take care!!! '''
 
         ''' Transform to robot pose '''
         y_bl = {}
+        pose_bl = self.robot.base.get_location()
         mat = self.pose_to_mat(pose_bl.pose)
         #t_result = R1_inv * t2 + t1_inv
 
         for entity in entities:
             if onTopOff(entity, self.robot.ed.get_entity(id=res.choices['location'])):
-                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]) - mat[0:3, 3]
+                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]).T - mat[0:3, 3]
                 y_bl[entity.id] = vec_bl.item(1)
 
         ''' Sort on y coordinate '''
         sorted_y_bl = sorted(y_bl.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         ''' Assert to world model '''
-        updates = zip(sorted_y_bl, res.choices)
+        values = [ v for k,v in res.choices.iteritems() if "object" in k]
+
+        updates = zip(sorted_y_bl, values)
         for update in updates:
-            self.robot.ed.update_entity(id=update[0], type=update[1])
+            rospy.loginfo("Updating entity: {0} is {1}".format(update[0][0], update[1]))
+
+            self.robot.ed.update_entity(id=update[0][0], type=update[1])
 
     def pose_to_mat(self, pose):
         '''Convert a pose message to a 4x4 numpy matrix.
@@ -111,7 +155,7 @@ class AskItems(smach.State):
         elif 'object2' in res.choices:
             object1  = res.choices['object1']
             object2  = res.choices['object2']
-            self.robot.speech.speak("Okay, so there is {0} and {1} on the {2}".format(object1, object2, location))
+            self.robot.speech.speak("Okay, so there are {0} and {1} on the {2}".format(object1, object2, location))
         else:
             object1  = res.choices['object1']
             self.robot.speech.speak("So I guess I see {0} on the {1}".format(object1, location))
@@ -218,8 +262,16 @@ class ExploreTable(smach.StateMachine):
                                     transitions={  'stored'         :   'LOOKAT_TABLE'})
 
             smach.StateMachine.add("LOOKAT_TABLE",
-                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id=table_id), keep_following=True),
-                                     transitions={  'succeeded'         :'ASK_ITEMS'})
+                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id=table_id), keep_following=True, waittime=2.0),
+                                     transitions={  'succeeded'     :   'LOCK_ENTITIES'})
+
+            smach.StateMachine.add("LOCK_ENTITIES",
+                                    LockEntities(robot, table_id=table_id),
+                                    transitions={   'locked'        :   'ASK_ITEMS'})
+
+            smach.StateMachine.add("LOOK_RIGHT",
+                                    LookRight(robot),
+                                    transitions={   'done'          :   'ASK_ITEMS'})
 
             smach.StateMachine.add('ASK_ITEMS',
                                 AskItems(robot),
