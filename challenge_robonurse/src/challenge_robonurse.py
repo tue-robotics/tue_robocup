@@ -225,7 +225,7 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add('INIT_POSE',
                                 states.SetInitialPose(robot, 'robonurse_initial'),
-                                transitions={   'done':'GOTO_SHELF',
+                                transitions={   'done':'HEAR_GRANNY',
                                                 'preempted':'Aborted',  # This transition will never happen at the moment.
                                                 'error':'HEAR_GRANNY'})  # It should never go to aborted.
             
@@ -271,14 +271,45 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add("ASK_WHICH_PILLS",
                                 Ask_pills(robot),
-                                transitions={'red':'GRAB_COKE',     #HACK, ASSUME RED IS COKE, WHITE IS MINTS and BLUE = bubblemint
-                                             'white':'GRAB_MINTS',
-                                             'blue':'GRAB_BUBBLEMINT',
-                                             'failed':'GRAB_MINTS'})
+                                transitions={'red':'RED_GOTO_SHELF',     #HACK, ASSUME RED IS COKE, WHITE IS MINTS and BLUE = bubblemint
+                                             'white':'WHITE_GOTO_SHELF',
+                                             'blue':'BLUE_GOTO_SHELF',
+                                             'failed':'WHITE_GOTO_SHELF'})
+
+            smach.StateMachine.add( "RED_GOTO_SHELF",
+                                    states.NavigateToSymbolic(robot, { shelf:"in_front_of"}, shelf),
+                                    transitions={   'arrived'           :'RED_LOOKAT_SHELF',
+                                                    'unreachable'       :'RED_LOOKAT_SHELF',
+                                                    'goal_not_defined'  :'RED_LOOKAT_SHELF'})
+
+            smach.StateMachine.add("RED_LOOKAT_SHELF",
+                                     states.LookAtEntity(robot, shelf, keep_following=True),
+                                     transitions={  'succeeded'         :'GRAB_COKE'})
+
+            smach.StateMachine.add( "WHITE_GOTO_SHELF",
+                                    states.NavigateToSymbolic(robot, { shelf:"in_front_of"}, shelf),
+                                    transitions={   'arrived'           :'WHITE_LOOKAT_SHELF',
+                                                    'unreachable'       :'WHITE_LOOKAT_SHELF',
+                                                    'goal_not_defined'  :'WHITE_LOOKAT_SHELF'})
+
+            smach.StateMachine.add("WHITE_LOOKAT_SHELF",
+                                     states.LookAtEntity(robot, shelf, keep_following=True),
+                                     transitions={  'succeeded'         :'GRAB_MINTS'})
+
+            smach.StateMachine.add( "BLUE_GOTO_SHELF",
+                                    states.NavigateToSymbolic(robot, { shelf:"in_front_of"}, shelf),
+                                    transitions={   'arrived'           :'BLUE_LOOKAT_SHELF',
+                                                    'unreachable'       :'BLUE_LOOKAT_SHELF',
+                                                    'goal_not_defined'  :'BLUE_LOOKAT_SHELF'})
+
+            smach.StateMachine.add("BLUE_LOOKAT_SHELF",
+                                     states.LookAtEntity(robot, shelf, keep_following=True),
+                                     transitions={  'succeeded'         :'GRAB_BUBBLEMINT'})
+
 
             red_pills = EdEntityDesignator(robot, type="coke")
             blue_pills = EdEntityDesignator(robot, type="mints")
-            white_pills = EdEntityDesignator(robot, type="blue")
+            white_pills = EdEntityDesignator(robot, type="bubblemint")
 
             smach.StateMachine.add( "GRAB_COKE",
                                     Grab(robot, red_pills, empty_arm_designator),
