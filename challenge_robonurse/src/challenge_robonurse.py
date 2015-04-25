@@ -271,8 +271,8 @@ class RoboNurse(smach.StateMachine):
             return x_ok and y_ok
 
         red_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="coke")
-        blue_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="mints")
-        white_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="bubblemint")
+        blue_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="bubblemint")
+        white_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="mints")
 
         with self:
             smach.StateMachine.add('INITIALIZE',
