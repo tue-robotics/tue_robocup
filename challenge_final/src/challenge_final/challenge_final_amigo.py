@@ -14,33 +14,37 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_amigo
 
-class ConversationWithOperator(smach.State):
+from robot_smach_states.util.designators import Designator
+
+OBJECTS_LIST = []
+
+class AwaitTriggerAndSave(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "failed"])
         self.robot = robot
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("What can I do for you?")
+        order_object = states.WaitForTrigger(self.robot, challenge_knowledge.object_options,"amigo/trigger")
 
-        res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
-        if not res:
-            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
-            return "failed"
-        try:
-            if res.result:
-                self.robot.speech.speak("Hmm, I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(res.choices['object']))
-                self.robot.speech.speak("Amigo, please bring my boss a {0}".format(res.choices['object']))
-                
-                # we kunnen hier eventueel publishen op het trigger topic van Amigo wat we nodig hebben, welk drankje.
+        OBJECTS_LIST.append(str(order_object.execute(None)))
 
-                return "done"
-            else:
-                self.robot.speech.speak("Sorry, could you please repeat?")
-                return "failed"
-        except KeyError:
-            print "KEYERROR FINAL, should not happen!"
-            return "failed"
+        return "done"
+
+class SayFinal(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["spoken"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        sentence = "Sergio triggered me! Let's get a "+ OBJECTS_LIST[0] +" for the boss!"
+
+        say_final = states.Say(self.robot, sentence,block=False)
+
+        say_final.execute(None)
+
+        return "spoken"
 
 
 ############################## main statemachine ######################
@@ -54,26 +58,24 @@ def setup_statemachine(robot):
                                 transitions={   "Done"              :   "WAIT_FOR_TRIGGER_TO_START",
                                                 "Aborted"           :   "WAIT_FOR_TRIGGER_TO_START",
                                                 "Failed"            :   "WAIT_FOR_TRIGGER_TO_START"})
-
+       
         smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-                                    states.WaitForTrigger(robot, ['amigo_trigger'],"/amigo/trigger"),
-                                    transitions={   'amigo_trigger':'SAY_YES',
-                                                    'preempted'  :'SAY_YES'})
+                                    AwaitTriggerAndSave(robot),
+                                    transitions={   'done'              :'SAY_GET_OBJECT',
+                                                    'failed'            :'SAY_GET_OBJECT'})
 
-        smach.StateMachine.add( 'SAY_YES',
-                                states.Say(robot, ["I have understood that I should give you a coke"], block=False),
-                                transitions={'spoken':'ASK_WHICH_PILLS'})     
+        #object_type_to_grab = 
+        smach.StateMachine.add( 'SAY_GET_OBJECT',
+                                SayFinal(robot),
+                                transitions={'spoken':'Done'})
 
-        # smach.StateMachine.add('GOTO_SHELF_BACKUP',
-        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_cupboard"), radius=0.2),
-        #                             transitions={   'arrived':'LOOKAT_SHELF',
-        #                                             'unreachable':'LOOKAT_SHELF',
-        #                                             'goal_not_defined':'LOOKAT_SHELF'})
-        
-        smach.StateMachine.add("ASK_WHICH_PILLS",
-                                    ConversationWithOperator(robot),
-                                    transitions={'done':'Done',
-                                                'failed':'Done'})
+        # empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        # drink = EdEntityDesignator(robot, type="object_type_to_grab")
+
+        # smach.StateMachine.add( "GRAB_PHONE",
+        #                             Grab(robot, phone, empty_arm_designator),
+        #                             transitions={   'done'              :'SAY_PHONE_TAKEN',
+        #                                             'failed'            :'SAY_PHONE_TAKEN_FAILED'})
 
     return sm
 

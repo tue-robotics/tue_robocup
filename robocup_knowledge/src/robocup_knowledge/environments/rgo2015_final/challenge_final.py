@@ -27,14 +27,19 @@ explore_locations_part_2 = [explore_location_4, explore_location_5, explore_loca
 end_location_sergio = "final_last_position_sergio"
 
 
+
 #SPECS + CHOICES for speech recognition
+location_options = ['cupboard','dinnertable','desk','sidetable','tv','kitchencounter','cabinet','bartable','couch','chair','coathanger','left_bedside_table','right_bedside_table']
+object_options = ['coke','beer','juice','tea','coffee']
+
 #mesh_spec = "((it is (a|an) <object>)|(a <object>)|(an <object>)|<object>)"
 mesh_spec = "(<object>)"
-mesh_choices = {'object':['cupboard','dinnertable','desk','sidetable','tv','kitchencounter','cabinet','bartable','couch','chair','coathanger','left_bedside_table','right_bedside_table']}
+mesh_choices = {'object':location_options}
 
 #object_spec = "((it is a <object>)|(a <object>)|(an <object>))"
 object_spec = "(<object>)"
-object_choices = {'object':['coke','beer','juice','tea','coffee']}
+object_choices = {'object':object_options}
 
 operator_object_spec = "((Can you give me a <object>)|<object>)"
-operator_object_choices = {'object':['coke','beer','juice','tea','coffee']}
+operator_object_choices = {'object':object_options}
+
