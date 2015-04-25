@@ -287,12 +287,12 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "GRAB_BUBBLEMINT",
                                     Grab(robot, blue_pills, empty_arm_designator),
-                                    transitions={   'done'              :'STORE_ITEM',
+                                    transitions={   'done'              :'SAY_PILLS_TAKEN',
                                                     'failed'            :'SAY_PILLS_TAKEN_FAILED'})
 
             smach.StateMachine.add( "GRAB_MINTS",
                                     Grab(robot, white_pills, empty_arm_designator),
-                                    transitions={   'done'              :'STORE_ITEM',
+                                    transitions={   'done'              :'SAY_PILLS_TAKEN',
                                                     'failed'            :'SAY_PILLS_TAKEN_FAILED'})
 
             smach.StateMachine.add( "SAY_PILLS_TAKEN",
