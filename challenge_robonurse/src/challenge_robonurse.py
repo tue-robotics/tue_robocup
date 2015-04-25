@@ -257,7 +257,7 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add("LOOKAT_SHELF",
                                      states.LookAtEntity(robot, shelf, keep_following=True),
-                                     transitions={  'succeeded'         :'SAY_LOOKAT_PICK_SHELF'})
+                                     transitions={  'succeeded'         :'SAY_FOUND_OBJECTS'})
 
             smach.StateMachine.add( "SAY_FOUND_OBJECTS",
                                     states.Say(robot, "I see a red bottle, a blue bottle and a white bottle"),
