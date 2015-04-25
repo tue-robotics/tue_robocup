@@ -37,12 +37,9 @@ class WakeMeUp(smach.StateMachine):
 
         # ------------------------ DEFINITIONS ------------------------
 
-
         def is_awake(entity):
             #Check that the operator is awake
             return True
-
-
 
         # ------------------------ INITIALIZATIONS ------------------------
 
@@ -59,19 +56,19 @@ class WakeMeUp(smach.StateMachine):
         choices = Designator({  "fruit_snack"  : ["apple" ], "cereal" : ["cereal", "choco-flakes"], "milk": ["whole-milk"]})
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        breakfastCerealDes = VariableDesignator(resolve_type=str)
+        breakfastCerealDes = VariableDesignator(resolve_type=str)       # designator containing chosen cereal name
         breakfastCerealDes.current = ""
 
-        breakfastFruitDes = VariableDesignator(resolve_type=str)
+        breakfastFruitDes = VariableDesignator(resolve_type=str)        # designator containing chosen fruit name
         breakfastFruitDes.current = ""
 
-        breakfastMilkDes = VariableDesignator(resolve_type=str)
+        breakfastMilkDes = VariableDesignator(resolve_type=str)         # designator containing chosen milk name
         breakfastMilkDes.current = ""
 
-        loop_counter_des = VariableDesignator(resolve_type=int)
+        loop_counter_des = VariableDesignator(resolve_type=int)         # counter for general looping (because smach iterator sucks)
         loop_counter_des.current = 0
 
-        wakeup_limit_des = VariableDesignator(resolve_type=int)
+        wakeup_limit_des = VariableDesignator(resolve_type=int)         # number of times to repeat wake up loop
         wakeup_limit_des.current = 3
 
         # ------------------------ STATE MACHINE ------------------------
