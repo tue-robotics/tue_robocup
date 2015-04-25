@@ -71,9 +71,10 @@ class StorePose(smach.State):
         return 'stored'
 
 class AskItems(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, table_id):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
+        self.table_id = table_id
 
     def execute(self, userdata):
         self.robot.head.look_at_standing_person()
@@ -102,7 +103,7 @@ class AskItems(smach.State):
         ''' Find entities on location '''
 
         #entities = self.robot.ed.get_entities(parse=False)
-        entities = LOCKED_ITEMS[res.choices['location']]
+        entities = LOCKED_ITEMS[self.table_id]
 
         ''' Check numbers??? '''
         ''' Backup scenario is difficult, operator should take care!!! '''
@@ -114,7 +115,7 @@ class AskItems(smach.State):
         #t_result = R1_inv * t2 + t1_inv
 
         for entity in entities:
-            if onTopOff(entity, self.robot.ed.get_entity(id=res.choices['location'])):
+            if onTopOff(entity, self.robot.ed.get_entity(id=self.table_id)):
                 vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]).T - mat[0:3, 3]
                 y_bl[entity.id] = vec_bl.item(1)
 
@@ -146,7 +147,7 @@ class AskItems(smach.State):
 
     def speak(self, res):
         # ToDo: make nice
-        location = res.choices['location']
+        location = self.table_id
         if 'object3' in res.choices:
             object1  = res.choices['object1']
             object2  = res.choices['object2']
@@ -274,7 +275,7 @@ class ExploreTable(smach.StateMachine):
                                     transitions={   'done'          :   'ASK_ITEMS'})
 
             smach.StateMachine.add('ASK_ITEMS',
-                                AskItems(robot),
+                                AskItems(robot, table_id),
                                 transitions={   'succeeded'         :   'RESET_HEAD_TABLE',
                                                 'failed'            :   'RESET_HEAD_TABLE'} )
 
