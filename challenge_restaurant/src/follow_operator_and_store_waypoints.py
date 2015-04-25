@@ -86,9 +86,6 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         # Get position of the base
         self._waypoint_dict[location] = base_pose
         
-        print "Current waypoint dictionary:"
-        print self._waypoint_dict
-        
         self._robot.speech.speak("Very well, moving on!")
                 
     def _check_all_knowledge(self):
@@ -123,7 +120,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
             operator = None
 
         if self._operator_id and not operator:
-            self._robot.speech.speak("I lost my operator!")
+            self._robot.speech.speak("I lost my operator! If you say please follow me, I will follow you again!")
             self._robot.base.local_planner.cancelCurrentPlan()
             self._operator_id = None
                 
