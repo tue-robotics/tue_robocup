@@ -74,7 +74,8 @@ class AskWhatDoISee(smach.State):
                     rospy.logerr("Challenge final: Cannot update mesh type: id unknown")
                 return "succeeded"
             else:
-                self.robot.speech.speak("Sorry, could you please repeat?")
+                self.robot.speech.speak("Sorry, I did not hear you properly")
+                rospy.logerr("No speech result")
                 return "failed"
         except KeyError:
             print "KEYERROR FINAL, should not happen!"
@@ -117,7 +118,53 @@ class ExploreWaypoint(smach.StateMachine):
                                     transitions={   'succeeded'                 :'succeeded',
                                                     'failed'                    :'succeeded'})
 
+############################## conversation with operator ######################
 
+class ConversationWithOperator(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        self.robot.speech.speak("What can I do for you?")
+
+        res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
+        if not res:
+            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
+            return "failed"
+        try:
+            if res.result:
+                self.robot.speech.speak("Hmm, I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(res.choices['object']))
+                self.robot.speech.speak("Amigo, please bring my boss a {0}".format(res.choices['object']))
+                
+                # we kunnen hier eventueel publishen op het trigger topic van Amigo wat we nodig hebben, welk drankje.
+
+                return "succeeded"
+            else:
+                self.robot.speech.speak("Sorry, I did not hear you properly")
+                return "failed"
+        except KeyError:
+            print "KEYERROR FINAL, should not happen!"
+            return "failed"
+
+class HumanRobotInteraction(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        waypoint_designator = EdEntityDesignator(robot, id=challenge_knowledge.task_location_sergio)
+
+        with self:
+            smach.StateMachine.add("GOTO_WAYPOINT",
+                                    states.NavigateToWaypoint(robot, waypoint_designator),
+                                    transitions={   'arrived'                   :'TALK_TO_OPERATOR',
+                                                    'unreachable'               :'TALK_TO_OPERATOR',
+                                                    'goal_not_defined'          :'TALK_TO_OPERATOR'})
+
+            smach.StateMachine.add("TALK_TO_OPERATOR",
+                                    ConversationWithOperator(robot),
+                                    transitions={   'succeeded'                 :'succeeded',
+                                                    'failed'                    :'succeeded'})
 
 ############################## main statemachine ######################
 def setup_statemachine(robot):
@@ -142,8 +189,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("EXPLORE3",
                                 ExploreWaypoint(robot, challenge_knowledge.explore_location_3),
-                                transitions={   "succeeded"        :   "EXPLORE4",
-                                                "failed"           :   "EXPLORE4"})
+                                transitions={   "succeeded"        :   "HUMAN_ROBOT_INTERACTION",
+                                                "failed"           :   "HUMAN_ROBOT_INTERACTION"})
+
+        smach.StateMachine.add("HUMAN_ROBOT_INTERACTION",
+                                HumanRobotInteraction(robot),
+                                transitions={   "succeeded"         :   "EXPLORE4",
+                                                "failed"            :   "EXPLORE4"})
 
         smach.StateMachine.add("EXPLORE4",
                                 ExploreWaypoint(robot, challenge_knowledge.explore_location_4),
