@@ -34,7 +34,7 @@ mesh_choices = {'object':['cupboard','dinnertable','desk','sidetable','tv','kitc
 
 #object_spec = "((it is a <object>)|(a <object>)|(an <object>))"
 object_spec = "(<object>)"
-object_choices = {'object':['coke','beer','sevenup','icetea']}
+object_choices = {'object':['coke','beer','juice','tea','coffee']}
 
 operator_object_spec = "((Can you give me a <object>)|<object>)"
-operator_object_choices = {'object':['coke','beer','sevenup','icetea']}
+operator_object_choices = {'object':['coke','beer','juice','tea','coffee']}
