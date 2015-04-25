@@ -95,7 +95,7 @@ class Trigger(smach.State):
         self.pub = rospy.Publisher(topic, std_msgs.msg.String, queue_size=10)
 
     def execute(self, userdata):
-        self.pub.publish(std_msgs.String(data=trigger)
+        self.pub.publish(std_msgs.String(data=trigger))
         return 'triggered'
 
 ############################## Wait for trigger ##############################
