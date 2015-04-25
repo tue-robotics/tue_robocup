@@ -52,7 +52,7 @@ objects = [
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'cranberry_cereals',  'sub-category': 'cereal'},
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'muesli_cereals',     'sub-category': 'cereal'}, 
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'bubblemint',         'sub-category': 'medicine'}, 
-{'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'deodorant'}, 
+{'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'deodorant',          'sub-category': 'medicine'},
 {'category': 'tool',    'placement': 'counter',     'group': 'known', 'name': 'brush'}, 
 {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'cigarettes'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'red_bull'}, 
