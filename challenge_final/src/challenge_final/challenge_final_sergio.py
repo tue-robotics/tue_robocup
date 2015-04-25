@@ -19,7 +19,7 @@ challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_sergio
 
 MESH_IDS = [] #''' List with the IDs of the meshes of which a snapshot has been taken '''
-SMALL_MESH_IDS = [] #''' List with the IDs of the small meshes which have been locked '''
+SMALL_MESH_IDS = [] #   ''' List with the IDs of the small meshes which have been locked '''
 
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0):
@@ -48,8 +48,9 @@ class TakeSnapShot(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        MESH_IDS.append('mesh'.format(len(MESH_IDS))) # ToDo: make nice
+        MESH_IDS.append('mesh{0}'.format(len(MESH_IDS))) # ToDo: make nice
         self.robot.ed.mesh_entity_in_view(id=MESH_IDS[-1])
+        rospy.sleep(rospy.Duration(3.0))
         return 'succeeded'
 
 class AskWhatDoISee(smach.State):
@@ -100,7 +101,7 @@ class ExploreWaypoint(smach.StateMachine):
 
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=2.5, waittime=1.5),
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=5.0, waittime=0.0),
                                     transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
                                                     'failed'                    :'TAKE_SNAPSHOT'})
 
@@ -186,6 +187,9 @@ class CheckSmallObject(smach.State):
     def execute(self, userdata):
         ''' For now, assume the ID of the mesh is always the latest that has been snapshot '''
         table_entity = self.robot.ed.get_entity(id=MESH_IDS[-1])
+        if not table_entity:
+            rospy.logerr("Not seeing an entity, returning no object found")
+            return 'no_object_found'
 
         ''' Get all entities and check which one is on the table '''
         entities = self.robot.ed.get_entities()
@@ -202,13 +206,57 @@ class CheckSmallObject(smach.State):
         elif len(entities_on_table) == 1:
             small_mesh_id = entities_on_table[0].id
         else:
-            rospy.logwarn("Found multiple entities on this table, will assert the first one in my list...")
-            # ToDo: do something smarter
-            small_mesh_id = entities_on_table[0].id
+            z_pos_filtered_entities = []
+            for entity in entities_on_table:
+                z_pos = entity.pose.position.z
+                if 0.6 < z_pos < 0.9:
+                    z_pos_filtered_entities.append(entity)
+
+            if len(z_pos_filtered_entities == 0):
+                rospy.logwarn("No entities left, assert first of original list")
+                small_mesh_id = entities_on_table[0].id
+            elif len(z_pos_filtered_entities):
+                small_mesh_id = z_pos_filtered_entities[0].id
+            else: 
+                rospy.logwarn("multiple entities remaining, fingers crossed")
+                small_mesh_id = z_pos_filtered_entities[0].id
 
         self.robot.ed.lock_entities(lock_ids=[small_mesh_id], unlock_ids=[])
         SMALL_MESH_IDS.append(small_mesh_id)
         return 'object_found'
+
+class AskSmallObject(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        self.robot.speech.speak("What do I see here?")
+
+        res = self.robot.ears.recognize(spec=challenge_knowledge.object_spec, choices=challenge_knowledge.object_choices, time_out = rospy.Duration(20))
+        if not res:
+            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
+            return "failed"
+        try:
+            if res.result:
+                name_object = res.choices['object']
+                self.robot.speech.speak("Okay, now I know this is {0}".format(name_object))
+                print "name_object = ", name_object
+                
+                ''' Assert type to ed '''
+                if len(SMALL_MESH_IDS) > 0:
+                    self.robot.ed.update_entity(id=SMALL_MESH_IDS[-1], type = name_object)
+                else:
+                    rospy.logerr("Challenge final: Cannot update small mesh type: id unknown")
+                return "succeeded"
+            else:
+                self.robot.speech.speak("Sorry, I did not hear you properly")
+                rospy.logerr("No speech result")
+                return "failed"
+        except KeyError:
+            print "KEYERROR FINAL, should not happen!"
+            return "failed"        
 
 class SmallObjectHandling(smach.StateMachine):
     def __init__(self, robot):
@@ -224,12 +272,20 @@ class SmallObjectHandling(smach.StateMachine):
             ''' Check if object present and assert '''
             smach.StateMachine.add("CHECK_SMALL_OBJECT",
                                     CheckSmallObject(robot),
-                                    transitions={   'object_found'              :'succeeded',
-                                                    'no_object_found'           :'succeeded'})
+                                    transitions={   'object_found'              :'LOOK_ASIDE',
+                                                    'no_object_found'           :'LOOK_ASIDE'})
 
             ''' If asserted, turn head '''
+            smach.StateMachine.add("LOOK_ASIDE",
+                                    LookBaseLinkPoint(robot, x=1.0, y=2.0, z=1.8, timeout=0.0, waittime=0.0),
+                                    transitions={   'succeeded'                 :'ASK_SMALL_OBJECT',
+                                                    'failed'                    :'ASK_SMALL_OBJECT'})
 
             ''' If asserted, ask what it is '''
+            smach.StateMachine.add("ASK_SMALL_OBJECT",
+                                    AskSmallObject(robot),
+                                    transitions={   'succeeded'                 :'succeeded',
+                                                    'failed'                    :'succeeded'})
 
 
 ############################## main statemachine ######################
@@ -250,13 +306,23 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("EXPLORE2",
                                 ExploreWaypoint(robot, challenge_knowledge.explore_location_2),
-                                transitions={   "succeeded"        :   "EXPLORE3",
-                                                "failed"           :   "EXPLORE3"})
+                                transitions={   "succeeded"        :   "SMALL_OBJECT_1",
+                                                "failed"           :   "SMALL_OBJECT_1"})
+
+        smach.StateMachine.add("SMALL_OBJECT_1",
+                                SmallObjectHandling(robot),
+                                transitions={   "succeeded"         :   "EXPLORE3",
+                                                "failed"            :   "EXPLORE3"})
 
         smach.StateMachine.add("EXPLORE3",
                                 ExploreWaypoint(robot, challenge_knowledge.explore_location_3),
-                                transitions={   "succeeded"        :   "HUMAN_ROBOT_INTERACTION",
-                                                "failed"           :   "HUMAN_ROBOT_INTERACTION"})
+                                transitions={   "succeeded"        :   "SMALL_OBJECT_2",
+                                                "failed"           :   "SMALL_OBJECT_2"})
+
+        smach.StateMachine.add("SMALL_OBJECT_2",
+                                SmallObjectHandling(robot),
+                                transitions={   "succeeded"         :   "HUMAN_ROBOT_INTERACTION",
+                                                "failed"            :   "HUMAN_ROBOT_INTERACTION"})
 
         smach.StateMachine.add("HUMAN_ROBOT_INTERACTION",
                                 HumanRobotInteraction(robot),
