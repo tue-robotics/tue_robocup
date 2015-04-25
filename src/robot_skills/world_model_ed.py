@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv
-from ed.srv import GetGUICommand, GetGUICommandResponse
+from ed.srv import GetGUICommand, GetGUICommandResponse, LockEntities
 from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -39,6 +39,7 @@ class ED:
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
         self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
         self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
+        self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
@@ -70,7 +71,7 @@ class ED:
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
-        
+
         # HACK
         entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" ]
 
@@ -118,4 +119,5 @@ class ED:
         json = '{"entities":[{%s}]}'%json_entity
         return self._ed_update_srv(request=json)
 
-
+    def lock_entities(self, lock_ids, unlock_ids):
+        return self._ed_lock_entities_srv(lock_ids=lock_ids, unlock_ids=unlock_ids)
