@@ -402,6 +402,50 @@ class MarkEntityInRviz(smach.State):
         self.publisher.publish(marker)
         return 'succeeded'
 
+class IteratorState(smach.State):
+    """
+    >>> from robot_smach_states.util.designators import *
+    >>> iterable = Designator(range(3), resolve_type=int) #Set up the collection we want to iterate over
+    >>> i = VariableDesignator(resolve_type=[int]) #iterable is a collection of integers (range(3))
+    >>> 
+    >>> # import ipdb; ipdb.set_trace()
+    >>> iterator_state = IteratorState(iterable, i)
+    >>> iterable.resolve()
+    [0, 1, 2]
+    >>> iterator_state.execute()
+    'next'
+    >>> iterable.resolve()
+    [1, 2]
+    >>> i.resolve()
+    0
+
+    >>> iterator_state.execute() #Assigns the next value of iterable to i
+    'next'
+    >>> i.resolve()
+    1
+    >>> 
+    >>> iterator_state.execute() #Assigns the next value of iterable to i
+    'next'
+    >>> i.resolve() #Use the designator that now resolves to the (next) human.
+    2
+    >>> 
+    >>> iterator_state.execute() #If there are no more items in iterable, just return a different outcome
+    'stop_iteration'
+    """
+    def __init__(self, iterable_designator, element_designator):
+        smach.State.__init__(self, outcomes=['next', 'stop_iteration'])
+        self.iterable_designator = iterable_designator
+        self.element_designator = element_designator
+
+    def execute(self, userdata=None):
+        elements = self.iterable_designator.resolve()
+        if elements:
+            self.element_designator.current = elements.pop(0)
+            return "next"
+        else:
+            # self.element_designator.current = None
+            return "stop_iteration"
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
