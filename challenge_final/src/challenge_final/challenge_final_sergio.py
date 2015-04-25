@@ -70,10 +70,14 @@ class ExploreWaypoint(smach.StateMachine):
             ''' Take snapshot '''
             smach.StateMachine.add("TAKE_SNAPSHOT",
                                     TakeSnapShot(robot),
+                                    transitions={   'succeeded'                 :'LOOK_ASIDE',
+                                                    'failed'                    :'LOOK_ASIDE'})
+
+            ''' Look aside '''
+            smach.StateMachine.add("LOOK_ASIDE",
+                                    LookBaseLinkPoint(robot, x=1.0, y=2.0, z=1.8, timeout=0.0, waittime=0.0),
                                     transitions={   'succeeded'                 :'succeeded',
                                                     'failed'                    :'succeeded'})
-
-            ''' Look to side '''
 
             ''' Ask for entity '''
 
