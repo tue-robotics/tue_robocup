@@ -63,6 +63,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
                 self._register_operator()
 
         self._speech_recognition_result = None
+        rospy.sleep(1)
             
     def _heard_location(self, choices):
         # Stop the base
@@ -76,6 +77,12 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         side = choices["side"]
         location = choices["location"]
 
+        self._robot.speech.speak("%s %s?"%(location, side))
+        result = self._robot.ears.recognize("(yes|no)",{})
+        if not result or result.result == "no":
+            self._robot.speech.speak("Sorry, moving on!", block=False)
+            return
+
         self._robot.speech.speak("%s %s, it is, moving on!"%(side, location))
         
         if side == "left":
@@ -86,7 +93,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         # Get position of the base
         self._waypoint_dict[location] = base_pose
         
-        self._robot.speech.speak("Very well, moving on!")
+        self._robot.speech.speak("Very well, moving on!", block=False)
                 
     def _check_all_knowledge(self):
         if self._has_all_knowledge:
