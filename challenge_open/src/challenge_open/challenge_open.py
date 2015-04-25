@@ -7,6 +7,7 @@ import math
 import numpy
 import operator
 
+import tf
 import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.util.startup import startup
@@ -41,7 +42,7 @@ class LockEntities(smach.State):
         self.table_id = table_id
 
     def execute(self, userdata):
-        
+
         ''' Get table entity '''
         table_entity = self.robot.ed.get_entity(id=self.table_id, parse=False)
 
@@ -53,7 +54,7 @@ class LockEntities(smach.State):
                 self.robot.ed.lock_entities(lock_ids=[entity.id], unlock_ids=[])
                 lock_entities.append(entity)
 
-        LOCKED_ITEMS['table_id'] = lock_entities
+        LOCKED_ITEMS[self.table_id] = lock_entities
 
         return 'locked'
 
@@ -70,17 +71,17 @@ class StorePose(smach.State):
         return 'stored'
 
 class AskItems(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, table_id):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
+        self.table_id = table_id
 
     def execute(self, userdata):
-        self.robot.head.look_at_standing_person()
 
-        self.robot.speech.speak("What can you tell me?")
+        self.robot.speech.speak(["What object do I see?", "What are those objects?"])
 
         res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
-        
+
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
@@ -99,30 +100,35 @@ class AskItems(smach.State):
 
     def addToED(self, res):
         ''' Find entities on location '''
+
         #entities = self.robot.ed.get_entities(parse=False)
-        entities = LOCKED_ITEMS[res.choices['location']]
+        entities = LOCKED_ITEMS[self.table_id]
 
         ''' Check numbers??? '''
         ''' Backup scenario is difficult, operator should take care!!! '''
 
         ''' Transform to robot pose '''
         y_bl = {}
+        pose_bl = self.robot.base.get_location()
         mat = self.pose_to_mat(pose_bl.pose)
         #t_result = R1_inv * t2 + t1_inv
 
         for entity in entities:
-            if onTopOff(entity, self.robot.ed.get_entity(id=res.choices['location'])):
-                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]) - mat[0:3, 3]
+            if onTopOff(entity, self.robot.ed.get_entity(id=self.table_id)):
+                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]).T - mat[0:3, 3]
                 y_bl[entity.id] = vec_bl.item(1)
 
         ''' Sort on y coordinate '''
         sorted_y_bl = sorted(y_bl.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         ''' Assert to world model '''
-        updates = zip(sorted_y_bl, res.choices)
+        values = [ v for k,v in res.choices.iteritems() if "object" in k]
+
+        updates = zip(sorted_y_bl, values)
         for update in updates:
-            rospy.loginfo("Updating entity: {0} is {1}".format(update[0], update[1]))
-            self.robot.ed.update_entity(id=update[0], type=update[1])
+            rospy.loginfo("Updating entity: {0} is {1}".format(update[0][0], update[1]))
+
+            self.robot.ed.update_entity(id=update[0][0], type=update[1])
 
     def pose_to_mat(self, pose):
         '''Convert a pose message to a 4x4 numpy matrix.
@@ -140,7 +146,7 @@ class AskItems(smach.State):
 
     def speak(self, res):
         # ToDo: make nice
-        location = res.choices['location']
+        location = self.table_id
         if 'object3' in res.choices:
             object1  = res.choices['object1']
             object2  = res.choices['object2']
@@ -244,8 +250,8 @@ class ExploreTable(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('GOTO_TABLE',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=table_id):"in_front_of"}, 
+                                states.NavigateToSymbolic(robot,
+                                                          {EdEntityDesignator(robot, id=table_id):"in_front_of"},
                                                           EdEntityDesignator(robot, id=table_id)),
                                 transitions={   'arrived'           :   'STORE_TABLE',
                                                 'unreachable'       :   'STORE_TABLE',
@@ -268,7 +274,7 @@ class ExploreTable(smach.StateMachine):
                                     transitions={   'done'          :   'ASK_ITEMS'})
 
             smach.StateMachine.add('ASK_ITEMS',
-                                AskItems(robot),
+                                AskItems(robot, table_id),
                                 transitions={   'succeeded'         :   'RESET_HEAD_TABLE',
                                                 'failed'            :   'RESET_HEAD_TABLE'} )
 
@@ -278,7 +284,7 @@ class ExploreTable(smach.StateMachine):
 
 ############################## explore state machine #####################
 class ExploreScenario(smach.StateMachine):
-    
+
     def __init__(self, robot):
 
         smach.StateMachine.__init__(self, outcomes=['done'])
@@ -302,7 +308,7 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
     with sm:
-        
+
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 states.SetInitialPose(robot, "open_challenge_start"),
                                 transitions={   'done'          :'INITIALIZE',
