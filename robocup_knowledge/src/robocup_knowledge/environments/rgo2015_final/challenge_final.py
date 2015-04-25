@@ -25,3 +25,9 @@ explore_locations_part_2 = [explore_location_4, explore_location_5, explore_loca
 
 # last position where sergio will wait (between cabinet and bartable, near the wall)
 end_location_sergio = "final_last_position_sergio"
+
+
+mesh_spec = "((It is a <object>)|(a <object>)|(an <object>))"
+mesh_choices = {'object':['cupboard','dinnertable','desk','sidetable','coke','beer','sevenup','icetea']}
+
+
