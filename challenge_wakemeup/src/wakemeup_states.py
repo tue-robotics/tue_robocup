@@ -32,8 +32,11 @@ class bcolors:
 
 prefix = bcolors.OKBLUE + "[WAKE ME UP] " + bcolors.ENDC
 
-# load item names
 default_milk = "fresh milk"
+
+bed_top_coordinates = {'x':0.783, 'y':1.315, 'z':0.3}
+
+# load item names
 common = load_knowledge('common')
 knowledge_objs= load_knowledge('common').objects
 
@@ -41,6 +44,10 @@ names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["
 names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
 names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
 
+# Debug print
+print prefix + "Fruit names from Knowledge: " + str(names_fruit)
+print prefix + "Cereal names from Knowledge: " + str(names_cereal)
+print prefix + "Milk names from Knowledge: " + str(names_milk)
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -228,13 +235,14 @@ class GetOrder(smach.State):
         else:
             return 'failed'
 
+
 # ----------------------------------------------------------------------------------------------------
 
 
 # Ask the persons name
 class RepeatOrderToPerson(smach.State):
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
-        smach.State.__init__(   self, outcomes=['done'])
+        smach.State.__init__(self, outcomes=['done'])
 
         self.robot = robot
         self.breakfastCereal = breakfastCerealDes
@@ -247,3 +255,65 @@ class RepeatOrderToPerson(smach.State):
         self.robot.speech.speak("I will get you a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve(), block=False)
 
         return 'done'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class CancelHeadGoals(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, robot):
+        print prefix + bcolors.OKBLUE + "CancelHeadGoals" + bcolors.ENDC
+
+        self.robot.head.cancel_goal()
+
+        return 'done'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class LookAtBedTop(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, robot):
+        print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
+
+        # set robots pose
+        # self.robot.spindle.high()
+        self.robot.head.cancel_goal()
+
+        # TODO maybe look around a bit to make sure the vision covers the whole bed top
+
+        # look at bed top
+        headGoal = msgs.PointStamped(x=bed_top_coordinates['x'], y=bed_top_coordinates['y'], z=bed_top_coordinates['z'], frame_id="/map")
+        self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
+
+        return 'done'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class LoopBreaker(smach.State):
+    def __init__(self, robot, counter_designator, limit_designator):
+        smach.State.__init__(self, outcomes=['break', 'continue'])
+        self.robot = robot
+        self.counter = counter_designator
+        self.limit = limit_designator
+
+    def execute(self, robot):
+        print prefix + bcolors.OKBLUE + "LoopBreaker" + bcolors.ENDC
+
+        if self.counter.resolve() == self.limit.resolve():
+            print "{}Breaking loop ({}={})".format(prefix, self.counter.resolve(), self.limit.resolve())
+            return 'break'
+        else:
+            print "{}Continuing loop ({}!={})".format(prefix, self.counter.resolve(), self.limit.resolve())
+            self.counter.current = self.counter.current + 1
+            return 'continue'
