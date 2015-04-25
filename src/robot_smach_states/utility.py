@@ -84,6 +84,20 @@ class SetInitialPose(smach.State):
 
         return "done"
 
+class Trigger(smach.State):
+
+    def __init__(self, robot, trigger, topic):
+        smach.State.__init__(self,
+                             outcomes=["triggered"])
+        self.robot = robot
+        self.trigger = trigger
+
+        self.pub = rospy.Publisher(topic, std_msgs.msg.String, queue_size=10)
+
+    def execute(self, userdata):
+        self.pub.publish(std_msgs.String(data=trigger)
+        return 'triggered'
+
 ############################## Wait for trigger ##############################
 class WaitForTrigger(smach.State):
     '''
