@@ -12,7 +12,7 @@ from robot_smach_states.util.designators import check_type, EdEntityDesignator
 
 
 class LookAtEntity(State):
-    def __init__(self, robot, entity, keep_following=False):
+    def __init__(self, robot, entity, keep_following=False, waittime=0.0):
         check_type(entity, EntityInfo)
 
         State.__init__(self, locals(), outcomes=['succeeded'])
@@ -28,6 +28,7 @@ class LookAtEntity(State):
         point_stamped = PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
         robot.head.look_at_point(point_stamped)
+        rospy.sleep(rospy.Duration(waittime))
         return "succeeded"
 
 # Testing
