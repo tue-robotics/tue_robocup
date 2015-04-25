@@ -48,6 +48,38 @@ class TakeSnapShot(smach.State):
         self.robot.ed.mesh_entity_in_view(id=MESH_IDS[-1])
         return 'succeeded'
 
+class AskWhatDoISee(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        self.robot.speech.speak("What do I see here?")
+
+        res = self.robot.ears.recognize(spec=challenge_knowledge.mesh_spec, choices=challenge_knowledge.mesh_choices, time_out = rospy.Duration(20))
+        if not res:
+            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
+            return "failed"
+        try:
+            if res.result:
+                name_object = res.choices['object']
+                self.robot.speech.speak("Okay, I will call this the {0}".format(name_object))
+                print "name_object = ", name_object
+                
+                ''' Assert type to ed '''
+                if len(MESH_IDS) > 0:
+                    self.robot.ed.update_entity(id=MESH_IDS[-1], type = name_object)
+                else:
+                    rospy.logerr("Challenge final: Cannot update mesh type: id unknown")
+                return "succeeded"
+            else:
+                self.robot.speech.speak("Sorry, could you please repeat?")
+                return "failed"
+        except KeyError:
+            print "KEYERROR FINAL, should not happen!"
+            return "failed"
+
 class ExploreWaypoint(smach.StateMachine):
     def __init__(self, robot, waypoint):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -76,12 +108,16 @@ class ExploreWaypoint(smach.StateMachine):
             ''' Look aside '''
             smach.StateMachine.add("LOOK_ASIDE",
                                     LookBaseLinkPoint(robot, x=1.0, y=2.0, z=1.8, timeout=0.0, waittime=0.0),
+                                    transitions={   'succeeded'                 :'ASK_SEE',
+                                                    'failed'                    :'ASK_SEE'})
+
+            ''' Ask for entity '''
+            smach.StateMachine.add("ASK_SEE",
+                                    AskWhatDoISee(robot),
                                     transitions={   'succeeded'                 :'succeeded',
                                                     'failed'                    :'succeeded'})
 
-            ''' Ask for entity '''
 
-            ''' Assert entity (or in previous???) '''
 
 ############################## main statemachine ######################
 def setup_statemachine(robot):
