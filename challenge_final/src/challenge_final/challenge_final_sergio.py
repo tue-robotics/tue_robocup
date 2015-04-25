@@ -6,6 +6,8 @@ import sys
 import random
 import math
 
+import std_msgs
+
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
@@ -124,6 +126,7 @@ class ConversationWithOperator(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
+        self.trigger_pub = rospy.Publisher("/amigo/trigger", std_msgs.msg.String, queue_size=10)
 
     def execute(self, userdata):
 
@@ -135,10 +138,17 @@ class ConversationWithOperator(smach.State):
             return "failed"
         try:
             if res.result:
-                self.robot.speech.speak("Hmm, I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(res.choices['object']))
-                self.robot.speech.speak("Amigo, please bring my boss a {0}".format(res.choices['object']))
+                object_string = res.choices['object']
+                self.robot.speech.speak("I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
+                self.robot.speech.speak("Amigo, please bring my boss a {0}".format(object_string))
                 
-                # we kunnen hier eventueel publishen op het trigger topic van Amigo wat we nodig hebben, welk drankje.
+                ''' Publish trigger for AMIGO to start its task '''
+                msg = std_msgs.msg.String(object_string)
+                counter = 0
+                while counter < 10:
+                    self.trigger_pub.publish(msg)
+                    counter += 1
+                    rospy.sleep(rospy.Duration(0.1))
 
                 return "succeeded"
             else:
