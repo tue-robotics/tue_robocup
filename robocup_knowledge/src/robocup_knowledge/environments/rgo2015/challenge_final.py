@@ -1,0 +1,1 @@
+initial_pose_sergio = "initial_pose_door_B"
