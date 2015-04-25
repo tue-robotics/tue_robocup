@@ -19,6 +19,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         smach.State.__init__(self, outcomes=["done",'aborted'])
 
         self._robot = robot
+        robot.base.local_planner.cancelCurrentPlan()
         self._speech_recognition_thread = None
         self._speech_recognition_result = None
         
@@ -26,7 +27,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         
         self._waypoint_dict = {}
 
-        self._said_has_all_knowledge = False
+        self._has_all_knowledge = False
         
     def _save_kitchen(self):
         self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
@@ -56,7 +57,7 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         # Check speech result
         if self._speech_recognition_result:
             print self._speech_recognition_result
-            if has_operator and result.result != "Please follow me":
+            if has_operator and result.result != "Please follow me" and 'location' in result.choices:
                 self._heard_location(result.choices)
             elif not has_operator and result.result == "Please follow me":
                 self._register_operator()
@@ -67,29 +68,33 @@ class FollowOperatorAndStoreWaypoints(smach.State):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
         
-        self._robot.speech.speak("I heard %s %s, is this allright?"%(choices["location"], choices["side"]))
-        yes_no_result = self._robot.ears.recognize("<banana>", {"banana": ["yes", "no"]})
-        if yes_no_result and yes_no_result.choices["banana"] == "yes":
-            base_pose = self._robot.base.get_location()
-            
-            side = choices["side"]
-            
-            if side == "left":
-                base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
-            elif side == "right":
-                base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+        base_pose = self._robot.base.get_location()
+        
+        if not "side" in choices:
+            return
 
-            # Get position of the base
-            self._waypoint_dict[choices["location"]] = base_pose
-            
-            print "Current waypoint dictionary:"
-            print self._waypoint_dict
-            
-            self._robot.speech.speak("Very well, moving on!")
-        else:
-            self._robot.speech.speak("I am sorry, moving on!")
+        side = choices["side"]
+        location = choices["location"]
+
+        self._robot.speech.speak("%s %s, it is, moving on!"%(side, location))
+        
+        if side == "left":
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+        elif side == "right":
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
+
+        # Get position of the base
+        self._waypoint_dict[location] = base_pose
+        
+        print "Current waypoint dictionary:"
+        print self._waypoint_dict
+        
+        self._robot.speech.speak("Very well, moving on!")
                 
     def _check_all_knowledge(self):
+        if self._has_all_knowledge:
+            return True
+
         for c in knowledge.guiding_choices['location']:
             if c not in self._waypoint_dict:
                 return False
@@ -100,9 +105,9 @@ class FollowOperatorAndStoreWaypoints(smach.State):
             # Adding entity does not work yet, should crash here
             self._robot.ed.update_entity(id=waypoint_id, posestamped=waypoint, type="waypoint")
 
-        if not self._said_has_all_knowledge:
-            self._robot.speech.speak("I stored all places, please bring me back to the kitchen! ")
-            self._said_has_all_knowledge = True
+        self._has_all_knowledge = True
+
+        self._robot.speech.speak("I stored all places, please bring me back to the kitchen! ")
             
         return True
         
@@ -116,11 +121,17 @@ class FollowOperatorAndStoreWaypoints(smach.State):
             operator = self._robot.ed.get_entity(id=operator_id)
         else:
             operator = None
+
+        if self._operator_id and not operator:
+            self._robot.speech.speak("I lost my operator!")
+            self._robot.base.local_planner.cancelCurrentPlan()
+            self._operator_id = None
                 
         return operator
         
     def _update_navigation(self, operator):
-        self._robot.base.move(knowledge.navigation_position_constraint_operator, operator.id)
+        if operator:
+            self._robot.base.move(knowledge.navigation_position_constraint_operator, operator.id)
 
     def _back_in_kitchen(self):
         # Get the robot pose and compare if we are close enough to the kitchen waypoint
@@ -144,8 +155,8 @@ class FollowOperatorAndStoreWaypoints(smach.State):
             # Check the speech result
             self._check_speech_result(self._speech_recognition_result, operator is not None)
             
-            if operator:
-                self._update_navigation(operator)
+            # Update the navigation
+            self._update_navigation(operator)
 
             # Check if we have all knowledge already
             if not self._check_all_knowledge():
@@ -156,6 +167,9 @@ class FollowOperatorAndStoreWaypoints(smach.State):
                     break
 
             rospy.sleep(1)
+
+        
+        self._robot.base.local_planner.cancelCurrentPlan()
 
         return "done"
 
