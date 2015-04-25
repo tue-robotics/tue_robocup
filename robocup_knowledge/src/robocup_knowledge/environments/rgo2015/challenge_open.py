@@ -1,10 +1,10 @@
 cabinet = "right_bookcase"
 table1  = "dinnertable"
 table2  = "counter"
-table3  = "desk"
+table3  = "right_bookcase/shelf3"
 object_shelves=["right_bookcase/shelf3","right_bookcase/shelf4","right_bookcase/shelf5"]
 
-objects = ["coke", "fanta", "beer"]
+objects = ["coke", "meadow_milk", "pringles","oblates","chocosticks","cup"]
 
 #spec find a person and talk with
 spec = "( (on|in|at) the <location> ((there is)|(you can find)|(you saw)) <object1> | (on|in|at) the <location> ((there is)|(you can find)|(you saw)) <object1> and <object2> | (on|in|at) the <location> ((there is)|(you can find)|(you saw)) <object1>, <object2> and <object3> ) "
