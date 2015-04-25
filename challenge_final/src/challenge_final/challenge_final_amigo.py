@@ -14,9 +14,68 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_amigo
 
-from robot_smach_states.util.designators import Designator
+from robot_smach_states.state import State
 
 OBJECTS_LIST = []
+
+class StartChallengeFinal(smach.StateMachine):
+    """Initialize, wait for the door to be opened and drive inside"""
+
+    class GoToEntryPoint(State):
+        def __init__(self, robot, initial_pose, use_entry_points = False):
+            State.__init__(self, locals(), outcomes=["no_goal" , "found", "not_found", "all_unreachable"])
+
+        def run(self, robot, initial_pose, use_entry_points):
+            print "TODO: IMPLEMENT THIS STATE"
+            return "no_goal"
+
+    class ForceDrive(State):
+        def __init__(self, robot):
+            State.__init__(self, locals(), outcomes=["done"])
+
+        def run(self, robot):
+            #self.robot.speech.speak("As a back-up scenario I will now drive through the door with my eyes closed.", block=False)  # Amigo should not say that it uses force drive, looks stupid.
+            rospy.loginfo("AMIGO uses force drive as a back-up scenario!")
+            robot.base.force_drive(0.25, 0, 0, 5.0)    # x, y, z, time in seconds
+            robot.ed.reset()
+            return "done"
+
+    def __init__(self, robot, initial_pose, use_entry_points = False):
+        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        assert hasattr(robot, "base")
+        # assert hasattr(robot, "reasoner")
+        assert hasattr(robot, "speech")
+
+        with self:
+            smach.StateMachine.add( "INITIALIZE",
+                                    states.Initialize(robot),
+                                    transitions={   "initialized"   :"WAIT_FOR_DOOR",
+                                                    "abort"         :"Aborted"})
+
+             # Start laser sensor that may change the state of the door if the door is open:
+            smach.StateMachine.add( "WAIT_FOR_DOOR",
+                                    states.WaitForDoorOpen(robot, timeout=10),
+                                    transitions={   "closed":"WAIT_FOR_DOOR",
+                                                    "open":"INIT_POSE"})
+
+            # Initial pose is set after opening door, otherwise snapmap will fail if door is still closed and initial pose is set,
+            # since it is thinks amigo is standing in front of a wall if door is closed and localization can(/will) be messed up.
+            smach.StateMachine.add('INIT_POSE',
+                                states.SetInitialPose(robot, initial_pose),
+                                transitions={   'done':'FORCE_DRIVE_THROUGH_DOOR',
+                                                'preempted':'Aborted',  # This transition will never happen at the moment.
+                                                'error':'FORCE_DRIVE_THROUGH_DOOR'})  # It should never go to aborted.
+
+            smach.StateMachine.add('FORCE_DRIVE_THROUGH_DOOR',
+                                    self.ForceDrive(robot),
+                                    transitions={   "done":"GO_TO_ENTRY_POINT"})
+
+            smach.StateMachine.add('GO_TO_ENTRY_POINT',
+                                    self.GoToEntryPoint(robot, initial_pose, use_entry_points),
+                                    transitions={   "found":"Done",
+                                                    "not_found":"GO_TO_ENTRY_POINT",
+                                                    "no_goal":"Done",
+                                                    "all_unreachable":"Done"})
 
 class AwaitTriggerAndSave(smach.State):
     def __init__(self, robot):
@@ -73,7 +132,7 @@ def setup_statemachine(robot):
                                     transitions={   'done'              :'INITIALIZE',
                                                     'failed'            :'INITIALIZE'})
         smach.StateMachine.add("INITIALIZE",
-                                states.StartChallengeRobust(robot, INITIAL_POSE, use_entry_points = True),
+                                StartChallengeFinal(robot, INITIAL_POSE, use_entry_points = True),
                                 transitions={   "Done"              :   "SAY_GET_OBJECT",
                                                 "Aborted"           :   "SAY_GET_OBJECT",
                                                 "Failed"            :   "SAY_GET_OBJECT"})
