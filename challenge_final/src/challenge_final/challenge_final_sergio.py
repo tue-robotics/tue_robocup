@@ -15,6 +15,8 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 INITIAL_POSE = challenge_knowledge.initial_pose_sergio
 
+MESH_IDS = []
+
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0):
         """ 
@@ -36,6 +38,16 @@ class LookBaseLinkPoint(smach.State):
         rospy.sleep(rospy.Duration(self.waittime))
         return 'succeeded'
 
+class TakeSnapShot(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        MESH_IDS.append('mesh'.format(len(MESH_IDS))) # ToDo: make nice
+        self.robot.ed.mesh_entity_in_view(id=MESH_IDS[-1])
+        return 'succeeded'
+
 class ExploreWaypoint(smach.StateMachine):
     def __init__(self, robot, waypoint):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -52,10 +64,14 @@ class ExploreWaypoint(smach.StateMachine):
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
                                     LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=2.5, waittime=1.5),
-                                    transitions={   'succeeded'                 :'succeeded',
-                                                    'failed'                    :'succeeded'})
+                                    transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
+                                                    'failed'                    :'TAKE_SNAPSHOT'})
 
             ''' Take snapshot '''
+            smach.StateMachine.add("TAKE_SNAPSHOT",
+                                    TakeSnapShot(robot),
+                                    transitions={   'succeeded'                 :'succeeded',
+                                                    'failed'                    :'succeeded'})
 
             ''' Look to side '''
 
@@ -67,7 +83,6 @@ class ExploreWaypoint(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-
     with sm:
     	smach.StateMachine.add("INITIALIZE",
     							states.StartChallengeRobust(robot, INITIAL_POSE, use_entry_points = False),
