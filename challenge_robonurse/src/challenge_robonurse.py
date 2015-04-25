@@ -277,7 +277,7 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add('INIT_POSE',
                                 states.SetInitialPose(robot, 'robonurse_initial'),
-                                transitions={   'done':'GOTO_COUCHTABLE',
+                                transitions={   'done':'HEAR_GRANNY',
                                                 'preempted':'Aborted',  # This transition will never happen at the moment.
                                                 'error':'HEAR_GRANNY'})  # It should never go to aborted.
             
@@ -359,7 +359,12 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add("RED_LOOKAT_SHELF",
                                      states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'GRAB_COKE'})
+                                     transitions={  'succeeded'         :'WAIT_TIME_RED'})
+
+            smach.StateMachine.add( "WAIT_TIME_RED",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'GRAB_COKE',
+                                                    'preempted' : 'GRAB_COKE'})
 
             #####################################
 
@@ -371,7 +376,12 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add("WHITE_LOOKAT_SHELF",
                                      states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'GRAB_MINTS'})
+                                     transitions={  'succeeded'         :'WAIT_TIME_WHITE'})
+
+            smach.StateMachine.add( "WAIT_TIME_WHITE",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'GRAB_MINTS',
+                                                    'preempted' : 'GRAB_MINTS'})
 
             #####################################
 
@@ -383,7 +393,12 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add("BLUE_LOOKAT_SHELF",
                                      states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'GRAB_BUBBLEMINT'})
+                                     transitions={  'succeeded'         :'WAIT_TIME_BLUE'})
+
+            smach.StateMachine.add( "WAIT_TIME_BLUE",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'GRAB_BUBBLEMINT',
+                                                    'preempted' : 'GRAB_BUBBLEMINT'})
 
             #####################################
 
@@ -558,15 +573,20 @@ class RoboNurse(smach.StateMachine):
                                      transitions={  'looking'         :'SAY_TRY_GRAB_PHONE'})
 
             smach.StateMachine.add( "SAY_TRY_GRAB_PHONE",
-                                    states.Say(robot, "I am trying to grab the phone.", block=True),
-                                    transitions={   'spoken'            :'STOP_LOOKING_COUCHTABLE'})
+                                    states.Say(robot, "I am trying to grab the phone.", block=False),
+                                    transitions={   'spoken'            :'WAIT_TIME_TO_UPDATE_MODEL'})
+
+            smach.StateMachine.add( "WAIT_TIME_TO_UPDATE_MODEL",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'STOP_LOOKING_COUCHTABLE',
+                                                    'preempted' : 'STOP_LOOKING_COUCHTABLE'})
 
             smach.StateMachine.add("STOP_LOOKING_COUCHTABLE",
                                      Stop_looking(robot),
                                      transitions={  'stopped_looking'         :'GRAB_PHONE'})
 
             #phone = EdEntityDesignator(robot, type="deodorant")        
-            
+
 
             smach.StateMachine.add( "GRAB_PHONE",
                                     Grab(robot, phone, empty_arm_designator),
