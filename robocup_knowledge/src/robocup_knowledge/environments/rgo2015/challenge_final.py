@@ -1,4 +1,4 @@
-initial_pose_sergio = "initial_pose_door_A"
+initial_pose_sergio = "initial_pose_door_B"
 
 initial_pose_amigo = "initial_pose_door_B"
 
