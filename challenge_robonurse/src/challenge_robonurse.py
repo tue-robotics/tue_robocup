@@ -17,7 +17,7 @@ import smach
 import sys
 import random
 
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
+from robot_smach_states.util.designators import ArmDesignator, Designator, EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -28,6 +28,7 @@ from collections import OrderedDict
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 import operator
+from robot_smach_states.util.geometry_helpers import *
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_robonurse')
@@ -82,22 +83,24 @@ def get_entity_size(entity):
     return size
 
 
-class Look_straight(smach.State):
-    def __init__(self, robot):
+class Look_point(smach.State):
+    def __init__(self, robot, x, y, z):
         smach.State.__init__(self, outcomes=["looking"])
         self.robot = robot
+        self.x = x
+        self.y = y
+        self.z = z
 
     def execute(self, userdata):
 
         goal = geom.PointStamped()
         goal.header.stamp = rospy.Time.now()
         goal.header.frame_id = "/map" #"/"+self._robot_name+"/base_link" # HACK TO LOOK AT RIGHT POINT.
-        goal.point.x = 5.958
-        goal.point.y = 8.337
-        goal.point.z = 0.8
+        goal.point.x = self.x
+        goal.point.y = self.y
+        goal.point.z = self.z
 
         self.robot.head.look_at_point(goal)
-        self.robot.head.look_at_standing_person()
         rospy.sleep(2)
         return "looking"
 
@@ -246,7 +249,30 @@ class RoboNurse(smach.StateMachine):
         described_bottle = LockingDesignator(EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False)) #Criteria funcs will be added based on what granny says
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, described_bottle)
+        arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
+
+
+
+
+        def size(entity):
+            return abs(entity.z_max - entity.z_min) < 0.4
+
+        def on_top(entity):
+            container_entity = robot.ed.get_entity(id=GRANNIES_TABLE_KB)
+            return onTopOff(entity, container_entity)
+
+        # Don't pass the weight_function, might screw up if phone is not near the robot
+        phone = EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
+
+        def in_box(entity):
+            x_ok = 5.57 < entity.center_point.x < 6.32
+            y_ok = 8.2 < entity.center_point.y < 8.48
+
+            return x_ok and y_ok
+
+        red_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="coke")
+        blue_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="bubblemint")
+        white_pills = EdEntityDesignator(robot, criteriafuncs=[in_box], type="mints")
 
         with self:
             smach.StateMachine.add('INITIALIZE',
@@ -303,12 +329,17 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined':'LOOKAT_SHELF'})
 
             smach.StateMachine.add("LOOKAT_SHELF",
-                                     Look_straight(robot),
+                                     Look_point(robot, 5.958, 8.337, 0.8),
                                      transitions={  'looking'         :'SAY_FOUND_OBJECTS'})
 
             smach.StateMachine.add( "SAY_FOUND_OBJECTS",
-                                    states.Say(robot, "I see a red bottle, a blue bottle and a white bottle"),
-                                    transitions={   'spoken'            :'STOP_LOOKING_STRAIGHT'})
+                                    states.Say(robot, "I see a red bottle, a blue bottle and a white bottle", block=True),
+                                    transitions={   'spoken'            :'WAIT_TIME_SHELF'})
+
+            smach.StateMachine.add( "WAIT_TIME_SHELF",
+                                    states.Wait_time(robot, waittime=2),
+                                    transitions={   'waited'    : 'STOP_LOOKING_STRAIGHT',
+                                                    'preempted' : 'STOP_LOOKING_STRAIGHT'})
 
             smach.StateMachine.add("STOP_LOOKING_STRAIGHT",
                                      Stop_looking(robot),
@@ -337,8 +368,13 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined'  :'RED_LOOKAT_SHELF'})
 
             smach.StateMachine.add("RED_LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'GRAB_COKE'})
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'WAIT_TIME_RED'})
+
+            smach.StateMachine.add( "WAIT_TIME_RED",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'GRAB_COKE',
+                                                    'preempted' : 'GRAB_COKE'})
 
             #####################################
 
@@ -349,8 +385,13 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined'  :'WHITE_LOOKAT_SHELF'})
 
             smach.StateMachine.add("WHITE_LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'GRAB_MINTS'})
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'WAIT_TIME_WHITE'})
+
+            smach.StateMachine.add( "WAIT_TIME_WHITE",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'GRAB_MINTS',
+                                                    'preempted' : 'GRAB_MINTS'})
 
             #####################################
 
@@ -361,14 +402,19 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined'  :'BLUE_LOOKAT_SHELF'})
 
             smach.StateMachine.add("BLUE_LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, shelf),
-                                     transitions={  'succeeded'         :'GRAB_BUBBLEMINT'})
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'WAIT_TIME_BLUE'})
+
+            smach.StateMachine.add( "WAIT_TIME_BLUE",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'GRAB_BUBBLEMINT',
+                                                    'preempted' : 'GRAB_BUBBLEMINT'})
 
             #####################################
 
-            red_pills = EdEntityDesignator(robot, type="coke")
-            blue_pills = EdEntityDesignator(robot, type="mints")
-            white_pills = EdEntityDesignator(robot, type="bubblemint")
+            # red_pills = EdEntityDesignator(robot, type="coke")
+            # blue_pills = EdEntityDesignator(robot, type="mints")
+            # white_pills = EdEntityDesignator(robot, type="bubblemint")
 
             #####################################
 
@@ -499,13 +545,106 @@ class RoboNurse(smach.StateMachine):
             #                                         'goal_not_defined'  :'DETECT_ACTION'})
 
             smach.StateMachine.add( "SAY_HANDOVER_BOTTLE",
-                                    states.Say(robot, ["Here are your pills, Granny.", "Granny, here are your pills."]),
+                                    states.Say(robot, ["Here are your pills, Granny.", "Granny, here are your pills."], block=False),
                                     transitions={   'spoken'            :'HANDOVER_TO_GRANNY'})
 
             smach.StateMachine.add('HANDOVER_TO_GRANNY',
                                    states.HandoverToHuman(robot, arm_with_item_designator),
-                                   transitions={   'succeeded'          :'Done', #DETECT_ACTION',
-                                                    'failed'            :'Done'}) #DETECT_ACTION'})
+                                   transitions={   'succeeded'          :'REST_ARMS_1', #DETECT_ACTION',
+                                                    'failed'            :'REST_ARMS_1'}) #DETECT_ACTION'})
+
+            smach.StateMachine.add( "REST_ARMS_1",
+                                    states.ResetArms(robot),
+                                    transitions={   'done'            :'WAIT_TIME'})
+
+            smach.StateMachine.add( "WAIT_TIME",
+                                    states.Wait_time(robot, waittime=10),
+                                    transitions={   'waited'    : 'SAY_FELL',
+                                                    'preempted' : 'SAY_FELL'})
+
+            smach.StateMachine.add( "SAY_FELL",
+                                    states.Say(robot, "Oh no, you fell! I will give you the phone.", block=True),
+                                    transitions={   'spoken' : 'GOTO_COUCHTABLE'})
+
+            smach.StateMachine.add('GOTO_COUCHTABLE',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_couchtable"), radius=0.1),
+                                    transitions={   'arrived':'LOOKAT_COUCHTABLE',
+                                                    'unreachable':'GOTO_COUCHTABLE_BACKUP',
+                                                    'goal_not_defined':'GOTO_COUCHTABLE_BACKUP'})
+
+            smach.StateMachine.add('GOTO_COUCHTABLE_BACKUP',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_couchtable"), radius=0.2),
+                                    transitions={   'arrived':'LOOKAT_COUCHTABLE',
+                                                    'unreachable':'LOOKAT_COUCHTABLE',
+                                                    'goal_not_defined':'LOOKAT_COUCHTABLE'})
+
+            smach.StateMachine.add("LOOKAT_COUCHTABLE",
+                                     Look_point(robot,8.055, 6.662, 0.4),
+                                     transitions={  'looking'         :'SAY_TRY_GRAB_PHONE'})
+
+            smach.StateMachine.add( "SAY_TRY_GRAB_PHONE",
+                                    states.Say(robot, "I am trying to grab the phone.", block=False),
+                                    transitions={   'spoken'            :'WAIT_TIME_TO_UPDATE_MODEL'})
+
+            smach.StateMachine.add( "WAIT_TIME_TO_UPDATE_MODEL",
+                                    states.Wait_time(robot, waittime=4),
+                                    transitions={   'waited'    : 'STOP_LOOKING_COUCHTABLE',
+                                                    'preempted' : 'STOP_LOOKING_COUCHTABLE'})
+
+            smach.StateMachine.add("STOP_LOOKING_COUCHTABLE",
+                                     Stop_looking(robot),
+                                     transitions={  'stopped_looking'         :'GRAB_PHONE'})
+
+            #phone = EdEntityDesignator(robot, type="deodorant")        
+
+
+            smach.StateMachine.add( "GRAB_PHONE",
+                                    Grab(robot, phone, empty_arm_designator),
+                                    transitions={   'done'              :'SAY_PHONE_TAKEN',
+                                                    'failed'            :'SAY_PHONE_TAKEN_FAILED'})
+
+            smach.StateMachine.add( "SAY_PHONE_TAKEN",
+                                    states.Say(robot, "I have the phone!"),
+                                    transitions={   'spoken'            :'GOTO_HANDOVER_GRANNY_PHONE'})
+
+            smach.StateMachine.add( "SAY_PHONE_TAKEN_FAILED",
+                                    states.Say(robot, "I am sorry, I was not able to get the phone, please try to get it yourself. You can do it! Good luck!"),
+                                    transitions={   'spoken'            :'Done'})
+
+            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_PHONE",
+                                    #states.NavigateToPose(robot, 0, 0, 0),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'SAY_HANDOVER_PHONE',
+                                                    'unreachable'       :'GOTO_HANDOVER_GRANNY_PHONE_BACKUP',
+                                                    'goal_not_defined'  :'SAY_HANDOVER_PHONE'})
+
+            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_PHONE_BACKUP",
+                                    #states.NavigateToPose(robot, 0, 0, 0),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'SAY_HANDOVER_PHONE',
+                                                    'unreachable'       :'SAY_HANDOVER_PHONE',
+                                                    'goal_not_defined'  :'SAY_HANDOVER_PHONE'})
+
+            smach.StateMachine.add( "SAY_HANDOVER_PHONE",
+                                    states.Say(robot, ["Here is the phone, Granny."]),
+                                    transitions={   'spoken'            :'HANDOVER_PHONE_TO_GRANNY'})
+
+            smach.StateMachine.add('HANDOVER_PHONE_TO_GRANNY',
+                                   states.HandoverToHuman(robot, arm_with_item_designator),
+                                   transitions={   'succeeded'          :'REST_ARMS_2', #DETECT_ACTION',
+                                                    'failed'            :'SAY_PHONE_TAKEN_FAILED'}) #DETECT_ACTION'})
+
+            smach.StateMachine.add( "REST_ARMS_2",
+                                    states.ResetArms(robot),
+                                    transitions={   'done'            :'SAY_CALL_FOR_HELP'})
+
+            smach.StateMachine.add( "SAY_CALL_FOR_HELP",
+                                    states.Say(robot, ["Please use the phone to call for help!"]),
+                                    transitions={   'spoken' :'Done'})
+
+
+
+
 
             # smach.StateMachine.add('DETECT_ACTION',
             #                        DetectAction(robot, granny),

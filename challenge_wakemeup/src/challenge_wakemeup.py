@@ -47,6 +47,7 @@ class WakeMeUp(smach.StateMachine):
         waypoint_bedside_2 = EdEntityDesignator(robot, id="wakemeup_bedside_2")
         waypoint_bedside_3 = EdEntityDesignator(robot, id="wakemeup_bedside_3")
         waypoint_bedside_4 = EdEntityDesignator(robot, id="wakemeup_bedside_4")
+        waypoint_kitchen = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
 
         homeowner = EdEntityDesignator(robot, type='human', criteriafuncs=[is_awake])
         bed = EdEntityDesignator(robot, type='bed')
@@ -87,7 +88,7 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_OPERATOR_AWAKE",
                                     states.Say(robot, "Lets see if my operator is awake", block=False), 
-                                    transitions={"spoken":"GOTO_BEDSIDE_1"})
+                                    transitions={"spoken":"GOTO_BEDSIDE_2"})
 
             smach.StateMachine.add('GOTO_BEDSIDE_1',
                                     states.NavigateToWaypoint(robot, waypoint_bedside_1),
@@ -125,9 +126,9 @@ class WakeMeUp(smach.StateMachine):
 
                 smach.StateMachine.add( "SAY_GOODMORNING",
                                         states.Say(robot, [ "Are you awake?", 
-                                                            "Rise and shine!", 
+                                                            "Rise and shine, and look at me!", 
                                                             "Wakey wakey!", 
-                                                            "Hello there sleepy head!", 
+                                                            "Hello there sleepy head! Please face me", 
                                                             "Time for breakfast!"]),
                                         transitions={   'spoken' :'LOOK_AT_BED'})
 
@@ -193,12 +194,17 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'TAKE_ORDER_CONTAINER',
                                     takeOrderContainer,
-                                    transitions={   'container_successed':'TAKE_ORDER_CONTAINER',
-                                                    'container_failed': 'TAKE_ORDER_CONTAINER'})
+                                    transitions={   'container_successed':'PREP_BREAKFAST_CONTAINER',
+                                                    'container_failed': 'SAY_ILL_CHOOSE_BREAKFAST'})
+
+
+            smach.StateMachine.add( "SAY_ILL_CHOOSE_BREAKFAST",
+                                    states.Say(robot, "I couldn't understand the breakfast order. I'll choose something for you.", block=False),
+                                    transitions={   'spoken' :'PREP_BREAKFAST_CONTAINER'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                                 PREPARE_BREAKFAST_CONTAINER
+            #                                 PREP_BREAKFAST_CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
@@ -206,8 +212,14 @@ class WakeMeUp(smach.StateMachine):
             with prepBreakfastContainer:
 
                 smach.StateMachine.add( "SAY_PREPARING",
-                                        states.Say(robot, [ "Preparing your breakfast! La la la la" ], block=False),
-                                        transitions={   'spoken' :'container_successed'})
+                                        states.Say(robot, [ "I'm preparing your breakfast! La la la la la." ], block=False),
+                                        transitions={   'spoken' :'GOTO_KITCHEN'})
+
+                smach.StateMachine.add('GOTO_KITCHEN',
+                                    states.NavigateToWaypoint(robot, waypoint_kitchen),
+                                    transitions={   'arrived':'container_successed',
+                                                    'unreachable':'container_successed',
+                                                    'goal_not_defined':'container_successed'})
 
             smach.StateMachine.add( 'PREP_BREAKFAST_CONTAINER',
                                     prepBreakfastContainer,
@@ -223,8 +235,14 @@ class WakeMeUp(smach.StateMachine):
             deliverBreakfastContainer = smach.StateMachine(outcomes = ['container_successed', 'container_failed'])
             with deliverBreakfastContainer:
 
-                smach.StateMachine.add( "SAY_INCOMING",
-                                        states.Say(robot, [ "Breakfast incoming!" ], block=False),
+                smach.StateMachine.add('GOTO_BEDSIDE',
+                                    states.NavigateToWaypoint(robot, waypoint_bedside_3),
+                                    transitions={   'arrived':'SAY_COULD_NOT_PREPARE',
+                                                    'unreachable':'SAY_COULD_NOT_PREPARE',
+                                                    'goal_not_defined':'SAY_COULD_NOT_PREPARE'})
+
+                smach.StateMachine.add( "SAY_COULD_NOT_PREPARE",
+                                        states.Say(robot, [ "I'm sorry but i could not prepare your breakfast." ], block=False),
                                         transitions={   'spoken' :'container_successed'})
 
             smach.StateMachine.add( 'DELIVER_BREAKFAST_CONTAINER',
