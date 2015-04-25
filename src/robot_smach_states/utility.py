@@ -92,7 +92,7 @@ class WaitForTrigger(smach.State):
 
     Example to wait for one of the strings 'allow' or 'deny' (could be sent from a gui):
 
-        WaitForTrigger(robot, ['allow', 'deny']),
+        WaitForTrigger(robot, ['allow', 'deny'], "/trigger"),
                        transitions={    'allow':     'DO_SOMETHING',
                                         'deny':      'DO_SOMETHING',
                                         'preempted': 'failed'})
