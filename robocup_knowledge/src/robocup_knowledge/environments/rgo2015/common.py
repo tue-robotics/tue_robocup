@@ -36,39 +36,40 @@ location_categories = list(set([ o["category"] for o in all_locations ]))
 location_names = list(set([ o["location_name"] for o in all_locations ]))
 location_manipulatable = list(set([ o["manipulation"] for o in all_locations ]))
 
-objects = [{'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'bubblegum'}, 
-{'category': 'decoration', 'placement': 'couchtable', 'group': 'known', 'name': 'candle'}, 
+objects = [
+{'category': 'food', 'placement': 'stove', 'group': 'known', 'name': 'bubblegum'}, 
+{'category': 'decoration',  'placement': 'couchtable',  'group': 'known', 'name': 'candle'}, 
 {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'cup'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'beer'},
 {'category': 'tool',    'placement': 'counter',     'group': 'known', 'name': 'wd40'}, 
 {'category': 'tool',    'placement': 'counter',     'group': 'known', 'name': 'filler'},
-{'category': 'food',    'sub-category': 'cereal',   'placement': 'stove',       'group': 'known', 'name': 'chocolate_cereals'},
-{'category': 'drink',   'sub-category': 'medicine', 'sub-category': 'medicine', 'placement': 'cabinet',     'group': 'known', 'name': 'coke'},
+{'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'chocolate_cereals',  'sub-category': 'cereal'},
+{'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'coke',               'sub-category': 'medicine'},
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'chocosticks'},
-{'category': 'decoration', 'placement': 'couchtable', 'group': 'known', 'name': 'yellow candle'},
+{'category': 'decoration',  'placement': 'couchtable',  'group': 'known', 'name': 'yellow candle'},
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'noodles'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'coffee'},
-{'category': 'food',    'sub-category': 'cereal',   'placement': 'stove',   'group': 'known', 'name': 'cranberry_cereals'},
-{'category': 'food',    'sub-category': 'cereal',   'placement': 'stove',       'group': 'known', 'name': 'muesli_cereals'}, 
-{'category': 'food',    'sub-category': 'medicine', 'placement': 'stove',       'group': 'known', 'name': 'bubblemint'}, 
+{'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'cranberry_cereals',  'sub-category': 'cereal'},
+{'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'muesli_cereals',     'sub-category': 'cereal'}, 
+{'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'bubblemint',         'sub-category': 'medicine'}, 
 {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'deodorant'}, 
 {'category': 'tool',    'placement': 'counter',     'group': 'known', 'name': 'brush'}, 
 {'category': 'leisure', 'placement': 'small_table', 'group': 'known', 'name': 'cigarettes'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'red_bull'}, 
-{'category': 'drink',   'sub-category': 'milk',     'placement': 'cabinet',     'group': 'known', 'name': 'meadow_milk'}, 
+{'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'meadow_milk','sub-category': 'milk'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'ice-tea'}, 
-{'category': 'food',    'sub-category': 'medicine', 'placement': 'stove',       'group': 'known', 'name': 'mints'}, 
+{'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'mints',      'sub-category': 'medicine'}, 
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'pringles'}, 
-{'category': 'drink',   'sub-category': 'milk',     'placement': 'cabinet',     'group': 'known', 'name': 'fresh_milk'}, 
+{'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'fresh_milk', 'sub-category': 'milk'}, 
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'oblates'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'known', 'name': 'coffeepads'}, 
 {'category': 'food',    'placement': 'stove',       'group': 'known', 'name': 'peanut'}, 
-{'category': 'food',    'sub-category': 'fruit',    'placement': 'stove',       'group': 'alike', 'name': 'mandarine'}, 
+{'category': 'food',    'placement': 'stove',       'group': 'alike', 'name': 'mandarine',  'sub-category': 'fruit'}, 
 {'category': 'tool',    'placement': 'counter',     'group': 'alike', 'name': 'tape'}, 
-{'category': 'food',    'sub-category': 'fruit',    'placement': 'stove',       'group': 'alike', 'name': 'lemon'}, 
+{'category': 'food',    'placement': 'stove',       'group': 'alike', 'name': 'lemon',      'sub-category': 'fruit'}, 
 {'category': 'tool',    'placement': 'counter',     'group': 'alike', 'name': 'twine'}, 
 {'category': 'drink',   'placement': 'cabinet',     'group': 'alike', 'name': 'fanta'}, 
-{'category': 'food',    'sub-category': 'fruit',    'placement': 'stove',       'group': 'alike', 'name': 'apple'}, 
+{'category': 'food',    'placement': 'stove',       'group': 'alike', 'name': 'apple',      'sub-category': 'fruit'}, 
 {'category': 'bowl',    'placement': '',            'group': 'containers', 'name': 'bowl'}, 
 {'category': 'tray',    'placement': '',            'group': 'containers', 'name': 'tray'}]
 
@@ -77,5 +78,3 @@ object_categories = list(set([ o["category"] for o in objects ]))
 object_groups = list(set([ o["group"] for o in objects ]))
 object_placements = list(set([ o["placement"] for o in objects ]))
 object_known_objects = list(set([ o["name"] for o in objects ]))
-
-
