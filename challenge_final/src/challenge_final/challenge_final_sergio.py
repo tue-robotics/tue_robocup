@@ -224,6 +224,7 @@ class CheckSmallObject(smach.State):
                 rospy.logwarn("multiple entities remaining, fingers crossed")
                 small_mesh_id = z_pos_filtered_entities[0].id
 
+        rospy.logwarn("Locking entity with ID: {0}".format(small_mesh_id))
         self.robot.ed.lock_entities(lock_ids=[small_mesh_id], unlock_ids=[])
         SMALL_MESH_IDS.append(small_mesh_id)
         return 'object_found'
