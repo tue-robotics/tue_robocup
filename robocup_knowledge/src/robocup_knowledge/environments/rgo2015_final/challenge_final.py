@@ -30,7 +30,7 @@ end_location_sergio = "final_last_position_sergio"
 
 #SPECS + CHOICES for speech recognition
 location_options = ['cupboard','dinnertable','desk','sidetable','tv','kitchencounter','cabinet','bartable','couch','chair','coathanger','left_bedside_table','right_bedside_table']
-object_options = ['coke','beer','juice','tea','coffee']
+object_options = ['coke','pringles','choco_sticks','beer','juice','tea','coffee']
 
 #mesh_spec = "((it is (a|an) <object>)|(a <object>)|(an <object>)|<object>)"
 mesh_spec = "(<object>)"
