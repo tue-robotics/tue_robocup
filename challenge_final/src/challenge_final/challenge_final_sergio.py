@@ -228,6 +228,7 @@ class CheckSmallObject(smach.State):
 
         rospy.logwarn("Locking entity with ID: {0}".format(small_mesh_id))
         self.robot.ed.lock_entities(lock_ids=[small_mesh_id], unlock_ids=[])
+        rospy.sleep(rospy.Duration(2.0))
         SMALL_MESH_IDS.append(small_mesh_id)
         return 'object_found'
 
@@ -271,7 +272,7 @@ class SmallObjectHandling(smach.StateMachine):
         with self:
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=1.5),
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=2.0),
                                     transitions={   'succeeded'                 :'CHECK_SMALL_OBJECT',
                                                     'failed'                    :'CHECK_SMALL_OBJECT'})
 
