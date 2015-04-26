@@ -22,12 +22,13 @@ MESH_IDS = [] #''' List with the IDs of the meshes of which a snapshot has been 
 SMALL_MESH_IDS = [] #   ''' List with the IDs of the small meshes which have been locked '''
 
 class LookBaseLinkPoint(smach.State):
-    def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0):
+    def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
         """ 
         Sends a goal to the head in base link frame of the robot_name
         x, y, z: coordinates
         timeout: timeout of the call to the head ref action (hence is a maximum)
         waittime: additional waiting time 
+        endtime: endtime which is passed to head ref 
         """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
@@ -36,9 +37,11 @@ class LookBaseLinkPoint(smach.State):
         self.z = z
         self.timeout = timeout
         self.waittime = waittime
+        self.endtime = endtime
 
     def execute(self, userdata):
-        self.robot.head.look_at_point(msgs.PointStamped(x=self.x, y=self.y, z=self.z, frame_id=self.robot.robot_name+"/base_link"), self.timeout)
+        self.robot.head.look_at_point(msgs.PointStamped(x=self.x, y=self.y, z=self.z, frame_id=self.robot.robot_name+"/base_link"))
+        #,            timeout=self.timeout, end_time=self.endtime)
         rospy.sleep(rospy.Duration(self.waittime))
         return 'succeeded'
 
@@ -49,6 +52,7 @@ class TakeSnapShot(smach.State):
 
     def execute(self, userdata):
         MESH_IDS.append('mesh{0}'.format(len(MESH_IDS))) # ToDo: make nice
+        rospy.logwarn("Taking snapshot, id = {0}".format(MESH_IDS[-1]))
         self.robot.ed.mesh_entity_in_view(id=MESH_IDS[-1])
         rospy.sleep(rospy.Duration(3.0))
         return 'succeeded'
@@ -74,6 +78,7 @@ class AskWhatDoISee(smach.State):
                 
                 ''' Assert type to ed '''
                 if len(MESH_IDS) > 0:
+                    rospy.logwarn("Mesh id: {0}, type: {1}".format(MESH_IDS[-1], name_object))
                     self.robot.ed.update_entity(id=MESH_IDS[-1], type = name_object)
                 else:
                     rospy.logerr("Challenge final: Cannot update mesh type: id unknown")
@@ -87,7 +92,11 @@ class AskWhatDoISee(smach.State):
             return "failed"
 
 class ExploreWaypoint(smach.StateMachine):
-    def __init__(self, robot, waypoint):
+    def __init__(self, robot, waypoint, x=1.6, y=0, z=0):
+        """
+        waypoint: string with desired waypoint 
+        x, y, z: head target in base link frame_id
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         waypoint_designator = EdEntityDesignator(robot, id=waypoint)
@@ -101,7 +110,7 @@ class ExploreWaypoint(smach.StateMachine):
 
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=5.0, waittime=0.0),
+                                    LookBaseLinkPoint(robot, x=x, y=y, z=z, timeout=5.0, waittime=3.0),
                                     transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
                                                     'failed'                    :'TAKE_SNAPSHOT'})
 
@@ -142,7 +151,7 @@ class ConversationWithOperator(smach.State):
         try:
             if res.result:
                 object_string = res.choices['object']
-                self.robot.speech.speak("I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
+                self.robot.speech.speak("I am very sorry, but I do not have an arm to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
                 self.robot.speech.speak("Amigo, please bring my boss a {0}".format(object_string))
                 
                 ''' Publish trigger for AMIGO to start its task '''
@@ -212,16 +221,18 @@ class CheckSmallObject(smach.State):
                 if 0.6 < z_pos < 0.9:
                     z_pos_filtered_entities.append(entity)
 
-            if len(z_pos_filtered_entities == 0):
+            if len(z_pos_filtered_entities) == 0:
                 rospy.logwarn("No entities left, assert first of original list")
                 small_mesh_id = entities_on_table[0].id
-            elif len(z_pos_filtered_entities):
+            elif len(z_pos_filtered_entities) == 1:
                 small_mesh_id = z_pos_filtered_entities[0].id
             else: 
                 rospy.logwarn("multiple entities remaining, fingers crossed")
                 small_mesh_id = z_pos_filtered_entities[0].id
 
+        rospy.logwarn("Locking entity with ID: {0}".format(small_mesh_id))
         self.robot.ed.lock_entities(lock_ids=[small_mesh_id], unlock_ids=[])
+        rospy.sleep(rospy.Duration(2.0))
         SMALL_MESH_IDS.append(small_mesh_id)
         return 'object_found'
 
@@ -232,7 +243,7 @@ class AskSmallObject(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("What do I see here?")
+        self.robot.speech.speak("What is this thing on the table?")
 
         res = self.robot.ears.recognize(spec=challenge_knowledge.object_spec, choices=challenge_knowledge.object_choices, time_out = rospy.Duration(20))
         if not res:
@@ -263,9 +274,20 @@ class SmallObjectHandling(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
+            ''' Say more to see '''
+            smach.StateMachine.add("SAY_MORE_TO_SEE",
+                                    states.Say(robot, 'Lets see if I can discover anything else'),
+                                    transitions={   'spoken'                    :'WAIT'})
+
+            ''' Wait for the operator to put something on the table '''
+            smach.StateMachine.add("WAIT",
+                                    states.Wait_time(robot, waittime=4.0),
+                                    transitions={   'waited'                    :'LOOK_AT_MESH',
+                                                    'preempted'                 :'LOOK_AT_MESH'})
+
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=2.5, waittime=1.5),
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=2.0),
                                     transitions={   'succeeded'                 :'CHECK_SMALL_OBJECT',
                                                     'failed'                    :'CHECK_SMALL_OBJECT'})
 
@@ -364,9 +386,15 @@ def setup_statemachine(robot):
                                 transitions={   "succeeded"        :   "END_CHALLENGE",
                                                 "failed"           :   "END_CHALLENGE"})
 
-    	smach.StateMachine.add('END_CHALLENGE',
-                                   states.Say(robot,"My work here is done, goodbye!"),
-                                   transitions={'spoken':'Done'})
+        smach.StateMachine.add('END_CHALLENGE',
+                                   states.Say(robot,"My work here is done, I am going to the kitchen and watch the crowd!", block=False),
+                                   transitions={'spoken':'GOTO_FINAL_WAYPOINT'})
+
+        smach.StateMachine.add("GOTO_FINAL_WAYPOINT",
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.end_location_sergio), radius=0.15),
+                                transitions={   'arrived'                  :'Done',
+                                                'unreachable'              :'Done',
+                                                'goal_not_defined'         :'Done'})
 
     return sm
 
