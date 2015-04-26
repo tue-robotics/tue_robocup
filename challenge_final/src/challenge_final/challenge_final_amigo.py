@@ -120,6 +120,21 @@ class SayFinal2(smach.State):
 
         return "spoken"
 
+class SayFinalFailed(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["spoken"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        sentence = "I'm really sorry, although I have the arms to pick up the "+ OBJECTS_LIST[0] +", I was not able to get it."
+
+        say_final = states.Say(self.robot, sentence, block=True)
+
+        say_final.execute(None)
+
+        return "spoken"
+
 class GrabFinal(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done","failed"])
@@ -185,7 +200,7 @@ def setup_statemachine(robot):
                                                     'goal_not_defined':'SAY_FAILED'})
 
         smach.StateMachine.add( "SAY_FAILED",
-                                    states.Say(robot, ["I'm really sorry, although I have the arms to pick up the drink."], block=False),
+                                    SayFinalFailed(robot),
                                     transitions={   'spoken'            :'REST_ARMS'})
 
         smach.StateMachine.add( "SAY_SUCCESS",
