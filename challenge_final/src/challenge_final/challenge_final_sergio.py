@@ -22,12 +22,13 @@ MESH_IDS = [] #''' List with the IDs of the meshes of which a snapshot has been 
 SMALL_MESH_IDS = [] #   ''' List with the IDs of the small meshes which have been locked '''
 
 class LookBaseLinkPoint(smach.State):
-    def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0):
+    def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
         """ 
         Sends a goal to the head in base link frame of the robot_name
         x, y, z: coordinates
         timeout: timeout of the call to the head ref action (hence is a maximum)
         waittime: additional waiting time 
+        endtime: endtime which is passed to head ref 
         """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
@@ -36,9 +37,11 @@ class LookBaseLinkPoint(smach.State):
         self.z = z
         self.timeout = timeout
         self.waittime = waittime
+        self.endtime = endtime
 
     def execute(self, userdata):
-        self.robot.head.look_at_point(msgs.PointStamped(x=self.x, y=self.y, z=self.z, frame_id=self.robot.robot_name+"/base_link"), self.timeout)
+        self.robot.head.look_at_point(msgs.PointStamped(x=self.x, y=self.y, z=self.z, frame_id=self.robot.robot_name+"/base_link"))
+        #,            timeout=self.timeout, end_time=self.endtime)
         rospy.sleep(rospy.Duration(self.waittime))
         return 'succeeded'
 
@@ -101,7 +104,7 @@ class ExploreWaypoint(smach.StateMachine):
 
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=5.0, waittime=0.0),
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=5.0, waittime=3.0),
                                     transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
                                                     'failed'                    :'TAKE_SNAPSHOT'})
 
