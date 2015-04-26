@@ -105,6 +105,21 @@ class SayFinal(smach.State):
 
         return "spoken"
 
+class SayFinal2(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["spoken"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        sentence = "Sir, I have got the "+ OBJECTS_LIST[0] +" for you!"
+
+        say_final = states.Say(self.robot, sentence, block=False)
+
+        say_final.execute(None)
+
+        return "spoken"
+
 class GrabFinal(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done","failed"])
@@ -135,7 +150,7 @@ def setup_statemachine(robot):
                                                     'failed'            :'INITIALIZE'})
         smach.StateMachine.add("INITIALIZE",
                                 StartChallengeFinal(robot, INITIAL_POSE, use_entry_points = True),
-                                transitions={   "Done"              :   "SAY_GET_OBJECT",
+                                transitions={   "Done"              :   "GOTO_FINAL_WAYPOINT",
                                                 "Aborted"           :   "SAY_GET_OBJECT",
                                                 "Failed"            :   "SAY_GET_OBJECT"})
 
@@ -185,18 +200,29 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('GOTO_BOSS_BACKUP',
                                     states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.task_location_sergio), radius=0.3),
-                                    transitions={   'arrived':'HANDOVER_TO_BOSS',
-                                                    'unreachable':'HANDOVER_TO_BOSS',
-                                                    'goal_not_defined':'HANDOVER_TO_BOSS'})
+                                    transitions={   'arrived':'SAY_HANDOVER',
+                                                    'unreachable':'SAY_HANDOVER',
+                                                    'goal_not_defined':'SAY_HANDOVER'})
+
+        smach.StateMachine.add( "SAY_HANDOVER",
+                                    SayFinal2(robot),
+                                    transitions={   'spoken'            :'HANDOVER_TO_BOSS'})
 
         smach.StateMachine.add('HANDOVER_TO_BOSS',
                                    states.HandoverToHuman(robot, arm_with_item_designator),
-                                   transitions={   'succeeded'          :'REST_ARMS', #DETECT_ACTION',
-                                                    'failed'            :'REST_ARMS'}) #DETECT_ACTION'})
+                                   transitions={   'succeeded'          :'REST_ARMS',
+                                                    'failed'            :'REST_ARMS'})
 
         smach.StateMachine.add( "REST_ARMS",
                                     states.ResetArms(robot),
-                                    transitions={   'done'            :'Done'})
+                                    transitions={   'done'            :'GOTO_FINAL_WAYPOINT'})
+
+        smach.StateMachine.add("GOTO_FINAL_WAYPOINT",
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.end_location_amigo), radius=0.15),
+                                transitions={   'arrived'                  :'Done',
+                                                'unreachable'              :'Done',
+                                                'goal_not_defined'         :'Done'})
+
 
     return sm
 

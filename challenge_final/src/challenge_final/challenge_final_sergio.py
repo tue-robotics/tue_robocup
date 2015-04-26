@@ -142,7 +142,7 @@ class ConversationWithOperator(smach.State):
         try:
             if res.result:
                 object_string = res.choices['object']
-                self.robot.speech.speak("I am very sorry, but I do not have an arm yet to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
+                self.robot.speech.speak("I am very sorry, but I do not have an arm to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
                 self.robot.speech.speak("Amigo, please bring my boss a {0}".format(object_string))
                 
                 ''' Publish trigger for AMIGO to start its task '''
@@ -364,9 +364,15 @@ def setup_statemachine(robot):
                                 transitions={   "succeeded"        :   "END_CHALLENGE",
                                                 "failed"           :   "END_CHALLENGE"})
 
-    	smach.StateMachine.add('END_CHALLENGE',
-                                   states.Say(robot,"My work here is done, goodbye!"),
-                                   transitions={'spoken':'Done'})
+        smach.StateMachine.add('END_CHALLENGE',
+                                   states.Say(robot,"My work here is done, I am going to the kitchen and watch the crowd!", block=False),
+                                   transitions={'spoken':'GOTO_FINAL_WAYPOINT'})
+
+        smach.StateMachine.add("GOTO_FINAL_WAYPOINT",
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.end_location_sergio), radius=0.15),
+                                transitions={   'arrived'                  :'Done',
+                                                'unreachable'              :'Done',
+                                                'goal_not_defined'         :'Done'})
 
     return sm
 
