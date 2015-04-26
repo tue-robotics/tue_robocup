@@ -243,7 +243,7 @@ class AskSmallObject(smach.State):
 
     def execute(self, userdata):
 
-        self.robot.speech.speak("What do I see here?")
+        self.robot.speech.speak("What is this thing on the table?")
 
         res = self.robot.ears.recognize(spec=challenge_knowledge.object_spec, choices=challenge_knowledge.object_choices, time_out = rospy.Duration(20))
         if not res:
@@ -274,6 +274,17 @@ class SmallObjectHandling(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
+            ''' Say more to see '''
+            smach.StateMachine.add("SAY_MORE_TO_SEE",
+                                    states.Say(robot, 'Lets see if I can discover anything else'),
+                                    transitions={   'spoken'                    :'WAIT'})
+
+            ''' Wait for the operator to put something on the table '''
+            smach.StateMachine.add("WAIT",
+                                    states.Wait_time(robot, waittime=4.0),
+                                    transitions={   'waited'                    :'LOOK_AT_MESH',
+                                                    'preempted'                 :'LOOK_AT_MESH'})
+
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
                                     LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=2.0),
