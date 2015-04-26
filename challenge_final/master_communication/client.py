@@ -12,9 +12,9 @@ def cyan(text):
 
 class SyncClient():
 
-    def __init__(self, server_ip):
+    def __init__(self, server_ip,port):
         self.srv = rospy.Service('~query', Query, self.srv_callback)
-        self.sp  = ServerProxy("http://%s:4000"%server_ip)
+        self.sp  = ServerProxy("http://%s:%d"%(server_ip,port))
 
     def srv_callback(self, req):
         rospy.loginfo("Request: [%s]"%cyan(req))
@@ -31,7 +31,8 @@ if __name__ == '__main__':
         rospy.init_node('sync_client')
         if rospy.has_param('~ip'):
             ip = rospy.get_param('~ip')
-            client = SyncClient(ip)
+            port = rospy.get_param('~port')
+            client = SyncClient(ip, port)
             rospy.loginfo("Sync client that pushes changes initialized [connecting to server on ip %s]"%ip)
             rospy.spin()
         else:

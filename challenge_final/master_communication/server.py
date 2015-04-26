@@ -19,11 +19,11 @@ def error(error):
 
 class SyncServer():
 
-    def __init__(self, ip):
-        self._server = Server((ip, 4000), allow_none=True)
+    def __init__(self, ip, port):
+        self._server = Server((ip, port), allow_none=True)
         self._server.register_function(self.get, 'get')
 
-        self._ros_service_proxy = rospy.ServiceProxy('/sergio/ed/query', Query)
+        self._ros_service_proxy = rospy.ServiceProxy('query', Query)
 
     # RPC METHOD
     def get(self, ids, properties, since_revision):
@@ -52,8 +52,9 @@ if __name__ == '__main__':
         rospy.init_node('sync_server')
         if rospy.has_param('~ip'):
             ip = rospy.get_param('~ip')
+            port = rospy.get_param('~port')
             server = SyncServer(ip)
-            print "Sync server active at %s:%d - returns the world model update with use of RPC"%(ip,8000)
+            print "Sync server active at %s:%d - returns the world model update with use of RPC"%(ip,port)
             server.serve()
 
         else:
