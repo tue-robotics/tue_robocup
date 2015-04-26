@@ -23,7 +23,7 @@ class SyncServer():
         self._server = Server((ip, port), allow_none=True)
         self._server.register_function(self.get, 'get')
 
-        self._ros_service_proxy = rospy.ServiceProxy('query', Query)
+        self._ros_service_proxy = rospy.ServiceProxy('/sergio/ed/query', Query)
 
     # RPC METHOD
     def get(self, ids, properties, since_revision):
@@ -53,7 +53,7 @@ if __name__ == '__main__':
         if rospy.has_param('~ip'):
             ip = rospy.get_param('~ip')
             port = rospy.get_param('~port')
-            server = SyncServer(ip)
+            server = SyncServer(ip, port)
             print "Sync server active at %s:%d - returns the world model update with use of RPC"%(ip,port)
             server.serve()
 
