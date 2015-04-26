@@ -221,10 +221,10 @@ class CheckSmallObject(smach.State):
                 if 0.6 < z_pos < 0.9:
                     z_pos_filtered_entities.append(entity)
 
-            if len(z_pos_filtered_entities == 0):
+            if len(z_pos_filtered_entities) == 0:
                 rospy.logwarn("No entities left, assert first of original list")
                 small_mesh_id = entities_on_table[0].id
-            elif len(z_pos_filtered_entities):
+            elif len(z_pos_filtered_entities) == 1:
                 small_mesh_id = z_pos_filtered_entities[0].id
             else: 
                 rospy.logwarn("multiple entities remaining, fingers crossed")
