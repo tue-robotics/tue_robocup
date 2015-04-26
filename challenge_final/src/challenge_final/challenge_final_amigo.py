@@ -9,6 +9,7 @@ import math
 from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
+from robot_skills.util import msg_constructors as geom
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
@@ -17,6 +18,11 @@ INITIAL_POSE = challenge_knowledge.initial_pose_amigo
 from robot_smach_states.state import State
 
 OBJECTS_LIST = []
+
+LOCATION_LIST = challenge_knowledge.location_options
+CHOSEN_LOCATION = ['table']
+
+CURRENT_LOCATION_LIST = []
 
 class StartChallengeFinal(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
@@ -135,6 +141,40 @@ class SayFinalFailed(smach.State):
 
         return "spoken"
 
+class SayFinalGoToCheckLocation(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["spoken"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        sentence = "I will check if Sergio mapped the "+ CHOSEN_LOCATION[0] +" correctly!"
+
+        say_final = states.Say(self.robot, sentence, block=True)
+
+        say_final.execute(None)
+
+        return "spoken"
+
+# class SayFinalGeneric(smach.State):
+#     def __init__(self, robot, sentence_part1, variable_in_sentence, sentence_part2=" ", block=True):
+#         smach.State.__init__(self, outcomes=["spoken"])
+#         self.robot = robot
+#         self.sentence_part1 = sentence_part1
+#         self.sentence_part2 = sentence_part2
+#         self.variable_in_sentence = variable_in_sentence
+#         self.block = block
+
+#     def execute(self, userdata):
+#         sentence = str(self.sentence_part1) + " " + str(self.variable_in_sentence) + " " + str(self.sentence_part2)
+#         print "sentence =", sentence
+
+#         say_final = states.Say(self.robot, str(sentence), block=self.block)
+
+#         say_final.execute(None)
+
+#         return "spoken"
+
 class GrabFinal(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done","failed"])
@@ -150,6 +190,105 @@ class GrabFinal(smach.State):
         status = grab_coke.execute(None)
 
         return status
+
+
+class ChooseLocation(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["location_found", "location_list_empty"])
+        self.robot = robot
+
+        for x in range(len(LOCATION_LIST)):
+            CURRENT_LOCATION_LIST.append(LOCATION_LIST[x])
+
+    def execute(self, userdata):
+
+        table_entity = None
+
+        while not table_entity:
+            if len(CURRENT_LOCATION_LIST) > 0:
+                #print "CURRENT_LOCATION_LIST =", CURRENT_LOCATION_LIST
+                random_location = random.choice(CURRENT_LOCATION_LIST)
+                #print "random_location =", random_location
+                table_entity = self.robot.ed.get_entities(type=str(random_location))
+
+                if len(table_entity) > 0:
+                    table_entity = table_entity[0]
+
+                #print "table_entity", table_entity
+
+                CURRENT_LOCATION_LIST.remove(random_location)
+            else:
+                return "location_list_empty"
+
+        #print "CHOSEN_LOCATION before emptying = ",CHOSEN_LOCATION
+        del CHOSEN_LOCATION[:]
+        #print "CHOSEN_LOCATION after emptying = ",CHOSEN_LOCATION
+
+        CHOSEN_LOCATION.append(str(random_location))
+
+        #print "CHOSEN_LOCATION after adding new location = ",CHOSEN_LOCATION
+
+        print "CHOSEN_LOCATION =", CHOSEN_LOCATION
+
+        return "location_found"
+
+
+class UpdateLocationList(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        for x in range(len(LOCATION_LIST)):
+            CURRENT_LOCATION_LIST.append(LOCATION_LIST[x])
+
+        rospy.sleep(1)
+
+        return "done"
+
+class NavigateCheckLocation(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["arrived","unreachable","goal_not_defined"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        navigate_location = states.NavigateToObserve(self.robot, EdEntityDesignator(self.robot, type=CHOSEN_LOCATION[0]), radius=0.8)
+
+        status = navigate_location.execute(None)
+
+        return status
+
+class Look_point(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["looking"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        table_entity = self.robot.ed.get_entities(type=CHOSEN_LOCATION[0])
+
+        print "table_entity = ", table_entity
+
+        goal = geom.PointStamped()
+        goal.header.stamp = rospy.Time.now()
+        goal.header.frame_id = "/map" #"/"+self._robot_name+"/base_link" # HACK TO LOOK AT RIGHT POINT.
+        goal.point = table_entity[0].center_point
+
+        self.robot.head.look_at_point(goal)
+        rospy.sleep(2)
+        return "looking"
+
+class Stop_looking(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["stopped_looking"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        self.robot.head.cancel_goal()
+        return "stopped_looking"
 
 ############################## main statemachine ######################
 def setup_statemachine(robot):
@@ -230,13 +369,52 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "REST_ARMS",
                                     states.ResetArms(robot),
-                                    transitions={   'done'            :'GOTO_FINAL_WAYPOINT'})
+                                    transitions={   'done'            :'CHOOSE_RANDOM_LOCATION'})
 
-        smach.StateMachine.add("GOTO_FINAL_WAYPOINT",
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.end_location_amigo), radius=0.15),
-                                transitions={   'arrived'                  :'Done',
-                                                'unreachable'              :'Done',
-                                                'goal_not_defined'         :'Done'})
+# ###################
+#         smach.StateMachine.add("GOTO_FINAL_WAYPOINT",
+#                                 states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.end_location_amigo), radius=0.15),
+#                                 transitions={   'arrived'                  :'Done',
+#                                                 'unreachable'              :'Done',
+#                                                 'goal_not_defined'         :'Done'})
+
+######################
+
+        smach.StateMachine.add('CHOOSE_RANDOM_LOCATION',
+                                   ChooseLocation(robot),
+                                   transitions={    'location_found'          :'SAY_LOC_FOUND',
+                                                    'location_list_empty'     :'UPDATE_LOC_LIST'})
+
+        smach.StateMachine.add( "SAY_LOC_FOUND",
+                                    SayFinalGoToCheckLocation(robot),
+                                    transitions={   'spoken'            :'GOTO_RANDOM_ENTITY_LOCATION'})
+
+
+        smach.StateMachine.add('GOTO_RANDOM_ENTITY_LOCATION',
+                                    NavigateCheckLocation(robot),
+                                    transitions={   'arrived':'LOOK_AT_LOCATION',
+                                                    'unreachable':'SAY_LOC_NOT_FOUND',
+                                                    'goal_not_defined':'SAY_LOC_NOT_FOUND'})
+
+        smach.StateMachine.add("LOOK_AT_LOCATION",
+                                     Look_point(robot),
+                                     transitions={  'looking'         :'SAY_JOB_WELL_DONE'})
+
+        smach.StateMachine.add( "SAY_JOB_WELL_DONE",
+                                states.Say(robot, "This looks good. Well done Sergio.", block=True),
+                                transitions={   'spoken'            :'STOP_LOOKING_AT_OBJECT'})
+
+        smach.StateMachine.add("STOP_LOOKING_AT_OBJECT",
+                                 Stop_looking(robot),
+                                 transitions={  'stopped_looking'         :'CHOOSE_RANDOM_LOCATION'})
+
+        smach.StateMachine.add( "SAY_LOC_NOT_FOUND",
+                                    states.Say(robot, ["Sorry, i can not reach the location. Maybe another location."], block=True),
+                                    transitions={   'spoken'            :'CHOOSE_RANDOM_LOCATION'})
+
+        smach.StateMachine.add( "UPDATE_LOC_LIST",
+                                    UpdateLocationList(robot),
+                                    transitions={   'done'            :'CHOOSE_RANDOM_LOCATION'})
 
 
     return sm
