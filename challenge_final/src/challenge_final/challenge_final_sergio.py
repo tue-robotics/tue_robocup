@@ -274,20 +274,21 @@ class SmallObjectHandling(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         with self:
+            
+            ''' Wait for the operator to put something on the table '''
+            smach.StateMachine.add("WAIT",
+                                    states.Wait_time(robot, waittime=3.0),
+                                    transitions={   'waited'                    :'SAY_MORE_TO_SEE',
+                                                    'preempted'                 :'SAY_MORE_TO_SEE'})
+                                                    
             ''' Say more to see '''
             smach.StateMachine.add("SAY_MORE_TO_SEE",
                                     states.Say(robot, 'Lets see if I can discover anything else'),
-                                    transitions={   'spoken'                    :'WAIT'})
-
-            ''' Wait for the operator to put something on the table '''
-            smach.StateMachine.add("WAIT",
-                                    states.Wait_time(robot, waittime=4.0),
-                                    transitions={   'waited'                    :'LOOK_AT_MESH',
-                                                    'preempted'                 :'LOOK_AT_MESH'})
+                                    transitions={   'spoken'                    :'LOOK_AT_MESH'})
 
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=2.0),
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=3.0),
                                     transitions={   'succeeded'                 :'CHECK_SMALL_OBJECT',
                                                     'failed'                    :'CHECK_SMALL_OBJECT'})
 
