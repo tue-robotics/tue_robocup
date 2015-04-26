@@ -150,7 +150,7 @@ def setup_statemachine(robot):
                                                     'failed'            :'INITIALIZE'})
         smach.StateMachine.add("INITIALIZE",
                                 StartChallengeFinal(robot, INITIAL_POSE, use_entry_points = True),
-                                transitions={   "Done"              :   "GOTO_FINAL_WAYPOINT",
+                                transitions={   "Done"              :   "SAY_GET_OBJECT",
                                                 "Aborted"           :   "SAY_GET_OBJECT",
                                                 "Failed"            :   "SAY_GET_OBJECT"})
 
