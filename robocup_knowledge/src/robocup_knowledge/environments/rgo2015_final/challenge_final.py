@@ -26,7 +26,8 @@ explore_locations_part_2 = [explore_location_4, explore_location_5, explore_loca
 # last position where sergio will wait (between cabinet and bartable, near the wall)
 end_location_sergio = "final_last_position_sergio"
 
-
+# last position where sergio will wait (between cabinet and bartable, near the wall)
+end_location_amigo = "final_last_position_amigo"
 
 #SPECS + CHOICES for speech recognition
 location_options = ['cupboard','dinnertable','desk','sidetable','tv','kitchencounter','cabinet','bartable','couch','chair','coathanger','left_bedside_table','right_bedside_table']
