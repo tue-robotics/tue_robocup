@@ -126,6 +126,8 @@ def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
+    arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
+
     with sm:
         smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
                                     AwaitTriggerAndSave(robot),
@@ -143,8 +145,58 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "GRAB_OBJECT",
                                     GrabFinal(robot),
-                                    transitions={   'done'              :'Done',
-                                                    'failed'            :'Done'})
+                                    transitions={   'done'              :'SAY_SUCCESS',
+                                                    'failed'            :'GOTO_DINNERTABLE'})       
+
+        smach.StateMachine.add('GOTO_DINNERTABLE',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.explore_location_2), radius=0.2),
+                                    transitions={   'arrived':'GRAB_OBJECT_BACKUP',
+                                                    'unreachable':'GRAB_OBJECT_BACKUP',
+                                                    'goal_not_defined':'GRAB_OBJECT_BACKUP'})
+
+        smach.StateMachine.add( "GRAB_OBJECT_BACKUP",
+                                    GrabFinal(robot),
+                                    transitions={   'done'              :'SAY_SUCCESS',
+                                                    'failed'            :'SAY_NO_SUCCES'})
+
+        smach.StateMachine.add( "SAY_NO_SUCCES",
+                                    states.Say(robot, ["Oh no! I can't grab it."], block=False),
+                                    transitions={   'spoken'            :'GOTO_BOSS_FAILURE'})
+
+        smach.StateMachine.add('GOTO_BOSS_FAILURE',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.task_location_sergio), radius=0.3),
+                                    transitions={   'arrived':'SAY_FAILED',
+                                                    'unreachable':'SAY_FAILED',
+                                                    'goal_not_defined':'SAY_FAILED'})
+
+        smach.StateMachine.add( "SAY_FAILED",
+                                    states.Say(robot, ["I'm really sorry, although I have the arms to pick up the drink."], block=False),
+                                    transitions={   'spoken'            :'REST_ARMS'})
+
+        smach.StateMachine.add( "SAY_SUCCESS",
+                                    states.Say(robot, ["All right!"], block=False),
+                                    transitions={   'spoken'            :'GOTO_BOSS'})
+
+        smach.StateMachine.add('GOTO_BOSS',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.task_location_sergio), radius=0.1),
+                                    transitions={   'arrived':'HANDOVER_TO_BOSS',
+                                                    'unreachable':'GOTO_BOSS_BACKUP',
+                                                    'goal_not_defined':'GOTO_BOSS_BACKUP'})
+
+        smach.StateMachine.add('GOTO_BOSS_BACKUP',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.task_location_sergio), radius=0.3),
+                                    transitions={   'arrived':'HANDOVER_TO_BOSS',
+                                                    'unreachable':'HANDOVER_TO_BOSS',
+                                                    'goal_not_defined':'HANDOVER_TO_BOSS'})
+
+        smach.StateMachine.add('HANDOVER_TO_BOSS',
+                                   states.HandoverToHuman(robot, arm_with_item_designator),
+                                   transitions={   'succeeded'          :'REST_ARMS', #DETECT_ACTION',
+                                                    'failed'            :'REST_ARMS'}) #DETECT_ACTION'})
+
+        smach.StateMachine.add( "REST_ARMS",
+                                    states.ResetArms(robot),
+                                    transitions={   'done'            :'Done'})
 
     return sm
 
