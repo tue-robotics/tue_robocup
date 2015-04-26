@@ -92,7 +92,11 @@ class AskWhatDoISee(smach.State):
             return "failed"
 
 class ExploreWaypoint(smach.StateMachine):
-    def __init__(self, robot, waypoint):
+    def __init__(self, robot, waypoint, x=1.6, y=0, z=0):
+        """
+        waypoint: string with desired waypoint 
+        x, y, z: head target in base link frame_id
+        """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         waypoint_designator = EdEntityDesignator(robot, id=waypoint)
@@ -106,7 +110,7 @@ class ExploreWaypoint(smach.StateMachine):
 
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=5.0, waittime=3.0),
+                                    LookBaseLinkPoint(robot, x=x, y=y, z=z, timeout=5.0, waittime=3.0),
                                     transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
                                                     'failed'                    :'TAKE_SNAPSHOT'})
 
