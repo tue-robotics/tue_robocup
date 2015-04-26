@@ -52,6 +52,7 @@ class TakeSnapShot(smach.State):
 
     def execute(self, userdata):
         MESH_IDS.append('mesh{0}'.format(len(MESH_IDS))) # ToDo: make nice
+        rospy.logwarn("Taking snapshot, id = {0}".format(MESH_IDS[-1]))
         self.robot.ed.mesh_entity_in_view(id=MESH_IDS[-1])
         rospy.sleep(rospy.Duration(3.0))
         return 'succeeded'
@@ -77,6 +78,7 @@ class AskWhatDoISee(smach.State):
                 
                 ''' Assert type to ed '''
                 if len(MESH_IDS) > 0:
+                    rospy.logwarn("Mesh id: {0}, type: {1}".format(MESH_IDS[-1], name_object))
                     self.robot.ed.update_entity(id=MESH_IDS[-1], type = name_object)
                 else:
                     rospy.logerr("Challenge final: Cannot update mesh type: id unknown")
@@ -268,7 +270,7 @@ class SmallObjectHandling(smach.StateMachine):
         with self:
             ''' Look at thing '''
             smach.StateMachine.add("LOOK_AT_MESH",
-                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=1, timeout=2.5, waittime=1.5),
+                                    LookBaseLinkPoint(robot, x=2.5, y=0, z=0, timeout=2.5, waittime=1.5),
                                     transitions={   'succeeded'                 :'CHECK_SMALL_OBJECT',
                                                     'failed'                    :'CHECK_SMALL_OBJECT'})
 
