@@ -446,6 +446,35 @@ class IteratorState(smach.State):
             # self.element_designator.current = None
             return "stop_iteration"
 
+def test_iteration():
+    from robot_smach_states.util.designators import Designator, VariableDesignator
+
+    sm = smach.StateMachine(outcomes=['succeeded', 'failed'])
+    numbers = Designator(range(3), resolve_type=[int])
+    number = VariableDesignator(resolve_type=int)
+
+    global gather
+    gather = []
+
+    with sm:
+        smach.StateMachine.add( "STEP",
+                                IteratorState(numbers, number), 
+                                transitions={   "next"          :"USE_NUMBER", 
+                                                "stop_iteration":"succeeded"})
+
+        def lengthen_list(*args, **kwargs):
+            resolved = number.resolve()
+            print resolved
+            global gather
+            gather += [resolved]
+        smach.StateMachine.add( "USE_NUMBER", 
+                                CallFunction("amigo", lengthen_list), 
+                                transitions={   "succeeded"     :"STEP", 
+                                                "failed"        :"failed"})
+
+    sm.execute()
+    print "gather = {0}".format(gather)
+
 if __name__ == "__main__":
     import doctest
     doctest.testmod()

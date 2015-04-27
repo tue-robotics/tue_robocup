@@ -151,7 +151,13 @@ class VariableDesignator(Designator):
         super(VariableDesignator, self).__init__(initial_value, resolve_type)
 
     def _set_current(self, value):
-        if not issubclass(type(value), tuple(self.resolve_type)):
+        resolve_type = self.resolve_type
+        try:
+            resolve_type = tuple(self.resolve_type)
+        except TypeError:
+            pass
+
+        if not issubclass(type(value), resolve_type):
             raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
 
