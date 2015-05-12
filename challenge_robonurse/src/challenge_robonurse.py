@@ -218,13 +218,13 @@ class RoboNurse(smach.StateMachine):
             #                                         'goal_not_defined'  :'LOOKAT_SHELF'})
 
             smach.StateMachine.add('GOTO_SHELF',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_cupboard"), radius=0.1),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=BOTTLE_SHELF), radius=0.1),
                                     transitions={   'arrived':'LOOKAT_SHELF',
                                                     'unreachable':'GOTO_SHELF_BACKUP',
                                                     'goal_not_defined':'GOTO_SHELF_BACKUP'})
 
             smach.StateMachine.add('GOTO_SHELF_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_cupboard"), radius=0.2),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=BOTTLE_SHELF), radius=0.2),
                                     transitions={   'arrived':'LOOKAT_SHELF',
                                                     'unreachable':'LOOKAT_SHELF',
                                                     'goal_not_defined':'LOOKAT_SHELF'})
@@ -468,13 +468,13 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'spoken' : 'GOTO_COUCHTABLE'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_couchtable"), radius=0.1),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.1),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'GOTO_COUCHTABLE_BACKUP',
                                                     'goal_not_defined':'GOTO_COUCHTABLE_BACKUP'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="gpsr_couchtable"), radius=0.2),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.2),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'LOOKAT_COUCHTABLE',
                                                     'goal_not_defined':'LOOKAT_COUCHTABLE'})
