@@ -122,41 +122,46 @@ class WakeMeUp(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            wakeupContainer = smach.StateMachine(outcomes = ['container_successed', 'container_failed'])
+            wakeupContainer = smach.StateMachine(outcomes = ['container_succeeded', 'container_failed'])
 
             with wakeupContainer:
 
-                smach.StateMachine.add( "SAY_GOODMORNING",
+                smach.StateMachine.add( "WAKEUP_MESSAGE",
                                         states.Say(robot, [ "Are you awake?", 
                                                             "Rise and shine, and look at me!", 
                                                             "Wakey wakey!", 
                                                             "Hello there sleepy head! Please face me", 
                                                             "Time for breakfast!"]),
-                                        transitions={   'spoken' :'LOOK_AT_BED'})
+                                        transitions={   'spoken' :'LOOK_IF_AWAKE'})
 
                 #TODO: Add concurrence to play music to wake someone up and monitor whether the dude is awake
                 # smach.StateMachine.add( "AWAIT_HUMAN_AWAKE",
                 #                         states.WaitForDesignator(robot, homeowner, attempts=2, sleep_interval=3),  # Wait 60 seconds
-                #                         transitions={   'success' : 'container_successed',
-                #                                         'failed' :  'container_successed'})
+                #                         transitions={   'success' : 'container_succeeded',
+                #                                         'failed' :  'container_succeeded'})
     
-                smach.StateMachine.add( 'LOOK_AT_BED',
-                                        wakeStates.LookAtBedTop(robot),
-                                        transitions={    'done':'AWAIT_HUMAN_AWAKE'})
+                # smach.StateMachine.add( 'LOOK_AT_BED',
+                #                         wakeStates.LookAtBedTop(robot),
+                #                         transitions={    'done':'AWAIT_HUMAN_AWAKE'})
 
-                smach.StateMachine.add("AWAIT_HUMAN_AWAKE",
-                                        states.WaitForPersonInFront(robot, attempts=10, sleep_interval=1),  # resolve 10 time, with a 1 second sleep in between
-                                        transitions={   'success':'container_successed',
-                                                        'failed':'LOOP_BREAKER'})
+                smach.StateMachine.add( "LOOK_IF_AWAKE",
+                                        wakeStates.LookIfAwake(robot),
+                                        transitions={    'awake':'container_succeeded',
+                                                         'not_awake':'WAKEUP_MESSAGE'})
 
-                smach.StateMachine.add( 'LOOP_BREAKER',
-                                        wakeStates.LoopBreaker(robot, counter_designator=loop_counter_des, limit_designator=wakeup_limit_des),
-                                        transitions={   'break':'container_failed',
-                                                        'continue':'SAY_GOODMORNING'})
+                # smach.StateMachine.add("AWAIT_HUMAN_AWAKE",
+                #                         states.WaitForPersonInFront(robot, attempts=10, sleep_interval=1),  # resolve 10 time, with a 1 second sleep in between
+                #                         transitions={   'success':'container_succeeded',
+                #                                         'failed':'LOOP_BREAKER'})
+
+                # smach.StateMachine.add( 'LOOP_BREAKER',
+                #                         wakeStates.LoopBreaker(robot, counter_designator=loop_counter_des, limit_designator=wakeup_limit_des),
+                #                         transitions={   'break':'container_failed',
+                #                                         'continue':'WAKEUP_MESSAGE'})
 
             smach.StateMachine.add( 'WAKEUP_CONTAINER',
                                     wakeupContainer,
-                                    transitions={   'container_successed':'CANCEL_HEAD_GOALS_1',
+                                    transitions={   'container_succeeded':'CANCEL_HEAD_GOALS_1',
                                                     'container_failed': 'CANCEL_HEAD_GOALS_1'})
 
             smach.StateMachine.add( 'CANCEL_HEAD_GOALS_1',

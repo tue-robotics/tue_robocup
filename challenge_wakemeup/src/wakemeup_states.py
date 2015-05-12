@@ -14,7 +14,7 @@ from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-from robocup_knowledge import load_knowledge
+# from robocup_knowledge import load_knowledge
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -36,18 +36,18 @@ default_milk = "fresh milk"
 
 bed_top_coordinates = {'x':0.783, 'y':1.315, 'z':0.3}
 
-# load item names
-common = load_knowledge('common')
-knowledge_objs= load_knowledge('common').objects
+# # load item names
+# common = load_knowledge('common')
+# knowledge_objs= load_knowledge('common').objects
 
-names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
-names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
-names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
+# names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
+# names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
+# names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
 
-# Debug print
-print prefix + "Fruit names from Knowledge: " + str(names_fruit)
-print prefix + "Cereal names from Knowledge: " + str(names_cereal)
-print prefix + "Milk names from Knowledge: " + str(names_milk)
+# # Debug print
+# print prefix + "Fruit names from Knowledge: " + str(names_fruit)
+# print prefix + "Cereal names from Knowledge: " + str(names_cereal)
+# print prefix + "Milk names from Knowledge: " + str(names_milk)
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -317,3 +317,18 @@ class LoopBreaker(smach.State):
             print "{}Continuing loop ({}!={})".format(prefix, self.counter.resolve(), self.limit.resolve())
             self.counter.current = self.counter.current + 1
             return 'continue'
+
+class LookIfAwake(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['awake', 'not_awake'])
+        self.robot = robot
+        self.designator = EdEntityDesignator(robot, center_point = robot.ed.get_entity("bed").pose.position, radius = 1.0)
+
+    def execute(self, robot):
+        person_awake = self.designator.resolve()
+        print person_awake
+        rospy.logerr("Only checking if there is something within radius 1 from the center point of the bed. Should be checking for a large new entity just above the bed")
+        if person_awake is not None:
+            return 'awake'
+        else:
+            return 'not_awake'
