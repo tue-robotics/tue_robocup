@@ -17,7 +17,7 @@ import smach
 import sys
 import random
 
-from robot_smach_states.util.designators import ArmDesignator, Designator, EdEntityDesignator, EdEntityCollectionDesignator, LockingDesignator, UnoccupiedArmDesignator, ArmHoldingEntityDesignator, VariableDesignator, check_resolve_type
+import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -60,6 +60,7 @@ class Look_point(smach.State):
         self.robot.head.look_at_point(goal)
         rospy.sleep(2)
         return "looking"
+
 
 class Stop_looking(smach.State):
     def __init__(self, robot):
@@ -127,7 +128,7 @@ class StartPhase(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_GRANNY",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'Done',
                                                     'unreachable'       :'Done',
                                                     'goal_not_defined'  :'Done'})
@@ -137,8 +138,8 @@ class GetPills(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
+        empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
 
         def small(entity):
             return abs(entity.z_min - entity.z_max) < 0.20
@@ -151,8 +152,8 @@ class GetPills(smach.StateMachine):
 
         bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room]
 
-        described_bottle = EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
-        locked_described_bottle = LockingDesignator(described_bottle)
+        described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
+        locked_described_bottle = ds.LockingDesignator(described_bottle)
 
         with self:
             smach.StateMachine.add("LOOKAT_SHELF",
@@ -160,17 +161,17 @@ class GetPills(smach.StateMachine):
                                      transitions={  'looking'         :'DESCRIBE_OBJECTS'})
 
             #START Loy's version
-            ask_bottles_spec = VariableDesignator(resolve_type=str)
-            ask_bottles_choices = VariableDesignator(resolve_type=dict)
+            ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
+            ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria),  # Type should be bottle or only check position+size/volume
+                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
                                                     'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
-            ask_bottles_answer = VariableDesignator(resolve_type=GetSpeechResponse)
+            ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
                                     states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
                                     transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
@@ -182,7 +183,7 @@ class GetPills(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['described'])
             def designate_bottle(userdata):
-                import ipdb; ipdb.set_trace()
+                # import ipdb; ipdb.set_trace()
                 answer = ask_bottles_answer.resolve()
                 if answer:
                     choices = answer.choices
@@ -204,7 +205,7 @@ class GetPills(smach.StateMachine):
                                     transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
             smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
-                                    states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+                                    states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
                                     transitions={   'arrived'           :'failed',#DETECT_ACTION'
                                                     'unreachable'       :'failed',#DETECT_ACTION'
                                                     'goal_not_defined'  :'failed'})#DETECT_ACTION'
@@ -212,20 +213,20 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
                                                     'unreachable'       :'GOTO_HANDOVER_GRANNY_BACKUP',
                                                     'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_BACKUP",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
                                                     'unreachable'       :'SAY_HANDOVER_BOTTLE',
                                                     'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
 
             # smach.StateMachine.add( "GOTO_GRANNY_WITH_BOTTLE",
-            #                         states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+            #                         states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
             #                         transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
             #                                         'unreachable'       :'DETECT_ACTION',
             #                                         'goal_not_defined'  :'DETECT_ACTION'})
@@ -244,8 +245,8 @@ class RespondToAction(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
+        empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
 
         def size(entity):
             return abs(entity.z_max - entity.z_min) < 0.4
@@ -255,7 +256,7 @@ class RespondToAction(smach.StateMachine):
             return onTopOff(entity, container_entity)
 
         # Don't pass the weight_function, might screw up if phone is not near the robot
-        phone = EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
+        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
 
         with self:
             smach.StateMachine.add( "WAIT_TIME",
@@ -268,13 +269,13 @@ class RespondToAction(smach.StateMachine):
                                     transitions={   'spoken' : 'GOTO_COUCHTABLE'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.1),
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.1),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'GOTO_COUCHTABLE_BACKUP',
                                                     'goal_not_defined':'GOTO_COUCHTABLE_BACKUP'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.2),
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.2),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'LOOKAT_COUCHTABLE',
                                                     'goal_not_defined':'LOOKAT_COUCHTABLE'})
@@ -314,14 +315,14 @@ class RespondToAction(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_PHONE",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'SAY_HANDOVER_PHONE',
                                                     'unreachable'       :'GOTO_HANDOVER_GRANNY_PHONE_BACKUP',
                                                     'goal_not_defined'  :'SAY_HANDOVER_PHONE'})
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_PHONE_BACKUP",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'SAY_HANDOVER_PHONE',
                                                     'unreachable'       :'SAY_HANDOVER_PHONE',
                                                     'goal_not_defined'  :'SAY_HANDOVER_PHONE'})
@@ -365,13 +366,14 @@ class RespondToAction(smach.StateMachine):
             #                         states.Say(robot, ["I will hold your cane"]),
             #                         transitions={   'spoken'            :'succeeded'})
 
+
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        granny = EdEntityDesignator(robot, type='human')
-        grannies_table = EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
-        shelf = EdEntityDesignator(robot, id=BOTTLE_SHELF)
+        granny = ds.EdEntityDesignator(robot, type='human')
+        grannies_table = ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
+        shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
 
         def in_box(entity):
             print entity
@@ -425,8 +427,6 @@ class RoboNurse(smach.StateMachine):
                                     RespondToAction(robot, grannies_table, granny),
                                     transitions={   'succeeded'     :'Done',
                                                     'failed'        :'Aborted'})
-
-            
 
 
 ############################## initializing program ######################
