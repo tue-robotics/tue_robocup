@@ -15,19 +15,13 @@ Granny does 1 of 3 things to which the robot must respond.
 import rospy
 import smach
 import sys
-import random
 
 import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
-from robot_smach_states import Place
 from robot_skills.util import msg_constructors as geom
-from robot_skills.util import transformations
-from collections import OrderedDict
-from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-import operator
 from robot_smach_states.util.geometry_helpers import *
 from bottle_description import DescribeBottles, get_entity_color, get_entity_size
 from action_detection import DetectAction
