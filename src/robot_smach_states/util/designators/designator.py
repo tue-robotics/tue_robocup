@@ -396,8 +396,7 @@ class EdEntityCollectionDesignator(Designator):
 class EdEntityDesignator(Designator):
 
     """
-    Resolves to an entity from an Ed query, (TODO: selected by some filter and
-    criteria functions)
+    Resolves to an entity from an Ed query
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None, weight_function=None,
