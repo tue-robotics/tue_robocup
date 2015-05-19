@@ -254,11 +254,11 @@ class CheckTime(smach.State):
     def __init__(self, robot, designator, max_duration):
         smach.State.__init__(self, outcomes=["ok", "timeout"])
         self.robot = robot
-        self.max_duration = max_duration
-        self.name = designator
+        self.max_duration = rospy.Duration(max_duration)
+        self.designator = designator
 
     def execute(self, userdata=None):
-        if self.designator.resolve() > self.max_duration:
+        if rospy.Time.now() - self.designator.resolve() > self.max_duration:
             return "timeout"
         else:
             return "ok"
