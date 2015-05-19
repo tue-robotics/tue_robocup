@@ -300,35 +300,17 @@ class LookAtBedTop(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
-class LoopBreaker(smach.State):
-    def __init__(self, robot, counter_designator, limit_designator):
-        smach.State.__init__(self, outcomes=['break', 'continue'])
-        self.robot = robot
-        self.counter = counter_designator
-        self.limit = limit_designator
-
-    def execute(self, robot):
-        print prefix + bcolors.OKBLUE + "LoopBreaker" + bcolors.ENDC
-
-        if self.counter.resolve() == self.limit.resolve():
-            print "{}Breaking loop ({}={})".format(prefix, self.counter.resolve(), self.limit.resolve())
-            return 'break'
-        else:
-            print "{}Continuing loop ({}!={})".format(prefix, self.counter.resolve(), self.limit.resolve())
-            self.counter.current = self.counter.current + 1
-            return 'continue'
-
-class LookIfAwake(smach.State):
-    def __init__(self, robot):
+class LookIfSomethingsThere(smach.State):
+    def __init__(self, robot, designator):
         smach.State.__init__(self, outcomes=['awake', 'not_awake'])
         self.robot = robot
-        self.designator = EdEntityDesignator(robot, center_point = robot.ed.get_entity("bed").pose.position, radius = 1.0)
+        self.designator = designator
 
     def execute(self, robot):
         person_awake = self.designator.resolve()
         print person_awake
-        rospy.logerr("Only checking if there is something within radius 1 from the center point of the bed. Should be checking for a large new entity just above the bed")
-        if person_awake is not None:
+        rospy.logerr("Only checking if the designator resolves...")
+        if person_awake != None:
             return 'awake'
         else:
             return 'not_awake'
