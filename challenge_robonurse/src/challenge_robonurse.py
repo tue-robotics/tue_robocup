@@ -100,6 +100,39 @@ class Ask_pills(smach.State):
         return "red"
 
 
+class StartPhase(smach.StateMachine):
+    def __init__(self, robot, grannies_table):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+
+        with self:
+            smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized':'INIT_POSE',
+                                                'abort':'Aborted'})
+
+            smach.StateMachine.add('INIT_POSE',
+                                states.SetInitialPose(robot, 'robonurse_initial'),
+                                transitions={   'done':'HEAR_GRANNY',
+                                                'preempted':'Aborted',  # This transition will never happen at the moment.
+                                                'error':'HEAR_GRANNY'})  # It should never go to aborted.
+            
+            smach.StateMachine.add('HEAR_GRANNY',
+                                states.Hear(robot, spec="((Help me)|hello|please|(please come)|amigo|sergio|come|(hi there)|hi|pills|robot|(give me my pills))",time_out=rospy.Duration(30)),
+                                transitions={   'heard':'SAY_HI',
+                                                'not_heard':'SAY_HI'})  # It should never go to aborted.
+
+            smach.StateMachine.add( "SAY_HI",
+                                    states.Say(robot, ["I hear you!"], block=False),
+                                    transitions={"spoken":"GOTO_GRANNY"})
+
+            smach.StateMachine.add( "GOTO_GRANNY",
+                                    #states.NavigateToPose(robot, 0, 0, 0),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'Done',
+                                                    'unreachable'       :'Done',
+                                                    'goal_not_defined'  :'Done'})
+
+
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
@@ -148,33 +181,11 @@ class RoboNurse(smach.StateMachine):
         blue_pills = EdEntityDesignator(robot, type="bubblemint")#, criteriafuncs=[in_box])
         white_pills = EdEntityDesignator(robot, type="mints")#, criteriafuncs=[in_box])
 
-        with self:
-            smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'INIT_POSE',
-                                                'abort':'Aborted'})
-
-            smach.StateMachine.add('INIT_POSE',
-                                states.SetInitialPose(robot, 'robonurse_initial'),
-                                transitions={   'done':'HEAR_GRANNY',
-                                                'preempted':'Aborted',  # This transition will never happen at the moment.
-                                                'error':'HEAR_GRANNY'})  # It should never go to aborted.
-            
-            smach.StateMachine.add('HEAR_GRANNY',
-                                states.Hear(robot, spec="((Help me)|hello|please|(please come)|amigo|sergio|come|(hi there)|hi|pills|robot|(give me my pills))",time_out=rospy.Duration(30)),
-                                transitions={   'heard':'SAY_HI',
-                                                'not_heard':'SAY_HI'})  # It should never go to aborted.
-
-            smach.StateMachine.add( "SAY_HI",
-                                    states.Say(robot, ["I hear you!"], block=False),
-                                    transitions={"spoken":"GOTO_GRANNY"})
-
-            smach.StateMachine.add( "GOTO_GRANNY",
-                                    #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
-                                    transitions={   'arrived'           :'ASK_GRANNY',
-                                                    'unreachable'       :'ASK_GRANNY',
-                                                    'goal_not_defined'  :'ASK_GRANNY'})
+        with self: 
+            smach.StateMachine.add( "START_PHASE",
+                                    StartPhase(robot, grannies_table),
+                                    transitions={   'Done'              :'ASK_GRANNY',
+                                                    'Aborted'           :'Aborted'})
 
             smach.StateMachine.add( "ASK_GRANNY",
                                     states.Say(robot, ["Hello Granny, Shall I bring you your pills?"], block=True),
