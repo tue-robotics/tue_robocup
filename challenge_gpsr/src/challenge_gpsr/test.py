@@ -1,37 +1,47 @@
 #!/usr/bin/env python
 
 
+from datetime import datetime
+from datetime import date
+
+# print "a\n"
+# print datetime.now()
+# print "b\n"
+# print date.today()
+# print "c\n"
+# print datetime.month()
+# print "d\n"
+# print datetime.date()
+
+time      = "It is %s"%datetime.now().strftime("%I %M %p")
+print time
+date2 = "It is %s"%datetime.now().strftime("%A")
+print date2
+# today     =
+# tomorrow  =
+# day_month = "It is the %s of %s"%datetime.now().strftime("%b"),datetime.now().strftime("%d") 
+# print day_month
+day_month = "It is the %s "%datetime.now().strftime("%b")
+print day_month
+day_month = "It is the %s "%datetime.now().strftime("%d")
+print day_month
+day_week  = "It is %s"%datetime.now().strftime("%A") 
+print day_week
 
 
-def replace_word(string,word_in,word_out):
-    try:
-        if string[:(len(word_in)+1)] == (word_in+" "):
-            string = string.replace(string[:len(word_in)],word_out)
+# speak_special = {
+#         "your name":"my name is amigo",
+#         "the name of your team": "my team's name is tech united",
+#         "the time": time,
+#         "what time is it": time,
+#         "tell the date": date,
+#         "what day is today": today,
+#         "what day is tomorrow":tomorrow,
+#         "tell the day of the month": day_month,
+#         "tell the day of the week": day_week
+# }
 
-        if string[(len(string)-len(word_in)-1):] == (" "+word_in):
-            string = string.replace(string[(len(string)-len(word_in)):],word_out)
 
-        string = string.replace(" "+word_in+" "," "+word_out+" ")
+# say_result = replace_word(result,"me","you")
 
-    except KeyError:
-        print "[gpsr] Received action is to short."
-
-    return string
-
-result = "tell the time"
-
-say_result = replace_word(result,"me","you")
-
-print "say_result = ", say_result
-
-result = "tell me"
-
-say_result = replace_word(result,"me","you")
-
-print "say_result = ", say_result
-
-result = "meet me in the corner of me time"
-
-say_result = replace_word(result,"me","you")
-
-print "say_result = ", say_result
+# print "say_result = ", say_result
