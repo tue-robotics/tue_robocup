@@ -133,13 +133,12 @@ class StartPhase(smach.StateMachine):
                                                     'goal_not_defined'  :'Done'})
 
 
-class RoboNurse(smach.StateMachine):
-    def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+class GetPills(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        granny = EdEntityDesignator(robot, type='human')
-        grannies_table = EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
-        shelf = EdEntityDesignator(robot, id=BOTTLE_SHELF)
+        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
 
         def small(entity):
             return abs(entity.z_min - entity.z_max) < 0.20
@@ -152,13 +151,101 @@ class RoboNurse(smach.StateMachine):
 
         bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room]
 
-        described_bottle = LockingDesignator(EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False)) #Criteria funcs will be added based on what granny says
+        described_bottle = EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
+        locked_described_bottle = LockingDesignator(described_bottle)
 
+        with self:
+            smach.StateMachine.add("LOOKAT_SHELF",
+                                     Look_point(robot, 5.958, 8.337, 0.8),
+                                     transitions={  'looking'         :'DESCRIBE_OBJECTS'})
+
+            #START Loy's version
+            ask_bottles_spec = VariableDesignator(resolve_type=str)
+            ask_bottles_choices = VariableDesignator(resolve_type=dict)
+            smach.StateMachine.add( "DESCRIBE_OBJECTS",
+                                    DescribeBottles(robot, 
+                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria),  # Type should be bottle or only check position+size/volume
+                                        spec_designator=ask_bottles_spec,
+                                        choices_designator=ask_bottles_choices),
+                                    transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
+                                                    'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
+
+            ask_bottles_answer = VariableDesignator(resolve_type=GetSpeechResponse)
+            smach.StateMachine.add( "ASK_WHICH_BOTTLE",
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
+                                    transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
+                                                    'no_result'         :'SAY_NOTHING_HEARD'})
+
+            smach.StateMachine.add( "SAY_NOTHING_HEARD",
+                                    states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
+                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
+
+            @smach.cb_interface(outcomes=['described'])
+            def designate_bottle(userdata):
+                # import ipdb; ipdb.set_trace()
+                described_bottle.criteriafuncs += lambda entity: get_entity_color(entity) == ask_bottles_answer['color']
+                described_bottle.criteriafuncs += lambda entity: get_entity_size(entity) == ask_bottles_answer['size']              
+                described_bottle.criteriafuncs += lambda entity: entity.data["label"] == ask_bottles_answer['label']
+                return 'described'
+            smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
+                                    smach.CBState(designate_bottle),
+                                    transitions={'described'            :"GRAB_BOTTLE"})
+
+            smach.StateMachine.add( "GRAB_BOTTLE",
+                                    Grab(robot, locked_described_bottle, empty_arm_designator),
+                                    transitions={   'done'              :'GOTO_HANDOVER_GRANNY',
+                                                    'failed'            :'SAY_GRAB_FAILED'})
+
+            smach.StateMachine.add( "SAY_GRAB_FAILED",
+                                    states.Say(robot, "I couldn't grab the bottle, sorry Granny"),
+                                    transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
+
+            smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
+                                    states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+                                    transitions={   'arrived'           :'failed',#DETECT_ACTION'
+                                                    'unreachable'       :'failed',#DETECT_ACTION'
+                                                    'goal_not_defined'  :'failed'})#DETECT_ACTION'
+            #END Loy's version
+
+            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
+                                    #states.NavigateToPose(robot, 0, 0, 0),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
+                                                    'unreachable'       :'GOTO_HANDOVER_GRANNY_BACKUP',
+                                                    'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
+
+            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_BACKUP",
+                                    #states.NavigateToPose(robot, 0, 0, 0),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
+                                                    'unreachable'       :'SAY_HANDOVER_BOTTLE',
+                                                    'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
+
+            # smach.StateMachine.add( "GOTO_GRANNY_WITH_BOTTLE",
+            #                         states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+            #                         transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
+            #                                         'unreachable'       :'DETECT_ACTION',
+            #                                         'goal_not_defined'  :'DETECT_ACTION'})
+
+            smach.StateMachine.add( "SAY_HANDOVER_BOTTLE",
+                                    states.Say(robot, ["Here are your pills, Granny.", "Granny, here are your pills."], block=False),
+                                    transitions={   'spoken'            :'HANDOVER_TO_GRANNY'})
+
+            smach.StateMachine.add('HANDOVER_TO_GRANNY',
+                                   states.HandoverToHuman(robot, arm_with_item_designator),
+                                   transitions={   'succeeded'          :'succeeded', #DETECT_ACTION',
+                                                    'failed'            :'failed'}) #DETECT_ACTION'})
+
+
+class RoboNurse(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+
+        granny = EdEntityDesignator(robot, type='human')
+        grannies_table = EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
+        shelf = EdEntityDesignator(robot, id=BOTTLE_SHELF)
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
-
-
-
 
         def size(entity):
             return abs(entity.z_max - entity.z_min) < 0.4
@@ -197,102 +284,26 @@ class RoboNurse(smach.StateMachine):
 
             # smach.StateMachine.add( "GOTO_SHELF",
             #                         states.NavigateToSymbolic(robot, { shelf:"in_front_of"}, shelf),
-            #                         transitions={   'arrived'           :'LOOKAT_SHELF',
-            #                                         'unreachable'       :'LOOKAT_SHELF',
-            #                                         'goal_not_defined'  :'LOOKAT_SHELF'})
+            #                         transitions={   'arrived'           :'GET_PILLS',
+            #                                         'unreachable'       :'GET_PILLS',
+            #                                         'goal_not_defined'  :'GET_PILLS'})
 
             smach.StateMachine.add('GOTO_SHELF',
                                     states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=BOTTLE_SHELF), radius=0.1),
-                                    transitions={   'arrived':'LOOKAT_SHELF',
+                                    transitions={   'arrived':'GET_PILLS',
                                                     'unreachable':'GOTO_SHELF_BACKUP',
                                                     'goal_not_defined':'GOTO_SHELF_BACKUP'})
 
             smach.StateMachine.add('GOTO_SHELF_BACKUP',
                                     states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=BOTTLE_SHELF), radius=0.2),
-                                    transitions={   'arrived':'LOOKAT_SHELF',
-                                                    'unreachable':'LOOKAT_SHELF',
-                                                    'goal_not_defined':'LOOKAT_SHELF'})
+                                    transitions={   'arrived':'GET_PILLS',
+                                                    'unreachable':'GET_PILLS',
+                                                    'goal_not_defined':'GET_PILLS'})
 
-            smach.StateMachine.add("LOOKAT_SHELF",
-                                     Look_point(robot, 5.958, 8.337, 0.8),
-                                     transitions={  'looking'         :'DESCRIBE_OBJECTS'})
-
-            #START Loy's version
-            ask_bottles_spec = VariableDesignator(resolve_type=str)
-            ask_bottles_choices = VariableDesignator(resolve_type=dict)
-            smach.StateMachine.add( "DESCRIBE_OBJECTS",
-                                    DescribeBottles(robot, 
-                                        EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria),  # Type should be bottle or only check position+size/volume
-                                        spec_designator=ask_bottles_spec,
-                                        choices_designator=ask_bottles_choices),
-                                    transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
-                                                    'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
-
-            ask_bottles_answer = VariableDesignator(resolve_type=GetSpeechResponse)
-            smach.StateMachine.add( "ASK_WHICH_BOTTLE",
-                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
-                                    transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
-                                                    'no_result'         :'SAY_NOTHING_HEARD'})
-
-            smach.StateMachine.add( "SAY_NOTHING_HEARD",
-                                    states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
-                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
-
-            @smach.cb_interface(outcomes=['described'])
-            def designate_bottle(userdata):
-                # import ipdb; ipdb.set_trace()
-                described_bottle.criteriafuncs += lambda entity: get_entity_color(entity) == ask_bottles_answer['color']
-                described_bottle.criteriafuncs += lambda entity: get_entity_size(entity) == ask_bottles_answer['size']              
-                described_bottle.criteriafuncs += lambda entity: entity.data["label"] == ask_bottles_answer['label']
-                return 'described'
-            smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
-                                    smach.CBState(designate_bottle),
-                                    transitions={'described'            :"GRAB_BOTTLE"})
-
-            smach.StateMachine.add( "GRAB_BOTTLE",
-                                    Grab(robot, described_bottle, empty_arm_designator),
-                                    transitions={   'done'              :'GOTO_HANDOVER_GRANNY',
-                                                    'failed'            :'SAY_GRAB_FAILED'})
-
-            smach.StateMachine.add( "SAY_GRAB_FAILED",
-                                    states.Say(robot, "I couldn't grab the bottle, sorry Granny"),
-                                    transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
-
-            smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
-                                    states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
-                                    transitions={   'arrived'           :'REST_ARMS_1',#DETECT_ACTION'
-                                                    'unreachable'       :'REST_ARMS_1',#DETECT_ACTION'
-                                                    'goal_not_defined'  :'REST_ARMS_1'})#DETECT_ACTION'
-            #END Loy's version
-
-            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
-                                    #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
-                                    transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
-                                                    'unreachable'       :'GOTO_HANDOVER_GRANNY_BACKUP',
-                                                    'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
-
-            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_BACKUP",
-                                    #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
-                                    transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
-                                                    'unreachable'       :'SAY_HANDOVER_BOTTLE',
-                                                    'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
-
-            # smach.StateMachine.add( "GOTO_GRANNY_WITH_BOTTLE",
-            #                         states.NavigateToSymbolic(robot, {granny:"near", EdEntityDesignator(robot, id=ROOM):"in"}, granny),
-            #                         transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
-            #                                         'unreachable'       :'DETECT_ACTION',
-            #                                         'goal_not_defined'  :'DETECT_ACTION'})
-
-            smach.StateMachine.add( "SAY_HANDOVER_BOTTLE",
-                                    states.Say(robot, ["Here are your pills, Granny.", "Granny, here are your pills."], block=False),
-                                    transitions={   'spoken'            :'HANDOVER_TO_GRANNY'})
-
-            smach.StateMachine.add('HANDOVER_TO_GRANNY',
-                                   states.HandoverToHuman(robot, arm_with_item_designator),
-                                   transitions={   'succeeded'          :'REST_ARMS_1', #DETECT_ACTION',
-                                                    'failed'            :'REST_ARMS_1'}) #DETECT_ACTION'})
+            smach.StateMachine.add( "GET_PILLS", 
+                                    GetPills(robot, grannies_table, granny),
+                                    transitions={   'succeeded'     : "REST_ARMS_1",
+                                                    'failed'        : "REST_ARMS_1"})
 
             smach.StateMachine.add( "REST_ARMS_1",
                                     states.ResetArms(robot),
