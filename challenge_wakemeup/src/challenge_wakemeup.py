@@ -48,6 +48,7 @@ class WakeMeUp(smach.StateMachine):
         def is_not_prior_knowledge(entity):
             return ((not entity.has_shape) and len(entity.id) == 32)
 
+        # TODO: Check if above chull of lower entity
         def is_just_above(lower_entity,upper_entity):
             return (upper_entity.center_point.z > lower_entity.z_max and upper_entity.z_min < lower_entity.z_max + 1.0)
 
@@ -78,7 +79,7 @@ class WakeMeUp(smach.StateMachine):
         loop_counter_des = VariableDesignator(resolve_type=int)         # counter for general looping (because smach iterator sucks)
         loop_counter_des.current = 0
 
-        wakeup_timer = VariableDesignator(resolve_type=type(rospy.Time.now()))         # Time to repeat wakeup loop
+        wakeup_time_marker = VariableDesignator(resolve_type=type(rospy.Time.now()))         # Time to repeat wakeup loop
 
         # ------------------------ STATE MACHINE ------------------------
 
@@ -118,8 +119,12 @@ class WakeMeUp(smach.StateMachine):
 
             with wakeupContainer:
 
+                smach.StateMachine.add( 'LOOK_AT_BED',
+                                        wakeStates.LookAtBedTop(robot),
+                                        transitions={    'done':'SET_TIME_MARKER'})
+
                 smach.StateMachine.add( "SET_TIME_MARKER",
-                                        states.SetTimeMarker(robot,wakeup_timer),
+                                        states.SetTimeMarker(robot,wakeup_time_marker),
                                         transitions={   'done' :'WAKEUP_MESSAGE'})
 
                 smach.StateMachine.add( "WAKEUP_MESSAGE",
@@ -128,7 +133,7 @@ class WakeMeUp(smach.StateMachine):
                                                             "Wakey wakey!", 
                                                             "Hello there sleepy head! Please face me", 
                                                             "Time for breakfast!"], block=True),
-                                        transitions={   'spoken' :'LOOK_AT_BED'})
+                                        transitions={   'spoken' :'LOOK_IF_AWAKE'})
 
                 #TODO: Add concurrence to play music to wake someone up and monitor whether the dude is awake
                 # smach.StateMachine.add( "AWAIT_HUMAN_AWAKE",
@@ -136,9 +141,7 @@ class WakeMeUp(smach.StateMachine):
                 #                         transitions={   'success' : 'container_succeeded',
                 #                                         'failed' :  'container_succeeded'})
     
-                smach.StateMachine.add( 'LOOK_AT_BED',
-                                        wakeStates.LookAtBedTop(robot),
-                                        transitions={    'done':'LOOK_IF_AWAKE'})
+                
 
                 smach.StateMachine.add( "LOOK_IF_AWAKE",
                                         wakeStates.LookIfSomethingsThere(robot, entityOnBedDesignator),
