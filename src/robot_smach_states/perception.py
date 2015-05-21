@@ -15,11 +15,14 @@ class LookAtEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
         check_type(entity, EntityInfo)
 
-        State.__init__(self, locals(), outcomes=['succeeded'])
+        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
     def run(self, robot, entity, keep_following, waittime):
         if keep_following:
             rospy.logerr("Look at stuff: keep_following is obsolete")
+
+        if not entity:
+            return 'failed'
 
         center_point = entity.center_point
         frame_id = "/map"
