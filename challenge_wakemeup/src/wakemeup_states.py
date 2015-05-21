@@ -277,9 +277,10 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, bedDesignator):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
+        self.bed = bedDesignator.resolve()
 
     def execute(self, robot):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
@@ -291,7 +292,7 @@ class LookAtBedTop(smach.State):
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
         # look at bed top
-        headGoal = msgs.PointStamped(x=bed_top_coordinates['x'], y=bed_top_coordinates['y'], z=bed_top_coordinates['z'], frame_id="/map")
+        headGoal = msgs.PointStamped(x=self.bed.pose.position.x, y=self.bed.pose.position.y, z=self.bed.pose.position.z+self.bed.z_max, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
         return 'done'
