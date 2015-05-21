@@ -49,13 +49,13 @@ class WakeMeUp(smach.StateMachine):
             return ((not entity.has_shape) and len(entity.id) == 32)
 
         # TODO: Check if above chull of lower entity
-        def is_just_above(lower_entity,upper_entity):
-            return (upper_entity.center_point.z > lower_entity.z_max and upper_entity.z_min < lower_entity.z_max + 1.0)
+        def is_just_above_bed(entity):
+            return (entity.center_point.z > robot.ed.get_entity("bed").z_max and entity.z_min < robot.ed.get_entity("bed").z_max + 1.0)
 
         # ------------------------ INITIALIZATIONS ------------------------
 
         entityOnBedDesignator = EdEntityDesignator(robot, center_point = robot.ed.get_entity("bed").pose.position, 
-            radius = 1.0, criteriafuncs = [is_not_bed, is_not_prior_knowledge, is_just_above])
+            radius = 2.0, criteriafuncs = [is_not_bed, is_just_above_bed, is_not_prior_knowledge])
 
         waypoint_kitchen = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
 
@@ -120,7 +120,7 @@ class WakeMeUp(smach.StateMachine):
             with wakeupContainer:
 
                 smach.StateMachine.add( 'LOOK_AT_BED',
-                                        wakeStates.LookAtBedTop(robot),
+                                        wakeStates.LookAtBedTop(robot, bed),
                                         transitions={    'done':'SET_TIME_MARKER'})
 
                 smach.StateMachine.add( "SET_TIME_MARKER",
@@ -140,8 +140,6 @@ class WakeMeUp(smach.StateMachine):
                 #                         states.WaitForDesignator(robot, homeowner, attempts=2, sleep_interval=3),  # Wait 60 seconds
                 #                         transitions={   'success' : 'container_succeeded',
                 #                                         'failed' :  'container_succeeded'})
-    
-                
 
                 smach.StateMachine.add( "LOOK_IF_AWAKE",
                                         wakeStates.LookIfSomethingsThere(robot, entityOnBedDesignator),
@@ -149,7 +147,7 @@ class WakeMeUp(smach.StateMachine):
                                                          'not_awake':'CHECK_TIME'})
 
                 smach.StateMachine.add( "CHECK_TIME",
-                                        states.CheckTime(robot,wakeup_timer,40),
+                                        states.CheckTime(robot, wakeup_time_marker, 40),
                                         transitions={   'ok'        :'WAKEUP_MESSAGE',
                                                         'timeout'   :'container_succeeded'})
 
