@@ -149,7 +149,8 @@ class LookAtEntities(smach.StateMachine):
 
             smach.StateMachine.add( "LOOK_AT_ENTITY",
                                      states.LookAtEntity(robot, element_designator, waittime=inspect_time),
-                                     transitions={  'succeeded'         :'SELECT_ENTITY'}) 
+                                     transitions={  'succeeded'         :'SELECT_ENTITY',
+                                                    'failed'            :'SELECT_ENTITY'}) 
 
 
 
@@ -183,7 +184,8 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "LOOKAT_GRANNY",
                                      states.LookAtEntity(robot, granny, keep_following=True),
-                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS'})
+                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
+                                                    'failed'            :'DESCRIBE_OBJECTS'})
 
             #START Loy's version
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
@@ -458,7 +460,7 @@ class RoboNurse(smach.StateMachine):
                                                     'failed'        :'Aborted'})
 
             smach.StateMachine.add('GO_BACK_TO_START',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial", radius=0.2)),
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial"), radius=0.2),
                                     transitions={   'arrived':'Done',
                                                     'unreachable':'Done',
                                                     'goal_not_defined':'Done'})
