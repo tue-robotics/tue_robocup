@@ -25,12 +25,14 @@ from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robot_smach_states.util.geometry_helpers import *
 from bottle_description import DescribeBottles, get_entity_color, get_entity_size
 from action_detection import DetectAction
+from ed.msg import EntityInfo
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_robonurse')
 ROOM = challenge_knowledge.room
 GRANNIES_TABLE_KB = challenge_knowledge.grannies_table
 BOTTLE_SHELF = challenge_knowledge.bottle_shelf
+BOTTLE_SHELF_WAYPOINT = challenge_knowledge.bottle_shelf_waypoint
 
 
 
@@ -128,6 +130,29 @@ class StartPhase(smach.StateMachine):
                                                     'goal_not_defined'  :'Done'})
 
 
+class LookAtEntities(smach.StateMachine):
+    def __init__(self, robot, entity_collection_designator, inspect_time=1.0):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        #We want one list and iterate over that. It should not update and regenerate every iteration
+        locked_entity_collection_designator = ds.LockingDesignator(entity_collection_designator)
+        locked_entity_collection_designator.lock() #So we lock it.
+
+        element_designator = ds.VariableDesignator(resolve_type=EntityInfo)
+
+        with self:
+            #At every iteration, an element of the collection is put into element_designator
+            smach.StateMachine.add( "SELECT_ENTITY",
+                                    states.IteratorState(locked_entity_collection_designator, element_designator),
+                                    transitions={   "next"          :"LOOK_AT_ENTITY", 
+                                                    "stop_iteration":"succeeded"})
+
+            smach.StateMachine.add( "LOOK_AT_ENTITY",
+                                     states.LookAtEntity(robot, element_designator, waittime=inspect_time),
+                                     transitions={  'succeeded'         :'SELECT_ENTITY'}) 
+
+
+
 class GetPills(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
@@ -148,11 +173,13 @@ class GetPills(smach.StateMachine):
 
         described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
         locked_described_bottle = ds.LockingDesignator(described_bottle)
+        shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
 
         with self:
-            smach.StateMachine.add("LOOKAT_SHELF",
-                                     Look_point(robot, 5.958, 8.337, 0.8),
-                                     transitions={  'looking'         :'DESCRIBE_OBJECTS'})
+            smach.StateMachine.add( "LOOKAT_SHELF",
+                                     LookAtEntities(robot, shelves),
+                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
+                                                    'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
             #START Loy's version
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
@@ -183,7 +210,7 @@ class GetPills(smach.StateMachine):
                     choices = answer.choices
                     described_bottle.criteriafuncs += [lambda entity: get_entity_color(entity) == choices['color']]
                     described_bottle.criteriafuncs += [lambda entity: get_entity_size(entity) == choices['size']]
-                    described_bottle.criteriafuncs += [lambda entity: entity.data["label"] == choices['label']]
+                    described_bottle.criteriafuncs += [lambda entity: entity.data.get("label", None) == choices['label']]
                 return 'described'
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
                                     smach.CBState(designate_bottle),
@@ -397,13 +424,13 @@ class RoboNurse(smach.StateMachine):
             #                                         'goal_not_defined'  :'GET_PILLS'})
 
             smach.StateMachine.add('GOTO_SHELF',
-                                    states.NavigateToWaypoint(robot, shelf, radius=0.1),
+                                    states.NavigateToObserve(robot, shelf), # , radius=0.1
                                     transitions={   'arrived':'GET_PILLS',
                                                     'unreachable':'GOTO_SHELF_BACKUP',
                                                     'goal_not_defined':'GOTO_SHELF_BACKUP'})
 
             smach.StateMachine.add('GOTO_SHELF_BACKUP',
-                                    states.NavigateToWaypoint(robot, shelf, radius=0.2),
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=BOTTLE_SHELF_WAYPOINT, radius=0.2)),
                                     transitions={   'arrived':'GET_PILLS',
                                                     'unreachable':'GET_PILLS',
                                                     'goal_not_defined':'GET_PILLS'})
@@ -422,6 +449,11 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'succeeded'     :'Done',
                                                     'failed'        :'Aborted'})
 
+
+def test_look_at_entities(robot):
+    shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
+    l = LookAtEntities(robot, shelves)
+    l.execute(None)
 
 ############################## initializing program ######################
 if __name__ == '__main__':
