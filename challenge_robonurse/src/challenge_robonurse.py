@@ -187,7 +187,7 @@ class GetPills(smach.StateMachine):
 
         bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room]
 
-        described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
+        described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=True) #Criteria funcs will be added based on what granny says
         locked_described_bottle = ds.LockingDesignator(described_bottle)
         shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
 
@@ -229,14 +229,23 @@ class GetPills(smach.StateMachine):
                 answer = ask_bottles_answer.resolve()
                 if answer:
                     choices = answer.choices
+                    robot.speech.speak("OK, I will get the {size} {color} one labeled {label}".format(**choices))
                     rospy.loginfo("Granny chose: {0}".format(choices))
-                    if 'color' in choices: described_bottle.criteriafuncs += [lambda entity: get_entity_color(entity) == choices['color']]
-                    if 'size' in choices: described_bottle.criteriafuncs += [lambda entity: get_entity_size(entity) == choices['size']]
-                    if 'label' in choices: described_bottle.criteriafuncs += [lambda entity: entity.data["label"] == choices['label']]
+                    if 'color' in choices and choices['color'] != '':
+                        described_bottle.criteriafuncs += [lambda entity: get_entity_color(entity) == choices['color']]
+                    if 'size' in choices and choices['size'] != '':
+                        described_bottle.criteriafuncs += [lambda entity: get_entity_size(entity) == choices['size']]
+                    if 'label' in choices and choices['label'] != '':
+                        described_bottle.criteriafuncs += [lambda entity: entity.data.get("label", None) == choices['label']]
                 return 'described'
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
                                     smach.CBState(designate_bottle),
-                                    transitions={'described'            :"STOP_LOOKING"})
+                                    transitions={'described'            :"LOOKAT_CHOSEN_BOTTLE"})
+            
+            smach.StateMachine.add( "LOOKAT_CHOSEN_BOTTLE",
+                                     states.LookAtEntity(robot, locked_described_bottle, waittime=1.0),
+                                     transitions={  'succeeded'         :'STOP_LOOKING',
+                                                    'failed'            :'STOP_LOOKING'})
 
             smach.StateMachine.add( "STOP_LOOKING",
                                     Stop_looking(robot),
