@@ -441,6 +441,7 @@ class IteratorState(smach.State):
         elements = self.iterable_designator.resolve()
         if elements:
             self.element_designator.current = elements.pop(0)
+            rospy.loginfo("{0} iterates to next: {1}".format(self, str(self.element_designator.current)[:20]))
             return "next"
         else:
             # self.element_designator.current = None
