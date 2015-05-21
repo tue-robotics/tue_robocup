@@ -178,8 +178,12 @@ class GetPills(smach.StateMachine):
         with self:
             smach.StateMachine.add( "LOOKAT_SHELF",
                                      LookAtEntities(robot, shelves),
-                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
+                                     transitions={  'succeeded'         :'LOOKAT_GRANNY',
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
+
+            smach.StateMachine.add( "LOOKAT_GRANNY",
+                                     states.LookAtEntity(robot, granny, keep_following=True),
+                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS'})
 
             #START Loy's version
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
@@ -214,7 +218,11 @@ class GetPills(smach.StateMachine):
                 return 'described'
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
                                     smach.CBState(designate_bottle),
-                                    transitions={'described'            :"GRAB_BOTTLE"})
+                                    transitions={'described'            :"STOP_LOOKING"})
+
+            smach.StateMachine.add( "STOP_LOOKING",
+                                    Stop_looking(robot),
+                                    transitions={   'stopped_looking'   :'GRAB_BOTTLE'})
 
             smach.StateMachine.add( "GRAB_BOTTLE",
                                     Grab(robot, locked_described_bottle, empty_arm_designator),
@@ -446,8 +454,14 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
-                                    transitions={   'succeeded'     :'Done',
+                                    transitions={   'succeeded'     :'GO_BACK_TO_START',
                                                     'failed'        :'Aborted'})
+
+            smach.StateMachine.add('GO_BACK_TO_START',
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial", radius=0.2)),
+                                    transitions={   'arrived':'Done',
+                                                    'unreachable':'Done',
+                                                    'goal_not_defined':'Done'})
 
 
 def test_look_at_entities(robot):
