@@ -136,21 +136,30 @@ class LookAtEntities(smach.StateMachine):
 
         #We want one list and iterate over that. It should not update and regenerate every iteration
         locked_entity_collection_designator = ds.LockingDesignator(entity_collection_designator)
-        locked_entity_collection_designator.lock() #So we lock it.
 
         element_designator = ds.VariableDesignator(resolve_type=EntityInfo)
 
         with self:
+            #We want one list and iterate over that. It should not update and regenerate every iteration. 
+            #So, before we start iterating, we lock the list
+            smach.StateMachine.add( "LOCK_ENTITIES",
+                                    states.LockDesignator(locked_entity_collection_designator),
+                                    transitions={   "locked"        :"SELECT_ENTITY"})
+
             #At every iteration, an element of the collection is put into element_designator
             smach.StateMachine.add( "SELECT_ENTITY",
                                     states.IteratorState(locked_entity_collection_designator, element_designator),
                                     transitions={   "next"          :"LOOK_AT_ENTITY", 
-                                                    "stop_iteration":"succeeded"})
+                                                    "stop_iteration":"UNLOCK_ENTITIES"})
 
             smach.StateMachine.add( "LOOK_AT_ENTITY",
                                      states.LookAtEntity(robot, element_designator, waittime=inspect_time),
                                      transitions={  'succeeded'         :'SELECT_ENTITY',
                                                     'failed'            :'SELECT_ENTITY'}) 
+            
+            smach.StateMachine.add( "UNLOCK_ENTITIES",
+                                    states.LockDesignator(locked_entity_collection_designator),
+                                    transitions={   "locked"        :"succeeded"})
 
 
 
