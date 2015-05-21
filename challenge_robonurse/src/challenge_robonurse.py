@@ -34,6 +34,13 @@ GRANNIES_TABLE_KB = challenge_knowledge.grannies_table
 BOTTLE_SHELF = challenge_knowledge.bottle_shelf
 BOTTLE_SHELF_WAYPOINT = challenge_knowledge.bottle_shelf_waypoint
 
+def define_designators(robot):
+    '''Define core designators in a separate function so that can be used when testing parts of the challenge separately.'''
+    granny = ds.EdEntityDesignator(robot, type='human')
+    grannies_table = ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
+    shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
+
+    return granny, grannies_table, shelf
 
 
 class Look_point(smach.State):
@@ -162,7 +169,6 @@ class LookAtEntities(smach.StateMachine):
                                     transitions={   "locked"        :"succeeded"})
 
 
-
 class GetPills(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
@@ -223,9 +229,10 @@ class GetPills(smach.StateMachine):
                 answer = ask_bottles_answer.resolve()
                 if answer:
                     choices = answer.choices
-                    described_bottle.criteriafuncs += [lambda entity: get_entity_color(entity) == choices['color']]
-                    described_bottle.criteriafuncs += [lambda entity: get_entity_size(entity) == choices['size']]
-                    described_bottle.criteriafuncs += [lambda entity: entity.data.get("label", None) == choices['label']]
+                    rospy.loginfo("Granny chose: {0}".format(choices))
+                    if 'color' in choices: described_bottle.criteriafuncs += [lambda entity: get_entity_color(entity) == choices['color']]
+                    if 'size' in choices: described_bottle.criteriafuncs += [lambda entity: get_entity_size(entity) == choices['size']]
+                    if 'label' in choices: described_bottle.criteriafuncs += [lambda entity: entity.data["label"] == choices['label']]
                 return 'described'
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
                                     smach.CBState(designate_bottle),
@@ -411,9 +418,8 @@ class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
 
-        granny = ds.EdEntityDesignator(robot, type='human')
-        grannies_table = ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
-        shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
+
+        granny, grannies_table, shelf = define_designators(robot)
 
         def in_box(entity):
             print entity
@@ -479,6 +485,11 @@ def test_look_at_entities(robot):
     shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
     l = LookAtEntities(robot, shelves)
     l.execute(None)
+
+def test_get_pills(robot):
+    granny, grannies_table, shelf = define_designators(robot)
+    getpills = GetPills(robot, grannies_table, granny)
+    getpills.execute(None)
 
 ############################## initializing program ######################
 if __name__ == '__main__':
