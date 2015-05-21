@@ -43,8 +43,12 @@ def onTopOff(e1, e2, ht=0.1):
 		e2: entity e2
 		ht: height threshold: the bottom of e1 and the top of e2 need to be within ht m
 	"""
+	''' First: check if e2 actually has a convex hull '''
+	if len(e2.convex_hull) == 0:
+		print 'Error, entity {0} has no convex hull'.format(e2.id)
+		return False
 
-	''' First: check if center point of e1 is within convex hull of e2 '''
+	''' Second: check if center point of e1 is within convex hull of e2 '''
 	if not isPointInsideHull(e1.center_point, e2.convex_hull):
 		return False
 
