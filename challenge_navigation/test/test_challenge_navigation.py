@@ -34,7 +34,7 @@ class door(object):
 
 
 if __name__ == "__main__":
-    rospy.init_node('fast_simulator_object_spawner')
+    rospy.init_node('test_navigation_object_spawner')
 
     settings = termios.tcgetattr(sys.stdin)
 
