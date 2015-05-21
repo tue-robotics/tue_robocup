@@ -19,6 +19,7 @@ from docopt import docopt, DocoptExit
 
 # load state machines
 import robot_smach_states as state_machine
+import robot_smach_states.util.designators as ds
 import robot_skills.util.msg_constructors as msgs
 
 class bcolors:
@@ -67,6 +68,7 @@ if __name__ == '__main__':
         -------------------------------------------------------------------\033[1;m"""
 
         print bcolors.OKGREEN+'\tSuccesfully loaded statemachines as "state_machine"'+bcolors.ENDC
+        print bcolors.OKGREEN+'\tSuccesfully loaded designators as "ds"'+bcolors.ENDC
 
         parts = arguments['--part']
         parts = parts.split(',') if parts else None
