@@ -27,7 +27,7 @@ class Person(object):
             self.awake = False
             print "Operator fell back asleep"
         else:
-            self.operator.set_position(self.x, self.y, 0.0, 0.0, 0.0, 0.0)
+            self.operator.set_position(self.x, self.y, 0.3, 0.0, 0.0, 0.0)
             self.awake = True
             print "Operator woke up"
 
