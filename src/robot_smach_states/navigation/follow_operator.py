@@ -69,6 +69,8 @@ class FollowOperator(smach.State):
         return False # We are not there
         
     def execute(self, userdata):
+        self._at_location = False
+        self._first_time_at_location = None
         self._register_operator()
 
         while not rospy.is_shutdown():
