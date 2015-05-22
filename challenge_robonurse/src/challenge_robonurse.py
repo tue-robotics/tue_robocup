@@ -305,6 +305,17 @@ class GetPills(smach.StateMachine):
                                                     'failed'            :'failed'}) #DETECT_ACTION'})
 
 
+class HandleBlanket(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        with self:
+            smach.StateMachine.add( "PICKUP_BLANKET",
+                                    states.Say(robot, [ "I would like to pick up your blanket, but I know I can't reach it.", 
+                                                        "Sorry, your blanket fell, but I can't reach it"]),
+                                    transitions={   'spoken'            :'succeeded'})
+
+
 class HandleFall(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
@@ -403,6 +414,26 @@ class HandleFall(smach.StateMachine):
                                     transitions={   'spoken' :'succeeded'})
 
 
+class HandleWalkAndSit(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        with self:
+            smach.StateMachine.add( 'FOLLOW_GRANNY', 
+                                    states.FollowOperator(robot), 
+                                    transitions={   'stopped'       :'SAY_TAKE_CANE', 
+                                                    'lost_operator' :'SAY_TAKE_CANE'})
+
+            smach.StateMachine.add( "SAY_TAKE_CANE",
+                                    states.Say(robot, [ "You can give me the cane, granny"]),
+                                    transitions={   'spoken'            :'HANDOVER_CANE'})
+
+            smach.StateMachine.add( "HANDOVER_CANE",
+                                    states.HandoverFromHuman(robot, ds.UnoccupiedArmDesignator(robot.arms, robot.arms["left"])),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
+
+
 class RespondToAction(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
@@ -410,23 +441,24 @@ class RespondToAction(smach.StateMachine):
         with self:            
             smach.StateMachine.add( 'DETECT_ACTION',
                                     DetectAction(robot, granny),
-                                    transitions={   "drop_blanket"      :"PICKUP_BLANKET", 
+                                    transitions={   "drop_blanket"      :"HANDLE_BLANKET", 
                                                     "fall"              :"HANDLE_FALL",
-                                                    "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
+                                                    "walk_and_sit"      :"HANDLE_WALK_AND_SIT"})
 
-            smach.StateMachine.add( "PICKUP_BLANKET",
-                                    states.Say(robot, ["I will pick up your blanket"]),
-                                    transitions={   'spoken'            :'succeeded'})
+            smach.StateMachine.add( "HANDLE_BLANKET",
+                                    HandleBlanket(robot, grannies_table, granny),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
             smach.StateMachine.add( "HANDLE_FALL",
                                     HandleFall(robot, grannies_table, granny),
-                                    transitions={   'succeeded'            :'succeeded'})
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
-            smach.StateMachine.add( "FOLLOW_TAKE_CANE",
-                                    states.Say(robot, ["I will hold your cane"]),
-                                    transitions={   'spoken'            :'succeeded'})
-
-
+            smach.StateMachine.add( "HANDLE_WALK_AND_SIT",
+                                    HandleWalkAndSit(robot, grannies_table, granny),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
 
 class RoboNurse(smach.StateMachine):
