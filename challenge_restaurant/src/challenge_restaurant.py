@@ -14,6 +14,7 @@ In short:
 import rospy
 import smach
 import sys
+import math
 
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup

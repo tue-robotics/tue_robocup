@@ -10,6 +10,8 @@ The robot must grab the bottle and bring it to Granny.
 
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
+
+TODO: Select only items from the given description
 """
 
 import rospy
@@ -177,7 +179,10 @@ class GetPills(smach.StateMachine):
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
 
         def small(entity):
-            return abs(entity.z_min - entity.z_max) < 0.20
+            return abs(entity.z_max - entity.z_min) < 0.20
+
+        def not_too_small(entity):
+            return abs(entity.z_max - entity.z_min) > 0.03
 
         def minimal_height_from_floor(entity):
             return entity.z_min > 0.50
@@ -185,7 +190,7 @@ class GetPills(smach.StateMachine):
         def type_unknown_or_not_room(entity):
             return entity.type == "" or entity.type not in ["room"] or "shelf" not in entity.type
 
-        bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room]
+        bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room, not_too_small]
 
         described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=True) #Criteria funcs will be added based on what granny says
         locked_described_bottle = ds.LockingDesignator(described_bottle)
@@ -207,7 +212,7 @@ class GetPills(smach.StateMachine):
             ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria),  # Type should be bottle or only check position+size/volume
+                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=True),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',

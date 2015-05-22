@@ -31,10 +31,12 @@ class ChallengePersonRecognition(smach.StateMachine):
         waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_1")
         waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_1")
 
+        #REVIEW: You can do this in one line: operatorNameDes = VariableDesignator("")
         operatorNameDes = VariableDesignator(resolve_type=str)
         operatorNameDes.current = ""
 
-        nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator)
+        #REVIEW: A designator resolving to a designator is weird. Can't you use a VariableDesignator directly?
+        nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) 
         nextLocationDes.current = PersonRecStates.PointDesignator()
 
         locationsToVisitDes = VariableDesignator(resolve_type=list)
@@ -43,7 +45,7 @@ class ChallengePersonRecognition(smach.StateMachine):
         facesAnalyzedDes = VariableDesignator(resolve_type=list)
         facesAnalyzedDes.current = []
 
-        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) # @LBFereirra: a designator that resolves to another designator is a bit weird
+        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
         operatorLocationDes.current = PersonRecStates.PointDesignator()
 
         def helloOperator(): return "Hello " + operatorNameDes.resolve()
