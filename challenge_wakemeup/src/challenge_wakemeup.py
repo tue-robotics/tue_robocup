@@ -39,7 +39,6 @@ class WakeMeUp(smach.StateMachine):
         # ------------------------ DEFINITIONS ------------------------
 
         def is_awake(entity):
-            #Check that the operator is awake
             return True
 
         def is_not_bed(entity):
@@ -48,9 +47,32 @@ class WakeMeUp(smach.StateMachine):
         def is_not_prior_knowledge(entity):
             return ((not entity.has_shape) and len(entity.id) == 32)
 
-        # TODO: Check if above chull of lower entity
         def is_just_above_bed(entity):
-            return (entity.center_point.z > robot.ed.get_entity("bed").z_max and entity.z_min < robot.ed.get_entity("bed").z_max + 1.0)
+            bed = robot.ed.get_entity("bed")
+
+            # Check if z coordinate is within specified range
+            if entity.z_max < bed.z_max + 0.3:
+                return False
+
+            # Check if center point of entity is within chull of bed
+            bed_chull = robot.ed.get_entity("bed").convex_hull
+            bed_chull = bed_chull + [bed_chull[0]]
+            
+            x_e = entity.pose.position.x
+            y_e = entity.pose.position.y
+
+            for i in range(len(bed_chull)-1):
+                dx = bed_chull[i+1].x - bed_chull[i].x
+                dy = bed_chull[i+1].y - bed_chull[i].y
+
+                dxe = x_e - bed_chull[i].x
+                dye = y_e - bed_chull[i].y
+
+                # Cross product of these two gives either positive or negative, if one is negative, point is outside the chull
+                if dx*dye-dy*dxe < 0:
+                    return False
+
+            return True
 
         # ------------------------ INITIALIZATIONS ------------------------
 
