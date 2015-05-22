@@ -25,13 +25,13 @@ class FollowOperator(smach.State):
         self._timeout = timeout
 
     def _register_operator(self):
-        operator = self._robot.ed.get_closest_entity(self, radius=1.0, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=0, frame_id="/%s/base_link"%self._robot.robot_name))
+        operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
         while not operator:
             self._robot.speech.speak("Please stand in front of me!")
             rospy.sleep(2)
-            operator = self._robot.ed.get_closest_entity(self, radius=1.0, center_point=msg_constructors.PointStamped(x=1.0, y=0, z=0, frame_id="/%s/base_link"%self._robot.robot_name))
+            operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
         print "We have a new operator: %s"%operator.id
-        self._robot.speech.speak("I will follow you!")
+        self._robot.speech.speak("I will follow you!", block=False)
         self._operator_id = operator.id
 
     def _get_operator(self, operator_id):        
