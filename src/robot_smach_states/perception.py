@@ -24,8 +24,12 @@ class LookAtEntity(State):
         if not entity:
             return 'failed'
 
-        center_point = entity.center_point
-        frame_id = "/map"
+        #Entities define their own frame, so there is no need to transform the pose to /map.
+        #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
+        #The added benefit is that the entity's frame actually moves because the entity is tracked.
+        #This makes the head track the entity
+        center_point = Point()
+        frame_id = "/"+entity.id
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = PointStamped(point=center_point,
