@@ -543,6 +543,72 @@ def test_respond_to_action(robot):
     respond = RespondToAction(robot, grannies_table, granny)
     respond.execute(None)
 
+def xydistance(a, b):
+    import math
+    # print a, b
+    return math.hypot(a[0]-b[0], a[1]-b[1])
+
+def recognize_action(coordinates):
+    #heuristic for stand up drop blanket: the z_max goes up and then down. x & y stay roughly the same (less than 1.0m)
+    #heuristic for walking away: the x & y at start / end are far apart, more than 2m
+    #heuristic for falling: the z_max gets very low, under 0.5m
+
+    xy_dist = xydistance(coordinates[0], coordinates[-1])
+
+    z_maxes = [coord[3] for coord in coordinates]
+    z_max_min = min(z_maxes)
+    z_max_max = max(z_maxes)
+    z_max_diff = z_max_max - z_max_min
+
+    xy_dist_large = xy_dist > 2.0 #start and end x&y are far apart
+    xy_dist_small = xy_dist < 1.0 #start and end x&y are close together
+    z_max_went_low = z_maxes[-1] < 0.5 #heuristic for falling
+
+    z_max_went_up_and_back_down = z_maxes[0] < z_max_max and z_maxes[-1] < z_max_max and z_max_diff > 0.15
+
+    if xy_dist_small:
+        if z_max_went_up_and_back_down:
+            return "drop_blanket"
+    elif xy_dist_large:
+        return "walk_and_sit"
+    elif z_max_went_low:
+        return "fall"
+    return None
+ 
+def dummy_action_recognition(robot):
+    # import numpy as np
+    from robot_skills.util import transformations
+
+    granny = ds.EdEntityDesignator(robot, type='human')
+
+    states.LookAtEntity(robot, granny).execute(None)
+    
+    action = None
+    coords = []
+    record = True
+    # import ipdb; ipdb.set_trace()
+    #break 600
+    while record:
+        try:
+            entity = granny.resolve()
+            p = transformations.tf_transform(entity.pose.position, entity.id, "/map", robot.tf_listener)
+            # print str(p).replace('\n', ',')
+
+            coords += [(p.x, p.y, p.z, entity.z_max)]
+            
+            if len(coords) > 1:
+                action = recognize_action(coords)
+                if action: 
+                    record = False
+            if len(coords) > 200: record = False
+        except KeyboardInterrupt, e:
+            rospy.logwarn(e)
+            record = False
+
+    print "Detected action {} from {} coords".format(action, len(coords))
+
+    return action, coords
+
 ############################## initializing program ######################
 if __name__ == '__main__':
     rospy.init_node('robonurse_exec')
