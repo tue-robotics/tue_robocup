@@ -51,6 +51,7 @@ class StoreKitchen(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
+        robot.base.local_planner.cancelCurrentPlan()
 
     def execute(self, userdata):
         self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
@@ -146,6 +147,9 @@ class AskOrder(smach.State):
                 
         self._robot.speech.speak("Ok, I will get you %s"%order, block=False)
 
+        print "\n\n Current orders: \n\n"
+        print ORDERS
+
         if "combo" in ORDERS and "beverage" in ORDERS:
             return "orders_done"
         else:
@@ -190,7 +194,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('FOLLOW_TO_THIRD', states.FollowOperator(robot), transitions={ 'stopped':'STORE_THIRD', 'lost_operator':'FOLLOW_TO_THIRD'})
         smach.StateMachine.add('STORE_THIRD', StoreWaypoint(robot), transitions={ 'done':'SAY_FOLLOW_TO_KITCHEN', 'continue':'FOLLOW_TO_THIRD'})
 
-        smach.StateMachine.add('SAY_FOLLOW_TO_KITCHEN', states.Say(robot, "I stored all places, please bring me back to the kitchen!"), transitions={ 'spoken' :'FOLLOW_TO_KITCHEN'})
+        smach.StateMachine.add('SAY_FOLLOW_TO_KITCHEN', states.Say(robot, "Please bring me back to the kitchen!"), transitions={ 'spoken' :'FOLLOW_TO_KITCHEN'})
 
         smach.StateMachine.add('FOLLOW_TO_KITCHEN', states.FollowOperator(robot), transitions={ 'stopped':'CHECK_IN_KITCHEN', 'lost_operator':'FOLLOW_TO_KITCHEN'})
         smach.StateMachine.add('CHECK_IN_KITCHEN', CheckInKitchen(robot), transitions={ 'not_in_kitchen':'FOLLOW_TO_KITCHEN', 'in_kitchen':'SAY_IN_KITCHEN'})
