@@ -250,7 +250,7 @@ class PointStampedOfEntityDesignator(Designator):
         entities = self.ed(query).entities
         if entities:
             entity = entities[0]
-            pointstamped = gm.PointStamped(point=entity.center_point,
+            pointstamped = gm.PointStamped(point=entity.pose.position,
                                            header=std.Header(
                                                entity.id, rospy.get_rostime())
                                            )  # ID is also the frame ID. Ed just works that way
