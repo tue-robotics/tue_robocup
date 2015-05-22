@@ -8,3 +8,4 @@ from navigate_to_pose import *
 from navigate_to_room import *
 from navigate_to_waypoint import *
 from navigate_to_symbolic import *
+from follow_operator import *
