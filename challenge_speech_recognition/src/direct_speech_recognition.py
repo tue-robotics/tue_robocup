@@ -31,7 +31,6 @@ class HearQuestion(smach.State):
             else:
                 self.robot.speech.speak("Sorry, I do not understand your question")
 
-        self.robot.head.cancel_goal()
         return "answered"
 
 
