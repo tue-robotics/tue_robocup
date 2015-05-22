@@ -55,7 +55,7 @@ class WakeMeUp(smach.StateMachine):
                 return False
 
             # Check if center point of entity is within chull of bed
-            bed_chull = robot.ed.get_entity("bed").convex_hull
+            bed_chull = bed.convex_hull
             bed_chull = bed_chull + [bed_chull[0]]
             
             x_e = entity.pose.position.x
@@ -65,8 +65,8 @@ class WakeMeUp(smach.StateMachine):
                 dx = bed_chull[i+1].x - bed_chull[i].x
                 dy = bed_chull[i+1].y - bed_chull[i].y
 
-                dxe = x_e - bed_chull[i].x
-                dye = y_e - bed_chull[i].y
+                dxe = -bed_chull[i].x
+                dye = -bed_chull[i].y
 
                 # Cross product of these two gives either positive or negative, if one is negative, point is outside the chull
                 if dx*dye-dy*dxe < 0:
