@@ -31,7 +31,7 @@ class FollowOperator(smach.State):
             rospy.sleep(2)
             operator = self._robot.ed.get_closest_entity(self, center_point=msg_constructors.PointStamped(x=1.7, y=0, z=0, frame_id="/%s/base_link"%self._robot.robot_name))
         print "We have a new operator: %s"%operator.id
-        self._robot.speech.speak("Okay, I will follow you!")
+        self._robot.speech.speak("I will follow you!")
         self._operator_id = operator.id
 
     def _get_operator(self, operator_id):        
