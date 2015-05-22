@@ -57,6 +57,8 @@ class WakeMeUp(smach.StateMachine):
         choices = Designator({  "fruit_snack"  : ["apple" ], "cereal" : ["cereal", "choco-flakes"], "milk": ["whole-milk"]})
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
+
+        #REVIEW: You can do breakfastCerealDes = VariableDesignator("") directly. The resole_type will be inferred from that
         breakfastCerealDes = VariableDesignator(resolve_type=str)       # designator containing chosen cereal name
         breakfastCerealDes.current = ""
 
