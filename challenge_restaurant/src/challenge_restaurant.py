@@ -70,8 +70,8 @@ class StoreWaypoint(smach.State):
         choices = knowledge.guiding_choices
         
         self._robot.head.look_at_standing_person()
-        result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
         time.sleep(1.0)
+        result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
         self._robot.head.cancel_goal()
 
         if result:
@@ -134,6 +134,7 @@ class AskOrder(smach.State):
         order = None
         while not order:
             self._robot.head.look_at_standing_person()
+            time.sleep(1)
             result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
             self._robot.head.cancel_goal()
             if "beverage" in result.choices:
