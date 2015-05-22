@@ -285,14 +285,14 @@ class HandoverFromHuman(smach.StateMachine):
             smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, "carrying_pose"),
                             transitions={'succeeded':'OPEN_BEFORE_INSERT','failed':'OPEN_BEFORE_INSERT'})
 
-            smach.StateMachine.add( 'OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator, gripperstate=0), #open
+            smach.StateMachine.add( 'OPEN_BEFORE_INSERT', SetGripper(robot, arm_designator, gripperstate='open'),
                                 transitions={'succeeded'    :   'SAY1',
                                              'failed'       :   'SAY1'})
 
             smach.StateMachine.add("SAY1", Say(robot,'Please hand over the object by sliding it in my gripper'),
                             transitions={'spoken':'CLOSE_AFTER_INSERT'})
 
-            smach.StateMachine.add( 'CLOSE_AFTER_INSERT', SetGripper(robot, arm_designator, gripperstate=1), #close
+            smach.StateMachine.add( 'CLOSE_AFTER_INSERT', SetGripper(robot, arm_designator, gripperstate='close'),
                                 transitions={'succeeded'    :   'succeeded',
                                              'failed'       :   'failed'})
 
