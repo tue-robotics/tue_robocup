@@ -28,6 +28,24 @@ knowledge = load_knowledge("challenge_restaurant")
 
 ORDERS = {}
 
+class HeadStraight(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
+        return "done"
+
+class HeadCancel(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.cancel_goal()
+        return "done"
+
 class StoreKitchen(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
@@ -149,7 +167,8 @@ def setup_statemachine(robot):
 
     with sm:
         smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'STORE_KITCHEN', 'abort':'aborted'})
-        smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'SAY_INTRO'})
+        smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'HEAD_STRAIGHT'})
+        smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
 
         smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Show me your restaurant please. Say 'Please Follow Me'"), transitions={ 'spoken' :'HEAR_PLEASE_FOLLOW_ME'})
         smach.StateMachine.add('HEAR_PLEASE_FOLLOW_ME', states.HearOptions(robot, ["please follow me"]), transitions={ 'no_result' :'HEAR_PLEASE_FOLLOW_ME', 'please follow me' : 'FOLLOW_TO_FIRST'})
