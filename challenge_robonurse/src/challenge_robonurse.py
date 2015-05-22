@@ -12,6 +12,9 @@ Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
 TODO: Select only items from the given description
+TODO: Actual action detection
+TODO: Grasp blanket
+TODO: Take cane
 """
 
 import rospy
@@ -203,7 +206,7 @@ class GetPills(smach.StateMachine):
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
             smach.StateMachine.add( "LOOKAT_GRANNY",
-                                     states.LookAtEntity(robot, granny, keep_following=True),
+                                     states.LookAtEntity(robot, granny),
                                      transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
                                                     'failed'            :'DESCRIBE_OBJECTS'})
 
@@ -212,7 +215,7 @@ class GetPills(smach.StateMachine):
             ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=True),  # Type should be bottle or only check position+size/volume
+                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
@@ -302,13 +305,21 @@ class GetPills(smach.StateMachine):
                                                     'failed'            :'failed'}) #DETECT_ACTION'})
 
 
-class RespondToAction(smach.StateMachine):
+class HandleBlanket(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
+        with self:
+            smach.StateMachine.add( "PICKUP_BLANKET",
+                                    states.Say(robot, [ "I would like to pick up your blanket, but I know I can't reach it.", 
+                                                        "Sorry, your blanket fell, but I can't reach it"]),
+                                    transitions={   'spoken'            :'succeeded'})
 
+
+class HandleFall(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+        
         def size(entity):
             return abs(entity.z_max - entity.z_min) < 0.4
 
@@ -318,13 +329,10 @@ class RespondToAction(smach.StateMachine):
 
         # Don't pass the weight_function, might screw up if phone is not near the robot
         phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
-
+        empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
+        
         with self:
-            smach.StateMachine.add( "WAIT_TIME",
-                                    states.Wait_time(robot, waittime=10),
-                                    transitions={   'waited'    : 'SAY_FELL',
-                                                    'preempted' : 'SAY_FELL'})
-
             smach.StateMachine.add( "SAY_FELL",
                                     states.Say(robot, "Oh no, you fell! I will give you the phone.", block=True),
                                     transitions={   'spoken' : 'GOTO_COUCHTABLE'})
@@ -406,26 +414,51 @@ class RespondToAction(smach.StateMachine):
                                     transitions={   'spoken' :'succeeded'})
 
 
+class HandleWalkAndSit(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        with self:
+            smach.StateMachine.add( 'FOLLOW_GRANNY', 
+                                    states.FollowOperator(robot), 
+                                    transitions={   'stopped'       :'SAY_TAKE_CANE', 
+                                                    'lost_operator' :'SAY_TAKE_CANE'})
+
+            smach.StateMachine.add( "SAY_TAKE_CANE",
+                                    states.Say(robot, [ "You can give me the cane, granny"]),
+                                    transitions={   'spoken'            :'HANDOVER_CANE'})
+
+            smach.StateMachine.add( "HANDOVER_CANE",
+                                    states.HandoverFromHuman(robot, ds.UnoccupiedArmDesignator(robot.arms, robot.arms["left"])),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
 
+class RespondToAction(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-            # smach.StateMachine.add('DETECT_ACTION',
-            #                        DetectAction(robot, granny),
-            #                        transitions={    "drop_blanket"      :"PICKUP_BLANKET", 
-            #                                         "fall"              :"BRING_PHONE",
-            #                                         "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
+        with self:            
+            smach.StateMachine.add( 'DETECT_ACTION',
+                                    DetectAction(robot, granny),
+                                    transitions={   "drop_blanket"      :"HANDLE_BLANKET", 
+                                                    "fall"              :"HANDLE_FALL",
+                                                    "walk_and_sit"      :"HANDLE_WALK_AND_SIT"})
 
-            # smach.StateMachine.add( "PICKUP_BLANKET",
-            #                         states.Say(robot, ["I will pick up your blanket"]),
-            #                         transitions={   'spoken'            :'succeeded'})
+            smach.StateMachine.add( "HANDLE_BLANKET",
+                                    HandleBlanket(robot, grannies_table, granny),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
-            # smach.StateMachine.add( "BRING_PHONE",
-            #                         states.Say(robot, ["I will bring you a phone"]),
-            #                         transitions={   'spoken'            :'succeeded'})
+            smach.StateMachine.add( "HANDLE_FALL",
+                                    HandleFall(robot, grannies_table, granny),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
-            # smach.StateMachine.add( "FOLLOW_TAKE_CANE",
-            #                         states.Say(robot, ["I will hold your cane"]),
-            #                         transitions={   'spoken'            :'succeeded'})
+            smach.StateMachine.add( "HANDLE_WALK_AND_SIT",
+                                    HandleWalkAndSit(robot, grannies_table, granny),
+                                    transitions={   'succeeded'            :'succeeded',
+                                                    'failed'               :'failed'})
 
 
 class RoboNurse(smach.StateMachine):
@@ -504,6 +537,77 @@ def test_get_pills(robot):
     granny, grannies_table, shelf = define_designators(robot)
     getpills = GetPills(robot, grannies_table, granny)
     getpills.execute(None)
+
+def test_respond_to_action(robot):
+    granny, grannies_table, shelf = define_designators(robot)
+    respond = RespondToAction(robot, grannies_table, granny)
+    respond.execute(None)
+
+def xydistance(a, b):
+    import math
+    # print a, b
+    return math.hypot(a[0]-b[0], a[1]-b[1])
+
+def recognize_action(coordinates):
+    #heuristic for stand up drop blanket: the z_max goes up and then down. x & y stay roughly the same (less than 1.0m)
+    #heuristic for walking away: the x & y at start / end are far apart, more than 2m
+    #heuristic for falling: the z_max gets very low, under 0.5m
+
+    xy_dist = xydistance(coordinates[0], coordinates[-1])
+
+    z_maxes = [coord[3] for coord in coordinates]
+    z_max_min = min(z_maxes)
+    z_max_max = max(z_maxes)
+    z_max_diff = z_max_max - z_max_min
+
+    xy_dist_large = xy_dist > 2.0 #start and end x&y are far apart
+    xy_dist_small = xy_dist < 1.0 #start and end x&y are close together
+    z_max_went_low = z_maxes[-1] < 0.5 #heuristic for falling
+
+    z_max_went_up_and_back_down = z_maxes[0] < z_max_max and z_maxes[-1] < z_max_max and z_max_diff > 0.15
+
+    if xy_dist_small:
+        if z_max_went_up_and_back_down:
+            return "drop_blanket"
+    elif xy_dist_large:
+        return "walk_and_sit"
+    elif z_max_went_low:
+        return "fall"
+    return None
+ 
+def dummy_action_recognition(robot):
+    # import numpy as np
+    from robot_skills.util import transformations
+
+    granny = ds.EdEntityDesignator(robot, type='human')
+
+    states.LookAtEntity(robot, granny).execute(None)
+    
+    action = None
+    coords = []
+    record = True
+    # import ipdb; ipdb.set_trace()
+    #break 600
+    while record:
+        try:
+            entity = granny.resolve()
+            p = transformations.tf_transform(entity.pose.position, entity.id, "/map", robot.tf_listener)
+            # print str(p).replace('\n', ',')
+
+            coords += [(p.x, p.y, p.z, entity.z_max)]
+            
+            if len(coords) > 1:
+                action = recognize_action(coords)
+                if action: 
+                    record = False
+            if len(coords) > 200: record = False
+        except KeyboardInterrupt, e:
+            rospy.logwarn(e)
+            record = False
+
+    print "Detected action {} from {} coords".format(action, len(coords))
+
+    return action, coords
 
 ############################## initializing program ######################
 if __name__ == '__main__':

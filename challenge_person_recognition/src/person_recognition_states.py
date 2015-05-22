@@ -14,25 +14,23 @@ from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
+from robocup_knowledge import load_knowledge
+
+# ----------------------------------------------------------------------------------------------------
+
+common_knowledge = load_knowledge("common")
+challenge_knowledge = load_knowledge("challenge_person_recognition")
 
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+def printOk(sentence):
+    challenge_knowledge.printOk(sentence)
 
-class Pose:
-    Standing = 0
-    Sitting_down = 1
+def printError(sentence):
+    challenge_knowledge.printError(sentence)
+    
+def printWarning(sentence):
+    challenge_knowledge.printWarning(sentence)
 
-class Gender:
-    Male = 0
-    Female = 1
 
 class Location(object):
     def __init__(self, point_stamped, visited, attempts):
@@ -41,7 +39,7 @@ class Location(object):
         self.attempts = attempts
 
 class FaceAnalysed(object):
-    def __init__(self, point_stamped, name, score, pose=Pose.Standing, gender=Gender.Male, inMainCrowd=False):
+    def __init__(self, point_stamped, name, score, pose=challenge_knowledge.Pose.Standing, gender=challenge_knowledge.Gender.Male, inMainCrowd=False):
         self.point_stamped = point_stamped
         self.name = name
         self.score = score
@@ -76,27 +74,17 @@ class DummyDesig(Designator):
 
 
 def points_distance(p1, p2):
-    print OUT_PREFIX + bcolors.OKBLUE + "points_distance" + bcolors.ENDC
+    printOk("points_distance")
 
     deltaX = p2[0] - p1[0]
     deltaY = p2[1] - p1[1]
     deltaZ = p2[2] - p1[2]
 
     distance = math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
-    print OUT_PREFIX + "Distance ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance)
-
+    printOk("Distance ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance))
 
     return distance
 
-
-# ----------------------------------------------------------------------------------------------------
-
-# import ipdb; ipdb.set_trace()
-
-OUT_PREFIX = bcolors.OKBLUE + "[CHALLENGE PERSON RECOGNITION] " + bcolors.ENDC
-
-names_women = ['Anna', 'Beth', 'Carmen', 'Jennifer', 'Jessica', 'Kimberly', 'Kristina', 'Laura', 'Mary', 'Sarah']
-names_men = ['Alfred', 'Charles', 'Daniel', 'James', 'John', 'Luis', 'Paul', 'Richard', 'Robert', 'Steve']
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -108,7 +96,7 @@ class LookAtPersonInFront(smach.State):
         self.lookDown = lookDown
 
     def execute(self, robot):
-        print OUT_PREFIX + bcolors.OKBLUE + "LookAtPersonInFront" + bcolors.ENDC
+        printOk("LookAtPersonInFront")
 
         # initialize variables
         foundFace = False
@@ -134,7 +122,7 @@ class LookAtPersonInFront(smach.State):
         # try to resolve the designator
         desgnResult = humanDesignator.resolve()
         if not desgnResult:
-            print OUT_PREFIX + "Could not find a human while looking up"
+            printOk("Could not find a human while looking up")
             pass
 
         # if no person was seen at 2 meters high, look down, because the person might be sitting
@@ -146,17 +134,17 @@ class LookAtPersonInFront(smach.State):
             # try to resolve the designator
             desgnResult = humanDesignator.resolve()
             if not desgnResult:
-                print OUT_PREFIX + "Could not find a human while looking down"
+                printOk("Could not find a human while looking down")
                 pass
 
         # if there is a person in front, try to look at the face
         if not desgnResult == None:
-            print OUT_PREFIX + "Designator resolved a Human!"
+            printOk("Designator resolved a Human!")
 
             # resolve the data designator
             entityData = dataDesignator.resolve()
             if not entityData:
-                print OUT_PREFIX + "Could not resolve dataDesignator"
+                printOk("Could not resolve dataDesignator")
                 pass
 
             # extract information from data
@@ -166,27 +154,27 @@ class LookAtPersonInFront(smach.State):
                     # get information on the first face found (cant guarantee its the closest in case there are many)
                     faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
                 except KeyError, ke:
-                    print OUT_PREFIX + "KeyError faces_front: " + str(ke)
+                    printOk("KeyError faces_front: " + str(ke))
                     pass
                 except IndexError, ke:
-                    print OUT_PREFIX + "IndexError faces_front: " + str(ke)
+                    printOk("IndexError faces_front: " + str(ke))
                     pass
 
                 if faces_front:
                     headGoal = msgs.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map")
 
-                    print OUT_PREFIX + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
+                    printOk("Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")")
                     self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
                     foundFace == True            
                 else:
-                    print OUT_PREFIX + "Could not find anyone in front of the robot. It will just look in front and up."
+                    printOk("Could not find anyone in front of the robot. It will just look in front and up.")
                     return 'failed'
 
         if foundFace == True:
             return 'succeded'
         else:
-            print OUT_PREFIX + "Could not find anyone in front of the robot. It will just look in front and up."
+            printOk("Could not find anyone in front of the robot. It will just look in front and up.")
             return 'failed'
 
 
@@ -198,7 +186,7 @@ class CancelHeadGoals(smach.State):
         self.robot = robot
 
     def execute(self, robot):
-        print OUT_PREFIX + bcolors.OKBLUE + "CancelHeadGoals" + bcolors.ENDC
+        printOk("CancelHeadGoals")
 
         self.robot.head.cancel_goal()
 
@@ -215,7 +203,8 @@ class FindCrowd(smach.State):
         self.locations = locations
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "FindCrowd" + bcolors.ENDC
+        printOk("FindCrowd")
+        
         foundFace = False
         centerPointRes = None
         humanDesignatorRes = None
@@ -242,20 +231,20 @@ class FindCrowd(smach.State):
         # resolve crowd designator
         humanDesignatorRes = humanDesignator.resolve()
         if not humanDesignatorRes:
-            print OUT_PREFIX + "Could not resolve humanDesignator"
+            printOk("Could not resolve humanDesignator")
             pass
 
 
         if not humanDesignatorRes == None:
-            print OUT_PREFIX + "Iterating through the {0} humans found".format(len(humanDesignatorRes))
+            printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
 
             for humanEntity in humanDesignatorRes:
                 try:
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
-                    print OUT_PREFIX + "Found {0} faces in this entity".format(len(faceList))
+                    printOk("Found {0} faces in this entity".format(len(faceList)))
                 except KeyError, ke:
                     # import ipdb; ipdb.set_trace()
-                    print OUT_PREFIX + "Could not resolve humanEntity.data[...]:" + str(ke)
+                    printOk("Could not resolve humanEntity.data[...]:" + str(ke))
                     pass
                 # faceList = [human['perception_result']['face_detector']['faces_front'] for human in humanDesignatorRes]
 
@@ -276,16 +265,17 @@ class FindCrowd(smach.State):
                                                                 visited = False,
                                                                 attempts = 0)]
 
-                            print OUT_PREFIX + "Added face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"])
+                            printOk("Added face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"]))
                         else:
-                            print OUT_PREFIX + "Location closeby already exists in the list"
+                            printOk("Location closeby already exists in the list")
 
                 else:
-                    # resolve data from entitie
+                    # resolve data from entity
                     try:
-                        centerPointRes = humanEntity.center_point
+                        # centerPointRes = humanEntity.center_point
+                        centerPointRes = None
                     except KeyError, ke:
-                        print OUT_PREFIX + "Could not resolve humanEntity.center_point" + str(ke)
+                        printOk("Could not resolve humanEntity.center_point" + str(ke))
                         pass
 
                     if not centerPointRes == None:
@@ -303,14 +293,14 @@ class FindCrowd(smach.State):
                                                                 visited = False,
                                                                 attempts = 0)]
 
-                            print OUT_PREFIX + "Added center_point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z)
+                            printOk("Added center_point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z))
                         else:
-                            print OUT_PREFIX + "Location closeby already exists in the list"
+                            printOk("Location closeby already exists in the list")
 
             return 'succeded'
 
         else:
-            print OUT_PREFIX + bcolors.WARNING + "Could not find anyone in the room." + bcolors.ENDC
+            printWarning("Could not find anyone in the room.")
 
         return 'failed'
 
@@ -327,7 +317,7 @@ class DescribePeople(smach.State):
         self.facesAnalyzedDes = facesAnalyzedDes
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "DescribePeople" + bcolors.ENDC
+        printOk("DescribePeople")
 
         numberMale = 0
         numberFemale = 0
@@ -336,20 +326,20 @@ class DescribePeople(smach.State):
         # try to resolve the crowd designator
         faceList = self.facesAnalyzedDes.resolve()
         if not faceList:
-            print OUT_PREFIX + bcolors.FAIL + "Could not resolve facesAnalyzedDes" + bcolors.ENDC
+            printFail("Could not resolve facesAnalyzedDes")
             pass
 
         if not faceList == None:
             # Compute crowd details
 
             for face in faceList:
-                print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}".format(
+                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}".format(
                     str(face.name),
                     str(face.score),
                     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z),
                     str(face.pose),
                     str(face.gender),
-                    str(face.inMainCrowd))
+                    str(face.inMainCrowd)))
 
                 if face.inMainCrowd == True:
                     if face.gender == Gender.Male:
@@ -365,7 +355,7 @@ class DescribePeople(smach.State):
 
             try:
                 if userdata.operatorIdx_in == None:
-                    print OUT_PREFIX + bcolors.FAIL + "Operator index from the list is invalid." + bcolors.ENDC
+                    printFail("Operator index from the list is invalid.")
                     self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
                 else:
                     self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
@@ -374,7 +364,7 @@ class DescribePeople(smach.State):
                         pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == Pose.Standing else "sitting down"),
                         block=True)
             except KeyError, ke:
-                    print OUT_PREFIX + "KeyError userdata.operatorIdx_in:" + str(ke)
+                    printOk("KeyError userdata.operatorIdx_in:" + str(ke))
                     pass
 
         else:
@@ -393,7 +383,7 @@ class PointAtOperator(smach.State):
         self.robot = robot
 
     def execute(self, robot):
-        print OUT_PREFIX + bcolors.OKBLUE + "PointAtOperator" + bcolors.ENDC
+        printOk("PointAtOperator")
 
         # Get information about the operator and point at the location
 
@@ -405,25 +395,24 @@ class PointAtOperator(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
-# Ask the persons name
+# Ask the person's name
 class AskPersonName(smach.State):
     def __init__(self, robot, operatorNameDes):
         smach.State.__init__(   self, 
-                                outcomes=['succeded', 'failed'],
-                                output_keys=['personName_out'])
+                                outcomes=['succeded', 'failed'])
 
         self.robot = robot
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "AskPersonName" + bcolors.ENDC
+        printOk("AskPersonName")
 
         self.robot.speech.speak("What is your name?", block=False)
 
         spec = Designator("((<prefix> <name>)|<name>)")
 
-        choices = Designator({"name"  : names_women + names_men,
-                              "prefix": ["My name is", "I'm called"]})
+        choices = Designator({"name"  : common_knowledge.names,
+                              "prefix": ["My name is", "I'm called", "I am"]})
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
@@ -432,27 +421,62 @@ class AskPersonName(smach.State):
 
         if not outcome == "heard":
             name = "Mister Operator Fallback"
-            userdata.personName_out = name
             self.operatorNameDes.current = name
 
-            print OUT_PREFIX + bcolors.WARNING + "Speech recognition outcome was not successful (outcome: " + str(outcome) + \
-                    "). Using default name" + self.operatorNameDes.resolve() + bcolors.ENDC
+            printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + \
+                    "). Using default name" + self.operatorNameDes.resolve())
             return 'failed'
         else:
             try:
                 name = answer.resolve().choices["name"]
-                print OUT_PREFIX + "Result received from speech recognition is '" + name + "'" + bcolors.ENDC
+                printOk("Result received from speech recognition is '" + name + "'")
             except KeyError, ke:
-                print OUT_PREFIX + "KeyError resolving the name heard: " + str(ke)
+                printOk("KeyError resolving the name heard: " + str(ke))
                 pass
-
-        userdata.personName_out = name
-        self.operatorNameDes.current = name
-
-        self.robot.speech.speak("Ok " + name, block=False)
 
         return 'succeded'
 
+
+# ----------------------------------------------------------------------------------------------------
+
+
+# Confirm person's name
+class ConfirmPersonName(smach.State):
+    def __init__(self, robot, operatorNameDes):
+        smach.State.__init__(   self, 
+                                outcomes=['correct', 'incorrect'])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+        printOk("ConfirmPersonName")
+
+        self.operatorNameDes.current = name
+
+        self.robot.speech.speak(["You said " + name + ", right?",
+                                 "I heard " + name + ", is that correct?"], block=False)
+
+
+        spec = Designator("answer")
+
+        choices = Designator({"anser": ["yes", "correct", "right", "that is correct"]})
+
+        answer = VariableDesignator(resolve_type=GetSpeechResponse)
+
+        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        outcome = state.execute()
+
+        if not outcome == "heard":
+            name = "Mister Operator Fallback"
+            self.operatorNameDes.current = name
+
+            printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + ")")
+            return 'incorrect'
+        else:
+            self.robot.speech.speak(["Ok!", "Very well."], block=False)
+
+        return 'correct'
+        
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -469,7 +493,7 @@ class GetOperatorLocation(smach.State):
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "GetOperatorLocation" + bcolors.ENDC
+        printOk("GetOperatorLocation")
 
         lowest_score = 1    # scores are between 0 and 1
         chosenOperator = False
@@ -478,17 +502,17 @@ class GetOperatorLocation(smach.State):
         # try to resolve the crowd designator
         faceList = self.facesAnalysedDes.resolve()
         if not faceList:
-            print OUT_PREFIX + "Could not resolve faces analysed"
+            printOk("Could not resolve faces analysed")
             pass
 
         # import ipdb; ipdb.set_trace()
 
         if not faceList == None:
             for idx, face in enumerate(faceList):
-                print OUT_PREFIX + "Name: {0}, Score: {1}, Location: ({2},{3},{4})".format(
+                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4})".format(
                     str(face.name),
                     str(face.score),
-                    str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z))
+                    str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z)))
 
                 # score of 0 is for unidentifies people
                 if face.score > 0 and face.score < lowest_score and self.operatorNameDes.resolve() == face.name:
@@ -506,10 +530,10 @@ class GetOperatorLocation(smach.State):
             	chosenOperator = True
 
             if chosenOperator:
-                print OUT_PREFIX + "Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
+                printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
                     str(faceList[operatorIdx].name),
                     str(faceList[operatorIdx].score),
-                    str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z))
+                    str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
 
                 # Operators face location
                 p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
@@ -526,10 +550,10 @@ class GetOperatorLocation(smach.State):
             else:
                 userdata.operatorIdx_out = 0
 
-                print OUT_PREFIX + bcolors.FAIL + "Could not choose an operator from the list!" + bcolors.ENDC
+                printFail("Could not choose an operator from the list!")
                 return 'failed'
         else:
-            print OUT_PREFIX + bcolors.FAIL + "No faces were analysed!" + bcolors.ENDC
+            printFail("No faces were analysed!")
             return 'failed'
 
 
@@ -544,7 +568,7 @@ class AnalysePerson(smach.State):
         self.facesAnalysedDes = facesAnalysedDes
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "AnalysePerson" + bcolors.ENDC
+        printOk("AnalysePerson")
 
         # initialize variables
         entityDataList = []
@@ -558,11 +582,11 @@ class AnalysePerson(smach.State):
 
         humanDesignatorRes = humanDesignator.resolve()
         if not humanDesignatorRes:
-            print OUT_PREFIX + "Could not resolve humanDesgnResult."
+            printOk("Could not resolve humanDesgnResult.")
             pass
 
         if not humanDesignatorRes == None:
-            print OUT_PREFIX + "Iterating through the {0} humans found".format(len(humanDesignatorRes))
+            printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
 
             for humanEntity in humanDesignatorRes:
 
@@ -572,8 +596,8 @@ class AnalysePerson(smach.State):
                     faceList = humanEntity.data['perception_result']['face_recognizer']['face']
 
                     # faceList = humanEntity.data['perception_result']['face_recognizer']['face']
-                    print OUT_PREFIX + "Found {0} faces in this entity".format(len(faceList))
-                    print OUT_PREFIX + str(faceList)
+                    printOk("Found {0} faces in this entity".format(len(faceList)))
+                    printOk(str(faceList))
 
                     for faceInfo in faceList:
 
@@ -584,7 +608,7 @@ class AnalysePerson(smach.State):
                         # initialize label as empty string if the recogniton didnt conclude anything
                         if recognition_score == 0:
                             recognition_label = ""
-                            print OUT_PREFIX + "Unrecognized person"
+                            printOk("Unrecognized person")
 
 
                         # if entityData['type'] == "crowd":
@@ -612,7 +636,7 @@ class AnalysePerson(smach.State):
 
                         if sameFace:
                             # TODO: COMPARE SCORES FROM THE FACE RECOGNITION, IF ITS BETTER, REPLACE
-                            print OUT_PREFIX + "Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current))
+                            printOk("Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current)))
 
                         #  if information is valid, add it to the list of analysed faces
                         # if not recognition_label == None and not recognition_score == None and not sameFace:
@@ -630,11 +654,11 @@ class AnalysePerson(smach.State):
                             else:
                                 personGender = Gender.Male
 
-                            print OUT_PREFIX + "Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
+                            printOk("Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
                                 str(recognition_label),
                                 str(recognition_score),
                                 "standing up" if pose == Pose.Standing else "sitting down",
-                                face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
+                                face_loc["map_x"], face_loc["map_y"], face_loc["map_z"]))
 
                             self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
                                                                             name = recognition_label, 
@@ -642,15 +666,15 @@ class AnalysePerson(smach.State):
                                                                             pose = pose,
                                                                             gender = personGender))]
                         else:
-                            print OUT_PREFIX + bcolors.WARNING + "Did not add face to the list" + bcolors.ENDC
+                            pprintWarning("Did not add face to the list")
 
                 except KeyError, ke:
-                    print OUT_PREFIX + "KeyError faceList:" + str(ke)
+                    printOk("KeyError faceList:" + str(ke))
                     pass
 
             return 'succeded'
         else:
-            print OUT_PREFIX + "Could not find anyone in front of the robot."
+            printOk("Could not find anyone in front of the robot.")
             return 'failed'
 
 
@@ -669,14 +693,13 @@ class GetNextLocation(smach.State):
         self.nextLocation = nextLocation
 
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "GetNextLocation" + bcolors.ENDC
+        printOk("GetNextLocation")
 
         availableLocations = self.locations.resolve()
 
         # if there are locations not visited yet, choose one
         if availableLocations:
-
-            print OUT_PREFIX + str(len(availableLocations)) + " locations in the list"
+            printOk(str(len(availableLocations)) + " locations in the list")
 
             chosenLocation = None
             # TODO: CHOOSE CLOSEST LOCATION
@@ -688,21 +711,20 @@ class GetNextLocation(smach.State):
                         loc.attempts += 1
                         break
                     else:
-                        print OUT_PREFIX + 'Tried to visit this location several times and it never worked. Ignoring it'
+                        printOk('Tried to visit this location several times and it never worked. Ignoring it')
 
             if not chosenLocation:
-                print OUT_PREFIX + 'All locations are marked as visited'
+                printOk('All locations are marked as visited')
                 return 'visited_all'
             else:
                 self.nextLocation.current.setPoint(point_stamped = chosenLocation)
-                print OUT_PREFIX + "Next location: " + str(chosenLocation.point)
+                printOk("Next location: " + str(chosenLocation.point))
 
                 return 'done'
 
         # If there are not more loactions to visit then report back to the operator
         else:
-
-            print OUT_PREFIX + "Visited all locations"
+            printOk("Visited all locations")
             return 'visited_all'
 
 
@@ -720,7 +742,7 @@ class ResetSearch(smach.State):
         self.locations = locations
         
     def execute(self, userdata):
-        print OUT_PREFIX + bcolors.OKBLUE + "ResetSearch" + bcolors.ENDC
+        printOk("ResetSearch")
 
         # Reset locations to visit
         self.locations.current = []

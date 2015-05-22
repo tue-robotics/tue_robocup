@@ -9,16 +9,13 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    # person at the door 
-    W.add_object("loy-1", "loy", 1.114, 4.233, 0)
+    # person at the learning spot
+    W.add_object("loy-1",   "loy",      2.157, 4.681, 0)
 
-    # crowd in the main room
-    # W.add_object("loy-2", "loy", 0.140, -0.612, 0.000)
-    # W.add_object("loy-3", "loy", 0.105, 0.215, 0.000)
-    # W.add_object("loy-4", "loy", 0.138, 0.714, 0.000)
-
-    W.add_object("loy-2", "loy", 0.234, 0.912, 0.000)
-    W.add_object("loy-3", "sjoerd", 0.385, 0.252, 0.000)
-    W.add_object("loy-4", "tim", 0.266, -0.280, 0.000)
+    W.add_object("sjoerd-2","sjoerd",   1.443, 0.794, 0.000)
+    W.add_object("sjoerd-3","sjoerd",   2.512, 0.868, 0.000)
+    W.add_object("tim-4",   "tim",      2.244, 0.972, 0.000)
+    W.add_object("rob-5",   "rob",      1.976, 0.781, 0.000)
+    W.add_object("loy-6",   "loy",      1.862, 0.955, 0.000)
 
     #loy, erik, tim, sjoerd, rob

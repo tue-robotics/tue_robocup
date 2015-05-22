@@ -1,6 +1,7 @@
 import rospy
 import smach
 import random
+import sys
 
 
 def raw_input_timeout(prompt, timeout=10):
