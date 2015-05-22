@@ -15,6 +15,7 @@ import rospy
 import smach
 import sys
 import math
+import time
 
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
@@ -70,6 +71,7 @@ class StoreWaypoint(smach.State):
         
         self._robot.head.look_at_standing_person()
         result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
+        time.sleep(1.0)
         self._robot.head.cancel_goal()
 
         if result:
@@ -87,7 +89,7 @@ class StoreWaypoint(smach.State):
                     self._robot.speech.speak("Sorry", block=False)
                     return "continue"
 
-                self._robot.speech.speak("%s %s, it is, moving on!"%(side, location))
+                self._robot.speech.speak("%s %s, it is!"%(side, location))
                 
                 if side == "left":
                     base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
