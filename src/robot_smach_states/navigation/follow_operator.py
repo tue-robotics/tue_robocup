@@ -54,6 +54,8 @@ class FollowOperator(smach.State):
                     self._first_time_at_location = rospy.Time.now()
                 self._at_location = True
 
+                print "At location!"
+
                 if (rospy.Time.now() - self._first_time_at_location) > rospy.Duration(self._timeout):
                     return True # We are there
             else:
