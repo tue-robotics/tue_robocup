@@ -4,6 +4,11 @@ import rospy
 import smach
 import sys
 import random
+import math
+import time
+
+from robot_skills.util import transformations as tf
+from robot_skills.util import transformations, msg_constructors
 
 import robot_smach_states as states
 from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator
@@ -29,12 +34,10 @@ class HearQuestion(smach.State):
             if "question" in res.choices:
                 rospy.loginfo("Question was: '%s'?"%res.result)
                 self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-                self.robot.head.cancel_goal()
                 return "answered"
             else:
                 self.robot.speech.speak("Sorry, I do not understand your question")
 
-        self.robot.head.cancel_goal()
         return "not_answered"
 
 class Turn(smach.State):
@@ -43,11 +46,37 @@ class Turn(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        # TODO: TURN HERE (Since we do not have sound localization, turn arbitrarely)
-        vth = 0.5
-        th = 3.1415 * (2.0/3.0)
-        print "Turning %f radians with force drive" % th
-        self.robot.base.force_drive(0, 0, random.choice([-1.0, 1.0]) * vth, th / vth)
+
+        # Reset the world model just to be sure
+        self.robot.ed.reset()
+
+        operator = None
+        while not operator:
+            operator = self.robot.ed.get_closest_entity(self, radius=1.5, center_point=self.robot.base.get_location().pose.position)
+            print operator
+            if not operator:
+                vth = 1.0
+                th = 3.1415 / 10
+                print "Turning %f radians with force drive" % th
+                self.robot.base.force_drive(0, 0, vth, th / vth)
+                
+        self.robot.speech.speak("There you are!")
+
+        # Turn towards the operator
+        current = self.robot.base.get_location() 
+        robot_th = tf.euler_z_from_quaternion(current.pose.orientation)
+        desired_th = math.atan2(operator.pose.position.y - current.pose.position.y, operator.pose.position.x - current.pose.position.x)
+
+        # Calculate params
+        th = desired_th - robot_th
+        if th > 3.1415:
+            th -= 2*3.1415
+        if th < -3.1415:
+            th += 2*3.1415
+        vth = 1.0
+        
+        # TUrn
+        self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
 
         return "turned"
 

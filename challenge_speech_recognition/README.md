@@ -1,4 +1,8 @@
 # Challenge Speech Recognition
+
+ahardware
+amiddle-restaurant
+
 ## Speech recognition
 rosrun challenge_speech_recognition speech_recognition.py [robot]
 ## Generate test sentences
