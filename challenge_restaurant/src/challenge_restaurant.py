@@ -14,17 +14,38 @@ In short:
 import rospy
 import smach
 import sys
+import math
+import time
 
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 
 from robot_smach_states.util.designators import EdEntityDesignator
+from robot_skills.util import transformations, msg_constructors
 
 from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
 knowledge = load_knowledge("challenge_restaurant")
 
 ORDERS = {}
+
+class HeadStraight(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
+        return "done"
+
+class HeadCancel(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.cancel_goal()
+        return "done"
 
 class StoreKitchen(smach.State):
     def __init__(self, robot):
@@ -48,22 +69,28 @@ class StoreWaypoint(smach.State):
 
         choices = knowledge.guiding_choices
         
+        self._robot.head.look_at_standing_person()
+        time.sleep(1.0)
         result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
+        self._robot.head.cancel_goal()
 
         if result:
             if "continue" in result.choices:
-                return "coninue"
+                return "continue"
             if "side" in result.choices and "location" in result.choices:
                 side = result.choices["side"]
                 location = result.choices["location"]
 
-                self._robot.speech.speak("%s %s?"%(location, side))
-                result = self._robot.ears.recognize("(yes|no)",{})
-                if not result or result.result == "no":
-                    self._robot.speech.speak("Sorry", block=False)
-                    return "continue"
+                self._robot.head.look_at_standing_person()
+#                self._robot.speech.speak("%s %s?"%(location, side))
+#                result = self._robot.ears.recognize("(yes|no)",{})
+#                self._robot.head.cancel_goal()
+#                if not result or result.result == "no":
+#                    self._robot.speech.speak("Sorry", block=False)
+#                    return "continue"
 
-                self._robot.speech.speak("%s %s, it is, moving on!"%(side, location))
+                self._robot.speech.speak("%s %s, it is!"%(location, side))
+                self._robot.head.cancel_goal()
                 
                 if side == "left":
                     base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
@@ -106,7 +133,10 @@ class AskOrder(smach.State):
 
         order = None
         while not order:
+            self._robot.head.look_at_standing_person()
+            time.sleep(1)
             result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
+            self._robot.head.cancel_goal()
             if "beverage" in result.choices:
                 order = result.choices["beverage"]
                 ORDERS["beverage"] = { "location" : self._location, "name" : order }
@@ -128,11 +158,15 @@ class SpeakOrders(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
         self._robot.speech.speak("Here are the orders:")
         if "beverage" in ORDERS:
             self._robot.speech.speak("Table %s would like to have the beverage %s"%(ORDERS["beverage"]["location"], ORDERS["beverage"]["name"]))
         if "combo" in ORDERS:
             self._robot.speech.speak("Table %s would like to have the combo %s"%(ORDERS["combo"]["location"], ORDERS["combo"]["name"]))
+
+        self._robot.head.cancel_goal()
+
         return "spoken"
 
 def setup_statemachine(robot):
@@ -141,7 +175,8 @@ def setup_statemachine(robot):
 
     with sm:
         smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'STORE_KITCHEN', 'abort':'aborted'})
-        smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'SAY_INTRO'})
+        smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'HEAD_STRAIGHT'})
+        smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
 
         smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Show me your restaurant please. Say 'Please Follow Me'"), transitions={ 'spoken' :'HEAR_PLEASE_FOLLOW_ME'})
         smach.StateMachine.add('HEAR_PLEASE_FOLLOW_ME', states.HearOptions(robot, ["please follow me"]), transitions={ 'no_result' :'HEAR_PLEASE_FOLLOW_ME', 'please follow me' : 'FOLLOW_TO_FIRST'})
@@ -150,7 +185,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('STORE_FIRST', StoreWaypoint(robot), transitions={ 'done':'FOLLOW_TO_SECOND', 'continue':'FOLLOW_TO_FIRST'})
 
         smach.StateMachine.add('FOLLOW_TO_SECOND', states.FollowOperator(robot), transitions={ 'stopped':'STORE_SECOND', 'lost_operator':'FOLLOW_TO_SECOND'})
-        smach.StateMachine.add('STORE_SECOND', StoreWaypoint(robot), transitions={ 'done':'FOLLOW_TO_THIRD', 'continue':'FOLLOW_TO_THIRD'})
+        smach.StateMachine.add('STORE_SECOND', StoreWaypoint(robot), transitions={ 'done':'FOLLOW_TO_THIRD', 'continue':'FOLLOW_TO_SECOND'})
 
         smach.StateMachine.add('FOLLOW_TO_THIRD', states.FollowOperator(robot), transitions={ 'stopped':'STORE_THIRD', 'lost_operator':'FOLLOW_TO_THIRD'})
         smach.StateMachine.add('STORE_THIRD', StoreWaypoint(robot), transitions={ 'done':'SAY_FOLLOW_TO_KITCHEN', 'continue':'FOLLOW_TO_THIRD'})
