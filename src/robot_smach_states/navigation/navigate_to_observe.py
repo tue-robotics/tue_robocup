@@ -54,8 +54,8 @@ class NavigateToObserve(NavigateTo):
 
                 length = (dx * dx + dy * dy)**.5
 
-                xs = ch[i].x + (dy/length)*self.radius
-                ys = ch[i].y - (dx/length)*self.radius
+                xs = x + ch[i].x + (dy/length)*self.radius
+                ys = y + ch[i].y - (dx/length)*self.radius
 
                 if i != 0:
                     pci = pci + ' and '
