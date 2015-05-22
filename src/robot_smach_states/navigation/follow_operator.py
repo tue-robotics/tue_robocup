@@ -49,7 +49,7 @@ class FollowOperator(smach.State):
         plan = self._robot.base.global_planner.getPlan(p)
         if plan:
             # Check whether we are already there
-            if len(plan) <= 2:
+            if len(plan) <= 10:
                 if not self._at_location:
                     self._first_time_at_location = rospy.Time.now()
                 self._at_location = True
@@ -77,6 +77,7 @@ class FollowOperator(smach.State):
             operator = self._get_operator(self._operator_id)
 
             if not operator:
+                self._robot.speech.speak("I lost my operator!")
                 return "lost_operator"
             
             # Update the navigation and check if we are already there
