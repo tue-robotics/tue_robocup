@@ -203,7 +203,7 @@ class GetPills(smach.StateMachine):
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
             smach.StateMachine.add( "LOOKAT_GRANNY",
-                                     states.LookAtEntity(robot, granny, keep_following=True),
+                                     states.LookAtEntity(robot, granny),
                                      transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
                                                     'failed'            :'DESCRIBE_OBJECTS'})
 
@@ -212,7 +212,7 @@ class GetPills(smach.StateMachine):
             ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, 
-                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=True),  # Type should be bottle or only check position+size/volume
+                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False),  # Type should be bottle or only check position+size/volume
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
@@ -319,11 +319,24 @@ class RespondToAction(smach.StateMachine):
         # Don't pass the weight_function, might screw up if phone is not near the robot
         phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
 
-        with self:
-            smach.StateMachine.add( "WAIT_TIME",
-                                    states.Wait_time(robot, waittime=10),
-                                    transitions={   'waited'    : 'SAY_FELL',
-                                                    'preempted' : 'SAY_FELL'})
+        with self:            
+            smach.StateMachine.add( 'DETECT_ACTION',
+                                    DetectAction(robot, granny),
+                                    transitions={    "drop_blanket"     :"PICKUP_BLANKET", 
+                                                    "fall"              :"SAY_FELL",
+                                                    "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
+
+            smach.StateMachine.add( "PICKUP_BLANKET",
+                                    states.Say(robot, ["I will pick up your blanket"]),
+                                    transitions={   'spoken'            :'succeeded'})
+
+            smach.StateMachine.add( "BRING_PHONE",
+                                    states.Say(robot, ["I will bring you a phone"]),
+                                    transitions={   'spoken'            :'succeeded'})
+
+            smach.StateMachine.add( "FOLLOW_TAKE_CANE",
+                                    states.Say(robot, ["I will hold your cane"]),
+                                    transitions={   'spoken'            :'succeeded'})
 
             smach.StateMachine.add( "SAY_FELL",
                                     states.Say(robot, "Oh no, you fell! I will give you the phone.", block=True),
@@ -406,28 +419,6 @@ class RespondToAction(smach.StateMachine):
                                     transitions={   'spoken' :'succeeded'})
 
 
-
-
-
-            # smach.StateMachine.add('DETECT_ACTION',
-            #                        DetectAction(robot, granny),
-            #                        transitions={    "drop_blanket"      :"PICKUP_BLANKET", 
-            #                                         "fall"              :"BRING_PHONE",
-            #                                         "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
-
-            # smach.StateMachine.add( "PICKUP_BLANKET",
-            #                         states.Say(robot, ["I will pick up your blanket"]),
-            #                         transitions={   'spoken'            :'succeeded'})
-
-            # smach.StateMachine.add( "BRING_PHONE",
-            #                         states.Say(robot, ["I will bring you a phone"]),
-            #                         transitions={   'spoken'            :'succeeded'})
-
-            # smach.StateMachine.add( "FOLLOW_TAKE_CANE",
-            #                         states.Say(robot, ["I will hold your cane"]),
-            #                         transitions={   'spoken'            :'succeeded'})
-
-
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
@@ -504,6 +495,11 @@ def test_get_pills(robot):
     granny, grannies_table, shelf = define_designators(robot)
     getpills = GetPills(robot, grannies_table, granny)
     getpills.execute(None)
+
+def test_respond_to_action(robot):
+    granny, grannies_table, shelf = define_designators(robot)
+    respond = RespondToAction(robot, grannies_table, granny)
+    respond.execute(None)
 
 ############################## initializing program ######################
 if __name__ == '__main__':
