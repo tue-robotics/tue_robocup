@@ -12,20 +12,19 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <run_depend>amigo_demo</run_depend>
-  <run_depend>challenge_basic_functionalities</run_depend>
-  <run_depend>challenge_demo</run_depend>
   <run_depend>challenge_final</run_depend>
-  <run_depend>challenge_follow_me</run_depend>
   <run_depend>challenge_gpsr</run_depend>
   <run_depend>challenge_manipulation</run_depend>
   <run_depend>challenge_navigation</run_depend>
-  <!-- <run_depend>challenge_open</run_depend> -->
+  <run_depend>challenge_open</run_depend>
   <run_depend>challenge_person_recognition</run_depend>
-  <!-- <run_depend>challenge_restaurant</run_depend> -->
+  <run_depend>challenge_restaurant</run_depend>
   <run_depend>challenge_rips</run_depend>
-  <!-- <run_depend>challenge_robo_zoo</run_depend> -->
+  <run_depend>challenge_robo_zoo</run_depend>
   <run_depend>challenge_speech_recognition</run_depend>
-
+  <run_depend>challenge_robonurse</run_depend>
+  <run_depend>challenge_wakemeup</run_depend>
+  
   <export>
     <metapackage/>
   </export>
