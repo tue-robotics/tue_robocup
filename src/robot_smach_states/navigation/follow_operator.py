@@ -61,7 +61,7 @@ class FollowOperator(smach.State):
                 self._at_location = False
 
             o = OrientationConstraint()
-            o.frame = frame
+            o.frame = operator.id
             self._robot.base.local_planner.setPlan(plan, p, o)
 
         return False # We are not there
