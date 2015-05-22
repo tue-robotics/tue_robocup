@@ -82,8 +82,9 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.center_point.x, center_point.y - entity.center_point.y))
+            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
         except:
+            print "Failed to sort entities"
             return None
 
         return entities[0]
