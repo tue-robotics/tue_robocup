@@ -302,42 +302,14 @@ class GetPills(smach.StateMachine):
                                                     'failed'            :'failed'}) #DETECT_ACTION'})
 
 
-class RespondToAction(smach.StateMachine):
-    def __init__(self, robot, grannies_table, granny):
+class HandleFall(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny, phone):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
-
-        def size(entity):
-            return abs(entity.z_max - entity.z_min) < 0.4
-
-        def on_top(entity):
-            container_entity = robot.ed.get_entity(id=GRANNIES_TABLE_KB)
-            return onTopOff(entity, container_entity)
-
-        # Don't pass the weight_function, might screw up if phone is not near the robot
-        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
-
-        with self:            
-            smach.StateMachine.add( 'DETECT_ACTION',
-                                    DetectAction(robot, granny),
-                                    transitions={    "drop_blanket"     :"PICKUP_BLANKET", 
-                                                    "fall"              :"SAY_FELL",
-                                                    "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
-
-            smach.StateMachine.add( "PICKUP_BLANKET",
-                                    states.Say(robot, ["I will pick up your blanket"]),
-                                    transitions={   'spoken'            :'succeeded'})
-
-            smach.StateMachine.add( "BRING_PHONE",
-                                    states.Say(robot, ["I will bring you a phone"]),
-                                    transitions={   'spoken'            :'succeeded'})
-
-            smach.StateMachine.add( "FOLLOW_TAKE_CANE",
-                                    states.Say(robot, ["I will hold your cane"]),
-                                    transitions={   'spoken'            :'succeeded'})
-
+        
+        with self:
             smach.StateMachine.add( "SAY_FELL",
                                     states.Say(robot, "Oh no, you fell! I will give you the phone.", block=True),
                                     transitions={   'spoken' : 'GOTO_COUCHTABLE'})
@@ -417,6 +389,42 @@ class RespondToAction(smach.StateMachine):
             smach.StateMachine.add( "SAY_CALL_FOR_HELP",
                                     states.Say(robot, ["Please use the phone to call for help!"]),
                                     transitions={   'spoken' :'succeeded'})
+
+
+class RespondToAction(smach.StateMachine):
+    def __init__(self, robot, grannies_table, granny):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        def size(entity):
+            return abs(entity.z_max - entity.z_min) < 0.4
+
+        def on_top(entity):
+            container_entity = robot.ed.get_entity(id=GRANNIES_TABLE_KB)
+            return onTopOff(entity, container_entity)
+
+        # Don't pass the weight_function, might screw up if phone is not near the robot
+        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
+
+        with self:            
+            smach.StateMachine.add( 'DETECT_ACTION',
+                                    DetectAction(robot, granny),
+                                    transitions={   "drop_blanket"      :"PICKUP_BLANKET", 
+                                                    "fall"              :"HANDLE_FALL",
+                                                    "walk_and_sit"      :"FOLLOW_TAKE_CANE"})
+
+            smach.StateMachine.add( "PICKUP_BLANKET",
+                                    states.Say(robot, ["I will pick up your blanket"]),
+                                    transitions={   'spoken'            :'succeeded'})
+
+            smach.StateMachine.add( "HANDLE_FALL",
+                                    HandleFall(robot, grannies_table, granny, phone),
+                                    transitions={   'succeeded'            :'succeeded'})
+
+            smach.StateMachine.add( "FOLLOW_TAKE_CANE",
+                                    states.Say(robot, ["I will hold your cane"]),
+                                    transitions={   'spoken'            :'succeeded'})
+
+
 
 
 class RoboNurse(smach.StateMachine):
