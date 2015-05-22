@@ -21,10 +21,10 @@ def get_entity_color(entity):
         try:
             return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
         except KeyError, ke:
-            rospy.logwarn(ke)
+            rospy.logwarn("Entity {0} has no key {1}".format(entity.id, ke))
             return ""
         except TypeError, te:
-            rospy.logwarn(te)
+            rospy.logwarn("{1} for Entity {0}".format(entity.id, te))
             return ""
 
 
@@ -60,6 +60,7 @@ class DescribeBottles(smach.State):
         self.choices_designator = choices_designator
 
     def execute(self, userdata=None):
+        self.robot.head.reset()
         bottles = self.bottle_collection_designator.resolve()
         if not bottles:
             return "failed"
