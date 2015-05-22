@@ -25,9 +25,9 @@ class FollowOperator(smach.State):
         self._timeout = timeout
 
     def _register_operator(self):
-        operator = None
+        operator = self._robot.ed.get_closest_entity(self, center_point=msg_constructors.PointStamped(x=1.7, y=0, z=0, frame_id="/%s/base_link"%self._robot.robot_name))
         while not operator:
-            self._robot.speech.speak("Please stand in front of me so that I can follow you!")
+            self._robot.speech.speak("Please stand in front of me!")
             rospy.sleep(2)
             operator = self._robot.ed.get_closest_entity(self, center_point=msg_constructors.PointStamped(x=1.7, y=0, z=0, frame_id="/%s/base_link"%self._robot.robot_name))
         print "We have a new operator: %s"%operator.id
@@ -49,7 +49,7 @@ class FollowOperator(smach.State):
         plan = self._robot.base.global_planner.getPlan(p)
         if plan:
             # Check whether we are already there
-            if len(plan) <= 10:
+            if len(plan) <= 5:
                 if not self._at_location:
                     self._first_time_at_location = rospy.Time.now()
                 self._at_location = True
@@ -77,7 +77,6 @@ class FollowOperator(smach.State):
             operator = self._get_operator(self._operator_id)
 
             if not operator:
-                self._robot.speech.speak("I lost my operator!")
                 return "lost_operator"
             
             # Update the navigation and check if we are already there
