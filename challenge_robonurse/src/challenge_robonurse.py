@@ -12,6 +12,9 @@ Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
 TODO: Select only items from the given description
+TODO: Actual action detection
+TODO: Grasp blanket
+TODO: Take cane
 """
 
 import rospy
@@ -303,9 +306,18 @@ class GetPills(smach.StateMachine):
 
 
 class HandleFall(smach.StateMachine):
-    def __init__(self, robot, grannies_table, granny, phone):
+    def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+        
+        def size(entity):
+            return abs(entity.z_max - entity.z_min) < 0.4
 
+        def on_top(entity):
+            container_entity = robot.ed.get_entity(id=GRANNIES_TABLE_KB)
+            return onTopOff(entity, container_entity)
+
+        # Don't pass the weight_function, might screw up if phone is not near the robot
+        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
         empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
         
@@ -395,16 +407,6 @@ class RespondToAction(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        def size(entity):
-            return abs(entity.z_max - entity.z_min) < 0.4
-
-        def on_top(entity):
-            container_entity = robot.ed.get_entity(id=GRANNIES_TABLE_KB)
-            return onTopOff(entity, container_entity)
-
-        # Don't pass the weight_function, might screw up if phone is not near the robot
-        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
-
         with self:            
             smach.StateMachine.add( 'DETECT_ACTION',
                                     DetectAction(robot, granny),
@@ -417,7 +419,7 @@ class RespondToAction(smach.StateMachine):
                                     transitions={   'spoken'            :'succeeded'})
 
             smach.StateMachine.add( "HANDLE_FALL",
-                                    HandleFall(robot, grannies_table, granny, phone),
+                                    HandleFall(robot, grannies_table, granny),
                                     transitions={   'succeeded'            :'succeeded'})
 
             smach.StateMachine.add( "FOLLOW_TAKE_CANE",
