@@ -8,6 +8,7 @@ from geometry_msgs.msg import *
 
 from robot_smach_states.util.designators import check_resolve_type
 import ed.msg
+from robot_skills.util import transformations as tf
 
 import rospy
 
@@ -35,14 +36,14 @@ class NavigateToWaypoint(NavigateTo):
             pose = e.data["pose"]
             x = pose["x"]
             y = pose["y"]
-        except KeyError:
-            rospy.logerr(KeyError)
-            return None
-
-        try:
             rz = e.data["pose"]["rz"]
-        except KeyError:
-            rz = 0
+        except:
+            try:
+                x = e.pose.position.x
+                y = e.pose.position.y
+                rz = tf.euler_z_from_quaternion(e.pose.orientation)
+            except:
+                return None
 
         pc = PositionConstraint(constraint="(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, self.radius), frame="/map")
         oc = OrientationConstraint(look_at=Point(x+10, y, 0.0), angle_offset=rz, frame="/map")
