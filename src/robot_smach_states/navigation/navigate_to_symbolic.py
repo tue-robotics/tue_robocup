@@ -50,9 +50,6 @@ class NavigateToSymbolic(NavigateTo):
             rospy.logerr("Could not resolve entity_lookat_designator".format(self.entity_lookat_designator))
             return None
 
-        if len(entity_lookat.convex_hull) > 0:
-            oc = OrientationConstraint(look_at=entity_lookat.center_point, frame="/map")
-        else:
-            oc = OrientationConstraint(look_at=entity_lookat.pose.position, frame="/map")
+	oc = OrientationConstraint(look_at=entity_lookat.pose.position, frame="/map")
 
         return pc, oc

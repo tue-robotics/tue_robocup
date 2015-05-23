@@ -49,10 +49,10 @@ def onTopOff(e1, e2, ht=0.1):
 		return False
 
 	''' Second: check if center point of e1 is within convex hull of e2 '''
-	if not isPointInsideHull(e1.center_point, e2.convex_hull):
+	if not isPointInsideHull(e1.pose.position, e2.convex_hull):
 		return False
 
-	if math.fabs(e1.z_min-e2.z_max) > ht:
+	if math.fabs(e1.pose.position.z+e1.z_min - e2.pose.position.z+e2.z_max) > ht:
 		return False
 
 	return True
