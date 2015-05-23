@@ -79,6 +79,7 @@ class FollowOperator(smach.State):
             operator = self._get_operator(self._operator_id)
 
             if not operator:
+                self._robot.speech.speak("I lost you")
                 return "lost_operator"
             
             # Update the navigation and check if we are already there
