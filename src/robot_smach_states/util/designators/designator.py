@@ -307,8 +307,8 @@ class ListElementDesignator(Designator):
             for criterium in self.criteriafuncs:
                 elements = filter(criterium, elements)
                 criterium_code = inspect.getsource(criterium)
-                rospy.logdebug("Criterium {0} leaves {1} elements: {2}".format(criterium_code, len(elements),
-                    pprint.pformat([elem for elem in elements])))
+                rospy.loginfo("Criterium {0} leaves {1} entities".format(criterium_code, len(elements)))
+                rospy.logdebug("Remaining entities: {}".format(pprint.pformat([elem for elem in elements])))
 
             if elements:
                 if self.sortkey:
@@ -386,10 +386,8 @@ class EdEntityCollectionDesignator(Designator):
             for criterium in _criteria:
                 entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
-                rospy.logdebug("Criterium {0} leaves {1} entities: {2}".format(
-                              criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
-                              )
-
+                rospy.loginfo("Criterium {0} leaves {1} entities".format(criterium_code, len(entities)))
+                rospy.logdebug("Remaining entities: {}".format(pprint.pformat([ent.id for ent in entities])))
             if entities:
                 self._current = entities
                 return self.current
@@ -477,9 +475,8 @@ class EdEntityDesignator(Designator):
             for criterium in _criteria:
                 entities = filter(criterium, entities)
                 criterium_code = inspect.getsource(criterium)
-                rospy.logdebug("Criterium {0} leaves {1} entities: {2}".format(
-                              criterium_code, len(entities), pprint.pformat([ent.id for ent in entities]))
-                              )
+                rospy.loginfo("Criterium {0} leaves {1} entities".format(criterium_code, len(entities)))
+                rospy.logdebug("Remaining entities: {}".format(pprint.pformat([ent.id for ent in entities])))
 
             if entities:
                 weights = [self.weight_function(entity) for entity in entities]
