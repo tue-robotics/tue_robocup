@@ -15,6 +15,8 @@ from robot_skills.util import transformations
 from std_srvs.srv import Empty #Reset Ed
 
 import tf
+import visualization_msgs.msg
+
 
 import yaml
 
@@ -49,10 +51,13 @@ class ED:
 
         self.navigation = Navigation(robot_name, tf_listener, wait_service)
 
+        self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker, queue_size=10)
+
     def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
         if isinstance(center_point, PointStamped):
             center_point = self._transform_center_point_to_map(center_point)
 
+        self._publish_marker(center_point, radius)
         query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
 
         try:
@@ -82,8 +87,9 @@ class ED:
 
         # Sort by distance
         try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.center_point.x, center_point.y - entity.center_point.y))
+            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
         except:
+            print "Failed to sort entities"
             return None
 
         return entities[0]
@@ -108,6 +114,24 @@ class ED:
     def _transform_center_point_to_map(self, pointstamped):
         point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
         return point_in_map
+        
+    def _publish_marker(self, center_point, radius):
+        marker = visualization_msgs.msg.Marker()
+        marker.header.frame_id = "/map"
+        marker.header.stamp = rospy.Time.now()
+        marker.type = 2
+        marker.pose.position.x = center_point.x
+        marker.pose.position.y = center_point.y
+        marker.pose.position.z = center_point.z
+        marker.lifetime = rospy.Duration(20.0)
+        marker.scale.x = radius
+        marker.scale.y = radius
+        marker.scale.z = radius
+
+        marker.color.a = 0.5
+        marker.color.r = 1
+
+        self._marker_publisher.publish(marker)
 
     def update_entity(self, id, type = None, posestamped = None, flags = None):
         json_entity = '"id" : "%s"' % id
