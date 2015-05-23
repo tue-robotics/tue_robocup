@@ -14,7 +14,6 @@ import smach_ros
 
 import wakemeup_states as wakeStates
 from robot_smach_states.util.designators import Designator, VariableDesignator, EdEntityDesignator
-# from robot_smach_states import SetTimeMarker, CheckTime
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -44,22 +43,19 @@ class WakeMeUp(smach.StateMachine):
         def is_not_bed(entity):
             return entity.id != "bed"
 
-        def is_not_prior_knowledge(entity):
-            return ((not entity.has_shape) and len(entity.id) == 32)
+        def is_not_prior(entity):
+            return entity.type == '' or entity.type == 'human'
 
         def is_just_above_bed(entity):
             bed = robot.ed.get_entity("bed")
 
             # Check if z coordinate is within specified range
-            if entity.z_max < bed.z_max + 0.3:
+            if entity.pose.position.z + entity.z_max < bed.pose.position.z + bed.z_max + 0.3:
                 return False
 
             # Check if center point of entity is within chull of bed
             bed_chull = bed.convex_hull
             bed_chull = bed_chull + [bed_chull[0]]
-            
-            x_e = entity.pose.position.x
-            y_e = entity.pose.position.y
 
             for i in range(len(bed_chull)-1):
                 dx = bed_chull[i+1].x - bed_chull[i].x
@@ -74,10 +70,27 @@ class WakeMeUp(smach.StateMachine):
 
             return True
 
+        def probably_exists(entity):
+            return entity.existence_probability > 0.6
+
+        def is_large_enough(entity):
+            if len(entity.convex_hull) < 3:
+                return False
+
+            chull = [entity.convex_hull[-1]] + entity.convex_hull + [entity.convex_hull[0]]
+            height = 2*entity.z_max
+            area = 0
+            for ppt, pt, npt in zip(chull, chull[1:], chull[2:]):
+                area += pt.x*( npt.y - ppt.y );
+            area /= 2
+
+            return area > 0.06
+
         # ------------------------ INITIALIZATIONS ------------------------
 
-        entityOnBedDesignator = EdEntityDesignator(robot, center_point = robot.ed.get_entity("bed").pose.position, 
-            radius = 2.0, criteriafuncs = [is_not_bed, is_just_above_bed, is_not_prior_knowledge])
+        entityOnBedDesignator = EdEntityDesignator(robot, center_point = robot.ed.get_entity("bed").pose.position, radius = 2.0, 
+            criteriafuncs = [is_large_enough, probably_exists, is_just_above_bed, is_not_bed, is_not_prior])
+
 
         waypoint_kitchen = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
 
@@ -142,6 +155,10 @@ class WakeMeUp(smach.StateMachine):
             wakeupContainer = smach.StateMachine(outcomes = ['container_succeeded', 'container_failed'])
 
             with wakeupContainer:
+
+                smach.StateMachine.add( 'CANCEL_HEAD_GOALS',
+                                        wakeStates.CancelHeadGoals(robot),
+                                        transitions={    'done':'LOOK_AT_BED'})
 
                 smach.StateMachine.add( 'LOOK_AT_BED',
                                         wakeStates.LookAtBedTop(robot, bed),
