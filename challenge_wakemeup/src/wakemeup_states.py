@@ -14,7 +14,7 @@ from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-from robocup_knowledge import load_knowledge
+# from robocup_knowledge import load_knowledge
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -36,18 +36,18 @@ default_milk = "fresh milk"
 
 bed_top_coordinates = {'x':0.783, 'y':1.315, 'z':0.3}
 
-# load item names
-common = load_knowledge('common')
-knowledge_objs= load_knowledge('common').objects
+# # load item names
+# common = load_knowledge('common')
+# knowledge_objs= load_knowledge('common').objects
 
-names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
-names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
-names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
+# names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
+# names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
+# names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
 
-# Debug print
-print prefix + "Fruit names from Knowledge: " + str(names_fruit)
-print prefix + "Cereal names from Knowledge: " + str(names_cereal)
-print prefix + "Milk names from Knowledge: " + str(names_milk)
+# # Debug print
+# print prefix + "Fruit names from Knowledge: " + str(names_fruit)
+# print prefix + "Cereal names from Knowledge: " + str(names_cereal)
+# print prefix + "Milk names from Knowledge: " + str(names_milk)
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -277,9 +277,10 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
-    def __init__(self, robot):
+    def __init__(self, robot, bedDesignator):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
+        self.bed = bedDesignator.resolve()
 
     def execute(self, robot):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
@@ -291,7 +292,7 @@ class LookAtBedTop(smach.State):
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
         # look at bed top
-        headGoal = msgs.PointStamped(x=bed_top_coordinates['x'], y=bed_top_coordinates['y'], z=bed_top_coordinates['z'], frame_id="/map")
+        headGoal = msgs.PointStamped(x=self.bed.pose.position.x, y=self.bed.pose.position.y, z=self.bed.pose.position.z+self.bed.z_max, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
         return 'done'
@@ -300,20 +301,17 @@ class LookAtBedTop(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
-class LoopBreaker(smach.State):
-    def __init__(self, robot, counter_designator, limit_designator):
-        smach.State.__init__(self, outcomes=['break', 'continue'])
+class LookIfSomethingsThere(smach.State):
+    def __init__(self, robot, designator):
+        smach.State.__init__(self, outcomes=['awake', 'not_awake'])
         self.robot = robot
-        self.counter = counter_designator
-        self.limit = limit_designator
+        self.designator = designator
 
     def execute(self, robot):
-        print prefix + bcolors.OKBLUE + "LoopBreaker" + bcolors.ENDC
-
-        if self.counter.resolve() == self.limit.resolve():
-            print "{}Breaking loop ({}={})".format(prefix, self.counter.resolve(), self.limit.resolve())
-            return 'break'
+        person_awake = self.designator.resolve()
+        print person_awake
+        rospy.logerr("Only checking if the designator resolves...")
+        if person_awake != None:
+            return 'awake'
         else:
-            print "{}Continuing loop ({}!={})".format(prefix, self.counter.resolve(), self.limit.resolve())
-            self.counter.current = self.counter.current + 1
-            return 'continue'
+            return 'not_awake'
