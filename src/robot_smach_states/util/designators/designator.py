@@ -147,7 +147,9 @@ class VariableDesignator(Designator):
 
     def __init__(self, initial_value=None, resolve_type=None):
         if not resolve_type:
-            raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
+            resolve_type = type(initial_value)
+            if resolve_type == type(None): #If the initial value is None, then the resolve_type cannot be interred and thus we raise an exception
+                raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
         super(VariableDesignator, self).__init__(initial_value, resolve_type)
 
     def _set_current(self, value):
