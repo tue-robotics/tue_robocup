@@ -4,7 +4,14 @@ import rospy
 import numpy as np
 import random
 
+from action_detection import raw_input_timeout
+
 from fast_simulator import client
+
+human_start = (0.76, 1.08, -0.5)
+stand_up = (0.76, 1.08, 0.0)
+human_end = (0.76, -1.5, 0.05)
+sit_down = (0.76, -1.5, -0.5)
 
 def animate_path(name, _type, start, end, duration, steps=50, noise=0):
     xs = np.linspace(start[0], end[0], num=steps)
@@ -21,6 +28,20 @@ def animate_path(name, _type, start, end, duration, steps=50, noise=0):
         W.add_object(name, _type, x,y,z)
         rospy.sleep(float(duration)/steps)
 
+def walk_and_sit(human_start):
+    animate_path("granny", "loy", human_start, stand_up, 5, noise=None) 
+    animate_path("granny", "loy", stand_up, human_end, 30, noise=None) 
+    # animate_path("granny", "loy", human_end, human_start, 10, noise=None) 
+
+def fall(human_start):
+    human_end =   (0.26, 0.5, -1.5)
+    animate_path("granny", "loy", human_start, human_end, 2.5, noise=None) 
+
+def drop_blanket(human_start):
+    animate_path("granny", "loy", human_start, stand_up, 5, noise=None) 
+    animate_path("granny", "loy", stand_up, human_start, 5, noise=None) 
+
+
 if __name__ == "__main__":
     rospy.init_node('challenge_robonurse_object_spawner')
 
@@ -31,9 +52,13 @@ if __name__ == "__main__":
     W.add_object("bottle-2", "apple_juice", 3.05, 2.70, 1.095)
     W.add_object("bottle-3", "tea_pack", 3.05, 2.913, 1.095)
 
-    W.add_object("granny", "loy", 0.76, 1.08, 0.0)
+    W.add_object("granny", "loy", *human_start)
 
-    human_start = (0.76, 1.08, 0.0)
-    human_end =   (0.76, -1.5, 0.05)
-    animate_path("granny", "loy", human_start, human_end, 30, noise=0.05) 
-    animate_path("granny", "loy", human_end, human_start, 30, noise=0.05) 
+    options = {}
+    options["drop"] = drop_blanket
+    options["fall"] = fall
+    options["walk"] = walk_and_sit
+
+    action = raw_input_timeout("Which action must be performed? : {0}".format(options.keys()), timeout=300)
+    func = options[action.strip()]
+    func(human_start)

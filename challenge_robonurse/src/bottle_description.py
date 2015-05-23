@@ -61,6 +61,7 @@ class DescribeBottles(smach.State):
 
     def execute(self, userdata=None):
         self.robot.head.reset()
+        import ipdb; ipdb.set_trace()
         bottles = self.bottle_collection_designator.resolve()
         if not bottles:
             return "failed"

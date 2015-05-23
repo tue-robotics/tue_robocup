@@ -11,10 +11,11 @@ The robot must grab the bottle and bring it to Granny.
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
-TODO: Select only items from the given description
-TODO: Actual action detection
-TODO: Grasp blanket
-TODO: Take cane
+TODO: Select only items from the given description.
+TODO: Actual action detection with a hack. 
+    Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
+# TODO: Grasp blanket
+# TODO: Take cane
 """
 
 import rospy
@@ -31,6 +32,7 @@ from robot_smach_states.util.geometry_helpers import *
 from bottle_description import DescribeBottles, get_entity_color, get_entity_size
 from action_detection import DetectAction
 from ed.msg import EntityInfo
+import numpy as np
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_robonurse')
@@ -188,16 +190,17 @@ class GetPills(smach.StateMachine):
             return abs(entity.z_max - entity.z_min) > 0.03
 
         def minimal_height_from_floor(entity):
-            return entity.z_min > 0.50
+            return True#entity.z_min > 0.50 #TODO: this filter does not work because all heights are 0
 
         def type_unknown_or_not_room(entity):
             return entity.type == "" or entity.type not in ["room"] or "shelf" not in entity.type
 
         bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room, not_too_small]
 
-        described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=True) #Criteria funcs will be added based on what granny says
-        locked_described_bottle = ds.LockingDesignator(described_bottle)
         shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
+        bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
+        described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
+        locked_described_bottle = ds.LockingDesignator(described_bottle)
 
         with self:
             smach.StateMachine.add( "LOOKAT_SHELF",
@@ -214,8 +217,7 @@ class GetPills(smach.StateMachine):
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
             ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
-                                    DescribeBottles(robot, 
-                                        ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False),  # Type should be bottle or only check position+size/volume
+                                    DescribeBottles(robot, bottles_to_describe,
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
@@ -553,6 +555,8 @@ def recognize_action(coordinates):
     #heuristic for walking away: the x & y at start / end are far apart, more than 2m
     #heuristic for falling: the z_max gets very low, under 0.5m
 
+    if len(coordinates) < 20: return None
+
     xy_dist = xydistance(coordinates[0], coordinates[-1])
 
     z_maxes = [coord[3] for coord in coordinates]
@@ -560,26 +564,36 @@ def recognize_action(coordinates):
     z_max_max = max(z_maxes)
     z_max_diff = z_max_max - z_max_min
 
-    xy_dist_large = xy_dist > 2.0 #start and end x&y are far apart
-    xy_dist_small = xy_dist < 1.0 #start and end x&y are close together
-    z_max_went_low = z_maxes[-1] < 0.5 #heuristic for falling
+    xy_dist_large = xy_dist > 1.5 #start and end x&y are far apart
+    xy_dist_small = xy_dist < 0.75 #start and end x&y are close together
+    z_max_went_low = z_maxes[-1] < 0.5 #top of the object is very low
 
     z_max_went_up_and_back_down = z_maxes[0] < z_max_max and z_maxes[-1] < z_max_max and z_max_diff > 0.15
 
-    if xy_dist_small:
-        if z_max_went_up_and_back_down:
-            return "drop_blanket"
-    elif xy_dist_large:
-        return "walk_and_sit"
-    elif z_max_went_low:
+    fall = z_max_went_low
+    drop_blanket = xy_dist_small and z_max_went_up_and_back_down and not fall
+    walk_and_sit = xy_dist_large and not fall
+
+    rospy.loginfo("z_max_min: {}, z_max_max: {}, z_max_diff: {}".format(z_max_min, z_max_max, z_max_diff))
+    rospy.logwarn("xy_dist_large: {}, xy_dist_small: {}, z_max_went_low: {}, z+-: {}, ".format(xy_dist_large, xy_dist_small, z_max_went_low, z_max_went_up_and_back_down))
+
+    if fall:
+        # rospy.loginfo("Detected fall because z_max_went_low < 0.5: z_maxes[-1] = {}".format(z_maxes[-1]))
         return "fall"
+    elif drop_blanket:
+        return "drop_blanket"
+    elif walk_and_sit:
+        return "walk_and_sit"
     return None
  
-def dummy_action_recognition(robot):
+def dummy_action_recognition(robot, max_measurements=200, _id=None):
     # import numpy as np
     from robot_skills.util import transformations
+    import pandas as pd
 
     granny = ds.EdEntityDesignator(robot, type='human')
+    if _id:
+        granny = ds.EdEntityDesignator(robot, id=robot.ed.get_full_id(_id))
 
     states.LookAtEntity(robot, granny).execute(None)
     
@@ -598,14 +612,23 @@ def dummy_action_recognition(robot):
             
             if len(coords) > 1:
                 action = recognize_action(coords)
-                if action: 
-                    record = False
-            if len(coords) > 200: record = False
+                rospy.logwarn("Current action estimation: {}".format(action))
+                # if action: 
+                #     record = False
+            if len(coords) > max_measurements-1: record = False
         except KeyboardInterrupt, e:
             rospy.logwarn(e)
             record = False
+        except AttributeError, e:
+            rospy.logwarn(e)
+            record = False #We lost the entity
 
     print "Detected action {} from {} coords".format(action, len(coords))
+
+    coords_array = pd.DataFrame(coords, columns=["X", "Y", "Z", "Z_max"])
+    import time
+    timestr = time.strftime("%Y%m%d_%H%M%S")
+    coords_array.to_csv("tracking_{}.csv".format(timestr))
 
     return action, coords
 
