@@ -13,8 +13,11 @@ from cb_planner_msgs_srvs.msg import *
 
 from robot_skills.util import transformations, msg_constructors
 
+from robot_skills.util import transformations as tf
+from robot_skills.util import transformations, msg_constructors
+
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 0.7^2", timeout = 3.0):
+    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator'])
         self._robot = robot
         self._operator_id = None
@@ -48,6 +51,22 @@ class FollowOperator(smach.State):
         p.frame = operator.id
         plan = self._robot.base.global_planner.getPlan(p)
         if plan:
+            # Make sure that the robot always looks towards the operator with the base nose
+#            current = self._robot.base.get_location()
+#            robot_th = tf.euler_z_from_quaternion(current.pose.orientation)
+#
+#            desired_th = math.atan2(operator.pose.position.y - current.pose.position.y, operator.pose.position.x - current.pose.position.x)
+#
+#            # Calculate params
+#	    th = desired_th - robot_th
+#	    if th > 3.1415:
+#	        th -= 2*3.1415
+#	    if th < -3.1415:
+#	        th += 2*3.1415
+#
+#            for p in plan:
+#                p.pose.orientation = tf.euler_z_to_quaternion(th)
+
             # Check whether we are already there
             if len(plan) <= 5:
                 if not self._at_location:
