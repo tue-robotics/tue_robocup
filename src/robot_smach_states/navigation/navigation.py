@@ -184,7 +184,7 @@ class planBlocked(smach.State):
         # Wait for 5 seconds but continue if the path is free
         wait_start = rospy.Time.now()
 
-        while ( (rospy.Time.now() - wait_start) < rospy.Duration(5.0) and not rospy.is_shutdown()):
+        while ( (rospy.Time.now() - wait_start) < rospy.Duration(3.0) and not rospy.is_shutdown()):
             rospy.sleep(0.5)
 
             # Look at the entity
