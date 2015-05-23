@@ -204,7 +204,7 @@ class InspectShelves(smach.State):
             if entity:
 
                 ''' Extract center point '''
-                cp = entity.center_point
+                cp = entity.pose.position
 
                 ''' Look at target '''
                 self.robot.head.look_at_point(geom.PointStamped(cp.x,cp.y,cp.z,"/map"))
@@ -291,7 +291,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         # select the entity closest in x direction to the robot in base_link frame
         def weight_function(entity):
             # TODO: return x coordinate of entity.center_point in base_link frame
-            p = transformations.tf_transform(entity.center_point, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+            p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
             return p.x*p.x
 
         # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only

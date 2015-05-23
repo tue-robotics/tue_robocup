@@ -470,8 +470,8 @@ class RoboNurse(smach.StateMachine):
 
         def in_box(entity):
             print entity
-            x_ok = 5.5 < entity.center_point.x < 6.4
-            y_ok = 8.1 < entity.center_point.y < 8.5
+            x_ok = 5.5 < entity.pose.position.x < 6.4
+            y_ok = 8.1 < entity.pose.position.y < 8.5
 
             return x_ok and y_ok
 

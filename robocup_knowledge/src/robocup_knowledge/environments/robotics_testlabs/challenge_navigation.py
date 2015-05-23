@@ -1,11 +1,11 @@
 target1 = {
-    'near' : 'dinner_table',
-    'in' : 'room_living_room',
-    'lookat' : 'dinner_table'
+    'near' : 'dinnertable',
+    'in' : 'living_room',
+    'lookat' : 'dinnertable'
 }
 
 target2 = {
     'near' : 'bed_cabinet',
-    'in' : 'room_bedroom',
+    'in' : 'bedroom',
     'lookat' : 'bed_cabinet'
 }

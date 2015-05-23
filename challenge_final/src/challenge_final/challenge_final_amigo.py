@@ -274,7 +274,7 @@ class Look_point(smach.State):
         goal = geom.PointStamped()
         goal.header.stamp = rospy.Time.now()
         goal.header.frame_id = "/map" #"/"+self._robot_name+"/base_link" # HACK TO LOOK AT RIGHT POINT.
-        goal.point = table_entity[0].center_point
+        goal.point = table_entity[0].pose.position
 
         self.robot.head.look_at_point(goal)
         rospy.sleep(2)

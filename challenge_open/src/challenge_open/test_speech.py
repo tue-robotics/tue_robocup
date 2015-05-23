@@ -102,7 +102,7 @@ class AskItems(smach.State):
 
         for entity in entities:
             if onTopOff(entity, self.robot.ed.get_entity(id=res.choices['location'])):
-                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.center_point.x, entity.center_point.y, entity.center_point.z]) - mat[0:3, 3]
+                vec_bl = mat[0:3,0:3].getT()*numpy.matrix([entity.pose.position.x, entity.pose.position.y, entity.pose.position.z]) - mat[0:3, 3]
                 y_bl[entity.id] = vec_bl.item(1)
 
         ''' Sort on y coordinate '''

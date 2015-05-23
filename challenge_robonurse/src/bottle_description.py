@@ -68,7 +68,7 @@ class DescribeBottles(smach.State):
         #TODO: Sort bottles by their Y-coord wrt base_link. We go from large to small, so the leftmost if first
         bottle_to_y_dict = {}
         for bottle in bottles:
-            in_map = geom.PointStamped(point=bottle.center_point, frame_id=bottle.id)
+            in_map = geom.PointStamped(point=bottle.pose.position, frame_id=bottle.id)
             in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
             bottle_to_y_dict[bottle] = in_base_link.y
 
