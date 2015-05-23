@@ -38,13 +38,12 @@ class Say(State):
     >>> #robot.speech.speak.assert_any_call('a', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
-    def __init__(self, robot, sentence=None, language="us", personality="kyle", voice="default", mood="excited", block=True):
+    def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True):
         check_type(sentence, str, list)
-        check_type(sentence, str, list)
-        check_type(language, str)
-        check_type(personality, str)
-        check_type(voice, str)
-        check_type(mood, str)
+        #check_type(language, str)
+        #check_type(personality, str)
+        #check_type(voice, str)
+        #check_type(mood, str)
         check_type(block, bool)
 
         State.__init__(self, locals(), outcomes=["spoken"])
