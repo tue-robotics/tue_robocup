@@ -109,7 +109,7 @@ class ED:
         point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
         return point_in_map
 
-    def update_entity(self, id, type = None, posestamped = None):
+    def update_entity(self, id, type = None, posestamped = None, flags = None):
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
@@ -117,8 +117,32 @@ class ED:
             X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
             t = posestamped.pose.position
             json_entity += ', "pose": { "x": %d, "y": %d, "z": %d, "X": %d, "Y": %d, "Z": %d }' % (t.x, t.y, t.z, X, Y, Z)
+        if flags:
+            if isinstance(flags, dict):
+                flags = [flags]
+
+            if isinstance(flags, list):
+                json_entity += ', "flags": ['
+                
+                first = True
+                for flag in flags:
+                    if not isinstance(flag, dict):
+                        print "update_entity - Error: flags need to be a list of dicts or a dict"
+                        return False
+                    for k,v in flag.iteritems():
+                        if not first:
+                            json_entity += ','
+                        json_entity += '{"%s":"%s"}' % (k,v)
+                        first = False
+
+                json_entity += ']'
+
+            else:
+                print "update_entity - Error: flags need to be a list of dicts or a dict"
+                return False
 
         json = '{"entities":[{%s}]}'%json_entity
+
         return self._ed_update_srv(request=json)
 
     def lock_entities(self, lock_ids, unlock_ids):
