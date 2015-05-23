@@ -175,3 +175,9 @@ class ED:
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
         return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+
+    def get_full_id(self, short_id):
+        """Get an entity's full ID based on the first characters of its ID like you can do with git hashes"""
+        all_entities = self.get_entities(parse=False)
+        matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
+        return matches
