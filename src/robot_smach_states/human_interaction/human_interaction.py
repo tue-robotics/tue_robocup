@@ -227,6 +227,41 @@ class WaitForPersonInFront(WaitForDesignator):
 
 ##########################################################################################################################################
 
+class NameToUserData(WaitForDesignator):
+    """
+    Pass the received name into userdata
+    """
+    def __init__(self, robot, person_name = "", name_designator = None):
+        smach.State.__init__(   self,
+                                output_keys=['personName_out'],
+                                outcomes=['done'])
+
+        self.robot = robot
+        self.person_name = person_name
+        self.name_designator = name_designator
+
+    def execute(self, userdata):
+        print "NameToUserData"
+        
+        name = ""
+        # if the name was given in person_name parameter use it, otherwise use designator
+        if self.person_name:
+            name = self.person_name
+        elif self.name_designator:    
+            name = self.name_designator.resolve()
+        else:
+            name = "Default"
+            print "ERROR: Could not get the goal name for the person! Using '" + name + "'"
+
+        userdata.personName_out = name
+        print "NameToUserData: param -> {0}".format(name)
+
+        # import ipdb; ipdb.set_trace()
+        return 'done'
+
+
+##########################################################################################################################################
+
 
 class LearnPerson(smach.StateMachine):
     """
@@ -237,11 +272,12 @@ class LearnPerson(smach.StateMachine):
 
     tutorial for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
     """
-    def __init__(self, robot, person_name = ""):
+    def __init__(self, robot, person_name = "", name_designator = None):
         smach.StateMachine.__init__(self,
-                                    outcomes=['succeded_learning', 'failed_learning'],
-                                    input_keys=['personName_in'])
+                                    outcomes=['succeded_learning', 'failed_learning'])
         self.robot = robot
+        self.person_name = person_name
+        self.name_designator = name_designator
         self.service_name = "/" + robot.robot_name + "/ed/face_recognition/learn_face"
 
         with self:
@@ -254,7 +290,6 @@ class LearnPerson(smach.StateMachine):
                 if status == actionlib.GoalStatus.SUCCEEDED:
                     if result.result_info == "Learning complete":
                         print "Face learning complete! result: " + result.result_info
-                        # self.robot.speech.speak("Learning complete.", block=False)
                         return 'succeeded'
                     else:
                         return 'aborted'
@@ -268,8 +303,6 @@ class LearnPerson(smach.StateMachine):
             def send_goal_cb(userdata, goal):
                 # import ipdb; ipdb.set_trace()
 
-                # self.robot.speech.speak("Please look at me while I learn your face.", block=True)
-
                 learn_goal = FaceLearningGoal()
                 learn_goal.person_name = userdata.person_name_goal
 
@@ -278,6 +311,11 @@ class LearnPerson(smach.StateMachine):
                 return learn_goal
 
             # --------------------------------------------------------------------------------
+
+            smach.StateMachine.add( 'NAME_TO_USERDATA',
+                                    NameToUserData(robot, person_name = self.person_name, name_designator = self.name_designator),
+                                    remapping={     'personName_out':'personName_userdata'},
+                                    transitions={   'done': 'LEARN_PERSON'})
 
             # Create Simple Action ClientS
             smach.StateMachine.add( 'LEARN_PERSON',
@@ -291,7 +329,7 @@ class LearnPerson(smach.StateMachine):
                                     transitions={   'succeeded':'succeded_learning',
                                                     'aborted': 'failed_learning',
                                                     'preempted': 'failed_learning'},
-                                    remapping={     'person_name_goal':'personName_in'})
+                                    remapping={     'person_name_goal':'personName_userdata'})
 
 
 
