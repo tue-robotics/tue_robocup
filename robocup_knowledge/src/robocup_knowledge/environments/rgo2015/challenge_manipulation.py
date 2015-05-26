@@ -8,4 +8,4 @@ grasp_shelf="right_bookcase/shelf3"
 place_shelf="right_bookcase/shelf2"
 
 ''' Room where everything will take place '''
-room="office"
+room="living_room"
