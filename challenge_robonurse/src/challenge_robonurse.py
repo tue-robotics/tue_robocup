@@ -202,7 +202,7 @@ class GetPills(smach.StateMachine):
 
         shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
         bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
-        described_bottle = ds.EdEntityDesignator(robot, criteriafuncs=bottle_criteria, debug=False) #Criteria funcs will be added based on what granny says
+        described_bottle = ds.EdEntityDesignator(robot, debug=True) #ID will be decided by the description given by granny
         locked_described_bottle = ds.LockingDesignator(described_bottle)
 
         with self:
