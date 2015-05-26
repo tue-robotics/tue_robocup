@@ -67,15 +67,17 @@ class Say(State):
 ##########################################################################################################################################
 
 class Hear(State):
-    def __init__(self, robot, spec, time_out = rospy.Duration(10)):
+    def __init__(self, robot, spec, time_out = rospy.Duration(10), look_at_standing_person=True):
         State.__init__(self, locals(), outcomes=["heard", "not_heard"])
 
-    def run(self, robot, spec, time_out):
-        robot.head.look_at_standing_person()
+    def run(self, robot, spec, time_out, look_at_standing_person):
+        if look_at_standing_person:
+            robot.head.look_at_standing_person()
 
         answer = robot.ears.recognize(spec, {}, time_out)
 
-        robot.head.cancel_goal()
+        if look_at_standing_person:
+            robot.head.cancel_goal()
 
         if answer:
             if answer.result:
@@ -86,20 +88,23 @@ class Hear(State):
         return "not_heard"
 
 class HearOptions(smach.State):
-    def __init__(self, robot, options, timeout = rospy.Duration(10)):
+    def __init__(self, robot, options, timeout = rospy.Duration(10), look_at_standing_person=True):
         outcomes = options
         outcomes.append("no_result")
         smach.State.__init__(self, outcomes=outcomes)
         self._options = options
         self._robot = robot
         self._timeout = timeout
+        self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata):
-        self._robot.head.look_at_standing_person()
+        if self.look_at_standing_person:
+            self._robot.head.look_at_standing_person()
 
         answer = self._robot.ears.recognize("<option>", {"option":self._options}, self._timeout)
 
-        self._robot.head.cancel_goal()
+        if self.look_at_standing_person:
+            self._robot.head.cancel_goal()
 
         if answer:
             if answer.result:
@@ -142,7 +147,8 @@ class HearOptionsExtra(smach.State):
     def __init__(self, robot, spec_designator,
                         choices_designator,
                         speech_result_designator,
-                        time_out=rospy.Duration(10)):
+                        time_out=rospy.Duration(10),
+                        look_at_standing_person=True):
         smach.State.__init__(self, outcomes=["heard", "no_result"])
 
         self.robot = robot
@@ -155,6 +161,7 @@ class HearOptionsExtra(smach.State):
         self.choices_designator = choices_designator
         self.speech_result_designator = speech_result_designator
         self.time_out = time_out
+        self.look_at_standing_person = look_at_standing_person
 
     def execute(self, userdata=None):
         spec = self.spec_designator.resolve()
@@ -167,11 +174,14 @@ class HearOptionsExtra(smach.State):
             rospy.logerr("Could not resolve choices")
             return "no_result"
 
-        self.robot.head.look_at_standing_person()
+
+        if self.look_at_standing_person:
+            self.robot.head.look_at_standing_person()
 
         answer = self.robot.ears.recognize(spec, choices, self.time_out)
 
-        self.robot.head.cancel_goal()
+        if self.look_at_standing_person:
+            self.robot.head.cancel_goal()
 
         if answer:
             if answer.result:
