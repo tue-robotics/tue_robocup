@@ -39,7 +39,7 @@ class Location(object):
         self.attempts = attempts
 
 class FaceAnalysed(object):
-    def __init__(self, point_stamped, name, score, pose=challenge_knowledge.Pose.Standing, gender=challenge_knowledge.Gender.Male, inMainCrowd=False):
+    def __init__(self, point_stamped, name, score, pose=challenge_knowledge.Pose.Standing, gender=challenge_knowledge.Gender.Male, inMainCrowd=True):
         self.point_stamped = point_stamped
         self.name = name
         self.score = score
@@ -62,15 +62,6 @@ class PointDesignator(Designator):
 
     def resolve(self):
         return self.entity
-
-# TODO RESOLVE THE WHOLE SENTENCE, NOT JUST THE NAME!
-class DummyDesig(Designator):
-    def __init__(self, other):
-        super(DummyDesig, self).__init__(resolve_type=str)
-        self.other = other
-
-    def resolve(self):
-        return "Hello " + self.other.resolve() + "."
 
 
 def points_distance(p1, p2):
@@ -116,7 +107,7 @@ class LookAtPersonInFront(smach.State):
 
         # look front, 2 meters high
         # self.robot.head.look_at_standing_person(timeout=4)
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 1,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 1.5,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
         rospy.sleep(3)  # give time for the percetion algorithms to add the entity
 
         # try to resolve the designator
@@ -149,8 +140,9 @@ class LookAtPersonInFront(smach.State):
 
             # extract information from data
             if not entityData == None:
+                faces_front = None
                 try:
-                	# import ipdb; ipdb.set_trace()
+                    # import ipdb; ipdb.set_trace()
                     # get information on the first face found (cant guarantee its the closest in case there are many)
                     faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
                 except KeyError, ke:
@@ -209,36 +201,44 @@ class FindCrowd(smach.State):
         centerPointRes = None
         humanDesignatorRes = None
         entityDataRes = None
-        faceList = None
+        
 
         # create designators
         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
         centerPointDes = AttrDesignator(humanDesignator, 'center_point')
 
-        # self.robot.spindle.high()
+        self.robot.head.cancel_goal()
 
         # "scan" the room with the head
         # look at 3 meters front, 5 meters right and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-5,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-        rospy.sleep(1)
-
-        # look at 3 meters front, 5 meters left and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,5,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
         rospy.sleep(2)
 
-        # self.robot.spindle.medium()
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
+        rospy.sleep(3)
 
-        # resolve crowd designator
+        # look at 3 meters front, 5 meters left and 2 meters high
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
+        rospy.sleep(2)
+
+        # extra sleep to give more time to process
+        rospy.sleep(2)
+
+        self.robot.head.cancel_goal()
+
+        # resolve designator
         humanDesignatorRes = humanDesignator.resolve()
         if not humanDesignatorRes:
             printOk("Could not resolve humanDesignator")
-            pass
+            return 'failed'
 
 
+        # if humanDesignatorRes is not empty
         if not humanDesignatorRes == None:
             printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
 
             for humanEntity in humanDesignatorRes:
+                faceList = None
                 try:
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
@@ -246,6 +246,7 @@ class FindCrowd(smach.State):
                     # import ipdb; ipdb.set_trace()
                     printOk("Could not resolve humanEntity.data[...]:" + str(ke))
                     pass
+
                 # faceList = [human['perception_result']['face_detector']['faces_front'] for human in humanDesignatorRes]
 
                 if not faceList == None:
@@ -267,37 +268,46 @@ class FindCrowd(smach.State):
 
                             printOk("Added face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"]))
                         else:
-                            printOk("Location closeby already exists in the list")
+                            printOk("Location already exists in the list")
 
                 else:
+                    printWarning("Designator resolved but no faces where found")
+
                     # resolve data from entity
-                    try:
-                        # centerPointRes = humanEntity.center_point
-                        centerPointRes = None
-                    except KeyError, ke:
-                        printOk("Could not resolve humanEntity.center_point" + str(ke))
-                        pass
+                    # try:
+                    #     # centerPointRes = humanEntity.center_point
+                    #     centerPointRes = None
+                    # except KeyError, ke:
+                    #     printOk("Could not resolve humanEntity.center_point" + str(ke))
+                    #     pass
 
-                    if not centerPointRes == None:
-                        alreadyExists = False
-                        for loc in self.locations.current:
-                            p1 = (centerPointRes.x, centerPointRes.y, centerPointRes.z)
-                            p2 = (loc.point_stamped.point.x, loc.point_stamped.point.y, loc.point_stamped.point.z)
+                    # if not centerPointRes == None:
+                    #     alreadyExists = False
+                    #     for loc in self.locations.current:
+                    #         p1 = (centerPointRes.x, centerPointRes.y, centerPointRes.z)
+                    #         p2 = (loc.point_stamped.point.x, loc.point_stamped.point.y, loc.point_stamped.point.z)
 
-                            if points_distance(p1=p1, p2=p2) < 0.1:
-                                alreadyExists = True
-                                break
+                    #         if points_distance(p1=p1, p2=p2) < 0.1:
+                    #             alreadyExists = True
+                    #             break
 
-                        if not alreadyExists:
-                            self.locations.current += [Location(point_stamped = msgs.PointStamped(x=centerPointRes.x, y=centerPointRes.y, z=centerPointRes.z, frame_id="/map"),
-                                                                visited = False,
-                                                                attempts = 0)]
+                    #     if not alreadyExists:
+                    #         self.locations.current += [Location(point_stamped = msgs.PointStamped(x=centerPointRes.x, y=centerPointRes.y, z=centerPointRes.z, frame_id="/map"),
+                    #                                             visited = False,
+                    #                                             attempts = 0)]
 
-                            printOk("Added center_point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z))
-                        else:
-                            printOk("Location closeby already exists in the list")
+                    #         printOk("Added center_point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z))
+                    #     else:
+                    #         printOk("Location closeby already exists in the list")
 
-            return 'succeded'
+
+            printOk("Face location list has " + str(len(self.locations.current)) + " entries")
+
+            # if the number of found faces is not enough, continue searching
+            if len(self.locations.current) >= challenge_knowledge.min_faces_found:
+                return 'succeded'
+            else:
+                return 'failed'                
 
         else:
             printWarning("Could not find anyone in the room.")
@@ -342,7 +352,7 @@ class DescribePeople(smach.State):
                     str(face.inMainCrowd)))
 
                 if face.inMainCrowd == True:
-                    if face.gender == Gender.Male:
+                    if face.gender == challenge_knowledge.Gender.Male:
                         numberMale += 1
                     else:
                         numberFemale += 1
@@ -359,9 +369,9 @@ class DescribePeople(smach.State):
                     self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
                 else:
                     self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
-                        gender = "man" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "woman",
-                        pronoun = "he" if faceList[userdata.operatorIdx_in].gender == Gender.Male else "she",
-                        pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == Pose.Standing else "sitting down"),
+                        gender = "man" if faceList[userdata.operatorIdx_in].gender == challenge_knowledge.Gender.Male else "woman",
+                        pronoun = "he" if faceList[userdata.operatorIdx_in].gender == challenge_knowledge.Gender.Male else "she",
+                        pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == challenge_knowledge.Pose.Standing else "sitting down"),
                         block=True)
             except KeyError, ke:
                     printOk("KeyError userdata.operatorIdx_in:" + str(ke))
@@ -386,8 +396,7 @@ class PointAtOperator(smach.State):
         printOk("PointAtOperator")
 
         # Get information about the operator and point at the location
-
-        self.robot.rightArm.send_goal(0.5, -0.3, 0.9, 0, 0, 0, 60)
+        self.robot.rightArm.send_goal(0.5, -0.2, 0.9, 0, 0, 0, 60)
 
         return 'succeeded'
 
@@ -420,15 +429,16 @@ class AskPersonName(smach.State):
         outcome = state.execute()
 
         if not outcome == "heard":
-            name = "Mister Operator Fallback"
+            name = "Mister Operator"
             self.operatorNameDes.current = name
 
-            printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + \
-                    "). Using default name" + self.operatorNameDes.resolve())
+            printWarning("Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(str(outcome), self.operatorNameDes.resolve()))
             return 'failed'
         else:
             try:
                 name = answer.resolve().choices["name"]
+                self.operatorNameDes.current = name
+
                 printOk("Result received from speech recognition is '" + name + "'")
             except KeyError, ke:
                 printOk("KeyError resolving the name heard: " + str(ke))
@@ -453,8 +463,7 @@ class ConfirmPersonName(smach.State):
 
         self.operatorNameDes.current = name
 
-        self.robot.speech.speak(["You said " + name + ", right?",
-                                 "I heard " + name + ", is that correct?"], block=False)
+        self.robot.speech.speak("I heard " + name + ", is that correct?", block=False)
 
 
         spec = Designator("answer")
@@ -473,7 +482,7 @@ class ConfirmPersonName(smach.State):
             printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + ")")
             return 'incorrect'
         else:
-            self.robot.speech.speak(["Ok!", "Very well."], block=False)
+            self.robot.speech.speak("Ok!", block=False)
 
         return 'correct'
         
@@ -503,7 +512,7 @@ class GetOperatorLocation(smach.State):
         faceList = self.facesAnalysedDes.resolve()
         if not faceList:
             printOk("Could not resolve faces analysed")
-            pass
+            return 'failed'
 
         # import ipdb; ipdb.set_trace()
 
@@ -521,13 +530,12 @@ class GetOperatorLocation(smach.State):
                     self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, y=face.point_stamped.point.y, z=face.point_stamped.point.z, frame_id="/map"))
                     chosenOperator = True
 
-                # TODO: MARK PEOPLE THERE ARE CLOSE TO THE OPERATOR, IN THE "MAIN CROWD" face.inMainCrowd
-
-            # HAAAAAAAAAAAAAAAAAAACK
+            # If no operator was choosen, select a random one
             if not chosenOperator:
-                operatorIdx = 0
-                #operatorIdx = random.randint(0, len(faceList)-1)
-            	chosenOperator = True
+                # operatorIdx = 0
+                operatorIdx = random.randint(0, len(faceList)-1)
+                chosenOperator = True
+                printWarn("Could not choose an operator. Selecting random index: " + operatorIdx)
 
             if chosenOperator:
                 printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
@@ -536,21 +544,21 @@ class GetOperatorLocation(smach.State):
                     str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
 
                 # Operators face location
-                p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
+                # p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
 
-                # Update who belongs to the main crowd, close to the operator
-                for face in faceList:
-                    p2 = (face.point_stamped.point.x, face.point_stamped.point.y, face.point_stamped.point.z)
+                # # Update who belongs to the main crowd, close to the operator
+                # for face in faceList:
+                #     p2 = (face.point_stamped.point.x, face.point_stamped.point.y, face.point_stamped.point.z)
 
-                    if points_distance(p1=p1, p2=p2) < 5.0:
-                        face.inMainCrowd = True
+                #     if points_distance(p1=p1, p2=p2) < 5.0:
+                #         face.inMainCrowd = True
 
                 userdata.operatorIdx_out = operatorIdx
                 return 'succeeded'
             else:
                 userdata.operatorIdx_out = 0
 
-                printFail("Could not choose an operator from the list!")
+                printFail("Could not choose an operator from the list! Selecting the first.")
                 return 'failed'
         else:
             printFail("No faces were analysed!")
@@ -644,20 +652,20 @@ class AnalysePerson(smach.State):
 
                             # "predict" pose in a hacky way
                             if face_loc["map_z"] > 0.8:
-                                pose = Pose.Standing
+                                pose = challenge_knowledge.Pose.Standing
                             else:
-                                pose = Pose.Sitting_down
+                                pose = challenge_knowledge.Pose.Sitting_down
 
                             #  "predict" gender, in a hacky way
                             if recognition_label[:-1] == 'a':
-                                personGender = Gender.Female
+                                personGender = challenge_knowledge.Gender.Female
                             else:
-                                personGender = Gender.Male
+                                personGender = challenge_knowledge.Gender.Male
 
                             printOk("Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
                                 str(recognition_label),
                                 str(recognition_score),
-                                "standing up" if pose == Pose.Standing else "sitting down",
+                                "standing up" if pose == challenge_knowledge.Pose.Standing else "sitting down",
                                 face_loc["map_x"], face_loc["map_y"], face_loc["map_z"]))
 
                             self.facesAnalysedDes.current += [(FaceAnalysed(point_stamped = msgs.PointStamped(x=face_loc["map_x"], y=face_loc["map_y"], z=face_loc["map_z"], frame_id="/map"),
@@ -666,10 +674,10 @@ class AnalysePerson(smach.State):
                                                                             pose = pose,
                                                                             gender = personGender))]
                         else:
-                            pprintWarning("Did not add face to the list")
+                            printWarning("Did not add face to the list")
 
                 except KeyError, ke:
-                    printOk("KeyError faceList:" + str(ke))
+                    printError("KeyError faceList:" + str(ke))
                     pass
 
             return 'succeded'
