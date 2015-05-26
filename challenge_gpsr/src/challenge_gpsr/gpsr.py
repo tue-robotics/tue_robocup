@@ -17,10 +17,18 @@ from robot_skills.util import msg_constructors as geom
 import ed.msg
 from robot_smach_states import Grab
 
+from datetime import datetime
+from datetime import date
+
 #import data
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_gpsr')
 #common_kb = load_knowledge('challenge_gpsr')
+
+global ROBOT_NAME_SPECIAL
+LOCATION_NR_IN_ROOM = 0
+global LOC_ROOM
+LOC_ROOM = "cabinet"
 
 ###########################
 # Created by: Erik Geerts #
@@ -56,14 +64,15 @@ class Ask_action(smach.State):
 
         self.robot.speech.speak("What can I do for you?")
 
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out = rospy.Duration(30))
+        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=rospy.Duration(30))
         self.robot.head.cancel_goal()
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
             return "failed"
         try:
             if res.result:
-                say_result = self.replace_word(res.result,"me","you")
+                say_result_filter_me = self.replace_word(res.result,"me","you")
+                say_result = self.replace_word(say_result_filter_me,"your","my")
                 self.robot.speech.speak("Okay I will {0}".format(say_result))
                 print say_result
                 self.save_action(res)
@@ -128,7 +137,7 @@ class Ask_action(smach.State):
 
 class Query_specific_action(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "return_to_operator", "test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
+        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -143,9 +152,9 @@ class Query_specific_action(smach.State):
             self.robot.reasoner.assertz("current_action('1')")
             current_action = int("1")
         
+        #current_action = 2 ## for testing
         print "current action = ", current_action
-        #current_action = 2
-
+        
         if current_action == 1:
             action_1 = self.robot.reasoner.query("action_info('1',A,B)")
             for x in action_1:
@@ -191,7 +200,7 @@ class Query_specific_action(smach.State):
                     if str(choice_value) == "2_vb_find":
 
                         #First check if the word 'person' can be found in the action:
-                        if str(self.robot.reasoner.query_first_answer("action_info('complete_action',A)")).find('person'):
+                        if str(self.robot.reasoner.query_first_answer("action_info('complete_action',A)")).find('person')>-1:
                             print "person is found"
                             
                             room = self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)")
@@ -224,8 +233,6 @@ class Query_specific_action(smach.State):
                         return "answer_question"
 
                     if str(choice_value) == "3_vb_speak":
-
-
                         return "answer_special"
 
                     if str(choice_value) == "3_person_me":
@@ -269,12 +276,13 @@ class Finished_goal(smach.State):
             self.robot.reasoner.query("retractall(current_action(_))")
             self.robot.reasoner.assertz("current_action('"+str(int(action_nr[0]['A'])+1)+"')")
             action_nr = self.robot.reasoner.query("current_action(A)")
-            #print "query after = ", action_nr
+            current_action = int(action_nr[0]['A'])
+            #print "query after = ", current_action
 
         else:
             print "[gpsr] current_action not found. This should not happen."
 
-        if action_nr == 4:
+        if current_action == 4:
             return "tasks_completed"
         return "new_task"
 
@@ -304,9 +312,75 @@ class HearQuestion(smach.State):
         self.robot.head.cancel_goal()
         return "answered"
 
-# class SpeakSpecial(smach.State):
-#     def __init__(self, robot, time_out=rospy.Duration(10)):
-#         smach.State.__init__(self, outcomes=["answered", "error", "failed"])
+class SpeakSpecial(smach.State):
+    def __init__(self, robot, time_out=rospy.Duration(10)):
+        smach.State.__init__(self, outcomes=["answered", "failed"])
+        self.robot = robot
+        self.time_out = time_out
+
+    def execute(self, userdata):
+        self.robot.head.look_at_standing_person()
+
+        say_type = str(self.robot.reasoner.query_first_answer("action_info('3','3_name_time_date',A)"))
+
+        if say_type == 'your_name':
+            self.robot.speech.speak("My name is %s" % ROBOT_NAME_SPECIAL)
+            self.robot.head.cancel_goal()
+            return "answered"
+        if say_type == 'the_name_of_your_team':
+            self.robot.speech.speak("My team's name is Tech United")
+            self.robot.head.cancel_goal()
+            return "answered"
+
+        ## TIME SPECIALS
+        if (say_type == 'the_time' or say_type == "what_time_is_it" or say_type == "what_time_it_is"):
+            time="It is %s" % datetime.now().strftime("%I %M %p")
+            self.robot.speech.speak(time)
+            self.robot.head.cancel_goal()
+            return "answered"
+
+        if (say_type == 'what_day_is_today' or say_type == 'the day of the week'):
+            today = "It is %s" % datetime.now().strftime("%A")
+            self.robot.speech.speak(today)
+            self.robot.head.cancel_goal()
+            return "answered"
+
+        if (say_type == 'the_date'):
+            month = datetime.now().strftime("%B")
+            day_nr = datetime.now().strftime("%d")
+            year = datetime.now().strftime("%Y")
+
+            the_date = "Today it is %s %s of the year %s" % (month, day_nr, year)
+            #print the_date
+            self.robot.speech.speak(the_date)
+            self.robot.head.cancel_goal()
+            return "answered"
+
+        if (say_type == 'the_day_of_the_month'):
+            month = datetime.now().strftime("%B")
+            day_nr = datetime.now().strftime("%d")
+            the_day_of_the_month = "Today it is %s %s" % (month, day_nr)
+            #print the_date
+            self.robot.speech.speak(the_day_of_the_month)
+            self.robot.head.cancel_goal()
+            return "answered"
+
+        if (say_type == 'what_day_is_tomorrow'):
+            today = int(datetime.now().strftime("%w"))
+            week_list = ["Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+            tomorrow = week_list[today]
+            the_day_of_the_month = "Tomorrow it is %s" % (tomorrow)
+            #print the_day_of_the_month
+            self.robot.speech.speak(the_day_of_the_month)
+            self.robot.head.cancel_goal()
+            return "answered"
+        
+        self.robot.speech.speak("Something went wrong, I'm sorry", block=False)
+        return "failed"
+
+# class DetermineLocation(smach.State):
+#     def __init__(self, robot, room):
+#         smach.State.__init__(self, outcomes=["answered", "failed"])
 #         self.robot = robot
 #         self.time_out = time_out
 
@@ -315,36 +389,20 @@ class HearQuestion(smach.State):
 
 #         say_type = str(self.robot.reasoner.query_first_answer("action_info('3','3_name_time_date',A)"))
 
-#         if say_type == 'your name':
-#             self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-
-#         , 'the name of your team', 'the time', 'what time is it', 'tell the date', 'what day is today', 'what day is today', 'what day is tomorrow',  'tell the day of the month', ' tell the day of the week']}
-
-
-#         if not res:
-#             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
-#             return "error"
-
-#         if res:
-#             if "question" in res.choices:
-#                 rospy.loginfo("Question was: '%s'?"%res.result)
-#                 self.robot.speech.speak("The answer is %s"%data.choice_answer_mapping[res.choices['question']])
-#             else:
-#                 self.robot.speech.speak("Sorry, I do not understand your question")
-#                 return "failed"
-
-#         self.robot.head.cancel_goal()
-#         return "answered"
-
-
-                        
-
+#         if say_type == 'your_name':
+#             self.robot.speech.speak("My name is %s" % ROBOT_NAME_SPECIAL)
+#             self.robot.head.cancel_goal()
+#             return "answered"
+#         if say_type == 'the_name_of_your_team':
+#             self.robot.speech.speak("My team's name is Tech United")
+#             self.robot.head.cancel_goal()
 
 class FindObjectInRoom(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
     def __init__(self, robot, room, object):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        smach.StateMachine.__init__(self, outcomes=["Object_found", "Object_not_found", "No_locations", "Failed"])
+
         with self:
 
             ## room is known -> locations to search for object found in knowledge file. 
@@ -355,7 +413,66 @@ class FindObjectInRoom(smach.StateMachine):
 
             smach.StateMachine.add("SAY_FIND_OBJECT_IN_ROOM",
                                states.Say(robot,"Testing FindObjectInRoom", block=True),
-                               transitions={'spoken':'Done'})
+                               transitions={'spoken':'CHECK_FOR_LOCATIONS'})
+
+            @smach.cb_interface(outcomes=['location_found','no_location'])
+            def get_location_room(userdata):
+                answer = room.resolve()
+                print "! Room = ", answer
+                print "BEFORE LOCATION_NR_IN_ROOM = ", LOCATION_NR_IN_ROOM
+
+                try:
+                    if len(data.rooms_detailed[answer]) > LOCATION_NR_IN_ROOM:
+                        LOC_ROOM = data.rooms_detailed[answer][LOCATION_NR_IN_ROOM]
+                    
+                        global LOCATION_NR_IN_ROOM 
+                        LOCATION_NR_IN_ROOM += 1
+                        print "AFTER LOCATION_NR_IN_ROOM = ", LOCATION_NR_IN_ROOM
+                        print "! LOC_ROOM = ", LOC_ROOM
+                        robot.reasoner.query("retractall(room_loc(B))")
+                        robot.reasoner.assertz("room_loc("+str(LOC_ROOM)+")")
+                        print robot.reasoner.query_first_answer("room_loc(A)")
+
+                        return 'location_found'
+                    else:
+                        return 'no_location'
+
+                except KeyError:
+                    print "[find_loc] No loc found anymore, can happen"
+                    return "no_location"
+
+            smach.StateMachine.add( "CHECK_FOR_LOCATIONS",
+                                    smach.CBState(get_location_room),
+                                    transitions={'location_found':'NAV_TO_LOC',
+                                                 'no_location':'No_locations'})
+
+            smach.StateMachine.add('NAV_TO_LOC',
+                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.5),
+                                        transitions={   'arrived':'LOOKAT_LOC',
+                                                        'unreachable':'NAV_TO_LOC_RETRY',
+                                                        'goal_not_defined':'NAV_TO_LOC_RETRY'})
+
+            smach.StateMachine.add('NAV_TO_LOC_RETRY',
+                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.8),
+                                        transitions={   'arrived':'LOOKAT_LOC',
+                                                        'unreachable':'Object_not_found',
+                                                        'goal_not_defined':'Object_not_found'})
+            
+            smach.StateMachine.add( "LOOKAT_LOC",
+                                         states.LookAtEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
+                                         transitions={  'succeeded'         :'Object_not_found',
+                                                        'failed'            :'Object_not_found'})
+        
+
+
+
+
+
+
+
+
+
+
 
 class FindPerson(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
@@ -445,37 +562,37 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        # # Start challenge via StartChallengeRobust
-        # smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-        #                             states.StartChallengeRobust(robot, data.starting_point, use_entry_points = True),
-        #                             transitions={   "Done":"GO_TO_MEETING_WAYPOINT",
-        #                                             "Aborted":"GO_TO_MEETING_WAYPOINT",
-        #                                             "Failed":"GO_TO_MEETING_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
+        # Start challenge via StartChallengeRobust
+        smach.StateMachine.add( "START_CHALLENGE_ROBUST",
+                                    states.StartChallengeRobust(robot, data.starting_point, use_entry_points = True),
+                                    transitions={   "Done":"GO_TO_MEETING_WAYPOINT",
+                                                    "Aborted":"GO_TO_MEETING_WAYPOINT",
+                                                    "Failed":"GO_TO_MEETING_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
-        # smach.StateMachine.add('GO_TO_MEETING_WAYPOINT',
-        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
-        #                             transitions={   'arrived':'INTRODUCE_SHORT',
-        #                                             'unreachable':'GO_TO_MEETING_WAYPOINT_BACKUP',
-        #                                             'goal_not_defined':'GO_TO_MEETING_WAYPOINT_BACKUP'})
+        smach.StateMachine.add('GO_TO_MEETING_WAYPOINT',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    transitions={   'arrived':'INTRODUCE_SHORT',
+                                                    'unreachable':'GO_TO_MEETING_WAYPOINT_BACKUP',
+                                                    'goal_not_defined':'GO_TO_MEETING_WAYPOINT_BACKUP'})
 
-        # smach.StateMachine.add('GO_TO_MEETING_WAYPOINT_BACKUP',
-        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
-        #                             transitions={   'arrived':'INTRODUCE_SHORT',
-        #                                             'unreachable':'INTRODUCE_SHORT_FAILED',
-        #                                             'goal_not_defined':'INTRODUCE_SHORT_FAILED'})
+        smach.StateMachine.add('GO_TO_MEETING_WAYPOINT_BACKUP',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    transitions={   'arrived':'INTRODUCE_SHORT',
+                                                    'unreachable':'INTRODUCE_SHORT_FAILED',
+                                                    'goal_not_defined':'INTRODUCE_SHORT_FAILED'})
 
-        # ######################################################
-        # #################### INSTRUCTIONS ####################             
-        # ######################################################
+        ######################################################
+        #################### INSTRUCTIONS ####################             
+        ######################################################
 
 
-        # smach.StateMachine.add("INTRODUCE_SHORT",
-        #                        states.Say(robot,"Hi! I will just wait here and wonder if I can do something for you", block=False),
-        #                        transitions={'spoken':'ASK_ACTION'})
+        smach.StateMachine.add("INTRODUCE_SHORT",
+                               states.Say(robot,"Hi! I will just wait here and wonder if I can do something for you", block=False),
+                               transitions={'spoken':'ASK_ACTION'})
 
-        # smach.StateMachine.add("INTRODUCE_SHORT_FAILED",
-        #                        states.Say(robot,"Hi! I could not reach the meeting point, but I will just wait here and wonder if I can do something for you", block=False),
-        #                        transitions={'spoken':'ASK_ACTION'})
+        smach.StateMachine.add("INTRODUCE_SHORT_FAILED",
+                               states.Say(robot,"Hi! I could not reach the meeting point, but I will just wait here and wonder if I can do something for you", block=False),
+                               transitions={'spoken':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_ACTION",
                                 Ask_action(robot),
@@ -491,6 +608,7 @@ def setup_statemachine(robot):
                                                 'find_person':'2_FIND_PERSON',
                                                 #'count_objects':'FINISHED_TASK',
                                                 'answer_question':'3_SAY_QUESTION_1',
+                                                'answer_special':'3_SPEAK_SPECIAL',
                                                 'return_to_operator':'3_NAVIGATE_TO_OPERATOR',
                                                 'test':'GO_TO_INITIAL_POINT'})
 
@@ -499,24 +617,32 @@ def setup_statemachine(robot):
         ######### ACTION PART 1 #########
         #################################
 
+        ## Navigate to specific location
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
                                     states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.5),
-                                    transitions={   'arrived':'SAY_ARRIVED',
+                                    transitions={   'arrived':'1_LOOKAT_LOCATION',
                                                     'unreachable':'1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
                                                     'goal_not_defined':'1_ACTION_NAVIGATE_TO_LOCATION_RETRY'})
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
                                     states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.8),
-                                    transitions={   'arrived':'SAY_ARRIVED',
+                                    transitions={   'arrived':'1_LOOKAT_LOCATION',
                                                     'unreachable':'SAY_NOT_ARRIVED',
                                                     'goal_not_defined':'SAY_NOT_ARRIVED'})
         
+        smach.StateMachine.add( "1_LOOKAT_LOCATION",
+                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), waittime=5.0),
+                                     transitions={  'succeeded'         :'FINISHED_TASK',
+                                                    'failed'            :'FINISHED_TASK'})
+
+        ## Navigate to a room
+
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
                                     {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
                                     EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
-                                transitions={   'arrived'           :   'SAY_ARRIVED',
+                                transitions={   'arrived'           :   'FINISHED_TASK',
                                                 'unreachable'       :   '1_ACTION_NAVIGATE_TO_ROOM_RETRY',
                                                 'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_ROOM_RETRY'})
 
@@ -524,13 +650,9 @@ def setup_statemachine(robot):
                                 states.NavigateToSymbolic(robot, 
                                     {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
                                     EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
-                                transitions={   'arrived'           :   'SAY_ARRIVED',
+                                transitions={   'arrived'           :   'FINISHED_TASK',
                                                 'unreachable'       :   'SAY_NOT_ARRIVED',
                                                 'goal_not_defined'  :   'SAY_NOT_ARRIVED'})  
-
-        smach.StateMachine.add( 'SAY_ARRIVED',
-                                states.Say(robot, ["I have arrived at the desired location."], block=True),
-                                transitions={'spoken':'FINISHED_TASK'})
 
         smach.StateMachine.add( 'SAY_NOT_ARRIVED',
                                 states.Say(robot, ["I have not arrived at the desired location, I'm sorry."], block=True),
@@ -540,6 +662,7 @@ def setup_statemachine(robot):
         ######### ACTION PART 2 #########
         #################################
 
+
         smach.StateMachine.add( "2_GRAB_ITEM",
                                     Grab(robot, ObjectTypeDesignator(robot), empty_arm_designator),
                                     transitions={   'done'              :'FINISHED_TASK',
@@ -547,8 +670,9 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "2_FIND_ITEM",
                                     FindObjectInRoom(robot, QueryFirstAnswerDesignator(robot, "action_info('2','2_look_object_loc',_,A)"),QueryFirstAnswerDesignator(robot, "action_info('2','2_look_object_loc',A,_)")),
-                                    transitions={   'Done'              :'FINISHED_TASK',
-                                                    'Aborted'           :'FINISHED_TASK',
+                                    transitions={   'Object_found'      :'FINISHED_TASK',
+                                                    'Object_not_found'  :'2_FIND_ITEM',
+                                                    'No_locations'      :'FINISHED_TASK',
                                                     'Failed'            :'FINISHED_TASK'})
 
         smach.StateMachine.add( "2_FIND_PERSON",
@@ -566,7 +690,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('3_SAY_QUESTION_1', 
-                                states.Say(robot, "What can I do for you?", block=True), 
+                                states.Say(robot, "What question do you have for me?", block=True), 
                                 transitions={ 'spoken' :'3_HEAR_QUESTION_1'})
 
         smach.StateMachine.add('3_HEAR_QUESTION_1', 
@@ -583,6 +707,14 @@ def setup_statemachine(robot):
                                 HearQuestion(robot), 
                                 transitions={ 'answered' :'FINISHED_TASK',
                                               'error':'FINISHED_TASK',
+                                              'failed':'FINISHED_TASK'})
+
+        ###### ACTION SPEAK SPECIAL ######
+
+
+        smach.StateMachine.add('3_SPEAK_SPECIAL', 
+                                SpeakSpecial(robot), 
+                                transitions={ 'answered':'FINISHED_TASK',
                                               'failed':'FINISHED_TASK'})
 
         ###### ACTION RETURN TO OPERATOR ######
@@ -672,6 +804,7 @@ if __name__ == "__main__":
     
     if len(sys.argv) > 1:
         robot_name = sys.argv[1]
+        ROBOT_NAME_SPECIAL = robot_name
     else:
         print "[CHALLENGE GPSR] Please provide robot name as argument."
         exit(1)

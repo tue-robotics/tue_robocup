@@ -34,7 +34,7 @@ spec_goroom_findobj = "(<1_vb_goto> the <1_room> and <2_vb_find> the <2_object>)
 spec_findperson_talk = "(<2_vb_find> a person in the <1_room> and ((answer a <3_question>)|(<3_vb_speak> <3_name_time_date>)))"
 
 spec = "("+spec_get_deliver+"|"+spec_goroom_findobj+"|"+spec_findperson_talk+")"
-#spec = spec_findperson_talk
+#spec = spec_goroom_findobj
 
 choices = {'1_location':location_placement,
 '2_vb_take':['take', 'grasp', 'get'],   
@@ -50,7 +50,7 @@ choices = {'1_location':location_placement,
 '2_vb_find':['find', 'look for'],
 '3_question':['question'],
 '3_vb_speak':['tell', 'say', 'speak'],
-'3_name_time_date':['your name', 'the name of your team', 'the time', 'what time is it', 'tell the date', 'what day is today', 'what day is tomorrow',  'tell the day of the month', ' tell the day of the week']}
+'3_name_time_date':['your name', 'the name of your team', 'the time', 'what time is it', 'what time it is', 'the date', 'what day is today', 'what day is tomorrow',  'the day of the month', 'the day of the week']}
 
 
 ##########################################
