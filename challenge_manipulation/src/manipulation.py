@@ -462,9 +462,12 @@ def setup_statemachine(robot):
         def export_to_pdf(userdata):
             all_entities = robot.ed.get_entities()
             pdf_entities = []
+            # import ipdb; ipdb.set_trace()
             for object_shelf in OBJECT_SHELVES:
                 container_entity = robot.ed.get_entity(id=object_shelf, parse=False)
-                pdf_entities += [ e for e in all_entities if onTopOff(e, container_entity) ]
+                entities_on_shelf = [ e for e in all_entities if onTopOff(e, container_entity) if e]
+                pdf_entities += entities_on_shelf
+                rospy.loginfo("There are {} entities onTopOff {}. Makes {} entities in total so far".format(len(entities_on_shelf), object_shelf, len(pdf_entities)))
 
             pdf.entities_to_pdf(robot.ed, pdf_entities, "manipulation_challenge")
             return "exported"

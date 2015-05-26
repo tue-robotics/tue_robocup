@@ -13,10 +13,22 @@ import robot_skills.util.msg_constructors as msgs
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
+from robocup_knowledge import load_knowledge
 
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime
 
+# ----------------------------------------------------------------------------------------------------
 
+challenge_knowledge = load_knowledge("challenge_person_recognition")
+
+def printOk(sentence):
+    challenge_knowledge.printOk(sentence)
+
+def printError(sentence):
+    challenge_knowledge.printError(sentence)
+    
+def printWarning(sentence):
+    challenge_knowledge.printWarning(sentence)
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -26,37 +38,27 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         # ------------------------ INITIALIZATIONS ------------------------
 
-        waypoint_learning = EdEntityDesignator(robot, id="person_rec_learning")
-        waypoint_living_room_1 = EdEntityDesignator(robot, id="person_rec_living_room_1")
-        waypoint_living_room_2 = EdEntityDesignator(robot, id="person_rec_living_room_1")
-        waypoint_living_room_3 = EdEntityDesignator(robot, id="person_rec_living_room_1")
-
-        #REVIEW: You can do this in one line: operatorNameDes = VariableDesignator("")
-        operatorNameDes = VariableDesignator(resolve_type=str)
-        operatorNameDes.current = ""
+        operatorNameDes = VariableDesignator("")
 
         #REVIEW: A designator resolving to a designator is weird. Can't you use a VariableDesignator directly?
         nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) 
         nextLocationDes.current = PersonRecStates.PointDesignator()
 
-        locationsToVisitDes = VariableDesignator(resolve_type=list)
-        locationsToVisitDes.current = []
+        locationsToVisitDes = VariableDesignator([])
 
-        facesAnalyzedDes = VariableDesignator(resolve_type=list)
-        facesAnalyzedDes.current = []
+        facesAnalyzedDes = VariableDesignator([])
 
         operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
         operatorLocationDes.current = PersonRecStates.PointDesignator()
 
-        def helloOperator(): return "Hello " + operatorNameDes.resolve()
-        helloOperatorDes = DeferToRuntime(helloOperator, resolve_type=str)
+        # def helloOperator(): return "Hello " + operatorNameDes.resolve()
+        # helloOperatorDes = DeferToRuntime(helloOperator, resolve_type=str)
 
-        def defaultNameOperator(): return "I did not understand your name, so I will call you " + operatorNameDes.resolve()
-        defaultNameOperatorDes = DeferToRuntime(defaultNameOperator, resolve_type=str)
+        # def defaultNameOperator(): return "I did not understand your name, so I will call you " + operatorNameDes.resolve()
+        # defaultNameOperatorDes = DeferToRuntime(defaultNameOperator, resolve_type=str)
 
         # ------------------ SIMULATION ------------------------------------
 
-        # print PersonRecStates.OUT_PREFIX + PersonRecStates.bcolors.WARNING + "Adding simulated knowledge!" + PersonRecStates.bcolors.ENDC
         # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
         #                                                             visited = False, 
         #                                                             attempts = 0)]
@@ -91,28 +93,48 @@ class ChallengePersonRecognition(smach.StateMachine):
         #  -----------------------------------------------------------------
 
         @smach.cb_interface(outcomes=['done'])
-        def removeLocation(userdatam):
+        def removeLocation(userdata):
             # import ipdb; ipdb.set_trace()
             locationsList = locationsToVisitDes.resolve()
             locToRemove = nextLocationDes.resolve().resolve()
             updated = False
 
-            print PersonRecStates.OUT_PREFIX + "removeLocationCB"
+            printOk("removeLocationCB")
 
-            print PersonRecStates.OUT_PREFIX + "Locations available: " + str(locationsList)
+            printOk("Locations available: " + str(locationsList))
 
             #  iterate through all locations on the list and update the correct one
             for loc in locationsList:
                 if locToRemove.pose.position == loc.point_stamped.point and loc.visited == False:
-                    print PersonRecStates.OUT_PREFIX + "Updading this location to visited:\n" + str(loc.point_stamped)
+                    printOk("Updading this location to visited:\n" + str(loc.point_stamped))
                     loc.visited = True
                     updated = True
                     break
 
             if not updated:
-                print PersonRecStates.OUT_PREFIX + PersonRecStates.bcolors.FAIL + "Location not found in the list!"
+                printError("Location not found in the list!")
 
             return 'done'
+
+        @smach.cb_interface(outcomes=['spoken'])
+        def sayCouldNotLearnNameCB(userdata):
+            printOk("sayHelloCB")
+            robot.speech.speak( "Sorry but i could not understand your name. I will just call you " + operatorNameDes.resolve(),
+                                block=False)
+            return 'spoken'
+
+        @smach.cb_interface(outcomes=['spoken'])
+        def sayHelloCB(userdata):
+            printOk("sayHelloCB")
+            robot.speech.speak( "Hello " + operatorNameDes.resolve() + "!",
+                                block=False)
+            return 'spoken'
+
+        @smach.cb_interface(outcomes=['spoken'])
+        def greetOperatorCB(userdata):
+            printOk("greetOperatorCB")
+            robot.speech.speak( "I have found you {0}.".format(operatorNameDes.resolve()), block=False)
+            return 'spoken'
 
         #  -----------------------------------------------------------------
 
@@ -195,6 +217,8 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                                 "Could you repeat your name after the beep?"]),
                                            transitions={    'spoken':'container_failed'})
 
+                        # CONFIRM PERSON NAAAAAAAAAAAAAAAAAAAAAAAMEEEEEEEEEEEEEEEEEE
+
                     smach.Iterator.set_contained_state( 'LEARN_NAME_CONTAINER', 
                                                         learnNameContainer,
                                                         # loop_outcomes=['container_failed'],
@@ -209,11 +233,11 @@ class ChallengePersonRecognition(smach.StateMachine):
                 # ----------------------------------------
 
                 smach.StateMachine.add( 'SAY_COULD_NOT_LEARN_NAME',
-                                        states.Say(robot, defaultNameOperatorDes.resolve(), block=False),
+                                        smach.CBState(sayCouldNotLearnNameCB),
                                         transitions={    'spoken':'SAY_LOOK_AT_ME'})
 
                 smach.StateMachine.add( 'SAY_HELLO',
-                                        states.Say(robot, helloOperatorDes.resolve(), block=False),
+                                        smach.CBState(sayHelloCB),
                                         transitions={    'spoken':'SAY_LOOK_AT_ME'})
 
                 smach.StateMachine.add( 'SAY_LOOK_AT_ME',
@@ -226,8 +250,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'LEARN_PERSON'})
 
                 smach.StateMachine.add('LEARN_PERSON',
-                                        states.LearnPerson(robot),
-                                        remapping={     'personName_in':'personName_userData'},
+                                        states.LearnPerson(robot, name_designator = operatorNameDes),
                                         transitions={   'succeded_learning':'SAY_OPERATOR_LEARNED',
                                                         'failed_learning':'SAY_LEARN_FACE_FAILED'})
 
@@ -299,7 +322,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             with findCrowndContainer:
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
-                                        states.NavigateToWaypoint(robot, waypoint_living_room_1),
+                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
                                         transitions={   'arrived':          'SAY_SEARCHING_CROWD',
                                                         'unreachable':      'SAY_SEARCHING_CROWD',
                                                         'goal_not_defined': 'SAY_SEARCHING_CROWD'})
@@ -310,46 +333,30 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'FIND_CROWD',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded':  'CANCEL_HEAD_GOALS_2',
-                                                        'failed':   'CANCEL_HEAD_GOALS_2'})
-
-                smach.StateMachine.add( 'CANCEL_HEAD_GOALS_2',
-                                        PersonRecStates.CancelHeadGoals(robot),
-                                        transitions={    'done':'container_success'})
+                                        transitions={   'succeded':  'container_success',
+                                                        'failed':   'GOTO_LIVING_ROOM_2'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
-                                        states.NavigateToWaypoint(robot, waypoint_living_room_2),
+                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
                                         transitions={   'arrived':          'FIND_CROWD_2',
                                                         'unreachable':      'FIND_CROWD_2',
                                                         'goal_not_defined': 'FIND_CROWD_2'})
 
                 smach.StateMachine.add( 'FIND_CROWD_2',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded':  'CANCEL_HEAD_GOALS_3',
+                                        transitions={   'succeded':  'container_success',
                                                         'failed':   'GOTO_LIVING_ROOM_3'})
 
-                smach.StateMachine.add( 'CANCEL_HEAD_GOALS_3',
-                                        PersonRecStates.CancelHeadGoals(robot),
-                                        transitions={    'done':'container_success'})
-
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
-                                        states.NavigateToWaypoint(robot, waypoint_living_room_3),
+                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
                                         transitions={   'arrived':          'FIND_CROWD_3',
                                                         'unreachable':      'FIND_CROWD_3',
                                                         'goal_not_defined': 'FIND_CROWD_3'})
 
                 smach.StateMachine.add( 'FIND_CROWD_3',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded':  'CANCEL_HEAD_GOALS_4',
-                                                        'failed':   'CANCEL_HEAD_GOALS_5'})
-
-                smach.StateMachine.add( 'CANCEL_HEAD_GOALS_4',
-                                        PersonRecStates.CancelHeadGoals(robot),
-                                        transitions={    'done':'container_success'})
-
-                smach.StateMachine.add( 'CANCEL_HEAD_GOALS_5',
-                                        PersonRecStates.CancelHeadGoals(robot),
-                                        transitions={    'done':'container_failed'})                
+                                        transitions={   'succeded':  'container_success',
+                                                        'failed':   'container_failed'})             
 
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_CROWD_CONTAINER',
@@ -430,7 +437,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                     smach.Iterator.set_contained_state( 'ANALYZE_CONTAINER',
                                                          analyzeIterator,
-                                                         loop_outcomes=['container_failed'],
+                                                         # loop_outcomes=['container_failed'],
                                                          break_outcomes=['container_success'])
 
                 # add the lookoutIterator to the main state machine
@@ -504,7 +511,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'container_success'})
 
                 smach.StateMachine.add( 'GREET_OPERATOR',
-                                        states.Say(robot, PersonRecStates.DummyDesig(operatorNameDes), block=False),
+                                        smach.CBState(greetOperatorCB),
                                         transitions={   'spoken':'DESCRIBE_PEOPLE'})
 
                 smach.StateMachine.add( 'DESCRIBE_PEOPLE',
@@ -572,7 +579,7 @@ if __name__ == "__main__":
     machine = ChallengePersonRecognition(robot)
 
     if  len(sys.argv) > 2:
-        print PersonRecStates.OUT_PREFIX + PersonRecStates.bcolors.WARNING + "Overriding initial_state to '" + sys.argv[2] +  "'" + PersonRecStates.bcolors.ENDC
+        printOk("Overriding initial_state to '" + sys.argv[2] +  "'")
 
         initial_state = [sys.argv[2]]
         machine.set_initial_state(initial_state)
