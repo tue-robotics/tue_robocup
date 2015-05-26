@@ -180,7 +180,7 @@ class GetPills(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+        empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.arms['left'])
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
 
         def small(entity):
@@ -222,7 +222,7 @@ class GetPills(smach.StateMachine):
                                         bottle_desc_mapping_designator=bottle_description_map_desig),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
                                                     'failed'            :'SAY_LOOKAT_SHELF_2'})
-            
+
             #If the description fails at first, say something to also wait a little bit for entities to pop into ED and then try again
             smach.StateMachine.add( "SAY_LOOKAT_SHELF_2",
                                      states.Say(robot, ["Lets see what we have in store", "What do we have here?"]),
@@ -350,7 +350,7 @@ class HandleBlanket(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "PICKUP_BLANKET",
-                                    states.Say(robot, [ "I would like to pick up your blanket, but I know I can't reach it.", 
+                                    states.Say(robot, [ "I would like to pick up your blanket, but I know I can't reach it. Sorry", 
                                                         "Sorry, your blanket fell, but I can't reach it"]),
                                     transitions={   'spoken'            :'succeeded'})
 
@@ -557,8 +557,12 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
-                                    transitions={   'succeeded'     :'GO_BACK_TO_START',
+                                    transitions={   'succeeded'     :'SAY_GO_BACK',
                                                     'failed'        :'Aborted'})
+
+            smach.StateMachine.add( "SAY_GO_BACK",
+                                    states.Say(robot, ["I'll just go back", "Heading back"], block=True),
+                                    transitions={   'spoken'            :'GO_BACK_TO_START'})
 
             smach.StateMachine.add('GO_BACK_TO_START',
                                     states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial"), radius=0.2),
