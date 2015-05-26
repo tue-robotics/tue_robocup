@@ -81,10 +81,24 @@ class DescribeBottles(smach.State):
 
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
-        for bottle, description in descriptions.iteritems():
-            desc_sentence = "a {size}, {color} one".format(size=description.size, color=description.color)
-            if description.label:
-                desc_sentence += " labeled {label}".format(label=description.label)
+        for bottle, desc in descriptions.iteritems():
+
+            desc_sentence = ""
+            if desc.size and desc.color and desc.label:
+                desc_sentence = "a {size}, {color} one labeled {label}".format(size=desc.size, color=desc.color, label=desc.label)
+            elif desc.size and desc.color:
+                desc_sentence = "a {size}, {color} one".format(size=desc.size, color=desc.color)
+            elif desc.color and desc.label:
+                desc_sentence = "a {color} one labeled {label}".format(label=desc.label, color=desc.color)
+            elif desc.size and desc.label:
+                desc_sentence = "a {size} one labeled {label}".format(label=desc.label, size=desc.size)
+            elif desc.size:
+                desc_sentence = "a {size} one".format(size=desc.size)
+            elif desc.color:
+                desc_sentence = "a {color} one".format(color=desc.color)
+            elif desc.label:
+                desc_sentence += "one labeled {label}".format(label=desc.label)
+            
             self.robot.speech.speak(desc_sentence)
         self.robot.speech.speak("Which do you want?")
 
