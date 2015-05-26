@@ -14,8 +14,10 @@ from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-# from robocup_knowledge import load_knowledge
 
+from robocup_knowledge import load_knowledge
+knowledge_objs = load_knowledge('common').objects
+knowledge = load_knowledge('challenge_wakemeup')
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -36,13 +38,10 @@ default_milk = "fresh milk"
 
 bed_top_coordinates = {'x':0.783, 'y':1.315, 'z':0.3}
 
-# # load item names
-# common = load_knowledge('common')
-# knowledge_objs= load_knowledge('common').objects
-
-# names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
-# names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
-# names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
+# load item names
+names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
+names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
+names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
 
 # # Debug print
 # print prefix + "Fruit names from Knowledge: " + str(names_fruit)
@@ -121,7 +120,7 @@ class GetOrder(smach.State):
                                 ([<beginning>] <item1> [<preposition>] <item2>))")
 
         choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
-                                "preposition" : ["and", "and a", "and an", "with a", "with a"],
+                                "preposition" : ["and", "and a", "and an", "with a", "with a", "with", "a"],
                                 "item1" :       names_cereal + names_fruit + names_milk,
                                 "item2" :       names_cereal + names_fruit + names_milk,
                                 "item3" :       names_cereal + names_fruit + names_milk})
@@ -277,10 +276,10 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
-    def __init__(self, robot, bedDesignator):
-        smach.State.__init__(self, outcomes=['done'])
+    def __init__(self, robot, entity_id):
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.robot = robot
-        self.bed = bedDesignator.resolve()
+        self.bed = self.robot.ed.get_entity(id=entity_id)
 
     def execute(self, robot):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
@@ -295,7 +294,7 @@ class LookAtBedTop(smach.State):
         headGoal = msgs.PointStamped(x=self.bed.pose.position.x, y=self.bed.pose.position.y, z=self.bed.pose.position.z+self.bed.z_max, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
-        return 'done'
+        return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
