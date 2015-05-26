@@ -29,7 +29,7 @@ from robot_smach_states import Grab
 from robot_skills.util import msg_constructors as geom
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robot_smach_states.util.geometry_helpers import *
-from bottle_description import DescribeBottles, get_entity_color, get_entity_size
+from bottle_description import DescribeBottles, get_entity_color, get_entity_size, BottleDescription
 from action_detection import DetectAction
 from ed.msg import EntityInfo
 import numpy as np
@@ -195,7 +195,10 @@ class GetPills(smach.StateMachine):
         def type_unknown_or_not_room(entity):
             return entity.type == "" or entity.type not in ["room"] or "shelf" not in entity.type
 
-        bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room, not_too_small]
+        def not_bookcase_part(entity):
+            return not BOTTLE_SHELF in entity.id #Bookcase has elements named "bookcase/shelf1" etc. Ditch those
+
+        bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room, not_too_small, not_bookcase_part]
 
         shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
         bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
@@ -216,10 +219,12 @@ class GetPills(smach.StateMachine):
             #START Loy's version
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
             ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
+            bottle_description_map_desig = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, bottles_to_describe,
                                         spec_designator=ask_bottles_spec,
-                                        choices_designator=ask_bottles_choices),
+                                        choices_designator=ask_bottles_choices,
+                                        bottle_desc_mapping_designator=bottle_description_map_desig),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
                                                     'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
@@ -233,24 +238,43 @@ class GetPills(smach.StateMachine):
                                     states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
                                     transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
 
-            @smach.cb_interface(outcomes=['described'])
+            @smach.cb_interface(outcomes=['described', 'no_match'])
             def designate_bottle(userdata):
-                # import ipdb; ipdb.set_trace()
+                """The DescribeBottles-state creates a mapping of entity:BottleDescription. 
+                Here, we get convert Granny's spoken description to a BottleDescription 
+                    and select the entity/entities that have that description"""
                 answer = ask_bottles_answer.resolve()
+                bottle_description_map = bottle_description_map_desig.resolve() #Resolves to OrderedDict of EntityInfo:BottleDescription
                 if answer:
                     choices = answer.choices
-                    robot.speech.speak("OK, I will get the {size} {color} one labeled {label}".format(**choices))
-                    rospy.loginfo("Granny chose: {0}".format(choices))
-                    if 'color' in choices and choices['color'] != '':
-                        described_bottle.criteriafuncs += [lambda entity: get_entity_color(entity) == choices['color']]
-                    if 'size' in choices and choices['size'] != '':
-                        described_bottle.criteriafuncs += [lambda entity: get_entity_size(entity) == choices['size']]
-                    if 'label' in choices and choices['label'] != '':
-                        described_bottle.criteriafuncs += [lambda entity: entity.data.get("label", None) == choices['label']]
-                return 'described'
+                    grannies_desc = BottleDescription()
+                    if 'color' in choices and choices['color'] != '': grannies_desc.color = choices['color']
+                    if 'size'  in choices and choices['size']  != '': grannies_desc.size =  choices['size']
+                    if 'label' in choices and choices['label'] != '': grannies_desc.label = choices['label']
+
+
+                    # import ipdb; ipdb.set_trace()
+                    matching_bottles = [bottle for (bottle, y), bottle_desc in bottle_description_map.iteritems() if bottle_desc == grannies_desc]
+                    if matching_bottles:
+                        selected_bottle_id = matching_bottles[0].id #TODO: Select an easy to grasp one or try each one that matches the description
+                        rospy.loginfo("Selected bottle.id {} ".format(selected_bottle_id))
+
+                        described_bottle.id = selected_bottle_id
+
+                        robot.speech.speak("OK, I will get the {size} {color} one labeled {label}".format(**choices))
+                        rospy.loginfo("Granny chose & described: {0}".format(grannies_desc))
+                        return 'described'
+                    else:
+                        rospy.logerr("There are no matching_bottles")
+                        robot.speech.speak("Hey, there are nu such bottles!")
+                        return "no_match"
+                else:
+                    return "no_match"
+
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
                                     smach.CBState(designate_bottle),
-                                    transitions={'described'            :"LOOKAT_CHOSEN_BOTTLE"})
+                                    transitions={'described'            :"LOOKAT_CHOSEN_BOTTLE",
+                                                 'no_match'             :"ASK_WHICH_BOTTLE"})
             
             smach.StateMachine.add( "LOOKAT_CHOSEN_BOTTLE",
                                      states.LookAtEntity(robot, locked_described_bottle, waittime=1.0),

@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import rospy
 import smach
 
@@ -16,20 +18,34 @@ class BottleDescription(object):
         self.color = color
         self.label = label
 
+    def __eq__(self, other):
+        """Check equality of self against other
+        >>> assert BottleDescription() == BottleDescription()
+        >>> assert BottleDescription(size="big") == BottleDescription(size="big")
+        >>> assert BottleDescription(label="ibuprofen") == BottleDescription(label="ibuprofen")
+        >>> assert BottleDescription(size="big", color="red") == BottleDescription(size="big", color="red")
+        
+        >>> assert BottleDescription(label="ibuprofen") != BottleDescription(size="small")
+        >>> assert BottleDescription(size="big", color="red") != BottleDescription(size="big", color="blue")"""
+        return self.__dict__ == other.__dict__  # An object's values are stored in its __dict__, so you can compare those. 
+
+    def __repr__(self):
+        return "BottleDescription(size={size}, color={color}, label={label})".format(**self.__dict__)
+
 
 def get_entity_color(entity):
         try:
             return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
         except KeyError, ke:
             rospy.logwarn("Entity {0} has no key {1}".format(entity.id, ke))
-            return ""
+            return None
         except TypeError, te:
             rospy.logwarn("{1} for Entity {0}".format(entity.id, te))
-            return ""
+            return None
 
 
 def get_entity_size(entity):
-    size = ""
+    size = None
     try:
         height = abs(entity.z_min - entity.z_max)
         if height < 0.05:
@@ -45,7 +61,7 @@ def get_entity_size(entity):
     return size
 
 class DescribeBottles(smach.State):
-    def __init__(self, robot, bottle_collection_designator, spec_designator, choices_designator):
+    def __init__(self, robot, bottle_collection_designator, spec_designator, choices_designator, bottle_desc_mapping_designator):
         """
         @param robot the robot to run this with
         @bottle_collection_designator designates a bunch of bottles/entities
@@ -58,10 +74,11 @@ class DescribeBottles(smach.State):
 
         self.spec_designator = spec_designator
         self.choices_designator = choices_designator
+        self.bottle_desc_mapping_designator = bottle_desc_mapping_designator
 
     def execute(self, userdata=None):
         self.robot.head.reset()
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         bottles = self.bottle_collection_designator.resolve()
         if not bottles:
             return "failed"
@@ -81,7 +98,7 @@ class DescribeBottles(smach.State):
 
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
-        for bottle, desc in descriptions.iteritems():
+        for (bottle, y), desc in descriptions.iteritems():
 
             desc_sentence = ""
             if desc.size and desc.color and desc.label:
@@ -99,17 +116,20 @@ class DescribeBottles(smach.State):
             elif desc.label:
                 desc_sentence += "one labeled {label}".format(label=desc.label)
             
+            rospy.loginfo("Description for {0} = {1} ({2})".format(bottle.id, desc_sentence, desc))
             self.robot.speech.speak(desc_sentence)
         self.robot.speech.speak("Which do you want?")
 
-        colors = set([desc.color for desc in descriptions.values()])
-        sizes = set([desc.size for desc in descriptions.values()])
-        labels = set([desc.label for desc in descriptions.values()])
+        colors = set([desc.color if desc.color else "" for desc in descriptions.values()])
+        sizes = set([desc.size if desc.size else "" for desc in descriptions.values()])
+        labels = set([desc.label if desc.label else "" for desc in descriptions.values()])
         choices = {"color": colors, "size": sizes, "label": labels}
 
         # import ipdb; ipdb.set_trace()
         self.spec_designator.current = "Give me the <size> <color> bottle labeled <label>"  # TODO: allow more sentences
         self.choices_designator.current = choices
+
+        self.bottle_desc_mapping_designator.current = descriptions
 
         return "succeeded"
 
@@ -122,4 +142,8 @@ class DescribeBottles(smach.State):
 
         return BottleDescription(   size=size,
                                     color=most_probable_color,
-                                    label=random.choice(["aspirin", "ibuprofen", ""]))
+                                    label=random.choice(["aspirin", "ibuprofen", None]))
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
