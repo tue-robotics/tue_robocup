@@ -80,6 +80,12 @@ class DescribeBottles(smach.State):
         self.robot.head.reset()
         # import ipdb; ipdb.set_trace()
         bottles = self.bottle_collection_designator.resolve()
+        
+        #Lock the IDs in the world model so that they keep their IDs persistently
+        bottle_ids = [bottle.id for bottle in bottles]
+        rospy.logwarn("Locking IDs {}".format(bottle_ids))
+        self.robot.ed.lock_entities(bottle_ids, [])
+        
         if not bottles:
             return "failed"
 
@@ -120,10 +126,12 @@ class DescribeBottles(smach.State):
             self.robot.speech.speak(desc_sentence)
         self.robot.speech.speak("Which do you want?")
 
-        colors = set([desc.color if desc.color else "" for desc in descriptions.values()])
-        sizes = set([desc.size if desc.size else "" for desc in descriptions.values()])
-        labels = set([desc.label if desc.label else "" for desc in descriptions.values()])
+        colors = set([desc.color for desc in descriptions.values() if desc.color])
+        sizes = set([desc.size for desc in descriptions.values() if desc.size])
+        labels = set([desc.label for desc in descriptions.values() if desc.label])
         choices = {"color": colors, "size": sizes, "label": labels}
+
+        rospy.loginfo("Choices are {}".format(choices))
 
         # import ipdb; ipdb.set_trace()
         self.spec_designator.current = "Give me the <size> <color> bottle labeled <label>"  # TODO: allow more sentences

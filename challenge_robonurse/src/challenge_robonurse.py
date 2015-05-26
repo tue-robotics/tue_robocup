@@ -200,21 +200,22 @@ class GetPills(smach.StateMachine):
 
         bottle_criteria = [small, minimal_height_from_floor, type_unknown_or_not_room, not_too_small, not_bookcase_part]
 
-        shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
+        # shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
+        bottle_shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
         bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
         described_bottle = ds.EdEntityDesignator(robot, debug=False) #ID will be decided by the description given by granny
         locked_described_bottle = ds.LockingDesignator(described_bottle)
 
         with self:
             smach.StateMachine.add( "LOOKAT_SHELF",
-                                     LookAtEntities(robot, shelves),
-                                     transitions={  'succeeded'         :'LOOKAT_GRANNY',
+                                     states.LookAtEntity(robot, bottle_shelf),
+                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
-            smach.StateMachine.add( "LOOKAT_GRANNY",
-                                     states.LookAtEntity(robot, granny),
-                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
-                                                    'failed'            :'DESCRIBE_OBJECTS'})
+            # smach.StateMachine.add( "LOOKAT_GRANNY",
+            #                          states.LookAtEntity(robot, granny),
+            #                          transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
+            #                                         'failed'            :'DESCRIBE_OBJECTS'})
 
             #START Loy's version
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
@@ -230,7 +231,7 @@ class GetPills(smach.StateMachine):
 
             ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
-                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer),
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer, look_at_standing_person=False),
                                     transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
                                                     'no_result'         :'SAY_NOTHING_HEARD'})
 
@@ -261,11 +262,11 @@ class GetPills(smach.StateMachine):
 
                         described_bottle.id = selected_bottle_id
 
-                        robot.speech.speak("OK, I will get the {size} {color} one labeled {label}".format(**choices))
+                        robot.speech.speak("OK, I will get the {size} {color} one labeled {label} with I D {_id}".format(_id=str(selected_bottle_id)[:5], **choices))
                         rospy.loginfo("Granny chose & described: {0}".format(grannies_desc))
                         return 'described'
                     else:
-                        rospy.logerr("There are no matching_bottles")
+                        rospy.logerr("There are no bottles matching {}".format(grannies_desc))
                         robot.speech.speak("Hey, there are nu such bottles!")
                         return "no_match"
                 else:
@@ -273,17 +274,17 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR",
                                     smach.CBState(designate_bottle),
-                                    transitions={'described'            :"LOOKAT_CHOSEN_BOTTLE",
+                                    transitions={'described'            :"GRAB_BOTTLE",
                                                  'no_match'             :"ASK_WHICH_BOTTLE"})
             
-            smach.StateMachine.add( "LOOKAT_CHOSEN_BOTTLE",
-                                     states.LookAtEntity(robot, locked_described_bottle, waittime=1.0),
-                                     transitions={  'succeeded'         :'STOP_LOOKING',
-                                                    'failed'            :'STOP_LOOKING'})
+            # smach.StateMachine.add( "LOOKAT_CHOSEN_BOTTLE",
+            #                          states.LookAtEntity(robot, locked_described_bottle),
+            #                          transitions={  'succeeded'         :'GRAB_BOTTLE',
+            #                                         'failed'            :'GRAB_BOTTLE'})
 
-            smach.StateMachine.add( "STOP_LOOKING",
-                                    Stop_looking(robot),
-                                    transitions={   'stopped_looking'   :'GRAB_BOTTLE'})
+            # smach.StateMachine.add( "STOP_LOOKING",
+            #                         Stop_looking(robot),
+            #                         transitions={   'stopped_looking'   :'GRAB_BOTTLE'})
 
             smach.StateMachine.add( "GRAB_BOTTLE",
                                     Grab(robot, locked_described_bottle, empty_arm_designator),
