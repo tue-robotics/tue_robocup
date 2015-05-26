@@ -212,16 +212,28 @@ class GetPills(smach.StateMachine):
                                      transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
-            # smach.StateMachine.add( "LOOKAT_GRANNY",
-            #                          states.LookAtEntity(robot, granny),
-            #                          transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
-            #                                         'failed'            :'DESCRIBE_OBJECTS'})
-
-            #START Loy's version
             ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
             ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
             bottle_description_map_desig = ds.VariableDesignator(resolve_type=dict)
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
+                                    DescribeBottles(robot, bottles_to_describe,
+                                        spec_designator=ask_bottles_spec,
+                                        choices_designator=ask_bottles_choices,
+                                        bottle_desc_mapping_designator=bottle_description_map_desig),
+                                    transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
+                                                    'failed'            :'SAY_LOOKAT_SHELF_2'})
+            
+            #If the description fails at first, say something to also wait a little bit for entities to pop into ED and then try again
+            smach.StateMachine.add( "SAY_LOOKAT_SHELF_2",
+                                     states.Say(robot, ["Lets see what we have in store", "What do we have here?"]),
+                                     transitions={  'spoken'            :'LOOKAT_SHELF_2'})
+
+            smach.StateMachine.add( "LOOKAT_SHELF_2",
+                                     states.LookAtEntity(robot, bottle_shelf),
+                                     transitions={  'succeeded'         :'DESCRIBE_OBJECTS_2',
+                                                    'failed'            :'failed'}) #If you can't look at objects, you can't describe them
+
+            smach.StateMachine.add( "DESCRIBE_OBJECTS_2",
                                     DescribeBottles(robot, bottles_to_describe,
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices,

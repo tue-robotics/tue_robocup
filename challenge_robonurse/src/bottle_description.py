@@ -80,14 +80,14 @@ class DescribeBottles(smach.State):
         self.robot.head.reset()
         # import ipdb; ipdb.set_trace()
         bottles = self.bottle_collection_designator.resolve()
+        if not bottles:
+            return "failed"
         
         #Lock the IDs in the world model so that they keep their IDs persistently
         bottle_ids = [bottle.id for bottle in bottles]
         rospy.logwarn("Locking IDs {}".format(bottle_ids))
         self.robot.ed.lock_entities(bottle_ids, [])
         
-        if not bottles:
-            return "failed"
 
         #TODO: Sort bottles by their Y-coord wrt base_link. We go from large to small, so the leftmost if first
         bottle_to_y_dict = {}
