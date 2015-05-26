@@ -3,6 +3,7 @@
 import rospy
 import tf_server
 import visualization_msgs.msg
+import std_msgs.msg
 
 from actionlib import SimpleActionClient, GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
@@ -270,6 +271,45 @@ class Arm(object):
                 return True
             else:
                 return False
+
+
+    def handover_to_human(self, timeout=10):
+        '''
+        Handover an item from the gripper to a human.
+
+        Feels if user slightly pulls or pushes the (item in the) arm. On timeout, it will return False.
+        '''
+
+        succeeded = False;
+
+        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1)
+        pub.publish(std_msgs.msg.Bool(True))
+
+        try:
+            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
+            return True
+        except(rospy.ROSException), e:
+            return False
+
+
+    def handover_to_robot(self, timeout=10):
+        '''
+        Handover an item from a human to the robot.
+
+        Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
+        '''
+
+        succeeded = False;
+        
+        pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
+        pub.publish(std_msgs.msg.Bool(True))
+
+        try:
+            rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
+            return True
+        except(rospy.ROSException), e:
+            return False
+
 
     def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5)):
         '''
