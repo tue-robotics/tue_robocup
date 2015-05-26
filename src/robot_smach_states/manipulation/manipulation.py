@@ -4,6 +4,7 @@ from robot_skills.util import transformations
 
 
 import geometry_msgs
+from ed.msg import EntityInfo
 
 from robot_smach_states.human_interaction import Say
 from robot_smach_states.reset import ResetTorso
@@ -276,10 +277,19 @@ class GrabWithVisualServoing(smach.State):
 
 
 class HandoverFromHuman(smach.StateMachine):
-    def __init__(self, robot, arm_designator):
+    '''
+    State that enables low level grab reflex. Besides a robot object, needs 
+    an arm and an entity to grab, which is either one from ed through the 
+    grabbed_entity_designator or it is made up in the 
+    CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
+    as id. 
+    '''
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         check_type(arm_designator, Arm)
+        if not grabbed_entity_designator and grabbed_entity_label == "":
+            rospy.logerr("No grabbed entity label or grabbed entity designator given")
 
         with self:
             smach.StateMachine.add("POSE", ArmToJointConfig(robot, arm_designator, "carrying_pose"),
@@ -289,16 +299,20 @@ class HandoverFromHuman(smach.StateMachine):
                                 transitions={'succeeded'    :   'SAY1',
                                              'failed'       :   'SAY1'})
 
-            smach.StateMachine.add("SAY1", Say(robot,'Please hand over the object by sliding it in my gripper'),
+            smach.StateMachine.add("SAY1", Say(robot,'Please hand over the object by pushing it gently in my gripper'),
                             transitions={'spoken':'CLOSE_AFTER_INSERT'})
 
-            smach.StateMachine.add( 'CLOSE_AFTER_INSERT', SetGripper(robot, arm_designator, gripperstate='close'),
+            smach.StateMachine.add( 'CLOSE_AFTER_INSERT', CloseGripperOnHandoverToRobot(robot, 
+                                                                                        arm_designator, 
+                                                                                        grabbed_entity_label=grabbed_entity_label, 
+                                                                                        grabbed_entity_designator=grabbed_entity_designator,
+                                                                                        timeout=timeout),
                                 transitions={'succeeded'    :   'succeeded',
                                              'failed'       :   'failed'})
 
 
 class HandoverToHuman(smach.StateMachine):
-    def __init__(self, robot, arm_designator):
+    def __init__(self, robot, arm_designator, timeout=10):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
         #A designator can resolve to a different item every time its resolved. We don't want that here, so lock
@@ -316,16 +330,16 @@ class HandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add("MOVE_HUMAN_HANDOVER_JOINT_GOAL",
                         ArmToJointConfig(robot, locked_arm, 'handover_to_human'),
-                        transitions={   'succeeded' :'SAY_OPEN_GRIPPER',
+                        transitions={ 'succeeded'   :'SAY_OPEN_GRIPPER',
                                       'failed'      :'SAY_OPEN_GRIPPER'})
             #smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
             #            transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
 
             smach.StateMachine.add("SAY_OPEN_GRIPPER",
-                        Say(robot, [ "Be careful, I will open my gripper now"]),
-                        transitions={   'spoken'    :'OPEN_GRIPPER_HANDOVER'})
+                        Say(robot, [ "I will open my gripper when you slightly pull this thing"]),
+                        transitions={   'spoken'    :'OPEN_GRIPPER_ON_HANDOVER'})
 
-            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.OPEN),
+            smach.StateMachine.add('OPEN_GRIPPER_ON_HANDOVER', OpenGripperOnHandoverToHuman(robot, locked_arm, timeout=timeout),
                         transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
                                      'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
 
@@ -345,6 +359,59 @@ class HandoverToHuman(smach.StateMachine):
             smach.StateMachine.add("UNLOCK_ARM",
                         UnlockDesignator(locked_arm),
                         transitions={'unlocked'         :'succeeded'})
+
+
+
+class OpenGripperOnHandoverToHuman(smach.State):
+    def __init__(self, robot, arm_designator, timeout=10):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.arm_designator = arm_designator
+        self.timeout = timeout
+
+    def execute(self,userdata):
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        if arm.handover_to_human(self.timeout):
+            arm.occupied_by = None
+            return "succeeded"
+        else:
+            return "failed"
+
+
+class CloseGripperOnHandoverToRobot(smach.State):
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.arm_designator = arm_designator
+        self.timeout = timeout
+
+    def execute(self,userdata):
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        if arm.handover_to_robot(self.timeout):
+            
+            if grabbed_entity_designator:
+                arm.occupied_by = grabbed_entity_designator
+            else:
+                if grabbed_entity_label != "":
+                    handed_entity = EntityInfo(id=grabbed_entity_label)
+                    arm.occupied = handed_entity
+                else:
+                    rospy.logerr("No grabbed entity designator and no label for dummy entity given")
+                    return "failed"
+
+            return "succeeded"
+        else:
+            return "failed"
+
+
 
 
 class SetGripper(smach.State):
