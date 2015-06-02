@@ -257,7 +257,20 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_NOTHING_HEARD_2",
                                     states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
-                                    transitions={   'spoken'            :'failed'}) #TODO: Grasp random bottle
+                                    transitions={   'spoken'            :'DESIGNATE_RANDOM_BOTTLE'})
+
+            @smach.cb_interface(outcomes=['described', 'no_bottles'])
+            def designate_random_bottle(userdata):
+                bottle_description_map = bottle_description_map_desig.resolve() #Resolves to OrderedDict of EntityInfo:BottleDescription
+                if bottle_description_map:
+                    described_bottle.id = bottle_description_map.values()[0].id #The ID of a random described bottle
+                    return "described"
+                else:
+                    return 'no_bottles' #This cannot happen, since then DescribeBottles would have failed and we would not ask if Granny want a bottle. There are none
+            smach.StateMachine.add( "DESIGNATE_RANDOM_BOTTLE",
+                                    smach.CBState(designate_random_bottle),
+                                    transitions={'described'            :"GRAB_BOTTLE",
+                                                 'no_bottles'           :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
             @smach.cb_interface(outcomes=['described', 'no_match'])
             def designate_bottle(userdata):
@@ -566,7 +579,7 @@ class RoboNurse(smach.StateMachine):
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
                                     transitions={   'succeeded'     :'SAY_GO_BACK',
-                                                    'failed'        :'Aborted'})
+                                                    'failed'        :'SAY_GO_BACK'})
 
             smach.StateMachine.add( "SAY_GO_BACK",
                                     states.Say(robot, ["I'll just go back", "Heading back"], block=True),
