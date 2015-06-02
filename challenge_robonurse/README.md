@@ -42,7 +42,7 @@ During the challenge
 --------------------
 
     - Tell the robot what pills to get when asked
-    - Perform one of the actions after being handed the pills
+    - Perform one of the actions (standup and drop blanket, walk away & sit & hand over cane or walk a metre or so and fall) after being handed the pills
 
 After the challenge
 -------------------

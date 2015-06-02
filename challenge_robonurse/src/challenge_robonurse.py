@@ -11,7 +11,6 @@ The robot must grab the bottle and bring it to Granny.
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
-TODO: Select only items from the given description.
 TODO: Actual action detection with a hack. 
     Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
 # TODO: Grasp blanket
@@ -249,7 +248,16 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_NOTHING_HEARD",
                                     states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
-                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE'})
+                                    transitions={   'spoken'            :'ASK_WHICH_BOTTLE_2'})
+
+            smach.StateMachine.add( "ASK_WHICH_BOTTLE_2",
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer, look_at_standing_person=False),
+                                    transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
+                                                    'no_result'         :'SAY_NOTHING_HEARD_2'})
+
+            smach.StateMachine.add( "SAY_NOTHING_HEARD_2",
+                                    states.Say(robot, ["Granny, I didn't hear you, please tell me wich bottles you want"]),
+                                    transitions={   'spoken'            :'failed'}) #TODO: Grasp random bottle
 
             @smach.cb_interface(outcomes=['described', 'no_match'])
             def designate_bottle(userdata):
