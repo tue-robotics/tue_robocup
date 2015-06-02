@@ -37,22 +37,24 @@ def isPointInsideHull(p, chull):
 
 	return True
 
-def onTopOff(e1, e2, ht=0.1):
-	""" Checks whether entity e1 is on top of entity e2 
-		e1: entity e1
-		e2: entity e2
-		ht: height threshold: the bottom of e1 and the top of e2 need to be within ht m
+def onTopOff(subject, container, ht=0.1):
+	""" Checks whether the entity 'subject' is on top of entity 'container' 
+		@param subject the EntityInfo which may be on top of the container, e.g. a cup
+		@param container: the EntityInfo that may be supporting the other subject, e.g. a table.
+		ht: height threshold: the bottom of entity and the top of container need to be within ht m
 	"""
-	''' First: check if e2 actually has a convex hull '''
-	if len(e2.convex_hull) == 0:
-		print 'Error, entity {0} has no convex hull'.format(e2.id)
+	''' First: check if container actually has a convex hull '''
+	if len(container.convex_hull) == 0:
+		print 'Error, entity {0} has no convex hull'.format(container.id)
 		return False
 
-	''' Second: check if center point of e1 is within convex hull of e2 '''
-	if not isPointInsideHull(e1.pose.position, e2.convex_hull):
+	''' Second: check if center point of entity is within convex hull of container '''
+	if not isPointInsideHull(subject.pose.position, container.convex_hull):
 		return False
 
-	if math.fabs(e1.pose.position.z+e1.z_min - e2.pose.position.z+e2.z_max) > ht:
+	subject_bottom = subject.pose.position.z+subject.z_min
+	container_top = container.pose.position.z+container.z_max
+	if math.fabs(subject_bottom - container_top) > ht:
 		return False
 
 	return True
