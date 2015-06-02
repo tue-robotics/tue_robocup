@@ -38,6 +38,35 @@ class LookAtEntity(State):
         rospy.sleep(rospy.Duration(waittime))
         return "succeeded"
 
+class LookOnTopOfEntity(State):
+    def __init__(self, robot, entity, keep_following=False, waittime=0.0):
+        check_type(entity, EntityInfo)
+
+        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
+
+    def run(self, robot, entity, keep_following, waittime):
+        if keep_following:
+            rospy.logerr("Look at stuff: keep_following is obsolete")
+
+        if not entity:
+            return 'failed'
+
+        #Entities define their own frame, so there is no need to transform the pose to /map.
+        #That would be equivalent to defining coordinates 0,0,0 in its own frame, so that is what we do here.
+        #The added benefit is that the entity's frame actually moves because the entity is tracked.
+        #This makes the head track the entity
+        center_point = Point()
+        frame_id = "/"+entity.id
+
+        center_point.z = entity.z_max
+
+        rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
+        point_stamped = PointStamped(point=center_point,
+                                     header=Header(frame_id=frame_id))
+        robot.head.look_at_point(point_stamped)
+        rospy.sleep(rospy.Duration(waittime))
+        return "succeeded"
+
 # Testing
 
 def setup_statemachine(robot):
