@@ -6,6 +6,9 @@ find_person = {
     'min_exist_prob' : 0.6
 }
 
+alarm_wait_time = 5
+alarm_duration = 60
+
 give_newspaper_timeout = 3
 
 

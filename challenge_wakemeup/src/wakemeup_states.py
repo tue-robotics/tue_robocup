@@ -301,16 +301,19 @@ class LookAtBedTop(smach.State):
 
 
 class LookIfSomethingsThere(smach.State):
-    def __init__(self, robot, designator):
+    def __init__(self, robot, designator, timeout=0):
         smach.State.__init__(self, outcomes=['awake', 'not_awake'])
         self.robot = robot
         self.designator = designator
+        self.timeout = rospy.Duration(timeout)
 
     def execute(self, robot):
-        person_awake = self.designator.resolve()
-        print person_awake
-        rospy.logerr("Only checking if the designator resolves...")
-        if person_awake != None:
-            return 'awake'
-        else:
-            return 'not_awake'
+        self.start_time = rospy.Time.now()
+        print (rospy.Time.now() - self.start_time).secs
+        print rospy.Time.now() - self.start_time < self.timeout
+        while rospy.Time.now() - self.start_time < self.timeout:
+            if self.designator.resolve():
+                return 'awake'
+
+        return 'not_awake'
+            

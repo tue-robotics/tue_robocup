@@ -181,27 +181,24 @@ class WakeMeUp(smach.StateMachine):
                                                             "Time for breakfast!"], block=True),
                                         transitions={   'spoken' :'LOOK_IF_AWAKE'})
 
-                #TODO: Add concurrence to play music to wake someone up and monitor whether the dude is awake?
-
                 smach.StateMachine.add( "LOOK_IF_AWAKE",
-                                        wakeStates.LookIfSomethingsThere(robot, entityOnBedDesignator),
+                                        wakeStates.LookIfSomethingsThere(robot, entityOnBedDesignator, timeout=knowledge.alarm_wait_time),
                                         transitions={    'awake':'SAY_AWAKE',
                                                          'not_awake':'CHECK_TIME'})
 
                 smach.StateMachine.add( "CHECK_TIME",
-                                        states.CheckTime(robot, wakeup_time_marker, 40),
+                                        states.CheckTime(robot, wakeup_time_marker, knowledge.alarm_duration),
                                         transitions={   'ok'        :'WAKEUP_MESSAGE',
                                                         'timeout'   :'SAY_AWAKE'})
 
                 smach.StateMachine.add( "SAY_AWAKE",
-                                        states.Say(robot, [ "Finally, you're awake, I will hand you your newspaper"], block=True),
+                                        states.Say(robot, ["Finally, you're awake, I will hand you your newspaper"], block=True),
                                         transitions={   'spoken' :'HANDOVER_NEWSPAPER'})
 
                 smach.StateMachine.add( "HANDOVER_NEWSPAPER",
                                         states.HandoverToHuman(robot, armDesignator, timeout=knowledge.give_newspaper_timeout),
                                         transitions={   'succeeded':'container_succeeded',
                                                         'failed':'container_succeeded'})
-
 
             smach.StateMachine.add( 'WAKEUP_CONTAINER',
                                     wakeupContainer,
@@ -245,7 +242,6 @@ class WakeMeUp(smach.StateMachine):
                                     takeOrderContainer,
                                     transitions={   'container_successed':'PREP_BREAKFAST_CONTAINER',
                                                     'container_failed': 'SAY_ILL_CHOOSE_BREAKFAST'})
-
 
             smach.StateMachine.add( "SAY_ILL_CHOOSE_BREAKFAST",
                                     states.Say(robot, "I couldn't understand the breakfast order. I'll choose something for you.", block=False),
