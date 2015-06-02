@@ -41,6 +41,58 @@ LOC_ROOM = "cabinet"
 # - dropoff points in eindhoven definieren.
 # - remove timeout of 5 minutes -> DID YOU SAY SOMETHING, IN ANY CASE, I DID NOT HEAR YOU!
 
+class QueryFirstAnswerDesignator(Designator):
+    def __init__(self, robot, reasoner_query):
+        super(QueryFirstAnswerDesignator, self).__init__(resolve_type=str)
+        self.robot = robot
+        self.reasoner_query = reasoner_query
+
+    def resolve(self):
+        first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
+        if not first_answer:
+            return None
+        print "first_answer is:", str(first_answer)
+        return str(first_answer)
+
+class ObjectTypeDesignator(Designator):
+    def __init__(self, robot):
+        super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
+        self.robot = robot
+        #self.object_to_find = object_to_find
+
+    def resolve(self):
+        object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',A,_)"))
+        #object_type = object_to_find.resolve()
+        ## FOR TESTING:
+        #object_type = "cola"
+        has_type = lambda entity: entity.type == object_type
+        location = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',_,A)"))
+        #location = str(self.robot.reasoner.query_first_answer(self.query))
+        ## FOR TESTING:
+        #location = "hallway_couch"
+        grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
+                                                                criteriafuncs=[has_type], debug=False)
+
+        print "test1"
+        print grab_item_designator.resolve()
+        print "test2"
+        return grab_item_designator.resolve()
+
+
+# class PersonTypeDesignator(Designator):
+#     def __init__(self, robot):
+#         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
+#         self.robot = robot
+
+#     def resolve(self):
+#         has_type = lambda entity: entity.type == "person"
+#         location = str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
+#         ## FOR TESTING:
+#         #location = "hallway_couch"
+#         grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
+#                                                                 criteriafuncs=[has_type], debug=False)
+
+#         return grab_item_designator.resolve()
 
 
 ### EXAMPLE SENTENCES stated in new conceptual rulebook.
@@ -137,7 +189,7 @@ class Ask_action(smach.State):
 
 class Query_specific_action(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "test"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
+        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "no_action"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -252,7 +304,7 @@ class Query_specific_action(smach.State):
         # answers = self.robot.reasoner.query("retractall(action_info(_,_))")
         # print "test"
         # print self.robot.reasoner.query("action_info(A,B)")
-        return "test"
+        return "no_action"
 
 class Finished_goal(smach.State):
     # Checks how many tasks have been done and if another task is needed
@@ -400,7 +452,7 @@ class SpeakSpecial(smach.State):
 class FindObjectInRoom(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
-    def __init__(self, robot, room, object):
+    def __init__(self, robot, room, object_to_find):
         smach.StateMachine.__init__(self, outcomes=["Object_found", "Object_not_found", "No_locations", "Failed"])
 
         with self:
@@ -418,8 +470,8 @@ class FindObjectInRoom(smach.StateMachine):
             @smach.cb_interface(outcomes=['location_found','no_location'])
             def get_location_room(userdata):
                 answer = room.resolve()
-                print "! Room = ", answer
-                print "BEFORE LOCATION_NR_IN_ROOM = ", LOCATION_NR_IN_ROOM
+                #print "! Room = ", answer
+                #print "BEFORE LOCATION_NR_IN_ROOM = ", LOCATION_NR_IN_ROOM
 
                 try:
                     if len(data.rooms_detailed[answer]) > LOCATION_NR_IN_ROOM:
@@ -427,11 +479,11 @@ class FindObjectInRoom(smach.StateMachine):
                     
                         global LOCATION_NR_IN_ROOM 
                         LOCATION_NR_IN_ROOM += 1
-                        print "AFTER LOCATION_NR_IN_ROOM = ", LOCATION_NR_IN_ROOM
-                        print "! LOC_ROOM = ", LOC_ROOM
+                        #print "AFTER LOCATION_NR_IN_ROOM = ", LOCATION_NR_IN_ROOM
+                        #print "! LOC_ROOM = ", LOC_ROOM
                         robot.reasoner.query("retractall(room_loc(B))")
                         robot.reasoner.assertz("room_loc("+str(LOC_ROOM)+")")
-                        print robot.reasoner.query_first_answer("room_loc(A)")
+                        #print robot.reasoner.query_first_answer("room_loc(A)")
 
                         return 'location_found'
                     else:
@@ -447,10 +499,12 @@ class FindObjectInRoom(smach.StateMachine):
                                                  'no_location':'No_locations'})
 
             smach.StateMachine.add('NAV_TO_LOC',
-                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.5),
-                                        transitions={   'arrived':'LOOKAT_LOC',
-                                                        'unreachable':'NAV_TO_LOC_RETRY',
-                                                        'goal_not_defined':'NAV_TO_LOC_RETRY'})
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'LOOKAT_LOC',
+                                                    'unreachable'       :   'NAV_TO_LOC_RETRY',
+                                                    'goal_not_defined'  :   'NAV_TO_LOC_RETRY'})
 
             smach.StateMachine.add('NAV_TO_LOC_RETRY',
                                         states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.8),
@@ -459,18 +513,58 @@ class FindObjectInRoom(smach.StateMachine):
                                                         'goal_not_defined':'Object_not_found'})
             
             smach.StateMachine.add( "LOOKAT_LOC",
-                                         states.LookAtEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
-                                         transitions={  'succeeded'         :'Object_not_found',
-                                                        'failed'            :'Object_not_found'})
-        
+                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
+                                         transitions={  'succeeded'         :'CHECK_FOR_OBJECT',
+                                                        'failed'            :'CHECK_FOR_OBJECT'})
 
+            @smach.cb_interface(outcomes=['object_found','object_not_found'])
+            def check_for_object(userdata):
+                answer = object_to_find.resolve()
+                print "! Object_type_to_find = ", answer
 
+                try:
+                    object_type = object_to_find.resolve()
+                    has_type = lambda entity: entity.type == object_type
+                    #print "aaaaa, test has_type = ", object_type
+                    location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
+                    #print "aaaaa, test location = ", location
+                    grab_item_designator = EdEntityDesignator(robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
+                                                                            criteriafuncs=[has_type], debug=False)
 
+                    #print "test1 \n"
+                    #print grab_item_designator.resolve()
+                    #print "\n test2"
+                    if grab_item_designator.resolve():
+                        return 'object_found'
+                    else:
+                        return 'object_not_found'
 
+                except KeyError:
+                    print "[find_loc] No loc found anymore, can happen"
+                    return "object_not_found"
 
+            smach.StateMachine.add( "CHECK_FOR_OBJECT",
+                                    smach.CBState(check_for_object),
+                                    transitions={'object_found':'SAY_FOUND_OBJECT',
+                                                 'object_not_found':'Object_not_found'})
 
+            @smach.cb_interface(outcomes=['ok'])
+            def dynamic_say(userdata):
+                answer = object_to_find.resolve()
+                print "! Object_type_to_find = ", answer
 
+                try:
+                    object_type = object_to_find.resolve()
+                    robot.speech.speak("I found the " + str(object_type) + ". They are on the " + str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()))
+                    return 'ok'
 
+                except KeyError:
+                    print "[say] problem should not happen"
+                    return "ok"
+
+            smach.StateMachine.add("SAY_FOUND_OBJECT",
+                               smach.CBState(dynamic_say),
+                               transitions={'ok':'Object_found'})
 
 
 
@@ -498,52 +592,6 @@ class FindPerson(smach.StateMachine):
 ##### STATEMACHINE #####
 ########################
 
-class QueryFirstAnswerDesignator(Designator):
-    def __init__(self, robot, reasoner_query):
-        super(QueryFirstAnswerDesignator, self).__init__(resolve_type=str)
-        self.robot = robot
-        self.reasoner_query = reasoner_query
-
-    def resolve(self):
-        first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
-        if not first_answer:
-            return None
-        print "first_answer is:", str(first_answer)
-        return str(first_answer)
-
-class ObjectTypeDesignator(Designator):
-    def __init__(self, robot):
-        super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
-        self.robot = robot
-
-    def resolve(self):
-        object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',A,_)"))               
-        ## FOR TESTING:
-        #object_type = "cola"
-        has_type = lambda entity: entity.type == object_type
-        location = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',_,A)"))
-        ## FOR TESTING:
-        #location = "hallway_couch"
-        grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-                                                                criteriafuncs=[has_type], debug=False)
-
-        return grab_item_designator.resolve()
-
-
-# class PersonTypeDesignator(Designator):
-#     def __init__(self, robot):
-#         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
-#         self.robot = robot
-
-#     def resolve(self):
-#         has_type = lambda entity: entity.type == "person"
-#         location = str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
-#         ## FOR TESTING:
-#         #location = "hallway_couch"
-#         grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-#                                                                 criteriafuncs=[has_type], debug=False)
-
-#         return grab_item_designator.resolve()
 
 def setup_statemachine(robot):
 
@@ -610,7 +658,7 @@ def setup_statemachine(robot):
                                                 'answer_question':'3_SAY_QUESTION_1',
                                                 'answer_special':'3_SPEAK_SPECIAL',
                                                 'return_to_operator':'3_NAVIGATE_TO_OPERATOR',
-                                                'test':'GO_TO_INITIAL_POINT'})
+                                                'no_action':'SAY_GO_TO_EXIT'})
 
 
         #################################
