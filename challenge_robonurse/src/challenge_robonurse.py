@@ -385,10 +385,12 @@ class HandleFall(smach.StateMachine):
 
         def on_top(entity):
             container_entity = robot.ed.get_entity(id=GRANNIES_TABLE_KB)
-            return onTopOff(entity, container_entity)
+            is_on_top = onTopOff(entity, container_entity)
+            rospy.loginfo("{} is {}op top of {}".format(entity.id, {True:"", False:"NOT "}[is_on_top], container_entity.id))
+            return is_on_top
 
         # Don't pass the weight_function, might screw up if phone is not near the robot
-        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
+        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=True)
         empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
         
@@ -398,7 +400,7 @@ class HandleFall(smach.StateMachine):
                                     transitions={   'spoken' : 'GOTO_COUCHTABLE'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.1),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'GOTO_COUCHTABLE_BACKUP',
                                                     'goal_not_defined':'GOTO_COUCHTABLE_BACKUP'})
@@ -410,8 +412,9 @@ class HandleFall(smach.StateMachine):
                                                     'goal_not_defined':'LOOKAT_COUCHTABLE'})
 
             smach.StateMachine.add("LOOKAT_COUCHTABLE",
-                                     Look_point(robot,8.055, 6.662, 0.4),
-                                     transitions={  'looking'         :'SAY_TRY_GRAB_PHONE'})
+                                     states.LookAtEntity(robot, grannies_table),
+                                     transitions={  'succeeded'         :'SAY_TRY_GRAB_PHONE',
+                                                    'failed'            :'SAY_TRY_GRAB_PHONE'})
 
             smach.StateMachine.add( "SAY_TRY_GRAB_PHONE",
                                     states.Say(robot, "I am trying to grab the phone.", block=False),
