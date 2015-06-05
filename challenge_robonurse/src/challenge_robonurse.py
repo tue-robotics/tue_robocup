@@ -263,7 +263,8 @@ class GetPills(smach.StateMachine):
             def designate_random_bottle(userdata):
                 bottle_description_map = bottle_description_map_desig.resolve() #Resolves to OrderedDict of EntityInfo:BottleDescription
                 if bottle_description_map:
-                    described_bottle.id = bottle_description_map.values()[0].id #The ID of a random described bottle
+                    #import ipdb; ipdb.set_trace()
+                    described_bottle.id = bottle_description_map.keys()[0][0].id #The ID of a random described bottle. [0] means first thing, second [0] is because keys are a (entity, y-coord)-tuple
                     return "described"
                 else:
                     return 'no_bottles' #This cannot happen, since then DescribeBottles would have failed and we would not ask if Granny want a bottle. There are none
