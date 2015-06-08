@@ -201,43 +201,54 @@ class FindCrowd(smach.State):
         centerPointRes = None
         humanDesignatorRes = None
         entityDataRes = None
+        faces_locations = []
         
-
+        head_points_stamped = [ msgs.PointStamped(3,-3,2,self.robot.robot_name+"/base_link"),
+                                msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"),
+                                msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link")]
         # create designators
         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
-        centerPointDes = AttrDesignator(humanDesignator, 'center_point')
 
+        # clear head goals
+        self.robot.head.cancel_goal()
+
+        for head_point in head_points_stamped:
+            self.robot.head.look_at_point(point_stamped=head_point, end_time=0, timeout=8)
+            rospy.sleep(3)
+
+            # resolve designator
+            humanDesignatorRes = humanDesignator.resolve()
+            if humanDesignatorRes:
+                faces_locations = faces_locations + humanDesignatorRes
+                printOk("Found {0} faces. Adding to list, now with {1}".format(len(humanDesignatorRes), len(faces_locations)))
+            else:
+                printWarning("Could not resolve humanDesignator")
+
+
+        # clear head gloas
         self.robot.head.cancel_goal()
 
         # "scan" the room with the head
         # look at 3 meters front, 5 meters right and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-        rospy.sleep(2)
+        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
 
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-        rospy.sleep(3)
+        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
+        # rospy.sleep(3)
 
-        # look at 3 meters front, 5 meters left and 2 meters high
-        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-        rospy.sleep(2)
+        # # look at 3 meters front, 5 meters left and 2 meters high
+        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
+        # rospy.sleep(2)
 
-        # extra sleep to give more time to process
-        rospy.sleep(2)
+        # # extra sleep to give more time to process
+        # rospy.sleep(2)
 
-        self.robot.head.cancel_goal()
-
-        # resolve designator
-        humanDesignatorRes = humanDesignator.resolve()
-        if not humanDesignatorRes:
-            printOk("Could not resolve humanDesignator")
-            return 'failed'
 
 
         # if humanDesignatorRes is not empty
-        if not humanDesignatorRes == None:
-            printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
+        if faces_locations:
+            printOk("Iterating through the {0} humans found".format(len(faces_locations)))
 
-            for humanEntity in humanDesignatorRes:
+            for humanEntity in faces_locations:
                 faceList = None
                 try:
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
@@ -535,7 +546,7 @@ class GetOperatorLocation(smach.State):
                 # operatorIdx = 0
                 operatorIdx = random.randint(0, len(faceList)-1)
                 chosenOperator = True
-                printWarn("Could not choose an operator. Selecting random index: " + operatorIdx)
+                printWarning("Could not choose an operator. Selecting random index: " + STR(operatorIdx))
 
             if chosenOperator:
                 printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
