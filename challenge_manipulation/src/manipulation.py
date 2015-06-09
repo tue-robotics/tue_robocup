@@ -149,33 +149,41 @@ class EmptySpotDesignator(Designator):
 
         points = []
 
-        ch = e.convex_hull
         x = e.pose.position.x
         y = e.pose.position.y
 
-        if len(ch) == 0:
+        if len(e.convex_hull) == 0:
+            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
             return []
+
+        ''' Convert convex hull to map frame '''
+        center_pose = poseMsgToKdlFrame(e.pose)
+        ch = []
+        for point in e.convex_hull:
+            p = pointMsgToKdlVector(point)
+            p = center_pose * p
+            ch.append(p)
 
         ''' Loop over hulls '''
         ch.append(ch[0])
         for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x - ch[i].x
-                dy = ch[i+1].y - ch[i].y
+                dx = ch[i+1].x() - ch[i].x()
+                dy = ch[i+1].y() - ch[i].y()
                 length = math.hypot(dx, dy)
 
                 d = self._edge_distance
                 while d < (length-self._edge_distance):
 
                     ''' Point on edge '''
-                    xs = ch[i].x + d/length*dx
-                    ys = ch[i].y + d/length*dy
+                    xs = ch[i].x() + d/length*dx
+                    ys = ch[i].y() + d/length*dy
 
                     ''' Shift point inwards and fill message'''
                     ps = geom.PointStamped()
                     ps.header.frame_id = "/map"
                     ps.point.x = xs - dy/length * self._edge_distance
                     ps.point.y = ys + dx/length * self._edge_distance
-                    ps.point.z = e.z_max
+                    ps.point.z = e.pose.position.z + e.z_max
                     points.append(ps)
 
                     # ToDo: check if still within hull???
