@@ -204,7 +204,7 @@ class GetPills(smach.StateMachine):
             container_entity = bottle_shelf.resolve()
             return onTopOff(entity, container_entity)
 
-        bottle_criteria = [minimal_height_from_floor, type_unknown_or_not_room, not_bookcase_part, on_top, small, not_too_small]
+        bottle_criteria = [minimal_height_from_floor, type_unknown_or_not_room, not_bookcase_part, onTopOffForDesignator(bottle_shelf), small, not_too_small]
 
         # shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
         bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
