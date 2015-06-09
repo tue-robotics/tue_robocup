@@ -51,12 +51,6 @@ class ChallengePersonRecognition(smach.StateMachine):
         operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
         operatorLocationDes.current = PersonRecStates.PointDesignator()
 
-        # def helloOperator(): return "Hello " + operatorNameDes.resolve()
-        # helloOperatorDes = DeferToRuntime(helloOperator, resolve_type=str)
-
-        # def defaultNameOperator(): return "I did not understand your name, so I will call you " + operatorNameDes.resolve()
-        # defaultNameOperatorDes = DeferToRuntime(defaultNameOperator, resolve_type=str)
-
         # ------------------ SIMULATION ------------------------------------
 
         # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
