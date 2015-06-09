@@ -50,10 +50,10 @@ def onTopOff(subject, container, ht=0.1):
 		return False
 
 	''' Second: turn points into KDL objects and offset '''
-	center_pose = pose_msg_to_kdl_frame(container.pose)
+	center_pose = poseMsgToKdlFrame(container.pose)
 	convex_hull = [] # Convex hull in map frame
 	for point in container.convex_hull:
-		p = point_msg_to_kdl_vector(point)
+		p = pointMsgToKdlVector(point)
 		p = center_pose * p
 		convex_hull.append(p)
 
@@ -68,10 +68,10 @@ def onTopOff(subject, container, ht=0.1):
 
 	return True
 
-def point_msg_to_kdl_vector(point):
+def pointMsgToKdlVector(point):
 	return kdl.Vector(point.x, point.y, point.z)
 
-def pose_msg_to_kdl_frame(pose):
+def poseMsgToKdlFrame(pose):
 	rot = kdl.Rotation.Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
 	trans = kdl.Vector(pose.position.x ,pose.position.y, pose.position.z)
 	return kdl.Frame(rot, trans)
