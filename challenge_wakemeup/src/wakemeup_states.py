@@ -319,7 +319,8 @@ class LookIfSomethingsThere(smach.State):
             if self.designator.resolve():
                 self.robot.lights.set_color(0,0,1)
                 return 'awake'
-            rospy.Time.sleep(0.1)
+            else:
+                rospy.sleep(0.2)
 
         return 'not_awake'
             

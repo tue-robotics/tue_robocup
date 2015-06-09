@@ -29,6 +29,8 @@ from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 knowledge = load_knowledge('challenge_wakemeup')
 
+# TODO:
+# Go to the kitchen and prepare breakfast is the next step, but check what is easy to do before making this!!!
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -99,13 +101,9 @@ class WakeMeUp(smach.StateMachine):
             radius = knowledge.find_person['within_range'], 
             criteriafuncs = [is_large_enough, probably_exists, is_just_above_bed, is_not_bed, is_not_prior])
 
-        wakeup_time_marker = VariableDesignator(resolve_type=type(rospy.Time.now()))         # Time to repeat wakeup loop
+        time_marker = VariableDesignator(resolve_type=type(rospy.Time.now()))         # Time to repeat wakeup loop
 
         # Taking breakfast order
-        spec = Designator("I want <fruit_snack> with <cereal> and <milk> for breakfast")
-        choices = Designator(knowledge.breakfast_order_options)
-        answer = VariableDesignator(resolve_type=GetSpeechResponse)
-
         breakfastCerealDes = VariableDesignator("")       # designator containing chosen cereal name
         breakfastFruitDes = VariableDesignator("")        # designator containing chosen fruit name
         breakfastMilkDes = VariableDesignator("")         # designator containing chosen milk name
@@ -119,7 +117,7 @@ class WakeMeUp(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('GET_NEWSPAPER',
-                                states.HandoverFromHuman(robot, armDesignator, grabbed_entity_label="newspaper", timeout=knowledge.give_newspaper_timeout),
+                                states.HandoverFromHuman(robot, armDesignator, grabbed_entity_label="newspaper", timeout=knowledge.get_newspaper_timeout),
                                 transitions={   'succeeded':'INITIALIZE',
                                                 'failed'   :'INITIALIZE'})
 
@@ -170,7 +168,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'succeeded':'SET_TIME_MARKER'})
 
                 smach.StateMachine.add( "SET_TIME_MARKER",
-                                        states.SetTimeMarker(robot,wakeup_time_marker),
+                                        states.SetTimeMarker(robot, time_marker),
                                         transitions={   'done' :'WAKEUP_MESSAGE'})
 
                 smach.StateMachine.add( "WAKEUP_MESSAGE",
@@ -187,7 +185,7 @@ class WakeMeUp(smach.StateMachine):
                                                          'not_awake':'CHECK_TIME'})
 
                 smach.StateMachine.add( "CHECK_TIME",
-                                        states.CheckTime(robot, wakeup_time_marker, knowledge.alarm_duration),
+                                        states.CheckTime(robot,  time_marker, knowledge.alarm_duration),
                                         transitions={   'ok'        :'WAKEUP_MESSAGE',
                                                         'timeout'   :'SAY_AWAKE'})
 
@@ -218,6 +216,10 @@ class WakeMeUp(smach.StateMachine):
             takeOrderContainer = smach.StateMachine(outcomes = ['container_successed', 'container_failed'])
             with takeOrderContainer:
 
+                smach.StateMachine.add( "SET_TIME_MARKER",
+                                        states.SetTimeMarker(robot, time_marker),
+                                        transitions={   'done' :'SAY_WHAT_BREAKFAST'})
+
                 smach.StateMachine.add( "SAY_WHAT_BREAKFAST",
                                         states.Say(robot, [ "What would you like to have for breakfast?", 
                                                             "Please tell me your breakfast order.", 
@@ -232,11 +234,17 @@ class WakeMeUp(smach.StateMachine):
                 smach.StateMachine.add( "SAY_INCORRECT_ORDER",
                                         states.Say(robot, [ "I didn't get that.",
                                                             "I missunderstood something," ], block=False),
-                                        transitions={   'spoken' :'SAY_WHAT_BREAKFAST'})
+                                        transitions={   'spoken' :'CHECK_TIME'})
+
+                smach.StateMachine.add( "CHECK_TIME",
+                                        states.CheckTime(robot, time_marker, knowledge.alarm_duration),
+                                        transitions={   'ok'        :'SAY_WHAT_BREAKFAST',
+                                                        'timeout'   :'container_failed'})
 
                 smach.StateMachine.add( "SAY_REPEAT_ORDER",
                                         wakeStates.RepeatOrderToPerson(robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
                                         transitions={   'done' :'container_successed'})
+
 
             smach.StateMachine.add( 'TAKE_ORDER_CONTAINER',
                                     takeOrderContainer,
@@ -260,8 +268,15 @@ class WakeMeUp(smach.StateMachine):
                                         states.Say(robot, [ "I'm preparing your breakfast! La la la la la." ], block=False),
                                         transitions={   'spoken' :'GOTO_KITCHEN'})
 
+                states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
+                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" }, 
+                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat']))
+
                 smach.StateMachine.add('GOTO_KITCHEN',
-                                    states.NavigateToWaypoint(robot, waypoint_kitchen),
+                                    states.NavigateToSymbolic(robot, {
+                                        EdEntityDesignator(robot, id=knowledge.kitchen_nav_goal['in']) : "in" }, 
+                                        EdEntityDesignator(robot, id=knowledge.kitchen_nav_goal['lookat'])),
                                     transitions={   'arrived':'container_successed',
                                                     'unreachable':'container_successed',
                                                     'goal_not_defined':'container_successed'})

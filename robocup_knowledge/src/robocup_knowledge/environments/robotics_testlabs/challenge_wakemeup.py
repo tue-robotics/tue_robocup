@@ -9,6 +9,7 @@ find_person = {
 alarm_wait_time = 5
 alarm_duration = 60
 
+get_newspaper_timeout = 3
 give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
@@ -22,10 +23,10 @@ bed_nav_goal = {
     'lookat' : 'bed'
 }
 
-breakfast_order_options = {
-    "fruit_snack"  : ["apple"],
-    "cereal" : ["cereal", "choco-flakes"], 
-    "milk": ["whole-milk"]
+knowledge.default_milk = "fresh milk"
+
+kitchen_nav_goal = {
+    "in" : "kitchen"
 }
 
 
