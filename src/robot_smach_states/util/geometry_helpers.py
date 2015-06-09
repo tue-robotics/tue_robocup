@@ -68,6 +68,16 @@ def onTopOff(subject, container, ht=0.1):
 
 	return True
 
+def onTopOffForDesignator(container_designator):
+	"""Returns a function that will tell if an entity is on top of the entity designated by container_designator.
+	This function can be used as a designator-criterium.
+	E.g. criteria_funcs = [onTopOffForDesignator(EdEntityDesignator(...))]"""
+	def on_top(entity):
+		container_entity = container_designator.resolve()
+		return onTopOff(entity, container_entity)
+	return on_top
+
+
 def point_msg_to_kdl_vector(point):
 	return kdl.Vector(point.x, point.y, point.z)
 
