@@ -21,31 +21,47 @@ from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
 challenge_knowledge = load_knowledge("challenge_person_recognition")
 
-
+# rename calls to make them shorter and colorfull
 def printOk(sentence):
     challenge_knowledge.printOk(sentence)
 
 def printError(sentence):
     challenge_knowledge.printError(sentence)
-    
+
 def printWarning(sentence):
     challenge_knowledge.printWarning(sentence)
 
 
 class Location(object):
+    """ class to store location of faces """
     def __init__(self, point_stamped, visited, attempts):
         self.point_stamped = point_stamped
         self.visited = visited
         self.attempts = attempts
 
 class FaceAnalysed(object):
-    def __init__(self, point_stamped, name, score, pose=challenge_knowledge.Pose.Standing, gender=challenge_knowledge.Gender.Male, inMainCrowd=True):
+    """ class to store characteristics of a face """
+    def __init__(self, point_stamped, name, score, pose=challenge_knowledge.Pose.Standing, gender=challenge_knowledge.Gender.Male, inMainCrowd=True, orderedPosition=""):
         self.point_stamped = point_stamped
         self.name = name
         self.score = score
         self.pose = pose
         self.gender = gender
         self.inMainCrowd = inMainCrowd
+        self.orderedPosition = orderedPosition
+
+    def __repr__(self):
+        # return '{}: {} {}'.format(self.__class__.__name__,
+        #                           self.name,
+        #                           self.number)
+        return "Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}".format(
+                    str(self.name),
+                    str(self.score),
+                    str(self.point_stamped.point.x), str(self.point_stamped.point.y), str(self.point_stamped.point.z),
+                    str(self.pose),
+                    str(self.gender),
+                    str(self.inMainCrowd),
+                    str(self.orderedPosition))
 
 class PointDesignator(Designator):
     """ Returns a more or less hardcoded designator"""
@@ -65,14 +81,14 @@ class PointDesignator(Designator):
 
 
 def points_distance(p1, p2):
-    printOk("points_distance")
+    # printOk("points_distance")
 
     deltaX = p2[0] - p1[0]
     deltaY = p2[1] - p1[1]
     deltaZ = p2[2] - p1[2]
 
     distance = math.sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
-    printOk("Distance ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance))
+    # printOk("Distance ({0},{1},{2}) -> ({3},{4},{5}) = {6}".format(p1[0], p1[1], p1[2], p2[0], p2[1], p2[2], distance))
 
     return distance
 
@@ -277,7 +293,7 @@ class FindCrowd(smach.State):
                                                                 visited = False,
                                                                 attempts = 0)]
 
-                            printOk("Added face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"]))
+                            printOk("\tAdded face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"]))
                         else:
                             printOk("Location already exists in the list")
 
@@ -328,7 +344,6 @@ class FindCrowd(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-
 class DescribePeople(smach.State):
     def __init__(self, robot, facesAnalyzedDes):
         smach.State.__init__(   self, 
@@ -343,6 +358,7 @@ class DescribePeople(smach.State):
         numberMale = 0
         numberFemale = 0
         faceList = None
+        position = 1
 
         # try to resolve the crowd designator
         faceList = self.facesAnalyzedDes.resolve()
@@ -351,22 +367,46 @@ class DescribePeople(smach.State):
             pass
 
         if not faceList == None:
-            # Compute crowd details
 
+            # import ipdb; ipdb.set_trace()
+
+            # order list by face X location
+            # TODO convert face location to robot base axis
+            faceList.sort(key=lambda k: k.point_stamped.point.x)
+            # faceList.sort(key=lambda k: k['point_stamped.point.x'])
+
+
+            # Compute crowd and operator details
             for face in faceList:
-                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}".format(
+                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}".format(
                     str(face.name),
                     str(face.score),
                     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z),
                     str(face.pose),
                     str(face.gender),
-                    str(face.inMainCrowd)))
+                    str(face.inMainCrowd),
+                    str(face.orderedPosition)))
 
+                # count number of males and females
                 if face.inMainCrowd == True:
                     if face.gender == challenge_knowledge.Gender.Male:
                         numberMale += 1
                     else:
                         numberFemale += 1
+
+                # translate position number to word
+                if position == 1 : face.orderedPosition = "first"
+                if position == 2 : face.orderedPosition = "second"
+                if position == 3 : face.orderedPosition = "third"
+                if position == 4 : face.orderedPosition = "fourth"
+                if position == 5 : face.orderedPosition = "fifth"
+                if position == 6 : face.orderedPosition = "sixth"
+                if position == 7 : face.orderedPosition = "seventh"
+                if position == 8 : face.orderedPosition = "eighth"
+                if position == 9 : face.orderedPosition = "ninth"
+                if position == 10 : face.orderedPosition = "tenth"
+                position = position + 1
+
 
             self.robot.speech.speak("I counted {0} persons in this crowd. {1} males and {2} females.".format(
                 str(numberMale + numberFemale),
@@ -379,7 +419,9 @@ class DescribePeople(smach.State):
                     printFail("Operator index from the list is invalid.")
                     self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
                 else:
-                    self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}.".format(
+                    self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from the my left.".format(
+                        name = faceList[userdata.operatorIdx_in].name,
+                        order = faceList[userdata.operatorIdx_in].orderedPosition,
                         gender = "man" if faceList[userdata.operatorIdx_in].gender == challenge_knowledge.Gender.Male else "woman",
                         pronoun = "he" if faceList[userdata.operatorIdx_in].gender == challenge_knowledge.Gender.Male else "she",
                         pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == challenge_knowledge.Pose.Standing else "sitting down"),
@@ -529,7 +571,7 @@ class GetOperatorLocation(smach.State):
 
         if not faceList == None:
             for idx, face in enumerate(faceList):
-                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4})".format(
+                printOk("\tName: {0}, Score: {1}, Location: ({2},{3},{4})".format(
                     str(face.name),
                     str(face.score),
                     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z)))
@@ -546,7 +588,7 @@ class GetOperatorLocation(smach.State):
                 # operatorIdx = 0
                 operatorIdx = random.randint(0, len(faceList)-1)
                 chosenOperator = True
-                printWarning("Could not choose an operator. Selecting random index: " + STR(operatorIdx))
+                printWarning("Could not choose an operator. Selecting random index: " + str(operatorIdx))
 
             if chosenOperator:
                 printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
@@ -616,7 +658,7 @@ class AnalysePerson(smach.State):
 
                     # faceList = humanEntity.data['perception_result']['face_recognizer']['face']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
-                    printOk(str(faceList))
+                    printOk("\t" + str(faceList))
 
                     for faceInfo in faceList:
 
@@ -626,8 +668,8 @@ class AnalysePerson(smach.State):
 
                         # initialize label as empty string if the recogniton didnt conclude anything
                         if recognition_score == 0:
-                            recognition_label = ""
-                            printOk("Unrecognized person")
+                            recognition_label = "unknown"
+                            printOk("Unrecognized face")
 
 
                         # if entityData['type'] == "crowd":
@@ -667,13 +709,14 @@ class AnalysePerson(smach.State):
                             else:
                                 pose = challenge_knowledge.Pose.Sitting_down
 
-                            #  "predict" gender, in a hacky way
+                            # TODO: match against the name list fiven by the knowledge
+                            #  "predict" gender, in a hacky way. Names finished with A are female
                             if recognition_label[:-1] == 'a':
                                 personGender = challenge_knowledge.Gender.Female
                             else:
                                 personGender = challenge_knowledge.Gender.Male
 
-                            printOk("Adding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
+                            printOk("\tAdding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
                                 str(recognition_label),
                                 str(recognition_score),
                                 "standing up" if pose == challenge_knowledge.Pose.Standing else "sitting down",
@@ -685,7 +728,7 @@ class AnalysePerson(smach.State):
                                                                             pose = pose,
                                                                             gender = personGender))]
                         else:
-                            printWarning("Did not add face to the list")
+                            printWarning("There is a face in this location already on the list. Did not add.")
 
                 except KeyError, ke:
                     printError("KeyError faceList:" + str(ke))
