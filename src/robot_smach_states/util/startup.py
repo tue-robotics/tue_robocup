@@ -81,7 +81,7 @@ def startup(statemachine_creator, scenario_setup_function=None, initial_state=No
             message = message.replace(".py", "")
 
             print [fname,lineno,fn,text, e]
-            robot.speech.speak(message)
+#            robot.speech.speak(message)
         finally:
             if introserver:
                 introserver.stop()
