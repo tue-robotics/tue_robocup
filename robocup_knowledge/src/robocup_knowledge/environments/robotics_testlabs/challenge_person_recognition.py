@@ -33,7 +33,7 @@ def printWarning(sentence):
     print prefix + bcolors.WARNING + sentence + bcolors.ENDC
 
 
-min_faces_found = 1
+min_faces_found = 2
 
 waypoint_learning = "person_rec_learning"
 waypoint_living_room_1 = "person_rec_living_room_1"
