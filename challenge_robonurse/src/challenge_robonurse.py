@@ -197,7 +197,7 @@ class GetPills(smach.StateMachine):
         def not_bookcase_part(entity):
             return not BOTTLE_SHELF in entity.id #Bookcase has elements named "bookcase/shelf1" etc. Ditch those
 
-        bottle_shelf = ds.EdEntityDesignator(robot, id="bookcase/shelf3")
+        bottle_shelf = ds.EdEntityDesignator(robot, id="bookcase/shelf3") #TODO: un-hardcode
 
         # import ipdb; ipdb.set_trace()
         def on_top(entity):
