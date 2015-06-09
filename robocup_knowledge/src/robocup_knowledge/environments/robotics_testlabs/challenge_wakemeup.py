@@ -9,7 +9,8 @@ find_person = {
 alarm_wait_time = 5
 alarm_duration = 60
 
-give_newspaper_timeout = 3
+give_newspaper_timeout = 30
+wakeup_light_color = [1, 1, 1]
 
 
 # Knowledge

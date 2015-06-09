@@ -166,7 +166,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'done':'LOOK_AT_BED'})
 
                 smach.StateMachine.add( 'LOOK_AT_BED',
-                                        wakeStates.LookAtBedTop(robot, knowledge.bed),
+                                        wakeStates.LookAtBedTop(robot, knowledge.bed, wakeup_light_color=knowledge.wakeup_light_color),
                                         transitions={   'succeeded':'SET_TIME_MARKER'})
 
                 smach.StateMachine.add( "SET_TIME_MARKER",

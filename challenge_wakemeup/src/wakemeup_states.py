@@ -276,10 +276,13 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
-    def __init__(self, robot, entity_id):
+    def __init__(self, robot, entity_id, wakeup_light_color):
         smach.State.__init__(self, outcomes=['succeeded'])
         self.robot = robot
         self.bed = self.robot.ed.get_entity(id=entity_id)
+        self.r = wakeup_light_color[0]
+        self.g = wakeup_light_color[1]
+        self.b = wakeup_light_color[2]
 
     def execute(self, robot):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
@@ -287,6 +290,7 @@ class LookAtBedTop(smach.State):
         # set robots pose
         # self.robot.spindle.high()
         self.robot.head.cancel_goal()
+        self.robot.lights.set_color(self.r,self.g,self.b)
 
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
@@ -313,7 +317,9 @@ class LookIfSomethingsThere(smach.State):
         print rospy.Time.now() - self.start_time < self.timeout
         while rospy.Time.now() - self.start_time < self.timeout:
             if self.designator.resolve():
+                self.robot.lights.set_color(0,0,1)
                 return 'awake'
+            rospy.Time.sleep(0.1)
 
         return 'not_awake'
             
