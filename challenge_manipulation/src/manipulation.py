@@ -229,25 +229,26 @@ class InspectShelves(smach.State):
 
         return 'succeeded'
 
-class InspectEntity(smach.State):
-    """Inspect an entity, i.e. look at all points that make up some entity"""
+# class InspectEntity(smach.State):
+#     """Inspect an entity, i.e. look at all points that make up some entity"""
+#     # ToDo: Is this obsolete???
 
-    def __init__(self, robot, entity_designator):
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
-        self.robot = robot
-        self.entity_designator = entity_designator
+#     def __init__(self, robot, entity_designator):
+#         smach.State.__init__(self, outcomes=['succeeded','failed'])
+#         self.robot = robot
+#         self.entity_designator = entity_designator
 
-    def execute(self, userdata=None):
-        entity = self.entity_designator.resolve()
+#     def execute(self, userdata=None):
+#         entity = self.entity_designator.resolve()
 
-        if not entity:
-            return "failed"
+#         if not entity:
+#             return "failed"
 
-        for point in entity.convex_hull:
-            point_stamped = geom.PointStamped(point=point, frame_id=entity.id)
-            self.robot.head.look_at_point(point_stamped, timeout=1)
+#         for point in entity.convex_hull:
+#             point_stamped = geom.PointStamped(point=point, frame_id=entity.id)
+#             self.robot.head.look_at_point(point_stamped, timeout=1)
 
-        return "succeeded"
+#         return "succeeded"
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
