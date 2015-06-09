@@ -15,6 +15,7 @@ from robot_smach_states.human_interaction.human_interaction import HearOptionsEx
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robocup_knowledge import load_knowledge
+from robot_skills.util import transformations
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -41,7 +42,15 @@ class Location(object):
 
 class FaceAnalysed(object):
     """ class to store characteristics of a face """
-    def __init__(self, point_stamped, name, score, pose=challenge_knowledge.Pose.Standing, gender=challenge_knowledge.Gender.Male, inMainCrowd=True, orderedPosition=""):
+    def __init__(   self, 
+                    point_stamped, 
+                    name, 
+                    score, 
+                    pose = challenge_knowledge.Pose.Standing, 
+                    gender = challenge_knowledge.Gender.Male, 
+                    inMainCrowd = True, 
+                    orderedPosition = "",
+                    operator = False):
         self.point_stamped = point_stamped
         self.name = name
         self.score = score
@@ -49,11 +58,9 @@ class FaceAnalysed(object):
         self.gender = gender
         self.inMainCrowd = inMainCrowd
         self.orderedPosition = orderedPosition
+        self.operator = operator
 
     def __repr__(self):
-        # return '{}: {} {}'.format(self.__class__.__name__,
-        #                           self.name,
-        #                           self.number)
         return "Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}".format(
                     str(self.name),
                     str(self.score),
@@ -188,6 +195,7 @@ class LookAtPersonInFront(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+
 class CancelHeadGoals(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self,outcomes=['done'])
@@ -212,13 +220,13 @@ class FindCrowd(smach.State):
 
     def execute(self, userdata):
         printOk("FindCrowd")
-        
+
         foundFace = False
         centerPointRes = None
         humanDesignatorRes = None
         entityDataRes = None
         faces_locations = []
-        
+
         head_points_stamped = [ msgs.PointStamped(3,-3,2,self.robot.robot_name+"/base_link"),
                                 msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"),
                                 msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link")]
@@ -270,11 +278,8 @@ class FindCrowd(smach.State):
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
                 except KeyError, ke:
-                    # import ipdb; ipdb.set_trace()
                     printOk("Could not resolve humanEntity.data[...]:" + str(ke))
                     pass
-
-                # faceList = [human['perception_result']['face_detector']['faces_front'] for human in humanDesignatorRes]
 
                 if not faceList == None:
                     for face in faceList:
@@ -299,33 +304,6 @@ class FindCrowd(smach.State):
 
                 else:
                     printWarning("Designator resolved but no faces where found")
-
-                    # resolve data from entity
-                    # try:
-                    #     # centerPointRes = humanEntity.center_point
-                    #     centerPointRes = None
-                    # except KeyError, ke:
-                    #     printOk("Could not resolve humanEntity.center_point" + str(ke))
-                    #     pass
-
-                    # if not centerPointRes == None:
-                    #     alreadyExists = False
-                    #     for loc in self.locations.current:
-                    #         p1 = (centerPointRes.x, centerPointRes.y, centerPointRes.z)
-                    #         p2 = (loc.point_stamped.point.x, loc.point_stamped.point.y, loc.point_stamped.point.z)
-
-                    #         if points_distance(p1=p1, p2=p2) < 0.1:
-                    #             alreadyExists = True
-                    #             break
-
-                    #     if not alreadyExists:
-                    #         self.locations.current += [Location(point_stamped = msgs.PointStamped(x=centerPointRes.x, y=centerPointRes.y, z=centerPointRes.z, frame_id="/map"),
-                    #                                             visited = False,
-                    #                                             attempts = 0)]
-
-                    #         printOk("Added center_point to the list: ({0}, {1}, {2})".format(centerPointRes.x, centerPointRes.y, centerPointRes.z))
-                    #     else:
-                    #         printOk("Location closeby already exists in the list")
 
 
             printOk("Face location list has " + str(len(self.locations.current)) + " entries")
@@ -359,6 +337,7 @@ class DescribePeople(smach.State):
         numberFemale = 0
         faceList = None
         position = 1
+        operatorIdx = 0
 
         # try to resolve the crowd designator
         faceList = self.facesAnalyzedDes.resolve()
@@ -370,14 +349,22 @@ class DescribePeople(smach.State):
 
             # import ipdb; ipdb.set_trace()
 
-            # order list by face X location
-            # TODO convert face location to robot base axis
-            faceList.sort(key=lambda k: k.point_stamped.point.x)
-            # faceList.sort(key=lambda k: k['point_stamped.point.x'])
+            # convert map frame to base_link frame
+            for face in faceList:
+                in_map = msgs.PointStamped(point=face.point_stamped.point, frame_id="/map")
+                in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
+                face.point_stamped.point.x = in_base_link.x
+                face.point_stamped.point.y = in_base_link.y
+                face.point_stamped.point.z = in_base_link.z
+
+
+            # order list by face Y location wrt base_link
+            faceList.sort(key=lambda k: k.point_stamped.point.y)
+            # faceList.sort(key=lambda k: k['point_stamped.point.y'])
 
 
             # Compute crowd and operator details
-            for face in faceList:
+            for idx, face in enumerate(faceList):
                 printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}".format(
                     str(face.name),
                     str(face.score),
@@ -395,17 +382,19 @@ class DescribePeople(smach.State):
                         numberFemale += 1
 
                 # translate position number to word
-                if position == 1 : face.orderedPosition = "first"
-                if position == 2 : face.orderedPosition = "second"
-                if position == 3 : face.orderedPosition = "third"
-                if position == 4 : face.orderedPosition = "fourth"
-                if position == 5 : face.orderedPosition = "fifth"
-                if position == 6 : face.orderedPosition = "sixth"
-                if position == 7 : face.orderedPosition = "seventh"
-                if position == 8 : face.orderedPosition = "eighth"
-                if position == 9 : face.orderedPosition = "ninth"
-                if position == 10 : face.orderedPosition = "tenth"
-                position = position + 1
+                if idx + 1 == 1 : face.orderedPosition = "first"
+                if idx + 1 == 2 : face.orderedPosition = "second"
+                if idx + 1 == 3 : face.orderedPosition = "third"
+                if idx + 1 == 4 : face.orderedPosition = "fourth"
+                if idx + 1 == 5 : face.orderedPosition = "fifth"
+                if idx + 1 == 6 : face.orderedPosition = "sixth"
+                if idx + 1 == 7 : face.orderedPosition = "seventh"
+                if idx + 1 == 8 : face.orderedPosition = "eighth"
+                if idx + 1 == 9 : face.orderedPosition = "ninth"
+                if idx + 1 == 10 : face.orderedPosition = "tenth"
+
+                if face.operator == True:
+                    operatorIdx = idx
 
 
             self.robot.speech.speak("I counted {0} persons in this crowd. {1} males and {2} females.".format(
@@ -414,20 +403,24 @@ class DescribePeople(smach.State):
                 numberFemale if numberFemale > 0 else "no"),
                 block=False)
 
+
             try:
-                if userdata.operatorIdx_in == None:
-                    printFail("Operator index from the list is invalid.")
-                    self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
-                else:
-                    self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from the my left.".format(
-                        name = faceList[userdata.operatorIdx_in].name,
-                        order = faceList[userdata.operatorIdx_in].orderedPosition,
-                        gender = "man" if faceList[userdata.operatorIdx_in].gender == challenge_knowledge.Gender.Male else "woman",
-                        pronoun = "he" if faceList[userdata.operatorIdx_in].gender == challenge_knowledge.Gender.Male else "she",
-                        pose =  "standing up" if faceList[userdata.operatorIdx_in].pose == challenge_knowledge.Pose.Standing else "sitting down"),
-                        block=True)
+                # just to be safe, test this...
+                if operatorIdx < 0 or operatorIdx >= len(faceList):
+                    printFail("Operator index from the list is invalid. (" + operatorIdx + "). Reseting to 0")
+                    # self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
+                    operatorIdx = 0
+
+                self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from the my left.".format(
+                    name = faceList[operatorIdx].name,
+                    order = faceList[operatorIdx].orderedPosition,
+                    gender = "man" if faceList[operatorIdx].gender == challenge_knowledge.Gender.Male else "woman",
+                    pronoun = "he" if faceList[operatorIdx].gender == challenge_knowledge.Gender.Male else "she",
+                    pose =  "standing up" if faceList[operatorIdx].pose == challenge_knowledge.Pose.Standing else "sitting down"),
+                    block=True)
+
             except KeyError, ke:
-                    printOk("KeyError userdata.operatorIdx_in:" + str(ke))
+                    printOk("KeyError operatorIdx:" + str(ke))
                     pass
 
         else:
@@ -538,12 +531,12 @@ class ConfirmPersonName(smach.State):
             self.robot.speech.speak("Ok!", block=False)
 
         return 'correct'
-        
+
 
 # ----------------------------------------------------------------------------------------------------
 
 
-class GetOperatorLocation(smach.State):
+class ChooseOperator(smach.State):
     def __init__(self, robot, facesAnalysedDes, operatorNameDes, operatorLocationDes):
         smach.State.__init__(   self, 
                                 output_keys=['operatorIdx_out'],
@@ -555,7 +548,7 @@ class GetOperatorLocation(smach.State):
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):
-        printOk("GetOperatorLocation")
+        printOk("ChooseOperator")
 
         lowest_score = 1    # scores are between 0 and 1
         chosenOperator = False
@@ -595,6 +588,8 @@ class GetOperatorLocation(smach.State):
                     str(faceList[operatorIdx].name),
                     str(faceList[operatorIdx].score),
                     str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
+
+                faceList[operatorIdx].operator = True
 
                 # Operators face location
                 # p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
