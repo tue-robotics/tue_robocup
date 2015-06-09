@@ -1,4 +1,5 @@
 import math
+import PyKDL as kdl
 
 import geometry_msgs.msg as gm
 
@@ -12,7 +13,7 @@ def isLeftOfLine(p, l):
 	""" 		
 	A = l[0]
 	B = l[1]
-	if ( (B.x - A.x) * (p.y - A.y) - (B.y - A.y) * (p.x - A.x) ) > 0:
+	if ( (B.x() - A.x()) * (p.y() - A.y()) - (B.y() - A.y()) * (p.x() - A.x()) ) > 0:
 		return True
 	else:
 		return False
@@ -48,8 +49,16 @@ def onTopOff(subject, container, ht=0.1):
 		print 'Error, entity {0} has no convex hull'.format(container.id)
 		return False
 
-	''' Second: check if center point of entity is within convex hull of container '''
-	if not isPointInsideHull(subject.pose.position, container.convex_hull):
+	''' Second: turn points into KDL objects and offset '''
+	center_pose = pose_msg_to_kdl_frame(container.pose)
+	convex_hull = [] # Convex hull in map frame
+	for point in container.convex_hull:
+		p = point_msg_to_kdl_vector(point)
+		p = center_pose * p
+		convex_hull.append(p)
+
+	''' Third: check if center point of entity is within convex hull of container '''
+	if not isPointInsideHull(center_pose.p, convex_hull):
 		return False
 
 	subject_bottom = subject.pose.position.z+subject.z_min
@@ -59,3 +68,10 @@ def onTopOff(subject, container, ht=0.1):
 
 	return True
 
+def point_msg_to_kdl_vector(point):
+	return kdl.Vector(point.x, point.y, point.z)
+
+def pose_msg_to_kdl_frame(pose):
+	rot = kdl.Rotation.Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
+	trans = kdl.Vector(pose.position.x ,pose.position.y, pose.position.z)
+	return kdl.Frame(rot, trans)
