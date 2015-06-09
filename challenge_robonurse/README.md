@@ -38,6 +38,11 @@ localhost:
 
 # Notes
 
+Before the challenge when setting up the environment
+----------------------------------------------------
+The shelf/closet from which the bottles should be grasped must be a composed object. 
+The bookcase should be an entity, with sub-entities like bookcase/shelfX etc. 
+
 During the challenge
 --------------------
 
