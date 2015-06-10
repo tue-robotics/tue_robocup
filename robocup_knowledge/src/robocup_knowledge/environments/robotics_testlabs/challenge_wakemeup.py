@@ -27,6 +27,7 @@ knowledge.default_milk = "fresh milk"
 
 kitchen_nav_goal = {
     "in" : "kitchen"
+    "lookat" : "kitchen"
 }
 
 
