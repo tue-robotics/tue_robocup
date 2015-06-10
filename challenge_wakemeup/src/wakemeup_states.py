@@ -14,8 +14,10 @@ from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-# from robocup_knowledge import load_knowledge
 
+from robocup_knowledge import load_knowledge
+knowledge_objs = load_knowledge('common').objects
+knowledge = load_knowledge('challenge_wakemeup')
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -36,13 +38,10 @@ default_milk = "fresh milk"
 
 bed_top_coordinates = {'x':0.783, 'y':1.315, 'z':0.3}
 
-# # load item names
-# common = load_knowledge('common')
-# knowledge_objs= load_knowledge('common').objects
-
-# names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
-# names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
-# names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
+# load item names
+names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
+names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
+names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
 
 # # Debug print
 # print prefix + "Fruit names from Knowledge: " + str(names_fruit)
@@ -121,7 +120,7 @@ class GetOrder(smach.State):
                                 ([<beginning>] <item1> [<preposition>] <item2>))")
 
         choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
-                                "preposition" : ["and", "and a", "and an", "with a", "with a"],
+                                "preposition" : ["and", "and a", "and an", "with a", "with a", "with", "a"],
                                 "item1" :       names_cereal + names_fruit + names_milk,
                                 "item2" :       names_cereal + names_fruit + names_milk,
                                 "item3" :       names_cereal + names_fruit + names_milk})
@@ -277,10 +276,13 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
-    def __init__(self, robot, bedDesignator):
-        smach.State.__init__(self, outcomes=['done'])
+    def __init__(self, robot, entity_id, wakeup_light_color):
+        smach.State.__init__(self, outcomes=['succeeded'])
         self.robot = robot
-        self.bed = bedDesignator.resolve()
+        self.bed = self.robot.ed.get_entity(id=entity_id)
+        self.r = wakeup_light_color[0]
+        self.g = wakeup_light_color[1]
+        self.b = wakeup_light_color[2]
 
     def execute(self, robot):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
@@ -288,6 +290,7 @@ class LookAtBedTop(smach.State):
         # set robots pose
         # self.robot.spindle.high()
         self.robot.head.cancel_goal()
+        self.robot.lights.set_color(self.r,self.g,self.b)
 
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
@@ -295,23 +298,29 @@ class LookAtBedTop(smach.State):
         headGoal = msgs.PointStamped(x=self.bed.pose.position.x, y=self.bed.pose.position.y, z=self.bed.pose.position.z+self.bed.z_max, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
-        return 'done'
+        return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
 
 
 class LookIfSomethingsThere(smach.State):
-    def __init__(self, robot, designator):
+    def __init__(self, robot, designator, timeout=0):
         smach.State.__init__(self, outcomes=['awake', 'not_awake'])
         self.robot = robot
         self.designator = designator
+        self.timeout = rospy.Duration(timeout)
 
     def execute(self, robot):
-        person_awake = self.designator.resolve()
-        print person_awake
-        rospy.logerr("Only checking if the designator resolves...")
-        if person_awake != None:
-            return 'awake'
-        else:
-            return 'not_awake'
+        self.start_time = rospy.Time.now()
+        print (rospy.Time.now() - self.start_time).secs
+        print rospy.Time.now() - self.start_time < self.timeout
+        while rospy.Time.now() - self.start_time < self.timeout:
+            if self.designator.resolve():
+                self.robot.lights.set_color(0,0,1)
+                return 'awake'
+            else:
+                rospy.sleep(0.2)
+
+        return 'not_awake'
+            
