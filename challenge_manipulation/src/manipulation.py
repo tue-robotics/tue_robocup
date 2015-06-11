@@ -235,13 +235,22 @@ class InspectShelves(smach.State):
 
                 # TODO: Store the entities in the pdf (and let AMIGO name them)
                 # ...
-                # for e in entitieS:
+                # for e in entities:
                 #     Say e.type
                 #     Store e in pdf
                 #
                 #      OR
                 # 
-                # Lock the items in the world model, and 
+                # Lock the items in the world model, and create the pdf afterwards
+                # ...
+                # for e in entities:
+                #     self.robot.ed.update_entity(e.id, flags=["locked"])
+                # 
+                # ... (later)
+                # # Getting all locked entities:
+                # for e in entities:
+                #     if "locked" in e.flags:
+                #         ...
 
                 self.robot.ed.disable_plugins(["kinect_integration", "perception"])
 
