@@ -30,6 +30,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
+from robot_smach_states import world_model
 from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
@@ -218,6 +219,31 @@ class InspectShelves(smach.State):
 
                 ''' Sleep for 1 second '''
                 rospy.sleep(1.0)
+
+                self.robot.ed.enable_plugins(["kinect_integration"])
+
+                rospy.sleep(2.0)
+
+                # TODO: Query for entities on top of the shelf and flag them with 'perception'
+                # ...
+                # for e in entities:
+                #    self.robot.ed.update_entity(id=e.id, flags=["perception"])
+
+                self.robot.ed.enable_plugins(["perception"])
+
+                rospy.sleep(2.0)
+
+                # TODO: Store the entities in the pdf (and let AMIGO name them)
+                # ...
+                # for e in entitieS:
+                #     Say e.type
+                #     Store e in pdf
+                #
+                #      OR
+                # 
+                # Lock the items in the world model, and 
+
+                self.robot.ed.disable_plugins(["kinect_integration", "perception"])
 
         return 'succeeded'
 
@@ -426,8 +452,14 @@ def setup_statemachine(robot):
     with sm:
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'AWAIT_START',
+                                transitions={   'initialized':'CONFIGURE_WM',
                                                 'abort':'Aborted'})
+
+        smach.StateMachine.add("CONFIGURE_WM",
+                               states.world_model.SetPlugins(robot, 
+                               		enable=["localization"],
+                               		disable=["kinect_integration", "laser_integration", "perception"]),
+                               transitions={'done'                      :'AWAIT_START'})
 
         smach.StateMachine.add("AWAIT_START",
                                states.AskContinue(robot),
