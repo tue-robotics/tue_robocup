@@ -31,23 +31,23 @@ def vector2hex(vector):
     return colour
 
 def analyze(im):
-    print 'reading image'
+    # print 'reading image'
 
     im = im.resize((150, 150))      # optional, to reduce time
     ar = scipy.misc.fromimage(im)
     shape = ar.shape
     ar = ar.reshape(scipy.product(shape[:2]), shape[2])
 
-    print 'finding clusters'
+    # print 'finding clusters'
     codes, dist = scipy.cluster.vq.kmeans(ar, NUM_CLUSTERS)
-    print 'cluster centres:\n', codes
+    # print 'cluster centres:\n', codes
 
     vecs, dist = scipy.cluster.vq.vq(ar, codes)         # assign codes
     counts, bins = scipy.histogram(vecs, len(codes))    # count occurrences
 
     vector2count = dict(zip([tuple(vector) for vector in codes], counts))
     name2count = {describe_color(vector2hex(vector)):count for vector,count in vector2count.iteritems()}
-    print name2count
+    # print name2count
 
     color_popularity_sorted = sorted(name2count.items(), key=operator.itemgetter(1), reverse=True)
     # import ipdb; ipdb.set_trace()
@@ -88,6 +88,8 @@ def hex2vector(hexcolor):
 
 
 if __name__ == "__main__":
-    im = Image.open('image.jpg')
+    import sys
+    filename = sys.argv[1]
+    im = Image.open(filename)
     most_frequent_colour = analyze(im)
     print most_frequent_colour
