@@ -59,6 +59,27 @@ class StoreKitchen(smach.State):
         self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
         return "done"
 
+class StoreBeverageSide(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.look_at_standing_person()
+        base_pose = self._robot.base.get_location()
+        time.sleep(1.0)
+        result = None
+        while not result:
+            result = self._robot.ears.recognize('<side>', {'side':['left','right']}, time_out = rospy.Duration(10)) # Wait 100 secs
+
+        if result == "left":
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
+        elif result == "right":
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)                
+
+        self._robot.ed.update_entity(id="beverages", posestamped=base_pose, type="waypoint")
+        return "done"
+
 class StoreWaypoint(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done", "continue"])
@@ -119,6 +140,12 @@ class StoreWaypoint(smach.State):
                 m.scale.y = 0.2
                 m.scale.z = 0.2
                 m.action = 0
+                m.ns = "arrow"
+                self._pub.publish(m)
+                m.type = 9
+                m.text = location
+                m.ns = "text"
+                m.pose.position.z = 0.5
                 self._pub.publish(m)
 
                 # Store waypoint in world model
@@ -131,6 +158,18 @@ class StoreWaypoint(smach.State):
                 return "done"
 
         return "continue"
+
+class CheckKnowledge(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["yes", "no"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        # Get the robot pose and compare if we are close enough to the kitchen waypoint
+        entity_ids = set([e.id for e in self._robot.ed.get_entities()])
+        if set(["one", "two", "three"]).issubset(entity_ids):
+            return "yes"
+        return "no"
 
 class CheckInKitchen(smach.State):
     def __init__(self, robot):
@@ -209,16 +248,11 @@ def setup_statemachine(robot):
         smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
 
         smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Show me your restaurant please. Say 'Please Follow Me'"), transitions={ 'spoken' :'HEAR_PLEASE_FOLLOW_ME'})
-        smach.StateMachine.add('HEAR_PLEASE_FOLLOW_ME', states.HearOptions(robot, ["please follow me"]), transitions={ 'no_result' :'HEAR_PLEASE_FOLLOW_ME', 'please follow me' : 'FOLLOW_TO_FIRST'})
+        smach.StateMachine.add('HEAR_PLEASE_FOLLOW_ME', states.HearOptions(robot, ["please follow me"]), transitions={ 'no_result' :'HEAR_PLEASE_FOLLOW_ME', 'please follow me' : 'FOLLOW'})
         
-        smach.StateMachine.add('FOLLOW_TO_FIRST', states.FollowOperator(robot), transitions={ 'stopped':'STORE_FIRST', 'lost_operator':'FOLLOW_TO_FIRST'})
-        smach.StateMachine.add('STORE_FIRST', StoreWaypoint(robot), transitions={ 'done':'FOLLOW_TO_SECOND', 'continue':'FOLLOW_TO_FIRST'})
-
-        smach.StateMachine.add('FOLLOW_TO_SECOND', states.FollowOperator(robot), transitions={ 'stopped':'STORE_SECOND', 'lost_operator':'FOLLOW_TO_SECOND'})
-        smach.StateMachine.add('STORE_SECOND', StoreWaypoint(robot), transitions={ 'done':'FOLLOW_TO_THIRD', 'continue':'FOLLOW_TO_SECOND'})
-
-        smach.StateMachine.add('FOLLOW_TO_THIRD', states.FollowOperator(robot), transitions={ 'stopped':'STORE_THIRD', 'lost_operator':'FOLLOW_TO_THIRD'})
-        smach.StateMachine.add('STORE_THIRD', StoreWaypoint(robot), transitions={ 'done':'SAY_FOLLOW_TO_KITCHEN', 'continue':'FOLLOW_TO_THIRD'})
+        smach.StateMachine.add('FOLLOW', states.FollowOperator(robot), transitions={ 'stopped':'STORE', 'lost_operator':'FOLLOW'})
+        smach.StateMachine.add('STORE', StoreWaypoint(robot), transitions={ 'done':'CHECK_KNOWLEDGE', 'continue':'FOLLOW' })
+        smach.StateMachine.add('CHECK_KNOWLEDGE', CheckKnowledge(robot), transitions={ 'yes':'SAY_FOLLOW_TO_KITCHEN', 'no':'FOLLOW'})
 
         smach.StateMachine.add('SAY_FOLLOW_TO_KITCHEN', states.Say(robot, "Please bring me back to the kitchen!"), transitions={ 'spoken' :'FOLLOW_TO_KITCHEN'})
 
@@ -259,11 +293,15 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SAY_ORDERS_DONE', states.Say(robot, "I received enough orders for now, going back to the kitchen!", block=False), transitions={ 'spoken' :'NAVIGATE_BACK_TO_THE_KITCHEN'})
 
-        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.2),
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
             transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'done', 'goal_not_defined':'done'})
-        smach.StateMachine.add('SPEAK_ORDERS', SpeakOrders(robot), transitions={ 'spoken' :'BANANA_KING'})
+        smach.StateMachine.add('SPEAK_ORDERS', SpeakOrders(robot), transitions={ 'spoken' :'STORE_BEVERAGE_SIDE'})
 
-        smach.StateMachine.add('BANANA_KING', states.Say(robot, "You're the banana king!", block=False), transitions={ 'spoken' :'done'})
+        smach.StateMachine.add('STORE_BEVERAGE_SIDE', StoreBeverageSide(robot), transitions={ 'done' : 'NAVIGATE_TO_BEVERAGES'})
+        smach.StateMachine.add('NAVIGATE_TO_BEVERAGES', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = 0.06),
+            transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'STORE_BEVERAGE_SIDE', 'goal_not_defined':'STORE_BEVERAGE_SIDE'})
+
+        smach.StateMachine.add('SPEAK_I_SEE_THE_BEVERAGES', states.Say(robot, "The beverages are in front of me", block=False), transitions={ 'spoken' :'done'})
 
     return sm
 
