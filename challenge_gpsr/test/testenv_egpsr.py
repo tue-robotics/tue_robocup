@@ -16,7 +16,28 @@ if __name__ == "__main__":
 
     env = os.environ['ROBOT_ENV']
 
-    if env == "rgo2014":
+    if env == "robotics_testlabs":
+
+        #person = W.add_object("loy-1", "loy", 0, 4, 0, 0, 0, 0.7)
+        W.add_object("sjoerd-2","sjoerd",   1, -0.5, 0.000)
+        #W.add_object("sjoerd-3","sjoerd",   1, 1, 0.000)
+        rospy.sleep(5)
+
+        # person.set_path([   [1.540, -0.021, 0.000],
+        #                     [7.031, -0.024, 0.000],
+        #                     [7.834, 2.987, 0.000],
+        #                     [7.892, 5.444, 0.000],
+        #                     [5.526, 7.008, 0.000],
+        #                     [4.694, 5.917, 0.000],
+        #                     [3.817, 5.120, 0.000],
+        #                     [2.995, 4.969, 0.000],
+        #                     [2.987, 2.681, 0.000],
+        #                     [3.901, 1.687, 0.000],
+        #                     [3.229, -0.079, 0.000],
+        #                     [-3.084, -0.038, 0.000]], 0.2)  # Last number is path velocity in m/s
+
+
+    elif env == "rgo2014":
         coke1 = W.add_object("coke-1", "coke", 4.25, 4.148, 0.86)   
 
         table_x = 8.028
@@ -31,6 +52,7 @@ if __name__ == "__main__":
         # table_y = -2.637
 
         table = W.add_object("table-1", "table", table_x, table_y, 0)
+
 
     elif env == "robotics_testlab_B":
         #coke1 = W.add_object("coke-1", "coke", 3.102, 0.0, 0.81)    
@@ -106,6 +128,9 @@ if __name__ == "__main__":
         # ["I cleaned up everything I could find, so my work here is done. Have a nice day!", "I'm done, everything I could find is cleaned up."]
 
         # rospy.loginfo("Done")
+
+
+
 
     else:
         print "No test scenario specified for environment {0}.".format(env)
