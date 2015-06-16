@@ -33,7 +33,7 @@ def save_entity_image_to_file(world_model_ed, entityID, colorname):
 
         # stream = StringIO.StringIO(byte_array)
         
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         image = Image.open(file_name)
 
         image_data = np.asarray(image)
