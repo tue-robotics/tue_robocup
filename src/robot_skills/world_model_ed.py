@@ -141,7 +141,7 @@ class ED:
         if posestamped:
             X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
             t = posestamped.pose.position
-            json_entity += ', "pose": { "x": %d, "y": %d, "z": %d, "X": %d, "Y": %d, "Z": %d }' % (t.x, t.y, t.z, X, Y, Z)
+            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
         if flags:
             if isinstance(flags, dict):
                 flags = [flags]
@@ -167,6 +167,7 @@ class ED:
                 return False
 
         json = '{"entities":[{%s}]}'%json_entity
+        print json
 
         return self._ed_update_srv(request=json)
 
