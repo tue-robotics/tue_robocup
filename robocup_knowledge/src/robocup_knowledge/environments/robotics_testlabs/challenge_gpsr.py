@@ -16,11 +16,12 @@ rooms_detailed = {  'kitchen':['chair','cabinet'],
 ###############################################
 
 #data for speech recognition
-objects_known = ['cola']
+objects_known = ['beer','coke','beer','coke','fanta','ice_tea','tea','coffee_pads','deodorant','frutas','sprite','teddy']
 
 location_placement = ['chair','cabinet', 'hallway couch','couchtable','dinnertable','corridor table','bookcase','bed','bed cabinet','operator table','workbench']
 
 rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
+#rooms = ["living room"]
 persons_women = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
 persons_men = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
 
@@ -34,7 +35,7 @@ spec_goroom_findobj = "(<1_vb_goto> the <1_room> and <2_vb_find> the <2_object>)
 spec_findperson_talk = "(<2_vb_find> a person in the <1_room> and ((answer a <3_question>)|(<3_vb_speak> <3_name_time_date>)))"
 
 spec = "("+spec_get_deliver+"|"+spec_goroom_findobj+"|"+spec_findperson_talk+")"
-#spec = spec_goroom_findobj
+#spec = spec_get_deliver
 
 choices = {'1_location':location_placement,
 '2_vb_take':['take', 'grasp', 'get'],   
@@ -115,40 +116,3 @@ choice_answer_mapping = {
 
 spec_question = '<question>'
 choices_question = {'question': [k for k,v in choice_answer_mapping.iteritems()]}
-
-
-
-# time      = "It is %s"%datetime.now().strftime("%I %M %p")
-# date      =see test.py
-# today     =see test.py
-# tomorrow  =see test.py
-# day_month = see test.py
-# day_week  = see test.py
-
-# speak_special = {
-#         "your name":"my name is amigo",
-#         "the name of your team": "my team's name is tech united",
-#         "the time": time,
-#         "what time is it": time,
-#         "tell the date": date,
-#         "what day is today": today,
-#         "what day is tomorrow":tomorrow,
-#         "tell the day of the month": day_month,
-#         "tell the day of the week": day_week
-# }
-
-
-# time      = "It is %s"%datetime.now().strftime("%I %M %p")
-# print time
-# date2 = "It is %s"%datetime.now().strftime("%A")
-# print date2
-# # today     =
-# # tomorrow  =
-# # day_month = "It is the %s of %s"%datetime.now().strftime("%b"),datetime.now().strftime("%d") 
-# # print day_month
-# day_month = "It is the %s "%datetime.now().strftime("%b")
-# print day_month
-# day_month = "It is the %s "%datetime.now().strftime("%d")
-# print day_month
-# day_week  = "It is %s"%datetime.now().strftime("%A") 
-# print day_week
