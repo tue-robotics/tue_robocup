@@ -11,6 +11,48 @@ import operator
 from robot_skills.util import transformations
 import random
 
+import os
+from PIL import Image
+import cStringIO as StringIO
+import numpy as np
+
+def save_entity_image_to_file(world_model_ed, entityID, colorname):
+    file_name = "images/%s_%s.jpg"%(entityID, colorname)
+    if "/" in file_name and not os.path.exists(os.path.dirname(file_name)):
+        os.makedirs(os.path.dirname(file_name))
+
+    # ed request
+    info = world_model_ed.get_entity_info(entityID)
+
+    try:
+        byte_array = bytearray(info.measurement_image)
+        f = open(file_name, 'wb')
+        f.write(byte_array)
+        f.close()
+        del f
+
+        # stream = StringIO.StringIO(byte_array)
+        
+        # import ipdb; ipdb.set_trace()
+        image = Image.open(file_name)
+
+        image_data = np.asarray(image)
+        image_data_bw = image_data.max(axis=2)
+        non_empty_columns = np.where(image_data_bw.max(axis=0)>0)[0]
+        non_empty_rows = np.where(image_data_bw.max(axis=1)>0)[0]
+        cropBox = (min(non_empty_rows), max(non_empty_rows), min(non_empty_columns), max(non_empty_columns))
+
+        image_data_new = image_data[cropBox[0]:cropBox[1]+1, cropBox[2]:cropBox[3]+1 , :]
+
+        cropped_image = Image.fromarray(image_data_new)
+        cropped_file_name = "images/%s_%s_cropped.jpg"%(entityID, colorname)
+        cropped_image.save(cropped_file_name)
+    except Exception, e:
+        rospy.logerr("Could not save image for {} because {}".format(entityID, e))
+        return None
+
+    return file_name
+
 
 class BottleDescription(object):
     def __init__(self, size=None, color=None, label=None):
@@ -77,7 +119,7 @@ class DescribeBottles(smach.State):
         self.bottle_desc_mapping_designator = bottle_desc_mapping_designator
 
     def execute(self, userdata=None):
-        self.robot.head.reset()
+        # self.robot.head.reset()
         # import ipdb; ipdb.set_trace()
         bottles = self.bottle_collection_designator.resolve()
         if not bottles:
@@ -146,11 +188,17 @@ class DescribeBottles(smach.State):
 
         # import ipdb; ipdb.set_trace()
         most_probable_color = get_entity_color(bottle_entity)
+        try:
+            filename = save_entity_image_to_file(self.robot.ed, bottle_entity.id, most_probable_color)
+            rospy.loginfo("{} has color {}".format(filename, most_probable_color))
+        except Exception, e:
+            rospy.logwarn("Could not save image of entity {}: {}".format(bottle_entity.id, e))
+
         size = get_entity_size(bottle_entity)
 
         return BottleDescription(   size=size,
                                     color=most_probable_color,
-                                    label=random.choice(["aspirin", "ibuprofen", None]))
+                                    label=None)
 
 if __name__ == "__main__":
     import doctest

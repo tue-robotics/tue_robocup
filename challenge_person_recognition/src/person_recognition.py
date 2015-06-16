@@ -472,7 +472,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             with describeCrowdContainer:
 
                 smach.StateMachine.add( 'GET_OPERATOR_LOCATION',
-                                        PersonRecStates.GetOperatorLocation(robot, facesAnalyzedDes, operatorNameDes, operatorLocationDes),
+                                        PersonRecStates.ChooseOperator(robot, facesAnalyzedDes, operatorNameDes, operatorLocationDes),
                                         remapping={     'operatorIdx_out':'operatorIdx_userData'},
                                         transitions={   'succeeded': 'GOTO_OPERATOR',
                                                         'failed':'SAY_CANT_CHOOSE_OPERATOR'})
