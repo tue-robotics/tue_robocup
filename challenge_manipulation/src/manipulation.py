@@ -200,12 +200,12 @@ class InspectShelves(smach.State):
             rospy.loginfo("Shelf: {0}".format(shelf))
 
             ''' Get entities '''
-            entity = self.robot.ed.get_entity(id=shelf, parse=False)
+            shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
 
-            if entity:
+            if shelf_entity:
 
                 ''' Extract center point '''
-                cp = entity.pose.position
+                cp = shelf_entity.pose.position
 
                 ''' Look at target '''
                 self.robot.head.look_at_point(geom.PointStamped(cp.x,cp.y,cp.z,"/map"))
@@ -218,20 +218,32 @@ class InspectShelves(smach.State):
                 self.robot.torso._send_goal([height], timeout=5.0)
 
                 ''' Sleep for 1 second '''
-                rospy.sleep(1.0)
+                rospy.sleep(1.0) # ToDo: remove???
 
+                ''' Enable kinect integration plugin and wait a bit '''
                 self.robot.ed.enable_plugins(["kinect_integration"])
-
                 rospy.sleep(2.0)
 
-                # TODO: Query for entities on top of the shelf and flag them with 'perception'
-                # ...
-                # for e in entities:
-                #    self.robot.ed.update_entity(id=e.id, flags=["perception"])
+                ''' Get all entities that are on top of the shelf and set perception flag '''
+                id_list = [] # List with entities that are flagged with 'perception'
+                entities = self.robot.ed.get_entities(parse=False)
+                for e in entities:
+                    if onTopOff(e, shelf_entity) and not e.type:
+                        # ToDo: filter on size in x, y, z
+                        self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
+                        id_list.append(e.id)
 
+                ''' Enable perception plugin and wait a bit '''
                 self.robot.ed.enable_plugins(["perception"])
-
                 rospy.sleep(2.0)
+
+                ''' Check all entities that were flagged to see if they have received a 'type' it_label
+                if so: recite them and lock them '''
+                for eid in id_list:
+                    e = self.robot.ed.get_entity(id=eid)
+                    if e.type:
+                        self.robot.speech.speak("I have seen {0}".format(e.type), block=False)
+                        self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
 
                 # TODO: Store the entities in the pdf (and let AMIGO name them)
                 # ...
