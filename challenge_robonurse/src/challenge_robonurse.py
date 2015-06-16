@@ -201,7 +201,7 @@ class GetPills(smach.StateMachine):
         def not_bookcase_part(entity):
             return not BOTTLE_SHELF in entity.id #Bookcase has elements named "bookcase/shelf1" etc. Ditch those
 
-        bottle_shelf = ds.EdEntityDesignator(robot, id="bookcase/shelf2") #TODO: un-hardcode and make it a lower shelf.
+        bottle_shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
 
         # import ipdb; ipdb.set_trace()
         def on_top(entity):
@@ -217,7 +217,7 @@ class GetPills(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, bottle_shelf),
+                                     states.LookAtEntity(robot, bottle_shelf, waittime=1.0),
                                      transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 

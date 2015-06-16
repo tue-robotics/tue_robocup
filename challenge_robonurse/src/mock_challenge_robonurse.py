@@ -48,9 +48,9 @@ if __name__ == "__main__":
     W = client.SimWorld()
 
  
-    W.add_object("bottle-1", "sim-coke", 3.05, 2.513, 1.095) 
-    W.add_object("bottle-2", "apple_juice", 3.05, 2.70, 1.095)
-    W.add_object("bottle-3", "tea_pack", 3.05, 2.913, 1.095)
+    W.add_object("bottle-1", "sim-coke", 3.05, 2.513, 0.80) #Height of the shelf to pick from + an offset for the objects' size
+    W.add_object("bottle-2", "apple_juice", 3.05, 2.70, 0.80)
+    W.add_object("bottle-3", "tea_pack", 3.05, 2.913, 0.80)
 
     W.add_object("granny", "loy", *human_start)
 
