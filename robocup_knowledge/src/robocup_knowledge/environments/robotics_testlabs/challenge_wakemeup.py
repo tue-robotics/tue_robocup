@@ -26,8 +26,12 @@ bed_nav_goal = {
 knowledge.default_milk = "fresh milk"
 
 kitchen_nav_goal = {
+    "in_front_of":"cabinet"
     "in" : "kitchen"
-    "lookat" : "kitchen"
+    "lookat" : "cabinet"
 }
+
+# Number of times it asks for the door to be opened and replans to the kitchen
+check_door_attempts = 1
 
 

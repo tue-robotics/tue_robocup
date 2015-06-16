@@ -190,7 +190,7 @@ class WakeMeUp(smach.StateMachine):
                                                         'timeout'   :'SAY_AWAKE'})
 
                 smach.StateMachine.add( "SAY_AWAKE",
-                                        states.Say(robot, ["Finally, you're awake, I will hand you your newspaper"], block=True),
+                                        states.Say(robot, ["Finally, you're awake, I will hand you your newspaper now"], block=True),
                                         transitions={   'spoken' :'HANDOVER_NEWSPAPER'})
 
                 smach.StateMachine.add( "HANDOVER_NEWSPAPER",
@@ -261,25 +261,35 @@ class WakeMeUp(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            prepBreakfastContainer = smach.StateMachine(outcomes = ['container_successed', 'container_failed'])
+            prepBreakfastContainer = smach.StateMachine(outcomes = ['container_succeeded', 'container_failed'])
             with prepBreakfastContainer:
 
                 smach.StateMachine.add( "SAY_PREPARING",
-                                        states.Say(robot, [ "I'm preparing your breakfast! La la la la la." ], block=False),
+                                        states.Say(robot, [ "I'm going to prepare your breakfast! La la la la la." ], block=False),
                                         transitions={   'spoken' :'GOTO_KITCHEN'})
-
-                states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
-                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" }, 
-                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat']))
 
                 smach.StateMachine.add('GOTO_KITCHEN',
                                     states.NavigateToSymbolic(robot, {
                                         EdEntityDesignator(robot, id=knowledge.kitchen_nav_goal['in']) : "in" }, 
                                         EdEntityDesignator(robot, id=knowledge.kitchen_nav_goal['lookat'])),
-                                    transitions={   'arrived':'container_successed',
-                                                    'unreachable':'container_successed',
-                                                    'goal_not_defined':'container_successed'})
+                                    transitions={   'arrived':'container_succeeded',
+                                                    'unreachable':'CHECK_DOOR',
+                                                    'goal_not_defined':'SAY_UNREACHABLE'})
+
+                smach.StateMachine.add('CHECK_DOOR',
+                                    wakestates.CheckIfObstacleIsDoor(robot, attempts=knowledge.check_door_attempts),
+                                    transitions={   'is_door':'ASK_FOR_OPEN',
+                                                    'is_not_door':'GOTO_KITCHEN',
+                                                    'tried_too_many_times':'SAY_UNREACHABLE'})
+
+                smach.SateMachine.add('ASK_FOR_OPEN',
+                                    states.Say(robot, "I see the door is closed. Would someone open the door for me?"),
+                                    transitions={   'spoken'    :'GOTO_KITCHEN'})
+
+                smach.SateMachine.add('SAY_UNREACHABLE',
+                                    states.Say(robot, "I can't get to the kitchen"),
+                                    transitions={   'spoken'    :'container_failed'})
+
 
             smach.StateMachine.add( 'PREP_BREAKFAST_CONTAINER',
                                     prepBreakfastContainer,
