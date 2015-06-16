@@ -234,8 +234,11 @@ class LockingDesignator(Designator):
             return self._current
         else:
             self._current = self.to_be_locked.resolve()
-            rospy.loginfo("{0} not resolved to, but is not locked to {1}".format(self, str(self._current)[:10]))
+            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, str(self._current)[:10]))
             return self._current
+
+    def __repr__(self):
+        return "LockingDesignator({})".format(self.to_be_locked)
 
 
 class PointStampedOfEntityDesignator(Designator):
