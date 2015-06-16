@@ -135,6 +135,14 @@ class ED:
         self._marker_publisher.publish(marker)
 
     def update_entity(self, id, type = None, posestamped = None, flags = None):
+        """
+        Updates entity
+        :param id: entity id
+        :param type: entity type
+        :param posestamped: ???
+        :param flags: (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,
+        e.g., 'perception'
+        """
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
