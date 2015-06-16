@@ -332,20 +332,22 @@ class HandoverToHuman(smach.StateMachine):
                         ArmToJointConfig(robot, locked_arm, 'handover_to_human'),
                         transitions={ 'succeeded'   :'SAY_OPEN_GRIPPER',
                                       'failed'      :'SAY_OPEN_GRIPPER'})
-            #smach.StateMachine.add('MOVE_HUMAN_HANDOVER', ArmToUserPose(self.side, 0.2, 0.3, 1.0, 0.0, 0.0 , 0.0, time_out=20, pre_grasp=False, frame_id="/amigo/base_link", delta=False),
-            #            transitions={'succeeded':'SAY_OPEN_GRIPPER','failed':'SAY_OPEN_GRIPPER'})
-
+            
             smach.StateMachine.add("SAY_OPEN_GRIPPER",
                         Say(robot, [ "I will open my gripper when you slightly pull this thing"]),
                         transitions={   'spoken'    :'OPEN_GRIPPER_ON_HANDOVER'})
 
             smach.StateMachine.add('OPEN_GRIPPER_ON_HANDOVER', OpenGripperOnHandoverToHuman(robot, locked_arm, timeout=timeout),
                         transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
-                                     'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+                                     'failed'       :   'SAY_I_WILL_KEEP_IT'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.CLOSE, timeout=0.0),
                         transitions={'succeeded'    :   'RESET_ARM',
                                      'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add("SAY_I_WILL_KEEP_IT",
+                        Say(robot, [ "If you don't want it, I will keep it"]),
+                        transitions={   'spoken'    :'RESET_ARM'})
 
             smach.StateMachine.add('RESET_ARM',
                         ArmToJointConfig(robot, locked_arm, 'reset'),
