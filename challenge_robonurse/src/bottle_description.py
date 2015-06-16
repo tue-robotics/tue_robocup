@@ -16,6 +16,8 @@ from PIL import Image
 import cStringIO as StringIO
 import numpy as np
 
+from color_analysis import analyze
+
 def save_entity_image_to_file(world_model_ed, entityID, colorname):
     file_name = "images/%s_%s.jpg"%(entityID, colorname)
     if "/" in file_name and not os.path.exists(os.path.dirname(file_name)):
@@ -190,6 +192,12 @@ class DescribeBottles(smach.State):
         most_probable_color = get_entity_color(bottle_entity)
         try:
             filename = save_entity_image_to_file(self.robot.ed, bottle_entity.id, most_probable_color)
+            
+            try:
+                most_probable_color = analyze(Image.open(filename))
+            except Exception, e:
+                rospy.logwarn("Could not get the dominant color in {}".format(filename))
+
             rospy.loginfo("{} has color {}".format(filename, most_probable_color))
         except Exception, e:
             rospy.logwarn("Could not save image of entity {}: {}".format(bottle_entity.id, e))

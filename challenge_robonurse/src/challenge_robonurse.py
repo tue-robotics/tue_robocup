@@ -12,13 +12,12 @@ Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
 
-TODO: for the testlab. pick a shelf from which we can actually grasp.
 TODO: Bottle descriptions should come from actual object sizes
 TODO: If there are no options for some type, reflect this in the speech spec.
 TODO: Actual action detection with a hack. 
     Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
 # TODO: Test Grasp blanket
-# TODO: Test Take cane
+# TODO: Test Take cane: didn't work OK, CLOSE_AFTER_INSERT failed
 """
 
 import rospy

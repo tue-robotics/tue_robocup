@@ -12,14 +12,14 @@ import operator
 
 NUM_CLUSTERS = 5
 
-def replace_black_with_transpart(img):
-    img = img.convert("RGBA")
+def replace_color(img, src, dst):
+    # img = img.convert("RGBA")
     datas = img.getdata()
 
     newData = []
     for item in datas:
-        if item[0] == 0 and item[1] == 0 and item[2] == 0:
-            newData.append((255, 255, 255, 0))
+        if item[0] == src[0] and item[1] == src[1] and item[2] == src[2]:
+            newData.append(dst) 
         else:
             newData.append(item)
 
@@ -34,6 +34,9 @@ def analyze(im):
     # print 'reading image'
 
     im = im.resize((150, 150))      # optional, to reduce time
+
+    im = replace_color(im, (255, 255, 255), (0,0,0)) #If it's fully white, replace it with black
+
     ar = scipy.misc.fromimage(im)
     shape = ar.shape
     ar = ar.reshape(scipy.product(shape[:2]), shape[2])
