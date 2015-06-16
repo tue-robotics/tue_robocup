@@ -15,7 +15,6 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states.util.designators import *
 from robot_skills.util import msg_constructors as geom
 import ed.msg
-from robot_smach_states import Grab
 
 from datetime import datetime
 from datetime import date
@@ -29,6 +28,8 @@ global ROBOT_NAME_SPECIAL
 LOCATION_NR_IN_ROOM = 0
 global LOC_ROOM
 LOC_ROOM = "cabinet"
+# global HUMAN 
+# HUMAN = ed.msg.EntityInfo
 
 ###########################
 # Created by: Erik Geerts #
@@ -54,9 +55,9 @@ class QueryFirstAnswerDesignator(Designator):
         print "first_answer is:", str(first_answer)
         return str(first_answer)
 
-class ObjectTypeDesignator(Designator):
+class ObjectGraspDesignator(Designator):
     def __init__(self, robot):
-        super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
+        super(ObjectGraspDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
         #self.object_to_find = object_to_find
 
@@ -70,29 +71,39 @@ class ObjectTypeDesignator(Designator):
         #location = str(self.robot.reasoner.query_first_answer(self.query))
         ## FOR TESTING:
         #location = "hallway_couch"
-        grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-                                                                criteriafuncs=[has_type], debug=False)
+        grab_item_designator = EdEntityDesignator(QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"))
+
+        self.robot.ed
 
         print "test1"
         print grab_item_designator.resolve()
         print "test2"
         return grab_item_designator.resolve()
 
+class PlaceLocDesignator(Designator):
+    def __init__(self, robot):
+        super(PlaceLocDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
+        self.robot = robot
 
-# class PersonTypeDesignator(Designator):
-#     def __init__(self, robot):
-#         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
-#         self.robot = robot
+    def resolve(self):
+        loc_entity = robot.ed.get_entity(id=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"))
 
-#     def resolve(self):
-#         has_type = lambda entity: entity.type == "person"
-#         location = str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
-#         ## FOR TESTING:
-#         #location = "hallway_couch"
-#         grab_item_designator = EdEntityDesignator(self.robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-#                                                                 criteriafuncs=[has_type], debug=False)
+        print "loc_entity in PlaceLocDesignator: \n"
+        print loc_entity.resolve()
+        return loc_entity.resolve()
 
-#         return grab_item_designator.resolve()
+class PossibleHumanFlagsDesignator(Designator):
+    def __init__(self, robot, room):
+        super(PossibleHumanFlagsDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
+        self.robot = robot
+        self.room = room
+
+    def resolve(self):
+        
+        rospy.sleep(2)
+        possible_humans =  self.robot.ed.get_closest_possible_person_entity(room=self.room.resolve())
+        
+        return possible_humans
 
 
 ### EXAMPLE SENTENCES stated in new conceptual rulebook.
@@ -189,7 +200,7 @@ class Ask_action(smach.State):
 
 class Query_specific_action(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "no_action"]) #outcomes=["action_get", "action_transport","action_point","action_find","action_navigate","action_leave","error"])
+        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "return_to_person", "place_item","no_action"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -290,11 +301,11 @@ class Query_specific_action(smach.State):
                     if str(choice_value) == "3_person_me":
                         return "return_to_operator"
 
+                    if str(choice_value) == "3_place_location":
+                        return "place_item"
 
-                    # if str(choice_value) == "3_place_location":
-
-                    # if str(choice_value) == "3_person":
-                    #     '3_room'
+                    if str(choice_value) == "3_person":
+                        return "return_to_person"
 
 
         # print answers[0]
@@ -550,12 +561,9 @@ class FindObjectInRoom(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['ok'])
             def dynamic_say(userdata):
-                answer = object_to_find.resolve()
-                print "! Object_type_to_find = ", answer
-
                 try:
                     object_type = object_to_find.resolve()
-                    robot.speech.speak("I found the " + str(object_type) + ". They are on the " + str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()))
+                    robot.speech.speak("I found the " + str(object_type) + ". It is on the " + str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()))
                     return 'ok'
 
                 except KeyError:
@@ -568,11 +576,11 @@ class FindObjectInRoom(smach.StateMachine):
 
 
 
-class FindPerson(smach.StateMachine):
+class FindAndGoToPerson(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
 
     def __init__(self, robot, room):
-        smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
+        smach.StateMachine.__init__(self, outcomes=["Found", "Not_found", "Failed"])
         with self:
 
             ## room is known -> locations to search for object found in knowledge file. 
@@ -581,11 +589,43 @@ class FindPerson(smach.StateMachine):
 
             #Class ChooseLocation in final amigo file. 
 
-            smach.StateMachine.add("SAY_FIND_PERSON",
-                               states.Say(robot,"Testing FindPerson", block=True),
-                               transitions={'spoken':'Done'})
+            @smach.cb_interface(outcomes=['found','not_found'])
+            def check_person(userdata):
+                try:
+                    possible_human = PossibleHumanFlagsDesignator(robot,room).resolve()
+                    if possible_human:
+                        print "! human = ", possible_human
 
+                        # global HUMAN
+                        # HUMAN = possible_human
 
+                        robot.speech.speak("I found a person")
+                        return 'found'
+                    else:
+                        return 'not_found'
+
+                except KeyError:
+                    print "[FindPerson] problem should not happen"
+                    return "not_found"
+
+            smach.StateMachine.add("CHECK_FOR_PERSON",
+                               smach.CBState(check_person),
+                               transitions={'found':'GO_TO_PERSON',
+                                            'not_found':'Not_found'})
+
+            smach.StateMachine.add('GO_TO_PERSON',
+                                    states.NavigateToWaypoint(robot, PossibleHumanFlagsDesignator(robot,room), radius=0.6),
+                                    transitions={   'arrived':'SAY_HELLO',
+                                                    'unreachable':'SAY_SORRY',
+                                                    'goal_not_defined':'SAY_SORRY'})
+
+            smach.StateMachine.add("SAY_HELLO",
+                               states.Say(robot,"Hello there!", block=True),
+                               transitions={'spoken':'Found'})
+
+            smach.StateMachine.add("SAY_SORRY",
+                               states.Say(robot,"Sorry, I was not able to reach. Please come to me.", block=True),
+                               transitions={'spoken':'Failed'})
 
 
 ########################
@@ -651,13 +691,15 @@ def setup_statemachine(robot):
                                 Query_specific_action(robot),
                                 transitions={   'navigate_room':'1_ACTION_NAVIGATE_TO_ROOM',
                                                 'navigate_location':'1_ACTION_NAVIGATE_TO_LOCATION',
-                                                'take_object_loc':'2_GRAB_ITEM', #amigo should be at a location and now try to search for object
+                                                'take_object_loc':'2_LOCK_GRAB_ITEM', #amigo should be at a location and now try to search for object
                                                 'look_object_loc':'2_FIND_ITEM', # If you are in a room, amigo should explore all locations in room.
                                                 'find_person':'2_FIND_PERSON',
                                                 #'count_objects':'FINISHED_TASK',
                                                 'answer_question':'3_SAY_QUESTION_1',
                                                 'answer_special':'3_SPEAK_SPECIAL',
                                                 'return_to_operator':'3_NAVIGATE_TO_OPERATOR',
+                                                'return_to_person':'3_ACTION_NAVIGATE_TO_ROOM',
+                                                'place_item':'3_NAV_TO_LOC_PLACE',
                                                 'no_action':'SAY_GO_TO_EXIT'})
 
 
@@ -710,9 +752,13 @@ def setup_statemachine(robot):
         ######### ACTION PART 2 #########
         #################################
 
+        grab_designator_locked = LockingDesignator(ObjectGraspDesignator(robot))
+        smach.StateMachine.add( "2_LOCK_GRAB_ITEM",
+                                    states.LockDesignator(grab_designator_locked), #TODO maybe: unlock this if you ever want to pickup something else
+                                    transitions={   'locked'              :'2_GRAB_ITEM'})
 
         smach.StateMachine.add( "2_GRAB_ITEM",
-                                    Grab(robot, ObjectTypeDesignator(robot), empty_arm_designator),
+                                    states.Grab(robot, ObjectGraspDesignator(robot), empty_arm_designator),
                                     transitions={   'done'              :'FINISHED_TASK',
                                                     'failed'            :'FINISHED_TASK'})
 
@@ -724,9 +770,9 @@ def setup_statemachine(robot):
                                                     'Failed'            :'FINISHED_TASK'})
 
         smach.StateMachine.add( "2_FIND_PERSON",
-                                    FindPerson(robot, QueryFirstAnswerDesignator(robot, "action_info('2','2_look_person_loc',_,A)")),
-                                    transitions={   'Done'              :'FINISHED_TASK',
-                                                    'Aborted'           :'FINISHED_TASK',
+                                    FindAndGoToPerson(robot, QueryFirstAnswerDesignator(robot, "action_info('2','2_look_person_loc',A)")),
+                                    transitions={   'Found'              :'FINISHED_TASK',
+                                                    'Not_found'           :'FINISHED_TASK',
                                                     'Failed'            :'FINISHED_TASK'})
         
 
@@ -765,7 +811,7 @@ def setup_statemachine(robot):
                                 transitions={ 'answered':'FINISHED_TASK',
                                               'failed':'FINISHED_TASK'})
 
-        ###### ACTION RETURN TO OPERATOR ######
+        ###### ACTION HANDOVER OBJECT TO OPERATOR ######
 
         smach.StateMachine.add('3_NAVIGATE_TO_OPERATOR',
                                     states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.5),
@@ -793,10 +839,48 @@ def setup_statemachine(robot):
                                    transitions={   'succeeded'          :'3_RESET_ARMS',
                                                     'failed'            :'3_RESET_ARMS'})
 
-        smach.StateMachine.add( "3_RESET_ARMS",
+        smach.StateMachine.add("3_RESET_ARMS",
                                     states.ResetArms(robot),
                                     transitions={   'done'            :'FINISHED_TASK'})
 
+
+        ###### ACTION PLACE OBJECT ON LOCATION ######
+
+
+        smach.StateMachine.add('3_NAV_TO_LOC_PLACE',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")) : "in_front_of" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"))),
+                                    transitions={   'arrived'           :   '3_SAY_FAILED_PLACING', #3_PLACE_ITEM
+                                                    'unreachable'       :   '3_SAY_FAILED_PLACING',
+                                                    'goal_not_defined'  :   '3_SAY_FAILED_PLACING'})
+
+        # place_loc_designator = PlaceLocDesignator(robot)
+
+        # # smach.StateMachine.add( "3_PLACE_ITEM",
+        # #                             states.Place(robot, item_to_place=grab_designator_locked, place_pose=place_loc_designator, arm=arm_with_item_designator),
+        # #                             transitions={   'done'              :'FINISHED_TASK',
+        # #                                             'failed'            :'3_SAY_FAILED_PLACING'})
+
+        smach.StateMachine.add( '3_SAY_FAILED_PLACING',
+                                states.Say(robot, ["I was not able to place the item. I'm sorry, but please take the item from me."], block=True),
+                                transitions={'spoken':'3_HANDOVER_TO_OPERATOR'})
+
+        ###### ACTION HANDOVER OBJECT TO PERSON IN ROOM ######
+
+        smach.StateMachine.add('3_ACTION_NAVIGATE_TO_ROOM',
+                                states.NavigateToSymbolic(robot, 
+                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)")) : "in" }, 
+                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)"))),
+                                transitions={   'arrived'           :   'FINISHED_TASK',
+                                                'unreachable'       :   '1_ACTION_NAVIGATE_TO_ROOM_RETRY',
+                                                'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_ROOM_RETRY'})
+
+        smach.StateMachine.add( "3_FIND_PERSON",
+                                    FindAndGoToPerson(robot, QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)")),
+                                    transitions={   'Found'             :'3_SAY_HANDOVER',
+                                                    'Not_found'         :'3_SAY_NOT_ARRIVED',
+                                                    'Failed'            :'FINISHED_TASK'})
 
 
         ###############################

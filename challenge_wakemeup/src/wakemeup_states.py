@@ -323,4 +323,32 @@ class LookIfSomethingsThere(smach.State):
                 rospy.sleep(0.2)
 
         return 'not_awake'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+class CheckIfObstacleIsDoor(smach.State):
+    def __init__(self, robot, attempts=1):
+        smach.State.__init__(self, outcomes=['is_door', 'is_not_door', 'tried_too_many_times'])
+        self.robot = robot
+        self.attempts_allowed = attempts
+        self.attempts_made = 0
+
+    def execute(self, robot):
+            door = True
+            if door:
+                # Check if the entity blocking the way to the kitchen 
+                # is probably the door, if it is, ask for it to be 
+                # opened. If it is not, the goal must be truly
+                # unreachable
+                return 'is_door'
+            else:
+                self.attempts_made += 1
+                if self.attempts_made < self.attempts_allowed:
+                    return 'is_not_door'
+                else:
+                    return 'tried_too_many_times'
             
+
+
+        

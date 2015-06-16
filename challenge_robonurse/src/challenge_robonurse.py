@@ -11,13 +11,10 @@ The robot must grab the bottle and bring it to Granny.
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
-
-TODO: for the testlab. pick a shelf from which we can actually grasp.
-TODO: Bottle descriptions should come from actual object sizes
+TODO: Bottle descriptions should come from relative object sizes and relative positions
 TODO: If there are no options for some type, reflect this in the speech spec.
 TODO: Actual action detection with a hack. 
     Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
-# TODO: Test Grasp blanket
 # TODO: Test Take cane
 """
 
@@ -342,9 +339,14 @@ class GetPills(smach.StateMachine):
             smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
                                     states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
                                     transitions={   'arrived'           :'failed',#DETECT_ACTION'
+                                                    'unreachable'       :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',#DETECT_ACTION'
+                                                    'goal_not_defined'  :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE'})#DETECT_ACTION'
+            
+            smach.StateMachine.add( "GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE",
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'failed',#DETECT_ACTION'
                                                     'unreachable'       :'failed',#DETECT_ACTION'
                                                     'goal_not_defined'  :'failed'})#DETECT_ACTION'
-            #END Loy's version
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
                                     #states.NavigateToPose(robot, 0, 0, 0),
@@ -401,7 +403,7 @@ class HandleFall(smach.StateMachine):
             return is_on_top
 
         # Don't pass the weight_function, might screw up if phone is not near the robot
-        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=True)
+        phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
         empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
         
@@ -491,6 +493,7 @@ class HandleFall(smach.StateMachine):
 class HandleWalkAndSit(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+        arm_for_cane = ds.UnoccupiedArmDesignator(robot.arms, robot.arms["left"])
 
         with self:
             smach.StateMachine.add( 'FOLLOW_GRANNY', 
@@ -503,9 +506,14 @@ class HandleWalkAndSit(smach.StateMachine):
                                     transitions={   'spoken'            :'HANDOVER_CANE'})
 
             smach.StateMachine.add( "HANDOVER_CANE",
-                                    states.HandoverFromHuman(robot, ds.UnoccupiedArmDesignator(robot.arms, robot.arms["left"])),
+                                    states.HandoverFromHuman(robot, arm_for_cane),
                                     transitions={   'succeeded'            :'succeeded',
-                                                    'failed'               :'failed'})
+                                                    'failed'               :'CLOSE_GRIPPER_AFTER_FAIL'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_AFTER_FAIL', 
+                                    states.SetGripper(robot, arm_for_cane, gripperstate='close', timeout=1.0),
+                                    transitions={'succeeded'               :'succeeded',
+                                                 'failed'                  :'failed'})
 
 
 class RespondToAction(smach.StateMachine):
