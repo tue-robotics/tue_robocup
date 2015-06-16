@@ -23,11 +23,11 @@ bed_nav_goal = {
     'lookat' : 'bed'
 }
 
-knowledge.default_milk = "fresh milk"
+default_milk = "fresh milk"
 
 kitchen_nav_goal = {
-    "in_front_of":"cabinet"
-    "in" : "kitchen"
+    "in_front_of":"cabinet",
+    "in" : "kitchen",
     "lookat" : "cabinet"
 }
 

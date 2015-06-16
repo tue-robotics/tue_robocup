@@ -277,23 +277,23 @@ class WakeMeUp(smach.StateMachine):
                                                     'goal_not_defined':'SAY_UNREACHABLE'})
 
                 smach.StateMachine.add('CHECK_DOOR',
-                                    wakestates.CheckIfObstacleIsDoor(robot, attempts=knowledge.check_door_attempts),
+                                    wakeStates.CheckIfObstacleIsDoor(robot, attempts=knowledge.check_door_attempts),
                                     transitions={   'is_door':'ASK_FOR_OPEN',
                                                     'is_not_door':'GOTO_KITCHEN',
                                                     'tried_too_many_times':'SAY_UNREACHABLE'})
 
-                smach.SateMachine.add('ASK_FOR_OPEN',
+                smach.StateMachine.add('ASK_FOR_OPEN',
                                     states.Say(robot, "I see the door is closed. Would someone open the door for me?"),
                                     transitions={   'spoken'    :'GOTO_KITCHEN'})
 
-                smach.SateMachine.add('SAY_UNREACHABLE',
+                smach.StateMachine.add('SAY_UNREACHABLE',
                                     states.Say(robot, "I can't get to the kitchen"),
                                     transitions={   'spoken'    :'container_failed'})
 
 
             smach.StateMachine.add( 'PREP_BREAKFAST_CONTAINER',
                                     prepBreakfastContainer,
-                                    transitions={   'container_successed':'DELIVER_BREAKFAST_CONTAINER',
+                                    transitions={   'container_succeeded':'DELIVER_BREAKFAST_CONTAINER',
                                                     'container_failed': 'DELIVER_BREAKFAST_CONTAINER'})
 
 
