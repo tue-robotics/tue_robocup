@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 import rospy
-from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv
+from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 from ed.srv import GetGUICommand, GetGUICommandResponse
 from ed_sensor_integration.srv import LockEntities, MeshEntityInView
 from ed_gui_server.srv import *
@@ -44,6 +44,7 @@ class ED:
         self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
         self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
         self._ed_mesh_entity_in_view_srv = rospy.ServiceProxy('/%s/ed/kinect/mesh_entity_in_view'%robot_name, MeshEntityInView)
+        self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
@@ -140,7 +141,7 @@ class ED:
         if posestamped:
             X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
             t = posestamped.pose.position
-            json_entity += ', "pose": { "x": %d, "y": %d, "z": %d, "X": %d, "Y": %d, "Z": %d }' % (t.x, t.y, t.z, X, Y, Z)
+            json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
         if flags:
             if isinstance(flags, dict):
                 flags = [flags]
@@ -166,8 +167,34 @@ class ED:
                 return False
 
         json = '{"entities":[{%s}]}'%json_entity
+        print json
 
         return self._ed_update_srv(request=json)
+
+    def _set_plugin_status(self, plugin_names, status):
+        if not plugin_names:
+            return
+
+        yaml = '{"plugins":['
+        for name in plugin_names:
+            yaml += '{"name":"%s",%s},' % (name, status)
+
+        # remove last comma
+        yaml = yaml[:-1]
+        yaml += ']}'
+
+        resp = self._ed_configure_srv(request=yaml)
+        if not resp.error_msg:
+            return True
+
+        rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
+        return False
+
+    def enable_plugins(self, plugin_names):
+        return self._set_plugin_status(plugin_names, '"enabled":1')
+
+    def disable_plugins(self, plugin_names):
+        return self._set_plugin_status(plugin_names, '"enabled":0')
 
     def lock_entities(self, lock_ids, unlock_ids):
         return self._ed_lock_entities_srv(lock_ids=lock_ids, unlock_ids=unlock_ids)
