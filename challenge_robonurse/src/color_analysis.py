@@ -12,6 +12,24 @@ import operator
 
 NUM_CLUSTERS = 5
 
+def replace_black_with_transpart(img):
+    img = img.convert("RGBA")
+    datas = img.getdata()
+
+    newData = []
+    for item in datas:
+        if item[0] == 0 and item[1] == 0 and item[2] == 0:
+            newData.append((255, 255, 255, 0))
+        else:
+            newData.append(item)
+
+    img.putdata(newData)
+    return img
+
+def vector2hex(vector):
+    colour = '#'+''.join(chr(c) for c in vector).encode('hex')
+    return colour
+
 def analyze(im):
     print 'reading image'
 
@@ -27,23 +45,35 @@ def analyze(im):
     vecs, dist = scipy.cluster.vq.vq(ar, codes)         # assign codes
     counts, bins = scipy.histogram(vecs, len(codes))    # count occurrences
 
-    index_max = scipy.argmax(counts)                    # find most frequent
-    peak = codes[index_max]
-    colour = ''.join(chr(c) for c in peak).encode('hex')
-    print 'most frequent is %s (#%s)' % (peak, colour)
+    vector2count = dict(zip([tuple(vector) for vector in codes], counts))
+    name2count = {describe_color(vector2hex(vector)):count for vector,count in vector2count.iteritems()}
+    print name2count
 
-    most_frequent_colour = describe_color(colour)
-    print "This is closest to %s"%most_frequent_colour
+    color_popularity_sorted = sorted(name2count.items(), key=operator.itemgetter(1), reverse=True)
+    # import ipdb; ipdb.set_trace()
+
+    if color_popularity_sorted[0][0] == "black":
+        del color_popularity_sorted[0]
+
+    return color_popularity_sorted[0][0]
+
+    # index_max = scipy.argmax(counts)                    # find most frequent
+    # peak = codes[index_max]
+    # colour = vector2hex(peak)
+    # print 'most frequent is %s (%s)' % (peak, colour)
+
+    # most_frequent_colour = describe_color(colour)
+    # print "This is closest to %s"%most_frequent_colour
 
 def describe_color(hexcolor):
-    queryvector = hex2vector("#"+hexcolor)
+    queryvector = hex2vector(hexcolor)
     referencevector2name = {hex2vector(_hex):name for name,_hex in matplotlib.colors.cnames.iteritems()}
     distance2name = {vector_distance(queryvector, referencevector):name for referencevector, name in referencevector2name.iteritems()}
     closest_color = min(distance2name.items(), key=operator.itemgetter(0))
     
-    print "Queried color is closest to {} with distance {}".format(closest_color[1], closest_color[0])
+    # print "Queried color is closest to {} with distance {}".format(closest_color[1], closest_color[0])
 
-    import ipdb; ipdb.set_trace()
+    # import ipdb; ipdb.set_trace()
     return closest_color[1]
 
 def vector_distance(a, b):
@@ -59,4 +89,5 @@ def hex2vector(hexcolor):
 
 if __name__ == "__main__":
     im = Image.open('image.jpg')
-    analyze(im)
+    most_frequent_colour = analyze(im)
+    print most_frequent_colour
