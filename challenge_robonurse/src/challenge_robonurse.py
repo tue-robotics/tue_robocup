@@ -12,7 +12,6 @@ Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
 TODO: Bottle descriptions should come from relative object sizes and relative positions
-TODO: If there are no options for some type, reflect this in the speech spec.
 TODO: Actual action detection with a hack. 
     Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
 # TODO: Test Take cane
@@ -294,16 +293,22 @@ class GetPills(smach.StateMachine):
                     if 'size'  in choices and choices['size']  != '': grannies_desc.size =  choices['size']
                     if 'label' in choices and choices['label'] != '': grannies_desc.label = choices['label']
 
-
-                    # import ipdb; ipdb.set_trace()
                     matching_bottles = [bottle for (bottle, y), bottle_desc in bottle_description_map.iteritems() if bottle_desc == grannies_desc]
                     if matching_bottles:
                         selected_bottle_id = matching_bottles[0].id #TODO: Select an easy to grasp one or try each one that matches the description
                         rospy.loginfo("Selected bottle.id {} ".format(selected_bottle_id))
 
                         described_bottle.id = selected_bottle_id
+                        spoken_description = "the "
+                        if 'color' in choices:
+                            spoken_description += " " + choices['color']
+                        if 'size' in choices:
+                            spoken_description += " " + choices['size']
+                        if 'label' in choices:
+                            spoken_description += " labeled " + choices['label']
+                        spoken_description += " one with I D " + str(selected_bottle_id)[:5]
 
-                        robot.speech.speak("OK, I will get the {size} {color} one labeled {label} with I D {_id}".format(_id=str(selected_bottle_id)[:5], **choices))
+                        robot.speech.speak("OK, I will get {}".format(spoken_description))
                         rospy.loginfo("Granny chose & described: {0}".format(grannies_desc))
                         return 'described'
                     else:

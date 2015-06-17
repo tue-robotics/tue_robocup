@@ -173,12 +173,31 @@ class DescribeBottles(smach.State):
         colors = set([desc.color for desc in descriptions.values() if desc.color])
         sizes = set([desc.size for desc in descriptions.values() if desc.size])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
-        choices = {"color": colors, "size": sizes, "label": labels}
-
+        choices = {}
+        if colors:
+            choices["color"] = colors
+        if sizes:
+            choices["size"] = sizes
+        if labels:
+            choices["label"] = labels
         rospy.loginfo("Choices are {}".format(choices))
 
         # import ipdb; ipdb.set_trace()
-        self.spec_designator.current = "Give me the <size> <color> bottle labeled <label>"  # TODO: allow more sentences
+        if sizes and colors and labels:
+            self.spec_designator.current = "Bring me the <size>, <color> bottle labeled <label>"
+        elif sizes and colors:
+            self.spec_designator.current = "Bring me the <size>, <color> bottle"
+        elif colors and labels:
+            self.spec_designator.current = "Bring me the <color> bottle labeled <label>"
+        elif sizes and labels:
+            self.spec_designator.current = "Bring me the <size> bottle labeled <label>"
+        elif sizes:
+            self.spec_designator.current = "Bring me the <size> bottle"
+        elif colors:
+            self.spec_designator.current = "Bring me the <color> bottle"
+        elif labels:
+            self.spec_designator.current = "Bring me the bottle labeled <label>"
+        
         self.choices_designator.current = choices
 
         self.bottle_desc_mapping_designator.current = descriptions
