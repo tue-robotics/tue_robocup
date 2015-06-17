@@ -244,7 +244,11 @@ class GetPills(smach.StateMachine):
                                         choices_designator=ask_bottles_choices,
                                         bottle_desc_mapping_designator=bottle_description_map_desig),
                                     transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
-                                                    'failed'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
+                                                    'failed'            :'SAY_FAILED_NO_BOTTLES'})
+
+            smach.StateMachine.add( "SAY_FAILED_NO_BOTTLES",
+                                    states.Say(robot, ["Sorry granny, I failed to see any bottles", "Sorry granny, I couldn't find any bottles"]),
+                                    transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
             ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
