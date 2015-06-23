@@ -30,6 +30,12 @@ def setup_statemachine(robot):
                                                     "Going to target 1"], block=False),
                                 transitions={   'spoken'            :   'GOTO_TARGET1'})
 
+        ######################################################################################################################################################
+        #
+        #                                                       TARGET 1
+        #
+        ######################################################################################################################################################
+
         smach.StateMachine.add('GOTO_TARGET1',
                                 states.NavigateToSymbolic(robot, 
                                                           {EdEntityDesignator(robot, id=challenge_knowledge.target1['near']) : "near", 
@@ -65,6 +71,12 @@ def setup_statemachine(robot):
                                                     "Target 1 is unreachable"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_TARGET2'})
 
+        ######################################################################################################################################################
+        #
+        #                                                       TARGET 2
+        #
+        ######################################################################################################################################################
+
         smach.StateMachine.add( 'SAY_GOTO_TARGET2',
                                 states.Say(robot, ["I will go to target 2 now",
                                                     "I will now go to target 2",
@@ -85,7 +97,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Reached target 2",
                                                     "I have arrived at target 2",
                                                     "I am now at target 2"], block=True),
-                                transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET3'})
 
         smach.StateMachine.add('RESET_ED_TARGET2', 
                                 states.ResetED(robot),
@@ -105,7 +117,73 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["I am unable to reach target 2",
                                                     "I cannot reach target 2",
                                                     "Target 2 is unreachable"], block=True),
+                                transitions={   'spoken'            :   'SAY_GOTO_TARGET3'})
+
+        ######################################################################################################################################################
+        #
+        #                                                       TARGET 3
+        #
+        ######################################################################################################################################################
+
+
+        smach.StateMachine.add( 'SAY_GOTO_TARGET3',
+                                states.Say(robot, ["I will go to target 3 now",
+                                                    "I will now go to target 3",
+                                                    "Lets go to target 3",
+                                                    "Going to target 3"], block=False),
+                                transitions={   'spoken'            :   'GOTO_TARGET3'})
+
+        smach.StateMachine.add('GOTO_TARGET3',
+                                states.NavigateToSymbolic(robot, 
+                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target3['near']) : "near", 
+                                                           EdEntityDesignator(robot, id=challenge_knowledge.target3['in']) : "in" },
+                                                          EdEntityDesignator(robot, id=challenge_knowledge.target3['lookat'])),
+                                transitions={   'arrived'           :   'SAY_TARGET3_REACHED',
+                                                'unreachable'       :   'RESET_ED_TARGET3',
+                                                'goal_not_defined'  :   'RESET_ED_TARGET3'})
+
+        smach.StateMachine.add( 'SAY_TARGET3_REACHED',
+                                states.Say(robot, ["Reached target 3",
+                                                    "I have arrived at target 3",
+                                                    "I am now at target 3"], block=True),
                                 transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
+
+        smach.StateMachine.add('RESET_ED_TARGET3', 
+                                states.ResetED(robot),
+                                transitions={   'done'              :   'GOTO_TARGET3_BACKUP'})
+
+        smach.StateMachine.add('GOTO_TARGET3_BACKUP',
+                                states.NavigateToSymbolic(robot, 
+                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target3['near']) : "near", 
+                                                           EdEntityDesignator(robot, id=challenge_knowledge.target3['in']) : "in" },
+                                                          EdEntityDesignator(robot, id=challenge_knowledge.target3['lookat'])),
+                                transitions={   'arrived'           :   'SAY_TARGET3_REACHED',
+                                                'unreachable'       :   'SAY_TARGET3_FAILED',
+                                                'goal_not_defined'  :   'SAY_TARGET3_FAILED'})
+
+        # Should we mention that we failed???
+        smach.StateMachine.add( 'SAY_TARGET3_FAILED',
+                                states.Say(robot, ["I am unable to reach target 3",
+                                                    "I cannot reach target 3",
+                                                    "Target 3 is unreachable"], block=True),
+                                transitions={   'spoken'            :   'SAY_GOTO_EXIT'})
+
+        ######################################################################################################################################################
+        #
+        #                                                       Follow waiter
+        #
+        ######################################################################################################################################################
+
+        # 1) Turn 180 degrees (store time)
+        # 2) Follow operator state (Make sure that we toggle the torso laser and disable the kinect)
+            # 3) Ask and check time (max 1 minute following or so)
+        # 4) Return to waypoint 3
+
+        ######################################################################################################################################################
+        #
+        #                                                       TARGET EXIT
+        #
+        ######################################################################################################################################################
 
         smach.StateMachine.add( 'SAY_GOTO_EXIT',
                                 states.Say(robot, ["I will move to the exit now. See you guys later!",
