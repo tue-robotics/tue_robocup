@@ -151,6 +151,9 @@ class DescribeBottles(smach.State):
         for bottle, y in sorted_bottles:
             descriptions[bottle] = self.describe_bottle((bottle, y))
 
+        import ipdb; ipdb.set_trace()
+        descriptions = self.describe_relative(descriptions)
+
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
         for bottle, desc in descriptions.iteritems():
@@ -233,6 +236,44 @@ class DescribeBottles(smach.State):
                                     label=None,
                                     position=y,
                                     height=height)
+
+    def describe_relative(self, descriptions):
+        """@param descriptions is a dict {(Entity, BottleDescription)}"""
+        ys = [desc.position for desc in descriptions.values()]
+        lm, rm = min(ys), max(ys)
+        hor_interval = rm-lm
+        #We cut this interval in 3: a leftmost third, a middle third and a rightmost third.
+        #To do this, we need to define a border between leftmost and middle (lm_m) and a border between middle and rightmost (m_rm)
+        lm_m = lm + (hor_interval / 3)
+        m_rm = rm - (hor_interval / 3)
+
+        for bottle, desc in descriptions.iteritems():
+            if lm <= desc.position < lm_m:
+                descriptions[bottle].position_description = "left"
+            elif lm_m <= desc.position < m_rm:
+                descriptions[bottle].position_description = "middle"
+            elif m_rm < desc.position <= rm:
+                descriptions[bottle].position_description = "right"
+
+
+        heights = [desc.height for desc in descriptions.values()]
+        smallest, biggest = min(heights), max(heights)
+        height_interval = biggest-smallest
+        #We cut this interval in 3: a smallest third, a normal third and a biggest third.
+        #To do this, we need to define a border between smallest and normal (smallest_m) and a border between normal and rightmost (m_biggest)
+        smallest_m = smallest + (height_interval / 3)
+        m_biggest = biggest - (height_interval / 3)
+
+        for bottle, desc in descriptions.iteritems():
+            if smallest <= desc.height < smallest_m:
+                descriptions[bottle].height_description = "small"
+            elif smallest_m <= desc.height < m_biggest:
+                descriptions[bottle].height_description = "normal sized"
+            elif m_biggest < desc.height <= biggest:
+                descriptions[bottle].height_description = "big"
+
+        return descriptions
+
 
 if __name__ == "__main__":
     import doctest
