@@ -273,8 +273,8 @@ class GetPills(smach.StateMachine):
             def designate_random_bottle(userdata):
                 bottle_description_map = bottle_description_map_desig.resolve() #Resolves to OrderedDict of EntityInfo:BottleDescription
                 if bottle_description_map:
-                    #import ipdb; ipdb.set_trace()
-                    described_bottle.id = bottle_description_map.keys()[0][0].id #The ID of a random described bottle. [0] means first thing, second [0] is because keys are a (entity, y-coord)-tuple
+                    import ipdb; ipdb.set_trace()
+                    described_bottle.id = bottle_description_map.keys()[0].id #The ID of a random described bottle. [0] means first thing, second [0] is because keys are a (entity, y-coord)-tuple
                     return "described"
                 else:
                     return 'no_bottles' #This cannot happen, since then DescribeBottles would have failed and we would not ask if Granny want a bottle. There are none
@@ -297,7 +297,8 @@ class GetPills(smach.StateMachine):
                     if 'size'  in choices and choices['size']  != '': grannies_desc.size =  choices['size']
                     if 'label' in choices and choices['label'] != '': grannies_desc.label = choices['label']
 
-                    matching_bottles = [bottle for (bottle, y), bottle_desc in bottle_description_map.iteritems() if bottle_desc == grannies_desc]
+                    import ipdb; ipdb.set_trace()
+                    matching_bottles = [bottle for bottle, bottle_desc in bottle_description_map.iteritems() if bottle_desc == grannies_desc]
                     if matching_bottles:
                         selected_bottle_id = matching_bottles[0].id #TODO: Select an easy to grasp one or try each one that matches the description
                         rospy.loginfo("Selected bottle.id {} ".format(selected_bottle_id))
@@ -317,7 +318,7 @@ class GetPills(smach.StateMachine):
                         return 'described'
                     else:
                         rospy.logerr("There are no bottles matching {}".format(grannies_desc))
-                        robot.speech.speak("Hey, there are nu such bottles!")
+                        robot.speech.speak("Hey, there are no such bottles!")
                         return "no_match"
                 else:
                     return "no_match"

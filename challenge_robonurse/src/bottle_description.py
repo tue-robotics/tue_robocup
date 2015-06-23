@@ -57,10 +57,15 @@ def save_entity_image_to_file(world_model_ed, entityID, colorname):
 
 
 class BottleDescription(object):
-    def __init__(self, size=None, color=None, label=None):
+    def __init__(self, size=None, color=None, label=None, height=None, position=None):
         self.size = size
         self.color = color
         self.label = label
+        self.height = height
+        self.position = position
+
+        self.height_description = None
+        self.position_description = None
 
     def __eq__(self, other):
         """Check equality of self against other
@@ -71,7 +76,7 @@ class BottleDescription(object):
         
         >>> assert BottleDescription(label="ibuprofen") != BottleDescription(size="small")
         >>> assert BottleDescription(size="big", color="red") != BottleDescription(size="big", color="blue")"""
-        return self.__dict__ == other.__dict__  # An object's values are stored in its __dict__, so you can compare those. 
+        return self.size == other.size and self.color == other.color and self.label == other.label
 
     def __repr__(self):
         return "BottleDescription(size={size}, color={color}, label={label})".format(**self.__dict__)
@@ -89,20 +94,20 @@ def get_entity_color(entity):
 
 
 def get_entity_size(entity):
-    size = None
+    size_description = None
     try:
         height = abs(entity.z_min - entity.z_max)
         if height < 0.05:
-            size = "small"
+            size_description = "small"
         elif 0.05 <= height < 0.10:
-            size = "normal sized"
+            size_description = "normal sized"
         elif 0.10 <= height:
-            size = "big"
-        rospy.loginfo("Height of object {0} is {1} so classifying as {2}".format(entity.id, height, size))
+            size_description = "big"
+        rospy.loginfo("Height of object {0} is {1} so classifying as {2}".format(entity.id, height, size_description))
     except:
         pass
 
-    return size
+    return size_description, height
 
 class DescribeBottles(smach.State):
     def __init__(self, robot, bottle_collection_designator, spec_designator, choices_designator, bottle_desc_mapping_designator):
@@ -143,12 +148,12 @@ class DescribeBottles(smach.State):
         sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
         descriptions = OrderedDict()
-        for bottle_at_y in sorted_bottles:
-            descriptions[bottle_at_y] = self.describe_bottle(bottle_at_y)
+        for bottle, y in sorted_bottles:
+            descriptions[bottle] = self.describe_bottle((bottle, y))
 
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
         self.robot.speech.speak("From left to right, I have a")
-        for (bottle, y), desc in descriptions.iteritems():
+        for bottle, desc in descriptions.iteritems():
 
             desc_sentence = ""
             if desc.size and desc.color and desc.label:
@@ -221,11 +226,13 @@ class DescribeBottles(smach.State):
         except Exception, e:
             rospy.logwarn("Could not save image of entity {}: {}".format(bottle_entity.id, e))
 
-        size = get_entity_size(bottle_entity)
+        size_description, height = get_entity_size(bottle_entity)
 
-        return BottleDescription(   size=size,
+        return BottleDescription(   size=size_description,
                                     color=most_probable_color,
-                                    label=None)
+                                    label=None,
+                                    position=y,
+                                    height=height)
 
 if __name__ == "__main__":
     import doctest
