@@ -159,27 +159,32 @@ class DescribeBottles(smach.State):
         for bottle, desc in descriptions.iteritems():
 
             desc_sentence = ""
-            if desc.size and desc.color and desc.label:
-                desc_sentence = "a {size}, {color} one labeled {label}".format(size=desc.size, color=desc.color, label=desc.label)
-            elif desc.size and desc.color:
-                desc_sentence = "a {size}, {color} one".format(size=desc.size, color=desc.color)
+            if desc.height_description and desc.color and desc.label:
+                desc_sentence = "a {size}, {color} one labeled {label}".format(size=desc.height_description, color=desc.color, label=desc.label)
+            elif desc.height_description and desc.color:
+                desc_sentence = "a {size}, {color} one".format(size=desc.height_description, color=desc.color)
             elif desc.color and desc.label:
                 desc_sentence = "a {color} one labeled {label}".format(label=desc.label, color=desc.color)
-            elif desc.size and desc.label:
-                desc_sentence = "a {size} one labeled {label}".format(label=desc.label, size=desc.size)
-            elif desc.size:
-                desc_sentence = "a {size} one".format(size=desc.size)
+            elif desc.height_description and desc.label:
+                desc_sentence = "a {size} one labeled {label}".format(label=desc.label, size=desc.height_description)
+            elif desc.height_description:
+                desc_sentence = "a {size} one".format(size=desc.height_description)
             elif desc.color:
                 desc_sentence = "a {color} one".format(color=desc.color)
             elif desc.label:
                 desc_sentence += "one labeled {label}".format(label=desc.label)
+
+            if desc.position_description:
+                if desc.position_description == "left": desc_sentence += " on the left"
+                if desc.position_description == "middle": desc_sentence += " in the middle"
+                if desc.position_description == "right": desc_sentence += " on the right"
             
             rospy.loginfo("Description for {0} = {1} ({2})".format(bottle.id, desc_sentence, desc))
             self.robot.speech.speak(desc_sentence)
         self.robot.speech.speak("Which do you want?")
 
         colors = set([desc.color for desc in descriptions.values() if desc.color])
-        sizes = set([desc.size for desc in descriptions.values() if desc.height_descriptionjavas])
+        sizes = set([desc.height_description for desc in descriptions.values() if desc.height_description])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
         choices = {}
         if colors:
