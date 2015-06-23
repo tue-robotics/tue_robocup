@@ -151,7 +151,7 @@ class DescribeBottles(smach.State):
         for bottle, y in sorted_bottles:
             descriptions[bottle] = self.describe_bottle((bottle, y))
 
-        import ipdb; ipdb.set_trace()
+        # import ipdb; ipdb.set_trace()
         descriptions = self.describe_relative(descriptions)
 
         self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
@@ -179,7 +179,7 @@ class DescribeBottles(smach.State):
         self.robot.speech.speak("Which do you want?")
 
         colors = set([desc.color for desc in descriptions.values() if desc.color])
-        sizes = set([desc.size for desc in descriptions.values() if desc.size])
+        sizes = set([desc.size for desc in descriptions.values() if desc.height_descriptionjavas])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
         choices = {}
         if colors:
