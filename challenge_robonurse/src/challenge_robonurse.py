@@ -295,6 +295,7 @@ class GetPills(smach.StateMachine):
                     if 'color' in choices and choices['color'] != '': grannies_desc.color = choices['color']
                     if 'size'  in choices and choices['size']  != '': grannies_desc.size =  choices['size']
                     if 'label' in choices and choices['label'] != '': grannies_desc.label = choices['label']
+                    if 'position' in choices and choices['position'] != '': grannies_desc.position_description = choices['position']
 
                     # import ipdb; ipdb.set_trace()
                     matching_bottles = [bottle for bottle, bottle_desc in bottle_description_map.iteritems() if bottle_desc == grannies_desc]
@@ -310,6 +311,8 @@ class GetPills(smach.StateMachine):
                             spoken_description += " " + choices['size']
                         if 'label' in choices:
                             spoken_description += " labeled " + choices['label']
+                        if 'position' in choices:
+                            spoken_description += " on the " + choices['position']
                         spoken_description += " one with I D " + str(selected_bottle_id)[:5]
 
                         robot.speech.speak("OK, I will get {}".format(spoken_description))
