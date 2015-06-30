@@ -49,7 +49,10 @@ name2hex = {"blue":"#0000FF",
             "fuchsia":"#FF00FF",
             "yellow":"#FFFF00",
             "black":"#000000",
-            "white":"#FFFFFF"} #matplotlib.colors.cnames
+            "white":"#FFFFFF",
+            "brown":"#964B00",
+            "pink":"#FFCBDB",
+            "orange":"#FF7F00"} #matplotlib.colors.cnames
 referencevector2name = {hex2vector(_hex):name for name,_hex in name2hex.iteritems()} #Create a dictionary/map from reference-color's 3D-vector to its colorname
 # print referencevector2name
 # import ipdb; ipdb.set_trace()
@@ -97,13 +100,13 @@ def analyze(im):
 def describe_color(hexcolor):
     """For a hexadecimal color, e.g. #FF00FF, return the closest color name.
     E.g. 
-    >>> describe_color("#FF0000")
+    >>> describe_color("#FF0001")
     'red'
-    >>> describe_color("#FFFFFF")
+    >>> describe_color("#FFFFFE")
     'white'
-    >>> describe_color("#008000")
+    >>> describe_color("#008001")
     'green'
-    >>> describe_color("#0000FF")
+    >>> describe_color("#0000FE")
     'blue'"""
     queryvector = hex2vector(hexcolor) #Convert the queried color to a point in 3D space
     distance2name = {vector_distance(queryvector, referencevector):name for referencevector, name in referencevector2name.iteritems()} #Map the distance between a reference point and the queried point to colornames.
