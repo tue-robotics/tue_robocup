@@ -2,7 +2,8 @@
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 from ed.srv import GetGUICommand, GetGUICommandResponse
-from ed_sensor_integration.srv import LockEntities, MeshEntityInView
+from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
+from ed_perception.srv import Classify
 from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -44,6 +45,8 @@ class ED:
         self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
         self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
         self._ed_mesh_entity_in_view_srv = rospy.ServiceProxy('/%s/ed/kinect/mesh_entity_in_view'%robot_name, MeshEntityInView)
+        self._ed_segment_srv = rospy.ServiceProxy('/%s/ed/kinect/segment'%robot_name, Segment)
+        self._ed_classify_srv = rospy.ServiceProxy('/%s/ed/classify'%robot_name, Classify)
         self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
@@ -189,6 +192,23 @@ class ED:
 
         rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
         return False
+
+    # If continuous is None, the continuous mode of segmentation is left unchanged (on if it was on, off if it was off). However,
+    # if 'continuous' is NOT None, it actively sets the mode of segmentation (True = on, False = off)
+    def configure_kinect_segmentation(self, continuous=None, max_sensor_range=0):
+        res = self._ed_segment_srv(enable_continuous_mode = (continuous == True), disable_continuous_mode = (continuous == False), max_sensor_range = max_sensor_range)
+        return res.entity_ids
+
+    def segment_kinect(self, max_sensor_range=0):
+        res = self._ed_segment_srv(enable_continuous_mode = False, disable_continuous_mode = False, max_sensor_range = max_sensor_range)
+        return res.entity_ids
+
+    def configure_perception(self, continuous):
+        self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
+
+    def classify(self, ids, types):
+        res = self._ed_classify_srv(ids = ids, types = types)
+        return res.types
 
     def enable_plugins(self, plugin_names):
         return self._set_plugin_status(plugin_names, '"enabled":1')
