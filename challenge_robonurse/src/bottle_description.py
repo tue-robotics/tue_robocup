@@ -19,6 +19,7 @@ import numpy as np
 from color_analysis import analyze
 
 def save_entity_image_to_file(world_model_ed, entityID, colorname):
+    """Saves an entity's measurement to a file. The filename includes the entity's ID and a colorname. """
     file_name = "images/%s_%s.jpg"%(entityID, colorname)
     if "/" in file_name and not os.path.exists(os.path.dirname(file_name)):
         os.makedirs(os.path.dirname(file_name))
@@ -57,7 +58,8 @@ def save_entity_image_to_file(world_model_ed, entityID, colorname):
 
 
 class BottleDescription(object):
-    def __init__(self, size=None, color=None, label=None, height=None, position=None):
+    """A description of a bottle. A bottle can be described by its size, color, label, relative position etc. """
+    def __init__(self, size=None, color=None, label=None, height=None, position=None, position_description=None):
         self.size = size
         self.color = color
         self.label = label
@@ -65,7 +67,7 @@ class BottleDescription(object):
         self.position = position
 
         self.height_description = None
-        self.position_description = None
+        self.position_description = position_description
 
     def __eq__(self, other):
         """Check equality of self against other
@@ -73,13 +75,17 @@ class BottleDescription(object):
         >>> assert BottleDescription(size="big") == BottleDescription(size="big")
         >>> assert BottleDescription(label="ibuprofen") == BottleDescription(label="ibuprofen")
         >>> assert BottleDescription(size="big", color="red") == BottleDescription(size="big", color="red")
+        >>> assert BottleDescription(size="big", color="red", position_description="left") == BottleDescription(size="big", color="red", position_description="left")
         
         >>> assert BottleDescription(label="ibuprofen") != BottleDescription(size="small")
-        >>> assert BottleDescription(size="big", color="red") != BottleDescription(size="big", color="blue")"""
-        return self.size == other.size and self.color == other.color and self.label == other.label
+        >>> assert BottleDescription(size="big", color="red") != BottleDescription(size="big", color="blue")
+        
+        >>> assert BottleDescription(position_description="left") != BottleDescription(position_description="right")
+        """
+        return self.size == other.size and self.color == other.color and self.label == other.label and self.position_description == other.position_description
 
     def __repr__(self):
-        return "BottleDescription(size={size}, color={color}, label={label})".format(**self.__dict__)
+        return "BottleDescription(size={size}, color={color}, label={label}, position_description={position_description})".format(**self.__dict__)
 
 
 def get_entity_color(entity):
