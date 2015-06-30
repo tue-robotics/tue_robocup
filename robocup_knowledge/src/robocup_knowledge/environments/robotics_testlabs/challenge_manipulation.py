@@ -9,3 +9,6 @@ place_shelf="bookcase/shelf1"
 
 ''' Room where everything will take place '''
 room="living_room"
+
+'''Object types that can be recognized'''
+object_types=['coke']

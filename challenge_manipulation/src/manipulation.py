@@ -30,6 +30,7 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
+from robot_smach_states import world_model
 from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
@@ -46,6 +47,7 @@ OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
 ROOM = challenge_knowledge.room
+OBJECT_TYPES = challenge_knowledge.object_types
 
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
@@ -207,12 +209,12 @@ class InspectShelves(smach.State):
             rospy.loginfo("Shelf: {0}".format(shelf))
 
             ''' Get entities '''
-            entity = self.robot.ed.get_entity(id=shelf, parse=False)
+            shelf_entity = self.robot.ed.get_entity(id=shelf, parse=False)
 
-            if entity:
+            if shelf_entity:
 
                 ''' Extract center point '''
-                cp = entity.pose.position
+                cp = shelf_entity.pose.position
 
                 ''' Look at target '''
                 self.robot.head.look_at_point(geom.PointStamped(cp.x,cp.y,cp.z,"/map"))
@@ -225,7 +227,54 @@ class InspectShelves(smach.State):
                 self.robot.torso._send_goal([height], timeout=5.0)
 
                 ''' Sleep for 1 second '''
-                rospy.sleep(1.0)
+                rospy.sleep(1.0) # ToDo: remove???
+
+                ''' Enable kinect segmentation plugin (only one image frame) '''
+                entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
+
+                ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
+                id_list = [] # List with entities that are flagged with 'perception'                
+                for entity_id in entity_ids:
+                    e = self.robot.ed.get_entity(entity_id)
+
+                    if e and onTopOff(e, shelf_entity) and not e.type:
+                        # ToDo: filter on size in x, y, z
+                        # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
+                        id_list.append(e.id)
+
+                ''' Try to classify the objects on the shelf '''
+                entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
+
+                ''' Check all entities that were flagged to see if they have received a 'type' it_label
+                if so: recite them and lock them '''
+                for i in range(0, len(id_list)):
+                    e_id = id_list[i]
+                    e_type = entity_types[i]
+                    
+                    if e_type:
+                        self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
+                        self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
+
+                # TODO: Store the entities in the pdf (and let AMIGO name them)
+                # ...
+                # for e in entities:
+                #     Say e.type
+                #     Store e in pdf
+                #
+                #      OR
+                # 
+                # Lock the items in the world model, and create the pdf afterwards
+                # ...
+                # for e in entities:
+                #     self.robot.ed.update_entity(e.id, flags=["locked"])
+                # 
+                # ... (later)
+                # # Getting all locked entities:
+                # for e in entities:
+                #     if "locked" in e.flags:
+                #         ...
+
+                # self.robot.ed.disable_plugins(["kinect_integration", "perception"])
 
         return 'succeeded'
 
@@ -249,6 +298,24 @@ class InspectShelves(smach.State):
 #             self.robot.head.look_at_point(point_stamped, timeout=1)
 
 #         return "succeeded"
+
+# ----------------------------------------------------------------------------------------------------
+
+class InitializeWorldModel(smach.State):
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.ed.configure_kinect_segmentation(continuous=False)
+        self.robot.ed.configure_perception(continuous=False)
+        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+        self.robot.ed.reset()
+
+        return "done"
+
+# ----------------------------------------------------------------------------------------------------
 
 class ManipRecogSingleItem(smach.StateMachine):
     """The ManipRecogSingleItem state machine (for one object) is:
@@ -435,8 +502,12 @@ def setup_statemachine(robot):
     with sm:
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'AWAIT_START',
+                                transitions={   'initialized':'INIT_WM',
                                                 'abort':'Aborted'})
+
+        smach.StateMachine.add("INIT_WM",
+                               InitializeWorldModel(robot), 
+                               transitions={'done'                      :'AWAIT_START'})
 
         smach.StateMachine.add("AWAIT_START",
                                states.AskContinue(robot),
