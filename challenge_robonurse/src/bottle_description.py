@@ -186,6 +186,7 @@ class DescribeBottles(smach.State):
         colors = set([desc.color for desc in descriptions.values() if desc.color])
         sizes = set([desc.height_description for desc in descriptions.values() if desc.height_description])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
+        positions = set([desc.position_description for desc in descriptions.values() if desc.position_description])
         choices = {}
         if colors:
             choices["color"] = colors
@@ -193,6 +194,8 @@ class DescribeBottles(smach.State):
             choices["size"] = sizes
         if labels:
             choices["label"] = labels
+        if positions:
+            choices["position"] = positions
         rospy.loginfo("Choices are {}".format(choices))
 
         # import ipdb; ipdb.set_trace()
@@ -210,6 +213,9 @@ class DescribeBottles(smach.State):
             self.spec_designator.current = "Bring me the <color> bottle"
         elif labels:
             self.spec_designator.current = "Bring me the bottle labeled <label>"
+
+        if positions:
+            self.spec_designator.current += " on the <position>"
         
         self.choices_designator.current = choices
 
