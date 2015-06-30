@@ -42,8 +42,15 @@ def vector2hex(vector):
 def hex2vector(hexcolor):
     return matplotlib.colors.hex2color(hexcolor)
 
-name2hex = matplotlib.colors.cnames.iteritems() #Get 
-referencevector2name = {hex2vector(_hex):name for name,_hex in name2hex} #Create a dictionary/map from reference-color's 3D-vector to its colorname
+name2hex = {"blue":"#0000FF",
+            "green":"#008000",
+            "red":"#FF0000",
+            "blue-greenish":"#00FFFF", #"cyan"
+            "fuchsia":"#FF00FF",
+            "yellow":"#FFFF00",
+            "black":"#000000",
+            "white":"#FFFFFF"} #matplotlib.colors.cnames
+referencevector2name = {hex2vector(_hex):name for name,_hex in name2hex.iteritems()} #Create a dictionary/map from reference-color's 3D-vector to its colorname
 # print referencevector2name
 # import ipdb; ipdb.set_trace()
 
