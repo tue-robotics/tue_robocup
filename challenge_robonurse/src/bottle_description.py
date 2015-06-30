@@ -89,6 +89,8 @@ class BottleDescription(object):
 
 
 def get_entity_color(entity):
+    """Try to get the result of the color_matcher. 
+    The color_matcher's output is a dictionary mapping a color name to a value between 0-1. So, select the key (color name) maximum value (value)"""
         try:
             return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
         except KeyError, ke:
@@ -100,6 +102,7 @@ def get_entity_color(entity):
 
 
 def get_entity_size(entity):
+    """Give a size label for the entity, based on an absolute scale. """
     size_description = None
     try:
         height = abs(entity.z_min - entity.z_max)
@@ -121,6 +124,8 @@ class DescribeBottles(smach.State):
         @param robot the robot to run this with
         @bottle_collection_designator designates a bunch of bottles/entities
         @param spec_designator based on the descriptions read aloud by the robot, a spec for speech interpretation is created and stored in this VariableDesignator
+        @param choices_designator what choices are there for the speech descriptions, e.g. what colors, labels etc are there to choose from?
+        @param bottle_desc_mapping_designator must be assigned a dictionary mapping EntityInfos to BottleDescriptions.
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self.robot = robot
@@ -255,7 +260,16 @@ class DescribeBottles(smach.State):
                                     height=height)
 
     def describe_relative(self, descriptions):
-        """@param descriptions is a dict {(Entity, BottleDescription)}"""
+        """@param descriptions is a dict mapping EntityInfo to BottleDescription
+        Based on the existing object descriptions (that include their numeric, absolute z-size and y-position,
+            calculate relative positions and sizes.
+        It takes the smallest/largest, splits the interval between those in some subintervals and checks into which subinterval an entity falls.
+        E.g. objects are distributed like so on some axis: 1--2-------3---4--------------5
+        Then the whole interval is divided in 3 parts:     |---left--|--middle--|--right--|
+        So, objects 1 and 2 are both left, 3 & 4 are in the middle and 5 is on right. 
+
+        The same happens for height
+        The updated descriptions are returned."""
         ys = [desc.position for desc in descriptions.values()]
         lm, rm = min(ys), max(ys)
         hor_interval = rm-lm
