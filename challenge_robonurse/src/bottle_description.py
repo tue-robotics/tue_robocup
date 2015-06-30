@@ -235,6 +235,8 @@ class DescribeBottles(smach.State):
         return "succeeded"
 
     def describe_bottle(self, bottle_at_y):
+        """Create a BottleDescription for a bottle_at_y.
+        @param bottle_at_y is a tuple (EntityInfo, float) representing the bottle to describe and its numeric position."""
         bottle_entity, y = bottle_at_y
 
         # import ipdb; ipdb.set_trace()
@@ -243,7 +245,8 @@ class DescribeBottles(smach.State):
             filename = save_entity_image_to_file(self.robot.ed, bottle_entity.id, most_probable_color)
             
             try:
-                most_probable_color = analyze(Image.open(filename))
+                #Analyze the image and return the dominant color
+                most_probable_color = analyze(Image.open(filename)) 
             except Exception, e:
                 rospy.logwarn("Could not get the dominant color in {}".format(filename))
 

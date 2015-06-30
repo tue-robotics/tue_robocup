@@ -1,5 +1,13 @@
 #!/usr/bin/python
 
+"""This is a bit of magic :-)
+Basically, the colors o the pixels in an image are clustered into NUM_CLUSTERS clusters using K-means (i.e. K == NUM_CLUSTERS).
+With this, we know the most common RGB values (i.e. vector in 3D-space), but not yet an actual human-understandable color name for them.
+
+To actually get a color name, we borrow color names from matplotlib.
+This library has a mapping of colornames to RGB-values.
+To give most common RGB values a name, we use the Euclidian distance between a color vector with a known name, and a cluster from k-means. """
+
 import struct
 from PIL import Image
 import scipy
@@ -55,6 +63,8 @@ def analyze(im):
     color_popularity_sorted = sorted(name2count.items(), key=operator.itemgetter(1), reverse=True)
     # import ipdb; ipdb.set_trace()
 
+    #If the most popular color is black, than we selected the background. 
+    #   This must be discarded so we pick the most popular color in the object
     if color_popularity_sorted[0][0] == "black":
         del color_popularity_sorted[0]
 
