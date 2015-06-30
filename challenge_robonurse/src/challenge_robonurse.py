@@ -11,10 +11,9 @@ The robot must grab the bottle and bring it to Granny.
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
-TODO: Bottle descriptions should come from relative object sizes and relative positions
 TODO: Actual action detection with a hack. 
-    Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
-# TODO: Test Take cane
+    One idea is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
+TODO: Test Take cane
 """
 
 import rospy
