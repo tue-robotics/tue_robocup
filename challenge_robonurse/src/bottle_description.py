@@ -91,14 +91,14 @@ class BottleDescription(object):
 def get_entity_color(entity):
     """Try to get the result of the color_matcher. 
     The color_matcher's output is a dictionary mapping a color name to a value between 0-1. So, select the key (color name) maximum value (value)"""
-        try:
-            return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
-        except KeyError, ke:
-            rospy.logwarn("Entity {0} has no key {1}".format(entity.id, ke))
-            return None
-        except TypeError, te:
-            rospy.logwarn("{1} for Entity {0}".format(entity.id, te))
-            return None
+    try:
+        return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
+    except KeyError, ke:
+        rospy.logwarn("Entity {0} has no key {1}".format(entity.id, ke))
+        return None
+    except TypeError, te:
+        rospy.logwarn("{1} for Entity {0}".format(entity.id, te))
+        return None
 
 
 def get_entity_size(entity):
