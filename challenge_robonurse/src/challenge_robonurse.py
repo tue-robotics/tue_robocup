@@ -306,7 +306,7 @@ class GetPills(smach.StateMachine):
                     choices = answer.choices
                     grannies_desc = BottleDescription()
                     if 'color' in choices and choices['color'] != '': grannies_desc.color = choices['color']
-                    if 'size'  in choices and choices['size']  != '': grannies_desc.size =  choices['size']
+                    if 'height_desc'  in choices and choices['height_desc']  != '': grannies_desc.height_description =  choices['height_desc']
                     if 'label' in choices and choices['label'] != '': grannies_desc.label = choices['label']
                     if 'position' in choices and choices['position'] != '': grannies_desc.position_description = choices['position']
 
@@ -320,8 +320,8 @@ class GetPills(smach.StateMachine):
                         spoken_description = "the "
                         if 'color' in choices:
                             spoken_description += " " + choices['color']
-                        if 'size' in choices:
-                            spoken_description += " " + choices['size']
+                        if 'height_desc' in choices:
+                            spoken_description += " " + choices['height_desc']
                         if 'label' in choices:
                             spoken_description += " labeled " + choices['label']
                         if 'position' in choices:
