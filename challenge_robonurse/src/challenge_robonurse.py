@@ -47,6 +47,19 @@ def define_designators(robot):
 
     return granny, grannies_table, shelf
 
+class InitializeWorldModel(smach.State):
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.ed.configure_kinect_segmentation(continuous=False)
+        self.robot.ed.configure_perception(continuous=False)
+        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+        self.robot.ed.reset()
+
+        return "done"
 
 class Look_point(smach.State):
     def __init__(self, robot, x, y, z):
@@ -570,6 +583,11 @@ class RoboNurse(smach.StateMachine):
             return x_ok and y_ok
 
         with self: 
+            smach.StateMachine.add( "INIT_WM",
+                                    InitializeWorldModel(robot), 
+                                    transitions={'done'                 :'START_PHASE'})
+
+
             smach.StateMachine.add( "START_PHASE",
                                     StartPhase(robot, grannies_table),
                                     transitions={   'Done'              :'ASK_GRANNY',

@@ -139,6 +139,10 @@ class DescribeBottles(smach.State):
     def execute(self, userdata=None):
         # self.robot.head.reset()
         # import ipdb; ipdb.set_trace()
+
+        entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
+        self.robot.ed.classify(ids=entity_ids, types=[])
+
         bottles = self.bottle_collection_designator.resolve()
         if not bottles:
             return "failed"
