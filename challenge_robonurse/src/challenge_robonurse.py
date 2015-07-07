@@ -324,9 +324,12 @@ class GetPills(smach.StateMachine):
                             spoken_description += " " + choices['height_desc']
                         if 'label' in choices:
                             spoken_description += " labeled " + choices['label']
+                        
+                        spoken_description += " one "
+                        
                         if 'position' in choices:
                             spoken_description += " on the " + choices['position']
-                        spoken_description += " one with I D " + str(selected_bottle_id)[:5]
+                        spoken_description += "with I D " + str(selected_bottle_id)[:5]
 
                         robot.speech.speak("OK, I will get {}".format(spoken_description))
                         rospy.loginfo("Granny chose & described: {0}".format(grannies_desc))
