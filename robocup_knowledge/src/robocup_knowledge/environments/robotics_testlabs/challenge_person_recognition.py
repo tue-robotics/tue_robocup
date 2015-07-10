@@ -39,3 +39,7 @@ waypoint_learning = "person_rec_learning"
 waypoint_living_room_1 = "person_rec_living_room_1"
 waypoint_living_room_2 = "person_rec_living_room_2"
 waypoint_living_room_3 = "person_rec_living_room_3"
+
+
+'''Object types that can be recognized'''
+object_types=['human']
