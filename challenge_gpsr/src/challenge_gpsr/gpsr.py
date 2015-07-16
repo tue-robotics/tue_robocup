@@ -22,7 +22,6 @@ from datetime import date
 #import data
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_gpsr')
-#common_kb = load_knowledge('challenge_gpsr')
 
 global ROBOT_NAME_SPECIAL
 LOCATION_NR_IN_ROOM = 0
@@ -100,7 +99,6 @@ class PossibleHumanFlagsDesignator(Designator):
 
     def resolve(self):
         
-        rospy.sleep(2)
         possible_humans =  self.robot.ed.get_closest_possible_person_entity(room=self.room.resolve())
         
         return possible_humans
@@ -358,7 +356,7 @@ class HearQuestion(smach.State):
     def execute(self, userdata):
         self.robot.head.look_at_standing_person()
 
-        res = self.robot.ears.recognize(spec=data.spec_question, choices=data.choices_question, time_out=self.time_out)
+        res = self.robot.ears.recognize(spec=data.spec_questions, choices=data.choices_questions, time_out=self.time_out)
 
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
@@ -441,24 +439,7 @@ class SpeakSpecial(smach.State):
         self.robot.speech.speak("Something went wrong, I'm sorry", block=False)
         return "failed"
 
-# class DetermineLocation(smach.State):
-#     def __init__(self, robot, room):
-#         smach.State.__init__(self, outcomes=["answered", "failed"])
-#         self.robot = robot
-#         self.time_out = time_out
 
-#     def execute(self, userdata):
-#         self.robot.head.look_at_standing_person()
-
-#         say_type = str(self.robot.reasoner.query_first_answer("action_info('3','3_name_time_date',A)"))
-
-#         if say_type == 'your_name':
-#             self.robot.speech.speak("My name is %s" % ROBOT_NAME_SPECIAL)
-#             self.robot.head.cancel_goal()
-#             return "answered"
-#         if say_type == 'the_name_of_your_team':
-#             self.robot.speech.speak("My team's name is Tech United")
-#             self.robot.head.cancel_goal()
 
 class FindObjectInRoom(smach.StateMachine):
     """Initialize, wait for the door to be opened and drive inside"""
@@ -592,6 +573,7 @@ class FindAndGoToPerson(smach.StateMachine):
             @smach.cb_interface(outcomes=['found','not_found'])
             def check_person(userdata):
                 try:
+                    rospy.sleep(2) #sleep is build in to make sure that amigo is standing still and has time to update entities.
                     possible_human = PossibleHumanFlagsDesignator(robot,room).resolve()
                     if possible_human:
                         print "! human = ", possible_human
@@ -611,21 +593,92 @@ class FindAndGoToPerson(smach.StateMachine):
             smach.StateMachine.add("CHECK_FOR_PERSON",
                                smach.CBState(check_person),
                                transitions={'found':'GO_TO_PERSON',
-                                            'not_found':'Not_found'})
+                                            'not_found':'DRIVE_TO_CENTER_ROOM'})
 
             smach.StateMachine.add('GO_TO_PERSON',
-                                    states.NavigateToWaypoint(robot, PossibleHumanFlagsDesignator(robot,room), radius=0.6),
-                                    transitions={   'arrived':'SAY_HELLO',
-                                                    'unreachable':'SAY_SORRY',
-                                                    'goal_not_defined':'SAY_SORRY'})
+                                    states.NavigateToObserve(robot, PossibleHumanFlagsDesignator(robot,room), radius=0.7),
+                                    transitions={   'arrived':'LOOK_AT_PERSON_FOUND',
+                                                    'unreachable':'LOOK_AT_PERSON_NOT_FOUND',
+                                                    'goal_not_defined':'LOOK_AT_PERSON_NOT_FOUND'})
 
+            smach.StateMachine.add('LOOK_AT_PERSON_FOUND',
+                                    states.LookAtEntity(robot, PossibleHumanFlagsDesignator(robot,room), waittime=1.0),
+                                    transitions={   'succeeded':'SAY_HELLO',
+                                                    'failed':'SAY_HELLO'})
+
+            smach.StateMachine.add('LOOK_AT_PERSON_NOT_FOUND',
+                                    states.LookAtEntity(robot, PossibleHumanFlagsDesignator(robot,room), waittime=1.0),
+                                    transitions={   'succeeded':'SAY_SORRY',
+                                                    'failed':'SAY_SORRY'})
             smach.StateMachine.add("SAY_HELLO",
                                states.Say(robot,"Hello there!", block=True),
                                transitions={'spoken':'Found'})
 
             smach.StateMachine.add("SAY_SORRY",
-                               states.Say(robot,"Sorry, I was not able to reach. Please come to me.", block=True),
+                               states.Say(robot,"Sorry, I was not able to reach you. Please come to me.", block=True),
                                transitions={'spoken':'Failed'})
+
+
+            smach.StateMachine.add('DRIVE_TO_CENTER_ROOM',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=room), radius=0.2),
+                                    transitions={   'arrived':'CHECK_FOR_PERSON_1',
+                                                    'unreachable':'DRIVE_TO_CENTER_ROOM_BACKUP',
+                                                    'goal_not_defined':'DRIVE_TO_CENTER_ROOM_BACKUP'})
+
+            smach.StateMachine.add('DRIVE_TO_CENTER_ROOM_BACKUP',
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=room), radius=0.4),
+                                    transitions={   'arrived':'CHECK_FOR_PERSON_1',
+                                                    'unreachable':'CHECK_FOR_PERSON_1',
+                                                    'goal_not_defined':'CHECK_FOR_PERSON_1'})
+
+            smach.StateMachine.add("CHECK_FOR_PERSON_1",
+                               smach.CBState(check_person),
+                               transitions={'found':'GO_TO_PERSON',
+                                            'not_found':'TURN_90_DEGREES_1'})
+
+            smach.StateMachine.add('TURN_90_DEGREES_1',
+                                    Turn_90_degrees(robot),
+                                    transitions={   'turned':'CHECK_FOR_PERSON_2'})
+
+            smach.StateMachine.add("CHECK_FOR_PERSON_2",
+                               smach.CBState(check_person),
+                               transitions={'found':'GO_TO_PERSON',
+                                            'not_found':'TURN_90_DEGREES_2'})
+
+            smach.StateMachine.add('TURN_90_DEGREES_2',
+                                    Turn_90_degrees(robot),
+                                    transitions={   'turned':'CHECK_FOR_PERSON_3'})
+
+            smach.StateMachine.add("CHECK_FOR_PERSON_3",
+                               smach.CBState(check_person),
+                               transitions={'found':'GO_TO_PERSON',
+                                            'not_found':'TURN_90_DEGREES_3'})
+
+            smach.StateMachine.add('TURN_90_DEGREES_3',
+                                    Turn_90_degrees(robot),
+                                    transitions={   'turned':'CHECK_FOR_PERSON_4'})
+
+            smach.StateMachine.add("CHECK_FOR_PERSON_4",
+                               smach.CBState(check_person),
+                               transitions={'found':'GO_TO_PERSON',
+                                            'not_found':'SAY_NOT_FOUND'})
+
+            smach.StateMachine.add("SAY_NOT_FOUND",
+                               states.Say(robot,"Sorry, I was not able to find you. Please come to me.", block=True),
+                               transitions={'spoken':'Not_found'})
+
+class Turn_90_degrees(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["turned"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        vth = 1.0
+        th = 3.1415 / 2 # turns 90 degrees
+        self.robot.base.force_drive(0, 0, vth, th / vth)
+
+        return "turned"
 
 
 ########################
@@ -656,6 +709,7 @@ def setup_statemachine(robot):
                                     transitions={   "Done":"GO_TO_MEETING_WAYPOINT",
                                                     "Aborted":"GO_TO_MEETING_WAYPOINT",
                                                     "Failed":"GO_TO_MEETING_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
+
 
         smach.StateMachine.add('GO_TO_MEETING_WAYPOINT',
                                     states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
@@ -928,6 +982,12 @@ def setup_statemachine(robot):
 
     return sm
 
+
+
+def test_find_person(robot,room):    
+    findperson = FindAndGoToPerson(robot, Designator(room))
+    findperson.execute(None)
+
 if __name__ == "__main__":
     rospy.init_node('gpsr_exec')
     rospy.loginfo("----------------------------------------------------------")
@@ -941,5 +1001,5 @@ if __name__ == "__main__":
         print "[CHALLENGE GPSR] Please provide robot name as argument."
         exit(1)
 
-    rospy.sleep(5)
+    rospy.sleep(1)
     states.util.startup(setup_statemachine, robot_name=robot_name)
