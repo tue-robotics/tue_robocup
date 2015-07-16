@@ -12,7 +12,7 @@ amigo1/sergio1:
 
 amigo2/sergio1:
 
-    ahardware/shardware: base, spindle, arms (left-arm is used) head
+    ahardware/shardware: base, spindle, arms, head
 
 amigo1/sergio1:
 
@@ -23,8 +23,6 @@ amigo3:
     Test audio:
 
     rosrun robot_skills test_audio.py [robot_name]
-
-    asdf
 
     rosrun challenge_wakemeup challenge_wakemeup.py [robot_name]
 
@@ -38,11 +36,21 @@ localhost:
 
 # Notes
 
+Before the challenge
+--------------------
+
+    - Make sure the knowledge is up to date!!!
+
+
 During the challenge
 --------------------
 
-    - Tell the robot what you want for breakfast
-    - Get out of bed and leave it messy for the robot to clean it up
+    - At initialization, the robot will ask for the newspaper to be put in its gripper. Do this within the time given in the robocup knowledge!
+    - The robot will go to the bed, look for an entity above the bed with a number of constraints (knowledge)
+    - The operator "wakes up" and sits up in the bed; the robot will detect this.
+    - The robot will hand the operator his newspaper and ask for his breakfast order
+    - The robot will navigate to the kitchen to prepare breakfast
+    - The robot will prepare the breakfast as far as it knows how to.
 
 After the challenge
 -------------------
