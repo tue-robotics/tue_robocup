@@ -49,3 +49,11 @@ After the challenge
 -------------------
 
     - Get the USB stick and inspect the classes in the file manipulation.pdf
+
+Testing
+-------
+The second part of the challenge (the delivery of orders) can be tested separately::
+
+    - $ roscd challenge_restaurant/src
+    - $ amigo-console
+    - >>> from challenge_restaurant import *; test_delivery(amigo)
