@@ -14,6 +14,7 @@ from robot_smach_states.util.startup import startup
 from robot_skills.util import msg_constructors as msgs
 from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
+from ed_sensor_integration.srv import GetPOIs
 
 from cb_planner_msgs_srvs.msg import *
 
@@ -247,6 +248,58 @@ class ExplorationDesignator(EdEntityDesignator):
             self.explored_ids.append(filtered_entities[0].id)
             return filtered_entities[0]
 
+class PoiDesignator(EdEntityDesignator):
+    """ Designator to select the point of interest to visit 
+    """
+    def __init__(self, robot, radius):
+        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo)
+        self.robot = robot
+        self.radius = radius
+        self.poi_srv = rospy.ServiceProxy('/%s/ed/get_pois'%robot.robot_name, GetPOIs) 
+        self.pois = []
+        self.visited_ids = []
+
+    def resolve(self):
+        resp = self.poi_srv()
+        # Add new pois
+        for i in range(len(self.pois), len(resp.pois)):
+            poi = {'poi': resp.pois[i], 'poiid': '%i'%len(self.pois)}
+            self.pois.append(poi)
+
+        # Remove visited items
+        filtered_pois = []
+        for poi in self.pois:
+            if not poi['poiid'] in self.visited_ids:
+                filtered_pois.append(poi)
+
+        if len(filtered_pois) == 0:
+            rospy.logwarn("No pois found")
+            return None
+
+        # Sort list
+        def computePoiPathLength(poi):
+            x = poi['poi'].point.x
+            y = poi['poi'].point.y
+            constraint="(x-%f)^2+(y-%f)^2 < %f^2 and (x-%f)^2+(y-%f)^2 > %f^2"%(x, y, self.radius+0.075, x, y, self.radius-0.075)
+            pc = PositionConstraint(constraint=constraint, frame="/map")
+            plan = self.robot.base.global_planner.getPlan(position_constraint=pc)
+            length = self.robot.base.global_planner.computePathLength(plan)
+            return length
+        sortf = lambda poi: computePoiPathLength(poi)
+        filtered_pois.sort(key=sortf)
+
+        # Wrap first item in EntityInfo
+        poi = filtered_pois[0]
+        self.visited_ids.append(poi['poiid'])
+
+        out = EntityInfo()
+        poips = poi['poi']
+        out.pose.position.x = poips.point.x 
+        out.pose.position.y = poips.point.y
+        out.pose.position.z = poips.point.z
+
+        return out
+
 
 ############################## explore state machine #####################
 class ExploreScenario(smach.StateMachine):
@@ -260,7 +313,15 @@ class ExploreScenario(smach.StateMachine):
             # wped = EdEntityDesignator(robot, type='waypoint', criteriafuncs=[id_has_explore]) # Helper designator to get Ed entity representing the target to explore
             # waypoint_designator = PointStampedOfEntityDesignator(wped)  # Designator to pass to the navigation state
 
+            radius = 1.5 # Radius for NavigateToExplore
             exploration_target_designator = ExplorationDesignator(robot)
+            poi_designator = PoiDesignator(robot, radius)
+
+            smach.StateMachine.add('GOTO_POINT_OF_INTEREST',
+                                    states.NavigateToObserve(robot=robot, entity_designator=poi_designator, radius = radius),
+                                    transitions={   'arrived'           : 'GOTO_POINT_OF_INTEREST',
+                                                    'unreachable'       : 'GOTO_POINT_OF_INTEREST',
+                                                    'goal_not_defined'  : 'GOTO_HARDCODED_WAYPOINT'})
 
             smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
                                     states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
