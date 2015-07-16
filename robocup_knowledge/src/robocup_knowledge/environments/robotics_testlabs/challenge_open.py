@@ -12,3 +12,5 @@ exploration_targets=["explore1",
                      ]
 
 initial_pose = "initial_pose"
+operator_waypoint_id = "operator_pose"
+exit_waypoint_id = "exit"
