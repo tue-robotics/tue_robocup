@@ -29,6 +29,12 @@ from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
 knowledge = load_knowledge("challenge_restaurant")
 
+ 
+tables = {1: "one", 2: "two", 3: "three"}
+# ORDERS is filled with 2 keys: "beverage" and "combo". 
+#   - Each value is a dictionary itself, with keys "location" and "name". 
+#       - key "location" gets its value from the values in the tables-dictionary
+#       - key "name" gets the value of the order, e.g. "banana and apple"
 ORDERS = {}
 
 class HeadStraight(smach.State):
@@ -113,12 +119,12 @@ class StoreWaypoint(smach.State):
                 location = result.choices["location"]
 
                 self._robot.head.look_at_standing_person()
-#                self._robot.speech.speak("%s %s?"%(location, side))
-#                result = self._robot.ears.recognize("(yes|no)",{})
-#                self._robot.head.cancel_goal()
-#                if not result or result.result == "no":
-#                    self._robot.speech.speak("Sorry", block=False)
-#                    return "continue"
+               # self._robot.speech.speak("%s %s?"%(location, side))
+               # result = self._robot.ears.recognize("(yes|no)",{})
+               # self._robot.head.cancel_goal()
+               # if not result or result.result == "no":
+               #     self._robot.speech.speak("Sorry", block=False)
+               #     return "continue"
 
                 self._robot.speech.speak("%s %s, it is!"%(location, side))
                 self._robot.head.cancel_goal()
@@ -244,6 +250,62 @@ class SpeakOrders(smach.State):
 
         return "spoken"
 
+class DeliverOrdersWithBasket(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        beverage_dest_desig = EdEntityDesignator(robot) #.id is overwritten by instruct_barman
+
+        with self:
+            @smach.cb_interface(outcomes=['spoken'])
+            def instruct_barman(userdata):
+                try:
+                    beverage_order = ORDERS['beverage']
+                    beverage_dest_desig.id = beverage_order['location']
+                    robot.speech.speak("Barman, please put a {name} in my basket for table {location}".format(**beverage_order))
+                except KeyError:
+                    rospy.logerr("No beverage in ORDERS")
+                return 'spoken'
+            smach.StateMachine.add( 'INSTRUCT_BARMAN',
+                                    smach.CBState(instruct_barman),
+                                    transitions={'spoken'               :'AWAIT_PUT_BEVERAGE_CONFIRMATION'})
+
+            smach.StateMachine.add( 'AWAIT_PUT_BEVERAGE_CONFIRMATION',
+                                    states.Wait_time(robot, 5),
+                                    transitions={   'waited'            :'GOTO_BEVERAGE_DESTINATION_1',
+                                                    'preempted'         :'failed'})
+
+            smach.StateMachine.add( 'GOTO_BEVERAGE_DESTINATION_1', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = 0.06),
+                                    transitions={   'arrived'           :'SAY_TAKE_BEVERAGE', 
+                                                    'unreachable'       :'GOTO_BEVERAGE_DESTINATION_2', 
+                                                    'goal_not_defined'  :'GOTO_BEVERAGE_DESTINATION_2'})
+
+            smach.StateMachine.add( 'GOTO_BEVERAGE_DESTINATION_2', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = 0.06),
+                                    transitions={   'arrived'           :'SAY_TAKE_BEVERAGE', 
+                                                    'unreachable'       :'failed', 
+                                                    'goal_not_defined'  :'failed'})
+
+            @smach.cb_interface(outcomes=['spoken'])
+            def instruct_guest(userdata):
+                try:
+                    beverage_order = ORDERS['beverage']
+                    robot.speech.speak("Dear guest at {location}, you can get your {name} from my basket.".format(**beverage_order))
+                except KeyError:
+                    rospy.logerr("No beverage in ORDERS")
+                return 'spoken'
+            smach.StateMachine.add( 'SAY_TAKE_BEVERAGE',
+                                    smach.CBState(instruct_guest),
+                                    transitions={'spoken'               :'AWAIT_TAKE_BEVERAGE_CONFIRMATION'})
+
+            smach.StateMachine.add( 'AWAIT_TAKE_BEVERAGE_CONFIRMATION',
+                                    states.Wait_time(robot, 10),
+                                    transitions={   'waited'            :'SAY_ENJOY_BEVERAGE',
+                                                    'preempted'         :'failed'})
+
+            smach.StateMachine.add( 'SAY_ENJOY_BEVERAGE',
+                                    states.Say(robot, ["Enjoy your beverage"]),
+                                    transitions={   'spoken'            :'succeeded'})
+
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
@@ -272,8 +334,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add('HEAR_WHICH_ORDER', states.HearOptions(robot, ["one", "two", "three"]),
             transitions={ 'no_result' :'SAY_WHICH_ORDER', 'one' : 'FIRST_SAY_TAKE_ORDER_FROM_TABLE_1', 'two': 'FIRST_SAY_TAKE_ORDER_FROM_TABLE_2', 'three' : "FIRST_SAY_TAKE_ORDER_FROM_TABLE_3"})
 
-        # ############## first table ############## 
-        tables = {1: "one", 2: "two", 3: "three"}
+        # ############## first table ##############
         for i, name in tables.iteritems():
             next_i = i+1
             if next_i > 3:
@@ -316,10 +377,23 @@ def setup_statemachine(robot):
         smach.StateMachine.add('NAVIGATE_TO_BEVERAGES', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = 0.06),
             transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'STORE_BEVERAGE_SIDE', 'goal_not_defined':'STORE_BEVERAGE_SIDE'})
 
-        smach.StateMachine.add('SPEAK_I_SEE_THE_BEVERAGES', states.Say(robot, "The beverages are in front of me", block=False), transitions={ 'spoken' :'done'})
+        smach.StateMachine.add('SPEAK_I_SEE_THE_BEVERAGES', states.Say(robot, "The beverages are in front of me", block=False), transitions={ 'spoken' :'DELIVER_ORDERS'})
+
+        smach.StateMachine.add('DELIVER_ORDERS', DeliverOrdersWithBasket(robot), transitions={'succeeded':'done', 'failed':'done'})
 
     return sm
 
+def test_delivery(robot):
+    from robot_skills.util.msg_constructors import PoseStamped
+    robot.ed.update_entity(id="one", posestamped=PoseStamped(x=1.0, y=0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="two", posestamped=PoseStamped(x=3.0, y=0, frame_id="/map"), type="waypoint")
+    robot.ed.update_entity(id="three", posestamped=PoseStamped(x=5.0, y=0, frame_id="/map"), type="waypoint")
+
+    global ORDERS
+    ORDERS = {"beverage":{"name":"coke", "location":"one"}, "combo":{"name":"pringles and chocolate", "location":"two"}}
+
+    deliver = DeliverOrdersWithBasket(robot)
+    deliver.execute(None)
 
 ############################## initializing program ######################
 if __name__ == '__main__':
