@@ -29,6 +29,10 @@ from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
 knowledge = load_knowledge("challenge_restaurant")
 
+# ORDERS is filled with 2 keys: "beverage" and "combo". 
+#   - Each value is a dictionary itself, with keys "location" and "name". 
+#       - key "location" gets its value from the variable tables below
+#       - key "name" gets the value of the order, e.g. "banana and apple"
 ORDERS = {}
 
 class HeadStraight(smach.State):
@@ -113,12 +117,12 @@ class StoreWaypoint(smach.State):
                 location = result.choices["location"]
 
                 self._robot.head.look_at_standing_person()
-#                self._robot.speech.speak("%s %s?"%(location, side))
-#                result = self._robot.ears.recognize("(yes|no)",{})
-#                self._robot.head.cancel_goal()
-#                if not result or result.result == "no":
-#                    self._robot.speech.speak("Sorry", block=False)
-#                    return "continue"
+               # self._robot.speech.speak("%s %s?"%(location, side))
+               # result = self._robot.ears.recognize("(yes|no)",{})
+               # self._robot.head.cancel_goal()
+               # if not result or result.result == "no":
+               #     self._robot.speech.speak("Sorry", block=False)
+               #     return "continue"
 
                 self._robot.speech.speak("%s %s, it is!"%(location, side))
                 self._robot.head.cancel_goal()
@@ -243,6 +247,13 @@ class SpeakOrders(smach.State):
         self._robot.head.cancel_goal()
 
         return "spoken"
+
+class DeliverOrdersWithBasket(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
+
+        with self:
+            pass
 
 def setup_statemachine(robot):
 
