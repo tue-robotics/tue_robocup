@@ -21,201 +21,6 @@ from cb_planner_msgs_srvs.msg import *
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_open')
 EXPLORATION_TARGETS = challenge_knowledge.exploration_targets
-# OBJECT_SHELVES = challenge_knowledge.object_shelves
-# CABINET = challenge_knowledge.cabinet
-# TABLE1 = challenge_knowledge.table1
-# TABLE2 = challenge_knowledge.table2
-# TABLE3 = challenge_knowledge.table3
-# OBJECT_SHELVES = challenge_knowledge.object_shelves
-# LOOK_POSES = {}
-# LOCKED_ITEMS = {}
-
-# class LookRight(smach.State):
-#     def __init__(self, robot):
-#         smach.State.__init__(self, outcomes=['done'])
-#         self.robot = robot
-
-#     def execute(self, userdata):
-#         self.robot.head.look_at_point(msgs.PointStamped(x=0.2, y=1.0, z=1.8, frame_id=self.robot.robot_name+"/base_link"))
-#         return 'done'
-
-# class LockEntities(smach.State):
-#     """docstring for LockEntities"""
-#     def __init__(self, robot, table_id):
-#         smach.State.__init__(self, outcomes=['locked'])
-#         self.robot = robot
-#         self.table_id = table_id
-
-#     def execute(self, userdata):
-
-#         ''' Get table entity '''
-#         table_entity = self.robot.ed.get_entity(id=self.table_id, parse=False)
-
-#         ''' Get all entities '''
-#         entities = self.robot.ed.get_entities(parse=False)
-#         lock_entities = []
-#         for entity in entities:
-#             if onTopOff(entity, table_entity):
-#                 self.robot.ed.lock_entities(lock_ids=[entity.id], unlock_ids=[])
-#                 lock_entities.append(entity)
-
-#         LOCKED_ITEMS[self.table_id] = lock_entities
-
-#         return 'locked'
-
-
-# class StorePose(smach.State):
-#     def __init__(self, robot, id):
-#         smach.State.__init__(self, outcomes=['stored'])
-#         self.robot = robot
-#         self.id = id
-
-#     def execute(self, userdata):
-#         pose = self.robot.base.get_location()
-#         LOOK_POSES[id] = pose
-#         return 'stored'
-
-# class AskItems(smach.State):
-#     def __init__(self, robot, table_id):
-#         smach.State.__init__(self, outcomes=['succeeded','failed'])
-#         self.robot = robot
-#         self.table_id = table_id
-
-#     def execute(self, userdata):
-
-# 	self.robot.head.look_at_standing_person()
-
-#         self.robot.speech.speak("What object do I see here?")
-
-#         res = self.robot.ears.recognize(spec=challenge_knowledge.spec, choices=challenge_knowledge.choices, time_out = rospy.Duration(30))
-
-#         if not res:
-#             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
-#             return "failed"
-#         try:
-#             if res.result:
-#                 self.speak(res)
-#                 self.addToED(res)
-#             else:
-#                 self.robot.speech.speak("Sorry, could you please repeat?")
-#                 return "failed"
-#         except KeyError:
-#             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
-#             return "failed"
-
-#         return "succeeded"
-
-#     def addToED(self, res):
-#         ''' Find entities on location '''
-
-#         #entities = self.robot.ed.get_entities(parse=False)
-#         entities = LOCKED_ITEMS[self.table_id]
-
-#         ''' Check numbers??? '''
-#         ''' Backup scenario is difficult, operator should take care!!! '''
-
-#         ''' Transform to robot pose '''
-#         y_bl = {}
-#         pose_bl = self.robot.base.get_location()
-#         mat = self.pose_to_mat(pose_bl.pose)
-#         #t_result = R1_inv * t2 + t1_inv
-
-#         # Calculate inverse of robot pose
-#         mat_inv = mat.copy()
-#         mat_inv[0:3,0:3] = mat[0:3,0:3].getT()
-#         mat_inv[0:3, 3:] = mat_inv[0:3,0:3] * -mat[0:3, 3:]
-
-#         for entity in entities:
-#             if onTopOff(entity, self.robot.ed.get_entity(id=self.table_id)):
-#                 entity_pose_mat_MAP = self.pose_to_mat(entity.pose)
-#                 entity_pose_mat_BL = mat_inv * entity_pose_mat_MAP
-#                 y_bl[entity.id] = entity_pose_mat_BL[1, 3]
-
-#         ''' Sort on y coordinate '''
-#         sorted_y_bl = sorted(y_bl.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
-
-#         ''' Assert to world model '''
-#         values = [ v for k,v in res.choices.iteritems() if "object" in k]
-
-#         updates = zip(sorted_y_bl, values)
-#         for update in updates:
-#             rospy.loginfo("Updating entity: {0} is {1}".format(update[0][0], update[1]))
-
-#             self.robot.ed.update_entity(id=update[0][0], type=update[1])
-
-#     def pose_to_mat(self, pose):
-#         '''Convert a pose message to a 4x4 numpy matrix.
-
-#         Args:
-#             pose (geometry_msgs.msg.Pose): Pose rospy message class.
-#         Returns:
-#             mat (numpy.matrix): 4x4 numpy matrix
-#         '''
-#         quat = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
-#         pos = numpy.matrix([pose.position.x, pose.position.y, pose.position.z]).T
-#         mat = numpy.matrix(tf.transformations.quaternion_matrix(quat))
-#         mat[0:3, 3] = pos
-#         return mat
-
-#     def speak(self, res):
-#         # ToDo: make nice
-#         location = self.table_id
-#         if 'object3' in res.choices:
-#             object1  = res.choices['object1']
-#             object2  = res.choices['object2']
-#             object3  = res.choices['object3']
-#             self.robot.speech.speak("All right, so I can find {0}, {1} and {2} on the {3}".format(object1, object2, object3, location))
-#         elif 'object2' in res.choices:
-#             object1  = res.choices['object1']
-#             object2  = res.choices['object2']
-#             self.robot.speech.speak("Okay, so there are {0} and {1} on the {2}".format(object1, object2, location))
-#         else:
-#             object1  = res.choices['object1']
-#             self.robot.speech.speak("So I guess I see {0} on the {1}".format(object1, location))
-
-
-# class ExploreTable(smach.StateMachine):
-
-#     def __init__(self, robot, table_id):
-
-#         smach.StateMachine.__init__(self, outcomes=['done'])
-
-
-#         ObjectOfInterestDesignator = EdEntityDesignator(robot)
-
-#         with self:
-#             smach.StateMachine.add('GOTO_TABLE',
-#                                 states.NavigateToSymbolic(robot,
-#                                                           {EdEntityDesignator(robot, id=table_id):"in_front_of"},
-#                                                           EdEntityDesignator(robot, id=table_id)),
-#                                 transitions={   'arrived'           :   'STORE_TABLE',
-#                                                 'unreachable'       :   'STORE_TABLE',
-#                                                 'goal_not_defined'  :   'STORE_TABLE'})
-
-#             smach.StateMachine.add("STORE_TABLE",
-#                                     StorePose(robot, table_id),
-#                                     transitions={  'stored'         :   'LOOKAT_TABLE'})
-
-#             smach.StateMachine.add("LOOKAT_TABLE",
-#                                      states.LookAtEntity(robot, EdEntityDesignator(robot, id=table_id), keep_following=True, waittime=2.0),
-#                                      transitions={  'succeeded'     :   'LOCK_ENTITIES'})
-
-#             smach.StateMachine.add("LOCK_ENTITIES",
-#                                     LockEntities(robot, table_id=table_id),
-#                                     transitions={   'locked'        :   'ASK_ITEMS'})
-
-#             smach.StateMachine.add("LOOK_RIGHT",
-#                                     LookRight(robot),
-#                                     transitions={   'done'          :   'ASK_ITEMS'})
-
-#             smach.StateMachine.add('ASK_ITEMS',
-#                                 AskItems(robot, table_id),
-#                                 transitions={   'succeeded'         :   'RESET_HEAD_TABLE',
-#                                                 'failed'            :   'RESET_HEAD_TABLE'} )
-
-#             smach.StateMachine.add( "RESET_HEAD_TABLE",
-#                                     states.CancelHead(robot),
-#                                     transitions={   'done'              :'done'})
 
 class ExplorationDesignator(EdEntityDesignator):
     """ Designator to determine the waypoint where the robot should go in its exploration phase 
@@ -267,11 +72,11 @@ class PoiDesignator(EdEntityDesignator):
             self.pois.append(poi)
 
         # Remove visited items
-        filtered_pois = []
-        for poi in self.pois:
-            if not poi['poiid'] in self.visited_ids:
-                filtered_pois.append(poi)
-
+        filtered_pois = [poi for poi in self.pois if not poi['poiid'] in self.visited_ids]
+        # filtered_pois = []
+        # for poi in self.pois:
+        #     if not poi['poiid'] in self.visited_ids:
+        #         filtered_pois.append(poi)
         if len(filtered_pois) == 0:
             rospy.logwarn("No pois found")
             return None
@@ -396,9 +201,6 @@ class ExploreScenario(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['done', 'call_received', 'shutdown_received'])
 
         with self:
-            # id_has_explore = lambda entity: "explore" in entity.id
-            # wped = EdEntityDesignator(robot, type='waypoint', criteriafuncs=[id_has_explore]) # Helper designator to get Ed entity representing the target to explore
-            # waypoint_designator = PointStampedOfEntityDesignator(wped)  # Designator to pass to the navigation state
 
             radius = 1.5 # Radius for NavigateToExplore
             exploration_target_designator = ExplorationDesignator(robot)
@@ -406,9 +208,9 @@ class ExploreScenario(smach.StateMachine):
 
             ''' Determine what to do '''
             smach.StateMachine.add('CHECK_TRIGGER',
-                                    CheckCommand(robot=robot, triggers=['call', 'shutdown'], topic="robot_call", rate = 100, timeout=0.1),
-                                    transitions={   'call'              : 'call_received',
-                                                    'shutdown'          : 'shutdown_received',
+                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/amigo/trigger", rate = 100, timeout=0.1),
+                                    transitions={   'call_robot'        : 'call_received',
+                                                    'exit_robot'        : 'shutdown_received',
                                                     'timeout'           : 'GOTO_POINT_OF_INTEREST',
                                                     'preempted'         : 'done'})
 
@@ -422,8 +224,8 @@ class ExploreScenario(smach.StateMachine):
             ''' Backup: if no point of interest: go to hardcoded waypoint '''
             smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
                                     states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
-                                    transitions={   'arrived'           : 'GOTO_HARDCODED_WAYPOINT',
-                                                    'unreachable'       : 'GOTO_HARDCODED_WAYPOINT',
+                                    transitions={   'arrived'           : 'CHECK_TRIGGER',
+                                                    'unreachable'       : 'CHECK_TRIGGER',
                                                     'goal_not_defined'  : 'done'})
 
             ''' Look at thing '''
@@ -438,18 +240,81 @@ class ExploreScenario(smach.StateMachine):
                                     transitions={   'succeeded'                 :'CHECK_TRIGGER',
                                                     'failed'                    :'CHECK_TRIGGER'})
 
-        # with self:
-        #     smach.StateMachine.add('EXPLORE_TABLE1',
-        #                             ExploreTable(robot, TABLE1),
-        #                             transitions={   'done'          :   'EXPLORE_TABLE2'})
+####################################  STATES FOR GUI CALLBACK ####################################################333
+class ConversationWithOperator(smach.State):
+    def __init__(self, robot, furniture_designator, object_designator):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        # Designator where to look for the object
+        self.furniture_designator = furniture_designator 
+        # Object designator
+        self.object_designator = object_designator
 
-        #     smach.StateMachine.add('EXPLORE_TABLE2',
-        #                             ExploreTable(robot, TABLE2),
-        #                             transitions={   'done'          :   'EXPLORE_TABLE3'})
+    def execute(self, userdata):
 
-        #     smach.StateMachine.add('EXPLORE_TABLE3',
-        #                             ExploreTable(robot, TABLE3),
-        #                             transitions={   'done'          :   'done'})
+        # Ask what to to
+        self.robot.speech.speak("What can I do for you?")
+
+        # Get location options
+        entities = self.robot.ed.get_entities(parse=False)
+        # furniture_list = []
+        # for e in entity:
+        #     if 'furniture' in e.flags:
+        #         furniture = e.type.split('/')[-1]
+        #         furniture_list.append(furniture)
+
+        # # Alternative
+        ''' Maps the entities to strings containing the 'stripped type' '''
+        furniture_list = {e:e.type.split('/')[-1] for e in entities if 'furniture' in e.flags}
+
+        # Listen to result
+        speech_options = {'object':challenge_knowledge.object_options, 'location': furniture_list.values()}
+        res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(10.0))
+
+        # res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
+
+        # Put result in designators
+        if not res:
+            ''' Get random furniture object (only the string) '''
+            furniture = random.choice(furniture_list.keys())
+            ''' Set the designator with the corresponding entity '''
+            self.furniture_designator.current = furniture
+            self.robot.speech.speak("My ears are not working properly, I'll go to the {0} to see what I can find there".format(furniture_list[furniture]))
+            return "failed"
+        else:
+            obj = res.choices['object']
+            loc = res.choices['location']
+            self.robot.speech.speak("All right, I will go to the {0} to grab the {1}".format(loc, obj), block=False)
+            for entity, stripped_type in furniture_list.iteritems():
+                if stripped_type == loc:
+                    self.furniture_designator.current = entity
+            self.object_designator.type = obj
+            rospy.logerr('ConversationWithOperator ALWAYS returns Failed for debugging purposes!!!')
+            return 'failed'
+        # Return
+        # 
+        # try:
+        #     if res.result:
+        #         object_string = res.choices['object']
+        #         self.robot.speech.speak("I am very sorry, but I do not have an arm to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
+        #         self.robot.speech.speak("Amigo, please bring my boss a {0}".format(object_string))
+                
+        #         ''' Publish trigger for AMIGO to start its task '''
+        #         msg = std_msgs.msg.String(object_string)
+        #         counter = 0
+        #         while counter < 10:
+        #             self.trigger_pub.publish(msg)
+        #             counter += 1
+        #             rospy.sleep(rospy.Duration(0.1))
+
+        #         return "succeeded"
+        #     else:
+        #         self.robot.speech.speak("Sorry, I did not hear you properly")
+        #         return "failed"
+        # except KeyError:
+        #     print "KEYERROR FINAL, should not happen!"
+        #     return "failed"
+
 
 ############################## explore state machine #####################
 class GuiCallCallback(smach.StateMachine):
@@ -458,10 +323,28 @@ class GuiCallCallback(smach.StateMachine):
 
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
+        location_designator = VariableDesignator(resolve_type=EntityInfo)
+        object_designator = EdEntityDesignator(robot)
+
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
                                     states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
-                                    transitions={   'arrived'           : 'succeeded',
+                                    transitions={   'arrived'           : 'HUMAN_ROBOT_INTERACTION',
+                                                    'unreachable'       : 'SAY_GOTO_OPERATOR_FAILED',
+                                                    'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
+
+            smach.StateMachine.add('SAY_GOTO_OPERATOR_FAILED',
+                                    states.Say(robot, ["I was not able to reach my operator, please come to me"], block=False),
+                                    transitions={   'spoken'            : 'HUMAN_ROBOT_INTERACTION'})
+
+            smach.StateMachine.add('HUMAN_ROBOT_INTERACTION',
+                                    ConversationWithOperator(robot=robot, furniture_designator=location_designator, object_designator=object_designator),
+                                    transitions={   'succeeded'         : 'GOTO_LOCATION_BACKUP',
+                                                    'failed'            : 'GOTO_LOCATION_BACKUP'})
+
+            smach.StateMachine.add('GOTO_LOCATION_BACKUP',
+                                    states.NavigateToObserve(robot, entity_designator=location_designator, radius = 0.7),
+                                    transitions={   'arrived'           : 'failed',
                                                     'unreachable'       : 'failed',
                                                     'goal_not_defined'  : 'failed'})
 
@@ -503,8 +386,8 @@ def setup_statemachine(robot):
                                                 'failed'            :   'SAY_FAILURE'})
 
         smach.StateMachine.add('SAY_GOTO_EXIT',
-                                states.Say(robot, ["My work here is done, I'm leaving now"], block=False),
-                                transitions={   'spoken'            :   'GOTO_EXIT'})
+                                states.Say(robot, ["My work here is done, I'm go and explore some more"], block=False),
+                                transitions={   'spoken'            :   'EXPLORE'})
 
         smach.StateMachine.add('GOTO_EXIT',
                                 states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
@@ -515,17 +398,6 @@ def setup_statemachine(robot):
         smach.StateMachine.add('SAY_FAILURE',
                                 states.Say(robot, ["Something went wrong, I'm giving up"], block=False),
                                 transitions={   'spoken'            :   'Done'})
-
-        # smach.StateMachine.add('GOTO_OPERATOR',
-        #                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
-        #                         transitions={   'arrived'           :   'Done',
-        #                                         'unreachable'       :   'Done',
-        #                                         'goal_not_defined'  :   'Done'})
-
-        # smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
-        #                         CiteItems(robot),
-        #                         transitions={   'succeeded'         :   'ASK_ITEMS1',
-        #                                         'failed'            :   'ASK_ITEMS1'} )
 
     return sm
 
