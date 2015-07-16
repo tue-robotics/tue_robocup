@@ -250,10 +250,10 @@ class ED:
         if not (room == "" and len(entities) == 0):
             print "room in ed = ", room
             room_entity = self.get_entity(id=str(room))
-            x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']
-            x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']
-            y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']
-            y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']
+            x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
+            x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
+            y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
+            y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
 
             entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
 
