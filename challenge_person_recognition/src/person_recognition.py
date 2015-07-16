@@ -112,16 +112,20 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         @smach.cb_interface(outcomes=['spoken'])
         def sayCouldNotLearnNameCB(userdata):
-            printOk("sayHelloCB")
-            robot.speech.speak( "Sorry but i could not understand your name. I will just call you " + operatorNameDes.resolve(),
-                                block=False)
+            printOk("sayCouldNotLearnNameCB")
+            robot.speech.speak( "Sorry but I could not understand your name. I will just call you " + operatorNameDes.resolve(), block=False)
+            return 'spoken'
+
+        @smach.cb_interface(outcomes=['spoken'])
+        def sayIsYourName(userdata):
+            printOk("sayIsYourName")
+            robot.speech.speak( "I heard " + operatorNameDes.resolve() + ". Is this correct?", block=False)
             return 'spoken'
 
         @smach.cb_interface(outcomes=['spoken'])
         def sayHelloCB(userdata):
             printOk("sayHelloCB")
-            robot.speech.speak( "Hello " + operatorNameDes.resolve() + "!",
-                                block=False)
+            robot.speech.speak( "Hello " + operatorNameDes.resolve() + "!", block=False)
             return 'spoken'
 
         @smach.cb_interface(outcomes=['spoken'])
@@ -203,15 +207,28 @@ class ChallengePersonRecognition(smach.StateMachine):
                         smach.StateMachine.add( 'ASK_PERSON_NAME',
                                                 PersonRecStates.AskPersonName(robot, operatorNameDes),
                                                 remapping={     'personName_out':'personName_userData'},
-                                                transitions={   'succeded':'container_success',
-                                                                'failed':'SAY_LEARN_NAME_FAILED'})
+                                                transitions={   'succeded':'SAY_IS_YOUR_NAME',
+                                                                'failed':'SAY_HEAR_FAILED'})
 
-                        smach.StateMachine.add('SAY_LEARN_NAME_FAILED',
-                                           states.Say(robot, [  "I did not understand your name, could you repeat after the beep?",
-                                                                "Could you repeat your name after the beep?"]),
-                                           transitions={    'spoken':'container_failed'})
+                        smach.StateMachine.add( 'SAY_IS_YOUR_NAME',
+                                                smach.CBState(sayIsYourName),
+                                                transitions={    'spoken':'HEAR_YES_NO_1'})
 
-                        # CONFIRM PERSON NAAAAAAAAAAAAAAAAAAAAAAAMEEEEEEEEEEEEEEEEEE
+                        smach.StateMachine.add( 'HEAR_YES_NO_1',
+                                                states.HearYesNo(robot),
+                                                transitions={   'heard_yes' : 'container_success', 
+                                                                'heard_no' : 'SAY_NAME_WRONG', 
+                                                                'heard_failed' : 'SAY_HEAR_FAILED'})
+                        
+                        smach.StateMachine.add( 'SAY_NAME_WRONG',
+                                                states.Say(robot, [  "Sorry, I understood wrong.",
+                                                                    "Oh I'm sorry."], block=False),
+                                                transitions={    'spoken':'container_failed'})
+
+                        smach.StateMachine.add( 'SAY_HEAR_FAILED',
+                                                states.Say(robot, [  "I did not understand your name.",
+                                                                    "I didn't listen correctly."], block=False),
+                                                transitions={    'spoken':'container_failed'})
 
                     smach.Iterator.set_contained_state( 'LEARN_NAME_CONTAINER', 
                                                         learnNameContainer,
@@ -315,6 +332,10 @@ class ChallengePersonRecognition(smach.StateMachine):
             findCrowndContainer = smach.StateMachine(   outcomes = ['container_success', 'container_failed'])
             with findCrowndContainer:
 
+                smach.StateMachine.add( 'RESET_ED_1',
+                                        PersonRecStates.ResetEd(robot),
+                                        transitions={   'done':  'GOTO_LIVING_ROOM_1'})                
+
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
                                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
                                         transitions={   'arrived':          'SAY_SEARCHING_CROWD',
@@ -350,7 +371,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add( 'FIND_CROWD_3',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
                                         transitions={   'succeded':  'container_success',
-                                                        'failed':   'container_failed'})             
+                                                        'failed':   'container_failed'})
 
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_CROWD_CONTAINER',
@@ -361,11 +382,15 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                     states.Say(robot,[  "I think I found some people.",
                                                         "I think I saw several people over there"], block=False),
-                                    transitions={   'spoken':'FIND_OPERATOR_CONTAINER'})
+                                    transitions={   'spoken':'RESET_ED_2'})
 
             smach.StateMachine.add('SAY_FAILED_FIND_CROWD',
                                    states.Say(robot,"Still Searching for the crowd", block=False),
                                    transitions={    'spoken':'FIND_CROWD_CONTAINER'})
+
+            smach.StateMachine.add( 'RESET_ED_2',
+                        PersonRecStates.ResetEd(robot),
+                        transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
 
 
 
@@ -392,7 +417,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'unreachable'       :   'SAY_FAILED_GOTO',
                                                         'goal_not_defined'  :   'SAY_FAILED_GOTO'})
 
-                smach.StateMachine.add('REMOVE_LOCATION',
+                smach.StateMachine.add( 'REMOVE_LOCATION',
                                         smach.CBState(removeLocation),
                                         transitions={   'done':'SAY_LOOK_AT_ME'})
 
@@ -511,16 +536,17 @@ class ChallengePersonRecognition(smach.StateMachine):
                 smach.StateMachine.add( 'DESCRIBE_PEOPLE',
                                         PersonRecStates.DescribePeople(robot, facesAnalyzedDes),
                                         remapping={     'operatorIdx_in':'operatorIdx_userData'},
-                                        transitions={   'done':'container_success'})
+                                        transitions={   'done':'SAY_REPEAT'})
 
-                # smach.StateMachine.add('SAY_DESCRIBE_CROWD',
-                #                         states.Say(robot,"I see several humans in this crowd!", block=False),
-                #                         transitions={'spoken':'DESCRIBE_CROWD'})
+                smach.StateMachine.add( 'SAY_REPEAT',
+                                        states.Say(robot,"Would you like me to repeat the crowd description?", block=True),
+                                        transitions={   'spoken':'HEAR_YES_NO_2'})
 
-                # smach.StateMachine.add( 'DESCRIBE_CROWD',
-                #                         PersonRecStates.DescribeCrowd(robot, EdEntityDesignator(robot, type='crowd')),
-                #                         transitions={   'success':'container_success',
-                #                                         'failed':'container_failed'})
+                smach.StateMachine.add( 'HEAR_YES_NO_2',
+                                                states.HearYesNo(robot),
+                                                transitions={   'heard_yes' : 'DESCRIBE_PEOPLE',
+                                                                'heard_no' : 'container_success', 
+                                                                'heard_failed' : 'container_success'})
 
             #add container to the main state machine
             smach.StateMachine.add( 'DESCRIBE_CROWD_CONTAINER',

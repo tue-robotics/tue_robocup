@@ -7,7 +7,6 @@ import inspect
 import random
 import ed_perception.msg
 import robot_skills.util.msg_constructors as msgs
-# import geometry_msgs.msg as gm
 import math
 from smach_ros import SimpleActionState
 from robot_smach_states.util.designators import *
@@ -18,7 +17,7 @@ from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
 
 # ----------------------------------------------------------------------------------------------------
-
+# import ipdb; ipdb.set_trace()
 common_knowledge = load_knowledge("common")
 challenge_knowledge = load_knowledge("challenge_person_recognition")
 
@@ -148,7 +147,7 @@ class LookAtPersonInFront(smach.State):
             # try to resolve the designator
             desgnResult = humanDesignator.resolve()
             if not desgnResult:
-                printOk("Could not find a human while looking down")
+                printWarning("Could not find a human while looking down")
                 pass
 
         # if there is a person in front, try to look at the face
@@ -169,10 +168,10 @@ class LookAtPersonInFront(smach.State):
                     # get information on the first face found (cant guarantee its the closest in case there are many)
                     faces_front = entityData["perception_result"]["face_detector"]["faces_front"][0]
                 except KeyError, ke:
-                    printOk("KeyError faces_front: " + str(ke))
+                    printWarning("KeyError faces_front: " + str(ke))
                     pass
                 except IndexError, ke:
-                    printOk("IndexError faces_front: " + str(ke))
+                    printWarning("IndexError faces_front: " + str(ke))
                     pass
 
                 if faces_front:
@@ -231,7 +230,8 @@ class FindCrowd(smach.State):
                                 msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"),
                                 msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link")]
         # create designators
-        humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+        humanDesignator = EdEntityCollectionDesignator( self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]], 
+                                                        center_point=msgs.PointStamped(**challenge_knowledge.room_center), radius=3)
 
         # clear head goals
         self.robot.head.cancel_goal()
@@ -244,7 +244,7 @@ class FindCrowd(smach.State):
             humanDesignatorRes = humanDesignator.resolve()
             if humanDesignatorRes:
                 faces_locations = faces_locations + humanDesignatorRes
-                printOk("Found {0} faces. Adding to list, now with {1}".format(len(humanDesignatorRes), len(faces_locations)))
+                printOk("Found {0} faces. Adding to list, now with {1} (before filtering)".format(len(humanDesignatorRes), len(faces_locations)))
             else:
                 printWarning("Could not resolve humanDesignator")
 
@@ -252,25 +252,9 @@ class FindCrowd(smach.State):
         # clear head gloas
         self.robot.head.cancel_goal()
 
-        # "scan" the room with the head
-        # look at 3 meters front, 5 meters right and 2 meters high
-        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-
-        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,0,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-        # rospy.sleep(3)
-
-        # # look at 3 meters front, 5 meters left and 2 meters high
-        # self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,3,2,self.robot.robot_name+"/base_link"), end_time=0, timeout=8)
-        # rospy.sleep(2)
-
-        # # extra sleep to give more time to process
-        # rospy.sleep(2)
-
-
-
         # if humanDesignatorRes is not empty
         if faces_locations:
-            printOk("Iterating through the {0} humans found".format(len(faces_locations)))
+            printOk("Iterating through the {0} faces found".format(len(faces_locations)))
 
             for humanEntity in faces_locations:
                 faceList = None
@@ -462,7 +446,7 @@ class AskPersonName(smach.State):
     def execute(self, userdata):
         printOk("AskPersonName")
 
-        self.robot.speech.speak("What is your name?", block=False)
+        self.robot.speech.speak("What is your name?", block=True)
 
         spec = Designator("((<prefix> <name>)|<name>)")
 
@@ -560,8 +544,6 @@ class ChooseOperator(smach.State):
             printOk("Could not resolve faces analysed")
             return 'failed'
 
-        # import ipdb; ipdb.set_trace()
-
         if not faceList == None:
             for idx, face in enumerate(faceList):
                 printOk("\tName: {0}, Score: {1}, Location: ({2},{3},{4})".format(
@@ -569,19 +551,12 @@ class ChooseOperator(smach.State):
                     str(face.score),
                     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z)))
 
-                # score of 0 is for unidentifies people
+                # Low scores are better. Score=0 means face not identified.
                 if face.score > 0 and face.score < lowest_score and self.operatorNameDes.resolve() == face.name:
                     lowest_score = face.score
                     operatorIdx = idx
                     self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, y=face.point_stamped.point.y, z=face.point_stamped.point.z, frame_id="/map"))
                     chosenOperator = True
-
-            # If no operator was choosen, select a random one
-            if not chosenOperator:
-                # operatorIdx = 0
-                operatorIdx = random.randint(0, len(faceList)-1)
-                chosenOperator = True
-                printWarning("Could not choose an operator. Selecting random index: " + str(operatorIdx))
 
             if chosenOperator:
                 printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
@@ -590,6 +565,10 @@ class ChooseOperator(smach.State):
                     str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
 
                 faceList[operatorIdx].operator = True
+
+                # loc = self.operatorLocationDes.current.resolve()
+                # loc.pose.position
+                # import ipdb; ipdb.set_trace()
 
                 # Operators face location
                 # p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
@@ -604,10 +583,20 @@ class ChooseOperator(smach.State):
                 userdata.operatorIdx_out = operatorIdx
                 return 'succeeded'
             else:
-                userdata.operatorIdx_out = 0
+                rand_op_idx = random.randint(0, len(faceList)-1)
+                printWarning("Could not choose an operator! Selecting random index: " + str(rand_op_idx))
+                
+                # If no operator was choosen, select a random one
+                # userdata.operatorIdx_out = 0
+                userdata.operatorIdx_out = rand_op_idx
 
-                printFail("Could not choose an operator from the list! Selecting the first.")
-                return 'failed'
+                printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
+                    str(faceList[rand_op_idx].name),
+                    str(faceList[rand_op_idx].score),
+                    str(faceList[rand_op_idx].point_stamped.point.x), str(faceList[rand_op_idx].point_stamped.point.y), str(faceList[rand_op_idx].point_stamped.point.z)))
+
+                return 'succeeded'
+
         else:
             printFail("No faces were analysed!")
             return 'failed'
@@ -634,6 +623,7 @@ class AnalysePerson(smach.State):
 
         # create designators
         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+
         humanDataDesignator = AttrDesignator(humanDesignator, 'data')
 
         humanDesignatorRes = humanDesignator.resolve()
@@ -690,23 +680,24 @@ class AnalysePerson(smach.State):
                                 sameFace = True
                                 break
 
-                        if sameFace:
+                        # if sameFace:
                             # TODO: COMPARE SCORES FROM THE FACE RECOGNITION, IF ITS BETTER, REPLACE
-                            printOk("Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current)))
+                            # printOk("Face location already present in the list. List size: " + str(len(self.facesAnalysedDes.current)))
 
                         #  if information is valid, add it to the list of analysed faces
                         # if not recognition_label == None and not recognition_score == None and not sameFace:
                         if not sameFace:
 
                             # "predict" pose in a hacky way
-                            if face_loc["map_z"] > 0.8:
+                            if face_loc["map_z"] > challenge_knowledge.sitting_height_treshold:
                                 pose = challenge_knowledge.Pose.Standing
                             else:
                                 pose = challenge_knowledge.Pose.Sitting_down
 
                             # TODO: match against the name list fiven by the knowledge
                             #  "predict" gender, in a hacky way. Names finished with A are female
-                            if recognition_label[:-1] == 'a':
+                            
+                            if recognition_label[-1:] == 'a':
                                 personGender = challenge_knowledge.Gender.Female
                             else:
                                 personGender = challenge_knowledge.Gender.Male
@@ -723,7 +714,7 @@ class AnalysePerson(smach.State):
                                                                             pose = pose,
                                                                             gender = personGender))]
                         else:
-                            printWarning("There is a face in this location already on the list. Did not add.")
+                            printWarning("There is a face in this location already on the list.  List size: " + str(len(self.facesAnalysedDes.current)))
 
                 except KeyError, ke:
                     printError("KeyError faceList:" + str(ke))
@@ -759,7 +750,7 @@ class GetNextLocation(smach.State):
             printOk(str(len(availableLocations)) + " locations in the list")
 
             chosenLocation = None
-            # TODO: CHOOSE CLOSEST LOCATION
+
             for loc in availableLocations:
 
                 if loc.visited == False:
@@ -805,3 +796,23 @@ class ResetSearch(smach.State):
         self.locations.current = []
         
         return 'done'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class ResetEd(smach.State):
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        printOk("ResetEd")
+
+        self.robot.ed.reset()
+
+        return "done"
+
+
+# ----------------------------------------------------------------------------------------------------
