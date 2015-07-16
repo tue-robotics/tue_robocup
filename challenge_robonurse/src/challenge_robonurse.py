@@ -11,10 +11,9 @@ The robot must grab the bottle and bring it to Granny.
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
-TODO: Bottle descriptions should come from relative object sizes and relative positions
 TODO: Actual action detection with a hack. 
-    Plan is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
-# TODO: Test Take cane
+    One idea is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
+TODO: Test Take cane
 """
 
 import rospy
@@ -48,6 +47,19 @@ def define_designators(robot):
 
     return granny, grannies_table, shelf
 
+class InitializeWorldModel(smach.State):
+
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.ed.configure_kinect_segmentation(continuous=False)
+        self.robot.ed.configure_perception(continuous=False)
+        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+        self.robot.ed.reset()
+
+        return "done"
 
 class Look_point(smach.State):
     def __init__(self, robot, x, y, z):
@@ -294,8 +306,9 @@ class GetPills(smach.StateMachine):
                     choices = answer.choices
                     grannies_desc = BottleDescription()
                     if 'color' in choices and choices['color'] != '': grannies_desc.color = choices['color']
-                    if 'size'  in choices and choices['size']  != '': grannies_desc.size =  choices['size']
+                    if 'height_desc'  in choices and choices['height_desc']  != '': grannies_desc.height_description =  choices['height_desc']
                     if 'label' in choices and choices['label'] != '': grannies_desc.label = choices['label']
+                    if 'position' in choices and choices['position'] != '': grannies_desc.position_description = choices['position']
 
                     # import ipdb; ipdb.set_trace()
                     matching_bottles = [bottle for bottle, bottle_desc in bottle_description_map.iteritems() if bottle_desc == grannies_desc]
@@ -307,11 +320,16 @@ class GetPills(smach.StateMachine):
                         spoken_description = "the "
                         if 'color' in choices:
                             spoken_description += " " + choices['color']
-                        if 'size' in choices:
-                            spoken_description += " " + choices['size']
+                        if 'height_desc' in choices:
+                            spoken_description += " " + choices['height_desc']
                         if 'label' in choices:
                             spoken_description += " labeled " + choices['label']
-                        spoken_description += " one with I D " + str(selected_bottle_id)[:5]
+                        
+                        spoken_description += " one "
+                        
+                        if 'position' in choices:
+                            spoken_description += " on the " + choices['position']
+                        spoken_description += "with I D " + str(selected_bottle_id)[:5]
 
                         robot.speech.speak("OK, I will get {}".format(spoken_description))
                         rospy.loginfo("Granny chose & described: {0}".format(grannies_desc))
@@ -568,6 +586,11 @@ class RoboNurse(smach.StateMachine):
             return x_ok and y_ok
 
         with self: 
+            smach.StateMachine.add( "INIT_WM",
+                                    InitializeWorldModel(robot), 
+                                    transitions={'done'                 :'START_PHASE'})
+
+
             smach.StateMachine.add( "START_PHASE",
                                     StartPhase(robot, grannies_table),
                                     transitions={   'Done'              :'ASK_GRANNY',

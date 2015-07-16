@@ -19,6 +19,7 @@ import numpy as np
 from color_analysis import analyze
 
 def save_entity_image_to_file(world_model_ed, entityID, colorname):
+    """Saves an entity's measurement to a file. The filename includes the entity's ID and a colorname. """
     file_name = "images/%s_%s.jpg"%(entityID, colorname)
     if "/" in file_name and not os.path.exists(os.path.dirname(file_name)):
         os.makedirs(os.path.dirname(file_name))
@@ -57,57 +58,67 @@ def save_entity_image_to_file(world_model_ed, entityID, colorname):
 
 
 class BottleDescription(object):
-    def __init__(self, size=None, color=None, label=None, height=None, position=None):
-        self.size = size
+    """A description of a bottle. A bottle can be described by its size, color, label, relative position etc. """
+    def __init__(self, color=None, label=None, height=None, position=None, height_description=None, position_description=None):
         self.color = color
         self.label = label
         self.height = height
         self.position = position
 
-        self.height_description = None
-        self.position_description = None
+        self.height_description = height_description
+        self.position_description = position_description
 
     def __eq__(self, other):
         """Check equality of self against other
         >>> assert BottleDescription() == BottleDescription()
-        >>> assert BottleDescription(size="big") == BottleDescription(size="big")
+        >>> assert BottleDescription(height_description="big") == BottleDescription(height_description="big")
         >>> assert BottleDescription(label="ibuprofen") == BottleDescription(label="ibuprofen")
-        >>> assert BottleDescription(size="big", color="red") == BottleDescription(size="big", color="red")
+        >>> assert BottleDescription(height_description="big", color="red") == BottleDescription(height_description="big", color="red")
+        >>> assert BottleDescription(height_description="big", color="red", position_description="left") == BottleDescription(height_description="big", color="red", position_description="left")
         
-        >>> assert BottleDescription(label="ibuprofen") != BottleDescription(size="small")
-        >>> assert BottleDescription(size="big", color="red") != BottleDescription(size="big", color="blue")"""
-        return self.size == other.size and self.color == other.color and self.label == other.label
+        >>> assert BottleDescription(label="ibuprofen") != BottleDescription(height_description="small")
+        >>> assert BottleDescription(height_description="big", color="red") != BottleDescription(height_description="big", color="blue")
+        
+        >>> assert BottleDescription(position_description="left") != BottleDescription(position_description="right")
+        """
+        return self.height_description == other.height_description \
+            and self.color == other.color \
+            and self.label == other.label \
+            and self.position_description == other.position_description
 
     def __repr__(self):
-        return "BottleDescription(size={size}, color={color}, label={label})".format(**self.__dict__)
+        return "BottleDescription(height_description={height_description}, color={color}, label={label}, position_description={position_description})".format(**self.__dict__)
 
 
 def get_entity_color(entity):
-        try:
-            return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
-        except KeyError, ke:
-            rospy.logwarn("Entity {0} has no key {1}".format(entity.id, ke))
-            return None
-        except TypeError, te:
-            rospy.logwarn("{1} for Entity {0}".format(entity.id, te))
-            return None
+    """Try to get the result of the color_matcher. 
+    The color_matcher's output is a dictionary mapping a color name to a value between 0-1. So, select the key (color name) maximum value (value)"""
+    try:
+        return max(entity.data['perception_result']['color_matcher']['colors'], key=lambda d: d['value'])['name']
+    except KeyError, ke:
+        rospy.logwarn("Entity {0} has no key {1}".format(entity.id, ke))
+        return None
+    except TypeError, te:
+        rospy.logwarn("{1} for Entity {0}".format(entity.id, te))
+        return None
 
 
 def get_entity_size(entity):
-    size_description = None
+    """Give a size label for the entity, based on an absolute scale. """
+    height_description = None
     try:
         height = abs(entity.z_min - entity.z_max)
         if height < 0.05:
-            size_description = "small"
+            height_description = "small"
         elif 0.05 <= height < 0.10:
-            size_description = "normal sized"
+            height_description = "normal sized"
         elif 0.10 <= height:
-            size_description = "big"
-        rospy.loginfo("Height of object {0} is {1} so classifying as {2}".format(entity.id, height, size_description))
+            height_description = "big"
+        rospy.loginfo("Height of object {0} is {1} so classifying as {2}".format(entity.id, height, height_description))
     except:
         pass
 
-    return size_description, height
+    return height_description, height
 
 class DescribeBottles(smach.State):
     def __init__(self, robot, bottle_collection_designator, spec_designator, choices_designator, bottle_desc_mapping_designator):
@@ -115,6 +126,8 @@ class DescribeBottles(smach.State):
         @param robot the robot to run this with
         @bottle_collection_designator designates a bunch of bottles/entities
         @param spec_designator based on the descriptions read aloud by the robot, a spec for speech interpretation is created and stored in this VariableDesignator
+        @param choices_designator what choices are there for the speech descriptions, e.g. what colors, labels etc are there to choose from?
+        @param bottle_desc_mapping_designator must be assigned a dictionary mapping EntityInfos to BottleDescriptions.
         """
         smach.State.__init__(self, outcomes=["succeeded", "failed"])
         self.robot = robot
@@ -128,6 +141,10 @@ class DescribeBottles(smach.State):
     def execute(self, userdata=None):
         # self.robot.head.reset()
         # import ipdb; ipdb.set_trace()
+
+        entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
+        self.robot.ed.classify(ids=entity_ids, types=[])
+
         bottles = self.bottle_collection_designator.resolve()
         if not bottles:
             return "failed"
@@ -160,15 +177,15 @@ class DescribeBottles(smach.State):
 
             desc_sentence = ""
             if desc.height_description and desc.color and desc.label:
-                desc_sentence = "a {size}, {color} one labeled {label}".format(size=desc.height_description, color=desc.color, label=desc.label)
+                desc_sentence = "a {height}, {color} one labeled {label}".format(height=desc.height_description, color=desc.color, label=desc.label)
             elif desc.height_description and desc.color:
-                desc_sentence = "a {size}, {color} one".format(size=desc.height_description, color=desc.color)
+                desc_sentence = "a {height}, {color} one".format(height=desc.height_description, color=desc.color)
             elif desc.color and desc.label:
                 desc_sentence = "a {color} one labeled {label}".format(label=desc.label, color=desc.color)
             elif desc.height_description and desc.label:
-                desc_sentence = "a {size} one labeled {label}".format(label=desc.label, size=desc.height_description)
+                desc_sentence = "a {height} one labeled {label}".format(label=desc.label, height=desc.height_description)
             elif desc.height_description:
-                desc_sentence = "a {size} one".format(size=desc.height_description)
+                desc_sentence = "a {height} one".format(height=desc.height_description)
             elif desc.color:
                 desc_sentence = "a {color} one".format(color=desc.color)
             elif desc.label:
@@ -184,32 +201,38 @@ class DescribeBottles(smach.State):
         self.robot.speech.speak("Which do you want?")
 
         colors = set([desc.color for desc in descriptions.values() if desc.color])
-        sizes = set([desc.height_description for desc in descriptions.values() if desc.height_description])
+        height_descs = set([desc.height_description for desc in descriptions.values() if desc.height_description])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
+        positions = set([desc.position_description for desc in descriptions.values() if desc.position_description])
         choices = {}
         if colors:
             choices["color"] = colors
-        if sizes:
-            choices["size"] = sizes
+        if height_descs:
+            choices["height_desc"] = height_descs
         if labels:
             choices["label"] = labels
+        if positions:
+            choices["position"] = positions
         rospy.loginfo("Choices are {}".format(choices))
 
         # import ipdb; ipdb.set_trace()
-        if sizes and colors and labels:
-            self.spec_designator.current = "Bring me the <size>, <color> bottle labeled <label>"
-        elif sizes and colors:
-            self.spec_designator.current = "Bring me the <size>, <color> bottle"
+        if height_descs and colors and labels:
+            self.spec_designator.current = "Bring me the <height_desc>, <color> bottle labeled <label>"
+        elif height_descs and colors:
+            self.spec_designator.current = "Bring me the <height_desc>, <color> bottle"
         elif colors and labels:
             self.spec_designator.current = "Bring me the <color> bottle labeled <label>"
-        elif sizes and labels:
-            self.spec_designator.current = "Bring me the <size> bottle labeled <label>"
-        elif sizes:
-            self.spec_designator.current = "Bring me the <size> bottle"
+        elif height_descs and labels:
+            self.spec_designator.current = "Bring me the <height_desc> bottle labeled <label>"
+        elif height_descs:
+            self.spec_designator.current = "Bring me the <height_desc> bottle"
         elif colors:
             self.spec_designator.current = "Bring me the <color> bottle"
         elif labels:
             self.spec_designator.current = "Bring me the bottle labeled <label>"
+
+        if positions:
+            self.spec_designator.current += " on the <position>"
         
         self.choices_designator.current = choices
 
@@ -218,6 +241,8 @@ class DescribeBottles(smach.State):
         return "succeeded"
 
     def describe_bottle(self, bottle_at_y):
+        """Create a BottleDescription for a bottle_at_y.
+        @param bottle_at_y is a tuple (EntityInfo, float) representing the bottle to describe and its numeric position."""
         bottle_entity, y = bottle_at_y
 
         # import ipdb; ipdb.set_trace()
@@ -226,7 +251,8 @@ class DescribeBottles(smach.State):
             filename = save_entity_image_to_file(self.robot.ed, bottle_entity.id, most_probable_color)
             
             try:
-                most_probable_color = analyze(Image.open(filename))
+                #Analyze the image and return the dominant color
+                most_probable_color = analyze(Image.open(filename)) 
             except Exception, e:
                 rospy.logwarn("Could not get the dominant color in {}".format(filename))
 
@@ -234,16 +260,25 @@ class DescribeBottles(smach.State):
         except Exception, e:
             rospy.logwarn("Could not save image of entity {}: {}".format(bottle_entity.id, e))
 
-        size_description, height = get_entity_size(bottle_entity)
+        height_description, height = get_entity_size(bottle_entity)
 
-        return BottleDescription(   size=size_description,
+        return BottleDescription(   height_description=height_description,
                                     color=most_probable_color,
                                     label=None,
                                     position=y,
                                     height=height)
 
     def describe_relative(self, descriptions):
-        """@param descriptions is a dict {(Entity, BottleDescription)}"""
+        """@param descriptions is a dict mapping EntityInfo to BottleDescription
+        Based on the existing object descriptions (that include their numeric, absolute z-size and y-position,
+            calculate relative positions and sizes.
+        It takes the smallest/largest, splits the interval between those in some subintervals and checks into which subinterval an entity falls.
+        E.g. objects are distributed like so on some axis: 1--2-------3---4--------------5
+        Then the whole interval is divided in 3 parts:     |---left--|--middle--|--right--|
+        So, objects 1 and 2 are both left, 3 & 4 are in the middle and 5 is on right. 
+
+        The same happens for height
+        The updated descriptions are returned."""
         ys = [desc.position for desc in descriptions.values()]
         lm, rm = min(ys), max(ys)
         hor_interval = rm-lm

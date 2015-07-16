@@ -26,6 +26,9 @@ amigo3:
 
     asdf
 
+    #For simulator testing
+    rosrun challenge_robonurse mock_challenge_robonurse.py
+
     rosrun challenge_robonurse challenge_robonurse.py [robot_name]
 
     or
@@ -53,3 +56,11 @@ After the challenge
 -------------------
 
     - Enjoy your pills
+
+Testing parts of the challenge
+-----------------------------
+$ roscd challenge_robonurse
+$ # Give a navgoal to make amigo face the shelf in rviz-amigo
+$ amigo-console
+>>> from challenge_robonurse import *
+>>> test_get_pills(amigo) #There are other test_... as well. 
