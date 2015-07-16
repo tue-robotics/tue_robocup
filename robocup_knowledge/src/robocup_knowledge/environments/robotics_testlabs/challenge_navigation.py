@@ -9,3 +9,9 @@ target2 = {
     'in' : 'bedroom',
     'lookat' : 'bed_cabinet'
 }
+
+target3 = {
+    'near' : 'bed_cabinet',
+    'in' : 'bedroom',
+    'lookat' : 'bed_cabinet'
+}
