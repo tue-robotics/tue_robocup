@@ -17,8 +17,8 @@ from robot_skills.util import transformations as tf
 from robot_skills.util import transformations, msg_constructors
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0):
-        smach.State.__init__(self, outcomes=["stopped",'lost_operator'])
+    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0, operator_timeout = 60):
+        smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
 
@@ -26,16 +26,24 @@ class FollowOperator(smach.State):
         self._first_time_at_location = None
         self._operator_position_constraint = operator_position_constraint
         self._timeout = timeout
+        self._operator_timeout = operator_timeouts
 
     def _register_operator(self):
+        start_time = rospy.Time.now()
+
         operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
         while not operator:
+            if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
+                return False
+
             self._robot.speech.speak("Please stand in front of me!")
             rospy.sleep(2)
             operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
         print "We have a new operator: %s"%operator.id
         self._robot.speech.speak("I will follow you!", block=False)
         self._operator_id = operator.id
+
+        return True
 
     def _get_operator(self, operator_id):        
         if self._operator_id:
@@ -90,7 +98,9 @@ class FollowOperator(smach.State):
     def execute(self, userdata):
         self._at_location = False
         self._first_time_at_location = None
-        self._register_operator()
+
+        if not self._register_operator():
+            return "no_operator"
 
         while not rospy.is_shutdown():
             
