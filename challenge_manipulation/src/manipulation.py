@@ -49,6 +49,8 @@ PLACE_SHELF = challenge_knowledge.place_shelf
 ROOM = challenge_knowledge.room
 OBJECT_TYPES = challenge_knowledge.object_types
 
+DETECTED_OBJECTS = []
+
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
@@ -197,11 +199,13 @@ class InspectShelves(smach.State):
     """ Inspect all object shelves """
 
     def __init__(self, robot, object_shelves):
-        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        smach.State.__init__(self, outcomes=['succeeded','failed','nothing_found'])
         self.robot = robot
         self.object_shelves = object_shelves
 
     def execute(self, userdata):
+
+        global DETECTED_OBJECTS
 
         ''' Loop over shelves '''
         for shelf in self.object_shelves:
@@ -241,15 +245,19 @@ class InspectShelves(smach.State):
                         # ToDo: filter on size in x, y, z
                         # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                         id_list.append(e.id)
+                        DETECTED_OBJECTS += [e]
 
                 ''' Try to classify the objects on the shelf '''
                 entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
+
+                print "entity types: {}".format(entity_types)
 
                 ''' Check all entities that were flagged to see if they have received a 'type' it_label
                 if so: recite them and lock them '''
                 for i in range(0, len(id_list)):
                     e_id = id_list[i]
                     e_type = entity_types[i]
+                    DETECTED_OBJECTS[i].type = e_type
                     
                     if e_type:
                         self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
@@ -275,6 +283,9 @@ class InspectShelves(smach.State):
                 #         ...
 
                 # self.robot.ed.disable_plugins(["kinect_integration", "perception"])
+
+        if not DETECTED_OBJECTS:
+            return "nothing_found"
 
         return 'succeeded'
 
@@ -536,20 +547,13 @@ def setup_statemachine(robot):
         smach.StateMachine.add("INSPECT_SHELVES",
                                 InspectShelves(robot, OBJECT_SHELVES),
                                 transitions={'succeeded'                :'EXPORT_PDF',
+                                             'nothing_found'            :'EXPORT_PDF',
                                              'failed'                   :'EXPORT_PDF'})
 
         @smach.cb_interface(outcomes=["exported"])
         def export_to_pdf(userdata):
-            all_entities = robot.ed.get_entities()
-            pdf_entities = []
-            # import ipdb; ipdb.set_trace()
-            for object_shelf in OBJECT_SHELVES:
-                container_entity = robot.ed.get_entity(id=object_shelf, parse=False)
-                entities_on_shelf = [ e for e in all_entities if onTopOff(e, container_entity) if e]
-                pdf_entities += entities_on_shelf
-                rospy.loginfo("There are {} entities onTopOff {}. Makes {} entities in total so far".format(len(entities_on_shelf), object_shelf, len(pdf_entities)))
-
-            pdf.entities_to_pdf(robot.ed, pdf_entities, "manipulation_challenge")
+            global DETECTED_OBJECTS
+            pdf.entities_to_pdf(robot.ed, DETECTED_OBJECTS, "manipulation_challenge")
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
                                 smach.CBState(export_to_pdf),

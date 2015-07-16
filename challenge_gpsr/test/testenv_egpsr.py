@@ -19,7 +19,7 @@ if __name__ == "__main__":
     if env == "robotics_testlabs":
 
         #person = W.add_object("loy-1", "loy", 0, 4, 0, 0, 0, 0.7)
-        W.add_object("sjoerd-2","sjoerd",   1, -0.5, 0.000)
+        W.add_object("sjoerd-2","sjoerd",   2.5, 1.0, 0.000)
         #W.add_object("sjoerd-3","sjoerd",   1, 1, 0.000)
         rospy.sleep(5)
 

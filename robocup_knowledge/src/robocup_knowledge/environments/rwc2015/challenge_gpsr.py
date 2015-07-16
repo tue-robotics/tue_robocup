@@ -1,8 +1,12 @@
+# RWC2015, to be adjusted when in hall.
+
+
 from robocup_knowledge import knowledge_loader
 challenge_speech_recognition_data = knowledge_loader.load_knowledge("challenge_speech_recognition")
 
 spec_questions = challenge_speech_recognition_data.spec 
 choices_questions = challenge_speech_recognition_data.choices 
+
 
 #locations:
 starting_point = "initial_pose"
@@ -26,7 +30,6 @@ objects_known = ['beer','coke','beer','coke','fanta','ice_tea','tea','coffee_pad
 location_placement = ['chair','cabinet', 'hallway couch','couchtable','dinnertable','corridor table','bookcase','bed','bed cabinet','operator table','workbench']
 
 rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
-#rooms = ["living room"]
 
 persons_women = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
 persons_men = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
@@ -58,5 +61,4 @@ choices = {'1_location':location_placement,
 '3_question':['question'],
 '3_vb_speak':['tell', 'say', 'speak'],
 '3_name_time_date':['your name', 'the name of your team', 'the time', 'what time is it', 'what time it is', 'the date', 'what day is today', 'what day is tomorrow',  'the day of the month', 'the day of the week']}
-
 
