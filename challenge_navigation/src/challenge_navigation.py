@@ -10,10 +10,7 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
 
-TIME = 0
-DURATION = 0
-
-class TurnAndStoreTime(smach.State):
+class Turn(smach.State):
     def __init__(self, robot, radians):
         smach.State.__init__(self, outcomes=["turned"])
         self.robot = robot
@@ -24,9 +21,6 @@ class TurnAndStoreTime(smach.State):
         vth = 1.0
         print "Turning %f radians with force drive" % radians
         self.robot.base.force_drive(0, 0, vth, radians / vth)
-
-        TIME = rospy.Time.now()
-        DURATION = self.duration
 
         return "turned"
 
@@ -166,7 +160,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Reached target 3",
                                                     "I have arrived at target 3",
                                                     "I am now at target 3"], block=True),
-                                transitions={   'spoken'            :   'TURN_AND_STORE_TIME'})
+                                transitions={   'spoken'            :   'TURN'})
 
         smach.StateMachine.add('RESET_ED_TARGET3', 
                                 states.ResetED(robot),
@@ -186,7 +180,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["I am unable to reach target 3",
                                                     "I cannot reach target 3",
                                                     "Target 3 is unreachable"], block=True),
-                                transitions={   'spoken'            :   'TURN_AND_STORE_TIME'})
+                                transitions={   'spoken'            :   'TURN'})
 
         ######################################################################################################################################################
         #
@@ -194,12 +188,14 @@ def setup_statemachine(robot):
         #
         ######################################################################################################################################################
 
-        smach.StateMachine.add( 'TURN_AND_STORE_TIME', TurnAndStoreTime(robot, 3.1415), transitions={ 'turned'   :   'CHECK_TIME'})
 
-        smach.StateMachine.add( 'CHECK_TIME', checkTime(robot, 60), transitions={ 'ok' : 'FOLLOW_OPERATOR', 'time_passed' : 'SAY_RETURN_TARGET3'})
+        smach.StateMachine.add( 'TURN', Turn(robot, 3.1415), transitions={ 'turned'   :   'CHECK_TIME'})
+        smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True), transitions={ 'spoken' : 'FOLLOW_OPERATOR'})
 
         # TODO :  (Make sure that we toggle the torso laser and disable the kinect)
-        smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot), transitions={ 'stopped' : 'CHECK_TIME', 'lost_operator' : 'CHECK_TIME'})
+        smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot), transitions={ 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
+        smach.StateMachine.add( 'SAY_SHOULD_I_RETURN', states.Say(robot, "Should I return to target 3?"), transitions={ 'spoken' : 'HEAR_SHOULD_I_RETURN'})
+        smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SAY_RETURN_TARGET3", "no" : "SAY_STAND_IN_FRONT"})
 
         ######################################################################################################################################################
         #
