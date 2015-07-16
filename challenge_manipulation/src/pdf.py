@@ -81,16 +81,18 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
         if len(entity.id) == 32 and entity.type != "":
             image = save_entity_image_to_file(world_model_ed, entity.id)
             print "Created entry for %s (%s)"%(entity.id, entity.type)
+            html += "<table border='1'><tr>"
             if image:
-                html += "<table border='1'><tr>"
                 html += "<td><img src='%s' alt='%s' /></td>"%(image, entity.id)
-                html += "<td><center>"
-                html += "<h2>%s</h2>"%entity.id
-                html += "<p><b>Type: </b>%s</p>"%entity.type
-                html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>"%(entity.pose.position.x, entity.pose.position.y, entity.pose.position.z)
-                html += "</center></td>"
-                html += "</tr></table>"
-                html += "<br />"
+            else:
+                html += "<td>!! NO IMAGE FOR '%s' !!</td>"%entity.id
+            html += "<td><center>"
+            html += "<h2>%s</h2>"%entity.id
+            html += "<p><b>Type: </b>%s</p>"%entity.type
+            html += "<p><b>Position (x,y,z): </b>(%.2f,%.2f,%.2f)</p>"%(entity.pose.position.x, entity.pose.position.y, entity.pose.position.z)
+            html += "</center></td>"
+            html += "</tr></table>"
+            html += "<br />"
 
     html += "</body>"
     html += "</html>"
@@ -104,6 +106,7 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
         html2pdf(html, "%s"%(filename))
 
 if __name__ == '__main__':
+    rospy.init_node("testpdf")
     pisa.showLogging()
 
     ed = world_model_ed.ED("amigo","nbanana");
