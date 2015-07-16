@@ -26,39 +26,10 @@ The robot will say "What can I do for you?" and then you can say your sentence.
 !!! Also mention weird actions to say to the robot !!!
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-    -------------------
-    --- FAKE SPEECH ---
-    -------------------
-	TODO: TEST FAKE SPEECH
-
-	ALLOWED IN ROBOCUP:
-	Go to a browser, type : 192.168.2.91:8000 (amigo1)
-	Then in gui to "Amigo hear" and type sentence and enter.
-	The way amigo will hear it is shown.
-
-    NOT ALLOWED IN ROBOCUP:
-    In terminal type (no quotation marks are needed):
-    hear give me a drink
-    or
-    hear yes
-
-INSTRUCTIONS:
-Amigo will go to the initial position (meeting point) and ask for a task.
-
-Amigo should give feedback during getting the action. At the moment he will
-try to get the action directly two times.
-
-Please give feedback about speech interpreter. If you might think it should
-be different.
+Testing finding person of the challenge
+-----------------------------
+$ roscd challenge_gpsr/src/challenge_gpsr/
+$ # Give a navgoal to make amigo face the shelf in rviz-amigo
+$ amigo-console
+>>> from gpsr import *
+>>> test_find_person(amigo,'hallway') #There are other test_... as well. 

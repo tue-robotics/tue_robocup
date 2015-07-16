@@ -59,7 +59,7 @@ After the challenge
 
 Testing parts of the challenge
 -----------------------------
-$ roscd challenge_robonurse
+$ roscd challenge_robonurse/src/
 $ # Give a navgoal to make amigo face the shelf in rviz-amigo
 $ amigo-console
 >>> from challenge_robonurse import *
