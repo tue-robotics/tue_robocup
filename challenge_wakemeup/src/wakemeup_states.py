@@ -14,6 +14,7 @@ from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
+from robot_smach_states.util.geometry_helpers import *
 
 from robocup_knowledge import load_knowledge
 knowledge_objs = load_knowledge('common').objects
@@ -35,8 +36,6 @@ class bcolors:
 prefix = bcolors.OKBLUE + "[WAKE ME UP] " + bcolors.ENDC
 
 default_milk = "fresh milk"
-
-bed_top_coordinates = {'x':0.783, 'y':1.315, 'z':0.3}
 
 # load item names
 names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
@@ -304,12 +303,36 @@ class LookAtBedTop(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
+# class LookIfSomethingsThere(smach.State):
+#     def __init__(self, robot, designator, timeout=0):
+#         smach.State.__init__(self, outcomes=['awake', 'not_awake'])
+#         self.robot = robot
+#         self.designator = designator
+#         self.timeout = rospy.Duration(timeout)
+
+#     def execute(self, robot):
+#         self.start_time = rospy.Time.now()
+#         print (rospy.Time.now() - self.start_time).secs
+#         print rospy.Time.now() - self.start_time < self.timeout
+#         while rospy.Time.now() - self.start_time < self.timeout:
+#             if self.designator.resolve():
+#                 self.robot.lights.set_color(0,0,1)
+#                 return 'awake'
+#             else:
+#                 rospy.sleep(0.2)
+
+#         return 'not_awake'
+
+# ----------------------------------------------------------------------------------------------------
+
+
 class LookIfSomethingsThere(smach.State):
-    def __init__(self, robot, designator, timeout=0):
-        smach.State.__init__(self, outcomes=['awake', 'not_awake'])
+    def __init__(self, robot, designator, timeout=0, sleep=0.2):
+        smach.State.__init__(self, outcomes=['there', 'not_there'])
         self.robot = robot
         self.designator = designator
         self.timeout = rospy.Duration(timeout)
+        self.sleep = sleep
 
     def execute(self, robot):
         self.start_time = rospy.Time.now()
@@ -318,37 +341,106 @@ class LookIfSomethingsThere(smach.State):
         while rospy.Time.now() - self.start_time < self.timeout:
             if self.designator.resolve():
                 self.robot.lights.set_color(0,0,1)
-                return 'awake'
+                return 'there'
             else:
-                rospy.sleep(0.2)
+                rospy.sleep(self.sleep)
 
-        return 'not_awake'
+        return 'not_there'
+
+# ----------------------------------------------------------------------------------------------------
+
+class Evaluate(smach.State)
+    def __init__(self, options, designator):
+        smach.State.__init__(self, outcomes=['all_succeeded','partly_succeeded','all_failed'])
+        self.options = options
+        self.results = designator.resolve()
+        self.something_failed = False
+        self.something_succeeded = False
+
+    def execute(self, robot):
+        for option in options:
+            if self.results[option]:
+                something_succeeded = True
+            else:
+                something_failed = True
+
+        if something_succeeded && something_failed:
+            return 'partly_succeeded'
+        else if something_succeeded && !something_failed:
+            return 'all_succeeded'
+        else if !something_succeeded && something_failed:
+            return 'all_failed'
+        else
+            return 'all_failed'
+
+# ----------------------------------------------------------------------------------------------------
+
+class addPositive(smach.State)
+    def __init__(self, results_designator, item_designator):
+        smach.State.__init__(self, outcomes=['done', 'failed'])
+        self.results = results_designator.resolve()
+        self.item = item_designator.resolve()
+
+    def execute(self,robot):
+        try:
+            if not self.results[self.item]
+        except Exception, e:
+            print self.item + " is not one of the items in the dictionary."
+            raise e
+        self.results[self.item] = True
+        return
 
 
 # ----------------------------------------------------------------------------------------------------
 
-class CheckIfObstacleIsDoor(smach.State):
-    def __init__(self, robot, attempts=1):
-        smach.State.__init__(self, outcomes=['is_door', 'is_not_door', 'tried_too_many_times'])
+class SelectItem(smach.State):
+    def __init__(self, robot, options, asked_items, generic_item, specific_item):
+        smach.State.__init__(self, outcomes=['selected', 'all_done'])
         self.robot = robot
-        self.attempts_allowed = attempts
-        self.attempts_made = 0
+        self.options = options
+        self.asked_items = asked_items
+        self.count = len(self.options)
+        self.current = 0
+        self.generic_item = generic_item
+        self.specific_item = specific_item
 
     def execute(self, robot):
-            door = True
-            if door:
-                # Check if the entity blocking the way to the kitchen 
-                # is probably the door, if it is, ask for it to be 
-                # opened. If it is not, the goal must be truly
-                # unreachable
-                return 'is_door'
-            else:
-                self.attempts_made += 1
-                if self.attempts_made < self.attempts_allowed:
-                    return 'is_not_door'
-                else:
-                    return 'tried_too_many_times'
-            
+        self.generic_item.current = self.options[current]
 
-
+        category_items = [i for i in objects if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
+        self.specific_item.current = list(set(category_items).intersection(asked_items))[0]
         
+        self.current++
+        if self.current == self.count:
+            self.current = 0
+            return 'all_done'
+        return 'selected'
+
+# ----------------------------------------------------------------------------------------------------
+
+class FindItem(smach.State):
+    def __init__(self, robot, goal_item, result):
+        smach.State.__init__(self, outcomes=['item_found', 'not_found'])
+        self.robot = robot
+        self.goal = goal_item
+        self.result = result
+        self.goal_type = o in objects if 'name' in o and o['name']==goal_item
+        milk_objects = [o for o in objects if 'sub-category' in o and o['sub-category']=='milk']
+
+    def execute(self,robot):
+        entity_ids = self.robot.ed.segment_kinect(max_sensor_range = 2.0)
+        filtered_ids = []
+        for entity_id in entity_ids:
+            e = self.robot.ed.get_entity(entity_id)
+
+            # if e and onTopOff(e, shelf_entity) and not e.type:
+            #     filtered_ids.append(e.id)
+
+        entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
+
+
+
+
+
+
+
