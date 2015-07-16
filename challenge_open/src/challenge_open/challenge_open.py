@@ -14,7 +14,7 @@ from robot_smach_states.util.startup import startup
 from robot_skills.util import msg_constructors as msgs
 from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
-from ed_sensor_integration.srv import GetPOIs
+from ed_sensor_integration.srv import GetPOIs, MakeSnapshot
 
 from cb_planner_msgs_srvs.msg import *
 
@@ -300,6 +300,40 @@ class PoiDesignator(EdEntityDesignator):
 
         return out
 
+class LookBaseLinkPoint(smach.State):
+    def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
+        """ 
+        Sends a goal to the head in base link frame of the robot_name
+        x, y, z: coordinates
+        timeout: timeout of the call to the head ref action (hence is a maximum)
+        waittime: additional waiting time 
+        endtime: endtime which is passed to head ref 
+        """
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.x = x
+        self.y = y
+        self.z = z
+        self.timeout = timeout
+        self.waittime = waittime
+        self.endtime = endtime
+
+    def execute(self, userdata):
+        self.robot.head.look_at_point(msgs.PointStamped(x=self.x, y=self.y, z=self.z, frame_id=self.robot.robot_name+"/base_link"))
+        #,            timeout=self.timeout, end_time=self.endtime)
+        rospy.sleep(rospy.Duration(self.waittime))
+        return 'succeeded'
+
+class TakeSnapShot(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.snapshot_srv = rospy.ServiceProxy('/%s/ed/make_snapshot'%robot.robot_name, MakeSnapshot) 
+
+    def execute(self, userdata):
+        rospy.loginfo("Taking snapshot")
+        self.snapshot_srv()
+        return 'succeeded'
 
 ############################## explore state machine #####################
 class ExploreScenario(smach.StateMachine):
@@ -317,17 +351,31 @@ class ExploreScenario(smach.StateMachine):
             exploration_target_designator = ExplorationDesignator(robot)
             poi_designator = PoiDesignator(robot, radius)
 
+            ''' Go to point of interest '''
             smach.StateMachine.add('GOTO_POINT_OF_INTEREST',
                                     states.NavigateToObserve(robot=robot, entity_designator=poi_designator, radius = radius),
-                                    transitions={   'arrived'           : 'GOTO_POINT_OF_INTEREST',
+                                    transitions={   'arrived'           : 'LOOK_AT_OBJECT',
                                                     'unreachable'       : 'GOTO_POINT_OF_INTEREST',
                                                     'goal_not_defined'  : 'GOTO_HARDCODED_WAYPOINT'})
 
+            ''' Backup: if no point of interest: go to hardcoded waypoint '''
             smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
                                     states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
                                     transitions={   'arrived'           : 'GOTO_HARDCODED_WAYPOINT',
                                                     'unreachable'       : 'GOTO_HARDCODED_WAYPOINT',
                                                     'goal_not_defined'  : 'done'})
+
+            ''' Look at thing '''
+            smach.StateMachine.add("LOOK_AT_OBJECT",
+                                    LookBaseLinkPoint(robot, x=radius, y=0, z=0, timeout=5.0, waittime=3.0),
+                                    transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
+                                                    'failed'                    :'TAKE_SNAPSHOT'})
+
+            ''' Take snapshot '''
+            smach.StateMachine.add("TAKE_SNAPSHOT",
+                                    TakeSnapShot(robot),
+                                    transitions={   'succeeded'                 :'GOTO_POINT_OF_INTEREST',
+                                                    'failed'                    :'GOTO_POINT_OF_INTEREST'})
 
         # with self:
         #     smach.StateMachine.add('EXPLORE_TABLE1',
