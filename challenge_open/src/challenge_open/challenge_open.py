@@ -393,7 +393,7 @@ class ExploreScenario(smach.StateMachine):
 
     def __init__(self, robot):
 
-        smach.StateMachine.__init__(self, outcomes=['done', 'call_received'])
+        smach.StateMachine.__init__(self, outcomes=['done', 'call_received', 'shutdown_received'])
 
         with self:
             # id_has_explore = lambda entity: "explore" in entity.id
@@ -406,8 +406,9 @@ class ExploreScenario(smach.StateMachine):
 
             ''' Determine what to do '''
             smach.StateMachine.add('CHECK_TRIGGER',
-                                    CheckCommand(robot=robot, triggers=['call'], topic="robot_call", rate = 100, timeout=0.1),
+                                    CheckCommand(robot=robot, triggers=['call', 'shutdown'], topic="robot_call", rate = 100, timeout=0.1),
                                     transitions={   'call'              : 'call_received',
+                                                    'shutdown'          : 'shutdown_received',
                                                     'timeout'           : 'GOTO_POINT_OF_INTEREST',
                                                     'preempted'         : 'done'})
 
@@ -450,6 +451,20 @@ class ExploreScenario(smach.StateMachine):
         #                             ExploreTable(robot, TABLE3),
         #                             transitions={   'done'          :   'done'})
 
+############################## explore state machine #####################
+class GuiCallCallback(smach.StateMachine):
+
+    def __init__(self, robot):
+
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        with self:
+            smach.StateMachine.add('GOTO_OPERATOR',
+                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    transitions={   'arrived'           : 'succeeded',
+                                                    'unreachable'       : 'failed',
+                                                    'goal_not_defined'  : 'failed'})
+
 ############################## state machine #############################
 def setup_statemachine(robot):
 
@@ -474,14 +489,38 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('EXPLORE',
                                 ExploreScenario(robot),
-                                transitions={   'done'              :   'GOTO_OPERATOR',
-                                                'call_received'     :   'Done'})
+                                transitions={   'done'              :   'HANDLE_GUI_CALL',
+                                                'call_received'     :   'SAY_RECEIVED_CALL',
+                                                'shutdown_received' :   'SAY_GOTO_EXIT'})
 
-        smach.StateMachine.add('GOTO_OPERATOR',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
-                                transitions={   'arrived'           :   'Done',
-                                                'unreachable'       :   'Done',
-                                                'goal_not_defined'  :   'Done'})
+        smach.StateMachine.add('SAY_RECEIVED_CALL',
+                                states.Say(robot, ["My operator called me, I better go and see what he wants"], block=False),
+                                transitions={   'spoken'            :   'HANDLE_GUI_CALL'})
+
+        smach.StateMachine.add('HANDLE_GUI_CALL',
+                                GuiCallCallback(robot),
+                                transitions={   'succeeded'         :   'EXPLORE',
+                                                'failed'            :   'SAY_FAILURE'})
+
+        smach.StateMachine.add('SAY_GOTO_EXIT',
+                                states.Say(robot, ["My work here is done, I'm leaving now"], block=False),
+                                transitions={   'spoken'            :   'GOTO_EXIT'})
+
+        smach.StateMachine.add('GOTO_EXIT',
+                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
+                                transitions={   'arrived'           : 'Done',
+                                                'unreachable'       : 'Done',
+                                                'goal_not_defined'  : 'Done'})
+
+        smach.StateMachine.add('SAY_FAILURE',
+                                states.Say(robot, ["Something went wrong, I'm giving up"], block=False),
+                                transitions={   'spoken'            :   'Done'})
+
+        # smach.StateMachine.add('GOTO_OPERATOR',
+        #                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
+        #                         transitions={   'arrived'           :   'Done',
+        #                                         'unreachable'       :   'Done',
+        #                                         'goal_not_defined'  :   'Done'})
 
         # smach.StateMachine.add('CITE_UNKNOWN_ITEMS',
         #                         CiteItems(robot),
