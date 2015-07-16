@@ -9,7 +9,7 @@ import time
 import os
 
 from robot_skills import world_model_ed
-import Image
+from PIL import Image
 import cStringIO as StringIO
 import numpy as np
 
@@ -39,6 +39,10 @@ def save_entity_image_to_file(world_model_ed, entityID):
     # ed request
     info = world_model_ed.get_entity_info(entityID)
 
+    byte_array = bytearray(info.measurement_image)
+    stream = StringIO.StringIO(byte_array)
+    image = Image.open(stream)
+
     try:
         byte_array = bytearray(info.measurement_image)
         stream = StringIO.StringIO(byte_array)
@@ -54,7 +58,7 @@ def save_entity_image_to_file(world_model_ed, entityID):
 
         cropped_image = Image.fromarray(image_data_new)
     except:
-        rospy.logerr("Failed to load image ... ask Rein")
+        rospy.logerr("Failed to load image ... Try installing the latest version of PILLOW: sudo pip install -I pillow")
         return None
 
     file_name = "images/%s.jpg"%entityID
