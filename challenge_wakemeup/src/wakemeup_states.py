@@ -425,6 +425,7 @@ class FindItem(smach.State):
         self.goal = goal_item
         self.result = result
         self.goal_type = o in objects if 'name' in o and o['name']==goal_item
+        
         milk_objects = [o for o in objects if 'sub-category' in o and o['sub-category']=='milk']
 
     def execute(self,robot):

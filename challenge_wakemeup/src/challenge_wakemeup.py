@@ -348,7 +348,7 @@ class WakeMeUp(smach.StateMachine):
                 smach.StateMachine.add( 'SAY_ITEM_NOT_FOUND',
                                         states.Say(robot, "Oops, I can't find your "+selected_spec_item_des.resolve()),
                                         transitions={   'spoken'    :'SELECT_ITEM'})
-                
+
 
                 smach.StateMachine.add( 'PICK_UP_ITEM',
                                         states.Grab(robot, best_guess_item, armDesignator)
