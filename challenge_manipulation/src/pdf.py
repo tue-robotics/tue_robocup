@@ -54,6 +54,7 @@ def save_entity_image_to_file(world_model_ed, entityID):
 
         cropped_image = Image.fromarray(image_data_new)
     except:
+        rospy.logerr("Failed to load image ... ask Rein")
         return None
 
     file_name = "images/%s.jpg"%entityID
