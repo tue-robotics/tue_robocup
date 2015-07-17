@@ -22,6 +22,8 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_open')
 EXPLORATION_TARGETS = challenge_knowledge.exploration_targets
 
+TESTMODE = False
+
 class ExplorationDesignator(EdEntityDesignator):
     """ Designator to determine the waypoint where the robot should go in its exploration phase 
         if no interesting point of interest is found
@@ -73,10 +75,7 @@ class PoiDesignator(EdEntityDesignator):
 
         # Remove visited items
         filtered_pois = [poi for poi in self.pois if not poi['poiid'] in self.visited_ids]
-        # filtered_pois = []
-        # for poi in self.pois:
-        #     if not poi['poiid'] in self.visited_ids:
-        #         filtered_pois.append(poi)
+
         if len(filtered_pois) == 0:
             rospy.logwarn("No pois found")
             return None
@@ -258,14 +257,8 @@ class ConversationWithOperator(smach.State):
 
         # Get location options
         entities = self.robot.ed.get_entities(parse=False)
-        # furniture_list = []
-        # for e in entity:
-        #     if 'furniture' in e.flags:
-        #         furniture = e.type.split('/')[-1]
-        #         furniture_list.append(furniture)
 
-        # # Alternative
-        ''' Maps the entities to strings containing the 'stripped type' '''
+        # Maps the entities to strings containing the 'stripped type' 
         furniture_list = {e:e.type.split('/')[-1] for e in entities if 'furniture' in e.flags}
 
         # Listen to result
@@ -292,29 +285,8 @@ class ConversationWithOperator(smach.State):
             self.object_designator.current = obj
             rospy.logerr('ConversationWithOperator ALWAYS returns Failed for debugging purposes!!!')
             return 'failed'
-        # Return
-        # 
-        # try:
-        #     if res.result:
-        #         object_string = res.choices['object']
-        #         self.robot.speech.speak("I am very sorry, but I do not have an arm to get a {0} for you. But my friend Amigo could get you one! I will call upon him!".format(object_string))
-        #         self.robot.speech.speak("Amigo, please bring my boss a {0}".format(object_string))
-                
-        #         ''' Publish trigger for AMIGO to start its task '''
-        #         msg = std_msgs.msg.String(object_string)
-        #         counter = 0
-        #         while counter < 10:
-        #             self.trigger_pub.publish(msg)
-        #             counter += 1
-        #             rospy.sleep(rospy.Duration(0.1))
 
-        #         return "succeeded"
-        #     else:
-        #         self.robot.speech.speak("Sorry, I did not hear you properly")
-        #         return "failed"
-        # except KeyError:
-        #     print "KEYERROR FINAL, should not happen!"
-        #     return "failed"
+
 class StorePoint(smach.State):
     def __init__(self, designator, point):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
@@ -403,6 +375,12 @@ class FindObjectOnFurniture(smach.State):
             return 'failed'
         entity_types = self.robot.ed.classify(ids=id_list, types=[object_type])
 
+        ########## Testmode ######
+        if TESTMODE:
+            if len(entity_types) > 0:
+                entity_types[0] = object_type
+        ###### End testmode ######3
+
         ''' Zip the lists and sort '''
         ziplist = zip(id_list, entity_types)
         filterend_list = [z for z in ziplist if z[1] == object_type]
@@ -435,9 +413,9 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
-        has_type = lambda entity: entity.type != ""
-        min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+        # has_type = lambda entity: entity.type != ""
+        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
 
         def on_top(entity):
             container_entity = location_designator.resolve()
@@ -449,12 +427,9 @@ class ManipRecogSingleItem(smach.StateMachine):
             p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
             return p.x*p.x
 
-        # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
         # current_item = LockingDesignator(EdEntityDesignator(robot,
-        #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
-        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
-        current_item = LockingDesignator(EdEntityDesignator(robot,
-            criteriafuncs=[size, has_type, on_top, min_entity_height], weight_function=weight_function, debug=False))
+        #     criteriafuncs=[size, has_type, on_top, min_entity_height], weight_function=weight_function, debug=False))
+        current_item = EdEntityDesignator(robot)
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
@@ -466,21 +441,11 @@ class ManipRecogSingleItem(smach.StateMachine):
         # print "{0} = arm_with_item_designator".format(arm_with_item_designator)
 
         with self:
-            # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
-            #                         #states.NavigateToObserve(robot, pick_shelf),
-            #                         states.NavigateToSymbolic(robot, {pick_shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, pick_shelf),
-            #                         transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
-            #                                         'unreachable'       :'LOOKAT_PICK_SHELF',
-            #                                         'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
             ''' Look at pick shelf '''
             # smach.StateMachine.add("LOOKAT_PICK_SHELF",
             #                          states.LookAtEntity(robot, location_designator, keep_following=True),
             #                          transitions={  'succeeded'         :'SAY_LOOKAT_PICK_SHELF'})
-
-            # smach.StateMachine.add("SAY_LOOKAT_PICK_SHELF",
-            #                        states.Say(robot, ["I'm looking at the {0} to see what items I can find".format(location_designator.id.split('/')[-1])]),
-            #                        transitions={   'spoken'            :'LOCK_ITEM'})
 
             smach.StateMachine.add("SAY_LOOKAT_PICK_SHELF",
                                    states.Say(robot, ["Let's see what I can see here"]),
@@ -492,23 +457,6 @@ class ManipRecogSingleItem(smach.StateMachine):
                                                     'not_found'     : 'RESET_HEAD_FAILED',
                                                     'failed'        : 'RESET_HEAD_FAILED'})
 
-            # @smach.cb_interface(outcomes=['locked'])
-            # def lock(userdata):
-            #     current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
-            #     if current_item.resolve():
-            #         rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
-
-            #     place_position.lock() #This determines that place_position will lock/cache its result after its resolved the first time.
-            #     return 'locked'
-            # ToDo: replace: snapshot, segment, recognize, see if it's there
-            # smach.StateMachine.add('LOCK_ITEM',
-            #                        smach.CBState(lock),
-            #                        transitions={'locked':'ANNOUNCE_ITEM'})
-
-            # smach.StateMachine.add( "ANNOUNCE_ITEM",
-            #                         states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", current_item), block=False),
-            #                         transitions={   'spoken'            :'GRAB_ITEM'})
-            # ToDo: new designator???
             smach.StateMachine.add( "GRAB_ITEM",
                                     states.Grab(robot, current_item, empty_arm_designator),
                                     transitions={   'done'              :'SAY_GRAB_SUCCEEDED',
@@ -521,42 +469,6 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, ["I couldn't grab this thing"], mood="sad", block=False),
                                     transitions={   'spoken'            :'RESET_HEAD_FAILED'}) 
-
-            # @smach.cb_interface(outcomes=['unlocked'])
-            # def unlock_and_ignore(userdata):
-            #     global ignore_ids
-            #     # import ipdb; ipdb.set_trace()
-            #     if current_item.resolve():
-            #         ignore_ids += [current_item.resolve().id]
-            #         rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
-            #     current_item.unlock() #This determines that current_item can now resolve to a new value on the next call
-            #     place_position.unlock() #This determines that place_position can now resolve to a new position on the next call
-            #     return 'unlocked'
-            # smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
-            #                        smach.CBState(unlock_and_ignore),
-            #                        transitions={'unlocked'              :'failed'})
-
-            # @smach.cb_interface(outcomes=['stored'])
-            # def store_as_manipulated(userdata):
-            #     manipulated_items.current += [current_item.current]
-            #     return 'stored'
-
-            # smach.StateMachine.add('STORE_ITEM',
-            #                        smach.CBState(store_as_manipulated),
-            #                        transitions={'stored':'ANNOUNCE_CLASS'})
-
-            # smach.StateMachine.add( "ANNOUNCE_CLASS",
-            #                         states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=current_item), block=False),
-            #                         transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
-
-            # smach.StateMachine.add("LOOKAT_PLACE_SHELF",
-            #                          states.LookAtEntity(robot, pick_shelf, keep_following=True),
-            #                          transitions={  'succeeded'         :'PLACE_ITEM'})
-
-            # smach.StateMachine.add( "PLACE_ITEM",
-            #                         Place(robot, current_item, place_position, arm_with_item_designator),
-            #                         transitions={   'done'              :'RESET_HEAD_PLACE',
-            #                                         'failed'            :'RESET_HEAD_HUMAN'})
 
             # ToDo: is this necessary?
             smach.StateMachine.add( "RESET_HEAD_SUCCEEDED",
@@ -594,9 +506,6 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'succeeded'         : 'succeeded',
                                                     'failed'            : 'succeeded'})
 
-            # smach.StateMachine.add( "UNLOCK_AFTER_HANDOVER",
-            #                         smach.CBState(unlock_and_ignore),
-            #                         transitions={'unlocked'              :'failed'})
 
 ############################## gui callback state machine #####################
 class GuiCallCallback(smach.StateMachine):
@@ -709,6 +618,12 @@ def setup_statemachine(robot):
 
 ############################## initializing program ######################
 if __name__ == '__main__':
+
+    if len(sys.argv) > 1:
+        global TESTMODE
+        TESTMODE = sys.argv[1]
+        print TESTMODE 
+
     rospy.init_node('open_challenge_exec')
 
     ''' Now, we will use AMIGO, but in the future we might change that '''
