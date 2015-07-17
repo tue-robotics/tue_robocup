@@ -117,27 +117,26 @@ def points_distance(p1, p2):
 # ----------------------------------------------------------------------------------------------------
 
 
-def scanForHuman(robot, entity_list=[]):
+def scanForHuman(robot):
     printOk("scanForHuman")
 
     entity_list = []
 
     ''' Enable kinect segmentation plugin (only one image frame) '''
+    entities_found = robot.ed.segment_kinect(max_sensor_range=3)
 
-    entity_ids = robot.ed.segment_kinect(max_sensor_range=3)
-
-    printOk("Got {0} IDs".format(len(entity_ids)))
+    printOk("Found {0} entities".format(len(entities_found)))
 
     ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
-    id_list = [] # List with entities that are flagged with 'perception'                
-    for entity_id in entity_ids:
+    id_list = []                
+    for entity_id in entities_found:
+        ''' get the entity from the ID '''
         entity = robot.ed.get_entity(entity_id)
 
         if entity:
-            # printOk("Appending ID {0}".format(entity.id))
             id_list.append(entity.id)
 
-    ''' Try to classify the objects on the shelf '''
+    ''' Try to classify the entities '''
     entity_types = robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
 
     ''' Check all entities that were flagged to see if they have received a 'type' it_label
@@ -151,13 +150,13 @@ def scanForHuman(robot, entity_list=[]):
                 entity = robot.ed.get_entity(e_id)
                 # entity.data
 
-                printOk("Entity with type " + e_type + " added to the list (" + e_id + ")")
+                printOk("Entity with type " + e_type + " added to the list (id " + e_id + ")")
                 robot.ed.update_entity(id=e_id, flags=[{"add": "locked"}])
 
                 entity_list = entity_list + [entity]
 
             else:
-                printOk("Entity with type " + e_type + " ignored")
+                printOk("Entity with type '" + e_type + "' ignored")
 
 
     # import ipdb; ipdb.set_trace()
@@ -184,7 +183,7 @@ class WaitForPerson(smach.State):
         while counter < self.attempts:
             print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
 
-            desgnResult = scanForHuman(self.robot, desgnResult)
+            desgnResult = scanForHuman(self.robot)
             if desgnResult:
                 printOk("Found a human!")
                 return 'succeded'
@@ -215,56 +214,37 @@ class LookAtPersonInFront(smach.State):
         desgnResult = None
 
         # create designators
-        humanDesignator = EdEntityDesignator(self.robot, type="human")
-        dataDesignator = AttrDesignator(humanDesignator, 'data')
-        centerDesignator = AttrDesignator(humanDesignator, 'center_point')
+        # humanDesignator = EdEntityDesignator(self.robot, type="human")
+        # dataDesignator = AttrDesignator(humanDesignator, 'data')
+        # centerDesignator = AttrDesignator(humanDesignator, 'center_point')
 
-        # set robots pose
-        # self.robot.spindle.high()
         self.robot.head.cancel_goal()
 
         # look front, 2 meters high
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 1.5,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
         rospy.sleep(1)  # give time for the percetion algorithms to add the entity
 
-        # try to resolve the designator
-        # desgnResult = humanDesignator.resolve()
-        # if not desgnResult:
-        #     printOk("Could not find a human while looking up")
-        #     pass
-
-        desgnResult = scanForHuman(self.robot, desgnResult)
+        desgnResult = scanForHuman(self.robot)
         if not desgnResult:
             printOk("Could not find a human while looking up")
 
-
         # if no person was seen at 2 meters high, look down, because the person might be sitting
-        # if desgnResult == None and self.lookDown == True:
         if not desgnResult and self.lookDown == True:
             # look front, 2 meters high
             self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 0,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
-            rospy.sleep(1)    # give time for the percetion algorithms to add the entity
+            # rospy.sleep(1)    # give time for the head to get in place
 
             # try to resolve the designator
-            # desgnResult = humanDesignator.resolve()
-            desgnResult = scanForHuman(self.robot, desgnResult)
+            desgnResult = scanForHuman(self.robot)
             if not desgnResult:
                 printWarning("Could not find a human while looking down")
                 pass
 
         # if there is a person in front, try to look at the face
-        # if not desgnResult == None:
         if desgnResult:
             printOk("Designator resolved a Human!")
 
-            # resolve the data designator
-            # entityData = dataDesignator.resolve()
-            # if not entityData:
-            #     printOk("Could not resolve dataDesignator")
-            #     pass
-
             # extract information from data
-
             faces_front = None
             try:
                 # import ipdb; ipdb.set_trace()
@@ -326,10 +306,10 @@ class FindCrowd(smach.State):
     def execute(self, userdata):
         printOk("FindCrowd")
 
-        foundFace = False
-        centerPointRes = None
-        humanDesignatorRes = None
-        entityDataRes = None
+        # foundFace = False
+        # centerPointRes = None
+        # humanDesignatorRes = None
+        # entityDataRes = None
         faces_locations = []
 
         # points where the head will look at
@@ -337,59 +317,52 @@ class FindCrowd(smach.State):
                                 msgs.PointStamped(3,0,2, self.robot.robot_name + "/base_link"),
                                 msgs.PointStamped(3,3,2, self.robot.robot_name + "/base_link")]
         # create designators
-        humanDesignator = EdEntityCollectionDesignator( self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]], 
-                                                        center_point=msgs.PointStamped(**challenge_knowledge.room_center), radius=3)
+        # humanDesignator = EdEntityCollectionDesignator( self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]], 
+        #                                                 center_point=msgs.PointStamped(**challenge_knowledge.room_center), radius=3)
 
         # clear head goals
         self.robot.head.cancel_goal()
 
+        # find human entities while turning the head
         for head_point in head_points_stamped:
             self.robot.head.look_at_point(point_stamped=head_point, end_time=0, timeout=8)
             
-            entity_list = []
-            scanForHuman(self.robot, entity_list)
+            ''' sleep to prevent head movement while scanning for humans'''
+            rospy.sleep(1)
 
-            if entity_list:
+            entity_list = scanForHuman(self.robot)
+            if not entity_list:
+                printWarning("Did not find any humans")
+                pass
+            else:
                 # import ipdb; ipdb.set_trace()
                 faces_locations = faces_locations + entity_list
-                printOk("Found {0} faces. Adding to list, now with {1} (before filtering)".format(len(humanDesignatorRes), len(faces_locations)))
-             
-            else:
-                printWarning("Could not resolve humanDesignator")
-
-            # rospy.sleep(2)
-
-            # resolve designator
-            # humanDesignatorRes = humanDesignator.resolve()
-            # if humanDesignatorRes:
-            #     # import ipdb; ipdb.set_trace()
-            #     faces_locations = faces_locations + humanDesignatorRes
-            #     printOk("Found {0} faces. Adding to list, now with {1}".format(len(humanDesignatorRes), len(faces_locations)))
-            # else:
-            #     printWarning("Could not resolve humanDesignator")
-
+                printOk("Found {0} humans. Adding to list, now with {1} (before filtering)".format(len(entity_list), len(faces_locations)))
 
 
         # clear head gloas
         self.robot.head.cancel_goal()
-
 
         # if humanDesignatorRes is not empty
         if faces_locations:
             printOk("Iterating through the {0} faces found".format(len(faces_locations)))
 
             for humanEntity in faces_locations:
-                faceList = None
+                faceList = []
                 try:
+                    # import ipdb; ipdb.set_trace()
+                    # faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
                 except KeyError, ke:
-                    printOk("Could not resolve humanEntity.data[...]:" + str(ke))
+                    printError("Could not resolve humanEntity.data[...]:" + str(ke))
                     pass
 
-                if not faceList == None:
+                ''' iterate through all the faces in this entity '''
+                if faceList:
                     for face in faceList:
 
+                        ''' check if there is already a face in this location in the list, to avoid duplicates '''
                         alreadyExists = False
                         for loc in self.locations.current:
                             p1 = (face["map_x"], face["map_y"], face["map_z"])
@@ -412,9 +385,9 @@ class FindCrowd(smach.State):
                     printWarning("Designator resolved but no faces where found")
 
 
-            printOk("Face location list has " + str(len(self.locations.current)) + " entries")
+            printOk("Found " + str(len(self.locations.current)) + " faces")
 
-            # if the number of found faces is not enough, continue searching
+            ''' if the number of found faces is not enough, continue searching '''
             if len(self.locations.current) >= challenge_knowledge.min_faces_found:
                 return 'succeded'
             else:
