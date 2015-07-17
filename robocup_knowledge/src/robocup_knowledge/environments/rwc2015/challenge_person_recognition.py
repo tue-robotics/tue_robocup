@@ -1,6 +1,8 @@
 # PERSON RECOGNITION RGO2015
 
-names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah","Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+#names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah","Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+# china names:
+names = ["Alex","Angel","Eve","Jamie","Jane","Liza","Melissa","Tracy","Robin","Sophia","Edward","Homer","John","Kevin","Kurt"]
 
 locations = [ 'kitchen', 'livingroom', 'hall', 'bedroom', 'office']
 
