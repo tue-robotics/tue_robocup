@@ -26,7 +26,7 @@ choice_answer_mapping = {
 "Give the name of the best James Bond parody":"Austin Powers",
 "What is the name of the bald commander of the Enterprise in Star Trek":"Captain Picard",
 "Who was the leading actress in Sister act 1 en 2 ":"Whoopi Goldberg",
-"What is the country top level domain of Belgium":"The dot be domain",
+"What is the country top level domain of Belgium":"The dot b e domain",
 "Which unit is an indication for the sound quality of MP3":"Kbps",
 "In computing what is Ram short for":"Random Access Memory",
 "Who was the first man to fly around the earth with a spaceship":"Yuri Gagarin",
@@ -48,7 +48,7 @@ choice_answer_mapping = {
 "What is the most fractured human bone":"Clavicle",
 "Which South American country is named after Venice":"Venezuela",
 "How many stars feature on the flag of New Zealand":"Four stars",
-"What colour to do you get when you mix red and white":"Pink",
+"What colour do you get when you mix red and white":"Pink",
 }
 
 spec = '<question>'
