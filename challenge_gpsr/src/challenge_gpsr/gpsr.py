@@ -471,9 +471,9 @@ class FindObjectInRoom(smach.StateMachine):
 
             #Class ChooseLocation in final amigo file. 
 
-            smach.StateMachine.add("SAY_FIND_OBJECT_IN_ROOM",
-                               states.Say(robot,"Testing FindObjectInRoom", block=True),
-                               transitions={'spoken':'CHECK_FOR_LOCATIONS'})
+            # smach.StateMachine.add("SAY_FIND_OBJECT_IN_ROOM",
+            #                    states.Say(robot,"Let's   FindObjectInRoom", block=True),
+            #                    transitions={'spoken':'CHECK_FOR_LOCATIONS'})
 
             @smach.cb_interface(outcomes=['location_found','no_location'])
             def get_location_room(userdata):
@@ -532,29 +532,74 @@ class FindObjectInRoom(smach.StateMachine):
 
                 try:
                     object_type = object_to_find.resolve()
-                    has_type = lambda entity: entity.type == object_type
-                    #print "aaaaa, test has_type = ", object_type
-                    location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
-                    #print "aaaaa, test location = ", location
-                    grab_item_designator = EdEntityDesignator(robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-                                                                            criteriafuncs=[has_type], debug=False)
+                    # has_type = lambda entity: entity.type == object_type
 
-                    #print "test1 \n"
-                    #print grab_item_designator.resolve()
-                    #print "\n test2"
-                    if grab_item_designator.resolve():
+
+                    #     #print "aaaaa, test has_type = ", object_type
+                    #     location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
+                    #     #print "aaaaa, test location = ", location
+                    #     grab_item_designator = EdEntityDesignator(robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
+                    #                                                             criteriafuncs=[has_type], debug=False)
+
+                    #     #print "test1 \n"
+                    #     #print grab_item_designator.resolve()
+                    #     #print "\n test2"
+                    #     if grab_item_designator.resolve():
+                    #         return 'object_found'
+                    #     else:
+                    #         return 'object_not_found'
+
+                    ''' Enable kinect segmentation plugin (only one image frame) '''
+                    entity_ids = robot.ed.segment_kinect(max_sensor_range=2)
+
+                    print "entity_ids = ", entity_ids
+
+                    ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
+                    id_list = [] # List with entities that are flagged with 'perception'                
+                    for entity_id in entity_ids:
+                        e = robot.ed.get_entity(entity_id)
+
+                        if e: #and onTopOff(e, location_ent):
+                            id_list.append(e.id)
+
+                    print "id_list = ", id_list
+
+                    ''' Try to classify the objects on the shelf '''
+                    print "data.objects_known =", data.objects_known
+
+                    entity_types = robot.ed.classify(ids=id_list, types=data.objects_known)
+
+                    ''' Check all entities that were flagged to see if they have received a 'type' it_label
+                    if so: recite them and lock them '''
+
+                    correct_object_type_ids_list = []
+                    not_correct_object_type_ids_list = []
+                    for i in range(0, len(id_list)):
+                        e_id = id_list[i]
+                        print "e_id = ", e_id
+                        e_type = entity_types[i]
+                        print "e_type = ", e_type
+                        if e_type == object_type:
+                            correct_object_type_ids_list.append(e_id)
+                        elif e_type:
+                            not_correct_object_type_ids_list.append(e_id)
+
+                    print "correct_object_type_ids_list = ", correct_object_type_ids_list
+                    
+                    if len(correct_object_type_ids_list) > 0:
                         return 'object_found'
                     else:
                         return 'object_not_found'
 
                 except KeyError:
-                    print "[find_loc] No loc found anymore, can happen"
+                    print "[find_loc] Keyerror at checking entities in snapshot. Should not happen!"
                     return "object_not_found"
+
 
             smach.StateMachine.add( "CHECK_FOR_OBJECT",
                                     smach.CBState(check_for_object),
                                     transitions={'object_found':'SAY_FOUND_OBJECT',
-                                                 'object_not_found':'Object_not_found'})
+                                                 'object_not_found':'CHECK_IF_LOCATIONS_LEFT'})
 
             @smach.cb_interface(outcomes=['ok'])
             def dynamic_say(userdata):
@@ -571,6 +616,25 @@ class FindObjectInRoom(smach.StateMachine):
                                smach.CBState(dynamic_say),
                                transitions={'ok':'Object_found'})
 
+            ## HACK: IF IT IS THE LAST LOCATION IN THE ROOM AND NO OBJECT HAS BEEN FOUND, JUST SAY THAT THE OBJECT IS THERE.
+            @smach.cb_interface(outcomes=['location_found','no_location'])
+            def check_locations_in_room_left(userdata):
+                answer = room.resolve()
+
+                try:
+                    if len(data.rooms_detailed[answer]) > LOCATION_NR_IN_ROOM:
+                        return 'location_found'
+                    else:
+                        return 'no_location'
+
+                except KeyError:
+                    print "[find_loc] No loc found anymore, can happen"
+                    return "no_location"
+
+            smach.StateMachine.add( "CHECK_IF_LOCATIONS_LEFT",
+                                    smach.CBState(check_locations_in_room_left),
+                                    transitions={'location_found':'Object_not_found',
+                                                 'no_location':'SAY_FOUND_OBJECT'})
 
 
 class FindAndGoToPerson(smach.StateMachine):
@@ -708,6 +772,7 @@ class InspectLocationAndGrab(smach.State):
         print "object_type = ", object_type
         location = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',_,A)"))
         print "location = ", location
+        location_ent = self.robot.ed.get_entity(id=location, parse=False)
 
         ''' Enable kinect segmentation plugin (only one image frame) '''
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
@@ -719,45 +784,106 @@ class InspectLocationAndGrab(smach.State):
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if e: #and onTopOff(e, location) 
+            if e: #and onTopOff(e, location_ent):
                 id_list.append(e.id)
 
         print "id_list = ", id_list
 
         ''' Try to classify the objects on the shelf '''
-        entity_types = self.robot.ed.classify(ids=id_list, types=[object_type])
+        print "data.objects_known =", data.objects_known
+
+        entity_types = self.robot.ed.classify(ids=id_list, types=data.objects_known)
 
         ''' Check all entities that were flagged to see if they have received a 'type' it_label
         if so: recite them and lock them '''
+
+        correct_object_type_ids_list = []
+        not_correct_object_type_ids_list = []
         for i in range(0, len(id_list)):
             e_id = id_list[i]
             print "e_id = ", e_id
             e_type = entity_types[i]
             print "e_type = ", e_type
-            
             if e_type == object_type:
-                self.robot.speech.speak("I have seen a {0}".format(object_type), block=True)
-                print "ed_id = ", e_id
+                correct_object_type_ids_list.append(e_id)
+            elif e_type:
+                not_correct_object_type_ids_list.append(e_id)
 
-                # In the gpsr I assume that there will only be one coke, no multiple cokes, therefore, directly grab the coke that is seen.
-                # In other cases, one could check which object is the closest and grab that item.
+        print "correct_object_type_ids_list = ", correct_object_type_ids_list
+        print "not_correct_object_type_ids_list = ", not_correct_object_type_ids_list
 
-                left_arm = ArmDesignator(self.robot.arms, self.robot.leftArm)
+        # TODO: Get closest entity to amigo, this item should be easier to grab.
+        
+        # # Taken from world_model_ed.py 
+        # # Sort by distance
+        # try:
+        #     entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+        # except:
+        #     print "Failed to sort entities"
+        #     return None
 
-                grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=e_id), left_arm) #UnoccupiedArmDesignator(self.robot.arms, self.robot.leftArm))
+        # return entities[0]
+        
+
+        # Grab correct item if correct item is seen, otherwise take one from other type. In GPSR there is a big chance that the desired object type is on the location.
+        left_arm = ArmDesignator(self.robot.arms, self.robot.leftArm)
+
+        if len(correct_object_type_ids_list)>0:
+            for i in range(0, len(correct_object_type_ids_list)):
+                grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=correct_object_type_ids_list[i]), left_arm)
                 result = grabstate.execute()
-
+                rospy.loginfo("Amigo attempts to grasp an object that is classified as the desired object type")
                 if result == 'done':
                     global ITEM 
-                    ITEM = e_id
-
-                    #self.robot.reasoner.query("retractall(grabbed_item('item_id',A))")
-                    #self.robot.reasoner.assertz("grabbed_item('item_id','"+str(e_id)+"'')")
+                    ITEM = correct_object_type_ids_list[i]
                     return 'succeeded'
-                else:
-                    return 'failed'
+
+        if len(not_correct_object_type_ids_list)>0:
+
+            for i in range(0, len(not_correct_object_type_ids_list)):
+                grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=not_correct_object_type_ids_list[i]), left_arm)
+                result = grabstate.execute()
+                rospy.loginfo("Amigo attempts to grasp an object that is not classified as the desired object type")
+                if result == 'done':
+                    global ITEM 
+                    ITEM = not_correct_object_type_ids_list[i]
+                    return 'succeeded'
 
         return 'failed'
+
+
+
+
+
+        # for i in range(0, len(id_list)):
+        #     e_id = id_list[i]
+        #     print "e_id = ", e_id
+        #     e_type = entity_types[i]
+        #     print "e_type = ", e_type
+            
+        #     if e_type == object_type:
+        #         self.robot.speech.speak("I have seen a {0}".format(object_type), block=True)
+        #         print "ed_id = ", e_id
+
+        #         # In the gpsr I assume that there will only be one coke, no multiple cokes, therefore, directly grab the coke that is seen.
+        #         # In other cases, one could check which object is the closest and grab that item.
+
+        #         left_arm = ArmDesignator(self.robot.arms, self.robot.leftArm)
+
+        #         grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=e_id), left_arm) #UnoccupiedArmDesignator(self.robot.arms, self.robot.leftArm))
+        #         result = grabstate.execute()
+
+        #         if result == 'done':
+        #             global ITEM 
+        #             ITEM = e_id
+
+        #             #self.robot.reasoner.query("retractall(grabbed_item('item_id',A))")
+        #             #self.robot.reasoner.assertz("grabbed_item('item_id','"+str(e_id)+"'')")
+        #             return 'succeeded'
+        #         else:
+        #             return 'failed'
+
+        # return 'failed'
 
 class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
@@ -870,10 +996,7 @@ class PlaceGrabbed(smach.State):
 
         place_pose_ent = EdEntityDesignator(self.robot,id=place_location)
         place_position = EmptySpotDesignator(self.robot, place_pose_ent)
-        #arm_with_item_designator = ArmHoldingEntityDesignator(self.robot.arms, EdEntityDesignator(self.robot,id=ITEM)) 
         arm_with_item_designator = ArmDesignator(self.robot.arms, self.robot.leftArm)
-
-        #ArmHoldingEntityDesignator(self.robot.arms, self.robot.leftArm) werkte niet
 
         placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot,id=ITEM), place_pose=place_position ,arm=arm_with_item_designator)
         result = placestate.execute()
