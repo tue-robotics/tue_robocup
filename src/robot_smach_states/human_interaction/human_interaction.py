@@ -204,22 +204,27 @@ class HearYesNo(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
+        # define answer format 
         spec = Designator("(<positive_answer>|<negative_answer>)")
 
-        choices = Designator({  "positive_answer": ["Yes", "Correct", "Right"],
-                                "negative_answer": ["No", "Incorrect", "Wrong"]})
+        # define choices
+        choices = Designator({  "positive_answer": ["Yes", "Correct", "Right", "Yup"],
+                                "negative_answer": ["No", "Incorrect", "Wrong", "Nope"]})
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
         state = HearOptionsExtra(self.robot, spec, choices, answer)
+        
+        # execute listen
         outcome = state.execute()
 
         if not outcome == "heard":
+            # if there was no answer
             print "HearYesNo: did not hear anything!"
             return 'heard_failed'
         else:
-            response_positive = ""
             response_negative = ""
+            response_positive = ""
 
             # test if the answer was positive, if its empty it will return excepton and continue to negative answer
             try:
