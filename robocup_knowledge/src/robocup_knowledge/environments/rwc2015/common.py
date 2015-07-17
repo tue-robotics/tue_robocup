@@ -24,7 +24,7 @@ all_locations = [
 {'room':'bedroom', 'category': 'table', 'location_name':'right_bedside_table','manipulation':'yes'},
 {'room':'bedroom', 'category': 'table',  'location_name':'desk',              'manipulation':'yes'},
 {'room':'bedroom', 'category': 'seat',  'location_name':'bed',                'manipulation':'yes'}, # bed has two spots
-{'room':'hallway', 'category': 'shelf', 'location_name':'bookcase',  		  'manipulation':'yes'}, # bookcase has for spots
+{'room':'hallway', 'category': 'shelf', 'location_name':'bookcase',  		  'manipulation':'yes'}, # bookcase has four spots
 {'room':'hallway', 'category': 'table', 'location_name':'hallwaytable', 	  'manipulation':'yes'}] # hallwaytable has two spots
 
 location_rooms = list(set([ o["room"] for o in all_locations ]))

@@ -1,38 +1,39 @@
-# RWC2015, to be adjusted when in hall.
-
-
+# RWC2015 
 from robocup_knowledge import knowledge_loader
 challenge_speech_recognition_data = knowledge_loader.load_knowledge("challenge_speech_recognition")
 
 spec_questions = challenge_speech_recognition_data.spec 
 choices_questions = challenge_speech_recognition_data.choices 
 
-
-#locations:
+#locations: # TO BE DEFINED IN model.yaml!
 starting_point = "initial_pose"
 meeting_point = "gpsr_meeting_point"
 gpsr_exit = "exit"
 
 # locations inside room used for finding object in room.
-rooms_detailed = {  'kitchen':['chair','cabinet'],
-                    'hallway':['hallway_couch'],
-                    'living_room':['couchtable','dinnertable','corridor_table','bookcase'],
-                    'bedroom':['bed','bed_cabinet'],
-                    'workshop':['operator_table','workbench']}
+rooms_detailed = {  'kitchen':['kitchentable','kitchencounter', 'cupboard'], # fridge and trashbin are no manipulation locations
+                    'livingroom':['bar','couchtable','dinnertable','sofa'], # dinnertable and sofa have both two spots
+                    'bedroom':['left_bedside_table','right_bedside_table','desk','bed'],# bed has two spots
+                    'hallway':['bookcase','hallwaytable']} # both locations have multiple spots.
 
 ###############################################
 #### GPSR KNOWLEDGE FOR ASKING FOR ACTION: ####
 ###############################################
 
 #data for speech recognition
-objects_known = ['beer','coke','beer','coke','fanta','ice_tea','tea','coffee_pads','deodorant','frutas','sprite','teddy']
 
-location_placement = ['chair','cabinet', 'hallway couch','couchtable','dinnertable','corridor table','bookcase','bed','bed cabinet','operator table','workbench']
+objects_known = ['pure milk', 'orange juice', 'sponge', 'papaya milk', 'apple', 'tomato chips', 'lemon', 'toothpaste', 
+                 'chocolates', 'bowl', 'beer', 'toilet paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth', 
+                 'green tea', 'gram soup', 'bubble gum', 'bean sauce', 'barbecue chips', 'tray', 'coconut cereals', 
+                 'egg stars', 'honey chips', 'coco balls', 'biscuits']
 
-rooms = ["kitchen", "hallway", "living room", "bedroom", "workshop"]
+location_placement = ['kitchentable', 'kitchencounter', 'cupboard', 'bar', 'couchtable', 'dinnertable', 'sofa', 
+                      'left bedside table', 'right bedside table', 'desk', 'bed', 'bookcase', 'hallwaytable']
 
-persons_women = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
-persons_men = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+rooms = ["kitchen", "hallway", "livingroom", "bedroom"]
+
+persons_women = ["Alex","Angel","Eve","Jamie","Jane","Liza","Melissa","Tracy","Robin","Sophia"] 
+persons_men = ["Alex","Angel","Edward","Homer","Jamie","John","Kevin","Kurt","Tracy","Robin"] 
 
 #spec_get_and_deliver
 spec_get_deliver = "(<2_vb_take> the <2_object> from the <1_location> and <3_vb_deliver> it to (<3_person_me>|(the <3_place_location>)|(<3_person> (at|in|(which is in)) the <3_room>)))"
