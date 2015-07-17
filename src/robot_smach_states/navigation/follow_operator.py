@@ -26,7 +26,7 @@ class FollowOperator(smach.State):
         self._first_time_at_location = None
         self._operator_position_constraint = operator_position_constraint
         self._timeout = timeout
-        self._operator_timeout = operator_timeouts
+        self._operator_timeout = operator_timeout
 
     def _register_operator(self):
         start_time = rospy.Time.now()

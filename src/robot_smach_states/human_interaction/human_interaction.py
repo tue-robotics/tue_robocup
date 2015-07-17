@@ -7,7 +7,7 @@ import ed_perception.msg
 import actionlib
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, check_type, check_resolve_type
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, VariableDesignator, check_type, check_resolve_type
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
@@ -195,6 +195,63 @@ class HearOptionsExtra(smach.State):
 
 ##########################################################################################################################################
 
+
+class HearYesNo(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(   self, 
+                                outcomes=['heard_yes', 'heard_no', 'heard_failed'])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+        # define answer format 
+        spec = Designator("(<positive_answer>|<negative_answer>)")
+
+        # define choices
+        choices = Designator({  "positive_answer": ["Yes", "Correct", "Right", "Yup"],
+                                "negative_answer": ["No", "Incorrect", "Wrong", "Nope"]})
+
+        answer = VariableDesignator(resolve_type=GetSpeechResponse)
+
+        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        
+        # execute listen
+        outcome = state.execute()
+
+        if not outcome == "heard":
+            # if there was no answer
+            print "HearYesNo: did not hear anything!"
+            return 'heard_failed'
+        else:
+            response_negative = ""
+            response_positive = ""
+
+            # test if the answer was positive, if its empty it will return excepton and continue to negative answer
+            try:
+                response_positive = answer.resolve().choices["positive_answer"]
+                
+                print "HearYesNo: answer is positive, heard: '" + response_positive + "'"
+                return 'heard_yes'
+            except KeyError, ke:
+                print "KeyError resolving the answer heard: " + str(ke)
+                pass
+
+            try:
+                response_negative = answer.resolve().choices["negative_answer"]
+                
+                print "HearYesNo: answer is negative, heard: '" + response_negative + "'"
+                return 'heard_no'
+            except KeyError, ke:
+                print "KeyError resolving the answer heard: " + str(ke)
+                pass
+
+        print "HearYesNo: could not resolve answer!"
+
+        return 'heard_failed'
+
+
+##########################################################################################################################################
+
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=rospy.Duration(10)):
         smach.StateMachine.__init__(self, outcomes=['continue','no_response'])
@@ -209,7 +266,8 @@ class AskContinue(smach.StateMachine):
 
             smach.StateMachine.add('HEAR',
                                     Hear(self.robot, 'continue', self.timeout),
-                                    transitions={'heard':'continue','not_heard':'no_response'})
+                                    transitions={   'heard':'continue',
+                                                    'not_heard':'no_response'})
 
 ##########################################################################################################################################
 
@@ -229,7 +287,7 @@ class WaitForPersonInFront(WaitForDesignator):
 
 class NameToUserData(WaitForDesignator):
     """
-    Pass the received name into userdata
+    Pass the received name into userdata. By default use 'person_name', if its empty use a designator
     """
     def __init__(self, robot, person_name = "", name_designator = None):
         smach.State.__init__(   self,
