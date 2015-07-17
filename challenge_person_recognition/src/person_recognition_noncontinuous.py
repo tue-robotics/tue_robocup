@@ -137,17 +137,6 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         with self:
 
-            # smach.StateMachine.add( 'START_CHALLENGE',
-            #                         states.StartChallengeRobust(robot, 'initial_pose'),
-            #                         transitions={   'Done':'GOTO_ENTRY',
-            #                                         'Aborted':'Aborted',
-            #                                         'Failed':'GOTO_ENTRY'})
-
-            # smach.StateMachine.add('GOTO_ENTRY',
-            #                         states.NavigateToWaypoint(robot, waypoint_learning),
-            #                         transitions={   'arrived':'LEARN_OPERATOR_CONTAINER',
-            #                                         'unreachable':'LEARN_OPERATOR_CONTAINER',
-            #                                         'goal_not_defined':'LEARN_OPERATOR_CONTAINER'})
 
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
@@ -163,13 +152,9 @@ class ChallengePersonRecognition(smach.StateMachine):
             #                                 LEARN_OPERATOR_CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-            # set default name in case learning name fails
-
             # container for this stage
             learnOperatorContainer = smach.StateMachine(outcomes = ['container_success', 'container_failed'],
                                                         output_keys = ['personName_userData'])
-
-            # learnOperatorContainer.userdata.personName_userData = "Mister Operator"
 
             with learnOperatorContainer:
 
@@ -191,12 +176,6 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'succeded':'LEARN_NAME_ITERATOR',
                                                         'failed':'SAY_WAITING_OPERATOR'})
 
-                # smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                #                         states.WaitForPersonInFront(robot, attempts=8, sleep_interval=1),
-                #                         transitions={   'success':'LEARN_NAME_ITERATOR',
-                #                                         'failed':'SAY_WAITING_OPERATOR'})
-
-                # ----------------------------------------
 
                 learnNameIterator = smach.Iterator( outcomes=['container_success', 'container_failed'], 
                                                     it = lambda:range(0, 3),
@@ -204,6 +183,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     input_keys=[],
                                                     output_keys=['personName_userData'],
                                                     exhausted_outcome = 'container_failed')
+
                 with learnNameIterator:
 
                     learnNameContainer = smach.StateMachine(output_keys=['personName_userData'],
@@ -244,7 +224,6 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         # loop_outcomes=['container_failed'],
                                                         break_outcomes=['container_success'])
 
-                # add the learnNameIterator to the main state machine
                 smach.StateMachine.add( 'LEARN_NAME_ITERATOR',
                                         learnNameIterator,
                                         transitions = { 'container_failed':'SAY_COULD_NOT_LEARN_NAME',
@@ -271,7 +250,6 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'TOGGLE_PERCEPTION_ON',
                                         PersonRecStates.TogglePerceptionMode(robot, toggle_mode=True),
-                                        # transitions={   'done':'TOGGLE_PERCEPTION_OFF_SUCCESS'})
                                         transitions={   'done':'LEARN_PERSON'})
 
                 smach.StateMachine.add('LEARN_PERSON',
