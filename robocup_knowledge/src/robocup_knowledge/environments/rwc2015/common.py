@@ -1,7 +1,9 @@
 # COMMON KNOWLEDGE FILE RGO2015
 
-female_names = ["Anna","Beth","Carmen","Jennifer","Jessica","Kimberly","Kristina","Laura","Mary","Sarah"]
-male_names = ["Alfred","Charles","Daniel","James","John","Luis","Paul","Richard","Robert","Steve"]
+# NAMES HAVE BEEN UPDATED for rwc2015 china
+female_names = ["Alex","Angel","Eve","Jamie","Jane","Liza","Melissa","Tracy","Robin","Sophia"] 
+male_names = ["Alex","Angel","Edward","Homer","Jamie","John","Kevin","Kurt","Tracy","Robin"] 
+
 names = female_names + male_names
 
 # NEXT TIME: locations should be rooms
