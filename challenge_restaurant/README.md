@@ -1,12 +1,11 @@
-# Manipulation and Object recognition
+# Challenge Restaurant 2015
 
-Responsible: Loy & Ramon
+Responsible: Rein 
 
 ## Startup
 
-1. Place the robot near or in front of the bookcase, cabinet or closet it is supposed to grasp from. This is currently hardcoded into variable BOOKCASE.
+1. Place the robot aside of the bar 
 2. Place 5 items in the bookcase
-3. In this bookcase, there should be 1 empty shelve at height PLACE_HEIGHT. 
 
 amigo1/sergio1:
 
@@ -18,42 +17,14 @@ amigo2/sergio1:
 
 amigo1/sergio1:
 
-    amiddle/smiddle
+    amiddle-restaurant/smiddle-restaurant
 
-amigo3:
+amigo3/sergio3:
 
     Test audio:
 
-    rosrun robot_skills test_audio.py [robot_name]
+	    rosrun robot_skills test_audio.py [robot_name]
 
-    asdf
-
-    rosrun challenge_restaurant manipulation.py [robot_name]
-
-    or
-
-    hear continue #Don't press enter just yet
+    rosrun challenge_restaurant challenge_restaurant [robot_name]
 
 Unplug the network cable in amigo.
-localhost:
-    sshamigo3 #This will not work because amigo is unplugged
-
-# Notes
-
-During the challenge
---------------------
-
-    Nothing to do, just tay out the way :-)
-
-After the challenge
--------------------
-
-    - Get the USB stick and inspect the classes in the file manipulation.pdf
-
-Testing
--------
-The second part of the challenge (the delivery of orders) can be tested separately::
-
-    - $ roscd challenge_restaurant/src
-    - $ amigo-console
-    - >>> from challenge_restaurant import *; test_delivery(amigo)
