@@ -4,7 +4,7 @@ import rospy
 
 import sys
 import os
-
+import itertools
 
 from fast_simulator import client
 
@@ -17,6 +17,14 @@ if __name__ == "__main__":
     env = os.environ['ROBOT_ENV']
 
     if env == "robotics_testlabs":
+
+        W.add_object("coke-1","coke", 3.19,4.1,1.0)
+        W.add_object("coke-2","coke", 3.14,4.2,1.0)
+        W.add_object("coke-3","coke", 3.2,4.3,1.0)
+        W.add_object("coke-4","coke", 3.15,4.4,1.0)
+        W.add_object("coke-5","coke", 3.17,4.5,1.0)
+        W.add_object("coke-6","coke", 3.2,4.6,1.0)
+
 
         #person = W.add_object("loy-1", "loy", 0, 4, 0, 0, 0, 0.7)
         W.add_object("sjoerd-2","sjoerd",   2.5, 1.0, 0.000)
