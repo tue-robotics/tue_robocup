@@ -324,7 +324,8 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
 
     with sm:
-        smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'STORE_KITCHEN', 'abort':'aborted'})
+        smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'INIT', 'abort':'aborted'})
+        smach.StateMachine.add('INIT', Init(robot), transitions={   'done':'STORE_KITCHEN'})
         smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'HEAD_STRAIGHT'})
         smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
 
