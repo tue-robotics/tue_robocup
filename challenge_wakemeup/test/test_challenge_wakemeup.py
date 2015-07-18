@@ -13,23 +13,42 @@ def getKey():
     return key
 
 class Person(object):
-    def __init__(self, W, x = 0, y = 0):
+    def __init__(self, W, positions):
         self.id = id
-        self.x = x
-        self.y = y
+        self.positions = positions
+        self.position = 0
+        self.x = self.positions[self.position][0]
+        self.y = self.positions[self.position][1]
         self.awake = False
+        self.height = -3.0
 
-        self.operator = W.add_object("operator", "ddw.chair", self.x, self.y, 0.0, 0.0, -3.0 )
+        self.operator = W.add_object("operator", "ddw.chair", self.x, self.y, self.height, 0.0, 0.0 )
+
+    def updatePosition(self):
+        self.operator.set_position(self.x, self.y, self.height, 0.0, 0.0, 0.0 )
 
     def toggleAwake(self):
         if self.awake:
-            self.operator.set_position(self.x, self.y, -3.0, 0.0, 0.0, 0.0)
+            self.height = -3.0
             self.awake = False
+            self.updatePosition()
             print "Operator fell back asleep"
         else:
-            self.operator.set_position(self.x, self.y, 0.3, 0.0, 0.0, 0.0)
+            self.height = 0.0
             self.awake = True
+            self.updatePosition()
             print "Operator woke up"
+
+    def changePosition(self):
+        self.position += 1
+        if self.position < len(self.positions):
+            pass
+        else:
+            self.position = 0
+        self.x = self.positions[self.position][0]
+        self.y = self.positions[self.position][1]
+        self.updatePosition()
+        print "Operator changed to position {}".format(self.position)
 
 
 if __name__ == "__main__":
@@ -39,7 +58,9 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    person = Person(W, -2.75, -1.0)
+    possible_positions = [[11.0, -7.8], [11.0, -8.5]]
+
+    person = Person(W, possible_positions)
 
     print "Dynamic wake me up simulator"
     print "Usage: press 1 to make the person in the bed wake up"
@@ -49,5 +70,7 @@ if __name__ == "__main__":
         key = getKey()
         if key == '1':
             person.toggleAwake()
+        elif key == '2':
+            person.changePosition()
         else:
             break
