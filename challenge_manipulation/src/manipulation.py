@@ -48,8 +48,9 @@ PICK_SHELF = challenge_knowledge.grasp_shelf
 PLACE_SHELF = challenge_knowledge.place_shelf
 ROOM = challenge_knowledge.room
 OBJECT_TYPES = challenge_knowledge.object_types
+MAX_NUM_ENTITIES_IN_PDF = 10
 
-DETECTED_OBJECTS = []
+DETECTED_OBJECTS_WITH_PROBS = []
 
 DEBUG = False
 
@@ -227,7 +228,7 @@ class InspectShelves(smach.State):
 
     def execute(self, userdata):
 
-        global DETECTED_OBJECTS
+        global DETECTED_OBJECTS_WITH_PROBS
 
         ''' Loop over shelves '''
         for shelf in self.object_shelves:
@@ -277,22 +278,24 @@ class InspectShelves(smach.State):
                         detected_entities.append(e)
 
                 ''' Try to classify the objects on the shelf '''
-                entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
+                entity_types_and_probs = self.robot.ed.classify_with_probs(ids=id_list, types=OBJECT_TYPES)
 
-                print "entity types: {}".format(entity_types)
+                print "entity types: {}".format(entity_types_and_probs)
 
                 ''' Check all entities that were flagged to see if they have received a 'type' it_label
                 if so: recite them and lock them '''
                 for i in range(0, len(id_list)):
                     e_id = id_list[i]
-                    e_type = entity_types[i]
-                    detected_entities[i].type = e_type
+                    (e_type, e_type_prob) = entity_types_and_probs[i]
+
+                    e = detected_entities[i]
+                    e.type = e_type
 
                     if e_type:
                         self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
                         self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
 
-                DETECTED_OBJECTS += detected_entities
+                        DETECTED_OBJECTS_WITH_PROBS += [(e, e_type_prob)]
 
                 # TODO: Store the entities in the pdf (and let AMIGO name them)
                 # ...
@@ -315,8 +318,11 @@ class InspectShelves(smach.State):
 
                 # self.robot.ed.disable_plugins(["kinect_integration", "perception"])
 
-        if not DETECTED_OBJECTS:
+        if not DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
+
+        # Sort based on probability
+        DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
 
         return 'succeeded'
 
@@ -585,8 +591,13 @@ def setup_statemachine(robot):
 
         @smach.cb_interface(outcomes=["exported"])
         def export_to_pdf(userdata):
-            global DETECTED_OBJECTS
-            pdf.entities_to_pdf(robot.ed, DETECTED_OBJECTS, "tech_united_manipulation_challenge")
+            global DETECTED_OBJECTS_WITH_PROBS
+
+            entities = [ e[0] for e in DETECTED_OBJECTS_WITH_PROBS ]
+
+            # Export images (Only best MAX_NUM_ENTITIES_IN_PDF)
+            pdf.entities_to_pdf(robot.ed, entities[:MAX_NUM_ENTITIES_IN_PDF], "tech_united_manipulation_challenge")
+
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
                                 smach.CBState(export_to_pdf),
