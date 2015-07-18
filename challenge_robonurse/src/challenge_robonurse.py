@@ -605,17 +605,17 @@ class RoboNurse(smach.StateMachine):
                                     states.Hear(robot, '(continue|yes|please|okay)',time_out=rospy.Duration(10)),
                                     transitions={'heard':'GOTO_SHELF','not_heard':'GOTO_SHELF'})
 
-            # smach.StateMachine.add( "GOTO_SHELF",
-            #                         states.NavigateToSymbolic(robot, { shelf:"in_front_of"}, shelf),
-            #                         transitions={   'arrived'           :'GET_PILLS',
-            #                                         'unreachable'       :'GET_PILLS',
-            #                                         'goal_not_defined'  :'GET_PILLS'})
+            smach.StateMachine.add( "GOTO_SHELF",
+                                    states.NavigateToSymbolic(robot, { shelf:"in_front_of"}, shelf),
+                                    transitions={   'arrived'           :'GET_PILLS',
+                                                    'unreachable'       :'GET_PILLS',
+                                                    'goal_not_defined'  :'GET_PILLS'})
 
-            smach.StateMachine.add('GOTO_SHELF',
-                                    states.NavigateToObserve(robot, shelf), # , radius=0.1
-                                    transitions={   'arrived':'GET_PILLS',
-                                                    'unreachable':'GOTO_SHELF_BACKUP',
-                                                    'goal_not_defined':'GOTO_SHELF_BACKUP'})
+            # smach.StateMachine.add('GOTO_SHELF',
+            #                         states.NavigateToObserve(robot, shelf), # , radius=0.1
+            #                         transitions={   'arrived':'GET_PILLS',
+            #                                         'unreachable':'GOTO_SHELF_BACKUP',
+            #                                         'goal_not_defined':'GOTO_SHELF_BACKUP'})
 
             smach.StateMachine.add('GOTO_SHELF_BACKUP',
                                     states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=BOTTLE_SHELF_WAYPOINT, radius=0.2)),
