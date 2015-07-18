@@ -127,7 +127,7 @@ class FollowOperator(smach.State):
 
     def execute(self, userdata):
         self._robot.head.cancel_goal()
-        self._robot.torso.torso.send_goal('reset', timeout=4.0)
+        self._robot.torso.send_goal('reset', timeout=4.0)
 
         self._at_location = False
         self._first_time_at_location = None
