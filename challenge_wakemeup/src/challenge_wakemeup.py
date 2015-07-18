@@ -51,7 +51,7 @@ class WakeMeUp(smach.StateMachine):
         def is_just_above_bed(entity):
             bed = robot.ed.get_entity(knowledge.bed)
 
-            # Check if z coordinate is within specified range
+            # Check if top of found object is above a certain threshold above the bed
             if entity.pose.position.z + entity.z_max < bed.pose.position.z + bed.z_max + knowledge.find_person['under_z']:
                 return False
 

@@ -42,7 +42,7 @@ prefix = bcolors.OKBLUE + "[WAKE ME UP] " + bcolors.ENDC
 default_milk = "fresh milk"
 
 # load item names
-object_names = [ o["name"] for o in knowledge_objs if "sub-category" in o] # TODO not very nice. combine the below 3
+object_names = [ o["name"] for o in knowledge_objs if "category" in o and o["category"] is "food" or o["category"] is "drinks"]
 names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
 names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
 names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]

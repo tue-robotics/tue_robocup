@@ -1,5 +1,5 @@
 # Tunable params
-find_person = {                 # This needs to be updated according to the environment
+find_person = {
     'within_range' : 2.0,
     'under_z' : 0.3,
     'min_chull_area' : 0.06,
@@ -9,14 +9,14 @@ find_person = {                 # This needs to be updated according to the envi
 alarm_wait_time = 5
 alarm_duration = 60
 
-get_newspaper_timeout = 3       # This needs to be updated for robocup maybe
+get_newspaper_timeout = 5
 give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
 # Knowledge
 initial_pose = "initial_pose_door_A"
 
-bed = 'bed'                     # This needs to be updated according to the environment
+bed = 'bed'
 
 bed_nav_goal = {        
     'near' : bed,
@@ -25,15 +25,21 @@ bed_nav_goal = {
     'lookat' : bed
 }
 
+# This is not used yet --------------
 default_milk = "pure_milk"
+default_cereal = "egg_stars"
+default_fruit = "lemon"
+# -----------------------------------
 
-kitchen_nav_goal = {            # This needs to be updated according to the environment
+# TODO: in front of?
+kitchen_nav_goal = {
     # "in_front_of":"kitchentable", # This may not be necessary?
     "in" : "kitchen",
     "lookat" : "kitchen"
 }
 
 generic_items = [ "milk", "fruit", "cereal"] # TODO: Pour Cereal!!!
+# TODO:
 # allowed_fruits = [ "apple" ]
 
 milk_shelf = "kitchentable"
@@ -55,29 +61,6 @@ item_nav_goal = {               # This needs to be updated according to the envi
     "near_fruit"    : fruit_shelf,
     "lookat_fruit"  : fruit_shelf
 }
-
-# milk_nav_goal = {               # This needs to be updated according to the environment
-#     "in" : "kitchen",
-#     "near" : milk_shelf,
-#     "lookat" : milk_shelf
-# }
-
-# cereal_nav_goal = {             # This needs to be updated according to the environment
-#     "in" : "kitchen",
-#     "near" : cereal_shelf,
-#     "lookat" : cereal_shelf
-# }
-
-# fruit_nav_goal = {              # This needs to be updated according to the environment
-#     "in" : "kitchen",
-#     "near" : fruit_shelf,
-#     "lookat" : fruit_shelf
-# }
-
-# kitchen_door = "kitchen_door"   # Only needed if we can open a door
-
-# # Number of times it asks for the door to be opened and replans to the kitchen
-# check_door_attempts = 1
 
 dinner_table = "dinnertable"
 
