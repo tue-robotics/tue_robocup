@@ -412,7 +412,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'visited_all':'container_success'})
 
                 smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.4),
+                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.8),
                                         transitions={   'arrived'           :   'REMOVE_LOCATION',
                                                         'unreachable'       :   'SAY_FAILED_GOTO',
                                                         'goal_not_defined'  :   'SAY_FAILED_GOTO'})
@@ -503,7 +503,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'SAY_CANT_CHOOSE_OPERATOR'})
 
                 smach.StateMachine.add( 'GOTO_OPERATOR',
-                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.current, radius = 1.3),
+                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.current, radius = 1.8),
                                         transitions={   'arrived'           :   'SAY_FOUND_OPERATOR',
                                                         'unreachable'       :   'SAY_CANT_REACH',
                                                         'goal_not_defined'  :   'SAY_CANT_REACH'})
