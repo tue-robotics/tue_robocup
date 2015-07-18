@@ -213,11 +213,6 @@ class LookAtPersonInFront(smach.State):
         faces_front = None
         desgnResult = None
 
-        # create designators
-        # humanDesignator = EdEntityDesignator(self.robot, type="human")
-        # dataDesignator = AttrDesignator(humanDesignator, 'data')
-        # centerDesignator = AttrDesignator(humanDesignator, 'center_point')
-
         self.robot.head.cancel_goal()
 
         # look front, 2 meters high
@@ -232,7 +227,6 @@ class LookAtPersonInFront(smach.State):
         if not desgnResult and self.lookDown == True:
             # look front, 2 meters high
             self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3, 0, 0,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
-            # rospy.sleep(1)    # give time for the head to get in place
 
             # try to resolve the designator
             desgnResult = scanForHuman(self.robot)
@@ -306,19 +300,13 @@ class FindCrowd(smach.State):
     def execute(self, userdata):
         printOk("FindCrowd")
 
-        # foundFace = False
-        # centerPointRes = None
-        # humanDesignatorRes = None
-        # entityDataRes = None
+
         faces_locations = []
 
         # points where the head will look at
-        head_points_stamped = [ msgs.PointStamped(3,-3,2, self.robot.robot_name + "/base_link"),
-                                msgs.PointStamped(3,0,2, self.robot.robot_name + "/base_link"),
-                                msgs.PointStamped(3,3,2, self.robot.robot_name + "/base_link")]
-        # create designators
-        # humanDesignator = EdEntityCollectionDesignator( self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]], 
-        #                                                 center_point=msgs.PointStamped(**challenge_knowledge.room_center), radius=3)
+        head_points_stamped = [ msgs.PointStamped(3,-3,1, self.robot.robot_name + "/base_link"),
+                                msgs.PointStamped(3,0,1, self.robot.robot_name + "/base_link"),
+                                msgs.PointStamped(3,3,1, self.robot.robot_name + "/base_link")]
 
         # clear head goals
         self.robot.head.cancel_goal()
@@ -328,7 +316,7 @@ class FindCrowd(smach.State):
             self.robot.head.look_at_point(point_stamped=head_point, end_time=0, timeout=8)
             
             ''' sleep to prevent head movement while scanning for humans'''
-            rospy.sleep(1)
+            rospy.sleep(2)
 
             entity_list = scanForHuman(self.robot)
             if not entity_list:
@@ -368,7 +356,8 @@ class FindCrowd(smach.State):
                             p1 = (face["map_x"], face["map_y"], face["map_z"])
                             p2 = (loc.point_stamped.point.x, loc.point_stamped.point.y, loc.point_stamped.point.z)
 
-                            if points_distance(p1=p1, p2=p2) < 0.1:
+                            if points_distance(p1=p1, p2=p2) < challenge_knowledge.face_proximity_treshold:
+                                printOk ("Too close to another face: " + str(points_distance(p1=p1, p2=p2)))
                                 alreadyExists = True
                                 break
 
@@ -379,7 +368,7 @@ class FindCrowd(smach.State):
 
                             printOk("\tAdded face location to the list: ({0}, {1}, {2})".format(face["map_x"], face["map_y"], face["map_z"]))
                         else:
-                            printOk("Location already exists in the list")
+                            printOk("Face location already exists in the list")
 
                 else:
                     printWarning("Designator resolved but no faces where found")
@@ -436,22 +425,20 @@ class DescribePeople(smach.State):
                 face.point_stamped.point.y = in_base_link.y
                 face.point_stamped.point.z = in_base_link.z
 
-
             # order list by face Y location wrt base_link
             faceList.sort(key=lambda k: k.point_stamped.point.y)
-            # faceList.sort(key=lambda k: k['point_stamped.point.y'])
-
 
             # Compute crowd and operator details
             for idx, face in enumerate(faceList):
-                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}".format(
+                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}, Operator: {9}".format(
                     str(face.name),
                     str(face.score),
                     str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z),
                     str(face.pose),
                     str(face.gender),
                     str(face.inMainCrowd),
-                    str(face.orderedPosition)))
+                    str(face.orderedPosition),
+                    str(face.operator)))
 
                 # count number of males and females
                 if face.inMainCrowd == True:
@@ -736,10 +723,8 @@ class AnalysePerson(smach.State):
 
                 try:
                     # import ipdb; ipdb.set_trace()
-                    # faceList = [human.data['perception_result']['face_recognizer']['face'] for human in humanDesignatorRes][0]
                     faceList = humanEntity.data['perception_result']['face_recognizer']['face']
 
-                    # faceList = humanEntity.data['perception_result']['face_recognizer']['face']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
                     printOk("\t" + str(faceList))
 
@@ -754,19 +739,12 @@ class AnalysePerson(smach.State):
                             recognition_label = "unknown"
                             printOk("Unrecognized face")
 
-
-                        # if entityData['type'] == "crowd":
-                            #  get the corresponding location of the face
+                        #  get the location of the face being currently analyzed
                         for face_detector_loc in humanEntity.data['perception_result']['face_detector']['faces_front']:
                             if face_idx == face_detector_loc['index']:
                                 # get location
                                 face_loc = face_detector_loc
                                 break
-
-                        # elif entityData['type'] == "human":
-                        #     face_loc = entityData['perception_result']['face_detector']['faces_front'][0]
-                        # else:
-                        #     print OUT_PREFIX + bcolors.FAIL + "Uknown entity type. Unable to get face location" + bcolors.ENDC
 
                         #  test if a face in this location is already present in the list
                         sameFace = False
@@ -774,7 +752,8 @@ class AnalysePerson(smach.State):
                             p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
                             p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
 
-                            if points_distance(p1=p1, p2=p2) < 0.1:
+                            if points_distance(p1=p1, p2=p2) < challenge_knowledge.face_proximity_treshold:
+                                printOk ("Too close to another face: " + str(points_distance(p1=p1, p2=p2)))
                                 sameFace = True
                                 break
 
@@ -783,7 +762,6 @@ class AnalysePerson(smach.State):
                             printOk("Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current)))
 
                         #  if information is valid, add it to the list of analysed faces
-                        # if not recognition_label == None and not recognition_score == None and not sameFace:
                         if not sameFace:
 
                             # "predict" pose in a hacky way

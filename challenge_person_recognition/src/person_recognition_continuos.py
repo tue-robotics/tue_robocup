@@ -5,7 +5,7 @@ import rospy
 import sys
 import smach
 import smach_ros
-import person_recognition_states as PersonRecStates
+import person_recognition_states_continuos as PersonRecStates
 import robot_smach_states as states
 import geometry_msgs.msg as gm
 import robot_skills.util.msg_constructors as msgs

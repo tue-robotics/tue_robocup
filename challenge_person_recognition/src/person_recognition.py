@@ -5,7 +5,7 @@ import rospy
 import sys
 import smach
 import smach_ros
-import person_recognition_states_noncontinuous as PersonRecStates
+import person_recognition_states as PersonRecStates
 import robot_smach_states as states
 import geometry_msgs.msg as gm
 import robot_skills.util.msg_constructors as msgs
@@ -166,7 +166,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'LOOK_AT_OPERATOR'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
-                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
+                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=True),
                                         transitions={   'succeded':'WAIT_FOR_OPERATOR',
                                                         'failed':'WAIT_FOR_OPERATOR'})
 
@@ -240,11 +240,11 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={    'spoken':'SAY_LOOK_AT_ME'})
 
                 smach.StateMachine.add( 'SAY_LOOK_AT_ME',
-                                        states.Say(robot,"Please look at me while I learn your face.", block=False),
+                                        states.Say(robot,"Please stand one meter in front of me and look at me while I learn your face.", block=False),
                                         transitions={    'spoken':'LOOK_AT_OPERATOR_2'})
 
                 smach.StateMachine.add( 'LOOK_AT_OPERATOR_2',
-                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
+                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=True),
                                         transitions={   'succeded':'TOGGLE_PERCEPTION_ON',
                                                         'failed':'TOGGLE_PERCEPTION_ON'})
 
