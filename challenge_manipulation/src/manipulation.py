@@ -264,7 +264,8 @@ class InspectShelves(smach.State):
                 entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
 
                 ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
-                id_list = [] # List with entities that are flagged with 'perception'                
+                id_list = [] # List with entities that are flagged with 'perception'
+                detected_entities = []                
                 for entity_id in entity_ids:
                     e = self.robot.ed.get_entity(entity_id)
 
@@ -273,7 +274,7 @@ class InspectShelves(smach.State):
                         # ToDo: filter on size in x, y, z
                         # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                         id_list.append(e.id)
-                        DETECTED_OBJECTS += [e]
+                        detected_entities.append(e)
 
                 ''' Try to classify the objects on the shelf '''
                 entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
@@ -285,11 +286,13 @@ class InspectShelves(smach.State):
                 for i in range(0, len(id_list)):
                     e_id = id_list[i]
                     e_type = entity_types[i]
-                    DETECTED_OBJECTS[i].type = e_type
+                    detected_entities[i].type = e_type
                     
                     if e_type:
                         self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
                         self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
+
+                DETECTED_OBJECTS += detected_entities
 
                 # TODO: Store the entities in the pdf (and let AMIGO name them)
                 # ...
