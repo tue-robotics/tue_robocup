@@ -44,7 +44,7 @@ def save_entity_image_to_file(world_model_ed, entityID):
     image = Image.open(stream)
 
     try:
-        byte_array = bytearray(info.measurement_image)
+        byte_array = bytearray(info.measurement_image_unmasked)
         stream = StringIO.StringIO(byte_array)
         image = Image.open(stream)
 
