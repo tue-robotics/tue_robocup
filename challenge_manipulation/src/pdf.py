@@ -12,6 +12,7 @@ from robot_skills import world_model_ed
 from PIL import Image
 import cStringIO as StringIO
 import numpy as np
+import datetime
 
 report = '''
 # H1
@@ -101,9 +102,15 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
     html += "</body>"
     html += "</html>"
 
-    filename = "%s_%d.pdf"%(name, int(time.time()))
+    date_str = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M")
+    filename = "%s_%s.pdf"%(name, date_str)
+
     try:
+
+
         html2pdf(html, "%s/%s"%(directory, filename))
+
+
     except IOError, ioerror:
         rospy.logerr(ioerror)
         rospy.logwarn("Writing to local file instead")

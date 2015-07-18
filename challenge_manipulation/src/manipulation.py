@@ -265,7 +265,7 @@ class InspectShelves(smach.State):
 
                 ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
                 id_list = [] # List with entities that are flagged with 'perception'
-                detected_entities = []                
+                detected_entities = []
                 for entity_id in entity_ids:
                     e = self.robot.ed.get_entity(entity_id)
 
@@ -287,7 +287,7 @@ class InspectShelves(smach.State):
                     e_id = id_list[i]
                     e_type = entity_types[i]
                     detected_entities[i].type = e_type
-                    
+
                     if e_type:
                         self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
                         self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
@@ -301,12 +301,12 @@ class InspectShelves(smach.State):
                 #     Store e in pdf
                 #
                 #      OR
-                # 
+                #
                 # Lock the items in the world model, and create the pdf afterwards
                 # ...
                 # for e in entities:
                 #     self.robot.ed.update_entity(e.id, flags=["locked"])
-                # 
+                #
                 # ... (later)
                 # # Getting all locked entities:
                 # for e in entities:
@@ -550,7 +550,7 @@ def setup_statemachine(robot):
                                                 'abort':'Aborted'})
 
         smach.StateMachine.add("INIT_WM",
-                               InitializeWorldModel(robot), 
+                               InitializeWorldModel(robot),
                                transitions={'done'                      :'AWAIT_START'})
 
         smach.StateMachine.add("AWAIT_START",
@@ -586,7 +586,7 @@ def setup_statemachine(robot):
         @smach.cb_interface(outcomes=["exported"])
         def export_to_pdf(userdata):
             global DETECTED_OBJECTS
-            pdf.entities_to_pdf(robot.ed, DETECTED_OBJECTS, "manipulation_challenge")
+            pdf.entities_to_pdf(robot.ed, DETECTED_OBJECTS, "tech_united_manipulation_challenge")
             return "exported"
         smach.StateMachine.add('EXPORT_PDF',
                                 smach.CBState(export_to_pdf),
