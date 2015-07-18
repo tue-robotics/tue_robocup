@@ -259,7 +259,7 @@ class ED:
         print "entities 1 in get_closest_possible_person_entity = ", entities
 
         # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and e.flags == ['possible_human']]
+        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
         print "entities 2 in get_closest_possible_person_entity = ", entities
 
         # if only the persons in a certain room should be found:
