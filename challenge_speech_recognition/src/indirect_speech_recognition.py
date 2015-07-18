@@ -52,7 +52,7 @@ class Turn(smach.State):
 
         operator = None
         while not operator:
-            operator = self.robot.ed.get_closest_entity(self, radius=1.5, center_point=self.robot.base.get_location().pose.position)
+            operator = self.robot.ed.get_closest_entity(self, radius=1.7, center_point=self.robot.base.get_location().pose.position)
             print operator
             if not operator:
                 vth = 1.0
