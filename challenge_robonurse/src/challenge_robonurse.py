@@ -11,7 +11,7 @@ The robot must grab the bottle and bring it to Granny.
 Then, part 2 start which involves action recognition.
 Granny does 1 of 3 things to which the robot must respond.
 
-TODO: Actual action detection with a hack. 
+TODO: Actual action detection with a hack.
     One idea is to record a the coordinates of an entity during tracking and apply some heuristics (see dummy_action_recognition and recognize_action)
 TODO: Test Take cane
 """
@@ -137,7 +137,7 @@ class StartPhase(smach.StateMachine):
             #                     transitions={   'done':'HEAR_GRANNY',
             #                                     'preempted':'Aborted',  # This transition will never happen at the moment.
             #                                     'error':'HEAR_GRANNY'})  # It should never go to aborted.
-            
+
             smach.StateMachine.add('HEAR_GRANNY',
                                 states.Hear(robot, spec="((Help me)|hello|please|(please come)|amigo|sergio|come|(hi there)|hi|pills|robot|(give me my pills))",time_out=rospy.Duration(30)),
                                 transitions={   'heard':'SAY_HI',
@@ -165,7 +165,7 @@ class LookAtEntities(smach.StateMachine):
         element_designator = ds.VariableDesignator(resolve_type=EntityInfo)
 
         with self:
-            #We want one list and iterate over that. It should not update and regenerate every iteration. 
+            #We want one list and iterate over that. It should not update and regenerate every iteration.
             #So, before we start iterating, we lock the list
             smach.StateMachine.add( "LOCK_ENTITIES",
                                     states.LockDesignator(locked_entity_collection_designator),
@@ -174,14 +174,14 @@ class LookAtEntities(smach.StateMachine):
             #At every iteration, an element of the collection is put into element_designator
             smach.StateMachine.add( "SELECT_ENTITY",
                                     states.IteratorState(locked_entity_collection_designator, element_designator),
-                                    transitions={   "next"          :"LOOK_AT_ENTITY", 
+                                    transitions={   "next"          :"LOOK_AT_ENTITY",
                                                     "stop_iteration":"UNLOCK_ENTITIES"})
 
             smach.StateMachine.add( "LOOK_AT_ENTITY",
                                      states.LookAtEntity(robot, element_designator, waittime=inspect_time),
                                      transitions={  'succeeded'         :'SELECT_ENTITY',
-                                                    'failed'            :'SELECT_ENTITY'}) 
-            
+                                                    'failed'            :'SELECT_ENTITY'})
+
             smach.StateMachine.add( "UNLOCK_ENTITIES",
                                     states.LockDesignator(locked_entity_collection_designator),
                                     transitions={   "locked"        :"succeeded"})
@@ -285,7 +285,7 @@ class GetPills(smach.StateMachine):
             def designate_random_bottle(userdata):
                 bottle_description_map = bottle_description_map_desig.resolve() #Resolves to OrderedDict of EntityInfo:BottleDescription
                 if bottle_description_map:
-                    import ipdb; ipdb.set_trace()
+                    #import ipdb; ipdb.set_trace()
                     described_bottle.id = bottle_description_map.keys()[0].id #The ID of a random described bottle. [0] means first thing, second [0] is because keys are a (entity, y-coord)-tuple
                     return "described"
                 else:
@@ -297,8 +297,8 @@ class GetPills(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['described', 'no_match'])
             def designate_bottle(userdata):
-                """The DescribeBottles-state creates a mapping of entity:BottleDescription. 
-                Here, we get convert Granny's spoken description to a BottleDescription 
+                """The DescribeBottles-state creates a mapping of entity:BottleDescription.
+                Here, we get convert Granny's spoken description to a BottleDescription
                     and select the entity/entities that have that description"""
                 answer = ask_bottles_answer.resolve()
                 bottle_description_map = bottle_description_map_desig.resolve() #Resolves to OrderedDict of EntityInfo:BottleDescription
@@ -324,9 +324,9 @@ class GetPills(smach.StateMachine):
                             spoken_description += " " + choices['height_desc']
                         if 'label' in choices:
                             spoken_description += " labeled " + choices['label']
-                        
+
                         spoken_description += " one "
-                        
+
                         if 'position' in choices:
                             spoken_description += " on the " + choices['position']
                         # spoken_description += "with I D " + str(selected_bottle_id)[:5]
@@ -345,7 +345,7 @@ class GetPills(smach.StateMachine):
                                     smach.CBState(designate_bottle),
                                     transitions={'described'            :"GRAB_BOTTLE",
                                                  'no_match'             :"ASK_WHICH_BOTTLE"})
-            
+
             # smach.StateMachine.add( "LOOKAT_CHOSEN_BOTTLE",
             #                          states.LookAtEntity(robot, locked_described_bottle),
             #                          transitions={  'succeeded'         :'GRAB_BOTTLE',
@@ -369,7 +369,7 @@ class GetPills(smach.StateMachine):
                                     transitions={   'arrived'           :'failed',#DETECT_ACTION'
                                                     'unreachable'       :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',#DETECT_ACTION'
                                                     'goal_not_defined'  :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE'})#DETECT_ACTION'
-            
+
             smach.StateMachine.add( "GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE",
                                     states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'failed',#DETECT_ACTION'
@@ -412,7 +412,7 @@ class HandleBlanket(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "PICKUP_BLANKET",
-                                    states.Say(robot, [ "I would like to pick up your blanket, but I know I can't reach it. Sorry", 
+                                    states.Say(robot, [ "I would like to pick up your blanket, but I know I can't reach it. Sorry",
                                                         "Sorry, your blanket fell, but I can't reach it"]),
                                     transitions={   'spoken'            :'succeeded'})
 
@@ -420,7 +420,7 @@ class HandleBlanket(smach.StateMachine):
 class HandleFall(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
-        
+
         def size(entity):
             return abs(entity.z_max - entity.z_min) < 0.4
 
@@ -434,7 +434,7 @@ class HandleFall(smach.StateMachine):
         phone = ds.EdEntityDesignator(robot, criteriafuncs=[size, on_top], debug=False)
         empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
-        
+
         with self:
             smach.StateMachine.add( "SAY_FELL",
                                     states.Say(robot, "Oh no, you fell! I will give you the phone.", block=True),
@@ -470,7 +470,7 @@ class HandleFall(smach.StateMachine):
                                      Stop_looking(robot),
                                      transitions={  'stopped_looking'         :'GRAB_PHONE'})
 
-            #phone = EdEntityDesignator(robot, type="deodorant")        
+            #phone = EdEntityDesignator(robot, type="deodorant")
 
 
             smach.StateMachine.add( "GRAB_PHONE",
@@ -524,8 +524,8 @@ class HandleWalkAndSit(smach.StateMachine):
         arm_for_cane = ds.UnoccupiedArmDesignator(robot.arms, robot.arms["left"])
 
         with self:
-            smach.StateMachine.add( 'FOLLOW_GRANNY', 
-                                    states.FollowOperator(robot), 
+            smach.StateMachine.add( 'FOLLOW_GRANNY',
+                                    states.FollowOperator(robot),
                                     transitions={   'stopped'       :'SAY_TAKE_CANE',
                                                     'no_operator'   : 'SAY_TAKE_CANE',
                                                     'lost_operator' :'SAY_TAKE_CANE'})
@@ -539,7 +539,7 @@ class HandleWalkAndSit(smach.StateMachine):
                                     transitions={   'succeeded'            :'succeeded',
                                                     'failed'               :'CLOSE_GRIPPER_AFTER_FAIL'})
 
-            smach.StateMachine.add('CLOSE_GRIPPER_AFTER_FAIL', 
+            smach.StateMachine.add('CLOSE_GRIPPER_AFTER_FAIL',
                                     states.SetGripper(robot, arm_for_cane, gripperstate='close', timeout=1.0),
                                     transitions={'succeeded'               :'succeeded',
                                                  'failed'                  :'failed'})
@@ -549,10 +549,10 @@ class RespondToAction(smach.StateMachine):
     def __init__(self, robot, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
-        with self:            
+        with self:
             smach.StateMachine.add( 'DETECT_ACTION',
                                     DetectAction(robot, granny),
-                                    transitions={   "drop_blanket"      :"HANDLE_BLANKET", 
+                                    transitions={   "drop_blanket"      :"HANDLE_BLANKET",
                                                     "fall"              :"HANDLE_FALL",
                                                     "walk_and_sit"      :"HANDLE_WALK_AND_SIT"})
 
@@ -586,9 +586,9 @@ class RoboNurse(smach.StateMachine):
 
             return x_ok and y_ok
 
-        with self: 
+        with self:
             smach.StateMachine.add( "INIT_WM",
-                                    InitializeWorldModel(robot), 
+                                    InitializeWorldModel(robot),
                                     transitions={'done'                 :'START_PHASE'})
 
 
@@ -623,7 +623,7 @@ class RoboNurse(smach.StateMachine):
                                                     'unreachable':'GET_PILLS',
                                                     'goal_not_defined':'GET_PILLS'})
 
-            smach.StateMachine.add( "GET_PILLS", 
+            smach.StateMachine.add( "GET_PILLS",
                                     GetPills(robot, grannies_table, granny),
                                     transitions={   'succeeded'     : "REST_ARMS_1",
                                                     'failed'        : "REST_ARMS_1"})
@@ -703,7 +703,7 @@ def recognize_action(coordinates):
     elif walk_and_sit:
         return "walk_and_sit"
     return None
- 
+
 def dummy_action_recognition(robot, max_measurements=200, _id=None):
     # import numpy as np
     from robot_skills.util import transformations
@@ -714,7 +714,7 @@ def dummy_action_recognition(robot, max_measurements=200, _id=None):
         granny = ds.EdEntityDesignator(robot, id=robot.ed.get_full_id(_id))
 
     states.LookAtEntity(robot, granny).execute(None)
-    
+
     action = None
     coords = []
     record = True
@@ -727,11 +727,11 @@ def dummy_action_recognition(robot, max_measurements=200, _id=None):
             # print str(p).replace('\n', ',')
 
             coords += [(p.x, p.y, p.z, entity.z_max)]
-            
+
             if len(coords) > 1:
                 action = recognize_action(coords)
                 rospy.logwarn("Current action estimation: {}".format(action))
-                # if action: 
+                # if action:
                 #     record = False
             if len(coords) > max_measurements-1: record = False
         except KeyboardInterrupt, e:
