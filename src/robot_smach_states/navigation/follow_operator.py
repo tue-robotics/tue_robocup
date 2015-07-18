@@ -15,14 +15,14 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0, operator_timeout = 20, distance_threshold = 2.0):
+    def __init__(self, robot, operator_radius=1, timeout = 3.0, operator_timeout = 20, distance_threshold = 2.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
 
         self._at_location = False
         self._first_time_at_location = None
-        self._operator_position_constraint = operator_position_constraint
+        self._operator_radius = operator_radius
         self._timeout = timeout
         self._operator_timeout = operator_timeout
         self._distance_threshold = distance_threshold
@@ -71,7 +71,7 @@ class FollowOperator(smach.State):
         self._robot.head.cancel_goal()
 
         p = PositionConstraint()
-        p.constraint = self._operator_position_constraint
+        p.constraint = "x^2 + y^2 < %f^2"%self._operator_radius
         p.frame = operator.id
 
         # We are going to do this dependent on distance to operator
@@ -98,7 +98,7 @@ class FollowOperator(smach.State):
             print "robot yaw: %f"%Z
             print "Desired yaw: %f"%yaw
             plan = []
-            for i in range(0, int(length / res)):
+            for i in range(0, int( (length - self._operator_radius) / res)):
                 x = r_point.x + i * dx_norm * res
                 y = r_point.y + i * dy_norm * res
                 plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
