@@ -61,7 +61,6 @@ class Init(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-        self._robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
         self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
         self._robot.ed.reset()
         return "done"
