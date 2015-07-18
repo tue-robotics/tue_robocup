@@ -256,20 +256,28 @@ class ED:
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
+        print "entities 1 in get_closest_possible_person_entity = ", entities
 
         # HACK
         entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and e.flags == ['possible_human']]
+        print "entities 2 in get_closest_possible_person_entity = ", entities
 
         # if only the persons in a certain room should be found:
         if not (room == "" and len(entities) == 0):
             print "room in ed = ", room
             room_entity = self.get_entity(id=str(room))
             x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
+            print "x_min_room = ", x_min_room
             x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
+            print "x_max_room = ", x_max_room
             y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
+            print "y_min_room = ", y_min_room
             y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
+            print "y_max_room = ", y_max_room
 
             entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
+
+            print "entities 3 in get_closest_possible_person_entity = ", entities
 
         if len(entities) == 0:
             return None
@@ -277,6 +285,7 @@ class ED:
         # Sort by distance
         try:
             entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            print "entities 4 in get_closest_possible_person_entity = ", entities
         except:
             print "Failed to sort entities"
             return None
