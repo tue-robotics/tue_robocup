@@ -80,158 +80,169 @@ def parseFoodType(item, got_fruit, got_cereal, got_milk):
     
 # ----------------------------------------------------------------------------------------------------
 
-
-# Ask the persons name
 class GetOrder(smach.State):
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
-        smach.State.__init__(   self, 
-                                outcomes=['succeeded', 'failed'])
-
-        self.robot = robot
+        smach.State.__init__( self, outcomes=['succeeded', 'failed'])
         self.breakfastCereal = breakfastCerealDes
         self.breakfastFruit = breakfastFruitDes
         self.breakfastMilk = breakfastMilkDes
 
-
     def execute(self, userdata):
-        print prefix + bcolors.OKBLUE + "GetOrder" + bcolors.ENDC
+        self.breakfastCereal.current = "muesli_cereals"
+        self.breakfastMilk.current   = "meadow_milk"
+        self.breakfastFruit.current  = "apple"
+        return "succeeded"
 
-        # import ipdb; ipdb.set_trace()
-        # Initializations
+# class GetOrder(smach.State):
+#     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
+#         smach.State.__init__(   self, 
+#                                 outcomes=['succeeded', 'failed'])
 
-        got_cereal = False
-        got_fruit = False
-        got_milk = False
-        heard_correctly = False
+#         self.robot = robot
+#         self.breakfastCereal = breakfastCerealDes
+#         self.breakfastFruit = breakfastFruitDes
+#         self.breakfastMilk = breakfastMilkDes
 
-        word_beginning = ""
-        word_preposition = ""
-        word_item1 = ""
-        word_item2 = ""
-        word_item3 = ""
 
-        self.breakfastFruit.current = ""
-        self.breakfastCereal.current = ""
-        self.breakfastMilk.current = ""
+#     def execute(self, userdata):
+#         print prefix + bcolors.OKBLUE + "GetOrder" + bcolors.ENDC
 
-        # define allowed sentences, [] means optional
-        sentence = Designator("(([<beginning>] <item1> [<preposition>] <item2> [<preposition>] <item3>) | \
-                                ([<beginning>] <item1> [<preposition>] <item2>))")
+#         # import ipdb; ipdb.set_trace()
+#         # Initializations
 
-        choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
-                                "preposition" : ["and", "and a", "and an", "with a", "with a", "with", "a"],
-                                "item1" :       names_cereal + names_fruit + names_milk,
-                                "item2" :       names_cereal + names_fruit + names_milk,
-                                "item3" :       names_cereal + names_fruit + names_milk})
+#         got_cereal = False
+#         got_fruit = False
+#         got_milk = False
+#         heard_correctly = False
 
-        answer = VariableDesignator(resolve_type=GetSpeechResponse)
+#         word_beginning = ""
+#         word_preposition = ""
+#         word_item1 = ""
+#         word_item2 = ""
+#         word_item3 = ""
 
-        state = HearOptionsExtra(self.robot, sentence, choices, answer, time_out=rospy.Duration(20))
-        outcome = state.execute()
+#         self.breakfastFruit.current = ""
+#         self.breakfastCereal.current = ""
+#         self.breakfastMilk.current = ""
 
-        # process response
-        if outcome == "heard":
+#         # define allowed sentences, [] means optional
+#         sentence = Designator("(([<beginning>] <item1> [<preposition>] <item2> [<preposition>] <item3>) | \
+#                                 ([<beginning>] <item1> [<preposition>] <item2>))")
 
-            # resolve words separatey since some of them might not have been caught
-            try:
-                word_beginning = answer.resolve().choices["beginning"]
-            except KeyError, ke:
-                print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
-                pass
+#         choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
+#                                 "preposition" : ["and", "and a", "and an", "with a", "with a", "with", "a"],
+#                                 "item1" :       names_cereal + names_fruit + names_milk,
+#                                 "item2" :       names_cereal + names_fruit + names_milk,
+#                                 "item3" :       names_cereal + names_fruit + names_milk})
 
-            try:
-                word_item3 = answer.resolve().choices["item3"]
-            except KeyError, ke:
-                print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
-                pass
+#         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-            try:
-                word_preposition = answer.resolve().choices["preposition"]
-                word_item1 = answer.resolve().choices["item1"]
-                word_item2 = answer.resolve().choices["item2"]
-            except KeyError, ke:
-                print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
-                pass
+#         state = HearOptionsExtra(self.robot, sentence, choices, answer, time_out=rospy.Duration(20))
+#         outcome = state.execute()
 
-            print "{}What was heard: {} {} {} {} {} {}".format(prefix, word_beginning , word_item1 , word_preposition ,  word_item2 , word_preposition , word_item3)
+#         # process response
+#         if outcome == "heard":
 
-            # find first item's type
-            if parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
-                self.breakfastFruit.current = word_item1
-                got_fruit = True
-                print "{}First item fruit".format(prefix)
-            elif parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Cereal:
-                self.breakfastCereal.current = word_item1
-                got_cereal = True
-                print "{}First item cereal".format(prefix)
-            elif parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Milk:
-                self.breakfastMilk.current = word_item1
-                got_milk = True
-                print "{}First item milk".format(prefix)
-            else:
-                print "{}Could not get a match with word_item1 = {}".format(prefix, word_item1)
+#             # resolve words separatey since some of them might not have been caught
+#             try:
+#                 word_beginning = answer.resolve().choices["beginning"]
+#             except KeyError, ke:
+#                 print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
+#                 pass
 
-            # find second item's type
-            if parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
-                self.breakfastFruit.current = word_item2
-                got_fruit = True
-                print "{}Second item Fruit".format(prefix)
-            elif parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Cereal:
-                self.breakfastCereal.current = word_item2
-                got_cereal = True
-                print "{}Second item Cereal".format(prefix)
-            elif parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Milk:
-                self.breakfastMilk.current = word_item2
-                got_milk = True
-                print "{}Second item Milk".format(prefix)
-            else:
-                print "{}Could not get a match with word_item2 = {}".format(prefix, word_item2)
+#             try:
+#                 word_item3 = answer.resolve().choices["item3"]
+#             except KeyError, ke:
+#                 print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
+#                 pass
 
-            # third type might not exist if its milk
-            if word_item3 :
+#             try:
+#                 word_preposition = answer.resolve().choices["preposition"]
+#                 word_item1 = answer.resolve().choices["item1"]
+#                 word_item2 = answer.resolve().choices["item2"]
+#             except KeyError, ke:
+#                 print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
+#                 pass
 
-                # find second item's type
-                if parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Fruit :
-                    self.breakfastFruit.current = word_item3
-                    got_fruit = True
-                    print "{}Third item Fruit".format(prefix)
-                elif parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Cereal :
-                    self.breakfastCereal.current = word_item3
-                    got_cereal = True
-                    print "{}Third item Cereal".format(prefix)
-                elif parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Milk :
-                    self.breakfastMilk.current = word_item3
-                    got_milk = True
-                    print "{}Third item Milk".format(prefix)
-                else:
-                    print "{}Could not get a match with word_item3 = {}".format(prefix, word_item3)
+#             print "{}What was heard: {} {} {} {} {} {}".format(prefix, word_beginning , word_item1 , word_preposition ,  word_item2 , word_preposition , word_item3)
 
-                # just a consistency check
-                if not got_milk:
-                    print prefix + "Still don't know what type of milk it is! Reseting to " + default_milk + bcolors.ENDC
-                    self.breakfastMilk.current = default_milk
+#             # find first item's type
+#             if parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
+#                 self.breakfastFruit.current = word_item1
+#                 got_fruit = True
+#                 print "{}First item fruit".format(prefix)
+#             elif parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Cereal:
+#                 self.breakfastCereal.current = word_item1
+#                 got_cereal = True
+#                 print "{}First item cereal".format(prefix)
+#             elif parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Milk:
+#                 self.breakfastMilk.current = word_item1
+#                 got_milk = True
+#                 print "{}First item milk".format(prefix)
+#             else:
+#                 print "{}Could not get a match with word_item1 = {}".format(prefix, word_item1)
 
-            else:
-                self.breakfastMilk.current = default_milk
-                got_milk = True
+#             # find second item's type
+#             if parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
+#                 self.breakfastFruit.current = word_item2
+#                 got_fruit = True
+#                 print "{}Second item Fruit".format(prefix)
+#             elif parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Cereal:
+#                 self.breakfastCereal.current = word_item2
+#                 got_cereal = True
+#                 print "{}Second item Cereal".format(prefix)
+#             elif parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Milk:
+#                 self.breakfastMilk.current = word_item2
+#                 got_milk = True
+#                 print "{}Second item Milk".format(prefix)
+#             else:
+#                 print "{}Could not get a match with word_item2 = {}".format(prefix, word_item2)
 
-            print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
+#             # third type might not exist if its milk
+#             if word_item3 :
+
+#                 # find second item's type
+#                 if parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Fruit :
+#                     self.breakfastFruit.current = word_item3
+#                     got_fruit = True
+#                     print "{}Third item Fruit".format(prefix)
+#                 elif parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Cereal :
+#                     self.breakfastCereal.current = word_item3
+#                     got_cereal = True
+#                     print "{}Third item Cereal".format(prefix)
+#                 elif parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Milk :
+#                     self.breakfastMilk.current = word_item3
+#                     got_milk = True
+#                     print "{}Third item Milk".format(prefix)
+#                 else:
+#                     print "{}Could not get a match with word_item3 = {}".format(prefix, word_item3)
+
+#                 # just a consistency check
+#                 if not got_milk:
+#                     print prefix + "Still don't know what type of milk it is! Reseting to " + default_milk + bcolors.ENDC
+#                     self.breakfastMilk.current = default_milk
+
+#             else:
+#                 self.breakfastMilk.current = default_milk
+#                 got_milk = True
+
+#             print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
             
-            if not self.breakfastCereal.resolve() or not self.breakfastFruit.resolve() or not self.breakfastMilk.resolve() :
-                heard_correctly = False
-                print prefix + bcolors.FAIL + "One of the food types was empty" + bcolors.ENDC
-            else:
-                heard_correctly = True
+#             if not self.breakfastCereal.resolve() or not self.breakfastFruit.resolve() or not self.breakfastMilk.resolve() :
+#                 heard_correctly = False
+#                 print prefix + bcolors.FAIL + "One of the food types was empty" + bcolors.ENDC
+#             else:
+#                 heard_correctly = True
 
-        else:
-            heard_correctly = False
+#         else:
+#             heard_correctly = False
 
-        # rospy.sleep(2)
+#         # rospy.sleep(2)
 
-        if heard_correctly:
-            return 'succeeded'
-        else:
-            return 'failed'
+#         if heard_correctly:
+#             return 'succeeded'
+#         else:
+#             return 'failed'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -250,7 +261,7 @@ class RepeatOrderToPerson(smach.State):
     def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "RepeatOrderToPerson" + bcolors.ENDC
 
-        self.robot.speech.speak("I will get you a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve(), block=False)
+        self.robot.speech.speak("I will get you a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Breakfast will be served in the dining room.", block=False)
 
         return 'done'
 
@@ -263,7 +274,7 @@ class CancelHeadGoals(smach.State):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
 
-    def execute(self, robot):
+    def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "CancelHeadGoals" + bcolors.ENDC
 
         self.robot.head.cancel_goal()
@@ -283,7 +294,7 @@ class LookAtBedTop(smach.State):
         self.g = wakeup_light_color[1]
         self.b = wakeup_light_color[2]
 
-    def execute(self, robot):
+    def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
 
         # set robots pose
@@ -334,7 +345,7 @@ class LookIfSomethingsThere(smach.State):
         self.timeout = rospy.Duration(timeout)
         self.sleep = sleep
 
-    def execute(self, robot):
+    def execute(self, userdata):
         self.start_time = rospy.Time.now()
         print (rospy.Time.now() - self.start_time).secs
         print rospy.Time.now() - self.start_time < self.timeout
@@ -349,7 +360,7 @@ class LookIfSomethingsThere(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-class Evaluate(smach.State)
+class Evaluate(smach.State):
     def __init__(self, options, designator):
         smach.State.__init__(self, outcomes=['all_succeeded','partly_succeeded','all_failed'])
         self.options = options
@@ -357,60 +368,68 @@ class Evaluate(smach.State)
         self.something_failed = False
         self.something_succeeded = False
 
-    def execute(self, robot):
-        for option in options:
+    def execute(self, userdata):
+        for option in self.options:
             if self.results[option]:
                 something_succeeded = True
             else:
                 something_failed = True
 
-        if something_succeeded && something_failed:
+        if something_succeeded and something_failed:
             return 'partly_succeeded'
-        else if something_succeeded && !something_failed:
+        elif something_succeeded and not something_failed:
             return 'all_succeeded'
-        else if !something_succeeded && something_failed:
+        elif not something_succeeded and something_failed:
             return 'all_failed'
-        else
+        else:
             return 'all_failed'
 
 # ----------------------------------------------------------------------------------------------------
 
-class addPositive(smach.State)
+class addPositive(smach.State):
     def __init__(self, results_designator, item_designator):
-        smach.State.__init__(self, outcomes=['done', 'failed'])
+        smach.State.__init__(self, outcomes=['done'])
         self.results = results_designator.resolve()
         self.item = item_designator.resolve()
 
-    def execute(self,robot):
-        try:
-            if not self.results[self.item]
-        except Exception, e:
-            print self.item + " is not one of the items in the dictionary."
-            raise e
-        self.results[self.item] = True
-        return
+    def execute(self, userdata):
+        self.results.current[self.item] = True
+        return "done"
 
 
 # ----------------------------------------------------------------------------------------------------
 
 class SelectItem(smach.State):
-    def __init__(self, robot, options, asked_items, generic_item, specific_item):
+    def __init__(self, robot, options, asked_items, generic_item, specific_item, item_nav_goal):
         smach.State.__init__(self, outcomes=['selected', 'all_done'])
         self.robot = robot
         self.options = options
-        self.asked_items = asked_items
+        self.asked_items_des = asked_items
         self.count = len(self.options)
         self.current = 0
         self.generic_item = generic_item
         self.specific_item = specific_item
+        self.nav_goal = item_nav_goal
 
-    def execute(self, robot):
-        self.generic_item.current = self.options[current]
+    def execute(self, userdata):
+        self.generic_item.current = self.options[self.current]
 
-        category_items = [i for i in objects if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
+        asked_items = [d.resolve() for d in self.asked_items_des]
+        category_items = [i['name'] for i in knowledge_objs if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
+
         self.specific_item.current = list(set(category_items).intersection(asked_items))[0]
+
+        self.robot.speech.speak("I will get your "+self.generic_item.resolve()+" now.", block=False)
+
+
+        self.nav_goal['at'] =   {
+                                    EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['near_'+self.generic_item.resolve()]) : "near",
+                                    EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in']) : "in"
+                                }
+
+        self.nav_goal['lookat'] =   EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['lookat_'+self.generic_item.resolve()])
         
-        self.current++
+        self.current += 1
         if self.current == self.count:
             self.current = 0
             return 'all_done'
@@ -419,29 +438,122 @@ class SelectItem(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class FindItem(smach.State):
-    def __init__(self, robot, goal_item, result):
+    def __init__(self, robot, sensor_range, type_des, result_des, on_object_des=None):
         smach.State.__init__(self, outcomes=['item_found', 'not_found'])
         self.robot = robot
-        self.goal = goal_item
-        self.result = result
-        self.goal_type = o in objects if 'name' in o and o['name']==goal_item
-        
-        milk_objects = [o for o in objects if 'sub-category' in o and o['sub-category']=='milk']
+        self.on_object = on_object_des.resolve()
+        self.result_type = type_des.resolve()
+        self.result_des = result_des
 
-    def execute(self,robot):
-        entity_ids = self.robot.ed.segment_kinect(max_sensor_range = 2.0)
+    def execute(self, userdata):
+        entity_ids = self.robot.ed.segment_kinect(max_sensor_range = sensor_range)
         filtered_ids = []
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            # if e and onTopOff(e, shelf_entity) and not e.type:
-            #     filtered_ids.append(e.id)
+            if e and self.on_object and onTopOff(e, self.on_object) and not e.type:
+                filtered_ids.append(e.id)
 
         entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
 
+        for i in range(len(entity_ids)):
+            if entity_types[i] == result_type:
+                result_des.current = self.robot.ed.get_entity(id_list[i])
+                return 'item_found'
 
+        return 'not_found'
 
+class EmptySpotDesignator(Designator):
+    """Designates an empty spot on the empty placement-shelve.
+    It does this by queying ED for entities that occupy some space.
+        If the result is no entities, then we found an open spot."""
+    def __init__(self, robot, closet_designator):
+        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
+        self.robot = robot
+        self.closet_designator = closet_designator
+        self._edge_distance = 0.1                   # Distance to table edge
+        self._spacing = 0.15
 
+    def resolve(self):
+        closet = self.closet_designator.resolve()
 
+        # points_of_interest = []
+        points_of_interest = self.determinePointsOfInterest(closet)
 
+        def is_poi_occupied(poi):
+            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
+            return not any(entities_at_poi)
 
+        open_POIs = filter(is_poi_occupied, points_of_interest)
+
+        def distance_to_poi_area(poi):
+            #Derived from navigate_to_place
+            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+            x = poi.point.x
+            y = poi.point.y
+            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
+            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+
+            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+
+            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
+            if plan_to_poi:
+                distance = len(plan_to_poi)
+            print "Distance: %s"%distance
+            return distance
+
+        if any(open_POIs):
+            best_poi = min(open_POIs, key=distance_to_poi_area)
+            placement = geom.PoseStamped(pointstamped=best_poi)
+            rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+            return placement
+        else:
+            rospy.logerr("Could not find an empty spot")
+            return None
+
+    def determinePointsOfInterest(self, e):
+
+        points = []
+
+        x = e.pose.position.x
+        y = e.pose.position.y
+
+        if len(e.convex_hull) == 0:
+            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+            return []
+
+        ''' Convert convex hull to map frame '''
+        center_pose = poseMsgToKdlFrame(e.pose)
+        ch = []
+        for point in e.convex_hull:
+            p = pointMsgToKdlVector(point)
+            p = center_pose * p
+            ch.append(p)
+
+        ''' Loop over hulls '''
+        ch.append(ch[0])
+        for i in xrange(len(ch) - 1):
+                dx = ch[i+1].x() - ch[i].x()
+                dy = ch[i+1].y() - ch[i].y()
+                length = math.hypot(dx, dy)
+
+                d = self._edge_distance
+                while d < (length-self._edge_distance):
+
+                    ''' Point on edge '''
+                    xs = ch[i].x() + d/length*dx
+                    ys = ch[i].y() + d/length*dy
+
+                    ''' Shift point inwards and fill message'''
+                    ps = geom.PointStamped()
+                    ps.header.frame_id = "/map"
+                    ps.point.x = xs - dy/length * self._edge_distance
+                    ps.point.y = ys + dx/length * self._edge_distance
+                    ps.point.z = e.pose.position.z + e.z_max
+                    points.append(ps)
+
+                    # ToDo: check if still within hull???
+                    d += self._spacing
+
+        return points
