@@ -16,10 +16,11 @@ class Low(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
-        self.robot.torso.send_goal('navigation', timeout=4.0)
-        self.robot.speech.speak("To the windooow!", block=False)
-        self.robot.speech.speak("To the waaall!", block=False)
+        if amigo.robot_name == "amigo":
+            self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
+            self.robot.torso.send_goal('navigation', timeout=4.0)
+            self.robot.speech.speak("To the windooow!", block=False)
+            self.robot.speech.speak("To the waaall!", block=False)
 
         return "done"
 
