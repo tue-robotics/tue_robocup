@@ -151,7 +151,7 @@ def scanForHuman(robot):
                 # entity.data
 
                 printOk("Entity with type " + e_type + " added to the list (id " + e_id + ")")
-                robot.ed.update_entity(id=e_id, flags=[{"add": "locked"}])
+                # robot.ed.update_entity(id=e_id, flags=[{"add": "locked"}])
 
                 entity_list = entity_list + [entity]
 
@@ -397,15 +397,16 @@ class DescribePeople(smach.State):
                                 outcomes=['done'])
         self.robot = robot
         self.facesAnalyzedDes = facesAnalyzedDes
+        self.first_time = True
+        self.numberMale = 0
+        self.numberFemale = 0
+        self.operatorIdx = 0
 
     def execute(self, userdata):
         printOk("DescribePeople")
 
-        numberMale = 0
-        numberFemale = 0
         faceList = None
         position = 1
-        operatorIdx = 0
 
         # try to resolve the crowd designator
         faceList = self.facesAnalyzedDes.resolve()
@@ -415,78 +416,78 @@ class DescribePeople(smach.State):
 
         if not faceList == None:
 
-            # import ipdb; ipdb.set_trace()
+            # there's a bug somewhere, if the function is ran twice it presents a different descriptio, so... fixed for now
+            if self.first_time == True:
+                self.first_time = False
+                # import ipdb; ipdb.set_trace()
 
-            # convert map frame to base_link frame
-            for face in faceList:
-                in_map = msgs.PointStamped(point=face.point_stamped.point, frame_id="/map")
-                in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
-                face.point_stamped.point.x = in_base_link.x
-                face.point_stamped.point.y = in_base_link.y
-                face.point_stamped.point.z = in_base_link.z
+                # convert map frame to base_link frame
+                for face in faceList:
+                    in_map = msgs.PointStamped(point=face.point_stamped.point, frame_id="/map")
+                    in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
+                    face.point_stamped.point.x = in_base_link.x
+                    face.point_stamped.point.y = in_base_link.y
+                    face.point_stamped.point.z = in_base_link.z
 
-            # order list by face Y location wrt base_link
-            faceList.sort(key=lambda k: k.point_stamped.point.y)
+                # order list by face Y location wrt base_link
+                faceList.sort(key=lambda k: k.point_stamped.point.y)
 
-            # Compute crowd and operator details
-            for idx, face in enumerate(faceList):
-                printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}, Operator: {9}".format(
-                    str(face.name),
-                    str(face.score),
-                    str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z),
-                    str(face.pose),
-                    str(face.gender),
-                    str(face.inMainCrowd),
-                    str(face.orderedPosition),
-                    str(face.operator)))
+                # Compute crowd and operator details
+                for idx, face in enumerate(faceList):
+                    printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}, Operator: {9}".format(
+                        str(face.name),
+                        str(face.score),
+                        str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z),
+                        str(face.pose),
+                        str(face.gender),
+                        str(face.inMainCrowd),
+                        str(face.orderedPosition),
+                        str(face.operator)))
 
-                # count number of males and females
-                if face.inMainCrowd == True:
-                    if face.gender == challenge_knowledge.Gender.Male:
-                        numberMale += 1
-                    else:
-                        numberFemale += 1
+                    # count number of males and females
+                    if face.inMainCrowd == True:
+                        if face.gender == challenge_knowledge.Gender.Male:
+                            self.numberMale += 1
+                        else:
+                            self.numberFemale += 1
 
-                # translate position number to word
-                if idx + 1 == 1 : face.orderedPosition = "first"
-                if idx + 1 == 2 : face.orderedPosition = "second"
-                if idx + 1 == 3 : face.orderedPosition = "third"
-                if idx + 1 == 4 : face.orderedPosition = "fourth"
-                if idx + 1 == 5 : face.orderedPosition = "fifth"
-                if idx + 1 == 6 : face.orderedPosition = "sixth"
-                if idx + 1 == 7 : face.orderedPosition = "seventh"
-                if idx + 1 == 8 : face.orderedPosition = "eighth"
-                if idx + 1 == 9 : face.orderedPosition = "ninth"
-                if idx + 1 == 10 : face.orderedPosition = "tenth"
+                    # translate position number to word
+                    if idx + 1 == 1 : face.orderedPosition = "first"
+                    if idx + 1 == 2 : face.orderedPosition = "second"
+                    if idx + 1 == 3 : face.orderedPosition = "third"
+                    if idx + 1 == 4 : face.orderedPosition = "fourth"
+                    if idx + 1 == 5 : face.orderedPosition = "fifth"
+                    if idx + 1 == 6 : face.orderedPosition = "sixth"
+                    if idx + 1 == 7 : face.orderedPosition = "seventh"
+                    if idx + 1 == 8 : face.orderedPosition = "eighth"
+                    if idx + 1 == 9 : face.orderedPosition = "ninth"
+                    if idx + 1 == 10 : face.orderedPosition = "tenth"
 
-                if face.operator == True:
-                    operatorIdx = idx
+                    if face.operator == True:
+                        self.operatorIdx = idx
 
 
             self.robot.speech.speak("I counted {0} persons in this crowd. {1} males and {2} females.".format(
-                str(numberMale + numberFemale),
-                numberMale if numberMale > 0 else "no",
-                numberFemale if numberFemale > 0 else "no"),
+                str(self.numberMale + self.numberFemale),
+                self.numberMale if self.numberMale > 0 else "no",
+                self.numberFemale if self.numberFemale > 0 else "no"),
                 block=False)
-
 
             try:
                 # just to be safe, test this...
-                if operatorIdx < 0 or operatorIdx >= len(faceList):
-                    printFail("Operator index from the list is invalid. (" + operatorIdx + "). Reseting to 0")
-                    # self.robot.speech.speak("I could not find my operator among the people I searched for.", block=False)
-                    operatorIdx = 0
-
+                if self.operatorIdx < 0 or self.operatorIdx >= len(faceList):
+                    printFail("Operator index from the list is invalid. (" + self.operatorIdx + "). Reseting to 0")
+                    self.operatorIdx = 0
+                
                 self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from the my left.".format(
-                    name = faceList[operatorIdx].name,
-                    order = faceList[operatorIdx].orderedPosition,
-                    gender = "man" if faceList[operatorIdx].gender == challenge_knowledge.Gender.Male else "woman",
-                    pronoun = "he" if faceList[operatorIdx].gender == challenge_knowledge.Gender.Male else "she",
-                    pose =  "standing up" if faceList[operatorIdx].pose == challenge_knowledge.Pose.Standing else "sitting down"),
-                    block=True)
+                    name = faceList[self.operatorIdx].name,
+                    order = faceList[self.operatorIdx].orderedPosition,
+                    gender = "man" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "woman",
+                    pronoun = "he" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "she",
+                    pose =  "standing up" if faceList[self.operatorIdx].pose == challenge_knowledge.Pose.Standing else "sitting down"), block=True)
 
             except KeyError, ke:
-                    printOk("KeyError operatorIdx:" + str(ke))
+                    printOk("KeyError self.operatorIdx:" + str(ke))
                     pass
 
         else:
@@ -642,13 +643,6 @@ class ChooseOperator(smach.State):
                     self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, y=face.point_stamped.point.y, z=face.point_stamped.point.z, frame_id="/map"))
                     chosenOperator = True
 
-            # If no operator was choosen, select a random one
-            # if not chosenOperator:
-            #     # operatorIdx = 0
-            #     operatorIdx = random.randint(0, len(faceList)-1)
-            #     chosenOperator = True
-            #     printWarning("Could not choose an operator. Selecting random index: " + str(operatorIdx))
-
             if chosenOperator:
                 printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
                     str(faceList[operatorIdx].name),
@@ -656,16 +650,6 @@ class ChooseOperator(smach.State):
                     str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
 
                 faceList[operatorIdx].operator = True
-
-                # Operators face location
-                # p1 = (faceList[operatorIdx].point_stamped.point.x, faceList[operatorIdx].point_stamped.point.y, faceList[operatorIdx].point_stamped.point.z)
-
-                # # Update who belongs to the main crowd, close to the operator
-                # for face in faceList:
-                #     p2 = (face.point_stamped.point.x, face.point_stamped.point.y, face.point_stamped.point.z)
-
-                #     if points_distance(p1=p1, p2=p2) < 5.0:
-                #         face.inMainCrowd = True
 
                 userdata.operatorIdx_out = operatorIdx
                 return 'succeeded'
@@ -708,15 +692,17 @@ class AnalysePerson(smach.State):
         humanDesignatorRes = None
 
         # create designators
-        humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
-        humanDataDesignator = AttrDesignator(humanDesignator, 'data')
+        # humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+        # humanDataDesignator = AttrDesignator(humanDesignator, 'data')
 
-        humanDesignatorRes = humanDesignator.resolve()
-        if not humanDesignatorRes:
-            printOk("Could not resolve humanDesgnResult.")
-            pass
+        # humanDesignatorRes = humanDesignator.resolve()
+        # if not humanDesignatorRes:
+        #     printOk("Could not resolve humanDesgnResult.")
+        #     pass
 
-        if not humanDesignatorRes == None:
+        
+        humanDesignatorRes = scanForHuman(self.robot)
+        if humanDesignatorRes:
             printOk("Iterating through the {0} humans found".format(len(humanDesignatorRes)))
 
             for humanEntity in humanDesignatorRes:
@@ -746,23 +732,32 @@ class AnalysePerson(smach.State):
                                 face_loc = face_detector_loc
                                 break
 
+                        # temporary, for debug output
+                        shortest = 90
+
                         #  test if a face in this location is already present in the list
                         sameFace = False
+                        p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
+
                         for face in self.facesAnalysedDes.current:
-                            p1 = (face_loc["map_x"], face_loc["map_y"], face_loc["map_z"])
                             p2 = (face.point_stamped.point.x,face.point_stamped.point.y, face.point_stamped.point.z)
+                            
+                            # just for testing
+                            if points_distance(p1=p1, p2=p2) < shortest:
+                                shortest = points_distance(p1=p1, p2=p2)
 
                             if points_distance(p1=p1, p2=p2) < challenge_knowledge.face_proximity_treshold:
                                 printOk ("Too close to another face: " + str(points_distance(p1=p1, p2=p2)))
                                 sameFace = True
                                 break
 
-                        if sameFace:
-                            # TODO: COMPARE SCORES FROM THE FACE RECOGNITION, IF ITS BETTER, REPLACE
-                            printOk("Face already present in the list. List size: " + str(len(self.facesAnalysedDes.current)))
 
                         #  if information is valid, add it to the list of analysed faces
                         if not sameFace:
+
+                            printOk("Shortest distance to another face was: " + str(shortest))
+
+                            printOk("Height of face: " + str(face_loc["map_z"]))
 
                             # "predict" pose in a hacky way
                             if face_loc["map_z"] > challenge_knowledge.sitting_height_treshold:
@@ -798,7 +793,7 @@ class AnalysePerson(smach.State):
 
             return 'succeded'
         else:
-            printOk("Could not find anyone in front of the robot.")
+            printWarning("Could not find anyone in front of the robot.")
             return 'failed'
 
 

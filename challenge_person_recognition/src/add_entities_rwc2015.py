@@ -9,9 +9,6 @@ if __name__ == "__main__":
 
     W = client.SimWorld()
 
-    # person at the learning spot
-    W.add_object("operator-1",   "sjoerd", 7.085, -8.183, 1.570)
-
     # people in the room
     W.add_object("person-1", "loy", 9.005, -1.867, 0.000)
     W.add_object("person-2", "erik", 8.525, -1.894, 0.000)
@@ -19,5 +16,8 @@ if __name__ == "__main__":
     W.add_object("person-4", "rob", 7.604, -1.873, 0.000)
     W.add_object("person-5", "sjoerd", 7.151, -2.278, 0.000)
     W.add_object("person-6", "rob", 6.618, -1.725, 0.000)
+
+    # operator
+    W.add_object("person-7", "sjoerd", 10.842, -5.057, 0.000)
     
     #loy, erik, tim, sjoerd, rob
