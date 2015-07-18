@@ -18,12 +18,12 @@ if __name__ == "__main__":
 
     if env == "robotics_testlabs":
 
-        W.add_object("coke-1","coke", 3.19,4.1,1.0)
-        W.add_object("coke-2","coke", 3.14,4.2,1.0)
-        W.add_object("coke-3","coke", 3.2,4.3,1.0)
-        W.add_object("coke-4","coke", 3.15,4.4,1.0)
-        W.add_object("coke-5","coke", 3.17,4.5,1.0)
-        W.add_object("coke-6","coke", 3.2,4.6,1.0)
+        W.add_object("coke-1","coke", 3.19,4.1,0.85)
+        W.add_object("coke-2","coke", 3.14,4.2,0.85)
+        W.add_object("coke-3","coke", 3.2,4.3,0.85)
+        W.add_object("coke-4","coke", 3.15,4.4,0.85)
+        W.add_object("coke-5","coke", 3.17,4.5,0.85)
+        W.add_object("coke-6","coke", 3.2,4.6,0.85)
 
 
         #person = W.add_object("loy-1", "loy", 0, 4, 0, 0, 0, 0.7)

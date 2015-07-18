@@ -385,8 +385,10 @@ class ManipRecogSingleItem(smach.StateMachine):
         # current_item = LockingDesignator(EdEntityDesignator(robot,
         #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
+        # current_item = LockingDesignator(EdEntityDesignator(robot,
+        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
+            criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))

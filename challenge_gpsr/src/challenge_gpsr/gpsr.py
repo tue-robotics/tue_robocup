@@ -601,6 +601,16 @@ class FindObjectInRoom(smach.StateMachine):
                                     transitions={'object_found':'SAY_FOUND_OBJECT',
                                                  'object_not_found':'CHECK_IF_LOCATIONS_LEFT'})
 
+
+            # smach.StateMachine.add('NAV_TO_LOC',
+            #                         states.NavigateToSymbolic(robot, 
+            #                             {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_2" }, 
+            #                             EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+            #                         transitions={   'arrived'           :   'LOOKAT_LOC',
+            #                                         'unreachable'       :   'CHECK_IF_LOCATIONS_LEFT',
+            #                                         'goal_not_defined'  :   'CHECK_IF_LOCATIONS_LEFT'})
+
+
             @smach.cb_interface(outcomes=['ok'])
             def dynamic_say(userdata):
                 try:
