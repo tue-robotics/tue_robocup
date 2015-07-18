@@ -217,9 +217,9 @@ class DescribeBottles(smach.State):
 
         # import ipdb; ipdb.set_trace()
         if height_descs and colors and labels:
-            self.spec_designator.current = "Bring me the <height_desc>, <color> bottle labeled <label>"
+            self.spec_designator.current = "Bring me the <height_desc> <color> bottle labeled <label>"
         elif height_descs and colors:
-            self.spec_designator.current = "Bring me the <height_desc>, <color> bottle"
+            self.spec_designator.current = "Bring me the <height_desc> <color> bottle"
         elif colors and labels:
             self.spec_designator.current = "Bring me the <color> bottle labeled <label>"
         elif height_descs and labels:

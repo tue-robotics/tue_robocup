@@ -37,14 +37,14 @@ def html2pdf(sourceHtml, outputFilename):
 
 def save_entity_image_to_file(world_model_ed, entityID):
     # ed request
-    info = world_model_ed.get_entity_info(entityID, measurement_image_border=20)
+    info = world_model_ed.get_entity_info(entityID)
 
     byte_array = bytearray(info.measurement_image_unmasked)
     stream = StringIO.StringIO(byte_array)
     image = Image.open(stream)
 
     try:
-        byte_array = bytearray(info.measurement_image)
+        byte_array = bytearray(info.measurement_image_unmasked)
         stream = StringIO.StringIO(byte_array)
         image = Image.open(stream)
 
