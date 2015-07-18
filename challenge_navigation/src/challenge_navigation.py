@@ -10,6 +10,19 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
 
+class Low(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
+        self.robot.torso.send_goal('navigation', timeout=4.0)
+        self.robot.speech.speak("To the windooow!", block=False)
+        self.robot.speech.speak("To the waaall!", block=False)
+
+        return "done"
+
 class Turn(smach.State):
     def __init__(self, robot, radians):
         smach.State.__init__(self, outcomes=["turned"])
@@ -33,9 +46,13 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
                                 states.StartChallengeRobust(robot, challenge_knowledge.starting_point, use_entry_points = True),
-                                transitions={   "Done"              :   "SAY_GOTO_TARGET1",
-                                                "Aborted"           :   "SAY_GOTO_TARGET1",
-                                                "Failed"            :   "SAY_GOTO_TARGET1"})
+                                transitions={   "Done"              :   "GET_LOW",
+                                                "Aborted"           :   "GET_LOW",
+                                                "Failed"            :   "GET_LOW"})
+
+        smach.StateMachine.add( "GET_LOW",
+                                Low(robot),
+                                transitions={   "done"              :   "SAY_GOTO_TARGET1"})
 
         smach.StateMachine.add( 'SAY_GOTO_TARGET1',
                                 states.Say(robot, ["I will go to my first target now",
