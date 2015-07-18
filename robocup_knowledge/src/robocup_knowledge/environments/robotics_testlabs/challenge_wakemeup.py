@@ -71,4 +71,6 @@ kitchen_door = "kitchen_door"   # Only needed if we can open a door
 # Number of times it asks for the door to be opened and replans to the kitchen
 check_door_attempts = 1
 
+dinner_table = "dinner_table"
+
 
