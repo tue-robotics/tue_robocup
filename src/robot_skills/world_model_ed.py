@@ -256,11 +256,11 @@ class ED:
             center_point = self._transform_center_point_to_map(center_point)
 
         entities = self.get_entities(type="", center_point=center_point, radius=radius)
-        print "entities 1 in get_closest_possible_person_entity = ", entities
+        #print "entities 1 in get_closest_possible_person_entity = ", entities
 
         # HACK
         entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
-        print "entities 2 in get_closest_possible_person_entity = ", entities
+        #print "entities 2 in get_closest_possible_person_entity = ", entities
 
         # if only the persons in a certain room should be found:
         if not (room == "" and len(entities) == 0):
@@ -277,7 +277,7 @@ class ED:
 
             entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
 
-            print "entities 3 in get_closest_possible_person_entity = ", entities
+            print "entities sorted in room = ", entities
 
         if len(entities) == 0:
             return None
@@ -285,7 +285,7 @@ class ED:
         # Sort by distance
         try:
             entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
-            print "entities 4 in get_closest_possible_person_entity = ", entities
+            print "entities sorted closest to robot = ", entities
         except:
             print "Failed to sort entities"
             return None
