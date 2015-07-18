@@ -491,7 +491,7 @@ class FindObjectInRoom(smach.StateMachine):
                         #print "! LOC_ROOM = ", LOC_ROOM
                         robot.reasoner.query("retractall(room_loc(B))")
                         robot.reasoner.assertz("room_loc("+str(LOC_ROOM)+")")
-                        #print robot.reasoner.query_first_answer("room_loc(A)")
+                        print "room_loc = ", robot.reasoner.query_first_answer("room_loc(A)")
 
                         return 'location_found'
                     else:
@@ -515,7 +515,7 @@ class FindObjectInRoom(smach.StateMachine):
                                                     'goal_not_defined'  :   'NAV_TO_LOC_RETRY'})
 
             smach.StateMachine.add('NAV_TO_LOC_RETRY',
-                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.8),
+                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.5),
                                         transitions={   'arrived':'LOOKAT_LOC',
                                                         'unreachable':'Object_not_found',
                                                         'goal_not_defined':'Object_not_found'})
@@ -536,7 +536,10 @@ class FindObjectInRoom(smach.StateMachine):
 
 
                     #     #print "aaaaa, test has_type = ", object_type
-                    #     location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
+                    location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
+                    print "location = ", location
+                    location_ent = robot.ed.get_entity(id=location, parse=False)
+                    #print "location_ent = ", location_ent
                     #     #print "aaaaa, test location = ", location
                     #     grab_item_designator = EdEntityDesignator(robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
                     #                                                             criteriafuncs=[has_type], debug=False)
@@ -559,15 +562,15 @@ class FindObjectInRoom(smach.StateMachine):
                     for entity_id in entity_ids:
                         e = robot.ed.get_entity(entity_id)
 
-                        if e: #and onTopOff(e, location_ent):
+                        if e and onTopOff(e, location_ent):
                             id_list.append(e.id)
 
                     print "id_list = ", id_list
 
                     ''' Try to classify the objects on the shelf '''
-                    print "data.objects_known =", data.objects_known
+                    print "data.objects_known_recognize =", data.objects_known_recognize
 
-                    entity_types = robot.ed.classify(ids=id_list, types=data.objects_known)
+                    entity_types = robot.ed.classify(ids=id_list, types=data.objects_known_recognize)
 
                     ''' Check all entities that were flagged to see if they have received a 'type' it_label
                     if so: recite them and lock them '''
@@ -615,7 +618,17 @@ class FindObjectInRoom(smach.StateMachine):
             def dynamic_say(userdata):
                 try:
                     object_type = object_to_find.resolve()
-                    robot.speech.speak("I found the " + str(object_type) + ". It is on the " + str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()))
+                    if ((str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf1") or 
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf2") or
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf3") or
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf4") or
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf5") or
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf6") or
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf7") or
+                    (str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()) == "bookcase/shelf8")):
+                        robot.speech.speak("I found the " + str(object_type) + ". It is on the bookcase")
+                    else:
+                        robot.speech.speak("I found the " + str(object_type) + ". It is on the " + str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()))
                     return 'ok'
 
                 except KeyError:
@@ -640,6 +653,24 @@ class FindObjectInRoom(smach.StateMachine):
                 except KeyError:
                     print "[find_loc] No loc found anymore, can happen"
                     return "no_location"
+
+            smach.StateMachine.add('NAV_TO_LOC_POS2',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_pos2" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'LOOKAT_LOC_POS2',
+                                                    'unreachable'       :   'CHECK_IF_LOCATIONS_LEFT',
+                                                    'goal_not_defined'  :   'CHECK_IF_LOCATIONS_LEFT'})
+
+            smach.StateMachine.add( "LOOKAT_LOC_POS2",
+                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
+                                         transitions={  'succeeded'         :'CHECK_FOR_OBJECT_POS2',
+                                                        'failed'            :'CHECK_FOR_OBJECT_POS2'})
+
+            smach.StateMachine.add( "CHECK_FOR_OBJECT_POS2",
+                                    smach.CBState(check_for_object),
+                                    transitions={'object_found':'SAY_FOUND_OBJECT',
+                                                 'object_not_found':'CHECK_IF_LOCATIONS_LEFT'})
 
             smach.StateMachine.add( "CHECK_IF_LOCATIONS_LEFT",
                                     smach.CBState(check_locations_in_room_left),
@@ -794,15 +825,15 @@ class InspectLocationAndGrab(smach.State):
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if e: #and onTopOff(e, location_ent):
+            if e and onTopOff(e, location_ent):
                 id_list.append(e.id)
 
         print "id_list = ", id_list
 
         ''' Try to classify the objects on the shelf '''
-        print "data.objects_known =", data.objects_known
+        print "data.objects_known_recognize =", data.objects_known_recognize
 
-        entity_types = self.robot.ed.classify(ids=id_list, types=data.objects_known)
+        entity_types = self.robot.ed.classify(ids=id_list, types=data.objects_known_recognize)
 
         ''' Check all entities that were flagged to see if they have received a 'type' it_label
         if so: recite them and lock them '''
