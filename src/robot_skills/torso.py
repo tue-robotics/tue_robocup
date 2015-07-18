@@ -21,7 +21,8 @@ class Torso(object):
         self.upper_limit = self.default_configurations['upper_limit']
 
         # Init action client
-        self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/torso_server', control_msgs.msg.FollowJointTrajectoryAction)
+        #self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/torso_server', control_msgs.msg.FollowJointTrajectoryAction)
+        self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/body/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
         
         # Init joint measurement subscriber
         self.torso_sub = rospy.Subscriber('/'+self.robot_name+'/sergio/torso/measurements', JointState, self._receive_torso_measurement)
