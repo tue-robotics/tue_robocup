@@ -32,7 +32,7 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
+                                states.StartChallengeRobust(robot, challenge_knowledge.starting_point, use_entry_points = True),
                                 transitions={   "Done"              :   "SAY_GOTO_TARGET1",
                                                 "Aborted"           :   "SAY_GOTO_TARGET1",
                                                 "Failed"            :   "SAY_GOTO_TARGET1"})
