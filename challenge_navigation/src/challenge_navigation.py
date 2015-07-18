@@ -32,7 +32,7 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
+                                states.StartChallengeRobust(robot, challenge_knowledge.starting_point, use_entry_points = True),
                                 transitions={   "Done"              :   "SAY_GOTO_TARGET1",
                                                 "Aborted"           :   "SAY_GOTO_TARGET1",
                                                 "Failed"            :   "SAY_GOTO_TARGET1"})
@@ -189,7 +189,7 @@ def setup_statemachine(robot):
         ######################################################################################################################################################
 
 
-        smach.StateMachine.add( 'TURN', Turn(robot, 3.1415), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
+        smach.StateMachine.add( 'TURN', Turn(robot, challenge_knowledge.rotation), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
         smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True), transitions={ 'spoken' : 'FOLLOW_OPERATOR'})
 
         # TODO :  (Make sure that we toggle the torso laser and disable the kinect)
