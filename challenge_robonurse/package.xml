@@ -15,6 +15,7 @@
   <run_depend>rospy</run_depend>
   <run_depend>python-markdown</run_depend>
   <run_depend>python-xhtml2pdf</run_depend>
+  <run_depend>python-matplotlib</run_depend>
   <run_depend>python-scipy</run_depend>
 
 </package>

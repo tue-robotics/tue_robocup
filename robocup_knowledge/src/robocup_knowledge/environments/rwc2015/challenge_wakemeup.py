@@ -13,44 +13,44 @@ get_newspaper_timeout = 3       # This needs to be updated for robocup maybe
 give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
-
 # Knowledge
 bed = 'bed'                     # This needs to be updated according to the environment
 
 bed_nav_goal = {        
     'near' : bed,
-    'in' : 'bedroom',
+    'in' : 'bedroom', # Maybe define a bedside to get a good vantage point and position for handing over the newspaper
     'lookat' : 'bed'
 }
 
-default_milk = "fresh milk"
+default_milk = "pure_milk"
 
 kitchen_nav_goal = {            # This needs to be updated according to the environment
-    "in_front_of":"cabinet",
+    # "in_front_of":"kitchentable", # This may not be necessary?
     "in" : "kitchen",
-    "lookat" : "cabinet"
+    "lookat" : "kitchen"
 }
 
 generic_items = [ "milk", "cereal", "fruit" ]
-allowed_fruits = [ "apple" ]
+# allowed_fruits = [ "apple" ]
 
-milk_shelf = "cabinet"          # This needs to be updated according to the environment
-cereal_shelf = "cabinet"        # This needs to be updated according to the environment
-fruit_shelf = "cabinet"         # This needs to be updated according to the environment
+milk_shelf = "kitchentable"          # This needs to be updated according to the environment
+cereal_shelf = "kitchencounter"        # This needs to be updated according to the environment
+fruit_shelf = "kitchencounter"         # This needs to be updated according to the environment
 
 table_nav_goal = {
-    "in": "kitchen",
-    "near": "kitchen_table"
+    "in": "livingroom",
+    "near": "dinnertable",
+    "lookat": "dinnertable"
 }
 
 item_nav_goal = {               # This needs to be updated according to the environment
     "in" : "kitchen",
-    "near_milk" : milk_shelf,
-    "lookat_milk" : milk_shelf,
-    "near_cereal" : cereal_shelf,
+    "near_milk"     : milk_shelf,
+    "lookat_milk"   : milk_shelf,
+    "near_cereal"   : cereal_shelf,
     "lookat_cereal" : cereal_shelf,
-    "near_fruit" : fruit_shelf,
-    "lookat_fruit" : fruit_shelf
+    "near_fruit"    : fruit_shelf,
+    "lookat_fruit"  : fruit_shelf
 }
 
 # milk_nav_goal = {               # This needs to be updated according to the environment
@@ -71,11 +71,11 @@ item_nav_goal = {               # This needs to be updated according to the envi
 #     "lookat" : fruit_shelf
 # }
 
-kitchen_door = "kitchen_door"   # Only needed if we can open a door
+# kitchen_door = "kitchen_door"   # Only needed if we can open a door
 
-# Number of times it asks for the door to be opened and replans to the kitchen
-check_door_attempts = 1
+# # Number of times it asks for the door to be opened and replans to the kitchen
+# check_door_attempts = 1
 
-dinner_table = "dinner_table"
+dinner_table = "dinnertable"
 
 
