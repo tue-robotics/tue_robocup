@@ -6,15 +6,15 @@ spec_questions = challenge_speech_recognition_data.spec
 choices_questions = challenge_speech_recognition_data.choices 
 
 #locations: # TO BE DEFINED IN model.yaml!
-starting_point = "initial_pose"
+starting_point = "initial_pose_door_A"
 meeting_point = "gpsr_meeting_point"
-gpsr_exit = "exit"
+gpsr_exit = "exit_door_B1"
 
 # locations inside room used for finding object in room.
 rooms_detailed = {  'kitchen':['kitchentable','kitchencounter', 'cupboard'], # fridge and trashbin are no manipulation locations
                     'livingroom':['bar','couchtable','dinnertable','sofa'], # dinnertable and sofa have both two spots
                     'bedroom':['left_bedside_table','right_bedside_table','desk','bed'],# bed has two spots
-                    'hallway':['bookcase','hallwaytable']} # both locations have multiple spots.
+                    'hallway':['hallwaytable', 'bookcase']} # both locations have multiple spots.
 
 ###############################################
 #### GPSR KNOWLEDGE FOR ASKING FOR ACTION: ####

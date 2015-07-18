@@ -1,11 +1,22 @@
 target1 = {
-    'near' : 'small_table',
-    'in' : 'hall',
-    'lookat' : 'small_table'
+    'near' : 'dinnertable',
+    'in' : 'livingroom',
+    'lookat' : 'dinnertable'
 }
 
 target2 = {
-    'near' : 'counter',
-    'in' : 'office',
-    'lookat' : 'counter'
+    'near' : 'bed',
+    'in' : 'bedroom',
+    'lookat' : 'bed'
 }
+
+target3 = {
+    'near' : 'hallwaytable',
+    'in' : 'hallway',
+    'lookat' : 'hallwaytable'
+}
+
+exit1 = "exit_door_B1"
+exit2 = "exit_door_B2"
+exit3 = "exit_door_A1"
+exit4 = "exit_door_A2"
