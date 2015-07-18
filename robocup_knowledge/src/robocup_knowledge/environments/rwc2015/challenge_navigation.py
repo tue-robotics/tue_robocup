@@ -1,6 +1,11 @@
 target1 = "navigation1"
-target2 = "navigation2"
+target2 = {
+    'in_front_of_pos2' : 'dinnertable',
+    'in' : 'livingroom',
+    'lookat' : 'dinnertable'
+}
 target3 = "navigation3"
+target4 = "navigation4"
 
 radius1 = 0.1
 radius2 = 0.6
@@ -12,3 +17,4 @@ exit4 = "exit_door_A2"
 
 starting_point = "initial_pose_door_A"
 rotation = 0
+
