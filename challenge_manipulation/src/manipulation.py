@@ -261,17 +261,12 @@ class InspectShelves(smach.State):
                 for entity_id in entity_ids:
                     e = self.robot.ed.get_entity(entity_id)
 
-                    if e and onTopOff(e, shelf_entity) and not e.type:
+                    # if e and onTopOff(e, shelf_entity) and not e.type:
+                    if e and onTopOff(e, shelf_entity) and size(e) and min_entity_height(e) and not e.type:
                         # ToDo: filter on size in x, y, z
                         # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                         id_list.append(e.id)
                         DETECTED_OBJECTS += [e]
-
-                ''' Filter on more criteria '''
-                # import ipdb; ipdb.set_trace()
-                DETECTED_OBJECTS = [obj for obj in DETECTED_OBJECTS if size(obj)]                # Filter on object size (height smaller than 0.4)
-                DETECTED_OBJECTS = [obj for obj in DETECTED_OBJECTS if min_entity_height(obj)]   # Filter on object size (height larger than 0.03)
-                #DETECTED_OBJECTS = [obj for obj in DETECTED_OBJECTS if max_width(obj)]           # Filter on object size (height larger than 0.03)
 
                 ''' Try to classify the objects on the shelf '''
                 entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
