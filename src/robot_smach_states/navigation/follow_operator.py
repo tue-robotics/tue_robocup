@@ -116,3 +116,19 @@ class FollowOperator(smach.State):
                 return "stopped"
 
             rospy.sleep(1) # Loop at 1Hz
+
+def setup_statemachine(robot):
+    sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+    with sm:
+        smach.StateMachine.add('TEST', FollowOperator(robot, entity), transitions={"stopped":"TEST",'lost_operator':"TEST", "no_operator":"TEST"})
+        return sm
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        robot_name = sys.argv[1]
+    else:
+        print "Please provide robot name as argument."
+        exit(1)
+
+    rospy.init_node('test_follow_operator')
+    startup(setup_statemachine, robot_name=robot_name)
