@@ -154,6 +154,9 @@ class FollowOperator(smach.State):
             rospy.sleep(1) # Loop at 1Hz
 
 def setup_statemachine(robot):
+    robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
+    robot.ed.enable_plugins(plugin_names=["laser_integration"])
+    robot.ed.reset()
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:
         smach.StateMachine.add('TEST', FollowOperator(robot), transitions={"stopped":"TEST",'lost_operator':"TEST", "no_operator":"TEST"})
