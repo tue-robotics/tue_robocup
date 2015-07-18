@@ -526,7 +526,8 @@ class HandleWalkAndSit(smach.StateMachine):
         with self:
             smach.StateMachine.add( 'FOLLOW_GRANNY', 
                                     states.FollowOperator(robot), 
-                                    transitions={   'stopped'       :'SAY_TAKE_CANE', 
+                                    transitions={   'stopped'       :'SAY_TAKE_CANE',
+                                                    'no_operator'   : 'SAY_TAKE_CANE',
                                                     'lost_operator' :'SAY_TAKE_CANE'})
 
             smach.StateMachine.add( "SAY_TAKE_CANE",
