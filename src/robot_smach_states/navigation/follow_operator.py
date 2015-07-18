@@ -15,7 +15,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0, operator_timeout = 20, distance_threshold = 1.5):
+    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0, operator_timeout = 20, distance_threshold = 2.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
@@ -30,12 +30,13 @@ class FollowOperator(smach.State):
     def _register_operator(self):
         start_time = rospy.Time.now()
 
+        self._robot.head.look_at_standing_person()
+
         operator = None
         while not operator:
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return False
 
-            self._robot.head.look_at_standing_person()
             self._robot.speech.speak("Should I follow you?", block=True)
 
             answer = self._robot.ears.recognize("(yes|no)", {})
@@ -80,8 +81,8 @@ class FollowOperator(smach.State):
         o_point = operator.pose.position
 
         # Get the distance
-        dx = r_point.x - o_point.x
-        dy = r_point.y - o_point.y
+        dx = o_point.x - r_point.x
+        dy = o_point.y - r_point.y
         length = math.hypot(dx, dy)
 
         plan = None
@@ -91,9 +92,13 @@ class FollowOperator(smach.State):
             res = 0.05
             dx_norm = dx / length
             dy_norm = dy / length
-            yaw = atan2(dy, dx)
+            yaw = math.atan2(dy, dx)
+
+            Z = transformations.euler_z_from_quaternion(self._robot.base.get_location().pose.orientation)
+            print "robot yaw: %f"%Z
+            print "Desired yaw: %f"%yaw
             plan = []
-            for i in range(0, length / res):
+            for i in range(0, int(length / res)):
                 x = r_point.x + i * dx_norm * res
                 y = r_point.y + i * dy_norm * res
                 plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
@@ -150,7 +155,7 @@ class FollowOperator(smach.State):
 def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:
-        smach.StateMachine.add('TEST', FollowOperator(robot, entity), transitions={"stopped":"TEST",'lost_operator':"TEST", "no_operator":"TEST"})
+        smach.StateMachine.add('TEST', FollowOperator(robot), transitions={"stopped":"TEST",'lost_operator':"TEST", "no_operator":"TEST"})
         return sm
 
 if __name__ == "__main__":
