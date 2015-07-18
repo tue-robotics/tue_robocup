@@ -15,7 +15,6 @@ import smach_ros
 import wakemeup_states as wakeStates
 from ed.msg import EntityInfo
 from robot_smach_states.util.designators import Designator, VariableDesignator, EdEntityDesignator, ArmDesignator, LockingDesignator
-from challenge_manipulation.manipulation import EmptySpotDesignator
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -91,6 +90,8 @@ class WakeMeUp(smach.StateMachine):
 
         # ------------------------ INITIALIZATIONS ------------------------
 
+        initial_ed_config = {'kinect_segmentation_continuous_mode':True, 'perception_continuous_mode':False, 'disabled_plugins':[]}
+
         armDesignator = LockingDesignator(ArmDesignator(robot.arms))
 
         # Waking up the operator
@@ -107,10 +108,6 @@ class WakeMeUp(smach.StateMachine):
         breakfastCerealDes = VariableDesignator("")       # designator containing chosen cereal name
         breakfastFruitDes = VariableDesignator("")        # designator containing chosen fruit name
         breakfastMilkDes = VariableDesignator("")         # designator containing chosen milk name
-        loop_counter_des = VariableDesignator(0)          # counter for general looping (because smach iterator sucks)
-
-        # Navigate to kitchen
-        door_des = EdEntityDesignator(robot, id=knowledge.kitchen_door)
 
         # Getting the order from the kitchen
         waypoint_kitchen = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
@@ -123,7 +120,7 @@ class WakeMeUp(smach.StateMachine):
             prep_eval_des.current['item'] = False
         item_designator = VariableDesignator(resolve_type=EntityInfo)
 
-        place_position = EmptySpotDesignator(robot, EdEntityDesignator(robot, id=knowledge.dinner_table))
+        place_position = wakeStates.EmptySpotDesignator(robot, EdEntityDesignator(robot, id=knowledge.dinner_table))
         
 
         # ------------------------ STATE MACHINE ------------------------
@@ -135,7 +132,7 @@ class WakeMeUp(smach.StateMachine):
                                                     'failed'   :'INITIALIZE'})
 
             smach.StateMachine.add( 'INITIALIZE',
-                                    states.Initialize(robot),
+                                    wakeStates.Initialize(robot,initial_ed_config),
                                     transitions={   'initialized':'START_CHALLENGE',
                                                     'abort':'Aborted'})
 
@@ -337,12 +334,12 @@ class WakeMeUp(smach.StateMachine):
                                                                     current_item_nav_goal['at'], 
                                                                     current_item_nav_goal['lookat'] ),
                                         transitions={   'arrived':'FIND_ITEM',
-                                                        'unreachable':'SELECT_ITEM',
-                                                        'goal_not_defined':'SELECT_ITEM'})
+                                                        'unreachable':'SAY_ITEM_UNREACHABLE',
+                                                        'goal_not_defined':'SAY_ITEM_UNREACHABLE'})
 
-                # smach.StateMachine.add( 'SAY_ITEM_UNREACHABLE',
-                #                         states.Say(robot, "Oops, I can't get to the "+selected_gen_item),
-                #                         transitions={   'spoken'    :'SELECT_ITEM'})
+                smach.StateMachine.add( 'SAY_ITEM_UNREACHABLE',
+                                        states.Say(robot, "Oops, I can't get to the item"),
+                                        transitions={   'spoken'    :'SELECT_ITEM'})
 
                 smach.StateMachine.add( 'FIND_ITEM',
                                         wakeStates.FindItem(robot, 
@@ -351,11 +348,11 @@ class WakeMeUp(smach.StateMachine):
                                                             type_des=selected_spec_item_des, 
                                                             result_des=item_designator),
                                         transitions={   'item_found':'PICK_UP_ITEM',
-                                                        'not_found' :'SELECT_ITEM'})
+                                                        'not_found' :'SAY_ITEM_NOT_FOUND'})
 
-                # smach.StateMachine.add( 'SAY_ITEM_NOT_FOUND',
-                #                         states.Say(robot, "Oops, I can't find your "+selected_spec_item),
-                #                         transitions={   'spoken'    :'SELECT_ITEM'})
+                smach.StateMachine.add( 'SAY_ITEM_NOT_FOUND',
+                                        states.Say(robot, "Oops, I can't find the item"),
+                                        transitions={   'spoken'    :'SELECT_ITEM'})
 
                 smach.StateMachine.add( 'PICK_UP_ITEM',
                                         states.Grab(robot, item_designator, armDesignator),
@@ -366,11 +363,22 @@ class WakeMeUp(smach.StateMachine):
                                         states.NavigateToSymbolic(robot, {
                                             EdEntityDesignator(robot, id=knowledge.table_nav_goal['in']) : "in" }, 
                                             EdEntityDesignator(robot, id=knowledge.table_nav_goal['lookat'])),
-                                        transitions={   'arrived':'container_succeeded',
-                                                        'unreachable':'SAY_UNREACHABLE',
-                                                        'goal_not_defined':'SAY_UNREACHABLE'})
+                                        transitions={   'arrived'           :'SCAN_TABLE',
+                                                        'unreachable'       :'SAY_UNREACHABLE',
+                                                        'goal_not_defined'  :'SAY_UNFINDABLE'})
 
-                # FIRST LOOK AT THE TABLE and take snapshot!!!
+                smach.StateMachine.add( 'SCAN_TABLE',
+                                        wakeStates.ScanTableTop(robot, EdEntityDesignator(robot, id=knowledge.dinner_table)),
+                                        transitions={   'done'      :'PLACE_ITEM',
+                                                        'failed'    :'SAY_UNFINDABLE'})
+
+                smach.StateMachine.add( 'SAY_UNFINDABLE',
+                                        states.Say(robot, "I can't find the "+knowledge.dinner_table),
+                                        transitions={   'spoken'    :'container_failed'})
+
+                smach.StateMachine.add( 'SAY_UNREACHABLE',
+                                        states.Say(robot, "I can't get to the "+knowledge.dinner_table),
+                                        transitions={   'spoken'    :'container_failed'})
 
                 smach.StateMachine.add( 'PLACE_ITEM',
                                         states.Place(robot, item_designator, place_position, armDesignator),
@@ -391,8 +399,8 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'PREP_BREAKFAST_CONTAINER',
                                     prepBreakfastContainer,
-                                    transitions={   'container_succeeded':'PREP_BREAKFAST_CONTAINER',
-                                                    'container_failed': 'PREP_BREAKFAST_CONTAINER'})
+                                    transitions={   'container_succeeded'   :'PREP_BREAKFAST_CONTAINER',
+                                                    'container_failed'      : 'PREP_BREAKFAST_CONTAINER'})
 
             # Pour cereal in the boal: find boal, grab cereal, move arm with cereal to predefined position, make rotating movement (pour), 
             # rotate back, put cereal back on table. 

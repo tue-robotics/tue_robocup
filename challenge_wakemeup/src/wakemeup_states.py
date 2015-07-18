@@ -10,6 +10,7 @@ import robot_skills.util.msg_constructors as msgs
 import geometry_msgs.msg as gm
 # import math
 from smach_ros import SimpleActionState
+import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
 from ed.msg import EntityInfo
@@ -77,7 +78,24 @@ def parseFoodType(item, got_fruit, got_cereal, got_milk):
     # print prefix + item + " was not matched!"
     return None
 
+# ----------------------------------------------------------------------------------------------------
     
+class Initialize(states.Initialize):
+    def __init__(self, robot=None, ed_configuration={}):
+        states.Initialize.__init__(self,robot)
+        self.robot = robot
+        self.ed_configuration = ed_configuration
+
+    def execute(self, userdata):
+        outcome = states.Initialize.execute(self,userdata)
+        self.robot.ed.configure_kinect_segmentation(continuous=self.ed_configuration['kinect_segmentation_continuous_mode'])
+        self.robot.ed.configure_perception(continuous=self.ed_configuration['perception_continuous_mode'])
+        self.robot.ed.disable_plugins(plugin_names=[plugin for plugin in self.ed_configuration["disabled_plugins"]])
+        self.robot.ed.reset()
+
+        return outcome
+
+
 # ----------------------------------------------------------------------------------------------------
 
 class GetOrder(smach.State):
@@ -88,8 +106,8 @@ class GetOrder(smach.State):
         self.breakfastMilk = breakfastMilkDes
 
     def execute(self, userdata):
-        self.breakfastCereal.current = "muesli_cereals"
-        self.breakfastMilk.current   = "meadow_milk"
+        self.breakfastCereal.current = "coconut_cereals"
+        self.breakfastMilk.current   = "papaya_milk"
         self.breakfastFruit.current  = "apple"
         return "succeeded"
 
@@ -289,7 +307,7 @@ class LookAtBedTop(smach.State):
     def __init__(self, robot, entity_id, wakeup_light_color):
         smach.State.__init__(self, outcomes=['succeeded'])
         self.robot = robot
-        self.bed = self.robot.ed.get_entity(id=entity_id)
+        self.entity = self.robot.ed.get_entity(id=entity_id)
         self.r = wakeup_light_color[0]
         self.g = wakeup_light_color[1]
         self.b = wakeup_light_color[2]
@@ -305,37 +323,13 @@ class LookAtBedTop(smach.State):
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
         # look at bed top
-        headGoal = msgs.PointStamped(x=self.bed.pose.position.x, y=self.bed.pose.position.y, z=self.bed.pose.position.z+self.bed.z_max, frame_id="/map")
+        headGoal = msgs.PointStamped(x=self.entity.pose.position.x, y=self.entity.pose.position.y, z=self.entity.pose.position.z+self.entity.z_max, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
         return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
-
-
-# class LookIfSomethingsThere(smach.State):
-#     def __init__(self, robot, designator, timeout=0):
-#         smach.State.__init__(self, outcomes=['awake', 'not_awake'])
-#         self.robot = robot
-#         self.designator = designator
-#         self.timeout = rospy.Duration(timeout)
-
-#     def execute(self, robot):
-#         self.start_time = rospy.Time.now()
-#         print (rospy.Time.now() - self.start_time).secs
-#         print rospy.Time.now() - self.start_time < self.timeout
-#         while rospy.Time.now() - self.start_time < self.timeout:
-#             if self.designator.resolve():
-#                 self.robot.lights.set_color(0,0,1)
-#                 return 'awake'
-#             else:
-#                 rospy.sleep(0.2)
-
-#         return 'not_awake'
-
-# ----------------------------------------------------------------------------------------------------
-
 
 class LookIfSomethingsThere(smach.State):
     def __init__(self, robot, designator, timeout=0, sleep=0.2):
@@ -347,11 +341,11 @@ class LookIfSomethingsThere(smach.State):
 
     def execute(self, userdata):
         self.start_time = rospy.Time.now()
-        print (rospy.Time.now() - self.start_time).secs
-        print rospy.Time.now() - self.start_time < self.timeout
+
         while rospy.Time.now() - self.start_time < self.timeout:
             if self.designator.resolve():
                 self.robot.lights.set_color(0,0,1)
+                self.robot.ed.configure_kinect_segmentation(continuous=False)
                 return 'there'
             else:
                 rospy.sleep(self.sleep)
@@ -361,16 +355,16 @@ class LookIfSomethingsThere(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class Evaluate(smach.State):
-    def __init__(self, options, designator):
+    def __init__(self, options, results):
         smach.State.__init__(self, outcomes=['all_succeeded','partly_succeeded','all_failed'])
         self.options = options
-        self.results = designator.resolve()
+        self.results = results
         self.something_failed = False
         self.something_succeeded = False
 
     def execute(self, userdata):
         for option in self.options:
-            if self.results[option]:
+            if self.results.resolve()[option]:
                 something_succeeded = True
             else:
                 something_failed = True
@@ -389,11 +383,11 @@ class Evaluate(smach.State):
 class addPositive(smach.State):
     def __init__(self, results_designator, item_designator):
         smach.State.__init__(self, outcomes=['done'])
-        self.results = results_designator.resolve()
-        self.item = item_designator.resolve()
+        self.results = results_designator
+        self.item = item_designator
 
     def execute(self, userdata):
-        self.results.current[self.item] = True
+        self.results.current[self.item.resolve()] = True
         return "done"
 
 
@@ -428,6 +422,8 @@ class SelectItem(smach.State):
                                 }
 
         self.nav_goal['lookat'] =   EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['lookat_'+self.generic_item.resolve()])
+
+        print self.nav_goal
         
         self.current += 1
         if self.current == self.count:
@@ -441,11 +437,25 @@ class FindItem(smach.State):
     def __init__(self, robot, sensor_range, type_des, result_des, on_object_des=None):
         smach.State.__init__(self, outcomes=['item_found', 'not_found'])
         self.robot = robot
-        self.on_object = on_object_des.resolve()
-        self.result_type = type_des.resolve()
+        self.on_object_des = on_object_des
+        self.result_type_des = type_des
         self.result_des = result_des
 
     def execute(self, userdata):
+        self.on_object = self.on_object_des.resolve()
+        self.result_type = self.result_type_des.resolve()
+
+        center_point = Point()
+        frame_id = "/"+self.on_object.id
+
+        center_point.z = self.on_object.z_max
+
+        rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
+        point_stamped = PointStamped(point=center_point,
+                                     header=Header(frame_id=frame_id))
+        robot.head.look_at_point(point_stamped)
+        rospy.sleep(rospy.Duration(waittime))
+
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range = sensor_range)
         filtered_ids = []
         for entity_id in entity_ids:
@@ -462,6 +472,31 @@ class FindItem(smach.State):
                 return 'item_found'
 
         return 'not_found'
+
+# ----------------------------------------------------------------------------------------------------
+
+class ScanTableTop(smach.State):
+    def __init__(self, robot, table):
+        smach.State.__init__(self, outcomes=['done','failed'])
+        self.robot = robot
+        self.table = table
+
+    def execute(self, userdata):
+        center_point = Point()
+        frame_id = "/"+self.table.id
+
+        center_point.z = self.table.z_max
+
+        rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
+        point_stamped = PointStamped(point=center_point,
+                                     header=Header(frame_id=frame_id))
+        self.robot.head.look_at_point(point_stamped)
+        rospy.sleep(rospy.Duration(waittime))
+        
+        self.robot.ed.segment_kinect(max_sensor_range = sensor_range)
+        return 'done'
+
+# ----------------------------------------------------------------------------------------------------
 
 class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
