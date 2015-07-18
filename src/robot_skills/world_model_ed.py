@@ -137,7 +137,7 @@ class ED:
 
         self._marker_publisher.publish(marker)
 
-    def update_entity(self, id, type = None, posestamped = None, flags = None):
+    def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []):
         """
         Updates entity
         :param id: entity id
@@ -149,18 +149,20 @@ class ED:
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
+        
         if posestamped:
             X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
             t = posestamped.pose.position
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
-        if flags:
+        
+        if flags or add_flags or remove_flags:
+            json_entity += ', "flags": ['
+            first = True
+
             if isinstance(flags, dict):
                 flags = [flags]
 
-            if isinstance(flags, list):
-                json_entity += ', "flags": ['
-                
-                first = True
+            if isinstance(flags, list):                
                 for flag in flags:
                     if not isinstance(flag, dict):
                         print "update_entity - Error: flags need to be a list of dicts or a dict"
@@ -171,11 +173,19 @@ class ED:
                         json_entity += '{"%s":"%s"}' % (k,v)
                         first = False
 
-                json_entity += ']'
+            for flag in add_flags:
+                if not first:
+                    json_entity += ','
+                json_entity += '{"add":"%s"}' % flag
+                first = False
 
-            else:
-                print "update_entity - Error: flags need to be a list of dicts or a dict"
-                return False
+            for flag in remove_flags:
+                if not first:
+                    json_entity += ','
+                json_entity += '{"remove":"%s"}' % flag
+                first = False
+
+            json_entity += ']'
 
         json = '{"entities":[{%s}]}'%json_entity
         print json
@@ -225,7 +235,11 @@ class ED:
         return self._set_plugin_status(plugin_names, '"enabled":0')
 
     def lock_entities(self, lock_ids, unlock_ids):
-        return self._ed_lock_entities_srv(lock_ids=lock_ids, unlock_ids=unlock_ids)
+        for eid in lock_ids:
+            self.update_entity(id=eid, add_flags=['locked'])
+
+        for eid in unlock_ids:
+            self.update_entity(id=eid, remove_flags=['locked'])
 
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
