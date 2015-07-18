@@ -20,7 +20,7 @@ class Init(smach.State):
             self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
             self.robot.torso.send_goal('navigation', timeout=4.0)
 
-        self.robot.ed.configure_kinect_segmentation(continuous=True)
+        self.robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
         self.robot.ed.enable_plugins(plugin_names=["laser_integration"])
         self.robot.ed.reset()
 
