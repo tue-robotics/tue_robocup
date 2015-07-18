@@ -332,9 +332,9 @@ class ChallengePersonRecognition(smach.StateMachine):
             findCrowndContainer = smach.StateMachine(   outcomes = ['container_success', 'container_failed'])
             with findCrowndContainer:
 
-                # smach.StateMachine.add( 'RESET_ED_1',
-                #                         PersonRecStates.ResetEd(robot),
-                #                         transitions={   'done':  'GOTO_LIVING_ROOM_1'})
+                smach.StateMachine.add( 'RESET_ED_1',
+                                        PersonRecStates.ResetEd(robot),
+                                        transitions={   'done':  'GOTO_LIVING_ROOM_1'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
                                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
@@ -382,15 +382,15 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                     states.Say(robot,[  "I think I found some people.",
                                                         "I think I saw several people over there"], block=False),
-                                    transitions={   'spoken':'FIND_OPERATOR_CONTAINER'})
+                                    transitions={   'spoken':'RESET_ED_2'})
 
             smach.StateMachine.add('SAY_FAILED_FIND_CROWD',
                                    states.Say(robot,"Still Searching for the crowd", block=False),
                                    transitions={    'spoken':'FIND_CROWD_CONTAINER'})
 
-            # smach.StateMachine.add( 'RESET_ED_2',
-            #             PersonRecStates.ResetEd(robot),
-            #             transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
+            smach.StateMachine.add( 'RESET_ED_2',
+                        PersonRecStates.ResetEd(robot),
+                        transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
 
 
 
