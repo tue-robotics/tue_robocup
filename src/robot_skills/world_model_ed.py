@@ -106,7 +106,7 @@ class ED:
         return entities[0]
 
     def get_entity_info(self, id):
-        return self._ed_entity_info_query_srv(id)
+        return self._ed_entity_info_query_srv(id=id, measurement_image_border=20)
 
     def reset(self):
         try:
