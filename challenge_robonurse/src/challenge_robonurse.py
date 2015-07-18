@@ -129,14 +129,14 @@ class StartPhase(smach.StateMachine):
         with self:
             smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized':'INIT_POSE',
+                                transitions={   'initialized':'HEAR_GRANNY',
                                                 'abort':'Aborted'})
 
-            smach.StateMachine.add('INIT_POSE',
-                                states.SetInitialPose(robot, 'robonurse_initial'),
-                                transitions={   'done':'HEAR_GRANNY',
-                                                'preempted':'Aborted',  # This transition will never happen at the moment.
-                                                'error':'HEAR_GRANNY'})  # It should never go to aborted.
+            # smach.StateMachine.add('INIT_POSE',
+            #                     states.SetInitialPose(robot, 'robonurse_initial'),
+            #                     transitions={   'done':'HEAR_GRANNY',
+            #                                     'preempted':'Aborted',  # This transition will never happen at the moment.
+            #                                     'error':'HEAR_GRANNY'})  # It should never go to aborted.
             
             smach.StateMachine.add('HEAR_GRANNY',
                                 states.Hear(robot, spec="((Help me)|hello|please|(please come)|amigo|sergio|come|(hi there)|hi|pills|robot|(give me my pills))",time_out=rospy.Duration(30)),
