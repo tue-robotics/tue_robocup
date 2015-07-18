@@ -17,7 +17,7 @@ from robot_skills.util import transformations as tf
 from robot_skills.util import transformations, msg_constructors
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0, operator_timeout = 60):
+    def __init__(self, robot, operator_position_constraint = "x^2 + y^2 < 1.0^2", timeout = 3.0, operator_timeout = 20):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
@@ -45,14 +45,14 @@ class FollowOperator(smach.State):
 
         return True
 
-    def _get_operator(self, operator_id):        
+    def _get_operator(self, operator_id):
         if self._operator_id:
             operator = self._robot.ed.get_entity(id=operator_id)
         else:
             operator = None
-                
+
         return operator
-        
+
     def _update_navigation(self, operator):
         p = PositionConstraint()
         p.constraint = self._operator_position_constraint
@@ -94,7 +94,7 @@ class FollowOperator(smach.State):
             self._robot.base.local_planner.setPlan(plan, p, o)
 
         return False # We are not there
-        
+
     def execute(self, userdata):
         self._at_location = False
         self._first_time_at_location = None
@@ -103,14 +103,14 @@ class FollowOperator(smach.State):
             return "no_operator"
 
         while not rospy.is_shutdown():
-            
+
             # Check if operator present still present
             operator = self._get_operator(self._operator_id)
 
             if not operator:
                 self._robot.speech.speak("I lost you")
                 return "lost_operator"
-            
+
             # Update the navigation and check if we are already there
             if self._update_navigation(operator):
                 return "stopped"
