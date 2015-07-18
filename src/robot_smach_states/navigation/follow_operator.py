@@ -36,9 +36,21 @@ class FollowOperator(smach.State):
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return False
 
-            self._robot.speech.speak("Please stand in front of me!")
-            rospy.sleep(2)
-            operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+            self._robot.head.look_at_standing_person()
+            self._robot.speech.speak("Should I follow you?")
+
+            answer = self._robot.ears.recognize("(yes|no)", {}, 10)
+
+            self._robot.head.cancel_goal()
+
+            if answer:
+                if answer.result == "yes":
+                    operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+            else:
+                self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+
+            rospy.sleep(3)
+
         print "We have a new operator: %s"%operator.id
         self._robot.speech.speak("I will follow you!", block=False)
         self._operator_id = operator.id
