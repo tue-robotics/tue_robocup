@@ -6,7 +6,7 @@ spec_questions = challenge_speech_recognition_data.spec
 choices_questions = challenge_speech_recognition_data.choices 
 
 #locations: # TO BE DEFINED IN model.yaml!
-starting_point = "initial_pose_door_A"
+starting_point = "initial_pose_door_B"
 meeting_point = "gpsr_meeting_point"
 gpsr_exit = "exit_door_B1"
 
@@ -14,7 +14,12 @@ gpsr_exit = "exit_door_B1"
 rooms_detailed = {  'kitchen':['kitchentable','kitchencounter', 'cupboard'], # fridge and trashbin are no manipulation locations
                     'livingroom':['bar','couchtable','dinnertable','sofa'], # dinnertable and sofa have both two spots
                     'bedroom':['left_bedside_table','right_bedside_table','desk','bed'],# bed has two spots
-                    'hallway':['hallwaytable', 'bookcase']} # both locations have multiple spots.
+                    'hallway':['hallwaytable', 'bookcase/shelf1','bookcase/shelf2','bookcase/shelf3','bookcase/shelf4','bookcase/shelf5','bookcase/shelf6','bookcase/shelf7','bookcase/shelf8']} #,'bookcase']} # both locations have multiple spots.
+
+objects_known_recognize = ['pure_milk', 'orange_juice', 'sponge', 'papaya_milk', 'apple', 'tomato_chips', 'lemon', 'toothpaste', 
+                 'chocolates', 'bowl', 'beer', 'toilet_paper', 'soap', 'plate', 'pear', 'lotion', 'water', 'cloth', 
+                 'green_tea', 'gram_soup', 'bubble_gum', 'bean_sauce', 'barbecue_chips', 'tray', 'coconut_cereals', 
+                 'egg_stars', 'honey_chips', 'coco_balls', 'biscuits']
 
 ###############################################
 #### GPSR KNOWLEDGE FOR ASKING FOR ACTION: ####
@@ -31,6 +36,7 @@ location_placement = ['kitchentable', 'kitchencounter', 'cupboard', 'bar', 'couc
                       'left bedside table', 'right bedside table', 'desk', 'bed', 'bookcase', 'hallwaytable']
 
 rooms = ["kitchen", "hallway", "livingroom", "bedroom"]
+#rooms = ["hallway"]
 
 persons_women = ["Alex","Angel","Eve","Jamie","Jane","Liza","Melissa","Tracy","Robin","Sophia"] 
 persons_men = ["Alex","Angel","Edward","Homer","Jamie","John","Kevin","Kurt","Tracy","Robin"] 
@@ -45,7 +51,7 @@ spec_goroom_findobj = "(<1_vb_goto> the <1_room> and <2_vb_find> the <2_object>)
 spec_findperson_talk = "(<2_vb_find> a person in the <1_room> and ((answer a <3_question>)|(<3_vb_speak> <3_name_time_date>)))"
 
 spec = "("+spec_get_deliver+"|"+spec_goroom_findobj+"|"+spec_findperson_talk+")"
-#spec = spec_findperson_talk
+#spec = spec_goroom_findobj
 
 choices = {'1_location':location_placement,
 '2_vb_take':['take', 'grasp', 'get'],   

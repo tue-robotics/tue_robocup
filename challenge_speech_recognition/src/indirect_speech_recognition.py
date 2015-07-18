@@ -17,15 +17,13 @@ from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_speech_recognition')
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, look=True, time_out=rospy.Duration(15)):
+    def __init__(self, robot, time_out=rospy.Duration(10)):
         smach.State.__init__(self, outcomes=["answered","not_answered"])
         self.robot = robot
         self.time_out = time_out
-        self.look = look
 
     def execute(self, userdata):
-        if self.look:
-            self.robot.head.look_at_standing_person()
+        self.robot.head.look_at_standing_person()
 
         res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=self.time_out)
 
@@ -54,18 +52,18 @@ class Turn(smach.State):
 
         operator = None
         while not operator:
-            operator = self.robot.ed.get_closest_entity(self, radius=1.5, center_point=self.robot.base.get_location().pose.position)
+            operator = self.robot.ed.get_closest_entity(self, radius=1.7, center_point=self.robot.base.get_location().pose.position)
             print operator
             if not operator:
                 vth = 1.0
                 th = 3.1415 / 10
                 print "Turning %f radians with force drive" % th
                 self.robot.base.force_drive(0, 0, vth, th / vth)
-
-        self.robot.speech.speak("There you are!",block=False)
+                
+        self.robot.speech.speak("There you are!")
 
         # Turn towards the operator
-        current = self.robot.base.get_location()
+        current = self.robot.base.get_location() 
         robot_th = tf.euler_z_from_quaternion(current.pose.orientation)
         desired_th = math.atan2(operator.pose.position.y - current.pose.position.y, operator.pose.position.x - current.pose.position.x)
 
@@ -76,7 +74,7 @@ class Turn(smach.State):
         if th < -3.1415:
             th += 2*3.1415
         vth = 1.0
-
+        
         # TUrn
         self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
 
