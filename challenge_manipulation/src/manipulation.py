@@ -55,7 +55,7 @@ DETECTED_OBJECTS = []
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
     # ToDo
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
 if not PICK_SHELF in OBJECT_SHELVES:
     rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
     OBJECT_SHELVES.append(PICK_SHELF)
@@ -67,6 +67,26 @@ ignore_types = ['waypoint', 'floor','room']
 #ROOM = "room_living_room"
 PLACE_HEIGHT = 1.0
 
+
+not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
+size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+# not_manipulated = lambda entity: not entity in manipulated_items.resolve()
+has_type = lambda entity: entity.type != ""
+min_height = lambda entity: entity.min_z > 0.3
+min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+def max_width(entity):
+    max_bb_x = max(ch.x for ch in entity.convex_hull)
+    min_bb_x = min(ch.x for ch in entity.convex_hull)
+    max_bb_y = max(ch.y for ch in entity.convex_hull)
+    min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+    x_size = abs(max_bb_x - min_bb_x)
+    y_size = abs(max_bb_y - min_bb_y)
+
+    x_ok = 0.02 < x_size < 0.15
+    y_ok = 0.02 < y_size < 0.15
+
+    return x_ok and y_ok
 
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
@@ -247,6 +267,12 @@ class InspectShelves(smach.State):
                         id_list.append(e.id)
                         DETECTED_OBJECTS += [e]
 
+                ''' Filter on more criteria '''
+                # import ipdb; ipdb.set_trace()
+                DETECTED_OBJECTS = [obj for obj in DETECTED_OBJECTS if size(obj)]                # Filter on object size (height smaller than 0.4)
+                DETECTED_OBJECTS = [obj for obj in DETECTED_OBJECTS if min_entity_height(obj)]   # Filter on object size (height larger than 0.03)
+                #DETECTED_OBJECTS = [obj for obj in DETECTED_OBJECTS if max_width(obj)]           # Filter on object size (height larger than 0.03)
+
                 ''' Try to classify the objects on the shelf '''
                 entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
 
@@ -351,25 +377,25 @@ class ManipRecogSingleItem(smach.StateMachine):
         # and are _not_:
         #   already placed
         #   on the placement-shelve.
-        not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
-        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+        # not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
+        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
         not_manipulated = lambda entity: not entity in manipulated_items.resolve()
-        has_type = lambda entity: entity.type != ""
-        min_height = lambda entity: entity.min_z > 0.3
-        min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
-        def max_width(entity):
-            max_bb_x = max(ch.x for ch in entity.convex_hull)
-            min_bb_x = min(ch.x for ch in entity.convex_hull)
-            max_bb_y = max(ch.y for ch in entity.convex_hull)
-            min_bb_y = min(ch.y for ch in entity.convex_hull)
+        # has_type = lambda entity: entity.type != ""
+        # min_height = lambda entity: entity.min_z > 0.3
+        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+        # def max_width(entity):
+        #     max_bb_x = max(ch.x for ch in entity.convex_hull)
+        #     min_bb_x = min(ch.x for ch in entity.convex_hull)
+        #     max_bb_y = max(ch.y for ch in entity.convex_hull)
+        #     min_bb_y = min(ch.y for ch in entity.convex_hull)
 
-            x_size = abs(max_bb_x - min_bb_x)
-            y_size = abs(max_bb_y - min_bb_y)
+        #     x_size = abs(max_bb_x - min_bb_x)
+        #     y_size = abs(max_bb_y - min_bb_y)
 
-            x_ok = 0.02 < x_size < 0.15
-            y_ok = 0.02 < y_size < 0.15
+        #     x_ok = 0.02 < x_size < 0.15
+        #     y_ok = 0.02 < y_size < 0.15
 
-            return x_ok and y_ok
+        #     return x_ok and y_ok
 
         def on_top(entity):
             container_entity = pick_shelf.resolve()
@@ -385,8 +411,10 @@ class ManipRecogSingleItem(smach.StateMachine):
         # current_item = LockingDesignator(EdEntityDesignator(robot,
         #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
+        # current_item = LockingDesignator(EdEntityDesignator(robot,
+        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
         current_item = LockingDesignator(EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
+            criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))
