@@ -10,16 +10,19 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
 
-class Low(smach.State):
+class Init(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
-        self.robot.torso.send_goal('navigation', timeout=4.0)
-        self.robot.speech.speak("To the windooow!", block=False)
-        self.robot.speech.speak("To the waaall!", block=False)
+        if self.robot.robot_name == "amigo":
+            self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
+            self.robot.torso.send_goal('navigation', timeout=4.0)
+
+        self.robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
+        self.robot.ed.enable_plugins(plugin_names=["laser_integration"])
+        self.robot.ed.reset()
 
         return "done"
 
@@ -46,12 +49,12 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
                                 states.StartChallengeRobust(robot, challenge_knowledge.starting_point, use_entry_points = True),
-                                transitions={   "Done"              :   "GET_LOW",
-                                                "Aborted"           :   "GET_LOW",
-                                                "Failed"            :   "GET_LOW"})
+                                transitions={   "Done"              :   "INIT",
+                                                "Aborted"           :   "INIT",
+                                                "Failed"            :   "INIT"})
 
-        smach.StateMachine.add( "GET_LOW",
-                                Low(robot),
+        smach.StateMachine.add( "INIT",
+                                Init(robot),
                                 transitions={   "done"              :   "SAY_GOTO_TARGET1"})
 
         smach.StateMachine.add( 'SAY_GOTO_TARGET1',
@@ -68,7 +71,7 @@ def setup_statemachine(robot):
         ######################################################################################################################################################
 
         smach.StateMachine.add('GOTO_TARGET1',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target1), radius = 0.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target1), challenge_knowledge.radius1),
                                 transitions={   'arrived'           :   'SAY_TARGET1_REACHED',
                                                 'unreachable'       :   'RESET_ED_TARGET1',
                                                 'goal_not_defined'  :   'RESET_ED_TARGET1'})
@@ -84,7 +87,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GOTO_TARGET1_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET1_BACKUP',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target1), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target1), challenge_knowledge.radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET1_REACHED',
                                                 'unreachable'       :   'SAY_TARGET1_FAILED',
                                                 'goal_not_defined'  :   'SAY_TARGET1_FAILED'})
@@ -110,7 +113,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_TARGET2'})
 
         smach.StateMachine.add('GOTO_TARGET2',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target2), radius = 0.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target2), challenge_knowledge.radius1),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
                                                 'unreachable'       :   'RESET_ED_TARGET2',
                                                 'goal_not_defined'  :   'RESET_ED_TARGET2'})
@@ -126,7 +129,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GOTO_TARGET2_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET2_BACKUP',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target2), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target2), challenge_knowledge.radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
                                                 'unreachable'       :   'SAY_TARGET2_FAILED',
                                                 'goal_not_defined'  :   'SAY_TARGET2_FAILED'})
@@ -153,7 +156,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_TARGET3'})
 
         smach.StateMachine.add('GOTO_TARGET3',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), radius = 0.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), challenge_knowledge.radius1),
                                 transitions={   'arrived'           :   'SAY_TARGET3_REACHED',
                                                 'unreachable'       :   'RESET_ED_TARGET3',
                                                 'goal_not_defined'  :   'RESET_ED_TARGET3'})
@@ -169,7 +172,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GOTO_TARGET3_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET3_BACKUP',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), challenge_knowledge.radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET3_REACHED',
                                                 'unreachable'       :   'SAY_TARGET3_FAILED',
                                                 'goal_not_defined'  :   'SAY_TARGET3_FAILED'})
@@ -210,7 +213,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'RETURN_TARGET3'})
 
         smach.StateMachine.add('RETURN_TARGET3',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), radius = 0.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), challenge_knowledge.radius1),
                                 transitions={   'arrived'           :   'SAY_TARGET3_RETURN_REACHED',
                                                 'unreachable'       :   'RESET_ED_RETURN_TARGET3',
                                                 'goal_not_defined'  :   'RESET_ED_RETURN_TARGET3'})
@@ -226,7 +229,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GOTO_RETURN_TARGET3_BACKUP'})
 
         smach.StateMachine.add('GOTO_RETURN_TARGET3_BACKUP',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.target3), challenge_knowledge.radius2),
                                 transitions={   'arrived'           :   'SAY_TARGET3_RETURN_REACHED',
                                                 'unreachable'       :   'SAY_RETURN_TARGET3_FAILED',
                                                 'goal_not_defined'  :   'SAY_RETURN_TARGET3_FAILED'})
@@ -271,7 +274,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP2'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP2',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.exit3), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.exit3), challenge_knowledge.radius2),
                                 transitions={   'arrived'           :   'GO_TO_EXIT_BACKUP3',
                                                 'unreachable'       :   'RESET_ED_EXIT3',
                                                 'goal_not_defined'  :   'RESET_ED_EXIT3'})

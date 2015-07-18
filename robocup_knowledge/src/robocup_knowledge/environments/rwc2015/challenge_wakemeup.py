@@ -14,13 +14,15 @@ give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
 # Knowledge
+initial_pose = "initial_pose_door_A"
+
 bed = 'bed'                     # This needs to be updated according to the environment
 
 bed_nav_goal = {        
     'near' : bed,
     'at_bedside' : bed,
     'in' : 'bedroom', # Maybe define a bedside to get a good vantage point and position for handing over the newspaper
-    'lookat' : 'bed'
+    'lookat' : bed
 }
 
 default_milk = "pure_milk"
@@ -31,12 +33,12 @@ kitchen_nav_goal = {            # This needs to be updated according to the envi
     "lookat" : "kitchen"
 }
 
-generic_items = [ "milk", "cereal", "fruit" ]
+generic_items = [ "milk", "fruit", "cereal"] # TODO: Pour Cereal!!!
 # allowed_fruits = [ "apple" ]
 
-milk_shelf = "kitchentable"          # This needs to be updated according to the environment
-cereal_shelf = "kitchencounter"        # This needs to be updated according to the environment
-fruit_shelf = "kitchencounter"         # This needs to be updated according to the environment
+milk_shelf = "kitchentable"
+cereal_shelf = "kitchencounter"
+fruit_shelf = "kitchencounter"
 
 table_nav_goal = {
     "in": "livingroom",
