@@ -488,6 +488,8 @@ class FindItem(smach.State):
         found_cereal    = list(set(entity_types).intersection(names_cereal))
         found_fruit     = list(set(entity_types).intersection(names_fruit))
 
+        print "I found the following items: {}".format(found_milk+found_cereal+found_fruit)
+
         if len(found_milk) > 0 and self.result_type in names_milk:
             result_des.current = self.robot.ed.get_entity(found_milk[0])
             return 'item_found'
