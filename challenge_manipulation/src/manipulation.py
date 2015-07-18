@@ -51,6 +51,8 @@ OBJECT_TYPES = challenge_knowledge.object_types
 
 DETECTED_OBJECTS = []
 
+DEBUG = False
+
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
@@ -252,6 +254,11 @@ class InspectShelves(smach.State):
 
                 ''' Sleep for 1 second '''
                 rospy.sleep(1.0) # ToDo: remove???
+
+                if DEBUG:
+                    rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
+                    import ipdb;ipdb.set_trace()
+                    continue
 
                 ''' Enable kinect segmentation plugin (only one image frame) '''
                 entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
@@ -617,5 +624,10 @@ if __name__ == '__main__':
     else:
         print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
         exit(1)
+
+    if len(sys.argv) > 2:
+        if sys.argv[2]:
+            rospy.logwarn("Running in debug mode!!!")
+            DEBUG = True
 
     startup(setup_statemachine, robot_name=robot_name)
