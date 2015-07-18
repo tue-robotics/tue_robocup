@@ -18,6 +18,7 @@ bed = 'bed'                     # This needs to be updated according to the envi
 
 bed_nav_goal = {        
     'near' : bed,
+    'at_bedside' : bed,
     'in' : 'bedroom', # Maybe define a bedside to get a good vantage point and position for handing over the newspaper
     'lookat' : 'bed'
 }

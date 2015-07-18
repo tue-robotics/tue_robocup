@@ -6,8 +6,11 @@ import subprocess
 import inspect
 # import random
 # import ed_perception.msg
+
+from std_msgs.msg import Header
 import robot_skills.util.msg_constructors as msgs
 import geometry_msgs.msg as gm
+from cb_planner_msgs_srvs.msg import *
 # import math
 from smach_ros import SimpleActionState
 import robot_smach_states as states
@@ -39,6 +42,7 @@ prefix = bcolors.OKBLUE + "[WAKE ME UP] " + bcolors.ENDC
 default_milk = "fresh milk"
 
 # load item names
+object_names = [ o["name"] for o in knowledge_objs if "sub-category" in o ]
 names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
 names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
 names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
@@ -363,17 +367,19 @@ class Evaluate(smach.State):
         self.something_succeeded = False
 
     def execute(self, userdata):
+        print self.options
+        print self.results.resolve()
         for option in self.options:
             if self.results.resolve()[option]:
                 something_succeeded = True
             else:
                 something_failed = True
 
-        if something_succeeded and something_failed:
+        if self.something_succeeded and self.something_failed:
             return 'partly_succeeded'
-        elif something_succeeded and not something_failed:
+        elif self.something_succeeded and not self.something_failed:
             return 'all_succeeded'
-        elif not something_succeeded and something_failed:
+        elif not self.something_succeeded and self.something_failed:
             return 'all_failed'
         else:
             return 'all_failed'
@@ -387,6 +393,7 @@ class addPositive(smach.State):
         self.item = item_designator
 
     def execute(self, userdata):
+        print self.item.resolve()
         self.results.current[self.item.resolve()] = True
         return "done"
 
@@ -394,7 +401,7 @@ class addPositive(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class SelectItem(smach.State):
-    def __init__(self, robot, options, asked_items, generic_item, specific_item, item_nav_goal):
+    def __init__(self, robot, options, asked_items, generic_item, specific_item, item_nav_goal, item_lookat_goal):
         smach.State.__init__(self, outcomes=['selected', 'all_done'])
         self.robot = robot
         self.options = options
@@ -404,31 +411,30 @@ class SelectItem(smach.State):
         self.generic_item = generic_item
         self.specific_item = specific_item
         self.nav_goal = item_nav_goal
+        self.lookat_goal = item_lookat_goal
 
     def execute(self, userdata):
-        self.generic_item.current = self.options[self.current]
-
-        asked_items = [d.resolve() for d in self.asked_items_des]
-        category_items = [i['name'] for i in knowledge_objs if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
-
-        self.specific_item.current = list(set(category_items).intersection(asked_items))[0]
-
-        self.robot.speech.speak("I will get your "+self.generic_item.resolve()+" now.", block=False)
-
-
-        self.nav_goal['at'] =   {
-                                    EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['near_'+self.generic_item.resolve()]) : "near",
-                                    EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in']) : "in"
-                                }
-
-        self.nav_goal['lookat'] =   EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['lookat_'+self.generic_item.resolve()])
-
-        print self.nav_goal
-        
-        self.current += 1
         if self.current == self.count:
             self.current = 0
             return 'all_done'
+        else:
+            self.generic_item.current = self.options[self.current]
+
+            asked_items = [d.resolve() for d in self.asked_items_des]
+            category_items = [i['name'] for i in knowledge_objs if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
+
+            self.specific_item.current = list(set(category_items).intersection(asked_items))[0]
+
+            self.robot.speech.speak("I will get your "+self.generic_item.resolve()+" now.", block=False)
+
+            self.nav_goal.current = {
+                                        EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['near_'+self.generic_item.resolve()]) : "near",
+                                        EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in']) : "in"
+                                    }
+
+            self.lookat_goal.current = EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['lookat_'+self.generic_item.resolve()])
+        
+        self.current += 1
         return 'selected'
 
 # ----------------------------------------------------------------------------------------------------
@@ -437,26 +443,27 @@ class FindItem(smach.State):
     def __init__(self, robot, sensor_range, type_des, result_des, on_object_des=None):
         smach.State.__init__(self, outcomes=['item_found', 'not_found'])
         self.robot = robot
+        self.sensor_range = sensor_range
         self.on_object_des = on_object_des
         self.result_type_des = type_des
         self.result_des = result_des
 
     def execute(self, userdata):
-        self.on_object = self.on_object_des.resolve()
+        self.on_object = self.on_object_des.resolve().resolve()
         self.result_type = self.result_type_des.resolve()
 
-        center_point = Point()
+        center_point = gm.Point()
         frame_id = "/"+self.on_object.id
 
         center_point.z = self.on_object.z_max
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
-        point_stamped = PointStamped(point=center_point,
+        point_stamped = gm.PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
-        robot.head.look_at_point(point_stamped)
-        rospy.sleep(rospy.Duration(waittime))
+        self.robot.head.look_at_point(point_stamped)
+        rospy.sleep(rospy.Duration(0.5))
 
-        entity_ids = self.robot.ed.segment_kinect(max_sensor_range = sensor_range)
+        entity_ids = self.robot.ed.segment_kinect(max_sensor_range = self.sensor_range)
         filtered_ids = []
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
@@ -464,11 +471,13 @@ class FindItem(smach.State):
             if e and self.on_object and onTopOff(e, self.on_object) and not e.type:
                 filtered_ids.append(e.id)
 
-        entity_types = self.robot.ed.classify(ids=id_list, types=OBJECT_TYPES)
+        entity_types = self.robot.ed.classify(ids=filtered_ids, types=object_names)
 
-        for i in range(len(entity_ids)):
-            if entity_types[i] == result_type:
-                result_des.current = self.robot.ed.get_entity(id_list[i])
+        self.robot.head.cancel_goal()
+
+        for i in range(len(filtered_ids)):
+            if entity_types[i] == self.result_type:
+                result_des.current = self.robot.ed.get_entity(filtered_ids[i])
                 return 'item_found'
 
         return 'not_found'
@@ -482,18 +491,20 @@ class ScanTableTop(smach.State):
         self.table = table
 
     def execute(self, userdata):
-        center_point = Point()
+        table = self.table.resolve()
+        center_point = gm.Point()
         frame_id = "/"+self.table.id
 
-        center_point.z = self.table.z_max
+        center_point.z = table.z_max
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
         self.robot.head.look_at_point(point_stamped)
-        rospy.sleep(rospy.Duration(waittime))
+        rospy.sleep(rospy.Duration(0.5))
         
         self.robot.ed.segment_kinect(max_sensor_range = sensor_range)
+        self.robot.head.cancel_goal()
         return 'done'
 
 # ----------------------------------------------------------------------------------------------------
@@ -592,3 +603,49 @@ class EmptySpotDesignator(Designator):
                     d += self._spacing
 
         return points
+
+# ----------------------------------------------------------------------------------------------------
+
+class NavigateToSymbolic(states.NavigateToSymbolic):
+    def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
+        super(states.NavigateToSymbolic, self).__init__(robot)
+
+        self.robot                 = robot
+
+        #Check that the entity_designator_area_name_map's keys all resolve to EntityInfo's
+        assert(all(entity_desig.resolve_type == EntityInfo for entity_desig in entity_designator_area_name_map.resolve().keys()))
+        self.entity_designator_area_name_map = entity_designator_area_name_map
+
+        # check_resolve_type(entity_lookat_designator.resolve(), EntityInfo) #Check that the entity_designator resolves to an Entity
+        self.entity_lookat_designator = entity_lookat_designator
+
+    def generateConstraint(self):
+        ''' PositionConstraint '''
+        entity_id_area_name_map = {}
+        for desig, area_name in self.entity_designator_area_name_map.resolve().iteritems():
+            entity = desig.resolve()
+            if entity:
+                entity_id_area_name_map[entity.id] = area_name
+            else:
+                rospy.logerr("Designator {0} in entity_designator_area_name_map resolved to {1}.".format(desig, entity))
+                entity_id_area_name_map[entity] = area_name #Put a None item in the dict. We check on that and if there's a None, something failed.
+
+        if None in entity_id_area_name_map:
+            rospy.logerr("At least 1 designator in self.entity_designator_area_name_map failed")
+            return None
+
+
+        pc = self.robot.ed.navigation.get_position_constraint(entity_id_area_name_map)
+
+        #Orientation constraint is the entity itself...
+        entity_lookat = self.entity_lookat_designator.resolve().resolve()
+        if not entity_lookat:
+            rospy.logerr("Could not resolve entity_lookat_designator".format(self.entity_lookat_designator))
+            return None
+
+        oc = OrientationConstraint(look_at=entity_lookat.pose.position, frame="/map")
+
+        return pc, oc
+
+
+# ----------------------------------------------------------------------------------------------------
