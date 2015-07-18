@@ -535,7 +535,7 @@ class HandleWalkAndSit(smach.StateMachine):
                                     transitions={   'spoken'            :'HANDOVER_CANE'})
 
             smach.StateMachine.add( "HANDOVER_CANE",
-                                    states.HandoverFromHuman(robot, arm_for_cane),
+                                    states.HandoverFromHuman(robot, arm_for_cane, grabbed_entity_label='walking_cane'),
                                     transitions={   'succeeded'            :'succeeded',
                                                     'failed'               :'CLOSE_GRIPPER_AFTER_FAIL'})
 
