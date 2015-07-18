@@ -17,7 +17,7 @@ from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_speech_recognition')
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(15)):
+    def __init__(self, robot, time_out=rospy.Duration(10)):
         smach.State.__init__(self, outcomes=["answered","not_answered"])
         self.robot = robot
         self.time_out = time_out
@@ -52,7 +52,7 @@ class Turn(smach.State):
 
         operator = None
         while not operator:
-            operator = self.robot.ed.get_closest_entity(self, radius=1.5, center_point=self.robot.base.get_location().pose.position)
+            operator = self.robot.ed.get_closest_entity(self, radius=1.7, center_point=self.robot.base.get_location().pose.position)
             print operator
             if not operator:
                 vth = 1.0
@@ -60,7 +60,7 @@ class Turn(smach.State):
                 print "Turning %f radians with force drive" % th
                 self.robot.base.force_drive(0, 0, vth, th / vth)
                 
-        self.robot.speech.speak("There you are!",block=False)
+        self.robot.speech.speak("There you are!")
 
         # Turn towards the operator
         current = self.robot.base.get_location() 

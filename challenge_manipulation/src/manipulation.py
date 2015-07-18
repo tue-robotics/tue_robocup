@@ -51,11 +51,13 @@ OBJECT_TYPES = challenge_knowledge.object_types
 
 DETECTED_OBJECTS = []
 
+DEBUG = False
+
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
     # ToDo
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
 if not PICK_SHELF in OBJECT_SHELVES:
     rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
     OBJECT_SHELVES.append(PICK_SHELF)
@@ -67,6 +69,26 @@ ignore_types = ['waypoint', 'floor','room']
 #ROOM = "room_living_room"
 PLACE_HEIGHT = 1.0
 
+
+not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
+size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+# not_manipulated = lambda entity: not entity in manipulated_items.resolve()
+has_type = lambda entity: entity.type != ""
+min_height = lambda entity: entity.min_z > 0.3
+min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+def max_width(entity):
+    max_bb_x = max(ch.x for ch in entity.convex_hull)
+    min_bb_x = min(ch.x for ch in entity.convex_hull)
+    max_bb_y = max(ch.y for ch in entity.convex_hull)
+    min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+    x_size = abs(max_bb_x - min_bb_x)
+    y_size = abs(max_bb_y - min_bb_y)
+
+    x_ok = 0.02 < x_size < 0.15
+    y_ok = 0.02 < y_size < 0.15
+
+    return x_ok and y_ok
 
 class FormattedSentenceDesignator(Designator):
     """docstring for FormattedSentenceDesignator"""
@@ -233,6 +255,11 @@ class InspectShelves(smach.State):
                 ''' Sleep for 1 second '''
                 rospy.sleep(1.0) # ToDo: remove???
 
+                if DEBUG:
+                    rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
+                    import ipdb;ipdb.set_trace()
+                    continue
+
                 ''' Enable kinect segmentation plugin (only one image frame) '''
                 entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
 
@@ -241,7 +268,8 @@ class InspectShelves(smach.State):
                 for entity_id in entity_ids:
                     e = self.robot.ed.get_entity(entity_id)
 
-                    if e and onTopOff(e, shelf_entity) and not e.type:
+                    # if e and onTopOff(e, shelf_entity) and not e.type:
+                    if e and onTopOff(e, shelf_entity) and size(e) and min_entity_height(e) and not e.type:
                         # ToDo: filter on size in x, y, z
                         # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                         id_list.append(e.id)
@@ -351,25 +379,25 @@ class ManipRecogSingleItem(smach.StateMachine):
         # and are _not_:
         #   already placed
         #   on the placement-shelve.
-        not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
-        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
+        # not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
+        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
         not_manipulated = lambda entity: not entity in manipulated_items.resolve()
-        has_type = lambda entity: entity.type != ""
-        min_height = lambda entity: entity.min_z > 0.3
-        min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
-        def max_width(entity):
-            max_bb_x = max(ch.x for ch in entity.convex_hull)
-            min_bb_x = min(ch.x for ch in entity.convex_hull)
-            max_bb_y = max(ch.y for ch in entity.convex_hull)
-            min_bb_y = min(ch.y for ch in entity.convex_hull)
+        # has_type = lambda entity: entity.type != ""
+        # min_height = lambda entity: entity.min_z > 0.3
+        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+        # def max_width(entity):
+        #     max_bb_x = max(ch.x for ch in entity.convex_hull)
+        #     min_bb_x = min(ch.x for ch in entity.convex_hull)
+        #     max_bb_y = max(ch.y for ch in entity.convex_hull)
+        #     min_bb_y = min(ch.y for ch in entity.convex_hull)
 
-            x_size = abs(max_bb_x - min_bb_x)
-            y_size = abs(max_bb_y - min_bb_y)
+        #     x_size = abs(max_bb_x - min_bb_x)
+        #     y_size = abs(max_bb_y - min_bb_y)
 
-            x_ok = 0.02 < x_size < 0.15
-            y_ok = 0.02 < y_size < 0.15
+        #     x_ok = 0.02 < x_size < 0.15
+        #     y_ok = 0.02 < y_size < 0.15
 
-            return x_ok and y_ok
+        #     return x_ok and y_ok
 
         def on_top(entity):
             container_entity = pick_shelf.resolve()
@@ -596,5 +624,10 @@ if __name__ == '__main__':
     else:
         print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
         exit(1)
+
+    if len(sys.argv) > 2:
+        if sys.argv[2]:
+            rospy.logwarn("Running in debug mode!!!")
+            DEBUG = True
 
     startup(setup_statemachine, robot_name=robot_name)

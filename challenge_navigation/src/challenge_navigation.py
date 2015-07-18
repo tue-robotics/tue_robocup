@@ -19,8 +19,8 @@ class Turn(smach.State):
     def execute(self, userdata):
 
         vth = 1.0
-        print "Turning %f radians with force drive" % radians
-        self.robot.base.force_drive(0, 0, vth, radians / vth)
+        print "Turning %f radians with force drive" % self.radians
+        self.robot.base.force_drive(0, 0, vth, self.radians / vth)
 
         return "turned"
 
@@ -32,7 +32,7 @@ def setup_statemachine(robot):
 
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
-                                states.StartChallengeRobust(robot, "initial_pose", use_entry_points = True),
+                                states.StartChallengeRobust(robot, challenge_knowledge.starting_point, use_entry_points = True),
                                 transitions={   "Done"              :   "SAY_GOTO_TARGET1",
                                                 "Aborted"           :   "SAY_GOTO_TARGET1",
                                                 "Failed"            :   "SAY_GOTO_TARGET1"})
@@ -189,10 +189,9 @@ def setup_statemachine(robot):
         ######################################################################################################################################################
 
 
-        smach.StateMachine.add( 'TURN', Turn(robot, 3.1415), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
+        smach.StateMachine.add( 'TURN', Turn(robot, challenge_knowledge.rotation), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
         smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True), transitions={ 'spoken' : 'FOLLOW_OPERATOR'})
 
-        # TODO :  (Make sure that we toggle the torso laser and disable the kinect)
         smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
         smach.StateMachine.add( 'SAY_SHOULD_I_RETURN', states.Say(robot, "Should I return to target 3?"), transitions={ 'spoken' : 'HEAR_SHOULD_I_RETURN'})
         smach.StateMachine.add( 'HEAR_SHOULD_I_RETURN', states.HearOptions(robot, ["yes", "no"]), transitions={ 'no_result' : 'SAY_STAND_IN_FRONT', "yes" : "SAY_RETURN_TARGET3", "no" : "SAY_STAND_IN_FRONT"})
@@ -259,7 +258,7 @@ def setup_statemachine(robot):
 
         # Amigo goes to the exit (waypoint stated in knowledge base)
         smach.StateMachine.add('GO_TO_EXIT',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.exit1), radius = 1.2),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'RESET_ED_EXIT',
                                                 'goal_not_defined'  :   'RESET_ED_EXIT'})
@@ -269,7 +268,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.exit2), radius = 1.2),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'RESET_ED_EXIT2',
                                                 'goal_not_defined'  :   'RESET_ED_EXIT2'})
@@ -279,7 +278,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP2'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP2',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_2_rips"), radius = 0.5),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.exit3), radius = 0.5),
                                 transitions={   'arrived'           :   'GO_TO_EXIT_BACKUP3',
                                                 'unreachable'       :   'RESET_ED_EXIT3',
                                                 'goal_not_defined'  :   'RESET_ED_EXIT3'})
@@ -289,12 +288,11 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GO_TO_EXIT_BACKUP3'})
 
         smach.StateMachine.add('GO_TO_EXIT_BACKUP3',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit_1_rips"), radius = 1.2),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.exit4), radius = 1.2),
                                 transitions={   'arrived'           :   'AT_END',
                                                 'unreachable'       :   'AT_END',
                                                 'goal_not_defined'  :   'AT_END'})
 
-        # Finally amigo will stop and says 'goodbye' to show that he's done.
         smach.StateMachine.add('AT_END',
                                 states.Say(robot, "Goodbye"),
                                 transitions={   'spoken'            :   'Done'})
