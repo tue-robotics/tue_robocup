@@ -49,8 +49,6 @@ class FollowOperator(smach.State):
             else:
                 self._robot.speech.speak("Something is wrong with my ears, please take a look!")
 
-            rospy.sleep(3)
-
         print "We have a new operator: %s"%operator.id
         self._robot.speech.speak("I will follow you!", block=False)
         self._operator_id = operator.id
@@ -66,6 +64,8 @@ class FollowOperator(smach.State):
         return operator
 
     def _update_navigation(self, operator):
+        self._robot.head.cancel_goal()
+
         p = PositionConstraint()
         p.constraint = self._operator_position_constraint
         p.frame = operator.id
