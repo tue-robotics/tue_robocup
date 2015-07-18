@@ -58,7 +58,7 @@ class Put(State):
         except KeyError:
             height = 0.8
 
-        dx = 0.5
+        dx = 0.6
 
         x = 0.2
         while x <= dx:
