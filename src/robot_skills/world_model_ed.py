@@ -228,6 +228,10 @@ class ED:
         res = self._ed_classify_srv(ids = ids, types = types)
         return res.types
 
+    def classify_with_probs(self, ids, types):
+        res = self._ed_classify_srv(ids = ids, types = types)
+        return zip(res.types, res.probabilities)
+
     def enable_plugins(self, plugin_names):
         return self._set_plugin_status(plugin_names, '"enabled":1')
 
