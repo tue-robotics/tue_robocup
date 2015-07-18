@@ -1,0 +1,1780 @@
+migo@amigo1 $ rosrun challenge_person_recognition person_recognition_noncontinuous.py amigo
+[WARN] [WallTime: 1437192097.061751] Nav_analyser: Bagging = False
+[INFO] [WallTime: 1437192097.066395] Waiting for the global planner services ...
+[INFO] [WallTime: 1437192097.669345] Waiting for service /amigo/text_to_speech/speak
+[INFO] [WallTime: 1437192097.675027] Initializing ebutton listener
+[INFO] [WallTime: 1437192097.679820] Sys.argv = ['/home/amigo/ros/indigo/system/src/challenge_person_recognition/src/person_recognition_noncontinuous.py', 'amigo'], Length = 2
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:132: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStructure)
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:137: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStatus)
+[INFO] [WallTime: 1437192097.720496] State machine starting in initial state 'INITIALIZE' with userdata:
+    []
+[INFO] [WallTime: 1437192098.742931] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1437192098.746614] State machine transitioning 'INITIALIZE':'initialized'-->'INIT_WM'
+[INFO] [WallTime: 1437192099.839387] State machine transitioning 'INIT_WM':'done'-->'LEARN_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437192099.840341] State machine starting in initial state 'SAY_WAITING_OPERATOR' with userdata:
+    []
+[INFO] [WallTime: 1437192099.841315] 'Would the operator please come forward.'
+[INFO] [WallTime: 1437192099.844709] State machine transitioning 'SAY_WAITING_OPERATOR':'spoken'-->'LOOK_AT_OPERATOR'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Could not find a human while looking up
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192103.341671] State machine transitioning 'LOOK_AT_OPERATOR':'failed'-->'WAIT_FOR_OPERATOR'
+[Person Recognition] WaitForPerson
+WaitForPerson: waiting 0/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+WaitForPerson: waiting 1/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 48b179f75d6059d3a774b2906baa529a)
+{"entities":[{"id" : "48b179f75d6059d3a774b2906baa529a", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found a human!
+[INFO] [WallTime: 1437192109.066187] State machine transitioning 'WAIT_FOR_OPERATOR':'succeded'-->'LEARN_NAME_ITERATOR'
+[INFO] [WallTime: 1437192109.067042] Iterating 0 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192109.067619] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192109.068245] 'What is your name?'
+[Person Recognition] Speech recognition outcome was not successful (outcome: 'no_result'). Using default name 'Mister Operator'
+[INFO] [WallTime: 1437192120.709980] State machine transitioning 'ASK_PERSON_NAME':'failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192120.710602] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437192120.713314] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192120.714045] Iterating 1 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192120.714440] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192120.714852] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Jane'
+[INFO] [WallTime: 1437192127.271163] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437192127.272141] 'I heard Jane. Is this correct?'
+[INFO] [WallTime: 1437192127.275128] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437192128.786182] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192128.786855] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437192128.790019] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192128.790517] Iterating 2 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192128.790888] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192128.791309] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Jane'
+[INFO] [WallTime: 1437192135.934833] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437192135.935518] 'I heard Jane. Is this correct?'
+[INFO] [WallTime: 1437192135.938556] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437192137.447509] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192137.448250] 'I did not understand your name.'
+[INFO] [WallTime: 1437192137.451429] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192137.452168] State machine transitioning 'LEARN_NAME_ITERATOR':'container_failed'-->'SAY_COULD_NOT_LEARN_NAME'
+[Person Recognition] sayCouldNotLearnNameCB
+[INFO] [WallTime: 1437192137.452738] 'Sorry but I could not understand your name. I will just call you Jane'
+[INFO] [WallTime: 1437192137.455498] State machine transitioning 'SAY_COULD_NOT_LEARN_NAME':'spoken'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192137.456147] 'Please look at me while I learn your face.'
+[INFO] [WallTime: 1437192137.458759] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'LOOK_AT_OPERATOR_2'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Could not find a human while looking up
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192144.224233] State machine transitioning 'LOOK_AT_OPERATOR_2':'failed'-->'TOGGLE_PERCEPTION_ON'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = True
+[INFO] [WallTime: 1437192144.424630] State machine transitioning 'TOGGLE_PERCEPTION_ON':'done'-->'LEARN_PERSON'
+[INFO] [WallTime: 1437192144.425684] State machine starting in initial state 'NAME_TO_USERDATA' with userdata:
+    []
+NameToUserData
+NameToUserData: param -> Jane
+[INFO] [WallTime: 1437192144.426332] State machine transitioning 'NAME_TO_USERDATA':'done'-->'LEARN_PERSON'
+Goal sent to the learning service (/amigo/ed/face_recognition/learn_face), with name 'Jane'
+Received result from the learning service
+Face learning complete! result: Learning complete
+[INFO] [WallTime: 1437192249.560800] State machine terminating 'LEARN_PERSON':'succeeded':'succeded_learning'
+[INFO] [WallTime: 1437192249.561716] State machine transitioning 'LEARN_PERSON':'succeded_learning'-->'TOGGLE_PERCEPTION_OFF_SUCCESS'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = False
+[INFO] [WallTime: 1437192249.824689] State machine transitioning 'TOGGLE_PERCEPTION_OFF_SUCCESS':'done'-->'SAY_OPERATOR_LEARNED'
+[INFO] [WallTime: 1437192249.826085] 'Now i know what you look like. Please go mix with the crowd.'
+[INFO] [WallTime: 1437192253.926680] State machine terminating 'SAY_OPERATOR_LEARNED':'spoken':'container_success'
+[INFO] [WallTime: 1437192253.927292] State machine transitioning 'LEARN_OPERATOR_CONTAINER':'container_success'-->'WAIT_CONTINUE_ITERATOR'
+[INFO] [WallTime: 1437192253.928026] Iterating 0 of <function <lambda> at 0x7efd680f41b8>
+[INFO] [WallTime: 1437192253.928579] State machine starting in initial state 'ASK_CONTINUE' with userdata:
+    []
+[INFO] [WallTime: 1437192253.929216] State machine starting in initial state 'SAY' with userdata:
+    []
+[INFO] [WallTime: 1437192253.929766] 'Please say continue so that I can continue my task.'
+[INFO] [WallTime: 1437192257.775442] State machine transitioning 'SAY':'spoken'-->'HEAR'
+[INFO] [WallTime: 1437192260.354431] State machine terminating 'HEAR':'heard':'continue'
+[INFO] [WallTime: 1437192260.355079] State machine terminating 'ASK_CONTINUE':'continue':'container_success'
+[INFO] [WallTime: 1437192260.355510] State machine transitioning 'WAIT_CONTINUE_ITERATOR':'container_success'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192260.356087] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata:
+    []
+[INFO] [WallTime: 1437192260.356524] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192260.359348] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192260.359888] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192260.475669] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437192260.487492] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd680265a8>
+[INFO] [WallTime: 1437192260.488353] 'Getting there!'
+[INFO] [WallTime: 1437192260.491338] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192277.507104] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192277.507561] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192277.510432]
+
+Navigation summary:
+Covered 3.41045204608 meters in 17.1509609222 seconds (0.198849036013) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192277.510832] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192277.511138] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437192277.511781] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437192277.514503] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (7.57522, -1.82705, 1.53118)
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192285.383396] State machine transitioning 'FIND_CROWD':'failed'-->'GOTO_LIVING_ROOM_2'
+[INFO] [WallTime: 1437192285.384185] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192285.387969] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192285.388492] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192285.501954] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_2', 0)]
+[INFO] [WallTime: 1437192285.510773] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605baea8>
+[INFO] [WallTime: 1437192285.511575] 'I will go there right away!'
+[INFO] [WallTime: 1437192285.514467] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192297.526782] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192297.527265] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192297.530907]
+
+Navigation summary:
+Covered 1.73983190513 meters in 12.1426241398 seconds (0.143283023925) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192297.531333] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192297.531689] State machine transitioning 'GOTO_LIVING_ROOM_2':'arrived'-->'FIND_CROWD_2'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 0 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192305.954297] State machine transitioning 'FIND_CROWD_2':'failed'-->'GOTO_LIVING_ROOM_3'
+[INFO] [WallTime: 1437192305.954918] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192305.957433] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192305.958013] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192306.072358] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_3', 0)]
+[INFO] [WallTime: 1437192306.082442] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd68023e60>
+[INFO] [WallTime: 1437192306.083252] 'I'm on my way!'
+[INFO] [WallTime: 1437192306.086653] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192320.100907] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192320.101408] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192320.104571]
+
+Navigation summary:
+Covered 2.53728046917 meters in 14.1468851566 seconds (0.179352588296) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192320.105745] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192320.106178] State machine transitioning 'GOTO_LIVING_ROOM_3':'arrived'-->'FIND_CROWD_3'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 0 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192327.790511] State machine terminating 'FIND_CROWD_3':'failed':'container_failed'
+[INFO] [WallTime: 1437192327.791033] State machine transitioning 'FIND_CROWD_CONTAINER':'container_failed'-->'SAY_FAILED_FIND_CROWD'
+[INFO] [WallTime: 1437192327.791660] 'Still Searching for the crowd'
+[INFO] [WallTime: 1437192327.795103] State machine transitioning 'SAY_FAILED_FIND_CROWD':'spoken'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192327.795699] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata:
+    []
+[INFO] [WallTime: 1437192327.796237] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192327.798936] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192327.799567] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192327.909023] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437192327.917861] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd6802afc8>
+[INFO] [WallTime: 1437192327.919061] 'I'm on my way!'
+[INFO] [WallTime: 1437192327.923059] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192340.935871] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192340.936445] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192340.939641]
+
+Navigation summary:
+Covered 1.07355516042 meters in 13.1405329704 seconds (0.0816979922225) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192340.940022] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192340.940422] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437192340.941152] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437192340.946086] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Entity with type human added to the list (id 2884b1bc2d2eb76843a342a289222be4)
+{"entities":[{"id" : "2884b1bc2d2eb76843a342a289222be4", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 2884b1bc2d2eb76843a342a289222be4)
+{"entities":[{"id" : "2884b1bc2d2eb76843a342a289222be4", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 2 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 469084da109c7f5c2ff62a9b3bd57bab)
+{"entities":[{"id" : "469084da109c7f5c2ff62a9b3bd57bab", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 3 (before filtering)
+[Person Recognition] Iterating through the 3 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (8.21046, -3.00804, 1.70005)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (7.4632, -2.69245, 1.51966)
+[Person Recognition] Found 3 faces
+[INFO] [WallTime: 1437192353.174011] State machine terminating 'FIND_CROWD':'succeded':'container_success'
+[INFO] [WallTime: 1437192353.174410] State machine transitioning 'FIND_CROWD_CONTAINER':'container_success'-->'SAY_FOUND_CROWD'
+[INFO] [WallTime: 1437192353.174913] 'I think I found some people.'
+[INFO] [WallTime: 1437192353.177753] State machine transitioning 'SAY_FOUND_CROWD':'spoken'-->'FIND_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437192353.178262] State machine starting in initial state 'SAY_LOOKING_OPERATOR' with userdata:
+    []
+[INFO] [WallTime: 1437192353.178643] 'I'm looking for my operator.'
+[INFO] [WallTime: 1437192353.181204] State machine transitioning 'SAY_LOOKING_OPERATOR':'spoken'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 7.57522
+y: -1.82705
+z: 1.53118
+[INFO] [WallTime: 1437192353.181813] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192353.182343] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192353.186184] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192353.186844] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192353.300826] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd6801b098>
+[INFO] [WallTime: 1437192353.301587] 'I will go there right away!'
+[INFO] [WallTime: 1437192353.304297] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192365.317446] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192365.318014] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192365.321767]
+
+Navigation summary:
+Covered 2.46952151354 meters in 12.1353240013 seconds (0.203498605663) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192365.322157] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192365.322494] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.57522
+y: -1.82705
+z: 1.53118
+[INFO] [WallTime: 1437192365.322987] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192365.323696] 'Please look at me.'
+[INFO] [WallTime: 1437192365.326658] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192365.327458] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 4 entities
+[Person Recognition] Entity with type human added to the list (id fbf7451d38e13c1e99c195c5cd9f9848)
+{"entities":[{"id" : "fbf7451d38e13c1e99c195c5cd9f9848", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.06398, -2.36404, 1.56615)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192374.279937] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192374.780724] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 4 entities
+[Person Recognition] Iterating through the 4 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.5698,-1.90497,1.5293)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (8.22392,-3.00834,1.68975)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 158.862, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.4632,-2.69245,1.51966)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition]    Adding face to list: 'Jane' (score:0.844815, pose: standing up) @ (7.06398,-2.36404,1.56615)
+[INFO] [WallTime: 1437192374.781876] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192374.782655] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192374.783206] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 8.21046
+y: -3.00804
+z: 1.70005
+[INFO] [WallTime: 1437192374.784459] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192374.785227] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192374.787628] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192374.788115] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192374.902788] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd68043f80>
+[INFO] [WallTime: 1437192374.903695] 'I'm on my way!'
+[INFO] [WallTime: 1437192374.906862] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192379.912210] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192379.912824] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192379.916341]
+
+Navigation summary:
+Covered 0.20011734804 meters in 5.12832689285 seconds (0.0390219563262) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192379.916792] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192379.917185] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 8.21046
+y: -3.00804
+z: 1.70005
+[INFO] [WallTime: 1437192379.917754] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192379.918276] 'Please look at me.'
+[INFO] [WallTime: 1437192379.921202] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192379.921773] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 23ca89599e61dbd0bd7d708bc6132bf5)
+{"entities":[{"id" : "23ca89599e61dbd0bd7d708bc6132bf5", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (8.01294, -2.94582, 1.50228)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192387.189197] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192387.724201] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 5 entities
+[Person Recognition] Iterating through the 5 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 47.6221, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 41.786, 'name': 'Jane'}, 'score': 0.835719, 'label': 'Jane'}]
+[Person Recognition]    Adding face to list: 'Jane' (score:0.835719, pose: standing up) @ (8.01294,-2.94582,1.50228)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[INFO] [WallTime: 1437192387.725456] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192387.725990] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192387.726332] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 7.4632
+y: -2.69245
+z: 1.51966
+[INFO] [WallTime: 1437192387.726773] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192387.727187] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192387.729668] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192387.730115] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192387.843757] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605d0cf8>
+[INFO] [WallTime: 1437192387.844589] 'I will go there right away!'
+[INFO] [WallTime: 1437192387.847866] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192399.859634] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192399.860208] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192399.863258]
+
+Navigation summary:
+Covered 0.739726786695 meters in 12.1334261894 seconds (0.0609660268375) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192399.863671] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192399.864028] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.4632
+y: -2.69245
+z: 1.51966
+[INFO] [WallTime: 1437192399.864577] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192399.865063] 'Would you look into my camera?'
+[INFO] [WallTime: 1437192399.868092] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192399.868689] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 3407924ca3ddffc989a2e67b40ad8e6c)
+{"entities":[{"id" : "3407924ca3ddffc989a2e67b40ad8e6c", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] KeyError faces_front: 'faces_front'
+[Person Recognition] Found a human but no faces.
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192406.307031] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192406.845144] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 6 entities
+[Person Recognition] Iterating through the 6 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 47.6221, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 41.786, 'name': 'Jane'}, 'score': 0.835719, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] KeyError faceList:'face_recognizer'
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[INFO] [WallTime: 1437192406.846310] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192406.847017] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192406.847576] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] All locations are marked as visited
+[INFO] [WallTime: 1437192406.848182] State machine terminating 'GET_NEXT_LOCATION':'visited_all':'container_success'
+[INFO] [WallTime: 1437192406.848576] State machine transitioning 'FIND_OPERATOR_CONTAINER':'container_success'-->'DESCRIBE_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192406.849202] State machine starting in initial state 'GET_OPERATOR_LOCATION' with userdata:
+    []
+[Person Recognition] ChooseOperator
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.5698,-1.90497,1.5293)
+[Person Recognition]    Name: unknown, Score: 0, Location: (8.22392,-3.00834,1.68975)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.4632,-2.69245,1.51966)
+[Person Recognition]    Name: Jane, Score: 0.844815, Location: (7.06398,-2.36404,1.56615)
+[Person Recognition]    Name: Jane, Score: 0.835719, Location: (8.01294,-2.94582,1.50228)
+[Person Recognition] Operator is: Jane (0.835719), Location: (8.01294,-2.94582,1.50228)
+[INFO] [WallTime: 1437192406.849803] State machine transitioning 'GET_OPERATOR_LOCATION':'succeeded'-->'GOTO_OPERATOR'
+[INFO] [WallTime: 1437192406.850258] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192406.853498] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192406.854443] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192406.968816] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605ba098>
+[INFO] [WallTime: 1437192406.969808] 'I'm on my way!'
+[INFO] [WallTime: 1437192406.973096] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192410.977370] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192410.977943] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192410.980929]
+
+Navigation summary:
+Covered 0.404555397166 meters in 4.1274189949 seconds (0.0980165565127) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192410.981363] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192410.981740] State machine transitioning 'GOTO_OPERATOR':'arrived'-->'SAY_FOUND_OPERATOR'
+[INFO] [WallTime: 1437192410.982401] 'This is my operator!'
+[INFO] [WallTime: 1437192410.987275] State machine transitioning 'SAY_FOUND_OPERATOR':'spoken'-->'POINT_AT_OPERATOR'
+[Person Recognition] PointAtOperator
+[INFO] [WallTime: 1437192410.987957] Grasp precompute frame id = /amigo/base_link
+[INFO] [WallTime: 1437192413.556756] State machine transitioning 'POINT_AT_OPERATOR':'succeeded'-->'GREET_OPERATOR'
+[Person Recognition] greetOperatorCB
+[INFO] [WallTime: 1437192413.557551] 'I have found you Jane.'
+[INFO] [WallTime: 1437192413.560589] State machine transitioning 'GREET_OPERATOR':'spoken'-->'DESCRIBE_PEOPLE'
+[Person Recognition] DescribePeople
+[Person Recognition] Name: unknown, Score: 0, Location: (1.57881228486,-0.0938461851795,1.68975), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: Jane, Score: 0.835719, Location: (1.3921058559,0.0226099017555,1.50228), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: unknown, Score: 0, Location: (0.929709580185,0.413250540584,1.51966), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: Jane, Score: 0.844815, Location: (0.632382883487,0.836129449884,1.56615), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: unknown, Score: 0, Location: (1.24220414971,1.14389098185,1.5293), Pose: 0, Gender: 0, Main crowd: True, Position:
+[INFO] [WallTime: 1437192413.570043] 'I counted 5 persons in this crowd. 5 males and no females.'
+[INFO] [WallTime: 1437192413.572650] 'My operator is a man, and he is standing up. Jane is the second person in the crowd, starting from the my left.'
+[INFO] [WallTime: 1437192427.934550] State machine transitioning 'DESCRIBE_PEOPLE':'done'-->'SAY_REPEAT'
+[INFO] [WallTime: 1437192427.935290] 'Would you like me to repeat the crowd description?'
+[INFO] [WallTime: 1437192430.879782] State machine transitioning 'SAY_REPEAT':'spoken'-->'HEAR_YES_NO_2'
+KeyError resolving the answer heard: 'positive_answer'
+HearYesNo: answer is negative, heard: 'No'
+[INFO] [WallTime: 1437192433.764343] State machine terminating 'HEAR_YES_NO_2':'heard_no':'container_success'
+[INFO] [WallTime: 1437192433.764734] State machine transitioning 'DESCRIBE_CROWD_CONTAINER':'container_success'-->'END_CHALLENGE'
+[INFO] [WallTime: 1437192433.765529] 'My work here is done, goodbye!'
+[INFO] [WallTime: 1437192436.197860] State machine terminating 'END_CHALLENGE':'spoken':'Done'
+[~]
+amigo@amigo1 $ rosrun challenge_person_recognition person_recognition_noncontinuous.py amigo
+[WARN] [WallTime: 1437192097.061751] Nav_analyser: Bagging = False
+[INFO] [WallTime: 1437192097.066395] Waiting for the global planner services ...
+[INFO] [WallTime: 1437192097.669345] Waiting for service /amigo/text_to_speech/speak
+[INFO] [WallTime: 1437192097.675027] Initializing ebutton listener
+[INFO] [WallTime: 1437192097.679820] Sys.argv = ['/home/amigo/ros/indigo/system/src/challenge_person_recognition/src/person_recognition_noncontinuous.py', 'amigo'], Length = 2
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:132: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStructure)
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:137: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStatus)
+[INFO] [WallTime: 1437192097.720496] State machine starting in initial state 'INITIALIZE' with userdata:
+    []
+[INFO] [WallTime: 1437192098.742931] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1437192098.746614] State machine transitioning 'INITIALIZE':'initialized'-->'INIT_WM'
+[INFO] [WallTime: 1437192099.839387] State machine transitioning 'INIT_WM':'done'-->'LEARN_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437192099.840341] State machine starting in initial state 'SAY_WAITING_OPERATOR' with userdata:
+    []
+[INFO] [WallTime: 1437192099.841315] 'Would the operator please come forward.'
+[INFO] [WallTime: 1437192099.844709] State machine transitioning 'SAY_WAITING_OPERATOR':'spoken'-->'LOOK_AT_OPERATOR'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Could not find a human while looking up
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192103.341671] State machine transitioning 'LOOK_AT_OPERATOR':'failed'-->'WAIT_FOR_OPERATOR'
+[Person Recognition] WaitForPerson
+WaitForPerson: waiting 0/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+WaitForPerson: waiting 1/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 48b179f75d6059d3a774b2906baa529a)
+{"entities":[{"id" : "48b179f75d6059d3a774b2906baa529a", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found a human!
+[INFO] [WallTime: 1437192109.066187] State machine transitioning 'WAIT_FOR_OPERATOR':'succeded'-->'LEARN_NAME_ITERATOR'
+[INFO] [WallTime: 1437192109.067042] Iterating 0 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192109.067619] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192109.068245] 'What is your name?'
+[Person Recognition] Speech recognition outcome was not successful (outcome: 'no_result'). Using default name 'Mister Operator'
+[INFO] [WallTime: 1437192120.709980] State machine transitioning 'ASK_PERSON_NAME':'failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192120.710602] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437192120.713314] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192120.714045] Iterating 1 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192120.714440] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192120.714852] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Jane'
+[INFO] [WallTime: 1437192127.271163] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437192127.272141] 'I heard Jane. Is this correct?'
+[INFO] [WallTime: 1437192127.275128] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437192128.786182] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192128.786855] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437192128.790019] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192128.790517] Iterating 2 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192128.790888] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192128.791309] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Jane'
+[INFO] [WallTime: 1437192135.934833] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437192135.935518] 'I heard Jane. Is this correct?'
+[INFO] [WallTime: 1437192135.938556] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437192137.447509] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192137.448250] 'I did not understand your name.'
+[INFO] [WallTime: 1437192137.451429] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192137.452168] State machine transitioning 'LEARN_NAME_ITERATOR':'container_failed'-->'SAY_COULD_NOT_LEARN_NAME'
+[Person Recognition] sayCouldNotLearnNameCB
+[INFO] [WallTime: 1437192137.452738] 'Sorry but I could not understand your name. I will just call you Jane'
+[INFO] [WallTime: 1437192137.455498] State machine transitioning 'SAY_COULD_NOT_LEARN_NAME':'spoken'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192137.456147] 'Please look at me while I learn your face.'
+[INFO] [WallTime: 1437192137.458759] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'LOOK_AT_OPERATOR_2'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Could not find a human while looking up
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192144.224233] State machine transitioning 'LOOK_AT_OPERATOR_2':'failed'-->'TOGGLE_PERCEPTION_ON'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = True
+[INFO] [WallTime: 1437192144.424630] State machine transitioning 'TOGGLE_PERCEPTION_ON':'done'-->'LEARN_PERSON'
+[INFO] [WallTime: 1437192144.425684] State machine starting in initial state 'NAME_TO_USERDATA' with userdata:
+    []
+NameToUserData
+NameToUserData: param -> Jane
+[INFO] [WallTime: 1437192144.426332] State machine transitioning 'NAME_TO_USERDATA':'done'-->'LEARN_PERSON'
+Goal sent to the learning service (/amigo/ed/face_recognition/learn_face), with name 'Jane'
+Received result from the learning service
+Face learning complete! result: Learning complete
+[INFO] [WallTime: 1437192249.560800] State machine terminating 'LEARN_PERSON':'succeeded':'succeded_learning'
+[INFO] [WallTime: 1437192249.561716] State machine transitioning 'LEARN_PERSON':'succeded_learning'-->'TOGGLE_PERCEPTION_OFF_SUCCESS'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = False
+[INFO] [WallTime: 1437192249.824689] State machine transitioning 'TOGGLE_PERCEPTION_OFF_SUCCESS':'done'-->'SAY_OPERATOR_LEARNED'
+[INFO] [WallTime: 1437192249.826085] 'Now i know what you look like. Please go mix with the crowd.'
+[INFO] [WallTime: 1437192253.926680] State machine terminating 'SAY_OPERATOR_LEARNED':'spoken':'container_success'
+[INFO] [WallTime: 1437192253.927292] State machine transitioning 'LEARN_OPERATOR_CONTAINER':'container_success'-->'WAIT_CONTINUE_ITERATOR'
+[INFO] [WallTime: 1437192253.928026] Iterating 0 of <function <lambda> at 0x7efd680f41b8>
+[INFO] [WallTime: 1437192253.928579] State machine starting in initial state 'ASK_CONTINUE' with userdata:
+    []
+[INFO] [WallTime: 1437192253.929216] State machine starting in initial state 'SAY' with userdata:
+    []
+[INFO] [WallTime: 1437192253.929766] 'Please say continue so that I can continue my task.'
+[INFO] [WallTime: 1437192257.775442] State machine transitioning 'SAY':'spoken'-->'HEAR'
+[INFO] [WallTime: 1437192260.354431] State machine terminating 'HEAR':'heard':'continue'
+[INFO] [WallTime: 1437192260.355079] State machine terminating 'ASK_CONTINUE':'continue':'container_success'
+[INFO] [WallTime: 1437192260.355510] State machine transitioning 'WAIT_CONTINUE_ITERATOR':'container_success'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192260.356087] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata:
+    []
+[INFO] [WallTime: 1437192260.356524] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192260.359348] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192260.359888] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192260.475669] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437192260.487492] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd680265a8>
+[INFO] [WallTime: 1437192260.488353] 'Getting there!'
+[INFO] [WallTime: 1437192260.491338] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192277.507104] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192277.507561] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192277.510432]
+
+Navigation summary:
+Covered 3.41045204608 meters in 17.1509609222 seconds (0.198849036013) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192277.510832] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192277.511138] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437192277.511781] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437192277.514503] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (7.57522, -1.82705, 1.53118)
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192285.383396] State machine transitioning 'FIND_CROWD':'failed'-->'GOTO_LIVING_ROOM_2'
+[INFO] [WallTime: 1437192285.384185] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192285.387969] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192285.388492] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192285.501954] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_2', 0)]
+[INFO] [WallTime: 1437192285.510773] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605baea8>
+[INFO] [WallTime: 1437192285.511575] 'I will go there right away!'
+[INFO] [WallTime: 1437192285.514467] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192297.526782] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192297.527265] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192297.530907]
+
+Navigation summary:
+Covered 1.73983190513 meters in 12.1426241398 seconds (0.143283023925) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192297.531333] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192297.531689] State machine transitioning 'GOTO_LIVING_ROOM_2':'arrived'-->'FIND_CROWD_2'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 0 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192305.954297] State machine transitioning 'FIND_CROWD_2':'failed'-->'GOTO_LIVING_ROOM_3'
+[INFO] [WallTime: 1437192305.954918] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192305.957433] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192305.958013] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192306.072358] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_3', 0)]
+[INFO] [WallTime: 1437192306.082442] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd68023e60>
+[INFO] [WallTime: 1437192306.083252] 'I'm on my way!'
+[INFO] [WallTime: 1437192306.086653] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192320.100907] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192320.101408] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192320.104571]
+
+Navigation summary:
+Covered 2.53728046917 meters in 14.1468851566 seconds (0.179352588296) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192320.105745] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192320.106178] State machine transitioning 'GOTO_LIVING_ROOM_3':'arrived'-->'FIND_CROWD_3'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 0 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192327.790511] State machine terminating 'FIND_CROWD_3':'failed':'container_failed'
+[INFO] [WallTime: 1437192327.791033] State machine transitioning 'FIND_CROWD_CONTAINER':'container_failed'-->'SAY_FAILED_FIND_CROWD'
+[INFO] [WallTime: 1437192327.791660] 'Still Searching for the crowd'
+[INFO] [WallTime: 1437192327.795103] State machine transitioning 'SAY_FAILED_FIND_CROWD':'spoken'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192327.795699] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata:
+    []
+[INFO] [WallTime: 1437192327.796237] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192327.798936] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192327.799567] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192327.909023] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437192327.917861] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd6802afc8>
+[INFO] [WallTime: 1437192327.919061] 'I'm on my way!'
+[INFO] [WallTime: 1437192327.923059] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192340.935871] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192340.936445] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192340.939641]
+
+Navigation summary:
+Covered 1.07355516042 meters in 13.1405329704 seconds (0.0816979922225) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192340.940022] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192340.940422] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437192340.941152] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437192340.946086] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Entity with type human added to the list (id 2884b1bc2d2eb76843a342a289222be4)
+{"entities":[{"id" : "2884b1bc2d2eb76843a342a289222be4", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 2884b1bc2d2eb76843a342a289222be4)
+{"entities":[{"id" : "2884b1bc2d2eb76843a342a289222be4", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 2 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 469084da109c7f5c2ff62a9b3bd57bab)
+{"entities":[{"id" : "469084da109c7f5c2ff62a9b3bd57bab", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 3 (before filtering)
+[Person Recognition] Iterating through the 3 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (8.21046, -3.00804, 1.70005)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (7.4632, -2.69245, 1.51966)
+[Person Recognition] Found 3 faces
+[INFO] [WallTime: 1437192353.174011] State machine terminating 'FIND_CROWD':'succeded':'container_success'
+[INFO] [WallTime: 1437192353.174410] State machine transitioning 'FIND_CROWD_CONTAINER':'container_success'-->'SAY_FOUND_CROWD'
+[INFO] [WallTime: 1437192353.174913] 'I think I found some people.'
+[INFO] [WallTime: 1437192353.177753] State machine transitioning 'SAY_FOUND_CROWD':'spoken'-->'FIND_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437192353.178262] State machine starting in initial state 'SAY_LOOKING_OPERATOR' with userdata:
+    []
+[INFO] [WallTime: 1437192353.178643] 'I'm looking for my operator.'
+[INFO] [WallTime: 1437192353.181204] State machine transitioning 'SAY_LOOKING_OPERATOR':'spoken'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 7.57522
+y: -1.82705
+z: 1.53118
+[INFO] [WallTime: 1437192353.181813] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192353.182343] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192353.186184] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192353.186844] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192353.300826] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd6801b098>
+[INFO] [WallTime: 1437192353.301587] 'I will go there right away!'
+[INFO] [WallTime: 1437192353.304297] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192365.317446] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192365.318014] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192365.321767]
+
+Navigation summary:
+Covered 2.46952151354 meters in 12.1353240013 seconds (0.203498605663) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192365.322157] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192365.322494] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.57522
+y: -1.82705
+z: 1.53118
+[INFO] [WallTime: 1437192365.322987] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192365.323696] 'Please look at me.'
+[INFO] [WallTime: 1437192365.326658] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192365.327458] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 4 entities
+[Person Recognition] Entity with type human added to the list (id fbf7451d38e13c1e99c195c5cd9f9848)
+{"entities":[{"id" : "fbf7451d38e13c1e99c195c5cd9f9848", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.06398, -2.36404, 1.56615)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192374.279937] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192374.780724] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 4 entities
+[Person Recognition] Iterating through the 4 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.5698,-1.90497,1.5293)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (8.22392,-3.00834,1.68975)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 158.862, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.4632,-2.69245,1.51966)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition]    Adding face to list: 'Jane' (score:0.844815, pose: standing up) @ (7.06398,-2.36404,1.56615)
+[INFO] [WallTime: 1437192374.781876] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192374.782655] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192374.783206] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 8.21046
+y: -3.00804
+z: 1.70005
+[INFO] [WallTime: 1437192374.784459] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192374.785227] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192374.787628] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192374.788115] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192374.902788] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd68043f80>
+[INFO] [WallTime: 1437192374.903695] 'I'm on my way!'
+[INFO] [WallTime: 1437192374.906862] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192379.912210] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192379.912824] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192379.916341]
+
+Navigation summary:
+Covered 0.20011734804 meters in 5.12832689285 seconds (0.0390219563262) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192379.916792] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192379.917185] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 8.21046
+y: -3.00804
+z: 1.70005
+[INFO] [WallTime: 1437192379.917754] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192379.918276] 'Please look at me.'
+[INFO] [WallTime: 1437192379.921202] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192379.921773] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 23ca89599e61dbd0bd7d708bc6132bf5)
+{"entities":[{"id" : "23ca89599e61dbd0bd7d708bc6132bf5", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (8.01294, -2.94582, 1.50228)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192387.189197] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192387.724201] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 5 entities
+[Person Recognition] Iterating through the 5 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 47.6221, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 41.786, 'name': 'Jane'}, 'score': 0.835719, 'label': 'Jane'}]
+[Person Recognition]    Adding face to list: 'Jane' (score:0.835719, pose: standing up) @ (8.01294,-2.94582,1.50228)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[INFO] [WallTime: 1437192387.725456] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192387.725990] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192387.726332] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 7.4632
+y: -2.69245
+z: 1.51966
+[INFO] [WallTime: 1437192387.726773] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192387.727187] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192387.729668] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192387.730115] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192387.843757] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605d0cf8>
+[INFO] [WallTime: 1437192387.844589] 'I will go there right away!'
+[INFO] [WallTime: 1437192387.847866] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192399.859634] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192399.860208] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192399.863258]
+
+Navigation summary:
+Covered 0.739726786695 meters in 12.1334261894 seconds (0.0609660268375) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192399.863671] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192399.864028] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.4632
+y: -2.69245
+z: 1.51966
+[INFO] [WallTime: 1437192399.864577] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192399.865063] 'Would you look into my camera?'
+[INFO] [WallTime: 1437192399.868092] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192399.868689] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 3407924ca3ddffc989a2e67b40ad8e6c)
+{"entities":[{"id" : "3407924ca3ddffc989a2e67b40ad8e6c", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] KeyError faces_front: 'faces_front'
+[Person Recognition] Found a human but no faces.
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192406.307031] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192406.845144] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 6 entities
+[Person Recognition] Iterating through the 6 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 47.6221, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 41.786, 'name': 'Jane'}, 'score': 0.835719, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] KeyError faceList:'face_recognizer'
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[INFO] [WallTime: 1437192406.846310] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192406.847017] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192406.847576] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] All locations are marked as visited
+[INFO] [WallTime: 1437192406.848182] State machine terminating 'GET_NEXT_LOCATION':'visited_all':'container_success'
+[INFO] [WallTime: 1437192406.848576] State machine transitioning 'FIND_OPERATOR_CONTAINER':'container_success'-->'DESCRIBE_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192406.849202] State machine starting in initial state 'GET_OPERATOR_LOCATION' with userdata:
+    []
+[Person Recognition] ChooseOperator
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.5698,-1.90497,1.5293)
+[Person Recognition]    Name: unknown, Score: 0, Location: (8.22392,-3.00834,1.68975)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.4632,-2.69245,1.51966)
+[Person Recognition]    Name: Jane, Score: 0.844815, Location: (7.06398,-2.36404,1.56615)
+[Person Recognition]    Name: Jane, Score: 0.835719, Location: (8.01294,-2.94582,1.50228)
+[Person Recognition] Operator is: Jane (0.835719), Location: (8.01294,-2.94582,1.50228)
+[INFO] [WallTime: 1437192406.849803] State machine transitioning 'GET_OPERATOR_LOCATION':'succeeded'-->'GOTO_OPERATOR'
+[INFO] [WallTime: 1437192406.850258] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192406.853498] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192406.854443] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192406.968816] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605ba098>
+[INFO] [WallTime: 1437192406.969808] 'I'm on my way!'
+[INFO] [WallTime: 1437192406.973096] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192410.977370] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192410.977943] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192410.980929]
+
+Navigation summary:
+Covered 0.404555397166 meters in 4.1274189949 seconds (0.0980165565127) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192410.981363] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192410.981740] State machine transitioning 'GOTO_OPERATOR':'arrived'-->'SAY_FOUND_OPERATOR'
+[INFO] [WallTime: 1437192410.982401] 'This is my operator!'
+[INFO] [WallTime: 1437192410.987275] State machine transitioning 'SAY_FOUND_OPERATOR':'spoken'-->'POINT_AT_OPERATOR'
+amigo@amigo1 $ rosrun challenge_person_recognition person_recognition_noncontinuous.py amigo
+[WARN] [WallTime: 1437192097.061751] Nav_analyser: Bagging = False
+[INFO] [WallTime: 1437192097.066395] Waiting for the global planner services ...
+[INFO] [WallTime: 1437192097.669345] Waiting for service /amigo/text_to_speech/speak
+[INFO] [WallTime: 1437192097.675027] Initializing ebutton listener
+[INFO] [WallTime: 1437192097.679820] Sys.argv = ['/home/amigo/ros/indigo/system/src/challenge_person_recognition/src/person_recognition_noncontinuous.py', 'amigo'], Length = 2
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:132: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStructure)
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:137: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStatus)
+[INFO] [WallTime: 1437192097.720496] State machine starting in initial state 'INITIALIZE' with userdata:
+    []
+[INFO] [WallTime: 1437192098.742931] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1437192098.746614] State machine transitioning 'INITIALIZE':'initialized'-->'INIT_WM'
+[INFO] [WallTime: 1437192099.839387] State machine transitioning 'INIT_WM':'done'-->'LEARN_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437192099.840341] State machine starting in initial state 'SAY_WAITING_OPERATOR' with userdata:
+    []
+[INFO] [WallTime: 1437192099.841315] 'Would the operator please come forward.'
+[INFO] [WallTime: 1437192099.844709] State machine transitioning 'SAY_WAITING_OPERATOR':'spoken'-->'LOOK_AT_OPERATOR'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Could not find a human while looking up
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192103.341671] State machine transitioning 'LOOK_AT_OPERATOR':'failed'-->'WAIT_FOR_OPERATOR'
+[Person Recognition] WaitForPerson
+WaitForPerson: waiting 0/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+WaitForPerson: waiting 1/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 48b179f75d6059d3a774b2906baa529a)
+{"entities":[{"id" : "48b179f75d6059d3a774b2906baa529a", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found a human!
+[INFO] [WallTime: 1437192109.066187] State machine transitioning 'WAIT_FOR_OPERATOR':'succeded'-->'LEARN_NAME_ITERATOR'
+[INFO] [WallTime: 1437192109.067042] Iterating 0 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192109.067619] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192109.068245] 'What is your name?'
+[Person Recognition] Speech recognition outcome was not successful (outcome: 'no_result'). Using default name 'Mister Operator'
+[INFO] [WallTime: 1437192120.709980] State machine transitioning 'ASK_PERSON_NAME':'failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192120.710602] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437192120.713314] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192120.714045] Iterating 1 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192120.714440] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192120.714852] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Jane'
+[INFO] [WallTime: 1437192127.271163] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437192127.272141] 'I heard Jane. Is this correct?'
+[INFO] [WallTime: 1437192127.275128] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437192128.786182] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192128.786855] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437192128.790019] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192128.790517] Iterating 2 of <function <lambda> at 0x7efd71699f50>
+[INFO] [WallTime: 1437192128.790888] State machine starting in initial state 'ASK_PERSON_NAME' with userdata:
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437192128.791309] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Jane'
+[INFO] [WallTime: 1437192135.934833] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437192135.935518] 'I heard Jane. Is this correct?'
+[INFO] [WallTime: 1437192135.938556] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437192137.447509] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437192137.448250] 'I did not understand your name.'
+[INFO] [WallTime: 1437192137.451429] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437192137.452168] State machine transitioning 'LEARN_NAME_ITERATOR':'container_failed'-->'SAY_COULD_NOT_LEARN_NAME'
+[Person Recognition] sayCouldNotLearnNameCB
+[INFO] [WallTime: 1437192137.452738] 'Sorry but I could not understand your name. I will just call you Jane'
+[INFO] [WallTime: 1437192137.455498] State machine transitioning 'SAY_COULD_NOT_LEARN_NAME':'spoken'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192137.456147] 'Please look at me while I learn your face.'
+[INFO] [WallTime: 1437192137.458759] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'LOOK_AT_OPERATOR_2'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Could not find a human while looking up
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192144.224233] State machine transitioning 'LOOK_AT_OPERATOR_2':'failed'-->'TOGGLE_PERCEPTION_ON'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = True
+[INFO] [WallTime: 1437192144.424630] State machine transitioning 'TOGGLE_PERCEPTION_ON':'done'-->'LEARN_PERSON'
+[INFO] [WallTime: 1437192144.425684] State machine starting in initial state 'NAME_TO_USERDATA' with userdata:
+    []
+NameToUserData
+NameToUserData: param -> Jane
+[INFO] [WallTime: 1437192144.426332] State machine transitioning 'NAME_TO_USERDATA':'done'-->'LEARN_PERSON'
+Goal sent to the learning service (/amigo/ed/face_recognition/learn_face), with name 'Jane'
+Received result from the learning service
+Face learning complete! result: Learning complete
+[INFO] [WallTime: 1437192249.560800] State machine terminating 'LEARN_PERSON':'succeeded':'succeded_learning'
+[INFO] [WallTime: 1437192249.561716] State machine transitioning 'LEARN_PERSON':'succeded_learning'-->'TOGGLE_PERCEPTION_OFF_SUCCESS'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = False
+[INFO] [WallTime: 1437192249.824689] State machine transitioning 'TOGGLE_PERCEPTION_OFF_SUCCESS':'done'-->'SAY_OPERATOR_LEARNED'
+[INFO] [WallTime: 1437192249.826085] 'Now i know what you look like. Please go mix with the crowd.'
+[INFO] [WallTime: 1437192253.926680] State machine terminating 'SAY_OPERATOR_LEARNED':'spoken':'container_success'
+[INFO] [WallTime: 1437192253.927292] State machine transitioning 'LEARN_OPERATOR_CONTAINER':'container_success'-->'WAIT_CONTINUE_ITERATOR'
+[INFO] [WallTime: 1437192253.928026] Iterating 0 of <function <lambda> at 0x7efd680f41b8>
+[INFO] [WallTime: 1437192253.928579] State machine starting in initial state 'ASK_CONTINUE' with userdata:
+    []
+[INFO] [WallTime: 1437192253.929216] State machine starting in initial state 'SAY' with userdata:
+    []
+[INFO] [WallTime: 1437192253.929766] 'Please say continue so that I can continue my task.'
+[INFO] [WallTime: 1437192257.775442] State machine transitioning 'SAY':'spoken'-->'HEAR'
+[INFO] [WallTime: 1437192260.354431] State machine terminating 'HEAR':'heard':'continue'
+[INFO] [WallTime: 1437192260.355079] State machine terminating 'ASK_CONTINUE':'continue':'container_success'
+[INFO] [WallTime: 1437192260.355510] State machine transitioning 'WAIT_CONTINUE_ITERATOR':'container_success'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192260.356087] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata:
+    []
+[INFO] [WallTime: 1437192260.356524] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192260.359348] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192260.359888] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192260.475669] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437192260.487492] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd680265a8>
+[INFO] [WallTime: 1437192260.488353] 'Getting there!'
+[INFO] [WallTime: 1437192260.491338] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192277.507104] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192277.507561] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192277.510432]
+
+Navigation summary:
+Covered 3.41045204608 meters in 17.1509609222 seconds (0.198849036013) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192277.510832] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192277.511138] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437192277.511781] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437192277.514503] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (7.57522, -1.82705, 1.53118)
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192285.383396] State machine transitioning 'FIND_CROWD':'failed'-->'GOTO_LIVING_ROOM_2'
+[INFO] [WallTime: 1437192285.384185] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192285.387969] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192285.388492] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192285.501954] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_2', 0)]
+[INFO] [WallTime: 1437192285.510773] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605baea8>
+[INFO] [WallTime: 1437192285.511575] 'I will go there right away!'
+[INFO] [WallTime: 1437192285.514467] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192297.526782] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192297.527265] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192297.530907]
+
+Navigation summary:
+Covered 1.73983190513 meters in 12.1426241398 seconds (0.143283023925) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192297.531333] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192297.531689] State machine transitioning 'GOTO_LIVING_ROOM_2':'arrived'-->'FIND_CROWD_2'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 0 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192305.954297] State machine transitioning 'FIND_CROWD_2':'failed'-->'GOTO_LIVING_ROOM_3'
+[INFO] [WallTime: 1437192305.954918] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192305.957433] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192305.958013] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192306.072358] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_3', 0)]
+[INFO] [WallTime: 1437192306.082442] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd68023e60>
+[INFO] [WallTime: 1437192306.083252] 'I'm on my way!'
+[INFO] [WallTime: 1437192306.086653] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192320.100907] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192320.101408] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192320.104571]
+
+Navigation summary:
+Covered 2.53728046917 meters in 14.1468851566 seconds (0.179352588296) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192320.105745] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192320.106178] State machine transitioning 'GOTO_LIVING_ROOM_3':'arrived'-->'FIND_CROWD_3'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 0 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Did not find any humans
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 393ea11d851089bac2a1f9207bd889db)
+{"entities":[{"id" : "393ea11d851089bac2a1f9207bd889db", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+[Person Recognition] Iterating through the 1 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces
+[INFO] [WallTime: 1437192327.790511] State machine terminating 'FIND_CROWD_3':'failed':'container_failed'
+[INFO] [WallTime: 1437192327.791033] State machine transitioning 'FIND_CROWD_CONTAINER':'container_failed'-->'SAY_FAILED_FIND_CROWD'
+[INFO] [WallTime: 1437192327.791660] 'Still Searching for the crowd'
+[INFO] [WallTime: 1437192327.795103] State machine transitioning 'SAY_FAILED_FIND_CROWD':'spoken'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192327.795699] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata:
+    []
+[INFO] [WallTime: 1437192327.796237] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192327.798936] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192327.799567] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192327.909023] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437192327.917861] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd6802afc8>
+[INFO] [WallTime: 1437192327.919061] 'I'm on my way!'
+[INFO] [WallTime: 1437192327.923059] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192340.935871] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192340.936445] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192340.939641]
+
+Navigation summary:
+Covered 1.07355516042 meters in 13.1405329704 seconds (0.0816979922225) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192340.940022] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192340.940422] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437192340.941152] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437192340.946086] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Entity with type human added to the list (id 2884b1bc2d2eb76843a342a289222be4)
+{"entities":[{"id" : "2884b1bc2d2eb76843a342a289222be4", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 2884b1bc2d2eb76843a342a289222be4)
+{"entities":[{"id" : "2884b1bc2d2eb76843a342a289222be4", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 2 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 469084da109c7f5c2ff62a9b3bd57bab)
+{"entities":[{"id" : "469084da109c7f5c2ff62a9b3bd57bab", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 3 (before filtering)
+[Person Recognition] Iterating through the 3 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (8.21046, -3.00804, 1.70005)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Location already exists in the list
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (7.4632, -2.69245, 1.51966)
+[Person Recognition] Found 3 faces
+[INFO] [WallTime: 1437192353.174011] State machine terminating 'FIND_CROWD':'succeded':'container_success'
+[INFO] [WallTime: 1437192353.174410] State machine transitioning 'FIND_CROWD_CONTAINER':'container_success'-->'SAY_FOUND_CROWD'
+[INFO] [WallTime: 1437192353.174913] 'I think I found some people.'
+[INFO] [WallTime: 1437192353.177753] State machine transitioning 'SAY_FOUND_CROWD':'spoken'-->'FIND_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437192353.178262] State machine starting in initial state 'SAY_LOOKING_OPERATOR' with userdata:
+    []
+[INFO] [WallTime: 1437192353.178643] 'I'm looking for my operator.'
+[INFO] [WallTime: 1437192353.181204] State machine transitioning 'SAY_LOOKING_OPERATOR':'spoken'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 7.57522
+y: -1.82705
+z: 1.53118
+[INFO] [WallTime: 1437192353.181813] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192353.182343] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192353.186184] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192353.186844] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192353.300826] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd6801b098>
+[INFO] [WallTime: 1437192353.301587] 'I will go there right away!'
+[INFO] [WallTime: 1437192353.304297] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192365.317446] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192365.318014] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192365.321767]
+
+Navigation summary:
+Covered 2.46952151354 meters in 12.1353240013 seconds (0.203498605663) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192365.322157] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192365.322494] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.57522
+y: -1.82705
+z: 1.53118
+[INFO] [WallTime: 1437192365.322987] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192365.323696] 'Please look at me.'
+[INFO] [WallTime: 1437192365.326658] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192365.327458] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 4 entities
+[Person Recognition] Entity with type human added to the list (id fbf7451d38e13c1e99c195c5cd9f9848)
+{"entities":[{"id" : "fbf7451d38e13c1e99c195c5cd9f9848", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.06398, -2.36404, 1.56615)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192374.279937] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192374.780724] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 4 entities
+[Person Recognition] Iterating through the 4 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.5698,-1.90497,1.5293)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (8.22392,-3.00834,1.68975)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 158.862, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.4632,-2.69245,1.51966)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition]    Adding face to list: 'Jane' (score:0.844815, pose: standing up) @ (7.06398,-2.36404,1.56615)
+[INFO] [WallTime: 1437192374.781876] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192374.782655] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192374.783206] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 8.21046
+y: -3.00804
+z: 1.70005
+[INFO] [WallTime: 1437192374.784459] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192374.785227] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192374.787628] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192374.788115] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192374.902788] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd68043f80>
+[INFO] [WallTime: 1437192374.903695] 'I'm on my way!'
+[INFO] [WallTime: 1437192374.906862] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192379.912210] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192379.912824] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192379.916341]
+
+Navigation summary:
+Covered 0.20011734804 meters in 5.12832689285 seconds (0.0390219563262) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192379.916792] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192379.917185] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 8.21046
+y: -3.00804
+z: 1.70005
+[INFO] [WallTime: 1437192379.917754] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192379.918276] 'Please look at me.'
+[INFO] [WallTime: 1437192379.921202] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192379.921773] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 23ca89599e61dbd0bd7d708bc6132bf5)
+{"entities":[{"id" : "23ca89599e61dbd0bd7d708bc6132bf5", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (8.01294, -2.94582, 1.50228)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192387.189197] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192387.724201] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 5 entities
+[Person Recognition] Iterating through the 5 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 47.6221, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 4
+[Person Recognition] There is a face in this location already on the list.  List size: 4
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 41.786, 'name': 'Jane'}, 'score': 0.835719, 'label': 'Jane'}]
+[Person Recognition]    Adding face to list: 'Jane' (score:0.835719, pose: standing up) @ (8.01294,-2.94582,1.50228)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[INFO] [WallTime: 1437192387.725456] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192387.725990] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192387.726332] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] Next location: x: 7.4632
+y: -2.69245
+z: 1.51966
+[INFO] [WallTime: 1437192387.726773] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437192387.727187] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192387.729668] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192387.730115] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192387.843757] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605d0cf8>
+[INFO] [WallTime: 1437192387.844589] 'I will go there right away!'
+[INFO] [WallTime: 1437192387.847866] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192399.859634] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192399.860208] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192399.863258]
+
+Navigation summary:
+Covered 0.739726786695 meters in 12.1334261894 seconds (0.0609660268375) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192399.863671] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192399.864028] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.4632
+y: -2.69245
+z: 1.51966
+[INFO] [WallTime: 1437192399.864577] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437192399.865063] 'Would you look into my camera?'
+[INFO] [WallTime: 1437192399.868092] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437192399.868689] State machine starting in initial state 'LOOK_AT_PERSON' with userdata:
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 3407924ca3ddffc989a2e67b40ad8e6c)
+{"entities":[{"id" : "3407924ca3ddffc989a2e67b40ad8e6c", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] KeyError faces_front: 'faces_front'
+[Person Recognition] Found a human but no faces.
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437192406.307031] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437192406.845144] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 6 entities
+[Person Recognition] Iterating through the 6 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 166.693, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 121.518, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 47.6221, 'name': 'Jane'}, 'score': 0, 'label': None}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 41.786, 'name': 'Jane'}, 'score': 0.835719, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] KeyError faceList:'face_recognizer'
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 42.2407, 'name': 'Jane'}, 'score': 0.844815, 'label': 'Jane'}]
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[INFO] [WallTime: 1437192406.846310] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437192406.847017] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437192406.847576] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 3 locations in the list
+[Person Recognition] All locations are marked as visited
+[INFO] [WallTime: 1437192406.848182] State machine terminating 'GET_NEXT_LOCATION':'visited_all':'container_success'
+[INFO] [WallTime: 1437192406.848576] State machine transitioning 'FIND_OPERATOR_CONTAINER':'container_success'-->'DESCRIBE_CROWD_CONTAINER'
+[INFO] [WallTime: 1437192406.849202] State machine starting in initial state 'GET_OPERATOR_LOCATION' with userdata:
+    []
+[Person Recognition] ChooseOperator
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.5698,-1.90497,1.5293)
+[Person Recognition]    Name: unknown, Score: 0, Location: (8.22392,-3.00834,1.68975)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.4632,-2.69245,1.51966)
+[Person Recognition]    Name: Jane, Score: 0.844815, Location: (7.06398,-2.36404,1.56615)
+[Person Recognition]    Name: Jane, Score: 0.835719, Location: (8.01294,-2.94582,1.50228)
+[Person Recognition] Operator is: Jane (0.835719), Location: (8.01294,-2.94582,1.50228)
+[INFO] [WallTime: 1437192406.849803] State machine transitioning 'GET_OPERATOR_LOCATION':'succeeded'-->'GOTO_OPERATOR'
+[INFO] [WallTime: 1437192406.850258] State machine starting in initial state 'START_ANALYSIS' with userdata:
+    []
+[INFO] [WallTime: 1437192406.853498] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437192406.854443] State machine starting in initial state 'GET_PLAN' with userdata:
+    []
+[INFO] [WallTime: 1437192406.968816] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7efd605ba098>
+[INFO] [WallTime: 1437192406.969808] 'I'm on my way!'
+[INFO] [WallTime: 1437192406.973096] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437192410.977370] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437192410.977943] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437192410.980929]
+
+Navigation summary:
+Covered 0.404555397166 meters in 4.1274189949 seconds (0.0980165565127) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437192410.981363] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437192410.981740] State machine transitioning 'GOTO_OPERATOR':'arrived'-->'SAY_FOUND_OPERATOR'
+[INFO] [WallTime: 1437192410.982401] 'This is my operator!'
+[INFO] [WallTime: 1437192410.987275] State machine transitioning 'SAY_FOUND_OPERATOR':'spoken'-->'POINT_AT_OPERATOR'
+[Person Recognition] PointAtOperator
+[INFO] [WallTime: 1437192410.987957] Grasp precompute frame id = /amigo/base_link
+[INFO] [WallTime: 1437192413.556756] State machine transitioning 'POINT_AT_OPERATOR':'succeeded'-->'GREET_OPERATOR'
+[Person Recognition] greetOperatorCB
+[INFO] [WallTime: 1437192413.557551] 'I have found you Jane.'
+[INFO] [WallTime: 1437192413.560589] State machine transitioning 'GREET_OPERATOR':'spoken'-->'DESCRIBE_PEOPLE'
+[Person Recognition] DescribePeople
+[Person Recognition] Name: unknown, Score: 0, Location: (1.57881228486,-0.0938461851795,1.68975), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: Jane, Score: 0.835719, Location: (1.3921058559,0.0226099017555,1.50228), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: unknown, Score: 0, Location: (0.929709580185,0.413250540584,1.51966), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: Jane, Score: 0.844815, Location: (0.632382883487,0.836129449884,1.56615), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: unknown, Score: 0, Location: (1.24220414971,1.14389098185,1.5293), Pose: 0, Gender: 0, Main crowd: True, Position:
+[INFO] [WallTime: 1437192413.570043] 'I counted 5 persons in this crowd. 5 males and no females.'
+[INFO] [WallTime: 1437192413.572650] 'My operator is a man, and he is standing up. Jane is the second person in the crowd, starting from the my left.'
+[INFO] [WallTime: 1437192427.934550] State machine transitioning 'DESCRIBE_PEOPLE':'done'-->'SAY_REPEAT'
+[INFO] [WallTime: 1437192427.935290] 'Would you like me to repeat the crowd description?'
+[INFO] [WallTime: 1437192430.879782] State machine transitioning 'SAY_REPEAT':'spoken'-->'HEAR_YES_NO_2'
+KeyError resolving the answer heard: 'positive_answer'
+HearYesNo: answer is negative, heard: 'No'
+[INFO] [WallTime: 1437192433.764343] State machine terminating 'HEAR_YES_NO_2':'heard_no':'container_success'
+[INFO] [WallTime: 1437192433.764734] State machine transitioning 'DESCRIBE_CROWD_CONTAINER':'container_success'-->'END_CHALLENGE'
+[INFO] [WallTime: 1437192433.765529] 'My work here is done, goodbye!'
+[INFO] [WallTime: 1437192436.197860] State machine terminating 'END_CHALLENGE':'spoken':'Done'
+[~]
+dvdeedwvo:n Recognition] PointAtOperator
+[INFO] [WallTime: 1437192410.987957] Grasp precompute frame id = /amigo/base_link
+[INFO] [WallTime: 1437192413.556756] State machine transitioning 'POINT_AT_OPERATOR':'succeeded'-->'GREET_OPERATOR'
+[Person Recognition] greetOperatorCB
+[INFO] [WallTime: 1437192413.557551] 'I have found you Jane.'
+[INFO] [WallTime: 1437192413.560589] State machine transitioning 'GREET_OPERATOR':'spoken'-->'DESCRIBE_PEOPLE'
+[Person Recognition] DescribePeople
+[Person Recognition] Name: unknown, Score: 0, Location: (1.57881228486,-0.0938461851795,1.68975), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: Jane, Score: 0.835719, Location: (1.3921058559,0.0226099017555,1.50228), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: unknown, Score: 0, Location: (0.929709580185,0.413250540584,1.51966), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: Jane, Score: 0.844815, Location: (0.632382883487,0.836129449884,1.56615), Pose: 0, Gender: 0, Main crowd: True, Position:
+[Person Recognition] Name: unknown, Score: 0, Location: (1.24220414971,1.14389098185,1.5293), Pose: 0, Gender: 0, Main crowd: True, Position:
+[INFO] [WallTime: 1437192413.570043] 'I counted 5 persons in this crowd. 5 males and no females.'
+[INFO] [WallTime: 1437192413.572650] 'My operator is a man, and he is standing up. Jane is the second person in the crowd, starting from the my left.'
+[INFO] [WallTime: 1437192427.934550] State machine transitioning 'DESCRIBE_PEOPLE':'done'-->'SAY_REPEAT'
+[INFO] [WallTime: 1437192427.935290] 'Would you like me to repeat the crowd description?'
+[INFO] [WallTime: 1437192430.879782] State machine transitioning 'SAY_REPEAT':'spoken'-->'HEAR_YES_NO_2'
+KeyError resolving the answer heard: 'positive_answer'
+HearYesNo: answer is negative, heard: 'No'
+[INFO] [WallTime: 1437192433.764343] State machine terminating 'HEAR_YES_NO_2':'heard_no':'container_success'
+[INFO] [WallTime: 1437192433.764734] State machine transitioning 'DESCRIBE_CROWD_CONTAINER':'container_success'-->'END_CHALLENGE'
+[INFO] [WallTime: 1437192433.765529] 'My work here is done, goodbye!'
+[INFO] [WallTime: 1437192436.197860] State machine terminating 'END_CHALLENGE':'spoken':'Done'
+[~]
+
