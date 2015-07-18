@@ -97,32 +97,33 @@ class WakeMeUp(smach.StateMachine):
         # Waking up the operator
         bed_des = EdEntityDesignator(robot, id=knowledge.bed)
 
-        entityOnBedDesignator = EdEntityDesignator(robot, 
-            center_point = robot.ed.get_entity(knowledge.bed).pose.position, 
-            radius = knowledge.find_person['within_range'], 
-            criteriafuncs = [is_large_enough, probably_exists, is_just_above_bed, is_not_bed, is_not_prior])
+        entityOnBedDesignator = EdEntityDesignator( robot, 
+                                                    center_point = robot.ed.get_entity(knowledge.bed).pose.position, 
+                                                    radius = knowledge.find_person['within_range'], 
+                                                    criteriafuncs = [   is_large_enough, 
+                                                                        probably_exists, 
+                                                                        is_just_above_bed, 
+                                                                        is_not_bed, 
+                                                                        is_not_prior])
 
         time_marker = VariableDesignator(resolve_type=type(rospy.Time.now()))         # Time to repeat wakeup loop
 
         # Taking breakfast order
         breakfastCerealDes = VariableDesignator("")       # designator containing chosen cereal name
-        breakfastFruitDes = VariableDesignator("")        # designator containing chosen fruit name
-        breakfastMilkDes = VariableDesignator("")         # designator containing chosen milk name
+        breakfastFruitDes  = VariableDesignator("")       # designator containing chosen fruit name
+        breakfastMilkDes   = VariableDesignator("")       # designator containing chosen milk name
 
         # Getting the order from the kitchen
-        waypoint_kitchen = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
-        selected_gen_item_des = VariableDesignator("")
+        waypoint_kitchen       = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
+        selected_gen_item_des  = VariableDesignator("")
         selected_spec_item_des = VariableDesignator("")
 
         prep_eval_des = VariableDesignator({})
-        for item in knowledge.generic_items:
+        for item in knowledge.generic_items: 
             prep_eval_des.current[item] = False
 
         current_item_nav_goal_at = VariableDesignator({})
         current_item_nav_goal_lookat = VariableDesignator(resolve_type=Designator)
-
-        current_item_nav_goal = {   'at':{ Designator(resolve_type=EntityInfo):'near',Designator(resolve_type=EntityInfo):'in'},
-                                    'lookat':Designator(resolve_type=EntityInfo) }
         
         item_designator = VariableDesignator(resolve_type=EntityInfo)
 
@@ -253,7 +254,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'succeeded' :   'SAY_REPEAT_ORDER',
                                                         'failed':       'SAY_INCORRECT_ORDER'})
 
-                # TODO: ORDER CONFIRMATION
+                # TODO: ORDER CONFIRMATION?
 
                 smach.StateMachine.add( "SAY_INCORRECT_ORDER",
                                         states.Say(robot, [ "I didn't get that.",
@@ -275,7 +276,6 @@ class WakeMeUp(smach.StateMachine):
                                     transitions={   'container_succeeded':'GOTO_KITCHEN_CONTAINER',
                                                     'container_failed': 'SAY_ILL_CHOOSE_BREAKFAST'})
 
-            # TODO: Test this!!!
             smach.StateMachine.add( "SAY_ILL_CHOOSE_BREAKFAST",
                                     states.Say(robot, "I couldn't understand the breakfast order. I'll choose something for you.", block=False),
                                     transitions={   'spoken' :'GOTO_KITCHEN_CONTAINER'})
@@ -376,11 +376,10 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'done'      :'GOTO_TABLE',
                                                         'failed'    :'SELECT_ITEM'})
 
-                # Maybe in front of?
                 smach.StateMachine.add( 'GOTO_TABLE',
                                         states.NavigateToSymbolic(robot, {
                                             EdEntityDesignator(robot, id=knowledge.table_nav_goal['in']) : "in",
-                                            EdEntityDesignator(robot, id=knowledge.table_nav_goal['near']) : "near" }, 
+                                            EdEntityDesignator(robot, id=knowledge.table_nav_goal['in_front_of']) : "in_front_of" }, 
                                             EdEntityDesignator(robot, id=knowledge.table_nav_goal['lookat'])),
                                         transitions={   'arrived'           :'SCAN_TABLE',
                                                         'unreachable'       :'SAY_UNREACHABLE',

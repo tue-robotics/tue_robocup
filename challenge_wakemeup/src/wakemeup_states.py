@@ -39,18 +39,11 @@ class bcolors:
 
 prefix = bcolors.OKBLUE + "[WAKE ME UP] " + bcolors.ENDC
 
-default_milk = "fresh milk"
-
 # load item names
 object_names = [ o["name"] for o in knowledge_objs if "category" in o and o["category"] is "food" or o["category"] is "drinks"]
 names_fruit = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "fruit" ]
 names_cereal = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "cereal" ]
 names_milk = [ o["name"] for o in knowledge_objs if "sub-category" in o and o["sub-category"] is "milk" ]
-
-# # Debug print
-# print prefix + "Fruit names from Knowledge: " + str(names_fruit)
-# print prefix + "Cereal names from Knowledge: " + str(names_cereal)
-# print prefix + "Milk names from Knowledge: " + str(names_milk)
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -146,9 +139,9 @@ class GetOrder(smach.State):
         word_item2 = ""
         word_item3 = ""
 
-        self.breakfastFruit.current = ""
-        self.breakfastCereal.current = ""
-        self.breakfastMilk.current = ""
+        self.breakfastFruit.current  = knowledge.default_fruit
+        self.breakfastCereal.current = knowledge.default_cereal
+        self.breakfastMilk.current   = knowledge.default_milk
 
         # define allowed sentences, [] means optional
         sentence = Designator("(([<beginning>] <item1> [<preposition>] <item2> [<preposition>] <item3>) | \
@@ -244,11 +237,11 @@ class GetOrder(smach.State):
 
                 # just a consistency check
                 if not got_milk:
-                    print prefix + "Still don't know what type of milk it is! Reseting to " + default_milk + bcolors.ENDC
-                    self.breakfastMilk.current = default_milk
+                    print prefix + "Still don't know what type of milk it is! Reseting to " + knowledge.default_milk + bcolors.ENDC
+                    self.breakfastMilk.current = knowledge.default_milk
 
             else:
-                self.breakfastMilk.current = default_milk
+                self.breakfastMilk.current = knowledge.default_milk
                 got_milk = True
 
             print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
@@ -431,7 +424,7 @@ class SelectItem(smach.State):
             self.robot.speech.speak("I will get your "+self.generic_item.resolve()+" now.", block=False)
 
             self.nav_goal.current = {
-                                        EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['near_'+self.generic_item.resolve()]) : "near",
+                                        EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in_front_of_'+self.generic_item.resolve()]) : "in_front_of",
                                         EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in']) : "in"
                                     }
 
@@ -455,6 +448,13 @@ class FindItem(smach.State):
     def execute(self, userdata):
         self.on_object = self.on_object_des.resolve().resolve()
         self.result_type = self.result_type_des.resolve()
+
+        # if self.result_type in names_fruit:
+        #     self.result_subcategory = "fruit"
+        # elif self.result_type in names_milk:
+        #     self.result_subcategory = "milk"
+        # elif self.result_type in names_cereal:
+        #     self.result_subcategory = "cereal"
 
         center_point = gm.Point()
         frame_id = "/"+self.on_object.id
@@ -484,8 +484,21 @@ class FindItem(smach.State):
                 result_des.current = self.robot.ed.get_entity(filtered_ids[i])
                 return 'item_found'
 
-        # IMportant TODO! if not correct item, but in same sub-category, pick that item!!!
-        # Maybe go to another position to look again?
+        found_milk      = list(set(entity_types).intersection(names_milk))
+        found_cereal    = list(set(entity_types).intersection(names_cereal))
+        found_fruit     = list(set(entity_types).intersection(names_fruit))
+
+        if len(found_milk) > 0 and self.result_type in names_milk:
+            result_des.current = self.robot.ed.get_entity(found_milk[0])
+            return 'item_found'
+        elif len(found_cereal) > 0 and self.result_type in names_cereal:
+            result_des.current = self.robot.ed.get_entity(found_cereal[0])
+            return 'item_found'
+        elif len(found_fruit) > 0 and self.result_type in names_fruit:
+            result_des.current = self.robot.ed.get_entity(found_fruit[0])
+            return 'item_found'
+
+        # TODO: maybe go to another position to look again?
 
         return 'not_found'
 

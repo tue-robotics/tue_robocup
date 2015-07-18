@@ -1,7 +1,7 @@
 # Tunable params
 find_person = {
     'within_range' : 2.0,
-    'under_z' : 0.3,
+    'under_z' : 0.4,
     'min_chull_area' : 0.06,
     'min_exist_prob' : 0.6
 }
@@ -48,18 +48,18 @@ fruit_shelf = "kitchencounter"
 
 table_nav_goal = {
     "in": "livingroom",
-    "near": "dinnertable",
+    "in_front_of": "dinnertable",
     "lookat": "dinnertable"
 }
 
 item_nav_goal = {               # This needs to be updated according to the environment
     "in" : "kitchen",
-    "near_milk"     : milk_shelf,
-    "lookat_milk"   : milk_shelf,
-    "near_cereal"   : cereal_shelf,
-    "lookat_cereal" : cereal_shelf,
-    "near_fruit"    : fruit_shelf,
-    "lookat_fruit"  : fruit_shelf
+    "in_front_of_milk"      : milk_shelf,
+    "lookat_milk"           : milk_shelf,
+    "in_front_of_cereal"    : cereal_shelf,
+    "lookat_cereal"         : cereal_shelf,
+    "in_front_of_fruit"     : fruit_shelf,
+    "lookat_fruit"          : fruit_shelf
 }
 
 dinner_table = "dinnertable"
