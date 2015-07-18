@@ -39,7 +39,7 @@ class FollowOperator(smach.State):
             self._robot.head.look_at_standing_person()
             self._robot.speech.speak("Should I follow you?")
 
-            answer = self._robot.ears.recognize("(yes|no)", {}, 10)
+            answer = self._robot.ears.recognize("(yes|no)", {})
 
             self._robot.head.cancel_goal()
 
