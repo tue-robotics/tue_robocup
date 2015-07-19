@@ -15,7 +15,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_radius=1, timeout=3.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0):
+    def __init__(self, robot, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
@@ -27,7 +27,8 @@ class FollowOperator(smach.State):
         self._start_timeout = start_timeout
         self._operator_timeout = operator_timeout
         self._distance_threshold = distance_threshold
-        self._last_pose = None
+        self._last_pose_stamped = None
+        self._time_started = None
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -43,12 +44,11 @@ class FollowOperator(smach.State):
 
             answer = self._robot.ears.recognize("(yes|no)", {})
 
-            self._robot.head.cancel_goal()
-
             if answer:
                 if answer.result == "yes":
                     operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
-                    break
+                    if not operator:
+                        self._robot.speech.speak("Please stand in front of me")
                 elif answer.result == "no":
                     return False
                 else:
@@ -56,6 +56,8 @@ class FollowOperator(smach.State):
             else:
                 self._robot.speech.speak("Something is wrong with my ears, please take a look!")
                 return False
+
+        self._robot.head.cancel_goal()
 
         # Operator is None?
         print "We have a new operator: %s"%operator.id
@@ -79,22 +81,6 @@ class FollowOperator(smach.State):
         p.constraint = "x^2 + y^2 < %f^2"%self._operator_radius
         p.frame = operator.id
 
-        # Store pose if changed and check timeout
-        current_pose_stamped = self._robot.base.get_location()
-        if not self._last_pose_stamped:
-            self._last_pose_stamped = current_pose_stamped
-        else:
-            # Compare the pose with the last pose and update if difference is larger than x
-            if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.y, current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.2:
-                # Update the last pose
-                self._last_pose_stamped = current_pose
-
-            # Check whether we passe the timeout
-            if (current_pose_stamped.stamp - self._last_pose_stamped.stamp).to_sec() > self._timeout:
-                # Only return True if we exceeded the start timeout
-                if (current_pose_stamped - self._time_started).to_sec() > self._start_timeout:
-                    return True
-
         # We are going to do this dependent on distance to operator
 
         # Get the point of the operator and the robot in map frame
@@ -105,6 +91,31 @@ class FollowOperator(smach.State):
         dx = o_point.x - r_point.x
         dy = o_point.y - r_point.y
         length = math.hypot(dx, dy)
+
+        # Store pose if changed and check timeout
+        current_pose_stamped = self._robot.base.get_location()
+        if not self._last_pose_stamped:
+            self._last_pose_stamped = current_pose_stamped
+        else:
+            # Compare the pose with the last pose and update if difference is larger than x
+            if math.hypot(current_pose_stamped.pose.position.x - self._last_pose_stamped.pose.position.x, current_pose_stamped.pose.position.y - self._last_pose_stamped.pose.position.y) > 0.05:
+                # Update the last pose
+                print "Last pose stamped (%f,%f) at %f secs"%(self._last_pose_stamped.pose.position.x, self._last_pose_stamped.pose.position.y, self._last_pose_stamped.header.stamp.secs)
+                self._last_pose_stamped = current_pose_stamped
+            else:
+                print "We are standing still :/"
+
+            print "Seconds not moved: %f"%(current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec()
+            print "Seconds since start: %f"%(current_pose_stamped.header.stamp - self._time_started).to_sec()
+            # Check whether we passe the timeout
+            if (current_pose_stamped.header.stamp - self._last_pose_stamped.header.stamp).to_sec() > self._timeout:
+                print "We are standing still long enough"
+                # Only return True if we exceeded the start timeout
+                if (current_pose_stamped.header.stamp - self._time_started).to_sec() > self._start_timeout:
+                    print "We passed start timeout"
+                    if length < 1.0:
+                        print "Distance to goal < 1.0 : %f" % length
+                        return True
 
         plan = None
         if length > self._distance_threshold:
@@ -136,11 +147,11 @@ class FollowOperator(smach.State):
         self._robot.head.close()
         self._robot.torso.send_goal('reset', timeout=4.0)
 
-        self._first_time_at_location = None
-
         if not self._register_operator():
             self._robot.base.local_planner.cancelCurrentPlan()
             return "no_operator"
+
+        self._time_started = rospy.Time.now()
 
         while not rospy.is_shutdown():
 
