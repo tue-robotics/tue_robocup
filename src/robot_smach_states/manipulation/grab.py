@@ -112,7 +112,7 @@ class PickUp(State):
         rospy.loginfo('y_home = ' + str(y_home))
 
         rospy.loginfo('start moving to carrying pose')
-        if not arm.send_goal(0.18, y_home, goal_bl.z + 0.3, 0, 0.5, 0,
+        if not arm.send_goal(0.18, y_home, 0.6, 0, 0.3, 0,
                              timeout=60
                              ):
             rospy.logerr('Failed carrying pose')
