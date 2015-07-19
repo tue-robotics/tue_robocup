@@ -55,15 +55,15 @@ class Turn(smach.State):
             operator = self.robot.ed.get_closest_entity(self, radius=1.7, center_point=self.robot.base.get_location().pose.position)
             print operator
             if not operator:
-                vth = 1.0
+                vth = 0.5
                 th = 3.1415 / 10
                 print "Turning %f radians with force drive" % th
                 self.robot.base.force_drive(0, 0, vth, th / vth)
-                
-        self.robot.speech.speak("There you are!")
+
+        self.robot.base.force_drive(0, 0, 0, 0.5)
 
         # Turn towards the operator
-        current = self.robot.base.get_location() 
+        current = self.robot.base.get_location()
         robot_th = tf.euler_z_from_quaternion(current.pose.orientation)
         desired_th = math.atan2(operator.pose.position.y - current.pose.position.y, operator.pose.position.x - current.pose.position.x)
 
@@ -73,10 +73,11 @@ class Turn(smach.State):
             th -= 2*3.1415
         if th < -3.1415:
             th += 2*3.1415
-        vth = 1.0
-        
+        vth = 0.5
+
         # TUrn
         self.robot.base.force_drive(0, 0, (th / abs(th)) * vth, abs(th) / vth)
+        self.robot.speech.speak("There you are!")
 
         return "turned"
 
