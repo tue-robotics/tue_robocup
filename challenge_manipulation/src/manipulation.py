@@ -440,21 +440,21 @@ class ManipRecogSingleItem(smach.StateMachine):
         print "{0} = arm_with_item_designator".format(arm_with_item_designator)
 
         with self:
-            smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
-                                    #states.NavigateToObserve(robot, pick_shelf),
-                                    states.NavigateToSymbolic(robot, {pick_shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, pick_shelf),
-                                    transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
-                                                    'unreachable'       :'LOOKAT_PICK_SHELF',
-                                                    'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
+            # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
+            #                         #states.NavigateToObserve(robot, pick_shelf),
+            #                         states.NavigateToSymbolic(robot, {pick_shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, pick_shelf),
+            #                         transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
+            #                                         'unreachable'       :'LOOKAT_PICK_SHELF',
+            #                                         'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
             ''' Look at pick shelf '''
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
                                      states.LookAtEntity(robot, pick_shelf, keep_following=True),
-                                     transitions={  'succeeded'         :'SAY_LOOKAT_PICK_SHELF'})
+                                     transitions={  'succeeded'         :'LOCK_ITEM'})
 
-            smach.StateMachine.add( "SAY_LOOKAT_PICK_SHELF",
-                                    states.Say(robot, ["I'm looking at the pick_shelf to see what items I can find"]),
-                                    transitions={   'spoken'            :'LOCK_ITEM'})
+            # smach.StateMachine.add( "SAY_LOOKAT_PICK_SHELF",
+            #                         states.Say(robot, ["I'm looking at the pick_shelf to see what items I can find"]),
+            #                         transitions={   'spoken'            :'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):

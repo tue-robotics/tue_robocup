@@ -221,24 +221,33 @@ class ExploreScenario(smach.StateMachine):
                                                     'unreachable'       : 'GOTO_POINT_OF_INTEREST',
                                                     'goal_not_defined'  : 'GOTO_HARDCODED_WAYPOINT'})
 
-            ''' Backup: if no point of interest: go to hardcoded waypoint '''
-            smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
-                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
-                                    transitions={   'arrived'           : 'CHECK_TRIGGER',
-                                                    'unreachable'       : 'CHECK_TRIGGER',
-                                                    'goal_not_defined'  : 'done'})
-
-            ''' Look at thing '''
+            ''' Look at thing (choose either of the two options below (second one not yet operational) '''
             smach.StateMachine.add("LOOK_AT_OBJECT",
-                                    LookBaseLinkPoint(robot, x=radius, y=0, z=0, timeout=5.0, waittime=3.0),
-                                    transitions={   'succeeded'                 :'TAKE_SNAPSHOT',
-                                                    'failed'                    :'TAKE_SNAPSHOT'})
+                                    LookBaseLinkPoint(robot, x=radius, y=0, z=1.0, timeout=5.0, waittime=3.0),
+                                    transitions={   'succeeded'         : 'TAKE_SNAPSHOT',
+                                                    'failed'            : 'TAKE_SNAPSHOT'})
+            # smach.StateMachine.add("LOOK_AT_OBJECT",
+            #                          states.LookAtEntity(robot, pick_shelf, keep_following=True),
+            #                          transitions={  'succeeded'         : 'TAKE_SNAPSHOT'})
 
             ''' Take snapshot '''
             smach.StateMachine.add("TAKE_SNAPSHOT",
                                     TakeSnapShot(robot),
                                     transitions={   'succeeded'                 :'CHECK_TRIGGER',
                                                     'failed'                    :'CHECK_TRIGGER'})
+
+            ''' Backup: if no point of interest: go to hardcoded waypoint '''
+            smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
+                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
+                                    transitions={   'arrived'           : 'LOOK_UP',
+                                                    'unreachable'       : 'LOOK_UP',
+                                                    'goal_not_defined'  : 'done'})
+
+            ''' If arrived at a waypoint, look up '''
+            smach.StateMachine.add("LOOK_UP",
+                                    LookBaseLinkPoint(robot, x=10.0, y=0, z=1.5, timeout=5.0, waittime=3.0),
+                                    transitions={   'succeeded'         : 'CHECK_TRIGGER',
+                                                    'failed'            : 'CHECK_TRIGGER'})
 
 ####################################  STATES FOR GUI CALLBACK ####################################################333
 class ConversationWithOperator(smach.State):
@@ -578,12 +587,27 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized'   :'SAY_EXPLORE',
-                                                'abort'         :'Aborted'})
+                                transitions={   'initialized'       : 'LOOKAT_FIRST_ITEM',
+                                                'abort'             : 'Aborted'})
+
+        smach.StateMachine.add('LOOKAT_FIRST_ITEM',
+                                LookBaseLinkPoint(robot=robot, x=1.0, y=0.0, z=0.0, timeout=2.5, waittime=1.0),
+                                transitions={   'succeeded'         : 'TAKE_FIRST_SNAPSHOT',
+                                                'failed'            : 'TAKE_FIRST_SNAPSHOT'})
+
+        smach.StateMachine.add('TAKE_FIRST_SNAPSHOT',
+                                TakeSnapShot(robot),
+                                transitions={   'succeeded'         : 'WAIT_FOR_EXPLORE_COMMAND',
+                                                'failed'            : 'WAIT_FOR_EXPLORE_COMMAND'})
+
+        smach.StateMachine.add('WAIT_FOR_EXPLORE_COMMAND',
+                                states.WaitForTrigger(robot=robot, triggers=['explore'], topic="/"+robot.robot_name+"/trigger", rate=1.0),
+                                transitions={   'explore'           : 'SAY_EXPLORE',
+                                                'preempted'         : 'SAY_EXPLORE'})
 
         smach.StateMachine.add('SAY_EXPLORE',
                                 states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
-                                transitions={   'spoken'        :'EXPLORE'})
+                                transitions={   'spoken'            : 'EXPLORE'})
 
         smach.StateMachine.add('EXPLORE',
                                 ExploreScenario(robot),
