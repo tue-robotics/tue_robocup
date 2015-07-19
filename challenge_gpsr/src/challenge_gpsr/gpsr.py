@@ -155,7 +155,7 @@ class Ask_action(smach.State):
                 self.save_action(res)
 
             else:
-                self.robot.speech.speak("Sorry, could you please repeat?")
+                self.robot.speech.speak("Sorry, I did not hear you. Please come closer to me if you can.")
                 return "failed"
         except KeyError:
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
