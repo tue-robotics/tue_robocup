@@ -10,7 +10,7 @@ from robot_smach_states.util.designators import check_resolve_type
 import ed.msg
 
 import rospy
-
+import math
 
 # ----------------------------------------------------------------------------------------------------
 class NavigateToObserve(NavigateTo):
@@ -44,13 +44,16 @@ class NavigateToObserve(NavigateTo):
 
         if len(ch) > 0:
 
-            ch.append(ch[0])
+            # Only append the first part again if it's more than 1 cm apart of the last
+            # if math.hypot( (ch[0].x - ch[-1].x), (ch[0].y - ch[-1].y) ) > 0.01:
+            #     ch.append(ch[0])
 
             pci = ""
 
             for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x - ch[i].x
-                dy = ch[i+1].y - ch[i].y
+                j = (i+1)%len(ch)
+                dx = ch[j].x - ch[i].x
+                dy = ch[j].y - ch[i].y
 
                 length = (dx * dx + dy * dy)**.5
 

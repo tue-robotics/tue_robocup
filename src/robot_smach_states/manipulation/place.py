@@ -90,7 +90,7 @@ class Put(State):
             return 'failed'
 
         # Close gripper
-        arm.send_gripper_goal('close')
+        arm.send_gripper_goal('close', timeout=0.0)
 
         arm.reset()
 
