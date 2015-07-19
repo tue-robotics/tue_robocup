@@ -125,10 +125,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_TARGET2'})
 
         smach.StateMachine.add('GOTO_TARGET2',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos2", 
-                                                           EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
-                                                          EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="navigation2"), 0.6),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
                                                 'unreachable'       :   'RESET_ED_TARGET2',
                                                 'goal_not_defined'  :   'RESET_ED_TARGET2'})
@@ -144,10 +141,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GOTO_TARGET2_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET2_BACKUP',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos2", 
-                                                           EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
-                                                          EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
+                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="navigation2"), 0.6),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
                                                 'unreachable'       :   'SAY_TARGET2_FAILED',
                                                 'goal_not_defined'  :   'SAY_TARGET2_FAILED'})

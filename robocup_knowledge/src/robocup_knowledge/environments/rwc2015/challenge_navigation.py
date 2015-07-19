@@ -8,7 +8,7 @@ target3 = "navigation3"
 target4 = "navigation4"
 
 radius1 = 0.1
-radius2 = 0.6
+radius2 = 0.7
 
 exit1 = "exit_door_B1"
 exit2 = "exit_door_B2"
@@ -17,4 +17,3 @@ exit4 = "exit_door_A2"
 
 starting_point = "initial_pose_door_A"
 rotation = 0
-
