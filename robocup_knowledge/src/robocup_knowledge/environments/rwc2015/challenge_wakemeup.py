@@ -13,6 +13,8 @@ get_newspaper_timeout = 5
 give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
+sensor_range = 2.0
+
 # Knowledge
 order_confirmation_limit = 3
 
@@ -32,10 +34,10 @@ default_milk = "pure_milk"
 default_cereal = "egg_stars"
 default_fruit = "lemon"
 
-# Remove before flight
+# # Remove before flight
 # default_milk = "coke"
-# default_cereal = "bubblemint"
-# default_fruit = "deodorant"
+# default_cereal = "coke"
+# default_fruit = "coke"
 
 
 # TODO: in front of?
@@ -74,6 +76,6 @@ dinner_table = "dinnertable"
 # Remove before flight!!!
 # objects = [
 # {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'coke'},
-# {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'mints'},
-# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'cereal','name': 'bubblemint'}, 
-# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'fruit', 'name': 'deodorant'}]
+# {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'coke'},
+# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'cereal','name': 'coke'}, 
+# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'fruit', 'name': 'coke'}]
