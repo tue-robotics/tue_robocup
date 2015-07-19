@@ -6,7 +6,7 @@ spec_questions = challenge_speech_recognition_data.spec
 choices_questions = challenge_speech_recognition_data.choices 
 
 #locations: # TO BE DEFINED IN model.yaml!
-starting_point = "initial_pose_door_B"
+starting_point = "initial_pose_door_A"
 meeting_point = "gpsr_meeting_point"
 gpsr_exit = "exit_door_B1"
 
@@ -35,7 +35,7 @@ objects_known = ['pure milk', 'orange juice', 'sponge', 'papaya milk', 'apple', 
 location_placement = ['kitchentable', 'kitchencounter', 'cupboard', 'bar', 'couchtable', 'dinnertable', 'sofa', 
                       'left bedside table', 'right bedside table', 'desk', 'bed', 'bookcase', 'hallwaytable']
 
-#location_placement = ['bookcase']
+#location_placement = ['kitchentable','dinnertable']
 
 rooms = ["kitchen", "hallway", "livingroom", "bedroom"]
 #rooms = ["hallway"]
@@ -45,6 +45,7 @@ persons_men = ["Alex","Angel","Edward","Homer","Jamie","John","Kevin","Kurt","Tr
 
 #spec_get_and_deliver
 spec_get_deliver = "(<2_vb_take> the <2_object> from the <1_location> and <3_vb_deliver> it to (<3_person_me>|(the <3_place_location>)|(<3_person> (at|in|(which is in)) the <3_room>)))"
+#spec_get_deliver = "(<2_vb_take> the <2_object> from the <1_location> and <3_vb_deliver> it to the <3_place_location>)"
 
 #spec go to room and search for an object
 spec_goroom_findobj = "(<1_vb_goto> the <1_room> and <2_vb_find> the <2_object>)"

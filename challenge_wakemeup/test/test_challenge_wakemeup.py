@@ -21,6 +21,7 @@ class Person(object):
         self.y = self.positions[self.position][1]
         self.awake = False
         self.height = -3.0
+        self.delta = 0.05
 
         self.operator = W.add_object("operator", "ddw.chair", self.x, self.y, self.height, 0.0, 0.0 )
 
@@ -50,6 +51,26 @@ class Person(object):
         self.updatePosition()
         print "Operator changed to position {}".format(self.position)
 
+    def move(self, key):
+        if key == 8:
+            dx = 1
+            dy = 0
+        elif key == 2:
+            dx = -1
+            dy = 0
+        elif key == 4:
+            dx = 0
+            dy = -1
+        elif key == 6:
+            dx = 0
+            dy = 1
+        else:
+            print "This is not supposed to happen"
+
+        self.x = self.x + dx * self.delta
+        self.y = self.y + dy * self.delta
+        self.updatePosition()
+
 
 if __name__ == "__main__":
     rospy.init_node('wake_me_up_test_object_spawner')
@@ -65,46 +86,45 @@ if __name__ == "__main__":
     object_names = ["deodorant", "bubblemint", "coke", "mints"]
 
     dx1 = 0.02
-    # Kitchen counter (drinks)
-    W.add_object("milk",  "mints", 2.25+(dx1*1), 2.0, 0.85, 0.0, 0.0 )
-    W.add_object("milk2", "coke", 2.35+(dx1*2), 2.0, 0.85, 0.0, 0.0 )
-    W.add_object("milk3", "mints", 2.45+(dx1*3), 2.0, 0.85, 0.0, 0.0 )
-    W.add_object("milk4", "coke", 2.55+(dx1*4), 2.0, 0.85, 0.0, 0.0 )
-    W.add_object("milk5", "mints", 2.65+(dx1*5), 2.0, 0.85, 0.0, 0.0 )
+    # Kitchen counter (food)
+    W.add_object("milk",  "sim_apple", 2.25+(dx1*1), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk2", "sim_lemon", 2.35+(dx1*2), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk3", "sim_pear", 2.45+(dx1*3), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk4", "sim_coconut_cereals", 2.55+(dx1*4), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk5", "sim_coco_balls", 2.65+(dx1*5), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk5", "sim_coco_balls", 2.75+(dx1*6), 2.0, 0.85, 0.0, 0.0 )
 
-    #W.add_object("milk6", "coke", 2.30+(dx1*1), 1.75, 0.85, 0.0, 0.0 )
-    #W.add_object("milk7", "mints", 2.40+(dx1*2), 1.75, 0.85, 0.0, 0.0 )
-    #W.add_object("milk8", "coke", 2.50+(dx1*3), 1.75, 0.85, 0.0, 0.0 )
-    #W.add_object("milk6", "mints", 2.60+(dx1*4), 1.75, 0.85, 0.0, 0.0 )
-
-    # Kitchen table (food)
+    # Kitchen table (drinks)
     dx = 0.03
-    W.add_object("fruit1", "mints", 2.80+dx, -1.25, 0.85, 0.0, 0.0 )
+    W.add_object("fruit1", "sim_pure_milk", 2.80+dx, -1.25, 0.85, 0.0, 0.0 )
     #W.add_object("fruit2", "coke", 2.85+dx*2, -1.05, 0.85, 0.0, 0.0 )
-    W.add_object("fruit3", "coke", 2.90+dx*3, -1.25, 0.85, 0.0, 0.0 )
+    W.add_object("fruit3", "sim_papaya_milk", 2.90+dx*3, -1.25, 0.85, 0.0, 0.0 )
     #W.add_object("fruit4", "coke", 2.95+dx*4, -1.05, 0.85, 0.0, 0.0 )
-    W.add_object("fruit5", "mints", 3.00+dx*5, -1.25, 0.85, 0.0, 0.0 )
+    W.add_object("fruit5", "sim_pure_milk", 3.00+dx*5, -1.25, 0.85, 0.0, 0.0 )
     #W.add_object("fruit6", "coke", 3.05+dx*6, -1.05, 0.85, 0.0, 0.0 )
-    W.add_object("fruit7", "coke", 3.10+dx*7, -1.25, 0.85, 0.0, 0.0 )
+    W.add_object("fruit7", "sim_papaya_milk", 3.10+dx*7, -1.25, 0.85, 0.0, 0.0 )
     #W.add_object("fruit8", "coke", 3.15+dx*8, -1.05, 0.85, 0.0, 0.0 )
-    W.add_object("fruit9", "coke", 3.20+dx*9, -1.25, 0.85, 0.0, 0.0 )
+    W.add_object("fruit9", "sim_papaya_milk", 3.20+dx*9, -1.25, 0.85, 0.0, 0.0 )
     
 
-    # W.add_object("coconut_cereals", "coconut_cereals",  3.20, -1.3, 0.8, 0.0, 0.0 )
-    # W.add_object("apple", "apple",                      2.75, -1.4, 0.8, 0.0, 0.0 )
-    # W.add_object("lemon", "lemon",                      2.90, -1.4, 0.8, 0.0, 0.0 )
-    # W.add_object("pear", "pear",                        3.05, -1.4, 0.8, 0.0, 0.0 )
-
     print "Dynamic wake me up simulator"
-    print "Usage: press 1 to make the person in the bed wake up"
-    print "       press 2 to make the person move to another position (to test if it can see it anywhere on the bed)"
+    print "Usage: press 5 to make the person in the bed wake up"
+    print "       press 0 to make the person move to another position (to test if it can see it anywhere on the bed)"
 
     while not rospy.is_shutdown():
 
         key = getKey()
-        if key == '1':
+        if key == '5':
             person.toggleAwake()
-        elif key == '2':
+        elif key == '0':
             person.changePosition()
+        elif key == '8':
+            person.move(int(key))
+        elif key == '4':
+            person.move(int(key))
+        elif key == '6':
+            person.move(int(key))
+        elif key == '2':
+            person.move(int(key))
         else:
             break

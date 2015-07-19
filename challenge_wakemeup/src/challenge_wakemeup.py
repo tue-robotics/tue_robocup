@@ -200,7 +200,7 @@ class WakeMeUp(smach.StateMachine):
                                                             "Wakey wakey!",
                                                             "Wake up boss", 
                                                             "Hello there sleepy head! Please get up", 
-                                                            "Time for breakfast!"], block=True),
+                                                            "Time for breakfast!"], block=False),
                                         transitions={   'spoken' :'LOOK_IF_AWAKE'})
 
                 smach.StateMachine.add( "LOOK_IF_AWAKE",
