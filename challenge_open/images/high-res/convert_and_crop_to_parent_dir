@@ -1,0 +1,1 @@
+convert bed.jpg  -trim -resize 200x200 \( +clone -rotate 90 +clone -mosaic +level-colors white \)           +swap -gravity center -composite    square_bed.jpg
