@@ -81,7 +81,7 @@ class Head():
         goal.header.frame_id = "/"+self._robot_name+"/base_link"
         goal.point.x = 1.0
         goal.point.y = 0.0
-        goal.point.z = 1.7
+        goal.point.z = 1.6
 
         return self.look_at_point(goal)
 
