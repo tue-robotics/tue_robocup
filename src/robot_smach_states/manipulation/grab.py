@@ -159,6 +159,10 @@ class Grab(smach.StateMachine):
         check_type(arm, Arm)
 
         with self:
+            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={ 'succeeded'    : 'NAVIGATE_TO_GRAB',
+                                                 'failed'       : 'failed'})
+
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable':      'failed',
                                                 'goal_not_defined': 'failed',
