@@ -114,7 +114,7 @@ class executePlan(smach.State):
 
         # Cancel head goal, we need it for navigation :)
         if self.reset_head:
-            self.robot.head.cancel_goal()
+            self.robot.head.close()
 
         while not rospy.is_shutdown():
             rospy.Rate(1.0).sleep() # 1hz
