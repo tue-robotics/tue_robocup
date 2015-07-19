@@ -33,8 +33,8 @@ gangnam_motionB_right= [gangnam_poseB_right_pre_start, gangnam_poseB_right_start
 def torso_up_down(robot, lower, upper, stopEvent):
     """Loop the robot's torso between the lower and upper heights given here"""
     while not rospy.is_shutdown() and not stopEvent.is_set():
-        robot.torso.send_goal("lower", timeout=4.0)
-        robot.torso.send_goal("upper", timeout=4.0)
+        robot.torso.send_goal("lower_limit", timeout=4.0)
+        robot.torso.send_goal("upper_limit", timeout=4.0)
 
 def motionA(robot):
     robot.rightArm._send_joint_trajectory([[-0.050, 1.500, 1.500, 0.100, 0.150, 0.000, 0.000]], timeout=rospy.Duration(1))
