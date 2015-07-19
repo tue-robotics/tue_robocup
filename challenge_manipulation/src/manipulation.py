@@ -430,7 +430,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
         place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))
 
-        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.rightArm)
+        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
 
         print "{0} = pick_shelf".format(pick_shelf)
