@@ -501,12 +501,12 @@ class FindItem(smach.State):
         self.on_object = self.on_object_des.resolve().resolve()
         self.result_type = self.result_type_des.resolve()
 
-        # if self.result_type in names_fruit:
-        #     self.result_subcategory = "fruit"
-        # elif self.result_type in names_milk:
-        #     self.result_subcategory = "milk"
-        # elif self.result_type in names_cereal:
-        #     self.result_subcategory = "cereal"
+        if self.result_type in names_fruit:
+            self.items_were_looking_for = names_fruit
+        elif self.result_type in names_milk:
+            self.items_were_looking_for = names_milk
+        elif self.result_type in names_cereal:
+            self.items_were_looking_for = names_cereal
 
         center_point = gm.Point()
         frame_id = "/"+self.on_object.id
@@ -527,7 +527,7 @@ class FindItem(smach.State):
             if e and self.on_object and onTopOff(e, self.on_object) and not e.type:
                 filtered_ids.append(e.id)
 
-        entity_types = self.robot.ed.classify(ids=filtered_ids, types=object_names)
+        entity_types = self.robot.ed.classify(ids=filtered_ids, types=self.items_were_looking_for)
 
         print "I found the following items: {}".format(entity_types)
 
