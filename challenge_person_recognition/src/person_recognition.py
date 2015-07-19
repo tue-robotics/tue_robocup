@@ -534,7 +534,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'DESCRIBE_PEOPLE'})
 
                 smach.StateMachine.add( 'DESCRIBE_PEOPLE',
-                                        PersonRecStates.DescribePeople(robot, facesAnalyzedDes),
+                                        PersonRecStates.DescribePeople(robot, facesAnalyzedDes, operatorNameDes),
                                         remapping={     'operatorIdx_in':'operatorIdx_userData'},
                                         transitions={   'done':'SAY_REPEAT'})
 

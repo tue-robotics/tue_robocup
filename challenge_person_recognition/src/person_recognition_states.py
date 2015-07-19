@@ -391,12 +391,13 @@ class FindCrowd(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class DescribePeople(smach.State):
-    def __init__(self, robot, facesAnalyzedDes):
+    def __init__(self, robot, facesAnalyzedDes, operatorNameDes):
         smach.State.__init__(   self, 
                                 input_keys=['operatorIdx_in'],
                                 outcomes=['done'])
         self.robot = robot
         self.facesAnalyzedDes = facesAnalyzedDes
+        self.operatorNameDes = operatorNameDes
         self.first_time = True
         self.numberMale = 0
         self.numberFemale = 0
@@ -480,7 +481,7 @@ class DescribePeople(smach.State):
                     self.operatorIdx = 0
                 
                 self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from my right.".format(
-                    name = faceList[self.operatorIdx].name,
+                    name = self.operatorNameDes.resolve(),
                     order = faceList[self.operatorIdx].orderedPosition,
                     gender = "man" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "woman",
                     pronoun = "he" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "she",
