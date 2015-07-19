@@ -33,7 +33,7 @@ prefix = bcolors.HEADER + "[Person Recognition] " + bcolors.ENDC
 
 
 ''' minimum number of faces found fo proceed with the challenge '''
-min_faces_found = 2
+min_faces_found = 3
 
 
 ''' determines if a face is discarded for being too close to another already tracked (in meters, as far as i know)'''
@@ -41,7 +41,7 @@ face_proximity_treshold = 0.25
 
 
 ''' threshold to consider a person standing up or sitting down, in meters '''
-sitting_height_treshold = 0.8
+sitting_height_treshold = 1.2
 
 
 ''' waypoint that the robot will visit to find people '''

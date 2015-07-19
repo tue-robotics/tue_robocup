@@ -316,7 +316,7 @@ class FindCrowd(smach.State):
             self.robot.head.look_at_point(point_stamped=head_point, end_time=0, timeout=8)
             
             ''' sleep to prevent head movement while scanning for humans'''
-            rospy.sleep(2)
+            rospy.sleep(1.5)
 
             entity_list = scanForHuman(self.robot)
             if not entity_list:
@@ -479,7 +479,7 @@ class DescribePeople(smach.State):
                     printFail("Operator index from the list is invalid. (" + self.operatorIdx + "). Reseting to 0")
                     self.operatorIdx = 0
                 
-                self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from the my left.".format(
+                self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from my right.".format(
                     name = faceList[self.operatorIdx].name,
                     order = faceList[self.operatorIdx].orderedPosition,
                     gender = "man" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "woman",

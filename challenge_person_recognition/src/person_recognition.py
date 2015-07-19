@@ -510,7 +510,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'SAY_FOUND_OPERATOR',
                                         states.Say(robot,"This is my operator!", block=False),
-                                        transitions={   'spoken':'SAY_CANT_POINT'})
+                                        transitions={   'spoken':'POINT_AT_OPERATOR'})
 
                 smach.StateMachine.add( 'SAY_CANT_CHOOSE_OPERATOR',
                                         states.Say(robot,"I couldn't find my operator.", block=False),
