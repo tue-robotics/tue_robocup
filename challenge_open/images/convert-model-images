@@ -1,0 +1,13 @@
+#! /bin/bash
+
+path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+for f in `ls $path/high-res`
+do
+    echo "Converting $f"
+    convert $path/high-res/$f  -trim \( +clone -rotate 90 +clone -mosaic +level-colors white \)           +swap -gravity center -composite -resize 200x200 $path/$f
+done
+
+
+
+

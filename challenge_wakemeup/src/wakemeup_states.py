@@ -61,17 +61,17 @@ def parseFoodType(item, got_fruit, got_cereal, got_milk):
 
     # if a fruit has not been picked, you can search there
     if not got_fruit and item in names_fruit:
-        # print prefix + item + " its a fruit!"
+        print prefix + item + " its a fruit!"
         return FoodType.Fruit
 
     # if a cereal has not been picked, you can search there
     if not got_cereal and item in names_cereal:
-        # print prefix + item + " its a cereal"
+        print prefix + item + " its a cereal"
         return FoodType.Cereal
 
     # if a milk has not been picked, you can search there
     if not got_milk and item in names_milk:
-        # print prefix + item + " its a milk!"
+        print prefix + item + " its a milk!"
         return FoodType.Milk
 
     # print prefix + item + " was not matched!"
@@ -500,6 +500,7 @@ class FindItem(smach.State):
     def execute(self, userdata):
         self.on_object = self.on_object_des.resolve().resolve()
         self.result_type = self.result_type_des.resolve()
+        print "result_type = ", self.result_type
 
         if self.result_type in names_fruit:
             self.items_were_looking_for = names_fruit
@@ -516,28 +517,54 @@ class FindItem(smach.State):
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
         point_stamped = gm.PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
+
+        print "look at table, point_stamped = ", point_stamped
+
         self.robot.head.look_at_point(point_stamped)
-        rospy.sleep(rospy.Duration(1.0))
+        rospy.sleep(rospy.Duration(2.0))
 
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range = self.sensor_range)
+        print "entity_ids 1: ", entity_ids
+
         filtered_ids = []
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if e and self.on_object and onTopOff(e, self.on_object) and not e.type:
+            if onTopOff(e, self.on_object):
+                print "id is on top of object"
+            else:
+                print "id is NOT on top of object"
+
+            if e and self.on_object and not e.type:# and onTopOff(e, self.on_object):
+                print "ja, toegevoegd"
                 filtered_ids.append(e.id)
 
+        print "filtered_ids =", filtered_ids
+        print "self.items_were_looking_for =", self.items_were_looking_for
+        
         entity_types = self.robot.ed.classify(ids=filtered_ids, types=self.items_were_looking_for)
+
 
         print "I found the following items: {}".format(entity_types)
 
         self.robot.head.cancel_goal()
 
+        ###############
+        #print "result designator = ". self.result_des
+
+
+        # hack to check grab state.
+        if len(filtered_ids)>0:
+            self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
+            return 'item_found'
+        ##############
+
         for i in range(len(filtered_ids)):
             if entity_types[i] == self.result_type:
-                result_des.current = self.robot.ed.get_entity(filtered_ids[i])
+                self.result_des.current = self.robot.ed.get_entity(filtered_ids[i])
                 return 'item_found'
 
+        # if wanted item is not found then ..
         found_milk      = list(set(entity_types).intersection(names_milk))
         found_cereal    = list(set(entity_types).intersection(names_cereal))
         found_fruit     = list(set(entity_types).intersection(names_fruit))
@@ -545,13 +572,13 @@ class FindItem(smach.State):
         print "I found the following milk, cereal and fruit items: {}".format(found_milk+found_cereal+found_fruit)
 
         if len(found_milk) > 0 and self.result_type in names_milk:
-            result_des.current = self.robot.ed.get_entity(found_milk[0])
+            self.result_des.current = self.robot.ed.get_entity(found_milk[0])
             return 'item_found'
         elif len(found_cereal) > 0 and self.result_type in names_cereal:
-            result_des.current = self.robot.ed.get_entity(found_cereal[0])
+            self.result_des.current = self.robot.ed.get_entity(found_cereal[0])
             return 'item_found'
         elif len(found_fruit) > 0 and self.result_type in names_fruit:
-            result_des.current = self.robot.ed.get_entity(found_fruit[0])
+            self.result_des.current = self.robot.ed.get_entity(found_fruit[0])
             return 'item_found'
 
         # TODO: maybe go to another position to look again?
@@ -574,12 +601,12 @@ class ScanTableTop(smach.State):
         center_point.z = table.z_max
 
         rospy.loginfo('Look at %s in frame %s' % (repr(center_point).replace('\n', ' '), frame_id))
-        point_stamped = PointStamped(point=center_point,
+        point_stamped = gm.PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
         self.robot.head.look_at_point(point_stamped)
         rospy.sleep(rospy.Duration(0.5))
         
-        self.robot.ed.segment_kinect(max_sensor_range = sensor_range)
+        self.robot.ed.segment_kinect(max_sensor_range = 2.0)
         self.robot.head.cancel_goal()
         return 'done'
 
@@ -627,12 +654,13 @@ class EmptySpotDesignator(Designator):
 
         if any(open_POIs):
             best_poi = min(open_POIs, key=distance_to_poi_area)
-            placement = geom.PoseStamped(pointstamped=best_poi)
+            placement = msgs.PoseStamped(pointstamped=best_poi)
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
             rospy.logerr("Could not find an empty spot")
             return None
+
 
     def determinePointsOfInterest(self, e):
 
@@ -668,7 +696,7 @@ class EmptySpotDesignator(Designator):
                     ys = ch[i].y() + d/length*dy
 
                     ''' Shift point inwards and fill message'''
-                    ps = geom.PointStamped()
+                    ps = gm.PointStamped()
                     ps.header.frame_id = "/map"
                     ps.point.x = xs - dy/length * self._edge_distance
                     ps.point.y = ys + dx/length * self._edge_distance
