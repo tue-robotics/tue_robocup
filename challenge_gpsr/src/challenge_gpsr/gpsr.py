@@ -22,6 +22,8 @@ from datetime import date
 from robot_smach_states.util.geometry_helpers import *
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
+from visualization_msgs.msg import Marker, MarkerArray
+
 #import data
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_gpsr')
@@ -1017,6 +1019,9 @@ class EmptySpotDesignator(Designator):
         self._edge_distance = 0.1                   # Distance to table edge
         self._spacing = 0.15
 
+        self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
+        self.marker_array = MarkerArray()
+
     def resolve(self):
         place_location = self.place_location_designator.resolve()
 
@@ -1055,6 +1060,25 @@ class EmptySpotDesignator(Designator):
             rospy.logerr("Could not find an empty spot")
             return None
 
+    def create_marker(self, x, y, z):
+        marker = Marker()
+        marker.id = len(self.marker_array.markers)
+        marker.type = 2
+        marker.header.frame_id = "/map"
+        marker.header.stamp = rospy.Time.now()
+        marker.pose.position.x = x
+        marker.pose.position.y = y
+        marker.pose.position.z = z
+        marker.pose.orientation.w = 1
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
+        marker.color.r = 1
+        marker.color.a = 1
+
+        marker.lifetime = rospy.Duration(10.0)
+        return marker
+
     def determinePointsOfInterest(self, e):
 
         points = []
@@ -1071,10 +1095,16 @@ class EmptySpotDesignator(Designator):
         ch = []
         for point in e.convex_hull:
             p = pointMsgToKdlVector(point)
-            p = center_pose * p
+            # p = center_pose * p
+            # p = p * center_pose
+            import PyKDL as kdl
+            pf = kdl.Frame(kdl.Rotation(), p)
+            pf = pf * center_pose
+            p = pf.p
             ch.append(p)
 
         ''' Loop over hulls '''
+        self.marker_array.markers = []
         ch.append(ch[0])
         for i in xrange(len(ch) - 1):
                 dx = ch[i+1].x() - ch[i].x()
@@ -1096,10 +1126,15 @@ class EmptySpotDesignator(Designator):
                     ps.point.z = e.pose.position.z + e.z_max
                     points.append(ps)
 
+                    self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+
                     # ToDo: check if still within hull???
                     d += self._spacing
 
+        self.marker_pub.publish(self.marker_array)
+
         return points
+
 
 class PlaceGrabbed(smach.State):
 
@@ -1119,7 +1154,7 @@ class PlaceGrabbed(smach.State):
         place_position = EmptySpotDesignator(self.robot, place_pose_ent)
         arm_with_item_designator = ArmDesignator(self.robot.arms, self.robot.leftArm)
 
-        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot,id=ITEM), place_pose=place_position ,arm=arm_with_item_designator)
+        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot_name), place_pose=place_position ,arm=arm_with_item_designator)
         result = placestate.execute()
 
         if result == 'done':
@@ -1589,6 +1624,22 @@ def setup_statemachine(robot):
 def test_find_person(robot,room):    
     findperson = FindAndGoToPerson(robot, Designator(room))
     findperson.execute(None)
+
+def test_placing(robot,place_location):    
+    
+    robot.reasoner.assertz("action_info('3','3_place_location','"+str(place_location)+"')")
+
+    nav_to_loc = states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")) : "in_front_of" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")))
+    nav_to_loc.execute(None)
+
+    place_pose_ent = EdEntityDesignator(robot,id=place_location)
+    place_position = EmptySpotDesignator(robot, place_pose_ent)
+    arm_with_item_designator = ArmDesignator(robot.arms, robot.leftArm)
+
+    placestate = states.Place(robot, item_to_place=EdEntityDesignator(robot), place_pose=place_position ,arm=arm_with_item_designator)
+    result = placestate.execute()
+
 
 if __name__ == "__main__":
     rospy.init_node('gpsr_exec')
