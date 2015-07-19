@@ -134,6 +134,16 @@ def setup_statemachine(robot):
                                                           EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
                                                          EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
+                                                'unreachable'       :   'GOTO_TARGET2_POS3_BACKUP',
+                                                'goal_not_defined'  :   'GOTO_TARGET2_POS3_BACKUP'})
+
+        smach.StateMachine.add('GOTO_TARGET2_POS3_BACKUP',
+                                # states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="navigation2"), 0.6),
+                                states.NavigateToSymbolic(robot,
+                                                         {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos3",
+                                                          EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
+                                                         EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
+                                transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
                                                 'unreachable'       :   'RESET_ED_TARGET2',
                                                 'goal_not_defined'  :   'RESET_ED_TARGET2'})
 
