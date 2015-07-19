@@ -277,7 +277,7 @@ class WakeMeUp(smach.StateMachine):
 
                 smach.StateMachine.add( "PICK_DEFAULT_ORDER",
                                         wakeStates.PickDefaultOrder(breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
-                                        transitions={   'done'      :'SAY_REPEAT_ORDER'})
+                                        transitions={   'done'      :'SAY_DEFAULT_ORDER'})
 
                 smach.StateMachine.add( "SAY_DEFAULT_ORDER",
                                         states.Say(robot, "I will bring you a "+knowledge.default_fruit+", "+knowledge.default_cereal+" and "+knowledge.default_milk),
