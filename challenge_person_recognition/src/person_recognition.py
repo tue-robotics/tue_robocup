@@ -118,7 +118,7 @@ class ChallengePersonRecognition(smach.StateMachine):
         @smach.cb_interface(outcomes=['spoken'])
         def sayIsYourName(userdata):
             printOk("sayIsYourName")
-            robot.speech.speak( "I heard " + operatorNameDes.resolve() + ". Is this correct?", block=False)
+            robot.speech.speak( "I heard " + operatorNameDes.resolve() + ". Is this correct?", block=True)
             return 'spoken'
 
         @smach.cb_interface(outcomes=['spoken'])
@@ -166,7 +166,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'LOOK_AT_OPERATOR'})
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
-                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=True),
+                                        PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
                                         transitions={   'succeded':'WAIT_FOR_OPERATOR',
                                                         'failed':'WAIT_FOR_OPERATOR'})
 
