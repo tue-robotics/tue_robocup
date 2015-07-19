@@ -31,7 +31,7 @@ bed_nav_goal = {
 }
 
 default_milk = "pure_milk"
-default_cereal = "egg_stars"
+default_cereal = "coconut_cereal"
 default_fruit = "lemon"
 
 # # Remove before flight
