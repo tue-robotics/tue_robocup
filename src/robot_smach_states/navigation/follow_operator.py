@@ -15,7 +15,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0):
+    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
@@ -29,6 +29,7 @@ class FollowOperator(smach.State):
         self._distance_threshold = distance_threshold
         self._last_pose_stamped = None
         self._time_started = None
+        self._ask_follow = ask_follow
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -40,24 +41,28 @@ class FollowOperator(smach.State):
             if (rospy.Time.now() - start_time).to_sec() > self._operator_timeout:
                 return False
 
-            self._robot.speech.speak("Should I follow you?", block=True)
+            if self._ask_follow:
+                self._robot.speech.speak("Should I follow you?", block=True)
+                answer = self._robot.ears.recognize("(yes|no)", {})
 
-            answer = self._robot.ears.recognize("(yes|no)", {})
-
-            if answer:
-                if answer.result == "yes":
-                    operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
-                    if not operator:
-                        self._robot.speech.speak("Please stand in front of me")
-                elif answer.result == "no":
-                    return False
+                if answer:
+                    if answer.result == "yes":
+                        operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                        if not operator:
+                            self._robot.speech.speak("Please stand in front of me")
+                    elif answer.result == "no":
+                        return False
+                    else:
+                        rospy.sleep(2)
                 else:
-                    rospy.sleep(2)
+                    self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+                    return False
             else:
-                self._robot.speech.speak("Something is wrong with my ears, please take a look!")
-                return False
+                operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
+                if not operator:
+                    rospy.sleep(1)
 
-        self._robot.head.cancel_goal()
+        self._robot.head.close()
 
         # Operator is None?
         print "We have a new operator: %s"%operator.id
