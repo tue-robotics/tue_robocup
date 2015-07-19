@@ -22,7 +22,7 @@ from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_open')
 EXPLORATION_TARGETS = challenge_knowledge.exploration_targets
 
-TESTMODE = False
+TEST_GRASP_LOC = None
 
 class ExplorationDesignator(EdEntityDesignator):
     """ Designator to determine the waypoint where the robot should go in its exploration phase 
@@ -527,6 +527,13 @@ class GuiCallCallback(smach.StateMachine):
         object_designator = VariableDesignator(resolve_type=str)
         point = msgs.Point(0, 0, 0)
 
+        ##### To start in a different state #####
+        if not TEST_GRASP_LOC == None:
+            smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
+            location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
+            object_designator.current = 'coke'
+    #########################################
+
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
                                     states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
@@ -576,6 +583,11 @@ class GuiCallCallback(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
+
+    ##### To start in a different state #####
+    if not TEST_GRASP_LOC == None:
+        sm.set_initial_state(["HANDLE_GUI_CALL"])
+    #########################################
 
     with sm:
 
@@ -643,12 +655,11 @@ def setup_statemachine(robot):
 ############################## initializing program ######################
 if __name__ == '__main__':
 
-    if len(sys.argv) > 1:
-        global TESTMODE
-        TESTMODE = sys.argv[1]
-        print TESTMODE 
-
     rospy.init_node('open_challenge_exec')
+
+    if len(sys.argv) > 1:
+        TEST_GRASP_LOC = sys.argv[1]        
+        rospy.logwarn('Not starting from scratch, grasping from {0}'.format(sys.argv[1]))
 
     ''' Now, we will use AMIGO, but in the future we might change that '''
     robot_name = 'amigo'
