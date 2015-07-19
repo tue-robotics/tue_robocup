@@ -316,7 +316,7 @@ class FindCrowd(smach.State):
             self.robot.head.look_at_point(point_stamped=head_point, end_time=0, timeout=8)
             
             ''' sleep to prevent head movement while scanning for humans'''
-            rospy.sleep(1.5)
+            rospy.sleep(1)
 
             entity_list = scanForHuman(self.robot)
             if not entity_list:
@@ -648,7 +648,7 @@ class ChooseOperator(smach.State):
 
             ''' if for some reason the operator could not be choosen, just select the first one in the list ''' 
             if not chosenOperator:
-                printWarning("Could not choose an operator! Selecting the first one in the list!")
+                printWarning("Could not choose an operator, i was looking for " + self.operatorNameDes.resolve() + ". Selecting the first one in the list!")
                 operatorIdx = 0
                 self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=faceList[operatorIdx].point_stamped.point.x, 
                                                                                             y=faceList[operatorIdx].point_stamped.point.y, 
@@ -773,10 +773,11 @@ class AnalysePerson(smach.State):
                             # TODO: match against the name list fiven by the knowledge
                             #  "predict" gender, in a hacky way. Names finished with A are female
                             
-                            if recognition_label[-1:] == 'a':
-                                personGender = challenge_knowledge.Gender.Female
-                            else:
-                                personGender = challenge_knowledge.Gender.Male
+                            personGender = random.randint(0, 1)
+                            # if recognition_label[-1:] == 'a':
+                            #     personGender = challenge_knowledge.Gender.Female
+                            # else:
+                            #     personGender = challenge_knowledge.Gender.Male
 
                             printOk("\tAdding face to list: '{0}' (score:{1}, pose: {2}) @ ({3},{4},{5})".format(
                                 str(recognition_label),
