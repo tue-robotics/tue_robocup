@@ -13,6 +13,33 @@ from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
 
+class PrepareEdGrasp(State):
+    def __init__(self, robot, arm, grab_entity):
+        # Check that the entity_designator resolves to an Entity or is an entity
+        check_type(grab_entity, ed.msg.EntityInfo)
+
+        # Check that the arm is a designator that resolves to an Arm or is an Arm
+        check_type(arm, Arm)
+
+        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
+
+    def run(self, robot, arm, grab_entity):
+        if not grab_entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        # Arm to position in a safe way
+        arm.send_joint_trajectory('prepare_grasp')
+
+        # Open gripper
+        arm.send_gripper_goal('open', timeout=0.0)
+
+        return 'succeeded'
+
+
 
 class PickUp(State):
     def __init__(self, robot, arm, grab_entity):
@@ -55,11 +82,11 @@ class PickUp(State):
 
         rospy.loginfo(goal_bl)
 
-        # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_grasp')
+        # # Arm to position in a safe way
+        # arm.send_joint_trajectory('prepare_grasp')
 
-        # Open gripper
-        arm.send_gripper_goal('open', timeout=0.0)
+        # # Open gripper
+        # arm.send_gripper_goal('open', timeout=0.0)
 
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
