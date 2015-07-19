@@ -10,7 +10,7 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
 
-class Init(smach.State):
+class ConfigureWorldmodelForNavigation(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
@@ -20,8 +20,20 @@ class Init(smach.State):
             self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
             self.robot.torso.send_goal('navigation', timeout=4.0)
 
+        self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso", "laser_integration_base", "kinect_integration"])
         self.robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
-        self.robot.ed.enable_plugins(plugin_names=["laser_integration"])
+        self.robot.ed.reset()
+
+        return "done"
+
+class ConfigureWorldmodelForFollowing(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso"])
+        self.robot.ed.disable_plugins(plugin_names=["laser_integration_base", "kinect_integration"])
         self.robot.ed.reset()
 
         return "done"
@@ -54,7 +66,7 @@ def setup_statemachine(robot):
                                                 "Failed"            :   "INIT"})
 
         smach.StateMachine.add( "INIT",
-                                Init(robot),
+                                ConfigureWorldmodelForNavigation(robot),
                                 transitions={   "done"              :   "SAY_GOTO_TARGET1"})
 
         smach.StateMachine.add( 'SAY_GOTO_TARGET1',
@@ -197,7 +209,8 @@ def setup_statemachine(robot):
         ######################################################################################################################################################
 
 
-        smach.StateMachine.add( 'TURN', Turn(robot, challenge_knowledge.rotation), transitions={ 'turned'   :   'SAY_STAND_IN_FRONT'})
+        smach.StateMachine.add( 'TURN', Turn(robot, challenge_knowledge.rotation), transitions={ 'turned'   :   'CONFIGURE_FOR_FOLLOWING'})
+        smach.StateMachine.add( "CONFIGURE_FOR_FOLLOWING", ConfigureWorldmodelForFollowing(robot), transitions={   "done"              :   "SAY_STAND_IN_FRONT"})
         smach.StateMachine.add( 'SAY_STAND_IN_FRONT', states.Say(robot, "Please stand in front of me!", block=True), transitions={ 'spoken' : 'FOLLOW_OPERATOR'})
 
         smach.StateMachine.add( 'FOLLOW_OPERATOR', states.FollowOperator(robot), transitions={ 'no_operator':'SAY_SHOULD_I_RETURN', 'stopped' : 'SAY_SHOULD_I_RETURN', 'lost_operator' : 'SAY_SHOULD_I_RETURN'})
