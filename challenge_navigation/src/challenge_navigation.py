@@ -23,6 +23,7 @@ class ConfigureWorldmodelForNavigation(smach.State):
         self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso", "laser_integration_base", "kinect_integration"])
         self.robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
         self.robot.ed.reset()
+        self.robot.head.close()
 
         return "done"
 
@@ -35,6 +36,7 @@ class ConfigureWorldmodelForFollowing(smach.State):
         self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso"])
         self.robot.ed.disable_plugins(plugin_names=["laser_integration_base", "kinect_integration"])
         self.robot.ed.reset()
+        self.robot.head.close()
 
         return "done"
 
@@ -45,6 +47,7 @@ class Turn(smach.State):
         self.radians = radians
 
     def execute(self, userdata):
+        self.robot.head.close()
 
         vth = 1.0
         print "Turning %f radians with force drive" % self.radians
@@ -125,8 +128,8 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_TARGET2'})
 
         smach.StateMachine.add('GOTO_TARGET2',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos2", 
+                                states.NavigateToSymbolic(robot,
+                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos2",
                                                            EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
                                                           EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',
@@ -144,8 +147,8 @@ def setup_statemachine(robot):
                                 transitions={   'done'              :   'GOTO_TARGET2_BACKUP'})
 
         smach.StateMachine.add('GOTO_TARGET2_BACKUP',
-                                states.NavigateToSymbolic(robot, 
-                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos2", 
+                                states.NavigateToSymbolic(robot,
+                                                          {EdEntityDesignator(robot, id=challenge_knowledge.target2['in_front_of_pos2']) : "in_front_of_pos2",
                                                            EdEntityDesignator(robot, id=challenge_knowledge.target2['in']) : "in" },
                                                           EdEntityDesignator(robot, id=challenge_knowledge.target2['lookat'])),
                                 transitions={   'arrived'           :   'SAY_TARGET2_REACHED',

@@ -621,7 +621,6 @@ class ChooseOperator(smach.State):
         chosenOperator = False
         faceList = None
 
-        # try to resolve the crowd designator
         faceList = self.facesAnalysedDes.resolve()
         if not faceList:
             printOk("Could not resolve faces analysed")
@@ -629,7 +628,8 @@ class ChooseOperator(smach.State):
 
         # import ipdb; ipdb.set_trace()
 
-        if not faceList == None:
+        if not faceList == None:            
+            ''' iterate through all the faces recognized and choose the best one as operator '''
             for idx, face in enumerate(faceList):
                 printOk("\tName: {0}, Score: {1}, Location: ({2},{3},{4})".format(
                     str(face.name),
@@ -640,33 +640,38 @@ class ChooseOperator(smach.State):
                 if face.score > 0 and face.score < lowest_score and self.operatorNameDes.resolve() == face.name:
                     lowest_score = face.score
                     operatorIdx = idx
-                    self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, y=face.point_stamped.point.y, z=face.point_stamped.point.z, frame_id="/map"))
+                    self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=face.point_stamped.point.x, 
+                                                                                                y=face.point_stamped.point.y, 
+                                                                                                z=face.point_stamped.point.z, 
+                                                                                                frame_id="/map"))
                     chosenOperator = True
 
-            if chosenOperator:
-                printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
-                    str(faceList[operatorIdx].name),
-                    str(faceList[operatorIdx].score),
-                    str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
+            ''' if for some reason the operator could not be choosen, just select the first one in the list ''' 
+            if not chosenOperator:
+                printWarning("Could not choose an operator! Selecting the first one in the list!")
+                operatorIdx = 0
+                self.operatorLocationDes.current.setPoint(point_stamped = msgs.PointStamped(x=faceList[operatorIdx].point_stamped.point.x, 
+                                                                                            y=faceList[operatorIdx].point_stamped.point.y, 
+                                                                                            z=faceList[operatorIdx].point_stamped.point.z, 
+                                                                                            frame_id="/map"))
 
-                faceList[operatorIdx].operator = True
-
-                userdata.operatorIdx_out = operatorIdx
-                return 'succeeded'
-            else:
-                rand_op_idx = random.randint(0, len(faceList)-1)
-                printWarning("Could not choose an operator! Selecting random index: " + str(rand_op_idx))
                 
+                # rand_op_idx = random.randint(0, len(faceList)-1)
+                # printWarning("Could not choose an operator! Selecting random index: " + str(rand_op_idx))
                 # If no operator was choosen, select a random one
-                # userdata.operatorIdx_out = 0
-                userdata.operatorIdx_out = rand_op_idx
+                # userdata.operatorIdx_out = rand_op_idx
 
-                printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
-                    str(faceList[rand_op_idx].name),
-                    str(faceList[rand_op_idx].score),
-                    str(faceList[rand_op_idx].point_stamped.point.x), str(faceList[rand_op_idx].point_stamped.point.y), str(faceList[rand_op_idx].point_stamped.point.z)))
+            ''' Updated list and userdata'''
+            userdata.operatorIdx_out = operatorIdx
+            faceList[operatorIdx].operator = True
 
-                return 'succeeded'
+            printOk("Operator is: {0} ({1}), Location: ({2},{3},{4})".format(
+                str(faceList[operatorIdx].name),
+                str(faceList[operatorIdx].score),
+                str(faceList[operatorIdx].point_stamped.point.x), str(faceList[operatorIdx].point_stamped.point.y), str(faceList[operatorIdx].point_stamped.point.z)))
+
+            return 'succeeded'
+
         else:
             printFail("No faces were analysed!")
             return 'failed'

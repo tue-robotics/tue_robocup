@@ -2,7 +2,7 @@
 cabinet = "bookcase"
 
 ''' Shelves where objects might be '''
-object_shelves =[cabinet + "/shelf5", cabinet + "/shelf6", cabinet + "/shelf7", cabinet + "/shelf8"]
+object_shelves =[cabinet + "/shelf6", cabinet + "/shelf7", cabinet + "/shelf8"]
 
 ''' Shelf where we will actually try to grasp '''
 grasp_shelf = cabinet + "/shelf6"
