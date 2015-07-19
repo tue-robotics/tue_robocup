@@ -530,12 +530,12 @@ class FindItem(smach.State):
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if onTopOff(e, self.on_object):
-                print "id is on top of object"
-            else:
-                print "id is NOT on top of object"
+            # if onTopOff(e, self.on_object):
+            #     print "id is on top of object"
+            # else:
+            #     print "id is NOT on top of object"
 
-            if e and self.on_object and not e.type:# and onTopOff(e, self.on_object):
+            if e and self.on_object and not e.type and onTopOff(e, self.on_object):
                 print "ja, toegevoegd"
                 filtered_ids.append(e.id)
 
@@ -549,15 +549,15 @@ class FindItem(smach.State):
 
         self.robot.head.cancel_goal()
 
-        ###############
-        #print "result designator = ". self.result_des
+        # ###############
+        # #print "result designator = ". self.result_des
 
 
-        # hack to check grab state.
-        if len(filtered_ids)>0:
-            self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
-            return 'item_found'
-        ##############
+        # # hack to check grab state.
+        # if len(filtered_ids)>0:
+        #     self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
+        #     return 'item_found'
+        # ##############
 
         for i in range(len(filtered_ids)):
             if entity_types[i] == self.result_type:

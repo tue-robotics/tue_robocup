@@ -29,6 +29,13 @@ external pc:
 
     rosrun challenge_open challenge_open.py 
 
+## In case you ONLY want to test grasping
+
+	rosrun challenge_open challenge_open.py '<type>'
+
+	where you put a type that has been assigned. Note that the 
+	object to be grasped might need to be updated.
+
 ## Story
 
 - The robot drives around autonomously and maps objects
