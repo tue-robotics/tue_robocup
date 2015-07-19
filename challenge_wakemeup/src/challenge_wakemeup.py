@@ -156,7 +156,7 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'GO_TO_BED',
                                     states.NavigateToSymbolic(robot, {
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
+                                        # EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" },
                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
@@ -166,7 +166,7 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'GO_TO_BED_BACKUP',
                                     states.NavigateToSymbolic(robot, {
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
+                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" },
                                         EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
                                     transitions={   'arrived'           :'WAKEUP_CONTAINER',
