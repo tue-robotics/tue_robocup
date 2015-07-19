@@ -298,12 +298,12 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                     transitions={'spoken'               :'AWAIT_TAKE_ORDER_CONFIRMATION'})
 
             smach.StateMachine.add( 'AWAIT_TAKE_ORDER_CONFIRMATION',
-                                    states.Wait_time(robot, 10),
+                                    states.Wait_time(robot, 5),
                                     transitions={   'waited'            :'SAY_ENJOY_ORDER',
                                                     'preempted'         :'failed'})
 
             smach.StateMachine.add( 'SAY_ENJOY_ORDER',
-                                    states.Say(robot, ["Enjoy your {}".format(order_type)]),
+                                    states.Say(robot, ["Enjoy your {}".format(order_type)], block=False),
                                     transitions={   'spoken'            :'succeeded'})
 
 def setup_statemachine(robot):
@@ -388,7 +388,10 @@ def setup_statemachine(robot):
         smach.StateMachine.add('DELIVER_COMBO', DeliverOrderWithBasket(robot, "combo"), transitions={'succeeded':'NAVIGATE_BACK_TO_THE_KITCHEN_2', 'failed':'NAVIGATE_BACK_TO_THE_KITCHEN_2'})
 
         smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
-            transitions={'arrived': 'done', 'unreachable':'done', 'goal_not_defined':'done'})
+            transitions={'arrived': 'SAY_DONE_WITH_CHALLENGE', 'unreachable':'SAY_DONE_WITH_CHALLENGE', 'goal_not_defined':'SAY_DONE_WITH_CHALLENGE'})
+
+        smach.StateMachine.add('SAY_DONE_WITH_CHALLENGE', states.Say(robot, "It would be very awesome if we can get to this point!"), transitions={ 'spoken' :'done'})
+
     return sm
 
 def test_delivery(robot):
