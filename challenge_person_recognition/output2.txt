@@ -1,0 +1,911 @@
+[~/ros/indigo/system/src/challenge_robonurse/src] (master %=)
+amigo@amigo1 $ roscd soem_core
+roscd: No such package/stack 'soem_core'
+[~/ros/indigo/system/src/challenge_robonurse/src] (master %=)
+amigo@amigo1 $ roscd soem
+[~/ros/indigo/system/src/soem] (master=)
+amigo@amigo1 $ ls
+ChangeLog              drvcomment.txt           osal         SOEM.anjuta
+clean_libsoem_lib.bat  make                     oshw         soem-config.cmake.in
+clean_test_win32.bat   Makefile                 package.xml  soem-config-version.cmake.in
+CMakeLists.txt         make_libsoem_lib.bat     README       test
+doc                    make_test_win32_all.bat  setup.sh     TODO.tasks
+Doxyfile               make_test_win32.bat      soem
+[~/ros/indigo/system/src/soem] (master=)
+amigo@amigo1 $ vim setup.sh 
+[~/ros/indigo/system/src/soem] (master=)
+amigo@amigo1 $ cd soem/
+[~/ros/indigo/system/src/soem/soem] (master=)
+amigo@amigo1 $ ls
+CMakeLists.txt  ethercatcoe.h         ethercatdc.c   ethercatmain.c   ethercatsoe.c   Makefile
+ethercatbase.c  ethercatconfig.c      ethercatdc.h   ethercatmain.h   ethercatsoe.h   soem.dox
+ethercatbase.h  ethercatconfig.h      ethercatfoe.c  ethercatprint.c  ethercattype.h
+ethercatcoe.c   ethercatconfiglist.h  ethercatfoe.h  ethercatprint.h  makefile
+[~/ros/indigo/system/src/soem/soem] (master=)
+amigo@amigo1 $ cd ..
+[~/ros/indigo/system/src/soem] (master=)
+amigo@amigo1 $ cd ..
+[~/ros/indigo/system/src]
+amigo@amigo1 $ ls
+action_server                 dashboard                     rosbridge_server
+amigo_bringup                 dragonfly_speech_recognition  rosbridge_suite
+amigo_demo                    dwa_local_planner             rtt_control_components
+amigo_description             ed                            rtt_control_msgs
+amigo_hardware                ed_gui_server                 rtt_tue_msgs
+amigo_head_ref                ed_localization               scl_filters
+amigo_moveit_config           ed_navigation                 sergio_hardware
+amigo_msgs                    ed_object_models              soem
+amigo_ref_interpolator        ed_perception                 soem_beckhoff_drivers
+ann2                          ed_sensor_integration         soem_master
+base_local_planner            emergency_speakup             swi_prolog
+battery_manager               geolib2                       teleop
+blackboard                    head_ref                      text_to_speech
+cb_base_navigation            head_ref_ed_client            tf_checker
+cb_planner_msgs_srvs          kinect_driver                 tf_server
+challenge_final               nav_core                      tue_config
+challenge_gpsr                node_alive                    tue_costmap_msgs
+challenge_manipulation        pein_msgs                     tue_ethercat_drivers
+challenge_navigation          pein_srvs                     tue_filesystem
+challenge_open                philips_text_to_speech        tue_manipulation
+challenge_person_recognition  picaso_4d_systems             tue_maps
+challenge_restaurant          qr_detector_zbar              tue_mobile_ui
+challenge_rips                rgbd                          tue_move_base_msgs
+challenge_robonurse           rgb_lights_manager            tue_msgs
+challenge_robo_zoo            robocup_knowledge             tue_recorder
+challenge_speech_recognition  robot_launch_files            tue_robocup
+challenge_wakemeup            robot_skills                  tue_serialization
+CMakeLists.txt                robot_smach_states            tue_teleop_keyboard
+code_profiler                 rosapi                        vocabulary_tree
+costmap_2d                    rosbridge_library             voxel_grid
+[~/ros/indigo/system/src]
+amigo@amigo1 $ cd soem
+soem/                  soem_beckhoff_drivers/ soem_master/           
+[~/ros/indigo/system/src]
+amigo@amigo1 $ cd soem
+soem/                  soem_beckhoff_drivers/ soem_master/           
+[~/ros/indigo/system/src]
+amigo@amigo1 $ cd soem_master
+[~/ros/indigo/system/src/soem_master] (master=)
+amigo@amigo1 $ ls
+CMakeLists.txt  manifest.xml  soem_driver_factory.cpp  soem_master_component.cpp  soem_plugin.cpp
+mainpage.dox    package.xml   soem_driver_factory.h    soem_master_component.h    test.ops
+Makefile        setcap.sh     soem_driver.h            soem_master_test.launch
+[~/ros/indigo/system/src/soem_master] (master=)
+amigo@amigo1 $ vim setcap.sh 
+[~/ros/indigo/system/src/soem_master] (master=)
+amigo@amigo1 $ rosrun challenge_person_recognition person_recognition.py amigo
+[WARN] [WallTime: 1437217616.847277] Nav_analyser: Bagging = False
+[INFO] [WallTime: 1437217616.849704] Waiting for the global planner services ...
+[INFO] [WallTime: 1437217617.502716] Waiting for service /amigo/text_to_speech/speak
+[INFO] [WallTime: 1437217617.508425] Initializing ebutton listener
+[INFO] [WallTime: 1437217617.513469] Sys.argv = ['/home/amigo/ros/indigo/system/src/challenge_person_recognition/src/person_recognition.py', 'amigo'], Length = 2
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:132: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStructure)
+/opt/ros/indigo/lib/python2.7/dist-packages/smach_ros/introspection.py:137: SyntaxWarning: The publisher should be created with an explicit keyword argument 'queue_size'. Please see http://wiki.ros.org/rospy/Overview/Publishers%20and%20Subscribers for more information.
+  data_class=SmachContainerStatus)
+[INFO] [WallTime: 1437217617.549499] State machine starting in initial state 'INITIALIZE' with userdata: 
+    []
+[INFO] [WallTime: 1437217618.564814] TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!
+[INFO] [WallTime: 1437217618.568465] State machine transitioning 'INITIALIZE':'initialized'-->'INIT_WM'
+[INFO] [WallTime: 1437217619.797801] State machine transitioning 'INIT_WM':'done'-->'LEARN_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437217619.798565] State machine starting in initial state 'SAY_WAITING_OPERATOR' with userdata: 
+    []
+[INFO] [WallTime: 1437217619.799056] 'Would the operator please come forward.'
+[INFO] [WallTime: 1437217619.802425] State machine transitioning 'SAY_WAITING_OPERATOR':'spoken'-->'LOOK_AT_OPERATOR'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Could not find a human while looking up
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id a4b0b5d48af9a60f5e14c42b60be0e2a)
+{"entities":[{"id" : "a4b0b5d48af9a60f5e14c42b60be0e2a", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.30057, -7.77633, 1.52296)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217627.364629] State machine transitioning 'LOOK_AT_OPERATOR':'failed'-->'WAIT_FOR_OPERATOR'
+[Person Recognition] WaitForPerson
+WaitForPerson: waiting 0/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+WaitForPerson: waiting 1/8
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 2ead482d317d87de6f2335ea59868b0a)
+{"entities":[{"id" : "2ead482d317d87de6f2335ea59868b0a", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found a human!
+[INFO] [WallTime: 1437217635.382819] State machine transitioning 'WAIT_FOR_OPERATOR':'succeded'-->'LEARN_NAME_ITERATOR'
+[INFO] [WallTime: 1437217635.383557] Iterating 0 of <function <lambda> at 0x7fd68001c050>
+[INFO] [WallTime: 1437217635.384062] State machine starting in initial state 'ASK_PERSON_NAME' with userdata: 
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437217635.384489] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Liza'
+[INFO] [WallTime: 1437217645.016256] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437217645.017137] 'I heard Liza. Is this correct?'
+[INFO] [WallTime: 1437217645.020590] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437217647.030575] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437217647.031347] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437217647.034209] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437217647.034728] Iterating 1 of <function <lambda> at 0x7fd68001c050>
+[INFO] [WallTime: 1437217647.035092] State machine starting in initial state 'ASK_PERSON_NAME' with userdata: 
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437217647.035575] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Liza'
+[INFO] [WallTime: 1437217654.072923] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437217654.073803] 'I heard Liza. Is this correct?'
+[INFO] [WallTime: 1437217654.076903] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437217655.996639] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437217655.997390] 'I did not understand your name.'
+[INFO] [WallTime: 1437217656.000425] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437217656.000958] Iterating 2 of <function <lambda> at 0x7fd68001c050>
+[INFO] [WallTime: 1437217656.001277] State machine starting in initial state 'ASK_PERSON_NAME' with userdata: 
+    ['personName_userData']
+[Person Recognition] AskPersonName
+[INFO] [WallTime: 1437217656.001827] 'What is your name?'
+[Person Recognition] Result received from speech recognition is 'Liza'
+[INFO] [WallTime: 1437217665.600155] State machine transitioning 'ASK_PERSON_NAME':'succeded'-->'SAY_IS_YOUR_NAME'
+[Person Recognition] sayIsYourName
+[INFO] [WallTime: 1437217665.600862] 'I heard Liza. Is this correct?'
+[INFO] [WallTime: 1437217665.603633] State machine transitioning 'SAY_IS_YOUR_NAME':'spoken'-->'HEAR_YES_NO_1'
+KeyError resolving the answer heard: 'positive_answer'
+KeyError resolving the answer heard: 'negative_answer'
+HearYesNo: could not resolve answer!
+[INFO] [WallTime: 1437217667.614796] State machine transitioning 'HEAR_YES_NO_1':'heard_failed'-->'SAY_HEAR_FAILED'
+[INFO] [WallTime: 1437217667.615484] 'I didn't listen correctly.'
+[INFO] [WallTime: 1437217667.618500] State machine terminating 'SAY_HEAR_FAILED':'spoken':'container_failed'
+[INFO] [WallTime: 1437217667.619049] State machine transitioning 'LEARN_NAME_ITERATOR':'container_failed'-->'SAY_COULD_NOT_LEARN_NAME'
+[Person Recognition] sayCouldNotLearnNameCB
+[INFO] [WallTime: 1437217667.619826] 'Sorry but I could not understand your name. I will just call you Liza'
+[INFO] [WallTime: 1437217667.622471] State machine transitioning 'SAY_COULD_NOT_LEARN_NAME':'spoken'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437217667.623066] 'Please stand one meter in front of me and look at me while I learn your face.'
+[INFO] [WallTime: 1437217667.625427] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'LOOK_AT_OPERATOR_2'
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Could not find a human while looking up
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id a4b0b5d48af9a60f5e14c42b60be0e2a)
+{"entities":[{"id" : "a4b0b5d48af9a60f5e14c42b60be0e2a", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.29066, -7.75062, 1.51173)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217677.034741] State machine transitioning 'LOOK_AT_OPERATOR_2':'failed'-->'TOGGLE_PERCEPTION_ON'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = True
+[INFO] [WallTime: 1437217677.203867] State machine transitioning 'TOGGLE_PERCEPTION_ON':'done'-->'LEARN_PERSON'
+[INFO] [WallTime: 1437217677.204668] State machine starting in initial state 'NAME_TO_USERDATA' with userdata: 
+    []
+NameToUserData
+NameToUserData: param -> Liza
+[INFO] [WallTime: 1437217677.205300] State machine transitioning 'NAME_TO_USERDATA':'done'-->'LEARN_PERSON'
+Goal sent to the learning service (/amigo/ed/face_recognition/learn_face), with name 'Liza'
+Received result from the learning service
+Face learning complete! result: Learning complete
+[INFO] [WallTime: 1437217700.962017] State machine terminating 'LEARN_PERSON':'succeeded':'succeded_learning'
+[INFO] [WallTime: 1437217700.962554] State machine transitioning 'LEARN_PERSON':'succeded_learning'-->'TOGGLE_PERCEPTION_OFF_SUCCESS'
+[Person Recognition] TogglePerceptionMode
+[Person Recognition] Continuos mode = False
+[INFO] [WallTime: 1437217701.003773] State machine transitioning 'TOGGLE_PERCEPTION_OFF_SUCCESS':'done'-->'SAY_OPERATOR_LEARNED'
+[INFO] [WallTime: 1437217701.005050] 'Now i know what you look like. Please go mix with the crowd.'
+[INFO] [WallTime: 1437217705.104335] State machine terminating 'SAY_OPERATOR_LEARNED':'spoken':'container_success'
+[INFO] [WallTime: 1437217705.105331] State machine transitioning 'LEARN_OPERATOR_CONTAINER':'container_success'-->'WAIT_CONTINUE_ITERATOR'
+[INFO] [WallTime: 1437217705.105970] Iterating 0 of <function <lambda> at 0x7fd68001c1b8>
+[INFO] [WallTime: 1437217705.106331] State machine starting in initial state 'ASK_CONTINUE' with userdata: 
+    []
+[INFO] [WallTime: 1437217705.106750] State machine starting in initial state 'SAY' with userdata: 
+    []
+[INFO] [WallTime: 1437217705.107236] 'I will continue my task if you say continue.'
+[INFO] [WallTime: 1437217708.436735] State machine transitioning 'SAY':'spoken'-->'HEAR'
+[INFO] [WallTime: 1437217710.828686] State machine terminating 'HEAR':'heard':'continue'
+[INFO] [WallTime: 1437217710.829240] State machine terminating 'ASK_CONTINUE':'continue':'container_success'
+[INFO] [WallTime: 1437217710.829742] State machine transitioning 'WAIT_CONTINUE_ITERATOR':'container_success'-->'FIND_CROWD_CONTAINER'
+[INFO] [WallTime: 1437217710.830311] State machine starting in initial state 'GOTO_LIVING_ROOM_1' with userdata: 
+    []
+[INFO] [WallTime: 1437217710.830928] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217710.834314] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217710.835203] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217710.947105] choosing best entity from this list (name->weight):
+    [('person_rec_living_room_1', 0)]
+[INFO] [WallTime: 1437217710.964896] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd660776f80>
+[INFO] [WallTime: 1437217710.965803] 'I'm on my way!'
+[INFO] [WallTime: 1437217710.968547] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217716.975992] State machine transitioning 'EXECUTE_PLAN':'blocked'-->'PLAN_BLOCKED'
+[INFO] [WallTime: 1437217716.976668] Plan blocked
+[WARN] [WallTime: 1437217717.478188] Plan free again
+[INFO] [WallTime: 1437217717.478817] State machine transitioning 'PLAN_BLOCKED':'free'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217770.523783] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217770.524620] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217770.528037] 
+
+Navigation summary:
+Covered 6.89904197012 meters in 59.6938638687 seconds (0.115573721033) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217770.528713] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217770.529246] State machine transitioning 'GOTO_LIVING_ROOM_1':'arrived'-->'SAY_SEARCHING_CROWD'
+[INFO] [WallTime: 1437217770.529809] 'I'm searching for the crowd.'
+[INFO] [WallTime: 1437217770.533490] State machine transitioning 'SAY_SEARCHING_CROWD':'spoken'-->'FIND_CROWD'
+[Person Recognition] FindCrowd
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 36b717fea4347749e8faafc685abd891)
+{"entities":[{"id" : "36b717fea4347749e8faafc685abd891", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 1 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 1 entities
+[Person Recognition] Entity with type human added to the list (id fcbb4a21cd56d2d6ef8be1024040a7b9)
+{"entities":[{"id" : "fcbb4a21cd56d2d6ef8be1024040a7b9", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 2 (before filtering)
+Waiting for 8 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 2 entities
+[Person Recognition] Entity with type human added to the list (id 465917ad5f33219012cf4c29c697e402)
+{"entities":[{"id" : "465917ad5f33219012cf4c29c697e402", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Found 1 humans. Adding to list, now with 3 (before filtering)
+[Person Recognition] Iterating through the 3 faces found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    Added face location to the list: (8.69924, -2.23821, 1.37055)
+[Person Recognition] Found 4 faces in this entity
+[Person Recognition]    Added face location to the list: (7.73321, -2.12497, 1.41545)
+[Person Recognition]    Added face location to the list: (8.18897, -2.20349, 1.57113)
+[Person Recognition]    Added face location to the list: (7.26524, -1.99569, 1.50771)
+[Person Recognition]    Added face location to the list: (6.76579, -2.11143, 1.49572)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition] Too close to another face: 0.0745002154359
+[Person Recognition] Face location already exists in the list
+[Person Recognition] Found 5 faces
+[INFO] [WallTime: 1437217784.000827] State machine terminating 'FIND_CROWD':'succeded':'container_success'
+[INFO] [WallTime: 1437217784.001157] State machine transitioning 'FIND_CROWD_CONTAINER':'container_success'-->'SAY_FOUND_CROWD'
+[INFO] [WallTime: 1437217784.001732] 'I think I found some people.'
+[INFO] [WallTime: 1437217784.004427] State machine transitioning 'SAY_FOUND_CROWD':'spoken'-->'FIND_OPERATOR_CONTAINER'
+[INFO] [WallTime: 1437217784.005022] State machine starting in initial state 'SAY_LOOKING_OPERATOR' with userdata: 
+    []
+[INFO] [WallTime: 1437217784.005439] 'I'm looking for my operator.'
+[INFO] [WallTime: 1437217784.007694] State machine transitioning 'SAY_LOOKING_OPERATOR':'spoken'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 5 locations in the list
+[Person Recognition] Next location: x: 8.69924
+y: -2.23821
+z: 1.37055
+[INFO] [WallTime: 1437217784.008168] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437217784.008546] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217784.010734] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217784.011419] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217784.128761] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd660756950>
+[INFO] [WallTime: 1437217784.129949] 'I'm on my way!'
+[INFO] [WallTime: 1437217784.133955] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217791.141211] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217791.141700] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217791.146941] 
+
+Navigation summary:
+Covered 1.34034733073 meters in 7.13579702377 seconds (0.187834284841) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217791.147692] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217791.148324] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 8.69924
+y: -2.23821
+z: 1.37055
+[INFO] [WallTime: 1437217791.149115] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437217791.149790] 'Let me see who is here, please face me.'
+[INFO] [WallTime: 1437217791.152617] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437217791.153240] State machine starting in initial state 'LOOK_AT_PERSON' with userdata: 
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 7 entities
+[Person Recognition] Entity with type human added to the list (id 36b717fea4347749e8faafc685abd891)
+{"entities":[{"id" : "36b717fea4347749e8faafc685abd891", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (8.69951, -2.36037, 1.38234)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217797.445537] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437217797.943644] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 5 entities
+[Person Recognition] Iterating through the 5 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 80.9902, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1995.66, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (8.69951,-2.36037,1.38234)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 73.1559, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1370.71, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (6.76546,-2.13079,1.56766)
+[Person Recognition] Found 4 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 69.4562, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1759.62, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 56.2537, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1381.44, 'name': 'Liza'}}, {'index': 2, 'lbph': {'score': 52.3034, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1754.49, 'name': 'Liza'}}, {'index': 3, 'lbph': {'score': 64.1859, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 909.764, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.73321,-2.12497,1.41545)
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (8.18897,-2.20349,1.57113)
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.26524,-1.99569,1.50771)
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0745002154359
+[Person Recognition] Face already present in the list. List size: 5
+[Person Recognition] There is a face in this location already on the list.  List size: 5
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 68.5463, 'name': 'person1'}, 'score': 0.656944, 'label': 'person2', 'fisher': {'score': 525.555, 'name': 'person2'}}]
+[Person Recognition]    Adding face to list: 'person2' (score:0.656944, pose: standing up) @ (7.28854,-7.85983,1.49982)
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 64.8025, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 2153.34, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0319644693371
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[INFO] [WallTime: 1437217797.945651] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437217797.946228] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437217797.946578] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 5 locations in the list
+[Person Recognition] Next location: x: 7.73321
+y: -2.12497
+z: 1.41545
+[INFO] [WallTime: 1437217797.947046] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437217797.947438] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217797.949991] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217797.950509] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217798.063393] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd6606b4e18>
+[INFO] [WallTime: 1437217798.064142] 'Getting there!'
+[INFO] [WallTime: 1437217798.066717] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217804.071585] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217804.072073] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217804.074917] 
+
+Navigation summary:
+Covered 0.205090811331 meters in 6.12481093407 seconds (0.0334852477143) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217804.075316] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217804.075623] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.73321
+y: -2.12497
+z: 1.41545
+[INFO] [WallTime: 1437217804.076289] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437217804.076981] 'Please look at me.'
+[INFO] [WallTime: 1437217804.079959] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437217804.080586] State machine starting in initial state 'LOOK_AT_PERSON' with userdata: 
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 3ffd47c020da6a44e5ebf41bc9209d3d)
+{"entities":[{"id" : "3ffd47c020da6a44e5ebf41bc9209d3d", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Entity with type human added to the list (id f44b958fcb4c75cae409da56b8874fa3)
+{"entities":[{"id" : "f44b958fcb4c75cae409da56b8874fa3", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.32033, -2.10249, 1.51338)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217812.520080] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437217813.047493] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 7 entities
+[Person Recognition] Iterating through the 7 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 80.9902, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1995.66, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 73.1559, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1370.71, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Found 4 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 69.4562, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1759.62, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 56.2537, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1381.44, 'name': 'Liza'}}, {'index': 2, 'lbph': {'score': 52.3034, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1754.49, 'name': 'Liza'}}, {'index': 3, 'lbph': {'score': 64.1859, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 909.764, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0745002154359
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 68.5463, 'name': 'person1'}, 'score': 0.656944, 'label': 'person2', 'fisher': {'score': 525.555, 'name': 'person2'}}]
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 64.8025, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 2153.34, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0319644693371
+[Person Recognition] Face already present in the list. List size: 6
+[Person Recognition] There is a face in this location already on the list.  List size: 6
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 54.6734, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1105.96, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.32033,-2.10249,1.51338)
+[Person Recognition] Found 2 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 54.1067, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1890.12, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 43.9844, 'name': 'Liza'}, 'score': 0.879688, 'label': 'Liza', 'fisher': {'score': 1451.03, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition]    Adding face to list: 'unknown' (score:0, pose: standing up) @ (7.81975,-2.23759,1.43029)
+[Person Recognition]    Adding face to list: 'Liza' (score:0.879688, pose: standing up) @ (8.23796,-2.31126,1.57723)
+[INFO] [WallTime: 1437217813.049068] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437217813.049739] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437217813.050005] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 5 locations in the list
+[Person Recognition] Next location: x: 8.18897
+y: -2.20349
+z: 1.57113
+[INFO] [WallTime: 1437217813.050487] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437217813.050860] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217813.053474] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217813.054341] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217813.170956] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd68c7f8cb0>
+[INFO] [WallTime: 1437217813.171654] 'Getting there!'
+[INFO] [WallTime: 1437217813.174354] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217816.178304] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217816.178824] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217816.182778] 
+
+Navigation summary:
+Covered 0.0789356420558 meters in 3.1291000843 seconds (0.0252263078614) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217816.183295] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217816.183611] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 8.18897
+y: -2.20349
+z: 1.57113
+[INFO] [WallTime: 1437217816.184144] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437217816.184670] 'Would you look into my camera?'
+[INFO] [WallTime: 1437217816.187565] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437217816.188423] State machine starting in initial state 'LOOK_AT_PERSON' with userdata: 
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id f44b958fcb4c75cae409da56b8874fa3)
+{"entities":[{"id" : "f44b958fcb4c75cae409da56b8874fa3", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.76446, -2.15944, 1.4264)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217824.528527] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437217825.073681] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 7 entities
+[Person Recognition] Iterating through the 7 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 80.9902, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1995.66, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 73.1559, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1370.71, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 4 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 69.4562, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1759.62, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 56.2537, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1381.44, 'name': 'Liza'}}, {'index': 2, 'lbph': {'score': 52.3034, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1754.49, 'name': 'Liza'}}, {'index': 3, 'lbph': {'score': 64.1859, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 909.764, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0745002154359
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 68.5463, 'name': 'person1'}, 'score': 0.656944, 'label': 'person2', 'fisher': {'score': 525.555, 'name': 'person2'}}]
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 64.8025, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 2153.34, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0319644693371
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 54.6734, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1105.96, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 2 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 49.67, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1221.44, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 50.5059, 'name': 'Liza'}, 'score': 0, 'label': None, 'fisher': {'score': 1630.5, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0477979696222
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0623070854719
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[INFO] [WallTime: 1437217825.075610] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437217825.076428] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437217825.076754] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 5 locations in the list
+[Person Recognition] Next location: x: 7.26524
+y: -1.99569
+z: 1.50771
+[INFO] [WallTime: 1437217825.077214] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437217825.077623] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217825.080573] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217825.081217] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217825.198238] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd660700fc8>
+[INFO] [WallTime: 1437217825.199081] 'I will go there right away!'
+[INFO] [WallTime: 1437217825.202009] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217828.205197] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217828.205806] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217828.208717] 
+
+Navigation summary:
+Covered 0.261441906479 meters in 3.12807917595 seconds (0.0835790565945) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217828.209091] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217828.209434] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 7.26524
+y: -1.99569
+z: 1.50771
+[INFO] [WallTime: 1437217828.210095] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437217828.210652] 'Let me see who is here, please face me.'
+[INFO] [WallTime: 1437217828.213419] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437217828.213896] State machine starting in initial state 'LOOK_AT_PERSON' with userdata: 
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 3 entities
+[Person Recognition] Entity with type human added to the list (id 465917ad5f33219012cf4c29c697e402)
+{"entities":[{"id" : "465917ad5f33219012cf4c29c697e402", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Entity with type human added to the list (id 6f916aed96a32ca3de413012e2aa6f2d)
+{"entities":[{"id" : "6f916aed96a32ca3de413012e2aa6f2d", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (6.77774, -2.15414, 1.51752)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217836.128907] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437217836.698204] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 8 entities
+[Person Recognition] Iterating through the 8 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 80.9902, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1995.66, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 50.3491, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1867.52, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0566572193105
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 4 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 69.4562, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1759.62, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 56.2537, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1381.44, 'name': 'Liza'}}, {'index': 2, 'lbph': {'score': 52.3034, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1754.49, 'name': 'Liza'}}, {'index': 3, 'lbph': {'score': 64.1859, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 909.764, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0745002154359
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 68.5463, 'name': 'person1'}, 'score': 0.656944, 'label': 'person2', 'fisher': {'score': 525.555, 'name': 'person2'}}]
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 64.8025, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 2153.34, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0319644693371
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 54.6734, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1105.96, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 2 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 49.67, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1221.44, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 50.5059, 'name': 'Liza'}, 'score': 0, 'label': None, 'fisher': {'score': 1630.5, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0477979696222
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0623070854719
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 2 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 53.6408, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 2140.44, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 59.841, 'name': 'Liza'}, 'score': 0, 'label': None, 'fisher': {'score': 1429, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0697126573873
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0400296914802
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[INFO] [WallTime: 1437217836.700120] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437217836.700749] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437217836.701114] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 5 locations in the list
+[Person Recognition] Next location: x: 6.76579
+y: -2.11143
+z: 1.49572
+[INFO] [WallTime: 1437217836.701673] State machine transitioning 'GET_NEXT_LOCATION':'done'-->'GOTO_LOCATION'
+[INFO] [WallTime: 1437217836.702194] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217836.705300] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217836.705789] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217836.827573] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd660685248>
+[INFO] [WallTime: 1437217836.828302] 'I will go there right away!'
+[INFO] [WallTime: 1437217836.831450] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217839.835382] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217839.835895] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217839.839238] 
+
+Navigation summary:
+Covered 0.187237289738 meters in 3.13377094269 seconds (0.0597482372395) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217839.839660] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217839.840040] State machine transitioning 'GOTO_LOCATION':'arrived'-->'REMOVE_LOCATION'
+[Person Recognition] removeLocationCB
+[Person Recognition] Updading this location to visited:
+x: 6.76579
+y: -2.11143
+z: 1.49572
+[INFO] [WallTime: 1437217839.840696] State machine transitioning 'REMOVE_LOCATION':'done'-->'SAY_LOOK_AT_ME'
+[INFO] [WallTime: 1437217839.841381] 'Would you look into my camera?'
+[INFO] [WallTime: 1437217839.844494] State machine transitioning 'SAY_LOOK_AT_ME':'spoken'-->'ANALYSE_ITERATOR'
+[INFO] [WallTime: 1437217839.845127] State machine starting in initial state 'LOOK_AT_PERSON' with userdata: 
+    []
+[Person Recognition] LookAtPersonInFront
+Waiting for 4 seconds to reach target ...
+[Person Recognition] scanForHuman
+[Person Recognition] Found 4 entities
+[Person Recognition] Entity with type human added to the list (id 611df4e422ad155e3ef292f707bd1ea8)
+{"entities":[{"id" : "611df4e422ad155e3ef292f707bd1ea8", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Entity with type human added to the list (id fb5f04336e083577369d99490072e1ae)
+{"entities":[{"id" : "fb5f04336e083577369d99490072e1ae", "flags": [{"add":"locked"}]}]}
+[Person Recognition] Designator resolved a Human!
+[Person Recognition] Sending head goal to (7.2596, -2.04875, 1.54876)
+Waiting for 4 seconds to reach target ...
+[Person Recognition] Could not find anyone in front of the robot. It will just look forward.
+[INFO] [WallTime: 1437217847.701922] State machine transitioning 'LOOK_AT_PERSON':'failed'-->'ANALYZE_PERSON'
+[Person Recognition] AnalysePerson
+[INFO] [WallTime: 1437217848.334875] Criterium         humanDesignator = EdEntityCollectionDesignator(self.robot, criteriafuncs=[lambda entity: entity.type in ["crowd", "human"]])
+ leaves 10 entities
+[Person Recognition] Iterating through the 10 humans found
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 80.9902, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1995.66, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 50.3491, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1867.52, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0566572193105
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 4 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 69.4562, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1759.62, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 56.2537, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1381.44, 'name': 'Liza'}}, {'index': 2, 'lbph': {'score': 52.3034, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 1754.49, 'name': 'Liza'}}, {'index': 3, 'lbph': {'score': 64.1859, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 909.764, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0745002154359
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 68.5463, 'name': 'person1'}, 'score': 0.656944, 'label': 'person2', 'fisher': {'score': 525.555, 'name': 'person2'}}]
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 64.8025, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 2153.34, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0319644693371
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 54.6734, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1105.96, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 2 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 49.67, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1221.44, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 50.5059, 'name': 'Liza'}, 'score': 0, 'label': None, 'fisher': {'score': 1630.5, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0477979696222
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0623070854719
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 2 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 53.6408, 'name': 'person2'}, 'score': 0, 'label': None, 'fisher': {'score': 2140.44, 'name': 'Liza'}}, {'index': 1, 'lbph': {'score': 59.841, 'name': 'Liza'}, 'score': 0, 'label': None, 'fisher': {'score': 1429, 'name': 'Liza'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0697126573873
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0400296914802
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 45.1879, 'name': 'Liza'}, 'score': 0.903759, 'label': 'Liza', 'fisher': {'score': 1801.33, 'name': 'Liza'}}]
+[Person Recognition] Too close to another face: 0.0673221783664
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[Person Recognition] Found 1 faces in this entity
+[Person Recognition]    [{'index': 0, 'lbph': {'score': 51.1256, 'name': 'person1'}, 'score': 0, 'label': None, 'fisher': {'score': 1600.84, 'name': 'person2'}}]
+[Person Recognition] Unrecognized face
+[Person Recognition] Too close to another face: 0.0496965713103
+[Person Recognition] Face already present in the list. List size: 9
+[Person Recognition] There is a face in this location already on the list.  List size: 9
+[INFO] [WallTime: 1437217848.338693] State machine transitioning 'ANALYZE_PERSON':'succeded'-->'CANCEL_HEAD_GOALS'
+[Person Recognition] CancelHeadGoals
+[INFO] [WallTime: 1437217848.339657] State machine terminating 'CANCEL_HEAD_GOALS':'done':'container_success'
+[INFO] [WallTime: 1437217848.340047] State machine transitioning 'ANALYSE_ITERATOR':'container_success'-->'GET_NEXT_LOCATION'
+[Person Recognition] GetNextLocation
+[Person Recognition] 5 locations in the list
+[Person Recognition] All locations are marked as visited
+[INFO] [WallTime: 1437217848.341074] State machine terminating 'GET_NEXT_LOCATION':'visited_all':'container_success'
+[INFO] [WallTime: 1437217848.341717] State machine transitioning 'FIND_OPERATOR_CONTAINER':'container_success'-->'DESCRIBE_CROWD_CONTAINER'
+[INFO] [WallTime: 1437217848.342412] State machine starting in initial state 'GET_OPERATOR_LOCATION' with userdata: 
+    []
+[Person Recognition] ChooseOperator
+[Person Recognition]    Name: unknown, Score: 0, Location: (8.69951,-2.36037,1.38234)
+[Person Recognition]    Name: unknown, Score: 0, Location: (6.76546,-2.13079,1.56766)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.73321,-2.12497,1.41545)
+[Person Recognition]    Name: unknown, Score: 0, Location: (8.18897,-2.20349,1.57113)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.26524,-1.99569,1.50771)
+[Person Recognition]    Name: person2, Score: 0.656944, Location: (7.28854,-7.85983,1.49982)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.32033,-2.10249,1.51338)
+[Person Recognition]    Name: unknown, Score: 0, Location: (7.81975,-2.23759,1.43029)
+[Person Recognition]    Name: Liza, Score: 0.879688, Location: (8.23796,-2.31126,1.57723)
+[Person Recognition] Operator is: Liza (0.879688), Location: (8.23796,-2.31126,1.57723)
+[INFO] [WallTime: 1437217848.343504] State machine transitioning 'GET_OPERATOR_LOCATION':'succeeded'-->'GOTO_OPERATOR'
+[INFO] [WallTime: 1437217848.344179] State machine starting in initial state 'START_ANALYSIS' with userdata: 
+    []
+[INFO] [WallTime: 1437217848.346880] State machine transitioning 'START_ANALYSIS':'done'-->'NAVIGATE'
+[INFO] [WallTime: 1437217848.347355] State machine starting in initial state 'GET_PLAN' with userdata: 
+    []
+[INFO] [WallTime: 1437217848.460494] Goal handle = <actionlib.action_client.ClientGoalHandle instance at 0x7fd660755a70>
+[INFO] [WallTime: 1437217848.461077] 'I'm on my way!'
+[INFO] [WallTime: 1437217848.463952] State machine transitioning 'GET_PLAN':'goal_ok'-->'EXECUTE_PLAN'
+[INFO] [WallTime: 1437217854.469082] State machine terminating 'EXECUTE_PLAN':'succeeded':'arrived'
+[INFO] [WallTime: 1437217854.469560] State machine transitioning 'NAVIGATE':'arrived'-->'STOP_ANALYSIS_SUCCEED'
+[INFO] [WallTime: 1437217854.472590] 
+
+Navigation summary:
+Covered 0.317555319177 meters in 6.1255838871 seconds (0.0518408244879) m/s avg.
+Result = succeeded with 0 plans, 0 clears and 0 resets
+
+
+[INFO] [WallTime: 1437217854.472988] State machine terminating 'STOP_ANALYSIS_SUCCEED':'done':'arrived'
+[INFO] [WallTime: 1437217854.473271] State machine transitioning 'GOTO_OPERATOR':'arrived'-->'SAY_FOUND_OPERATOR'
+[INFO] [WallTime: 1437217854.473889] 'This is my operator!'
+[INFO] [WallTime: 1437217854.476815] State machine transitioning 'SAY_FOUND_OPERATOR':'spoken'-->'POINT_AT_OPERATOR'
+[Person Recognition] PointAtOperator
+[INFO] [WallTime: 1437217854.477686] Grasp precompute frame id = /amigo/base_link
+[INFO] [WallTime: 1437217857.048898] State machine transitioning 'POINT_AT_OPERATOR':'succeeded'-->'GREET_OPERATOR'
+[Person Recognition] greetOperatorCB
+[INFO] [WallTime: 1437217857.049863] 'I have found you Liza.'
+[INFO] [WallTime: 1437217857.053492] State machine transitioning 'GREET_OPERATOR':'spoken'-->'DESCRIBE_PEOPLE'
+[Person Recognition] DescribePeople
+[Person Recognition] Name: person2, Score: 0.656944, Location: (-4.00614894024,-2.19419690958,1.49982), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: unknown, Score: 0, Location: (1.40541017529,-0.476662464034,1.38234), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: Liza, Score: 0.879688, Location: (1.20248630347,-0.0592153454138,1.57723), Pose: 0, Gender: 1, Main crowd: True, Position: , Operator: True
+[Person Recognition] Name: unknown, Score: 0, Location: (1.26792270875,0.0394379356419,1.57113), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: unknown, Score: 0, Location: (1.04335647026,0.334490851112,1.43029), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: unknown, Score: 0, Location: (1.0930084893,0.467558927692,1.41545), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: unknown, Score: 0, Location: (0.893290579243,0.829619697731,1.51338), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: unknown, Score: 0, Location: (0.954672012364,0.932932174074,1.50771), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[Person Recognition] Name: unknown, Score: 0, Location: (0.575268400371,1.28518912235,1.56766), Pose: 0, Gender: 0, Main crowd: True, Position: , Operator: False
+[INFO] [WallTime: 1437217857.071119] 'I counted 9 persons in this crowd. 8 males and 1 females.'
+[INFO] [WallTime: 1437217857.073708] 'My operator is a woman, and she is standing up. Liza is the third person in the crowd, starting from the my left.'
+[INFO] [WallTime: 1437217871.461736] State machine transitioning 'DESCRIBE_PEOPLE':'done'-->'SAY_REPEAT'
+[INFO] [WallTime: 1437217871.462462] 'Would you like me to repeat the crowd description?'
+[INFO] [WallTime: 1437217874.406136] State machine transitioning 'SAY_REPEAT':'spoken'-->'HEAR_YES_NO_2'
+KeyError resolving the answer heard: 'positive_answer'
+HearYesNo: answer is negative, heard: 'No'
+[INFO] [WallTime: 1437217876.987925] State machine terminating 'HEAR_YES_NO_2':'heard_no':'container_success'
+[INFO] [WallTime: 1437217876.988525] State machine transitioning 'DESCRIBE_CROWD_CONTAINER':'container_success'-->'END_CHALLENGE'
+[INFO] [WallTime: 1437217876.989265] 'My work here is done, goodbye!'
+[INFO] [WallTime: 1437217879.418763] State machine terminating 'END_CHALLENGE':'spoken':'Done'
+

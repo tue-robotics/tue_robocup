@@ -1,7 +1,14 @@
 target1 = "navigation1"
-target2 = "navigation2"
+target2 = {
+    'in_front_of_pos2' : 'dinnertable',
+    'in' : 'livingroom',
+    'lookat' : 'dinnertable'
+}
 target3 = "navigation3"
-target_follow = "navigation_follow"
+target4 = "navigation4"
+
+radius1 = 0.1
+radius2 = 0.7
 
 exit1 = "exit_door_B1"
 exit2 = "exit_door_B2"

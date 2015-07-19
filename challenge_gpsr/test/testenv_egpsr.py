@@ -44,6 +44,26 @@ if __name__ == "__main__":
         #                     [3.229, -0.079, 0.000],
         #                     [-3.084, -0.038, 0.000]], 0.2)  # Last number is path velocity in m/s
 
+    elif env == "rwc2015":
+
+        #W.add_object("coke-1","coke", 3.19,4.1,0.85)
+        #W.add_object("coke-2","coke", 3.14,4.2,0.85)
+        #W.add_object("coke-3","coke", 3.2,4.3,0.85)
+        #W.add_object("coke-4","coke", 3.15,4.4,0.85)
+        #W.add_object("coke-5","coke", 3.17,4.5,0.85)
+        #W.add_object("coke-6","coke", 3.2,4.6,0.85)
+
+
+        #person = W.add_object("loy-1", "loy", 0, 4, 0, 0, 0, 0.7)
+        W.add_object("sjoerd-1","sjoerd",   3.1, -6.1, 0.000)
+        W.add_object("sjoerd-2","sjoerd",   3.2, -6.2, 0.000)
+        W.add_object("sjoerd-3","sjoerd",   3.0, -6.2, 0.000)
+        W.add_object("sjoerd-4","sjoerd",   3.0, -6.4, 0.000)
+        #W.add_object("sjoerd-3","sjoerd",   1, 1, 0.000)
+        rospy.sleep(5)
+
+
+
 
     elif env == "rgo2014":
         coke1 = W.add_object("coke-1", "coke", 4.25, 4.148, 0.86)   

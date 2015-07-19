@@ -5,7 +5,7 @@ import rospy
 import sys
 import smach
 import smach_ros
-import person_recognition_states_noncontinuous as PersonRecStates
+import person_recognition_states_continuos as PersonRecStates
 import robot_smach_states as states
 import geometry_msgs.msg as gm
 import robot_skills.util.msg_constructors as msgs
@@ -88,18 +88,19 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         @smach.cb_interface(outcomes=['done'])
         def removeLocation(userdata):
+            # import ipdb; ipdb.set_trace()
             locationsList = locationsToVisitDes.resolve()
             locToRemove = nextLocationDes.resolve().resolve()
             updated = False
 
             printOk("removeLocationCB")
 
-            # printOk(str(len(locationsList)) + " locations available")
+            printOk("Locations available: " + str(locationsList))
 
-            ''' iterate through all locations on the list and update the correct one '''
+            #  iterate through all locations on the list and update the correct one
             for loc in locationsList:
                 if locToRemove.pose.position == loc.point_stamped.point and loc.visited == False:
-                    printOk("Updading this location to visited:\n" + str(loc.point_stamped.point))
+                    printOk("Updading this location to visited:\n" + str(loc.point_stamped))
                     loc.visited = True
                     updated = True
                     break
@@ -137,24 +138,35 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         with self:
 
+            # smach.StateMachine.add( 'START_CHALLENGE',
+            #                         states.StartChallengeRobust(robot, 'initial_pose'),
+            #                         transitions={   'Done':'GOTO_ENTRY',
+            #                                         'Aborted':'Aborted',
+            #                                         'Failed':'GOTO_ENTRY'})
 
-            smach.StateMachine.add( 'INITIALIZE',
-                                    states.Initialize(robot),
-                                    transitions={   'initialized':'INIT_WM',
-                                                    'abort':'Aborted'})
+            # smach.StateMachine.add('GOTO_ENTRY',
+            #                         states.NavigateToWaypoint(robot, waypoint_learning),
+            #                         transitions={   'arrived':'LEARN_OPERATOR_CONTAINER',
+            #                                         'unreachable':'LEARN_OPERATOR_CONTAINER',
+            #                                         'goal_not_defined':'LEARN_OPERATOR_CONTAINER'})
 
-            smach.StateMachine.add( "INIT_WM",
-                                    PersonRecStates.InitializeWorldModel(robot), 
-                                    transitions={    'done':'LEARN_OPERATOR_CONTAINER'})
+            smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized':'LEARN_OPERATOR_CONTAINER',
+                                                'abort':'Aborted'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                                 LEARN_OPERATOR_CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+            # set default name in case learning name fails
+
             # container for this stage
             learnOperatorContainer = smach.StateMachine(outcomes = ['container_success', 'container_failed'],
                                                         output_keys = ['personName_userData'])
+
+            # learnOperatorContainer.userdata.personName_userData = "Mister Operator"
 
             with learnOperatorContainer:
 
@@ -170,12 +182,12 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'succeded':'WAIT_FOR_OPERATOR',
                                                         'failed':'WAIT_FOR_OPERATOR'})
 
-
                 smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                                        PersonRecStates.WaitForPerson(robot, attempts=8, sleep_interval=1),
-                                        transitions={   'succeded':'LEARN_NAME_ITERATOR',
+                                        states.WaitForPersonInFront(robot, attempts=8, sleep_interval=1),
+                                        transitions={   'success':'LEARN_NAME_ITERATOR',
                                                         'failed':'SAY_WAITING_OPERATOR'})
 
+                # ----------------------------------------
 
                 learnNameIterator = smach.Iterator( outcomes=['container_success', 'container_failed'], 
                                                     it = lambda:range(0, 3),
@@ -183,7 +195,6 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     input_keys=[],
                                                     output_keys=['personName_userData'],
                                                     exhausted_outcome = 'container_failed')
-
                 with learnNameIterator:
 
                     learnNameContainer = smach.StateMachine(output_keys=['personName_userData'],
@@ -224,6 +235,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         # loop_outcomes=['container_failed'],
                                                         break_outcomes=['container_success'])
 
+                # add the learnNameIterator to the main state machine
                 smach.StateMachine.add( 'LEARN_NAME_ITERATOR',
                                         learnNameIterator,
                                         transitions = { 'container_failed':'SAY_COULD_NOT_LEARN_NAME',
@@ -245,25 +257,13 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'LOOK_AT_OPERATOR_2',
                                         PersonRecStates.LookAtPersonInFront(robot, lookDown=False),
-                                        transitions={   'succeded':'TOGGLE_PERCEPTION_ON',
-                                                        'failed':'TOGGLE_PERCEPTION_ON'})
-
-                smach.StateMachine.add( 'TOGGLE_PERCEPTION_ON',
-                                        PersonRecStates.TogglePerceptionMode(robot, toggle_mode=True),
-                                        transitions={   'done':'LEARN_PERSON'})
+                                        transitions={   'succeded':'LEARN_PERSON',
+                                                        'failed':'LEARN_PERSON'})
 
                 smach.StateMachine.add('LEARN_PERSON',
                                         states.LearnPerson(robot, name_designator = operatorNameDes),
-                                        transitions={   'succeded_learning':'TOGGLE_PERCEPTION_OFF_SUCCESS',
-                                                        'failed_learning':'TOGGLE_PERCEPTION_OFF_FAILED'})
-
-                smach.StateMachine.add( 'TOGGLE_PERCEPTION_OFF_SUCCESS',
-                                        PersonRecStates.TogglePerceptionMode(robot, toggle_mode=False),
-                                        transitions={   'done':'SAY_OPERATOR_LEARNED'})
-
-                smach.StateMachine.add( 'TOGGLE_PERCEPTION_OFF_FAILED',
-                                        PersonRecStates.TogglePerceptionMode(robot, toggle_mode=False),
-                                        transitions={   'done':'SAY_LEARN_FACE_FAILED'})
+                                        transitions={   'succeded_learning':'SAY_OPERATOR_LEARNED',
+                                                        'failed_learning':'SAY_LEARN_FACE_FAILED'})
 
                 smach.StateMachine.add('SAY_LEARN_FACE_FAILED',
                                        states.Say(robot,"I could not learn your face for some reason. Let's try again.", block=False),
@@ -332,15 +332,15 @@ class ChallengePersonRecognition(smach.StateMachine):
             findCrowndContainer = smach.StateMachine(   outcomes = ['container_success', 'container_failed'])
             with findCrowndContainer:
 
-                # smach.StateMachine.add( 'RESET_ED_1',
-                #                         PersonRecStates.ResetEd(robot),
-                #                         transitions={   'done':  'GOTO_LIVING_ROOM_1'})
+                smach.StateMachine.add( 'RESET_ED_1',
+                                        PersonRecStates.ResetEd(robot),
+                                        transitions={   'done':  'GOTO_LIVING_ROOM_1'})                
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
                                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
-                                        transitions={   'arrived' : 'SAY_SEARCHING_CROWD',
-                                                        'unreachable' : 'SAY_SEARCHING_CROWD',
-                                                        'goal_not_defined' : 'SAY_SEARCHING_CROWD'})
+                                        transitions={   'arrived':          'SAY_SEARCHING_CROWD',
+                                                        'unreachable':      'SAY_SEARCHING_CROWD',
+                                                        'goal_not_defined': 'SAY_SEARCHING_CROWD'})
 
                 smach.StateMachine.add( 'SAY_SEARCHING_CROWD',
                                         states.Say(robot, "I'm searching for the crowd.", block=False),
@@ -348,30 +348,30 @@ class ChallengePersonRecognition(smach.StateMachine):
 
                 smach.StateMachine.add( 'FIND_CROWD',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded' : 'container_success',
-                                                        'failed' : 'GOTO_LIVING_ROOM_2'})
+                                        transitions={   'succeded':  'container_success',
+                                                        'failed':   'GOTO_LIVING_ROOM_2'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
                                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
-                                        transitions={   'arrived' : 'FIND_CROWD_2',
-                                                        'unreachable' : 'FIND_CROWD_2',
-                                                        'goal_not_defined' : 'FIND_CROWD_2'})
+                                        transitions={   'arrived':          'FIND_CROWD_2',
+                                                        'unreachable':      'FIND_CROWD_2',
+                                                        'goal_not_defined': 'FIND_CROWD_2'})
 
                 smach.StateMachine.add( 'FIND_CROWD_2',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded' : 'container_success',
-                                                        'failed' : 'GOTO_LIVING_ROOM_3'})
+                                        transitions={   'succeded':  'container_success',
+                                                        'failed':   'GOTO_LIVING_ROOM_3'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
                                         states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
-                                        transitions={   'arrived' : 'FIND_CROWD_3',
-                                                        'unreachable' : 'FIND_CROWD_3',
-                                                        'goal_not_defined' : 'FIND_CROWD_3'})
+                                        transitions={   'arrived':          'FIND_CROWD_3',
+                                                        'unreachable':      'FIND_CROWD_3',
+                                                        'goal_not_defined': 'FIND_CROWD_3'})
 
                 smach.StateMachine.add( 'FIND_CROWD_3',
                                         PersonRecStates.FindCrowd(robot, locationsToVisitDes),
                                         transitions={   'succeded':  'container_success',
-                                                        'failed':   'container_failed'})             
+                                                        'failed':   'container_failed'})
 
             #add container to the main state machine
             smach.StateMachine.add( 'FIND_CROWD_CONTAINER',
@@ -382,15 +382,15 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                     states.Say(robot,[  "I think I found some people.",
                                                         "I think I saw several people over there"], block=False),
-                                    transitions={   'spoken':'FIND_OPERATOR_CONTAINER'})
+                                    transitions={   'spoken':'RESET_ED_2'})
 
             smach.StateMachine.add('SAY_FAILED_FIND_CROWD',
                                    states.Say(robot,"Still Searching for the crowd", block=False),
                                    transitions={    'spoken':'FIND_CROWD_CONTAINER'})
 
-            # smach.StateMachine.add( 'RESET_ED_2',
-            #             PersonRecStates.ResetEd(robot),
-            #             transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
+            smach.StateMachine.add( 'RESET_ED_2',
+                        PersonRecStates.ResetEd(robot),
+                        transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
 
 
 
@@ -427,12 +427,12 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                             "Let me see who is here, please face me."], block=False),
                                         transitions={   'spoken':'ANALYSE_ITERATOR'})
 
-                analyzeIterator = smach.Iterator(   outcomes=['container_success', 'container_failed'], 
-                                                    it = lambda:range(0, 5),
-                                                    it_label='counter',
-                                                    input_keys=[],
-                                                    output_keys=[],
-                                                    exhausted_outcome = 'container_failed')
+                analyzeIterator = smach.Iterator(  outcomes=['container_success', 'container_failed'], 
+                                        it = lambda:range(0, 5),
+                                        it_label='counter',
+                                        input_keys=[],
+                                        output_keys=[],
+                                        exhausted_outcome = 'container_failed')
                 with analyzeIterator:
 
                     analyzeIterator = smach.StateMachine( outcomes = ['container_success', 'container_failed'])

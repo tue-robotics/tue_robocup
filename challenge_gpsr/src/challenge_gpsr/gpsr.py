@@ -214,7 +214,7 @@ class Ask_action(smach.State):
 
 class Query_specific_action(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "return_to_person", "place_item","no_action"])
+        smach.State.__init__(self, outcomes=["navigate_room", "navigate_location", "grab_from_shelf", "take_object_loc", "look_object_loc", "find_person", "answer_question", "answer_special", "return_to_operator", "return_to_person", "place_item","no_action"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -249,11 +249,18 @@ class Query_specific_action(smach.State):
 
                     if str(choice_value) == "1_location":
                         location=str(self.robot.reasoner.query_first_answer("action_info('1','"+str(choice_value)+"',A)"))
-                        self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
-                        #self.robot.reasoner.assertz("action_info('1','1_location','"+"gpsr_"+str(location)+"')")
-                        self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
-                        print self.robot.reasoner.query_first_answer("action_info('1','1_location',A)")
-                        return "navigate_location"
+                        if location == "bookcase": # hack for robocup 2015 china
+                            self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
+                            #self.robot.reasoner.assertz("action_info('1','1_location','"+"gpsr_"+str(location)+"')")
+                            self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
+                            print self.robot.reasoner.query_first_answer("action_info('1','1_location',A)")
+                            return "grab_from_shelf"
+                        else:
+                            self.robot.reasoner.query("retractall(action_info('1','"+str(choice_value)+"',A))")
+                            #self.robot.reasoner.assertz("action_info('1','1_location','"+"gpsr_"+str(location)+"')")
+                            self.robot.reasoner.assertz("action_info('1','1_location','"+str(location)+"')")
+                            print self.robot.reasoner.query_first_answer("action_info('1','1_location',A)")
+                            return "navigate_location"
 
 
         elif current_action == 2:
@@ -503,8 +510,31 @@ class FindObjectInRoom(smach.StateMachine):
 
             smach.StateMachine.add( "CHECK_FOR_LOCATIONS",
                                     smach.CBState(get_location_room),
-                                    transitions={'location_found':'NAV_TO_LOC',
+                                    transitions={'location_found':'CHECK_FOR_AREA_LOC',
                                                  'no_location':'No_locations'})
+
+            @smach.cb_interface(outcomes=['area_exists','no_such_area'])
+            def check_in_front_of_area_is_defined(userdata):
+                print "Checking for in_front_of"
+                location = QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()
+                print "to be checked location = ", location
+                location_entity = robot.ed.get_entity(id=str(location))
+                print "location_entity = ", location_entity
+
+                if location_entity.data:
+                    for i in range (0, len(location_entity.data['areas'])):
+                        try:
+                            if location_entity.data['areas'][i]['name'] == "in_front_of":
+                                return 'area_exists'
+                        except KeyError:
+                            print "[find_loc] name was not defined in area"
+
+                return 'no_such_area'
+
+            smach.StateMachine.add( "CHECK_FOR_AREA_LOC",
+                                    smach.CBState(check_in_front_of_area_is_defined),
+                                    transitions={'area_exists':'NAV_TO_LOC',
+                                                 'no_such_area':'CHECK_FOR_AREA_LOC_POS2'})
 
             smach.StateMachine.add('NAV_TO_LOC',
                                     states.NavigateToSymbolic(robot, 
@@ -515,10 +545,26 @@ class FindObjectInRoom(smach.StateMachine):
                                                     'goal_not_defined'  :   'NAV_TO_LOC_RETRY'})
 
             smach.StateMachine.add('NAV_TO_LOC_RETRY',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "near" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'NAV_TO_LOC_2',
+                                                    'unreachable'       :   'NAV_TO_LOC_RETRY_RADIUS',
+                                                    'goal_not_defined'  :   'NAV_TO_LOC_RETRY_RADIUS'})
+
+            smach.StateMachine.add('NAV_TO_LOC_RETRY_RADIUS',
                                         states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.5),
-                                        transitions={   'arrived':'LOOKAT_LOC',
-                                                        'unreachable':'Object_not_found',
-                                                        'goal_not_defined':'Object_not_found'})
+                                        transitions={   'arrived':'NAV_TO_LOC_2',
+                                                        'unreachable':'NAV_TO_LOC_2',
+                                                        'goal_not_defined':'NAV_TO_LOC_2'})
+
+            smach.StateMachine.add('NAV_TO_LOC_2',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'LOOKAT_LOC',
+                                                    'unreachable'       :   'LOOKAT_LOC',
+                                                    'goal_not_defined'  :   'LOOKAT_LOC'})
             
             smach.StateMachine.add( "LOOKAT_LOC",
                                          states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
@@ -602,17 +648,7 @@ class FindObjectInRoom(smach.StateMachine):
             smach.StateMachine.add( "CHECK_FOR_OBJECT",
                                     smach.CBState(check_for_object),
                                     transitions={'object_found':'SAY_FOUND_OBJECT',
-                                                 'object_not_found':'CHECK_IF_LOCATIONS_LEFT'})
-
-
-            # smach.StateMachine.add('NAV_TO_LOC',
-            #                         states.NavigateToSymbolic(robot, 
-            #                             {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_2" }, 
-            #                             EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
-            #                         transitions={   'arrived'           :   'LOOKAT_LOC',
-            #                                         'unreachable'       :   'CHECK_IF_LOCATIONS_LEFT',
-            #                                         'goal_not_defined'  :   'CHECK_IF_LOCATIONS_LEFT'})
-
+                                                 'object_not_found':'CHECK_FOR_AREA_LOC_POS2'})
 
             @smach.cb_interface(outcomes=['ok'])
             def dynamic_say(userdata):
@@ -639,6 +675,62 @@ class FindObjectInRoom(smach.StateMachine):
                                smach.CBState(dynamic_say),
                                transitions={'ok':'Object_found'})
 
+
+            @smach.cb_interface(outcomes=['area_exists','no_such_area'])
+            def check_in_front_of_area_pos2_is_defined(userdata):
+                print "Checking for in_front_of_pos2"
+                location = QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve()
+                print "to be checked location = ", location
+                location_entity = robot.ed.get_entity(id=str(location))
+                if location_entity.data:
+                    for i in range (0, len(location_entity.data['areas'])):
+                        try:
+                            if location_entity.data['areas'][i]['name'] == "in_front_of_pos2":
+                                return 'area_exists'
+                        except KeyError:
+                            print "[find_loc] name was not defined in area"
+
+                return 'no_such_area'
+
+            smach.StateMachine.add( "CHECK_FOR_AREA_LOC_POS2",
+                                    smach.CBState(check_in_front_of_area_pos2_is_defined),
+                                    transitions={'area_exists':'NAV_TO_LOC_POS2',
+                                                 'no_such_area':'CHECK_IF_LOCATIONS_LEFT'})
+
+            smach.StateMachine.add('NAV_TO_LOC_POS2',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_pos2" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'LOOKAT_LOC_POS2',
+                                                    'unreachable'       :   'NAV_TO_LOC_POS2_RETRY',
+                                                    'goal_not_defined'  :   'NAV_TO_LOC_POS2_RETRY'})
+
+            smach.StateMachine.add('NAV_TO_LOC_POS2_RETRY',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "near" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'NAV_TO_LOC_POS2_2',
+                                                    'unreachable'       :   'NAV_TO_LOC_POS2_2',
+                                                    'goal_not_defined'  :   'NAV_TO_LOC_POS2_2'})
+
+            smach.StateMachine.add('NAV_TO_LOC_POS2_2',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_pos2" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                    transitions={   'arrived'           :   'LOOKAT_LOC_POS2',
+                                                    'unreachable'       :   'LOOKAT_LOC_POS2',
+                                                    'goal_not_defined'  :   'LOOKAT_LOC_POS2'})
+
+            smach.StateMachine.add( "LOOKAT_LOC_POS2",
+                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
+                                         transitions={  'succeeded'         :'CHECK_FOR_OBJECT_POS2',
+                                                        'failed'            :'CHECK_FOR_OBJECT_POS2'})
+
+            smach.StateMachine.add( "CHECK_FOR_OBJECT_POS2",
+                                    smach.CBState(check_for_object),
+                                    transitions={'object_found':'SAY_FOUND_OBJECT',
+                                                 'object_not_found':'CHECK_IF_LOCATIONS_LEFT'})
+
             ## HACK: IF IT IS THE LAST LOCATION IN THE ROOM AND NO OBJECT HAS BEEN FOUND, JUST SAY THAT THE OBJECT IS THERE.
             @smach.cb_interface(outcomes=['location_found','no_location'])
             def check_locations_in_room_left(userdata):
@@ -653,24 +745,6 @@ class FindObjectInRoom(smach.StateMachine):
                 except KeyError:
                     print "[find_loc] No loc found anymore, can happen"
                     return "no_location"
-
-            smach.StateMachine.add('NAV_TO_LOC_POS2',
-                                    states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_pos2" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
-                                    transitions={   'arrived'           :   'LOOKAT_LOC_POS2',
-                                                    'unreachable'       :   'CHECK_IF_LOCATIONS_LEFT',
-                                                    'goal_not_defined'  :   'CHECK_IF_LOCATIONS_LEFT'})
-
-            smach.StateMachine.add( "LOOKAT_LOC_POS2",
-                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
-                                         transitions={  'succeeded'         :'CHECK_FOR_OBJECT_POS2',
-                                                        'failed'            :'CHECK_FOR_OBJECT_POS2'})
-
-            smach.StateMachine.add( "CHECK_FOR_OBJECT_POS2",
-                                    smach.CBState(check_for_object),
-                                    transitions={'object_found':'SAY_FOUND_OBJECT',
-                                                 'object_not_found':'CHECK_IF_LOCATIONS_LEFT'})
 
             smach.StateMachine.add( "CHECK_IF_LOCATIONS_LEFT",
                                     smach.CBState(check_locations_in_room_left),
@@ -803,17 +877,22 @@ class Turn_90_degrees(smach.State):
 
 class InspectLocationAndGrab(smach.State):
 
-    def __init__(self, robot): #, unknown = False):
+    def __init__(self, robot, location = "", grab_wrong_item = False): #, unknown = False):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
+        self.grab_wrong_item = grab_wrong_item
+        self.location = location
 
     def execute(self, userdata):
 
         object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',A,_)"))
         print "object_type = ", object_type
-        location = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',_,A)"))
-        print "location = ", location
-        location_ent = self.robot.ed.get_entity(id=location, parse=False)
+        if self.location == "":
+            location = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',_,A)"))
+            print "location = ", location
+            location_ent = self.robot.ed.get_entity(id=location, parse=False)
+        else:
+            location_ent = self.robot.ed.get_entity(id=self.location, parse=False)
 
         ''' Enable kinect segmentation plugin (only one image frame) '''
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
@@ -879,16 +958,17 @@ class InspectLocationAndGrab(smach.State):
                     ITEM = correct_object_type_ids_list[i]
                     return 'succeeded'
 
-        if len(not_correct_object_type_ids_list)>0:
+        if self.grab_wrong_item == True:
+            if len(not_correct_object_type_ids_list)>0:
 
-            for i in range(0, len(not_correct_object_type_ids_list)):
-                grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=not_correct_object_type_ids_list[i]), left_arm)
-                result = grabstate.execute()
-                rospy.loginfo("Amigo attempts to grasp an object that is not classified as the desired object type")
-                if result == 'done':
-                    global ITEM 
-                    ITEM = not_correct_object_type_ids_list[i]
-                    return 'succeeded'
+                for i in range(0, len(not_correct_object_type_ids_list)):
+                    grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=not_correct_object_type_ids_list[i]), left_arm)
+                    result = grabstate.execute()
+                    rospy.loginfo("Amigo attempts to grasp an object that is not classified as the desired object type")
+                    if result == 'done':
+                        global ITEM 
+                        ITEM = not_correct_object_type_ids_list[i]
+                        return 'succeeded'
 
         return 'failed'
 
@@ -1050,6 +1130,31 @@ class PlaceGrabbed(smach.State):
         return 'failed'
 
 
+# THIS IS A TOTAL HACK FOR ONLY THE SHELVES FOR RWC 2015 prutscode, maar onder het motto: 'als het maar werkt'
+class GrabFromShelves(smach.StateMachine):
+    """Initialize, wait for the door to be opened and drive inside"""
+
+    def __init__(self, robot, location, grab_wrong_item = False):
+        smach.StateMachine.__init__(self, outcomes=["Success", "Failed"])
+        with self:
+
+            smach.StateMachine.add('NAVIGATE_TO_LOCATION_IN_FRONT_OF',
+                                        states.NavigateToSymbolic(robot, 
+                                            {EdEntityDesignator(robot, id=location) : "in_front_of" }, 
+                                            EdEntityDesignator(robot, id=location)),
+                                        transitions={   'arrived'           :   'LOOKAT_LOCATION',
+                                                        'unreachable'       :   'Failed',
+                                                        'goal_not_defined'  :   'Failed'})
+
+            smach.StateMachine.add( "LOOKAT_LOCATION",
+                                             states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id=location), waittime=5.0),
+                                         transitions={  'succeeded'         :'INSPECT_AND_GRAB_LOCATION_FOR_ITEM',
+                                                        'failed'            :'INSPECT_AND_GRAB_LOCATION_FOR_ITEM'})
+
+            smach.StateMachine.add( "INSPECT_AND_GRAB_LOCATION_FOR_ITEM",
+                                        InspectLocationAndGrab(robot, location = location, grab_wrong_item = grab_wrong_item),
+                                        transitions={   'succeeded'              :'Success',
+                                                        'failed'                 :'Failed'})                                     
 
 
 ########################
@@ -1120,7 +1225,8 @@ def setup_statemachine(robot):
                                 Query_specific_action(robot),
                                 transitions={   'navigate_room':'1_ACTION_NAVIGATE_TO_ROOM',
                                                 'navigate_location':'1_ACTION_NAVIGATE_TO_LOCATION',
-                                                'take_object_loc':'2_INSPECT_AND_GRAB', #amigo should be at a location and now try to search for object
+                                                'grab_from_shelf': '1_2_ITERATE_OVER_SHELVES_SHELF1', # hack for rwc2015, shelves of bookcase.
+                                                'take_object_loc':'2_CHECK_FOR_AREA_LOC_POS2', #amigo should be at a location and now try to search for object
                                                 'look_object_loc':'2_FIND_ITEM', # If you are in a room, amigo should explore all locations in room.
                                                 'find_person':'2_FIND_PERSON',
                                                 #'count_objects':'FINISHED_TASK',
@@ -1147,6 +1253,14 @@ def setup_statemachine(robot):
                                                     'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY'})
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "near" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+                                    transitions={   'arrived'           :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF',
+                                                    'unreachable'       :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF',
+                                                    'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF'})
+
+        smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF',
                                     states.NavigateToSymbolic(robot, 
                                         {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of" }, 
                                         EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
@@ -1197,30 +1311,107 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( 'SAY_NOT_ARRIVED',
                                 states.Say(robot, ["I have not arrived at the desired location, I'm sorry."], block=True),
-                                transitions={'spoken':'FINISHED_TASK'})
+                                transitions={'spoken':'1_LOOKAT_LOCATION'})
 
         #################################
         ######### ACTION PART 2 #########
         #################################
 
-        # grab_designator_locked = LockingDesignator(ObjectGraspDesignator(robot))
-        # smach.StateMachine.add( "2_LOCK_GRAB_ITEM",
-        #                             states.LockDesignator(grab_designator_locked), #TODO maybe: unlock this if you ever want to pickup something else
-        #                             transitions={   'locked'              :'2_GRAB_ITEM'})
 
-        smach.StateMachine.add( "2_INSPECT_AND_GRAB",
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF1",
+                                    GrabFromShelves(robot, location = "bookcase/shelf1", grab_wrong_item = False), #lowest shelf, difficult to grasp
+                                    transitions={   'Success'                :'FINISHED_TASK',
+                                                    'Failed'                 :'1_2_ITERATE_OVER_SHELVES_SHELF2'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF2",
+                                    GrabFromShelves(robot, location = "bookcase/shelf2", grab_wrong_item = True),
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'                 :'1_2_ITERATE_OVER_SHELVES_SHELF3'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF3",
+                                    GrabFromShelves(robot, location = "bookcase/shelf3", grab_wrong_item = True),
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'                 :'1_2_ITERATE_OVER_SHELVES_SHELF4'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF4",
+                                    GrabFromShelves(robot, location = "bookcase/shelf4", grab_wrong_item = False), #highest shelf, difficult to grasp
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'                 :'1_2_ITERATE_OVER_SHELVES_SHELF5'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF5",
+                                    GrabFromShelves(robot, location = "bookcase/shelf5", grab_wrong_item = False), #lowest shelf, difficult to grasp
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'                 :'1_2_ITERATE_OVER_SHELVES_SHELF8'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF6",
+                                    GrabFromShelves(robot, location = "bookcase/shelf6", grab_wrong_item = True),
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'                 :'1_2_ITERATE_OVER_SHELVES_SHELF7'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF7",
+                                    GrabFromShelves(robot, location = "bookcase/shelf7", grab_wrong_item = True),
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'                 :'2_SAY_NOT_GRABBED'})
+
+        smach.StateMachine.add( "1_2_ITERATE_OVER_SHELVES_SHELF8",
+                                    GrabFromShelves(robot, location = "bookcase/shelf8", grab_wrong_item = False), #highest shelf, difficult to grasp
+                                    transitions={   'Success'              :'FINISHED_TASK',
+                                                    'Failed'               :'1_2_ITERATE_OVER_SHELVES_SHELF6'})
+
+        @smach.cb_interface(outcomes=['area_exists','no_such_area'])
+        def check_in_front_of_area_pos2_is_defined(userdata):
+            print "Checking for in_front_of_pos2"
+            location = QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)").resolve()
+            print "to be checked location = ", location
+            location_entity = robot.ed.get_entity(id=str(location))
+            if location_entity.data:
+                for i in range (0, len(location_entity.data['areas'])):
+                    try:
+                        if location_entity.data['areas'][i]['name'] == "in_front_of_pos2":
+                            return 'area_exists'
+                    except KeyError:
+                        print "[find_loc] name was not defined in area"
+
+            return 'no_such_area'
+
+        smach.StateMachine.add( "2_CHECK_FOR_AREA_LOC_POS2",
+                                smach.CBState(check_in_front_of_area_pos2_is_defined),
+                                transitions={'area_exists':'2_INSPECT_AND_GRAB_WRONG_ITEM_FALSE',
+                                             'no_such_area':'2_INSPECT_AND_GRAB_WRONG_ITEM_TRUE'})
+
+        smach.StateMachine.add( "2_INSPECT_AND_GRAB_WRONG_ITEM_TRUE",
+                                    InspectLocationAndGrab(robot, grab_wrong_item = True),
+                                    transitions={   'succeeded'              :'FINISHED_TASK',
+                                                    'failed'                 :'2_SAY_NOT_GRABBED'})
+
+        smach.StateMachine.add( "2_INSPECT_AND_GRAB_WRONG_ITEM_FALSE",
+                                    InspectLocationAndGrab(robot,grab_wrong_item = False),
+                                    transitions={   'succeeded'              :'FINISHED_TASK',
+                                                    'failed'                 :'1_ACTION_NAVIGATE_TO_LOCATION_IN_FRONT_OF_POS2'})      
+        
+        smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_IN_FRONT_OF_POS2',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of_pos2" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+                                    transitions={   'arrived'           :   '1_LOOKAT_LOCATION_POS2',
+                                                    'unreachable'       :   '1_LOOKAT_LOCATION_POS2',
+                                                    'goal_not_defined'  :   '2_SAY_NOT_GRABBED'})
+
+        smach.StateMachine.add( "1_LOOKAT_LOCATION_POS2",
+                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), waittime=5.0),
+                                     transitions={  'succeeded'         :'2_INSPECT_AND_GRAB_WRONG_ITEM_TRUE',
+                                                    'failed'            :'2_INSPECT_AND_GRAB_WRONG_ITEM_TRUE'})
+
+        smach.StateMachine.add( "2_INSPECT_AND_GRAB_POS2",
                                     InspectLocationAndGrab(robot),
                                     transitions={   'succeeded'              :'FINISHED_TASK',
                                                     'failed'                 :'2_SAY_NOT_GRABBED'})
 
         smach.StateMachine.add( '2_SAY_NOT_GRABBED',
-                                states.Say(robot, ["I was not able to grasp the item, I'm sorry."], block=False),
+                                states.Say(robot, ["I was not able to grasp the item, I'm sorry. Therefore i cannot finish the rest of the task."], block=False),
                                 transitions={'spoken':'SAY_GO_TO_EXIT'})
 
-        # smach.StateMachine.add( "2_GRAB_ITEM",
-        #                             states.Grab(robot, ObjectGraspDesignator(robot), empty_arm_designator),
-        #                             transitions={   'done'              :'FINISHED_TASK',
-        #                                             'failed'            :'FINISHED_TASK'})
+
 
         smach.StateMachine.add( "2_FIND_ITEM",
                                     FindObjectInRoom(robot, QueryFirstAnswerDesignator(robot, "action_info('2','2_look_object_loc',_,A)"),QueryFirstAnswerDesignator(robot, "action_info('2','2_look_object_loc',A,_)")),

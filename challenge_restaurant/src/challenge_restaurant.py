@@ -29,10 +29,10 @@ from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
 knowledge = load_knowledge("challenge_restaurant")
 
- 
+
 tables = {1: "one", 2: "two", 3: "three"}
-# ORDERS is filled with 2 keys: "beverage" and "combo". 
-#   - Each value is a dictionary itself, with keys "location" and "name". 
+# ORDERS is filled with 2 keys: "beverage" and "combo".
+#   - Each value is a dictionary itself, with keys "location" and "name".
 #       - key "location" gets its value from the values in the tables-dictionary
 #       - key "name" gets the value of the order, e.g. "banana and apple"
 ORDERS = {}
@@ -55,6 +55,17 @@ class HeadCancel(smach.State):
         self._robot.head.cancel_goal()
         return "done"
 
+class Init(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.ed.enable_plugins(plugin_names=["laser_integration"])
+        self._robot.ed.reset()
+        return "done"
+
+
 class StoreKitchen(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
@@ -63,6 +74,7 @@ class StoreKitchen(smach.State):
 
     def execute(self, userdata):
         self._robot.ed.update_entity(id="kitchen", posestamped=self._robot.base.get_location(), type="waypoint")
+
         return "done"
 
 class StoreBeverageSide(smach.State):
@@ -83,11 +95,11 @@ class StoreBeverageSide(smach.State):
         if result.result == "left":
             base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
         elif result.result == "right":
-            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)            
+            base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) - math.pi / 2)
         else:
             print "\n\n WHUT?? No left or right lol? \n\n"
             print result
-            print "\n"    
+            print "\n"
 
         self._robot.ed.update_entity(id="beverages", posestamped=base_pose, type="waypoint")
         return "done"
@@ -101,11 +113,11 @@ class StoreWaypoint(smach.State):
     def execute(self, userdata):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
-        
+
         base_pose = self._robot.base.get_location()
 
         choices = knowledge.guiding_choices
-        
+
         self._robot.head.look_at_standing_person()
         time.sleep(1.0)
         result = self._robot.ears.recognize(knowledge.guiding_spec, choices, time_out = rospy.Duration(10)) # Wait 100 secs
@@ -128,7 +140,7 @@ class StoreWaypoint(smach.State):
 
                 self._robot.speech.speak("%s %s, it is!"%(location, side))
                 self._robot.head.cancel_goal()
-                
+
                 if side == "left":
                     base_pose.pose.orientation = transformations.euler_z_to_quaternion(transformations.euler_z_from_quaternion(base_pose.pose.orientation) + math.pi / 2)
                 elif side == "right":
@@ -137,14 +149,14 @@ class StoreWaypoint(smach.State):
                 m = Marker()
                 if location == "one":
                     m.id = 1
-                    m.color.r = 1 
+                    m.color.r = 1
                 if location == "two":
                     m.id = 2
-                    m.color.g = 1 
+                    m.color.g = 1
                 if location == "three":
                     m.id = 3
-                    m.color.b = 1 
-                m.color.a = 1 
+                    m.color.b = 1
+                m.color.a = 1
                 m.pose = base_pose.pose
                 m.header = base_pose.header
                 m.type = 0 #Arrow
@@ -161,7 +173,7 @@ class StoreWaypoint(smach.State):
                 self._pub.publish(m)
 
                 # Store waypoint in world model
-                print "Asserting waypoint %s to world model"%location   
+                print "Asserting waypoint %s to world model"%location
                 print "\n\n\n\nCURRENT BASE POSE:\n\n\n"
                 print base_pose
                 print "\n\n\n"
@@ -192,7 +204,7 @@ class CheckInKitchen(smach.State):
         # Get the robot pose and compare if we are close enough to the kitchen waypoint
         kitchen = self._robot.ed.get_entity(id="kitchen")
         if kitchen:
-            current = self._robot.base.get_location() 
+            current = self._robot.base.get_location()
             if math.hypot(current.pose.position.x - kitchen.pose.position.x, current.pose.position.y - kitchen.pose.position.y) < knowledge.kitchen_radius:
                 return "in_kitchen"
         else:
@@ -221,7 +233,7 @@ class AskOrder(smach.State):
             elif "food1" and "food2" in result.choices:
                 order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
                 ORDERS["combo"] = { "location" : self._location, "name" : order }
-                
+
         self._robot.speech.speak("Ok, I will get you %s"%order, block=False)
 
         print "\n\n Current orders: \n\n"
@@ -276,13 +288,13 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                                     'preempted'         :'failed'})
 
             smach.StateMachine.add( 'GOTO_ORDER_DESTINATION_1', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = 0.06),
-                                    transitions={   'arrived'           :'SAY_TAKE_ORDER', 
-                                                    'unreachable'       :'GOTO_ORDER_DESTINATION_2', 
+                                    transitions={   'arrived'           :'SAY_TAKE_ORDER',
+                                                    'unreachable'       :'GOTO_ORDER_DESTINATION_2',
                                                     'goal_not_defined'  :'GOTO_ORDER_DESTINATION_2'})
 
             smach.StateMachine.add( 'GOTO_ORDER_DESTINATION_2', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = 0.20),
-                                    transitions={   'arrived'           :'SAY_TAKE_ORDER', 
-                                                    'unreachable'       :'failed', 
+                                    transitions={   'arrived'           :'SAY_TAKE_ORDER',
+                                                    'unreachable'       :'failed',
                                                     'goal_not_defined'  :'failed'})
 
             @smach.cb_interface(outcomes=['spoken'])
@@ -311,13 +323,14 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['done', 'aborted'])
 
     with sm:
-        smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'STORE_KITCHEN', 'abort':'aborted'})
+        smach.StateMachine.add('INITIALIZE', states.Initialize(robot), transitions={   'initialized':'INIT', 'abort':'aborted'})
+        smach.StateMachine.add('INIT', Init(robot), transitions={   'done':'STORE_KITCHEN'})
         smach.StateMachine.add('STORE_KITCHEN', StoreKitchen(robot), transitions={   'done':'HEAD_STRAIGHT'})
         smach.StateMachine.add('HEAD_STRAIGHT', HeadStraight(robot), transitions={   'done':'SAY_INTRO'})
 
         smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Show me your restaurant please. Say 'Please Follow Me'"), transitions={ 'spoken' :'HEAR_PLEASE_FOLLOW_ME'})
         smach.StateMachine.add('HEAR_PLEASE_FOLLOW_ME', states.HearOptions(robot, ["please follow me"]), transitions={ 'no_result' :'HEAR_PLEASE_FOLLOW_ME', 'please follow me' : 'FOLLOW'})
-        
+
         smach.StateMachine.add('FOLLOW', states.FollowOperator(robot, operator_timeout=30), transitions={ 'stopped':'STORE', 'lost_operator':'FOLLOW', 'no_operator':'FOLLOW'})
         smach.StateMachine.add('STORE', StoreWaypoint(robot), transitions={ 'done':'CHECK_KNOWLEDGE', 'continue':'FOLLOW' })
         smach.StateMachine.add('CHECK_KNOWLEDGE', CheckKnowledge(robot), transitions={ 'yes':'SAY_FOLLOW_TO_KITCHEN', 'no':'FOLLOW'})
@@ -345,7 +358,7 @@ def setup_statemachine(robot):
                     transitions={'arrived': 'FIRST_ASK_ORDER_TABLE_%d'%i, 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i, 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i})
             smach.StateMachine.add('FIRST_ASK_ORDER_TABLE_%d'%i, AskOrder(robot, name), transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i, 'orders_done' : 'SAY_ORDERS_DONE'})
 
-        # ############## Loop over the reset of the tables until we have a beverage and a combo ############## 
+        # ############## Loop over the reset of the tables until we have a beverage and a combo ##############
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_1',
                 states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="one"), radius = 0.06),
                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_1', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
@@ -405,7 +418,7 @@ def test_delivery(robot):
         smach.StateMachine.add('NAVIGATE_TO_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
             transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'DELIVER_COMBO', 'goal_not_defined':'DELIVER_COMBO'})
         smach.StateMachine.add('DELIVER_COMBO', DeliverOrderWithBasket(robot, "combo"), transitions={'succeeded':'done', 'failed':'aborted'})
-    
+
     deliver.execute(None)
 
 ############################## initializing program ######################
