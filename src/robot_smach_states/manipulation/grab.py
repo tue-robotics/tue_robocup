@@ -34,6 +34,9 @@ class PickUp(State):
 
         rospy.loginfo('PickUp!')
 
+        # Trigger perception once again to update object pose
+        self.robot.ed.segment_kinect(max_sensor_range=2)
+
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
 
@@ -94,7 +97,7 @@ class PickUp(State):
                              ):
             rospy.logerr('Failed lift')
 
-	robot.base.force_drive(-0.125,0,0,3)
+        robot.base.force_drive(-0.125,0,0,3)
 
         # Retract
         if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.15, 0.0, 0.0, 0.0,
