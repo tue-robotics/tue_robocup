@@ -90,7 +90,7 @@ class PickUp(State):
 
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z+0.05, 0, 0, 0,
                              frame_id='/'+robot.robot_name+'/base_link',
                              timeout=20, pre_grasp=True, first_joint_pos_only=True
                              ):
