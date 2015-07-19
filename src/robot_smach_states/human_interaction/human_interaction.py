@@ -108,7 +108,8 @@ class HearOptions(smach.State):
 
         if answer:
             if answer.result:
-                return answer.choices["option"]
+                if "option" in answer.choices:
+                    return answer.choices["option"]
         else:
             self._robot.speech.speak("Something is wrong with my ears, please take a look!")
 
@@ -198,13 +199,13 @@ class HearOptionsExtra(smach.State):
 
 class HearYesNo(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(   self, 
+        smach.State.__init__(   self,
                                 outcomes=['heard_yes', 'heard_no', 'heard_failed'])
 
         self.robot = robot
 
     def execute(self, userdata):
-        # define answer format 
+        # define answer format
         spec = Designator("(<positive_answer>|<negative_answer>)")
 
         # define choices
@@ -214,7 +215,7 @@ class HearYesNo(smach.State):
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
         state = HearOptionsExtra(self.robot, spec, choices, answer)
-        
+
         # execute listen
         outcome = state.execute()
 
@@ -229,7 +230,7 @@ class HearYesNo(smach.State):
             # test if the answer was positive, if its empty it will return excepton and continue to negative answer
             try:
                 response_positive = answer.resolve().choices["positive_answer"]
-                
+
                 print "HearYesNo: answer is positive, heard: '" + response_positive + "'"
                 return 'heard_yes'
             except KeyError, ke:
@@ -238,7 +239,7 @@ class HearYesNo(smach.State):
 
             try:
                 response_negative = answer.resolve().choices["negative_answer"]
-                
+
                 print "HearYesNo: answer is negative, heard: '" + response_negative + "'"
                 return 'heard_no'
             except KeyError, ke:
@@ -300,12 +301,12 @@ class NameToUserData(WaitForDesignator):
 
     def execute(self, userdata):
         print "NameToUserData"
-        
+
         name = ""
         # if the name was given in person_name parameter use it, otherwise use designator
         if self.person_name:
             name = self.person_name
-        elif self.name_designator:    
+        elif self.name_designator:
             name = self.name_designator.resolve()
         else:
             name = "Default"
