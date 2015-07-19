@@ -13,6 +13,33 @@ from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
 
+class PrepareEdGrasp(State):
+    def __init__(self, robot, arm, grab_entity):
+        # Check that the entity_designator resolves to an Entity or is an entity
+        check_type(grab_entity, ed.msg.EntityInfo)
+
+        # Check that the arm is a designator that resolves to an Arm or is an Arm
+        check_type(arm, Arm)
+
+        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
+
+    def run(self, robot, arm, grab_entity):
+        if not grab_entity:
+            rospy.logerr("Could not resolve grab_entity")
+            return "failed"
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        # Arm to position in a safe way
+        arm.send_joint_trajectory('prepare_grasp')
+
+        # Open gripper
+        arm.send_gripper_goal('open', timeout=0.0)
+
+        return 'succeeded'
+
+
 
 class PickUp(State):
     def __init__(self, robot, arm, grab_entity):
@@ -34,6 +61,9 @@ class PickUp(State):
 
         rospy.loginfo('PickUp!')
 
+        # Trigger perception once again to update object pose
+        robot.ed.segment_kinect(max_sensor_range=2)
+
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
 
@@ -52,11 +82,11 @@ class PickUp(State):
 
         rospy.loginfo(goal_bl)
 
-        # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_grasp')
+        # # Arm to position in a safe way
+        # arm.send_joint_trajectory('prepare_grasp')
 
-        # Open gripper
-        arm.send_gripper_goal('open', timeout=0.0)
+        # # Open gripper
+        # arm.send_gripper_goal('open', timeout=0.0)
 
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
@@ -94,7 +124,7 @@ class PickUp(State):
                              ):
             rospy.logerr('Failed lift')
 
-	robot.base.force_drive(-0.125,0,0,3)
+        robot.base.force_drive(-0.125,0,0,3)
 
         # Retract
         if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.15, 0.0, 0.0, 0.0,
@@ -129,6 +159,10 @@ class Grab(smach.StateMachine):
         check_type(arm, Arm)
 
         with self:
+            smach.StateMachine.add('PREPARE_GRASP', PrepareEdGrasp(robot, arm, item),
+                                   transitions={ 'succeeded'    : 'NAVIGATE_TO_GRAB',
+                                                 'failed'       : 'failed'})
+
             smach.StateMachine.add('NAVIGATE_TO_GRAB', NavigateToGrasp(robot, item, arm),
                                    transitions={'unreachable':      'failed',
                                                 'goal_not_defined': 'failed',
