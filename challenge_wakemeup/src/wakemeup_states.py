@@ -22,6 +22,8 @@ from robot_smach_states.util.geometry_helpers import *
 
 from robocup_knowledge import load_knowledge
 knowledge_objs = load_knowledge('common').objects
+# Remove before flight
+# knowledge_objs = load_knowledge('challenge_wakemeup').objects
 knowledge = load_knowledge('challenge_wakemeup')
 
 # ----------------------------------------------------------------------------------------------------
@@ -139,9 +141,9 @@ class GetOrder(smach.State):
         word_item2 = ""
         word_item3 = ""
 
-        self.breakfastFruit.current  = knowledge.default_fruit
-        self.breakfastCereal.current = knowledge.default_cereal
-        self.breakfastMilk.current   = knowledge.default_milk
+        self.breakfastFruit.current  = ""
+        self.breakfastCereal.current = ""
+        self.breakfastMilk.current   = ""
 
         # define allowed sentences, [] means optional
         sentence = Designator("(([<beginning>] <item1> [<preposition>] <item2> [<preposition>] <item3>) | \
@@ -262,12 +264,26 @@ class GetOrder(smach.State):
         else:
             return 'failed'
 
+# ----------------------------------------------------------------------------------------------------
+
+class PickDefaultOrder(smach.State):
+    def __init__(self, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
+        smach.State.__init__(self, outcomes=['done'])
+
+        self.breakfastCereal = breakfastCerealDes
+        self.breakfastFruit = breakfastFruitDes
+        self.breakfastMilk = breakfastMilkDes
+
+    def execute(self, userdata):
+        self.breakfastCereal.current = knowledge.default_cereal
+        self.breakfastMilk.current   = knowledge.default_cereal
+        self.breakfastFruit.current  = knowledge.default_cereal
+
+        return 'done'
 
 # ----------------------------------------------------------------------------------------------------
 
-
-# Ask the persons name
-class RepeatOrderToPerson(smach.State):
+class ConfirmOrder(smach.State):
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
         smach.State.__init__(self, outcomes=['done'])
 
@@ -277,11 +293,49 @@ class RepeatOrderToPerson(smach.State):
         self.breakfastMilk = breakfastMilkDes
 
     def execute(self, userdata):
-        print prefix + bcolors.OKBLUE + "RepeatOrderToPerson" + bcolors.ENDC
+        print prefix + bcolors.OKBLUE + "ConfirmOrder" + bcolors.ENDC
 
-        self.robot.speech.speak("I will get you a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Breakfast will be served in the dining room.", block=False)
+        self.robot.speech.speak("I understand you want a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Is that correct?", block=True)
 
         return 'done'
+
+# ----------------------------------------------------------------------------------------------------
+
+# class RepeatOrderToPerson(smach.State):
+#     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
+#         smach.State.__init__(self, outcomes=['done'])
+
+#         self.robot = robot
+#         self.breakfastCereal = breakfastCerealDes
+#         self.breakfastFruit = breakfastFruitDes
+#         self.breakfastMilk = breakfastMilkDes
+
+#     def execute(self, userdata):
+#         print prefix + bcolors.OKBLUE + "RepeatOrderToPerson" + bcolors.ENDC
+
+#         self.robot.speech.speak("I will get you a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Breakfast will be served in the dining room.", block=False)
+
+#         return 'done'
+
+# ----------------------------------------------------------------------------------------------------
+
+class Counter(smach.State):
+    def __init__(self, counter, limit):
+        smach.State.__init__(self, outcomes=['counted', 'limit_reached'])
+        self.limit = limit
+
+        check_resolve_type(counter,int)
+        self.counter = counter
+
+    def execute(self, userdata):
+        count = self.counter.resolve()
+
+        if count >= self.limit:
+            self.counter.current = 0
+            return 'limit_reached'
+        else:
+            self.counter.current += 1
+            return 'counted'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -304,13 +358,10 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
-    def __init__(self, robot, entity_id, wakeup_light_color):
+    def __init__(self, robot, entity_id):
         smach.State.__init__(self, outcomes=['succeeded'])
         self.robot = robot
         self.entity = self.robot.ed.get_entity(id=entity_id)
-        self.r = wakeup_light_color[0]
-        self.g = wakeup_light_color[1]
-        self.b = wakeup_light_color[2]
 
     def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
@@ -318,7 +369,6 @@ class LookAtBedTop(smach.State):
         # set robots pose
         # self.robot.spindle.high()
         self.robot.head.cancel_goal()
-        self.robot.lights.set_color(self.r,self.g,self.b)
 
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
@@ -344,7 +394,6 @@ class LookIfSomethingsThere(smach.State):
 
         while rospy.Time.now() - self.start_time < self.timeout:
             if self.designator.resolve():
-                self.robot.lights.set_color(0,0,1)
                 self.robot.ed.configure_kinect_segmentation(continuous=False)
                 return 'there'
             else:
@@ -419,6 +468,9 @@ class SelectItem(smach.State):
             asked_items = [d.resolve() for d in self.asked_items_des]
             category_items = [i['name'] for i in knowledge_objs if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
 
+            print "asked items: {}".format(asked_items)
+            print "category items: {}".format(category_items)
+
             self.specific_item.current = list(set(category_items).intersection(asked_items))[0]
 
             self.robot.speech.speak("I will get your "+self.generic_item.resolve()+" now.", block=False)
@@ -477,6 +529,8 @@ class FindItem(smach.State):
 
         entity_types = self.robot.ed.classify(ids=filtered_ids, types=object_names)
 
+        print "I found the following items: {}".format(entity_types)
+
         self.robot.head.cancel_goal()
 
         for i in range(len(filtered_ids)):
@@ -488,7 +542,7 @@ class FindItem(smach.State):
         found_cereal    = list(set(entity_types).intersection(names_cereal))
         found_fruit     = list(set(entity_types).intersection(names_fruit))
 
-        print "I found the following items: {}".format(found_milk+found_cereal+found_fruit)
+        print "I found the following milk, cereal and fruit items: {}".format(found_milk+found_cereal+found_fruit)
 
         if len(found_milk) > 0 and self.result_type in names_milk:
             result_des.current = self.robot.ed.get_entity(found_milk[0])

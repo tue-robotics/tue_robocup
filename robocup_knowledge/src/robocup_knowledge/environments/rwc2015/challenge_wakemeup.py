@@ -14,9 +14,12 @@ give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
 # Knowledge
+order_confirmation_limit = 3
+
 initial_pose = "initial_pose_door_A"
 
 bed = 'bed'
+matress_height = 0.51
 
 bed_nav_goal = {        
     'near' : bed,
@@ -25,11 +28,15 @@ bed_nav_goal = {
     'lookat' : bed
 }
 
-# This is not used yet --------------
 default_milk = "pure_milk"
 default_cereal = "egg_stars"
 default_fruit = "lemon"
-# -----------------------------------
+
+# Remove before flight
+# default_milk = "coke"
+# default_cereal = "bubblemint"
+# default_fruit = "deodorant"
+
 
 # TODO: in front of?
 kitchen_nav_goal = {
@@ -64,4 +71,9 @@ item_nav_goal = {               # This needs to be updated according to the envi
 
 dinner_table = "dinnertable"
 
-
+# Remove before flight!!!
+# objects = [
+# {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'coke'},
+# {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'mints'},
+# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'cereal','name': 'bubblemint'}, 
+# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'fruit', 'name': 'deodorant'}]

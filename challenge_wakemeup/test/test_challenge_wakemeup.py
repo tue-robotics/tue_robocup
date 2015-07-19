@@ -62,18 +62,19 @@ if __name__ == "__main__":
 
     person = Person(W, possible_positions)
 
+    object_names = ["deodorant", "bubblemint", "coke", "mints"]
+
     # Kitchen counter (drinks)
-    W.add_object("egg_stars", "egg_stars",              2.30, 2.1, 0.8, 0.0, 0.0 )
-    W.add_object("coco_balls", "coco_balls",            2.45, 2.1, 0.8, 0.0, 0.0 )
-    W.add_object("coconut_cereals", "coconut_cereals",  2.60, 2.1, 0.8, 0.0, 0.0 )
-    W.add_object("apple", "apple",                      2.75, 2.1, 0.8, 0.0, 0.0 )
-    W.add_object("lemon", "lemon",                      2.90, 2.1, 0.8, 0.0, 0.0 )
-    W.add_object("pear", "pear",                        3.05, 2.1, 0.8, 0.0, 0.0 )
+    W.add_object("milk", "coke",              2.30, 2.1, 0.8, 0.0, 0.0 )
+    W.add_object("milk2", "mints",            2.45, 2.1, 0.8, 0.0, 0.0 )
 
     # Kitchen table (food)
-    W.add_object("egg_stars", "egg_stars",              2.90, -1.3, 0.8, 0.0, 0.0 )
-    W.add_object("coco_balls", "coco_balls",            3.05, -1.3, 0.8, 0.0, 0.0 )
-    W.add_object("coconut_cereals", "coconut_cereals",  3.20, -1.3, 0.8, 0.0, 0.0 )
+    W.add_object("fruit", "deodorant",              2.90, -1.3, 0.8, 0.0, 0.0 )
+    W.add_object("cereal", "bubblemint",            3.05, -1.3, 0.8, 0.0, 0.0 )
+    # W.add_object("coconut_cereals", "coconut_cereals",  3.20, -1.3, 0.8, 0.0, 0.0 )
+    # W.add_object("apple", "apple",                      2.75, -1.4, 0.8, 0.0, 0.0 )
+    # W.add_object("lemon", "lemon",                      2.90, -1.4, 0.8, 0.0, 0.0 )
+    # W.add_object("pear", "pear",                        3.05, -1.4, 0.8, 0.0, 0.0 )
 
     print "Dynamic wake me up simulator"
     print "Usage: press 1 to make the person in the bed wake up"

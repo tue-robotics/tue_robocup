@@ -52,7 +52,7 @@ class WakeMeUp(smach.StateMachine):
             bed = robot.ed.get_entity(knowledge.bed)
 
             # Check if top of found object is above a certain threshold above the bed
-            if entity.pose.position.z + entity.z_max < bed.pose.position.z + bed.z_max + knowledge.find_person['under_z']:
+            if entity.pose.position.z + entity.z_max < bed.pose.position.z + knowledge.matress_height + knowledge.find_person['under_z']:
                 return False
 
             # Check if center point of entity is within chull of bed
@@ -112,6 +112,7 @@ class WakeMeUp(smach.StateMachine):
         breakfastCerealDes = VariableDesignator("")       # designator containing chosen cereal name
         breakfastFruitDes  = VariableDesignator("")       # designator containing chosen fruit name
         breakfastMilkDes   = VariableDesignator("")       # designator containing chosen milk name
+        orderConfirmationCounter = VariableDesignator(0)
 
         # Getting the order from the kitchen
         waypoint_kitchen       = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
@@ -187,7 +188,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'done':'LOOK_AT_BED'})
 
                 smach.StateMachine.add( 'LOOK_AT_BED',
-                                        wakeStates.LookAtBedTop(robot, knowledge.bed, wakeup_light_color=knowledge.wakeup_light_color),
+                                        wakeStates.LookAtBedTop(robot, knowledge.bed),
                                         transitions={   'succeeded':'SET_TIME_MARKER'})
 
                 smach.StateMachine.add( "SET_TIME_MARKER",
@@ -236,12 +237,13 @@ class WakeMeUp(smach.StateMachine):
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
-            takeOrderContainer = smach.StateMachine(outcomes = ['container_succeeded', 'container_failed'])
+            takeOrderContainer = smach.StateMachine(outcomes = ['container_succeeded'])
             with takeOrderContainer:
 
-                smach.StateMachine.add( "SET_TIME_MARKER",
-                                        states.SetTimeMarker(robot, time_marker),
-                                        transitions={   'done' :'SAY_WHAT_BREAKFAST'})
+                smach.StateMachine.add( "COUNTER",
+                                        wakeStates.Counter(counter=orderConfirmationCounter,limit=knowledge.order_confirmation_limit),
+                                        transitions={   'counted'       :'SAY_WHAT_BREAKFAST',
+                                                        'limit_reached' :'SAY_ILL_CHOOSE_BREAKFAST'})
 
                 smach.StateMachine.add( "SAY_WHAT_BREAKFAST",
                                         states.Say(robot, [ "What would you like to have for breakfast?", 
@@ -252,33 +254,44 @@ class WakeMeUp(smach.StateMachine):
                 smach.StateMachine.add( "GET_ORDER",
                                         wakeStates.GetOrder(robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
                                         transitions={   'succeeded' :   'SAY_REPEAT_ORDER',
-                                                        'failed':       'SAY_INCORRECT_ORDER'})
+                                                        'failed'    :   'SAY_INCORRECT_ORDER'})
 
-                # TODO: ORDER CONFIRMATION?
+                smach.StateMachine.add( "SAY_REPEAT_ORDER",
+                                        wakeStates.ConfirmOrder(robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
+                                        transitions={   'done'      :'HEAR_IF_CORRECT'})
+
+                smach.StateMachine.add( "HEAR_IF_CORRECT",
+                                        states.HearYesNo(robot),
+                                        transitions={   'heard_yes' :'SAY_ALRIGHT',
+                                                        'heard_no'  :'COUNTER',
+                                                        'heard_failed':"COUNTER"})
 
                 smach.StateMachine.add( "SAY_INCORRECT_ORDER",
                                         states.Say(robot, [ "I didn't get that.",
                                                             "I missunderstood something," ], block=False),
-                                        transitions={   'spoken' :'CHECK_TIME'})
+                                        transitions={   'spoken'    :'COUNTER'})
 
-                smach.StateMachine.add( "CHECK_TIME",
-                                        states.CheckTime(robot, time_marker, knowledge.alarm_duration),
-                                        transitions={   'ok'        :'SAY_WHAT_BREAKFAST',
-                                                        'timeout'   :'container_failed'})
+                smach.StateMachine.add( "SAY_ILL_CHOOSE_BREAKFAST",
+                                        states.Say(robot, "I couldn't understand the breakfast order. I'll choose something for you.", block=False),
+                                        transitions={   'spoken'    :'PICK_DEFAULT_ORDER'})
 
-                smach.StateMachine.add( "SAY_REPEAT_ORDER",
-                                        wakeStates.RepeatOrderToPerson(robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
-                                        transitions={   'done' :'container_succeeded'})
+                smach.StateMachine.add( "PICK_DEFAULT_ORDER",
+                                        wakeStates.PickDefaultOrder(breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
+                                        transitions={   'done'      :'SAY_REPEAT_ORDER'})
+
+                smach.StateMachine.add( "SAY_DEFAULT_ORDER",
+                                        states.Say(robot, "I will bring you a "+knowledge.default_fruit+", "+knowledge.default_cereal+" and "+knowledge.default_milk),
+                                        transitions={   'spoken'      :'container_succeeded'})
+
+                smach.StateMachine.add( "SAY_ALRIGHT",
+                                        states.Say(robot, "Alright!"),
+                                        transitions={   'spoken'      :'container_succeeded'})
 
 
             smach.StateMachine.add( 'TAKE_ORDER_CONTAINER',
                                     takeOrderContainer,
-                                    transitions={   'container_succeeded':'GOTO_KITCHEN_CONTAINER',
-                                                    'container_failed': 'SAY_ILL_CHOOSE_BREAKFAST'})
+                                    transitions={   'container_succeeded':'GOTO_KITCHEN_CONTAINER'})
 
-            smach.StateMachine.add( "SAY_ILL_CHOOSE_BREAKFAST",
-                                    states.Say(robot, "I couldn't understand the breakfast order. I'll choose something for you.", block=False),
-                                    transitions={   'spoken' :'GOTO_KITCHEN_CONTAINER'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -300,16 +313,6 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'arrived':'container_succeeded',
                                                         'unreachable':'SAY_UNREACHABLE',
                                                         'goal_not_defined':'SAY_UNREACHABLE'})
-
-                # smach.StateMachine.add('CHECK_DOOR',
-                #                     wakeStates.CheckIfSomethingsThere(robot, door_des),
-                #                     transitions={   'is_door':'ASK_FOR_OPEN',
-                #                                     'is_not_door':'GOTO_KITCHEN',
-                #                                     'tried_too_many_times':'SAY_UNREACHABLE'})
-
-                # smach.StateMachine.add('ASK_FOR_OPEN',
-                #                     states.Say(robot, "I see the door is closed. Would someone open the door for me?"),
-                #                     transitions={   'spoken'    :'GOTO_KITCHEN'})
 
                 smach.StateMachine.add( 'SAY_UNREACHABLE',
                                         states.Say(robot, "I can't get to the kitchen"),
@@ -354,7 +357,7 @@ class WakeMeUp(smach.StateMachine):
                                                         'goal_not_defined':'SAY_ITEM_UNREACHABLE'})
 
                 smach.StateMachine.add( 'SAY_ITEM_UNREACHABLE',
-                                        states.Say(robot, "Oops, I can't get to the item"),
+                                        states.Say(robot, "I'm afraid I can't get to the item"),
                                         transitions={   'spoken'    :'SELECT_ITEM'})
 
                 smach.StateMachine.add( 'FIND_ITEM',
@@ -367,7 +370,7 @@ class WakeMeUp(smach.StateMachine):
                                                         'not_found' :'SAY_ITEM_NOT_FOUND'})
 
                 smach.StateMachine.add( 'SAY_ITEM_NOT_FOUND',
-                                        states.Say(robot, "Oops, I can't find the item"),
+                                        states.Say(robot, "I'm afraid I can't find the item"),
                                         transitions={   'spoken'    :'SELECT_ITEM'})
 
                 # TODO: check this!!!
