@@ -56,7 +56,7 @@ class PickUp(State):
         arm.send_joint_trajectory('prepare_grasp')
 
         # Open gripper
-        arm.send_gripper_goal('open')
+        arm.send_gripper_goal('open', timeout=0.0)
 
         # Pre-grasp
         rospy.loginfo('Starting Pre-grasp')
