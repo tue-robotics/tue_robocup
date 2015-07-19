@@ -46,13 +46,16 @@ class FollowOperator(smach.State):
             if answer:
                 if answer.result == "yes":
                     operator = self._robot.ed.get_closest_entity(radius=1, center_point=msg_constructors.PointStamped(x=1.5, y=0, z=1, frame_id="/%s/base_link"%self._robot.robot_name))
-                else:
+                    break
+                elif answer.result == "no":
                     return False
+                else:
+                    rospy.sleep(2)
             else:
                 self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+                return False
 
-            rospy.sleep(2)
-
+        # Operator is None?
         print "We have a new operator: %s"%operator.id
         self._robot.speech.speak("I will follow you!", block=False)
         self._operator_id = operator.id
@@ -126,7 +129,7 @@ class FollowOperator(smach.State):
         return False # We are not there
 
     def execute(self, userdata):
-        self._robot.head.cancel_goal()
+        self._robot.head.close()
         self._robot.torso.send_goal('reset', timeout=4.0)
 
         self._at_location = False
@@ -143,6 +146,7 @@ class FollowOperator(smach.State):
 
             if not operator:
                 self._robot.speech.speak("I lost you", block=True)
+                self._robot.base.force_drive(0,0,0,0.5)
                 self._robot.base.local_planner.cancelCurrentPlan()
                 return "lost_operator"
 
