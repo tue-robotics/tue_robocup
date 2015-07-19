@@ -254,7 +254,7 @@ class InspectShelves(smach.State):
                 self.robot.torso._send_goal([height], timeout=5.0)
 
                 ''' Sleep for 1 second '''
-                rospy.sleep(1.0) # ToDo: remove???
+                rospy.sleep(3.0) # ToDo: remove???
 
                 if DEBUG:
                     rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
