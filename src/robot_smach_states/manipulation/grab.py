@@ -62,7 +62,7 @@ class PickUp(State):
         rospy.loginfo('PickUp!')
 
         # Trigger perception once again to update object pose
-        self.robot.ed.segment_kinect(max_sensor_range=2)
+        robot.ed.segment_kinect(max_sensor_range=2)
 
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
