@@ -64,13 +64,32 @@ if __name__ == "__main__":
 
     object_names = ["deodorant", "bubblemint", "coke", "mints"]
 
+    dx1 = 0.02
     # Kitchen counter (drinks)
-    W.add_object("milk", "coke",              2.30, 2.1, 0.8, 0.0, 0.0 )
-    W.add_object("milk2", "mints",            2.45, 2.1, 0.8, 0.0, 0.0 )
+    W.add_object("milk",  "mints", 2.25+(dx1*1), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk2", "coke", 2.35+(dx1*2), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk3", "mints", 2.45+(dx1*3), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk4", "coke", 2.55+(dx1*4), 2.0, 0.85, 0.0, 0.0 )
+    W.add_object("milk5", "mints", 2.65+(dx1*5), 2.0, 0.85, 0.0, 0.0 )
+
+    #W.add_object("milk6", "coke", 2.30+(dx1*1), 1.75, 0.85, 0.0, 0.0 )
+    #W.add_object("milk7", "mints", 2.40+(dx1*2), 1.75, 0.85, 0.0, 0.0 )
+    #W.add_object("milk8", "coke", 2.50+(dx1*3), 1.75, 0.85, 0.0, 0.0 )
+    #W.add_object("milk6", "mints", 2.60+(dx1*4), 1.75, 0.85, 0.0, 0.0 )
 
     # Kitchen table (food)
-    W.add_object("fruit", "deodorant",              2.90, -1.3, 0.8, 0.0, 0.0 )
-    W.add_object("cereal", "bubblemint",            3.05, -1.3, 0.8, 0.0, 0.0 )
+    dx = 0.03
+    W.add_object("fruit1", "mints", 2.80+dx, -1.25, 0.85, 0.0, 0.0 )
+    #W.add_object("fruit2", "coke", 2.85+dx*2, -1.05, 0.85, 0.0, 0.0 )
+    W.add_object("fruit3", "coke", 2.90+dx*3, -1.25, 0.85, 0.0, 0.0 )
+    #W.add_object("fruit4", "coke", 2.95+dx*4, -1.05, 0.85, 0.0, 0.0 )
+    W.add_object("fruit5", "mints", 3.00+dx*5, -1.25, 0.85, 0.0, 0.0 )
+    #W.add_object("fruit6", "coke", 3.05+dx*6, -1.05, 0.85, 0.0, 0.0 )
+    W.add_object("fruit7", "coke", 3.10+dx*7, -1.25, 0.85, 0.0, 0.0 )
+    #W.add_object("fruit8", "coke", 3.15+dx*8, -1.05, 0.85, 0.0, 0.0 )
+    W.add_object("fruit9", "coke", 3.20+dx*9, -1.25, 0.85, 0.0, 0.0 )
+    
+
     # W.add_object("coconut_cereals", "coconut_cereals",  3.20, -1.3, 0.8, 0.0, 0.0 )
     # W.add_object("apple", "apple",                      2.75, -1.4, 0.8, 0.0, 0.0 )
     # W.add_object("lemon", "lemon",                      2.90, -1.4, 0.8, 0.0, 0.0 )
