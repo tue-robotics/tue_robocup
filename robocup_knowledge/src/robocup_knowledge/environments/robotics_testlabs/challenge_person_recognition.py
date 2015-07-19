@@ -37,7 +37,7 @@ min_faces_found = 2
 
 
 ''' determines if a face is discarded for being too close to another already tracked (in meters, as far as i know)'''
-face_proximity_treshold = 0.1
+face_proximity_treshold = 0.2
 
 
 ''' threshold to consider a person standing up or sitting down, in meters '''
