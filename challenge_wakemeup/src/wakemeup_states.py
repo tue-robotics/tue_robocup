@@ -239,7 +239,7 @@ class GetOrder(smach.State):
 
                 # just a consistency check
                 if not got_milk:
-                    print prefix + "Still don't know what type of milk it is! Reseting to " + knowledge.default_milk + bcolors.ENDC
+                    print prefix + "Still don't know what type of milk it is! Reseting to default." + bcolors.ENDC
                     self.breakfastMilk.current = knowledge.default_milk
 
             else:
@@ -276,8 +276,8 @@ class PickDefaultOrder(smach.State):
 
     def execute(self, userdata):
         self.breakfastCereal.current = knowledge.default_cereal
-        self.breakfastMilk.current   = knowledge.default_cereal
-        self.breakfastFruit.current  = knowledge.default_cereal
+        self.breakfastMilk.current   = knowledge.default_milk
+        self.breakfastFruit.current  = knowledge.default_fruit
 
         return 'done'
 
