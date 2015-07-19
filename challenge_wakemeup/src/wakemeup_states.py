@@ -654,17 +654,13 @@ class EmptySpotDesignator(Designator):
 
         if any(open_POIs):
             best_poi = min(open_POIs, key=distance_to_poi_area)
-            print "best_poi = "
-            print best_poi
-            placement = gm.PoseStamped()
-            placement.header = best_poi.header
-            placement.pose.position = best_poi.point
-            print "placement = ", placement
+            placement = msgs.PoseStamped(pointstamped=best_poi)
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
             rospy.logerr("Could not find an empty spot")
             return None
+
 
     def determinePointsOfInterest(self, e):
 
