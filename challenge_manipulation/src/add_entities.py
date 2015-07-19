@@ -30,5 +30,6 @@ if __name__ == "__main__":
         W.add_object("coke11", "sim-coke", 1.15, -8.13, 1.10)
         W.add_object("coke12", "sim-coke", 1.15, -8.13, 0.75)
         W.add_object("coke13", "sim-coke", 1.15, -8.33, 0.75)
+        W.add_object("coke14", "sim-coke", 1.15, -8.7,  0.75)
 
 
