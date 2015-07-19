@@ -373,7 +373,7 @@ class LookAtBedTop(smach.State):
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
         # look at bed top
-        headGoal = gm.PointStamped(x=self.entity.pose.position.x, y=self.entity.pose.position.y, z=self.entity.pose.position.z+self.entity.z_max, frame_id="/map")
+        headGoal = msgs.PointStamped(x=self.entity.pose.position.x, y=self.entity.pose.position.y, z=self.entity.pose.position.z+self.entity.z_max, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
         return 'succeeded'
