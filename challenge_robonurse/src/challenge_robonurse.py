@@ -634,18 +634,18 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
-                                    transitions={   'succeeded'     :'SAY_GO_BACK',
-                                                    'failed'        :'SAY_GO_BACK'})
+                                    transitions={   'succeeded'     :'Done',
+                                                    'failed'        :'Done'})
 
-            smach.StateMachine.add( "SAY_GO_BACK",
-                                    states.Say(robot, ["I'll just go back", "Heading back"], block=True),
-                                    transitions={   'spoken'            :'GO_BACK_TO_START'})
+            # smach.StateMachine.add( "SAY_GO_BACK",
+            #                         states.Say(robot, ["I'll just go back", "Heading back"], block=True),
+            #                         transitions={   'spoken'            :'GO_BACK_TO_START'})
 
-            smach.StateMachine.add('GO_BACK_TO_START',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial"), radius=0.2),
-                                    transitions={   'arrived':'Done',
-                                                    'unreachable':'Done',
-                                                    'goal_not_defined':'Done'})
+            # smach.StateMachine.add('GO_BACK_TO_START',
+            #                         states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial"), radius=0.2),
+            #                         transitions={   'arrived':'Done',
+            #                                         'unreachable':'Done',
+            #                                         'goal_not_defined':'Done'})
 
 
 def test_look_at_entities(robot):

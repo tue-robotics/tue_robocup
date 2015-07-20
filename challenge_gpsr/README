@@ -28,6 +28,7 @@ The robot will drive to the meeting point and say "What can I do for you?" and t
 !!! Please mention in your test results how many times amigo was able to understand you !!!
 !!! Also mention weird actions to say to the robot !!!
 
+-----------------------------------------------------------------------------------------
 
 Testing finding person of the challenge
 -----------------------------
@@ -37,3 +38,30 @@ $ roscd challenge_gpsr/src/challenge_gpsr/
 $ amigo-console
 >>> from gpsr import *
 >>> test_find_person(amigo,'hallway') # 'hallway' can also be another room.
+
+
+Testing getting action by speech
+-----------------------------
+
+$ roscd challenge_gpsr/src/challenge_gpsr/
+$ amigo-console
+>>> from gpsr import *
+>>> test_ask_action(amigo)
+
+
+Testing time statements
+-----------------------------
+
+$ roscd challenge_gpsr/src/challenge_gpsr/
+$ amigo-console
+>>> from gpsr import *
+>>> test_time(amigo,'the_time')
+
+
+Testing time statements
+-----------------------------
+
+$ roscd challenge_gpsr/src/challenge_gpsr/
+$ amigo-console
+>>> from gpsr import *
+>>> test_placing(amigo,'dinnertable')

@@ -20,8 +20,10 @@ def setup_statemachine(robot):
         # Start challenge via StartChallengeRobust
         smach.StateMachine.add( "START_CHALLENGE_ROBUST",
                                 states.Initialize(robot),
-                                transitions={   'initialized'      :   "SAY_1",
+                                transitions={   'initialized'      :   "SAY_INTRO",
                                                 "abort"            :   "Aborted"})
+
+        smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Please come a little bit closer to me, talk loudly and wait for the ping! I am ready!"), transitions={ 'spoken' :'SAY_1'})
 
         smach.StateMachine.add('SAY_1', states.Say(robot, "Please ask me question one"), transitions={ 'spoken' :'QUESTION_1'})
         smach.StateMachine.add('QUESTION_1', direct_speech_recognition.HearQuestion(robot), transitions={ 'answered' :'SAY_2'})

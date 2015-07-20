@@ -47,9 +47,9 @@ kitchen_nav_goal = {
     "lookat" : "kitchen"
 }
 
-generic_items = [ "milk", "fruit", "cereal"] # TODO: Pour Cereal!!!
-# TODO:
-# allowed_fruits = [ "apple" ]
+# This also defines the order in which to pick the items!!!
+generic_items = [ "milk", "fruit", "cereal"] 
+# TODO: Pour Cereal
 
 milk_shelf = "kitchentable"
 cereal_shelf = "kitchencounter"

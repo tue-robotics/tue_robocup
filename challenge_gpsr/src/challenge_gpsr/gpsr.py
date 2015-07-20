@@ -16,11 +16,12 @@ from robot_smach_states.util.designators import *
 from robot_skills.util import msg_constructors as geom
 import ed.msg
 
-from datetime import datetime
-from datetime import date
+from datetime import datetime, date, timedelta
 
 from robot_smach_states.util.geometry_helpers import *
 from cb_planner_msgs_srvs.msg import PositionConstraint
+
+from visualization_msgs.msg import Marker, MarkerArray
 
 #import data
 from robocup_knowledge import load_knowledge
@@ -405,6 +406,9 @@ class SpeakSpecial(smach.State):
     def execute(self, userdata):
         self.robot.head.look_at_standing_person()
 
+        time_delta = timedelta(hours=6)
+        corrected_time = datetime.now() + time_delta
+
         say_type = str(self.robot.reasoner.query_first_answer("action_info('3','3_name_time_date',A)"))
 
         if say_type == 'your_name':
@@ -418,21 +422,21 @@ class SpeakSpecial(smach.State):
 
         ## TIME SPECIALS
         if (say_type == 'the_time' or say_type == "what_time_is_it" or say_type == "what_time_it_is"):
-            time="It is %s" % datetime.now().strftime("%I %M %p")
+            time="It is %s" % corrected_time.strftime("%I %M %p")
             self.robot.speech.speak(time)
             self.robot.head.cancel_goal()
             return "answered"
 
         if (say_type == 'what_day_is_today' or say_type == 'the day of the week'):
-            today = "It is %s" % datetime.now().strftime("%A")
+            today = "It is %s" % corrected_time.strftime("%A")
             self.robot.speech.speak(today)
             self.robot.head.cancel_goal()
             return "answered"
 
         if (say_type == 'the_date'):
-            month = datetime.now().strftime("%B")
-            day_nr = datetime.now().strftime("%d")
-            year = datetime.now().strftime("%Y")
+            month = corrected_time.strftime("%B")
+            day_nr = corrected_time.strftime("%d")
+            year = corrected_time.strftime("%Y")
 
             the_date = "Today it is %s %s of the year %s" % (month, day_nr, year)
             #print the_date
@@ -441,8 +445,8 @@ class SpeakSpecial(smach.State):
             return "answered"
 
         if (say_type == 'the_day_of_the_month'):
-            month = datetime.now().strftime("%B")
-            day_nr = datetime.now().strftime("%d")
+            month = corrected_time.strftime("%B")
+            day_nr = corrected_time.strftime("%d")
             the_day_of_the_month = "Today it is %s %s" % (month, day_nr)
             #print the_date
             self.robot.speech.speak(the_day_of_the_month)
@@ -450,7 +454,7 @@ class SpeakSpecial(smach.State):
             return "answered"
 
         if (say_type == 'what_day_is_tomorrow'):
-            today = int(datetime.now().strftime("%w"))
+            today = int(corrected_time.strftime("%w"))
             week_list = ["Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
             tomorrow = week_list[today]
             the_day_of_the_month = "Tomorrow it is %s" % (tomorrow)
@@ -1006,100 +1010,133 @@ class InspectLocationAndGrab(smach.State):
 
         # return 'failed'
 
-class EmptySpotDesignator(Designator):
-    """Designates an empty spot on the empty placement-shelve.
-    It does this by queying ED for entities that occupy some space.
-        If the result is no entities, then we found an open spot."""
-    def __init__(self, robot, place_location_designator):
-        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
-        self.robot = robot
-        self.place_location_designator = place_location_designator
-        self._edge_distance = 0.1                   # Distance to table edge
-        self._spacing = 0.15
+# class EmptySpotDesignator(Designator):
+#     """Designates an empty spot on the empty placement-shelve.
+#     It does this by queying ED for entities that occupy some space.
+#         If the result is no entities, then we found an open spot."""
+#     def __init__(self, robot, place_location_designator):
+#         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
+#         self.robot = robot
+#         self.place_location_designator = place_location_designator
+#         self._edge_distance = 0.1                   # Distance to table edge
+#         self._spacing = 0.15
 
-    def resolve(self):
-        place_location = self.place_location_designator.resolve()
+#         self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
+#         self.marker_array = MarkerArray()
 
-        # points_of_interest = []
-        points_of_interest = self.determinePointsOfInterest(place_location)
+#     def resolve(self):
+#         place_location = self.place_location_designator.resolve()
 
-        def is_poi_occupied(poi):
-            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
-            return not any(entities_at_poi)
+#         # points_of_interest = []
+#         points_of_interest = self.determinePointsOfInterest(place_location)
 
-        open_POIs = filter(is_poi_occupied, points_of_interest)
+#         def is_poi_occupied(poi):
+#             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
+#             return not any(entities_at_poi)
 
-        def distance_to_poi_area(poi):
-            #Derived from navigate_to_place
-            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-            x = poi.point.x
-            y = poi.point.y
-            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
-            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+#         open_POIs = filter(is_poi_occupied, points_of_interest)
 
-            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+#         def distance_to_poi_area(poi):
+#             #Derived from navigate_to_place
+#             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+#             x = poi.point.x
+#             y = poi.point.y
+#             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
+#             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+#             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
 
-            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
-            if plan_to_poi:
-                distance = len(plan_to_poi)
-            print "Distance: %s"%distance
-            return distance
+#             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
-        if any(open_POIs):
-            best_poi = min(open_POIs, key=distance_to_poi_area)
-            placement = geom.PoseStamped(pointstamped=best_poi)
-            rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
-            return placement
-        else:
-            rospy.logerr("Could not find an empty spot")
-            return None
+#             distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
+#             if plan_to_poi:
+#                 distance = len(plan_to_poi)
+#             print "Distance: %s"%distance
+#             return distance
 
-    def determinePointsOfInterest(self, e):
+#         if any(open_POIs):
+#             best_poi = min(open_POIs, key=distance_to_poi_area)
+#             placement = geom.PoseStamped(pointstamped=best_poi)
+#             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+#             return placement
+#         else:
+#             rospy.logerr("Could not find an empty spot")
+#             return None
 
-        points = []
+#     def create_marker(self, x, y, z):
+#         marker = Marker()
+#         marker.id = len(self.marker_array.markers)
+#         marker.type = 2
+#         marker.header.frame_id = "/map"
+#         marker.header.stamp = rospy.Time.now()
+#         marker.pose.position.x = x
+#         marker.pose.position.y = y
+#         marker.pose.position.z = z
+#         marker.pose.orientation.w = 1
+#         marker.scale.x = 0.05
+#         marker.scale.y = 0.05
+#         marker.scale.z = 0.05
+#         marker.color.r = 1
+#         marker.color.a = 1
 
-        x = e.pose.position.x
-        y = e.pose.position.y
+#         marker.lifetime = rospy.Duration(10.0)
+#         return marker
 
-        if len(e.convex_hull) == 0:
-            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
-            return []
+#     def determinePointsOfInterest(self, e):
 
-        ''' Convert convex hull to map frame '''
-        center_pose = poseMsgToKdlFrame(e.pose)
-        ch = []
-        for point in e.convex_hull:
-            p = pointMsgToKdlVector(point)
-            p = center_pose * p
-            ch.append(p)
+#         points = []
 
-        ''' Loop over hulls '''
-        ch.append(ch[0])
-        for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x() - ch[i].x()
-                dy = ch[i+1].y() - ch[i].y()
-                length = math.hypot(dx, dy)
+#         x = e.pose.position.x
+#         y = e.pose.position.y
 
-                d = self._edge_distance
-                while d < (length-self._edge_distance):
+#         if len(e.convex_hull) == 0:
+#             rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+#             return []
 
-                    ''' Point on edge '''
-                    xs = ch[i].x() + d/length*dx
-                    ys = ch[i].y() + d/length*dy
+#         ''' Convert convex hull to map frame '''
+#         center_pose = poseMsgToKdlFrame(e.pose)
+#         ch = []
+#         for point in e.convex_hull:
+#             p = pointMsgToKdlVector(point)
+#             # p = center_pose * p
+#             # p = p * center_pose
+#             import PyKDL as kdl
+#             pf = kdl.Frame(kdl.Rotation(), p)
+#             pf = pf * center_pose
+#             p = pf.p
+#             ch.append(p)
 
-                    ''' Shift point inwards and fill message'''
-                    ps = geom.PointStamped()
-                    ps.header.frame_id = "/map"
-                    ps.point.x = xs - dy/length * self._edge_distance
-                    ps.point.y = ys + dx/length * self._edge_distance
-                    ps.point.z = e.pose.position.z + e.z_max
-                    points.append(ps)
+#         ''' Loop over hulls '''
+#         self.marker_array.markers = []
+#         ch.append(ch[0])
+#         for i in xrange(len(ch) - 1):
+#                 dx = ch[i+1].x() - ch[i].x()
+#                 dy = ch[i+1].y() - ch[i].y()
+#                 length = math.hypot(dx, dy)
 
-                    # ToDo: check if still within hull???
-                    d += self._spacing
+#                 d = self._edge_distance
+#                 while d < (length-self._edge_distance):
 
-        return points
+#                     ''' Point on edge '''
+#                     xs = ch[i].x() + d/length*dx
+#                     ys = ch[i].y() + d/length*dy
+
+#                     ''' Shift point inwards and fill message'''
+#                     ps = geom.PointStamped()
+#                     ps.header.frame_id = "/map"
+#                     ps.point.x = xs - dy/length * self._edge_distance
+#                     ps.point.y = ys + dx/length * self._edge_distance
+#                     ps.point.z = e.pose.position.z + e.z_max
+#                     points.append(ps)
+
+#                     self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+
+#                     # ToDo: check if still within hull???
+#                     d += self._spacing
+
+#         self.marker_pub.publish(self.marker_array)
+
+#         return points
+
 
 class PlaceGrabbed(smach.State):
 
@@ -1589,6 +1626,39 @@ def setup_statemachine(robot):
 def test_find_person(robot,room):    
     findperson = FindAndGoToPerson(robot, Designator(room))
     findperson.execute(None)
+
+def test_placing(robot,place_location):    
+    
+    robot.reasoner.assertz("action_info('3','3_place_location','"+str(place_location)+"')")
+
+    nav_to_loc = states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")) : "in_front_of" }, 
+                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")))
+    nav_to_loc.execute(None)
+
+    place_pose_ent = EdEntityDesignator(robot,id=place_location)
+    place_position = EmptySpotDesignator(robot, place_pose_ent)
+    arm_with_item_designator = ArmDesignator(robot.arms, robot.leftArm)
+
+    placestate = states.Place(robot, item_to_place=EdEntityDesignator(robot), place_pose=place_position ,arm=arm_with_item_designator)
+    result = placestate.execute()
+
+
+def test_time(robot,option):    
+    
+    robot.reasoner.assertz("action_info('3','3_name_time_date','"+str(option)+"')")
+
+    speakspecial_state = SpeakSpecial(robot)
+    result = speakspecial_state.execute(None)
+
+def test_ask_action(robot):    
+    
+    askaction_state = Ask_action(robot)
+    result = askaction_state.execute(None)
+
+
+
+
+
 
 if __name__ == "__main__":
     rospy.init_node('gpsr_exec')

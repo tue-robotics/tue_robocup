@@ -214,7 +214,7 @@ class WakeMeUp(smach.StateMachine):
                                                         'timeout'   :'SAY_AWAKE'})
 
                 smach.StateMachine.add( "SAY_AWAKE",
-                                        states.Say(robot, ["Finally, you're awake, I will hand you your newspaper now"], block=True),
+                                        states.Say(robot, ["Finally, you're awake. Now please face me. I will hand you your newspaper now"], block=False),
                                         transitions={   'spoken'    :'HANDOVER_NEWSPAPER'})
 
                 smach.StateMachine.add( "HANDOVER_NEWSPAPER",
@@ -362,7 +362,7 @@ class WakeMeUp(smach.StateMachine):
 
                 smach.StateMachine.add( 'FIND_ITEM',
                                         wakeStates.FindItem(robot, 
-                                                            sensor_range=2.0, 
+                                                            sensor_range=knowledge.sensor_range, 
                                                             on_object_des=current_item_nav_goal_lookat,
                                                             type_des=selected_spec_item_des, 
                                                             result_des=item_designator),
