@@ -16,8 +16,7 @@ from robot_smach_states.util.designators import *
 from robot_skills.util import msg_constructors as geom
 import ed.msg
 
-from datetime import datetime
-from datetime import date
+from datetime import datetime, date, timedelta
 
 from robot_smach_states.util.geometry_helpers import *
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -407,6 +406,9 @@ class SpeakSpecial(smach.State):
     def execute(self, userdata):
         self.robot.head.look_at_standing_person()
 
+        time_delta = timedelta(hours=6)
+        corrected_time = datetime.now() + time_delta
+
         say_type = str(self.robot.reasoner.query_first_answer("action_info('3','3_name_time_date',A)"))
 
         if say_type == 'your_name':
@@ -420,21 +422,21 @@ class SpeakSpecial(smach.State):
 
         ## TIME SPECIALS
         if (say_type == 'the_time' or say_type == "what_time_is_it" or say_type == "what_time_it_is"):
-            time="It is %s" % datetime.now().strftime("%I %M %p")
+            time="It is %s" % corrected_time.strftime("%I %M %p")
             self.robot.speech.speak(time)
             self.robot.head.cancel_goal()
             return "answered"
 
         if (say_type == 'what_day_is_today' or say_type == 'the day of the week'):
-            today = "It is %s" % datetime.now().strftime("%A")
+            today = "It is %s" % corrected_time.strftime("%A")
             self.robot.speech.speak(today)
             self.robot.head.cancel_goal()
             return "answered"
 
         if (say_type == 'the_date'):
-            month = datetime.now().strftime("%B")
-            day_nr = datetime.now().strftime("%d")
-            year = datetime.now().strftime("%Y")
+            month = corrected_time.strftime("%B")
+            day_nr = corrected_time.strftime("%d")
+            year = corrected_time.strftime("%Y")
 
             the_date = "Today it is %s %s of the year %s" % (month, day_nr, year)
             #print the_date
@@ -443,8 +445,8 @@ class SpeakSpecial(smach.State):
             return "answered"
 
         if (say_type == 'the_day_of_the_month'):
-            month = datetime.now().strftime("%B")
-            day_nr = datetime.now().strftime("%d")
+            month = corrected_time.strftime("%B")
+            day_nr = corrected_time.strftime("%d")
             the_day_of_the_month = "Today it is %s %s" % (month, day_nr)
             #print the_date
             self.robot.speech.speak(the_day_of_the_month)
@@ -452,7 +454,7 @@ class SpeakSpecial(smach.State):
             return "answered"
 
         if (say_type == 'what_day_is_tomorrow'):
-            today = int(datetime.now().strftime("%w"))
+            today = int(corrected_time.strftime("%w"))
             week_list = ["Monday", "Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
             tomorrow = week_list[today]
             the_day_of_the_month = "Tomorrow it is %s" % (tomorrow)
@@ -1154,7 +1156,7 @@ class PlaceGrabbed(smach.State):
         place_position = EmptySpotDesignator(self.robot, place_pose_ent)
         arm_with_item_designator = ArmDesignator(self.robot.arms, self.robot.leftArm)
 
-        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot_name), place_pose=place_position ,arm=arm_with_item_designator)
+        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot,id=ITEM), place_pose=place_position ,arm=arm_with_item_designator)
         result = placestate.execute()
 
         if result == 'done':
@@ -1639,6 +1641,23 @@ def test_placing(robot,place_location):
 
     placestate = states.Place(robot, item_to_place=EdEntityDesignator(robot), place_pose=place_position ,arm=arm_with_item_designator)
     result = placestate.execute()
+
+
+def test_time(robot,option):    
+    
+    robot.reasoner.assertz("action_info('3','3_name_time_date','"+str(option)+"')")
+
+    speakspecial_state = SpeakSpecial(robot)
+    result = speakspecial_state.execute(None)
+
+def test_ask_action(robot):    
+    
+    askaction_state = Ask_action(robot)
+    result = askaction_state.execute(None)
+
+
+
+
 
 
 if __name__ == "__main__":
