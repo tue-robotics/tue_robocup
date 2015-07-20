@@ -46,6 +46,16 @@ class Head():
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
             return False
 
+    def look_at_ground_in_front_of_robot(self, distance=2):
+        goal = PointStamped()
+        goal.header.stamp = rospy.Time.now()
+        goal.header.frame_id = "/"+self._robot_name+"/base_link"
+        goal.point.x = distance
+        goal.point.y = 0.0
+        goal.point.z = 0.0
+
+        return self.look_at_point(goal)
+
     def look_down(self, timeout=0):
         """
         Gives a target at z = 1.0 at 1 m in front of the robot
