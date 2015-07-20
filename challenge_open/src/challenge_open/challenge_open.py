@@ -191,7 +191,9 @@ class CheckCommand(smach.State):
         self.timeout = timeout
         topic = topic
 
-        rospy.Subscriber(topic, std_msgs.msg.String, self.callback, queue_size=1)
+        #"/"+robot.robot_name+"/trigger"
+        #rospy.Subscriber(topic, std_msgs.msg.String, self.callback, queue_size=1)
+        rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self.callback, queue_size=1)
 
         rospy.loginfo('topic: /%s', topic)
         rospy.loginfo('rate:  %d Hz', self.rate)
