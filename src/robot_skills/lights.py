@@ -20,6 +20,11 @@ class Lights:
         rgb_msg.show_color.data = True
         self._topic.publish(rgb_msg)
 
+    def reset(self):
+        rgb_msg = RGBLightCommand(color=ColorRGBA(0.0,0.0,1.0,1.0))
+        rgb_msg.show_color.data = True
+        self._topic.publish(rgb_msg)
+
     def on(self):
         rgb_msg = RGBLightCommand(show_color=True)
         self._topic.publish(rgb_msg)
