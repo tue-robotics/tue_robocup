@@ -338,7 +338,7 @@ class ConversationWithOperator(smach.State):
 
         # Listen to result
         speech_options = {'location': furniture_list.values()}
-        res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(10.0))
+        res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(15.0))
 
         # res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
 
