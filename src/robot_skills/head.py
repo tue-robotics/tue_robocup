@@ -140,7 +140,7 @@ class Head():
 
 #######################################
     # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
-    def take_snapshot(self, distance=2, timeout = 0.2):
+    def take_snapshot(self, distance=10, timeout = 1.0):
            
         self.look_at_ground_in_front_of_robot(distance)
         rospy.sleep(timeout)
@@ -148,18 +148,6 @@ class Head():
         res = self.snapshot_srv()
 
         return res
-
-
-def look_at_ground_in_front_of_robot(self, distance=2):
-        goal = PointStamped()
-        goal.header.stamp = rospy.Time.now()
-        goal.header.frame_id = "/"+self._robot_name+"/base_link"
-        goal.point.x = distance
-        goal.point.y = 0.0
-        goal.point.z = 0.0
-
-        return self.look_at_point(goal)
-
 
 #######################################
 
