@@ -700,7 +700,7 @@ class GuiCallCallback(smach.StateMachine):
 
             # Flag entity to dynamic
             smach.StateMachine.add('FLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=['dynamic']),
+                                    ChangeFlag(robot=robot, designator=location_designator), #add_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION',
                                                     'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
 
@@ -717,7 +717,7 @@ class GuiCallCallback(smach.StateMachine):
                                                     'failed'            : 'UNFLAG_DYNAMIC'})
 
             smach.StateMachine.add('UNFLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=['dynamic']),
+                                    ChangeFlag(robot=robot, designator=location_designator), #, remove_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION2',
                                                     'failed'            : 'GOTO_LOCATION2'})
 
