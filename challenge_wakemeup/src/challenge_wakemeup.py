@@ -134,7 +134,7 @@ class WakeMeUp(smach.StateMachine):
         
         item_designator = VariableDesignator(resolve_type=EntityInfo)
 
-        place_position = wakeStates.EmptySpotDesignator(robot, EdEntityDesignator(robot, id=knowledge.dinner_table))
+        place_position = EmptySpotDesignator(robot, EdEntityDesignator(robot, id=knowledge.dinner_table))
         
 
         # ------------------------ STATE MACHINE ------------------------

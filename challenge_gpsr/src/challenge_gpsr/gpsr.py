@@ -372,7 +372,7 @@ class Finished_goal(smach.State):
         return "new_task"
 
 class HearQuestion(smach.State):
-    def __init__(self, robot, time_out=rospy.Duration(10)):
+    def __init__(self, robot, time_out=rospy.Duration(20)):
         smach.State.__init__(self, outcomes=["answered", "error", "failed"])
         self.robot = robot
         self.time_out = time_out
