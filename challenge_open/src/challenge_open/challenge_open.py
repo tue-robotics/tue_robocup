@@ -15,6 +15,7 @@ from robot_skills.util import msg_constructors as msgs
 from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
 from ed_sensor_integration.srv import GetPOIs, MakeSnapshot
+from visualization_msgs.msg import Marker
 
 from cb_planner_msgs_srvs.msg import *
 
@@ -23,6 +24,69 @@ challenge_knowledge = load_knowledge('challenge_open')
 EXPLORATION_TARGETS = challenge_knowledge.exploration_targets
 
 TEST_GRASP_LOC = None
+
+##### For current item designator #####
+size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
+has_type = lambda entity: entity.type != ""
+min_height = lambda entity: entity.min_z > 0.3
+min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.1
+def max_width(entity):
+    max_bb_x = max(ch.x for ch in entity.convex_hull)
+    min_bb_x = min(ch.x for ch in entity.convex_hull)
+    max_bb_y = max(ch.y for ch in entity.convex_hull)
+    min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+    x_size = abs(max_bb_x - min_bb_x)
+    y_size = abs(max_bb_y - min_bb_y)
+
+    x_ok = 0.02 < x_size < 0.2
+    y_ok = 0.02 < y_size < 0.2
+
+    return x_ok and y_ok
+def weight_function(entity, robot):
+    # TODO: return x coordinate of entity.center_point in base_link frame
+    p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+    return p.x*p.x
+#####
+
+class StoreWaypoint(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+        self._pub = rospy.Publisher("/operator_waypoint", Marker, queue_size=1)
+
+    def execute(self, userdata):
+        # Stop the base
+        self._robot.base.local_planner.cancelCurrentPlan()
+
+        base_pose = self._robot.base.get_location()
+
+        m = Marker()
+        m.color.r = 1
+        m.color.a = 1
+        m.pose = base_pose.pose
+        m.header = base_pose.header
+        m.type = 0 #Arrow
+        m.scale.x = 1.0
+        m.scale.y = 0.2
+        m.scale.z = 0.2
+        m.action = 0
+        m.ns = "arrow"
+        self._pub.publish(m)
+        m.type = 9
+        m.text = "operator pose"
+        m.ns = "text"
+        m.pose.position.z = 0.5
+        self._pub.publish(m)
+
+        # Store waypoint in world model
+        print "\n\n\n\nCURRENT BASE POSE:\n\n\n"
+        print base_pose
+        print "\n\n\n"
+        self._robot.ed.update_entity(id=challenge_knowledge.operator_waypoint_id, posestamped=base_pose, type="waypoint")
+
+        return "done"
+
 
 class ExplorationDesignator(EdEntityDesignator):
     """ Designator to determine the waypoint where the robot should go in its exploration phase 
@@ -206,9 +270,10 @@ class ExploreScenario(smach.StateMachine):
             exploration_target_designator = ExplorationDesignator(robot)
             poi_designator = PoiDesignator(robot, radius)
 
+            # ToDo: remove shutdown request???
             ''' Determine what to do '''
             smach.StateMachine.add('CHECK_TRIGGER',
-                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name+"/trigger", rate = 100, timeout=0.1),
+                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name+"/trigger", rate = 100, timeout=0.5),
                                     transitions={   'call_robot'        : 'call_received',
                                                     'exit_robot'        : 'shutdown_received',
                                                     'timeout'           : 'GOTO_POINT_OF_INTEREST',
@@ -219,13 +284,13 @@ class ExploreScenario(smach.StateMachine):
                                     states.NavigateToObserve(robot=robot, entity_designator=poi_designator, radius = radius),
                                     transitions={   'arrived'           : 'LOOK_AT_OBJECT',
                                                     'unreachable'       : 'GOTO_POINT_OF_INTEREST',
-                                                    'goal_not_defined'  : 'GOTO_HARDCODED_WAYPOINT'})
+                                                    'goal_not_defined'  : 'CHECK_TRIGGER'})
 
             ''' Look at thing (choose either of the two options below (second one not yet operational) '''
             smach.StateMachine.add("LOOK_AT_OBJECT",
                                     LookBaseLinkPoint(robot, x=radius, y=0, z=1.0, timeout=5.0, waittime=3.0),
                                     transitions={   'succeeded'         : 'TAKE_SNAPSHOT',
-                                                    'failed'            : 'TAKE_SNAPSHOT'})
+                                                    'failed'            : 'TAKE_SNAPSHOT'}) # ToDo: update waittime???
             # smach.StateMachine.add("LOOK_AT_OBJECT",
             #                          states.LookAtEntity(robot, pick_shelf, keep_following=True),
             #                          transitions={  'succeeded'         : 'TAKE_SNAPSHOT'})
@@ -236,18 +301,18 @@ class ExploreScenario(smach.StateMachine):
                                     transitions={   'succeeded'                 :'CHECK_TRIGGER',
                                                     'failed'                    :'CHECK_TRIGGER'})
 
-            ''' Backup: if no point of interest: go to hardcoded waypoint '''
-            smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
-                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
-                                    transitions={   'arrived'           : 'LOOK_UP',
-                                                    'unreachable'       : 'LOOK_UP',
-                                                    'goal_not_defined'  : 'done'})
+            # ''' Backup: if no point of interest: go to hardcoded waypoint '''
+            # smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
+            #                         states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
+            #                         transitions={   'arrived'           : 'LOOK_UP',
+            #                                         'unreachable'       : 'LOOK_UP',
+            #                                         'goal_not_defined'  : 'done'})
 
-            ''' If arrived at a waypoint, look up '''
-            smach.StateMachine.add("LOOK_UP",
-                                    LookBaseLinkPoint(robot, x=10.0, y=0, z=1.5, timeout=5.0, waittime=3.0),
-                                    transitions={   'succeeded'         : 'CHECK_TRIGGER',
-                                                    'failed'            : 'CHECK_TRIGGER'})
+            # ''' If arrived at a waypoint, look up '''
+            # smach.StateMachine.add("LOOK_UP",
+            #                         LookBaseLinkPoint(robot, x=10.0, y=0, z=1.5, timeout=5.0, waittime=3.0),
+            #                         transitions={   'succeeded'         : 'CHECK_TRIGGER',
+            #                                         'failed'            : 'CHECK_TRIGGER'})
 
 ####################################  STATES FOR GUI CALLBACK ####################################################333
 class ConversationWithOperator(smach.State):
@@ -256,7 +321,7 @@ class ConversationWithOperator(smach.State):
         self.robot = robot
         # Designator where to look for the object
         self.furniture_designator = furniture_designator 
-        # Object designator
+        # Object designator (obsolete)
         self.object_designator = object_designator
 
     def execute(self, userdata):
@@ -272,8 +337,8 @@ class ConversationWithOperator(smach.State):
         furniture_list = {e:e.type.split('/')[-1].replace("_"," ") for e in entities if 'furniture' in e.flags}
 
         # Listen to result
-        speech_options = {'object':challenge_knowledge.object_options, 'location': furniture_list.values()}
-        res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(10.0))
+        speech_options = {'location': furniture_list.values()}
+        res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(15.0))
 
         # res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
 
@@ -288,17 +353,16 @@ class ConversationWithOperator(smach.State):
                 return "succeeded"
             else:
                 return "failed"
-        elif not ('object' in res.choices and 'location' in res.choices):
-            rospy.logerr('Speech result does not contain either location or object')
+        elif not ('location' in res.choices):
+            rospy.logerr('Speech result does not contain either location')
             return 'failed'
         else:
-            obj = res.choices['object']
+            # obj = res.choices['object']
             loc = res.choices['location']
-            self.robot.speech.speak("All right, I will go to the {0} to grab the {1}".format(loc, obj), block=False)
+            self.robot.speech.speak("All right, I will go to the {0} to grab the chips".format(loc), block=False)
             for entity, stripped_type in furniture_list.iteritems():
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
-            self.object_designator.current = obj
             return 'succeeded'
 
 
@@ -355,7 +419,7 @@ class FindObjectOnFurniture(smach.State):
         smach.State.__init__(self, outcomes=['found', 'not_found', 'failed'])
         self.robot = robot
         self.location_designator = location_designator
-        self.object_designator = object_designator
+        self.object_designator = object_designator # (Obsolete)
         self.return_designator = return_designator
 
     def execute(self, userdate):
@@ -378,37 +442,44 @@ class FindObjectOnFurniture(smach.State):
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if e and onTopOff(e, location_entity) and not e.type:
+            if e and onTopOff(e, location_entity) and not e.type and size(e) and min_entity_height(e) and max_width(e):
                 # ToDo: filter on size in x, y, z
                 # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                 id_list.append(e.id)
 
-        ''' Try to classify the objects on the shelf '''
-        object_type = self.object_designator.resolve()
-        if object_type == None:
-            rospy.logerr('Object type not specified')
-            return 'failed'
-        entity_types = self.robot.ed.classify(ids=id_list, types=[object_type])
-
-        ########## Testmode ######
-        if TESTMODE:
-            if len(entity_types) > 0:
-                entity_types[0] = object_type
-        ###### End testmode ######3
-
-        ''' Zip the lists and sort '''
-        ziplist = zip(id_list, entity_types)
-        filterend_list = [z for z in ziplist if z[1] == object_type]
-
-        ''' If the filtered list is empty, the object has not been found '''
-        if len(filterend_list) == 0:
-            rospy.loginfo('No entities of type {0} found on the {1}'.format(object_type, location_entity.id))
+        # ToDo: add weight function???
+        if len(id_list) > 0:
+            self.return_designator.id = id_list[0]
+            return 'found'
+        else:
             return 'not_found'
 
-        ''' Else, set the id and return that the object has been found '''
-        if self.return_designator:
-            self.return_designator.id = ziplist[0][0]
-        return 'found'
+        # ''' Try to classify the objects on the shelf '''
+        # object_type = self.object_designator.resolve()
+        # if object_type == None:
+        #     rospy.logerr('Object type not specified')
+        #     return 'failed'
+        # entity_types = self.robot.ed.classify(ids=id_list, types=[object_type])
+
+        ########## Testmode ######
+        # if TESTMODE:
+        #     if len(entity_types) > 0:
+        #         entity_types[0] = object_type
+        ###### End testmode ######3
+
+        # ''' Zip the lists and sort '''
+        # ziplist = zip(id_list, entity_types)
+        # filterend_list = [z for z in ziplist if z[1] == object_type]
+
+        # ''' If the filtered list is empty, the object has not been found '''
+        # if len(filterend_list) == 0:
+        #     rospy.loginfo('No entities of type {0} found on the {1}'.format(object_type, location_entity.id))
+        #     return 'not_found'
+
+        # ''' Else, set the id and return that the object has been found '''
+        # if self.return_designator:
+        #     self.return_designator.id = ziplist[0][0]
+        # return 'found'
 
 
 ################### MANIPULATION STATE MACHINE ##########################################################
@@ -437,10 +508,10 @@ class ManipRecogSingleItem(smach.StateMachine):
             return onTopOff(entity, container_entity)
 
         # select the entity closest in x direction to the robot in base_link frame
-        def weight_function(entity):
-            # TODO: return x coordinate of entity.center_point in base_link frame
-            p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
-            return p.x*p.x
+        # def weight_function(entity):
+        #     # TODO: return x coordinate of entity.center_point in base_link frame
+        #     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+        #     return p.x*p.x
 
         # current_item = LockingDesignator(EdEntityDesignator(robot,
         #     criteriafuncs=[size, has_type, on_top, min_entity_height], weight_function=weight_function, debug=False))
@@ -521,24 +592,74 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'succeeded'         : 'succeeded',
                                                     'failed'            : 'succeeded'})
 
+class ChangeFlag(smach.State):
+    """ Smach state to add or remove ED flags
+    """
+    def __init__(self, robot, designator, add_flags=[], remove_flags=[]):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.designator = designator
+
+    def execute(self, userdata):
+        e = self.designator.resolve()
+        if e == None:
+            return 'failed'
+
+        self.robot.ed.update_entity(id=e.id, add_flags=add_flags, remove_flags=remove_flags)
+
+        return 'succeeded'
+
+
 
 ############################## gui callback state machine #####################
 class GuiCallCallback(smach.StateMachine):
 
     def __init__(self, robot):
 
+        #update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []
+
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         location_designator = VariableDesignator(resolve_type=EntityInfo)
+        
         object_designator = VariableDesignator(resolve_type=str)
+        # def on_top(entity):
+        #     container_entity = pick_shelf.resolve()
+        #     return onTopOff(entity, container_entity)
+
+        # def max_width(entity):
+        #     max_bb_x = max(ch.x for ch in entity.convex_hull)
+        #     min_bb_x = min(ch.x for ch in entity.convex_hull)
+        #     max_bb_y = max(ch.y for ch in entity.convex_hull)
+        #     min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+        #     x_size = abs(max_bb_x - min_bb_x)
+        #     y_size = abs(max_bb_y - min_bb_y)
+
+        #     x_ok = 0.02 < x_size < 0.15
+        #     y_ok = 0.02 < y_size < 0.15
+
+        #     return x_ok and y_ok
+
+        # # select the entity closest in x direction to the robot in base_link frame
+        # def weight_function(entity):
+        #     # TODO: return x coordinate of entity.center_point in base_link frame
+        #     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+        #     return p.x*p.x
+
+        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
+        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.10
+
+        # object_designator = LockingDesignator(EdEntityDesignator(robot,
+        #     criteriafuncs=[size, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
+
         point = msgs.Point(0, 0, 0)
 
         ##### To start in a different state #####
         if not TEST_GRASP_LOC == None:
             smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
             location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
-            object_designator.current = 'coke'
-    #########################################
+        #########################################
 
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
@@ -558,8 +679,14 @@ class GuiCallCallback(smach.StateMachine):
 
             smach.StateMachine.add('STORE_POINT',
                                     StorePoint(location_designator, point),
+                                    transitions={   'succeeded'         : 'FLAG_DYNAMIC',
+                                                    'failed'            : 'FLAG_DYNAMIC'})
+
+            # Flag entity to dynamic
+            smach.StateMachine.add('FLAG_DYNAMIC',
+                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION',
-                                                    'failed'            : 'GOTO_LOCATION'})
+                                                    'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
 
             # First goto location
             smach.StateMachine.add('GOTO_LOCATION',
@@ -570,6 +697,11 @@ class GuiCallCallback(smach.StateMachine):
 
             smach.StateMachine.add('CHECK_POINT',
                                     CheckPoint(robot, location_designator, point),
+                                    transitions={   'succeeded'         : 'UNFLAG_DYNAMIC',
+                                                    'failed'            : 'UNFLAG_DYNAMIC'})
+
+            smach.StateMachine.add('UNFLAG_DYNAMIC',
+                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION2',
                                                     'failed'            : 'GOTO_LOCATION2'})
 
@@ -605,8 +737,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized'       : 'LOOKAT_FIRST_ITEM',
+                                transitions={   'initialized'       : 'STORE_OPERATOR_WAYPOINT',
                                                 'abort'             : 'Aborted'})
+
+        smach.StateMachine.add('STORE_OPERATOR_WAYPOINT',
+                                StoreWaypoint(robot),
+                                transitions={   'done'              : 'LOOKAT_FIRST_ITEM'})
 
         smach.StateMachine.add('LOOKAT_FIRST_ITEM',
                                 LookBaseLinkPoint(robot=robot, x=1.0, y=0.0, z=0.0, timeout=2.5, waittime=1.0),

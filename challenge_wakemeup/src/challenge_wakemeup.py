@@ -43,9 +43,11 @@ class WakeMeUp(smach.StateMachine):
             return True
 
         def is_not_bed(entity):
+            print entity.id
             return entity.id != knowledge.bed
 
         def is_not_prior(entity):
+            print entity.type
             return entity.type == '' or entity.type == 'human'
 
         def is_just_above_bed(entity):
@@ -68,15 +70,18 @@ class WakeMeUp(smach.StateMachine):
 
                 # Cross product of these two gives either positive or negative, if one is negative, point is outside the chull
                 if dx*dye-dy*dxe < 0:
+                    print "this is true"
                     return False
 
             return True
 
         def probably_exists(entity):
+            print "This is true 2"
             return entity.existence_probability > knowledge.find_person['min_exist_prob']
 
         def is_large_enough(entity):
             if len(entity.convex_hull) < 3:
+                print "this is true 3"
                 return False
 
             chull = [entity.convex_hull[-1]] + entity.convex_hull + [entity.convex_hull[0]]
@@ -84,6 +89,7 @@ class WakeMeUp(smach.StateMachine):
             for ppt, pt, npt in zip(chull, chull[1:], chull[2:]):
                 area += pt.x*( npt.y - ppt.y );
             area /= 2
+            print area
 
             return area > knowledge.find_person['min_chull_area']
 
