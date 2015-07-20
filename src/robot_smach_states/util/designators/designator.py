@@ -31,6 +31,11 @@ import inspect
 import pprint
 from robot_skills.arms import Arm
 
+from robot_smach_states.util.geometry_helpers import *
+from robot_skills.util import msg_constructors as geom
+from cb_planner_msgs_srvs.msg import PositionConstraint
+from visualization_msgs.msg import Marker, MarkerArray # for EmptySpotDesignator
+
 def check_resolve_type(designator, *allowed_types):
     """
     >>> d1 = Designator("a", resolve_type=str)
@@ -668,6 +673,134 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     def available(self, arm):
         """Check that the arm is occupied by the entity refered to by the entity_designator"""
         return arm.occupied_by == self.entity_designator.resolve()
+
+
+class EmptySpotDesignator(Designator):
+    """Designates an empty spot on the empty placement-shelve.
+    It does this by queying ED for entities that occupy some space.
+        If the result is no entities, then we found an open spot."""
+    def __init__(self, robot, place_location_designator):
+        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
+        self.robot = robot
+        self.place_location_designator = place_location_designator
+        self._edge_distance = 0.1                   # Distance to table edge
+        self._spacing = 0.15
+
+        self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
+        self.marker_array = MarkerArray()
+
+    def resolve(self):
+        place_location = self.place_location_designator.resolve()
+
+        # points_of_interest = []
+        points_of_interest = self.determinePointsOfInterest(place_location)
+
+        def is_poi_occupied(poi):
+            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
+            return not any(entities_at_poi)
+
+        open_POIs = filter(is_poi_occupied, points_of_interest)
+
+        def distance_to_poi_area(poi):
+            #Derived from navigate_to_place
+            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+            x = poi.point.x
+            y = poi.point.y
+            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
+            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+
+            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+
+            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
+            if plan_to_poi:
+                distance = len(plan_to_poi)
+            print "Distance: %s"%distance
+            return distance
+
+        if any(open_POIs):
+            best_poi = min(open_POIs, key=distance_to_poi_area)
+            placement = geom.PoseStamped(pointstamped=best_poi)
+            rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+            return placement
+        else:
+            rospy.logerr("Could not find an empty spot")
+            return None
+
+    def create_marker(self, x, y, z):
+        marker = Marker()
+        marker.id = len(self.marker_array.markers)
+        marker.type = 2
+        marker.header.frame_id = "/map"
+        marker.header.stamp = rospy.Time.now()
+        marker.pose.position.x = x
+        marker.pose.position.y = y
+        marker.pose.position.z = z
+        marker.pose.orientation.w = 1
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
+        marker.color.r = 1
+        marker.color.a = 1
+
+        marker.lifetime = rospy.Duration(10.0)
+        return marker
+
+    def determinePointsOfInterest(self, e):
+
+        points = []
+
+        x = e.pose.position.x
+        y = e.pose.position.y
+
+        if len(e.convex_hull) == 0:
+            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+            return []
+
+        ''' Convert convex hull to map frame '''
+        center_pose = poseMsgToKdlFrame(e.pose)
+        ch = []
+        for point in e.convex_hull:
+            p = pointMsgToKdlVector(point)
+            # p = center_pose * p
+            # p = p * center_pose
+            import PyKDL as kdl
+            pf = kdl.Frame(kdl.Rotation(), p)
+            pf = pf * center_pose
+            p = pf.p
+            ch.append(p)
+
+        ''' Loop over hulls '''
+        self.marker_array.markers = []
+        ch.append(ch[0])
+        for i in xrange(len(ch) - 1):
+                dx = ch[i+1].x() - ch[i].x()
+                dy = ch[i+1].y() - ch[i].y()
+                length = math.hypot(dx, dy)
+
+                d = self._edge_distance
+                while d < (length-self._edge_distance):
+
+                    ''' Point on edge '''
+                    xs = ch[i].x() + d/length*dx
+                    ys = ch[i].y() + d/length*dy
+
+                    ''' Shift point inwards and fill message'''
+                    ps = geom.PointStamped()
+                    ps.header.frame_id = "/map"
+                    ps.point.x = xs - dy/length * self._edge_distance
+                    ps.point.y = ys + dx/length * self._edge_distance
+                    ps.point.z = e.pose.position.z + e.z_max
+                    points.append(ps)
+
+                    self.marker_array.markers.append(self.create_marker(ps.point.x, ps.point.y, ps.point.z))
+
+                    # ToDo: check if still within hull???
+                    d += self._spacing
+
+        self.marker_pub.publish(self.marker_array)
+
+        return points
 
 
 class DeferToRuntime(Designator):
