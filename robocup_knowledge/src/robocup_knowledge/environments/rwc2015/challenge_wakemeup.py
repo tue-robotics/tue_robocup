@@ -7,7 +7,7 @@ find_person = {
 }
 
 alarm_wait_time = 5
-alarm_duration = 60
+alarm_duration = 50
 
 get_newspaper_timeout = 5
 give_newspaper_timeout = 30
@@ -31,13 +31,8 @@ bed_nav_goal = {
 }
 
 default_milk = "pure_milk"
-default_cereal = "coconut_cereal"
+default_cereal = "coconut_cereals"
 default_fruit = "lemon"
-
-# # Remove before flight
-# default_milk = "coke"
-# default_cereal = "coke"
-# default_fruit = "coke"
 
 
 # TODO: in front of?
@@ -72,10 +67,3 @@ item_nav_goal = {               # This needs to be updated according to the envi
 }
 
 dinner_table = "dinnertable"
-
-# Remove before flight!!!
-# objects = [
-# {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'coke'},
-# {'category': 'drinks',          'placement': 'kitchentable',    'group': 'known',       'sub-category':'milk',  'name': 'coke'},
-# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'cereal','name': 'coke'}, 
-# {'category': 'food',            'placement': 'kitchencounter',  'group': 'known',       'sub-category':'fruit', 'name': 'coke'}]

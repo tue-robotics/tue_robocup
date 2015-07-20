@@ -154,8 +154,8 @@ class CheckCommand(smach.State):
         if data.data in self.triggers:
             rospy.loginfo('trigger received: %s', data.data)
             self.trigger_received = data.data
-        else:
-            rospy.logwarn('wrong trigger received: %s', data.data)
+        # else:
+            # rospy.logwarn('wrong trigger received: %s', data.data)
 
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
@@ -208,7 +208,7 @@ class ExploreScenario(smach.StateMachine):
 
             ''' Determine what to do '''
             smach.StateMachine.add('CHECK_TRIGGER',
-                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/amigo/trigger", rate = 100, timeout=0.1),
+                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name+"/trigger", rate = 100, timeout=0.1),
                                     transitions={   'call_robot'        : 'call_received',
                                                     'exit_robot'        : 'shutdown_received',
                                                     'timeout'           : 'GOTO_POINT_OF_INTEREST',
@@ -268,7 +268,8 @@ class ConversationWithOperator(smach.State):
         entities = self.robot.ed.get_entities(parse=False)
 
         # Maps the entities to strings containing the 'stripped type' 
-        furniture_list = {e:e.type.split('/')[-1] for e in entities if 'furniture' in e.flags}
+        # And replace underscores
+        furniture_list = {e:e.type.split('/')[-1].replace("_"," ") for e in entities if 'furniture' in e.flags}
 
         # Listen to result
         speech_options = {'object':challenge_knowledge.object_options, 'location': furniture_list.values()}
@@ -278,12 +279,18 @@ class ConversationWithOperator(smach.State):
 
         # Put result in designators
         if not res:
-            ''' Get random furniture object (only the string) '''
-            furniture = random.choice(furniture_list.keys())
-            ''' Set the designator with the corresponding entity '''
-            self.furniture_designator.current = furniture
-            self.robot.speech.speak("My ears are not working properly, I'll go to the {0} to see what I can find there".format(furniture_list[furniture]))
-            return "failed"
+            if len(furniture_list.keys()) > 0:
+                ''' Get random furniture object (only the string) '''
+                furniture = random.choice(furniture_list.keys())
+                ''' Set the designator with the corresponding entity '''
+                self.furniture_designator.current = furniture
+                self.robot.speech.speak("My ears are not working properly, I'll go to the {0} to see what I can find there".format(furniture_list[furniture]))
+                return "succeeded"
+            else:
+                return "failed"
+        elif not ('object' in res.choices and 'location' in res.choices):
+            rospy.logerr('Speech result does not contain either location or object')
+            return 'failed'
         else:
             obj = res.choices['object']
             loc = res.choices['location']
@@ -292,8 +299,7 @@ class ConversationWithOperator(smach.State):
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
             self.object_designator.current = obj
-            rospy.logerr('ConversationWithOperator ALWAYS returns Failed for debugging purposes!!!')
-            return 'failed'
+            return 'succeeded'
 
 
 class StorePoint(smach.State):
@@ -657,11 +663,14 @@ if __name__ == '__main__':
 
     rospy.init_node('open_challenge_exec')
 
-    if len(sys.argv) > 1:
-        TEST_GRASP_LOC = sys.argv[1]        
-        rospy.logwarn('Not starting from scratch, grasping from {0}'.format(sys.argv[1]))
+    if len(sys.argv) < 2:
+        rospy.logerr('Please specify the robot name')
+        exit()
+    else:
+        robot_name = sys.argv[1]
 
-    ''' Now, we will use AMIGO, but in the future we might change that '''
-    robot_name = 'amigo'
+    if len(sys.argv) > 2:
+        TEST_GRASP_LOC = sys.argv[2]        
+        rospy.logwarn('Not starting from scratch, grasping from {0}'.format(TEST_GRASP_LOC))
 
     startup(setup_statemachine, robot_name=robot_name)
