@@ -21,6 +21,7 @@ import visualization_msgs.msg
 
 import yaml
 
+
 class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
         self._get_constraint_srv = rospy.ServiceProxy('/%s/ed/navigation/get_constraint'%robot_name, GetGoalConstraint)
@@ -295,3 +296,5 @@ class ED:
             return None
 
         return entities[0]
+
+
