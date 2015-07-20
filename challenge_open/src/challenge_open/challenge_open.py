@@ -597,47 +597,66 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'succeeded'         : 'succeeded',
                                                     'failed'            : 'succeeded'})
 
+class ChangeFlag(smach.State):
+    """ Smach state to add or remove ED flags
+    """
+    def __init__(self, robot, designator, add_flags=[], remove_flags=[]):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.designator = designator
+
+    def execute(self, userdata):
+        e = self.designator.resolve()
+        if e == None:
+            return 'failed'
+
+        self.robot.ed.update_entity(id=e.id, add_flags=add_flags, remove_flags=remove_flags)
+
+        return 'succeeded'
+
+
 
 ############################## gui callback state machine #####################
 class GuiCallCallback(smach.StateMachine):
 
     def __init__(self, robot):
 
+        #update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []
+
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         location_designator = VariableDesignator(resolve_type=EntityInfo)
         
-        # object_designator = VariableDesignator(resolve_type=str)
-        def on_top(entity):
-            container_entity = pick_shelf.resolve()
-            return onTopOff(entity, container_entity)
+        object_designator = VariableDesignator(resolve_type=str)
+        # def on_top(entity):
+        #     container_entity = pick_shelf.resolve()
+        #     return onTopOff(entity, container_entity)
 
-        def max_width(entity):
-            max_bb_x = max(ch.x for ch in entity.convex_hull)
-            min_bb_x = min(ch.x for ch in entity.convex_hull)
-            max_bb_y = max(ch.y for ch in entity.convex_hull)
-            min_bb_y = min(ch.y for ch in entity.convex_hull)
+        # def max_width(entity):
+        #     max_bb_x = max(ch.x for ch in entity.convex_hull)
+        #     min_bb_x = min(ch.x for ch in entity.convex_hull)
+        #     max_bb_y = max(ch.y for ch in entity.convex_hull)
+        #     min_bb_y = min(ch.y for ch in entity.convex_hull)
 
-            x_size = abs(max_bb_x - min_bb_x)
-            y_size = abs(max_bb_y - min_bb_y)
+        #     x_size = abs(max_bb_x - min_bb_x)
+        #     y_size = abs(max_bb_y - min_bb_y)
 
-            x_ok = 0.02 < x_size < 0.15
-            y_ok = 0.02 < y_size < 0.15
+        #     x_ok = 0.02 < x_size < 0.15
+        #     y_ok = 0.02 < y_size < 0.15
 
-            return x_ok and y_ok
+        #     return x_ok and y_ok
 
-        # select the entity closest in x direction to the robot in base_link frame
-        def weight_function(entity):
-            # TODO: return x coordinate of entity.center_point in base_link frame
-            p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
-            return p.x*p.x
+        # # select the entity closest in x direction to the robot in base_link frame
+        # def weight_function(entity):
+        #     # TODO: return x coordinate of entity.center_point in base_link frame
+        #     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+        #     return p.x*p.x
 
-        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
-        min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.10
+        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
+        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.10
 
-        object_designator = LockingDesignator(EdEntityDesignator(robot,
-            criteriafuncs=[size, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
-        
+        # object_designator = LockingDesignator(EdEntityDesignator(robot,
+        #     criteriafuncs=[size, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
 
         point = msgs.Point(0, 0, 0)
 
@@ -665,8 +684,14 @@ class GuiCallCallback(smach.StateMachine):
 
             smach.StateMachine.add('STORE_POINT',
                                     StorePoint(location_designator, point),
+                                    transitions={   'succeeded'         : 'FLAG_DYNAMIC',
+                                                    'failed'            : 'FLAG_DYNAMIC'})
+
+            # Flag entity to dynamic
+            smach.StateMachine.add('FLAG_DYNAMIC',
+                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION',
-                                                    'failed'            : 'GOTO_LOCATION'})
+                                                    'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
 
             # First goto location
             smach.StateMachine.add('GOTO_LOCATION',
@@ -677,6 +702,11 @@ class GuiCallCallback(smach.StateMachine):
 
             smach.StateMachine.add('CHECK_POINT',
                                     CheckPoint(robot, location_designator, point),
+                                    transitions={   'succeeded'         : 'UNFLAG_DYNAMIC',
+                                                    'failed'            : 'UNFLAG_DYNAMIC'})
+
+            smach.StateMachine.add('UNFLAG_DYNAMIC',
+                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION2',
                                                     'failed'            : 'GOTO_LOCATION2'})
 
