@@ -13,7 +13,7 @@ get_newspaper_timeout = 5
 give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
-handover_joint_config = "handover_to_human"
+handover_joint_config = "sensed_handover"
 
 sensor_range = 2.0
 
