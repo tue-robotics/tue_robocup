@@ -188,7 +188,7 @@ class LookAtEntities(smach.StateMachine):
 
 
 class GetPills(smach.StateMachine):
-    def __init__(self, robot, grannies_table, granny):
+    def __init__(self, robot, shelf, grannies_table, granny):
         smach.StateMachine.__init__(self, outcomes=["succeeded", "failed"])
 
         empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.arms['left'])
@@ -209,14 +209,12 @@ class GetPills(smach.StateMachine):
         def not_bookcase_part(entity):
             return not BOTTLE_SHELF in entity.id #Bookcase has elements named "bookcase/shelf1" etc. Ditch those
 
-        bottle_shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
-
         # import ipdb; ipdb.set_trace()
         def on_top(entity):
-            container_entity = bottle_shelf.resolve()
+            container_entity = shelf.resolve()
             return onTopOff(entity, container_entity)
 
-        bottle_criteria = [minimal_height_from_floor, type_unknown_or_not_room, not_bookcase_part, onTopOffForDesignator(bottle_shelf), small, not_too_small]
+        bottle_criteria = [minimal_height_from_floor, type_unknown_or_not_room, not_bookcase_part, onTopOffForDesignator(shelf), small, not_too_small]
 
         # shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
         bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
@@ -225,7 +223,7 @@ class GetPills(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "LOOKAT_SHELF",
-                                     states.LookAtEntity(robot, bottle_shelf, waittime=1.0),
+                                     states.LookAtEntity(robot, shelf, waittime=1.0),
                                      transitions={  'succeeded'         :'DESCRIBE_OBJECTS',
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
@@ -246,7 +244,7 @@ class GetPills(smach.StateMachine):
                                      transitions={  'spoken'            :'LOOKAT_SHELF_2'})
 
             smach.StateMachine.add( "LOOKAT_SHELF_2",
-                                     states.LookAtEntity(robot, bottle_shelf),
+                                     states.LookAtEntity(robot, shelf),
                                      transitions={  'succeeded'         :'DESCRIBE_OBJECTS_2',
                                                     'failed'            :'failed'}) #If you can't look at objects, you can't describe them
 
@@ -624,7 +622,7 @@ class RoboNurse(smach.StateMachine):
                                                     'goal_not_defined':'GET_PILLS'})
 
             smach.StateMachine.add( "GET_PILLS",
-                                    GetPills(robot, grannies_table, granny),
+                                    GetPills(robot, shelf, grannies_table, granny),
                                     transitions={   'succeeded'     : "REST_ARMS_1",
                                                     'failed'        : "REST_ARMS_1"})
 
@@ -655,7 +653,7 @@ def test_look_at_entities(robot):
 
 def test_get_pills(robot):
     granny, grannies_table, shelf = define_designators(robot)
-    getpills = GetPills(robot, grannies_table, granny)
+    getpills = GetPills(robot, shelf, grannies_table, granny)
     getpills.execute(None)
 
 def test_respond_to_action(robot):
