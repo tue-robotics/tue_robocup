@@ -362,7 +362,7 @@ class ConversationWithOperator(smach.State):
         else:
             # obj = res.choices['object']
             loc = res.choices['location']
-            self.robot.speech.speak("All right, I will go to the {0} to grab the chips".format(loc), block=False)
+            self.robot.speech.speak("All right, I will go to the {0} to grab the object".format(loc), block=False)
             for entity, stripped_type in furniture_list.iteritems():
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
@@ -630,7 +630,7 @@ class ChangeFlag(smach.State):
 ############################## gui callback state machine #####################
 class GuiCallCallback(smach.StateMachine):
 
-    def __init__(self, robot):
+    def __init__(self, robot, flags=[]):
 
         #update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []
 
@@ -700,7 +700,7 @@ class GuiCallCallback(smach.StateMachine):
 
             # Flag entity to dynamic
             smach.StateMachine.add('FLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator), #add_flags=['dynamic']),
+                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=flags),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION',
                                                     'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
 
@@ -717,7 +717,7 @@ class GuiCallCallback(smach.StateMachine):
                                                     'failed'            : 'UNFLAG_DYNAMIC'})
 
             smach.StateMachine.add('UNFLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator), #, remove_flags=['dynamic']),
+                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=flags),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION2',
                                                     'failed'            : 'GOTO_LOCATION2'})
 
@@ -792,12 +792,31 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('HANDLE_GUI_CALL',
                                 GuiCallCallback(robot),
-                                transitions={   'succeeded'         :   'EXPLORE',
-                                                'failed'            :   'SAY_FAILURE'})
+                                transitions={   'succeeded'         :   'EXPLORE_2',
+                                                'failed'            :   'SAY_FAILURE_2'})
+
+        smach.StateMachine.add('EXPLORE_2',
+                                ExploreScenario(robot),
+                                transitions={   'done'              :   'HANDLE_GUI_CALL_DYNAMIC',
+                                                'call_received'     :   'SAY_RECEIVED_CALL_2',
+                                                'shutdown_received' :   'SAY_GOTO_EXIT'})
+
+        smach.StateMachine.add('SAY_RECEIVED_CALL_2',
+                                states.Say(robot, ["My operator called me, I better go and see what he wants"], block=False),
+                                transitions={   'spoken'            :   'HANDLE_GUI_CALL_DYNAMIC'})
+
+        smach.StateMachine.add('HANDLE_GUI_CALL_DYNAMIC',
+                                GuiCallCallback(robot, flags=['dynamic']),
+                                transitions={   'succeeded'         :   'EXPLORE_2',
+                                                'failed'            :   'SAY_FAILURE_2'})
 
         smach.StateMachine.add('SAY_FAILURE',
                                 states.Say(robot, ["Something went wrong, I'll go and explore some more"], block=False),
                                 transitions={   'spoken'            :   'EXPLORE'})
+
+        smach.StateMachine.add('SAY_FAILURE_2',
+                                states.Say(robot, ["Something went wrong, I'll go and explore some more"], block=False),
+                                transitions={   'spoken'            :   'EXPLORE_2'})
 
         smach.StateMachine.add('SAY_GOTO_EXIT',
                                 states.Say(robot, ["My work here is done, I'm leaving"], block=False),
