@@ -154,8 +154,8 @@ class CheckCommand(smach.State):
         if data.data in self.triggers:
             rospy.loginfo('trigger received: %s', data.data)
             self.trigger_received = data.data
-        else:
-            rospy.logwarn('wrong trigger received: %s', data.data)
+        # else:
+            # rospy.logwarn('wrong trigger received: %s', data.data)
 
 class LookBaseLinkPoint(smach.State):
     def __init__(self, robot, x, y, z, timeout = 2.5, waittime = 0.0, endtime=20.0):
@@ -278,12 +278,18 @@ class ConversationWithOperator(smach.State):
 
         # Put result in designators
         if not res:
-            ''' Get random furniture object (only the string) '''
-            furniture = random.choice(furniture_list.keys())
-            ''' Set the designator with the corresponding entity '''
-            self.furniture_designator.current = furniture
-            self.robot.speech.speak("My ears are not working properly, I'll go to the {0} to see what I can find there".format(furniture_list[furniture]))
-            return "failed"
+            if len(furniture_list.keys()) > 0:
+                ''' Get random furniture object (only the string) '''
+                furniture = random.choice(furniture_list.keys())
+                ''' Set the designator with the corresponding entity '''
+                self.furniture_designator.current = furniture
+                self.robot.speech.speak("My ears are not working properly, I'll go to the {0} to see what I can find there".format(furniture_list[furniture]))
+                return "succeeded"
+            else:
+                return "failed"
+        elif not ('object' in res.choices and 'location' in res.choices):
+            rospy.logerr('Speech result does not contain either location or object')
+            return 'failed'
         else:
             obj = res.choices['object']
             loc = res.choices['location']
@@ -292,8 +298,7 @@ class ConversationWithOperator(smach.State):
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
             self.object_designator.current = obj
-            rospy.logerr('ConversationWithOperator ALWAYS returns Failed for debugging purposes!!!')
-            return 'failed'
+            return 'succeeded'
 
 
 class StorePoint(smach.State):
