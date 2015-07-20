@@ -599,13 +599,15 @@ class ChangeFlag(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
         self.designator = designator
+        self.add_flags = add_flags
+        self.remove_flags = remove_flags
 
     def execute(self, userdata):
         e = self.designator.resolve()
         if e == None:
             return 'failed'
 
-        self.robot.ed.update_entity(id=e.id, add_flags=add_flags, remove_flags=remove_flags)
+        self.robot.ed.update_entity(id=e.id, add_flags=self.add_flags, remove_flags=self.remove_flags)
 
         return 'succeeded'
 
