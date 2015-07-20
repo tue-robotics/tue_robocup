@@ -789,7 +789,7 @@ class SensedHandoverFromHuman(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( "POSE", 
-                                    states.ArmToJointConfig(robot, arm_designator, "handover_to_human"),
+                                    states.ArmToJointConfig(robot, arm_designator, knowledge.handover_joint_config),
                                     transitions={   'succeeded':'OPEN_BEFORE_INSERT',
                                                     'failed':'OPEN_BEFORE_INSERT'})
 
@@ -831,7 +831,7 @@ class SensedHandoverToHuman(smach.StateMachine):
                                     transitions={'done'         :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
 
             smach.StateMachine.add( "MOVE_HUMAN_HANDOVER_JOINT_GOAL",
-                                    states.ArmToJointConfig(robot, locked_arm, 'handover_to_human'),
+                                    states.ArmToJointConfig(robot, locked_arm, knowledge.handover_joint_config),
                                     transitions={ 'succeeded'   :'SAY_OPEN_GRIPPER',
                                                   'failed'      :'SAY_OPEN_GRIPPER'})
             
