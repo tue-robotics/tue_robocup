@@ -153,7 +153,7 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
-                                    transitions={   'initialized':'START_CHALLENGE',
+                                    transitions={   'initialized':'RECONFIGURE_ED1',
                                                     'abort':'RECONFIGURE_ED1'})
 
             smach.StateMachine.add( 'RECONFIGURE_ED1',
