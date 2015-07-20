@@ -362,7 +362,7 @@ class ConversationWithOperator(smach.State):
         else:
             # obj = res.choices['object']
             loc = res.choices['location']
-            self.robot.speech.speak("All right, I will go to the {0} to grab the chips".format(loc), block=False)
+            self.robot.speech.speak("All right, I will go to the {0} to grab the object".format(loc), block=False)
             for entity, stripped_type in furniture_list.iteritems():
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
@@ -443,6 +443,7 @@ class FindObjectOnFurniture(smach.State):
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
 
         print "entity_ids are :", entity_ids
+
 
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
         id_list = [] # List with entities that are flagged with 'perception'                
