@@ -208,7 +208,7 @@ class ExploreScenario(smach.StateMachine):
 
             ''' Determine what to do '''
             smach.StateMachine.add('CHECK_TRIGGER',
-                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name="/trigger", rate = 100, timeout=0.1),
+                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name+"/trigger", rate = 100, timeout=0.1),
                                     transitions={   'call_robot'        : 'call_received',
                                                     'exit_robot'        : 'shutdown_received',
                                                     'timeout'           : 'GOTO_POINT_OF_INTEREST',
