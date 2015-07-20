@@ -536,8 +536,6 @@ class FindItem(smach.State):
         point_stamped = gm.PointStamped(point=center_point,
                                      header=Header(frame_id=frame_id))
 
-        print "look at table, point_stamped = ", point_stamped
-
         self.robot.head.look_at_point(point_stamped)
         rospy.sleep(rospy.Duration(2.0))
 
@@ -554,16 +552,12 @@ class FindItem(smach.State):
             #     print "id is NOT on top of object"
 
             if e and self.on_object and not e.type and onTopOff(e, self.on_object):
-                print "ja, toegevoegd"
                 filtered_ids.append(e.id)
 
         print "filtered_ids =", filtered_ids
         print "self.items_were_looking_for =", self.items_were_looking_for
         
         entity_types = self.robot.ed.classify(ids=filtered_ids, types=self.items_were_looking_for)
-
-
-        print "I found the following items: {}".format(entity_types)
 
         self.robot.head.cancel_goal()
 
@@ -583,20 +577,28 @@ class FindItem(smach.State):
                 return 'item_found'
 
         # if wanted item is not found then ..
+        type_ids = dict(zip(entity_types,filtered_ids))
+
+        print "I found the following items with the ids: {}".format(type_ids)
+
         found_milk      = list(set(entity_types).intersection(names_milk))
         found_cereal    = list(set(entity_types).intersection(names_cereal))
         found_fruit     = list(set(entity_types).intersection(names_fruit))
 
+        print "I need to get a " + self.result_type
         print "I found the following milk, cereal and fruit items: {}".format(found_milk+found_cereal+found_fruit)
 
         if len(found_milk) > 0 and self.result_type in names_milk:
-            self.result_des.current = self.robot.ed.get_entity(found_milk[0])
+            print self.robot.ed.get_entity(found_milk[0])
+            self.result_des.current = self.robot.ed.get_entity(type_ids[found_milk[0]])
             return 'item_found'
         elif len(found_cereal) > 0 and self.result_type in names_cereal:
-            self.result_des.current = self.robot.ed.get_entity(found_cereal[0])
+            print self.robot.ed.get_entity(found_cereal[0])
+            self.result_des.current = self.robot.ed.get_entity(type_ids[found_cereal[0]])
             return 'item_found'
         elif len(found_fruit) > 0 and self.result_type in names_fruit:
-            self.result_des.current = self.robot.ed.get_entity(found_fruit[0])
+            print self.robot.ed.get_entity(found_fruit[0])
+            self.result_des.current = self.robot.ed.get_entity(type_ids[found_fruit[0]])
             return 'item_found'
 
         # TODO: maybe go to another position to look again?
@@ -907,6 +909,8 @@ class CloseGripperOnHandoverToRobot(smach.State):
         self.robot = robot
         self.arm_designator = arm_designator
         self.timeout = timeout
+        self.grabbed_entity_designator = grabbed_entity_designator
+        self.grabbed_entity_label = grabbed_entity_label
 
     def execute(self,userdata):
         arm = self.arm_designator.resolve()
@@ -916,11 +920,11 @@ class CloseGripperOnHandoverToRobot(smach.State):
 
         if arm.handover_to_robot(self.timeout):
             
-            if grabbed_entity_designator:
-                arm.occupied_by = grabbed_entity_designator
+            if self.grabbed_entity_designator:
+                arm.occupied_by = self.grabbed_entity_designator
             else:
-                if grabbed_entity_label != "":
-                    handed_entity = EntityInfo(id=grabbed_entity_label)
+                if self.grabbed_entity_label:
+                    handed_entity = EntityInfo(id=self.grabbed_entity_label)
                     arm.occupied = handed_entity
                 else:
                     rospy.logerr("No grabbed entity designator and no label for dummy entity given")
