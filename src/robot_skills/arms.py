@@ -283,10 +283,12 @@ class Arm(object):
         succeeded = False;
 
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1)
+        print '/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human'
         pub.publish(std_msgs.msg.Bool(True))
 
         try:
             rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
+            print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
             return True
         except(rospy.ROSException), e:
             return False
@@ -302,10 +304,12 @@ class Arm(object):
         succeeded = False;
         
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1)
+        print '/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot'
         pub.publish(std_msgs.msg.Bool(True))
 
         try:
             rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
+            print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
             return True
         except(rospy.ROSException), e:
             return False
