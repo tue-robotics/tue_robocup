@@ -794,7 +794,7 @@ class SensedHandoverFromHuman(smach.StateMachine):
                                                     'failed':'OPEN_BEFORE_INSERT'})
 
             smach.StateMachine.add( 'OPEN_BEFORE_INSERT', 
-                                    states.SetGripper(robot, arm_designator, gripperstate='open'),
+                                    states.SetGripper(robot, arm_designator, gripperstate=states.ArmState.OPEN),
                                     transitions={   'succeeded'    :   'SAY1',
                                                     'failed'       :   'SAY1'})
 
@@ -809,7 +809,14 @@ class SensedHandoverFromHuman(smach.StateMachine):
                                                                     grabbed_entity_designator=grabbed_entity_designator,
                                                                     timeout=timeout),
                                     transitions={   'succeeded'    :   'succeeded',
+                                                    'failed'       :   'OPEN_FALLBACK'})
+
+            smach.StateMachine.add( 'OPEN_FALLBACK', 
+                                    states.SetGripper(robot, arm_designator, gripperstate=states.ArmState.CLOSE),
+                                    transitions={   'succeeded'    :   'succeeded',
                                                     'failed'       :   'failed'})
+            
+
 
 # ----------------------------------------------------------------------------------------------------
 
