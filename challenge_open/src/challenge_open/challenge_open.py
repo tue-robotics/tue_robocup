@@ -268,7 +268,8 @@ class ConversationWithOperator(smach.State):
         entities = self.robot.ed.get_entities(parse=False)
 
         # Maps the entities to strings containing the 'stripped type' 
-        furniture_list = {e:e.type.split('/')[-1] for e in entities if 'furniture' in e.flags}
+        # And replace underscores
+        furniture_list = {e:e.type.split('/')[-1].replace("_"," ") for e in entities if 'furniture' in e.flags}
 
         # Listen to result
         speech_options = {'object':challenge_knowledge.object_options, 'location': furniture_list.values()}
