@@ -191,9 +191,7 @@ class CheckCommand(smach.State):
         self.timeout = timeout
         topic = topic
 
-        #"/"+robot.robot_name+"/trigger"
-        #rospy.Subscriber(topic, std_msgs.msg.String, self.callback, queue_size=1)
-        rospy.Subscriber("/amigo/trigger", std_msgs.msg.String, self.callback, queue_size=1)
+        rospy.Subscriber(topic, std_msgs.msg.String, self.callback, queue_size=1)
 
         rospy.loginfo('topic: /%s', topic)
         rospy.loginfo('rate:  %d Hz', self.rate)
@@ -446,6 +444,7 @@ class FindObjectOnFurniture(smach.State):
 
         print "entity_ids are :", entity_ids
 
+
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
         id_list = [] # List with entities that are flagged with 'perception'                
         for entity_id in entity_ids:
@@ -632,7 +631,7 @@ class ChangeFlag(smach.State):
 ############################## gui callback state machine #####################
 class GuiCallCallback(smach.StateMachine):
 
-    def __init__(self, robot, flags=[]):
+    def __init__(self, robot):
 
         #update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []
 
@@ -702,7 +701,7 @@ class GuiCallCallback(smach.StateMachine):
 
             # Flag entity to dynamic
             smach.StateMachine.add('FLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=flags),
+                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION',
                                                     'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
 
@@ -719,7 +718,7 @@ class GuiCallCallback(smach.StateMachine):
                                                     'failed'            : 'UNFLAG_DYNAMIC'})
 
             smach.StateMachine.add('UNFLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=flags),
+                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=['dynamic']),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION2',
                                                     'failed'            : 'GOTO_LOCATION2'})
 
@@ -794,31 +793,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('HANDLE_GUI_CALL',
                                 GuiCallCallback(robot),
-                                transitions={   'succeeded'         :   'EXPLORE_2',
-                                                'failed'            :   'SAY_FAILURE_2'})
-
-        smach.StateMachine.add('EXPLORE_2',
-                                ExploreScenario(robot),
-                                transitions={   'done'              :   'HANDLE_GUI_CALL_DYNAMIC',
-                                                'call_received'     :   'SAY_RECEIVED_CALL_2',
-                                                'shutdown_received' :   'SAY_GOTO_EXIT'})
-
-        smach.StateMachine.add('SAY_RECEIVED_CALL_2',
-                                states.Say(robot, ["My operator called me, I better go and see what he wants"], block=False),
-                                transitions={   'spoken'            :   'HANDLE_GUI_CALL_DYNAMIC'})
-
-        smach.StateMachine.add('HANDLE_GUI_CALL_DYNAMIC',
-                                GuiCallCallback(robot, flags=['dynamic']),
-                                transitions={   'succeeded'         :   'EXPLORE_2',
-                                                'failed'            :   'SAY_FAILURE_2'})
+                                transitions={   'succeeded'         :   'EXPLORE',
+                                                'failed'            :   'SAY_FAILURE'})
 
         smach.StateMachine.add('SAY_FAILURE',
                                 states.Say(robot, ["Something went wrong, I'll go and explore some more"], block=False),
                                 transitions={   'spoken'            :   'EXPLORE'})
-
-        smach.StateMachine.add('SAY_FAILURE_2',
-                                states.Say(robot, ["Something went wrong, I'll go and explore some more"], block=False),
-                                transitions={   'spoken'            :   'EXPLORE_2'})
 
         smach.StateMachine.add('SAY_GOTO_EXIT',
                                 states.Say(robot, ["My work here is done, I'm leaving"], block=False),
