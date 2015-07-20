@@ -14,7 +14,7 @@ import smach_ros
 
 import wakemeup_states as wakeStates
 from ed.msg import EntityInfo
-from robot_smach_states.util.designators import Designator, VariableDesignator, EdEntityDesignator, ArmDesignator, LockingDesignator
+from robot_smach_states.util.designators import *
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
