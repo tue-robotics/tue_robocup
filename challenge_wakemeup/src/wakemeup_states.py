@@ -612,101 +612,101 @@ class ScanTableTop(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-class EmptySpotDesignator(Designator):
-    """Designates an empty spot on the empty placement-shelve.
-    It does this by queying ED for entities that occupy some space.
-        If the result is no entities, then we found an open spot."""
-    def __init__(self, robot, closet_designator):
-        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
-        self.robot = robot
-        self.closet_designator = closet_designator
-        self._edge_distance = 0.1                   # Distance to table edge
-        self._spacing = 0.15
+# class EmptySpotDesignator(Designator):
+#     """Designates an empty spot on the empty placement-shelve.
+#     It does this by queying ED for entities that occupy some space.
+#         If the result is no entities, then we found an open spot."""
+#     def __init__(self, robot, closet_designator):
+#         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
+#         self.robot = robot
+#         self.closet_designator = closet_designator
+#         self._edge_distance = 0.1                   # Distance to table edge
+#         self._spacing = 0.15
 
-    def resolve(self):
-        closet = self.closet_designator.resolve()
+#     def resolve(self):
+#         closet = self.closet_designator.resolve()
 
-        # points_of_interest = []
-        points_of_interest = self.determinePointsOfInterest(closet)
+#         # points_of_interest = []
+#         points_of_interest = self.determinePointsOfInterest(closet)
 
-        def is_poi_occupied(poi):
-            entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
-            return not any(entities_at_poi)
+#         def is_poi_occupied(poi):
+#             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
+#             return not any(entities_at_poi)
 
-        open_POIs = filter(is_poi_occupied, points_of_interest)
+#         open_POIs = filter(is_poi_occupied, points_of_interest)
 
-        def distance_to_poi_area(poi):
-            #Derived from navigate_to_place
-            radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-            x = poi.point.x
-            y = poi.point.y
-            ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
-            ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-            pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
+#         def distance_to_poi_area(poi):
+#             #Derived from navigate_to_place
+#             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
+#             x = poi.point.x
+#             y = poi.point.y
+#             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
+#             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
+#             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
 
-            plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
+#             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
 
-            distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
-            if plan_to_poi:
-                distance = len(plan_to_poi)
-            print "Distance: %s"%distance
-            return distance
+#             distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
+#             if plan_to_poi:
+#                 distance = len(plan_to_poi)
+#             print "Distance: %s"%distance
+#             return distance
 
-        if any(open_POIs):
-            best_poi = min(open_POIs, key=distance_to_poi_area)
-            placement = msgs.PoseStamped(pointstamped=best_poi)
-            rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
-            return placement
-        else:
-            rospy.logerr("Could not find an empty spot")
-            return None
+#         if any(open_POIs):
+#             best_poi = min(open_POIs, key=distance_to_poi_area)
+#             placement = msgs.PoseStamped(pointstamped=best_poi)
+#             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+#             return placement
+#         else:
+#             rospy.logerr("Could not find an empty spot")
+#             return None
 
 
-    def determinePointsOfInterest(self, e):
+#     def determinePointsOfInterest(self, e):
 
-        points = []
+#         points = []
 
-        x = e.pose.position.x
-        y = e.pose.position.y
+#         x = e.pose.position.x
+#         y = e.pose.position.y
 
-        if len(e.convex_hull) == 0:
-            rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
-            return []
+#         if len(e.convex_hull) == 0:
+#             rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
+#             return []
 
-        ''' Convert convex hull to map frame '''
-        center_pose = poseMsgToKdlFrame(e.pose)
-        ch = []
-        for point in e.convex_hull:
-            p = pointMsgToKdlVector(point)
-            p = center_pose * p
-            ch.append(p)
+#         ''' Convert convex hull to map frame '''
+#         center_pose = poseMsgToKdlFrame(e.pose)
+#         ch = []
+#         for point in e.convex_hull:
+#             p = pointMsgToKdlVector(point)
+#             p = center_pose * p
+#             ch.append(p)
 
-        ''' Loop over hulls '''
-        ch.append(ch[0])
-        for i in xrange(len(ch) - 1):
-                dx = ch[i+1].x() - ch[i].x()
-                dy = ch[i+1].y() - ch[i].y()
-                length = math.hypot(dx, dy)
+#         ''' Loop over hulls '''
+#         ch.append(ch[0])
+#         for i in xrange(len(ch) - 1):
+#                 dx = ch[i+1].x() - ch[i].x()
+#                 dy = ch[i+1].y() - ch[i].y()
+#                 length = math.hypot(dx, dy)
 
-                d = self._edge_distance
-                while d < (length-self._edge_distance):
+#                 d = self._edge_distance
+#                 while d < (length-self._edge_distance):
 
-                    ''' Point on edge '''
-                    xs = ch[i].x() + d/length*dx
-                    ys = ch[i].y() + d/length*dy
+#                     ''' Point on edge '''
+#                     xs = ch[i].x() + d/length*dx
+#                     ys = ch[i].y() + d/length*dy
 
-                    ''' Shift point inwards and fill message'''
-                    ps = gm.PointStamped()
-                    ps.header.frame_id = "/map"
-                    ps.point.x = xs - dy/length * self._edge_distance
-                    ps.point.y = ys + dx/length * self._edge_distance
-                    ps.point.z = e.pose.position.z + e.z_max
-                    points.append(ps)
+#                     ''' Shift point inwards and fill message'''
+#                     ps = gm.PointStamped()
+#                     ps.header.frame_id = "/map"
+#                     ps.point.x = xs - dy/length * self._edge_distance
+#                     ps.point.y = ys + dx/length * self._edge_distance
+#                     ps.point.z = e.pose.position.z + e.z_max
+#                     points.append(ps)
 
-                    # ToDo: check if still within hull???
-                    d += self._spacing
+#                     # ToDo: check if still within hull???
+#                     d += self._spacing
 
-        return points
+#         return points
 
 # ----------------------------------------------------------------------------------------------------
 
