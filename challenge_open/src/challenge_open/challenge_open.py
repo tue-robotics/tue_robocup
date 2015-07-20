@@ -442,6 +442,7 @@ class FindObjectOnFurniture(smach.State):
         ''' Enable kinect segmentation plugin (only one image frame) '''
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
 
+        print "entity_ids are :", entity_ids
 
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
         id_list = [] # List with entities that are flagged with 'perception'                
@@ -452,6 +453,13 @@ class FindObjectOnFurniture(smach.State):
                 # ToDo: filter on size in x, y, z
                 # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                 id_list.append(e.id)
+                print "yes appended"
+
+            print "e.type, size(e), min_entity_height(e), max_width(e):"
+            print e.type
+            print size(e)
+            print min_entity_height(e)
+            print max_width(e)
 
         # ToDo: add weight function???
         if len(id_list) > 0:
