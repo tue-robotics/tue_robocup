@@ -90,9 +90,15 @@ class WakeMeUp(smach.StateMachine):
 
         # ------------------------ INITIALIZATIONS ------------------------
 
-        initial_ed_config = {'kinect_segmentation_continuous_mode':True, 'perception_continuous_mode':False, 'disabled_plugins':[]}
+        ed_config1 = {  'kinect_segmentation_continuous_mode':True, 
+                        'perception_continuous_mode':False, 
+                        'disabled_plugins':[]}
 
-        armDesignator = LockingDesignator(ArmDesignator(robot.arms))
+        ed_config2 = {  'kinect_segmentation_continuous_mode':False,
+                        'perception_continuous_mode':False,
+                        'disabled_plugins':[]}
+
+        armDesignator = LockingDesignator(ArmDesignator(robot.arms,robot.rightArm))
 
         # Waking up the operator
         bed_des = EdEntityDesignator(robot, id=knowledge.bed)
@@ -135,14 +141,18 @@ class WakeMeUp(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'GET_NEWSPAPER',
-                                    states.HandoverFromHuman(robot, armDesignator, grabbed_entity_label="newspaper", timeout=knowledge.get_newspaper_timeout),
+                                    wakeStates.SensedHandoverFromHuman(robot, armDesignator, grabbed_entity_label="newspaper", timeout=knowledge.get_newspaper_timeout),
                                     transitions={   'succeeded':'INITIALIZE',
                                                     'failed'   :'INITIALIZE'})
 
             smach.StateMachine.add( 'INITIALIZE',
-                                    wakeStates.Initialize(robot,initial_ed_config),
+                                    states.Initialize(robot),
                                     transitions={   'initialized':'START_CHALLENGE',
-                                                    'abort':'START_CHALLENGE'})
+                                                    'abort':'RECONFIGURE_ED1'})
+
+            smach.StateMachine.add( 'RECONFIGURE_ED1',
+                                    wakeStates.ConfigureEd(robot,configuration=ed_config1),
+                                    transitions={   'done':'START_CHALLENGE'})
 
             smach.StateMachine.add( 'START_CHALLENGE',
                                     states.StartChallengeRobust(robot, knowledge.initial_pose),
@@ -218,7 +228,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'spoken'    :'HANDOVER_NEWSPAPER'})
 
                 smach.StateMachine.add( "HANDOVER_NEWSPAPER",
-                                        states.HandoverToHuman(robot, armDesignator, timeout=knowledge.give_newspaper_timeout),
+                                        wakeStates.SensedHandoverToHuman(robot, armDesignator, timeout=knowledge.give_newspaper_timeout),
                                         transitions={   'succeeded' :'container_succeeded',
                                                         'failed'    :'container_succeeded'})
 
@@ -229,7 +239,11 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'CANCEL_HEAD_GOALS_1',
                                     wakeStates.CancelHeadGoals(robot),
-                                    transitions={    'done':'TAKE_ORDER_CONTAINER'})
+                                    transitions={    'done':'RECONFIGURE_ED2'})
+
+            smach.StateMachine.add( 'RECONFIGURE_ED2',
+                                    wakeStates.ConfigureEd(robot,configuration=ed_config2),
+                                    transitions={   'done':'TAKE_ORDER_CONTAINER'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
