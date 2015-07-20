@@ -1154,7 +1154,7 @@ class PlaceGrabbed(smach.State):
         place_position = EmptySpotDesignator(self.robot, place_pose_ent)
         arm_with_item_designator = ArmDesignator(self.robot.arms, self.robot.leftArm)
 
-        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot_name), place_pose=place_position ,arm=arm_with_item_designator)
+        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot,id=ITEM), place_pose=place_position ,arm=arm_with_item_designator)
         result = placestate.execute()
 
         if result == 'done':
