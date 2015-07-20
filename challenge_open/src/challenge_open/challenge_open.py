@@ -747,23 +747,23 @@ def setup_statemachine(robot):
                                 transitions={   'done'              : 'LOOKAT_FIRST_ITEM'})
 
         smach.StateMachine.add('LOOKAT_FIRST_ITEM',
-                                LookBaseLinkPoint(robot=robot, x=1.0, y=0.0, z=0.0, timeout=2.5, waittime=1.0),
+                                LookBaseLinkPoint(robot=robot, x=1.0, y=0.0, z=1.0, timeout=2.5, waittime=1.0),
                                 transitions={   'succeeded'         : 'TAKE_FIRST_SNAPSHOT',
                                                 'failed'            : 'TAKE_FIRST_SNAPSHOT'})
 
         smach.StateMachine.add('TAKE_FIRST_SNAPSHOT',
                                 TakeSnapShot(robot),
-                                transitions={   'succeeded'         : 'WAIT_FOR_EXPLORE_COMMAND',
-                                                'failed'            : 'WAIT_FOR_EXPLORE_COMMAND'})
+                                transitions={   'succeeded'         : 'EXPLORE',
+                                                'failed'            : 'EXPLORE'})
 
-        smach.StateMachine.add('WAIT_FOR_EXPLORE_COMMAND',
-                                states.WaitForTrigger(robot=robot, triggers=['explore'], topic="/"+robot.robot_name+"/trigger", rate=1.0),
-                                transitions={   'explore'           : 'SAY_EXPLORE',
-                                                'preempted'         : 'SAY_EXPLORE'})
+        #smach.StateMachine.add('WAIT_FOR_EXPLORE_COMMAND',
+        #                        states.WaitForTrigger(robot=robot, triggers=['explore'], topic="/"+robot.robot_name+"/trigger", rate=1.0),
+        #                        transitions={   'explore'           : 'SAY_EXPLORE',
+        #                                        'preempted'         : 'SAY_EXPLORE'})
 
-        smach.StateMachine.add('SAY_EXPLORE',
-                                states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
-                                transitions={   'spoken'            : 'EXPLORE'})
+        #smach.StateMachine.add('SAY_EXPLORE',
+        #                        states.Say(robot, ["I do not have much knowledge about this room, I better go and explore it"], block=False),
+        #                        transitions={   'spoken'            : 'EXPLORE'})
 
         smach.StateMachine.add('EXPLORE',
                                 ExploreScenario(robot),
