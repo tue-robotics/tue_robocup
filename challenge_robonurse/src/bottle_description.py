@@ -250,11 +250,11 @@ class DescribeBottles(smach.State):
         try:
             filename = save_entity_image_to_file(self.robot.ed, bottle_entity.id, most_probable_color)
             
-            try:
-                #Analyze the image and return the dominant color
-                most_probable_color = analyze(Image.open(filename)) 
-            except Exception, e:
-                rospy.logwarn("Could not get the dominant color in {}".format(filename))
+            # try:
+            #     #Analyze the image and return the dominant color
+            #     most_probable_color = analyze(Image.open(filename)) 
+            # except Exception, e:
+            #     rospy.logwarn("Could not get the dominant color in {}".format(filename))
 
             rospy.loginfo("{} has color {}".format(filename, most_probable_color))
         except Exception, e:
