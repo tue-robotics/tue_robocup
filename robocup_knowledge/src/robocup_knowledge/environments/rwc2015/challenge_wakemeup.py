@@ -32,7 +32,7 @@ bed_nav_goal = {
 
 default_milk = "pure_milk"
 default_cereal = "coconut_cereals"
-default_fruit = "lemon"
+default_fruit = "apple"
 
 
 # TODO: in front of?

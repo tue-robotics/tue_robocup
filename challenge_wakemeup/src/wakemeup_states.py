@@ -314,7 +314,7 @@ class ConfirmOrder(smach.State):
     def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "ConfirmOrder" + bcolors.ENDC
 
-        self.robot.speech.speak("I understand you want a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Is that correct?", block=True)
+        self.robot.speech.speak("I understand you want an " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Is that correct?", block=True)
 
         return 'done'
 
@@ -392,7 +392,7 @@ class LookAtBedTop(smach.State):
         # TODO maybe look around a bit to make sure the vision covers the whole bed top
 
         # look at bed top
-        headGoal = msgs.PointStamped(x=self.entity.pose.position.x, y=self.entity.pose.position.y, z=self.entity.pose.position.z+self.entity.z_max, frame_id="/map")
+        headGoal = msgs.PointStamped(x=self.entity.pose.position.x, y=self.entity.pose.position.y, z=knowledge.matress_height, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
         return 'succeeded'
