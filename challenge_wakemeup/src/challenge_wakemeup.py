@@ -146,11 +146,6 @@ class WakeMeUp(smach.StateMachine):
         # ------------------------ STATE MACHINE ------------------------
 
         with self:
-            smach.StateMachine.add( 'GET_NEWSPAPER',
-                                    wakeStates.SensedHandoverFromHuman(robot, armDesignator, grabbed_entity_label="newspaper", timeout=knowledge.get_newspaper_timeout),
-                                    transitions={   'succeeded':'INITIALIZE',
-                                                    'failed'   :'INITIALIZE'})
-
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
                                     transitions={   'initialized':'RECONFIGURE_ED1',
