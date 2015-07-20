@@ -17,8 +17,8 @@ operator_waypoint_id = "operator_pose"
 exit_waypoint_id = "exit"
 
 # Human robot interactions
-object_options = ['coke','pringles','choco_sticks','beer','juice','tea','coffee']
-speech_spec = '(Can you give me a <object> from the <location>)|(Bring me a <object> from the <location>)'
+# object_options = ['coke','pringles','choco_sticks','beer','juice','tea','coffee']
+speech_spec = '(Can you give me chips from the <location>)|(Bring me chips from the <location>)'
 
 ####################################### OLD ###################################
 # cabinet = "right_bookcase"

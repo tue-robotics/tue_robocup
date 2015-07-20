@@ -24,6 +24,30 @@ EXPLORATION_TARGETS = challenge_knowledge.exploration_targets
 
 TEST_GRASP_LOC = None
 
+##### For current item designator #####
+size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
+has_type = lambda entity: entity.type != ""
+min_height = lambda entity: entity.min_z > 0.3
+min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.1
+def max_width(entity):
+    max_bb_x = max(ch.x for ch in entity.convex_hull)
+    min_bb_x = min(ch.x for ch in entity.convex_hull)
+    max_bb_y = max(ch.y for ch in entity.convex_hull)
+    min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+    x_size = abs(max_bb_x - min_bb_x)
+    y_size = abs(max_bb_y - min_bb_y)
+
+    x_ok = 0.02 < x_size < 0.2
+    y_ok = 0.02 < y_size < 0.2
+
+    return x_ok and y_ok
+def weight_function(entity, robot):
+    # TODO: return x coordinate of entity.center_point in base_link frame
+    p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+    return p.x*p.x
+#####
+
 class ExplorationDesignator(EdEntityDesignator):
     """ Designator to determine the waypoint where the robot should go in its exploration phase 
         if no interesting point of interest is found
@@ -219,7 +243,13 @@ class ExploreScenario(smach.StateMachine):
                                     states.NavigateToObserve(robot=robot, entity_designator=poi_designator, radius = radius),
                                     transitions={   'arrived'           : 'LOOK_AT_OBJECT',
                                                     'unreachable'       : 'GOTO_POINT_OF_INTEREST',
-                                                    'goal_not_defined'  : 'GOTO_HARDCODED_WAYPOINT'})
+                                                    'goal_not_defined'  : 'WAIT_FOR_POI'})
+
+            ''' Wait for POI '''
+            smach.StateMachine.add('WAIT_FOR_POI',
+                                    states.Wait_time(waittime=1.0),
+                                    transitions={   'waited'            : 'GOTO_POINT_OF_INTEREST',
+                                                    'preempted'         : 'GOTO_POINT_OF_INTEREST'})
 
             ''' Look at thing (choose either of the two options below (second one not yet operational) '''
             smach.StateMachine.add("LOOK_AT_OBJECT",
@@ -236,18 +266,18 @@ class ExploreScenario(smach.StateMachine):
                                     transitions={   'succeeded'                 :'CHECK_TRIGGER',
                                                     'failed'                    :'CHECK_TRIGGER'})
 
-            ''' Backup: if no point of interest: go to hardcoded waypoint '''
-            smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
-                                    states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
-                                    transitions={   'arrived'           : 'LOOK_UP',
-                                                    'unreachable'       : 'LOOK_UP',
-                                                    'goal_not_defined'  : 'done'})
+            # ''' Backup: if no point of interest: go to hardcoded waypoint '''
+            # smach.StateMachine.add('GOTO_HARDCODED_WAYPOINT',
+            #                         states.NavigateToWaypoint(robot=robot, waypoint_designator=exploration_target_designator, radius = 0.15),
+            #                         transitions={   'arrived'           : 'LOOK_UP',
+            #                                         'unreachable'       : 'LOOK_UP',
+            #                                         'goal_not_defined'  : 'done'})
 
-            ''' If arrived at a waypoint, look up '''
-            smach.StateMachine.add("LOOK_UP",
-                                    LookBaseLinkPoint(robot, x=10.0, y=0, z=1.5, timeout=5.0, waittime=3.0),
-                                    transitions={   'succeeded'         : 'CHECK_TRIGGER',
-                                                    'failed'            : 'CHECK_TRIGGER'})
+            # ''' If arrived at a waypoint, look up '''
+            # smach.StateMachine.add("LOOK_UP",
+            #                         LookBaseLinkPoint(robot, x=10.0, y=0, z=1.5, timeout=5.0, waittime=3.0),
+            #                         transitions={   'succeeded'         : 'CHECK_TRIGGER',
+            #                                         'failed'            : 'CHECK_TRIGGER'})
 
 ####################################  STATES FOR GUI CALLBACK ####################################################333
 class ConversationWithOperator(smach.State):
@@ -256,7 +286,7 @@ class ConversationWithOperator(smach.State):
         self.robot = robot
         # Designator where to look for the object
         self.furniture_designator = furniture_designator 
-        # Object designator
+        # Object designator (obsolete)
         self.object_designator = object_designator
 
     def execute(self, userdata):
@@ -272,7 +302,7 @@ class ConversationWithOperator(smach.State):
         furniture_list = {e:e.type.split('/')[-1].replace("_"," ") for e in entities if 'furniture' in e.flags}
 
         # Listen to result
-        speech_options = {'object':challenge_knowledge.object_options, 'location': furniture_list.values()}
+        speech_options = {'location': furniture_list.values()}
         res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(10.0))
 
         # res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
@@ -288,17 +318,16 @@ class ConversationWithOperator(smach.State):
                 return "succeeded"
             else:
                 return "failed"
-        elif not ('object' in res.choices and 'location' in res.choices):
-            rospy.logerr('Speech result does not contain either location or object')
+        elif not ('location' in res.choices):
+            rospy.logerr('Speech result does not contain either location')
             return 'failed'
         else:
-            obj = res.choices['object']
+            # obj = res.choices['object']
             loc = res.choices['location']
-            self.robot.speech.speak("All right, I will go to the {0} to grab the {1}".format(loc, obj), block=False)
+            self.robot.speech.speak("All right, I will go to the {0} to grab the chips".format(loc), block=False)
             for entity, stripped_type in furniture_list.iteritems():
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
-            self.object_designator.current = obj
             return 'succeeded'
 
 
@@ -355,7 +384,7 @@ class FindObjectOnFurniture(smach.State):
         smach.State.__init__(self, outcomes=['found', 'not_found', 'failed'])
         self.robot = robot
         self.location_designator = location_designator
-        self.object_designator = object_designator
+        self.object_designator = object_designator # (Obsolete)
         self.return_designator = return_designator
 
     def execute(self, userdate):
@@ -378,37 +407,44 @@ class FindObjectOnFurniture(smach.State):
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if e and onTopOff(e, location_entity) and not e.type:
+            if e and onTopOff(e, location_entity) and not e.type and size(e) and min_entity_height(e) and max_width(e):
                 # ToDo: filter on size in x, y, z
                 # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                 id_list.append(e.id)
 
-        ''' Try to classify the objects on the shelf '''
-        object_type = self.object_designator.resolve()
-        if object_type == None:
-            rospy.logerr('Object type not specified')
-            return 'failed'
-        entity_types = self.robot.ed.classify(ids=id_list, types=[object_type])
-
-        ########## Testmode ######
-        if TESTMODE:
-            if len(entity_types) > 0:
-                entity_types[0] = object_type
-        ###### End testmode ######3
-
-        ''' Zip the lists and sort '''
-        ziplist = zip(id_list, entity_types)
-        filterend_list = [z for z in ziplist if z[1] == object_type]
-
-        ''' If the filtered list is empty, the object has not been found '''
-        if len(filterend_list) == 0:
-            rospy.loginfo('No entities of type {0} found on the {1}'.format(object_type, location_entity.id))
+        # ToDo: add weight function???
+        if len(id_list) > 0:
+            self.return_designator.id = id_list[0]
+            return 'found'
+        else:
             return 'not_found'
 
-        ''' Else, set the id and return that the object has been found '''
-        if self.return_designator:
-            self.return_designator.id = ziplist[0][0]
-        return 'found'
+        # ''' Try to classify the objects on the shelf '''
+        # object_type = self.object_designator.resolve()
+        # if object_type == None:
+        #     rospy.logerr('Object type not specified')
+        #     return 'failed'
+        # entity_types = self.robot.ed.classify(ids=id_list, types=[object_type])
+
+        ########## Testmode ######
+        # if TESTMODE:
+        #     if len(entity_types) > 0:
+        #         entity_types[0] = object_type
+        ###### End testmode ######3
+
+        # ''' Zip the lists and sort '''
+        # ziplist = zip(id_list, entity_types)
+        # filterend_list = [z for z in ziplist if z[1] == object_type]
+
+        # ''' If the filtered list is empty, the object has not been found '''
+        # if len(filterend_list) == 0:
+        #     rospy.loginfo('No entities of type {0} found on the {1}'.format(object_type, location_entity.id))
+        #     return 'not_found'
+
+        # ''' Else, set the id and return that the object has been found '''
+        # if self.return_designator:
+        #     self.return_designator.id = ziplist[0][0]
+        # return 'found'
 
 
 ################### MANIPULATION STATE MACHINE ##########################################################
@@ -437,10 +473,10 @@ class ManipRecogSingleItem(smach.StateMachine):
             return onTopOff(entity, container_entity)
 
         # select the entity closest in x direction to the robot in base_link frame
-        def weight_function(entity):
-            # TODO: return x coordinate of entity.center_point in base_link frame
-            p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
-            return p.x*p.x
+        # def weight_function(entity):
+        #     # TODO: return x coordinate of entity.center_point in base_link frame
+        #     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+        #     return p.x*p.x
 
         # current_item = LockingDesignator(EdEntityDesignator(robot,
         #     criteriafuncs=[size, has_type, on_top, min_entity_height], weight_function=weight_function, debug=False))
@@ -530,15 +566,46 @@ class GuiCallCallback(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
         location_designator = VariableDesignator(resolve_type=EntityInfo)
-        object_designator = VariableDesignator(resolve_type=str)
+        
+        # object_designator = VariableDesignator(resolve_type=str)
+        def on_top(entity):
+            container_entity = pick_shelf.resolve()
+            return onTopOff(entity, container_entity)
+
+        def max_width(entity):
+            max_bb_x = max(ch.x for ch in entity.convex_hull)
+            min_bb_x = min(ch.x for ch in entity.convex_hull)
+            max_bb_y = max(ch.y for ch in entity.convex_hull)
+            min_bb_y = min(ch.y for ch in entity.convex_hull)
+
+            x_size = abs(max_bb_x - min_bb_x)
+            y_size = abs(max_bb_y - min_bb_y)
+
+            x_ok = 0.02 < x_size < 0.15
+            y_ok = 0.02 < y_size < 0.15
+
+            return x_ok and y_ok
+
+        # select the entity closest in x direction to the robot in base_link frame
+        def weight_function(entity):
+            # TODO: return x coordinate of entity.center_point in base_link frame
+            p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
+            return p.x*p.x
+
+        size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
+        min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.10
+
+        object_designator = LockingDesignator(EdEntityDesignator(robot,
+            criteriafuncs=[size, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
+        
+
         point = msgs.Point(0, 0, 0)
 
         ##### To start in a different state #####
         if not TEST_GRASP_LOC == None:
             smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
             location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
-            object_designator.current = 'coke'
-    #########################################
+        #########################################
 
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
