@@ -850,11 +850,11 @@ class SensedHandoverToHuman(smach.StateMachine):
 
             smach.StateMachine.add( 'OPEN_GRIPPER_ON_HANDOVER', 
                                     OpenGripperOnHandoverToHuman(robot, locked_arm, timeout=timeout),
-                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                    transitions={'succeeded'    :   'OPEN_GRIPPER_FALLBACK',
                                                  'failed'       :   'SAY_OPEN_GRIPPER_ANYWAY'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
-                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.CLOSE, timeout=0.0),
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.CLOSE, timeout=1.0),
                                     transitions={'succeeded'    :   'RESET_ARM',
                                                  'failed'       :   'RESET_ARM'})
 
@@ -863,7 +863,7 @@ class SensedHandoverToHuman(smach.StateMachine):
                                     transitions={   'spoken'    :'OPEN_GRIPPER_FALLBACK'})
 
             smach.StateMachine.add( 'OPEN_GRIPPER_FALLBACK', 
-                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=0.0),
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=1.0),
                                     transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
                                                  'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
 
