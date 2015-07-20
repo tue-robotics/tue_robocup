@@ -15,6 +15,7 @@ from robot_skills.util import msg_constructors as msgs
 from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
 from ed_sensor_integration.srv import GetPOIs, MakeSnapshot
+from visualization_msgs.msg import Marker
 
 from cb_planner_msgs_srvs.msg import *
 
@@ -47,6 +48,45 @@ def weight_function(entity, robot):
     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
     return p.x*p.x
 #####
+
+class StoreWaypoint(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self._robot = robot
+        self._pub = rospy.Publisher("/operator_waypoint", Marker, queue_size=1)
+
+    def execute(self, userdata):
+        # Stop the base
+        self._robot.base.local_planner.cancelCurrentPlan()
+
+        base_pose = self._robot.base.get_location()
+
+        m = Marker()
+        m.color.r = 1
+        m.color.a = 1
+        m.pose = base_pose.pose
+        m.header = base_pose.header
+        m.type = 0 #Arrow
+        m.scale.x = 1.0
+        m.scale.y = 0.2
+        m.scale.z = 0.2
+        m.action = 0
+        m.ns = "arrow"
+        self._pub.publish(m)
+        m.type = 9
+        m.text = "operator pose"
+        m.ns = "text"
+        m.pose.position.z = 0.5
+        self._pub.publish(m)
+
+        # Store waypoint in world model
+        print "\n\n\n\nCURRENT BASE POSE:\n\n\n"
+        print base_pose
+        print "\n\n\n"
+        self._robot.ed.update_entity(id=challenge_knowledge.operator_waypoint_id, posestamped=base_pose, type="waypoint")
+
+        return "done"
+
 
 class ExplorationDesignator(EdEntityDesignator):
     """ Designator to determine the waypoint where the robot should go in its exploration phase 
@@ -672,8 +712,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized'       : 'LOOKAT_FIRST_ITEM',
+                                transitions={   'initialized'       : 'STORE_OPERATOR_WAYPOINT',
                                                 'abort'             : 'Aborted'})
+
+        smach.StateMachine.add('STORE_OPERATOR_WAYPOINT',
+                                StoreWaypoint(robot),
+                                transitions={   'done'              : 'LOOKAT_FIRST_ITEM'})
 
         smach.StateMachine.add('LOOKAT_FIRST_ITEM',
                                 LookBaseLinkPoint(robot=robot, x=1.0, y=0.0, z=0.0, timeout=2.5, waittime=1.0),
