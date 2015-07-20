@@ -888,6 +888,8 @@ class OpenGripperOnHandoverToHuman(smach.State):
         self.robot = robot
         if check_resolve_type(arm_designator,Arm):
             self.arm_designator = arm_designator
+        else:
+            rospy.logerr("Arm designator does not resolve to Arm")
         self.timeout = timeout
 
     def execute(self,userdata):
