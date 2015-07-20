@@ -270,9 +270,10 @@ class ExploreScenario(smach.StateMachine):
             exploration_target_designator = ExplorationDesignator(robot)
             poi_designator = PoiDesignator(robot, radius)
 
+            # ToDo: remove shutdown request???
             ''' Determine what to do '''
             smach.StateMachine.add('CHECK_TRIGGER',
-                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name+"/trigger", rate = 100, timeout=0.1),
+                                    CheckCommand(robot=robot, triggers=['call_robot', 'exit_robot'], topic="/"+robot.robot_name+"/trigger", rate = 100, timeout=0.5),
                                     transitions={   'call_robot'        : 'call_received',
                                                     'exit_robot'        : 'shutdown_received',
                                                     'timeout'           : 'GOTO_POINT_OF_INTEREST',
@@ -283,19 +284,13 @@ class ExploreScenario(smach.StateMachine):
                                     states.NavigateToObserve(robot=robot, entity_designator=poi_designator, radius = radius),
                                     transitions={   'arrived'           : 'LOOK_AT_OBJECT',
                                                     'unreachable'       : 'GOTO_POINT_OF_INTEREST',
-                                                    'goal_not_defined'  : 'WAIT_FOR_POI'})
-
-            ''' Wait for POI '''
-            smach.StateMachine.add('WAIT_FOR_POI',
-                                    states.Wait_time(waittime=1.0),
-                                    transitions={   'waited'            : 'GOTO_POINT_OF_INTEREST',
-                                                    'preempted'         : 'GOTO_POINT_OF_INTEREST'})
+                                                    'goal_not_defined'  : 'CHECK_TRIGGER'})
 
             ''' Look at thing (choose either of the two options below (second one not yet operational) '''
             smach.StateMachine.add("LOOK_AT_OBJECT",
                                     LookBaseLinkPoint(robot, x=radius, y=0, z=1.0, timeout=5.0, waittime=3.0),
                                     transitions={   'succeeded'         : 'TAKE_SNAPSHOT',
-                                                    'failed'            : 'TAKE_SNAPSHOT'})
+                                                    'failed'            : 'TAKE_SNAPSHOT'}) # ToDo: update waittime???
             # smach.StateMachine.add("LOOK_AT_OBJECT",
             #                          states.LookAtEntity(robot, pick_shelf, keep_following=True),
             #                          transitions={  'succeeded'         : 'TAKE_SNAPSHOT'})
