@@ -434,7 +434,7 @@ class FindObjectOnFurniture(smach.State):
 
         cp = location_entity.pose.position
         self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,0.8,"/map"))
-        height = min(0.4, max(0.1, cp.z-0.55))
+        height = min(0.4, max(0.1, 0.8-0.55)) # 0.8 was cp.z
         self.robot.torso._send_goal([height], timeout=5.0)
 
         rospy.sleep(2)
