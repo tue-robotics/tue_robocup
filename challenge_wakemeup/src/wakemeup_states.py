@@ -151,9 +151,9 @@ class GetOrder(smach.State):
 
         choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
                                 "preposition" : ["and", "and a", "and an", "with a", "with a", "with", "a"],
-                                "item1" :       names_cereal + names_fruit + names_milk,
-                                "item2" :       names_cereal + names_fruit + names_milk,
-                                "item3" :       names_cereal + names_fruit + names_milk})
+                                "item1" :       [i.replace("_"," " for i in names_cereal + names_fruit + names_milk],
+                                "item2" :       [i.replace("_"," " for i in names_cereal + names_fruit + names_milk],
+                                "item3" :       [i.replace("_"," " for i in names_cereal + names_fruit + names_milk]})
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
@@ -165,21 +165,21 @@ class GetOrder(smach.State):
 
             # resolve words separatey since some of them might not have been caught
             try:
-                word_beginning = answer.resolve().choices["beginning"]
+                word_beginning = answer.resolve().choices["beginning"].replace(" ","_")
             except KeyError, ke:
                 print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
                 pass
 
             try:
-                word_item3 = answer.resolve().choices["item3"]
+                word_item3 = answer.resolve().choices["item3"].replace(" ","_")
             except KeyError, ke:
                 print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
                 pass
 
             try:
-                word_preposition = answer.resolve().choices["preposition"]
-                word_item1 = answer.resolve().choices["item1"]
-                word_item2 = answer.resolve().choices["item2"]
+                word_preposition = answer.resolve().choices["preposition"].replace(" ","_")
+                word_item1 = answer.resolve().choices["item1"].replace(" ","_")
+                word_item2 = answer.resolve().choices["item2"].replace(" ","_")
             except KeyError, ke:
                 print prefix + bcolors.FAIL + "KeyError resolving: " + str(ke) + bcolors.ENDC
                 pass
