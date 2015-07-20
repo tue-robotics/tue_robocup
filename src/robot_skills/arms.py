@@ -287,6 +287,7 @@ class Arm(object):
 
         try:
             rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
+            print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
             return True
         except(rospy.ROSException), e:
             rospy.logerr(e)
@@ -307,6 +308,7 @@ class Arm(object):
 
         try:
             rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
+            print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
             return True
         except(rospy.ROSException), e:
             rospy.logerr(e)

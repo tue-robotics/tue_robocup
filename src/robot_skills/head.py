@@ -8,12 +8,16 @@ from geometry_msgs.msg import Point, PointStamped
 import robot_skills.util.msg_constructors as msgs
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
+from ed_sensor_integration.srv import MakeSnapshot
+
 class Head():
     def __init__(self, robot_name):
         self._robot_name = robot_name
         self._ac_head_ref_action = actionlib.SimpleActionClient("/"+robot_name+"/head_ref/action_server",  HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
+
+        self.snapshot_srv = rospy.ServiceProxy('/%s/ed/make_snapshot'%robot_name, MakeSnapshot) 
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
@@ -45,6 +49,16 @@ class Head():
         else:
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")
             return False
+
+    def look_at_ground_in_front_of_robot(self, distance=2):
+        goal = PointStamped()
+        goal.header.stamp = rospy.Time.now()
+        goal.header.frame_id = "/"+self._robot_name+"/base_link"
+        goal.point.x = distance
+        goal.point.y = 0.0
+        goal.point.z = 0.0
+
+        return self.look_at_point(goal)
 
     def look_down(self, timeout=0):
         """
@@ -121,6 +135,23 @@ class Head():
     def __doneCallback(self, terminal_state, result):
         self._goal = None
         self._at_setpoint = False
+
+
+
+#######################################
+    # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
+    def take_snapshot(self, distance=10, timeout = 1.0):
+           
+        self.look_at_ground_in_front_of_robot(distance)
+        rospy.sleep(timeout)
+        rospy.loginfo("Taking snapshot")
+        res = self.snapshot_srv()
+
+        return res
+
+#######################################
+
+
 
 if __name__ == "__main__":
     rospy.init_node('amigo_head_executioner', anonymous=True)
