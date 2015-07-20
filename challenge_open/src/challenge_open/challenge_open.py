@@ -430,12 +430,15 @@ class FindObjectOnFurniture(smach.State):
             return 'failed'
 
         cp = location_entity.pose.position
-        self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,cp.z,"/map"))
+        self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,0.8,"/map"))
         height = min(0.4, max(0.1, cp.z-0.55))
         self.robot.torso._send_goal([height], timeout=5.0)
 
+        rospy.sleep(2)
+
         ''' Enable kinect segmentation plugin (only one image frame) '''
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
+
 
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
         id_list = [] # List with entities that are flagged with 'perception'                
@@ -539,7 +542,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_LOCATION",
                                    FindObjectOnFurniture(robot=robot, location_designator=location_designator, object_designator=object_designator, return_designator=current_item),
-                                   transitions={    'found'         : 'failed',
+                                   transitions={    'found'         : 'GRAB_ITEM', # hier stond 'failed' enig idee waarom Janno ? (Erik) ToDo:
                                                     'not_found'     : 'RESET_HEAD_FAILED',
                                                     'failed'        : 'RESET_HEAD_FAILED'})
 
@@ -718,6 +721,7 @@ class GuiCallCallback(smach.StateMachine):
                                     ManipRecogSingleItem(robot, location_designator=location_designator, object_designator=object_designator),
                                     transitions={   'succeeded'         : 'succeeded',
                                                     'failed'            : 'failed'})
+
 
 ############################## state machine #############################
 def setup_statemachine(robot):
