@@ -21,7 +21,6 @@ import visualization_msgs.msg
 
 import yaml
 
-from ed_sensor_integration.srv import GetPOIs, MakeSnapshot
 
 class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
@@ -58,8 +57,6 @@ class ED:
         self.navigation = Navigation(robot_name, tf_listener, wait_service)
 
         self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker, queue_size=10)
-
-        self.snapshot_srv = rospy.ServiceProxy('/%s/ed/make_snapshot'%robot_name, MakeSnapshot) 
 
     def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
         if isinstance(center_point, PointStamped):
@@ -301,12 +298,3 @@ class ED:
         return entities[0]
 
 
-#######################################
-    # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
-    def take_snapshot(self):
-        rospy.loginfo("Taking snapshot")
-        res = self.snapshot_srv()
-
-        return res
-
-#######################################
