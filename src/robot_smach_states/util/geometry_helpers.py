@@ -10,7 +10,7 @@ def isLeftOfLine(p, l):
 		p: geometry_msgs.Point
 		l: array of size two of geometry_msgs.Point. 
 		Note that only x and y are evaluated
-	""" 		
+	""" 
 	A = l[0]
 	B = l[1]
 	if ( (B.x() - A.x()) * (p.y() - A.y()) - (B.y() - A.y()) * (p.x() - A.x()) ) > 0:
@@ -30,10 +30,10 @@ def isPointInsideHull(p, chull):
 	ch = list(chull)
 
 	''' Loop over lines of chull '''
-	for i in xrange(len(ch) - 1):
-
+	for i in xrange(len(ch)):
+		j = (i+1)%len(ch)
 		''' Check whether the point is left of the line '''
-		if not isLeftOfLine(p, [ch[i], ch[i+1]]):
+		if not isLeftOfLine(p, [ch[i], ch[j]]):
 			return False
 
 	return True
@@ -50,15 +50,18 @@ def onTopOff(subject, container, ht=0.1):
 		return False
 
 	''' Second: turn points into KDL objects and offset '''
-	center_pose = poseMsgToKdlFrame(container.pose)
+	container_center_pose = poseMsgToKdlFrame(container.pose)
 	convex_hull = [] # Convex hull in map frame
 	for point in container.convex_hull:
 		p = pointMsgToKdlVector(point)
-		p = center_pose * p
-		convex_hull.append(p)
+		pf = kdl.Frame(kdl.Rotation(), p)
+		pf = pf * container_center_pose
+		point = kdl.Vector(pf.p)
+		convex_hull.append(point)
 
 	''' Third: check if center point of entity is within convex hull of container '''
-	if not isPointInsideHull(center_pose.p, convex_hull):
+	subject_center_pose = poseMsgToKdlFrame(subject.pose)
+	if not isPointInsideHull(subject_center_pose.p, convex_hull):
 		return False
 
 	subject_bottom = subject.pose.position.z+subject.z_min
