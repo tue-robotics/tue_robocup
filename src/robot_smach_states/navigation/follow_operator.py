@@ -150,7 +150,8 @@ class FollowOperator(smach.State):
 
     def execute(self, userdata):
         self._robot.head.close()
-        self._robot.torso.send_goal('reset', timeout=4.0)
+        if self._robot.robot_name == "amigo":
+            self._robot.torso.send_goal('reset', timeout=4.0)
 
         if not self._register_operator():
             self._robot.base.local_planner.cancelCurrentPlan()
