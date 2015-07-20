@@ -326,6 +326,8 @@ class ConversationWithOperator(smach.State):
 
     def execute(self, userdata):
 
+        self.robot.head.look_at_standing_person()
+
         # Ask what to to
         self.robot.speech.speak("What can I do for you?")
 
@@ -340,6 +342,7 @@ class ConversationWithOperator(smach.State):
         speech_options = {'location': furniture_list.values()}
         res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(15.0))
 
+        self.robot.head.cancel_goal()
         # res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
 
         # Put result in designators
@@ -542,7 +545,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_LOCATION",
                                    FindObjectOnFurniture(robot=robot, location_designator=location_designator, object_designator=object_designator, return_designator=current_item),
-                                   transitions={    'found'         : 'GRAB_ITEM', # hier stond 'failed' enig idee waarom Janno ? (Erik) ToDo:
+                                   transitions={    'found'         : 'GRAB_ITEM',
                                                     'not_found'     : 'RESET_HEAD_FAILED',
                                                     'failed'        : 'RESET_HEAD_FAILED'})
 
