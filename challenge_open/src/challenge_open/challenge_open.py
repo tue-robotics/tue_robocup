@@ -326,6 +326,8 @@ class ConversationWithOperator(smach.State):
 
     def execute(self, userdata):
 
+        self.robot.head.look_at_standing_person()
+
         # Ask what to to
         self.robot.speech.speak("What can I do for you?")
 
@@ -340,6 +342,7 @@ class ConversationWithOperator(smach.State):
         speech_options = {'location': furniture_list.values()}
         res = self.robot.ears.recognize(spec=challenge_knowledge.speech_spec, choices=speech_options, time_out=rospy.Duration(15.0))
 
+        self.robot.head.cancel_goal()
         # res = self.robot.ears.recognize(spec=challenge_knowledge.operator_object_spec, choices=challenge_knowledge.operator_object_choices, time_out = rospy.Duration(20))
 
         # Put result in designators
@@ -359,7 +362,7 @@ class ConversationWithOperator(smach.State):
         else:
             # obj = res.choices['object']
             loc = res.choices['location']
-            self.robot.speech.speak("All right, I will go to the {0} to grab the chips".format(loc), block=False)
+            self.robot.speech.speak("All right, I will go to the {0} to grab the object".format(loc), block=False)
             for entity, stripped_type in furniture_list.iteritems():
                 if stripped_type == loc:
                     self.furniture_designator.current = entity
@@ -430,12 +433,16 @@ class FindObjectOnFurniture(smach.State):
             return 'failed'
 
         cp = location_entity.pose.position
-        self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,cp.z,"/map"))
-        height = min(0.4, max(0.1, cp.z-0.55))
+        self.robot.head.look_at_point(msgs.PointStamped(cp.x,cp.y,0.8,"/map"))
+        height = min(0.4, max(0.1, 0.8-0.55)) # 0.8 was cp.z
         self.robot.torso._send_goal([height], timeout=5.0)
+
+        rospy.sleep(2)
 
         ''' Enable kinect segmentation plugin (only one image frame) '''
         entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
+
+        print "entity_ids are :", entity_ids
 
         ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
         id_list = [] # List with entities that are flagged with 'perception'                
@@ -446,6 +453,13 @@ class FindObjectOnFurniture(smach.State):
                 # ToDo: filter on size in x, y, z
                 # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                 id_list.append(e.id)
+                print "yes appended"
+
+            print "e.type, size(e), min_entity_height(e), max_width(e):"
+            print e.type
+            print size(e)
+            print min_entity_height(e)
+            print max_width(e)
 
         # ToDo: add weight function???
         if len(id_list) > 0:
@@ -539,7 +553,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             smach.StateMachine.add("INSPECT_LOCATION",
                                    FindObjectOnFurniture(robot=robot, location_designator=location_designator, object_designator=object_designator, return_designator=current_item),
-                                   transitions={    'found'         : 'failed',
+                                   transitions={    'found'         : 'GRAB_ITEM',
                                                     'not_found'     : 'RESET_HEAD_FAILED',
                                                     'failed'        : 'RESET_HEAD_FAILED'})
 
@@ -616,7 +630,7 @@ class ChangeFlag(smach.State):
 ############################## gui callback state machine #####################
 class GuiCallCallback(smach.StateMachine):
 
-    def __init__(self, robot):
+    def __init__(self, robot, flags=[]):
 
         #update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []
 
@@ -686,7 +700,7 @@ class GuiCallCallback(smach.StateMachine):
 
             # Flag entity to dynamic
             smach.StateMachine.add('FLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=['dynamic']),
+                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=flags),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION',
                                                     'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
 
@@ -703,7 +717,7 @@ class GuiCallCallback(smach.StateMachine):
                                                     'failed'            : 'UNFLAG_DYNAMIC'})
 
             smach.StateMachine.add('UNFLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=['dynamic']),
+                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=flags),
                                     transitions={   'succeeded'         : 'GOTO_LOCATION2',
                                                     'failed'            : 'GOTO_LOCATION2'})
 
@@ -718,6 +732,7 @@ class GuiCallCallback(smach.StateMachine):
                                     ManipRecogSingleItem(robot, location_designator=location_designator, object_designator=object_designator),
                                     transitions={   'succeeded'         : 'succeeded',
                                                     'failed'            : 'failed'})
+
 
 ############################## state machine #############################
 def setup_statemachine(robot):
@@ -777,12 +792,31 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('HANDLE_GUI_CALL',
                                 GuiCallCallback(robot),
-                                transitions={   'succeeded'         :   'EXPLORE',
-                                                'failed'            :   'SAY_FAILURE'})
+                                transitions={   'succeeded'         :   'EXPLORE_2',
+                                                'failed'            :   'SAY_FAILURE_2'})
+
+        smach.StateMachine.add('EXPLORE_2',
+                                ExploreScenario(robot),
+                                transitions={   'done'              :   'HANDLE_GUI_CALL_DYNAMIC',
+                                                'call_received'     :   'SAY_RECEIVED_CALL_2',
+                                                'shutdown_received' :   'SAY_GOTO_EXIT'})
+
+        smach.StateMachine.add('SAY_RECEIVED_CALL_2',
+                                states.Say(robot, ["My operator called me, I better go and see what he wants"], block=False),
+                                transitions={   'spoken'            :   'HANDLE_GUI_CALL_DYNAMIC'})
+
+        smach.StateMachine.add('HANDLE_GUI_CALL_DYNAMIC',
+                                GuiCallCallback(robot, flags=['dynamic']),
+                                transitions={   'succeeded'         :   'EXPLORE_2',
+                                                'failed'            :   'SAY_FAILURE_2'})
 
         smach.StateMachine.add('SAY_FAILURE',
                                 states.Say(robot, ["Something went wrong, I'll go and explore some more"], block=False),
                                 transitions={   'spoken'            :   'EXPLORE'})
+
+        smach.StateMachine.add('SAY_FAILURE_2',
+                                states.Say(robot, ["Something went wrong, I'll go and explore some more"], block=False),
+                                transitions={   'spoken'            :   'EXPLORE_2'})
 
         smach.StateMachine.add('SAY_GOTO_EXIT',
                                 states.Say(robot, ["My work here is done, I'm leaving"], block=False),
