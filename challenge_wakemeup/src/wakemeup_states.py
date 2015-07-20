@@ -78,21 +78,40 @@ def parseFoodType(item, got_fruit, got_cereal, got_milk):
     return None
 
 # ----------------------------------------------------------------------------------------------------
-    
-class Initialize(states.Initialize):
-    def __init__(self, robot=None, ed_configuration={}):
-        states.Initialize.__init__(self,robot)
+
+class ConfigureEd(smach.State):
+    def __init__(self, robot, configuration={},reset = None):
+        smach.State.__init__( self, outcomes=['done'])
         self.robot = robot
-        self.ed_configuration = ed_configuration
+
+        if type(configuration) == Designator:
+            if configuration.resolve_type == dict:
+                self.config = configuration.resolve()
+            else:
+                rospy.logerr("Configuration designator must resolve to a dict with the new ED configuration")
+        elif type(configuration) == dict:
+            self.config = configuration
+        else:
+            rospy.logerr("keyword argument 'configuration' must either be a dict with the new ED configuration, or a designator that resolves to such a dict")
+
+        if reset:
+            self.reset = reset
+        else:
+            self.reset = True
+            rospy.logwarn("[CONFIGURE ED] Keyword argument 'reset' not set, defaulting to 'True'. If you do not want to reset ed after reconfiguration, set to 'False'.")
 
     def execute(self, userdata):
-        outcome = states.Initialize.execute(self,userdata)
-        self.robot.ed.configure_kinect_segmentation(continuous=self.ed_configuration['kinect_segmentation_continuous_mode'])
-        self.robot.ed.configure_perception(continuous=self.ed_configuration['perception_continuous_mode'])
-        self.robot.ed.disable_plugins(plugin_names=[plugin for plugin in self.ed_configuration["disabled_plugins"]])
-        self.robot.ed.reset()
+        self.robot.ed.configure_kinect_segmentation(continuous=self.config['kinect_segmentation_continuous_mode'])
+        self.robot.ed.configure_perception(continuous=self.config['perception_continuous_mode'])
+        self.robot.ed.disable_plugins(plugin_names=[plugin for plugin in self.config["disabled_plugins"]])
 
-        return outcome
+        if self.reset:
+            self.robot.ed.reset()
+
+        return 'done'
+
+
+
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -151,9 +170,9 @@ class GetOrder(smach.State):
 
         choices = Designator({  "beginning" :   ["I want", "I would like", "a", "one"],
                                 "preposition" : ["and", "and a", "and an", "with a", "with a", "with", "a"],
-                                "item1" :       [i.replace("_"," " for i in names_cereal + names_fruit + names_milk],
-                                "item2" :       [i.replace("_"," " for i in names_cereal + names_fruit + names_milk],
-                                "item3" :       [i.replace("_"," " for i in names_cereal + names_fruit + names_milk]})
+                                "item1" :       [i.replace("_"," ") for i in names_cereal + names_fruit + names_milk],
+                                "item2" :       [i.replace("_"," ") for i in names_cereal + names_fruit + names_milk],
+                                "item3" :       [i.replace("_"," ") for i in names_cereal + names_fruit + names_milk]})
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
@@ -394,7 +413,6 @@ class LookIfSomethingsThere(smach.State):
 
         while rospy.Time.now() - self.start_time < self.timeout:
             if self.designator.resolve():
-                self.robot.ed.configure_kinect_segmentation(continuous=False)
                 return 'there'
             else:
                 rospy.sleep(self.sleep)
@@ -751,5 +769,158 @@ class NavigateToSymbolic(states.NavigateToSymbolic):
 
         return pc, oc
 
+
+# ----------------------------------------------------------------------------------------------------
+
+class SensedHandoverFromHuman(smach.StateMachine):
+    '''
+    State that enables low level grab reflex. Besides a robot object, needs 
+    an arm and an entity to grab, which is either one from ed through the 
+    grabbed_entity_designator or it is made up in the 
+    CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
+    as id. 
+    '''
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        check_type(arm_designator, Arm)
+        if not grabbed_entity_designator and grabbed_entity_label == "":
+            rospy.logerr("No grabbed entity label or grabbed entity designator given")
+
+        with self:
+            smach.StateMachine.add( "POSE", 
+                                    states.ArmToJointConfig(robot, arm_designator, "handover_to_human"),
+                                    transitions={   'succeeded':'OPEN_BEFORE_INSERT',
+                                                    'failed':'OPEN_BEFORE_INSERT'})
+
+            smach.StateMachine.add( 'OPEN_BEFORE_INSERT', 
+                                    states.SetGripper(robot, arm_designator, gripperstate='open'),
+                                    transitions={   'succeeded'    :   'SAY1',
+                                                    'failed'       :   'SAY1'})
+
+            smach.StateMachine.add( "SAY1", 
+                                    states.Say(robot,'Please hand over the object by pushing it gently in my gripper'),
+                                    transitions={'spoken':'CLOSE_AFTER_INSERT'})
+
+            smach.StateMachine.add( 'CLOSE_AFTER_INSERT', 
+                                    CloseGripperOnHandoverToRobot(  robot, 
+                                                                    arm_designator, 
+                                                                    grabbed_entity_label=grabbed_entity_label, 
+                                                                    grabbed_entity_designator=grabbed_entity_designator,
+                                                                    timeout=timeout),
+                                    transitions={   'succeeded'    :   'succeeded',
+                                                    'failed'       :   'failed'})
+
+# ----------------------------------------------------------------------------------------------------
+
+class SensedHandoverToHuman(smach.StateMachine):
+    def __init__(self, robot, arm_designator, timeout=10):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        #A designator can resolve to a different item every time its resolved. We don't want that here, so lock
+        check_type(arm_designator, Arm)
+        locked_arm = LockingDesignator(arm_designator)
+
+        with self:
+            smach.StateMachine.add( "LOCK_ARM",
+                                    states.LockDesignator(locked_arm),
+                                    transitions={'locked'         :'SPINDLE_MEDIUM'})
+
+            smach.StateMachine.add( "SPINDLE_MEDIUM",
+                                    states.ResetTorso(robot),
+                                    transitions={'done'         :'MOVE_HUMAN_HANDOVER_JOINT_GOAL'})
+
+            smach.StateMachine.add( "MOVE_HUMAN_HANDOVER_JOINT_GOAL",
+                                    states.ArmToJointConfig(robot, locked_arm, 'handover_to_human'),
+                                    transitions={ 'succeeded'   :'SAY_OPEN_GRIPPER',
+                                                  'failed'      :'SAY_OPEN_GRIPPER'})
+            
+            smach.StateMachine.add( "SAY_OPEN_GRIPPER",
+                                    states.Say(robot, [ "Please take it from my gripper"]),
+                                    transitions={   'spoken'    :'OPEN_GRIPPER_ON_HANDOVER'})
+
+            smach.StateMachine.add( 'OPEN_GRIPPER_ON_HANDOVER', 
+                                    OpenGripperOnHandoverToHuman(robot, locked_arm, timeout=timeout),
+                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                                 'failed'       :   'SAY_OPEN_GRIPPER_ANYWAY'})
+
+            smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.CLOSE, timeout=0.0),
+                                    transitions={'succeeded'    :   'RESET_ARM',
+                                                 'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add( "SAY_OPEN_GRIPPER_ANYWAY",
+                                    states.Say(robot, [ "Please take this from me now"]),
+                                    transitions={   'spoken'    :'OPEN_GRIPPER_FALLBACK'})
+
+            smach.StateMachine.add( 'OPEN_GRIPPER_FALLBACK', 
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=0.0),
+                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                                 'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+
+            smach.StateMachine.add( 'RESET_ARM',
+                                    states.ArmToJointConfig(robot, locked_arm, 'reset'),
+                                    transitions={'succeeded'    :'RESET_TORSO',
+                                                  'failed'      :'RESET_TORSO'   })
+
+            smach.StateMachine.add( 'RESET_TORSO',
+                                    states.ResetTorso(robot),
+                                    transitions={'done':'UNLOCK_ARM'})
+
+            smach.StateMachine.add( "UNLOCK_ARM",
+                                    states.UnlockDesignator(locked_arm),
+                                    transitions={'unlocked'         :'succeeded'})
+
+# ----------------------------------------------------------------------------------------------------
+
+class OpenGripperOnHandoverToHuman(smach.State):
+    def __init__(self, robot, arm_designator, timeout=10):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.arm_designator = arm_designator
+        self.timeout = timeout
+
+    def execute(self,userdata):
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        if arm.handover_to_human(self.timeout):
+            arm.occupied_by = None
+            return "succeeded"
+        else:
+            return "failed"
+
+# ----------------------------------------------------------------------------------------------------
+
+class CloseGripperOnHandoverToRobot(smach.State):
+    def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
+        smach.State.__init__(self, outcomes=['succeeded','failed'])
+        self.robot = robot
+        self.arm_designator = arm_designator
+        self.timeout = timeout
+
+    def execute(self,userdata):
+        arm = self.arm_designator.resolve()
+        if not arm:
+            rospy.logerr("Could not resolve arm")
+            return "failed"
+
+        if arm.handover_to_robot(self.timeout):
+            
+            if grabbed_entity_designator:
+                arm.occupied_by = grabbed_entity_designator
+            else:
+                if grabbed_entity_label != "":
+                    handed_entity = EntityInfo(id=grabbed_entity_label)
+                    arm.occupied = handed_entity
+                else:
+                    rospy.logerr("No grabbed entity designator and no label for dummy entity given")
+                    return "failed"
+
+            return "succeeded"
+        else:
+            return "failed"
 
 # ----------------------------------------------------------------------------------------------------
