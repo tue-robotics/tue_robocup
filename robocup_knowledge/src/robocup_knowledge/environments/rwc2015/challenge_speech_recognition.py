@@ -1,7 +1,7 @@
 choice_answer_mapping = {
 "Which German Count invented the zeppelin":"Count von Zeppelin",
 "Who was the first president of the USA":"George Washington",
-"In ancient China what meat was reserved for the Emperor":"Pork",
+"What meat was reserved for the Emperor":"Pork",
 "In which city was the Titanic built":"Belfast",
 "How many children did Queen Victoria have":"Nine children",
 "Which French king was called the Sun King":"Louis the forteenth",
