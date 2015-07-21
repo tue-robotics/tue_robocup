@@ -69,10 +69,13 @@ class StoreGrannyPose(smach.State):
     def execute(self, userdata):
         # Hardcoded center pointS!!!
         table_centerpoint = gm.Point(3.12, -6.725, 0.0)
-        possible_humans = self.robot.get_closest_possible_person_entity(type="", center_point=table_centerpoint)
+        possible_humans = self.robot.ed.get_closest_possible_person_entity(type="", center_point=table_centerpoint)
         self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
 
-        amigo.head.look_at_ground_in_front_of_robot(60)
+        self.robot.head.look_at_ground_in_front_of_robot(60)
+
+        if not possible_humans:
+            return 'failed'
 
         if len(possible_humans) == 0:
             rospy.logwarn("No possible_humans found")
