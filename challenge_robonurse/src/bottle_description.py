@@ -173,8 +173,8 @@ class DescribeBottles(smach.State):
         # import ipdb; ipdb.set_trace()
         descriptions = self.describe_relative(descriptions)
 
-        self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
-        self.robot.speech.speak("From left to right, I have a")
+        # self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
+        self.robot.speech.speak("I see ")
         for bottle, desc in descriptions.iteritems():
 
             desc_sentence = ""
@@ -200,7 +200,7 @@ class DescribeBottles(smach.State):
             
             rospy.loginfo("Description for {0} = {1} ({2})".format(bottle.id, desc_sentence, desc))
             self.robot.speech.speak(desc_sentence)
-        self.robot.speech.speak("Which do you want?")
+        self.robot.speech.speak("Which pills do you want?")
 
         colors = set([desc.color for desc in descriptions.values() if desc.color])
         height_descs = set([desc.height_description for desc in descriptions.values() if desc.height_description])
