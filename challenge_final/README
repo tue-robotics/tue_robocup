@@ -1,4 +1,8 @@
-PREPARATION
+--------------------------------------------------------------------------------------------
+    PREPARATION
+--------------------------------------------------------------------------------------------
+
+  [0:00]
 
   - Make sure the RoboEarth router is correctly positioned
   - Max and Janno put AMIGO and SERGIO side-by-side in the furthest living room corner
@@ -15,7 +19,9 @@ PREPARATION
 
   - Luis goes to the bedroom, and stays there
 
-SCENARIO:
+--------------------------------------------------------------------------------------------
+    SCENARIO
+--------------------------------------------------------------------------------------------
 
   [0:30] SERGIO stores AMIGO's initial pose in the world model 
 
@@ -61,4 +67,39 @@ SCENARIO:
 
          "Get me the object from X"
 
+--------------------------------------------------------------------------------------------
+    TODO PER PERSON
+--------------------------------------------------------------------------------------------
+
+  - Ramon: get bandwith check tool to work, responsible for GUI
+
+  - Max: testing
+
+  - Rokus: time query node, testing
+
+  - Luis: testing
+
+  - Erik: AMIGO executive
+      - When started, AMIGO automatically goes down, head down, (lights off)
+      - Can be triggered by topic (received from GUI)
+
+  - Janno: SERGIO executive
+      - SERGIO should always keep it's head straight, slightly looking down
+      - Must be able to cancel nav goals -> need snappy behavior
+
+  - Rein: robot-robot communication
+
+  - Sjoerd: visualization
+      - OpenCV GUI mimic 
+      - RViz-like visualization
+
+--------------------------------------------------------------------------------------------
+    NICE TO HAVES (DON'T FOCUS ON THIS, UNLESS ALL OF THE ABOVE IS DONE!)
+--------------------------------------------------------------------------------------------
+
+  - dynamic updates of objects. TODO's:
+    - Test and debug dynamic update (Sjoerd)
+    - Map filter (Sjoerd)
+  - following a person and fitting objects instead of GUI (?)
+  - paramaterized models (Sjoerd)
 
