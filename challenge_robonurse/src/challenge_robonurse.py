@@ -76,12 +76,12 @@ class StoreGrannyPose(smach.State):
         if not possible_humans:
             return 'failed'
 
-        if len(possible_humans) == 0:
-            rospy.logwarn("No possible_humans found")
-            return 'failed'
+        #if len(possible_humans) == 0:
+        #    rospy.logwarn("No possible_humans found")
+        #    return 'failed'
 
         # Granny is the first one
-        designator.current = possible_humans[0]
+        designator.current = possible_humans
 
         return 'succeeded'
 
