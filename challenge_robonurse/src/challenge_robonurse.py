@@ -697,8 +697,8 @@ def test_describe_pills(robot):
     described_bottle = ds.EdEntityDesignator(robot, debug=False) #ID will be decided by the description given by granny
     locked_described_bottle = ds.LockingDesignator(described_bottle)
 
-    lookat = states.LookAtEntity(robot, bottle_shelf, waittime=1.0)
-    lookat.execute(None)
+    # lookat = states.LookAtEntity(robot, bottle_shelf, waittime=1.0)
+    # lookat.execute(None)
 
     ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
     ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
