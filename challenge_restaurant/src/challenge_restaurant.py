@@ -248,13 +248,13 @@ class SpeakOrders(smach.State):
         sentence_final = ""
 
         if "beverage" in ORDERS:
-            sentence_beverage = "Table %s would like to have the beverage %s"%(ORDERS["beverage"]["location"], ORDERS["beverage"]["name"]
+            sentence_beverage = "Table %s would like to have the beverage %s"%(ORDERS["beverage"]["location"], ORDERS["beverage"]["name"])
         if "combo" in ORDERS:
             sentence_combo = "Table %s wants the combo %s"%(ORDERS["combo"]["location"], ORDERS["combo"]["name"])
 
         ''' add a COMA and an AND abetween sentences better understanding ''' 
         if "combo" in ORDERS and "beverage" in ORDERS:
-            sentence_final = sentence_beverage + ", and " sentence_combo
+            sentence_final = sentence_beverage + ", and " + sentence_combo
 
         self._robot.speech.speak(sentence_final)
 
@@ -364,7 +364,7 @@ def setup_statemachine(robot):
         # ############## Loop over the reset of the tables until we have a beverage and a combo ##############
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_1', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="one"), radius = 0.06),
                                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_1', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
-        smach.StateMachine.add('SAY_IF_ORDER_TABLE_1', states.Say(robot, {"Hello, are you ready to order?", "Would you like to order something?"}), 
+        smach.StateMachine.add('SAY_IF_ORDER_TABLE_1', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
                                 transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_1'})
         smach.StateMachine.add('HEAR_IF_ORDER_TABLE_1', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), 
                                 transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_2', 'yes':'ASK_ORDER_TABLE_1','no':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
@@ -374,7 +374,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="two"), radius = 0.06),
                                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_2', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
-        smach.StateMachine.add('SAY_IF_ORDER_TABLE_2', states.Say(robot, "Hello, are you ready to order?", "Would you like to order something?"), 
+        smach.StateMachine.add('SAY_IF_ORDER_TABLE_2', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
                                 transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_2'})
         smach.StateMachine.add('HEAR_IF_ORDER_TABLE_2', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), 
                                 transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_3', 'yes':'ASK_ORDER_TABLE_2','no':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
@@ -384,7 +384,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_3', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="three"), radius = 0.06),
                                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_3', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
-        smach.StateMachine.add('SAY_IF_ORDER_TABLE_3', states.Say(robot, "Hello, are you ready to order?", "Would you like to order something?"), 
+        smach.StateMachine.add('SAY_IF_ORDER_TABLE_3', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
                                 transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_3'})
         smach.StateMachine.add('HEAR_IF_ORDER_TABLE_3', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), 
                                 transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_1', 'yes':'ASK_ORDER_TABLE_3','no':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
