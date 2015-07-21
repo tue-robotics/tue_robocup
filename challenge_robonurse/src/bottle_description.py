@@ -310,11 +310,11 @@ class DescribeBottles(smach.State):
 
         for bottle, desc in descriptions.iteritems():
             if lm <= desc.position < lm_m:
-                descriptions[bottle].position_description = "left"
+                descriptions[bottle].position_description = "right"
             elif lm_m <= desc.position < m_rm:
                 descriptions[bottle].position_description = "middle"
             elif m_rm < desc.position <= rm:
-                descriptions[bottle].position_description = "right"
+                descriptions[bottle].position_description = "left"
 
 
         heights = [desc.height for desc in descriptions.values()]
