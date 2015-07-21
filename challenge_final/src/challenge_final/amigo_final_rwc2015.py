@@ -23,6 +23,8 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 from visualization_msgs.msg import Marker, MarkerArray
 
+import timer_states as timer
+
 #import data
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
@@ -350,8 +352,6 @@ def setup_statemachine(robot):
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
         ###################
-
-
 
     return sm
 
