@@ -220,8 +220,13 @@ class AskOrder(smach.State):
                     order = result.choices["beverage"]
                     ORDERS["beverage"] = { "location" : self._location, "name" : order }
                 elif "food1" and "food2" in result.choices:
-                    order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
-                    ORDERS["combo"] = { "location" : self._location, "name" : order }
+                    if result.choices["food1"] == result.choices["food2"]:
+                        self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
+                    else:
+                        order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
+                        ORDERS["combo"] = { "location" : self._location, "name" : order }
+            else:
+                self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
 
         self._robot.head.cancel_goal()
 
