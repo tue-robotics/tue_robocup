@@ -3,6 +3,7 @@
 import rospy
 import smach
 
+from visualization_msgs.msg import Marker
 from robot_smach_states.util.designators import check_resolve_type
 from ed.msg import EntityInfo
 from robot_skills.util import msg_constructors as geom
@@ -137,6 +138,7 @@ class DescribeBottles(smach.State):
         self.spec_designator = spec_designator
         self.choices_designator = choices_designator
         self.bottle_desc_mapping_designator = bottle_desc_mapping_designator
+        self._pub = rospy.Publisher("/bottles", Marker, queue_size=10)
 
     def execute(self, userdata=None):
         # self.robot.head.reset()
@@ -157,10 +159,28 @@ class DescribeBottles(smach.State):
 
         #TODO: Sort bottles by their Y-coord wrt base_link. We go from large to small, so the leftmost if first
         bottle_to_y_dict = {}
+        the_id = 0
+
+        m = Marker()
         for bottle in bottles:
             in_map = geom.PointStamped(point=bottle.pose.position, frame_id=bottle.id)
             in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
             bottle_to_y_dict[bottle] = in_base_link.y
+
+            the_id += 1
+
+            m.id = the_id
+            m.color.r = 1
+            m.color.a = 1
+            print in_map
+            m.pose.position = in_map.point
+            m.header.frame_id = "/map"
+            m.header.stamp = rospy.Time.now()
+            m.type = 2
+            m.scale.x = 0.1
+            m.scale.y = 0.1
+            m.scale.z = 0.1
+            self._pub.publish(m)
 
         sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
@@ -171,8 +191,8 @@ class DescribeBottles(smach.State):
         # import ipdb; ipdb.set_trace()
         descriptions = self.describe_relative(descriptions)
 
-        self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
-        self.robot.speech.speak("From left to right, I have a")
+        # self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
+        self.robot.speech.speak("I see ")
         for bottle, desc in descriptions.iteritems():
 
             desc_sentence = ""
@@ -198,12 +218,13 @@ class DescribeBottles(smach.State):
             
             rospy.loginfo("Description for {0} = {1} ({2})".format(bottle.id, desc_sentence, desc))
             self.robot.speech.speak(desc_sentence)
-        self.robot.speech.speak("Which do you want?")
+        self.robot.speech.speak("Which pills do you want?")
 
         colors = set([desc.color for desc in descriptions.values() if desc.color])
         height_descs = set([desc.height_description for desc in descriptions.values() if desc.height_description])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
         positions = set([desc.position_description for desc in descriptions.values() if desc.position_description])
+
         choices = {}
         if colors:
             choices["color"] = colors
@@ -289,11 +310,11 @@ class DescribeBottles(smach.State):
 
         for bottle, desc in descriptions.iteritems():
             if lm <= desc.position < lm_m:
-                descriptions[bottle].position_description = "left"
+                descriptions[bottle].position_description = "right"
             elif lm_m <= desc.position < m_rm:
                 descriptions[bottle].position_description = "middle"
             elif m_rm < desc.position <= rm:
-                descriptions[bottle].position_description = "right"
+                descriptions[bottle].position_description = "left"
 
 
         heights = [desc.height for desc in descriptions.values()]

@@ -37,6 +37,46 @@ tables = {1: "one", 2: "two", 3: "three"}
 #       - key "name" gets the value of the order, e.g. "banana and apple"
 ORDERS = {}
 
+WAYPOINT_RADIUS = 0.2
+
+class HearWhichTable(smach.State):
+    def __init__(self, robot, timeout = rospy.Duration(10), look_at_standing_person=True):
+        smach.State.__init__(self, outcomes=["one", "two", "three", "no_result"])
+        self._robot = robot
+        self._timeout = timeout
+        self.look_at_standing_person = look_at_standing_person
+
+    def execute(self, userdata):
+        if self.look_at_standing_person:
+            self._robot.head.look_at_standing_person()
+
+        answer = self._robot.ears.recognize("<option>", {"option":["one", "two", "three"]}, self._timeout)
+
+        if answer:
+            if answer.result:
+                if "option" in answer.choices:
+                    number = answer.choices["option"]
+                    robot.speech.speak("Table %s, is this correct?"%number)
+
+                    answer = self._robot.ears.recognize("<option>", {"option":["yes", "no"]}, self._timeout)
+
+                    if answer:
+                        if answer.result:
+                            if "option" in answer.choices:
+                                if answer.choices["option"] == "yes":
+                                    if self.look_at_standing_person:
+                                        self._robot.head.cancel_goal()
+                                    return number
+                    else:
+                        self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+        else:
+            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+
+        if self.look_at_standing_person:
+            self._robot.head.cancel_goal()
+
+        return "no_result"
+
 class HeadStraight(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
@@ -72,7 +112,7 @@ class StoreBeverageSide(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-        self._robot.speech.speak("Are the beverages on my left or on my right?")
+        self._robot.speech.speak("Is the bar on my left or on my right?")
 
         self._robot.head.look_at_standing_person()
         base_pose = self._robot.base.get_location()
@@ -199,26 +239,43 @@ class CheckInKitchen(smach.State):
             print "NO KITCHEN IN ED???"
         return "not_in_kitchen"
 
+class LookAtPersonSitting(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.look_at_ground_in_front_of_robot(3)
+
+        return 'done'
+
 class AskOrder(smach.State):
     def __init__(self, robot, location):
-        smach.State.__init__(self, outcomes=["next_order",'orders_done'])
+        smach.State.__init__(self, outcomes=['next_order','orders_done'])
 
         self._robot = robot
         self._location = location
 
     def execute(self, userdata):
-        self._robot.head.look_at_standing_person()
+        self._robot.head.look_at_ground_in_front_of_robot(3)
         self._robot.speech.speak("Which combo or beverage do you want?")
 
         order = None
         while not order:
             result = self._robot.ears.recognize(knowledge.order_spec, knowledge.order_choices)
-            if "beverage" in result.choices:
-                order = result.choices["beverage"]
-                ORDERS["beverage"] = { "location" : self._location, "name" : order }
-            elif "food1" and "food2" in result.choices:
-                order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
-                ORDERS["combo"] = { "location" : self._location, "name" : order }
+            if result:
+                if "beverage" in result.choices:
+                    order = result.choices["beverage"]
+                    ORDERS["beverage"] = { "location" : self._location, "name" : order }
+                elif "food1" and "food2" in result.choices:
+                    if result.choices["food1"] == result.choices["food2"]:
+                        self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
+                    else:
+                        order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
+                        ORDERS["combo"] = { "location" : self._location, "name" : order }
+            else:
+                self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
 
         self._robot.head.cancel_goal()
 
@@ -240,14 +297,27 @@ class SpeakOrders(smach.State):
 
     def execute(self, userdata):
         self._robot.head.look_at_standing_person()
-        self._robot.speech.speak("Here are the orders:")
+        self._robot.speech.speak("Mr. Barman I have some orders.")
+
+        sentence_combo = ""
+        sentence_beverage = ""
+        sentence_final = ""
+
+
         if "beverage" in ORDERS:
-            self._robot.speech.speak("Table %s would like to have the beverage %s"%(ORDERS["beverage"]["location"], ORDERS["beverage"]["name"]))
+            sentence_beverage = "Table %s would like to have the beverage %s"%(ORDERS["beverage"]["location"], ORDERS["beverage"]["name"])
+            sentence_final = sentence_beverage
         if "combo" in ORDERS:
-            self._robot.speech.speak("Table %s would like to have the combo %s"%(ORDERS["combo"]["location"], ORDERS["combo"]["name"]))
+            sentence_combo = "Table %s wants the combo %s"%(ORDERS["combo"]["location"], ORDERS["combo"]["name"])
+            sentence_final = sentence_combo
+
+        ''' add a COMA and an AND abetween sentences better understanding ''' 
+        if "combo" in ORDERS and "beverage" in ORDERS:
+            sentence_final = sentence_beverage + ", and " + sentence_combo
+
+        self._robot.speech.speak(sentence_final)
 
         self._robot.head.cancel_goal()
-
         return "spoken"
 
 class DeliverOrderWithBasket(smach.StateMachine):
@@ -271,16 +341,16 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                     transitions={'spoken'               :'AWAIT_PUT_ORDER_CONFIRMATION'})
 
             smach.StateMachine.add( 'AWAIT_PUT_ORDER_CONFIRMATION',
-                                    states.Wait_time(robot, 5),
+                                    states.Wait_time(robot, 8),
                                     transitions={   'waited'            :'GOTO_ORDER_DESTINATION_1',
                                                     'preempted'         :'failed'})
 
-            smach.StateMachine.add( 'GOTO_ORDER_DESTINATION_1', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = 0.06),
+            smach.StateMachine.add( 'GOTO_ORDER_DESTINATION_1', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = WAYPOINT_RADIUS),
                                     transitions={   'arrived'           :'SAY_TAKE_ORDER',
                                                     'unreachable'       :'GOTO_ORDER_DESTINATION_2',
                                                     'goal_not_defined'  :'GOTO_ORDER_DESTINATION_2'})
 
-            smach.StateMachine.add( 'GOTO_ORDER_DESTINATION_2', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = 0.20),
+            smach.StateMachine.add( 'GOTO_ORDER_DESTINATION_2', states.NavigateToWaypoint(robot, beverage_dest_desig, radius = WAYPOINT_RADIUS),
                                     transitions={   'arrived'           :'SAY_TAKE_ORDER',
                                                     'unreachable'       :'failed',
                                                     'goal_not_defined'  :'failed'})
@@ -333,7 +403,7 @@ def setup_statemachine(robot):
 
         # Where to take the order from?
         smach.StateMachine.add('SAY_WHICH_ORDER', states.Say(robot, "From which table should I take the first order?"), transitions={ 'spoken' :'HEAR_WHICH_ORDER'})
-        smach.StateMachine.add('HEAR_WHICH_ORDER', states.HearOptions(robot, ["one", "two", "three"]),
+        smach.StateMachine.add('HEAR_WHICH_ORDER', HearWhichTable(robot),
             transitions={ 'no_result' :'SAY_WHICH_ORDER', 'one' : 'FIRST_SAY_TAKE_ORDER_FROM_TABLE_1', 'two': 'FIRST_SAY_TAKE_ORDER_FROM_TABLE_2', 'three' : "FIRST_SAY_TAKE_ORDER_FROM_TABLE_3"})
 
         # ############## first table ##############
@@ -342,57 +412,95 @@ def setup_statemachine(robot):
             if next_i > 3:
                 next_i = 1
 
-            smach.StateMachine.add('FIRST_SAY_TAKE_ORDER_FROM_TABLE_%d'%i, states.Say(robot, "Okay, I will take an order from table %d"%i, block=False), transitions={ 'spoken' :'FIRST_NAVIGATE_TO_WAYPOINT_TABLE_%d'%i})
-            smach.StateMachine.add('FIRST_NAVIGATE_TO_WAYPOINT_TABLE_%d'%i, states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=name), radius = 0.06),
-                    transitions={'arrived': 'FIRST_ASK_ORDER_TABLE_%d'%i, 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i, 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i})
-            smach.StateMachine.add('FIRST_ASK_ORDER_TABLE_%d'%i, AskOrder(robot, name), transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i, 'orders_done' : 'SAY_ORDERS_DONE'})
+            smach.StateMachine.add('FIRST_SAY_TAKE_ORDER_FROM_TABLE_%d'%i, states.Say(robot, "Okay, I will take an order from table %d"%i, block=False), 
+                                    transitions={ 'spoken' :'FIRST_NAVIGATE_TO_WAYPOINT_TABLE_%d'%i})
+            smach.StateMachine.add('FIRST_NAVIGATE_TO_WAYPOINT_TABLE_%d'%i, states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=name), radius = WAYPOINT_RADIUS),
+                                    transitions={'arrived': 'FIRST_ASK_ORDER_TABLE_%d'%i, 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i, 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i})
+            smach.StateMachine.add('FIRST_ASK_ORDER_TABLE_%d'%i, AskOrder(robot, name), 
+                                    transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_%d'%next_i, 'orders_done' : 'SAY_ORDERS_DONE'})
+
 
         # ############## Loop over the reset of the tables until we have a beverage and a combo ##############
-        smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_1',
-                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="one"), radius = 0.06),
-                transitions={'arrived': 'SAY_IF_ORDER_TABLE_1', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
-        smach.StateMachine.add('SAY_IF_ORDER_TABLE_1', states.Say(robot, "Would you like to order something?"), transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_1'})
-        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_1', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_2', 'yes':'ASK_ORDER_TABLE_1','no':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
-        smach.StateMachine.add('ASK_ORDER_TABLE_1', AskOrder(robot, "one"), transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'orders_done' : 'SAY_ORDERS_DONE'})
+        smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_1', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="one"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SAY_IF_ORDER_TABLE_1', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
+        smach.StateMachine.add('SAY_IF_ORDER_TABLE_1', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
+                                transitions={ 'spoken' :'HEAD_DOWN_TABLE_1'})
+        smach.StateMachine.add('HEAD_DOWN_TABLE_1', LookAtPersonSitting(robot), 
+                                transitions={ 'done' :'HEAR_IF_ORDER_TABLE_1'})
+        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_1', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10),look_at_standing_person=False), 
+                                transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_2', 'yes':'ASK_ORDER_TABLE_1','no':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
+        smach.StateMachine.add('ASK_ORDER_TABLE_1', AskOrder(robot, "one"), 
+                                transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'orders_done' : 'SAY_ORDERS_DONE'})
 
-        smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_2',
-                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="two"), radius = 0.06),
-                transitions={'arrived': 'SAY_IF_ORDER_TABLE_2', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
-        smach.StateMachine.add('SAY_IF_ORDER_TABLE_2', states.Say(robot, "Would you like to order something?"), transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_2'})
-        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_2', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_3', 'yes':'ASK_ORDER_TABLE_2','no':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
-        smach.StateMachine.add('ASK_ORDER_TABLE_2', AskOrder(robot, "two"), transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'orders_done' : 'SAY_ORDERS_DONE'})
 
-        smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_3',
-                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="three"), radius = 0.06),
-                transitions={'arrived': 'SAY_IF_ORDER_TABLE_3', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
-        smach.StateMachine.add('SAY_IF_ORDER_TABLE_3', states.Say(robot, "Would you like to order something?"), transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_3'})
-        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_3', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_1', 'yes':'ASK_ORDER_TABLE_3','no':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
-        smach.StateMachine.add('ASK_ORDER_TABLE_3', AskOrder(robot, "three"), transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'orders_done' : 'SAY_ORDERS_DONE'})
+        smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="two"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SAY_IF_ORDER_TABLE_2', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
+        smach.StateMachine.add('SAY_IF_ORDER_TABLE_2', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
+                                transitions={ 'spoken' :'HEAD_DOWN_TABLE_2'})
+        smach.StateMachine.add('HEAD_DOWN_TABLE_2', LookAtPersonSitting(robot), 
+                                transitions={ 'done' :'HEAR_IF_ORDER_TABLE_2'})       
+        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_2', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10),look_at_standing_person=False), 
+                                transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_3', 'yes':'ASK_ORDER_TABLE_2','no':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
+        smach.StateMachine.add('ASK_ORDER_TABLE_2', AskOrder(robot, "two"), 
+                                transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'orders_done' : 'SAY_ORDERS_DONE'})
 
-        smach.StateMachine.add('SAY_ORDERS_DONE', states.Say(robot, "I received enough orders for now, going back to the kitchen!", block=False), transitions={ 'spoken' :'NAVIGATE_BACK_TO_THE_KITCHEN'})
 
-        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
-            transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'done', 'goal_not_defined':'done'})
-        smach.StateMachine.add('SPEAK_ORDERS', SpeakOrders(robot), transitions={ 'spoken' :'STORE_BEVERAGE_SIDE'})
+        smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_3', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="three"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SAY_IF_ORDER_TABLE_3', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
+        smach.StateMachine.add('SAY_IF_ORDER_TABLE_3', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
+                                transitions={ 'spoken' :'HEAD_DOWN_TABLE_3'})
+        smach.StateMachine.add('HEAD_DOWN_TABLE_3', LookAtPersonSitting(robot), 
+                                transitions={ 'done' :'HEAR_IF_ORDER_TABLE_3'}) 
+        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_3', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10),look_at_standing_person=False), 
+                                transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_1', 'yes':'ASK_ORDER_TABLE_3','no':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
+        smach.StateMachine.add('ASK_ORDER_TABLE_3', AskOrder(robot, "three"), 
+                                transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'orders_done' : 'SAY_ORDERS_DONE'})
 
-        smach.StateMachine.add('STORE_BEVERAGE_SIDE', StoreBeverageSide(robot), transitions={ 'done' : 'NAVIGATE_TO_BEVERAGES'})
-        smach.StateMachine.add('NAVIGATE_TO_BEVERAGES', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = 0.06),
-            transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'STORE_BEVERAGE_SIDE', 'goal_not_defined':'STORE_BEVERAGE_SIDE'})
 
-        smach.StateMachine.add('SPEAK_I_SEE_THE_BEVERAGES', states.Say(robot, "The beverages are in front of me", block=False), transitions={ 'spoken' :'DELIVER_BEVERAGE'})
+        smach.StateMachine.add('SAY_ORDERS_DONE', states.Say(robot, "I received enough orders for now, going back to the kitchen!", block=False), 
+                                transitions={ 'spoken' :'NAVIGATE_BACK_TO_THE_KITCHEN'})
 
-        smach.StateMachine.add('DELIVER_BEVERAGE', DeliverOrderWithBasket(robot, "beverage"), transitions={'succeeded':'NAVIGATE_TO_KITCHEN', 'failed':'NAVIGATE_TO_KITCHEN'})
-        smach.StateMachine.add('NAVIGATE_TO_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
-            transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'DELIVER_COMBO', 'goal_not_defined':'DELIVER_COMBO'})
 
-        smach.StateMachine.add('DELIVER_COMBO', DeliverOrderWithBasket(robot, "combo"), transitions={'succeeded':'NAVIGATE_BACK_TO_THE_KITCHEN_2', 'failed':'NAVIGATE_BACK_TO_THE_KITCHEN_2'})
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP', 'goal_not_defined':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP'})
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS+0.2),
+                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP_2', 'goal_not_defined':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP_2'})
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS+0.4),
+                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'SPEAK_ORDERS', 'goal_not_defined':'SPEAK_ORDERS'})
+        smach.StateMachine.add('SPEAK_ORDERS', SpeakOrders(robot), 
+                                transitions={ 'spoken' :'STORE_BEVERAGE_SIDE'})
 
-        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
-            transitions={'arrived': 'SAY_DONE_WITH_CHALLENGE', 'unreachable':'SAY_DONE_WITH_CHALLENGE', 'goal_not_defined':'SAY_DONE_WITH_CHALLENGE'})
+        smach.StateMachine.add('STORE_BEVERAGE_SIDE', StoreBeverageSide(robot), 
+                                transitions={ 'done' : 'NAVIGATE_TO_BEVERAGES'})
+        smach.StateMachine.add('NAVIGATE_TO_BEVERAGES', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'NAVIGATE_TO_BEVERAGES_BACKUP', 'goal_not_defined':'NAVIGATE_TO_BEVERAGES_BACKUP'})
+        smach.StateMachine.add('NAVIGATE_TO_BEVERAGES_BACKUP', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = WAYPOINT_RADIUS+0.1),
+                                transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'STORE_BEVERAGE_SIDE', 'goal_not_defined':'STORE_BEVERAGE_SIDE'})
 
-        smach.StateMachine.add('SAY_DONE_WITH_CHALLENGE', states.Say(robot, "It would be very awesome if we can get to this point!"), transitions={ 'spoken' :'done'})
+        smach.StateMachine.add('SPEAK_I_SEE_THE_BEVERAGES', states.Say(robot, "The beverages are in front of me", block=False), 
+                                transitions={ 'spoken' :'DELIVER_BEVERAGE'})
+
+
+        smach.StateMachine.add('DELIVER_BEVERAGE', DeliverOrderWithBasket(robot, "beverage"), 
+                                transitions={'succeeded':'NAVIGATE_TO_KITCHEN', 'failed':'NAVIGATE_TO_KITCHEN'})
+        smach.StateMachine.add('NAVIGATE_TO_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'NAVIGATE_TO_KITCHEN_BACKUP', 'goal_not_defined':'NAVIGATE_TO_KITCHEN_BACKUP'})
+
+        smach.StateMachine.add('NAVIGATE_TO_KITCHEN_BACKUP', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS+0.1),
+                                transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'DELIVER_COMBO', 'goal_not_defined':'DELIVER_COMBO'})
+
+
+        smach.StateMachine.add('DELIVER_COMBO', DeliverOrderWithBasket(robot, "combo"), 
+                                transitions={'succeeded':'NAVIGATE_BACK_TO_THE_KITCHEN_2', 'failed':'NAVIGATE_BACK_TO_THE_KITCHEN_2'})
+
+
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SAY_DONE_WITH_CHALLENGE', 'unreachable':'SAY_DONE_WITH_CHALLENGE', 'goal_not_defined':'SAY_DONE_WITH_CHALLENGE'})
+
+        smach.StateMachine.add('SAY_DONE_WITH_CHALLENGE', states.Say(robot, "I'm done with this challenge and you're a banana!"), transitions={ 'spoken' :'done'})
 
     return sm
+
 
 def test_delivery(robot):
     from robot_skills.util.msg_constructors import PoseStamped
@@ -407,7 +515,7 @@ def test_delivery(robot):
 
     with deliver:
         smach.StateMachine.add('DELIVER_BEVERAGE', DeliverOrderWithBasket(robot, "beverage"), transitions={'succeeded':'NAVIGATE_TO_KITCHEN', 'failed':'NAVIGATE_TO_KITCHEN'})
-        smach.StateMachine.add('NAVIGATE_TO_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = 0.06),
+        smach.StateMachine.add('NAVIGATE_TO_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
             transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'DELIVER_COMBO', 'goal_not_defined':'DELIVER_COMBO'})
         smach.StateMachine.add('DELIVER_COMBO', DeliverOrderWithBasket(robot, "combo"), transitions={'succeeded':'done', 'failed':'aborted'})
 
