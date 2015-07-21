@@ -98,7 +98,7 @@
       - Make sure laptop visualization works with beamer
 
   - Sjoerd: visualization
-  #   - Nav
+  #   - Navigation
       - Localization AMIGO
       - OpenCV GUI mimic
       - RViz-like visualization
