@@ -159,10 +159,28 @@ class DescribeBottles(smach.State):
 
         #TODO: Sort bottles by their Y-coord wrt base_link. We go from large to small, so the leftmost if first
         bottle_to_y_dict = {}
+        the_id = 0
+
+        m = Marker()
         for bottle in bottles:
             in_map = geom.PointStamped(point=bottle.pose.position, frame_id=bottle.id)
             in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
             bottle_to_y_dict[bottle] = in_base_link.y
+
+            the_id += 1
+
+            m.id = the_id
+            m.color.r = 1
+            m.color.a = 1
+            print in_map
+            m.pose.position = in_map.point
+            m.header.frame_id = "/map"
+            m.header.stamp = rospy.Time.now()
+            m.type = 2
+            m.scale.x = 0.1
+            m.scale.y = 0.1
+            m.scale.z = 0.1
+            self._pub.publish(m)
 
         sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
 
@@ -206,25 +224,6 @@ class DescribeBottles(smach.State):
         height_descs = set([desc.height_description for desc in descriptions.values() if desc.height_description])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
         positions = set([desc.position_description for desc in descriptions.values() if desc.position_description])
-
-        m = Marker()
-
-        the_id = 0
-        for p in positions:
-            the_id += 1
-
-            m.id = the_id
-            m.color.r = 1
-            m.color.a = 1
-            m.pose.position = p
-            m.header.frame_id = "/map"
-            m.header.stamp = rospy.Time.now()
-            m.type = 2
-            m.scale.x = 0.3
-            m.scale.y = 0.3
-            m.scale.z = 0.3
-            m.ns = "arrow"
-            self._pub.publish(m)
 
         choices = {}
         if colors:
