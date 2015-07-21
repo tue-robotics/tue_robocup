@@ -1,46 +1,64 @@
-PREPARATION:
+PREPARATION
 
-    # Make sure hydro's costmap_2d is used
-    ln -s ~/ros/groovy/rosbuild_ws/tue/user/Rein/catkin_packages/hydro_navigation ~/ros/groovy/catkin_ws/src/
+  - Make sure the RoboEarth router is correctly positioned
+  - Max and Janno put AMIGO and SERGIO side-by-side in the furthest living room corner
+    near the hall, 1.5 meter apart in Y (SERGIO nearer to the bar)
+  - AMIGO has torso down, looking down, lights off
+  - Rein has computer with visualization connected to beamer:
+    - One desktop with OpenCV GUI
+    - One desktop with our custom visualization
+  - Rokus and Luis start re-positioning the objects in the kitchen
+    - ALSO already put grasp items on the tabble. TO DO: which object, where?
+  - Ramon sits with the jury with the GUI on the iPad
 
-    # Make sure cb_base_navigation is used
-    rospkgs; // Add this line:
-        - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
-        
-    # Use Janno's robot_skills. 
-    "rospkgs" -> add this line
-		- other: {local-name: tue/user/Janno/rwc2014/robot_skills}
+  - While setting up, Sjoerd starts pitch
 
-    # Source the bashrc
-    source ~/.bashrc
+  - Luis goes to the bedroom, and stays there
 
-    # Make navigation (optional)
-    tue-catkin-make
-    rosmake cb_base_navigation
+SCENARIO:
 
-SOFTWARE:
-    # restart ssh session
-    amiddle-final # starts custom middleware and dependencies.launch 
+  [0:30] SERGIO stores AMIGO's initial pose in the world model 
 
-    # start the challenge
-    rosrun challenge_final challenge_final.py
-    
-START GUI: (click to navigate doesn't work yet)
-	# web page:
-	http://192.168.2.91:8000/src/final.html#final
+  [0:30] Using the GUI Ramon maps the room with SERGIO in the order:
+         - bar
+         - dinner_table
+         - ... other objects in livingroom ...
+         - bed
+         - ... continue to hallway
 
-POSTPARATION:
-    # When you're done:
-    rm -rf ~/ros/groovy/catkin_ws/src/hydro_navigation
+  [?:??] As soon as SERGIO maps the bar, AMIGO is requested to go to the person nearest to the bar.
+         AMIGO's queries his initial pose from the world model and sets it.
 
-    # Remove the cb base navigation again:
-    comment or delete the following line from rospkgs: 
-        - other: {local-name: tue/user/Rein/rosbuild_packages/tue_vwm_navigation}
+         TODO:
+             how do we give this command? With the GUI?
 
-STORY:
+         SERGIO keeps on exploring the room
 
-?? 
+  [?:??] AMIGO asks: "what can I do for you?".
+         OPERATOR: "Luis needs your help"
+         AMIGO: "Where can I find Luis?"
+         OPERATOR: "near the bed"
 
-Sentences to say if amigo asks "what can I do for you":
-"get me a (beer / milk) from the (dinnertable / sideboard / bar)"
+  [?:??] AMIGO drives to the person near the bed (Luis). He asks Luis: "What can I do for you?"
+         Luis: "Bring me the object on the dinner_table"
+
+  [?:??] AMIGO drives to the dinner_table, grasps the object, and bring it back Luis (again the person nearest to the bar)
+  [?:??] AMIGO asks Luis: "what can I do for you?".
+         Luis: "How much time do we still have?"
+         
+         Rokus' time node is queried. This returns a string that can be directly given to 'speak'
+
+  [?:??] AMIGO asks Luis: "what can I do for you?".
+         Luis: "Go back to the operator"
+         
+  [?:??] AMIGO drives back to the person nearest to the bar
+
+  [?:??] When SERGIO is done exploring, Ramon clicks a button on the GUI and SERGIO drives back to the jury
+
+         TODO: maybe it's nice to have the option "drive to X" in the GUI. THIS IS A NICE TO HAVE!
+
+  [?:??] From this point on, let AMIGO keep on asking "What can I do for you?". The possibilities are:
+
+         "Get me the object from X"
+
 
