@@ -284,7 +284,7 @@ class DeliverOrderWithBasket(smach.StateMachine):
                                     transitions={'spoken'               :'AWAIT_PUT_ORDER_CONFIRMATION'})
 
             smach.StateMachine.add( 'AWAIT_PUT_ORDER_CONFIRMATION',
-                                    states.Wait_time(robot, 5),
+                                    states.Wait_time(robot, 8),
                                     transitions={   'waited'            :'GOTO_ORDER_DESTINATION_1',
                                                     'preempted'         :'failed'})
 
