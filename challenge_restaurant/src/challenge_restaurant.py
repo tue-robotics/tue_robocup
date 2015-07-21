@@ -201,6 +201,17 @@ class CheckInKitchen(smach.State):
             print "NO KITCHEN IN ED???"
         return "not_in_kitchen"
 
+class LookAtPersonSitting(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+
+        self._robot = robot
+
+    def execute(self, userdata):
+        self._robot.head.look_at_ground_in_front_of_robot(3)
+
+        return 'done'
+
 class AskOrder(smach.State):
     def __init__(self, robot, location):
         smach.State.__init__(self, outcomes=['next_order','orders_done'])
@@ -220,8 +231,13 @@ class AskOrder(smach.State):
                     order = result.choices["beverage"]
                     ORDERS["beverage"] = { "location" : self._location, "name" : order }
                 elif "food1" and "food2" in result.choices:
-                    order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
-                    ORDERS["combo"] = { "location" : self._location, "name" : order }
+                    if result.choices["food1"] == result.choices["food2"]:
+                        self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
+                    else:
+                        order = "%s and %s" % (result.choices["food1"], result.choices["food2"])
+                        ORDERS["combo"] = { "location" : self._location, "name" : order }
+            else:
+                self._robot.speech.speak("Sorry, I dit not understand, please repeat.")
 
         self._robot.head.cancel_goal()
 
@@ -370,8 +386,10 @@ def setup_statemachine(robot):
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_1', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="one"), radius = WAYPOINT_RADIUS),
                                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_1', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
         smach.StateMachine.add('SAY_IF_ORDER_TABLE_1', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
-                                transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_1'})
-        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_1', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), 
+                                transitions={ 'spoken' :'HEAD_DOWN_TABLE_1'})
+        smach.StateMachine.add('HEAD_DOWN_TABLE_1', LookAtPersonSitting(robot), 
+                                transitions={ 'done' :'HEAR_IF_ORDER_TABLE_1'})
+        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_1', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10),look_at_standing_person=False), 
                                 transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_2', 'yes':'ASK_ORDER_TABLE_1','no':'NAVIGATE_TO_WAYPOINT_TABLE_2'})
         smach.StateMachine.add('ASK_ORDER_TABLE_1', AskOrder(robot, "one"), 
                                 transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_2', 'orders_done' : 'SAY_ORDERS_DONE'})
@@ -380,8 +398,10 @@ def setup_statemachine(robot):
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="two"), radius = WAYPOINT_RADIUS),
                                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_2', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
         smach.StateMachine.add('SAY_IF_ORDER_TABLE_2', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
-                                transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_2'})
-        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_2', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), 
+                                transitions={ 'spoken' :'HEAD_DOWN_TABLE_2'})
+        smach.StateMachine.add('HEAD_DOWN_TABLE_2', LookAtPersonSitting(robot), 
+                                transitions={ 'done' :'HEAR_IF_ORDER_TABLE_2'})       
+        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_2', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10),look_at_standing_person=False), 
                                 transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_3', 'yes':'ASK_ORDER_TABLE_2','no':'NAVIGATE_TO_WAYPOINT_TABLE_3'})
         smach.StateMachine.add('ASK_ORDER_TABLE_2', AskOrder(robot, "two"), 
                                 transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_3', 'orders_done' : 'SAY_ORDERS_DONE'})
@@ -390,8 +410,10 @@ def setup_statemachine(robot):
         smach.StateMachine.add('NAVIGATE_TO_WAYPOINT_TABLE_3', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="three"), radius = WAYPOINT_RADIUS),
                                 transitions={'arrived': 'SAY_IF_ORDER_TABLE_3', 'unreachable':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'goal_not_defined':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
         smach.StateMachine.add('SAY_IF_ORDER_TABLE_3', states.Say(robot, ["Hello, are you ready to order?", "Would you like to order something?"]), 
-                                transitions={ 'spoken' :'HEAR_IF_ORDER_TABLE_3'})
-        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_3', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10)), 
+                                transitions={ 'spoken' :'HEAD_DOWN_TABLE_3'})
+        smach.StateMachine.add('HEAD_DOWN_TABLE_3', LookAtPersonSitting(robot), 
+                                transitions={ 'done' :'HEAR_IF_ORDER_TABLE_3'}) 
+        smach.StateMachine.add('HEAR_IF_ORDER_TABLE_3', states.HearOptions(robot, ['yes','no'], timeout = rospy.Duration(10),look_at_standing_person=False), 
                                 transitions={ 'no_result' :'NAVIGATE_TO_WAYPOINT_TABLE_1', 'yes':'ASK_ORDER_TABLE_3','no':'NAVIGATE_TO_WAYPOINT_TABLE_1'})
         smach.StateMachine.add('ASK_ORDER_TABLE_3', AskOrder(robot, "three"), 
                                 transitions={'next_order':'NAVIGATE_TO_WAYPOINT_TABLE_1', 'orders_done' : 'SAY_ORDERS_DONE'})
