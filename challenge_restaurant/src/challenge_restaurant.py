@@ -39,6 +39,44 @@ ORDERS = {}
 
 WAYPOINT_RADIUS = 0.2
 
+class HearWhichTable(smach.State):
+    def __init__(self, robot, timeout = rospy.Duration(10), look_at_standing_person=True):
+        smach.State.__init__(self, outcomes=["one", "two", "three", "no_result"])
+        self._robot = robot
+        self._timeout = timeout
+        self.look_at_standing_person = look_at_standing_person
+
+    def execute(self, userdata):
+        if self.look_at_standing_person:
+            self._robot.head.look_at_standing_person()
+
+        answer = self._robot.ears.recognize("<option>", {"option":["one", "two", "three"]}, self._timeout)
+
+        if answer:
+            if answer.result:
+                if "option" in answer.choices:
+                    number = answer.choices["option"]
+                    robot.speech.speak("Table %s, is this correct?"%number)
+
+                    answer = self._robot.ears.recognize("<option>", {"option":["yes", "no"]}, self._timeout)
+
+                    if answer:
+                        if answer.result:
+                            if "option" in answer.choices:
+                                if answer.choices["option"] == "yes":
+                                    if self.look_at_standing_person:
+                                        self._robot.head.cancel_goal()
+                                    return number
+                    else:
+                        self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+        else:
+            self._robot.speech.speak("Something is wrong with my ears, please take a look!")
+
+        if self.look_at_standing_person:
+            self._robot.head.cancel_goal()
+
+        return "no_result"
+
 class HeadStraight(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
@@ -354,7 +392,7 @@ def setup_statemachine(robot):
 
         # Where to take the order from?
         smach.StateMachine.add('SAY_WHICH_ORDER', states.Say(robot, "From which table should I take the first order?"), transitions={ 'spoken' :'HEAR_WHICH_ORDER'})
-        smach.StateMachine.add('HEAR_WHICH_ORDER', states.HearOptions(robot, ["one", "two", "three"]),
+        smach.StateMachine.add('HEAR_WHICH_ORDER', HearWhichTable(robot),
             transitions={ 'no_result' :'SAY_WHICH_ORDER', 'one' : 'FIRST_SAY_TAKE_ORDER_FROM_TABLE_1', 'two': 'FIRST_SAY_TAKE_ORDER_FROM_TABLE_2', 'three' : "FIRST_SAY_TAKE_ORDER_FROM_TABLE_3"})
 
         # ############## first table ##############
