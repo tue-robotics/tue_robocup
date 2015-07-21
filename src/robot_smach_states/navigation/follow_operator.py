@@ -66,7 +66,7 @@ class FollowOperator(smach.State):
 
         # Operator is None?
         print "We have a new operator: %s"%operator.id
-        self._robot.speech.speak("I will follow you!", block=False)
+        self._robot.speech.speak("Ok, I will follow you!", block=False)
         self._operator_id = operator.id
 
         self._robot.head.close()
