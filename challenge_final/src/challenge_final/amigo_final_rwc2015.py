@@ -124,7 +124,7 @@ class ForceDriveToTheRight(smach.State):
 
 class AskAction(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["drive_near_loc_for_person", "grasp_object","time_spoken","no_action", "failed"])
+        smach.State.__init__(self, outcomes=["drive_near_loc_for_person", "grasp_object","time_asked_for","no_action", "failed"])
         self.robot = robot
 
     def execute(self, userdata):
