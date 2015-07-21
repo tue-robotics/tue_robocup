@@ -15,7 +15,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0):
+    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0, lost_timeout = 5, lost_distance = 1.5):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
@@ -30,6 +30,8 @@ class FollowOperator(smach.State):
         self._last_pose_stamped = None
         self._time_started = None
         self._ask_follow = ask_follow
+        self._lost_timeout = lost_timeout
+        self._lost_distance = lost_distance
 
     def _register_operator(self):
         start_time = rospy.Time.now()
@@ -159,16 +161,35 @@ class FollowOperator(smach.State):
 
         self._time_started = rospy.Time.now()
 
+        old_operator = None
+
         while not rospy.is_shutdown():
 
             # Check if operator present still present
+            old_operator = operator
             operator = self._get_operator(self._operator_id)
 
             if not operator:
-                self._robot.speech.speak("I lost you", block=True)
-                self._robot.base.force_drive(0,0,0,0.5)
-                self._robot.base.local_planner.cancelCurrentPlan()
-                return "lost_operator"
+                lost_time = rospy.Time.now()
+                recovered_operator = None
+                while rospy.Time.now() - lost_time < self._lost_timeout:
+                    # Try to catch up with a close entity
+                    recovered_operator = self._robot.ed.get_closest_entity(radius=self._lost_distance, center_point=old_operator.pose.position)
+                    if recovered_operator:
+                        break
+                    rospy.sleep(0.2)
+
+                if not recovered_operator:
+                    self._robot.speech.speak("I lost you", block=True)
+                    self._robot.base.force_drive(0,0,0,0.5)
+                    self._robot.base.local_planner.cancelCurrentPlan()
+                    return "lost_operator"
+                else:
+                    print "\n\nWe recovered the operator!\n\n"
+                    self._robot.speech.speak("Still following you!", block=False)
+                    operator = recovered_operator
+
+            old_operator = operator
 
             # Update the navigation and check if we are already there
             if self._update_navigation(operator):
