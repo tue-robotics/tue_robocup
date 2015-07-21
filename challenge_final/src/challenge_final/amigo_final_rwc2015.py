@@ -169,7 +169,7 @@ class PersonDesignator(Designator):
     def resolve(self):
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()
-        furniture_id = 'rwc2015/' + furniture_id + '-0'
+        furniture_id = 'rwc2015/' + furniture_id + '-0`'
         entities = self._robot.ed.get_entities()
         f = None
         for e in entities:
@@ -211,61 +211,61 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        # smach.StateMachine.add('INITIALIZE',
-        #                         states.Initialize(robot),
-        #                         transitions={   'initialized':'INIT_WM',
-        #                                         'abort':'Aborted'})
+        smach.StateMachine.add('INITIALIZE',
+                                states.Initialize(robot),
+                                transitions={   'initialized':'INIT_WM',
+                                                'abort':'Aborted'})
 
-        # smach.StateMachine.add( "INIT_WM",
-        #                             InitializeWorldModel(robot),
-        #                             transitions={'done'    :'FAKESHUTDOWN'})
+        smach.StateMachine.add( "INIT_WM",
+                                    InitializeWorldModel(robot),
+                                    transitions={'done'    :'FAKESHUTDOWN'})
 
-        # ## ?? TODO WHICH SENSORS FOR ED SHOULD BE
+        ## ?? TODO WHICH SENSORS FOR ED SHOULD BE
 
-        # smach.StateMachine.add('FAKESHUTDOWN',
-        #                             FakeShutdownRobot(robot),
-        #                             transitions={   'done':'TEMPORARY_SLEEP'})
-
-
-        # # WAIT FOR TRIGGER NOT USED ANYMORE, but just in case..
-        # # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        # #                             states.WaitForTrigger(robot,['amigo_startup'],topic="/"+robot.robot_name+"/trigger"),
-        # #                             transitions={   'amigo_startup'        :'FAKESTARTUP',
-        # #                                             'preempted'            :'FAKESTARTUP'})
+        smach.StateMachine.add('FAKESHUTDOWN',
+                                    FakeShutdownRobot(robot),
+                                    transitions={   'done':'TEMPORARY_SLEEP'})
 
 
+        # WAIT FOR TRIGGER NOT USED ANYMORE, but just in case..
+        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+        #                             states.WaitForTrigger(robot,['amigo_startup'],topic="/"+robot.robot_name+"/trigger"),
+        #                             transitions={   'amigo_startup'        :'FAKESTARTUP',
+        #                                             'preempted'            :'FAKESTARTUP'})
 
 
-        # #TODO: add entity
-        # # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        # #                             WaitForEntity(robot,ed_entity_name='walls2'),
-        # #                             transitions={   'entity_exists'        :'FAKESTARTUP'})
 
 
-        # smach.StateMachine.add('TEMPORARY_SLEEP',
-        #                             Sleep(robot,10),
-        #                             transitions={   'done':'FAKESTARTUP'})
+        #TODO: add entity
+        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+        #                             WaitForEntity(robot,ed_entity_name='walls2'),
+        #                             transitions={   'entity_exists'        :'FAKESTARTUP'})
+
+
+        smach.StateMachine.add('TEMPORARY_SLEEP',
+                                    Sleep(robot,10),
+                                    transitions={   'done':'FAKESTARTUP'})
     
 
 
-        # smach.StateMachine.add('FAKESTARTUP',
-        #                             FakeStartupRobot(robot),
-        #                             transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
+        smach.StateMachine.add('FAKESTARTUP',
+                                    FakeStartupRobot(robot),
+                                    transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
 
-        # smach.StateMachine.add('FORCEDRIVE_TO_THE_RIGHT',
-        #                             ForceDriveToTheRight(robot),
-        #                             transitions={   'done':'SET_INITIAL_POSE_TEST'})
+        smach.StateMachine.add('FORCEDRIVE_TO_THE_RIGHT',
+                                    ForceDriveToTheRight(robot),
+                                    transitions={   'done':'SET_INITIAL_POSE_TEST'})
 
-        # smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
-        #                             states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
-        #                             transitions={   'spoken'            :'SET_INITIAL_POSE'})
+        smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
+                                    states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
+                                    transitions={   'spoken'            :'SET_INITIAL_POSE'})
 
 
-        # smach.StateMachine.add('SET_INITIAL_POSE',
-        #                         states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
-        #                         transitions={   'done'          :'Done',
-        #                                         'preempted'     :'Done',
-        #                                         'error'         :'Done'})
+        smach.StateMachine.add('SET_INITIAL_POSE',
+                                states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
+                                transitions={   'done'          :'Done',
+                                                'preempted'     :'Done',
+                                                'error'         :'Done'})
 
 
         ######################################################
