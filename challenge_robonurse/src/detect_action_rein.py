@@ -74,17 +74,17 @@ def detect_action(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x,
 	if not last_seen_operator:
 		return "fall"
 
-	dr = math.hypot(last_seen_operator.pose.position.x - operator.pose.position.x, last_seen_operator.pose.position.x - operator.pose.position.y)
+	dr = math.hypot(last_seen_operator.pose.position.x - operator.pose.position.x, last_seen_operator.pose.position.y - operator.pose.position.y)
 	dt = (last_seen_operator.last_update_time - operator.last_update_time).to_sec()
 
-	print "dr: " + dr
-	print "dt: " + dt
+	print "dr: %f" % dr
+	print "dt: %f" % dt
 
 	# Compare last seen with original
 	if dr > distance_threshold:
 		return "walk"
 
-	if dt > 0.8 * timeout:
+	if dt > 0.9 * timeout:
 		return "sit"
 
 	return "fall"
@@ -93,4 +93,4 @@ if __name__ == "__main__":
 	rospy.init_node("test_detection_action_rein")
 	rospy.sleep(1.0)
 	ed = world_model_ed.ED('sergio', TransformListener(), wait_service=False)
-	print detect_action(ed, roi_x_start=1.59, roi_x_end=4.7, roi_y_start=-9.17, roi_y_end=-4, closest_x=2.9, closest_y=-7.4, timeout=10, distance_threshold=1.0)
+	print detect_action(ed, roi_x_start=1.59, roi_x_end=4.7, roi_y_start=-9.17, roi_y_end=-4, closest_x=2.9, closest_y=-7.4, timeout=15, distance_threshold=2.0)
