@@ -474,7 +474,7 @@ class WakeMeUp(smach.StateMachine):
 
 
             smach.StateMachine.add( 'END_CHALLENGE',
-                                    states.Say(robot,"That was all I can do. Goodbye!"),
+                                    states.Say(robot,"That was all I can do. Breakfast is served at the dinner table. Goodbye!"),
                                     transitions={'spoken':'Done'})
 
 
