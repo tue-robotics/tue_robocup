@@ -378,7 +378,7 @@ class GetPills(smach.StateMachine):
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices,
                                         bottle_desc_mapping_designator=bottle_description_map_desig),
-                                    transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
+                                    transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_LOOKAT_SHELF_2'})
 
             #If the description fails at first, say something to also wait a little bit for entities to pop into ED and then try again
