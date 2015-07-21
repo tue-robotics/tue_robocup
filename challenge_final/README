@@ -6,13 +6,13 @@
 
   - Make sure the RoboEarth router is correctly positioned
   - Max and Janno put AMIGO and SERGIO side-by-side in the furthest living room corner
-    near the hall, 1.5 meter apart in Y (SERGIO nearer to the bar)
-  - AMIGO has torso down, looking down, lights off
+    near the hall, 1.5 meter apart in Y (SERGIO nearer to the bar) # ToDo: update in executive
+  - AMIGO has torso down, looking down, lights off # ToDo: make direct function
   - Rein has computer with visualization connected to beamer:
     - One desktop with OpenCV GUI
     - One desktop with our custom visualization
   - Rokus and Luis start re-positioning the objects in the kitchen
-    - ALSO already put grasp items on the tabble. TO DO: which object, where?
+    - ALSO already put grasp items on the table. # ToDo: which object, where?
   - Ramon sits with the jury with the GUI on the iPad
 
   - While setting up, Sjoerd starts pitch
@@ -57,7 +57,7 @@
   [?:??] AMIGO asks Luis: "what can I do for you?".
          Luis: "Go back to the operator"
          
-  [?:??] AMIGO drives back to the person nearest to the bar
+  [?:??] AMIGO drives back to the person nearest to the bar # ToDo: why not: get me object <furniture>
 
   [?:??] When SERGIO is done exploring, Ramon clicks a button on the GUI and SERGIO drives back to the jury
 
