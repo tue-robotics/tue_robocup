@@ -886,10 +886,7 @@ class OpenGripperOnHandoverToHuman(smach.State):
     def __init__(self, robot, arm_designator, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
-        if check_resolve_type(arm_designator,Arm):
-            self.arm_designator = arm_designator
-        else:
-            rospy.logerr("Arm designator does not resolve to Arm")
+        self.arm_designator = arm_designator
         self.timeout = timeout
 
     def execute(self,userdata):
@@ -898,7 +895,7 @@ class OpenGripperOnHandoverToHuman(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
-        self.robot.lights.set(1.0,1.0,1.0)
+        self.robot.lights.set_color(1.0,1.0,1.0)
         if arm.handover_to_human(self.timeout):
             arm.occupied_by = None
             self.robot.lights.reset()
