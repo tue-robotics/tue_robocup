@@ -75,7 +75,7 @@
   - Ramon: get bandwith check tool to work, responsible for GUI
 
   - Max: testing
-      - Make sure we have external audio on SERGIO (ask Janno)
+  #    - Make sure we have external audio on SERGIO (ask Janno)
       - Check if we can have a mic for Sjoerd and also one to point at each Robot so that the jury can listen to the orders and responses 
           (3 mics, or 2 if Sergio does not communicate much)
 
@@ -98,6 +98,7 @@
       - Make sure laptop visualization works with beamer
 
   - Sjoerd: visualization
+  #   - Nav
       - Localization AMIGO
       - OpenCV GUI mimic
       - RViz-like visualization

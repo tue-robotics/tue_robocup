@@ -159,6 +159,35 @@ class Ask_action(smach.State):
         return "done"
 
 
+###### Janno ######
+class PersonDesignator(Designator):
+    def __init__(self, robot, furniture_designator):
+        super(PersonDesignator, self).__init__(resolve_type=EntityInfo)
+        self._robot = robot
+        self._furniture_designator = furniture_designator
+
+    def resolve(self):
+        # Get furniture entity
+        furniture_id = self._furniture_designator.resolve()
+        furniture_id = 'rwc2015/' + furniture_id + '-0'
+        entities = self._robot.ed.get_entities()
+        f = None
+        for e in entities:
+            if e.id == furniture_id:
+                f = e
+
+        if not f:
+            rospy.logwarn('Entity with id {0} not found'.format(furniture_id))
+            return None
+
+        person = self._robot.ed.get_closest_possible_person_entity(type="possible_human", center_point=f.pose.position, radius=10)
+        if not person:
+            rospy.logwarn('No person found near the {0}'.format(furniture_id))
+            return None
+        else:
+            return person
+###################
+
 def setup_statemachine(robot):
 
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
@@ -170,6 +199,11 @@ def setup_statemachine(robot):
     empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
     arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
+    ###### Janno ######
+    bar_designator = Designator(initial_value='bar', resolve_type=str)
+    operator_designator = PersonDesignator(robot, bar_designator)
+    ###################
+
     with sm:
 
 
@@ -177,68 +211,74 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
-                                transitions={   'initialized':'INIT_WM',
-                                                'abort':'Aborted'})
+        # smach.StateMachine.add('INITIALIZE',
+        #                         states.Initialize(robot),
+        #                         transitions={   'initialized':'INIT_WM',
+        #                                         'abort':'Aborted'})
 
-        smach.StateMachine.add( "INIT_WM",
-                                    InitializeWorldModel(robot),
-                                    transitions={'done'    :'FAKESHUTDOWN'})
+        # smach.StateMachine.add( "INIT_WM",
+        #                             InitializeWorldModel(robot),
+        #                             transitions={'done'    :'FAKESHUTDOWN'})
 
-        ## ?? TODO WHICH SENSORS FOR ED SHOULD BE
+        # ## ?? TODO WHICH SENSORS FOR ED SHOULD BE
 
-        smach.StateMachine.add('FAKESHUTDOWN',
-                                    FakeShutdownRobot(robot),
-                                    transitions={   'done':'TEMPORARY_SLEEP'})
-
-
-        # WAIT FOR TRIGGER NOT USED ANYMORE, but just in case..
-        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        #                             states.WaitForTrigger(robot,['amigo_startup'],topic="/"+robot.robot_name+"/trigger"),
-        #                             transitions={   'amigo_startup'        :'FAKESTARTUP',
-        #                                             'preempted'            :'FAKESTARTUP'})
+        # smach.StateMachine.add('FAKESHUTDOWN',
+        #                             FakeShutdownRobot(robot),
+        #                             transitions={   'done':'TEMPORARY_SLEEP'})
 
 
+        # # WAIT FOR TRIGGER NOT USED ANYMORE, but just in case..
+        # # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+        # #                             states.WaitForTrigger(robot,['amigo_startup'],topic="/"+robot.robot_name+"/trigger"),
+        # #                             transitions={   'amigo_startup'        :'FAKESTARTUP',
+        # #                                             'preempted'            :'FAKESTARTUP'})
 
 
-        #TODO: add entity
-        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        #                             WaitForEntity(robot,ed_entity_name='walls2'),
-        #                             transitions={   'entity_exists'        :'FAKESTARTUP'})
 
 
-        smach.StateMachine.add('TEMPORARY_SLEEP',
-                                    Sleep(robot,10),
-                                    transitions={   'done':'FAKESTARTUP'})
+        # #TODO: add entity
+        # # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+        # #                             WaitForEntity(robot,ed_entity_name='walls2'),
+        # #                             transitions={   'entity_exists'        :'FAKESTARTUP'})
+
+
+        # smach.StateMachine.add('TEMPORARY_SLEEP',
+        #                             Sleep(robot,10),
+        #                             transitions={   'done':'FAKESTARTUP'})
     
 
 
-        smach.StateMachine.add('FAKESTARTUP',
-                                    FakeStartupRobot(robot),
-                                    transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
+        # smach.StateMachine.add('FAKESTARTUP',
+        #                             FakeStartupRobot(robot),
+        #                             transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
 
-        smach.StateMachine.add('FORCEDRIVE_TO_THE_RIGHT',
-                                    ForceDriveToTheRight(robot),
-                                    transitions={   'done':'SET_INITIAL_POSE_TEST'})
+        # smach.StateMachine.add('FORCEDRIVE_TO_THE_RIGHT',
+        #                             ForceDriveToTheRight(robot),
+        #                             transitions={   'done':'SET_INITIAL_POSE_TEST'})
 
-        smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
-                                    states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
-                                    transitions={   'spoken'            :'SET_INITIAL_POSE'})
+        # smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
+        #                             states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
+        #                             transitions={   'spoken'            :'SET_INITIAL_POSE'})
 
 
-        smach.StateMachine.add('SET_INITIAL_POSE',
-                                states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
-                                transitions={   'done'          :'Done',
-                                                'preempted'     :'Done',
-                                                'error'         :'Done'})
+        # smach.StateMachine.add('SET_INITIAL_POSE',
+        #                         states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
+        #                         transitions={   'done'          :'Done',
+        #                                         'preempted'     :'Done',
+        #                                         'error'         :'Done'})
 
 
         ######################################################
         ##################### ASK STATE  #####################             
         ######################################################
 
-
+        ###### Janno ######
+        smach.StateMachine.add('GOTO_OPERATOR',
+                                states.NavigateToObserve(robot=robot, entity_designator=operator_designator, radius=0.7),
+                                transitions={   'arrived'           : 'Done',
+                                                'unreachable'       : 'Done',
+                                                'goal_not_defined'  : 'Done'})
+        ###################
 
 
 
