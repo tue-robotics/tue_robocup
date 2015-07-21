@@ -209,7 +209,7 @@ class AskOrder(smach.State):
         self._location = location
 
     def execute(self, userdata):
-        sergio.head.look_at_ground_in_front_of_robot(3)
+        self._robot.head.look_at_ground_in_front_of_robot(3)
         self._robot.speech.speak("Which combo or beverage do you want?")
 
         order = None
@@ -402,13 +402,19 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
-                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'done', 'goal_not_defined':'done'})
+                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP', 'goal_not_defined':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP'})
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS+0.2),
+                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP_2', 'goal_not_defined':'NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP_2'})
+        smach.StateMachine.add('NAVIGATE_BACK_TO_THE_KITCHEN_BACKUP_2', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS+0.4),
+                                transitions={'arrived': 'SPEAK_ORDERS', 'unreachable':'SPEAK_ORDERS', 'goal_not_defined':'SPEAK_ORDERS'})
         smach.StateMachine.add('SPEAK_ORDERS', SpeakOrders(robot), 
                                 transitions={ 'spoken' :'STORE_BEVERAGE_SIDE'})
 
         smach.StateMachine.add('STORE_BEVERAGE_SIDE', StoreBeverageSide(robot), 
                                 transitions={ 'done' : 'NAVIGATE_TO_BEVERAGES'})
         smach.StateMachine.add('NAVIGATE_TO_BEVERAGES', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'NAVIGATE_TO_BEVERAGES_BACKUP', 'goal_not_defined':'NAVIGATE_TO_BEVERAGES_BACKUP'})
+        smach.StateMachine.add('NAVIGATE_TO_BEVERAGES_BACKUP', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="beverages"), radius = WAYPOINT_RADIUS+0.1),
                                 transitions={'arrived': 'SPEAK_I_SEE_THE_BEVERAGES', 'unreachable':'STORE_BEVERAGE_SIDE', 'goal_not_defined':'STORE_BEVERAGE_SIDE'})
 
         smach.StateMachine.add('SPEAK_I_SEE_THE_BEVERAGES', states.Say(robot, "The beverages are in front of me", block=False), 
@@ -418,7 +424,11 @@ def setup_statemachine(robot):
         smach.StateMachine.add('DELIVER_BEVERAGE', DeliverOrderWithBasket(robot, "beverage"), 
                                 transitions={'succeeded':'NAVIGATE_TO_KITCHEN', 'failed':'NAVIGATE_TO_KITCHEN'})
         smach.StateMachine.add('NAVIGATE_TO_KITCHEN', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS),
+                                transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'NAVIGATE_TO_KITCHEN_BACKUP', 'goal_not_defined':'NAVIGATE_TO_KITCHEN_BACKUP'})
+
+        smach.StateMachine.add('NAVIGATE_TO_KITCHEN_BACKUP', states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="kitchen"), radius = WAYPOINT_RADIUS+0.1),
                                 transitions={'arrived': 'DELIVER_COMBO', 'unreachable':'DELIVER_COMBO', 'goal_not_defined':'DELIVER_COMBO'})
+
 
         smach.StateMachine.add('DELIVER_COMBO', DeliverOrderWithBasket(robot, "combo"), 
                                 transitions={'succeeded':'NAVIGATE_BACK_TO_THE_KITCHEN_2', 'failed':'NAVIGATE_BACK_TO_THE_KITCHEN_2'})
