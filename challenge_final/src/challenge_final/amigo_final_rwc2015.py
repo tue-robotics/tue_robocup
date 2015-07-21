@@ -149,7 +149,7 @@ class AskAction(smach.State):
 
                 elif "time" in result.choices:
                     self.robot.speech.speak("The time that is left is unknown, rokus is working on it")
-                    return "time_spoken"
+                    return "time_asked_for"
             else:
                 self.robot.speech.speak("Sorry, I did not hear you.")
                 return "no_action"
@@ -327,8 +327,13 @@ def setup_statemachine(robot):
                                 AskAction(robot),
                                 transitions={'drive_near_loc_for_person':'ASK_LOCATION_PERSON',
                                              'grasp_object':'ASK_ACTION',#'GOTO_GRASP_LOCATION',
-                                             'time_spoken':'ASK_ACTION',
+                                             'time_asked_for':'SAY_TIME_LEFT',
                                              'no_action':'ASK_ACTION',
+                                             'failed':'ASK_ACTION'})
+
+        smach.StateMachine.add("SAY_TIME_LEFT",
+                                timer.SayRemainingTime(robot,block=True),
+                                transitions={'done':'ASK_ACTION',
                                              'failed':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_LOCATION_PERSON",

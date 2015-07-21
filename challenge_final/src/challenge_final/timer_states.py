@@ -19,8 +19,8 @@ class StartPresentationTimer(smach.State):
 
     def execute(self, userdata):
         try:
-            rospy.wait_for_service('finals/start_countdown',1.0)
-            start_countdown = rospy.ServiceProxy('finals/start_countdown', StartCountdown)
+            rospy.wait_for_service('start_countdown',1.0)
+            start_countdown = rospy.ServiceProxy('start_countdown', StartCountdown)
         except rospy.ServiceException as e:
             print 'Timer service is not available: ' + str(e)
             return 'failed'
@@ -45,8 +45,8 @@ class SayRemainingTime(smach.State):
 
     def execute(self,userdata):
         try:
-            rospy.wait_for_service('finals/get_time',1.0)
-            get_time = rospy.ServiceProxy('finals/get_time', EmptyString)
+            rospy.wait_for_service('get_time',1.0)
+            get_time = rospy.ServiceProxy('get_time', EmptyString)
         except rospy.ServiceException as e:
             print 'Timer service is not available: ' + str(e)
             return 'failed'

@@ -68,14 +68,16 @@ if __name__ == "__main__":
 
     rospy.init_node('time_server')
 
-    timezone_difference = 0
+    # HACK!!!
+    timezone_difference = 6
+    # !!!
 
     time = Time(tzdiff=timezone_difference)
 
-    set_clock_service       = rospy.Service('finals/start_clock', EmptyBool, time.start_clock)
-    set_countdown_service   = rospy.Service('finals/start_countdown', StartCountdown, time.start_countdown)
-    give_time_service       = rospy.Service('finals/get_time', EmptyString, time.get_time)
-    is_running_service      = rospy.Service('finals/timer_running', EmptyBool, time.is_running)
+    set_clock_service       = rospy.Service('start_clock', EmptyBool, time.start_clock)
+    set_countdown_service   = rospy.Service('start_countdown', StartCountdown, time.start_countdown)
+    give_time_service       = rospy.Service('get_time', EmptyString, time.get_time)
+    is_running_service      = rospy.Service('timer_running', EmptyBool, time.is_running)
 
     while not rospy.is_shutdown():
         rospy.spin()
