@@ -38,7 +38,7 @@ class Time:
             time_left_min = ( time_left.seconds % 3600 ) / 60
             time_left_sec = time_left.seconds % 60
 
-            line = " " + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds "
+            line = "You still have" + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds left. "
             print line
             return line
 
@@ -49,13 +49,13 @@ class Time:
             duration_min = ( duration_dt.seconds % 3600 ) / 60
             duration_sec = duration_dt.seconds % 60
 
-            line = "Time since start: " + str(duration_hrs) + " hrs " + str(duration_min) + " min and " + str(duration_sec) + " sec."
+            line = "Time since start is " + str(duration_hrs) + " hours " + str(duration_min) + " minutes and " + str(duration_sec) + " seconds."
             print line
             return line
 
         # If the timer is not counting at all
         else:
-            line = str(current_time.time().hour) + " " + str(current_time.time().minute)
+            line = "The current time is " + str(current_time.time().hour) + ":" + str(current_time.time().minute)
             print line
             return line
 
