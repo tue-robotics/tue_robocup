@@ -39,6 +39,16 @@ GRANNIES_TABLE_KB = challenge_knowledge.grannies_table
 BOTTLE_SHELF = challenge_knowledge.bottle_shelf
 BOTTLE_SHELF_WAYPOINT = challenge_knowledge.bottle_shelf_waypoint
 
+
+
+import rospy
+from tf import TransformListener
+from robot_skills import world_model_ed
+from geometry_msgs.msg import Point
+import math
+
+
+
 def define_designators(robot):
     '''Define core designators in a separate function so that can be used when testing parts of the challenge separately.'''
     granny = ds.EdEntityDesignator(robot, type='human')
@@ -46,6 +56,108 @@ def define_designators(robot):
     shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
 
     return granny, grannies_table, shelf
+
+
+
+class DetectFallingGranny(smach.State):
+    def __init__(self, robot, timeout = 30):
+        smach.State.__init__(self, outcomes=["sit", "fall", "walk"])
+        self.robot = robot
+        self.timeout = timeout
+
+    def _get_entity_from_roi_and_center_point(self, ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y):
+        entity = ed.get_closest_entity(center_point=Point(x=closest_x, y=closest_y))
+        if not entity:
+            return None
+        if entity.pose.position.x > roi_x_start and entity.pose.position.x < roi_x_end and entity.pose.position.y > roi_y_start and entity.pose.position.y < roi_y_end:
+            return entity
+        return None 
+
+
+    def detect_action(self, ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y, timeout, distance_threshold):
+        print "Find the person in the room in ROI x: [%fx%f], y: [%fx%f] from closest (x,y) : (%f,%f)" % (roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
+
+        total_start = rospy.Time.now()
+
+        # Find an operator
+        operator = None
+        while not operator:
+            if rospy.Time.now() - total_start > rospy.Duration(timeout):
+                return "sit"
+
+            tmp_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
+            if tmp_operator:
+                start = rospy.Time.now()
+
+                # Check if ID is alive for more than 3 seconds
+                while rospy.Time.now() - start < rospy.Duration(1):
+                    # check if id is the same
+                    check_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
+                    if not check_operator:
+                        operator = None
+                        break
+
+                    if check_operator.id != tmp_operator.id:
+                        operator = None
+                        break
+
+                    operator = tmp_operator
+
+                    rospy.sleep(0.2)
+
+            rospy.sleep(0.2)
+
+        # We found an operator
+        print "We have found an operator: %s"%operator.id
+
+        last_seen_operator = None
+
+        # Continuously the operator
+        while rospy.Time.now() - total_start < rospy.Duration(timeout):
+            tmp_operator = ed.get_entity(id=operator.id)
+            if tmp_operator:
+                last_seen_operator = tmp_operator
+            else:
+                if last_seen_operator:
+                    tmp_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, last_seen_operator.pose.position.x, last_seen_operator.pose.position.y)
+                    if tmp_operator:
+                        last_seen_operator = tmp_operator
+                else:
+                    tmp_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, operator.pose.position.x, operator.pose.position.y)
+                    if tmp_operator:
+                        last_seen_operator = tmp_operator
+
+            rospy.sleep(0.2)
+
+        # Check the result 
+        if not last_seen_operator:
+            return "fall"
+
+        dr = math.hypot(last_seen_operator.pose.position.x - operator.pose.position.x, last_seen_operator.pose.position.y - operator.pose.position.y)
+        dt = (last_seen_operator.last_update_time - operator.last_update_time).to_sec()
+
+        print "dr: %f" % dr
+        print "dt: %f" % dt
+
+        # Compare last seen with original
+        if dr > distance_threshold:
+            return "walk"
+
+        if dt > 0.9 * timeout:
+            return "sit"
+
+        return "fall"
+
+    def execute(self, userdata=None):
+        # self.robot.head.reset()
+        # import ipdb; ipdb.set_trace()
+
+        result = self.detect_action(self.robot.ed, 1.59, 4.7, -9.17, -4, 2.9, -7.4, self.timeout, 2.0)
+
+        return result
+
+
+
 
 class InitializeWorldModel(smach.State):
 
@@ -244,7 +356,7 @@ class GetPills(smach.StateMachine):
 
             #If the description fails at first, say something to also wait a little bit for entities to pop into ED and then try again
             smach.StateMachine.add( "SAY_LOOKAT_SHELF_2",
-                                     states.Say(robot, ["Lets see what we have in store", "What do we have here?"]),
+                                     states.Say(robot, ["Looking"]),
                                      transitions={  'spoken'            :'LOOKAT_SHELF_2'})
 
             smach.StateMachine.add( "LOOKAT_SHELF_2",
@@ -257,12 +369,27 @@ class GetPills(smach.StateMachine):
                                         spec_designator=ask_bottles_spec,
                                         choices_designator=ask_bottles_choices,
                                         bottle_desc_mapping_designator=bottle_description_map_desig),
-                                    transitions={   'succeeded'         :'ASK_WHICH_BOTTLE',
+                                    transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_FAILED_NO_BOTTLES'})
 
             smach.StateMachine.add( "SAY_FAILED_NO_BOTTLES",
-                                    states.Say(robot, ["Sorry granny, I failed to see any bottles", "Sorry granny, I couldn't find any bottles"]),
+                                    states.Say(robot, ["Sorry granny, I could not grasp any bottle"]),
                                     transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
+
+
+            smach.StateMachine.add( "GOTO_GRANNY_ASK_BOTTLE",
+                                    states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+                                    transitions={   'arrived'           :'GOTO_GRANNY_ASK_BOTTLE_BACKUP',#DETECT_ACTION'
+                                                    'unreachable'       :'GOTO_GRANNY_ASK_BOTTLE_BACKUP',#DETECT_ACTION'
+                                                    'goal_not_defined'  :'GOTO_GRANNY_ASK_BOTTLE_BACKUP'})#DETECT_ACTION'
+
+            smach.StateMachine.add('GOTO_GRANNY_ASK_BOTTLE_BACKUP',
+                                    states.NavigateToSymbolic(robot, 
+                                        {ds.EdEntityDesignator(robot, id=grannies_table): "in_front_of_pos2" }, 
+                                        ds.EdEntityDesignator(robot, id=grannies_table)),
+                                    transitions={   'arrived'           :   'ASK_WHICH_BOTTLE',
+                                                    'unreachable'       :   'ASK_WHICH_BOTTLE',
+                                                    'goal_not_defined'  :   'ASK_WHICH_BOTTLE'})
 
             ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
@@ -369,8 +496,16 @@ class GetPills(smach.StateMachine):
             smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
                                     states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
                                     transitions={   'arrived'           :'failed',#DETECT_ACTION'
-                                                    'unreachable'       :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',#DETECT_ACTION'
-                                                    'goal_not_defined'  :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE'})#DETECT_ACTION'
+                                                    'unreachable'       :'GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1',#DETECT_ACTION'
+                                                    'goal_not_defined'  :'GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1'})#DETECT_ACTION'
+
+            smach.StateMachine.add('GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1',
+                                    states.NavigateToSymbolic(robot, 
+                                        {ds.EdEntityDesignator(robot, id=grannies_table): "in_front_of_pos2" }, 
+                                        ds.EdEntityDesignator(robot, id=grannies_table)),
+                                    transitions={   'arrived'           :   'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',
+                                                    'unreachable'       :   'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',
+                                                    'goal_not_defined'  :   'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE'})
 
             smach.StateMachine.add( "GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE",
                                     states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
@@ -378,12 +513,20 @@ class GetPills(smach.StateMachine):
                                                     'unreachable'       :'failed',#DETECT_ACTION'
                                                     'goal_not_defined'  :'failed'})#DETECT_ACTION'
 
-            smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
-                                    #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
-                                    transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
-                                                    'unreachable'       :'GOTO_HANDOVER_GRANNY_BACKUP',
-                                                    'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
+            # smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
+            #                         #states.NavigateToPose(robot, 0, 0, 0),
+            #                         states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+            #                         transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
+            #                                         'unreachable'       :'GOTO_HANDOVER_GRANNY_BACKUP',
+            #                                         'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
+
+            smach.StateMachine.add('GOTO_HANDOVER_GRANNY',
+                                    states.NavigateToSymbolic(robot, 
+                                        {ds.EdEntityDesignator(robot, id=grannies_table): "in_front_of_pos2" }, 
+                                        ds.EdEntityDesignator(robot, id=grannies_table)),
+                                    transitions={   'arrived'           :   'SAY_HANDOVER_BOTTLE',
+                                                    'unreachable'       :   'GOTO_HANDOVER_GRANNY_BACKUP',
+                                                    'goal_not_defined'  :   'GOTO_HANDOVER_GRANNY_BACKUP'})
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_BACKUP",
                                     #states.NavigateToPose(robot, 0, 0, 0),
@@ -557,6 +700,10 @@ class RespondToAction(smach.StateMachine):
                                     transitions={   "drop_blanket"      :"HANDLE_BLANKET",
                                                     "fall"              :"HANDLE_FALL",
                                                     "walk_and_sit"      :"HANDLE_WALK_AND_SIT"})
+                                    # DetectFallingGranny(robot, timeout=30),
+                                    # transitions={   "sit"       :"HANDLE_BLANKET",
+                                    #                 "fall"      :"HANDLE_FALL",
+                                    #                 "walk"      :"HANDLE_WALK_AND_SIT"})
 
             smach.StateMachine.add( "HANDLE_BLANKET",
                                     HandleBlanket(robot, grannies_table, granny),
@@ -636,8 +783,8 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
-                                    transitions={   'succeeded'     :'Done',
-                                                    'failed'        :'Done'})
+                                    transitions={   'succeeded'     :'RESPOND_TO_ACTION',
+                                                    'failed'        :'RESPOND_TO_ACTION'})
 
             # smach.StateMachine.add( "SAY_GO_BACK",
             #                         states.Say(robot, ["I'll just go back", "Heading back"], block=True),
@@ -804,6 +951,9 @@ def dummy_action_recognition(robot, max_measurements=200, _id=None):
     coords_array.to_csv("tracking_{}.csv".format(timestr))
 
     return action, coords
+
+
+
 
 ############################## initializing program ######################
 if __name__ == '__main__':
