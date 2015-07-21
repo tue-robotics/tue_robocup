@@ -171,7 +171,7 @@ class FollowOperator(smach.State):
             if not operator:
                 lost_time = rospy.Time.now()
                 recovered_operator = None
-                while rospy.Time.now() - lost_time < self._lost_timeout:
+                while rospy.Time.now() - lost_time < rospy.Duration(self._lost_timeout):
                     # Try to catch up with a close entity
                     recovered_operator = self._robot.ed.get_closest_entity(radius=self._lost_distance, center_point=old_operator.pose.position)
                     if recovered_operator:
