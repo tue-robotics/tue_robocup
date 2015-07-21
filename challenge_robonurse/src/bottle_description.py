@@ -182,7 +182,7 @@ class DescribeBottles(smach.State):
             m.scale.z = 0.1
             self._pub.publish(m)
 
-        sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1))  # Sort dict by value, i.e. the bottle's Y
+        sorted_bottles = sorted(bottle_to_y_dict.items(), key=operator.itemgetter(1), reverse = True)  # Sort dict by value, i.e. the bottle's Y
 
         descriptions = OrderedDict()
         for bottle, y in sorted_bottles:
