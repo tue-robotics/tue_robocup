@@ -79,7 +79,9 @@
       - Check if we can have a mic for Sjoerd and also one to point at each Robot so that the jury can listen to the orders and responses 
           (3 mics, or 2 if Sergio does not communicate much)
 
-  - Rokus: time query node, testing
+  - Rokus: 
+      - time query node 
+      - testing
 
   - Luis: testing
 
@@ -88,14 +90,15 @@
       - Can be triggered by topic (received from GUI)
 
   - Janno: SERGIO executive
-      - SERGIO should always keep it's head straight, slightly looking down
-      - Must be able to cancel nav goals -> need snappy behavior
+  #    - SERGIO should always keep it's head straight, slightly looking down
+  o    - Must be able to cancel nav goals -> need snappy behavior
 
   - Rein:
       - robot-robot communication
       - Make sure laptop visualization works with beamer
 
   - Sjoerd: visualization
+      - Localization AMIGO
       - OpenCV GUI mimic
       - RViz-like visualization
 
