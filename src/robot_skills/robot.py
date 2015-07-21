@@ -74,6 +74,18 @@ class Robot(object):
         #Grasp offsets
         #TODO: Don't hardcode, load from parameter server to make robot independent.
         self.grasp_offset = geometry_msgs.msg.Point(0.5, 0.2, 0.0)
+        
+    def standby(self):
+		if not self.robot_name == 'amigo':
+			rospy.logerr('Standby only works for amigo')
+			return
+		self.leftArm.reset()
+		self.rightArm.reset()
+		self.leftArm.send_gripper_goal('close')
+		self.rightArm.send_gripper_goal('close')
+		self.head.look_down()
+		self.torso.low()
+		self.lights.set_color(0, 0, 0)
 
     def publish_target(self, x, y):
         self.pub_target.publish(geometry_msgs.msg.Pose2D(x, y, 0))
