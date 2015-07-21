@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import rospy
 import smach
 import robot_smach_states as states
@@ -5,22 +7,30 @@ import robot_smach_states as states
 from challenge_final.srv import *
 
 class StartPresentationTimer(smach.State):
-    def __init__(self, robot, block=False):
-        State.__init__(self, outcomes=['done','failed'])
+    def __init__(self, robot, mins=0, secs=0):
+        smach.State.__init__(self, outcomes=['done','failed'])
+        if mins==0 and secs==0:
+            rospy.logerr('StartPresentationTimer: Time was not set')
+        else:
+            self.mins = mins
+            self.secs = secs
         self.robot = robot
+
 
     def execute(self, userdata):
         try:
             rospy.wait_for_service('finals/start_countdown',1.0)
-            set_clock = rospy.ServiceProxy('finals/start_countdown', StartCountdown)
+            start_countdown = rospy.ServiceProxy('finals/start_countdown', StartCountdown)
         except rospy.ServiceException as e:
             print 'Timer service is not available: ' + str(e)
             return 'failed'
 
         try:
-            if set_clock(mins=10, secs=0):
+            if start_countdown(mins=self.mins, secs=self.secs):
+                print 'Set clock succesfully!'
                 return 'done'
             else:
+                return 'Strangely, setting the clock was not successful'
                 return 'failed'
 
         except rospy.ServiceException as e:
@@ -29,7 +39,7 @@ class StartPresentationTimer(smach.State):
 
 class SayRemainingTime(smach.State):
     def __init__(self, robot, block=False):
-        State.__init__(self, outcomes=['done','failed'])
+        smach.State.__init__(self, outcomes=['done','failed'])
         self.robot = robot
         self.block = block
 
@@ -42,8 +52,9 @@ class SayRemainingTime(smach.State):
             return 'failed'
 
         try:
-            sentence = get_time(mins=10, secs=0)
-            robot.speech.speak(sentence, self.block)
+            response = get_time()
+            self.robot.speech.speak(sentence=str(response.sentence), block=self.block)
+            print 'Said time succesfully!'
             return 'done'
         except rospy.ServiceException as e:
             print 'Timer service failed: ' + str(e)

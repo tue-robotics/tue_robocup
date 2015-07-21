@@ -44,7 +44,7 @@ class SyncServer():
         return result
 
     def serve(self):
-	try:
+        try:
             self._server.serve_forever()
         except KeyboardInterrupt:
             pass

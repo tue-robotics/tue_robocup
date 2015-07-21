@@ -1,4 +1,4 @@
 uint32 mins
 uint32 secs
 ---
-string sentence
+bool b

@@ -27,6 +27,10 @@ from visualization_msgs.msg import Marker, MarkerArray
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 
+GRASP_LOC = []
+PERSON_LOC = []
+NUMBER_OF_TRIES = 0
+
 class InitializeWorldModel(smach.State):
 
     def __init__(self, robot):
@@ -69,7 +73,7 @@ class FakeStartupRobot(smach.State):
         
         dx = 0.01
         x = 0.02
-        for i in range(0,40):
+        for i in range(0,20):
             self.robot.lights.set_color(0,0,1,1)
             rospy.sleep(dx*i)
             self.robot.lights.set_color(0,0,0,1)
@@ -118,9 +122,9 @@ class ForceDriveToTheRight(smach.State):
         return "done"
 
 
-class Ask_action(smach.State):
+class AskAction(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["done", "failed"])
+        smach.State.__init__(self, outcomes=["drive_near_loc_for_person", "grasp_object","time_spoken","no_action", "failed"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -128,36 +132,84 @@ class Ask_action(smach.State):
 
         self.robot.speech.speak("What can I do for you?")
 
-        res = self.robot.ears.recognize(spec=challenge_knowledge.spec1_amigo_task, choices=challenge_knowledge.choices1_amigo_task, time_out=rospy.Duration(30))
+        result = self.robot.ears.recognize(spec=challenge_knowledge.spec1_amigo_task, choices=challenge_knowledge.choices1_amigo_task, time_out=rospy.Duration(60))
         self.robot.head.cancel_goal()
-        if not res:
-            self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
-            return "failed"
+
         try:
-            if res.result:
+            if result:
+                if "name" in result.choices:
+                    return "drive_near_loc_for_person"
 
-                say_result_filter_me = self.replace_word(res.result,"me","you")
-                say_result = self.replace_word(say_result_filter_me,"your","my")
-                self.robot.speech.speak("Okay I will {0}".format(say_result))
-                # self.robot.speech.speak("Is that correct?")
+                elif "grasp_location" in result.choices:
+                    say_result_filter_me = self.replace_word(result.result,"me","you")
+                    self.robot.speech.speak("Okay I will {0}".format(say_result_filter_me))
+                    GRASP_LOC.append(result.choices['grasp_location'])
+                    print "GRASP_LOC = ", GRASP_LOC
+                    return "grasp_object"
 
-
-
-
-                print say_result
-                self.save_action(res)
-
-
-
+                elif "time" in result.choices:
+                    self.robot.speech.speak("The time that is left is unknown, rokus is working on it")
+                    return "time_spoken"
             else:
-                self.robot.speech.speak("Sorry, I did not hear you. Please come closer to me if you can.")
-                return "failed"
+                self.robot.speech.speak("Sorry, I did not hear you.")
+                return "no_action"
         except KeyError:
             print "[what_did_you_say] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
             return "failed"
 
-        return "done"
+        return "no_action"
 
+    def replace_word(self,string,word_in,word_out):
+        try:
+            if string[:(len(word_in)+1)] == (word_in+" "):
+                string = string.replace(string[:len(word_in)],word_out)
+
+            if string[(len(string)-len(word_in)-1):] == (" "+word_in):
+                string = string.replace(string[(len(string)-len(word_in)):],word_out)
+
+            string = string.replace(" "+word_in+" "," "+word_out+" ")
+
+        except KeyError:
+            print "[gpsr] Received action is to short."
+
+        return string
+
+
+class AskPersonLoc(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["drive_near_loc_for_person", "no_action", "no_multiple_actions_heard", "failed"])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.head.look_at_standing_person()
+
+        self.robot.speech.speak("Where can I find him?")
+        result = self.robot.ears.recognize(spec=challenge_knowledge.spec2_amigo_task_followup, choices=challenge_knowledge.choices2_amigo_task_followup, time_out=rospy.Duration(15))
+        self.robot.head.cancel_goal()
+
+        try:
+            if result:
+                if "location" in result.choices:
+                    self.robot.speech.speak("Okay I will find him near the {0}".format(result.choices['location']))
+                    print "PERSON_LOC = ", PERSON_LOC
+                    PERSON_LOC.append(result.choices['location'])
+                    return "drive_near_loc_for_person"
+                else:
+                    self.robot.speech.speak("Sorry, I did not understand you.")
+            else:
+                self.robot.speech.speak("Sorry, I did not hear you.")
+                return "no_action"
+        except KeyError:
+            print "[FINAL] Received question is not in map. THIS SHOULD NEVER HAPPEN!"
+            return "failed"
+
+        NUMBER_OF_TRIES = NUMBER_OF_TRIES + 1
+
+        if NUMBER_OF_TRIES > 3:
+            NUMBER_OF_TRIES = 0
+            return "no_multiple_actions_heard"
+        else:
+            return "no_action"
 
 ###### Janno ######
 class PersonDesignator(Designator):
@@ -246,8 +298,6 @@ def setup_statemachine(robot):
                                     Sleep(robot,10),
                                     transitions={   'done':'FAKESTARTUP'})
     
-
-
         smach.StateMachine.add('FAKESTARTUP',
                                     FakeStartupRobot(robot),
                                     transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
@@ -263,14 +313,30 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
-                                transitions={   'done'          :'Done',
-                                                'preempted'     :'Done',
-                                                'error'         :'Done'})
+                                transitions={   'done'          :'ASK_ACTION',
+                                                'preempted'     :'ASK_ACTION',
+                                                'error'         :'ASK_ACTION'})
 
 
         ######################################################
         ##################### ASK STATE  #####################             
         ######################################################
+
+
+        smach.StateMachine.add("ASK_ACTION",
+                                AskAction(robot),
+                                transitions={'drive_near_loc_for_person':'ASK_LOCATION_PERSON',
+                                             'grasp_object':'ASK_ACTION',#'GOTO_GRASP_LOCATION',
+                                             'time_spoken':'ASK_ACTION',
+                                             'no_action':'ASK_ACTION',
+                                             'failed':'ASK_ACTION'})
+
+        smach.StateMachine.add("ASK_LOCATION_PERSON",
+                                AskPersonLoc(robot),
+                                transitions={'drive_near_loc_for_person':'ASK_ACTION',#'DRIVE_TO_LOC_FOR_PERSON',
+                                             'no_action':'ASK_LOCATION_PERSON',
+                                             'no_multiple_actions_heard':'ASK_ACTION', # In case multiple times location was not heard.
+                                             'failed':'ASK_ACTION'})
 
         ###### Janno ######
         smach.StateMachine.add('GOTO_OPERATOR',
@@ -279,15 +345,6 @@ def setup_statemachine(robot):
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
         ###################
-
-
-
-
-
-
-
-
-
 
 
 
