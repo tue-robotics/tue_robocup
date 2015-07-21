@@ -60,8 +60,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  GetTime.srv
-  StartClock.srv
+  EmptyString.srv
+  EmptyBool.srv
   StartCountdown.srv
 )
 
