@@ -359,7 +359,12 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('STORE_OPERATOR_WAYPOINT',
                                 StoreWaypoint(robot=robot, waypoint_id=INITIAL_POSE_AMIGO, offset=ROBOTS_OFFSET),
-                                transitions={   'done'              : 'EXPLORE'})
+                                transitions={   'done'              : 'WAIT_FOR_COMMAND'})
+
+        smach.StateMachine.add('WAIT_FOR_COMMAND',
+                               states.WaitForTrigger(robot=robot, triggers=['call_robot'], topic="/"+robot.robot_name+"/trigger", rate=1.0),
+                               transitions={   'call_robot'        : 'SAY_RECEIVED_CALL',
+                                               'preempted'         : 'SAY_RECEIVED_CALL'})
 
         smach.StateMachine.add('EXPLORE',
                                 ExploreScenario(robot),
