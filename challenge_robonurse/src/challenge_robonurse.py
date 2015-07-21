@@ -57,6 +57,31 @@ def define_designators(robot):
 
     return granny, grannies_table, shelf
 
+LASER_GRANNY = ds.VariableDesignator(resolve_type=EntityInfo)
+
+class StoreGrannyPose(smach.State):
+    def __init__(self, robot, designator):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        self.robot = robot
+        self.designator = designator
+
+    def execute(self, userdata):
+        # Hardcoded center pointS!!!
+        table_centerpoint = gm.Point(3.12, -6.725, 0.0)
+        possible_humans = self.robot.get_closest_possible_person_entity(type="", center_point=table_centerpoint)
+        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+
+        amigo.head.look_at_ground_in_front_of_robot(60)
+
+        if len(possible_humans) == 0:
+            rospy.logwarn("No possible_humans found")
+            return 'failed'
+
+        # Granny is the first one
+        designator.current = possible_humans[0]
+
+        return 'succeeded'
 
 
 class DetectFallingGranny(smach.State):
@@ -85,14 +110,14 @@ class DetectFallingGranny(smach.State):
             if rospy.Time.now() - total_start > rospy.Duration(timeout):
                 return "sit"
 
-            tmp_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
+            tmp_operator = self._get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
             if tmp_operator:
                 start = rospy.Time.now()
 
                 # Check if ID is alive for more than 3 seconds
                 while rospy.Time.now() - start < rospy.Duration(1):
                     # check if id is the same
-                    check_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
+                    check_operator = self._get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, closest_x, closest_y)
                     if not check_operator:
                         operator = None
                         break
@@ -119,11 +144,11 @@ class DetectFallingGranny(smach.State):
                 last_seen_operator = tmp_operator
             else:
                 if last_seen_operator:
-                    tmp_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, last_seen_operator.pose.position.x, last_seen_operator.pose.position.y)
+                    tmp_operator = self._get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, last_seen_operator.pose.position.x, last_seen_operator.pose.position.y)
                     if tmp_operator:
                         last_seen_operator = tmp_operator
                 else:
-                    tmp_operator = _get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, operator.pose.position.x, operator.pose.position.y)
+                    tmp_operator = self._get_entity_from_roi_and_center_point(ed, roi_x_start, roi_x_end, roi_y_start, roi_y_end, operator.pose.position.x, operator.pose.position.y)
                     if tmp_operator:
                         last_seen_operator = tmp_operator
 
@@ -168,7 +193,7 @@ class InitializeWorldModel(smach.State):
     def execute(self, userdata=None):
         self.robot.ed.configure_kinect_segmentation(continuous=False)
         self.robot.ed.configure_perception(continuous=False)
-        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+        
         self.robot.ed.reset()
 
         return "done"
@@ -738,8 +763,12 @@ class RoboNurse(smach.StateMachine):
         with self:
             smach.StateMachine.add( "INIT_WM",
                                     InitializeWorldModel(robot),
-                                    transitions={'done'                 :'START_PHASE'})
+                                    transitions={'done'                 :'STORE_GRANNY_POSE'})
 
+            smach.StateMachine.add( "STORE_GRANNY_POSE",
+                                    StoreGrannyPose(robot, LASER_GRANNY),
+                                    transitions={   'succeeded'         : 'START_PHASE',
+                                                    'failed'            : 'START_PHASE'})
 
             smach.StateMachine.add( "START_PHASE",
                                     StartPhase(robot, grannies_table),
