@@ -23,6 +23,8 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 
 from visualization_msgs.msg import Marker, MarkerArray
 
+import timer_states as timer
+
 #import data
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
@@ -42,6 +44,28 @@ BED_DESIGNATOR = None #VariableDesignator(resolve_type=EntityInfo)
 BED_TYPE_DESIGNATOR = None #VariableDesignator(resolve_type=str) # Designator that returns a string with the bar type
 LUIS_DESIGNATOR = None #PersonDesignator(robot=robot, furniture_designator=bed_type_designator)      # Designator that returns the operator
 ###################
+
+class Initialize(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['initialized',
+                                             'abort'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.lights.set_color(0,0,0)  #be sure lights are blue
+
+        self.robot.head.reset()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close',0.0)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close',0.0)
+        self.robot.torso.reset()
+
+        ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
+        rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
+        self.robot.base.get_location()
+
+        return 'initialized'
 
 class InitializeWorldModel(smach.State):
 
@@ -109,6 +133,27 @@ class WaitForEntity(smach.State):
 
         return "entity_exists"
 
+class WaitForEntityInitialPose(smach.State):
+
+    def __init__(self, robot, ed_entity_name):
+        smach.State.__init__(self, outcomes=['entity_exists','initial_pose_to_be_set_manually'])
+        self.robot = robot
+        self.ed_entity_name = ed_entity_name
+
+    def execute(self, userdata=None):
+
+        for i in range (0,100):
+            if not self.robot.ed.get_entity(id=self.ed_entity_name):
+                print "Initial pose not known"
+                rospy.sleep(0.1)
+            else:
+                print "Initial pose known!!"
+                return "entity_exists"
+
+        return "initial_pose_to_be_set_manually"
+
+                
+
 
 class Sleep(smach.State):
     def __init__(self, robot,sleep=1):
@@ -136,7 +181,7 @@ class ForceDriveToTheRight(smach.State):
 
 class AskAction(smach.State):
     def __init__(self, robot):
-        smach.State.__init__(self, outcomes=["drive_near_loc_for_person", "grasp_object","time_spoken","no_action", "failed"])
+        smach.State.__init__(self, outcomes=["drive_near_loc_for_person", "grasp_object","time_asked_for","no_action", "failed"])
         self.robot = robot
 
     def execute(self, userdata):
@@ -160,8 +205,7 @@ class AskAction(smach.State):
                     return "grasp_object"
 
                 elif "time" in result.choices:
-                    self.robot.speech.speak("The time that is left is unknown, rokus is working on it")
-                    return "time_spoken"
+                    return "time_asked_for"
             else:
                 self.robot.speech.speak("Sorry, I did not hear you.")
                 return "no_action"
@@ -269,9 +313,9 @@ def setup_statemachine(robot):
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
     robot.reasoner.query("retractall(current_action(_))")
     robot.reasoner.query("retractall(action_info(_,_,_))")
-    
+
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
-    
+
     empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
     arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
@@ -286,7 +330,7 @@ def setup_statemachine(robot):
     bed_type_designator = VariableDesignator(resolve_type=str) # Designator that returns a string with the bar type
     luis_designator = PersonDesignator(robot=robot, furniture_designator=bed_type_designator)      # Designator that returns the operator
     ###################
-    
+
     with sm:
 
 
@@ -294,8 +338,8 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
+        smach.StateMachine.add('INITIALIZE_NO_ED',
+                                Initialize(robot),
                                 transitions={   'initialized':'INIT_WM',
                                                 'abort':'Aborted'})
 
@@ -307,27 +351,11 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('FAKESHUTDOWN',
                                     FakeShutdownRobot(robot),
-                                    transitions={   'done':'TEMPORARY_SLEEP'})
-
-
-        # WAIT FOR TRIGGER NOT USED ANYMORE, but just in case..
-        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        #                             states.WaitForTrigger(robot,['amigo_startup'],topic="/"+robot.robot_name+"/trigger"),
-        #                             transitions={   'amigo_startup'        :'FAKESTARTUP',
-        #                                             'preempted'            :'FAKESTARTUP'})
-
-
-
-
-        #TODO: add entity
-        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        #                             WaitForEntity(robot,ed_entity_name='walls2'),
-        #                             transitions={   'entity_exists'        :'FAKESTARTUP'})
-
-
-        smach.StateMachine.add('TEMPORARY_SLEEP',
-                                    Sleep(robot,10),
-                                    transitions={   'done':'FAKESTARTUP'})
+                                    transitions={   'done':'WAIT_FOR_TRIGGER_TO_START'})
+       
+        smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+                                    WaitForEntity(robot,ed_entity_name='walls'),
+                                    transitions={   'entity_exists'        :'FAKESTARTUP'})
     
         smach.StateMachine.add('FAKESTARTUP',
                                     FakeStartupRobot(robot),
@@ -338,9 +366,13 @@ def setup_statemachine(robot):
                                     transitions={   'done':'SET_INITIAL_POSE_TEST'})
 
         smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
-                                    states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
-                                    transitions={   'spoken'            :'SET_INITIAL_POSE'})
+                                    states.Say(robot, ["Only for testing,gui now initial pose is needed. Probably a crash ;)"], block=True),
+                                    transitions={   'spoken'            :'WAIT_FOR_ENTITY_INITIAL_POSE'})
 
+        smach.StateMachine.add("WAIT_FOR_ENTITY_INITIAL_POSE", 
+                                    WaitForEntityInitialPose(robot,ed_entity_name=challenge_knowledge.initial_pose_amigo),
+                                    transitions={   'entity_exists'                   : 'SET_INITIAL_POSE',
+                                                    'initial_pose_to_be_set_manually' : 'ASK_ACTION'})
 
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
@@ -358,8 +390,13 @@ def setup_statemachine(robot):
                                 AskAction(robot),
                                 transitions={'drive_near_loc_for_person':'ASK_LOCATION_PERSON',
                                              'grasp_object':'ASK_ACTION',#'GOTO_GRASP_LOCATION',
-                                             'time_spoken':'ASK_ACTION',
+                                             'time_asked_for':'SAY_TIME_LEFT',
                                              'no_action':'ASK_ACTION',
+                                             'failed':'ASK_ACTION'})
+
+        smach.StateMachine.add("SAY_TIME_LEFT",
+                                timer.SayRemainingTime(robot,block=True),
+                                transitions={'done':'ASK_ACTION',
                                              'failed':'ASK_ACTION'})
 
         smach.StateMachine.add("ASK_LOCATION_PERSON",

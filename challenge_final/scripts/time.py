@@ -38,7 +38,7 @@ class Time:
             time_left_min = ( time_left.seconds % 3600 ) / 60
             time_left_sec = time_left.seconds % 60
 
-            line = " " + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds "
+            line = "You still have" + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds left. "
             print line
             return line
 
@@ -49,13 +49,13 @@ class Time:
             duration_min = ( duration_dt.seconds % 3600 ) / 60
             duration_sec = duration_dt.seconds % 60
 
-            line = "Time since start: " + str(duration_hrs) + " hrs " + str(duration_min) + " min and " + str(duration_sec) + " sec."
+            line = "Time since start is " + str(duration_hrs) + " hours " + str(duration_min) + " minutes and " + str(duration_sec) + " seconds."
             print line
             return line
 
         # If the timer is not counting at all
         else:
-            line = str(current_time.time().hour) + " " + str(current_time.time().minute)
+            line = "The current time is " + str(current_time.time().hour) + ":" + str(current_time.time().minute)
             print line
             return line
 
@@ -68,14 +68,16 @@ if __name__ == "__main__":
 
     rospy.init_node('time_server')
 
-    timezone_difference = 0
+    # HACK!!!
+    timezone_difference = 6
+    # !!!
 
     time = Time(tzdiff=timezone_difference)
 
-    set_clock_service       = rospy.Service('finals/start_clock', EmptyBool, time.start_clock)
-    set_countdown_service   = rospy.Service('finals/start_countdown', StartCountdown, time.start_countdown)
-    give_time_service       = rospy.Service('finals/get_time', EmptyString, time.get_time)
-    is_running_service      = rospy.Service('finals/timer_running', EmptyBool, time.is_running)
+    set_clock_service       = rospy.Service('timer/start_clock', EmptyBool, time.start_clock)
+    set_countdown_service   = rospy.Service('timer/start_countdown', StartCountdown, time.start_countdown)
+    give_time_service       = rospy.Service('timer/get_time', EmptyString, time.get_time)
+    is_running_service      = rospy.Service('timer/timer_running', EmptyBool, time.is_running)
 
     while not rospy.is_shutdown():
         rospy.spin()
