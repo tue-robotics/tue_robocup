@@ -4,10 +4,10 @@
 
   [0:00]
 
-  - Make sure the RoboEarth router is correctly positioned
+  # Make sure the RoboEarth router is correctly positioned
   - Max and Janno put AMIGO and SERGIO side-by-side in the furthest living room corner
     near the hall, 1.5 meter apart in Y (SERGIO nearer to the bar)
-  - AMIGO has torso down, looking down, lights off # ToDo: make direct function
+  # AMIGO has torso down, looking down, lights off # ToDo: make direct function
   - Rein has computer with visualization connected to beamer:
     - One desktop with OpenCV GUI
     - One desktop with our custom visualization
