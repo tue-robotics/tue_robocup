@@ -209,7 +209,7 @@ class AskOrder(smach.State):
         self._location = location
 
     def execute(self, userdata):
-        self._robot.head.look_at_standing_person()
+        sergio.head.look_at_ground_in_front_of_robot(3)
         self._robot.speech.speak("Which combo or beverage do you want?")
 
         order = None
