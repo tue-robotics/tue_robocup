@@ -69,10 +69,13 @@ class FakeStartupRobot(smach.State):
         
         dx = 0.01
         x = 0.02
-        for i in range(0,100):
-            self.robot.lights.set_color(0,0,1,dx*i)
-            rospy.sleep(x)
+        for i in range(0,40):
+            self.robot.lights.set_color(0,0,1,1)
+            rospy.sleep(dx*i)
+            self.robot.lights.set_color(0,0,0,1)
+            rospy.sleep(dx*i)
 
+        self.robot.lights.set_color(0,0,1,1)
         return "done"
 
 
@@ -132,10 +135,12 @@ class Ask_action(smach.State):
             return "failed"
         try:
             if res.result:
+
                 say_result_filter_me = self.replace_word(res.result,"me","you")
                 say_result = self.replace_word(say_result_filter_me,"your","my")
                 self.robot.speech.speak("Okay I will {0}".format(say_result))
-               # self.robot.speech.speak("Is that correct?")
+                # self.robot.speech.speak("Is that correct?")
+
 
 
 
@@ -204,7 +209,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('TEMPORARY_SLEEP',
-                                    Sleep(robot,7),
+                                    Sleep(robot,10),
                                     transitions={   'done':'FAKESTARTUP'})
     
 
