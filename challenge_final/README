@@ -48,24 +48,25 @@
   [?:??] AMIGO drives to the person near the bed (Luis). He asks Luis: "What can I do for you?"
          Luis: "Bring me the object on the dinner_table"
 
-  [?:??] AMIGO drives to the dinner_table, grasps the object, and bring it back Luis (again the person nearest to the bar)
-  [?:??] AMIGO asks Luis: "what can I do for you?".
-         Luis: "How much time do we still have?"
-
-         Rokus' time node is queried. This returns a string that can be directly given to 'speak'
+  [?:??] AMIGO drives to the dinner_table, grasps the object, and bring it back Luis (again the person nearest to the bed)
 
   [?:??] AMIGO asks Luis: "what can I do for you?".
          Luis: "Go back to the operator"
-         
-  [?:??] AMIGO drives back to the person nearest to the bar # ToDo: why not: get me object <furniture>
+
+  [?:??] AMIGO drives back to the person nearest to the bar (Sjoerd)
+         AMIGO asks Sjoerd: "what can I do for you?".
+         Sjoerd: "How much time do we still have?"
+
+         Rokus' time node is queried. This returns a string that can be directly given to 'speak'
+       
+  [?:??] From this point on, let AMIGO keep on asking "What can I do for you?". The possibilities are:
+
+         "Get me the object from X"
 
   [?:??] When SERGIO is done exploring, Ramon clicks a button on the GUI and SERGIO drives back to the jury
 
          TODO: maybe it's nice to have the option "drive to X" in the GUI. THIS IS A NICE TO HAVE!
 
-  [?:??] From this point on, let AMIGO keep on asking "What can I do for you?". The possibilities are:
-
-         "Get me the object from X"
 
 --------------------------------------------------------------------------------------------
     TODO PER PERSON
@@ -75,6 +76,8 @@
 
   - Max: testing
       - Make sure we have external audio on SERGIO (ask Janno)
+      - Check if we can have a mic for Sjoerd and also one to point at each Robot so that the jury can listen to the orders and responses 
+          (3 mics, or 2 if Sergio does not communicate much)
 
   - Rokus: time query node, testing
 
@@ -105,4 +108,3 @@
     - Map filter (Sjoerd)
   - following a person and fitting objects instead of GUI (?)
   - paramaterized models (Sjoerd)
-
