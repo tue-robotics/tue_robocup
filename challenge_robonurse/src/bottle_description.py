@@ -174,7 +174,7 @@ class DescribeBottles(smach.State):
         descriptions = self.describe_relative(descriptions)
 
         # self.robot.speech.speak("I see {0} bottles, which do you want?".format(len(descriptions)))
-        self.robot.speech.speak("I see ")
+        # self.robot.speech.speak("I see ")
         for bottle, desc in descriptions.iteritems():
 
             desc_sentence = ""
