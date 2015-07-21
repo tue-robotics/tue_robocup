@@ -71,12 +71,15 @@ class Arm(object):
             "/" + robot_name + "/" + self.side + "_arm/joint_trajectory_action", FollowJointTrajectoryAction)
 
         # ToDo: don't hardcode?
-        server_timeout = 1.0
-        if not self._ac_gripper.wait_for_server(timeout=rospy.Duration(server_timeout)):
+        server_timeout = 0.25
+        self._ac_gripper_present = self._ac_gripper.wait_for_server(timeout=rospy.Duration(server_timeout))
+        if not self._ac_gripper_present:
             rospy.logwarn("Cannot find gripper {0} server".format(self.side))
-        if not self._ac_grasp_precompute.wait_for_server(timeout=rospy.Duration(server_timeout)):
+        self._ac_grasp_precompute_present  = self._ac_grasp_precompute.wait_for_server(timeout=rospy.Duration(server_timeout))
+        if not self._ac_grasp_precompute_present:
             rospy.logwarn("Cannot find grasp precompute {0} server".format(self.side))
-        if not self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(server_timeout)):
+        self._ac_joint_traj_present = self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(server_timeout))
+        if not self._ac_joint_traj_present:
             rospy.logwarn("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
@@ -323,6 +326,14 @@ class Arm(object):
         completion of the actionlib goal. It will return True as soon as possible when the goal
         succeeded. On timeout, it will return False.
         '''
+        # First: check if the actionlib is available
+        if not self._ac_joint_traj_present:
+            self._ac_joint_traj_present = self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(0.25))
+        # If still not available: return false
+        if not self._ac_joint_traj_present:
+            rospy.logwarn('Joint trajectory action is not present: joint goal not reached')
+            return False
+
         time_from_start = rospy.Duration()
         ps = []
         for joints_reference in joints_references:
