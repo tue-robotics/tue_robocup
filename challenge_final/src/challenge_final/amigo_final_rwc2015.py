@@ -99,6 +99,27 @@ class WaitForEntity(smach.State):
 
         return "entity_exists"
 
+class WaitForEntityInitialPose(smach.State):
+
+    def __init__(self, robot, ed_entity_name):
+        smach.State.__init__(self, outcomes=['entity_exists','initial_pose_to_be_set_manually'])
+        self.robot = robot
+        self.ed_entity_name = ed_entity_name
+
+    def execute(self, userdata=None):
+
+        for i in range (0,100):
+            if not self.robot.ed.get_entity(id=self.ed_entity_name):
+                print "Initial pose not known"
+                rospy.sleep(0.1)
+            else:
+                print "Initial pose known!!"
+                return "entity_exists"
+
+        return "initial_pose_to_be_set_manually"
+
+                
+
 
 class Sleep(smach.State):
     def __init__(self, robot,sleep=1):
@@ -280,24 +301,11 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('FAKESHUTDOWN',
                                     FakeShutdownRobot(robot),
-                                    transitions={   'done':'TEMPORARY_SLEEP'})
-
-
-        # WAIT FOR TRIGGER NOT USED ANYMORE, but just in case..
-        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        #                             states.WaitForTrigger(robot,['amigo_startup'],topic="/"+robot.robot_name+"/trigger"),
-        #                             transitions={   'amigo_startup'        :'FAKESTARTUP',
-        #                                             'preempted'            :'FAKESTARTUP'})
-
-
-
-
-        
-
-
-        smach.StateMachine.add('TEMPORARY_SLEEP',
-                                    Sleep(robot,10),
-                                    transitions={   'done':'FAKESTARTUP'})
+                                    transitions={   'done':'WAIT_FOR_TRIGGER_TO_START'})
+       
+        smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
+                                    WaitForEntity(robot,ed_entity_name='walls'),
+                                    transitions={   'entity_exists'        :'FAKESTARTUP'})
     
         smach.StateMachine.add('FAKESTARTUP',
                                     FakeStartupRobot(robot),
@@ -308,13 +316,13 @@ def setup_statemachine(robot):
                                     transitions={   'done':'SET_INITIAL_POSE_TEST'})
 
         smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
-                                    states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
+                                    states.Say(robot, ["Only for testing,gui now initial pose is needed. Probably a crash ;)"], block=True),
                                     transitions={   'spoken'            :'WAIT_FOR_ENTITY_INITIAL_POSE'})
 
         smach.StateMachine.add("WAIT_FOR_ENTITY_INITIAL_POSE", 
-                                    WaitForEntity(robot,ed_entity_name=challenge_knowledge.initial_pose_amigo),
-                                    transitions={   'entity_exists'        :'SET_INITIAL_POSE'})
-
+                                    WaitForEntityInitialPose(robot,ed_entity_name=challenge_knowledge.initial_pose_amigo),
+                                    transitions={   'entity_exists'                   : 'SET_INITIAL_POSE',
+                                                    'initial_pose_to_be_set_manually' : 'ASK_ACTION'})
 
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
