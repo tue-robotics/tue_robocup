@@ -249,10 +249,13 @@ class SpeakOrders(smach.State):
         sentence_beverage = ""
         sentence_final = ""
 
+
         if "beverage" in ORDERS:
             sentence_beverage = "Table %s would like to have the beverage %s"%(ORDERS["beverage"]["location"], ORDERS["beverage"]["name"])
+            sentence_final = sentence_beverage
         if "combo" in ORDERS:
             sentence_combo = "Table %s wants the combo %s"%(ORDERS["combo"]["location"], ORDERS["combo"]["name"])
+            sentence_final = sentence_combo
 
         ''' add a COMA and an AND abetween sentences better understanding ''' 
         if "combo" in ORDERS and "beverage" in ORDERS:
