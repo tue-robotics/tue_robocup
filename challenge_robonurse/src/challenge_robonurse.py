@@ -656,6 +656,59 @@ def test_get_pills(robot):
     getpills = GetPills(robot, shelf, grannies_table, granny)
     getpills.execute(None)
 
+
+
+def test_describe_pills(robot):
+    granny, grannies_table, shelf = define_designators(robot)
+
+    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.arms['left'])
+    arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])  #ArmHoldingEntityDesignator(robot.arms, robot.arms['left']) #described_bottle)
+
+    def small(entity):
+        return abs(entity.z_max - entity.z_min) < 0.20
+
+    def not_too_small(entity):
+        return abs(entity.z_max - entity.z_min) > 0.03
+
+    def minimal_height_from_floor(entity):
+        return (entity.z_min + entity.pose.position.z)> 0.50
+
+    def type_unknown_or_not_room(entity):
+        return entity.type == "" or entity.type not in ["room"] or "shelf" not in entity.type
+
+    def not_bookcase_part(entity):
+        return not BOTTLE_SHELF in entity.id #Bookcase has elements named "bookcase/shelf1" etc. Ditch those
+
+    bottle_shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
+
+    # import ipdb; ipdb.set_trace()
+    def on_top(entity):
+        container_entity = bottle_shelf.resolve()
+        return onTopOff(entity, container_entity)
+
+    bottle_criteria = [minimal_height_from_floor, type_unknown_or_not_room, not_bookcase_part, onTopOffForDesignator(bottle_shelf), small, not_too_small]
+
+    # shelves = ds.EdEntityCollectionDesignator(robot, criteriafuncs=[lambda e: "bookcase" in e.id])
+    bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False)
+    described_bottle = ds.EdEntityDesignator(robot, debug=False) #ID will be decided by the description given by granny
+    locked_described_bottle = ds.LockingDesignator(described_bottle)
+
+    lookat = states.LookAtEntity(robot, bottle_shelf, waittime=1.0)
+    lookat.execute(None)
+
+    ask_bottles_spec = ds.VariableDesignator(resolve_type=str)
+    ask_bottles_choices = ds.VariableDesignator(resolve_type=dict)
+    bottle_description_map_desig = ds.VariableDesignator(resolve_type=dict)
+    
+    state_describe = DescribeBottles(robot, bottles_to_describe,
+                                    spec_designator=ask_bottles_spec,
+                                    choices_designator=ask_bottles_choices,
+                                    bottle_desc_mapping_designator=bottle_description_map_desig)
+
+    state_describe.execute(None)
+
+
+
 def test_respond_to_action(robot):
     granny, grannies_table, shelf = define_designators(robot)
     respond = RespondToAction(robot, grannies_table, granny)
