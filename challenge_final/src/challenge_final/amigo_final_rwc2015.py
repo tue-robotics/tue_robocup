@@ -150,7 +150,6 @@ class AskAction(smach.State):
                     return "grasp_object"
 
                 elif "time" in result.choices:
-                    self.robot.speech.speak("The time that is left is unknown, rokus is working on it")
                     return "time_asked_for"
             else:
                 self.robot.speech.speak("Sorry, I did not hear you.")
