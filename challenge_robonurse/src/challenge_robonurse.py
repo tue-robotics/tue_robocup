@@ -518,21 +518,21 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "SAY_GRAB_FAILED",
                                     states.Say(robot, "I couldn't grab the bottle, sorry Granny"),
-                                    transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE'})
+                                    transitions={   'spoken'            :'GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1'})
 
             smach.StateMachine.add( "GOTO_GRANNY_WITHOUT_BOTTLE",
                                     states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
                                     transitions={   'arrived'           :'failed',#DETECT_ACTION'
-                                                    'unreachable'       :'GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1',#DETECT_ACTION'
-                                                    'goal_not_defined'  :'GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1'})#DETECT_ACTION'
+                                                    'unreachable'       :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',#DETECT_ACTION'
+                                                    'goal_not_defined'  :'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE'})#DETECT_ACTION'
 
             smach.StateMachine.add('GOTO_GRANNY_WITHOUT_BOTTLE_BACKUP_1',
                                     states.NavigateToSymbolic(robot, 
                                         {ds.EdEntityDesignator(robot, id=grannies_table): "in_front_of_pos2" }, 
                                         ds.EdEntityDesignator(robot, id=grannies_table)),
-                                    transitions={   'arrived'           :   'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',
-                                                    'unreachable'       :   'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE',
-                                                    'goal_not_defined'  :   'GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE'})
+                                    transitions={   'arrived'           :   'failed',
+                                                    'unreachable'       :   'GOTO_GRANNY_WITHOUT_BOTTLE',
+                                                    'goal_not_defined'  :   'GOTO_GRANNY_WITHOUT_BOTTLE'})
 
             smach.StateMachine.add( "GOTO_GRANNYS_TABLE_WITHOUT_BOTTLE",
                                     states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
@@ -723,14 +723,14 @@ class RespondToAction(smach.StateMachine):
 
         with self:
             smach.StateMachine.add( 'DETECT_ACTION',
-                                    DetectAction(robot, granny),
-                                    transitions={   "drop_blanket"      :"HANDLE_BLANKET",
-                                                    "fall"              :"HANDLE_FALL",
-                                                    "walk_and_sit"      :"HANDLE_WALK_AND_SIT"})
-                                    # DetectFallingGranny(robot, timeout=30),
-                                    # transitions={   "sit"       :"HANDLE_BLANKET",
-                                    #                 "fall"      :"HANDLE_FALL",
-                                    #                 "walk"      :"HANDLE_WALK_AND_SIT"})
+                                    # DetectAction(robot, granny),
+                                    # transitions={   "drop_blanket"      :"HANDLE_BLANKET",
+                                    #                 "fall"              :"HANDLE_FALL",
+                                    #                 "walk_and_sit"      :"HANDLE_WALK_AND_SIT"})
+                                    DetectFallingGranny(robot, timeout=30),
+                                    transitions={   "sit"       :"HANDLE_BLANKET",
+                                                    "fall"      :"HANDLE_FALL",
+                                                    "walk"      :"HANDLE_WALK_AND_SIT"})
 
             smach.StateMachine.add( "HANDLE_BLANKET",
                                     HandleBlanket(robot, grannies_table, granny),
