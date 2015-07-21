@@ -782,7 +782,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'spoken'            :'HEAR_ANSWER'})
 
             smach.StateMachine.add('HEAR_ANSWER',
-                                    states.Hear(robot, '(continue|i need my pills|(please) get me my pills)',time_out=rospy.Duration(10)),
+                                    states.Hear(robot, '(continue|i need my pills|(please) get me my pills)',time_out=rospy.Duration(10),look_at_standing_person=False),
                                     transitions={'heard':'GOTO_SHELF','not_heard':'GOTO_SHELF'})
 
             smach.StateMachine.add( "GOTO_SHELF",
