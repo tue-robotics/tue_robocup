@@ -414,9 +414,19 @@ class GetPills(smach.StateMachine):
                                     states.NavigateToSymbolic(robot, 
                                         {ds.EdEntityDesignator(robot, id=grannies_table): "in_front_of_pos2" }, 
                                         ds.EdEntityDesignator(robot, id=grannies_table)),
-                                    transitions={   'arrived'           :   'ASK_WHICH_BOTTLE',
-                                                    'unreachable'       :   'ASK_WHICH_BOTTLE',
-                                                    'goal_not_defined'  :   'ASK_WHICH_BOTTLE'})
+                                    transitions={   'arrived'           :   'GOTO_GRANNY_ASK_BOTTLE_BACKUP_23',
+                                                    'unreachable'       :   'GOTO_GRANNY_ASK_BOTTLE_BACKUP_23',
+                                                    'goal_not_defined'  :   'GOTO_GRANNY_ASK_BOTTLE_BACKUP_23'})
+
+
+
+            smach.StateMachine.add( "GOTO_GRANNY_ASK_BOTTLE_BACKUP_23",
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    transitions={   'arrived'           :'ASK_WHICH_BOTTLE',#DETECT_ACTION'
+                                                    'unreachable'       :'ASK_WHICH_BOTTLE',#DETECT_ACTION'
+                                                    'goal_not_defined'  :'ASK_WHICH_BOTTLE'})#DETECT_ACTION'
+
+
 
             ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
