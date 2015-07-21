@@ -71,7 +71,7 @@ class StoreGrannyPose(smach.State):
         possible_humans = self.robot.ed.get_closest_possible_person_entity(type="", center_point=table_centerpoint)
         self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
 
-        self.robot.head.look_at_ground_in_front_of_robot(60)
+        self.robot.head.look_at_ground_in_front_of_robot(10)
 
         if not possible_humans:
             return 'failed'
