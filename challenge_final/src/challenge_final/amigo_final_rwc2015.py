@@ -35,9 +35,8 @@ class InitializeWorldModel(smach.State):
 
     def execute(self, userdata=None):
         self.robot.ed.configure_kinect_segmentation(continuous=False)
-        self.robot.ed.configure_perception(continuous=False)
+        #self.robot.ed.configure_perception(continuous=False)
         self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
-        self.robot.ed.reset()
 
         return "done"
 
@@ -68,9 +67,10 @@ class FakeStartupRobot(smach.State):
         self.robot.spindle.reset()
         self.robot.head.reset()
         
-        x = 0.1
-        for i in range(0,10):
-            self.robot.lights.set_color(0,0,1,x*i)
+        dx = 0.01
+        x = 0.02
+        for i in range(0,100):
+            self.robot.lights.set_color(0,0,1,dx*i)
             rospy.sleep(x)
 
         return "done"
@@ -92,7 +92,6 @@ class WaitForEntity(smach.State):
 
 
 class Sleep(smach.State):
-
     def __init__(self, robot,sleep=1):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
@@ -101,6 +100,17 @@ class Sleep(smach.State):
     def execute(self, userdata=None):
 
         rospy.sleep(self.sleep)
+
+        return "done"
+
+class ForceDriveToTheRight(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata):
+
+        self.robot.base.force_drive(0, -0.5, 0, 2.0)    
 
         return "done"
 
@@ -115,7 +125,7 @@ class Ask_action(smach.State):
 
         self.robot.speech.speak("What can I do for you?")
 
-        res = self.robot.ears.recognize(spec=data.spec, choices=data.choices, time_out=rospy.Duration(30))
+        res = self.robot.ears.recognize(spec=challenge_knowledge.spec1_amigo_task, choices=challenge_knowledge.choices1_amigo_task, time_out=rospy.Duration(30))
         self.robot.head.cancel_goal()
         if not res:
             self.robot.speech.speak("My ears are not working properly, can i get a restart?.")
@@ -143,54 +153,6 @@ class Ask_action(smach.State):
 
         return "done"
 
-    def replace_word(self,string,word_in,word_out):
-        try:
-            if string[:(len(word_in)+1)] == (word_in+" "):
-                string = string.replace(string[:len(word_in)],word_out)
-
-            if string[(len(string)-len(word_in)-1):] == (" "+word_in):
-                string = string.replace(string[(len(string)-len(word_in)):],word_out)
-
-            string = string.replace(" "+word_in+" "," "+word_out+" ")
-
-        except KeyError:
-            print "[gpsr] Received action is to short."
-
-        return string
-
-    def save_action(self,res):
-        
-        self.robot.reasoner.query("retractall(action_info(A,B,C))")
-        self.robot.reasoner.query("retractall(current_action(A))")
-        self.robot.reasoner.query("retractall(action_info(A,B))")
-
-        self.robot.reasoner.assertz("action_info('complete_action','"+self.add_underscores(str(res.result))+"')")
-
-        whole_action = self.robot.reasoner.query("action_info('complete_action',B)")
-        print "whole_action = ", whole_action
-
-        for choice_key, choice_value in res.choices.iteritems():
-            print "choice_key = ", self.add_underscores(str(choice_key))
-            print "choice_value = '",self.add_underscores(str(choice_value)),"'"
-
-            if not choice_key[:1].find("1"):
-                #print " 1 = ", choice_key[:1]             
-                self.robot.reasoner.assertz("action_info('1','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
-            if not choice_key[:1].find("2") : 
-                #print " 2 = ", choice_key[:1] 
-                self.robot.reasoner.assertz("action_info('2','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")  
-            if not choice_key[:1].find("3"):
-                #print " 3 = ", choice_key[:1]   
-                self.robot.reasoner.assertz("action_info('3','"+self.add_underscores(str(choice_key))+"','"+self.add_underscores(str(choice_value))+"')")
-
-
-    #   todo: 
-    #       - First get for first action the simple action (for now only navigating to location, room or object, later also direct grabbing object)
-    #       - Then get action 2
-    #       - Then action 3. (mainly dropoff, report, follow, answer question (including tell time))
-    #
-    def add_underscores(self, string):
-        return str(string.replace(" ","_"))
 
 def setup_statemachine(robot):
 
@@ -242,18 +204,23 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('TEMPORARY_SLEEP',
-                                    Sleep(robot,10),
+                                    Sleep(robot,7),
                                     transitions={   'done':'FAKESTARTUP'})
     
 
 
         smach.StateMachine.add('FAKESTARTUP',
                                     FakeStartupRobot(robot),
+                                    transitions={   'done':'FORCEDRIVE_TO_THE_RIGHT'})
+
+        smach.StateMachine.add('FORCEDRIVE_TO_THE_RIGHT',
+                                    ForceDriveToTheRight(robot),
                                     transitions={   'done':'SET_INITIAL_POSE_TEST'})
 
         smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
                                     states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
                                     transitions={   'spoken'            :'SET_INITIAL_POSE'})
+
 
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
@@ -262,6 +229,9 @@ def setup_statemachine(robot):
                                                 'error'         :'Done'})
 
 
+        ######################################################
+        ##################### ASK STATE  #####################             
+        ######################################################
 
 
 
