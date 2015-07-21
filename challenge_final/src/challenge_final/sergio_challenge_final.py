@@ -354,8 +354,13 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('INITIALIZE',
                                 states.Initialize(robot),
-                                transitions={   'initialized'       : 'STORE_OPERATOR_WAYPOINT',
+                                transitions={   'initialized'       : 'LOOK_IN_FRONT',
                                                 'abort'             : 'Aborted'})
+
+        smach.StateMachine.add('LOOK_IN_FRONT',
+                                LookBaseLinkPoint(robot=robot, x=3, y=0, z=0, timeout=2.5, waittime=0.0),
+                                transitions={   'succeeded'         : 'STORE_OPERATOR_WAYPOINT',
+                                                'failed'            : 'STORE_OPERATOR_WAYPOINT'})# ToDo: abort???
 
         smach.StateMachine.add('STORE_OPERATOR_WAYPOINT',
                                 StoreWaypoint(robot=robot, waypoint_id=INITIAL_POSE_AMIGO, offset=ROBOTS_OFFSET),
