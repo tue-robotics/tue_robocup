@@ -808,7 +808,7 @@ class RoboNurse(smach.StateMachine):
             #                                         'goal_not_defined':'GOTO_SHELF_BACKUP'})
 
             smach.StateMachine.add('GOTO_SHELF_BACKUP',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=BOTTLE_SHELF_WAYPOINT, radius=0.2)),
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=BOTTLE_SHELF_WAYPOINT), radius=0.2),
                                     transitions={   'arrived':'GET_PILLS',
                                                     'unreachable':'GET_PILLS',
                                                     'goal_not_defined':'GET_PILLS'})
@@ -820,7 +820,13 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "REST_ARMS_1",
                                     states.ResetArms(robot),
-                                    transitions={   'done'           :'RESPOND_TO_ACTION'})
+                                    transitions={   'done'           :'GOTO_TABLE_DECTTTTE'})
+
+            smach.StateMachine.add('GOTO_TABLE_DECTTTTE',
+                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="granny_waypoint"), radius=0.2),
+                                    transitions={   'arrived':'RESPOND_TO_ACTION',
+                                                    'unreachable':'RESPOND_TO_ACTION',
+                                                    'goal_not_defined':'RESPOND_TO_ACTION'})
 
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
