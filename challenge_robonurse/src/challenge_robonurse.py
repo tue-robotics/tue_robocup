@@ -47,17 +47,16 @@ from robot_skills import world_model_ed
 from geometry_msgs.msg import Point
 import math
 
-
+LASER_GRANNY = ds.VariableDesignator(resolve_type=EntityInfo)
 
 def define_designators(robot):
     '''Define core designators in a separate function so that can be used when testing parts of the challenge separately.'''
-    granny = ds.EdEntityDesignator(robot, type='human')
+    # granny = ds.EdEntityDesignator(robot, type='human')
+    granny = LASER_GRANNY
     grannies_table = ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB)
     shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF)
 
     return granny, grannies_table, shelf
-
-LASER_GRANNY = ds.VariableDesignator(resolve_type=EntityInfo)
 
 class StoreGrannyPose(smach.State):
     def __init__(self, robot, designator):
