@@ -44,7 +44,10 @@ class SyncServer():
         return result
 
     def serve(self):
-        self._server.serve_forever()
+	try:
+            self._server.serve_forever()
+        except KeyboardInterrupt:
+            pass
 
 # Main function
 if __name__ == '__main__':
