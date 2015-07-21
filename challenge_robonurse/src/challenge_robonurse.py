@@ -362,9 +362,9 @@ class GetPills(smach.StateMachine):
         locked_described_bottle = ds.LockingDesignator(described_bottle)
 
         with self:
-            smach.StateMachine.add( "SAY_FOUND_3_BOTTLEES",
-                                     states.Say(robot, ["I see three bottles"], block=False),
-                                     transitions={  'spoken'            :'LOOKAT_SHELF'})
+            # smach.StateMachine.add( "SAY_FOUND_3_BOTTLEES",
+            #                          states.Say(robot, ["I see three bottles"], block=False),
+            #                          transitions={  'spoken'            :'LOOKAT_SHELF'})
 
             smach.StateMachine.add( "LOOKAT_SHELF",
                                      states.LookAtEntity(robot, shelf, waittime=1.0),
