@@ -64,12 +64,12 @@ class FollowOperator(smach.State):
                 if not operator:
                     rospy.sleep(1)
 
-        self._robot.head.close()
-
         # Operator is None?
         print "We have a new operator: %s"%operator.id
         self._robot.speech.speak("I will follow you!", block=False)
         self._operator_id = operator.id
+
+        self._robot.head.close()
 
         return True
 
@@ -186,7 +186,7 @@ class FollowOperator(smach.State):
                 else:
                     print "\n\nWe recovered the operator!\n\n"
                     self._robot.speech.speak("Still following you!", block=False)
-                    operator = recovered_operator
+                    self._operator_id = recovered_operator.id
 
             old_operator = operator
 
