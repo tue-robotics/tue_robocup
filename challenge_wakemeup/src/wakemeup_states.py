@@ -600,8 +600,13 @@ class FindItem(smach.State):
             print self.robot.ed.get_entity(found_fruit[0])
             self.result_des.current = self.robot.ed.get_entity(type_ids[found_fruit[0]])
             return 'item_found'
+        elif self.result_type in names_milk and len(filtered_ids)>0:
+            rospy.logwarn("No milk found, grabbing something anyway!")
+            self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
 
         # TODO: maybe go to another position to look again?
+
+
 
         return 'not_found'
 
