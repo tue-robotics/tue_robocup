@@ -600,8 +600,13 @@ class FindItem(smach.State):
             print self.robot.ed.get_entity(found_fruit[0])
             self.result_des.current = self.robot.ed.get_entity(type_ids[found_fruit[0]])
             return 'item_found'
+        elif self.result_type in names_milk and len(filtered_ids)>0:
+            rospy.logwarn("No milk found, grabbing something anyway!")
+            self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
 
         # TODO: maybe go to another position to look again?
+
+
 
         return 'not_found'
 
@@ -845,32 +850,36 @@ class SensedHandoverToHuman(smach.StateMachine):
                                                   'failed'      :'SAY_OPEN_GRIPPER'})
             
             smach.StateMachine.add( "SAY_OPEN_GRIPPER",
-                                    states.Say(robot, [ "Please take it from my gripper"]),
+                                    states.Say(robot, [ "Please pull my gripper to take it!"]),
                                     transitions={   'spoken'    :'OPEN_GRIPPER_ON_HANDOVER'})
 
             smach.StateMachine.add( 'OPEN_GRIPPER_ON_HANDOVER', 
                                     OpenGripperOnHandoverToHuman(robot, locked_arm, timeout=timeout),
-                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
+                                    transitions={'succeeded'    :   'SAY_THERE_YOU_ARE',
                                                  'failed'       :   'SAY_OPEN_GRIPPER_ANYWAY'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
-                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.CLOSE, timeout=0.0),
-                                    transitions={'succeeded'    :   'RESET_ARM',
-                                                 'failed'       :   'RESET_ARM'})
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.CLOSE, timeout=1.0),
+                                    transitions={'succeeded'    :   'RESET_TORSO',
+                                                 'failed'       :   'RESET_TORSO'})
 
             smach.StateMachine.add( "SAY_OPEN_GRIPPER_ANYWAY",
                                     states.Say(robot, [ "Please take this from me now"]),
-                                    transitions={   'spoken'    :'OPEN_GRIPPER_FALLBACK'})
+                                    transitions={   'spoken'    :'SAY_THERE_YOU_ARE'})
 
             smach.StateMachine.add( 'OPEN_GRIPPER_FALLBACK', 
-                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=0.0),
-                                    transitions={'succeeded'    :   'CLOSE_GRIPPER_HANDOVER',
-                                                 'failed'       :   'CLOSE_GRIPPER_HANDOVER'})
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=2.0),
+                                    transitions={'succeeded'    :   'RESET_ARM',
+                                                 'failed'       :   'RESET_ARM'})
+
+            smach.StateMachine.add( "SAY_THERE_YOU_ARE",
+                                    states.Say(robot, [ "There you are!"], block=False),
+                                    transitions={   'spoken'    :'OPEN_GRIPPER_FALLBACK'})
 
             smach.StateMachine.add( 'RESET_ARM',
                                     states.ArmToJointConfig(robot, locked_arm, 'reset'),
-                                    transitions={'succeeded'    :'RESET_TORSO',
-                                                  'failed'      :'RESET_TORSO'   })
+                                    transitions={'succeeded'    :'CLOSE_GRIPPER_HANDOVER',
+                                                  'failed'      :'CLOSE_GRIPPER_HANDOVER'   })
 
             smach.StateMachine.add( 'RESET_TORSO',
                                     states.ResetTorso(robot),
@@ -895,10 +904,13 @@ class OpenGripperOnHandoverToHuman(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
+        self.robot.lights.set_color(1.0,1.0,1.0)
         if arm.handover_to_human(self.timeout):
             arm.occupied_by = None
+            self.robot.lights.reset()
             return "succeeded"
         else:
+            self.robot.lights.reset()
             return "failed"
 
 # ----------------------------------------------------------------------------------------------------
