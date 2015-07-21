@@ -3,6 +3,7 @@
 import rospy
 import smach
 
+from visualization_msgs.msg import Marker
 from robot_smach_states.util.designators import check_resolve_type
 from ed.msg import EntityInfo
 from robot_skills.util import msg_constructors as geom
@@ -137,6 +138,7 @@ class DescribeBottles(smach.State):
         self.spec_designator = spec_designator
         self.choices_designator = choices_designator
         self.bottle_desc_mapping_designator = bottle_desc_mapping_designator
+        self._pub = rospy.Publisher("/bottles", Marker, queue_size=10)
 
     def execute(self, userdata=None):
         # self.robot.head.reset()
@@ -204,6 +206,26 @@ class DescribeBottles(smach.State):
         height_descs = set([desc.height_description for desc in descriptions.values() if desc.height_description])
         labels = set([desc.label for desc in descriptions.values() if desc.label])
         positions = set([desc.position_description for desc in descriptions.values() if desc.position_description])
+
+        m = Marker()
+
+        the_id = 0
+        for p in positions:
+            the_id += 1
+
+            m.id = the_id
+            m.color.r = 1
+            m.color.a = 1
+            m.pose.position = p
+            m.header.frame_id = "/map"
+            m.header.stamp = rospy.Time.now()
+            m.type = 2
+            m.scale.x = 0.3
+            m.scale.y = 0.3
+            m.scale.z = 0.3
+            m.ns = "arrow"
+            self._pub.publish(m)
+
         choices = {}
         if colors:
             choices["color"] = colors
