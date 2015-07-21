@@ -187,6 +187,7 @@ class FollowOperator(smach.State):
                     print "\n\nWe recovered the operator!\n\n"
                     self._robot.speech.speak("Still following you!", block=False)
                     self._operator_id = recovered_operator.id
+                    operator = recovered_operator
 
             old_operator = operator
 
