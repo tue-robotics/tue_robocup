@@ -4,10 +4,10 @@
 
   [0:00]
 
-  - Make sure the RoboEarth router is correctly positioned
+  # Make sure the RoboEarth router is correctly positioned
   - Max and Janno put AMIGO and SERGIO side-by-side in the furthest living room corner
     near the hall, 1.5 meter apart in Y (SERGIO nearer to the bar)
-  - AMIGO has torso down, looking down, lights off # ToDo: make direct function
+  # AMIGO has torso down, looking down, lights off # ToDo: make direct function
   - Rein has computer with visualization connected to beamer:
     - One desktop with OpenCV GUI
     - One desktop with our custom visualization
@@ -75,7 +75,7 @@
   - Ramon: get bandwith check tool to work, responsible for GUI
 
   - Max: testing
-      - Make sure we have external audio on SERGIO (ask Janno)
+  #    - Make sure we have external audio on SERGIO (ask Janno)
       - Check if we can have a mic for Sjoerd and also one to point at each Robot so that the jury can listen to the orders and responses 
           (3 mics, or 2 if Sergio does not communicate much)
 
@@ -98,6 +98,7 @@
       - Make sure laptop visualization works with beamer
 
   - Sjoerd: visualization
+  #   - Navigation
       - Localization AMIGO
       - OpenCV GUI mimic
       - RViz-like visualization

@@ -69,10 +69,13 @@ class FakeStartupRobot(smach.State):
         
         dx = 0.01
         x = 0.02
-        for i in range(0,100):
-            self.robot.lights.set_color(0,0,1,dx*i)
-            rospy.sleep(x)
+        for i in range(0,40):
+            self.robot.lights.set_color(0,0,1,1)
+            rospy.sleep(dx*i)
+            self.robot.lights.set_color(0,0,0,1)
+            rospy.sleep(dx*i)
 
+        self.robot.lights.set_color(0,0,1,1)
         return "done"
 
 
@@ -132,10 +135,12 @@ class Ask_action(smach.State):
             return "failed"
         try:
             if res.result:
+
                 say_result_filter_me = self.replace_word(res.result,"me","you")
                 say_result = self.replace_word(say_result_filter_me,"your","my")
                 self.robot.speech.speak("Okay I will {0}".format(say_result))
-               # self.robot.speech.speak("Is that correct?")
+                # self.robot.speech.speak("Is that correct?")
+
 
 
 
@@ -154,6 +159,35 @@ class Ask_action(smach.State):
         return "done"
 
 
+###### Janno ######
+class PersonDesignator(Designator):
+    def __init__(self, robot, furniture_designator):
+        super(PersonDesignator, self).__init__(resolve_type=EntityInfo)
+        self._robot = robot
+        self._furniture_designator = furniture_designator
+
+    def resolve(self):
+        # Get furniture entity
+        furniture_id = self._furniture_designator.resolve()
+        furniture_id = 'rwc2015/' + furniture_id + '-0`'
+        entities = self._robot.ed.get_entities()
+        f = None
+        for e in entities:
+            if e.id == furniture_id:
+                f = e
+
+        if not f:
+            rospy.logwarn('Entity with id {0} not found'.format(furniture_id))
+            return None
+
+        person = self._robot.ed.get_closest_possible_person_entity(type="possible_human", center_point=f.pose.position, radius=10)
+        if not person:
+            rospy.logwarn('No person found near the {0}'.format(furniture_id))
+            return None
+        else:
+            return person
+###################
+
 def setup_statemachine(robot):
 
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
@@ -164,6 +198,11 @@ def setup_statemachine(robot):
 
     empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
     arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
+
+    ###### Janno ######
+    bar_designator = Designator(initial_value='bar', resolve_type=str)
+    operator_designator = PersonDesignator(robot, bar_designator)
+    ###################
 
     with sm:
 
@@ -204,7 +243,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('TEMPORARY_SLEEP',
-                                    Sleep(robot,7),
+                                    Sleep(robot,10),
                                     transitions={   'done':'FAKESTARTUP'})
     
 
@@ -233,7 +272,13 @@ def setup_statemachine(robot):
         ##################### ASK STATE  #####################             
         ######################################################
 
-
+        ###### Janno ######
+        smach.StateMachine.add('GOTO_OPERATOR',
+                                states.NavigateToObserve(robot=robot, entity_designator=operator_designator, radius=0.7),
+                                transitions={   'arrived'           : 'Done',
+                                                'unreachable'       : 'Done',
+                                                'goal_not_defined'  : 'Done'})
+        ###################
 
 
 
