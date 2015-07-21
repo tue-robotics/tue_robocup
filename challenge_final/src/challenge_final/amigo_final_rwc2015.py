@@ -31,6 +31,18 @@ GRASP_LOC = []
 PERSON_LOC = []
 NUMBER_OF_TRIES = 0
 
+###### Janno ######
+# Driving to the operator (Sjoerd)
+BAR_DESIGNATOR = None #EdEntityDesignator(robot=robot, id='rwc2015/bar-0')
+BAR_TYPE_DESIGNATOR = None #Designator(initial_value='bar', resolve_type=str) # Designator that returns a string with the bar type
+OPERATOR_DESIGNATOR = None #PersonDesignator(robot=robot, furniture_designator=bar_type_designator)      # Designator that returns the operator
+
+# Driving to the operator (Sjoerd)
+BED_DESIGNATOR = None #VariableDesignator(resolve_type=EntityInfo)
+BED_TYPE_DESIGNATOR = None #VariableDesignator(resolve_type=str) # Designator that returns a string with the bar type
+LUIS_DESIGNATOR = None #PersonDesignator(robot=robot, furniture_designator=bed_type_designator)      # Designator that returns the operator
+###################
+
 class InitializeWorldModel(smach.State):
 
     def __init__(self, robot):
@@ -193,6 +205,13 @@ class AskPersonLoc(smach.State):
                     self.robot.speech.speak("Okay I will find him near the {0}".format(result.choices['location']))
                     print "PERSON_LOC = ", PERSON_LOC
                     PERSON_LOC.append(result.choices['location'])
+
+                    # Query location to create the entity
+                    e = self.robot.ed.get_entity(id='rwc2015/' + loc + '-0')
+                    if not e: 
+                        return failed
+                    BED_DESIGNATOR.current = e
+                    BED_TYPE_DESIGNATOR.current = result.choices['location']
                     return "drive_near_loc_for_person"
                 else:
                     self.robot.speech.speak("Sorry, I did not understand you.")
@@ -213,7 +232,12 @@ class AskPersonLoc(smach.State):
 
 ###### Janno ######
 class PersonDesignator(Designator):
+    """ Designator that can be used to drive to a person near a furniture object 
+    :param robot robot
+    :furniture_designator Designator with resolve type string
+    """
     def __init__(self, robot, furniture_designator):
+        # ToDo: maybe an EdEntityDesignator is more convenient than a string designator
         super(PersonDesignator, self).__init__(resolve_type=EntityInfo)
         self._robot = robot
         self._furniture_designator = furniture_designator
@@ -245,17 +269,24 @@ def setup_statemachine(robot):
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
     robot.reasoner.query("retractall(current_action(_))")
     robot.reasoner.query("retractall(action_info(_,_,_))")
-
+    
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
-
+    
     empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
     arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
     ###### Janno ######
-    bar_designator = Designator(initial_value='bar', resolve_type=str)
-    operator_designator = PersonDesignator(robot, bar_designator)
+    # Driving to the operator (Sjoerd)
+    bar_designator = EdEntityDesignator(robot=robot, id='rwc2015/bar-0')
+    bar_type_designator = Designator(initial_value='bar', resolve_type=str) # Designator that returns a string with the bar type
+    operator_designator = PersonDesignator(robot=robot, furniture_designator=bar_type_designator)      # Designator that returns the operator
+    
+    # Driving to the operator (Sjoerd)
+    bed_designator = VariableDesignator(resolve_type=EntityInfo)
+    bed_type_designator = VariableDesignator(resolve_type=str) # Designator that returns a string with the bar type
+    luis_designator = PersonDesignator(robot=robot, furniture_designator=bed_type_designator)      # Designator that returns the operator
     ###################
-
+    
     with sm:
 
 
@@ -333,14 +364,34 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("ASK_LOCATION_PERSON",
                                 AskPersonLoc(robot),
-                                transitions={'drive_near_loc_for_person':'ASK_ACTION',#'DRIVE_TO_LOC_FOR_PERSON',
+                                transitions={'drive_near_loc_for_person':'GOTO_SECOND_OPERATOR_FURNITURE',#'DRIVE_TO_LOC_FOR_PERSON',
                                              'no_action':'ASK_LOCATION_PERSON',
                                              'no_multiple_actions_heard':'ASK_ACTION', # In case multiple times location was not heard.
                                              'failed':'ASK_ACTION'})
 
         ###### Janno ######
+        ''' GoTo Sjoerd '''
+        smach.StateMachine.add('GOTO_OPERATOR_FURNITURE',
+                                states.NavigateToObserve(robot=robot, entity_designator=bar_designator, radius=2.0),
+                                transitions={   'arrived'           : 'GOTO_OPERATOR',
+                                                'unreachable'       : 'GOTO_OPERATOR',
+                                                'goal_not_defined'  : 'GOTO_OPERATOR'})
+
         smach.StateMachine.add('GOTO_OPERATOR',
                                 states.NavigateToObserve(robot=robot, entity_designator=operator_designator, radius=0.7),
+                                transitions={   'arrived'           : 'Done',
+                                                'unreachable'       : 'Done',
+                                                'goal_not_defined'  : 'Done'})
+
+        ''' GoTo Luis '''
+        smach.StateMachine.add('GOTO_SECOND_OPERATOR_FURNITURE',
+                                states.NavigateToObserve(robot=robot, entity_designator=bed_designator, radius=2.0),
+                                transitions={   'arrived'           : 'GOTO_SECOND_OPERATOR',
+                                                'unreachable'       : 'GOTO_SECOND_OPERATOR',
+                                                'goal_not_defined'  : 'GOTO_SECOND_OPERATOR'})
+
+        smach.StateMachine.add('GOTO_SECOND_OPERATOR',
+                                states.NavigateToObserve(robot=robot, entity_designator=luis_designator, radius=0.7),
                                 transitions={   'arrived'           : 'Done',
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
