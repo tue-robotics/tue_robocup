@@ -33,6 +33,28 @@ GRASP_LOC = []
 PERSON_LOC = []
 NUMBER_OF_TRIES = 0
 
+class Initialize(smach.State):
+    def __init__(self, robot=None):
+        smach.State.__init__(self, outcomes=['initialized',
+                                             'abort'])
+        self.robot = robot
+
+    def execute(self, userdata):
+        self.robot.lights.set_color(0,0,0)  #be sure lights are blue
+
+        self.robot.head.reset()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close',0.0)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close',0.0)
+        self.robot.torso.reset()
+
+        ## Check if TF link between /map and /base_link is set, if not error at initialize in stead of during first navigate execution
+        rospy.loginfo("TF link between /map and /base_link is checked. If it takes longer than a second, probably an error. Do a restart!!!")
+        self.robot.base.get_location()
+
+        return 'initialized'
+
 class InitializeWorldModel(smach.State):
 
     def __init__(self, robot):
@@ -287,8 +309,8 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        smach.StateMachine.add('INITIALIZE',
-                                states.Initialize(robot),
+        smach.StateMachine.add('INITIALIZE_NO_ED',
+                                Initialize(robot),
                                 transitions={   'initialized':'INIT_WM',
                                                 'abort':'Aborted'})
 
