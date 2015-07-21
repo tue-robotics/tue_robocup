@@ -74,7 +74,7 @@ class StoreBeverageSide(smach.State):
         self._robot = robot
 
     def execute(self, userdata):
-        self._robot.speech.speak("Are the beverages on my left or on my right?")
+        self._robot.speech.speak("Is the bar on my left or on my right?")
 
         self._robot.head.look_at_standing_person()
         base_pose = self._robot.base.get_location()
