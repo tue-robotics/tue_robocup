@@ -166,7 +166,6 @@ class FollowOperator(smach.State):
         while not rospy.is_shutdown():
 
             # Check if operator present still present
-            old_operator = operator
             operator = self._get_operator(self._operator_id)
 
             if not operator:
