@@ -242,6 +242,8 @@ class PersonDesignator(Designator):
             return person
 ###################
 
+
+
 def setup_statemachine(robot):
 
     robot.reasoner.load_database("challenge_gpsr","prolog/prolog_data.pl")
@@ -290,10 +292,7 @@ def setup_statemachine(robot):
 
 
 
-        #TODO: add entity
-        # smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-        #                             WaitForEntity(robot,ed_entity_name='walls2'),
-        #                             transitions={   'entity_exists'        :'FAKESTARTUP'})
+        
 
 
         smach.StateMachine.add('TEMPORARY_SLEEP',
@@ -310,7 +309,11 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add( "SET_INITIAL_POSE_TEST",
                                     states.Say(robot, ["Only for testing, now initial pose is needed. Probably a crash ;)"], block=True),
-                                    transitions={   'spoken'            :'SET_INITIAL_POSE'})
+                                    transitions={   'spoken'            :'WAIT_FOR_ENTITY_INITIAL_POSE'})
+
+        smach.StateMachine.add("WAIT_FOR_ENTITY_INITIAL_POSE", 
+                                    WaitForEntity(robot,ed_entity_name=challenge_knowledge.initial_pose_amigo),
+                                    transitions={   'entity_exists'        :'SET_INITIAL_POSE'})
 
 
         smach.StateMachine.add('SET_INITIAL_POSE',
@@ -352,6 +355,42 @@ def setup_statemachine(robot):
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
         ###################
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     return sm
 
