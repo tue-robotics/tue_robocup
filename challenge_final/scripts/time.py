@@ -31,28 +31,31 @@ class Time:
     def get_time(self, req):
         current_time = datetime.now() + self.timezone_difference
 
+        # If the timer is counting down
         if self.countdown_time:
             time_left = self.countdown_time - (current_time - self.start_time)
             time_left_hrs = time_left.seconds / 3600
             time_left_min = ( time_left.seconds % 3600 ) / 60
             time_left_sec = time_left.seconds % 60
 
-            line = "Returning time left: " + str(time_left_hrs) + " hrs " + str(time_left_min) + " min and " + str(time_left_sec) + " sec."
+            line = " " + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds "
             print line
             return line
 
+        # If the timer is counting up
         elif self.start_time:
             duration_dt  = current_time - self.start_time
             duration_hrs = duration_dt.seconds / 3600
             duration_min = ( duration_dt.seconds % 3600 ) / 60
             duration_sec = duration_dt.seconds % 60
 
-            line = "Returning time since start: " + str(duration_hrs) + " hrs " + str(duration_min) + " min and " + str(duration_sec) + " sec."
+            line = "Time since start: " + str(duration_hrs) + " hrs " + str(duration_min) + " min and " + str(duration_sec) + " sec."
             print line
             return line
 
+        # If the timer is not counting at all
         else:
-            line = "Returning current time: " + str(current_time.time().hour) + " hrs " + str(current_time.time().minute) + " min and " + str(current_time.time().second) + " sec"
+            line = str(current_time.time().hour) + " " + str(current_time.time().minute)
             print line
             return line
 

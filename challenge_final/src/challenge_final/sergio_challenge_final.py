@@ -30,7 +30,6 @@ EXIT_WAYPOINT_ID = challenge_knowledge.operator_id # Robot returns to operator a
 
 # AMIGO starts 1.0 m left of SERGIO
 ROBOTS_OFFSET = gm.Pose()
-ROBOTS_OFFSET.position.y = 1.5
 
 class StoreWaypoint(smach.State):
     """ Stores current position of the robot in ED as a waypoint, with id and offset
