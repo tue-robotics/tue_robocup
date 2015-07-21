@@ -15,7 +15,7 @@ from robot_skills.util import transformations, msg_constructors
 
 
 class FollowOperator(smach.State):
-    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 2.0, lost_timeout = 5, lost_distance = 1.5):
+    def __init__(self, robot, ask_follow=True, operator_radius=1, timeout=1.0, start_timeout=10, operator_timeout = 20, distance_threshold = 4.0, lost_timeout = 5, lost_distance = 1.5):
         smach.State.__init__(self, outcomes=["stopped",'lost_operator', "no_operator"])
         self._robot = robot
         self._operator_id = None
@@ -187,6 +187,7 @@ class FollowOperator(smach.State):
                     print "\n\nWe recovered the operator!\n\n"
                     self._robot.speech.speak("Still following you!", block=False)
                     self._operator_id = recovered_operator.id
+                    operator = recovered_operator
 
             old_operator = operator
 
