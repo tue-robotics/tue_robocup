@@ -23,9 +23,14 @@ from cb_planner_msgs_srvs.msg import *
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 
+# Init pose AMIGO identifier
+INITIAL_POSE_AMIGO = challenge_knowledge.initial_pose_amigo
+OPERATOR_ID = challenge_knowledge.operator_id
+EXIT_WAYPOINT_ID = challenge_knowledge.operator_id # Robot returns to operator at the end
+
 # AMIGO starts 1.0 m left of SERGIO
 ROBOTS_OFFSET = gm.Pose()
-ROBOTS_OFFSET.position.y = 1.0
+ROBOTS_OFFSET.position.y = 1.5
 
 class StoreWaypoint(smach.State):
     """ Stores current position of the robot in ED as a waypoint, with id and offset
@@ -43,9 +48,9 @@ class StoreWaypoint(smach.State):
         self._robot.base.local_planner.cancelCurrentPlan()
         store_pose = self._robot.base.get_location()
 
-        store_pose.pose.position.x += offset.position.x
-        store_pose.pose.position.y += offset.position.y
-        store_pose.pose.position.z += offset.position.z
+        store_pose.pose.position.x += self._offset.position.x
+        store_pose.pose.position.y += self._offset.position.y
+        store_pose.pose.position.z += self._offset.position.z
 
         m = Marker()
         m.color.r = 1
@@ -318,15 +323,15 @@ class GuiCallCallback(smach.StateMachine):
         point = msgs.Point(0, 0, 0)
 
         ##### To start in a different state #####
-        if not TEST_GRASP_LOC == None:
-            smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
-            location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
+        # if not TEST_GRASP_LOC == None:
+        #     smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
+        #     location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
         #########################################
 
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
-                                    transitions={   'arrived'           : 'HUMAN_ROBOT_INTERACTION',
+                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=INITIAL_POSE_AMIGO), radius = 1.0),
+                                    transitions={   'arrived'           : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'unreachable'       : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
 
@@ -341,8 +346,8 @@ def setup_statemachine(robot):
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
 
     ##### To start in a different state #####
-    if not TEST_GRASP_LOC == None:
-        sm.set_initial_state(["HANDLE_GUI_CALL"])
+    # if not TEST_GRASP_LOC == None:
+    #     sm.set_initial_state(["HANDLE_GUI_CALL"])
     #########################################
 
     with sm:
@@ -353,7 +358,7 @@ def setup_statemachine(robot):
                                                 'abort'             : 'Aborted'})
 
         smach.StateMachine.add('STORE_OPERATOR_WAYPOINT',
-                                StoreWaypoint(robot),
+                                StoreWaypoint(robot=robot, waypoint_id=INITIAL_POSE_AMIGO, offset=ROBOTS_OFFSET),
                                 transitions={   'done'              : 'EXPLORE'})
 
         smach.StateMachine.add('EXPLORE',
@@ -380,7 +385,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_EXIT'})
 
         smach.StateMachine.add('GOTO_EXIT',
-                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
+                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=EXIT_WAYPOINT_ID), radius = 1.0),
                                 transitions={   'arrived'           : 'Done',
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
@@ -398,8 +403,8 @@ if __name__ == '__main__':
     else:
         robot_name = sys.argv[1]
 
-    if len(sys.argv) > 2:
-        TEST_GRASP_LOC = sys.argv[2]        
-        rospy.logwarn('Not starting from scratch, grasping from {0}'.format(TEST_GRASP_LOC))
+    # if len(sys.argv) > 2:
+    #     TEST_GRASP_LOC = sys.argv[2]        
+    #     rospy.logwarn('Not starting from scratch, grasping from {0}'.format(TEST_GRASP_LOC))
 
     startup(setup_statemachine, robot_name=robot_name)
