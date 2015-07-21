@@ -23,7 +23,7 @@ if __name__ == "__main__":
     elif env == "rwc2015":
 
         # Put stuff on the dinner table
-        W.add_object("coke_d1", "coke",         7.500, 0.4, 0.9)
-        W.add_object("coke_d2", "tea_pack",     7.400, 0.6, 0.9)
-        W.add_object("coke_d3", "marmalade",    7.350, 0.8, 0.9)
-        W.add_object("coke_d4", "cif",          7.400, 1.0, 0.9)
+        W.add_object("coke11", "sim-coke", 1.15, -4.13, 1.10)
+        W.add_object("coke12", "sim-coke", 1.15, -4.13, 0.75)
+        W.add_object("coke13", "sim-coke", 1.15, -4.33, 0.75)
+        W.add_object("coke14", "sim-coke", 1.15, -4.7,  0.75)

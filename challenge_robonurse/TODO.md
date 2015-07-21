@@ -2,14 +2,9 @@
 
 ## First part
 - calls for robot assistance using her voice or by waving arms
-    + voice should never go to aborted
+    + where is granny located?
+    + is 30 sec timeout for voice ok?
     + implement wave detection?
-    + fix person sitting in hallway
-- pills conversation
-    + make it more natural (Ramon)
-- go to shelf
-    + hallway shelf
-    + test shelf backup
 - get pills (test_get_pills)
     + test describing pills on robot !!!
     + test grasping

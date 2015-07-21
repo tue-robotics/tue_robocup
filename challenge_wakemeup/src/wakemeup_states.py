@@ -850,36 +850,36 @@ class SensedHandoverToHuman(smach.StateMachine):
                                                   'failed'      :'SAY_OPEN_GRIPPER'})
             
             smach.StateMachine.add( "SAY_OPEN_GRIPPER",
-                                    states.Say(robot, [ "Please take it from my gripper"]),
+                                    states.Say(robot, [ "Please pull my gripper to take it!"]),
                                     transitions={   'spoken'    :'OPEN_GRIPPER_ON_HANDOVER'})
 
             smach.StateMachine.add( 'OPEN_GRIPPER_ON_HANDOVER', 
                                     OpenGripperOnHandoverToHuman(robot, locked_arm, timeout=timeout),
-                                    transitions={'succeeded'    :   'OPEN_GRIPPER_FALLBACK',
+                                    transitions={'succeeded'    :   'SAY_THERE_YOU_ARE',
                                                  'failed'       :   'SAY_OPEN_GRIPPER_ANYWAY'})
 
             smach.StateMachine.add('CLOSE_GRIPPER_HANDOVER', 
                                     states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.CLOSE, timeout=1.0),
-                                    transitions={'succeeded'    :   'RESET_ARM',
-                                                 'failed'       :   'RESET_ARM'})
+                                    transitions={'succeeded'    :   'RESET_TORSO',
+                                                 'failed'       :   'RESET_TORSO'})
 
             smach.StateMachine.add( "SAY_OPEN_GRIPPER_ANYWAY",
                                     states.Say(robot, [ "Please take this from me now"]),
-                                    transitions={   'spoken'    :'OPEN_GRIPPER_FALLBACK'})
+                                    transitions={   'spoken'    :'SAY_THERE_YOU_ARE'})
 
             smach.StateMachine.add( 'OPEN_GRIPPER_FALLBACK', 
-                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=1.0),
-                                    transitions={'succeeded'    :   'SAY_THERE_YOU_ARE',
-                                                 'failed'       :   'SAY_THERE_YOU_ARE'})
+                                    states.SetGripper(robot, locked_arm, gripperstate=states.ArmState.OPEN, timeout=2.0),
+                                    transitions={'succeeded'    :   'RESET_ARM',
+                                                 'failed'       :   'RESET_ARM'})
 
             smach.StateMachine.add( "SAY_THERE_YOU_ARE",
                                     states.Say(robot, [ "There you are!"], block=False),
-                                    transitions={   'spoken'    :'CLOSE_GRIPPER_HANDOVER'})
+                                    transitions={   'spoken'    :'OPEN_GRIPPER_FALLBACK'})
 
             smach.StateMachine.add( 'RESET_ARM',
                                     states.ArmToJointConfig(robot, locked_arm, 'reset'),
-                                    transitions={'succeeded'    :'RESET_TORSO',
-                                                  'failed'      :'RESET_TORSO'   })
+                                    transitions={'succeeded'    :'CLOSE_GRIPPER_HANDOVER',
+                                                  'failed'      :'CLOSE_GRIPPER_HANDOVER'   })
 
             smach.StateMachine.add( 'RESET_TORSO',
                                     states.ResetTorso(robot),

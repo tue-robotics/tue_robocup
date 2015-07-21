@@ -596,11 +596,11 @@ class RoboNurse(smach.StateMachine):
                                                     'Aborted'           :'Aborted'})
 
             smach.StateMachine.add( "ASK_GRANNY",
-                                    states.Say(robot, ["Hello Granny, Shall I bring you your pills?"], block=True),
+                                    states.Say(robot, ["What can I do for you?"], block=True),
                                     transitions={   'spoken'            :'HEAR_ANSWER'})
 
             smach.StateMachine.add('HEAR_ANSWER',
-                                    states.Hear(robot, '(continue|yes|please|okay)',time_out=rospy.Duration(10)),
+                                    states.Hear(robot, '(continue|i need my pills|(please) get me my pills)',time_out=rospy.Duration(10)),
                                     transitions={'heard':'GOTO_SHELF','not_heard':'GOTO_SHELF'})
 
             smach.StateMachine.add( "GOTO_SHELF",
