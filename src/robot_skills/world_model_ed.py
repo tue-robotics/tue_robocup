@@ -119,7 +119,7 @@ class ED:
     def _transform_center_point_to_map(self, pointstamped):
         point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
         return point_in_map
-        
+
     def _publish_marker(self, center_point, radius):
         marker = visualization_msgs.msg.Marker()
         marker.header.frame_id = "/map"
@@ -150,12 +150,12 @@ class ED:
         json_entity = '"id" : "%s"' % id
         if type:
             json_entity += ', "type": "%s"' % type
-        
+
         if posestamped:
             X, Y, Z = tf.transformations.euler_from_quaternion([posestamped.pose.orientation.x, posestamped.pose.orientation.y, posestamped.pose.orientation.z, posestamped.pose.orientation.w])
             t = posestamped.pose.position
             json_entity += ', "pose": { "x": %f, "y": %f, "z": %f, "X": %f, "Y": %f, "Z": %f }' % (t.x, t.y, t.z, X, Y, Z)
-        
+
         if flags or add_flags or remove_flags:
             json_entity += ', "flags": ['
             first = True
@@ -163,7 +163,7 @@ class ED:
             if isinstance(flags, dict):
                 flags = [flags]
 
-            if isinstance(flags, list):                
+            if isinstance(flags, list):
                 for flag in flags:
                     if not isinstance(flag, dict):
                         print "update_entity - Error: flags need to be a list of dicts or a dict"
@@ -268,21 +268,21 @@ class ED:
         #print "entities 2 in get_closest_possible_person_entity = ", entities
 
         # if only the persons in a certain room should be found:
-        if not (room == "" and len(entities) == 0):
-            print "room in ed = ", room
-            room_entity = self.get_entity(id=str(room))
-            x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
-            print "x_max_room = ", x_max_room
-            x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
-            print "x_min_room = ", x_min_room
-            y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
-            print "y_max_room = ", y_max_room
-            y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
-            print "y_min_room = ", y_min_room
+        # if not (room == "" and len(entities) == 0):
+        #     print "room in ed = ", room
+        #     room_entity = self.get_entity(id=str(room))
+        #     x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
+        #     print "x_max_room = ", x_max_room
+        #     x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
+        #     print "x_min_room = ", x_min_room
+        #     y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
+        #     print "y_max_room = ", y_max_room
+        #     y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
+        #     print "y_min_room = ", y_min_room
 
-            entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
+        #     entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
 
-            print "entities sorted in room = ", entities
+        #     print "entities sorted in room = ", entities
 
         if len(entities) == 0:
             return None
