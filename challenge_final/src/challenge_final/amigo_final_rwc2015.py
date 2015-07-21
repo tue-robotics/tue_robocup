@@ -174,8 +174,6 @@ class AskAction(smach.State):
 
         return string
 
-                print say_result
-                self.save_action(res)
 
 class AskPersonLoc(smach.State):
     def __init__(self, robot):
