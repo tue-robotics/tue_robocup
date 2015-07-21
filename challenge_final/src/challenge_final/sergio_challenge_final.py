@@ -8,6 +8,9 @@ import numpy
 import operator
 
 import tf
+import geometry_msgs.msg as gm
+from visualization_msgs.msg import Marker
+
 import robot_smach_states as states
 from robot_smach_states.util.designators import *
 from robot_smach_states.util.startup import startup
@@ -15,30 +18,40 @@ from robot_skills.util import msg_constructors as msgs
 from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
 from ed_sensor_integration.srv import GetPOIs, MakeSnapshot
-from visualization_msgs.msg import Marker
-
 from cb_planner_msgs_srvs.msg import *
 
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
 
+# AMIGO starts 1.0 m left of SERGIO
+ROBOTS_OFFSET = gm.Pose()
+ROBOTS_OFFSET.position.y = 1.0
+
 class StoreWaypoint(smach.State):
-    def __init__(self, robot):
+    """ Stores current position of the robot in ED as a waypoint, with id and offset
+        PLEASE NOTE: ORIENTATION OFFSETS ARE NOT IMPLEMENTED
+    """
+    def __init__(self, robot, waypoint_id, offset=gm.Pose):
         smach.State.__init__(self, outcomes=["done"])
         self._robot = robot
+        self._waypoint_id = waypoint_id
+        self._offset = offset
         self._pub = rospy.Publisher("/operator_waypoint", Marker, queue_size=1)
 
     def execute(self, userdata):
         # Stop the base
         self._robot.base.local_planner.cancelCurrentPlan()
+        store_pose = self._robot.base.get_location()
 
-        base_pose = self._robot.base.get_location()
+        store_pose.pose.position.x += offset.position.x
+        store_pose.pose.position.y += offset.position.y
+        store_pose.pose.position.z += offset.position.z
 
         m = Marker()
         m.color.r = 1
         m.color.a = 1
-        m.pose = base_pose.pose
-        m.header = base_pose.header
+        m.pose = store_pose.pose
+        m.header = store_pose.header
         m.type = 0 #Arrow
         m.scale.x = 1.0
         m.scale.y = 0.2
@@ -54,9 +67,9 @@ class StoreWaypoint(smach.State):
 
         # Store waypoint in world model
         print "\n\n\n\nCURRENT BASE POSE:\n\n\n"
-        print base_pose
+        print store_pose
         print "\n\n\n"
-        self._robot.ed.update_entity(id=challenge_knowledge.operator_waypoint_id, posestamped=base_pose, type="waypoint")
+        self._robot.ed.update_entity(id=self._waypoint_id, posestamped=store_pose, type="waypoint")
 
         return "done"
 
@@ -557,53 +570,8 @@ class GuiCallCallback(smach.StateMachine):
                                                     'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
 
             smach.StateMachine.add('SAY_GOTO_OPERATOR_FAILED',
-                                    states.Say(robot, ["I was not able to reach my operator, please come to me"], block=False),
-                                    transitions={   'spoken'            : 'HUMAN_ROBOT_INTERACTION'})
-
-            smach.StateMachine.add('HUMAN_ROBOT_INTERACTION',
-                                    ConversationWithOperator(robot=robot, furniture_designator=location_designator, object_designator=object_designator),
-                                    transitions={   'succeeded'         : 'STORE_POINT',
-                                                    'failed'            : 'STORE_POINT'})
-
-            smach.StateMachine.add('STORE_POINT',
-                                    StorePoint(location_designator, point),
-                                    transitions={   'succeeded'         : 'FLAG_DYNAMIC',
-                                                    'failed'            : 'FLAG_DYNAMIC'})
-
-            # Flag entity to dynamic
-            smach.StateMachine.add('FLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, add_flags=['dynamic']),
-                                    transitions={   'succeeded'         : 'GOTO_LOCATION',
-                                                    'failed'            : 'GOTO_LOCATION'}) # ToDo: change backup???
-
-            # First goto location
-            smach.StateMachine.add('GOTO_LOCATION',
-                                    states.NavigateToObserve(robot, entity_designator=location_designator, radius = 0.7),
-                                    transitions={   'arrived'           : 'CHECK_POINT',
-                                                    'unreachable'       : 'failed',
-                                                    'goal_not_defined'  : 'failed'})
-
-            smach.StateMachine.add('CHECK_POINT',
-                                    CheckPoint(robot, location_designator, point),
-                                    transitions={   'succeeded'         : 'UNFLAG_DYNAMIC',
-                                                    'failed'            : 'UNFLAG_DYNAMIC'})
-
-            smach.StateMachine.add('UNFLAG_DYNAMIC',
-                                    ChangeFlag(robot=robot, designator=location_designator, remove_flags=['dynamic']),
-                                    transitions={   'succeeded'         : 'GOTO_LOCATION2',
-                                                    'failed'            : 'GOTO_LOCATION2'})
-
-            # Second goto location: this is there to account for the possible movement of the furniture object
-            smach.StateMachine.add('GOTO_LOCATION2',
-                                    states.NavigateToObserve(robot, entity_designator=location_designator, radius = 0.7),
-                                    transitions={   'arrived'           : 'MANIPULATE_ITEM',
-                                                    'unreachable'       : 'failed',
-                                                    'goal_not_defined'  : 'failed'})
-
-            smach.StateMachine.add('MANIPULATE_ITEM',
-                                    ManipRecogSingleItem(robot, location_designator=location_designator, object_designator=object_designator),
-                                    transitions={   'succeeded'         : 'succeeded',
-                                                    'failed'            : 'failed'})
+                                    states.Say(robot, ["I do not have anything useful to do yet, so I will continue exploration"], block=False),
+                                    transitions={   'spoken'            : 'succeeded'})
 
 
 ############################## state machine #############################
@@ -625,17 +593,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('STORE_OPERATOR_WAYPOINT',
                                 StoreWaypoint(robot),
-                                transitions={   'done'              : 'LOOKAT_FIRST_ITEM'})
-
-        smach.StateMachine.add('LOOKAT_FIRST_ITEM',
-                                LookBaseLinkPoint(robot=robot, x=1.0, y=0.0, z=1.0, timeout=2.5, waittime=1.0),
-                                transitions={   'succeeded'         : 'TAKE_FIRST_SNAPSHOT',
-                                                'failed'            : 'TAKE_FIRST_SNAPSHOT'})
-
-        smach.StateMachine.add('TAKE_FIRST_SNAPSHOT',
-                                TakeSnapShot(robot),
-                                transitions={   'succeeded'         : 'EXPLORE',
-                                                'failed'            : 'EXPLORE'})
+                                transitions={   'done'              : 'EXPLORE'})
 
         smach.StateMachine.add('EXPLORE',
                                 ExploreScenario(robot),
@@ -671,11 +629,11 @@ def setup_statemachine(robot):
 ############################## initializing program ######################
 if __name__ == '__main__':
 
-    rospy.init_node('open_challenge_exec')
+    rospy.init_node('sergio_final_challenge_exec')
 
     if len(sys.argv) < 2:
-        rospy.logerr('Please specify the robot name')
-        exit()
+        rospy.logwarn('Defaulting to SERGIO')
+        robot_name="sergio"
     else:
         robot_name = sys.argv[1]
 

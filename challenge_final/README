@@ -23,7 +23,7 @@
     SCENARIO
 --------------------------------------------------------------------------------------------
 
-  [0:30] SERGIO stores AMIGO's initial pose in the world model 
+  [0:30] SERGIO stores AMIGO's initial pose in the world model
 
   [0:30] Using the GUI Ramon maps the room with SERGIO in the order:
          - bar
@@ -51,12 +51,12 @@
   [?:??] AMIGO drives to the dinner_table, grasps the object, and bring it back Luis (again the person nearest to the bar)
   [?:??] AMIGO asks Luis: "what can I do for you?".
          Luis: "How much time do we still have?"
-         
+
          Rokus' time node is queried. This returns a string that can be directly given to 'speak'
 
   [?:??] AMIGO asks Luis: "what can I do for you?".
          Luis: "Go back to the operator"
-         
+
   [?:??] AMIGO drives back to the person nearest to the bar
 
   [?:??] When SERGIO is done exploring, Ramon clicks a button on the GUI and SERGIO drives back to the jury
@@ -74,6 +74,7 @@
   - Ramon: get bandwith check tool to work, responsible for GUI
 
   - Max: testing
+      - Make sure we have external audio on SERGIO (ask Janno)
 
   - Rokus: time query node, testing
 
@@ -87,10 +88,12 @@
       - SERGIO should always keep it's head straight, slightly looking down
       - Must be able to cancel nav goals -> need snappy behavior
 
-  - Rein: robot-robot communication
+  - Rein:
+      - robot-robot communication
+      - Make sure laptop visualization works with beamer
 
   - Sjoerd: visualization
-      - OpenCV GUI mimic 
+      - OpenCV GUI mimic
       - RViz-like visualization
 
 --------------------------------------------------------------------------------------------
