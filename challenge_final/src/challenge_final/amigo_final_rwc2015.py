@@ -576,11 +576,23 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add('GOTO_OPERATOR_SUCCEEDED',
                                     states.NavigateToObserve(robot=robot, entity_designator=LUIS_DESIGNATOR, radius = 0.7),
                                     transitions={   'arrived'           : 'SAY_GRASP_SUCCEEDED',
+                                                    'unreachable'       : 'GOTO_OPERATOR_SUCCEEDED_BACKUP',
+                                                    'goal_not_defined'  : 'GOTO_OPERATOR_SUCCEEDED_BACKUP'})
+
+            smach.StateMachine.add('GOTO_OPERATOR_SUCCEEDED_BACKUP',
+                                    states.NavigateToObserve(robot=robot, entity_designator=BED_DESIGNATOR, radius = 0.7),
+                                    transitions={   'arrived'           : 'SAY_GRASP_SUCCEEDED',
                                                     'unreachable'       : 'SAY_GRASP_SUCCEEDED',
                                                     'goal_not_defined'  : 'SAY_GRASP_SUCCEEDED'})
 
             smach.StateMachine.add('GOTO_OPERATOR_FAILED',
                                     states.NavigateToObserve(robot=robot, entity_designator=LUIS_DESIGNATOR, radius = 0.7),
+                                    transitions={   'arrived'           : 'SAY_FAILED',
+                                                    'unreachable'       : 'GOTO_OPERATOR_FAILED_BACKUP',
+                                                    'goal_not_defined'  : 'GOTO_OPERATOR_FAILED_BACKUP'})
+
+            smach.StateMachine.add('GOTO_OPERATOR_FAILED_BACKUP',
+                                    states.NavigateToObserve(robot=robot, entity_designator=BED_DESIGNATOR, radius = 0.7),
                                     transitions={   'arrived'           : 'SAY_FAILED',
                                                     'unreachable'       : 'SAY_FAILED',
                                                     'goal_not_defined'  : 'SAY_FAILED'})
