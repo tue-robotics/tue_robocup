@@ -378,7 +378,10 @@ class PersonDesignator(Designator):
     def resolve(self):
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()
+        print "furniture_id = ", furniture_id
         furniture_id = 'rwc2015/' + str(furniture_id) + '-0'
+        
+        #self.robot.ed.get_entity(id=furniture_id)
         
         ## FOR TESTING, no committing!!! (CHECKCOMMITTING)
         #furniture_id = furniture_id
@@ -782,7 +785,7 @@ def setup_statemachine(robot):
                                     transitions={   'done':'WAIT_FOR_TRIGGER_TO_START'})
        
         smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-                                    WaitForEntity(robot,ed_entity_name='walls'),
+                                    WaitForEntity(robot,ed_entity_name='rwc2015/bar-0'),
                                     transitions={   'entity_exists'        :'FAKESTARTUP'})
     
         smach.StateMachine.add('FAKESTARTUP',
