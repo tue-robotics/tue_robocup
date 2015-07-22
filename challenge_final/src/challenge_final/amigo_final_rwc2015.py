@@ -813,9 +813,9 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SET_INITIAL_POSE',
                                 SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
-                                transitions={   'done'          :'ASK_ACTION',
-                                                'preempted'     :'ASK_ACTION',
-                                                'error'         :'ASK_ACTION'})
+                                transitions={   'done'          :'GOTO_BAR_FOR_OPERATOR',
+                                                'preempted'     :'GOTO_BAR_FOR_OPERATOR',
+                                                'error'         :'GOTO_BAR_FOR_OPERATOR'})
 
 
         ######################################################
