@@ -3,7 +3,7 @@ import rospy
 
 from std_msgs.msg import String
 from std_srvs.srv import Empty
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 from challenge_final.srv import *
 
@@ -37,8 +37,22 @@ class Time:
             time_left_hrs = time_left.seconds / 3600
             time_left_min = ( time_left.seconds % 3600 ) / 60
             time_left_sec = time_left.seconds % 60
+            print time_left
+            print timedelta(0) - time_left
 
-            line = "You still have" + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds left. "
+            if time_left.days < 0:
+                over_time = timedelta(0) - time_left
+                over_time_min = ( over_time.seconds % 3600 ) / 60
+                over_time_sec = over_time.seconds % 60
+                
+                if over_time_min == 0 and over_time.seconds > 0:
+                    line = " Our time was already up " + str(over_time.seconds) + " seconds ago. I'll stop the timer now. "
+                else:
+                    line = " Our time was already up " + str(over_time_min) + " minutes ago. I'll stop the timer now. "
+                self.countdown_time = None
+                self.start_time = None
+            else:
+                line = "We still have " + str(time_left_min) + " minutes and " + str(time_left_sec) + " seconds left. "
             print line
             return line
 
@@ -49,13 +63,15 @@ class Time:
             duration_min = ( duration_dt.seconds % 3600 ) / 60
             duration_sec = duration_dt.seconds % 60
 
-            line = "Time since start is " + str(duration_hrs) + " hours " + str(duration_min) + " minutes and " + str(duration_sec) + " seconds."
+            line = "You started the timer " + str(duration_hrs) + " hours " + str(duration_min) + " minutes and " + str(duration_sec) + " seconds ago."
             print line
             return line
 
         # If the timer is not counting at all
         else:
-            line = "The current time is " + str(current_time.time().hour) + ":" + str(current_time.time().minute)
+            print current_time
+            # line = "The current time is " + str(current_time.time().hour) + ":" + str(current_time.time().minute)
+            line = "I don't know. You should have set a timer, pal. But it's " + str(current_time.time().hour) + ":" + str(current_time.time().minute) + " now."
             print line
             return line
 
