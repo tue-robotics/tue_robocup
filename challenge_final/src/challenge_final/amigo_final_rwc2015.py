@@ -25,6 +25,8 @@ from visualization_msgs.msg import Marker, MarkerArray
 
 import timer_states as timer
 
+from robot_skills.util import transformations
+
 #import data
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_final')
@@ -94,6 +96,58 @@ class InitializeWorldModel(smach.State):
 
         return "done"
 
+class SetInitialPose(smach.State):
+    ## To call upon this state:
+    # example 1: Set_initial_pose(robot, "front_of_door"),
+    # OR
+    # Set_initial_pose(robot, [1,0,0])
+    def __init__(self, robot, init_position):
+        smach.State.__init__(self, outcomes=["done", "preempted", "error"])
+
+        self.robot = robot
+        self.preempted = False
+
+        self.initial_position = init_position
+
+    def location_2d(self, location):
+        e_loc = self.robot.ed.get_entity(id=location)
+
+        if not e_loc:
+            rospy.logerr("SetInitialPose: ED entity '" + location + "' does not exist.")
+            return []
+
+        print e_loc
+
+        try:
+            rz = transformations.euler_z_from_quaternion(e_loc.pose.orientation)
+            print "rz = ", rz
+        except KeyError:
+            rz = 0
+
+        return e_loc.pose.position.x, e_loc.pose.position.y, rz
+
+    def execute(self, userdata):
+        if isinstance(self.initial_position, str):
+            x,y,phi = self.location_2d(self.initial_position)
+        elif len(self.initial_position) == 3: #Tuple or list
+            x = self.initial_position[0]
+            y = self.initial_position[1]
+            phi = self.initial_position[2]
+        else:
+            rospy.logerr("Initial pose {0} could not be set".format(self.initial_position))
+            return "error"
+
+        rospy.loginfo('Set initial pose to {0}, {1}, {2}'.format(x, y, phi))
+
+        self.robot.base.set_initial_pose(x, y, phi)
+
+        # Reset costmap: costmap is obviously entirely off if the localization was wrong before giving the initial pose
+        # self.robot.base.reset_costmap()
+        # Wait 0.5 s just to be sure
+        rospy.sleep(rospy.Duration(0.5))
+
+        return "done"
+
 class FakeShutdownRobot(smach.State):
 
     def __init__(self, robot):
@@ -105,6 +159,14 @@ class FakeShutdownRobot(smach.State):
         self.robot.rightArm.reset()
         self.robot.spindle.low()
         self.robot.head.look_at_ground_in_front_of_robot(1)
+        
+        # Lichten worden niet altijd goed gezet. Vandaar even deze lelijke code:
+        self.robot.lights.set_color(0,0,0,1)
+        rospy.sleep(0.1)
+        self.robot.lights.set_color(0,0,0,1)
+        rospy.sleep(0.1)
+        self.robot.lights.set_color(0,0,0,1)
+        rospy.sleep(0.1)
         self.robot.lights.set_color(0,0,0,1)
 
         return "done"
@@ -316,7 +378,10 @@ class PersonDesignator(Designator):
     def resolve(self):
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()
+        print "furniture_id = ", furniture_id
         furniture_id = 'rwc2015/' + str(furniture_id) + '-0'
+        
+        #self.robot.ed.get_entity(id=furniture_id)
         
         ## FOR TESTING, no committing!!! (CHECKCOMMITTING)
         #furniture_id = furniture_id
@@ -378,10 +443,15 @@ class PickupObject(smach.StateMachine):
 
             # First goto location
             smach.StateMachine.add('GOTO_LOCATION',
-                                    states.NavigateToObserve(robot, entity_designator=location_designator, radius = 0.2),
+                                    states.NavigateToObserve(robot, entity_designator=location_designator, radius = 0.7),
                                     transitions={   'arrived'           : 'CHECK_POINT',
                                                     'unreachable'       : 'failed',
-                                                    'goal_not_defined'  : 'failed'})
+                                                    'goal_not_defined'  : 'SAY_LOCATION_UNKNOWN'})
+
+            smach.StateMachine.add( "SAY_LOCATION_UNKNOWN",
+                                    states.Say(robot, ["I'm sorry, but at this moment I do not know where this location is."], block=False),
+                                    transitions={   'spoken'            :'failed'}) 
+
 
             smach.StateMachine.add('CHECK_POINT',
                                     CheckPoint(robot, location_designator, point),
@@ -602,7 +672,7 @@ class FindObjectOnFurniture(smach.State):
         for entity_id in entity_ids:
             e = self.robot.ed.get_entity(entity_id)
 
-            if e:#and onTopOff(e, location_entity) and not e.type and size(e) and min_entity_height(e) and max_width(e):
+            if e and onTopOff(e, location_entity) and not e.type and size(e) and min_entity_height(e) and max_width(e):
                 # ToDo: filter on size in x, y, z
                 # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
                 id_list.append(e.id)
@@ -715,7 +785,7 @@ def setup_statemachine(robot):
                                     transitions={   'done':'WAIT_FOR_TRIGGER_TO_START'})
        
         smach.StateMachine.add("WAIT_FOR_TRIGGER_TO_START", 
-                                    WaitForEntity(robot,ed_entity_name='walls'),
+                                    WaitForEntity(robot,ed_entity_name='rwc2015/bar-0'),
                                     transitions={   'entity_exists'        :'FAKESTARTUP'})
     
         smach.StateMachine.add('FAKESTARTUP',
@@ -732,7 +802,7 @@ def setup_statemachine(robot):
                                                     'initial_pose_to_be_set_manually' : 'GOTO_BAR_FOR_OPERATOR'})
 
         smach.StateMachine.add('SET_INITIAL_POSE',
-                                states.SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
+                                SetInitialPose(robot, challenge_knowledge.initial_pose_amigo),
                                 transitions={   'done'          :'ASK_ACTION',
                                                 'preempted'     :'ASK_ACTION',
                                                 'error'         :'ASK_ACTION'})
@@ -779,7 +849,7 @@ def setup_statemachine(robot):
 
         ''' GoTo Luis '''
         smach.StateMachine.add('GOTO_SECOND_OPERATOR_FURNITURE',
-                                states.NavigateToObserve(robot=robot, entity_designator=BED_DESIGNATOR, radius=1.0),
+                                states.NavigateToObserve(robot=robot, entity_designator=BED_DESIGNATOR, radius=1.4),
                                 transitions={   'arrived'           : 'GOTO_SECOND_OPERATOR',
                                                 'unreachable'       : 'GOTO_SECOND_OPERATOR',
                                                 'goal_not_defined'  : 'GOTO_SECOND_OPERATOR'})

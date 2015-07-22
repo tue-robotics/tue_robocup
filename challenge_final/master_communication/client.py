@@ -23,6 +23,8 @@ class SyncClient():
         result = self.sp.get(req.ids, req.properties, req.since_revision)
         if not result:
             rospy.loginfo("Sync result: [%s]"%cyan("None"))
+        else:
+            rospy.loginfo("Sync client: synced data of size [%2f kb] with revision [%d]"%(len(str(result['human_readable'])) / 1000.0,result['new_revision']))
         return result
 
 # Main function
@@ -36,6 +38,6 @@ if __name__ == '__main__':
             rospy.loginfo("Sync client that pushes changes initialized [connecting to server on ip %s]"%ip)
             rospy.spin()
         else:
-            rospy.logerr("GetSpeech client: no server ip set; please specify the local 'ip' parameter")
+            rospy.logerr("Sync client: no server ip set; please specify the local 'ip' parameter")
     except rospy.ROSInterruptException:
         pass
