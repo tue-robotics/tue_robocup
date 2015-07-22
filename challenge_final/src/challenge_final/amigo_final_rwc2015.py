@@ -567,7 +567,11 @@ class ManipRecogSingleItem(smach.StateMachine):
             # ToDo: is this necessary?
             smach.StateMachine.add( "RESET_HEAD_FAILED",
                                     states.CancelHead(robot),
-                                    transitions={   'done'              :'GOTO_OPERATOR_FAILED'})
+                                    transitions={   'done'              :'RESET_ARMS_SPINDLE'})
+
+            smach.StateMachine.add("RESET_ARMS_SPINDLE",
+                                    states.ResetArmsSpindle(robot),
+                                    transitions={   'done'            :'GOTO_OPERATOR_FAILED'})
 
             smach.StateMachine.add('GOTO_OPERATOR_SUCCEEDED',
                                     states.NavigateToObserve(robot=robot, entity_designator=LUIS_DESIGNATOR, radius = 0.7),
