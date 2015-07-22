@@ -520,7 +520,8 @@ class ManipRecogSingleItem(smach.StateMachine):
         current_item = EdEntityDesignator(robot)
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
+        #arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
+        arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
         # print "{0} = pick_shelf".format(pick_shelf)
         # print "{0} = current_item".format(current_item)
