@@ -10,8 +10,15 @@ from challenge_final.srv import *
 class Time:
     def __init__(self, tzdiff):
         self.timezone_difference = timedelta(hours=tzdiff)
-        self.start_time = None
-        self.countdown_time = None
+        # self.start_time = None
+        # self.countdown_time = None
+
+        self.countdown_time = timedelta(minutes=10, seconds=0)
+        self.start_time = datetime.now() + self.timezone_difference
+
+        line = "Starting countdown from " + str(self.countdown_time)
+        print line
+        
 
     def start_clock(self, req):
         self.start_time = datetime.now() + self.timezone_difference
@@ -37,18 +44,17 @@ class Time:
             time_left_hrs = time_left.seconds / 3600
             time_left_min = ( time_left.seconds % 3600 ) / 60
             time_left_sec = time_left.seconds % 60
-            print time_left
-            print timedelta(0) - time_left
 
             if time_left.days < 0:
-                over_time = timedelta(0) - time_left
-                over_time_min = ( over_time.seconds % 3600 ) / 60
-                over_time_sec = over_time.seconds % 60
+                line = " You better hurry up! "
+                # over_time = timedelta(0) - time_left
+                # over_time_min = ( over_time.seconds % 3600 ) / 60
+                # over_time_sec = over_time.seconds % 60
                 
-                if over_time_min == 0 and over_time.seconds > 0:
-                    line = " Our time was already up " + str(over_time.seconds) + " seconds ago. I'll stop the timer now. "
-                else:
-                    line = " Our time was already up " + str(over_time_min) + " minutes ago. I'll stop the timer now. "
+                # if over_time_min == 0 and over_time.seconds > 0:
+                #     line = " Our time was already up " + str(over_time.seconds) + " seconds ago. I'll stop the timer now. "
+                # else:
+                #     line = " Our time was already up " + str(over_time_min) + " minutes ago. I'll stop the timer now. "
                 self.countdown_time = None
                 self.start_time = None
             else:
