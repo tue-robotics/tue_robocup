@@ -33,6 +33,7 @@ challenge_knowledge = load_knowledge('challenge_final')
 
 GRASP_LOC = []
 PERSON_LOC = []
+global NUMBER_OF_TRIES
 NUMBER_OF_TRIES = 0
 
 ##### For current item designator #####
