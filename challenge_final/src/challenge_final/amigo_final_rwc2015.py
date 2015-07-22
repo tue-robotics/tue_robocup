@@ -41,6 +41,7 @@ has_type = lambda entity: entity.type != ""
 min_height = lambda entity: entity.min_z > 0.1 #0.3 
 min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.1
 
+
 def max_width(entity):
     max_bb_x = max(ch.x for ch in entity.convex_hull)
     min_bb_x = min(ch.x for ch in entity.convex_hull)
@@ -158,8 +159,12 @@ class FakeShutdownRobot(smach.State):
         self.robot.leftArm.reset()
         self.robot.rightArm.reset()
         self.robot.spindle.low()
+        self.robot.head.look_at_ground_in_front_of_robot(10)
+        rospy.sleep(0.1)
+        self.robot.head.look_at_ground_in_front_of_robot(2)
+        rospy.sleep(0.1)
         self.robot.head.look_at_ground_in_front_of_robot(1)
-        
+        rospy.sleep(0.1)
         # Lichten worden niet altijd goed gezet. Vandaar even deze lelijke code:
         self.robot.lights.set_color(0,0,0,1)
         rospy.sleep(0.1)
@@ -344,7 +349,12 @@ class AskPersonLoc(smach.State):
                     if not e:
                         return 'failed'
                     BED_DESIGNATOR.current = e
+                    print result.choices['location']
+                    #import ipdb; ipdb.set_trace()
                     BED_TYPE_DESIGNATOR.current = result.choices['location']
+
+                    #LOC_FIND_PERSON = result.choices['location']
+
                     return "drive_near_loc_for_person"
                 else:
                     self.robot.speech.speak("Sorry, I did not understand you.")
@@ -376,13 +386,13 @@ class PersonDesignator(Designator):
         self._furniture_designator = furniture_designator
 
     def resolve(self):
+        #import ipdb; ipdb.set_trace()
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()
-        print "furniture_id = ", furniture_id
+        print "furniture_id 1 = ", furniture_id
         furniture_id = 'rwc2015/' + str(furniture_id) + '-0'
-        
-        #self.robot.ed.get_entity(id=furniture_id)
-        
+        print "furniture_id 2 = ", furniture_id
+
         ## FOR TESTING, no committing!!! (CHECKCOMMITTING)
         #furniture_id = furniture_id
 
@@ -752,12 +762,12 @@ def setup_statemachine(robot):
     # Driving to the operator (Sjoerd)
     BED_DESIGNATOR = VariableDesignator(resolve_type=EntityInfo)
     BED_TYPE_DESIGNATOR = VariableDesignator(resolve_type=str) # Designator that returns a string with the bar type
+
     LUIS_DESIGNATOR = PersonDesignator(robot=robot, furniture_designator=BED_TYPE_DESIGNATOR)      # Designator that returns the operator
 
     global PICKUPLOC_DESIGNATOR
     # Driving to the operator (Sjoerd)
     PICKUPLOC_DESIGNATOR = VariableDesignator(resolve_type=EntityInfo)
-    BED_TYPE_DESIGNATOR = VariableDesignator(resolve_type=str) # Designator that returns a string with the bar type
 
     ###################
 
