@@ -316,7 +316,7 @@ class PersonDesignator(Designator):
     def resolve(self):
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()
-        furniture_id = 'rwc2015/' + furniture_id + '-0`'
+        furniture_id = 'rwc2015/' + str(furniture_id) + '-0'
         
         ## FOR TESTING, no committing!!! (CHECKCOMMITTING)
         #furniture_id = furniture_id
@@ -766,7 +766,7 @@ def setup_statemachine(robot):
         ###### Janno ######
         ''' GoTo Sjoerd '''
         smach.StateMachine.add('GOTO_BAR_FOR_OPERATOR',
-                                states.NavigateToObserve(robot=robot, entity_designator=BAR_DESIGNATOR, radius=2.0),
+                                states.NavigateToObserve(robot=robot, entity_designator=BAR_DESIGNATOR, radius=1.4),
                                 transitions={   'arrived'           : 'GOTO_OPERATOR',
                                                 'unreachable'       : 'GOTO_OPERATOR',
                                                 'goal_not_defined'  : 'GOTO_OPERATOR'})
