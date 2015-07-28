@@ -57,6 +57,7 @@ class FoodType:
 
 
 def parseFoodType(item, got_fruit, got_cereal, got_milk):
+
     # print prefix + bcolors.OKBLUE + "parseFoodType" + bcolors.ENDC
 
     # if a fruit has not been picked, you can search there
@@ -80,6 +81,12 @@ def parseFoodType(item, got_fruit, got_cereal, got_milk):
 # ----------------------------------------------------------------------------------------------------
 
 class ConfigureEd(smach.State):
+    '''Smach state to (re)configure ed. Takes a configuration in the form 
+    of a dictionary containing at least kinect_segmentation_continuous_mode
+    to a Bool, perception_continuous_mode to another Bool and 
+    disabled_plugins to a list of plugins that should be disabled. An 
+    optional argument is the Bool reset. This resets the world model after
+    configuration'''
     def __init__(self, robot, configuration={},reset = None):
         smach.State.__init__( self, outcomes=['done'])
         self.robot = robot
@@ -133,6 +140,9 @@ class ConfigureEd(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class GetOrder(smach.State):
+    ''' Smach state to listen to and parse the breakfast order. Takes variable
+    designators which it will assign strings to. These strings are the names of
+    the ordered items.'''
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
         smach.State.__init__(   self, 
                                 outcomes=['succeeded', 'failed'])
@@ -286,6 +296,7 @@ class GetOrder(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class PickDefaultOrder(smach.State):
+    '''Smach state to pick the default order as defined in the knowledge'''
     def __init__(self, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
         smach.State.__init__(self, outcomes=['done'])
 
@@ -303,6 +314,7 @@ class PickDefaultOrder(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class ConfirmOrder(smach.State):
+    '''Smach state to ask for confirmation of the breakfast order'''
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
         smach.State.__init__(self, outcomes=['done'])
 
@@ -320,25 +332,10 @@ class ConfirmOrder(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-# class RepeatOrderToPerson(smach.State):
-#     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
-#         smach.State.__init__(self, outcomes=['done'])
-
-#         self.robot = robot
-#         self.breakfastCereal = breakfastCerealDes
-#         self.breakfastFruit = breakfastFruitDes
-#         self.breakfastMilk = breakfastMilkDes
-
-#     def execute(self, userdata):
-#         print prefix + bcolors.OKBLUE + "RepeatOrderToPerson" + bcolors.ENDC
-
-#         self.robot.speech.speak("I will get you a " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Breakfast will be served in the dining room.", block=False)
-
-#         return 'done'
-
-# ----------------------------------------------------------------------------------------------------
-
 class Counter(smach.State):
+    '''Smach state that counts the number of times it is executed. Returns 'counted' when it simply
+    counted another value. Returns limit_reached when the counter designator resolves to a number
+    that is greater than or equal to its set limit.'''
     def __init__(self, counter, limit):
         smach.State.__init__(self, outcomes=['counted', 'limit_reached'])
         self.limit = limit
@@ -361,6 +358,7 @@ class Counter(smach.State):
 
 
 class CancelHeadGoals(smach.State):
+    '''Smach state to cancel all head goals'''
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=['done'])
         self.robot = robot
@@ -377,6 +375,8 @@ class CancelHeadGoals(smach.State):
 
 
 class LookAtBedTop(smach.State):
+    '''Smach state to make the robot look at the bed top. Make sure to cancel this head goal when it
+    is no longer needed.'''
     def __init__(self, robot, entity_id):
         smach.State.__init__(self, outcomes=['succeeded'])
         self.robot = robot
@@ -385,13 +385,10 @@ class LookAtBedTop(smach.State):
     def execute(self, userdata):
         print prefix + bcolors.OKBLUE + "LookAtBedTop" + bcolors.ENDC
 
-        # set robots pose
-        # self.robot.spindle.high()
+        # Cancel previous head goals
         self.robot.head.cancel_goal()
 
-        # TODO maybe look around a bit to make sure the vision covers the whole bed top
-
-        # look at bed top
+        # Look at bed top
         headGoal = msgs.PointStamped(x=self.entity.pose.position.x, y=self.entity.pose.position.y, z=knowledge.matress_height, frame_id="/map")
         self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
 
@@ -401,6 +398,8 @@ class LookAtBedTop(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class LookIfSomethingsThere(smach.State):
+    '''Smach state to check if an entitydesignator resolves. It will check for 'timeout' seconds at a
+    rate of 1/'sleep' Hz. Returns 'there' if the designator resolves and 'not_there' if it does not.'''
     def __init__(self, robot, designator, timeout=0, sleep=0.2):
         smach.State.__init__(self, outcomes=['there', 'not_there'])
         self.robot = robot
@@ -422,6 +421,9 @@ class LookIfSomethingsThere(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class Evaluate(smach.State):
+    '''Smach state to evaluate a number of operations that were to be performed. 'options' is a list of
+    keys to values in the dictionary 'results', which are Bools indicating whether this task succeeded 
+    or not. '''
     def __init__(self, options, results):
         smach.State.__init__(self, outcomes=['all_succeeded','partly_succeeded','all_failed'])
         self.options = options
@@ -450,6 +452,8 @@ class Evaluate(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class addPositive(smach.State):
+    '''Smach state to add a positive result to the dictionary of results the results designator
+    resolves to. Uses the string in item_designator as key to this dict. '''
     def __init__(self, results_designator, item_designator):
         smach.State.__init__(self, outcomes=['done'])
         self.results = results_designator
@@ -464,6 +468,10 @@ class addPositive(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class SelectItem(smach.State):
+    '''From the list of generic options (milk,fruit,cereal), selects the next one, picks the 
+    associated specific item asked for (from asked_items, which are all within a sub-category in the 
+    generic options). Fills generic and specific item designators with strings and generates a nav
+    goal for getting it. Will return 'all_done' when all items in the options have been selected. '''
     def __init__(self, robot, options, asked_items, generic_item, specific_item, item_nav_goal, item_lookat_goal):
         smach.State.__init__(self, outcomes=['selected', 'all_done'])
         self.robot = robot
@@ -507,6 +515,9 @@ class SelectItem(smach.State):
 # TODO maybe store recognized objects for future use?
 
 class FindItem(smach.State):
+    '''Smach state to find an object of the type contained in the type designator. Looks within
+    sensor_range, possibly using the supporting object contained in on_object_des. Assigns the found
+    entity info to result_des. '''
     def __init__(self, robot, sensor_range, type_des, result_des, on_object_des=None):
         smach.State.__init__(self, outcomes=['item_found', 'not_found'])
         self.robot = robot
@@ -613,6 +624,8 @@ class FindItem(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class ScanTableTop(smach.State):
+    '''Smach state to look at the table top and take a snapshot to see if there are things on it. 
+    Useful for finding free space before using the EmptySpotDesignator'''
     def __init__(self, robot, table):
         smach.State.__init__(self, outcomes=['done','failed'])
         self.robot = robot
@@ -637,105 +650,10 @@ class ScanTableTop(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-# class EmptySpotDesignator(Designator):
-#     """Designates an empty spot on the empty placement-shelve.
-#     It does this by queying ED for entities that occupy some space.
-#         If the result is no entities, then we found an open spot."""
-#     def __init__(self, robot, closet_designator):
-#         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
-#         self.robot = robot
-#         self.closet_designator = closet_designator
-#         self._edge_distance = 0.1                   # Distance to table edge
-#         self._spacing = 0.15
-
-#     def resolve(self):
-#         closet = self.closet_designator.resolve()
-
-#         # points_of_interest = []
-#         points_of_interest = self.determinePointsOfInterest(closet)
-
-#         def is_poi_occupied(poi):
-#             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
-#             return not any(entities_at_poi)
-
-#         open_POIs = filter(is_poi_occupied, points_of_interest)
-
-#         def distance_to_poi_area(poi):
-#             #Derived from navigate_to_place
-#             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-#             x = poi.point.x
-#             y = poi.point.y
-#             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
-#             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-#             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
-
-#             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
-
-#             distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
-#             if plan_to_poi:
-#                 distance = len(plan_to_poi)
-#             print "Distance: %s"%distance
-#             return distance
-
-#         if any(open_POIs):
-#             best_poi = min(open_POIs, key=distance_to_poi_area)
-#             placement = msgs.PoseStamped(pointstamped=best_poi)
-#             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
-#             return placement
-#         else:
-#             rospy.logerr("Could not find an empty spot")
-#             return None
-
-
-#     def determinePointsOfInterest(self, e):
-
-#         points = []
-
-#         x = e.pose.position.x
-#         y = e.pose.position.y
-
-#         if len(e.convex_hull) == 0:
-#             rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
-#             return []
-
-#         ''' Convert convex hull to map frame '''
-#         center_pose = poseMsgToKdlFrame(e.pose)
-#         ch = []
-#         for point in e.convex_hull:
-#             p = pointMsgToKdlVector(point)
-#             p = center_pose * p
-#             ch.append(p)
-
-#         ''' Loop over hulls '''
-#         ch.append(ch[0])
-#         for i in xrange(len(ch) - 1):
-#                 dx = ch[i+1].x() - ch[i].x()
-#                 dy = ch[i+1].y() - ch[i].y()
-#                 length = math.hypot(dx, dy)
-
-#                 d = self._edge_distance
-#                 while d < (length-self._edge_distance):
-
-#                     ''' Point on edge '''
-#                     xs = ch[i].x() + d/length*dx
-#                     ys = ch[i].y() + d/length*dy
-
-#                     ''' Shift point inwards and fill message'''
-#                     ps = gm.PointStamped()
-#                     ps.header.frame_id = "/map"
-#                     ps.point.x = xs - dy/length * self._edge_distance
-#                     ps.point.y = ys + dx/length * self._edge_distance
-#                     ps.point.z = e.pose.position.z + e.z_max
-#                     points.append(ps)
-
-#                     # ToDo: check if still within hull???
-#                     d += self._spacing
-
-#         return points
-
-# ----------------------------------------------------------------------------------------------------
-
 class NavigateToSymbolic(states.NavigateToSymbolic):
+    '''NavigateToSymbolic for an entity_designator_area_name_map which is contained in a designator.
+    This is useful if the navigation goal changes with different executions of the NavigateToSymbolic
+    state.'''
     def __init__(self, robot, entity_designator_area_name_map, entity_lookat_designator):
         super(states.NavigateToSymbolic, self).__init__(robot)
 
@@ -828,6 +746,13 @@ class SensedHandoverFromHuman(smach.StateMachine):
 # ----------------------------------------------------------------------------------------------------
 
 class SensedHandoverToHuman(smach.StateMachine):
+    '''
+    State that enables low level release reflex. Besides a robot object, needs 
+    an arm and an entity to grab, which is either one from ed through the 
+    grabbed_entity_designator or it is made up in the 
+    CloseGripperOnHandoverToRobot state and given the grabbed_entity_label
+    as id. 
+    '''
     def __init__(self, robot, arm_designator, timeout=10):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
@@ -850,7 +775,7 @@ class SensedHandoverToHuman(smach.StateMachine):
                                                   'failed'      :'SAY_OPEN_GRIPPER'})
             
             smach.StateMachine.add( "SAY_OPEN_GRIPPER",
-                                    states.Say(robot, [ "Please pull my gripper to take it!"]),
+                                    states.Say(robot, [ "Please pull my gripper to take it after my lights turned white!"]),
                                     transitions={   'spoken'    :'OPEN_GRIPPER_ON_HANDOVER'})
 
             smach.StateMachine.add( 'OPEN_GRIPPER_ON_HANDOVER', 
@@ -892,6 +817,8 @@ class SensedHandoverToHuman(smach.StateMachine):
 # ----------------------------------------------------------------------------------------------------
 
 class OpenGripperOnHandoverToHuman(smach.State):
+    '''Smach state for opening the gripper when handing over an object to a human. Sets lights to 
+    white as soon as it is ready to feel if someone grabbed something from the gripper.'''
     def __init__(self, robot, arm_designator, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
@@ -916,6 +843,8 @@ class OpenGripperOnHandoverToHuman(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class CloseGripperOnHandoverToRobot(smach.State):
+    '''Smach state for closing the gripper when handing over an object to the robot. Sets lights to 
+    white as soon as it is ready to feel if someone pushed something into the gripper.'''
     def __init__(self, robot, arm_designator, grabbed_entity_label="", grabbed_entity_designator=None, timeout=10):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
@@ -930,6 +859,7 @@ class CloseGripperOnHandoverToRobot(smach.State):
             rospy.logerr("Could not resolve arm")
             return "failed"
 
+        self.robot.lights.set_color(1.0,1.0,1.0)
         if arm.handover_to_robot(self.timeout):
             
             if self.grabbed_entity_designator:
@@ -940,10 +870,12 @@ class CloseGripperOnHandoverToRobot(smach.State):
                     arm.occupied = handed_entity
                 else:
                     rospy.logerr("No grabbed entity designator and no label for dummy entity given")
+                    self.robot.lights.reset()
                     return "failed"
-
+            self.robot.lights.reset()
             return "succeeded"
         else:
+            self.robot.lights.reset()
             return "failed"
 
 # ----------------------------------------------------------------------------------------------------
