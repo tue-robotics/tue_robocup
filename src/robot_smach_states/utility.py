@@ -9,6 +9,9 @@ from visualization_msgs.msg import Marker
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
 from robot_smach_states.state import State
+from robot_smach_states.util.designators import *
+
+# ----------------------------------------------------------------------------------------------------
 
 class Initialize(smach.State):
     def __init__(self, robot=None):
@@ -32,6 +35,8 @@ class Initialize(smach.State):
         self.robot.base.get_location()
 
         return 'initialized'
+
+# ----------------------------------------------------------------------------------------------------
 
 class SetInitialPose(smach.State):
     ## To call upon this state:
@@ -84,6 +89,8 @@ class SetInitialPose(smach.State):
 
         return "done"
 
+# ----------------------------------------------------------------------------------------------------
+
 class Trigger(smach.State):
 
     def __init__(self, robot, trigger, topic):
@@ -98,7 +105,8 @@ class Trigger(smach.State):
         self.pub.publish(std_msgs.String(data=trigger))
         return 'triggered'
 
-############################## Wait for trigger ##############################
+# ----------------------------------------------------------------------------------------------------
+
 class WaitForTrigger(smach.State):
     '''
     This state will block execution until a suitable trigger command is received on the channel /trigger
@@ -146,8 +154,9 @@ class WaitForTrigger(smach.State):
         else:
             rospy.logwarn('wrong trigger received: %s', data.data)
 
-############################## State Wait ##############################
-class Wait_time(smach.State):
+# ----------------------------------------------------------------------------------------------------
+
+class WaitTime(smach.State):
     def __init__(self, robot=None, waittime=10):
         smach.State.__init__(self, outcomes=['waited','preempted'])
         self.robot = robot
@@ -161,12 +170,14 @@ class Wait_time(smach.State):
             rospy.sleep(sleep_interval)
             total_sleep += sleep_interval
             if self.preempt_requested():
-                rospy.loginfo('Wait_time preempted at {0} of {1}'.format(total_sleep, self.waittime))
+                rospy.loginfo('WaitTime preempted at {0} of {1}'.format(total_sleep, self.waittime))
                 self.service_preempt()
                 return 'preempted'
         return 'waited'
 
-class Wait_Condition(smach.State):
+# ----------------------------------------------------------------------------------------------------
+
+class WaitCondition(smach.State):
     '''Wait until a condition is satisfied, possible on a robot.
     When the condtion is satisfied, the value that matched the condition is stored in the userdata.
     The callback must return that value or something that evaluates to False otherwise.
@@ -195,16 +206,30 @@ class Wait_Condition(smach.State):
             rospy.sleep(0.1)
         return 'timed_out'
 
-class Finish(smach.State):
-    def __init__(self, robot=None):
-        smach.State.__init__(self,
-                                   outcomes=['stop'])
-        self.robot = robot
+# ----------------------------------------------------------------------------------------------------
 
-    def execute(self, gl):
+class Counter(smach.State):
+    '''Smach state that counts the number of times it is executed. Returns 'counted' when it simply
+    counted another value. Returns limit_reached when the counter designator resolves to a number
+    that is greater than or equal to its set limit.'''
+    def __init__(self, counter, limit):
+        smach.State.__init__(self, outcomes=['counted', 'limit_reached'])
+        self.limit = limit
 
-        print "Finished executing task."
-        return 'stop'
+        check_resolve_type(counter,int)
+        self.counter = counter
+
+    def execute(self, userdata):
+        count = self.counter.resolve()
+
+        if count >= self.limit:
+            self.counter.current = 0
+            return 'limit_reached'
+        else:
+            self.counter.current += 1
+            return 'counted'
+
+# ----------------------------------------------------------------------------------------------------
 
 # class FinishOld(smach.State):
 #     def __init__(self, robot=None):
@@ -217,6 +242,8 @@ class Finish(smach.State):
 #         duration = calculate_duration(gl.start_time)
 #         print "Finished executing task", gl.challenge, "in", duration, "seconds."
 #         return 'stop'
+
+# ----------------------------------------------------------------------------------------------------
 
 class PlaySound(smach.State):
     def __init__(self, filename, blocking=False):
@@ -240,6 +267,8 @@ class PlaySound(smach.State):
             rospy.logerr(e)
             return "error"
 
+# ----------------------------------------------------------------------------------------------------
+
 class SetTimeMarker(smach.State):
     def __init__(self, robot, designator):
         smach.State.__init__(self, outcomes=["done"])
@@ -249,6 +278,8 @@ class SetTimeMarker(smach.State):
     def execute(self, userdata=None):
         self.designator.current = rospy.Time.now()
         return "done"
+
+# ----------------------------------------------------------------------------------------------------
 
 class CheckTime(smach.State):
     def __init__(self, robot, designator, max_duration):
@@ -263,6 +294,8 @@ class CheckTime(smach.State):
         else:
             return "ok"
 
+# ----------------------------------------------------------------------------------------------------
+
 class LookAtHand(smach.State):
     def __init__(self, robot, side, keep_tracking=False, timeout=0.0):
         smach.State.__init__(self, outcomes=["done"])
@@ -276,8 +309,8 @@ class LookAtHand(smach.State):
         self.robot.head.look_at_hand(side_string, keep_tracking=self.keep_tracking) #TODO: Unify side as string or/and object
         return "done"
 
+# ----------------------------------------------------------------------------------------------------
 
-############################## Wait for designator ##############################
 class WaitForDesignator(smach.State):
     '''
         Waits for a given designator to answer. It will retry to resolve the
@@ -305,6 +338,8 @@ class WaitForDesignator(smach.State):
             rospy.sleep(self.sleep_interval)
 
         return "failed"
+
+# ----------------------------------------------------------------------------------------------------
 
 class CallFunction(State):
     """Call a (lambda) function with the given arguments
@@ -334,6 +369,58 @@ class CallFunction(State):
             rospy.logerr(e)
             return 'failed'
 
+# ----------------------------------------------------------------------------------------------------
+
+class Evaluate(smach.State):
+    '''Evaluates a dictionary of tasks and their results. 'results' is a designator containing a
+    dictionary of task names to booleans which indicate whether this task succeeded or not. '''
+    def __init__(self, results):
+        smach.State.__init__(self, outcomes=['all_succeeded','partly_succeeded','all_failed'])
+        self.results_designator = results
+
+    def execute(self, userdata):
+        results = self.results_designator.resolve()
+        bools = [result for option, result in results.iteritems()]
+
+        if True in bools and False in bools:
+            return 'partly_succeeded'
+        elif True in bools and not False in bools:
+            return 'all_succeeded'
+        elif not True in bools and False in bools:
+            return 'all_failed'
+        else:
+            return 'all_failed'
+
+# ----------------------------------------------------------------------------------------------------
+
+class AddPositiveResult(smach.State):
+    '''Smach state to add a positive result to the dictionary of results the results designator
+    resolves to. Uses the string in item_designator as key to this dict. '''
+    def __init__(self, results_designator, item_designator):
+        smach.State.__init__(self, outcomes=['done'])
+        self.results = results_designator
+        self.item = item_designator
+
+    def execute(self, userdata):
+        self.results.current[self.item.resolve()] = True
+        return "done"
+
+# ----------------------------------------------------------------------------------------------------
+
+class AddNegativeResult(smach.State):
+    '''Smach state to add a negative result to the dictionary of results the results designator
+    resolves to. Uses the string in item_designator as key to this dict. '''
+    def __init__(self, results_designator, item_designator):
+        smach.State.__init__(self, outcomes=['done'])
+        self.results = results_designator
+        self.item = item_designator
+
+    def execute(self, userdata):
+        self.results.current[self.item.resolve()] = False
+        return "done"
+
+# ----------------------------------------------------------------------------------------------------
+
 class LockDesignator(smach.State):
     def __init__(self, locking_designator):
         smach.State.__init__(self, outcomes=['locked'])
@@ -344,6 +431,8 @@ class LockDesignator(smach.State):
         rospy.loginfo("locking_designator {1} is now locked to {0}".format(str(self.locking_designator.resolve())[:10], self.locking_designator))
         return 'locked'
 
+# ----------------------------------------------------------------------------------------------------
+
 class UnlockDesignator(smach.State):
     def __init__(self, locking_designator):
         smach.State.__init__(self, outcomes=['unlocked'])
@@ -353,6 +442,8 @@ class UnlockDesignator(smach.State):
         rospy.loginfo("locking_designator {1} is going to unlock from {0}".format(str(self.locking_designator.resolve())[:10], self.locking_designator))
         self.locking_designator.unlock()
         return 'unlocked'
+
+# ----------------------------------------------------------------------------------------------------
 
 class MarkEntityInRviz(smach.State):
     def __init__(self, entity_designator, namespace="designator"):
@@ -402,6 +493,8 @@ class MarkEntityInRviz(smach.State):
         self.publisher.publish(marker)
         return 'succeeded'
 
+# ----------------------------------------------------------------------------------------------------
+
 class IteratorState(smach.State):
     """
     >>> from robot_smach_states.util.designators import *
@@ -446,6 +539,8 @@ class IteratorState(smach.State):
         else:
             # self.element_designator.current = None
             return "stop_iteration"
+
+# ----------------------------------------------------------------------------------------------------
 
 def test_iteration():
     from robot_smach_states.util.designators import Designator, VariableDesignator
