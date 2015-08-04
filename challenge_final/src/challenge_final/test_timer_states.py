@@ -28,7 +28,7 @@ class TestPresentationTimer(smach.StateMachine):
                                                     'failed':'WAIT_A_WHILE'})
 
             smach.StateMachine.add( 'WAIT_A_WHILE',
-                                    states.Wait_time(robot,10.0),
+                                    states.WaitTime(robot,10.0),
                                     transitions={   'waited':'SAY_TIME_LEFT',
                                                     'preempted':'SAY_TIME_LEFT'})
 

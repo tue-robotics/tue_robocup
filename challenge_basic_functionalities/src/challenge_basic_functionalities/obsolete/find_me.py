@@ -228,7 +228,7 @@ class FindMe(smach.StateMachine):
                                                     'no_answers':'WAIT'})
 
             smach.StateMachine.add( 'WAIT',
-                                    states.Wait_time(robot, waittime=5),
+                                    states.WaitTime(robot, waittime=5),
                                     transitions={   'waited'   :"GOTO_ROOM",
                                                     'preempted':"GOTO_ROOM"})
 
