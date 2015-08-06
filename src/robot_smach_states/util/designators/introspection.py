@@ -45,11 +45,13 @@ def analyse_designators():
                 statelabel = state2label.get(state, state) #Get the label of state, if not possible, just default to ugly __repr__
                 state_designator_relations += [(statelabel, desig, designator_role, desig.resolve_type)]
 
-                desig_name = desig.__class__.__name__ + "@" + str(hex(id(desig)))
+                desig_name = "{name}@{addr}\n[{resolve_type}]".format(  name=desig.__class__.__name__, 
+                                                                        addr=hex(id(desig)), 
+                                                                        resolve_type=desig.resolve_type.__name__)
 
                 dot.edge(   desig_name.replace("=", "_"), 
                             str(statelabel).replace("=", "_"), 
-                            label="{} [{}]".format(str(designator_role), desig.resolve_type.__name__))
+                            label=str(designator_role))
 
     pprint.pprint(resolve_types)
     print "-" * 10
