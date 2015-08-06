@@ -114,9 +114,9 @@ class EdEntityCollectionDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-    def __repr__(self):
-        return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
+    # def __repr__(self):
+    #     return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+    #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
 
 
 class EdEntityDesignator(Designator):
@@ -212,11 +212,11 @@ class EdEntityDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-    def __repr__(self):
-        criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
+    # def __repr__(self):
+    #     criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
 
-        return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
+    #     return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+    #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
 
 
 class EmptySpotDesignator(Designator):
