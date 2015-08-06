@@ -6,6 +6,10 @@ from robot_smach_states.util.designators.core import Designator
 import gc
 import pprint
 
+"""
+#TODO: Also iterate which designators have other designators as members
+"""
+
 __author__ = 'loy'
 
 def flatten(tree, parentname=None, sep="."):
