@@ -64,8 +64,8 @@ def analyse_designators():
                 parent_name = format_designator(parent_designator)
                 child_name = format_designator(child_designator)
 
-                dot.edge(   parent_name.replace("=", "_"),
-                            child_name.replace("=", "_"),
+                dot.edge(   child_name.replace("=", "_"),
+                            parent_name.replace("=", "_"),
                             label=str(child_role))
 
     pprint.pprint(resolve_types)
@@ -78,13 +78,18 @@ def analyse_designators():
 
 
 def format_designator(desig):
-    resolve_type_format = desig.resolve_type.__name__
-    # import ipdb; ipdb.set_trace()
-    # if (desig.resolve_type == list or desig.resolve_type == tuple) and len(desig.resolve_type) >= 1:
-    #     # If the resolve_type is a collection, then show the type of the collection elements
-    #     resolve_type_format = "[{}]".format(desig.resolve_type[0])
+    resolve_type_format = desig.resolve_type
+    if type(desig.resolve_type) == list or type(desig.resolve_type) == tuple:
+        try:
+            if len(desig.resolve_type) >= 1:
+                # If the resolve_type is a collection, then show the type of the collection elements
+                resolve_type_format = "[{}]".format(desig.resolve_type[0])
+        except TypeError:
+            pass
+    else:
+        resolve_type_format = desig.resolve_type.__name__
 
-    desig_name = "{name}@{addr}\n[{resolve_type}]".format(name=desig.__class__.__name__,
+    desig_name = "{name}@{addr}\n<{resolve_type}>".format(name=desig.__class__.__name__,
                                                           addr=hex(id(desig)),
                                                           resolve_type=resolve_type_format)
     return desig_name
