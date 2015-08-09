@@ -15,9 +15,6 @@ class DesignatorUsage(object):
         self.designator = designator
         self.role = role
 
-    def ad_graphviz_edge(self, graph):
-        pass
-
 class DesignatorUsedInState(DesignatorUsage):
     def add_graphviz_edge(self, graph):
         desig_name = format_designator(self.designator)
