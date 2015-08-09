@@ -21,6 +21,8 @@ class Designator(object):
 
     >>> assert(issubclass(d.resolve_type, str))"""
 
+    instances = []
+
     def __init__(self, initial_value=None, resolve_type=None, name=None):
         super(Designator, self).__init__()
 
@@ -31,6 +33,8 @@ class Designator(object):
             self._resolve_type = type(initial_value)
         else:
             self._resolve_type = resolve_type
+
+        Designator.instances += [self]
 
     def resolve(self):
         """Selects a new goal and sets it as the current value."""

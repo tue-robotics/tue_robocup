@@ -3,8 +3,6 @@
 import rospy
 import smach
 from robot_smach_states.util.designators.core import Designator
-import gc
-import pprint
 
 """
 """
@@ -66,10 +64,8 @@ def flatten(tree, parentname=None, sep="."):
 
 def analyse_designators(statemachine=None, statemachine_name=""):
 
-    designators = [obj for obj in gc.get_objects() if isinstance(obj, Designator)]
-    resolve_types = {desig:desig.resolve_type for desig in designators}
+    designators = Designator.instances
 
-    # import ipdb; ipdb.set_trace()
     if not statemachine:
         statemachine = smach.StateMachine._currently_opened_container()
     label2state = dict(flatten(statemachine, sep="\n."))
