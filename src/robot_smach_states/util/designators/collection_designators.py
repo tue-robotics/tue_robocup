@@ -37,11 +37,11 @@ class ListElementDesignator(Designator):
     'aap'
     """
 
-    def __init__(self, list_designator, sortkey=None, criteriafuncs=None, minmax=min):
+    def __init__(self, list_designator, sortkey=None, criteriafuncs=None, minmax=min, name=None):
         if not len(list_designator.resolve_type) == 1:
             raise TypeError("The list_designator should indicate the type of the list elements, e.g. [str] for a list of str's")
         element_type = list_designator.resolve_type[0]
-        super(ListElementDesignator, self).__init__(self, resolve_type=element_type)
+        super(ListElementDesignator, self).__init__(self, resolve_type=element_type, name=name)
 
         self.list_designator = list_designator
         self.sortkey = sortkey

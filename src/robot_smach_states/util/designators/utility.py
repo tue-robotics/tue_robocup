@@ -53,8 +53,8 @@ class LockingDesignator(Designator):
     >>> assert(locking.resolve_type == int)
     """
 
-    def __init__(self, to_be_locked):
-        super(LockingDesignator, self).__init__(resolve_type=to_be_locked.resolve_type)
+    def __init__(self, to_be_locked, name=None):
+        super(LockingDesignator, self).__init__(resolve_type=to_be_locked.resolve_type, name=name)
         self.to_be_locked = to_be_locked
         self._locked = False
 
@@ -93,8 +93,8 @@ class AttrDesignator(Designator):
     >>> assert(issubclass(wrapped.resolve_type, str))
     """
 
-    def __init__(self, orig, attribute, resolve_type=None):
-        super(AttrDesignator, self).__init__(resolve_type=resolve_type)
+    def __init__(self, orig, attribute, resolve_type=None, name=None):
+        super(AttrDesignator, self).__init__(resolve_type=resolve_type, name=name)
         self.orig = orig
         self.attribute = attribute
 
@@ -118,8 +118,8 @@ class FuncDesignator(Designator):
     >>> assert(issubclass(wrapped.resolve_type, int))
     """
 
-    def __init__(self, orig, func, resolve_type=None):
-        super(FuncDesignator, self).__init__(resolve_type=resolve_type)
+    def __init__(self, orig, func, resolve_type=None, name=None):
+        super(FuncDesignator, self).__init__(resolve_type=resolve_type, name=name)
         self.orig = orig
         self.func = func
 
@@ -146,8 +146,8 @@ class DeferToRuntime(Designator):
     'Hello world'
     """
 
-    def __init__(self, func, resolve_type):
-        super(DeferToRuntime, self).__init__(resolve_type=resolve_type)
+    def __init__(self, func, resolve_type, name=None):
+        super(DeferToRuntime, self).__init__(resolve_type=resolve_type, name=name)
         self.func = func
 
     def resolve(self):

@@ -15,12 +15,12 @@ class ArmDesignator(Designator):
     >>> assert a.resolve() == robot.arms['left']
     """
 
-    def __init__(self, all_arms, preferred_arm=None):
+    def __init__(self, all_arms, preferred_arm=None, name=None):
         """Initialize a new ArmDesignator with a collection of arms available on the robot and an arm that is preferred for the given operations.
         @param all_arms a dictionary of arms available on the robot
         @param preferred_arm the arm that is preferred for the operations that use this designator"""
 
-        super(ArmDesignator, self).__init__(resolve_type=Arm)
+        super(ArmDesignator, self).__init__(resolve_type=Arm, name=name)
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
 
@@ -75,8 +75,8 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> arm_to_use_for_third_grab = empty_arm_designator.resolve()
     >>> assert arm_to_use_for_third_grab == None
     """
-    def __init__(self, all_arms, preferred_arm):
-        super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm)
+    def __init__(self, all_arms, preferred_arm, name=None):
+        super(UnoccupiedArmDesignator, self).__init__(all_arms, preferred_arm, name=name)
 
     def available(self, arm):
         """Check that there is no entity occupying the arm"""
@@ -110,8 +110,8 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> arm_to_use_for_second_place = holding_arm_designator.resolve()
     >>> assert arm_to_use_for_second_place == None
     """
-    def __init__(self, all_arms, entity_designator):
-        super(ArmHoldingEntityDesignator, self).__init__(all_arms)
+    def __init__(self, all_arms, entity_designator, name=None):
+        super(ArmHoldingEntityDesignator, self).__init__(all_arms, name=name)
 
         self.entity_designator = entity_designator
 

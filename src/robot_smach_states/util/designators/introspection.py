@@ -89,7 +89,8 @@ def format_designator(desig):
     else:
         resolve_type_format = desig.resolve_type.__name__
 
-    desig_name = "{name}@{addr}\n<{resolve_type}>".format(name=desig.__class__.__name__,
-                                                          addr=hex(id(desig)),
-                                                          resolve_type=resolve_type_format)
+    desig_name = "{name}({cls}@{addr})\n<{resolve_type}>".format(   name=desig.name + "\n" if desig.name else "",
+                                                                    cls=desig.__class__.__name__,
+                                                                    addr=hex(id(desig)),
+                                                                    resolve_type=resolve_type_format)
     return desig_name
