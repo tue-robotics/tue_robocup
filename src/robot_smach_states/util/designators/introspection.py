@@ -47,6 +47,7 @@ def format_designator(desig):
                                                                     cls=desig.__class__.__name__,
                                                                     addr=hex(id(desig)),
                                                                     resolve_type=resolve_type_format)
+    return desig_name
 
 def flatten(tree, parentname=None, sep="."):
     flat = []
