@@ -844,7 +844,7 @@ class RoboNurse(smach.StateMachine):
             #                                         'unreachable':'Done',
             #                                         'goal_not_defined':'Done'})
 
-            ds.analyse_designators()
+            ds.analyse_designators(self, "robonurse")
 
 
 def test_look_at_entities(robot):
