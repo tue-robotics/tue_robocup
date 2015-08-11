@@ -105,8 +105,8 @@ class FormattedSentenceDesignator(Designator):
 
 class EntityDescriptionDesignator(Designator):
     """EntityDescriptionDesignator"""
-    def __init__(self, formats, entity_designator):
-        super(EntityDescriptionDesignator, self).__init__(resolve_type=str)
+    def __init__(self, formats, entity_designator, name=None):
+        super(EntityDescriptionDesignator, self).__init__(resolve_type=str, name=name)
         self.entity_designator = entity_designator
         self.formats = formats
 
@@ -380,8 +380,8 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        pick_shelf = EdEntityDesignator(robot, id=PICK_SHELF)
-        place_shelf = EdEntityDesignator(robot, id=PLACE_SHELF)
+        self.pick_shelf = EdEntityDesignator(robot, id=PICK_SHELF, name="pick_shelf")
+        self.place_shelf = EdEntityDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
         # TODO: Designate items that are
         # inside pick_shelf
@@ -409,7 +409,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         #     return x_ok and y_ok
 
         def on_top(entity):
-            container_entity = pick_shelf.resolve()
+            container_entity = self.pick_shelf.resolve()
             return onTopOff(entity, container_entity)
 
         # select the entity closest in x direction to the robot in base_link frame
@@ -418,62 +418,62 @@ class ManipRecogSingleItem(smach.StateMachine):
             p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
             return p.x*p.x
 
-        # current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
-        # current_item = LockingDesignator(EdEntityDesignator(robot,
+        # self.current_item = EdEntityDesignator(robot, id="beer1")  # TODO: For testing only
+        # self.current_item = LockingDesignator(EdEntityDesignator(robot,
         #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
-        # current_item = LockingDesignator(EdEntityDesignator(robot,
+        # self.current_item = LockingDesignator(EdEntityDesignator(robot,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
-        current_item = LockingDesignator(EdEntityDesignator(robot,
-            criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
+        self.current_item = LockingDesignator(EdEntityDesignator(robot,
+            criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
-        place_position = LockingDesignator(EmptySpotDesignator(robot, place_shelf))
+        self.place_position = LockingDesignator(EmptySpotDesignator(robot, self.place_shelf, name="placement"), name="place_position")
 
-        empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
+        self.empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
+        self.arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
 
-        print "{0} = pick_shelf".format(pick_shelf)
-        print "{0} = current_item".format(current_item)
-        print "{0} = place_position".format(place_position)
-        print "{0} = empty_arm_designator".format(empty_arm_designator)
-        print "{0} = arm_with_item_designator".format(arm_with_item_designator)
+        print "{0} = pick_shelf".format(self.pick_shelf)
+        print "{0} = current_item".format(self.current_item)
+        print "{0} = place_position".format(self.place_position)
+        print "{0} = empty_arm_designator".format(self.empty_arm_designator)
+        print "{0} = arm_with_item_designator".format(self.arm_with_item_designator)
 
         with self:
             # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
-            #                         #states.NavigateToObserve(robot, pick_shelf),
-            #                         states.NavigateToSymbolic(robot, {pick_shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, pick_shelf),
+            #                         #states.NavigateToObserve(robot, self.pick_shelf),
+            #                         states.NavigateToSymbolic(robot, {self.pick_shelf:"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"}, self.pick_shelf),
             #                         transitions={   'arrived'           :'LOOKAT_PICK_SHELF',
             #                                         'unreachable'       :'LOOKAT_PICK_SHELF',
             #                                         'goal_not_defined'  :'LOOKAT_PICK_SHELF'})
 
             ''' Look at pick shelf '''
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
-                                     states.LookAtEntity(robot, pick_shelf, keep_following=True),
+                                     states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
                                      transitions={  'succeeded'         :'LOCK_ITEM'})
 
             # smach.StateMachine.add( "SAY_LOOKAT_PICK_SHELF",
-            #                         states.Say(robot, ["I'm looking at the pick_shelf to see what items I can find"]),
+            #                         states.Say(robot, ["I'm looking at the self.pick_shelf to see what items I can find"]),
             #                         transitions={   'spoken'            :'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
-                current_item.lock() #This determines that current_item cannot not resolve to a new value until it is unlocked again.
-                if current_item.resolve():
-                    rospy.loginfo("Current_item is now locked to {0}".format(current_item.resolve().id))
+                self.current_item.lock() #This determines that self.current_item cannot not resolve to a new value until it is unlocked again.
+                if self.current_item.resolve():
+                    rospy.loginfo("Current_item is now locked to {0}".format(self.current_item.resolve().id))
 
-                place_position.lock() #This determines that place_position will lock/cache its result after its resolved the first time.
+                self.place_position.lock() #This determines that self.place_position will lock/cache its result after its resolved the first time.
                 return 'locked'
             smach.StateMachine.add('LOCK_ITEM',
                                    smach.CBState(lock),
                                    transitions={'locked':'ANNOUNCE_ITEM'})
 
             smach.StateMachine.add( "ANNOUNCE_ITEM",
-                                    states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", current_item), block=False),
+                                    states.Say(robot, EntityDescriptionDesignator("I'm trying to grab item {id} which is a {type}.", self.current_item, name="current_item_desc"), block=False),
                                     transitions={   'spoken'            :'GRAB_ITEM'})
 
             smach.StateMachine.add( "GRAB_ITEM",
-                                    Grab(robot, current_item, empty_arm_designator),
+                                    Grab(robot, self.current_item, self.empty_arm_designator),
                                     transitions={   'done'              :'STORE_ITEM',
                                                     'failed'            :'SAY_GRAB_FAILED'})
 
@@ -485,11 +485,11 @@ class ManipRecogSingleItem(smach.StateMachine):
             def unlock_and_ignore(userdata):
                 global ignore_ids
                 # import ipdb; ipdb.set_trace()
-                if current_item.resolve():
-                    ignore_ids += [current_item.resolve().id]
-                    rospy.loginfo("Current_item WAS now locked to {0}".format(current_item.resolve().id))
-                current_item.unlock() #This determines that current_item can now resolve to a new value on the next call
-                place_position.unlock() #This determines that place_position can now resolve to a new position on the next call
+                if self.current_item.resolve():
+                    ignore_ids += [self.current_item.resolve().id]
+                    rospy.loginfo("Current_item WAS now locked to {0}".format(self.current_item.resolve().id))
+                self.current_item.unlock() #This determines that self.current_item can now resolve to a new value on the next call
+                self.place_position.unlock() #This determines that self.place_position can now resolve to a new position on the next call
                 return 'unlocked'
             smach.StateMachine.add('UNLOCK_ITEM_AFTER_FAILED_GRAB',
                                    smach.CBState(unlock_and_ignore),
@@ -497,7 +497,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['stored'])
             def store_as_manipulated(userdata):
-                manipulated_items.current += [current_item.current]
+                manipulated_items.current += [self.current_item.current]
                 return 'stored'
 
             smach.StateMachine.add('STORE_ITEM',
@@ -505,15 +505,15 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    transitions={'stored':'ANNOUNCE_CLASS'})
 
             smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=current_item), block=False),
+                                    states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item, name="item_type_sentence"), block=False),
                                     transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
-                                     states.LookAtEntity(robot, pick_shelf, keep_following=True),
+                                     states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
                                      transitions={  'succeeded'         :'PLACE_ITEM'})
 
             smach.StateMachine.add( "PLACE_ITEM",
-                                    Place(robot, current_item, place_position, arm_with_item_designator),
+                                    Place(robot, self.current_item, self.place_position, self.arm_with_item_designator),
                                     transitions={   'done'              :'RESET_HEAD_PLACE',
                                                     'failed'            :'RESET_HEAD_HUMAN'})
 
@@ -534,7 +534,7 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'spoken'            :'HANDOVER_TO_HUMAN'})
 
             smach.StateMachine.add('HANDOVER_TO_HUMAN',
-                                   states.HandoverToHuman(robot, arm_with_item_designator),
+                                   states.HandoverToHuman(robot, self.arm_with_item_designator),
                                    transitions={   'succeeded'         :'UNLOCK_AFTER_HANDOVER',
                                                     'failed'           :'UNLOCK_AFTER_HANDOVER'})
 
@@ -546,7 +546,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = EdEntityDesignator(robot, id="manipulation_init_pose")
+    start_waypoint = EdEntityDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
     placed_items = []
 
     with sm:
@@ -611,7 +611,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items, list))
+            single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items, list, name="placed_items"))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM',
                                                 single_item,
@@ -626,6 +626,9 @@ def setup_statemachine(robot):
         smach.StateMachine.add('AT_END',
                                states.Say(robot, "Goodbye"),
                                transitions={'spoken': 'Done'})
+
+        analyse_designators(sm, "manipulation")
+
     return sm
 
 

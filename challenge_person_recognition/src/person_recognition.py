@@ -15,7 +15,7 @@ from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -570,7 +570,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                    states.Say(robot,"My work here is done, goodbye!"),
                                    transitions={'spoken':'Done'})
 
-
+            analyse_designators()
 
 # ----------------------------------------------------------------------------------------------------
 

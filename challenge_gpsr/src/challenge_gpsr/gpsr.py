@@ -1619,6 +1619,8 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Goodbye"], block=True),
                                 transitions={'spoken':'Done'})
 
+        analyse_designators()
+
     return sm
 
 
