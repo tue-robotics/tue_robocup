@@ -55,7 +55,7 @@ class RandomNav(smach.StateMachine):
         with self:
             
             smach.StateMachine.add( "WAIT_A_SEC", 
-                                    states.Wait_time(robot, waittime=1.0),
+                                    states.WaitTime(robot, waittime=1.0),
                                     transitions={'waited'   :"SELECT_ACTION",
                                                  'preempted':"Aborted"})
                                                  
