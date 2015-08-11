@@ -60,26 +60,7 @@ class Designator(object):
 class VariableDesignator(Designator):
 
     """
-    A VariableDesignator simply contains a variable that can be set by anyone.
-    This variable is encapsulated by a property called current.
-
-    You can also set current = ...
-
-    >>> v = VariableDesignator(name="variable_tester")  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    TypeError: ...
-
-    >>> v = VariableDesignator(resolve_type=str)
-    >>> v.current = 'Works'
-    >>> v.current
-    'Works'
-
-    >>> v.current = 666  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    TypeError: ...
-    >>> assert(v.current == 'Works') #Unchanged
+    A VariableDesignator simply contains a variable that can be set if you have a writer for it.
     """
 
     def __init__(self, initial_value=None, resolve_type=None, name=None):
@@ -89,7 +70,7 @@ class VariableDesignator(Designator):
                 raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
         super(VariableDesignator, self).__init__(initial_value, resolve_type, name=name)
 
-    def _set_current(self, value):
+    def _set_current_protected(self, value):
         resolve_type = self.resolve_type
         try:
             resolve_type = tuple(self.resolve_type)
@@ -100,7 +81,57 @@ class VariableDesignator(Designator):
             raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
 
+    def _set_current(self, value):
+        raise DeprecationWarning("Cannot directly write to a VariableDesignator, use a VariableWriter (aliased as writeable(designator) instead")
+
+    current = property(Designator._get_current, _set_current) #TODO: Once all state machines use the VariableWriter, the _set_current can be removed
+
+
+class VariableWriter(object):
+    """When writing to a VariableDesignator you must use a writer, 
+        to make it explicit who changes designators so you can directly spot the changer.
+    This way, the dataflow can be more accurately visualized and understood.
+
+    >>> #Create a VariableDesignator with a string
+    >>> v = VariableDesignator('Hello')
+    >>> v.resolve() #No surprise, it resolves to the given string!
+    'Hello'
+    >>> #Writing to the designator directly will fail.
+    >>> v.current = 'World'   # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    DeprecationWarning: ...
+
+    >>> v.resolve() #Still unchanged
+    'Hello'
+    >>> #Instead, use a writer to assign to a VariableDesignator
+    >>> w = writeable(v)
+    >>> w.current = 'World'
+    >>> v.resolve() #Now it works!
+    'World'
+    """
+
+    def __init__(self, variable_designator):
+        self.variable_designator = variable_designator
+
+    def write(self, value):
+        if isinstance(value, self.variable_designator.resolve_type):
+            self.variable_designator._set_current_protected(value)
+        else:
+            raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value), 
+                self.variable_designator, 
+                self.variable_designator.resolve_type))
+
+    def _set_current(self, value):
+        self.variable_designator._set_current_protected(value)
+
     current = property(Designator._get_current, _set_current)
+
+    def resolve(self, *args, **kwargs):
+        return self.variable_designator.resolve(*args, **kwargs)
+
+
+writeable = VariableWriter
 
 
 if __name__ == "__main__":
