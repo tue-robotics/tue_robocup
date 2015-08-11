@@ -52,7 +52,7 @@ def format_designator(desig):
     else:
         resolve_type_format = desig.resolve_type.__name__
 
-    desig_name = "{name}({cls}@{addr}) <{resolve_type}>".format(name=desig.name + " " if desig.name else "",
+    desig_name = "{name}({cls}@{addr})\\n<{resolve_type}>".format(name=desig.name + " " if desig.name else "",
                                                                  cls=desig.__class__.__name__,
                                                                  addr=hex(id(desig)),
                                                                  resolve_type=resolve_type_format)
@@ -76,7 +76,7 @@ def analyse_designators(statemachine=None, statemachine_name=""):
 
     if not statemachine:
         statemachine = smach.StateMachine._currently_opened_container()
-    label2state = dict(flatten(statemachine, sep=" ."))
+    label2state = dict(flatten(statemachine, sep="\\n."))
     states = label2state.values()
 
     state2label = {state: label for label, state in label2state.iteritems()}
