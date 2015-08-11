@@ -11,7 +11,7 @@ class Designator(object):
 
     current is therefore a property with only a getter.
 
-    >>> d = Designator("Initial value")
+    >>> d = Designator("Initial value", name="tester")
     >>> d.current
     'Initial value'
     >>> d.current = 'Error'
@@ -21,14 +21,20 @@ class Designator(object):
 
     >>> assert(issubclass(d.resolve_type, str))"""
 
-    def __init__(self, initial_value=None, resolve_type=None):
+    instances = []
+
+    def __init__(self, initial_value=None, resolve_type=None, name=None):
         super(Designator, self).__init__()
+
+        self._name = name
 
         self._current = initial_value
         if not resolve_type:
             self._resolve_type = type(initial_value)
         else:
             self._resolve_type = resolve_type
+
+        Designator.instances += [self]
 
     def resolve(self):
         """Selects a new goal and sets it as the current value."""
@@ -42,8 +48,13 @@ class Designator(object):
         """The currently selected goal"""
         return self._resolve_type
 
+    def _get_name(self):
+        """The currently selected goal"""
+        return self._name
+
     current = property(_get_current)
     resolve_type = property(_get_resolve_type)
+    name = property(_get_name)
 
 
 class VariableDesignator(Designator):
@@ -54,7 +65,7 @@ class VariableDesignator(Designator):
 
     You can also set current = ...
 
-    >>> v = VariableDesignator()  # doctest: +IGNORE_EXCEPTION_DETAIL
+    >>> v = VariableDesignator(name="variable_tester")  # doctest: +IGNORE_EXCEPTION_DETAIL
     Traceback (most recent call last):
       ...
     TypeError: ...
@@ -71,12 +82,12 @@ class VariableDesignator(Designator):
     >>> assert(v.current == 'Works') #Unchanged
     """
 
-    def __init__(self, initial_value=None, resolve_type=None):
+    def __init__(self, initial_value=None, resolve_type=None, name=None):
         if not resolve_type:
             resolve_type = type(initial_value)
             if resolve_type == type(None): #If the initial value is None, then the resolve_type cannot be interred and thus we raise an exception
                 raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
-        super(VariableDesignator, self).__init__(initial_value, resolve_type)
+        super(VariableDesignator, self).__init__(initial_value, resolve_type, name=name)
 
     def _set_current(self, value):
         resolve_type = self.resolve_type

@@ -18,8 +18,8 @@ __author__ = 'loy'
 
 class PointStampedOfEntityDesignator(Designator):
 
-    def __init__(self, entity_designator):
-        super(VariableDesignator, self).__init__(resolve_type=gm.PointStamped)
+    def __init__(self, entity_designator, name=None):
+        super(VariableDesignator, self).__init__(resolve_type=gm.PointStamped, name=name)
         self.entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
@@ -51,7 +51,7 @@ class EdEntityCollectionDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None,
-        type_designator=None, center_point_designator=None, id_designator=None, debug=False):
+        type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates a collection of entities of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -63,7 +63,7 @@ class EdEntityCollectionDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved through a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[EntityInfo])
+        super(EdEntityCollectionDesignator, self).__init__(resolve_type=[EntityInfo],name=name)
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -114,9 +114,9 @@ class EdEntityCollectionDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-    def __repr__(self):
-        return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
+    # def __repr__(self):
+    #     return "EdEntityCollectionDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+    #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, self.criteriafuncs)
 
 
 class EdEntityDesignator(Designator):
@@ -126,7 +126,7 @@ class EdEntityDesignator(Designator):
     """
 
     def __init__(self, robot, type="", center_point=None, radius=0, id="", parse=True, criteriafuncs=None, weight_function=None,
-        type_designator=None, center_point_designator=None, id_designator=None, debug=False):
+        type_designator=None, center_point_designator=None, id_designator=None, debug=False, name=None):
         """Designates an entity of some type, within a radius of some center_point, with some id,
         that match some given criteria functions.
         @param robot the robot to use for Ed queries
@@ -140,7 +140,7 @@ class EdEntityDesignator(Designator):
         @param type_designator same as type but dynamically resolved trhough a designator. Mutually exclusive with type
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
-        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo)
+        super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -212,19 +212,19 @@ class EdEntityDesignator(Designator):
         rospy.logerr("No entities found in {0}".format(self))
         return None
 
-    def __repr__(self):
-        criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
+    # def __repr__(self):
+    #     criteria_code = [inspect.getsource(criterium).strip().replace('\\n', '\n') for criterium in self.criteriafuncs]
 
-        return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
-            self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
+    #     return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
+    #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
 
 
 class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
     It does this by queying ED for entities that occupy some space.
         If the result is no entities, then we found an open spot."""
-    def __init__(self, robot, place_location_designator):
-        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
+    def __init__(self, robot, place_location_designator, name=None):
+        super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped, name=name)
         self.robot = robot
         self.place_location_designator = place_location_designator
         self._edge_distance = 0.1                   # Distance to table edge
