@@ -256,7 +256,7 @@ class WakeMeUp(smach.StateMachine):
             with takeOrderContainer:
 
                 smach.StateMachine.add( "COUNTER",
-                                        wakeStates.Counter(counter=orderConfirmationCounter,limit=knowledge.order_confirmation_limit),
+                                        states.Counter(counter=orderConfirmationCounter,limit=knowledge.order_confirmation_limit),
                                         transitions={   'counted'       :'SAY_WHAT_BREAKFAST',
                                                         'limit_reached' :'SAY_ILL_CHOOSE_BREAKFAST'})
 
@@ -360,7 +360,7 @@ class WakeMeUp(smach.StateMachine):
                                                                 specific_item=selected_spec_item_des,
                                                                 item_nav_goal=current_item_nav_goal_at,
                                                                 item_lookat_goal=current_item_nav_goal_lookat),
-                                        transitions={   'selected' : 'GOTO_ITEM',
+                                        transitions={   'selected' : 'SELECT_ITEM',
                                                         'all_done' : 'EVALUATE_RESULTS'})
 
                 smach.StateMachine.add( 'GOTO_ITEM',
@@ -422,12 +422,12 @@ class WakeMeUp(smach.StateMachine):
                                                         'failed'    :'SELECT_ITEM'})
 
                 smach.StateMachine.add( 'ADD_POSITIVE_RESULT',
-                                        wakeStates.addPositive( results_designator=prep_eval_des, 
-                                                                item_designator=selected_gen_item_des),
+                                        states.AddPositiveResult(   results_designator=prep_eval_des, 
+                                                                    item_designator=selected_gen_item_des),
                                         transitions={   'done'      :'SELECT_ITEM'})
 
                 smach.StateMachine.add( 'EVALUATE_RESULTS',
-                                        wakeStates.Evaluate(knowledge.generic_items, prep_eval_des),
+                                        states.Evaluate(results=prep_eval_des),
                                         transitions={   'all_succeeded'     :'container_succeeded',
                                                         'all_failed'        :'container_failed',
                                                         'partly_succeeded'  :'container_succeeded'})

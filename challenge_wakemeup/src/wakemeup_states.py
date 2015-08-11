@@ -139,6 +139,7 @@ class ConfigureEd(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+# TODO: Generalize and put in human interaction?
 class GetOrder(smach.State):
     ''' Smach state to listen to and parse the breakfast order. Takes variable
     designators which it will assign strings to. These strings are the names of
@@ -313,6 +314,7 @@ class PickDefaultOrder(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
+# TODO: Generalize and put in human interaction smach states?
 class ConfirmOrder(smach.State):
     '''Smach state to ask for confirmation of the breakfast order'''
     def __init__(self, robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
@@ -329,30 +331,6 @@ class ConfirmOrder(smach.State):
         self.robot.speech.speak("I understand you want an " +  self.breakfastFruit.resolve() + " and " + self.breakfastCereal.resolve() + " with " + self.breakfastMilk.resolve() + ". Is that correct?", block=True)
 
         return 'done'
-
-# ----------------------------------------------------------------------------------------------------
-
-class Counter(smach.State):
-    '''Smach state that counts the number of times it is executed. Returns 'counted' when it simply
-    counted another value. Returns limit_reached when the counter designator resolves to a number
-    that is greater than or equal to its set limit.'''
-    def __init__(self, counter, limit):
-        smach.State.__init__(self, outcomes=['counted', 'limit_reached'])
-        self.limit = limit
-
-        check_resolve_type(counter,int)
-        self.counter = counter
-
-    def execute(self, userdata):
-        count = self.counter.resolve()
-
-        if count >= self.limit:
-            self.counter.current = 0
-            return 'limit_reached'
-        else:
-            self.counter.current += 1
-            return 'counted'
-
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -451,7 +429,7 @@ class Evaluate(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-class addPositive(smach.State):
+class AddPositiveResult(smach.State):
     '''Smach state to add a positive result to the dictionary of results the results designator
     resolves to. Uses the string in item_designator as key to this dict. '''
     def __init__(self, results_designator, item_designator):

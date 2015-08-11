@@ -1094,7 +1094,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add("SUB_SM_LEAVE",
                                 sm_leave,
-                                transitions={'Done':'FINISH',                
+                                transitions={'Done':'RESET_ARMS_SPINDLE_HEAD_AFTER_FINISHED',                
                                              'Failed':'FAILED_TASK'})
 
         ######################################################
@@ -1113,7 +1113,7 @@ def setup_statemachine(robot):
         smach.StateMachine.add("FINISHED_TASK",
                                 Finished_goal(robot),
                                 transitions={'new_task':'RESET_REASONER',
-                                              'tasks_completed':'FINISH'})
+                                              'tasks_completed':'RESET_ARMS_SPINDLE_HEAD_AFTER_FINISHED'})
 
         smach.StateMachine.add("RESET_REASONER",
                                 states.ResetReasoner(robot),
@@ -1130,9 +1130,6 @@ def setup_statemachine(robot):
         ######################################################
         ###################### FINISHED ######################
         ######################################################
-
-        smach.StateMachine.add('FINISH', states.Finish(robot),
-                                        transitions={'stop':'RESET_ARMS_SPINDLE_HEAD_AFTER_FINISHED'})
 
         smach.StateMachine.add("RESET_ARMS_SPINDLE_HEAD_AFTER_FINISHED",
                                 states.ResetArmsSpindleHead(robot),

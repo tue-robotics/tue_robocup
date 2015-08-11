@@ -167,7 +167,7 @@ class ReceivePackage(smach.StateMachine):
                                                     'preempted':'failed'})
 
             smach.StateMachine.add( 'WAIT_FOR_DOORBELL_SOUND',
-                        states.Wait_time(robot, waittime=2),
+                        states.WaitTime(robot, waittime=2),
                                     transitions={   'waited':'SAY_SOMEONE_AT_THE_DOOR',
                                                     'preempted':'failed'})
 
@@ -207,7 +207,7 @@ class ReceivePackage(smach.StateMachine):
                                                     'failed':'WAIT_FOR_LOAD'})
 
             smach.StateMachine.add( 'WAIT_FOR_LOAD',
-                        states.Wait_time(robot, waittime=5),
+                        states.WaitTime(robot, waittime=5),
                                     transitions={   'waited':'SAY_PACKAGE_RECEIVED',
                                                     'preempted':'failed'})
 

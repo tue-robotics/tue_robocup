@@ -645,7 +645,7 @@ class HandleFall(smach.StateMachine):
                                     transitions={   'spoken'            :'WAIT_TIME_TO_UPDATE_MODEL'})
 
             smach.StateMachine.add( "WAIT_TIME_TO_UPDATE_MODEL",
-                                    states.Wait_time(robot, waittime=4),
+                                    states.WaitTime(robot, waittime=4),
                                     transitions={   'waited'    : 'STOP_LOOKING_COUCHTABLE',
                                                     'preempted' : 'STOP_LOOKING_COUCHTABLE'})
 

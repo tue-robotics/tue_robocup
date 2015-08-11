@@ -277,7 +277,7 @@ class SmallObjectHandling(smach.StateMachine):
             
             ''' Wait for the operator to put something on the table '''
             smach.StateMachine.add("WAIT",
-                                    states.Wait_time(robot, waittime=3.0),
+                                    states.WaitTime(robot, waittime=3.0),
                                     transitions={   'waited'                    :'SAY_MORE_TO_SEE',
                                                     'preempted'                 :'SAY_MORE_TO_SEE'})
                                                     

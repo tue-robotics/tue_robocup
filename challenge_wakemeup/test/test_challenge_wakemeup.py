@@ -19,23 +19,23 @@ class Person(object):
         self.position = 0
         self.x = self.positions[self.position][0]
         self.y = self.positions[self.position][1]
+        self.z = -3.0
         self.awake = False
-        self.height = -3.0
         self.delta = 0.05
 
-        self.operator = W.add_object("operator", "ddw.chair", self.x, self.y, self.height, 0.0, 0.0 )
+        self.operator = W.add_object("operator", "ddw.chair", self.x, self.y, self.z, 0.0, 0.0 )
 
     def updatePosition(self):
-        self.operator.set_position(self.x, self.y, self.height, 0.0, 0.0, 0.0 )
+        self.operator.set_position(self.x, self.y, self.z, 0.0, 0.0, 0.0 )
 
     def toggleAwake(self):
         if self.awake:
-            self.height = -3.0
+            self.z = -3.0
             self.awake = False
             self.updatePosition()
             print "Operator fell back asleep"
         else:
-            self.height = 0.0
+            self.z = 0.0
             self.awake = True
             self.updatePosition()
             print "Operator woke up"
@@ -52,23 +52,44 @@ class Person(object):
         print "Operator changed to position {}".format(self.position)
 
     def move(self, key):
-        if key == 8:
-            dx = 1
-            dy = 0
-        elif key == 2:
-            dx = -1
-            dy = 0
-        elif key == 4:
-            dx = 0
-            dy = -1
-        elif key == 6:
+        dx = 0
+        dy = 0
+        dz = 0
+
+        if key == '8':
             dx = 0
             dy = 1
+        elif key == '2':
+            dx = 0
+            dy = -1
+        elif key == '4':
+            dx = -1
+            dy = 0
+        elif key == '6':
+            dx = 1
+            dy = 0
+        elif key == '9':
+            dx = 1
+            dy = 1
+        elif key == '3':
+            dx = 1
+            dy = -1
+        elif key == '1':
+            dx = -1
+            dy = -1
+        elif key == '7':
+            dx = -1
+            dy = 1
+        elif key == '+':
+            dz = 1
+        elif key == '-':
+            dz = -1
         else:
-            print "This is not supposed to happen"
+            print "Don't do that"
 
         self.x = self.x + dx * self.delta
         self.y = self.y + dy * self.delta
+        self.z = self.z + dz * self.delta
         self.updatePosition()
 
 
@@ -109,7 +130,7 @@ if __name__ == "__main__":
 
     print "Dynamic wake me up simulator"
     print "Usage: press 5 to make the person in the bed wake up"
-    print "       press 0 to make the person move to another position (to test if it can see it anywhere on the bed)"
+    print "       use the numpad keys to move the thing around"
 
     while not rospy.is_shutdown():
 
@@ -118,13 +139,7 @@ if __name__ == "__main__":
             person.toggleAwake()
         elif key == '0':
             person.changePosition()
-        elif key == '8':
-            person.move(int(key))
-        elif key == '4':
-            person.move(int(key))
-        elif key == '6':
-            person.move(int(key))
-        elif key == '2':
-            person.move(int(key))
+        elif key in ['1','2','3','4','6','7','8','9','+','-']:
+            person.move(key)
         else:
             break
