@@ -130,6 +130,11 @@ class VariableWriter(object):
     def resolve(self, *args, **kwargs):
         return self.variable_designator.resolve(*args, **kwargs)
 
+    def _get_resolve_type(self):
+        return self.variable_designator.resolve_type
+
+    resolve_type = property(_get_resolve_type)
+
 
 writeable = VariableWriter
 
