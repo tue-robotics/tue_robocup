@@ -539,7 +539,7 @@ class AskPersonName(smach.State):
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        state = HearOptionsExtra(self.robot, spec, choices, writeable(answer))
         outcome = state.execute()
 
         if not outcome == "heard":
