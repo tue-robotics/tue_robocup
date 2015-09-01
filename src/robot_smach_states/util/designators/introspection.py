@@ -25,6 +25,8 @@ class DesignatorUsedInState(DesignatorUsage):
     def add_graphviz_edge(self, graph):
         desig_name = format_designator(self.designator)
 
+        graph.node(gv_safe(self.parent), shape="box", color="bisque", style="filled")
+
         graph.edge(gv_safe(desig_name), gv_safe(self.parent), label=gv_safe(self.role))
 
 class DesignatorWrittenInState(DesignatorUsage):
