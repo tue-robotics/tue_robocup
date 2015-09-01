@@ -111,8 +111,12 @@ class VariableWriter(object):
     'World'
     """
 
+    instances = []
+
     def __init__(self, variable_designator):
         self.variable_designator = variable_designator
+        self.name = "writeable({})".format(self.variable_designator.name)
+        VariableWriter.instances += [self]
 
     def write(self, value):
         if isinstance(value, self.variable_designator.resolve_type):

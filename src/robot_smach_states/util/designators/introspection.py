@@ -8,7 +8,7 @@ state_machines and designators.
 """
 
 import smach
-from robot_smach_states.util.designators.core import Designator
+from robot_smach_states.util.designators.core import Designator, VariableWriter
 
 
 __author__ = 'loy'
@@ -26,6 +26,12 @@ class DesignatorUsedInState(DesignatorUsage):
         desig_name = format_designator(self.designator)
 
         graph.edge(gv_safe(desig_name), gv_safe(self.parent), label=gv_safe(self.role))
+
+class DesignatorWrittenInState(DesignatorUsage):
+    def add_graphviz_edge(self, graph):
+        desig_name = format_designator(self.designator)
+
+        graph.edge(gv_safe(desig_name), gv_safe(self.parent), label=gv_safe(self.parent)+" writes "+gv_safe(self.role))
 
 
 class DesignatorUsedInDesignator(DesignatorUsage):
@@ -73,6 +79,7 @@ def flatten(tree, parentname=None, sep="."):
 
 def analyse_designators(statemachine=None, statemachine_name=""):
     designators = Designator.instances
+    writers = VariableWriter.instances
 
     if not statemachine:
         statemachine = smach.StateMachine._currently_opened_container()
@@ -89,6 +96,10 @@ def analyse_designators(statemachine=None, statemachine_name=""):
             # If the member is also a designator, then process it.
             if designator in designators:
                 usages += [DesignatorUsedInState(state_label, designator, designator_role)]
+
+            if designator in writers:
+                usages += [DesignatorWrittenInState(state_label, designator, designator_role)]
+
 
     for parent_designator in designators:
         # Iterate the self.xxx members of each designator
