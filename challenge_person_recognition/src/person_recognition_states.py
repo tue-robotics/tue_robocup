@@ -338,12 +338,15 @@ class FindCrowd(smach.State):
             for humanEntity in faces_locations:
                 faceList = []
                 try:
-                    # import ipdb; ipdb.set_trace()
                     # faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
                 except KeyError, ke:
                     printError("Could not resolve humanEntity.data[...]:" + str(ke))
+                    pass
+                except TypeError, te:
+                    printError("Could not resolve humanEntity.data[...]:" + str(te))
+                    # import ipdb; ipdb.set_trace()
                     pass
 
                 ''' iterate through all the faces in this entity '''
