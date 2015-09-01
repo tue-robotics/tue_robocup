@@ -15,7 +15,7 @@ from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators, writeable
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -41,15 +41,13 @@ class ChallengePersonRecognition(smach.StateMachine):
         operatorNameDes = VariableDesignator("")
 
         #REVIEW: A designator resolving to a designator is weird. Can't you use a VariableDesignator directly?
-        nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) 
-        nextLocationDes.current = PersonRecStates.PointDesignator()
+        nextLocationDes = VariableDesignator(PersonRecStates.PointDesignator())
 
         locationsToVisitDes = VariableDesignator([])
 
         facesAnalyzedDes = VariableDesignator([])
 
-        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
-        operatorLocationDes.current = PersonRecStates.PointDesignator()
+        operatorLocationDes = VariableDesignator(PersonRecStates.PointDesignator()) #REVIEW: a designator that resolves to another designator is a bit weird
 
         # ------------------ SIMULATION ------------------------------------
 
@@ -194,7 +192,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                         learnNameContainer.userdata.personName_userData = ""
 
                         smach.StateMachine.add( 'ASK_PERSON_NAME',
-                                                PersonRecStates.AskPersonName(robot, operatorNameDes),
+                                                PersonRecStates.AskPersonName(robot, writeable(operatorNameDes)),
                                                 remapping={     'personName_out':'personName_userData'},
                                                 transitions={   'succeded':'SAY_IS_YOUR_NAME',
                                                                 'failed':'SAY_HEAR_FAILED'})
@@ -407,12 +405,12 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'GET_NEXT_LOCATION'})
                 
                 smach.StateMachine.add( 'GET_NEXT_LOCATION',
-                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, nextLocationDes),
+                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, writeable(nextLocationDes)),
                                         transitions={   'done':'GOTO_LOCATION',
                                                         'visited_all':'container_success'})
 
                 smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.8),
+                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.8), #REVIEW: Using .current in the constructor of your challenge is not correct.
                                         transitions={   'arrived'           :   'REMOVE_LOCATION',
                                                         'unreachable'       :   'SAY_FAILED_GOTO',
                                                         'goal_not_defined'  :   'SAY_FAILED_GOTO'})
