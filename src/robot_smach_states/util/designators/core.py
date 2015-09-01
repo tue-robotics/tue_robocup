@@ -127,6 +127,11 @@ class VariableWriter(object):
 
     current = property(Designator._get_current, _set_current)
 
+    def _get_resolve_type(self):
+        return self.variable_designator.resolve_type
+
+    resolve_type = property(_get_resolve_type)
+
     def resolve(self, *args, **kwargs):
         return self.variable_designator.resolve(*args, **kwargs)
 
