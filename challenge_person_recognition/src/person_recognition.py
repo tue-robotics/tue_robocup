@@ -15,7 +15,8 @@ from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators, writeable
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, \
+    analyse_designators, writeable
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -47,7 +48,8 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         facesAnalyzedDes = VariableDesignator([])
 
-        operatorLocationDes = VariableDesignator(PersonRecStates.PointDesignator()) #REVIEW: a designator that resolves to another designator is a bit weird
+        operatorLocationDes = VariableDesignator(PersonRecStates.PointDesignator()) #REVIEW: a designator that
+        # resolves to another designator is a bit weird
 
         # ------------------ SIMULATION ------------------------------------
 
@@ -405,12 +407,12 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'spoken':'GET_NEXT_LOCATION'})
                 
                 smach.StateMachine.add( 'GET_NEXT_LOCATION',
-                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, writeable(nextLocationDes)),
+                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, nextLocationDes),
                                         transitions={   'done':'GOTO_LOCATION',
                                                         'visited_all':'container_success'})
 
                 smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.8), #REVIEW: Using .current in the constructor of your challenge is not correct.
+                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.8),
                                         transitions={   'arrived'           :   'REMOVE_LOCATION',
                                                         'unreachable'       :   'SAY_FAILED_GOTO',
                                                         'goal_not_defined'  :   'SAY_FAILED_GOTO'})
@@ -553,7 +555,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     'container_failed':'RESET_SEARCH'})
 
             smach.StateMachine.add( 'RESET_SEARCH',
-                                    PersonRecStates.ResetSearch(robot, writeable(locationsToVisitDes)),
+                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes),
                                     transitions={   'done':'SAY_FIND_CROWD_AGAIN'})
 
             smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',
@@ -568,7 +570,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                    states.Say(robot,"My work here is done, goodbye!"),
                                    transitions={'spoken':'Done'})
 
-            analyse_designators()
+            analyse_designators(self, "person_recognition")
 
 # ----------------------------------------------------------------------------------------------------
 
