@@ -21,11 +21,13 @@ install:
   - source ~/.tue/setup.bash # source all target setup files
 
 before_script:
-  - cd ${TUE_SYSTEM_DIR}/src
-
   # Link the repo we are testing to the new workspace
-  - rm -rf $REPOSITORY_NAME
-  - ln -s $CI_SOURCE_PATH .
+  - cd $TUE_ENV_DIR/repos/https:/github.com/tue-robotics/
+  - rm -rf "${REPOSITORY_NAME}.git"
+  - ln -s $CI_SOURCE_PATH "${REPOSITORY_NAME}.git"
+  - ls -l
+
+  - cd ${TUE_SYSTEM_DIR}/src
   - ls -l
   - cd .. # go to the catkin workspace
   - rospack list
