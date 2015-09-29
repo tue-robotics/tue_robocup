@@ -540,38 +540,39 @@ class FindObjectInRoom(smach.StateMachine):
                                     transitions={'area_exists':'NAV_TO_LOC',
                                                  'no_such_area':'CHECK_FOR_AREA_LOC_POS2'})
 
+            room_loc_a = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"), name="room_loc_a")
             smach.StateMachine.add('NAV_TO_LOC',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                        {room_loc_a : "in_front_of" }, 
+                                        room_loc_a),
                                     transitions={   'arrived'           :   'LOOKAT_LOC',
                                                     'unreachable'       :   'NAV_TO_LOC_RETRY',
                                                     'goal_not_defined'  :   'NAV_TO_LOC_RETRY'})
 
             smach.StateMachine.add('NAV_TO_LOC_RETRY',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "near" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                        {room_loc_a : "near" }, 
+                                        room_loc_a),
                                     transitions={   'arrived'           :   'NAV_TO_LOC_2',
                                                     'unreachable'       :   'NAV_TO_LOC_RETRY_RADIUS',
                                                     'goal_not_defined'  :   'NAV_TO_LOC_RETRY_RADIUS'})
 
             smach.StateMachine.add('NAV_TO_LOC_RETRY_RADIUS',
-                                        states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), radius=0.5),
+                                        states.NavigateToObserve(robot, room_loc_a, radius=0.5),
                                         transitions={   'arrived':'NAV_TO_LOC_2',
                                                         'unreachable':'NAV_TO_LOC_2',
                                                         'goal_not_defined':'NAV_TO_LOC_2'})
 
             smach.StateMachine.add('NAV_TO_LOC_2',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                        {room_loc_a : "in_front_of" }, 
+                                        room_loc_a),
                                     transitions={   'arrived'           :   'LOOKAT_LOC',
                                                     'unreachable'       :   'LOOKAT_LOC',
                                                     'goal_not_defined'  :   'LOOKAT_LOC'})
             
             smach.StateMachine.add( "LOOKAT_LOC",
-                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
+                                         states.LookOnTopOfEntity(robot, room_loc_a, waittime=5.0),
                                          transitions={  'succeeded'         :'CHECK_FOR_OBJECT',
                                                         'failed'            :'CHECK_FOR_OBJECT'})
 
@@ -703,30 +704,30 @@ class FindObjectInRoom(smach.StateMachine):
 
             smach.StateMachine.add('NAV_TO_LOC_POS2',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_pos2" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                        {room_loc_a : "in_front_of_pos2" }, 
+                                        room_loc_a),
                                     transitions={   'arrived'           :   'LOOKAT_LOC_POS2',
                                                     'unreachable'       :   'NAV_TO_LOC_POS2_RETRY',
                                                     'goal_not_defined'  :   'NAV_TO_LOC_POS2_RETRY'})
 
             smach.StateMachine.add('NAV_TO_LOC_POS2_RETRY',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "near" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                        {room_loc_a : "near" }, 
+                                        room_loc_a),
                                     transitions={   'arrived'           :   'NAV_TO_LOC_POS2_2',
                                                     'unreachable'       :   'NAV_TO_LOC_POS2_2',
                                                     'goal_not_defined'  :   'NAV_TO_LOC_POS2_2'})
 
             smach.StateMachine.add('NAV_TO_LOC_POS2_2',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")) : "in_front_of_pos2" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"))),
+                                        {room_loc_a : "in_front_of_pos2" }, 
+                                        room_loc_a),
                                     transitions={   'arrived'           :   'LOOKAT_LOC_POS2',
                                                     'unreachable'       :   'LOOKAT_LOC_POS2',
                                                     'goal_not_defined'  :   'LOOKAT_LOC_POS2'})
 
             smach.StateMachine.add( "LOOKAT_LOC_POS2",
-                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)")), waittime=5.0),
+                                         states.LookOnTopOfEntity(robot, room_loc_a, waittime=5.0),
                                          transitions={  'succeeded'         :'CHECK_FOR_OBJECT_POS2',
                                                         'failed'            :'CHECK_FOR_OBJECT_POS2'})
 
@@ -794,19 +795,20 @@ class FindAndGoToPerson(smach.StateMachine):
                                transitions={'found':'GO_TO_PERSON',
                                             'not_found':'DRIVE_TO_CENTER_ROOM'})
 
+            possible_human_flags_des = PossibleHumanFlagsDesignator(robot,room)
             smach.StateMachine.add('GO_TO_PERSON',
-                                    states.NavigateToObserve(robot, PossibleHumanFlagsDesignator(robot,room), radius=0.7),
+                                    states.NavigateToObserve(robot, possible_human_flags_des, radius=0.7),
                                     transitions={   'arrived':'LOOK_AT_PERSON_FOUND',
                                                     'unreachable':'LOOK_AT_PERSON_NOT_FOUND',
                                                     'goal_not_defined':'LOOK_AT_PERSON_NOT_FOUND'})
 
             smach.StateMachine.add('LOOK_AT_PERSON_FOUND',
-                                    states.LookAtEntity(robot, PossibleHumanFlagsDesignator(robot,room), waittime=1.0),
+                                    states.LookAtEntity(robot, possible_human_flags_des, waittime=1.0),
                                     transitions={   'succeeded':'SAY_HELLO',
                                                     'failed':'SAY_HELLO'})
 
             smach.StateMachine.add('LOOK_AT_PERSON_NOT_FOUND',
-                                    states.LookAtEntity(robot, PossibleHumanFlagsDesignator(robot,room), waittime=1.0),
+                                    states.LookAtEntity(robot, possible_human_flags_des, waittime=1.0),
                                     transitions={   'succeeded':'SAY_SORRY',
                                                     'failed':'SAY_SORRY'})
             smach.StateMachine.add("SAY_HELLO",
@@ -818,14 +820,15 @@ class FindAndGoToPerson(smach.StateMachine):
                                transitions={'spoken':'Failed'})
 
 
+            room_des = EdEntityDesignator(robot, id_designator=room)
             smach.StateMachine.add('DRIVE_TO_CENTER_ROOM',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=room), radius=0.2),
+                                    states.NavigateToWaypoint(robot, room_des, radius=0.2),
                                     transitions={   'arrived':'CHECK_FOR_PERSON_1',
                                                     'unreachable':'DRIVE_TO_CENTER_ROOM_BACKUP',
                                                     'goal_not_defined':'DRIVE_TO_CENTER_ROOM_BACKUP'})
 
             smach.StateMachine.add('DRIVE_TO_CENTER_ROOM_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=room), radius=0.4),
+                                    states.NavigateToWaypoint(robot, room_des, radius=0.4),
                                     transitions={   'arrived':'CHECK_FOR_PERSON_1',
                                                     'unreachable':'CHECK_FOR_PERSON_1',
                                                     'goal_not_defined':'CHECK_FOR_PERSON_1'})
@@ -1175,16 +1178,17 @@ class GrabFromShelves(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Success", "Failed"])
         with self:
 
+            in_front_of_loc_des = EdEntityDesignator(robot, id=location, name="in_front_of_loc_des")
             smach.StateMachine.add('NAVIGATE_TO_LOCATION_IN_FRONT_OF',
                                         states.NavigateToSymbolic(robot, 
-                                            {EdEntityDesignator(robot, id=location) : "in_front_of" }, 
-                                            EdEntityDesignator(robot, id=location)),
+                                            {in_front_of_loc_des : "in_front_of" }, 
+                                            in_front_of_loc_des),
                                         transitions={   'arrived'           :   'LOOKAT_LOCATION',
                                                         'unreachable'       :   'Failed',
                                                         'goal_not_defined'  :   'Failed'})
 
             smach.StateMachine.add( "LOOKAT_LOCATION",
-                                             states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id=location), waittime=5.0),
+                                             states.LookOnTopOfEntity(robot, in_front_of_loc_des, waittime=5.0),
                                          transitions={  'succeeded'         :'INSPECT_AND_GRAB_LOCATION_FOR_ITEM',
                                                         'failed'            :'INSPECT_AND_GRAB_LOCATION_FOR_ITEM'})
 
@@ -1216,6 +1220,8 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
+        meeting_point_des = EdEntityDesignator(robot, id=data.meeting_point, name="meeting_point")
+
         smach.StateMachine.add("INIT_WM",
                                InitializeWorldModel(robot), 
                                transitions={'done'                      :'START_CHALLENGE_ROBUST'})
@@ -1229,13 +1235,13 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('GO_TO_MEETING_WAYPOINT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    states.NavigateToWaypoint(robot, meeting_point_des, radius=0.2),
                                     transitions={   'arrived':'INTRODUCE_SHORT',
                                                     'unreachable':'GO_TO_MEETING_WAYPOINT_BACKUP',
                                                     'goal_not_defined':'GO_TO_MEETING_WAYPOINT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_MEETING_WAYPOINT_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    states.NavigateToWaypoint(robot, meeting_point_des, radius=0.6),
                                     transitions={   'arrived':'INTRODUCE_SHORT',
                                                     'unreachable':'INTRODUCE_SHORT_FAILED',
                                                     'goal_not_defined':'INTRODUCE_SHORT_FAILED'})
@@ -1280,68 +1286,68 @@ def setup_statemachine(robot):
         #################################
 
         ## Navigate to specific location
-
+        location_1_des = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"), name="location_1_des")
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+                                        {location_1_des : "in_front_of" }, 
+                                        location_1_des),
                                     transitions={   'arrived'           :   '1_LOOKAT_LOCATION',
                                                     'unreachable'       :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
                                                     'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY'})
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "near" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+                                        {location_1_des : "near" }, 
+                                        location_1_des),
                                     transitions={   'arrived'           :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF',
                                                     'unreachable'       :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF',
                                                     'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF'})
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_RETRY_IN_FRONT_OF',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+                                        {location_1_des : "in_front_of" }, 
+                                        location_1_des),
                                     transitions={   'arrived'           :   '1_LOOKAT_LOCATION',
                                                     'unreachable'       :   'SAY_NOT_ARRIVED',
                                                     'goal_not_defined'  :   'SAY_NOT_ARRIVED'})
 
 
         # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
-        #                             states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.5),
+        #                             states.NavigateToObserve(robot, location_1_des, radius=0.5),
         #                             transitions={   'arrived':'1_LOOKAT_LOCATION',
         #                                             'unreachable':'1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
         #                                             'goal_not_defined':'1_ACTION_NAVIGATE_TO_LOCATION_RETRY'})
 
         # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_RETRY',
-        #                             states.NavigateToObserve(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.8),
+        #                             states.NavigateToObserve(robot, location_1_des, radius=0.8),
         #                             transitions={   'arrived':'1_LOOKAT_LOCATION',
         #                                             'unreachable':'SAY_NOT_ARRIVED',
         #                                             'goal_not_defined':'SAY_NOT_ARRIVED'})
         
         # smach.StateMachine.add( "1_LOOKAT_LOCATION",
-        #                              states.LookAtEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), waittime=5.0),
+        #                              states.LookAtEntity(robot, location_1_des, waittime=5.0),
         #                              transitions={  'succeeded'         :'FINISHED_TASK',
         #                                             'failed'            :'FINISHED_TASK'})
 
         smach.StateMachine.add( "1_LOOKAT_LOCATION",
-                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), waittime=5.0),
+                                         states.LookOnTopOfEntity(robot, location_1_des, waittime=5.0),
                                      transitions={  'succeeded'         :'FINISHED_TASK',
                                                     'failed'            :'FINISHED_TASK'})
 
         ## Navigate to a room
-
+        locations_rooms_des = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
+                                    {locations_rooms_des : "in" }, 
+                                    locations_rooms_des),
                                 transitions={   'arrived'           :   'FINISHED_TASK',
                                                 'unreachable'       :   '1_ACTION_NAVIGATE_TO_ROOM_RETRY',
                                                 'goal_not_defined'  :   '1_ACTION_NAVIGATE_TO_ROOM_RETRY'})
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM_RETRY',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
+                                    {locations_rooms_des : "in" }, 
+                                    locations_rooms_des),
                                 transitions={   'arrived'           :   'FINISHED_TASK',
                                                 'unreachable'       :   'SAY_NOT_ARRIVED',
                                                 'goal_not_defined'  :   'SAY_NOT_ARRIVED'})  
@@ -1428,14 +1434,14 @@ def setup_statemachine(robot):
         
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION_IN_FRONT_OF_POS2',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")) : "in_front_of_pos2" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"))),
+                                        {location_1_des : "in_front_of_pos2" }, 
+                                        location_1_des),
                                     transitions={   'arrived'           :   '1_LOOKAT_LOCATION_POS2',
                                                     'unreachable'       :   '1_LOOKAT_LOCATION_POS2',
                                                     'goal_not_defined'  :   '2_SAY_NOT_GRABBED'})
 
         smach.StateMachine.add( "1_LOOKAT_LOCATION_POS2",
-                                         states.LookOnTopOfEntity(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), waittime=5.0),
+                                         states.LookOnTopOfEntity(robot, location_1_des, waittime=5.0),
                                      transitions={  'succeeded'         :'2_INSPECT_AND_GRAB_WRONG_ITEM_TRUE',
                                                     'failed'            :'2_INSPECT_AND_GRAB_WRONG_ITEM_TRUE'})
 
@@ -1502,13 +1508,13 @@ def setup_statemachine(robot):
         ###### ACTION HANDOVER OBJECT TO OPERATOR ######
 
         smach.StateMachine.add('3_NAVIGATE_TO_OPERATOR',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    states.NavigateToWaypoint(robot, meeting_point_des, radius=0.2),
                                     transitions={   'arrived':'3_SAY_HANDOVER',
                                                     'unreachable':'3_NAVIGATE_TO_OPERATOR_RETRY',
                                                     'goal_not_defined':'3_NAVIGATE_TO_OPERATOR_RETRY'})
 
         smach.StateMachine.add('3_NAVIGATE_TO_OPERATOR_RETRY',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    states.NavigateToWaypoint(robot, meeting_point_des, radius=0.6),
                                     transitions={   'arrived':'3_SAY_HANDOVER',
                                                     'unreachable':'3_SAY_NOT_ARRIVED',
                                                     'goal_not_defined':'3_SAY_NOT_ARRIVED'})
@@ -1535,10 +1541,11 @@ def setup_statemachine(robot):
         ###### ACTION PLACE OBJECT ON LOCATION ######
 
 
+        place_3_location = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"), name="place_3_location")
         smach.StateMachine.add('3_NAV_TO_LOC_PLACE',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"))),
+                                        {place_3_location : "in_front_of" }, 
+                                        place_3_location),
                                     transitions={   'arrived'           :   '3_PLACE_ITEM', #3_PLACE_ITEM
                                                     'unreachable'       :   '3_PLACE_ITEM',
                                                     'goal_not_defined'  :   '3_PLACE_ITEM'})
@@ -1561,10 +1568,11 @@ def setup_statemachine(robot):
 
         ###### ACTION HANDOVER OBJECT TO PERSON IN ROOM ######
 
+        room_3 = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)"))
         smach.StateMachine.add('3_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)")) : "in" }, 
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)"))),
+                                    {room_3 : "in" }, 
+                                    room_3),
                                 transitions={   'arrived'           :   '3_FIND_PERSON',
                                                 'unreachable'       :   '3_FIND_PERSON',
                                                 'goal_not_defined'  :   '3_FIND_PERSON'})
@@ -1581,13 +1589,13 @@ def setup_statemachine(robot):
         ###############################
 
         smach.StateMachine.add('GO_TO_INITIAL_POINT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    states.NavigateToWaypoint(robot, meeting_point_des, radius=0.2),
                                     transitions={   'arrived':'FINISHED_TASK',
                                                     'unreachable':'GO_TO_INITIAL_POINT_BACKUP',
                                                     'goal_not_defined':'GO_TO_INITIAL_POINT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_INITIAL_POINT_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    states.NavigateToWaypoint(robot, meeting_point_des, radius=0.6),
                                     transitions={   'arrived':'FINISHED_TASK',
                                                     'unreachable':'FINISHED_TASK',
                                                     'goal_not_defined':'FINISHED_TASK'})
@@ -1610,7 +1618,7 @@ def setup_statemachine(robot):
                                 transitions={'spoken':'GO_TO_EXIT'})
 
         smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.gpsr_exit), radius = 0.4),
+                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.gpsr_exit, name="gpsr_exit"), radius = 0.4),
                                     transitions={   'arrived':'SAY_GOODBYE',
                                                     'unreachable':'SAY_GOODBYE',
                                                     'goal_not_defined':'SAY_GOODBYE'})
@@ -1619,7 +1627,7 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Goodbye"], block=True),
                                 transitions={'spoken':'Done'})
 
-        analyse_designators()
+        analyse_designators(sm, "gpsr")
 
     return sm
 

@@ -16,9 +16,7 @@ from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, \
-    analyse_designators, writeable
-
-# ----------------------------------------------------------------------------------------------------
+    analyse_designators
 
 challenge_knowledge = load_knowledge("challenge_person_recognition")
 
@@ -194,7 +192,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                         learnNameContainer.userdata.personName_userData = ""
 
                         smach.StateMachine.add( 'ASK_PERSON_NAME',
-                                                PersonRecStates.AskPersonName(robot, writeable(operatorNameDes)),
+                                                PersonRecStates.AskPersonName(robot, operatorNameDes.writeable),
                                                 remapping={     'personName_out':'personName_userData'},
                                                 transitions={   'succeded':'SAY_IS_YOUR_NAME',
                                                                 'failed':'SAY_HEAR_FAILED'})
