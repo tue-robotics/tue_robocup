@@ -78,3 +78,30 @@ object_categories = list(set([ o["category"] for o in objects ]))
 object_groups = list(set([ o["group"] for o in objects ]))
 object_placements = list(set([ o["placement"] for o in objects ]))
 object_known_objects = list(set([ o["name"] for o in objects ]))
+
+
+''' colors from printing on screen '''
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+''' define general function for printing shortcuts '''
+def make_prints(name):
+    prefix = bcolors.HEADER + name + bcolors.ENDC
+    def printOk(sentence):
+        print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
+
+    def printError(sentence):
+        print prefix + bcolors.FAIL + sentence + bcolors.ENDC
+
+    def printWarning(sentence):
+        print prefix + bcolors.WARNING + sentence + bcolors.ENDC
+
+    return printOk, printError, printWarning
