@@ -70,12 +70,12 @@ def format_designator(desig):
 def flatten(tree, parentname=None, sep="."):
     flat = []
     for branch_name, branch in tree.get_children().iteritems():
+        this_name = parentname + sep + branch_name if parentname else branch_name
         if isinstance(branch, smach.StateMachine) or isinstance(branch, smach.Iterator):
-            flat.extend(flatten(branch, parentname=branch_name, sep=sep))
+            flat += [(this_name, branch)]
+            flat.extend(flatten(branch, parentname=this_name, sep=sep))
         else:
-            name = parentname + sep + branch_name if parentname else branch_name
-            flat += [(name, branch)]
-    # print flat
+            flat += [(this_name, branch)]
     return flat
 
 
