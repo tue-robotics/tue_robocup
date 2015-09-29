@@ -2,7 +2,8 @@
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 from ed.srv import GetGUICommand, GetGUICommandResponse
-from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
+# from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
+import ed_sensor_integration.srv
 from ed_perception.srv import Classify
 from ed_gui_server.srv import *
 from ed_navigation.srv import GetGoalConstraint
@@ -44,9 +45,11 @@ class ED:
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
         self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
         self._ed_update_srv = rospy.ServiceProxy('/%s/ed/update'%robot_name, UpdateSrv)
-        self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
-        self._ed_mesh_entity_in_view_srv = rospy.ServiceProxy('/%s/ed/kinect/mesh_entity_in_view'%robot_name, MeshEntityInView)
-        self._ed_segment_srv = rospy.ServiceProxy('/%s/ed/kinect/segment'%robot_name, Segment)
+        # self._ed_lock_entities_srv = rospy.ServiceProxy('/%s/ed/kinect/lock_entities'%robot_name, LockEntities)
+        # self._ed_mesh_entity_in_view_srv = rospy.ServiceProxy('/%s/ed/kinect/mesh_entity_in_view'%robot_name, MeshEntityInView)
+        # self._ed_segment_srv = rospy.ServiceProxy('/%s/ed/kinect/segment'%robot_name, Segment)
+        self._ed_kinect_update_srv = rospy.ServiceProxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update)
+
         self._ed_classify_srv = rospy.ServiceProxy('/%s/ed/classify'%robot_name, Classify)
         self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
@@ -218,9 +221,12 @@ class ED:
         res = self._ed_segment_srv(enable_continuous_mode = (continuous == True), disable_continuous_mode = (continuous == False), max_sensor_range = max_sensor_range)
         return res.entity_ids
 
-    def segment_kinect(self, max_sensor_range=0):
-        res = self._ed_segment_srv(enable_continuous_mode = False, disable_continuous_mode = False, max_sensor_range = max_sensor_range)
-        return res.entity_ids
+    def update_kinect(self, area_description):
+        res = self._ed_kinect_update_srv(update_space_description = area_description)
+        if res.error_msg:
+            print res.error_msg
+
+        return res
 
     def configure_perception(self, continuous):
         self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))

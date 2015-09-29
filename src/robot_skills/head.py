@@ -8,16 +8,12 @@ from geometry_msgs.msg import Point, PointStamped
 import robot_skills.util.msg_constructors as msgs
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
 
-from ed_sensor_integration.srv import MakeSnapshot
-
 class Head():
     def __init__(self, robot_name):
         self._robot_name = robot_name
         self._ac_head_ref_action = actionlib.SimpleActionClient("/"+robot_name+"/head_ref/action_server",  HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
-
-        self.snapshot_srv = rospy.ServiceProxy('/%s/ed/make_snapshot'%robot_name, MakeSnapshot) 
 
     def close(self):
         self._ac_head_ref_action.cancel_all_goals()
@@ -139,15 +135,15 @@ class Head():
 
 
 #######################################
-    # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
-    def take_snapshot(self, distance=10, timeout = 1.0):
+    # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
+    # def take_snapshot(self, distance=10, timeout = 1.0):
            
-        self.look_at_ground_in_front_of_robot(distance)
-        rospy.sleep(timeout)
-        rospy.loginfo("Taking snapshot")
-        res = self.snapshot_srv()
+    #     self.look_at_ground_in_front_of_robot(distance)
+    #     rospy.sleep(timeout)
+    #     rospy.loginfo("Taking snapshot")
+    #     res = self.snapshot_srv()
 
-        return res
+    #     return res
 
 #######################################
 
