@@ -31,18 +31,8 @@ from robocup_knowledge import load_knowledge
 common_knowledge = load_knowledge("common")
 # challenge_knowledge = load_knowledge("challenge_test")
 
-''' printing shortcuts '''
-prefix = common_knowledge.bcolors.HEADER + "[Challenge Test] " + common_knowledge.bcolors.ENDC
-
-def printOk(sentence):
-    print prefix + common_knowledge.bcolors.OKBLUE + sentence + common_knowledge.bcolors.ENDC
-
-def printError(sentence):
-    print prefix + common_knowledge.bcolors.FAIL + sentence + common_knowledge.bcolors.ENDC
-
-def printWarning(sentence):
-    print prefix + common_knowledge.bcolors.WARNING + sentence + common_knowledge.bcolors.ENDC
-
+# define print shortcuts from common knowledge
+printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Test] ")
 
 
 ############################## MAIN STATE MACHINE ##############################
