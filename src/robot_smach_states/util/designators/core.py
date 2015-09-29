@@ -69,6 +69,7 @@ class VariableDesignator(Designator):
             if resolve_type == type(None): #If the initial value is None, then the resolve_type cannot be interred and thus we raise an exception
                 raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
         super(VariableDesignator, self).__init__(initial_value, resolve_type, name=name)
+        self.writeable = VariableWriter(self)
 
     def _set_current_protected(self, value):
         resolve_type = self.resolve_type
