@@ -4,12 +4,33 @@ import sys
 
 import rospy
 import importlib
+import threading
 
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint
 from robot_smach_states.manipulation import Grab, Place
 from robot_smach_states.util.designators import Designator, UnoccupiedArmDesignator, EdEntityDesignator, ArmHoldingEntityDesignator
 
 ROBOTS = {}
+ACTION = None
+
+# ----------------------------------------------------------------------------------------------------
+
+class SmachAction:
+
+    def __init__(self, machine):
+        self.machine = machine
+        self.thread = None
+
+    def start(self):
+        self.thread = threading.Thread(target=self.machine.execute)
+        self.thread.start()
+
+    def cancel(self):
+        if self.machine.is_running:
+            self.machine.request_preempt()
+
+        # Wait until canceled
+        self.thread.join()
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -17,6 +38,16 @@ def say(msg):
     print ""
     print "    ROBOT: %s" % msg
     print ""
+
+# ----------------------------------------------------------------------------------------------------
+
+def stop():
+    global ACTION
+    if not ACTION:
+        return
+
+    ACTION.cancel()
+    ACTION = None
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -45,7 +76,7 @@ def parse_object(p, robot):
             color = p.last_read[0]
         elif p.read("small", "big", "medium"):
             size = p.last_read[0]
-        elif p.read("nearest"):
+        elif p.read("nearest", "closest"):
             pass # simply skip: we will by default take the nearest object that fulfills the description
         else:
             break
@@ -106,7 +137,9 @@ def grab(p, robot):
     arm = robot.leftArm
     machine = Grab(robot, arm=UnoccupiedArmDesignator(robot.arms, arm), item=EdEntityDesignator(robot, id=entities[0].id))
 
-    machine.execute()
+    stop()
+    ACTION = SmachAction(machine)
+    ACTION.start()
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -120,7 +153,9 @@ def move(p, robot):
 
     machine = NavigateToObserve(robot, entity_designator=EdEntityDesignator(robot, id=entities[0].id), radius=.5)
 
-    machine.execute()
+    stop()
+    ACTION = SmachAction(machine)
+    ACTION.start()
 
 # ----------------------------------------------------------------------------------------------------  
 
@@ -186,7 +221,7 @@ def help():
 
 def main():
 
-    rospy.init_node("robot_console", anonymous=True)
+    rospy.init_node("robot_console", anonymous=True, log_level=rospy.ERROR, disable_signals=True)
 
     robot = None
 
@@ -197,7 +232,9 @@ def main():
             print ""
             command = "exit"
 
-        if command in ["help"]:
+        if not command:
+            continue
+        elif command in ["help"]:
             help()
         elif command in ["quit", "exit"]:
             break
@@ -210,6 +247,7 @@ def main():
                 robot = get_robot(p.last_read[0])
                 if not robot:
                     print "\n    Could not connect to robot\n"
+                    continue
 
             if not robot:
                 print  "\n    Please select a robot. For example: \"amigo go to the table\"\n"
@@ -221,6 +259,8 @@ def main():
                 move(p, robot)
             elif p.read("look at", "lookat"):
                 lookat(p, robot)
+            elif p.read("stop"):
+                stop()
             else:
                 say("I don't understand")
 
