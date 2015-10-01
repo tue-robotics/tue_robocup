@@ -29,46 +29,51 @@ def parse_object(p, robot):
     id = None
     type = None
     size = None
-    color = None    
+    color = None
 
+    entities = robot.ed.get_entities(parse=False)
+    ids = [e.id for e in entities]
+    types = [e.type for e in entities]
+
+    # Simply skip articles if they are there
     if p.read("a", "an", "the"):
+        pass       
 
-        if p.read("nearest object", "nearest entity"):
-            say("Looking for the nearest object.")
+    # Check adjectives
+    while True:
+        if p.read("red", "green", "blue", "black", "white" "pink", "purple", "orange", "brown", "grey", "yellow"):    
+            color = p.last_read[0]
+        elif p.read("small", "big", "medium"):
+            size = p.last_read[0]
+        elif p.read("nearest"):
+            pass # simply skip: we will by default take the nearest object that fulfills the description
+        else:
+            break
 
-        # Check adjectives
-        while True:
-            if p.read("red", "green", "blue", "black", "white" "pink", "purple", "orange", "brown", "grey", "yellow"):    
-                color = p.last_read[0]
-            elif p.read("small", "big", "medium"):
-                size = p.last_read[0]
-            elif p.read("nearest"):
-                pass # simply skip: we will by default take the nearest object that fulfills the description
-            else:
-                break
+    w_next_l = p.read_var(1)
+    if w_next_l:
+        w_next = w_next_l[0]
 
-        type_l = p.read_var(1)
-        if type_l and not (type_l[0] in ["object", "entity", "thing"]):
-            type = type_l[0]
+        if w_next in ids:
+            id = w_next
+        elif w_next in types:
+            type = w_next
+        elif not w_next in ["object", "entity", "thing"]:
+            say("What is a '%s'?" % w_next)
+            return
 
-        if p.read("on the", "from the"):
-            loc_l = p.read_var(1)
-            if loc_l:
-                loc = loc[0]
-
-    elif p.read("object", "obj", "entity"):
-        id_l = p.read_var(1)
-        if id_l:
-            id = id[0]
-    else:
-        return None
+    if p.read("on the", "from the"):
+        loc_l = p.read_var(1)
+        if loc_l:
+            loc = loc[0]
 
     if id:
         e = robot.ed.get_entity(id=id, parse=False)
         if e:
-            return id
+            return [e]
         else:
             say("There is no entity with id '%s'" % id)
+            return []
     elif type:
         entities = robot.ed.get_entities(type=type, parse=False)
     else:
@@ -87,11 +92,15 @@ def grab(p, robot):
 
     entities = parse_object(p, robot)
 
+    if not entities:
+        say("No such entities!")
+        return
+
     # Only filter to entities that do not have a shape but do have a convex hull
     entities = [ e for e in entities if not e.has_shape and len(e.convex_hull) > 0]
 
     if not entities:
-        say("No such entities!")
+        say("I am sorry, but I cannot grab that object")
         return
 
     arm = robot.leftArm
@@ -105,13 +114,19 @@ def move(p, robot):
 
     entities = parse_object(p, robot)
 
-    print [e.id for e in entities]
+    if not entities:
+        say("No such entities!")
+        return
+
+    machine = NavigateToObserve(robot, entity_designator=EdEntityDesignator(robot, id=entities[0].id), radius=.5)
+
+    machine.execute()
+
+# ----------------------------------------------------------------------------------------------------  
 
 def lookat(p, robot):
 
-    entities = parse_object(p, robot)
-
-    print [e.id for e in entities]
+    move(p, robot)
 
 # ----------------------------------------------------------------------------------------------------
 
