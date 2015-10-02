@@ -2,6 +2,7 @@
 
 import sys
 
+import cmd
 import rospy
 import importlib
 import threading
@@ -234,8 +235,19 @@ class Parser:
 
 # ----------------------------------------------------------------------------------------------------
 
-def help():
-    print """
+class REPL(cmd.Cmd):
+
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+        self.prompt = "> "
+        self.robot = None
+        self.use_rawinput = True
+
+    def emptyline(self):
+        pass
+
+    def do_help(self, str):
+        print """
     Type a command explaining what you want the robot to do. For example:
 
         go to the bed
@@ -247,52 +259,60 @@ def help():
         exit - Exits the console
         """
 
-def main():
-
-    rospy.init_node("robot_console", anonymous=True, log_level=rospy.ERROR, disable_signals=True)
-
-    robot = None
-
-    while True:
-        try:
-            command = raw_input("> ")
-        except KeyboardInterrupt:
-            print ""
-            command = "exit"
-
+    def default(self, command):
         if not command:
-            continue
+            return False
         elif command in ["help"]:
             help()
         elif command in ["quit", "exit"]:
-            break
+            return True  # True means interpreter has to stop
         else:
             words = command.split()
 
             p = Parser(words)
 
             if p.read("amigo", "sergio"):
-                robot = get_robot(p.last_read[0])
-                if not robot:
+                self.robot = get_robot(p.last_read[0])
+                if not self.robot:
                     print "\n    Could not connect to robot\n"
-                    continue
+                    return False
 
-            if not robot:
+            if not self.robot:
                 print  "\n    Please select a robot. For example: \"amigo go to the table\"\n"
-                continue
+                return False
 
             if p.read("grab", "grasp", "pick up"):
-                grab(p, robot)
+                grab(p, self.robot)
             elif p.read("goto", "go to", "move to", "navigate to"):
-                move(p, robot)
+                move(p, self.robot)
             elif p.read("look at", "lookat"):
-                lookat(p, robot)
+                lookat(p, self.robot)
             elif p.read("show"):
-                show(p, robot)                
+                show(p, self.robot)                
             elif p.read("stop"):
                 stop()
             else:
                 say("I don't understand")
+
+        return False # Signals interpreter to continue
+
+    def completedefault(self, text, line, begidx, endidx):
+        print "%s %s %s %s" % (text, line, begids, endidx)
+        return ["test"]
+
+# ----------------------------------------------------------------------------------------------------
+
+def main():
+
+    rospy.init_node("robot_console", anonymous=True, log_level=rospy.ERROR, disable_signals=True)
+
+    robot = None
+
+    try:
+        repl = REPL()
+        repl.cmdloop()
+    except KeyboardInterrupt:
+        pass
 
 if __name__ == "__main__":
     sys.exit(main())
