@@ -15,6 +15,19 @@ ACTION = None
 
 # ----------------------------------------------------------------------------------------------------
 
+class bcolors:
+    RED    = '\033[91m'
+    ORANGE = '\033[93m'
+    BLUE   = '\033[94m'
+    GREEN  = '\033[92m'
+    ENDC   = '\033[0m'
+
+    @staticmethod
+    def wrap(msg, color):
+        return "%s%s%s" % (color, msg, bcolors.ENDC)
+
+# ----------------------------------------------------------------------------------------------------
+
 class SmachAction:
 
     def __init__(self, machine):
@@ -64,7 +77,7 @@ def parse_object(p, robot):
 
     entities = robot.ed.get_entities(parse=False)
     ids = [e.id for e in entities]
-    types = [e.type for e in entities]
+    types = set([i for sublist in [e.types for e in entities] for i in sublist])
 
     # Simply skip articles if they are there
     if p.read("a", "an", "the"):
@@ -165,6 +178,21 @@ def lookat(p, robot):
 
 # ----------------------------------------------------------------------------------------------------
 
+def show(p, robot):
+
+    if (p.read("ids", "entities", "objects")):
+        entities = robot.ed.get_entities(parse=False)
+        print "\n    The following entities are in the world model:\n"
+
+        for e in entities:
+            print "      - %s (%s)" % (bcolors.wrap(e.id, bcolors.GREEN), bcolors.wrap(", ".join(e.types), bcolors.BLUE))
+
+        print ""
+    else:
+        print "\n    I don't understand what you want me to show.\n"
+
+# ----------------------------------------------------------------------------------------------------
+
 def get_robot(name):
     if name in ROBOTS:
         return ROBOTS[name]
@@ -259,6 +287,8 @@ def main():
                 move(p, robot)
             elif p.read("look at", "lookat"):
                 lookat(p, robot)
+            elif p.read("show"):
+                show(p, robot)                
             elif p.read("stop"):
                 stop()
             else:
