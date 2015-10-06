@@ -1,19 +1,42 @@
 #! /usr/bin/env python
 
 import rospy
-from robot_smach_states.state import State
+import smach
 
 # ----------------------------------------------------------------------------------------------------
 
-class SetPlugins(State):
+class SetPlugins(smach.State):
     def __init__(self, robot, enable=None, disable=None):
-        State.__init__(self, locals(), outcomes=["done"])
+        smach.State.__init__(self, outcomes=["done"])
+        self.enable = enable
+        self.disable = disable
+        self.robot = robot
 
-    def run(self, robot, enable, disable):
-        if disable:  
-            robot.ed.disable_plugins(disable)
+    def execute(self, userdata=None):
+        if self.disable:  
+            robot.ed.disable_plugins(self.disable)
 
-        if enable:
-            robot.ed.enable_plugins(enable)
+        if self.enable:
+            robot.ed.enable_plugins(self.enable)
 
         return 'done'
+
+
+
+'''
+	Initialize world model with a certain configuration.
+	Set perception mode to non-continuos and disable laser_integration.
+'''
+class InitializeWorldModel(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=["done"])
+        self.robot = robot
+
+    def execute(self, userdata=None):
+        self.robot.ed.configure_kinect_segmentation(continuous=False)
+        self.robot.ed.configure_perception(continuous=False)
+        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+        self.robot.ed.reset()
+
+        return 'done'
+
