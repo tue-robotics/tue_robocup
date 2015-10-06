@@ -6,13 +6,22 @@ import cmd
 import rospy
 import importlib
 import threading
+import multiprocessing
 
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint
 from robot_smach_states.manipulation import Grab, Place
 from robot_smach_states.util.designators import Designator, UnoccupiedArmDesignator, EdEntityDesignator, ArmHoldingEntityDesignator
 
 ROBOTS = {}
+
+global ACTION
 ACTION = None
+
+WORDS = ["grab", "grasp", "pick", "up", "goto", "go", "to", "move", "navigate",
+         "lookat", "look", "at", "show", "stop", "quit", "exit", "the", "an", "a",
+         "red", "green", "blue", "black", "white" "pink", "purple", "orange",
+         "brown", "grey", "yellow", "small", "big", "medium", "nearest", "closest",
+         "on", "from", "object", "entity", "thing"]
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -35,8 +44,14 @@ class SmachAction:
         self.machine = machine
         self.thread = None
 
+    def _run(self):
+        try:
+            self.machine.execute()
+        except Exception:
+            pass
+
     def start(self):
-        self.thread = threading.Thread(target=self.machine.execute)
+        self.thread = multiprocessing.Process(target=self._run)
         self.thread.start()
 
     def cancel(self):
@@ -44,7 +59,13 @@ class SmachAction:
             self.machine.request_preempt()
 
         # Wait until canceled
-        self.thread.join()
+        #self.thread.join()
+
+    def kill(self):
+        try:
+            self.thread.terminate()
+        except Exception:
+            pass
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -152,6 +173,8 @@ def grab(p, robot):
     machine = Grab(robot, arm=UnoccupiedArmDesignator(robot.arms, arm), item=EdEntityDesignator(robot, id=entities[0].id))
 
     stop()
+
+    global ACTION
     ACTION = SmachAction(machine)
     ACTION.start()
 
@@ -168,6 +191,8 @@ def move(p, robot):
     machine = NavigateToObserve(robot, entity_designator=EdEntityDesignator(robot, id=entities[0].id), radius=.5)
 
     stop()
+
+    global ACTION
     ACTION = SmachAction(machine)
     ACTION.start()
 
@@ -239,7 +264,7 @@ class REPL(cmd.Cmd):
 
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.prompt = "> "
+        self.prompt = bcolors.wrap("> ", bcolors.BLUE)
         self.robot = None
         self.use_rawinput = True
 
@@ -297,8 +322,17 @@ class REPL(cmd.Cmd):
         return False # Signals interpreter to continue
 
     def completedefault(self, text, line, begidx, endidx):
-        print "%s %s %s %s" % (text, line, begids, endidx)
-        return ["test"]
+        # text: current word, line: full line
+
+        words = WORDS
+
+        if self.robot:
+            entities = self.robot.ed.get_entities(parse=False)
+            words += [e.id for e in entities]
+            words += [i for sublist in [e.types for e in entities] for i in sublist]
+
+        return [w for w in words if w.startswith(text)]
+
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -313,6 +347,11 @@ def main():
         repl.cmdloop()
     except KeyboardInterrupt:
         pass
+
+    # If there is still an action going on, kill it (we don't want to wait)
+    global ACTION
+    if ACTION:
+        ACTION.kill()
 
 if __name__ == "__main__":
     sys.exit(main())
