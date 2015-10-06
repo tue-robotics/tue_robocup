@@ -83,7 +83,7 @@ class VariableDesignator(Designator):
         self._current = value
 
     def _set_current(self, value):
-        raise DeprecationWarning("Cannot directly write to a VariableDesignator, use a VariableWriter (aliased as writeable(designator) instead")
+        raise DeprecationWarning("Cannot directly write to a VariableDesignator, use a VariableWriter instead. E.g. XxxState(robot, someVariableDes.writable)")
 
     current = property(Designator._get_current, _set_current) #TODO: Once all state machines use the VariableWriter, the _set_current can be removed
 
