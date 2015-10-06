@@ -27,13 +27,30 @@ class DesignatorUsedInState(DesignatorUsage):
 
         graph.node(gv_safe(self.parent), shape="box", color="bisque", style="filled")
 
-        graph.edge(gv_safe(desig_name), gv_safe(self.parent), label=gv_safe(self.role))
+        graph.edge(gv_safe(desig_name),
+                   gv_safe(self.parent),
+                   label=gv_safe("{}.resolve".format(self.role)),
+                   color="green")
 
 class DesignatorWrittenInState(DesignatorUsage):
     def add_graphviz_edge(self, graph):
-        desig_name = format_designator(self.designator)
+        writer_name = format_designator(self.designator)
+        variable_name = format_designator(self.designator.variable_designator)
 
-        graph.edge(gv_safe(desig_name), gv_safe(self.parent), label=gv_safe(self.parent)+" writes "+gv_safe(self.role))
+        # graph.edge(gv_safe(self.parent),
+        #            gv_safe(variable_name),
+        #            label=gv_safe("sets {}".format(self.role)),
+        #            color="red")
+
+        graph.edge(gv_safe(self.parent),
+                   gv_safe(variable_name),
+                   label=gv_safe("write {}".format(self.role)),
+                   color="red")
+
+        graph.edge(gv_safe(variable_name),
+                   gv_safe(self.parent),
+                   gv_safe("{}.resolve".format(self.role)),
+                   color="green")
 
 
 class DesignatorUsedInDesignator(DesignatorUsage):
@@ -41,7 +58,11 @@ class DesignatorUsedInDesignator(DesignatorUsage):
         parent_name = format_designator(self.parent)
         desig_name = format_designator(self.designator)
 
-        graph.edge(gv_safe(desig_name), gv_safe(parent_name), label=gv_safe(self.role))
+        graph.edge(gv_safe(desig_name),
+                   gv_safe(parent_name),
+                   gv_safe("{}.resolve".format(self.role)),
+                   color="darkgreen",
+                   style="solid")
 
 
 def gv_safe(string):

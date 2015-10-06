@@ -7,6 +7,7 @@ class State(smach.State):
     def __init__(self, *args, **kwargs):
         smach.State.__init__(self, outcomes=kwargs['outcomes'])
         self.__dict__['init_arguments'] = args
+        print "Using State in {} is deprecated, use smach.State instead and implement execute(self, userdata) instead of run(self, ...)".format(type(self))
 
     def execute(self, userdata=None):
         resolved_arguments = {key:(value.resolve() if hasattr(value, "resolve") else value) for key,value
