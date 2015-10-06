@@ -37,7 +37,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         # ------------------------ INITIALIZATIONS ------------------------
 
-        operatorNameDes = VariableDesignator("")
+        operatorNameDes = VariableDesignator("", name="operatorName")
 
         #REVIEW: A designator resolving to a designator is weird. Can't you use a VariableDesignator directly?
         nextLocationDes = VariableDesignator(PersonRecStates.PointDesignator())
