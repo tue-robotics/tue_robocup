@@ -107,7 +107,7 @@ class VariableWriter(object):
     'Hello'
     >>> #Instead, use a writer to assign to a VariableDesignator
     >>> w = writeable(v)
-    >>> w.current = 'World'
+    >>> w.write('World')
     >>> v.resolve() #Now it works!
     'World'
     """
@@ -128,6 +128,7 @@ class VariableWriter(object):
                 self.variable_designator.resolve_type))
 
     def _set_current(self, value):
+        print "writable(VariableDesignator).current = ...  is deprecated, use writable(VariableDesignator).write(...) instead"
         self.variable_designator._set_current_protected(value)
 
     current = property(Designator._get_current, _set_current)

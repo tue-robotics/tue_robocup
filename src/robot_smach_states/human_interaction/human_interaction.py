@@ -7,7 +7,7 @@ import ed_perception.msg
 import actionlib
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, VariableDesignator, check_type, check_resolve_type, writeable
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, VariableDesignator, check_type, check_resolve_type, writeable, is_writeable
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
@@ -157,6 +157,7 @@ class HearOptionsExtra(smach.State):
         check_resolve_type(spec_designator, str)
         check_resolve_type(choices_designator, dict)
         check_resolve_type(speech_result_designator, GetSpeechResponse)
+        is_writeable(speech_result_designator)
 
         self.spec_designator = spec_designator
         self.choices_designator = choices_designator
@@ -186,7 +187,7 @@ class HearOptionsExtra(smach.State):
 
         if answer:
             if answer.result:
-                self.speech_result_designator.current = answer
+                self.speech_result_designator.write(answer)
                 return "heard"
         else:
             self.robot.speech.speak("Something is wrong with my ears, please take a look!")

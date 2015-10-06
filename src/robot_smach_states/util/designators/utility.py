@@ -12,40 +12,40 @@ class LockingDesignator(Designator):
     A LockingDesignator will resolve to the same object after a call to .lock() and
     will only resolve to a different value after an unlock() call.
 
-    >>> varying = VariableDesignator(0, int)
+    >>> varying = VariableDesignator(0, int).writeable #To be able to write to a designator, it must be writeable!
     >>> locking = LockingDesignator(varying)
     >>> assert(varying.resolve() == 0)
     >>> assert(locking.resolve() == 0)
     >>>
     >>> locking.lock()
     >>>
-    >>> varying.current = 1
+    >>> varying.write(1)
     >>> assert(varying.resolve() == 1)  # The value changed
     >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
     >>>
-    >>> varying.current = 2
+    >>> varying.write(2)
     >>> assert(varying.resolve() == 2)  # The value changed
     >>> assert(locking.resolve() == 0)  # This one sticks to the value it had when locked
     >>>
     >>> locking.unlock()
     >>>
-    >>> varying.current = 3
+    >>> varying.write(3)
     >>> assert(varying.resolve() == 3)  # The value changed
     >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
     >>>
     >>> locking.lock()
     >>>
-    >>> varying.current = 4
+    >>> varying.write(4)
     >>> assert(varying.resolve() == 4)  # The value changed
     >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
     >>>
-    >>> varying.current = 5
+    >>> varying.write(5)
     >>> assert(varying.resolve() == 5)  # The value changed
     >>> assert(locking.resolve() == 3)  # This one sticks to the value it had when locked
     >>>
     >>> locking.unlock()
     >>>
-    >>> varying.current = 6
+    >>> varying.write(6)
     >>> assert(varying.resolve() == 6)  # The value changed
     >>> assert(locking.resolve() == 6)  # This one sticks to the value it had when locked
 
