@@ -25,7 +25,7 @@ import sys
 import random
 import math
 
-from robot_smach_states.util.designators import *
+import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
@@ -91,7 +91,7 @@ def max_width(entity):
 
     return x_ok and y_ok
 
-class FormattedSentenceDesignator(Designator):
+class FormattedSentenceDesignator(ds.Designator):
     """docstring for FormattedSentenceDesignator"""
     def __init__(self, fmt, **kwargs):
         super(FormattedSentenceDesignator, self).__init__(resolve_type=str)
@@ -103,7 +103,7 @@ class FormattedSentenceDesignator(Designator):
         return self.fmt.format(**kwargs_resolved)
 
 
-class EntityDescriptionDesignator(Designator):
+class EntityDescriptionDesignator(ds.Designator):
     """EntityDescriptionDesignator"""
     def __init__(self, formats, entity_designator, name=None):
         super(EntityDescriptionDesignator, self).__init__(resolve_type=str, name=name)
@@ -123,7 +123,7 @@ class EntityDescriptionDesignator(Designator):
         return sentence
 
 
-# class EmptySpotDesignator(Designator):
+# class EmptySpotDesignator(ds.Designator):
 #     """Designates an empty spot on the empty placement-shelve.
 #     It does this by queying ED for entities that occupy some space.
 #         If the result is no entities, then we found an open spot."""
@@ -378,10 +378,11 @@ class ManipRecogSingleItem(smach.StateMachine):
 
     def __init__(self, robot, manipulated_items):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
+        self.manipulated_items = manipulated_items
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        self.pick_shelf = EdEntityDesignator(robot, id=PICK_SHELF, name="pick_shelf")
-        self.place_shelf = EdEntityDesignator(robot, id=PLACE_SHELF, name="place_shelf")
+        self.pick_shelf = ds.EdEntityDesignator(robot, id=PICK_SHELF, name="pick_shelf")
+        self.place_shelf = ds.EdEntityDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
         # TODO: Designate items that are
         # inside pick_shelf
@@ -390,7 +391,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         #   on the placement-shelve.
         # not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
         # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
-        not_manipulated = lambda entity: not entity in manipulated_items.resolve()
+        not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
         # has_type = lambda entity: entity.type != ""
         # min_height = lambda entity: entity.min_z > 0.3
         # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
@@ -424,14 +425,14 @@ class ManipRecogSingleItem(smach.StateMachine):
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
         # self.current_item = LockingDesignator(EdEntityDesignator(robot,
         #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
-        self.current_item = LockingDesignator(EdEntityDesignator(robot,
+        self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
             criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
 
         #This makes that the empty spot is resolved only once, even when the robot moves. This is important because the sort is based on distance between robot and constrait-area
-        self.place_position = LockingDesignator(EmptySpotDesignator(robot, self.place_shelf, name="placement"), name="place_position")
+        self.place_position = ds.LockingDesignator(ds.EmptySpotDesignator(robot, self.place_shelf, name="placement"), name="place_position")
 
-        self.empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
-        self.arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
+        self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
+        self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
 
         print "{0} = pick_shelf".format(self.pick_shelf)
         print "{0} = current_item".format(self.current_item)
@@ -546,7 +547,7 @@ class ManipRecogSingleItem(smach.StateMachine):
 def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
-    start_waypoint = EdEntityDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
+    start_waypoint = ds.EdEntityDesignator(robot, id="manipulation_init_pose", name="start_waypoint")
     placed_items = []
 
     with sm:
@@ -564,11 +565,13 @@ def setup_statemachine(robot):
                                transitions={'continue'                  :'NAV_TO_START',
                                             'no_response'               :'AWAIT_START'})
 
+        pick_shelf = ds.EdEntityDesignator(robot, id=PICK_SHELF)
+        room = ds.EdEntityDesignator(robot, id=ROOM)
         smach.StateMachine.add( "NAV_TO_START",
                                 #states.NavigateToObserve(robot, pick_shelf),
                                 states.NavigateToSymbolic(robot,
-                                                          {EdEntityDesignator(robot, id=PICK_SHELF):"in_front_of", EdEntityDesignator(robot, id=ROOM):"in"},
-                                                          EdEntityDesignator(robot, id=PICK_SHELF)),
+                                                          {pick_shelf:"in_front_of", room:"in"},
+                                                          pick_shelf),
                                 transitions={   'arrived'           :'RESET_ED',
                                                 'unreachable'       :'RESET_ED',
                                                 'goal_not_defined'  :'RESET_ED'})
@@ -611,7 +614,7 @@ def setup_statemachine(robot):
                                             exhausted_outcome = 'succeeded') #The exhausted argument should be set to the preffered state machine outcome
 
         with range_iterator:
-            single_item = ManipRecogSingleItem(robot, VariableDesignator(placed_items, list, name="placed_items"))
+            single_item = ManipRecogSingleItem(robot, ds.VariableDesignator(placed_items, list, name="placed_items"))
 
             smach.Iterator.set_contained_state( 'SINGLE_ITEM',
                                                 single_item,
@@ -627,7 +630,7 @@ def setup_statemachine(robot):
                                states.Say(robot, "Goodbye"),
                                transitions={'spoken': 'Done'})
 
-        analyse_designators(sm, "manipulation")
+        ds.analyse_designators(sm, "manipulation")
 
     return sm
 
