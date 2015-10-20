@@ -41,15 +41,13 @@ class ChallengePersonRecognition(smach.StateMachine):
         operatorNameDes = VariableDesignator("")
 
         #REVIEW: A designator resolving to a designator is weird. Can't you use a VariableDesignator directly?
-        nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) 
-        nextLocationDes.current = PersonRecStates.PointDesignator()
+        nextLocationDes = VariableDesignator(PersonRecStates.PointDesignator)
 
         locationsToVisitDes = VariableDesignator([])
 
         facesAnalyzedDes = VariableDesignator([])
 
-        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
-        operatorLocationDes.current = PersonRecStates.PointDesignator()
+        operatorLocationDes = VariableDesignator(PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
 
         # ------------------ SIMULATION ------------------------------------
 
