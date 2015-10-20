@@ -217,7 +217,7 @@ class Counter(smach.State):
         self.limit = limit
 
         check_resolve_type(counter, int)
-        is_writable(counter)
+        is_writeable(counter)
         self.counter = counter
 
     def execute(self, userdata):
@@ -274,7 +274,7 @@ class SetTimeMarker(smach.State):
     def __init__(self, robot, designator):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
-        is_writable(designator)
+        is_writeable(designator)
         self.designator = designator
 
     def execute(self, userdata=None):
