@@ -7,6 +7,7 @@ A .dot and .png will be saved to the current directory, showing the relations an
 state_machines and designators.
 """
 
+import os
 import smach
 from robot_smach_states.util.designators.core import Designator, VariableWriter
 
@@ -100,7 +101,7 @@ def flatten(tree, parentname=None, sep="."):
     return flat
 
 
-def analyse_designators(statemachine=None, statemachine_name=""):
+def analyse_designators(statemachine=None, statemachine_name="", save_dot=False, fmt="png"):
     designators = Designator.instances
     writers = VariableWriter.instances
 
@@ -132,10 +133,13 @@ def analyse_designators(statemachine=None, statemachine_name=""):
                 usages += [DesignatorUsedInDesignator(parent_designator, child_designator, child_role)]
 
     from graphviz import Digraph
-    dot = Digraph(comment=statemachine_name + ' Designators', format="png")
+    dot = Digraph(comment=statemachine_name + ' Designators', format=fmt)
 
     for usage in usages:
         usage.add_graphviz_edge(dot)
 
-    dot.save(statemachine_name + '_designators.dot')
+    if save_dot:
+        dot.save(statemachine_name + '_designators.dot')
     dot.render(statemachine_name + '_designators')
+
+    os.remove(statemachine_name + '_designators')
