@@ -162,7 +162,7 @@ class WakeMeUp(smach.StateMachine):
                                                     'Failed'            :'SAY_OPERATOR_AWAKE'})
 
             smach.StateMachine.add( "SAY_OPERATOR_AWAKE",
-                                    states.Say(robot, "Lets see if my operator is awake", block=False), 
+                                    states.Say(robot, "Lets see if my operator is awake", block=False),
                                     transitions={   "spoken"            :"GO_TO_BED"})
 
             smach.StateMachine.add( 'GO_TO_BED',
@@ -203,7 +203,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'succeeded':'SET_TIME_MARKER'})
 
                 smach.StateMachine.add( "SET_TIME_MARKER",
-                                        states.SetTimeMarker(robot, time_marker),
+                                        states.SetTimeMarker(robot, time_marker.writeable),
                                         transitions={   'done' :'WAKEUP_MESSAGE'})
 
                 smach.StateMachine.add( "WAKEUP_MESSAGE",
@@ -256,7 +256,7 @@ class WakeMeUp(smach.StateMachine):
             with takeOrderContainer:
 
                 smach.StateMachine.add( "COUNTER",
-                                        states.Counter(counter=orderConfirmationCounter,limit=knowledge.order_confirmation_limit),
+                                        states.Counter(counter=orderConfirmationCounter.writeable,limit=knowledge.order_confirmation_limit),
                                         transitions={   'counted'       :'SAY_WHAT_BREAKFAST',
                                                         'limit_reached' :'SAY_ILL_CHOOSE_BREAKFAST'})
 
