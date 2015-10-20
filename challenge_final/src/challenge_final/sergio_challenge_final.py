@@ -399,6 +399,9 @@ def setup_statemachine(robot):
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
 
+
+
+    analyse_designators(sm, "sergio_final_rwc2015")
     return sm
 
 ############################## initializing program ######################

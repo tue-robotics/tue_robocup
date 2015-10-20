@@ -6,7 +6,7 @@ import sys
 import random
 
 import robot_smach_states as states
-from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator
+from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator, analyse_designators
 
 import direct_speech_recognition
 import indirect_speech_recognition
@@ -70,6 +70,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('AT_END', states.Say(robot, "That was all folks!"), transitions={ 'spoken' :'Done'})
 
+    analyse_designators(sm, "speech_recognition")
     return sm
 
 

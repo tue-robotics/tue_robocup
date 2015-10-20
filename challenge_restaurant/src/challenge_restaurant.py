@@ -22,7 +22,7 @@ from visualization_msgs.msg import Marker
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, analyse_designators
 from robot_skills.util import transformations, msg_constructors
 
 from robocup_knowledge import load_knowledge
@@ -499,6 +499,7 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SAY_DONE_WITH_CHALLENGE', states.Say(robot, "I'm done with this challenge and you're a banana!"), transitions={ 'spoken' :'done'})
 
+    analyse_designators(sm, "restaurant")
     return sm
 
 

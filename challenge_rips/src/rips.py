@@ -4,7 +4,7 @@ import rospy
 import smach
 import sys
 
-from robot_smach_states.util.designators import EdEntityDesignator
+from robot_smach_states.util.designators import EdEntityDesignator, analyse_designators
 import robot_smach_states as states
 
 from robocup_knowledge import load_knowledge
@@ -81,6 +81,8 @@ def setup_statemachine(robot):
         smach.StateMachine.add('AT_END',
                                 states.Say(robot, "Goodbye"),
                                 transitions={'spoken':'Done'})
+
+    analyse_designators(sm, "rips")
     return sm
 
 

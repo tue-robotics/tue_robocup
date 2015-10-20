@@ -477,6 +477,8 @@ class WakeMeUp(smach.StateMachine):
                                     states.Say(robot,"That was all I can do. Breakfast is served at the dinner table. Goodbye!"),
                                     transitions={'spoken':'Done'})
 
+        analyse_designators(self, "wake_me_up")
+
 
 
 # ------------------------ MAIN ------------------------

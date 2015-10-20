@@ -907,7 +907,7 @@ def setup_statemachine(robot):
 
 
 
-
+    analyse_designators(sm, "amigo_final_rwc2015")
 
     return sm
 
