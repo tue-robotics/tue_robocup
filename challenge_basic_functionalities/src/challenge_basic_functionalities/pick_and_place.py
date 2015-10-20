@@ -14,6 +14,7 @@ from robot_smach_states.util.designators import Designator, VariableDesignator, 
 
 from pein_srvs.srv import SetObjects
 from ed.srv import SimpleQuery, SimpleQueryRequest
+from ed.msg import EntityInfo
 
 from robot_smach_states.utility_states import Initialize
 from robot_smach_states.human_interaction import Say
@@ -50,10 +51,10 @@ class LookForObjects(smach.State):
             rospy.loginfo("{0} objects remaining after filterfunc #{1}: {2}".format(len(entities), filter_index, filter_code))
 
         if entities:
-            self.designator.current = entities[0]
+            self.designator.write(entities[0])
             rospy.loginfo("Selected object: {0}".format(self.designator.current.id))
         elif entities:
-            self.designator.current = entities[0]
+            self.designator.write(entities[0])
             rospy.logwarn("May not be able to pick up selected object: {0}".format(self.designator.current.id))
         else:
             rospy.logwarn("Could not select an object")
@@ -69,7 +70,7 @@ class PickAndPlace(smach.StateMachine):
         # ToDo: get rid of hardcode poi lookat
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         self.robot = robot
-        self.designator = VariableDesignator()
+        self.designator = VariableDesignator(resolve_type=EntityInfo)
 
         # self.entity_designator = EdEntityByQueryDesignator(SimpleQueryRequest(type=""))
 
@@ -83,7 +84,7 @@ class PickAndPlace(smach.StateMachine):
             #TODO: Insert NavigateToExplore here.
 
             smach.StateMachine.add( 'LOOK_FOR_OBJECTS',
-                                    LookForObjects(robot, self.designator),
+                                    LookForObjects(robot, self.designator.writeable),
                                     transitions={"done":   "PICKUP_OBJECT",
                                                  "failed": "HANDOVER_FROM_HUMAN"})
 
@@ -108,6 +109,9 @@ class PickAndPlace(smach.StateMachine):
                                     Initialize(robot),
                                     transitions={"initialized": "Done",
                                                  "abort":       "Aborted"})
+
+            ds.analyse_designators(self, "pick_and_place")
+
 if __name__ == "__main__":
     rospy.init_node('pick_and_place_exec')
     robot_smach_states.util.startup(PickAndPlace)
