@@ -9,7 +9,8 @@ state_machines and designators.
 
 import os
 import smach
-from robot_smach_states.util.designators.core import Designator, VariableWriter
+from robot_smach_states.util.designators.core import Designator, VariableWriter, VariableDesignator
+from graphviz import Digraph
 
 
 __author__ = 'loy'
@@ -101,6 +102,28 @@ def flatten(tree, parentname=None, sep="."):
     return flat
 
 
+def make_legend():
+    legend = Digraph('legend')
+
+    legend.body.append('label = "Legend"')
+    legend.body.append('color=black')
+
+    state = smach.State()
+    parent_desig = Designator(name="parent_designator")
+    desig = Designator(name="designator")
+    vardesig = VariableDesignator(resolve_type=str, name="variable").writeable
+
+    used_in_state = DesignatorUsedInState(state, desig, "role")
+    written_in_state = DesignatorWrittenInState(state, vardesig, "role")
+    used_in_desig = DesignatorUsedInDesignator(parent_desig, desig, "role")
+
+    usages = [used_in_state, written_in_state, used_in_desig]
+    for usage in usages:
+        usage.add_graphviz_edge(legend)
+
+    return legend
+
+
 def analyse_designators(statemachine=None, statemachine_name="", save_dot=False, fmt="png"):
     designators = Designator.instances
     writers = VariableWriter.instances
@@ -132,11 +155,12 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
             if child_designator in designators:
                 usages += [DesignatorUsedInDesignator(parent_designator, child_designator, child_role)]
 
-    from graphviz import Digraph
     dot = Digraph(comment=statemachine_name + ' Designators', format=fmt)
 
     for usage in usages:
         usage.add_graphviz_edge(dot)
+
+    # dot.subgraph(make_legend())
 
     if save_dot:
         dot.save(statemachine_name + '_designators.dot')
