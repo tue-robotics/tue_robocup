@@ -132,9 +132,9 @@ class ConfigureEd(smach.State):
 #         self.breakfastMilk = breakfastMilkDes
 
 #     def execute(self, userdata):
-#         self.breakfastCereal.current = "coconut_cereals"
+#         self.breakfastCereal.write("coconut_cereals")
 #         self.breakfastMilk.current   = "papaya_milk"
-#         self.breakfastFruit.current  = "apple"
+#         self.breakfastFruit.write("apple")
 #         return "succeeded"
 
 # ----------------------------------------------------------------------------------------------------
@@ -171,9 +171,9 @@ class GetOrder(smach.State):
         word_item2 = ""
         word_item3 = ""
 
-        self.breakfastFruit.current  = ""
-        self.breakfastCereal.current = ""
-        self.breakfastMilk.current   = ""
+        self.breakfastFruit.write("")
+        self.breakfastCereal.write("")
+        self.breakfastMilk.write("")
 
         # define allowed sentences, [] means optional
         sentence = Designator("(([<beginning>] <item1> [<preposition>] <item2> [<preposition>] <item3>) | \
@@ -218,15 +218,15 @@ class GetOrder(smach.State):
 
             # find first item's type
             if parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
-                self.breakfastFruit.current = word_item1
+                self.breakfastFruit.write(word_item1)
                 got_fruit = True
                 print "{}First item fruit".format(prefix)
             elif parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Cereal:
-                self.breakfastCereal.current = word_item1
+                self.breakfastCereal.write(word_item1)
                 got_cereal = True
                 print "{}First item cereal".format(prefix)
             elif parseFoodType(word_item1, got_fruit, got_cereal, got_milk) == FoodType.Milk:
-                self.breakfastMilk.current = word_item1
+                self.breakfastMilk.write(word_item1)
                 got_milk = True
                 print "{}First item milk".format(prefix)
             else:
@@ -234,15 +234,15 @@ class GetOrder(smach.State):
 
             # find second item's type
             if parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Fruit:
-                self.breakfastFruit.current = word_item2
+                self.breakfastFruit.write(word_item2)
                 got_fruit = True
                 print "{}Second item Fruit".format(prefix)
             elif parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Cereal:
-                self.breakfastCereal.current = word_item2
+                self.breakfastCereal.write(word_item2)
                 got_cereal = True
                 print "{}Second item Cereal".format(prefix)
             elif parseFoodType(word_item2, got_fruit, got_cereal, got_milk) == FoodType.Milk:
-                self.breakfastMilk.current = word_item2
+                self.breakfastMilk.write(word_item2)
                 got_milk = True
                 print "{}Second item Milk".format(prefix)
             else:
@@ -253,15 +253,15 @@ class GetOrder(smach.State):
 
                 # find second item's type
                 if parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Fruit :
-                    self.breakfastFruit.current = word_item3
+                    self.breakfastFruit.write(word_item3)
                     got_fruit = True
                     print "{}Third item Fruit".format(prefix)
                 elif parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Cereal :
-                    self.breakfastCereal.current = word_item3
+                    self.breakfastCereal.write(word_item3)
                     got_cereal = True
                     print "{}Third item Cereal".format(prefix)
                 elif parseFoodType(word_item3, got_fruit, got_cereal, got_milk) == FoodType.Milk :
-                    self.breakfastMilk.current = word_item3
+                    self.breakfastMilk.write(word_item3)
                     got_milk = True
                     print "{}Third item Milk".format(prefix)
                 else:
@@ -270,10 +270,10 @@ class GetOrder(smach.State):
                 # just a consistency check
                 if not got_milk:
                     print prefix + "Still don't know what type of milk it is! Reseting to default." + bcolors.ENDC
-                    self.breakfastMilk.current = knowledge.default_milk
+                    self.breakfastMilk.write(knowledge.default_milk)
 
             else:
-                self.breakfastMilk.current = knowledge.default_milk
+                self.breakfastMilk.write(knowledge.default_milk)
                 got_milk = True
 
             print "{}Response: fruit = {}, cereal = {} , milk = {}".format(prefix, self.breakfastFruit.resolve(), self.breakfastCereal.resolve(), self.breakfastMilk.resolve())
@@ -306,9 +306,9 @@ class PickDefaultOrder(smach.State):
         self.breakfastMilk = breakfastMilkDes
 
     def execute(self, userdata):
-        self.breakfastCereal.current = knowledge.default_cereal
-        self.breakfastMilk.current   = knowledge.default_milk
-        self.breakfastFruit.current  = knowledge.default_fruit
+        self.breakfastCereal.write(knowledge.default_cereal)
+        self.breakfastMilk.write(knowledge.default_milk)
+        self.breakfastFruit.write(knowledge.default_fruit)
 
         return 'done'
 
@@ -467,7 +467,7 @@ class SelectItem(smach.State):
             self.current = 0
             return 'all_done'
         else:
-            self.generic_item.current = self.options[self.current]
+            self.generic_item.write(self.options[self.current])
 
             asked_items = [d.resolve() for d in self.asked_items_des]
             category_items = [i['name'] for i in knowledge_objs if 'sub-category' in i and i['sub-category']==self.generic_item.resolve()]
@@ -475,16 +475,16 @@ class SelectItem(smach.State):
             print "asked items: {}".format(asked_items)
             print "category items: {}".format(category_items)
 
-            self.specific_item.current = list(set(category_items).intersection(asked_items))[0]
+            self.specific_item.write(list(set(category_items).intersection(asked_items))[0])
 
             self.robot.speech.speak("I will get your "+self.generic_item.resolve()+" now.", block=False)
 
-            self.nav_goal.current = {
+            self.nav_goal.write({
                                         EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in_front_of_'+self.generic_item.resolve()]) : "in_front_of",
                                         EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['in']) : "in"
-                                    }
+                                    })
 
-            self.lookat_goal.current = EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['lookat_'+self.generic_item.resolve()])
+            self.lookat_goal.write(EdEntityDesignator(self.robot, id=knowledge.item_nav_goal['lookat_'+self.generic_item.resolve()]))
         
         self.current += 1
         return 'selected'
@@ -556,13 +556,13 @@ class FindItem(smach.State):
 
         # # hack to check grab state.
         # if len(filtered_ids)>0:
-        #     self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
+        #     self.result_des.write(self.robot.ed.get_entity(filtered_ids[0]))
         #     return 'item_found'
         # ##############
 
         for i in range(len(filtered_ids)):
             if entity_types[i] == self.result_type:
-                self.result_des.current = self.robot.ed.get_entity(filtered_ids[i])
+                self.result_des.write(self.robot.ed.get_entity(filtered_ids[i]))
                 return 'item_found'
 
         # if wanted item is not found then ..
@@ -579,19 +579,19 @@ class FindItem(smach.State):
 
         if len(found_milk) > 0 and self.result_type in names_milk:
             print self.robot.ed.get_entity(found_milk[0])
-            self.result_des.current = self.robot.ed.get_entity(type_ids[found_milk[0]])
+            self.result_des.write(self.robot.ed.get_entity(type_ids[found_milk[0]]))
             return 'item_found'
         elif len(found_cereal) > 0 and self.result_type in names_cereal:
             print self.robot.ed.get_entity(found_cereal[0])
-            self.result_des.current = self.robot.ed.get_entity(type_ids[found_cereal[0]])
+            self.result_des.write(self.robot.ed.get_entity(type_ids[found_cereal[0]]))
             return 'item_found'
         elif len(found_fruit) > 0 and self.result_type in names_fruit:
             print self.robot.ed.get_entity(found_fruit[0])
-            self.result_des.current = self.robot.ed.get_entity(type_ids[found_fruit[0]])
+            self.result_des.write(self.robot.ed.get_entity(type_ids[found_fruit[0]]))
             return 'item_found'
         elif self.result_type in names_milk and len(filtered_ids)>0:
             rospy.logwarn("No milk found, grabbing something anyway!")
-            self.result_des.current = self.robot.ed.get_entity(filtered_ids[0])
+            self.result_des.write(self.robot.ed.get_entity(filtered_ids[0]))
 
         # TODO: maybe go to another position to look again?
 
