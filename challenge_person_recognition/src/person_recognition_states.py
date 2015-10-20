@@ -874,7 +874,7 @@ class ResetSearch(smach.State):
         printOk("ResetSearch")
 
         # Reset locations to visit
-        self.locations.current = []
+        self.locations.write([])
         
         return 'done'
 
