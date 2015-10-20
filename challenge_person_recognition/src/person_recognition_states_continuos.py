@@ -460,14 +460,14 @@ class AskPersonName(smach.State):
 
         if not outcome == "heard":
             name = "Mister Operator"
-            self.operatorNameDes.current = name
+            self.operatorNameDes.write(name)
 
             printWarning("Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(str(outcome), self.operatorNameDes.resolve()))
             return 'failed'
         else:
             try:
                 name = answer.resolve().choices["name"]
-                self.operatorNameDes.current = name
+                self.operatorNameDes.write(name)
 
                 printOk("Result received from speech recognition is '" + name + "'")
             except KeyError, ke:
@@ -491,7 +491,7 @@ class ConfirmPersonName(smach.State):
     def execute(self, userdata):
         printOk("ConfirmPersonName")
 
-        self.operatorNameDes.current = name
+        self.operatorNameDes.write(name)
 
         self.robot.speech.speak("I heard " + name + ", is that correct?", block=False)
 
@@ -507,7 +507,7 @@ class ConfirmPersonName(smach.State):
 
         if not outcome == "heard":
             name = "Mister Operator Fallback"
-            self.operatorNameDes.current = name
+            self.operatorNameDes.write(name)
 
             printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + ")")
             return 'incorrect'
@@ -793,7 +793,7 @@ class ResetSearch(smach.State):
         printOk("ResetSearch")
 
         # Reset locations to visit
-        self.locations.current = []
+        self.locations.write([])
         
         return 'done'
 

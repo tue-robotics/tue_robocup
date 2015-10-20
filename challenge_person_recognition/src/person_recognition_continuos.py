@@ -203,7 +203,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                         learnNameContainer.userdata.personName_userData = ""
 
                         smach.StateMachine.add( 'ASK_PERSON_NAME',
-                                                PersonRecStates.AskPersonName(robot, operatorNameDes),
+                                                PersonRecStates.AskPersonName(robot, operatorNameDes.writeable),
                                                 remapping={     'personName_out':'personName_userData'},
                                                 transitions={   'succeded':'SAY_IS_YOUR_NAME',
                                                                 'failed':'SAY_HEAR_FAILED'})
@@ -553,7 +553,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     'container_failed':'RESET_SEARCH'})
 
             smach.StateMachine.add( 'RESET_SEARCH',
-                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes),
+                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes.writeable),
                                     transitions={   'done':'SAY_FIND_CROWD_AGAIN'})
 
             smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',
