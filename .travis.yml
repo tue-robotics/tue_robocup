@@ -8,33 +8,32 @@ compiler:
 env:
   - ROS_DISTRO=hydro
 notifications:
-  email: false
+  - email: false
 
 before_install:
-  - export CI_SOURCE_PATH=$(pwd)
-  - export REPOSITORY_NAME=${PWD##*/}
+  - CI_SOURCE_PATH=$(pwd)
+  - REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
 
 install:
-  - export TUE_ENV=$ROS_DISTRO
-  - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap)
-  - tue-get install ros-robot_skills
-  - tue-get install ros-robot_smach_states
+  - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
   - tue-get install ros-${REPOSITORY_NAME}
+  - source ~/.tue/setup.bash # source all target setup files
 
 before_script:
-  - source ~/.tue/setup.bash # source ROS
-  - cd ${TUE_SYSTEM_DIR}/src
-
   # Link the repo we are testing to the new workspace
-  - rm -rf $REPOSITORY_NAME
-  - ln -s $CI_SOURCE_PATH .
+  - cd $TUE_ENV_DIR/repos/https:/github.com/tue-robotics/
+  - rm -rf "${REPOSITORY_NAME}.git"
+  - ln -s $CI_SOURCE_PATH "${REPOSITORY_NAME}.git"
+  - ls -l
+
+  - cd ${TUE_SYSTEM_DIR}/src
   - ls -l
   - cd .. # go to the catkin workspace
   - rospack list
 
 script:
-  - catkin_make
+  - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
   - catkin_make run_tests # and run them
