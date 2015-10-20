@@ -16,6 +16,7 @@ from robot_skills.util import transformations
 from robot_smach_states.util.geometry_helpers import *
 from ed_sensor_integration.srv import GetPOIs, MakeSnapshot
 from visualization_msgs.msg import Marker
+from ed.msg import EntityInfo
 
 from cb_planner_msgs_srvs.msg import *
 
@@ -351,7 +352,7 @@ class ConversationWithOperator(smach.State):
                 ''' Get random furniture object (only the string) '''
                 furniture = random.choice(furniture_list.keys())
                 ''' Set the designator with the corresponding entity '''
-                self.furniture_designator.current = furniture
+                self.furniture_designator.write(furniture)
                 self.robot.speech.speak("My ears are not working properly, I'll go to the {0} to see what I can find there".format(furniture_list[furniture]))
                 return "succeeded"
             else:
@@ -365,7 +366,7 @@ class ConversationWithOperator(smach.State):
             self.robot.speech.speak("All right, I will go to the {0} to grab the object".format(loc), block=False)
             for entity, stripped_type in furniture_list.iteritems():
                 if stripped_type == loc:
-                    self.furniture_designator.current = entity
+                    self.furniture_designator.write(entity)
             return 'succeeded'
 
 
@@ -637,7 +638,7 @@ class GuiCallCallback(smach.StateMachine):
 
         smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
 
-        location_designator = VariableDesignator(resolve_type=EntityInfo)
+        location_designator = VariableDesignator(resolve_type=EntityInfo, name="location_designator")
         
         object_designator = VariableDesignator(resolve_type=str)
         # def on_top(entity):
@@ -675,7 +676,7 @@ class GuiCallCallback(smach.StateMachine):
         ##### To start in a different state #####
         if not TEST_GRASP_LOC == None:
             smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
-            location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
+            location_designator = VariableDesignator(resolve_type=EntityInfo, name="location_designator")
         #########################################
 
         with self:
@@ -690,7 +691,7 @@ class GuiCallCallback(smach.StateMachine):
                                     transitions={   'spoken'            : 'HUMAN_ROBOT_INTERACTION'})
 
             smach.StateMachine.add('HUMAN_ROBOT_INTERACTION',
-                                    ConversationWithOperator(robot=robot, furniture_designator=location_designator, object_designator=object_designator),
+                                    ConversationWithOperator(robot=robot, furniture_designator=location_designator.writeable, object_designator=object_designator),
                                     transitions={   'succeeded'         : 'STORE_POINT',
                                                     'failed'            : 'STORE_POINT'})
 
@@ -809,6 +810,8 @@ def setup_statemachine(robot):
                                 transitions={   'arrived'           : 'Done',
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})
+
+        analyse_designators(statemachine_name="open")
 
     return sm
 
