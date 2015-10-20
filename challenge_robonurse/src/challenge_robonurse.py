@@ -81,7 +81,7 @@ class StoreGrannyPose(smach.State):
         #    return 'failed'
 
         # Granny is the first one
-        designator.current = possible_humans
+        designator.write(possible_humans)
 
         return 'succeeded'
 
@@ -377,9 +377,9 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "DESCRIBE_OBJECTS",
                                     DescribeBottles(robot, bottles_to_describe,
-                                        spec_designator=ask_bottles_spec,
-                                        choices_designator=ask_bottles_choices,
-                                        bottle_desc_mapping_designator=bottle_description_map_desig),
+                                        spec_designator=ask_bottles_spec.writeable,
+                                        choices_designator=ask_bottles_choices.writeable,
+                                        bottle_desc_mapping_designator=bottle_description_map_desigv),
                                     transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_LOOKAT_SHELF_2'})
 
@@ -395,9 +395,9 @@ class GetPills(smach.StateMachine):
 
             smach.StateMachine.add( "DESCRIBE_OBJECTS_2",
                                     DescribeBottles(robot, bottles_to_describe,
-                                        spec_designator=ask_bottles_spec,
-                                        choices_designator=ask_bottles_choices,
-                                        bottle_desc_mapping_designator=bottle_description_map_desig),
+                                        spec_designator=ask_bottles_spec.writeable,
+                                        choices_designator=ask_bottles_choices.writeable,
+                                        bottle_desc_mapping_designator=bottle_description_map_desig.writeable),
                                     transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_FAILED_NO_BOTTLES'})
 
@@ -779,7 +779,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={'done'                 :'STORE_GRANNY_POSE'})
 
             smach.StateMachine.add( "STORE_GRANNY_POSE",
-                                    StoreGrannyPose(robot, LASER_GRANNY),
+                                    StoreGrannyPose(robot, LASER_GRANNY.writeable),
                                     transitions={   'succeeded'         : 'START_PHASE',
                                                     'failed'            : 'START_PHASE'})
 
