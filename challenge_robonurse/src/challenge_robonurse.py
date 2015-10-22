@@ -379,7 +379,7 @@ class GetPills(smach.StateMachine):
                                     DescribeBottles(robot, bottles_to_describe,
                                         spec_designator=ask_bottles_spec.writeable,
                                         choices_designator=ask_bottles_choices.writeable,
-                                        bottle_desc_mapping_designator=bottle_description_map_desigv),
+                                        bottle_desc_mapping_designator=bottle_description_map_desig),
                                     transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_LOOKAT_SHELF_2'})
 
@@ -431,7 +431,9 @@ class GetPills(smach.StateMachine):
 
             ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse, name="ask_bottles_answer")
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
-                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer, look_at_standing_person=False),
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices,
+                                                            ask_bottles_answer.writeable,
+                                                            look_at_standing_person=False),
                                     transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
                                                     'no_result'         :'SAY_NOTHING_HEARD'})
 
@@ -440,7 +442,8 @@ class GetPills(smach.StateMachine):
                                     transitions={   'spoken'            :'ASK_WHICH_BOTTLE_2'})
 
             smach.StateMachine.add( "ASK_WHICH_BOTTLE_2",
-                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer, look_at_standing_person=False),
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices,
+                                                            ask_bottles_answer.writeable, look_at_standing_person=False),
                                     transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
                                                     'no_result'         :'SAY_NOTHING_HEARD_2'})
 
@@ -1009,10 +1012,4 @@ def dummy_action_recognition(robot, max_measurements=200, _id=None):
 if __name__ == '__main__':
     rospy.init_node('robonurse_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
-        exit(1)
-
-    startup(RoboNurse, robot_name=robot_name)
+    startup(RoboNurse)
