@@ -92,8 +92,15 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-''' define general function for printing shortcuts '''
+''' 
+	General function for printing shortcuts
+	name: name of the progam that instanciates make_prints
+	sentence: sentence to be displayed
+
+	Ex: "[<EXECUTIVE NAME>] <SENTENCE TO BE DISPLAYED>" 
+'''
 def make_prints(name):
+
     prefix = bcolors.HEADER + name + bcolors.ENDC
     def printOk(sentence):
         print prefix + bcolors.OKBLUE + sentence + bcolors.ENDC
