@@ -2,8 +2,8 @@
 State machine startup
 
 Usage:
-  challenge_xxx.py <robotname>
-  challenge_xxx.py <robotname> --initial=<init>
+  challenge_{challenge_name}.py {robot}
+  challenge_{challenge_name}.py {robot} --initial=<init>
 
 Options:
   -h --help     Show this screen.
@@ -18,7 +18,7 @@ import traceback
 from docopt import docopt
 
 
-def startup(statemachine_creator, initial_state=None, robot_name=''):
+def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None):
     '''
     :param statemachine_creator: a function that outputs a statemachine.
         The function should take a robot as input.
@@ -31,12 +31,14 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
                         " is not needed and deprecated. "
                         "This is inferred by startup from the command line")
 
-    arguments = docopt(__doc__, version='robot_smach_states startup 2.0')
-    robot_name = arguments["<robotname>"]
+    available_robots = ['amigo', 'sergio', 'mockbot']
+    arguments = docopt(__doc__.format(robot='|'.join(available_robots),
+                                      challenge_name=challenge_name if challenge_name else "xxx"),
+                       version='robot_smach_states startup 2.0')
+    robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
 
     robot = None
-    available_robots = ['amigo', 'sergio', 'mockbot']
     if robot_name == "amigo":
         import robot_skills.amigo
         robot = robot_skills.amigo.Amigo(wait_services=True)
