@@ -103,8 +103,6 @@ def flatten(tree, parentname=None, sep="."):
 
 
 def make_legend():
-    legend = Digraph('legend')
-
     legend = Digraph('cluster_1')
 
     state = smach.State()
@@ -112,16 +110,19 @@ def make_legend():
     desig = Designator(name="designator")
     vardesig = VariableDesignator(resolve_type=str, name="variable").writeable
 
-    used_in_state = DesignatorUsedInState(state, desig, "role")
-    written_in_state = DesignatorWrittenInState(state, vardesig, "role")
-    used_in_desig = DesignatorUsedInDesignator(parent_desig, desig, "role")
+    used_in_state = DesignatorUsedInState(state, desig, "role_resolved_from")
+    written_in_state = DesignatorWrittenInState(state, vardesig, "role_written_to")
+    used_in_desig = DesignatorUsedInDesignator(parent_desig, desig, "role_in_parent")
 
     usages = [used_in_state, written_in_state, used_in_desig]
     for usage in usages:
         usage.add_graphviz_edge(legend)
 
-    legend.body.append('label = "legend"')
+    legend.body.append('label = "Legend"')
     legend.body.append('color=black')
+    legend.body.append('width=0.25')
+    legend.body.append('height=0.25')
+    legend.body.append('size="2.0, 2.0"')
 
     return legend
 
