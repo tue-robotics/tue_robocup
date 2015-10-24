@@ -58,7 +58,7 @@ class Ears(object):
         answer.choices += [Choice(id="room", values=["kitchen"])]
         answer.choices += [Choice(id="table", values=["desk"])]
 
-        self.recognize = lambda spec, choices, time_out: answer
+        self.recognize = lambda spec, choices, time_out=None: answer
 
 class EButton(object):
     def __init__(self, *args, **kwargs):
@@ -82,6 +82,7 @@ class Head(object):
         self.atGoal = mock.MagicMock()
         self.look_at_standing_person = mock.MagicMock()
         self.look_at_point = mock.MagicMock()
+        self.look_at_ground_in_front_of_robot = mock.MagicMock() #TODO: Must return a EntityInfo
         self.setPanTiltGoal = mock.MagicMock()
         self.setLookAtGoal = mock.MagicMock()
         self.cancelGoal = mock.MagicMock()
@@ -183,6 +184,11 @@ class ED(object):
         self.reset = mock.MagicMock()
         self.navigation = mock.MagicMock()
         self.navigation.get_position_constraint = mock.MagicMock()
+        self.configure_kinect_segmentation = mock.MagicMock()
+        self.update_entity = mock.MagicMock()
+        self.configure_perception = mock.MagicMock()
+        self.get_closest_possible_person_entity = mock.MagicMock()
+        self.disable_plugins = mock.MagicMock()
 
 
 # class MockbotArms(arms.Arms):
