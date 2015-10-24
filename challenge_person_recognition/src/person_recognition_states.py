@@ -596,7 +596,7 @@ class ConfirmPersonName(smach.State):
 
         if not outcome == "heard":
             name = "Mister Operator Fallback"
-            self.operatorNameDes..write(name)
+            self.operatorNameDes.write(name)
 
             printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + ")")
             return 'incorrect'

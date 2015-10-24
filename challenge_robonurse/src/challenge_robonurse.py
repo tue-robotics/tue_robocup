@@ -81,7 +81,7 @@ class StoreGrannyPose(smach.State):
         #    return 'failed'
 
         # Granny is the first one
-        designator.write(possible_humans)
+        self.designator.write(possible_humans)
 
         return 'succeeded'
 
@@ -379,7 +379,7 @@ class GetPills(smach.StateMachine):
                                     DescribeBottles(robot, bottles_to_describe,
                                         spec_designator=ask_bottles_spec.writeable,
                                         choices_designator=ask_bottles_choices.writeable,
-                                        bottle_desc_mapping_designator=bottle_description_map_desig),
+                                        bottle_desc_mapping_designator=bottle_description_map_desig.writeable),
                                     transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_LOOKAT_SHELF_2'})
 
