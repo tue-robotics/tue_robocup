@@ -63,4 +63,4 @@ class ChallengeTest(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('person_recognition_exec')
 
-    startup(ChallengeTest)
+    startup(ChallengeTest, challenge_name="test")
