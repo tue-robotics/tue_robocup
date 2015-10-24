@@ -5,11 +5,8 @@
 # Date: October 2015
 ################################################
 
-import roslib; 
 import rospy
-import sys
 import smach
-import smach_ros
 import robot_smach_states as states
 import robot_smach_states.util.designators as ds
 from robot_smach_states.util.startup import startup
@@ -61,6 +58,6 @@ class ChallengeTest(smach.StateMachine):
 ############################## PYTHON ENTRY POINT ##############################
 
 if __name__ == "__main__":
-    rospy.init_node('person_recognition_exec')
+    rospy.init_node('template_executive')
 
     startup(ChallengeTest, challenge_name="test")
