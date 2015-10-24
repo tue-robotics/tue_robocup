@@ -1675,13 +1675,5 @@ if __name__ == "__main__":
     rospy.loginfo("----------------------------------------------------------")
     rospy.loginfo("----------------------- GPSR 2015 ------------------------")
     rospy.loginfo("----------------------------------------------------------")
-    
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-        ROBOT_NAME_SPECIAL = robot_name
-    else:
-        print "[CHALLENGE GPSR] Please provide robot name as argument."
-        exit(1)
 
-    rospy.sleep(1)
-    states.util.startup(setup_statemachine, robot_name=robot_name)
+    states.util.startup(setup_statemachine, challenge_name="gpsr")

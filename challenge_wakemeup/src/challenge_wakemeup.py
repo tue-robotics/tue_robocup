@@ -487,41 +487,4 @@ class WakeMeUp(smach.StateMachine):
 if __name__ == '__main__':
     rospy.init_node('wakemeup_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
-        exit(1)
-
-    if robot_name == 'amigo':
-        robot = Amigo(wait_services=True)
-    elif robot_name == 'sergio':
-        robot = Sergio(wait_services=True)
-    elif robot_name == 'mockbot':
-        robot = Mockbot(wait_services=True)
-    else:
-        print "Don't recognize that robot name: " + robot_name
-
-    ''' If necessary: set initial state '''
-    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
-
-    ''' Setup state machine'''
-    machine = WakeMeUp(robot)
-
-    if  len(sys.argv) > 2:
-        print wakeStates.bcolors.WARNING + "Overriding initial_state to '" + sys.argv[2] +  "'" + wakeStates.bcolors.ENDC
-
-        initial_state = [sys.argv[2]]
-        machine.set_initial_state(initial_state)
-
-    # for using smach viewer
-    introserver = smach_ros.IntrospectionServer('server_name', machine, '/SM_ROOT_PRIMARY')
-    introserver.start()
-
-    try:
-        machine.execute()
-        # startup(WakeMeUp, robot_name=robot_name)
-    except Exception, e:
-        print "Exception occurred on state machine execution"
-
-    introserver.stop()
+    startup(WakeMeUp, challenge_name="wakemeup")

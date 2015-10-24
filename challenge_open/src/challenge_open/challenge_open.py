@@ -817,17 +817,6 @@ def setup_statemachine(robot):
 
 ############################## initializing program ######################
 if __name__ == '__main__':
-
     rospy.init_node('open_challenge_exec')
 
-    if len(sys.argv) < 2:
-        rospy.logerr('Please specify the robot name')
-        exit()
-    else:
-        robot_name = sys.argv[1]
-
-    if len(sys.argv) > 2:
-        TEST_GRASP_LOC = sys.argv[2]        
-        rospy.logwarn('Not starting from scratch, grasping from {0}'.format(TEST_GRASP_LOC))
-
-    startup(setup_statemachine, robot_name=robot_name)
+    startup(setup_statemachine, challenge_name="open")

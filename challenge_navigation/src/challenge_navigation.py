@@ -333,10 +333,4 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('navigation_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE NAVIGATION] Please provide robot name as argument."
-        exit(1)
-
-    states.util.startup(setup_statemachine, robot_name=robot_name)
+    states.util.startup(setup_statemachine, challenge_name="navigation")

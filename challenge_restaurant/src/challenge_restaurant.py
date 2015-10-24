@@ -526,10 +526,4 @@ def test_delivery(robot):
 if __name__ == '__main__':
     rospy.init_node('restaurant_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE RESTAURANT] Please provide robot name as argument."
-        exit(1)
-
-    startup(setup_statemachine, robot_name=robot_name)
+    startup(setup_statemachine, challenge_name="restaurant")
