@@ -574,3 +574,20 @@ def test_iteration():
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+# ----------------------------------------------------------------------------------------------------
+
+class CancelHeadGoals(smach.State):
+    """
+        State wrapper for the function to cancels all head goals
+    """
+    def __init__(self, robot):
+        smach.State.__init__(self,outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, robot):
+        printOk("CancelHeadGoals")
+
+        self.robot.head.cancel_goal()
+
+        return 'done'
