@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
 ################################################
-# Creator: Luis Ferreira (luisfferreira@outlook.com)
+# Creator: Luis Ferreira (luisfferreira@outlook.com)\
+# Maintainers: Loy van Beek (loy.vanbeek@gmail.com) & Luis Ferreira (luisfferreira@outlook.com)
 # Date: October 2015
 ################################################
 
