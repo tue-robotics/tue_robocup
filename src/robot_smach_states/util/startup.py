@@ -14,7 +14,8 @@ Options:
 import rospy
 import smach_ros
 import robot_skills
-import sys, traceback
+import sys
+import traceback
 from docopt import docopt
 
 
@@ -45,7 +46,8 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
         import robot_skills.mockbot
         robot = robot_skills.mockbot.Mockbot(wait_services=True)
     else:
-        rospy.logerr("No robot named '{}'. Options: {}".format(robot_name, available_robots))
+        rospy.logerr(
+            "No robot named '{}'. Options: {}".format(robot_name, available_robots))
         exit(-1)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
@@ -54,38 +56,44 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
 
     with robot:
         try:
-            #build the state machine
+            # build the state machine
             executioner = statemachine_creator(robot)
             if initial_state:
                 initial_state = [initial_state]
-                rospy.logwarn("Overriding initial state with {}".format(initial_state))
+                rospy.logwarn(
+                    "Overriding initial state with {}".format(initial_state))
                 executioner.set_initial_state(initial_state)
 
-            introserver = smach_ros.IntrospectionServer(statemachine_creator.__name__, executioner, '/SM_ROOT_PRIMARY')
+            introserver = smach_ros.IntrospectionServer(
+                statemachine_creator.__name__, executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
 
-            #Run the statemachine
+            # Run the statemachine
             outcome = executioner.execute()
             print "Final outcome: {0}".format(outcome)
         except Exception, e:
             frame = traceback.extract_tb(sys.exc_info()[2])[0]
-            fname,lineno,fn,text = frame
-            rospy.logerr("Error: {0},{1},{2},{3}".format(fname,lineno,fn,text))
+            fname, lineno, fn, text = frame
+            rospy.logerr(
+                "Error: {0},{1},{2},{3}".format(fname, lineno, fn, text))
 
             fname_stripped = fname.split("/")[-1:][0]
 
             message = "I encountered an error in '{0}'' on line {1}: '{4}'. Can I get a restart and try again?"\
-                .format(fname_stripped,lineno,fn,text, e)
+                .format(fname_stripped, lineno, fn, text, e)
             message = message.replace("_", " ")
             message = message.replace(".py", "")
 
-            print [fname,lineno,fn,text, e]
+            print[fname, lineno, fn, text, e]
 #            robot.speech.speak(message)
         finally:
             if introserver:
                 introserver.stop()
 
-# Used in final of rgo2014. Perhaps as well in brazil. Adding possibility to start in certain state.
+# Used in final of rgo2014. Perhaps as well in brazil. Adding possibility
+# to start in certain state.
+
+
 def startup_final(statemachine_creator, initial_state, scenario_setup_function=None):
     '''Takes a FUNCTION that outputs a smach statemachine as input,
     and optionally also a FUNCTION that attaches hooks for testing the statemachine as input.
@@ -99,20 +107,20 @@ def startup_final(statemachine_creator, initial_state, scenario_setup_function=N
 
     parser = OptionParser()
     parser.add_option("--test",
-        action="store",
-        type="string",
-        dest="testmode",
-        help="Test the listed parts: --test=head,base,perception,worldmodel,arms,... or simply --test=all")
+                      action="store",
+                      type="string",
+                      dest="testmode",
+                      help="Test the listed parts: --test=head,base,perception,worldmodel,arms,... or simply --test=all")
     options, arguments = parser.parse_args()
-
 
     amigo = None
     if options.testmode:
         fakeparts = options.testmode
         fakeparts = fakeparts.split(",")
         if "all" in fakeparts:
-            fakeparts=['base','arms','perception','head', 'worldmodel']
-        rospy.logwarn("Executive started in TESTMODE, so mocking these parts of amigo: {0}".format(fakeparts))
+            fakeparts = ['base', 'arms', 'perception', 'head', 'worldmodel']
+        rospy.logwarn(
+            "Executive started in TESTMODE, so mocking these parts of amigo: {0}".format(fakeparts))
         from test_tools.build_amigo import build_amigo
         amigo = build_amigo(fake=fakeparts, wait_services=True)
     else:
@@ -122,33 +130,37 @@ def startup_final(statemachine_creator, initial_state, scenario_setup_function=N
     introserver = None
     with amigo:
         try:
-            #build the state machine
+            # build the state machine
             executioner = statemachine_creator(amigo)
-            introserver = smach_ros.IntrospectionServer('server_name', executioner, '/SM_ROOT_PRIMARY')
+            introserver = smach_ros.IntrospectionServer(
+                'server_name', executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
             if options.testmode and scenario_setup_function:
-                #add side-effects to make testing possible without working perception
+                # add side-effects to make testing possible without working
+                # perception
                 scenario_setup_function(amigo, executioner)
 
-            rospy.logwarn("Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
+            rospy.logwarn(
+                "Setting initial state to {0}, please make sure the reasoner is reset and the robot is localized correctly".format(initial_state))
             executioner.set_initial_state(initial_state)
 
-            #Run the statemachine
+            # Run the statemachine
             outcome = executioner.execute()
             print "Final outcome: {0}".format(outcome)
         except Exception, e:
             frame = traceback.extract_tb(sys.exc_info()[2])[0]
-            fname,lineno,fn,text = frame
-            rospy.logerr("Error: {0},{1},{2},{3}".format(fname,lineno,fn,text))
+            fname, lineno, fn, text = frame
+            rospy.logerr(
+                "Error: {0},{1},{2},{3}".format(fname, lineno, fn, text))
 
             fname_stripped = fname.split("/")[-1:][0]
 
             message = "I encountered an error in '{0}'' on line {1}: '{4}'. Can I get a restart and try again?"\
-                .format(fname_stripped,lineno,fn,text, e)
+                .format(fname_stripped, lineno, fn, text, e)
             message = message.replace("_", " ")
             message = message.replace(".py", "")
 
-            print [fname,lineno,fn,text, e]
+            print[fname, lineno, fn, text, e]
             amigo.speech.speak(message)
         finally:
             if introserver:
