@@ -379,7 +379,7 @@ class GetPills(smach.StateMachine):
                                     DescribeBottles(robot, bottles_to_describe,
                                         spec_designator=ask_bottles_spec.writeable,
                                         choices_designator=ask_bottles_choices.writeable,
-                                        bottle_desc_mapping_designator=bottle_description_map_desigv),
+                                        bottle_desc_mapping_designator=bottle_description_map_desig),
                                     transitions={   'succeeded'         :'GOTO_GRANNY_ASK_BOTTLE',
                                                     'failed'            :'SAY_LOOKAT_SHELF_2'})
 
