@@ -636,15 +636,4 @@ def setup_statemachine(robot):
 if __name__ == '__main__':
     rospy.init_node('manipulation_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
-        exit(1)
-
-    if len(sys.argv) > 2:
-        if sys.argv[2]:
-            rospy.logwarn("Running in debug mode!!!")
-            DEBUG = True
-
-    startup(setup_statemachine, robot_name=robot_name)
+    startup(setup_statemachine)

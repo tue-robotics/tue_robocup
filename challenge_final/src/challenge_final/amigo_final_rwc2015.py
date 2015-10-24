@@ -918,13 +918,5 @@ if __name__ == "__main__":
     rospy.loginfo("----------------------------- AMIGO -----------------------------")
     rospy.loginfo("-----------------------------------------------------------------")
         
-    # if len(sys.argv) > 1:
-    #     robot_name = sys.argv[1]
-    #     ROBOT_NAME_SPECIAL = robot_name
-    # else:
-    #     print "[CHALLENGE FINAL] Please provide robot name as argument."
-    #     exit(1)
 
-    #rospy.sleep(1)
-    #states.util.startup(setup_statemachine, robot_name=robot_name)
-    states.util.startup(setup_statemachine)
+    states.util.startup(setup_statemachine, challenge_name="final")

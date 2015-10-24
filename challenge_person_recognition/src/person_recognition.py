@@ -14,6 +14,7 @@ from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
+from robot_smach_states.util.startup import startup
 
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 
@@ -577,41 +578,4 @@ class ChallengePersonRecognition(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('person_recognition_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE PERSON RECOGNITION] Please provide robot name as argument."
-        exit(1)
-
-    if robot_name == 'amigo':
-        robot = Amigo(wait_services=True)
-    elif robot_name == 'sergio':
-        robot = Sergio(wait_services=True)
-    elif robot_name == 'mockbot':
-        robot = Mockbot(wait_services=True)
-    else:
-        print "[CHALLENGE PERSON RECOGNITION] Don't know robot name " + robot_name
-
-    ''' If necessary: set initial state '''
-    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
-
-    ''' Setup state machine'''
-    machine = ChallengePersonRecognition(robot)
-
-    if  len(sys.argv) > 2:
-        printOk("Overriding initial_state to '" + sys.argv[2] +  "'")
-
-        initial_state = [sys.argv[2]]
-        machine.set_initial_state(initial_state)
-
-
-    # for using smach viewer
-    introserver = smach_ros.IntrospectionServer('server_name', machine, '/SM_ROOT_PRIMARY')
-    introserver.start()
-
-    try:
-        machine.execute()
-    except Exception, e:
-        print "Exception occurred on state machine execution"
-
-    introserver.stop()
+    startup(ChallengePersonRecognition, challenge_name="person_recognition")

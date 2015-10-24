@@ -1009,10 +1009,4 @@ def dummy_action_recognition(robot, max_measurements=200, _id=None):
 if __name__ == '__main__':
     rospy.init_node('robonurse_exec')
 
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        print "[CHALLENGE MANIPULATION] Please provide robot name as argument."
-        exit(1)
-
-    startup(RoboNurse, robot_name=robot_name)
+    startup(RoboNurse, challenge_name="robonurse")
