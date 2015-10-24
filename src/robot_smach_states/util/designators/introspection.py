@@ -105,8 +105,7 @@ def flatten(tree, parentname=None, sep="."):
 def make_legend():
     legend = Digraph('legend')
 
-    legend.body.append('label = "Legend"')
-    legend.body.append('color=black')
+    legend = Digraph('cluster_1')
 
     state = smach.State()
     parent_desig = Designator(name="parent_designator")
@@ -120,6 +119,9 @@ def make_legend():
     usages = [used_in_state, written_in_state, used_in_desig]
     for usage in usages:
         usage.add_graphviz_edge(legend)
+
+    legend.body.append('label = "legend"')
+    legend.body.append('color=black')
 
     return legend
 
@@ -160,7 +162,9 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
     for usage in usages:
         usage.add_graphviz_edge(dot)
 
-    # dot.subgraph(make_legend())
+    dot.subgraph(make_legend())
+
+    # dot.subgraph(c1)
 
     if save_dot:
         dot.save(statemachine_name + '_designators.dot')
