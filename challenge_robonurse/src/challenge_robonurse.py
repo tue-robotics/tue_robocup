@@ -431,7 +431,7 @@ class GetPills(smach.StateMachine):
 
             ask_bottles_answer = ds.VariableDesignator(resolve_type=GetSpeechResponse, name="ask_bottles_answer")
             smach.StateMachine.add( "ASK_WHICH_BOTTLE",
-                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer, look_at_standing_person=False),
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer.writeable, look_at_standing_person=False),
                                     transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
                                                     'no_result'         :'SAY_NOTHING_HEARD'})
 
@@ -440,7 +440,7 @@ class GetPills(smach.StateMachine):
                                     transitions={   'spoken'            :'ASK_WHICH_BOTTLE_2'})
 
             smach.StateMachine.add( "ASK_WHICH_BOTTLE_2",
-                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer, look_at_standing_person=False),
+                                    states.HearOptionsExtra(robot, ask_bottles_spec, ask_bottles_choices, ask_bottles_answer.writeable, look_at_standing_person=False),
                                     transitions={   'heard'             :'CONVERT_SPEECH_DESCRIPTION_TO_DESIGNATOR',
                                                     'no_result'         :'SAY_NOTHING_HEARD_2'})
 
