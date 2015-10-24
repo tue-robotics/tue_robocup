@@ -33,9 +33,11 @@ class InitializeWorldModel(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        self.robot.ed.configure_kinect_segmentation(continuous=False)
-        self.robot.ed.configure_perception(continuous=False)
-        self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
+    	# TODO: the state was crashing when calling these arguments,
+    	# 		ASK SJOERD HOW TO USE THIS NOW!
+        # self.robot.ed.configure_kinect_segmentation(continuous=False)
+        # self.robot.ed.configure_perception(continuous=False)
+        # self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
         self.robot.ed.reset()
 
         return 'done'

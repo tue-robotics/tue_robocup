@@ -254,6 +254,7 @@ class HearYesNo(smach.State):
 
 ##########################################################################################################################################
 
+
 class AskContinue(smach.StateMachine):
     def __init__(self, robot, timeout=rospy.Duration(10)):
         smach.StateMachine.__init__(self, outcomes=['continue','no_response'])
@@ -273,6 +274,7 @@ class AskContinue(smach.StateMachine):
 
 ##########################################################################################################################################
 
+
 class WaitForPersonInFront(WaitForDesignator):
     """
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
@@ -286,6 +288,7 @@ class WaitForPersonInFront(WaitForDesignator):
 
 
 ##########################################################################################################################################
+
 
 class NameToUserData(WaitForDesignator):
     """
@@ -391,6 +394,172 @@ class LearnPerson(smach.StateMachine):
                                                     'preempted': 'failed_learning'},
                                     remapping={     'person_name_goal':'personName_userdata'})
 
+
+
+##########################################################################################################################################
+
+
+class LookAtPersonInFront(smach.State):
+    """
+        Look at the face of the person in front of the Robot. If no person is found just look forward.
+        Robot will look front and search for a face. Using the lookDown argument you can also 
+            look down, to search for example of shorter or sitting down people
+    """
+    def __init__(self, robot, lookDown = False):
+        smach.State.__init__(self, outcomes=['succeded', 'failed'])
+        self.robot = robot
+        self.lookDown = lookDown
+
+    def execute(self, userdata=None):
+
+        # initialize variables
+        foundFace = False
+        result = None
+        entityData = None
+        faces_front = None
+        desgnResult = None
+
+        self.robot.head.cancel_goal()
+
+        # look front, 2 meters high
+        self.robot.head.look_at_point(point_stamped=gm.PointStamped(3, 0, 1.5,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
+        rospy.sleep(1)  # give time for the percetion algorithms to add the entity
+
+        desgnResult = scanForHuman(self.robot)
+        if not desgnResult:
+            print "[LookAtPersonInFront] " + "Could not find a human while looking up"
+
+        # if no person was seen at 2 meters high, look down, because the person might be sitting
+        if not desgnResult and self.lookDown == True:
+            # look front, 2 meters high
+            self.robot.head.look_at_point(point_stamped=gm.PointStamped(3, 0, 0,self.robot.robot_name+"/base_link"), end_time=0, timeout=4)
+
+            # try to resolve the designator
+            desgnResult = scanForHuman(self.robot)
+            if not desgnResult:
+                print "[LookAtPersonInFront] " + "Could not find a human while looking down"
+                pass
+
+        # if there is a person in front, try to look at the face
+        if desgnResult:
+            print "[LookAtPersonInFront] " + "Designator resolved a Human!"
+
+            # extract information from data
+            faces_front = None
+            try:
+                # import ipdb; ipdb.set_trace()
+                # get information on the first face found (cant guarantee its the closest in case there are many)
+                faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
+            except KeyError, ke:
+                print "[LookAtPersonInFront] " + "KeyError faces_front: " + str(ke)
+                pass
+            except IndexError, ke:
+                print "[LookAtPersonInFront] " + "IndexError faces_front: " + str(ke)
+                pass
+            except TypeError, ke:
+                print "[LookAtPersonInFront] " + "TypeError faces_front: " + str(ke)
+                pass
+
+            if faces_front:
+                headGoal = gm.PointStamped(x=faces_front["map_x"], y=faces_front["map_y"], z=faces_front["map_z"], frame_id="/map")
+
+                print "[LookAtPersonInFront] " + "Sending head goal to (" + str(headGoal.point.x) + ", " + str(headGoal.point.y) + ", " + str(headGoal.point.z) + ")"
+                self.robot.head.look_at_point(point_stamped=headGoal, end_time=0, timeout=4)
+
+                foundFace == True            
+            else:
+                print "[LookAtPersonInFront] " + "Found a human but no faces."
+                foundFace == False 
+
+        if foundFace == True:
+            return 'succeded'
+        else:
+            print "[LookAtPersonInFront] " + "Could not find anyone in front of the robot"
+            return 'failed'
+
+
+##########################################################################################################################################
+
+
+class WaitForPerson(smach.State):
+    """
+        Wait until a person is seen/scanned in front of the robot.
+            Use paramaterers to costumize number of retries and sleep between retries
+    """
+    def __init__(self, robot, attempts = 1, sleep_interval = 1):
+        smach.State.__init__(self, outcomes=['succeded', 'failed'])
+        self.robot = robot
+        self.attempts = attempts
+        self.sleep_interval = sleep_interval
+
+    def execute(self, userdata=None):
+        counter = 0
+        desgnResult = None
+
+        while counter < self.attempts:
+            print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
+
+            desgnResult = scanForHuman(self.robot)
+            if desgnResult:
+                print "[LookAtPersonInFront] " + "Found a human!"
+                return 'succeded'
+
+            counter += 1
+            rospy.sleep(self.sleep_interval)
+
+        return 'failed'
+
+##########################################################################################################################################
+
+
+def scanForHuman(robot):
+    """
+        Scan for a human in front of the robot
+    """
+    entity_list = []
+
+    ''' Enable kinect segmentation plugin (only one image frame) '''
+    # TODO: AttributeError: ED instance has no attribute 'segment_kinect'
+    # entities_found = robot.ed.segment_kinect(max_sensor_range=3)
+    entities_found = []
+
+    print "[LookAtPersonInFront] " + "Found {0} entities".format(len(entities_found))
+
+    ''' Get all entities that are returned by the segmentation '''
+    id_list = []                
+    for entity_id in entities_found:
+        ''' get the entity from the ID '''
+        entity = robot.ed.get_entity(entity_id)
+
+        if entity:
+            id_list.append(entity.id)
+
+    ''' Try to classify the entities '''
+    entity_types = robot.ed.classify(ids=id_list, types=['human'])
+
+    ''' Check all entities that were flagged to see if they have received a 'type' it_label'''
+    for i in range(0, len(id_list)):
+        e_id = id_list[i]
+        e_type = entity_types[i]
+
+        if e_type:
+            ''' If the type is human, add it to the list '''
+            if e_type == "human":
+                entity = robot.ed.get_entity(e_id)
+                # entity.data
+
+                print "[LookAtPersonInFront] " + "Entity with type " + e_type + " added to the list (id " + e_id + ")"
+                # robot.ed.update_entity(id=e_id, flags=[{"add": "locked"}])
+
+                entity_list = entity_list + [entity]
+            else:
+                ''' if the entity type is not human, ignore it '''
+                print "[LookAtPersonInFront] " + "Entity with type '" + e_type + "' ignored"
+
+
+    # import ipdb; ipdb.set_trace()
+
+    return entity_list
 
 
 ##########################################################################################################################################
