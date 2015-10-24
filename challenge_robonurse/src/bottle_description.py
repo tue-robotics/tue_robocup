@@ -4,7 +4,7 @@ import rospy
 import smach
 
 from visualization_msgs.msg import Marker
-from robot_smach_states.util.designators import check_resolve_type
+from robot_smach_states.util.designators import check_resolve_type, is_writeable
 from ed.msg import EntityInfo
 from robot_skills.util import msg_constructors as geom
 from collections import OrderedDict
@@ -135,8 +135,13 @@ class DescribeBottles(smach.State):
         check_resolve_type(bottle_collection_designator, [EntityInfo])
         self.bottle_collection_designator = bottle_collection_designator
 
+        is_writeable(spec_designator)
         self.spec_designator = spec_designator
+
+        is_writeable(choices_designator)
         self.choices_designator = choices_designator
+
+        is_writeable(bottle_desc_mapping_designator)
         self.bottle_desc_mapping_designator = bottle_desc_mapping_designator
         self._pub = rospy.Publisher("/bottles", Marker, queue_size=10)
 

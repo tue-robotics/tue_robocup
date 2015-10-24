@@ -149,8 +149,14 @@ class GetOrder(smach.State):
                                 outcomes=['succeeded', 'failed'])
 
         self.robot = robot
+
+        is_writeable(breakfastCerealDes)
         self.breakfastCereal = breakfastCerealDes
+
+        is_writeable(breakfastFruitDes)
         self.breakfastFruit = breakfastFruitDes
+
+        is_writeable(breakfastMilkDes)
         self.breakfastMilk = breakfastMilkDes
 
 
@@ -301,8 +307,13 @@ class PickDefaultOrder(smach.State):
     def __init__(self, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes):
         smach.State.__init__(self, outcomes=['done'])
 
+        is_writeable(breakfastCerealDes)
         self.breakfastCereal = breakfastCerealDes
+
+        is_writeable(breakfastFruitDes)
         self.breakfastFruit = breakfastFruitDes
+
+        is_writeable(breakfastMilkDes)
         self.breakfastMilk = breakfastMilkDes
 
     def execute(self, userdata):
@@ -457,6 +468,12 @@ class SelectItem(smach.State):
         self.asked_items_des = asked_items
         self.count = len(self.options)
         self.current = 0
+
+        is_writeable(generic_item)
+        is_writeable(specific_item)
+        is_writeable(item_nav_goal)
+        is_writeable(item_lookat_goal)
+
         self.generic_item = generic_item
         self.specific_item = specific_item
         self.nav_goal = item_nav_goal
@@ -502,6 +519,8 @@ class FindItem(smach.State):
         self.sensor_range = sensor_range
         self.on_object_des = on_object_des
         self.result_type_des = type_des
+
+        is_writeable(result_des)
         self.result_des = result_des
 
     def execute(self, userdata):

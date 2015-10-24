@@ -441,6 +441,8 @@ class AskPersonName(smach.State):
                                 outcomes=['succeded', 'failed'])
 
         self.robot = robot
+
+        is_writeable(operatorNameDes)
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):
@@ -486,6 +488,8 @@ class ConfirmPersonName(smach.State):
         smach.State.__init__(   self, 
                                 outcomes=['correct', 'incorrect'])
 
+        is_writeable(operatorNameDes)
+        self.operatorNameDes = operatorNameDes
         self.robot = robot
 
     def execute(self, userdata):
@@ -502,7 +506,7 @@ class ConfirmPersonName(smach.State):
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
         if not outcome == "heard":
@@ -787,6 +791,8 @@ class ResetSearch(smach.State):
         smach.State.__init__(   self, outcomes=['done'])
 
         self.robot = robot
+
+        is_writeable(locations)
         self.locations = locations
         
     def execute(self, userdata):

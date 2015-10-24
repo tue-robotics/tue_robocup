@@ -10,7 +10,7 @@ from robot_skills.reasoner  import Conjunction, Compound, Disjunction, Constant
 from robot_smach_states.util.startup import startup
 import robot_skills.util.msg_constructors as msgs
 import robot_skills.util.transformations as transformations
-from robot_smach_states.util.designators import Designator, VariableDesignator, EdEntityByQueryDesignator
+from robot_smach_states.util.designators import Designator, VariableDesignator, EdEntityByQueryDesignator, is_writeable
 
 from pein_srvs.srv import SetObjects
 from ed.srv import SimpleQuery, SimpleQueryRequest
@@ -30,6 +30,8 @@ class LookForObjects(smach.State):
     def __init__(self, robot, designator):
         smach.State.__init__(self,outcomes=['done', 'failed'])
         self.robot = robot
+
+        is_writeable(designator)
         self.designator = designator
 
     def execute(self, userdata):

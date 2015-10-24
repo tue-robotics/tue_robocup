@@ -528,6 +528,8 @@ class AskPersonName(smach.State):
                                 outcomes=['succeded', 'failed'])
 
         self.robot = robot
+
+        is_writeable(operatorNameDes)
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):

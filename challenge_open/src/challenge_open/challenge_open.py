@@ -321,7 +321,8 @@ class ConversationWithOperator(smach.State):
         smach.State.__init__(self, outcomes=['succeeded','failed'])
         self.robot = robot
         # Designator where to look for the object
-        self.furniture_designator = furniture_designator 
+        is_writeable(furniture_designator)
+        self.furniture_designator = furniture_designator
         # Object designator (obsolete)
         self.object_designator = object_designator
 
