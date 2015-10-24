@@ -17,6 +17,7 @@ from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
+from robot_smach_states.util.startup import startup
 
 # import designators
 from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
@@ -63,7 +64,7 @@ class ChallengeTest(smach.StateMachine):
             with testContainer:
 
                 smach.StateMachine.add('SAY_TEST_SYMBOLIC',
-                                       states.Say(robot,"Testing Navigate To Symbolic.", block=True),
+                                       states.Say(robot,"Testing Navigate To Symbolic, going to the couch table.", block=False),
                                        transitions={'spoken':'NAV_TO_SYMB'})
 
                 smach.StateMachine.add('NAV_TO_SYMB',
@@ -75,11 +76,11 @@ class ChallengeTest(smach.StateMachine):
                                                         'goal_not_defined'  :   'SAY_FAILED_SYMBOLIC'})
 
                 smach.StateMachine.add('SAY_FAILED_SYMBOLIC',
-                                       states.Say(robot,"Failed Navigate To Symbolic.", block=False),
+                                       states.Say(robot,"Failed Navigate To Symbolic.", block=True),
                                        transitions={'spoken':'SAY_TEST_WAYPOINT'})
 
                 smach.StateMachine.add('SAY_TEST_WAYPOINT',
-                                       states.Say(robot,"Testing Navigate To Waypoint.", block=True),
+                                       states.Say(robot,"Testing Navigate To Waypoint.", block=False),
                                        transitions={'spoken':'NAV_TO_WAYPOINT'})
 
                 smach.StateMachine.add( 'NAV_TO_WAYPOINT',
@@ -89,7 +90,7 @@ class ChallengeTest(smach.StateMachine):
                                                         'goal_not_defined' : 'SAY_FAILED_WAYPOINT'})
 
                 smach.StateMachine.add('SAY_FAILED_WAYPOINT',
-                                       states.Say(robot,"Failed Navigate To Waypoint.", block=False),
+                                       states.Say(robot,"Failed Navigate To Waypoint.", block=True),
                                        transitions={'spoken':'container_success'})
 
 
@@ -109,47 +110,7 @@ class ChallengeTest(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('person_recognition_exec')
 
-    # make sure there is an argument with the robot name
-    if len(sys.argv) > 1:
-        robot_name = sys.argv[1]
-    else:
-        printError("Please provide robot name as argument.")
-        exit(1)
-
-    # load robot name
-    if robot_name == 'amigo':
-        robot = Amigo(wait_services=True)
-    elif robot_name == 'sergio':
-        robot = Sergio(wait_services=True)
-    elif robot_name == 'mockbot':
-        robot = Mockbot(wait_services=True)
-    else:
-        printError("Unknown robot name: " + robot_name)
-
-    rospy.loginfo("Sys.argv = {0}, Length = {1}".format(sys.argv,len(sys.argv)))
-
-    # initialize state machine
-    machine = ChallengeTest(robot)
-
-    # override initial state if there is a second argument with the state name
-    if  len(sys.argv) > 2:
-        printWarning("Overriding initial_state to '" + sys.argv[2] +  "'")
-
-        initial_state = [sys.argv[2]]
-        machine.set_initial_state(initial_state)
-
-    # introserver for using smach viewer
-    introserver = smach_ros.IntrospectionServer('server_name', machine, '/SM_ROOT_PRIMARY')
-    introserver.start()
-
-    # execute state machine
-    try:
-        machine.execute()
-        printOk("Executive finished")       
-    except Exception, e:
-        print "Exception occurred on state machine execution"
-
-    introserver.stop()
+    startup(ChallengeTest, challenge_name="test")
 
 
 '''
@@ -174,7 +135,7 @@ Behaviours to test:
 
 Executive:
     - drive to living room (waypoint)
-    - test speech: say looking for people
+    - test speech: say waiting for people
     - facing forward, learn the person in front
     - drive to dinning room (object)
     - test speech: say looking for objects on top of the table

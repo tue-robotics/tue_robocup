@@ -26,7 +26,7 @@ printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Tes
 
 ############################## MAIN STATE MACHINE ##############################
 
-class ChallengeTest(smach.StateMachine):
+class ChallengeTemplate(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
@@ -60,4 +60,5 @@ class ChallengeTest(smach.StateMachine):
 if __name__ == "__main__":
     rospy.init_node('template_executive')
 
-    startup(ChallengeTest, challenge_name="test")
+
+    startup(ChallengeTemplate, challenge_name="template")
