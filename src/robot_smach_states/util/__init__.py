@@ -1,2 +1,2 @@
-from startup import startup, startup_final
+from startup import startup
 

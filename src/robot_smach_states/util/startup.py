@@ -13,7 +13,6 @@ Options:
 
 import rospy
 import smach_ros
-import robot_skills
 import sys
 import traceback
 from docopt import docopt
@@ -23,12 +22,14 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
     '''
     :param statemachine_creator: a function that outputs a statemachine.
         The function should take a robot as input.
-    :param initial_state the state to start the state machine in. Can be supplied as command line argument
-    :param robot_name name of the robot to initialize and start to pass to the state machine'''
+    :param initial_state the state to start the state machine in. 
+        Can be supplied as command line argument
+    :param robot_name name of the robot to pass to the state machine'''
 
     if initial_state or robot_name:
-        rospy.logwarn("Setting initial_state and robot_name via the startup is not needed and deprecated. "
-                      "This is inferred by startup from the command line")
+        rospy.logwarn(  "Setting initial_state and robot_name via the startup"
+                        " is not needed and deprecated. "
+                        "This is inferred by startup from the command line")
 
     arguments = docopt(__doc__, version='robot_smach_states startup 2.0')
     robot_name = arguments["<robotname>"]
@@ -47,7 +48,8 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
         robot = robot_skills.mockbot.Mockbot(wait_services=True)
     else:
         rospy.logerr(
-            "No robot named '{}'. Options: {}".format(robot_name, available_robots))
+            "No robot named '{}'. Options: {}"\
+                .format(robot_name, available_robots))
         exit(-1)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
@@ -79,7 +81,8 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
 
             fname_stripped = fname.split("/")[-1:][0]
 
-            message = "I encountered an error in '{0}'' on line {1}: '{4}'. Can I get a restart and try again?"\
+            message = "I encountered an error in '{0}'' on line {1}: '{4}'. " \
+                      "Can I get a restart and try again?"\
                 .format(fname_stripped, lineno, fn, text, e)
             message = message.replace("_", " ")
             message = message.replace(".py", "")
@@ -89,4 +92,3 @@ def startup(statemachine_creator, initial_state=None, robot_name=''):
         finally:
             if introserver:
                 introserver.stop()
-
