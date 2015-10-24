@@ -83,7 +83,7 @@ def format_designator(desig):
     else:
         resolve_type_format = desig.resolve_type.__name__
 
-    desig_name = "{name}({cls}@{addr})\\n<{resolve_type}>".format(name=desig.name + " " if desig.name else "",
+    desig_name = "{name}\\n{cls}\\n@{addr}\\n<{resolve_type}>".format(name=desig.name + " " if desig.name else "",
                                                                  cls=desig.__class__.__name__,
                                                                  addr=hex(id(desig)),
                                                                  resolve_type=resolve_type_format)
@@ -164,8 +164,6 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
         usage.add_graphviz_edge(dot)
 
     dot.subgraph(make_legend())
-
-    # dot.subgraph(c1)
 
     if save_dot:
         dot.save(statemachine_name + '_designators.dot')
