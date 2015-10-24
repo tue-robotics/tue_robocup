@@ -22,17 +22,22 @@ common_knowledge = load_knowledge("common")
 challenge_knowledge = load_knowledge("challenge_person_recognition")
 OBJECT_TYPES = challenge_knowledge.object_types
 
-
-''' printing shortcuts '''
-prefix = common_knowledge.bcolors.HEADER + "[Challenge Test] " + common_knowledge.bcolors.ENDC
-
-def printOk(sentence):
-    print prefix + common_knowledge.bcolors.OKBLUE + sentence + common_knowledge.bcolors.ENDC
-
-def printError(sentence):
-    print prefix + common_knowledge.bcolors.FAIL + sentence + common_knowledge.bcolors.ENDC
-
-def printWarning(sentence):
-    print prefix + common_knowledge.bcolors.WARNING + sentence + common_knowledge.bcolors.ENDC
+# define print shortcuts from common knowledge
+printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Test] ")
 
 
+
+# ----------------------------------------------------------------------------------------------------
+
+class PointAtOperator(smach.State):
+    def __init__(self, robot):
+        smach.State.__init__(self, outcomes=['done'])
+        self.robot = robot
+
+    def execute(self, robot):
+        printOk("PointAtOperator")
+
+        # Get information about the operator and point at the location
+        self.robot.rightArm.send_goal(0.5, -0.2, 0.9, 0, 0, 0, 60)
+
+        return 'done'

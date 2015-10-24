@@ -19,30 +19,20 @@ from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 
 # import designators
-# from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 
 # import states from another file
-# import test_states as test_states
+import test_states as test_states
 
 
 ############################## INITIALIZATIONS ##############################
 
 # load knowledge
 common_knowledge = load_knowledge("common")
-# challenge_knowledge = load_knowledge("challenge_test")
+challenge_knowledge = load_knowledge("challenge_test")
 
-''' printing shortcuts '''
-prefix = common_knowledge.bcolors.HEADER + "[Challenge Test] " + common_knowledge.bcolors.ENDC
-
-def printOk(sentence):
-    print prefix + common_knowledge.bcolors.OKBLUE + sentence + common_knowledge.bcolors.ENDC
-
-def printError(sentence):
-    print prefix + common_knowledge.bcolors.FAIL + sentence + common_knowledge.bcolors.ENDC
-
-def printWarning(sentence):
-    print prefix + common_knowledge.bcolors.WARNING + sentence + common_knowledge.bcolors.ENDC
-
+# define print shortcuts from common knowledge
+printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Test] ")
 
 
 ############################## MAIN STATE MACHINE ##############################
@@ -53,17 +43,55 @@ class ChallengeTest(smach.StateMachine):
 
         with self:
 
+            # Initializations
+
+            smach.StateMachine.add( 'INITIALIZE',
+                                    states.Initialize(robot),
+                                    transitions={   'initialized':'INIT_WM',
+                                                    'abort':'Aborted'})
+
+            smach.StateMachine.add( "INIT_WM",
+                                    states.InitializeWorldModel(robot), 
+                                    transitions={    'done':'TEST_CONTAINER'})
+
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                             TEST CONTAINER
+            #                             ENTER CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # container for this stage
             testContainer = smach.StateMachine(outcomes = ['container_success', 'container_failed'])
             with testContainer:
 
-                smach.StateMachine.add('TEST_SPEACH',
-                                       states.Say(robot,"Testing speach"),
+                smach.StateMachine.add('SAY_TEST_SYMBOLIC',
+                                       states.Say(robot,"Testing Navigate To Symbolic.", block=True),
+                                       transitions={'spoken':'NAV_TO_SYMB'})
+
+                smach.StateMachine.add('NAV_TO_SYMB',
+                                        states.NavigateToSymbolic(robot, 
+                                            {EdEntityDesignator(robot, id="living_room") : "in" }, 
+                                            EdEntityDesignator(robot, id="couchtable")),
+                                        transitions={   'arrived'           :   'SAY_TEST_WAYPOINT',
+                                                        'unreachable'       :   'SAY_FAILED_SYMBOLIC',
+                                                        'goal_not_defined'  :   'SAY_FAILED_SYMBOLIC'})
+
+                smach.StateMachine.add('SAY_FAILED_SYMBOLIC',
+                                       states.Say(robot,"Failed Navigate To Symbolic.", block=False),
+                                       transitions={'spoken':'SAY_TEST_WAYPOINT'})
+
+                smach.StateMachine.add('SAY_TEST_WAYPOINT',
+                                       states.Say(robot,"Testing Navigate To Waypoint.", block=True),
+                                       transitions={'spoken':'NAV_TO_WAYPOINT'})
+
+                smach.StateMachine.add( 'NAV_TO_WAYPOINT',
+                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.wp_test_nav)),
+                                        transitions={   'arrived' : 'container_success',
+                                                        'unreachable' : 'SAY_FAILED_WAYPOINT',
+                                                        'goal_not_defined' : 'SAY_FAILED_WAYPOINT'})
+
+                smach.StateMachine.add('SAY_FAILED_WAYPOINT',
+                                       states.Say(robot,"Failed Navigate To Waypoint.", block=False),
                                        transitions={'spoken':'container_success'})
+
 
             # add container to state machine
             smach.StateMachine.add( 'TEST_CONTAINER',
@@ -122,3 +150,39 @@ if __name__ == "__main__":
         print "Exception occurred on state machine execution"
 
     introserver.stop()
+
+
+'''
+Setup:
+    - insert 2 persons in "computer room"
+    - insert person in living room, in sight
+    - insert 3 drinks in dinning table
+    - insert object behind the kitchen table
+
+
+Behaviours to test:
+    - navigate to waypoint
+    - navigate to object
+    - avoid obstacle
+    - detect/recognize objects
+    - detect/recognize people
+    - speach
+    - listenning
+    - grasping object
+    - test designators
+
+
+Executive:
+    - drive to living room (waypoint)
+    - test speech: say looking for people
+    - facing forward, learn the person in front
+    - drive to dinning room (object)
+    - test speech: say looking for objects on top of the table
+    - detect and recognize the three drinks 
+    - grab one of the drinks
+    - navigate to behind the "kitchen counter", and test navigation fail by placing an object in the way
+    - navigate to second door
+    - recognize the person in front
+    - finish challenge
+
+'''
