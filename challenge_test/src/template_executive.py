@@ -29,7 +29,7 @@ printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Tes
 
 ############################## MAIN STATE MACHINE ##############################
 
-class ChallengeTest(smach.StateMachine):
+class ChallengeTemplate(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
 
@@ -61,6 +61,6 @@ class ChallengeTest(smach.StateMachine):
 ############################## PYTHON ENTRY POINT ##############################
 
 if __name__ == "__main__":
-    rospy.init_node('person_recognition_exec')
+    rospy.init_node('template_exec')
 
-    startup(ChallengeTest, challenge_name="test")
+    startup(ChallengeTemplate, challenge_name="template_exec")
