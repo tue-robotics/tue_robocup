@@ -234,6 +234,26 @@ class EntityByIdDesignator(Designator):
             return None
 
 
+class ReasonedEntityDesignator(Designator):
+    def __init__(self, robot, querystring, name=None):
+        super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        assert hasattr(robot, "reasoner")
+        self.robot = robot
+        self.querystring = querystring
+
+    def resolve(self):
+        first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
+        if not first_answer:
+            return None
+        print "first_answer is:", str(first_answer)
+
+        entities = self.ed.get_entities(id=str(first_answer), parse=True)
+        if entities:
+            return entities[0]
+        else:
+            return None
+
+
 class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
     It does this by queying ED for entities that occupy some space.
