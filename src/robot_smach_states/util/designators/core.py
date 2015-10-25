@@ -58,7 +58,16 @@ class Designator(object):
 
     def lockable(self):
         """Designators can be lockable. This means their value does not change between calls to .lock and .unlock().
-        What this means exactly is different for different subclasses."""
+        What this means exactly is different for different subclasses.
+
+        For example, an EdEntityDesignator must lock only the Entity's ID and not the Python object itself.
+        In the latter case, ED can update the Entity's info but the designator will not update that because its
+        locked to a Python-object.
+        For Arms, it makes sense to lock to the actual Python-object with the current implementation.
+
+        For a lot of Designators, .lockable() will yield the Error below, but in those cases it will make sense,
+        because locking them has no meaning.
+        Then, calling .lock will fail as well. States that want a .lock method should check for it."""
         raise NotImplementedError("Core Designator is not lockable. Override .lockable() in subclasses."
                                   " For locking to the exact same Python-object, use the LockingDesignator")
 
