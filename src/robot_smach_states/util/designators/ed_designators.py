@@ -141,6 +141,7 @@ class EdEntityDesignator(Designator):
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
         super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        self.robot = robot
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -169,6 +170,9 @@ class EdEntityDesignator(Designator):
         self.id_designator = id_designator
 
         self.debug = debug
+
+    def lockable(self):
+        return LockToId(self.robot, self)
 
     def resolve(self):
         if self.debug:
@@ -252,6 +256,9 @@ class ReasonedEntityDesignator(Designator):
             return entities[0]
         else:
             return None
+
+    def lockable(self):
+        return LockToId(self.robot, self)
 
 
 class EmptySpotDesignator(Designator):
@@ -380,6 +387,49 @@ class EmptySpotDesignator(Designator):
         self.marker_pub.publish(self.marker_array)
 
         return points
+
+
+class LockToId(Designator):
+    """An Entity...Designator's resolve() method may return a different Entity everytime.
+    For some cases, this may be unwanted because a process has to be done with the same Entity for tha action to be
+    consistent.
+    In that case, a designator resolving to a different object every time is not usable.
+    A LockToId will resolve to the same Entity after a call to .lock() and
+    will only resolve to a different Entity after an unlock() call.
+    This is done by remembering the Entity's ID"""
+
+    def __init__(self, robot, to_be_locked, name=None):
+        super(LockToId, self).__init__(resolve_type=to_be_locked.resolve_type, name=name)
+        self.robot = robot
+        self.to_be_locked = to_be_locked
+        self._locked_to_id = None
+        self._locked = False
+
+    def lock(self):
+        self._locked = True
+
+    def unlock(self):
+        self._locked_to_id = None
+        self._locked = False
+
+    def resolve(self):
+        if self._locked: # If we should resolve to a remembered thing
+            if not self._locked_to_id: # but we haven't remembered anything yet
+                entity = self.to_be_locked.resolve() # Then find  out what we should remember
+                if entity: # If we can find what to remember
+                    self._locked_to_id = entity.id # remember its ID.
+                else:
+                    pass # If we cannot find what to remember, to_be_locked.resolve() return None and we return that too
+                rospy.loginfo("{0} locked to ID {1}".format(self, self._locked_to_id))
+            else: # If we do remember something already, recall that remembered ID:
+                return self.robot.ed.get_entities(id=self._locked_to_id)
+        else:
+            entity = self.to_be_locked.resolve()
+            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity.id))
+            return entity
+
+    def __repr__(self):
+        return "LockToId({})._locked = {}".format(self.to_be_locked, self._locked)
 
 if __name__ == "__main__":
     import doctest

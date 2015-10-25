@@ -2,6 +2,7 @@
 
 import rospy
 from robot_smach_states.util.designators.core import Designator
+from robot_smach_states.util.designators.utility import LockingDesignator
 from robot_skills.arms import Arm
 
 __author__ = 'loy'
@@ -48,6 +49,9 @@ class ArmDesignator(Designator):
     def available(self, arm):
         """Check whether the given arm is available for some function."""
         return True
+
+    def lockable(self):
+        return LockingDesignator(self)
 
 
 class UnoccupiedArmDesignator(ArmDesignator):

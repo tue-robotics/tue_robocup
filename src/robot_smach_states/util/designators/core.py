@@ -56,6 +56,12 @@ class Designator(object):
     resolve_type = property(_get_resolve_type)
     name = property(_get_name)
 
+    def lockable(self):
+        """Designators can be lockable. This means their value does not change between calls to .lock and .unlock().
+        What this means exactly is different for different subclasses."""
+        raise NotImplementedError("Core Designator is not lockable. Override .lockable() in subclasses."
+                                  " For locking to the exact same Python-object, use the LockingDesignator")
+
 
 class VariableDesignator(Designator):
 
