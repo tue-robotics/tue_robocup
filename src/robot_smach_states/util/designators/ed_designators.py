@@ -219,6 +219,21 @@ class EdEntityDesignator(Designator):
     #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
 
 
+class EntityByIdDesignator(Designator):
+    def __init__(self, robot, id_, parse=True, name=None):
+        super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        self.ed = robot.ed
+        self.id_ = id_
+        self.parse = parse
+
+    def resolve(self):
+        entities = self.ed.get_entities(id=self.id_, parse=self.parse)
+        if entities:
+            return entities[0]
+        else:
+            return None
+
+
 class EmptySpotDesignator(Designator):
     """Designates an empty spot on the empty placement-shelve.
     It does this by queying ED for entities that occupy some space.
