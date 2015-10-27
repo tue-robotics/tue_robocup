@@ -590,8 +590,6 @@ class CancelHeadGoals(smach.State):
         self.robot = robot
 
     def execute(self, robot):
-        printOk("CancelHeadGoals")
-
         self.robot.head.cancel_goal()
 
         return 'done'
