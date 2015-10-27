@@ -147,7 +147,7 @@ class LearnNameContainer(smach.StateMachine):
                 with learnNameContainer:
 
                     smach.StateMachine.add( 'ASK_PERSON_NAME',
-                                            test_states.AskPersonName(robot, personNameDes),
+                                            test_states.AskPersonName(robot, personNameDes.writeable),
                                             transitions={   'succeded':'SAY_IS_YOUR_NAME',
                                                             'failed':'SAY_HEAR_FAILED'})
 

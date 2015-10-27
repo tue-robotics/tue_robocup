@@ -69,18 +69,18 @@ class AskPersonName(smach.State):
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
         if not outcome == "heard":
-            self.personNameDes.current = self.defaultName
+            self.personNameDes.write(self.defaultName)
 
             printWarning("Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(str(outcome), self.personNameDes.resolve()))
             return 'failed'
         else:
             try:
                 name = answer.resolve().choices["name"]
-                self.personNameDes.current = name
+                self.personNameDes.write(name)
 
                 printOk("Result received from speech recognition is '" + name + "'")
             except KeyError, ke:
