@@ -216,17 +216,18 @@ class Counter(smach.State):
         smach.State.__init__(self, outcomes=['counted', 'limit_reached'])
         self.limit = limit
 
-        check_resolve_type(counter,int)
+        check_resolve_type(counter, int)
+        is_writeable(counter)
         self.counter = counter
 
     def execute(self, userdata):
         count = self.counter.resolve()
 
         if count >= self.limit:
-            self.counter.current = 0
+            self.counter.write(0)
             return 'limit_reached'
         else:
-            self.counter.current += 1
+            self.counter.write(self.counter.resolve() + 1)
             return 'counted'
 
 # ----------------------------------------------------------------------------------------------------
@@ -273,10 +274,11 @@ class SetTimeMarker(smach.State):
     def __init__(self, robot, designator):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
+        is_writeable(designator)
         self.designator = designator
 
     def execute(self, userdata=None):
-        self.designator.current = rospy.Time.now()
+        self.designator.write(rospy.Time.now())
         return "done"
 
 # ----------------------------------------------------------------------------------------------------
@@ -528,16 +530,18 @@ class IteratorState(smach.State):
     def __init__(self, iterable_designator, element_designator):
         smach.State.__init__(self, outcomes=['next', 'stop_iteration'])
         self.iterable_designator = iterable_designator
+
+        is_writeable(element_designator)
         self.element_designator = element_designator
 
     def execute(self, userdata=None):
         elements = self.iterable_designator.resolve()
         if elements:
-            self.element_designator.current = elements.pop(0)
+            self.element_designator.write(elements.pop(0))
             rospy.loginfo("{0} iterates to next: {1}".format(self, str(self.element_designator.current)[:20]))
             return "next"
         else:
-            # self.element_designator.current = None
+            # self.element_designator.write(None)
             return "stop_iteration"
 
 # ----------------------------------------------------------------------------------------------------

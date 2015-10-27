@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 __author__ = 'loy'
-
+import core
 
 def check_resolve_type(designator, *allowed_types):
     """
@@ -48,6 +48,13 @@ def check_type(designator_or_value, *allowed_types):
     else:
         if not type(designator_or_value) in allowed_types:
             raise TypeError("{0} is of type {1} but should be {2}".format(designator_or_value, type(designator_or_value), allowed_types))
+
+def is_writeable(variable_writer):
+    if isinstance(variable_writer, core.VariableWriter):
+        return True
+    else:
+        raise TypeError("{0} is not writable".format(variable_writer))
+
 
 if __name__ == "__main__":
     import doctest
