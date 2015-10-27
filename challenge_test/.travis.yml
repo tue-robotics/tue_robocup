@@ -9,6 +9,7 @@ env:
   - ROS_DISTRO=hydro
 notifications:
   - email: false
+sudo: required
 
 before_install:
   - CI_SOURCE_PATH=$(pwd)
