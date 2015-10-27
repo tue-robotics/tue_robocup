@@ -37,3 +37,4 @@ script:
   - roscore >> /dev/null &
   - rosrun robot_skills msg_constructors.py
   - rosrun robot_skills mockbot.py
+  - killall roscore
