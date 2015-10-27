@@ -14,6 +14,7 @@ sudo: required
 before_install:
   - CI_SOURCE_PATH=$(pwd)
   - REPOSITORY_NAME=${PWD##*/}
+  - ROBOT_ENV=robotics_testlabs
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
 
 install:
