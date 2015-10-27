@@ -16,6 +16,7 @@ import smach_ros
 import sys
 import traceback
 from docopt import docopt
+import os
 
 
 def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None):
@@ -76,6 +77,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
             outcome = executioner.execute()
             print "Final outcome: {0}".format(outcome)
         except Exception, e:
+            print "An exception occured"
             frame = traceback.extract_tb(sys.exc_info()[2])[0]
             fname, lineno, fn, text = frame
             rospy.logerr(
@@ -94,3 +96,20 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
         finally:
             if introserver:
                 introserver.stop()
+            kill_proc_tree(os.getpid()) #Sometimes scripts won't terminate nicely, so we kill it the hard way.
+
+def kill_proc_tree(pid, including_parent=True):    
+    import psutil
+    parent = psutil.Process(pid)
+    try:
+        parent.wait(5)
+    except psutil.TimeoutExpired:
+        print "Parent process won't die nicely, so kill the children first. Sounds harsh, but it just a process"
+        children = parent.get_children()
+        for child in children:
+            child.kill()
+        for child in children:
+            child.wait(timeout=5)
+        if including_parent:
+            parent.kill()
+            parent.wait(5)
