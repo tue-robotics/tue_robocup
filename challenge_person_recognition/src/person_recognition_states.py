@@ -338,12 +338,15 @@ class FindCrowd(smach.State):
             for humanEntity in faces_locations:
                 faceList = []
                 try:
-                    # import ipdb; ipdb.set_trace()
                     # faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
                     faceList = humanEntity.data['perception_result']['face_detector']['faces_front']
                     printOk("Found {0} faces in this entity".format(len(faceList)))
                 except KeyError, ke:
                     printError("Could not resolve humanEntity.data[...]:" + str(ke))
+                    pass
+                except TypeError, te:
+                    printError("Could not resolve humanEntity.data[...]:" + str(te))
+                    # import ipdb; ipdb.set_trace()
                     pass
 
                 ''' iterate through all the faces in this entity '''
@@ -525,6 +528,8 @@ class AskPersonName(smach.State):
                                 outcomes=['succeded', 'failed'])
 
         self.robot = robot
+
+        is_writeable(operatorNameDes)
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):
@@ -539,19 +544,19 @@ class AskPersonName(smach.State):
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        state = HearOptionsExtra(self.robot, spec, choices, writeable(answer))
         outcome = state.execute()
 
         if not outcome == "heard":
             name = "Mister Operator"
-            self.operatorNameDes.current = name
+            self.operatorNameDes.write(name)
 
             printWarning("Speech recognition outcome was not successful (outcome: '{0}'). Using default name '{1}'".format(str(outcome), self.operatorNameDes.resolve()))
             return 'failed'
         else:
             try:
                 name = answer.resolve().choices["name"]
-                self.operatorNameDes.current = name
+                self.operatorNameDes.write(name)
 
                 printOk("Result received from speech recognition is '" + name + "'")
             except KeyError, ke:
@@ -575,7 +580,7 @@ class ConfirmPersonName(smach.State):
     def execute(self, userdata):
         printOk("ConfirmPersonName")
 
-        self.operatorNameDes.current = name
+        self.operatorNameDes.write(name)
 
         self.robot.speech.speak("I heard " + name + ", is that correct?", block=False)
 
@@ -591,7 +596,7 @@ class ConfirmPersonName(smach.State):
 
         if not outcome == "heard":
             name = "Mister Operator Fallback"
-            self.operatorNameDes.current = name
+            self.operatorNameDes.write(name)
 
             printWarning("Speech recognition outcome was not successful (outcome: " + str(outcome) + ")")
             return 'incorrect'
@@ -871,7 +876,7 @@ class ResetSearch(smach.State):
         printOk("ResetSearch")
 
         # Reset locations to visit
-        self.locations.current = []
+        self.locations.write([])
         
         return 'done'
 

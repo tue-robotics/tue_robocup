@@ -13,6 +13,13 @@ get_newspaper_timeout = 3       # This needs to be updated for robocup maybe
 give_newspaper_timeout = 30
 wakeup_light_color = [1, 1, 1]
 
+handover_joint_config = "sensed_handover"
+
+sensor_range = 2.0
+
+order_confirmation_limit = 3
+
+initial_pose = "initial_pose"
 
 # Knowledge
 bed = 'bed'                     # This needs to be updated according to the environment
@@ -20,10 +27,13 @@ bed = 'bed'                     # This needs to be updated according to the envi
 bed_nav_goal = {        
     'near' : bed,
     'in' : 'bedroom',
-    'lookat' : 'bed'
+    'lookat' : 'bed',
+    'at_bedside' : bed,
 }
 
 default_milk = "fresh milk"
+default_cereal = "coconut_cereals"
+default_fruit = "apple"
 
 kitchen_nav_goal = {            # This needs to be updated according to the environment
     "in_front_of":"cabinet",
@@ -40,7 +50,9 @@ fruit_shelf = "cabinet"         # This needs to be updated according to the envi
 
 table_nav_goal = {
     "in": "kitchen",
-    "near": "kitchen_table"
+    "near": "kitchen_table",
+    "in_front_of": "dinnertable",
+    "lookat" : "dinnertable"
 }
 
 item_nav_goal = {               # This needs to be updated according to the environment

@@ -41,15 +41,13 @@ class ChallengePersonRecognition(smach.StateMachine):
         operatorNameDes = VariableDesignator("")
 
         #REVIEW: A designator resolving to a designator is weird. Can't you use a VariableDesignator directly?
-        nextLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) 
-        nextLocationDes.current = PersonRecStates.PointDesignator()
+        nextLocationDes = VariableDesignator(PersonRecStates.PointDesignator)
 
         locationsToVisitDes = VariableDesignator([])
 
         facesAnalyzedDes = VariableDesignator([])
 
-        operatorLocationDes = VariableDesignator(resolve_type=PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
-        operatorLocationDes.current = PersonRecStates.PointDesignator()
+        operatorLocationDes = VariableDesignator(PersonRecStates.PointDesignator) #REVIEW: a designator that resolves to another designator is a bit weird
 
         # ------------------ SIMULATION ------------------------------------
 
@@ -205,7 +203,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                         learnNameContainer.userdata.personName_userData = ""
 
                         smach.StateMachine.add( 'ASK_PERSON_NAME',
-                                                PersonRecStates.AskPersonName(robot, operatorNameDes),
+                                                PersonRecStates.AskPersonName(robot, operatorNameDes.writeable),
                                                 remapping={     'personName_out':'personName_userData'},
                                                 transitions={   'succeded':'SAY_IS_YOUR_NAME',
                                                                 'failed':'SAY_HEAR_FAILED'})
@@ -555,7 +553,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     'container_failed':'RESET_SEARCH'})
 
             smach.StateMachine.add( 'RESET_SEARCH',
-                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes),
+                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes.writeable),
                                     transitions={   'done':'SAY_FIND_CROWD_AGAIN'})
 
             smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',

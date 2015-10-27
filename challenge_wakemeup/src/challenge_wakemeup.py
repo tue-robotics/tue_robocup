@@ -162,7 +162,7 @@ class WakeMeUp(smach.StateMachine):
                                                     'Failed'            :'SAY_OPERATOR_AWAKE'})
 
             smach.StateMachine.add( "SAY_OPERATOR_AWAKE",
-                                    states.Say(robot, "Lets see if my operator is awake", block=False), 
+                                    states.Say(robot, "Lets see if my operator is awake", block=False),
                                     transitions={   "spoken"            :"GO_TO_BED"})
 
             smach.StateMachine.add( 'GO_TO_BED',
@@ -203,7 +203,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'succeeded':'SET_TIME_MARKER'})
 
                 smach.StateMachine.add( "SET_TIME_MARKER",
-                                        states.SetTimeMarker(robot, time_marker),
+                                        states.SetTimeMarker(robot, time_marker.writeable),
                                         transitions={   'done' :'WAKEUP_MESSAGE'})
 
                 smach.StateMachine.add( "WAKEUP_MESSAGE",
@@ -256,7 +256,7 @@ class WakeMeUp(smach.StateMachine):
             with takeOrderContainer:
 
                 smach.StateMachine.add( "COUNTER",
-                                        states.Counter(counter=orderConfirmationCounter,limit=knowledge.order_confirmation_limit),
+                                        states.Counter(counter=orderConfirmationCounter.writeable,limit=knowledge.order_confirmation_limit),
                                         transitions={   'counted'       :'SAY_WHAT_BREAKFAST',
                                                         'limit_reached' :'SAY_ILL_CHOOSE_BREAKFAST'})
 
@@ -267,7 +267,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'spoken' :'GET_ORDER'})
 
                 smach.StateMachine.add( "GET_ORDER",
-                                        wakeStates.GetOrder(robot, breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
+                                        wakeStates.GetOrder(robot, breakfastCerealDes.writeable, breakfastFruitDes.writeable, breakfastMilkDes.writeable),
                                         transitions={   'succeeded' :   'SAY_REPEAT_ORDER',
                                                         'failed'    :   'SAY_INCORRECT_ORDER'})
 
@@ -291,7 +291,7 @@ class WakeMeUp(smach.StateMachine):
                                         transitions={   'spoken'    :'PICK_DEFAULT_ORDER'})
 
                 smach.StateMachine.add( "PICK_DEFAULT_ORDER",
-                                        wakeStates.PickDefaultOrder(breakfastCerealDes, breakfastFruitDes, breakfastMilkDes),
+                                        wakeStates.PickDefaultOrder(breakfastCerealDes.writeable, breakfastFruitDes.writeable, breakfastMilkDes.writeable),
                                         transitions={   'done'      :'SAY_DEFAULT_ORDER'})
 
                 smach.StateMachine.add( "SAY_DEFAULT_ORDER",
@@ -356,10 +356,10 @@ class WakeMeUp(smach.StateMachine):
                                         wakeStates.SelectItem(  robot, 
                                                                 options=knowledge.generic_items, 
                                                                 asked_items= [ breakfastCerealDes, breakfastMilkDes, breakfastFruitDes ], 
-                                                                generic_item=selected_gen_item_des, 
-                                                                specific_item=selected_spec_item_des,
-                                                                item_nav_goal=current_item_nav_goal_at,
-                                                                item_lookat_goal=current_item_nav_goal_lookat),
+                                                                generic_item=selected_gen_item_des.writeable,
+                                                                specific_item=selected_spec_item_des.writeable,
+                                                                item_nav_goal=current_item_nav_goal_at.writeable,
+                                                                item_lookat_goal=current_item_nav_goal_lookat.writeable),
                                         transitions={   'selected' : 'SELECT_ITEM',
                                                         'all_done' : 'EVALUATE_RESULTS'})
 
@@ -380,7 +380,7 @@ class WakeMeUp(smach.StateMachine):
                                                             sensor_range=knowledge.sensor_range, 
                                                             on_object_des=current_item_nav_goal_lookat,
                                                             type_des=selected_spec_item_des, 
-                                                            result_des=item_designator),
+                                                            result_des=item_designator.writeable),
                                         transitions={   'item_found':'PICK_UP_ITEM',
                                                         'not_found' :'SAY_ITEM_NOT_FOUND'})
 
@@ -476,6 +476,8 @@ class WakeMeUp(smach.StateMachine):
             smach.StateMachine.add( 'END_CHALLENGE',
                                     states.Say(robot,"That was all I can do. Breakfast is served at the dinner table. Goodbye!"),
                                     transitions={'spoken':'Done'})
+
+        analyse_designators(self, "wake_me_up")
 
 
 

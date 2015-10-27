@@ -4,7 +4,7 @@ import rospy
 import smach
 
 from visualization_msgs.msg import Marker
-from robot_smach_states.util.designators import check_resolve_type
+from robot_smach_states.util.designators import check_resolve_type, is_writeable
 from ed.msg import EntityInfo
 from robot_skills.util import msg_constructors as geom
 from collections import OrderedDict
@@ -135,8 +135,13 @@ class DescribeBottles(smach.State):
         check_resolve_type(bottle_collection_designator, [EntityInfo])
         self.bottle_collection_designator = bottle_collection_designator
 
+        is_writeable(spec_designator)
         self.spec_designator = spec_designator
+
+        is_writeable(choices_designator)
         self.choices_designator = choices_designator
+
+        is_writeable(bottle_desc_mapping_designator)
         self.bottle_desc_mapping_designator = bottle_desc_mapping_designator
         self._pub = rospy.Publisher("/bottles", Marker, queue_size=10)
 
@@ -238,26 +243,26 @@ class DescribeBottles(smach.State):
 
         # import ipdb; ipdb.set_trace()
         if height_descs and colors and labels:
-            self.spec_designator.current = "Bring me the <height_desc> <color> bottle labeled <label>"
+            self.spec_designator.write("Bring me the <height_desc> <color> bottle labeled <label>")
         elif height_descs and colors:
-            self.spec_designator.current = "Bring me the <height_desc> <color> bottle"
+            self.spec_designator.write("Bring me the <height_desc> <color> bottle")
         elif colors and labels:
-            self.spec_designator.current = "Bring me the <color> bottle labeled <label>"
+            self.spec_designator.write("Bring me the <color> bottle labeled <label>")
         elif height_descs and labels:
-            self.spec_designator.current = "Bring me the <height_desc> bottle labeled <label>"
+            self.spec_designator.write("Bring me the <height_desc> bottle labeled <label>")
         elif height_descs:
-            self.spec_designator.current = "Bring me the <height_desc> bottle"
+            self.spec_designator.write("Bring me the <height_desc> bottle")
         elif colors:
-            self.spec_designator.current = "Bring me the <color> bottle"
+            self.spec_designator.write("Bring me the <color> bottle")
         elif labels:
-            self.spec_designator.current = "Bring me the bottle labeled <label>"
+            self.spec_designator.write("Bring me the bottle labeled <label>")
 
         if positions:
-            self.spec_designator.current += " on the <position>"
+            self.spec_designator.write(self.spec_designator.resolve() + " on the <position>")
         
-        self.choices_designator.current = choices
+        self.choices_designator.write(choices)
 
-        self.bottle_desc_mapping_designator.current = descriptions
+        self.bottle_desc_mapping_designator.write(descriptions)
 
         return "succeeded"
 

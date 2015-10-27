@@ -292,8 +292,8 @@ class AskAction(smach.State):
                     #e = self.robot.ed.get_entity(id=str(result.choices['grasp_location']))
                     if not e:
                         return 'failed'
-                    PICKUPLOC_DESIGNATOR.current = e
-                    #PICKUPLOC_DESIGNATOR.current = result.choices['grasp_location']
+                    PICKUPLOC_DESIGNATOR.writeable.write(e)
+                    #PICKUPLOC_DESIGNATOR.writeable.write(result.choices['grasp_location'])
                     return "grasp_object"
 
                 elif "time" in result.choices:
@@ -349,10 +349,10 @@ class AskPersonLoc(smach.State):
                     
                     if not e:
                         return 'failed'
-                    BED_DESIGNATOR.current = e
+                    BED_DESIGNATOR.writeable.write(e)
                     print result.choices['location']
                     #import ipdb; ipdb.set_trace()
-                    BED_TYPE_DESIGNATOR.current = result.choices['location']
+                    BED_TYPE_DESIGNATOR.writeable.write(result.choices['location'])
 
                     #LOC_FIND_PERSON = result.choices['location']
 
@@ -907,7 +907,7 @@ def setup_statemachine(robot):
 
 
 
-
+    analyse_designators(sm, "amigo_final_rwc2015")
 
     return sm
 
