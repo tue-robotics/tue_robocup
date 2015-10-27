@@ -34,5 +34,15 @@ script:
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
   - catkin_make run_tests # and run them
-  - rosrun robot_smach_states designator.py
+  - rosrun robot_smach_states arm.py
+  - rosrun robot_smach_states checks.py
+  - rosrun robot_smach_states collection_designators.py
+  - rosrun robot_smach_states core.py
+  - rosrun robot_smach_states decorators.py
+  - rosrun robot_smach_states ed_designators.py
+  - rosrun robot_smach_states tests.py
   - rosrun robot_smach_states human_interaction.py
+  - pushd .
+  - roscd robot_smach_states/src/robot_smach_states/util/designators/
+  - python utility.py
+  - popd

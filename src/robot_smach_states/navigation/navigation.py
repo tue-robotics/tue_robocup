@@ -142,6 +142,7 @@ class executePlan(smach.State):
                 return "succeeded"
             elif status == "blocked":
                 return "blocked"
+            return "preempted"
 
     def checkBetterPlan(self):
         # Get alternative plan

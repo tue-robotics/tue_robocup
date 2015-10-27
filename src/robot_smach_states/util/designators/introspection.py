@@ -7,8 +7,10 @@ A .dot and .png will be saved to the current directory, showing the relations an
 state_machines and designators.
 """
 
+import os
 import smach
-from robot_smach_states.util.designators.core import Designator
+from robot_smach_states.util.designators.core import Designator, VariableWriter, VariableDesignator
+from graphviz import Digraph
 
 
 __author__ = 'loy'
@@ -25,7 +27,32 @@ class DesignatorUsedInState(DesignatorUsage):
     def add_graphviz_edge(self, graph):
         desig_name = format_designator(self.designator)
 
-        graph.edge(gv_safe(desig_name), gv_safe(self.parent), label=gv_safe(self.role))
+        graph.node(gv_safe(self.parent), shape="box", color="bisque", style="filled")
+
+        graph.edge(gv_safe(desig_name),
+                   gv_safe(self.parent),
+                   label=gv_safe("{}.resolve".format(self.role)),
+                   color="green")
+
+class DesignatorWrittenInState(DesignatorUsage):
+    def add_graphviz_edge(self, graph):
+        writer_name = format_designator(self.designator)
+        variable_name = format_designator(self.designator.variable_designator)
+
+        # graph.edge(gv_safe(self.parent),
+        #            gv_safe(variable_name),
+        #            label=gv_safe("sets {}".format(self.role)),
+        #            color="red")
+
+        graph.edge(gv_safe(self.parent),
+                   gv_safe(variable_name),
+                   label=gv_safe("write {}".format(self.role)),
+                   color="red")
+
+        graph.edge(gv_safe(variable_name),
+                   gv_safe(self.parent),
+                   gv_safe("{}.resolve".format(self.role)),
+                   color="green")
 
 
 class DesignatorUsedInDesignator(DesignatorUsage):
@@ -33,7 +60,11 @@ class DesignatorUsedInDesignator(DesignatorUsage):
         parent_name = format_designator(self.parent)
         desig_name = format_designator(self.designator)
 
-        graph.edge(gv_safe(desig_name), gv_safe(parent_name), label=gv_safe(self.role))
+        graph.edge(gv_safe(desig_name),
+                   gv_safe(parent_name),
+                   gv_safe("{}.resolve".format(self.role)),
+                   color="darkgreen",
+                   style="solid")
 
 
 def gv_safe(string):
@@ -52,7 +83,7 @@ def format_designator(desig):
     else:
         resolve_type_format = desig.resolve_type.__name__
 
-    desig_name = "{name}({cls}@{addr})\\n<{resolve_type}>".format(name=desig.name + " " if desig.name else "",
+    desig_name = "{name}\\n{cls}\\n@{addr}\\n<{resolve_type}>".format(name=desig.name + " " if desig.name else "",
                                                                  cls=desig.__class__.__name__,
                                                                  addr=hex(id(desig)),
                                                                  resolve_type=resolve_type_format)
@@ -62,17 +93,43 @@ def format_designator(desig):
 def flatten(tree, parentname=None, sep="."):
     flat = []
     for branch_name, branch in tree.get_children().iteritems():
+        this_name = parentname + sep + branch_name if parentname else branch_name
         if isinstance(branch, smach.StateMachine) or isinstance(branch, smach.Iterator):
-            flat.extend(flatten(branch, parentname=branch_name, sep=sep))
+            flat += [(this_name, branch)]
+            flat.extend(flatten(branch, parentname=this_name, sep=sep))
         else:
-            name = parentname + sep + branch_name if parentname else branch_name
-            flat += [(name, branch)]
-    # print flat
+            flat += [(this_name, branch)]
     return flat
 
 
-def analyse_designators(statemachine=None, statemachine_name=""):
+def make_legend():
+    legend = Digraph('cluster_1')
+
+    state = smach.State()
+    parent_desig = Designator(name="parent_designator")
+    desig = Designator(name="designator")
+    vardesig = VariableDesignator(resolve_type=str, name="variable").writeable
+
+    used_in_state = DesignatorUsedInState(state, desig, "role_resolved_from")
+    written_in_state = DesignatorWrittenInState(state, vardesig, "role_written_to")
+    used_in_desig = DesignatorUsedInDesignator(parent_desig, desig, "role_in_parent")
+
+    usages = [used_in_state, written_in_state, used_in_desig]
+    for usage in usages:
+        usage.add_graphviz_edge(legend)
+
+    legend.body.append('label = "Legend"')
+    legend.body.append('color=black')
+    legend.body.append('width=0.25')
+    legend.body.append('height=0.25')
+    legend.body.append('size="2.0, 2.0"')
+
+    return legend
+
+
+def analyse_designators(statemachine=None, statemachine_name="", save_dot=False, fmt="png"):
     designators = Designator.instances
+    writers = VariableWriter.instances
 
     if not statemachine:
         statemachine = smach.StateMachine._currently_opened_container()
@@ -90,6 +147,10 @@ def analyse_designators(statemachine=None, statemachine_name=""):
             if designator in designators:
                 usages += [DesignatorUsedInState(state_label, designator, designator_role)]
 
+            if designator in writers:
+                usages += [DesignatorWrittenInState(state_label, designator, designator_role)]
+
+
     for parent_designator in designators:
         # Iterate the self.xxx members of each designator
         for child_role, child_designator in parent_designator.__dict__.iteritems():
@@ -97,11 +158,15 @@ def analyse_designators(statemachine=None, statemachine_name=""):
             if child_designator in designators:
                 usages += [DesignatorUsedInDesignator(parent_designator, child_designator, child_role)]
 
-    from graphviz import Digraph
-    dot = Digraph(comment=statemachine_name + ' Designators', format="png")
+    dot = Digraph(comment=statemachine_name + ' Designators', format=fmt)
 
     for usage in usages:
         usage.add_graphviz_edge(dot)
 
-    dot.save(statemachine_name + '_designators.dot')
+    dot.subgraph(make_legend())
+
+    if save_dot:
+        dot.save(statemachine_name + '_designators.dot')
     dot.render(statemachine_name + '_designators')
+
+    os.remove(statemachine_name + '_designators')

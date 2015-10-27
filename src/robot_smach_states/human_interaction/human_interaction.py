@@ -7,7 +7,7 @@ import ed_perception.msg
 import actionlib
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, VariableDesignator, check_type, check_resolve_type
+from robot_smach_states.util.designators import Designator, EdEntityDesignator, VariableDesignator, check_type, check_resolve_type, writeable, is_writeable
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
@@ -21,7 +21,7 @@ from dragonfly_speech_recognition.srv import GetSpeechResponse
 
 ##########################################################################################################################################
 
-class Say(State):
+class Say(smach.State):
     """Say a sentence or pick a random one from a list.
 
     >>> from mock import MagicMock
@@ -39,6 +39,7 @@ class Say(State):
     >>> #robot.speech.speak.assert_any_call('b', 'us', 'kyle', 'default', 'excited', True)
     >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True):
+        smach.State.__init__(self, outcomes=["spoken"])
         check_type(sentence, str, list)
         #check_type(language, str)
         #check_type(personality, str)
@@ -46,19 +47,25 @@ class Say(State):
         #check_type(mood, str)
         check_type(block, bool)
 
-        State.__init__(self, locals(), outcomes=["spoken"])
+        self.robot = robot
+        self.sentence = sentence
+        self.language = language
+        self.personality = personality
+        self.voice = voice
+        self.mood = mood
+        self.block = block
 
-    def run(self, robot, sentence, language, personality, voice, mood, block):
+    def execute(self, userdata=None):
         #robot.head.look_at_standing_person()
 
-        if not sentence:
+        if not self.sentence:
             rospy.logerr("sentence = None, not saying anything...")
             return "spoken"
 
-        if not isinstance(sentence, str) and isinstance(sentence, list):
-            sentence = random.choice(sentence)
+        if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
+            self.sentence = random.choice(self.sentence)
 
-        robot.speech.speak(sentence, language, personality, voice, mood, block)
+        self.robot.speech.speak(self.sentence, self.language, self.personality, self.voice, self.mood, self.block)
 
         #robot.head.cancel_goal()
 
@@ -66,24 +73,28 @@ class Say(State):
 
 ##########################################################################################################################################
 
-class Hear(State):
+class Hear(smach.State):
     def __init__(self, robot, spec, time_out = rospy.Duration(10), look_at_standing_person=True):
-        State.__init__(self, locals(), outcomes=["heard", "not_heard"])
+        smach.State.__init__(self, outcomes=["heard", "not_heard"])
+        self.robot = robot
+        self.spec = spec
+        self.time_out = time_out
+        self.look_at_standing_person = look_at_standing_person
 
-    def run(self, robot, spec, time_out, look_at_standing_person):
-        if look_at_standing_person:
-            robot.head.look_at_standing_person()
+    def execute(self, userdata=None):
+        if self.look_at_standing_person:
+            self.robot.head.look_at_standing_person()
 
-        answer = robot.ears.recognize(spec, {}, time_out)
+        answer = self.robot.ears.recognize(self.spec, {}, self.time_out)
 
-        if look_at_standing_person:
-            robot.head.cancel_goal()
+        if self.look_at_standing_person:
+            self.robot.head.cancel_goal()
 
         if answer:
             if answer.result:
                 return "heard"
         else:
-            robot.speech.speak("Something is wrong with my ears, please take a look!")
+            self.robot.speech.speak("Something is wrong with my ears, please take a look!")
 
         return "not_heard"
 
@@ -130,7 +141,7 @@ class HearOptionsExtra(smach.State):
         choices = Designator({"name"  : names_list,
                               "prefix": ["My name is", "I'm called"]})
         answer = VariableDesignator(resolve_type = GetSpeechResponse)
-        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
         if outcome == "heard":
@@ -142,7 +153,7 @@ class HearOptionsExtra(smach.State):
     >>> spec = Designator("I will go to the <table> in the <room>")
     >>> choices = Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
     >>> answer = VariableDesignator(resolve_type=GetSpeechResponse)
-    >>> state = HearOptionsExtra(mockbot, spec, choices, answer)
+    >>> state = HearOptionsExtra(mockbot, spec, choices, answer.writeable)
     >>> outcome = state.execute()
     """
     def __init__(self, robot, spec_designator,
@@ -157,6 +168,7 @@ class HearOptionsExtra(smach.State):
         check_resolve_type(spec_designator, str)
         check_resolve_type(choices_designator, dict)
         check_resolve_type(speech_result_designator, GetSpeechResponse)
+        is_writeable(speech_result_designator)
 
         self.spec_designator = spec_designator
         self.choices_designator = choices_designator
@@ -186,7 +198,7 @@ class HearOptionsExtra(smach.State):
 
         if answer:
             if answer.result:
-                self.speech_result_designator.current = answer
+                self.speech_result_designator.write(answer)
                 return "heard"
         else:
             self.robot.speech.speak("Something is wrong with my ears, please take a look!")
@@ -214,7 +226,7 @@ class HearYesNo(smach.State):
 
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, answer)
+        state = HearOptionsExtra(self.robot, spec, choices, writeable(answer))
 
         # execute listen
         outcome = state.execute()
