@@ -245,6 +245,8 @@ class ReasonedEntityDesignator(Designator):
         self.robot = robot
         self.querystring = querystring
 
+        self._locker = None
+
     def resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
@@ -258,7 +260,9 @@ class ReasonedEntityDesignator(Designator):
             return None
 
     def lockable(self):
-        return LockToId(self.robot, self)
+        if not self._locker:
+            self._locker = LockToId(self.robot, self)
+        return self._locker
 
 
 class EmptySpotDesignator(Designator):

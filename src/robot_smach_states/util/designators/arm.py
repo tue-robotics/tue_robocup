@@ -31,6 +31,8 @@ class ArmDesignator(Designator):
         if not self.preferred_arm in self.all_arms.values():
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
+        self._locker = None
+
     def resolve(self):
         if self.available(self.preferred_arm) and self.preferred_arm.operational:
             return self.preferred_arm
@@ -51,7 +53,9 @@ class ArmDesignator(Designator):
         return True
 
     def lockable(self):
-        return LockingDesignator(self)
+        if not self._locker:
+            self._locker = LockingDesignator(self)
+        return self._locker
 
 
 class UnoccupiedArmDesignator(ArmDesignator):

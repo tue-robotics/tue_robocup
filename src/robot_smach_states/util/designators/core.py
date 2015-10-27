@@ -68,7 +68,8 @@ class Designator(object):
         For a lot of Designators, .lockable() will yield the Error below, but in those cases it will make sense,
         because locking them has no meaning.
         Then, calling .lock will fail as well. States that want a .lock method should check for it."""
-        raise NotImplementedError("Core Designator is not lockable. Override .lockable() in subclasses."
+        raise NotImplementedError("Core Designator is not lockable. Override .lockable() in subclasses and "
+                                  "make it so that thereś only *one* locker instead of a new one every call."
                                   " For locking to the exact same Python-object, use the LockingDesignator")
 
 
