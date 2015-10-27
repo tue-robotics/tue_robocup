@@ -35,4 +35,4 @@ script:
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
   - catkin_make run_tests # and run them
-  - rosrun challenge_test mockbot
+  - rosrun challenge_test test.py mockbot
