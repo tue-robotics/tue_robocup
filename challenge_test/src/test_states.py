@@ -70,7 +70,7 @@ class AskPersonName(smach.State):
         answer = VariableDesignator(resolve_type=GetSpeechResponse)
 
         state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
-        outcome = state.execute()
+        outcome = state.execute() # REVIEW(Loy): Luis, this is really not the way to go. Nest state machines using the smach way
 
         if not outcome == "heard":
             self.personNameDes.write(self.defaultName)
