@@ -42,6 +42,7 @@ printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Tes
 
 
 personNameDes = VariableDesignator("")
+objectsIDsDes = VariableDesignator([])
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,13 +56,13 @@ class EnterContainer(smach.StateMachine):
         with self:
 
             smach.StateMachine.add('SAY_TEST_SYMBOLIC',
-                                   states.Say(robot,"Testing Navigate To Symbolic, going to the couch table.", block=False),
+                                   states.Say(robot,"Testing Navigate To Symbolic, going to the cabinet.", block=False),
                                    transitions={'spoken':'NAV_TO_SYMB'})
 
             smach.StateMachine.add('NAV_TO_SYMB',
                                     states.NavigateToSymbolic(robot, 
                                         {EdEntityDesignator(robot, id="living_room") : "in" }, 
-                                        EdEntityDesignator(robot, id="couchtable")),
+                                        EdEntityDesignator(robot, id="dinnertable")),
                                     transitions={   'arrived'           :   'SAY_TEST_WAYPOINT',
                                                     'unreachable'       :   'SAY_FAILED_SYMBOLIC',
                                                     'goal_not_defined'  :   'SAY_FAILED_SYMBOLIC'})
@@ -129,6 +130,12 @@ class LearnNameContainer(smach.StateMachine):
             robot.speech.speak( "I heard " + personNameDes.resolve() + ". Is this correct?", block=True)
             return 'spoken'
 
+        @smach.cb_interface(outcomes=['spoken'])
+        def sayCouldNotLearnNameCB(userdata):
+            printOk("sayCouldNotLearnNameCB")
+            robot.speech.speak( "Sorry but I could not understand your name. I will just call you " + personNameDes.resolve(), block=False)
+            return 'spoken'
+
         smach.StateMachine.__init__(self, outcomes=['container_success','container_failed'])
 
         with self:
@@ -142,7 +149,7 @@ class LearnNameContainer(smach.StateMachine):
 
             with learnNameIterator:
 
-                # for some reason the container needs to have the same outcomes as the iterator, plus equivalent to "continue"
+                # for some reason the container needs to have the same outcomes as the iterator, plus a "continue" state
                 learnNameContainer = smach.StateMachine(outcomes = ['iterator_success', 'iterator_failed', 'inner_container_failed'])
                 with learnNameContainer:
 
@@ -177,7 +184,50 @@ class LearnNameContainer(smach.StateMachine):
             smach.StateMachine.add( 'LEARN_NAME_ITERATOR',
                                     learnNameIterator,
                                     transitions={   'iterator_success':'container_success',
-                                                    'iterator_failed':'container_failed'})
+                                                    'iterator_failed':'SAY_COULD_NOT_LEARN_NAME'})
+
+            smach.StateMachine.add( 'SAY_COULD_NOT_LEARN_NAME',
+                                    smach.CBState(sayCouldNotLearnNameCB),
+                                    transitions={   'spoken':'container_failed'})
+
+
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#                                 LEARN_FACE_CONTAINER
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+class LearnFaceContainer(smach.StateMachine):
+    def __init__(self, robot, personNameDes):
+        
+        smach.StateMachine.__init__(self, outcomes=['container_success','container_failed'])
+
+        with self:
+
+            smach.StateMachine.add( 'SAY_LOOK_AT_ME',
+                                        states.Say(robot,"Please stand in front of me and look at my camera while I learn your face.", block=False),
+                                        transitions={    'spoken':'LOOK_AT_OPERATOR'})
+
+            smach.StateMachine.add( 'LOOK_AT_OPERATOR',
+                                    states_interaction.LookAtPersonInFront(robot, lookDown=True),
+                                    transitions={   'succeded':'LEARN_PERSON',
+                                                    'failed':'SAY_LEARN_FACE_FAILED'})
+
+            smach.StateMachine.add('LEARN_PERSON',
+                                    states.LearnPerson(robot, name_designator = personNameDes),
+                                    transitions={   'succeded_learning':'CANCEL_HEAD_GOALS_SUCCESS',
+                                                    'failed_learning':'SAY_LEARN_FACE_FAILED'})
+
+            smach.StateMachine.add('SAY_LEARN_FACE_FAILED',
+                                   states.Say(robot,"I could not learn your face for some reason.", block=False),
+                                   transitions={    'spoken':'CANCEL_HEAD_GOALS_FAILED'})
+
+            smach.StateMachine.add( 'CANCEL_HEAD_GOALS_SUCCESS',
+                                    CancelHeadGoals(robot),
+                                    transitions={    'done':'container_success'})
+
+            smach.StateMachine.add( 'CANCEL_HEAD_GOALS_FAILED',
+                                    CancelHeadGoals(robot),
+                                    transitions={    'done':'container_failed'})
 
 
 
@@ -193,12 +243,6 @@ class ChallengeTest(smach.StateMachine):
         # - - - - - - - - - - - - - - - - - - - Callback States  - - - - - - - - - - - - - - - - - - -
 
         @smach.cb_interface(outcomes=['spoken'])
-        def sayCouldNotLearnNameCB(userdata):
-            printOk("sayCouldNotLearnNameCB")
-            robot.speech.speak( "Sorry but I could not understand your name. I will just call you " + personNameDes.resolve(), block=False)
-            return 'spoken'
-
-        @smach.cb_interface(outcomes=['spoken'])
         def sayHelloCB(userdata):
             printOk("sayHelloCB")
             robot.speech.speak( "Hello " + personNameDes.resolve() + "!", block=False)
@@ -208,8 +252,6 @@ class ChallengeTest(smach.StateMachine):
 
         with self:
 
-            # Initializations
-
             smach.StateMachine.add( 'INITIALIZE',
                                     states.Initialize(robot),
                                     transitions={   'initialized':'INIT_WM',
@@ -218,10 +260,9 @@ class ChallengeTest(smach.StateMachine):
             smach.StateMachine.add( "INIT_WM",
                                     states.InitializeWorldModel(robot), 
                                     # transitions={   'done':'LEARN_NAME_CONTAINER'})
+                                    # transitions={   'done':'SAY_SEARCHING_OBJECTS'})
                                     transitions={   'done':'ENTER_ROOM_CONTAINER'})
             
-
-            # test navigation by going to an object and a waypoint
             smach.StateMachine.add( 'ENTER_ROOM_CONTAINER',
                                     EnterContainer(robot),
                                     transitions={   'container_success':'WAIT_PERSON_CONTAINER',
@@ -236,82 +277,52 @@ class ChallengeTest(smach.StateMachine):
             # ask the person name until it is confirmed
             smach.StateMachine.add( 'LEARN_NAME_CONTAINER',
                                     LearnNameContainer(robot, personNameDes),
-                                    transitions={   'container_failed':'SAY_COULD_NOT_LEARN_NAME',
+                                    transitions={   'container_failed':'SAY_HELLO',
                                                     'container_success':'SAY_HELLO'})
-
-            smach.StateMachine.add( 'SAY_COULD_NOT_LEARN_NAME',
-                                    smach.CBState(sayCouldNotLearnNameCB),
-                                    transitions={    'spoken':'END_CHALLENGE'})
 
             smach.StateMachine.add( 'SAY_HELLO',
                                     smach.CBState(sayHelloCB),
-                                    transitions={    'spoken':'END_CHALLENGE'})
+                                    transitions={   'spoken':'LEARN_FACE_CONTAINER'})
+
+            smach.StateMachine.add( 'LEARN_FACE_CONTAINER',
+                                    LearnFaceContainer(robot, personNameDes),
+                                    transitions={   'container_success':'SAY_SEARCHING_OBJECTS',
+                                                    'container_failed': 'SAY_SEARCHING_OBJECTS'})
+
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                                 LEARN_PERSON_CONTAINER
+            #                                 MANIPULATE_CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-            learnPerson_container = smach.StateMachine(outcomes = ['container_success', 'container_failed'],
-                                                        output_keys = ['personName_userData'])
+            smach.StateMachine.add('SAY_SEARCHING_OBJECTS',
+                                   states.Say(robot,"I'm going to the dinning table to search for objects", block=False),
+                                   transitions={'spoken':'NAV_TO_TABLE'})
+            
+            smach.StateMachine.add('NAV_TO_TABLE',
+                                    states.NavigateToSymbolic(robot, 
+                                        {EdEntityDesignator(robot, id="living_room") : "in" }, 
+                                        EdEntityDesignator(robot, id="dinnertable")),
+                                    transitions={   'arrived'           :   'SEGMENT_OBJECTS',
+                                                    'unreachable'       :   'SAY_FAILED_NAV_TO_TABLE',
+                                                    'goal_not_defined'  :   'SAY_FAILED_NAV_TO_TABLE'})
 
-            with learnPerson_container:
+
+            smach.StateMachine.add('SAY_FAILED_NAV_TO_TABLE',
+                                   states.Say(robot,"I could not reach the table, but i will try to continue.", block=True),
+                                   transitions={'spoken':'SEGMENT_OBJECTS'})
+
+            smach.StateMachine.add( "SEGMENT_OBJECTS",
+                                    states.SegmentObjects(robot, objectsIDsDes.writeable, EdEntityDesignator(robot, id="dinnertable"), "on_top_of"),
+                                    transitions={   'done':'END_CHALLENGE'})
 
 
 
-                # - - - - - - - - - - - - - - - - - - - Learn Person Face - - - - - - - - - - - - - - - - - - -
 
-                smach.StateMachine.add( 'SAY_LOOK_AT_ME',
-                                        states.Say(robot,"Please stand one meter in front of me and look at me while I learn your face.", block=False),
-                                        transitions={    'spoken':'LOOK_AT_OPERATOR_2'})
 
-                smach.StateMachine.add( 'LOOK_AT_OPERATOR_2',
-                                        states_interaction.LookAtPersonInFront(robot, lookDown=True),
-                                        transitions={   'succeded':'LEARN_PERSON',
-                                                        'failed':'LEARN_PERSON'})
-
-                # smach.StateMachine.add( 'TOGGLE_PERCEPTION_ON',
-                #                         PersonRecStates.TogglePerceptionMode(robot, toggle_mode=True),
-                #                         transitions={   'done':'LEARN_PERSON'})
-
-                smach.StateMachine.add('LEARN_PERSON',
-                                        states.LearnPerson(robot, name_designator = personNameDes),
-                                        transitions={   'succeded_learning':'SAY_OPERATOR_LEARNED',
-                                                        'failed_learning':'SAY_LEARN_FACE_FAILED'})
-
-                # smach.StateMachine.add( 'TOGGLE_PERCEPTION_OFF_SUCCESS',
-                #                         PersonRecStates.TogglePerceptionMode(robot, toggle_mode=False),
-                #                         transitions={   'done':'SAY_OPERATOR_LEARNED'})
-
-                # smach.StateMachine.add( 'TOGGLE_PERCEPTION_OFF_FAILED',
-                #                         PersonRecStates.TogglePerceptionMode(robot, toggle_mode=False),
-                #                         transitions={   'done':'SAY_LEARN_FACE_FAILED'})
-
-                smach.StateMachine.add('SAY_LEARN_FACE_FAILED',
-                                       states.Say(robot,"I could not learn your face for some reason. Let's try again.", block=False),
-                                       transitions={    'spoken':'LOOK_AT_OPERATOR_2'})
-
-                smach.StateMachine.add('SAY_OPERATOR_LEARNED',
-                                       states.Say(robot,"Now i know what you look like. Please go mix with the crowd."),
-                                       transitions={'spoken':   'container_success'})
-
-            smach.StateMachine.add( 'LEARN_PERSON_CONTAINER',
-                                    learnPerson_container,
-                                    transitions={   'container_success':'END_CHALLENGE',
-                                                    'container_failed': 'CANCEL_HEAD_GOALS_1'})
-
-            smach.StateMachine.add( 'CANCEL_HEAD_GOALS_1',
-                                    CancelHeadGoals(robot),
-                                    transitions={    'done':'SAY_FAILED_LEARNING'})
-
-            smach.StateMachine.add( 'SAY_FAILED_LEARNING',
-                                    states.Say(robot,"I could not learn my operator's face. Let me try again.", block=True),
-                                    transitions={    'spoken':'LEARN_PERSON_CONTAINER'})
-
-            smach.StateMachine.add('END_CHALLENGE',
-                                   states.Say(robot,"My work here is done, goodbye!"),
-                                   transitions={'spoken':'Done'})
-
+            smach.StateMachine.add( 'END_CHALLENGE',
+                                    states.Say(robot,"My work here is done, goodbye!"),
+                                    transitions={    'spoken':'Done'})
 
 ############################## PYTHON ENTRY POINT ##############################
 
