@@ -15,5 +15,6 @@
 
   <run_depend>robot_skills</run_depend>
   <run_depend>robot_smach_states</run_depend>
+  <run_depend>robocup_knowledge</run_depend>
 
 </package>
