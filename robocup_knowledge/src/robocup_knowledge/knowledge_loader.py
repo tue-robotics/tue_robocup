@@ -6,7 +6,7 @@ def load_knowledge(knowledge_item):
 
     if not _robot_env:
         print "robocup_knowledge - load(): ROBOT_ENV environment variable is not set!"
-        sys.exit()
+        sys.exit(1)
 
     # Look for the correct knowledge file
     try:
@@ -14,4 +14,4 @@ def load_knowledge(knowledge_item):
         return imp.load_source('environment_knowledge', _knowledge_path)
     except:
         print "Knowledge item '%s' for environment '%s' does not exist at path '%s'!"%(knowledge_item, _robot_env, _knowledge_path)
-        sys.exit()
+        sys.exit(1)
