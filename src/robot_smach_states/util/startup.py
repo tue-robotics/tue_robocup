@@ -105,7 +105,12 @@ def kill_proc_tree(pid, including_parent=True):
         parent.wait(5)
     except psutil.TimeoutExpired:
         print "Parent process won't die nicely, so kill the children first. Sounds harsh, but it just a process"
-        children = parent.get_children()
+        children = []
+        try:
+            children = parent.get_children()
+        except AttributeError:
+            children = parent.children()
+        
         for child in children:
             child.kill()
         for child in children:
