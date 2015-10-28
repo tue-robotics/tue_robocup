@@ -17,6 +17,9 @@ before_install:
   - REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
 
+before_install:
+  - pip install codecov
+  
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
   - tue-get install ros-${REPOSITORY_NAME}
@@ -39,3 +42,6 @@ script:
   - catkin_make run_tests # and run them
   - rosrun challenge_test test.py mockbot
   - killall roscore #And kill the roscore afterwards
+  
+after_success:
+  - codecov
