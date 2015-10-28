@@ -14,7 +14,10 @@ before_install:
   - CI_SOURCE_PATH=$(pwd)
   - REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
-
+  
+before_install:
+  - pip install codecov
+  
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
   - tue-get install ros-${REPOSITORY_NAME}
@@ -46,3 +49,6 @@ script:
   - roscd robot_smach_states/src/robot_smach_states/util/designators/
   - python utility.py
   - popd
+  
+after_success:
+  - codecov
