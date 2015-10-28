@@ -79,6 +79,7 @@ class AskPersonName(smach.State):
             return 'failed'
         else:
             try:
+                print answer.resolve()
                 name = answer.resolve().choices["name"]
                 self.personNameDes.write(name)
 
