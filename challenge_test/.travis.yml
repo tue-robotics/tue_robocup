@@ -35,5 +35,7 @@ script:
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
+  - roscore >> /dev/null & #Set up a roscore to run the tests with
   - catkin_make run_tests # and run them
   - rosrun challenge_test test.py mockbot
+  - killall roscore #And kill the roscore afterwards
