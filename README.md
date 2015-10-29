@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tue-robotics/robot_smach_states.svg?branch=master)](https://travis-ci.org/tue-robotics/robot_smach_states)
+[![Build Status](https://travis-ci.org/tue-robotics/robot_smach_states.svg?branch=master)](https://travis-ci.org/tue-robotics/robot_smach_states)[![codecov.io](https://codecov.io/github/tue-robotics/robot_smach_states/coverage.svg?branch=master)](https://codecov.io/github/tue-robotics/robot_smach_states?branch=master)
 
 robot_smach_states
 ==================
