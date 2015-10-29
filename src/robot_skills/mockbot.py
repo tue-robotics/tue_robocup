@@ -15,6 +15,7 @@ from collections import namedtuple
 
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from dragonfly_speech_recognition.msg import Choice
+from ed.msg import EntityInfo
 
 class Arm(object):
     def __init__(self, robot_name, side, tf_listener):
@@ -196,9 +197,18 @@ class Torso(object):
 
 class ED(object):
     def __init__(self, *args, **kwargs):
-        self.get_entities = mock.MagicMock()
-        self.get_closest_entity = mock.MagicMock()
-        self.get_entity = mock.MagicMock()
+        def generate_random_entity(id=None):
+            entity = EntityInfo()
+
+            if not id:
+                entity.id = hash(entity)
+            entity.type = "random_from_magicmock"
+
+            return entity
+
+        self.get_entities = lambda *args, **kwargs: [generate_random_entity(), generate_random_entity()]
+        self.get_closest_entity = lambda *args, **kwargs: generate_random_entity()
+        self.get_entity = lambda id=None, parse=True: generate_random_entity(id)
         self.reset = mock.MagicMock()
         self.navigation = mock.MagicMock()
         self.navigation.get_position_constraint = mock.MagicMock()
