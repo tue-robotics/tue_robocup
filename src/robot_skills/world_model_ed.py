@@ -228,12 +228,27 @@ class ED:
 
         return res
 
-    def configure_perception(self, continuous):
-        self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
+    #def configure_perception(self, continuous):
+    #    self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
 
-    def classify(self, ids, types):
-        res = self._ed_classify_srv(ids = ids, types = types)
-        return res.types
+    def classify(self, ids, perception_model_name = "", property = "type"):
+        import rospkg
+        rospack = rospkg.RosPack()
+
+        try:
+            import os
+            robot_env = os.environ['ROBOT_ENV']
+            path = rospack.get_path('ed_perception_models') + "/models/" + robot_env + "/" + perception_model_name
+        except KeyError:
+            rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
+            return []
+
+        res = self._ed_classify_srv(ids = ids, property = property, perception_models_path=path)
+
+        if (res.error_msg):
+            rospy.logerr("While classifying entities: %s" % res.error_msg)
+
+        return zip(res.ids, res.expected_values, res.expected_value_probabilities)
 
     def classify_with_probs(self, ids, types):
         res = self._ed_classify_srv(ids = ids, types = types)
