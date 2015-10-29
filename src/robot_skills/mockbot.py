@@ -16,6 +16,7 @@ from collections import namedtuple
 from dragonfly_speech_recognition.srv import GetSpeechResponse
 from dragonfly_speech_recognition.msg import Choice
 from ed.msg import EntityInfo
+from ed_sensor_integration.srv import UpdateResponse
 
 class Arm(object):
     def __init__(self, robot_name, side, tf_listener):
@@ -219,8 +220,13 @@ class ED(object):
         self.disable_plugins = mock.MagicMock()
         self.classify = mock.MagicMock()
         self.classify_with_probs = mock.MagicMock()
-        self.update_kinect = mock.MagicMock()
 
+    def update_kinect(self, *args, **kwargs):
+        res = UpdateResponse()
+        res.new_ids = [hash(i) for i in range(10)]
+        res.updated_ids = [hash(i) for i in range(10)]
+        res.deleted_ids = [hash(i) for i in range(10)]
+        return res
 
 # class MockbotArms(arms.Arms):
 #     def __init__(self, tf_listener):
