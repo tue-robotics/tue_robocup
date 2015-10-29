@@ -9,6 +9,8 @@ import robot
 
 import mock
 
+import random
+
 from collections import namedtuple
 
 from dragonfly_speech_recognition.srv import GetSpeechResponse
@@ -58,7 +60,23 @@ class Ears(object):
         answer.choices += [Choice(id="room", values=["kitchen"])]
         answer.choices += [Choice(id="table", values=["desk"])]
 
-        self.recognize = lambda spec, choices, time_out=None: answer
+    def recognize(self, spec, choices, time_out=None):
+        print "spec:", spec
+        print "choices:", choices
+        # import ipdb; ipdb.set_trace()
+        answer = GetSpeechResponse(result="Mockbot cannot actually hear, this is a dummy answer")
+        keys = choices.keys()
+        if "prefix" in keys:
+            keys.remove("prefix")
+
+        for key in keys:
+            answer.choices += [Choice(id=key, values=[random.choice(choices[key])])]
+
+        answer.choices = dict((x.id, x.values[0]) for x in answer.choices)
+
+        return answer
+
+        # self.recognize = lambda spec, choices, time_out=None: answer
 
 class EButton(object):
     def __init__(self, *args, **kwargs):
@@ -189,6 +207,9 @@ class ED(object):
         self.configure_perception = mock.MagicMock()
         self.get_closest_possible_person_entity = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
+        self.classify = mock.MagicMock()
+        self.classify_with_probs = mock.MagicMock()
+        self.update_kinect = mock.MagicMock()
 
 
 # class MockbotArms(arms.Arms):

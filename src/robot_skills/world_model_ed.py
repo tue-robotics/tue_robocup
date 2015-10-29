@@ -5,7 +5,7 @@ from ed.srv import GetGUICommand, GetGUICommandResponse
 # from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
 from ed_perception.srv import Classify
-from ed_gui_server.srv import *
+from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
