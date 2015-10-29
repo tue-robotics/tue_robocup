@@ -189,6 +189,8 @@ class ED(object):
         self.configure_perception = mock.MagicMock()
         self.get_closest_possible_person_entity = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
+        self.classify = mock.MagicMock()
+        self.classify_with_probs = mock.MagicMock()
 
 
 # class MockbotArms(arms.Arms):
