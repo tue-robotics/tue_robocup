@@ -80,7 +80,7 @@ class SegmentObjects(smach.State):
         objIDs = objIDs + res.new_ids
         objIDs = objIDs + res.updated_ids
 
-        self.objectIDsDes.current = objIDs
+        self.objectIDsDes.write(objIDs)
 
         print "Found {} objects!".format(len(self.objectIDsDes.resolve()))
 
