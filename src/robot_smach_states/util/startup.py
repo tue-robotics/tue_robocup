@@ -40,20 +40,20 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     initial_state = arguments["--initial"]
 
     robot = None
-    if robot_name == "amigo":
-        import robot_skills.amigo
-        robot = robot_skills.amigo.Amigo(wait_services=True)
-    elif robot_name == "sergio":
-        import robot_skills.sergio
-        robot = robot_skills.sergio.Sergio(wait_services=True)
-    elif robot_name == "mockbot":
-        import robot_skills.mockbot
-        robot = robot_skills.mockbot.Mockbot(wait_services=True)
-    else:
-        rospy.logerr(
-            "No robot named '{}'. Options: {}"\
-                .format(robot_name, available_robots))
-        exit(-1)
+    # if robot_name == "amigo":
+    #     import robot_skills.amigo
+    #     robot = robot_skills.amigo.Amigo(wait_services=True)
+    # elif robot_name == "sergio":
+    #     import robot_skills.sergio
+    #     robot = robot_skills.sergio.Sergio(wait_services=True)
+    # elif robot_name == "mockbot":
+    #     import robot_skills.mockbot
+    #     robot = robot_skills.mockbot.Mockbot(wait_services=True)
+    # else:
+    #     rospy.logerr(
+    #         "No robot named '{}'. Options: {}"\
+    #             .format(robot_name, available_robots))
+    #     exit(-1)
 
     rospy.loginfo("Using robot '" + robot_name + "'.")
 
