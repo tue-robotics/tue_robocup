@@ -22,6 +22,9 @@ install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
   - tue-get install ros-${REPOSITORY_NAME}
   - source ~/.tue/setup.bash # source all target setup files
+  - echo "This is an ugly hack, directly patching a file"
+  - cd /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages/smach_ros
+  - sudo wget https://raw.githubusercontent.com/LoyVanBeek/executive_smach/indigo-devel/smach_ros/src/smach_ros/simple_action_state.py
 
 before_script:
   - cd ${TUE_SYSTEM_DIR}/src
