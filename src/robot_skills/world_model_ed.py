@@ -55,6 +55,8 @@ class ED:
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
+        self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
+
         self._tf_listener = tf_listener
 
         self.navigation = Navigation(robot_name, tf_listener, wait_service)
@@ -215,6 +217,32 @@ class ED:
         rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
         return False
 
+    def save_image(self, path = "", path_suffix = "", filename = ""):
+        import os
+        import time
+
+        if not path:
+            home_dir = os.environ["HOME"]
+            path = home_dir + "/ed/kinect/" + time.strftime("%Y-%m-%d") 
+            if path_suffix:
+                path += "/" + path_suffix
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        if not filename:
+            filename = time.strftime("%Y-%m-%d-%H-%M-%S")
+
+        fname = path + "/" + filename
+
+        res = self._ed_get_image_srv(filename=filename)
+
+        with open(fname + ".rgbd", "wb") as f:
+            f.write(bytearray(res.rgbd_data))        
+
+        with open(fname + ".json", "w") as f:
+            f.write(res.json_meta_data)
+
     # If continuous is None, the continuous mode of segmentation is left unchanged (on if it was on, off if it was off). However,
     # if 'continuous' is NOT None, it actively sets the mode of segmentation (True = on, False = off)
     def configure_kinect_segmentation(self, continuous=None, max_sensor_range=0):
@@ -222,9 +250,12 @@ class ED:
         return res.entity_ids
 
     def update_kinect(self, area_description):
+        # Save the image (logging)
+        self.save_image(path_suffix=area_description.replace(" ", "_"))
+
         res = self._ed_kinect_update_srv(update_space_description = area_description)
         if res.error_msg:
-            print res.error_msg
+            print res.error_msg        
 
         return res
 
