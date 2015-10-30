@@ -75,7 +75,6 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
 
             # Run the statemachine
             outcome = executioner.execute()
-            outcome = None
             print "Final outcome: {0}".format(outcome)
         except Exception, e:
             print "An exception occured"
@@ -96,47 +95,4 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
 #            robot.speech.speak(message)
         finally:
             if introserver:
-                print "Stopping introserver"
                 introserver.stop()
-                print "Introserver stopped"
-                del introserver
-
-            # list_threads()
-            # kill_proc_tree(os.getpid()) #Sometimes scripts won't terminate nicely, so we kill it the hard way.
-
-def kill_proc_tree(pid, including_parent=True):    
-    import psutil
-    parent = psutil.Process(pid)
-    try:
-        if parent.is_running():
-            parent.wait(5)
-    except psutil.TimeoutExpired:
-        print "Parent process won't die nicely, so kill the children first. Sounds harsh, but it just a process"
-        children = []
-        try:
-            children = parent.get_children()
-        except AttributeError:
-            children = parent.children()
-        
-        for child in children:
-            child.kill()
-        for child in children:
-            child.wait(timeout=5)
-        if including_parent:
-            parent.kill()
-            parent.wait(5)
-
-def list_threads():
-    print >> sys.stderr, "\n*** STACKTRACE - START ***\n"
-    code = set()
-    for threadId, stack in sys._current_frames().items():
-        thread_description = "\n# ThreadID: "
-        for filename, lineno, name, line in traceback.extract_stack(stack):
-            thread_description += 'File: "%s", line %d, in %s\n' % (filename, lineno, name)
-            if line:
-                thread_description += "  %s\n" % (line.strip())
-        code.add(thread_description)
-
-    for line in code:
-        print >> sys.stderr, line
-    print >> sys.stderr, "\n*** STACKTRACE - END ***\n"
