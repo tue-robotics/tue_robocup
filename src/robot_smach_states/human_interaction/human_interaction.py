@@ -390,7 +390,7 @@ class LearnPerson(smach.StateMachine):
                                     NameToUserData(robot, person_name = self.person_name, name_designator = self.name_designator),
                                     remapping={     'personName_out':'personName_userdata'},
                                     transitions={   'done': 'LEARN_PERSON'})
-
+            return
             # Create Simple Action ClientS
             smach.StateMachine.add( 'LEARN_PERSON',
                                     SimpleActionState(  self.service_name,
