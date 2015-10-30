@@ -62,7 +62,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     with robot:
         try:
             # build the state machine
-            executioner = statemachine_creator(robot)
+            executioner = None #statemachine_creator(robot)
             if initial_state:
                 initial_state = [initial_state]
                 rospy.logwarn(
