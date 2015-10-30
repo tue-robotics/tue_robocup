@@ -74,7 +74,8 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
             # introserver.start()
 
             # Run the statemachine
-            outcome = executioner.execute()
+            # outcome = executioner.execute()
+            outcome = None
             print "Final outcome: {0}".format(outcome)
         except Exception, e:
             print "An exception occured"
