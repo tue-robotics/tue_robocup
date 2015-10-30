@@ -73,7 +73,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
 
             introserver = smach_ros.IntrospectionServer(
                 statemachine_creator.__name__, executioner, '/SM_ROOT_PRIMARY')
-            # introserver.start()
+            introserver.start()
 
             # Run the statemachine
             # outcome = executioner.execute()
