@@ -48,7 +48,9 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     #     robot = robot_skills.sergio.Sergio(wait_services=True)
     # elif robot_name == "mockbot":
     import robot_skills.mockbot
+    # import ipdb; ipdb.set_trace()
     robot = robot_skills.mockbot.Mockbot(wait_services=True)
+
     # else:
     #     rospy.logerr(
     #         "No robot named '{}'. Options: {}"\
@@ -102,13 +104,14 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
                 del introserver
 
             # list_threads()
-            kill_proc_tree(os.getpid()) #Sometimes scripts won't terminate nicely, so we kill it the hard way.
+            # kill_proc_tree(os.getpid()) #Sometimes scripts won't terminate nicely, so we kill it the hard way.
 
 def kill_proc_tree(pid, including_parent=True):    
     import psutil
     parent = psutil.Process(pid)
     try:
-        parent.wait(5)
+        if parent.is_running():
+            parent.wait(5)
     except psutil.TimeoutExpired:
         print "Parent process won't die nicely, so kill the children first. Sounds harsh, but it just a process"
         children = []
