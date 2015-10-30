@@ -71,8 +71,8 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
                     "Overriding initial state with {}".format(initial_state))
                 executioner.set_initial_state(initial_state)
 
-            # introserver = smach_ros.IntrospectionServer(
-            #     statemachine_creator.__name__, executioner, '/SM_ROOT_PRIMARY')
+            introserver = smach_ros.IntrospectionServer(
+                statemachine_creator.__name__, executioner, '/SM_ROOT_PRIMARY')
             # introserver.start()
 
             # Run the statemachine
