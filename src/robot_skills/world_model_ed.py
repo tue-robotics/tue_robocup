@@ -236,6 +236,8 @@ class ED:
         fname = path + "/" + filename
 
         res = self._ed_get_image_srv(filename=filename)
+        if (res.error_msg):
+            rospy.logerr("Could not save image: %s" % res.error_msg)
 
         with open(fname + ".rgbd", "wb") as f:
             f.write(bytearray(res.rgbd_data))        
@@ -255,7 +257,7 @@ class ED:
 
         res = self._ed_kinect_update_srv(update_space_description = area_description)
         if res.error_msg:
-            print res.error_msg        
+            rospy.logerr("Could not segment objects: %s" % res.error_msg)
 
         return res
 
@@ -275,7 +277,6 @@ class ED:
             return []
 
         res = self._ed_classify_srv(ids = ids, property = property, perception_models_path=path)
-
         if (res.error_msg):
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
