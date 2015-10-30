@@ -48,7 +48,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
     #     robot = robot_skills.sergio.Sergio(wait_services=True)
     # elif robot_name == "mockbot":
     import robot_skills.mockbot
-    # robot = robot_skills.mockbot.Mockbot(wait_services=True)
+    robot = robot_skills.mockbot.Mockbot(wait_services=True)
     # else:
     #     rospy.logerr(
     #         "No robot named '{}'. Options: {}"\
