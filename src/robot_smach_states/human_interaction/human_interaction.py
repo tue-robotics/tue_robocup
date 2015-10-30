@@ -398,7 +398,8 @@ class LearnPerson(smach.StateMachine):
                                                         result_cb = get_result_cb,
                                                         goal_cb = send_goal_cb,            # create a goal inside the callback
                                                         input_keys=['person_name_goal'],
-                                                        output_keys=['result_info_out']),
+                                                        output_keys=['result_info_out'],
+                                                        server_wait_timeout=rospy.Duration(5.0)),
                                                         # goal_slots = ['person_name_goal'],# or create it here directly
                                     transitions={   'succeeded':'succeded_learning',
                                                     'aborted': 'failed_learning',

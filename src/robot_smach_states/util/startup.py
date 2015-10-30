@@ -96,25 +96,3 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
         finally:
             if introserver:
                 introserver.stop()
-            kill_proc_tree(os.getpid()) #Sometimes scripts won't terminate nicely, so we kill it the hard way.
-
-def kill_proc_tree(pid, including_parent=True):    
-    import psutil
-    parent = psutil.Process(pid)
-    try:
-        parent.wait(5)
-    except psutil.TimeoutExpired:
-        print "Parent process won't die nicely, so kill the children first. Sounds harsh, but it just a process"
-        children = []
-        try:
-            children = parent.get_children()
-        except AttributeError:
-            children = parent.children()
-        
-        for child in children:
-            child.kill()
-        for child in children:
-            child.wait(timeout=5)
-        if including_parent:
-            parent.kill()
-            parent.wait(5)
