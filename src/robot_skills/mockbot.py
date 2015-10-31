@@ -63,9 +63,6 @@ class Ears(object):
         answer.choices += [Choice(id="table", values=["desk"])]
 
     def recognize(self, spec, choices, time_out=None):
-        print "spec:", spec
-        print "choices:", choices
-        # import ipdb; ipdb.set_trace()
         answer = GetSpeechResponse(result="Mockbot cannot actually hear, this is a dummy answer")
         keys = choices.keys()
         if "prefix" in keys:
