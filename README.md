@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/tue-robotics/robot_skills.svg?branch=master)](https://travis-ci.org/tue-robotics/robot_skills) 
+[![Build Status](https://travis-ci.org/tue-robotics/robot_skills.svg?branch=master)](https://travis-ci.org/tue-robotics/robot_skills) [![Code Climate](https://codeclimate.com/github/tue-robotics/robot_skills/badges/gpa.svg)](https://codeclimate.com/github/tue-robotics/robot_skills)
 
 robot_skills
 ============
