@@ -14,6 +14,7 @@ before_install:
   - CI_SOURCE_PATH=$(pwd)
   - REPOSITORY_NAME=${PWD##*/}
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
+  - sudo pip install codecov
 
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
@@ -34,15 +35,16 @@ script:
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
   - catkin_make run_tests # and run them
-  - rosrun robot_smach_states arm.py
-  - rosrun robot_smach_states checks.py
-  - rosrun robot_smach_states collection_designators.py
-  - rosrun robot_smach_states core.py
-  - rosrun robot_smach_states decorators.py
-  - rosrun robot_smach_states ed_designators.py
-  - rosrun robot_smach_states tests.py
-  - rosrun robot_smach_states human_interaction.py
-  - pushd .
-  - roscd robot_smach_states/src/robot_smach_states/util/designators/
-  - python utility.py
-  - popd
+  - roscd robot_smach_states
+  - coverage run src/robot_smach_states/util/designators/arm.py
+  - coverage run --append src/robot_smach_states/util/designators/checks.py
+  - coverage run --append src/robot_smach_states/util/designators/collection_designators.py
+  - coverage run --append src/robot_smach_states/util/designators/core.py
+  - coverage run --append src/robot_smach_states/util/designators/decorators.py
+  - coverage run --append src/robot_smach_states/util/designators/ed_designators.py
+  - coverage run --append src/robot_smach_states/util/designators/tests.py
+  - coverage run --append src/robot_smach_states/util/designators/utility.py
+  - coverage run --append src/robot_smach_states/human_interaction/human_interaction.py
+
+after_success:
+  - codecov
