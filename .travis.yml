@@ -35,20 +35,16 @@ script:
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
   - catkin_make run_tests # and run them
-  - pushd .
-  - roscd robot_smach_states/src/robot_smach_states/util/designators/
-  - coverage run arm.py
-  - coverage run  checks.py
-  - coverage run  collection_designators.py
-  - coverage run  core.py
-  - coverage run  decorators.py
-  - coverage run ed_designators.py
-  - coverage run tests.py
-  - coverage run utility.py
-  - roscd robot_smach_states/src/robot_smach_states/human_interaction
-  - coverage run human_interaction.py
-  - popd
+  - roscd robot_smach_states
+  - coverage run src/robot_smach_states/util/designators/arm.py
+  - coverage run --append src/robot_smach_states/util/designators/checks.py
+  - coverage run --append src/robot_smach_states/util/designators/collection_designators.py
+  - coverage run --append src/robot_smach_states/util/designators/core.py
+  - coverage run --append src/robot_smach_states/util/designators/decorators.py
+  - coverage run --append src/robot_smach_states/util/designators/ed_designators.py
+  - coverage run --append src/robot_smach_states/util/designators/tests.py
+  - coverage run --append src/robot_smach_states/util/designators/utility.py
+  - coverage run --append src/robot_smach_states/human_interaction/human_interaction.py
 
 after_success:
-  - coverage report
   - codecov
