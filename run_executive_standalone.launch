@@ -1,7 +1,0 @@
-<launch>
-    <include file="$(find text_to_speech_google)/launch/start.launch"/>
-    <include file="$(find tue_reasoner_core)/launch/start.launch"/>
-    <include file="$(find wire_core)/launch/start.launch"/>
-
-    <node name="tf_server" pkg="tf_server" type="tf_server" respawn="false"/>
-</launch>
