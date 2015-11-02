@@ -13,7 +13,7 @@ from actionlib_msgs.msg import GoalStatus
 class Torso(object):
     def __init__(self, robot_name, wait_service=False):
 
-        self.robot_name  = robot_name  
+        self.robot_name  = robot_name
         self.joint_names = rospy.get_param('/'+self.robot_name+'/skills/torso/joint_names')
         self.default_configurations = rospy.get_param('/'+self.robot_name+'/skills/torso/default_configurations')
         self.default_tolerance = rospy.get_param('/'+self.robot_name+'/skills/torso/default_tolerance')
@@ -23,7 +23,7 @@ class Torso(object):
         # Init action client
         #self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/torso_server', control_msgs.msg.FollowJointTrajectoryAction)
         self.ac_move_torso = actionlib.SimpleActionClient('/'+self.robot_name+'/body/joint_trajectory_action', control_msgs.msg.FollowJointTrajectoryAction)
-        
+
         # Init joint measurement subscriber
         self.torso_sub = rospy.Subscriber('/'+self.robot_name+'/sergio/torso/measurements', JointState, self._receive_torso_measurement)
 
@@ -37,14 +37,14 @@ class Torso(object):
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
-    
+
     def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
         rospy.logdebug("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
         if (len(torso_pos) != len(self.joint_names)):
             rospy.logwarn('Length of desired torso pos {0} does not correspond with number of joints {1}'.format(len(torso_pos), len(self.joint_names)))
             return False
-        
+
         ''' Check limits '''
         for i in range(0, len(self.joint_names)):
             if (torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit):
@@ -56,7 +56,7 @@ class Torso(object):
         torso_goal.trajectory.joint_names = self.joint_names
         torso_goal_point.positions = torso_pos
         torso_goal.trajectory.points.append(torso_goal_point)
-        
+
         for i in range(0,len(self.joint_names)):
             goal_tolerance = control_msgs.msg.JointTolerance()
             goal_tolerance.name = self.joint_names[i]
@@ -68,28 +68,28 @@ class Torso(object):
 
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
         self.ac_move_torso.send_goal(torso_goal)
-        
+
         if timeout == 0.0:
             return True
         else:
             return self.wait(timeout)
-            
+
     def high(self):
         return self._send_goal(self.upper_limit)
-        
+
     def medium(self):
         goal = []
         # ToDo: make nice
         for i in range(0, len(self.joint_names)):
             goal.append(self.lower_limit[i]+(self.upper_limit[i]-self.lower_limit[i])/2)
         return self._send_goal(goal)
-        
+
     def low(self):
         return self._send_goal(self.lower_limit)
-        
+
     def reset(self):
         return self.send_goal('reset')
-    
+
     def wait(self, timeout=10):
         self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
         if self.ac_move_torso.get_state() == GoalStatus.SUCCEEDED:
@@ -98,7 +98,7 @@ class Torso(object):
         else:
             rospy.loginfo("Reaching torso target failed")
             return False
-            
+
     def cancel_goal(self):
         self.ac_move_torso.cancel_all_goals()
         #return True

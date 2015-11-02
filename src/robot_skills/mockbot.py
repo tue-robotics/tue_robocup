@@ -175,7 +175,7 @@ class Speech(object):
         self.get_info = mock.MagicMock()
         self.get_action = mock.MagicMock()
         self.buildList = mock.MagicMock()
-        
+
     def speak(self, sentence, *args, **kwargs):
         rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m")
 
@@ -233,10 +233,10 @@ class Mockbot(robot.Robot):
     """
     Interface to all parts of Mockbot. When initializing Mockbot, you can choose a list of components
     which wont be needed
-    
+
     # I want a blind and mute Mockbot!
     >>> Mockbot(['perception', 'speech'])
-    
+
     # I want a full fledged, awesome Mockbot
     >>> Mockbot()
     """
@@ -321,12 +321,12 @@ if __name__ == "__main__":
     speak = lambda sentence: mockbot.speech.speak(sentence, block=False)
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
     look_at_point = lambda x, y, z: mockbot.head.look_at_point(msgs.PointStamped(x, y, z, frame_id="/mockbot/base_link"))
-        
+
     r = mockbot.reasoner
     q = mockbot.reasoner.query
 
     mapgo = mockbot.base.go
-    
+
     def basego(x,y,phi):
         return mockbot.base.go(x,y,phi,frame="/mockbot/base_link")
 
@@ -344,7 +344,7 @@ if __name__ == "__main__":
        rot_array = [rot.w, rot.x, rot.y, rot.z]
        rot3 = tf.transformations.euler_from_quaternion(rot_array)
        print 'x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0])
-       return (loc.x, loc.y, rot3[0]) 
+       return (loc.x, loc.y, rot3[0])
 
     def hear(text):
         pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         ENDC = '\033[0m'
 
         mockbot.speech.speak("Please say: continue when I turn green", block=True) #definitely block here, otherwise we hear ourselves
-        
+
         result = mockbot.ears.ask_user("continue")
         rospy.loginfo("test_audio result: {0}".format(result))
         if result and result != "false":
@@ -375,17 +375,17 @@ if __name__ == "__main__":
             mockbot.speech.speak("Nope, my ears are clogged", block=False)
 
 
-    print """\033[1;33m You can now command mockbot from the python REPL. 
-    Type e.g. help(mockbot) for help on objects and functions, 
-    or type 'mockbot.' <TAB> to see what methods are available. 
+    print """\033[1;33m You can now command mockbot from the python REPL.
+    Type e.g. help(mockbot) for help on objects and functions,
+    or type 'mockbot.' <TAB> to see what methods are available.
     Also, try 'dir()'
     You can use both robot.foo or mockbot.foo for easy copypasting.
     Press ctrl-D or type 'exit()' to exit the awesome mockbot-console.
     WARNING: When the console exits, it cancels ALL arm and base goals.
-    There are handy shortcuts, such as: 
-        - mapgo/basego(x,y,phi), 
+    There are handy shortcuts, such as:
+        - mapgo/basego(x,y,phi),
         - speak/praat/(sentence), save_sentence(sentence) saves the .wav file to /tmp/<sentence_you_typed>.wav
-        - head_down, head_reset, left/right_close/open, look_at_point(x,y,z), 
+        - head_down, head_reset, left/right_close/open, look_at_point(x,y,z),
         - get_pose_2d()
         - test_audio()
     Finally, methods can be called without parentheses, like 'speak "Look ma, no parentheses!"'\033[1;m"""

@@ -22,15 +22,15 @@ class Amigo(object):
     """
     Interface to all parts of Amigo. When initializing Amigo, you can choose a list of components
     which wont be needed
-    
+
     # I want a blind and mute Amigo!
     >>> Amigo(['perception', 'speech'])
-    
+
     # I want a full fledged, awesome Amigo
     >>> Amigo()
     """
     def __init__(self, dontInclude = [], wait_services=True):
-        
+
         self.tf_listener = tf_server.TFClient()
 
         if 'head' not in dontInclude:
@@ -58,4 +58,4 @@ if __name__ == "__main__":
     amigo.leftArm.cancel_goal()
     amigo.rightArm.cancel_goal()
     amigo.head.reset()
-    
+

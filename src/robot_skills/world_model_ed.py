@@ -223,7 +223,7 @@ class ED:
 
         if not path:
             home_dir = os.environ["HOME"]
-            path = home_dir + "/ed/kinect/" + time.strftime("%Y-%m-%d") 
+            path = home_dir + "/ed/kinect/" + time.strftime("%Y-%m-%d")
             if path_suffix:
                 path += "/" + path_suffix
 
@@ -240,7 +240,7 @@ class ED:
             rospy.logerr("Could not save image: %s" % res.error_msg)
 
         with open(fname + ".rgbd", "wb") as f:
-            f.write(bytearray(res.rgbd_data))        
+            f.write(bytearray(res.rgbd_data))
 
         with open(fname + ".json", "w") as f:
             f.write(res.json_meta_data)
