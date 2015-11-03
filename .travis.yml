@@ -34,6 +34,7 @@ before_script:
   - cd .. # go to the catkin workspace
 
 script:
+  - pushd .
   - pwd
   - ls
   - echo $ROS_PACKAGE_PATH
@@ -42,6 +43,11 @@ script:
   - pwd
   - cd ..
   - ls
+  - cd tue_robocup
+  - ls
+  - cd ..
+  - rm -rf tue_robocup
+  - popd
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
