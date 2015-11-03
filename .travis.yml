@@ -20,7 +20,14 @@ before_install:
   
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-${REPOSITORY_NAME}
+  - tue-get install ros-challenge_test
+  - tue-get install ros-challenge_manipulation
+  - tue-get install ros-challenge_navigation
+  - tue-get install ros-challenge_person_recognition
+  - tue-get install ros-challenge_rips
+  - tue-get install ros-challenge_robonurse
+  - tue-get install ros-speech_recognition
+  - tue-get install ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
   - echo "This is an ugly hack, directly patching a file"
   - cd /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages/smach_ros
@@ -45,6 +52,7 @@ script:
   - rosrun tf_server tf_server >> /dev/null & #Robot keeps waiting for this
   - roscd tue_robocup
   - ./open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
+  -
   - roscd challenge_manipulation
   - rosrun challenge_manipulation manipulation.py mockbot
   - 
