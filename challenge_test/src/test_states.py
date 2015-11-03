@@ -16,6 +16,9 @@ from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
 
+from collections import namedtuple
+ClassificationResult = namedtuple("ClassificationResult", "id type probability") #Generates a class with id, type and probability.
+
 # ----------------------------------------------------------------------------------------------------
 
 common_knowledge = load_knowledge("common")
@@ -50,8 +53,7 @@ class AskPersonName(smach.State):
         Ask the person's name, and try to hear one of the names in common_knowledge
     """
     def __init__(self, robot, personNameDes, defaultName = 'Operator'):
-        smach.State.__init__(   self, 
-                                outcomes=['succeded', 'failed'])
+        smach.State.__init__(   self, outcomes=['succeded', 'failed'])
 
         self.robot = robot
         self.personNameDes = personNameDes
@@ -89,3 +91,50 @@ class AskPersonName(smach.State):
                 pass
 
         return 'succeded'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class PickUpRandomObj(smach.State):
+    """
+        Ask the person's name, and try to hear one of the names in common_knowledge
+    """
+    def __init__(self, robot, objectsIDsDes):
+        smach.State.__init__(   self, outcomes=['succeded', 'failed', 'no_objects'])
+
+        self.robot = robot
+        self.objectsIDsDes = objectsIDsDes
+
+    def execute(self, userdata):
+        printOk("PickUpRandomObj")
+
+        objsResolved = self.objectsIDsDes.resolve()
+
+        # import ipdb; ipdb.set_trace()
+
+        if not (self.objectsIDsDes) or len(objsResolved) == 0:
+            self.robot.speech.speak("I don't see any objects that i can pick up!", block=False)
+            return 'no_objects'
+        else:
+            sentence = "I see "
+
+            # describe objects
+            for idx, obj in enumerate(objsResolved):
+
+                if (idx < len(objsResolved)-1 or len(objsResolved) == 1):
+                    # if its not the last item or there is only one
+                    sentence+=(", a ")
+                else:
+                    # if its the last item, finish with 'and'
+                    sentence+=("and a ")
+
+                sentence+=("{} ".format(objsResolved[0].type if objsResolved[0].type else "unknown object"))
+                print sentence
+
+            self.robot.speech.speak(sentence, block=False)
+            
+            self.robot.speech.speak("I am going to pick up a random object.", block=False)
+
+            return 'failed'
+
