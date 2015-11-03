@@ -34,8 +34,14 @@ before_script:
   - cd .. # go to the catkin workspace
 
 script:
+  - pwd
+  - ls
   - echo $ROS_PACKAGE_PATH
   - rospack list
+  - roscd challenge_manipulation
+  - pwd
+  - cd ..
+  - ls
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
