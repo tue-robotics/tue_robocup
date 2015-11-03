@@ -26,7 +26,7 @@ install:
   - tue-get install ros-challenge_person_recognition
   - tue-get install ros-challenge_rips
   - tue-get install ros-challenge_robonurse
-  - tue-get install ros-speech_recognition
+  - tue-get install ros-challenge_speech_recognition
   - tue-get install ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
   - echo "This is an ugly hack, directly patching a file"
