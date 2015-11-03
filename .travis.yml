@@ -58,6 +58,9 @@ script:
   - roscd tue_robocup
   - ./open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
   -
+  - roscd challenge_test
+  - rosrun challenge_test test.py mockbot
+  -
   - roscd challenge_manipulation
   - rosrun challenge_manipulation manipulation.py mockbot
   - 
