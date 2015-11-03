@@ -764,7 +764,7 @@ class RespondToAction(smach.StateMachine):
 
 class RoboNurse(smach.StateMachine):
     def __init__(self, robot):
-        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted'])
+        smach.StateMachine.__init__(self, outcomes=['Done', 'Aborted', 'Failed'])
 
 
         granny, grannies_table, shelf = define_designators(robot)
@@ -834,8 +834,8 @@ class RoboNurse(smach.StateMachine):
 
             smach.StateMachine.add( "RESPOND_TO_ACTION",
                                     RespondToAction(robot, grannies_table, granny),
-                                    transitions={   'succeeded'     :'RESPOND_TO_ACTION',
-                                                    'failed'        :'RESPOND_TO_ACTION'})
+                                    transitions={   'succeeded'     :'Done',
+                                                    'failed'        :'Failed'})
 
             # smach.StateMachine.add( "SAY_GO_BACK",
             #                         states.Say(robot, ["I'll just go back", "Heading back"], block=True),

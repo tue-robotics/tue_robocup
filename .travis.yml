@@ -20,15 +20,9 @@ before_install:
   
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-challenge_test
-  - tue-get install ros-challenge_manipulation
-  - tue-get install ros-challenge_navigation
-  - tue-get install ros-challenge_person_recognition
-  - tue-get install ros-challenge_rips
-  - tue-get install ros-challenge_robonurse
-  - tue-get install ros-challenge_speech_recognition
-  - tue-get install ros-challenge_manipulation
+  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_navigation ros-challenge_person_recognition ros-challenge_rips ros-challenge_robonurse ros-challenge_speech_recognition ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
+  - cd
 
 before_script:
   - cd ${TUE_SYSTEM_DIR}/src
@@ -40,6 +34,20 @@ before_script:
   - cd .. # go to the catkin workspace
 
 script:
+  - pushd .
+  - pwd
+  - ls
+  - echo $ROS_PACKAGE_PATH
+  - rospack list
+  - roscd challenge_manipulation
+  - pwd
+  - cd ..
+  - ls
+  - cd tue_robocup
+  - ls
+  - cd ..
+  - rm -rf tue_robocup
+  - popd
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
@@ -56,7 +64,7 @@ script:
   - rosrun challenge_navigation challenge_navigation.py mockbot
   - 
   - roscd challenge_person_recognition
-  - rosrun challenge_person_recognition person_recognition mockbot
+  - rosrun challenge_person_recognition person_recognition.py mockbot
   - 
   - roscd challenge_rips
   - rosrun challenge_rips rips.py mockbot
