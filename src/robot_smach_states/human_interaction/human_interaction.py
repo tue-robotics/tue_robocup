@@ -549,7 +549,8 @@ def scanForHuman(robot):
             id_list.append(entity.id)
 
     ''' Try to classify the entities '''
-    entity_types = robot.ed.classify(ids=id_list, types=['human'])
+    # entity_types = robot.ed.classify(ids=id_list, types=['human'])
+    entity_types = robot.ed.classify(ids=id_list)
 
     ''' Check all entities that were flagged to see if they have received a 'type' it_label'''
     for i in range(0, len(id_list)):
