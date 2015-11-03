@@ -243,7 +243,7 @@ class ChallengeTest(smach.StateMachine):
         # - - - - - - - - - - - - - - - - - - - Callback States  - - - - - - - - - - - - - - - - - - -
 
         @smach.cb_interface(outcomes=['spoken'])
-        def sayHelloCB(userdata):
+        def sayHelloCB(userdata = None):
             printOk("sayHelloCB")
             robot.speech.speak( "Hello " + personNameDes.resolve() + "!", block=False)
             return 'spoken'
@@ -260,13 +260,17 @@ class ChallengeTest(smach.StateMachine):
             smach.StateMachine.add( "INIT_WM",
                                     states.InitializeWorldModel(robot), 
                                     # transitions={   'done':'LEARN_NAME_CONTAINER'})
-                                    # transitions={   'done':'SAY_SEARCHING_OBJECTS'})
-                                    transitions={   'done':'ENTER_ROOM_CONTAINER'})
+                                    transitions={   'done':'SAY_SEARCHING_OBJECTS'})
+                                    # transitions={   'done':'ENTER_ROOM_CONTAINER'})
             
             smach.StateMachine.add( 'ENTER_ROOM_CONTAINER',
                                     EnterContainer(robot),
                                     transitions={   'container_success':'WAIT_PERSON_CONTAINER',
                                                     'container_failed': 'WAIT_PERSON_CONTAINER'})
+
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            #                                 HUMAN INTERACTION
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             # wait for a person to be seen in front of the robot
             smach.StateMachine.add( 'WAIT_PERSON_CONTAINER',
@@ -292,7 +296,7 @@ class ChallengeTest(smach.StateMachine):
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                                 MANIPULATE_CONTAINER
+            #                                 MANIPULATION
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             smach.StateMachine.add('SAY_SEARCHING_OBJECTS',
@@ -314,9 +318,25 @@ class ChallengeTest(smach.StateMachine):
 
             smach.StateMachine.add( "SEGMENT_OBJECTS",
                                     states.SegmentObjects(robot, objectsIDsDes.writeable, EdEntityDesignator(robot, id="dinnertable"), "on_top_of"),
-                                    transitions={   'done':'END_CHALLENGE'})
+                                    transitions={   'done':'PICKUP_OBJECT'})
 
+            smach.StateMachine.add( 'PICKUP_OBJECT',
+                                    test_states.PickUpRandomObj(robot, objectsIDsDes),
+                                    transitions={   'succeded':'SAY_I_HAVE_OBJ',
+                                                    'failed':'SAY_PICKUP_FAILED',
+                                                    'no_objects' : 'SAY_NO_OBJECTS'})
 
+            smach.StateMachine.add('SAY_I_HAVE_OBJ',
+                                   states.Say(robot,"I have the object!", block=False),
+                                   transitions={'spoken':'END_CHALLENGE'})
+
+            smach.StateMachine.add('SAY_PICKUP_FAILED',
+                                   states.Say(robot,"Something went wrong and i could not pick up the object!", block=False),
+                                   transitions={'spoken':'END_CHALLENGE'})
+
+            smach.StateMachine.add('SAY_NO_OBJECTS',
+                                   states.Say(robot,"I don't see any objects to pick up!", block=False),
+                                   transitions={'spoken':'END_CHALLENGE'})
 
 
 
