@@ -29,10 +29,6 @@ install:
   - tue-get install ros-challenge_speech_recognition
   - tue-get install ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
-  - echo "This is an ugly hack, directly patching a file"
-  - cd /opt/ros/$ROS_DISTRO/lib/python2.7/dist-packages/smach_ros
-  - sudo rm simple_action_state.py #Replace the original with Loys patch
-  - sudo wget https://raw.githubusercontent.com/LoyVanBeek/executive_smach/indigo-devel/smach_ros/src/smach_ros/simple_action_state.py
 
 before_script:
   - cd ${TUE_SYSTEM_DIR}/src
