@@ -28,6 +28,8 @@ install:
   - tue-get install ros-challenge_robonurse
   - tue-get install ros-challenge_speech_recognition
   - tue-get install ros-challenge_manipulation
+  - roscd tue_robocup/..
+  - rm -rf tue_robocup/ #this is handled by the 'tue-get install's above
   - source ~/.tue/setup.bash # source all target setup files
 
 before_script:
