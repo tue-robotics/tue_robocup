@@ -34,8 +34,8 @@ before_script:
   - cd .. # go to the catkin workspace
 
 script:
-  - roscd tue_robocup/..
-  - rm -rf tue_robocup #this is handled by the 'tue-get install's above
+  - echo $ROS_PACKAGE_PATH
+  - rospack list
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
