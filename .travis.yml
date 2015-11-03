@@ -28,9 +28,7 @@ install:
   - tue-get install ros-challenge_robonurse
   - tue-get install ros-challenge_speech_recognition
   - tue-get install ros-challenge_manipulation
-  - rm -rf tue_robocup/ #this is handled by the 'tue-get install's above
   - source ~/.tue/setup.bash # source all target setup files
-  - roscd tue_robocup/..
   - cd
 
 before_script:
@@ -43,6 +41,8 @@ before_script:
   - cd .. # go to the catkin workspace
 
 script:
+  - roscd tue_robocup/..
+  - rm -rf tue_robocup #this is handled by the 'tue-get install's above
   - catkin_make -j2
   - catkin_make install   # installing the package
   - catkin_make tests     # build the tests
