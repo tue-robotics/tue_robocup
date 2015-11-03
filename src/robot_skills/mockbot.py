@@ -199,7 +199,7 @@ class ED(object):
             entity = EntityInfo()
 
             if not id:
-                entity.id = hash(entity)
+                entity.id = str(hash(entity))
             entity.type = "random_from_magicmock"
 
             return entity
