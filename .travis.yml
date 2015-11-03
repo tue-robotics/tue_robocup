@@ -35,10 +35,11 @@ before_script:
 
 script:
   - pushd .
-  - pwd
-  - ls
   - echo $ROS_PACKAGE_PATH
   - rospack list
+  - cd src
+  - pwd
+  - find . -maxdepth 3 -type d -exec ls -l "{}" \;
   - roscd challenge_manipulation
   - pwd
   - cd ..
