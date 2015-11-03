@@ -214,7 +214,7 @@ class ED(object):
         self.configure_kinect_segmentation = mock.MagicMock()
         self.update_entity = mock.MagicMock()
         self.configure_perception = mock.MagicMock()
-        self.get_closest_possible_person_entity = mock.MagicMock()
+        self.get_closest_possible_person_entity = lambda *args, **kwargs: generate_random_entity()
         self.enable_plugins = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
         self.classify = mock.MagicMock()
