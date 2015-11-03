@@ -56,7 +56,7 @@ script:
   - rosrun challenge_navigation challenge_navigation.py mockbot
   - 
   - roscd challenge_person_recognition
-  - rosrun challenge_person_recognition person_recognition mockbot
+  - rosrun challenge_person_recognition person_recognition.py mockbot
   - 
   - roscd challenge_rips
   - rosrun challenge_rips rips.py mockbot
