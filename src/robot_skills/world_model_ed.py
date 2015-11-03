@@ -22,6 +22,9 @@ import visualization_msgs.msg
 
 import yaml
 
+from collections import namedtuple
+ClassificationResult = namedtuple("ClassificationResult", "id type probability") #Generates a class with id, type and probability.
+
 
 class Navigation:
     def __init__(self, robot_name, tf_listener, wait_service=False):
@@ -264,7 +267,7 @@ class ED:
     #def configure_perception(self, continuous):
     #    self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
 
-    def classify(self, ids, perception_model_name = "", property = "type"):
+    def classify(self, ids, perception_model_name = "", property = "type", types = None):
         import rospkg
         rospack = rospkg.RosPack()
 
@@ -280,7 +283,13 @@ class ED:
         if (res.error_msg):
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
-        return zip(res.ids, res.expected_values, res.expected_value_probabilities)
+
+        # if there is a set of expected types, only report the one with the highest probability
+        if (types):
+            # for idx, id, type in enumerate (res.ids):
+            print "TODO: finish type filtering in Classification"    
+        else:
+            return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 
     def classify_with_probs(self, ids, types):
         res = self._ed_classify_srv(ids = ids, types = types)
