@@ -46,8 +46,6 @@ script:
   - ls
   - cd tue_robocup
   - ls
-  - cd ..
-  - rm -rf tue_robocup
   - popd
   - catkin_make -j2
   - catkin_make install   # installing the package
