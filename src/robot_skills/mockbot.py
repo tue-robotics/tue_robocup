@@ -201,6 +201,7 @@ class ED(object):
             if not id:
                 entity.id = str(hash(entity))
             entity.type = "random_from_magicmock"
+            entity.data = mock.MagicMock()
 
             return entity
 
@@ -214,6 +215,7 @@ class ED(object):
         self.update_entity = mock.MagicMock()
         self.configure_perception = mock.MagicMock()
         self.get_closest_possible_person_entity = mock.MagicMock()
+        self.enable_plugins = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
         self.classify = mock.MagicMock()
         self.classify_with_probs = mock.MagicMock()
