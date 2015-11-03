@@ -65,7 +65,9 @@ class Say(smach.State):
         if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
             self.sentence = random.choice(self.sentence)
 
-        self.robot.speech.speak(self.sentence, self.language, self.personality, self.voice, self.mood, self.block)
+        sentence = str(self.sentence.resolve() if hasattr(self.sentence, "resolve") else self.sentence)
+
+        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
 
         #robot.head.cancel_goal()
 
