@@ -20,14 +20,7 @@ before_install:
   
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-challenge_test
-  - tue-get install ros-challenge_manipulation
-  - tue-get install ros-challenge_navigation
-  - tue-get install ros-challenge_person_recognition
-  - tue-get install ros-challenge_rips
-  - tue-get install ros-challenge_robonurse
-  - tue-get install ros-challenge_speech_recognition
-  - tue-get install ros-challenge_manipulation
+  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_navigation ros-challenge_person_recognition ros-challenge_rips ros-challenge_robonurse ros-challenge_speech_recognition ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
   - cd
 
