@@ -217,6 +217,7 @@ class ED(object):
         self.disable_plugins = mock.MagicMock()
         self.classify = mock.MagicMock()
         self.classify_with_probs = mock.MagicMock()
+        self.segment_kinect = mock.MagicMock()
 
     def update_kinect(self, *args, **kwargs):
         res = UpdateResponse()
