@@ -40,6 +40,8 @@ script:
   - cd src
   - pwd
   - find . -maxdepth 3 -type d -exec ls -l "{}" \;
+  - rm -rf /home/travis/build/tue-robotics/tue_robocup
+  - find . -maxdepth 3 -type d -exec ls -l "{}" \;
   - roscd challenge_test
   - pwd
   - cd ..
