@@ -20,7 +20,7 @@ before_install:
   
 install:
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_navigation ros-challenge_person_recognition ros-challenge_rips ros-challenge_robonurse ros-challenge_speech_recognition ros-challenge_manipulation
+  - tue-get install ros-challenge_test # ros-challenge_manipulation ros-challenge_navigation ros-challenge_person_recognition ros-challenge_rips ros-challenge_robonurse ros-challenge_speech_recognition ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
   - cd
 
@@ -40,7 +40,7 @@ script:
   - cd src
   - pwd
   - find . -maxdepth 3 -type d -exec ls -l "{}" \;
-  - roscd challenge_manipulation
+  - roscd challenge_test
   - pwd
   - cd ..
   - ls
@@ -53,30 +53,30 @@ script:
   - roscore >> /dev/null & #Set up a roscore to run the tests with
   - catkin_make run_tests # and run them
   - rosrun tf_server tf_server >> /dev/null & #Robot keeps waiting for this
-  - roscd test_tools
-  - ./open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
+  - #roscd test_tools
+  - #./open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
   -
   - roscd challenge_test
   - rosrun challenge_test test.py mockbot
   -
-  - roscd challenge_manipulation
-  - rosrun challenge_manipulation manipulation.py mockbot
+  - #roscd challenge_manipulation
+  - #rosrun challenge_manipulation manipulation.py mockbot
   - 
-  - roscd challenge_navigation
-  - rosrun challenge_navigation challenge_navigation.py mockbot
+  - #roscd challenge_navigation
+  - #rosrun challenge_navigation challenge_navigation.py mockbot
   - 
-  - roscd challenge_person_recognition
-  - rosrun challenge_person_recognition person_recognition.py mockbot
+  - #roscd challenge_person_recognition
+  - #rosrun challenge_person_recognition person_recognition.py mockbot
   - 
-  - roscd challenge_rips
-  - rosrun challenge_rips rips.py mockbot
+  - #roscd challenge_rips
+  - #rosrun challenge_rips rips.py mockbot
   - 
-  - roscd challenge_robonurse
-  - rosrun challenge_robonurse challenge_robonurse.py mockbot
+  - #roscd challenge_robonurse
+  - #rosrun challenge_robonurse challenge_robonurse.py mockbot
   - 
-  - roscd challenge_speech_recognition
-  - rosrun challenge_speech_recognition 1_direct_speech_recognition.py mockbot
+  - #roscd challenge_speech_recognition
+  - #rosrun challenge_speech_recognition 1_direct_speech_recognition.py mockbot
   - 
-  - roscd challenge_speech_recognition
-  - rosrun challenge_speech_recognition 2_indirect_speech_recognition.py mockbot
+  - #roscd challenge_speech_recognition
+  - #rosrun challenge_speech_recognition 2_indirect_speech_recognition.py mockbot
   - killall roscore #And kill the roscore afterwards
