@@ -62,8 +62,6 @@ class SegmentObjects(smach.State):
         entity = self.entityDes.resolve()
         objIDs = []
 
-        # import ipdb; ipdb.set_trace()
-
         # Make sure the head looks at the entity
         pos = entity.pose.position
         self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, 0.5, "/map"), timeout=10)
@@ -74,15 +72,21 @@ class SegmentObjects(smach.State):
         # string[] new_ids      # ids of new entities
         # string[] updated_ids  # ids of updated entities
         # string[] deleted_ids  # ids of deleted entities
-
         # string error_msg      # Empty if no errors
 
         objIDs = objIDs + res.new_ids
         objIDs = objIDs + res.updated_ids
+        print "Segmented {} objects!".format(len(objIDs))
 
-        self.objectIDsDes.write(objIDs)
+        # Classify and update IDs
+        objClassif = self.robot.ed.classify(ids=objIDs)
+        
+        # import ipdb; ipdb.set_trace()
+        
+        for idx, obj in enumerate(objClassif): 
+            print "Object {} is a '{}' (ID: {})".format(idx, obj.type, obj.id)        
 
-        print "Found {} objects!".format(len(self.objectIDsDes.resolve()))
+        self.objectIDsDes.write(objClassif)
 
         # Cancel the head goal
         self.robot.head.cancel_goal()

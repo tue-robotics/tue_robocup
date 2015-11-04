@@ -65,7 +65,9 @@ class Say(smach.State):
         if not isinstance(self.sentence, str) and isinstance(self.sentence, list):
             self.sentence = random.choice(self.sentence)
 
-        self.robot.speech.speak(self.sentence, self.language, self.personality, self.voice, self.mood, self.block)
+        sentence = str(self.sentence.resolve() if hasattr(self.sentence, "resolve") else self.sentence)
+
+        self.robot.speech.speak(sentence, self.language, self.personality, self.voice, self.mood, self.block)
 
         #robot.head.cancel_goal()
 
@@ -398,7 +400,8 @@ class LearnPerson(smach.StateMachine):
                                                         result_cb = get_result_cb,
                                                         goal_cb = send_goal_cb,            # create a goal inside the callback
                                                         input_keys=['person_name_goal'],
-                                                        output_keys=['result_info_out']),
+                                                        output_keys=['result_info_out'],
+                                                        server_wait_timeout=rospy.Duration(5.0)),
                                                         # goal_slots = ['person_name_goal'],# or create it here directly
                                     transitions={   'succeeded':'succeded_learning',
                                                     'aborted': 'failed_learning',
@@ -546,7 +549,8 @@ def scanForHuman(robot):
             id_list.append(entity.id)
 
     ''' Try to classify the entities '''
-    entity_types = robot.ed.classify(ids=id_list, types=['human'])
+    # entity_types = robot.ed.classify(ids=id_list, types=['human'])
+    entity_types = robot.ed.classify(ids=id_list)
 
     ''' Check all entities that were flagged to see if they have received a 'type' it_label'''
     for i in range(0, len(id_list)):
