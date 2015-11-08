@@ -17,6 +17,7 @@ from dragonfly_speech_recognition.srv import GetSpeechResponse
 from dragonfly_speech_recognition.msg import Choice
 from ed.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
+from robot_skills.classification_result import ClassificationResult
 
 class Arm(object):
     def __init__(self, robot_name, side, tf_listener):
@@ -217,7 +218,7 @@ class ED(object):
         self.get_closest_possible_person_entity = lambda *args, **kwargs: generate_random_entity()
         self.enable_plugins = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
-        self.classify = mock.MagicMock()
+        self.classify = lambda *args, **kwargs: [mock.MagicMock() for i in range(5)]
         self.classify_with_probs = mock.MagicMock()
         self.segment_kinect = mock.MagicMock()
 

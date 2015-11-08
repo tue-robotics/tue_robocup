@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
-from ed.srv import GetGUICommand, GetGUICommandResponse
 # from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
 from ed_perception.srv import Classify
@@ -9,7 +8,6 @@ from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
-import robot_skills.util.msg_constructors as msgs
 from math import hypot
 
 from robot_skills.util import transformations
@@ -22,8 +20,7 @@ import visualization_msgs.msg
 
 import yaml
 
-from collections import namedtuple
-ClassificationResult = namedtuple("ClassificationResult", "id type probability") #Generates a class with id, type and probability.
+from robot_skills.classification_result import ClassificationResult
 
 
 class Navigation:
