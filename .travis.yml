@@ -55,11 +55,15 @@ script:
   - catkin_make run_tests # and run them
   - rosrun tf_server tf_server >> /dev/null & #Robot keeps waiting for this
   - roscd test_tools
-  - ./open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
+  - rosrun test_tools open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
   -
   - roscd challenge_test
   - rosrun challenge_test test.py mockbot
   -
+  - roscd test_tools
+  - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in. Its a bit hacky
+  - sleep 5
+  - cat open_door_log.txt
   - roscd challenge_manipulation
   - rosrun challenge_manipulation manipulation.py mockbot
   - 
