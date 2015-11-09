@@ -59,11 +59,6 @@ script:
   -
   - roscd challenge_test
   - rosrun challenge_test test.py mockbot
-  -
-  - roscd test_tools
-  - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in. Its a bit hacky
-  - sleep 5
-  - cat open_door_log.txt
   - roscd challenge_manipulation
   - rosrun challenge_manipulation manipulation.py mockbot
   - 
@@ -72,6 +67,11 @@ script:
   - 
   - #roscd challenge_person_recognition
   - #rosrun challenge_person_recognition person_recognition.py mockbot
+  - 
+  - roscd test_tools
+  - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in. Its a bit hacky
+  - sleep 5
+  - cat open_door_log.txt
   - 
   - roscd challenge_rips
   - rosrun challenge_rips rips.py mockbot
