@@ -305,8 +305,8 @@ class ChallengeTest(smach.StateMachine):
             
             smach.StateMachine.add('NAV_TO_TABLE',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id="living_room") : "in" }, 
-                                        EdEntityDesignator(robot, id="dinnertable")),
+                                        {EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ROOM_ID) : "in" }, 
+                                        EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID)),
                                     transitions={   'arrived'           :   'SEGMENT_OBJECTS',
                                                     'unreachable'       :   'SAY_FAILED_NAV_TO_TABLE',
                                                     'goal_not_defined'  :   'SAY_FAILED_NAV_TO_TABLE'})
@@ -317,7 +317,7 @@ class ChallengeTest(smach.StateMachine):
                                    transitions={'spoken':'SEGMENT_OBJECTS'})
 
             smach.StateMachine.add( "SEGMENT_OBJECTS",
-                                    states.SegmentObjects(robot, objectsIDsDes.writeable, EdEntityDesignator(robot, id="dinnertable"), "on_top_of"),
+                                    states.SegmentObjects(robot, objectsIDsDes.writeable, EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID), "on_top_of"),
                                     transitions={   'done':'PICKUP_OBJECT'})
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
