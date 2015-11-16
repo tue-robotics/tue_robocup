@@ -5,6 +5,9 @@ import smach
 
 import robot_skills.util.msg_constructors as msgs
 
+from robot_smach_states.navigation import NavigateToObserve
+from robot_smach_states.util.designators import VariableDesignator
+
 # ----------------------------------------------------------------------------------------------------
 
 class SetPlugins(smach.State):
@@ -64,7 +67,11 @@ class SegmentObjects(smach.State):
 
         # Make sure the head looks at the entity
         pos = entity.pose.position
-        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, 0.5, "/map"), timeout=10)
+        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, 0.8, "/map"), timeout=10)
+
+        # This is needed because the head is not entirely still when the look_at_point function finishes
+        import time
+        time.sleep(1)
 
         # Inspect 'on top of' the entity
         res = self.robot.ed.update_kinect("{} {}".format(self.searchArea, entity.id))
@@ -93,3 +100,17 @@ class SegmentObjects(smach.State):
 
         return 'done'
 
+# ----------------------------------------------------------------------------------------------------
+
+class Inspect(smach.StateMachine):
+    def __init__(self, robot, entityDes, objectIDsDes = VariableDesignator([]), searchArea="on_top_of"):
+        smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
+
+        with self:
+            smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
+                                   transitions={'unreachable':      'failed',
+                                                'goal_not_defined': 'failed',
+                                                'arrived':          'SEGMENT'})
+
+            smach.StateMachine.add('SEGMENT', SegmentObjects(robot, objectIDsDes.writeable, entityDes, searchArea),
+                                   transitions={'done':      'done'})
