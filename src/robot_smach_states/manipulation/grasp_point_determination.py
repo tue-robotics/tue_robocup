@@ -28,6 +28,7 @@ class GraspPointDeterminant(object):
 		:param arm: arm to use
 		:return KDL frame with grasp pose
 		"""
+		starttime = rospy.Time.now()
 		# ToDo: divide into functions
 		''' Create a grasp vector for every side of the convex hull '''
 		''' First: check if container actually has a convex hull '''
@@ -62,20 +63,11 @@ class GraspPointDeterminant(object):
 
 			yaw = math.atan2(dx, -dy)
 
-			x = 0.5 * ( chull[i].x() + chull[j].x() )
-			y = 0.5 * ( chull[i].y() + chull[j].y() )
-			cvec = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), 
-				                  kdl.Vector(x, y, entity.pose.position.z))
-
 			''' Filter on object width '''
-			# Define a vector onto which all points will be projected. This will show how far the gripper will need to open
-			vx = chull[j].x() - x
-			vy = chull[j].y() - y
-
 			# Normalize
-			n = math.hypot(vx, vy) # Norm
-			vx = vx/n
-			vy = vy/n
+			n = math.hypot(dx, dy) # Norm
+			vx = dx/n
+			vy = dy/n
 
 			# Loop over all points
 			wmin = 0
@@ -83,10 +75,11 @@ class GraspPointDeterminant(object):
 			for c in chull:
 
 				# Compute vector
-				tx = c.x() - x  
-				ty = c.y() - y  
+				tx = c.x() - chull[i].x()
+				ty = c.y() - chull[i].y()
 				
 				# Perform projection
+				# ToDo: continue when offset in x direction is too large
 				offset = tx * vx + ty * vy
 
 				# Update min and max
@@ -96,9 +89,24 @@ class GraspPointDeterminant(object):
 			width = wmax - wmin
 
 			if width > self._width_treshold:
-				score = 0
+				continue
 			else:
 				score = 1.0
+
+			''' Compute candidate vector '''
+			# Middle between point i and point j
+			# x = 0.5 * ( chull[i].x() + chull[j].x() )
+			# y = 0.5 * ( chull[i].y() + chull[j].y() )
+			# cvec = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw), 
+			# 	             kdl.Vector(x, y, entity.pose.position.z))
+
+			# Divide width in two
+			 # * kdl.Vector(0.5 * (wmin+wmax, 0, 0)
+			tvec = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
+							 kdl.Vector(chull[i].x(), chull[i].y(), entity.pose.position.z)) # Helper frame
+
+			cvec = kdl.Frame(kdl.Rotation.RPY(0, 0, yaw),
+							 tvec * kdl.Vector(0, -0.5 * (wmin+wmax), 0))
 
 			''' Optimize over yaw offset w.r.t. robot '''
 			# robot_in_map * entity_in_robot = entity_in_map
@@ -115,6 +123,7 @@ class GraspPointDeterminant(object):
 		# self._candidates = self._candidates[0:5] # ToDo: remove??
 
 		self.visualize()
+		print "GPD took %f seconds"%(rospy.Time.now() - starttime).to_sec()
 
 	def visualize(self):
 		""" Visualizes the candidate grasp vectors """
