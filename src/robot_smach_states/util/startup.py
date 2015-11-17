@@ -16,6 +16,7 @@ import smach_ros
 import sys
 import traceback
 from docopt import docopt
+import os
 
 
 def startup(statemachine_creator, initial_state=None, robot_name='', challenge_name=None):
@@ -76,6 +77,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
             outcome = executioner.execute()
             print "Final outcome: {0}".format(outcome)
         except Exception, e:
+            print "An exception occured"
             frame = traceback.extract_tb(sys.exc_info()[2])[0]
             fname, lineno, fn, text = frame
             rospy.logerr(

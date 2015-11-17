@@ -117,7 +117,7 @@ class executePlan(smach.State):
             self.robot.head.close()
 
         while not rospy.is_shutdown():
-            rospy.Rate(1.0).sleep() # 1hz
+            rospy.Rate(10).sleep() # 10hz
 
             ''' If the breakoutfunction returns preempt,
                 navigation has succeeded and the robot can stop'''
@@ -142,7 +142,6 @@ class executePlan(smach.State):
                 return "succeeded"
             elif status == "blocked":
                 return "blocked"
-            return "preempted"
 
     def checkBetterPlan(self):
         # Get alternative plan
