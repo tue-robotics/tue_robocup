@@ -305,7 +305,7 @@ class Arm(object):
         '''
 
         succeeded = False;
-        
+
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1, latch = True)
         pub.publish(std_msgs.msg.Bool(True))
 
@@ -351,11 +351,13 @@ class Arm(object):
 
         rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
         self._ac_joint_traj.send_goal(goal)
-        if timeout != 0.0:
+        if timeout != rospy.Duration(0):
             done = self._ac_joint_traj.wait_for_result(timeout*len(joints_references))
             if not done:
                 rospy.logwarn("Cannot reach joint goal {0}".format(goal))
-        return done
+            return done
+        else:
+            return None
 
     def _publish_marker(self, goal, color, ns = ""):
         marker = visualization_msgs.msg.Marker()

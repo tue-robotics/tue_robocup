@@ -137,7 +137,7 @@ class Head():
 #######################################
     # # WORKS ONLY WITH amiddle-open (for open challenge rwc2015)
     # def take_snapshot(self, distance=10, timeout = 1.0):
-           
+
     #     self.look_at_ground_in_front_of_robot(distance)
     #     rospy.sleep(timeout)
     #     rospy.loginfo("Taking snapshot")

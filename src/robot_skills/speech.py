@@ -17,7 +17,7 @@ class Speech(object):
         self._speech_service = rospy.ServiceProxy('/%s/text_to_speech/speak'%robot_name, Speak)
         self._pre_hook = pre_hook
         self._post_hook = post_hook
-        
+
         self._default_language  = rospy.get_param(robot_name+"/text_to_speech/language", 'us')
         self._default_voice     = rospy.get_param(robot_name+"/text_to_speech/voice", 'kyle')
         self._default_character = rospy.get_param(robot_name+"/text_to_speech/character", 'default')
@@ -33,7 +33,7 @@ class Speech(object):
         When block=False, this method returns immediatly.
         With the replace-dictionary, you can specify which characters to replace with what. By default, it replace underscores with spaces.
         """
-        
+
         if not language:
             language = self._default_language
         if not voice:
@@ -42,7 +42,7 @@ class Speech(object):
             personality = self._default_character
         if not mood:
             mood = self._default_emotion
-            
+
         if hasattr(self._pre_hook, '__call__'):
             self._pre_hook()
 

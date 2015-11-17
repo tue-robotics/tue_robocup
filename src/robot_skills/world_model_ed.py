@@ -1,15 +1,13 @@
 #! /usr/bin/env python
 import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
-from ed.srv import GetGUICommand, GetGUICommandResponse
 # from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
 from ed_perception.srv import Classify
-from ed_gui_server.srv import *
+from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
-import robot_skills.util.msg_constructors as msgs
 from math import hypot
 
 from robot_skills.util import transformations
@@ -21,6 +19,8 @@ import visualization_msgs.msg
 
 
 import yaml
+
+from robot_skills.classification_result import ClassificationResult
 
 
 class Navigation:
@@ -54,6 +54,8 @@ class ED:
         self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
+
+        self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
 
         self._tf_listener = tf_listener
 
@@ -215,6 +217,34 @@ class ED:
         rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
         return False
 
+    def save_image(self, path = "", path_suffix = "", filename = ""):
+        import os
+        import time
+
+        if not path:
+            home_dir = os.environ["HOME"]
+            path = home_dir + "/ed/kinect/" + time.strftime("%Y-%m-%d")
+            if path_suffix:
+                path += "/" + path_suffix
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        if not filename:
+            filename = time.strftime("%Y-%m-%d-%H-%M-%S")
+
+        fname = path + "/" + filename
+
+        res = self._ed_get_image_srv(filename=filename)
+        if (res.error_msg):
+            rospy.logerr("Could not save image: %s" % res.error_msg)
+
+        with open(fname + ".rgbd", "wb") as f:
+            f.write(bytearray(res.rgbd_data))
+
+        with open(fname + ".json", "w") as f:
+            f.write(res.json_meta_data)
+
     # If continuous is None, the continuous mode of segmentation is left unchanged (on if it was on, off if it was off). However,
     # if 'continuous' is NOT None, it actively sets the mode of segmentation (True = on, False = off)
     def configure_kinect_segmentation(self, continuous=None, max_sensor_range=0):
@@ -222,18 +252,41 @@ class ED:
         return res.entity_ids
 
     def update_kinect(self, area_description):
+        # Save the image (logging)
+        self.save_image(path_suffix=area_description.replace(" ", "_"))
+
         res = self._ed_kinect_update_srv(update_space_description = area_description)
         if res.error_msg:
-            print res.error_msg
+            rospy.logerr("Could not segment objects: %s" % res.error_msg)
 
         return res
 
-    def configure_perception(self, continuous):
-        self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
+    #def configure_perception(self, continuous):
+    #    self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
 
-    def classify(self, ids, types):
-        res = self._ed_classify_srv(ids = ids, types = types)
-        return res.types
+    def classify(self, ids, perception_model_name = "", property = "type", types = None):
+        import rospkg
+        rospack = rospkg.RosPack()
+
+        try:
+            import os
+            robot_env = os.environ['ROBOT_ENV']
+            path = rospack.get_path('ed_perception_models') + "/models/" + robot_env + "/" + perception_model_name
+        except KeyError:
+            rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
+            return []
+
+        res = self._ed_classify_srv(ids = ids, property = property, perception_models_path=path)
+        if (res.error_msg):
+            rospy.logerr("While classifying entities: %s" % res.error_msg)
+
+
+        # if there is a set of expected types, only report the one with the highest probability
+        if (types):
+            # for idx, id, type in enumerate (res.ids):
+            print "TODO: finish type filtering in Classification"    
+        else:
+            return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 
     def classify_with_probs(self, ids, types):
         res = self._ed_classify_srv(ids = ids, types = types)
