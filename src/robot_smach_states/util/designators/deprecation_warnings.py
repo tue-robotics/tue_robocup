@@ -9,6 +9,7 @@ __author__ = 'Loy'
 
 import warnings
 import functools
+import inspect
 
 # def deprecated(func):
 #     '''This is a decorator which can be used to mark functions
@@ -43,6 +44,15 @@ def deprecated(func):
 
         return func(*args, **kwargs)
     return new_func
+
+
+def get_caller_info():
+    #Index 1 would get caller of get_caller_info, index 2 gets the caller of of the method that calls get_caller_info
+    frame, filename, line_number, function_name, lines, index = inspect.getouterframes(inspect.currentframe())[2]
+    return {"frame":frame,
+            "filename":filename, "line_number":line_number,
+            "function_name":function_name,
+            "lines":lines, "index":index}
 
 if __name__ == "__main__":
     ## Usage examples ##
