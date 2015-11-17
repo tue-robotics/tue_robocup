@@ -82,7 +82,7 @@ class PointDesignator(Designator):
     def setPoint(self, point_stamped):
         self.entity.pose.position = point_stamped.point
 
-    def resolve(self):
+    def _resolve(self):
         return self.entity
 
 

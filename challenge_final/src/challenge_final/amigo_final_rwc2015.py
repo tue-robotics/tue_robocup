@@ -386,7 +386,7 @@ class PersonDesignator(Designator):
         self._robot = robot
         self._furniture_designator = furniture_designator
 
-    def resolve(self):
+    def _resolve(self):
         #import ipdb; ipdb.set_trace()
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()

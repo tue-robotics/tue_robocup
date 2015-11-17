@@ -87,7 +87,7 @@ class ExplorationDesignator(EdEntityDesignator):
         self.robot = robot
         self.explored_ids = []
 
-    def resolve(self):
+    def _resolve(self):
         # Get entities
         entities = self.robot.ed.get_entities(type='waypoint')
         filtered_entities = []
@@ -120,7 +120,7 @@ class PoiDesignator(EdEntityDesignator):
         self.pois = []
         self.visited_ids = []
 
-    def resolve(self):
+    def _resolve(self):
         resp = self.poi_srv()
         # Add new pois
         for i in range(len(self.pois), len(resp.pois)):

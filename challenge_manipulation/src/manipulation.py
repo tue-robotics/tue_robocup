@@ -98,7 +98,7 @@ class FormattedSentenceDesignator(ds.Designator):
         self.fmt = fmt
         self.kwargs = kwargs
 
-    def resolve(self):
+    def _resolve(self):
         kwargs_resolved = {key:value.resolve() for key,value in self.kwargs.iteritems()}
         return self.fmt.format(**kwargs_resolved)
 
@@ -110,7 +110,7 @@ class EntityDescriptionDesignator(ds.Designator):
         self.entity_designator = entity_designator
         self.formats = formats
 
-    def resolve(self):
+    def _resolve(self):
         entity = self.entity_designator.resolve()
         if not entity:
             return None
@@ -134,7 +134,7 @@ class EntityDescriptionDesignator(ds.Designator):
 #         self._edge_distance = 0.1                   # Distance to table edge
 #         self._spacing = 0.15
 
-#     def resolve(self):
+#     def _resolve(self):
 #         closet = self.closet_designator.resolve()
 
 #         # points_of_interest = []

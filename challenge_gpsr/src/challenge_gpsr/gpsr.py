@@ -64,7 +64,7 @@ class QueryFirstAnswerDesignator(Designator):
         self.robot = robot
         self.reasoner_query = reasoner_query
 
-    def resolve(self):
+    def _resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
@@ -77,7 +77,7 @@ class ObjectGraspDesignator(Designator):
         self.robot = robot
         #self.object_to_find = object_to_find
 
-    def resolve(self):
+    def _resolve(self):
         object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',A,_)"))
         #object_type = object_to_find.resolve()
         ## FOR TESTING:
@@ -101,7 +101,7 @@ class PlaceLocDesignator(Designator):
         super(PlaceLocDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
 
-    def resolve(self):
+    def _resolve(self):
         loc_entity = robot.ed.get_entity(id=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"))
 
         print "loc_entity in PlaceLocDesignator: \n"
@@ -114,7 +114,7 @@ class PossibleHumanFlagsDesignator(Designator):
         self.robot = robot
         self.room = room
 
-    def resolve(self):
+    def _resolve(self):
         
         possible_humans =  self.robot.ed.get_closest_possible_person_entity(room=self.room.resolve())
         
@@ -1027,7 +1027,7 @@ class InspectLocationAndGrab(smach.State):
 #         self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
 #         self.marker_array = MarkerArray()
 
-#     def resolve(self):
+#     def _resolve(self):
 #         place_location = self.place_location_designator.resolve()
 
 #         # points_of_interest = []

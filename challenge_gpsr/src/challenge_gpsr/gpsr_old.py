@@ -307,7 +307,7 @@ class QueryFirstAnswerDesignator(Designator):
         self.robot = robot
         self.reasoner_query = reasoner_query
 
-    def resolve(self):
+    def _resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
@@ -319,7 +319,7 @@ class ObjectTypeDesignator(Designator):
         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
 
-    def resolve(self):
+    def _resolve(self):
         object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_object',A)"))               
         ## FOR TESTING:
         #object_type = "cola"
@@ -337,7 +337,7 @@ class ObjectTypeDesignator(Designator):
 #         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
 #         self.robot = robot
 
-#     def resolve(self):
+#     def _resolve(self):
 #         has_type = lambda entity: entity.type == "person"
 #         location = str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
 #         ## FOR TESTING:
