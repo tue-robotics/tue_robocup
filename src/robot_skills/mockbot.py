@@ -6,6 +6,7 @@ import geometry_msgs
 import std_msgs.msg
 import tf
 import robot
+import arms
 
 import mock
 
@@ -19,7 +20,7 @@ from ed.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
 from robot_skills.classification_result import ClassificationResult
 
-class Arm(object):
+class Arm(arms.Arm):
     def __init__(self, robot_name, side, tf_listener):
         self.side = side
 
@@ -40,7 +41,7 @@ class Arm(object):
         self._send_joint_trajectory = mock.MagicMock()
         self._publish_marker = mock.MagicMock()
         self.occupied_by = None
-        self.operational = True
+        self._operational = True
 
 class Base(object):
     def __init__(self, *args, **kwargs):
