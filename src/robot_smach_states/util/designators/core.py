@@ -44,7 +44,7 @@ class Designator(object):
     def resolve(self):
         """Selects a new goal and sets it as the current value."""
         result = self._resolve()
-        if not isinstance(result, self.resolve_type):
+        if result != None and not isinstance(result, self.resolve_type):
             raise TypeError("{} resolved to a '{}' instead of expected '{}'".format(self, type(result), self.resolve_type))
         return result
 
