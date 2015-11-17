@@ -12,6 +12,7 @@ from robot_smach_states.state import State
 from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
+from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 
 class PrepareEdGrasp(State):
     def __init__(self, robot, arm, grab_entity):
@@ -181,6 +182,7 @@ class SjoerdsGrab(smach.State):
         self._robot = robot
         self.item_des = item_des
         self.arm_des = arm_des
+        self._gpd = GraspPointDeterminant(robot)
 
     def execute(self, userdata=None):
         entity = self.item_des.resolve()
@@ -227,6 +229,10 @@ class SjoerdsGrab(smach.State):
 
         # Inspect the entity
         segm_res = self._robot.ed.update_kinect("%s" % entity.id)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Grasp point determination
+        grasp_pose = self._gpd.get_grasp_pose(entity, arm)        
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
