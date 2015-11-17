@@ -258,9 +258,6 @@ class SjoerdsGrab(smach.State):
         # Close gripper
         arm.send_gripper_goal('close', timeout=5)
 
-        # Cancel the head goal
-        self._robot.head.cancel_goal()
-
         # Lift
         if not arm.send_goal( goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0, timeout=20, pre_grasp=False, frame_id="/amigo/base_link"):
             print "Failed lift"
@@ -270,7 +267,25 @@ class SjoerdsGrab(smach.State):
             print "Failed retract"
 
         # Carrying pose
-        arm._send_joint_trajectory([[-0.1, -0.6, 0.2, 1.7, 0, 0.4, 0]])
+        arm._send_joint_trajectory([[-0.1, -0.6, 0.2, 1.7, 0, 0.4, 0]], timeout=rospy.Duration(0))
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Check if the entity is gone
+
+        # Make sure the head looks at the entity
+        pos = entity.pose.position
+        self._robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, pos.z, "/map"), timeout=10)
+
+        # This is needed because the head is not entirely still when the
+        # look_at_point function finishes
+        import time
+        time.sleep(1)
+
+        # Inspect the entity
+        segm_res = self._robot.ed.update_kinect("%s" % entity.id)
+
+        # Cancel the head goal
+        self._robot.head.cancel_goal()
 
         return "done"
 
