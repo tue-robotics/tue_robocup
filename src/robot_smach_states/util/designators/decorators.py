@@ -11,12 +11,12 @@ def functionDesignator(original_function):
         self.args = args
         self.kwargs = kwargs
 
-    def resolve(self):
+    def _resolve(self):
         self._current = original_function(*self.args, **self.kwargs)
-        return super(Class, self).resolve()
+        return super(Class, self)._resolve()
 
     Class.__init__ = init
-    Class.resolve = resolve
+    Class._resolve = _resolve
     return Class
 
 if __name__ == '__main__':
@@ -32,4 +32,3 @@ if __name__ == '__main__':
     d = FormattedSentenceDesignator("This is a {item}.", item=item_designator)
     print 'resolving the designator'
     print d.resolve()
-    print d.current

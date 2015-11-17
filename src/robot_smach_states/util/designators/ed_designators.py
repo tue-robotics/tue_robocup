@@ -23,7 +23,7 @@ class PointStampedOfEntityDesignator(Designator):
         self.entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
-    def resolve(self):
+    def _resolve(self):
         # type is a reserved keyword. Maybe unpacking a dict as kwargs is
         # cleaner
         query = SimpleQueryRequest(id=self.entity_designator.resolve())
@@ -92,7 +92,7 @@ class EdEntityCollectionDesignator(Designator):
 
         self.debug = debug
 
-    def resolve(self):
+    def _resolve(self):
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
         _id = self.id_designator.resolve() if self.id_designator else self.id
@@ -174,7 +174,7 @@ class EdEntityDesignator(Designator):
     def lockable(self):
         return LockToId(self.robot, self)
 
-    def resolve(self):
+    def _resolve(self):
         if self.debug:
             import ipdb; ipdb.set_trace()
         _type = self.type_designator.resolve() if self.type_designator else self.type
@@ -230,7 +230,7 @@ class EntityByIdDesignator(Designator):
         self.id_ = id_
         self.parse = parse
 
-    def resolve(self):
+    def _resolve(self):
         entities = self.ed.get_entities(id=self.id_, parse=self.parse)
         if entities:
             return entities[0]
@@ -247,7 +247,7 @@ class ReasonedEntityDesignator(Designator):
 
         self._locker = None
 
-    def resolve(self):
+    def _resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
@@ -279,7 +279,7 @@ class EmptySpotDesignator(Designator):
         self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
         self.marker_array = MarkerArray()
 
-    def resolve(self):
+    def _resolve(self):
         place_location = self.place_location_designator.resolve()
 
         # points_of_interest = []
@@ -416,7 +416,7 @@ class LockToId(Designator):
         self._locked_to_id = None
         self._locked = False
 
-    def resolve(self):
+    def _resolve(self):
         if self._locked: # If we should resolve to a remembered thing
             if not self._locked_to_id: # but we haven't remembered anything yet
                 entity = self.to_be_locked.resolve() # Then find  out what we should remember
