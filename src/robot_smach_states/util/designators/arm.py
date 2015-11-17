@@ -4,6 +4,7 @@ import rospy
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.utility import LockingDesignator
 from robot_skills.arms import Arm
+from robot_skills.mockbot import Arm as mockArm
 
 __author__ = 'loy'
 
@@ -13,7 +14,6 @@ class ArmDesignator(Designator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> a = ArmDesignator(robot.arms, robot.arms['left'])
-    >>> a._resolve_type = type(robot.arms['left']) #Becasue we mock, we must override the default type here to make typechecking work
     >>> assert a.resolve() == robot.arms['left']
     """
 
@@ -22,7 +22,7 @@ class ArmDesignator(Designator):
         @param all_arms a dictionary of arms available on the robot
         @param preferred_arm the arm that is preferred for the operations that use this designator"""
 
-        super(ArmDesignator, self).__init__(resolve_type=Arm, name=name)
+        super(ArmDesignator, self).__init__(resolve_type=Arm , name=name)
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
 
@@ -65,13 +65,11 @@ class UnoccupiedArmDesignator(ArmDesignator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> a = ArmDesignator(robot.arms, robot.arms['left'])
-    >>> a._resolve_type = type(robot.arms['left']) #Becasue we mock, we must override the default type here to make typechecking work
     >>> assert a.resolve() == robot.arms['left']
 
     >>> robot.arms['left'].occupied_by = None
     >>> robot.arms['right'].occupied_by = None
     >>> empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.arms['right'])
-    >>> empty_arm_designator._resolve_type = type(robot.arms['left']) #Becasue we mock, we must override the default type here to make typechecking work
     >>> arm_to_use_for_first_grab = empty_arm_designator.resolve()
     >>> assert(arm_to_use_for_first_grab == robot.arms['right'])
     >>>
@@ -101,7 +99,6 @@ class ArmHoldingEntityDesignator(ArmDesignator):
     >>> from robot_skills.mockbot import Mockbot
     >>> robot = Mockbot()
     >>> a = ArmDesignator(robot.arms, robot.arms['left'])
-    >>> a._resolve_type = type(robot.arms['left']) #Becasue we mock, we must override the default type here to make typechecking work
     >>> assert a.resolve() == robot.arms['left']
 
     >>> leftArm = robot.arms['left']
@@ -112,7 +109,6 @@ class ArmHoldingEntityDesignator(ArmDesignator):
 
     >>> entity_designator = Designator("entity3")
     >>> holding_arm_designator = ArmHoldingEntityDesignator(robot.arms, entity_designator)
-    >>> holding_arm_designator._resolve_type = type(robot.arms['left']) #Because we mock, we must override the default type here to make typechecking work
     >>> arm_to_use_for_placing_entity3 = holding_arm_designator.resolve()
     >>> assert(arm_to_use_for_placing_entity3 == rightArm)
     >>>

@@ -208,10 +208,9 @@ class EdEntityDesignator(Designator):
 
                 if len(entities) >= 1:
                     rospy.loginfo('choosing best entity from this list (name->weight):\n\t%s', zip(names, weights))
-                    self._current = min(entities, key=self.weight_function)
+                    return min(entities, key=self.weight_function)
                 else:
-                    self._current = entities[0]
-                return self.current
+                    return entities[0]
 
         rospy.logerr("No entities found in {0}".format(self))
         return None

@@ -57,6 +57,7 @@ class LockingDesignator(Designator):
         super(LockingDesignator, self).__init__(resolve_type=to_be_locked.resolve_type, name=name)
         self.to_be_locked = to_be_locked
         self._locked = False
+        self._current = None
 
     def lock(self):
         self._locked = True
