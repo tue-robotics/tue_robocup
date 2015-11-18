@@ -317,6 +317,12 @@ class Arm(object):
             rospy.logerr(e)
             return False
 
+    def handshake(self, timeout=10):
+        return self._send_joint_trajectory([
+            [-0.2, 0.4, 0.7, 1.4, -1.5, 0.3, 0],
+            [-0.2, 0.4, 0.7, 1.6, -1.5, 0.3, 0],
+            [-0.2, 0.4, 0.7, 1.3, -1.5, 0.3, 0],
+            [-0.2, 0.4, 0.7, 1.4, -1.5, 0.3, 0]], timeout=rospy.Duration(timeout))                    
 
     def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5)):
         '''
@@ -357,7 +363,7 @@ class Arm(object):
                 rospy.logwarn("Cannot reach joint goal {0}".format(goal))
             return done
         else:
-            return None
+            return None    
 
     def _publish_marker(self, goal, color, ns = ""):
         marker = visualization_msgs.msg.Marker()
