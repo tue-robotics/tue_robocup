@@ -38,7 +38,6 @@ script:
   - roscd robot_smach_states
   - coverage run src/robot_smach_states/util/designators/arm.py
   - coverage run --append src/robot_smach_states/util/designators/checks.py
-  - coverage run --append src/robot_smach_states/util/designators/collection_designators.py
   - coverage run --append src/robot_smach_states/util/designators/core.py
   - coverage run --append src/robot_smach_states/util/designators/decorators.py
   - coverage run --append src/robot_smach_states/util/designators/ed_designators.py
