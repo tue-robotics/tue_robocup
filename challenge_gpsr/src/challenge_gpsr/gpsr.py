@@ -770,6 +770,9 @@ class FindAndGoToPerson(smach.StateMachine):
 
             #Class ChooseLocation in final amigo file. 
 
+            room_des = EdEntityDesignator(robot, id_designator=room)
+            possible_human_flags_des = PossibleHumanFlagsDesignator(robot,room)
+            
             @smach.cb_interface(outcomes=['found','not_found'])
             def check_person(userdata):
                 try:
@@ -795,7 +798,6 @@ class FindAndGoToPerson(smach.StateMachine):
                                transitions={'found':'GO_TO_PERSON',
                                             'not_found':'DRIVE_TO_CENTER_ROOM'})
 
-            possible_human_flags_des = PossibleHumanFlagsDesignator(robot,room)
             smach.StateMachine.add('GO_TO_PERSON',
                                     states.NavigateToObserve(robot, possible_human_flags_des, radius=0.7),
                                     transitions={   'arrived':'LOOK_AT_PERSON_FOUND',
@@ -820,7 +822,6 @@ class FindAndGoToPerson(smach.StateMachine):
                                transitions={'spoken':'Failed'})
 
 
-            room_des = EdEntityDesignator(robot, id_designator=room)
             smach.StateMachine.add('DRIVE_TO_CENTER_ROOM',
                                     states.NavigateToWaypoint(robot, room_des, radius=0.2),
                                     transitions={   'arrived':'CHECK_FOR_PERSON_1',
