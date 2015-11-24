@@ -540,7 +540,7 @@ class FindObjectInRoom(smach.StateMachine):
                                     transitions={'area_exists':'NAV_TO_LOC',
                                                  'no_such_area':'CHECK_FOR_AREA_LOC_POS2'})
 
-            room_loc_a = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"), name="room_loc_a")
+            room_loc_a = ReasonedEntityDesignator(robot, query="room_loc(A)"), name="room_loc_a")
             smach.StateMachine.add('NAV_TO_LOC',
                                     states.NavigateToSymbolic(robot, 
                                         {room_loc_a : "in_front_of" }, 
@@ -1286,7 +1286,7 @@ def setup_statemachine(robot):
         #################################
 
         ## Navigate to specific location
-        location_1_des = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"), name="location_1_des")
+        location_1_des = ReasonedEntityDesignator(robot, query="action_info('1','1_location',A)"), name="location_1_des")
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
                                     states.NavigateToSymbolic(robot, 
                                         {location_1_des : "in_front_of" }, 
@@ -1335,7 +1335,7 @@ def setup_statemachine(robot):
                                                     'failed'            :'FINISHED_TASK'})
 
         ## Navigate to a room
-        locations_rooms_des = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))
+        locations_rooms_des = ReasonedEntityDesignator(robot, query="action_info('1','1_locations_rooms',A)"))
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
                                     {locations_rooms_des : "in" }, 
@@ -1541,7 +1541,7 @@ def setup_statemachine(robot):
         ###### ACTION PLACE OBJECT ON LOCATION ######
 
 
-        place_3_location = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"), name="place_3_location")
+        place_3_location = ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)"), name="place_3_location")
         smach.StateMachine.add('3_NAV_TO_LOC_PLACE',
                                     states.NavigateToSymbolic(robot, 
                                         {place_3_location : "in_front_of" }, 
@@ -1568,7 +1568,7 @@ def setup_statemachine(robot):
 
         ###### ACTION HANDOVER OBJECT TO PERSON IN ROOM ######
 
-        room_3 = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)"))
+        room_3 = ReasonedEntityDesignator(robot, query="action_info('3','3_room',A)"))
         smach.StateMachine.add('3_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
                                     {room_3 : "in" }, 
@@ -1641,8 +1641,8 @@ def test_placing(robot,place_location):
     
     robot.reasoner.assertz("action_info('3','3_place_location','"+str(place_location)+"')")
 
-    nav_to_loc = states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")))
+    nav_to_loc = states.NavigateToSymbolic(robot, {ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)")) : "in_front_of" }, 
+                                        ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)")))
     nav_to_loc.execute(None)
 
     place_pose_ent = EdEntityDesignator(robot,id=place_location)

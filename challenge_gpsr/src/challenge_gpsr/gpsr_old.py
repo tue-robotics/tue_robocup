@@ -424,7 +424,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.3),
+                                    states.NavigateToWaypoint(robot, ReasonedEntityDesignator(robot, query="action_info('1','1_location',A)")), radius=0.3),
                                     transitions={   'arrived':'SAY_ARRIVED',
                                                     'unreachable':'SAY_NOT_ARRIVED',
                                                     'goal_not_defined':'SAY_NOT_ARRIVED'})
@@ -440,8 +440,8 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
+                                    {ReasonedEntityDesignator(robot, query="action_info('1','1_locations_rooms',A)")) : "in" }, 
+                                    ReasonedEntityDesignator(robot, query="action_info('1','1_locations_rooms',A)"))),
                                 transitions={   'arrived'           :   'SAY_ARRIVED',
                                                 'unreachable'       :   'SAY_NOT_ARRIVED',
                                                 'goal_not_defined'  :   'SAY_NOT_ARRIVED'}) 
