@@ -449,8 +449,11 @@ class AddPositiveResult(smach.State):
         self.item = item_designator
 
     def execute(self, userdata):
-        print self.item.resolve()
-        self.results.current[self.item.resolve()] = True
+        item = self.item.resolve()
+        print item
+        result = self.results.resolve()
+        result[item] = True
+        self.results.write(result)
         return "done"
 
 

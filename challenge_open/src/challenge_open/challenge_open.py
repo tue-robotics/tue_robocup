@@ -807,7 +807,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_EXIT'})
 
         smach.StateMachine.add('GOTO_EXIT',
-                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
+                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
                                 transitions={   'arrived'           : 'Done',
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})

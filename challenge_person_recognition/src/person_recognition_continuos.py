@@ -335,7 +335,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'done':  'GOTO_LIVING_ROOM_1'})                
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
-                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
+                                        states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
                                         transitions={   'arrived':          'SAY_SEARCHING_CROWD',
                                                         'unreachable':      'SAY_SEARCHING_CROWD',
                                                         'goal_not_defined': 'SAY_SEARCHING_CROWD'})
@@ -350,7 +350,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':   'GOTO_LIVING_ROOM_2'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
-                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
+                                        states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
                                         transitions={   'arrived':          'FIND_CROWD_2',
                                                         'unreachable':      'FIND_CROWD_2',
                                                         'goal_not_defined': 'FIND_CROWD_2'})
@@ -361,7 +361,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':   'GOTO_LIVING_ROOM_3'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
-                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
+                                        states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
                                         transitions={   'arrived':          'FIND_CROWD_3',
                                                         'unreachable':      'FIND_CROWD_3',
                                                         'goal_not_defined': 'FIND_CROWD_3'})

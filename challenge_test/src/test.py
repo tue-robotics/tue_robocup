@@ -22,7 +22,7 @@ from robot_smach_states.utility import CancelHeadGoals
 import robot_smach_states.human_interaction.human_interaction as states_interaction
 
 # import designators
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 
 # import states from another file
 import test_states as test_states
@@ -61,8 +61,8 @@ class EnterContainer(smach.StateMachine):
 
             smach.StateMachine.add('NAV_TO_SYMB',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id="living_room") : "in" }, 
-                                        EdEntityDesignator(robot, id="dinnertable")),
+                                        {EntityByIdDesignator(robot, id="living_room") : "in" }, 
+                                        EntityByIdDesignator(robot, id="dinnertable")),
                                     transitions={   'arrived'           :   'SAY_TEST_WAYPOINT',
                                                     'unreachable'       :   'SAY_FAILED_SYMBOLIC',
                                                     'goal_not_defined'  :   'SAY_FAILED_SYMBOLIC'})
@@ -76,7 +76,7 @@ class EnterContainer(smach.StateMachine):
                                    transitions={'spoken':'NAV_TO_WAYPOINT'})
 
             smach.StateMachine.add( 'NAV_TO_WAYPOINT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.wp_test_nav)),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.wp_test_nav)),
                                     transitions={   'arrived' : 'container_success',
                                                     'unreachable' : 'SAY_FAILED_WAYPOINT',
                                                     'goal_not_defined' : 'SAY_FAILED_WAYPOINT'})
@@ -305,8 +305,8 @@ class ChallengeTest(smach.StateMachine):
             
             smach.StateMachine.add('NAV_TO_TABLE',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ROOM_ID) : "in" }, 
-                                        EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID)),
+                                        {EntityByIdDesignator(robot, id=challenge_knowledge.INSPECT_ROOM_ID) : "in" }, 
+                                        EntityByIdDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID)),
                                     transitions={   'arrived'           :   'SEGMENT_OBJECTS',
                                                     'unreachable'       :   'SAY_FAILED_NAV_TO_TABLE',
                                                     'goal_not_defined'  :   'SAY_FAILED_NAV_TO_TABLE'})
@@ -317,7 +317,7 @@ class ChallengeTest(smach.StateMachine):
                                    transitions={'spoken':'SEGMENT_OBJECTS'})
 
             smach.StateMachine.add( "SEGMENT_OBJECTS",
-                                    states.SegmentObjects(robot, objectsIDsDes.writeable, EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID), "on_top_of"),
+                                    states.SegmentObjects(robot, objectsIDsDes.writeable, EntityByIdDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID), "on_top_of"),
                                     transitions={   'done':'PICKUP_OBJECT'})
 
             smach.StateMachine.add( 'PICKUP_OBJECT',

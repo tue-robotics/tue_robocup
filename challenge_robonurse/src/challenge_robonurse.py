@@ -53,8 +53,8 @@ def define_designators(robot):
     '''Define core designators in a separate function so that can be used when testing parts of the challenge separately.'''
     # granny = ds.EdEntityDesignator(robot, type='human', name="granny")
     granny = LASER_GRANNY
-    grannies_table = ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB, name="grannies_table")
-    shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF, name="shelf")
+    grannies_table = ds.EntityByIdDesignator(robot, id=GRANNIES_TABLE_KB, name="grannies_table")
+    shelf = ds.EntityByIdDesignator(robot, id=BOTTLE_SHELF, name="shelf")
 
     return granny, grannies_table, shelf
 
@@ -288,7 +288,7 @@ class StartPhase(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_GRANNY",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM, name="GOTO_GRANNY_room") : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EntityByIdDesignator(robot, id=ROOM, name="GOTO_GRANNY_room") : "in"}, grannies_table),
                                     transitions={   'arrived'           :'Done',
                                                     'unreachable'       :'Done',
                                                     'goal_not_defined'  :'Done'})
@@ -359,7 +359,7 @@ class GetPills(smach.StateMachine):
         bottles_to_describe = ds.EdEntityCollectionDesignator(robot, type="", criteriafuncs=bottle_criteria, debug=False, name="bottles_to_describe")
         described_bottle = ds.EdEntityDesignator(robot, debug=False, name="described_bottle") #ID will be decided by the description given by granny
         locked_described_bottle = ds.LockingDesignator(described_bottle, name="locked_described_bottle")
-        room_designator = ds.EdEntityDesignator(robot, id=ROOM, name="room_designator")
+        room_designator = ds.EntityByIdDesignator(robot, id=ROOM, name="room_designator")
 
         with self:
             # smach.StateMachine.add( "SAY_FOUND_3_BOTTLEES",
@@ -556,7 +556,7 @@ class GetPills(smach.StateMachine):
 
             # smach.StateMachine.add( "GOTO_HANDOVER_GRANNY",
             #                         #states.NavigateToPose(robot, 0, 0, 0),
-            #                         states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+            #                         states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EntityByIdDesignator(robot, id=ROOM) : "in"}, grannies_table),
             #                         transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
             #                                         'unreachable'       :'GOTO_HANDOVER_GRANNY_BACKUP',
             #                                         'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
@@ -577,7 +577,7 @@ class GetPills(smach.StateMachine):
                                                     'goal_not_defined'  :'SAY_HANDOVER_BOTTLE'})
 
             # smach.StateMachine.add( "GOTO_GRANNY_WITH_BOTTLE",
-            #                         states.NavigateToSymbolic(robot, {granny:"near", ds.EdEntityDesignator(robot, id=ROOM):"in"}, granny),
+            #                         states.NavigateToSymbolic(robot, {granny:"near", ds.EntityByIdDesignator(robot, id=ROOM):"in"}, granny),
             #                         transitions={   'arrived'           :'SAY_HANDOVER_BOTTLE',
             #                                         'unreachable'       :'DETECT_ACTION',
             #                                         'goal_not_defined'  :'DETECT_ACTION'})
@@ -627,13 +627,13 @@ class HandleFall(smach.StateMachine):
                                     transitions={   'spoken' : 'GOTO_COUCHTABLE'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE',
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EntityByIdDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'GOTO_COUCHTABLE_BACKUP',
                                                     'goal_not_defined':'GOTO_COUCHTABLE_BACKUP'})
 
             smach.StateMachine.add('GOTO_COUCHTABLE_BACKUP',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.2),
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=GRANNIES_TABLE_KB), radius=0.2),
                                     transitions={   'arrived':'LOOKAT_COUCHTABLE',
                                                     'unreachable':'LOOKAT_COUCHTABLE',
                                                     'goal_not_defined':'LOOKAT_COUCHTABLE'})
@@ -674,14 +674,14 @@ class HandleFall(smach.StateMachine):
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_PHONE",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EntityByIdDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'SAY_HANDOVER_PHONE',
                                                     'unreachable'       :'GOTO_HANDOVER_GRANNY_PHONE_BACKUP',
                                                     'goal_not_defined'  :'SAY_HANDOVER_PHONE'})
 
             smach.StateMachine.add( "GOTO_HANDOVER_GRANNY_PHONE_BACKUP",
                                     #states.NavigateToPose(robot, 0, 0, 0),
-                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EdEntityDesignator(robot, id=ROOM) : "in"}, grannies_table),
+                                    states.NavigateToSymbolic(robot, {grannies_table:"near", ds.EntityByIdDesignator(robot, id=ROOM) : "in"}, grannies_table),
                                     transitions={   'arrived'           :'SAY_HANDOVER_PHONE',
                                                     'unreachable'       :'SAY_HANDOVER_PHONE',
                                                     'goal_not_defined'  :'SAY_HANDOVER_PHONE'})
@@ -812,7 +812,7 @@ class RoboNurse(smach.StateMachine):
             #                                         'goal_not_defined':'GOTO_SHELF_BACKUP'})
 
             smach.StateMachine.add('GOTO_SHELF_BACKUP',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id=BOTTLE_SHELF_WAYPOINT), radius=0.2),
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=BOTTLE_SHELF_WAYPOINT), radius=0.2),
                                     transitions={   'arrived':'GET_PILLS',
                                                     'unreachable':'GET_PILLS',
                                                     'goal_not_defined':'GET_PILLS'})
@@ -827,7 +827,7 @@ class RoboNurse(smach.StateMachine):
                                     transitions={   'done'           :'GOTO_TABLE_DECTTTTE'})
 
             smach.StateMachine.add('GOTO_TABLE_DECTTTTE',
-                                    states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="granny_waypoint"), radius=0.2),
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id="granny_waypoint"), radius=0.2),
                                     transitions={   'arrived':'RESPOND_TO_ACTION',
                                                     'unreachable':'RESPOND_TO_ACTION',
                                                     'goal_not_defined':'RESPOND_TO_ACTION'})
@@ -842,7 +842,7 @@ class RoboNurse(smach.StateMachine):
             #                         transitions={   'spoken'            :'GO_BACK_TO_START'})
 
             # smach.StateMachine.add('GO_BACK_TO_START',
-            #                         states.NavigateToWaypoint(robot, ds.EdEntityDesignator(robot, id="robonurse_initial"), radius=0.2),
+            #                         states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id="robonurse_initial"), radius=0.2),
             #                         transitions={   'arrived':'Done',
             #                                         'unreachable':'Done',
             #                                         'goal_not_defined':'Done'})
@@ -883,7 +883,7 @@ def test_describe_pills(robot):
     def not_bookcase_part(entity):
         return not BOTTLE_SHELF in entity.id #Bookcase has elements named "bookcase/shelf1" etc. Ditch those
 
-    bottle_shelf = ds.EdEntityDesignator(robot, id=BOTTLE_SHELF, name="bottle_shelf")
+    bottle_shelf = ds.EntityByIdDesignator(robot, id=BOTTLE_SHELF, name="bottle_shelf")
 
     # import ipdb; ipdb.set_trace()
     def on_top(entity):
@@ -966,7 +966,7 @@ def dummy_action_recognition(robot, max_measurements=200, _id=None):
 
     granny = ds.EdEntityDesignator(robot, type='human', name="granny")
     if _id:
-        granny = ds.EdEntityDesignator(robot, id=robot.ed.get_full_id(_id), name="granny")
+        granny = ds.EntityByIdDesignator(robot, id=robot.ed.get_full_id(_id), name="granny")
 
     states.LookAtEntity(robot, granny).execute(None)
 

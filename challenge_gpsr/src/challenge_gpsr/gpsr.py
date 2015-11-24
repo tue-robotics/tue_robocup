@@ -1178,7 +1178,7 @@ class GrabFromShelves(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Success", "Failed"])
         with self:
 
-            in_front_of_loc_des = EdEntityDesignator(robot, id=location, name="in_front_of_loc_des")
+            in_front_of_loc_des = EntityByIdDesignator(robot, id=location, name="in_front_of_loc_des")
             smach.StateMachine.add('NAVIGATE_TO_LOCATION_IN_FRONT_OF',
                                         states.NavigateToSymbolic(robot, 
                                             {in_front_of_loc_des : "in_front_of" }, 
@@ -1220,7 +1220,7 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        meeting_point_des = EdEntityDesignator(robot, id=data.meeting_point, name="meeting_point")
+        meeting_point_des = EntityByIdDesignator(robot, id=data.meeting_point, name="meeting_point")
 
         smach.StateMachine.add("INIT_WM",
                                InitializeWorldModel(robot), 
@@ -1618,7 +1618,7 @@ def setup_statemachine(robot):
                                 transitions={'spoken':'GO_TO_EXIT'})
 
         smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.gpsr_exit, name="gpsr_exit"), radius = 0.4),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=data.gpsr_exit, name="gpsr_exit"), radius = 0.4),
                                     transitions={   'arrived':'SAY_GOODBYE',
                                                     'unreachable':'SAY_GOODBYE',
                                                     'goal_not_defined':'SAY_GOODBYE'})
