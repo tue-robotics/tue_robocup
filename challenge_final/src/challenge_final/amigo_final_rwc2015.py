@@ -434,12 +434,6 @@ class PickupObject(smach.StateMachine):
 
         point = msgs.Point(0, 0, 0)
 
-        ##### To start in a different state #####
-        # if not TEST_GRASP_LOC == None:
-        #     smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
-        #     location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
-        #########################################
-
         with self:
             # smach.StateMachine.add('STORE_POINT',
             #                         StorePoint(location_designator, point),
@@ -520,7 +514,6 @@ class ManipRecogSingleItem(smach.StateMachine):
         current_item = EdEntityDesignator(robot)
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        #arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
         arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
         # print "{0} = pick_shelf".format(pick_shelf)

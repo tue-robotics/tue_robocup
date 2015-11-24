@@ -590,18 +590,6 @@ class FindObjectInRoom(smach.StateMachine):
                     location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
                     print "location = ", location
                     location_ent = robot.ed.get_entity(id=location, parse=False)
-                    #print "location_ent = ", location_ent
-                    #     #print "aaaaa, test location = ", location
-                    #     grab_item_designator = EdEntityDesignator(robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-                    #                                                             criteriafuncs=[has_type], debug=False)
-
-                    #     #print "test1 \n"
-                    #     #print grab_item_designator.resolve()
-                    #     #print "\n test2"
-                    #     if grab_item_designator.resolve():
-                    #         return 'object_found'
-                    #     else:
-                    #         return 'object_not_found'
 
                     ''' Enable kinect segmentation plugin (only one image frame) '''
                     entity_ids = robot.ed.segment_kinect(max_sensor_range=2)
@@ -1646,7 +1634,7 @@ def test_placing(robot,place_location):
                                         ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)")))
     nav_to_loc.execute(None)
 
-    place_pose_ent = EdEntityDesignator(robot,id=place_location)
+    place_pose_ent = EntityByIdDesignator(robot,id=place_location)
     place_position = EmptySpotDesignator(robot, place_pose_ent)
     arm_with_item_designator = ArmDesignator(robot.arms, robot.leftArm)
 

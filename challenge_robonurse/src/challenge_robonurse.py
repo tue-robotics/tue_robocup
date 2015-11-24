@@ -51,7 +51,6 @@ LASER_GRANNY = ds.VariableDesignator(resolve_type=EntityInfo, name="LASER_GRANNY
 
 def define_designators(robot):
     '''Define core designators in a separate function so that can be used when testing parts of the challenge separately.'''
-    # granny = ds.EdEntityDesignator(robot, type='human', name="granny")
     granny = LASER_GRANNY
     grannies_table = ds.EntityByIdDesignator(robot, id=GRANNIES_TABLE_KB, name="grannies_table")
     shelf = ds.EntityByIdDesignator(robot, id=BOTTLE_SHELF, name="shelf")
@@ -655,9 +654,6 @@ class HandleFall(smach.StateMachine):
             smach.StateMachine.add("STOP_LOOKING_COUCHTABLE",
                                      Stop_looking(robot),
                                      transitions={  'stopped_looking'         :'GRAB_PHONE'})
-
-            #phone = EdEntityDesignator(robot, type="deodorant")
-
 
             smach.StateMachine.add( "GRAB_PHONE",
                                     Grab(robot, phone, empty_arm_designator),

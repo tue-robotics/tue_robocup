@@ -321,15 +321,9 @@ class GuiCallCallback(smach.StateMachine):
 
         point = msgs.Point(0, 0, 0)
 
-        ##### To start in a different state #####
-        # if not TEST_GRASP_LOC == None:
-        #     smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
-        #     location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
-        #########################################
-
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=INITIAL_POSE_AMIGO), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=INITIAL_POSE_AMIGO), radius = 1.0),
                                     transitions={   'arrived'           : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'unreachable'       : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
