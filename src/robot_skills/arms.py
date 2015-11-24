@@ -68,7 +68,7 @@ class Arm(object):
 
         # Init joint trajectory action server
         self._ac_joint_traj = SimpleActionClient(
-            "/" + robot_name + "/" + self.side + "_arm/joint_trajectory", FollowJointTrajectoryAction)
+            "/" + robot_name + "/body/joint_trajectory_action", FollowJointTrajectoryAction)
 
         # ToDo: don't hardcode?
         server_timeout = 0.25
