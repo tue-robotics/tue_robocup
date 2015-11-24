@@ -223,10 +223,10 @@ class EdEntityDesignator(Designator):
 
 
 class EntityByIdDesignator(Designator):
-    def __init__(self, robot, id_, parse=True, name=None):
+    def __init__(self, robot, id, parse=True, name=None):
         super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         self.ed = robot.ed
-        self.id_ = id_
+        self.id_ = id
         self.parse = parse
 
     def _resolve(self):

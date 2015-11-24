@@ -86,7 +86,7 @@ class Designator(object):
 
     def _get_current(self):
         caller_info = get_caller_info()
-        raise DeprecationWarning("Using designator.current (as in {}:{} is deprecated. Use designator.resolve() instead".format(self, caller_info["filename"],
+        raise DeprecationWarning("Using designator.current (as in {}:{}) is deprecated. Use designator.resolve() instead".format(self, caller_info["filename"],
                                                                                              caller_info["line_number"]))
 
     current = property(_get_current)
@@ -190,7 +190,7 @@ class VariableWriter(object):
         if isinstance(value, self.variable_designator.resolve_type):
             self.variable_designator._set_current_protected(value)
         else:
-            raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value), 
+            raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
                 self.variable_designator, 
                 self.variable_designator.resolve_type))
 
