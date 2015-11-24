@@ -766,10 +766,10 @@ def setup_statemachine(robot):
     global BAR_DESIGNATOR
     global BAR_TYPE_DESIGNATOR
     global OPERATOR_DESIGNATOR
-    BAR_DESIGNATOR = EdEntityDesignator(robot=robot, id='rwc2015/bar-0')
+    BAR_DESIGNATOR = EntityByIdDesignator(robot=robot, id='rwc2015/bar-0')
 
     ## DO NOT COMMIT THIS LINE UNCOMMETED BELOW, for testing (CHECKCOMMENTED)
-    #BAR_DESIGNATOR = EdEntityDesignator(robot=robot, id='bar')
+    #BAR_DESIGNATOR = EntityByIdDesignator(robot=robot, id='bar')
 
     BAR_TYPE_DESIGNATOR = Designator(initial_value='bar', resolve_type=str) # Designator that returns a string with the bar type
     OPERATOR_DESIGNATOR = PersonDesignator(robot=robot, furniture_designator=BAR_TYPE_DESIGNATOR)      # Designator that returns the operator

@@ -584,13 +584,13 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'done'              :'GOTO_OPERATOR_FAILED'})
 
             smach.StateMachine.add('GOTO_OPERATOR_SUCCEEDED',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
                                     transitions={   'arrived'           : 'SAY_GRASP_SUCCEEDED',
                                                     'unreachable'       : 'SAY_GRASP_SUCCEEDED',
                                                     'goal_not_defined'  : 'SAY_GRASP_SUCCEEDED'})
 
             smach.StateMachine.add('GOTO_OPERATOR_FAILED',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
                                     transitions={   'arrived'           : 'SAY_FAILED',
                                                     'unreachable'       : 'SAY_FAILED',
                                                     'goal_not_defined'  : 'SAY_FAILED'})
@@ -682,7 +682,7 @@ class GuiCallCallback(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
                                     transitions={   'arrived'           : 'HUMAN_ROBOT_INTERACTION',
                                                     'unreachable'       : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
