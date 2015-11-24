@@ -319,10 +319,10 @@ class Arm(object):
 
     def handshake(self, timeout=10):
         return self._send_joint_trajectory([
-            [-0.2, 0.4, 0.7, 1.4, -1.5, 0.3, 0],
-            [-0.2, 0.4, 0.7, 1.6, -1.5, 0.3, 0],
-            [-0.2, 0.4, 0.7, 1.3, -1.5, 0.3, 0],
-            [-0.2, 0.4, 0.7, 1.4, -1.5, 0.3, 0]], timeout=rospy.Duration(timeout))                    
+            [-0.2, 0.4, 0.7, 1.4, -1.75, 0.3, 0],
+            [-0.2, 0.4, 0.7, 1.6, -1.75, 0.3, 0],
+            [-0.2, 0.4, 0.7, 1.3, -1.75, 0.3, 0],
+            [-0.2, 0.4, 0.7, 1.4, -1.75, 0.3, 0]], timeout=rospy.Duration(timeout))                    
 
     def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5)):
         '''
