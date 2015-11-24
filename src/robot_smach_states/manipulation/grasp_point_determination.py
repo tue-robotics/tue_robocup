@@ -4,7 +4,7 @@ import math
 
 import rospy
 from visualization_msgs.msg import Marker, MarkerArray
-from robot_smach_states.util.geometry_helpers import pointMsgToKdlVector, poseMsgToKdlFrame
+from robot_smach_states.util.geometry_helpers import pointMsgToKdlVector, poseMsgToKdlFrame, offsetConvexHull
 
 class GraspPointDeterminant(object):
 	""" Computes grasp points """
@@ -38,13 +38,9 @@ class GraspPointDeterminant(object):
 
 		''' Second: turn points into KDL objects and offset chull to get it in map frame '''
 		center_pose = poseMsgToKdlFrame(entity.pose)
-		chull = [] # Convex hull in map frame
-		for point in entity.convex_hull:
-			p = pointMsgToKdlVector(point)
-			pf = kdl.Frame(kdl.Rotation(), p)
-			pf = pf * center_pose
-			point = kdl.Vector(pf.p)
-			chull.append(point)
+
+		chull_obj = [pointMsgToKdlVector(p) for p in entity.convex_hull]   # convex hull in object frame
+		chull = offsetConvexHull(chull_obj, center_pose)	# convex hull in map frame
 
 		''' Get robot pose as a kdl frame (is required later on) '''
 		robot_pose = self._robot.base.get_location()
@@ -143,7 +139,9 @@ class GraspPointDeterminant(object):
 			marker.pose.orientation.y = ry
 			marker.pose.orientation.z = rz
 			marker.pose.orientation.w = rw
-			if 'score' in c:
+			if i == 0: # The 'best' one is blue...
+				marker.color.b = 1.0
+			elif 'score' in c:
 				if c['score'] <= 0.0:
 					marker.color.r = 1.0
 				elif c['score'] < 0.5:
