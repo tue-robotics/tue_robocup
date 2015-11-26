@@ -20,7 +20,6 @@ class StartChallengeRobust(smach.StateMachine):
     def __init__(self, robot, initial_pose, use_entry_points = False):
         smach.StateMachine.__init__(self, outcomes=["Done", "Aborted", "Failed"])
         assert hasattr(robot, "base")
-        # assert hasattr(robot, "reasoner")
         assert hasattr(robot, "speech")
 
         with self:
