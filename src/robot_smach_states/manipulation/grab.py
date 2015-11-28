@@ -245,12 +245,12 @@ class SjoerdsGrab(smach.State):
             return 'failed'
 
         # Pre-grasp
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
-            print "Pre-grasp failed (x: {0}, y: {1}, z: {2}".format(goal_bl.x, goal_bl.y, goal_bl.z)
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=0.01)
-            self._robot.head.cancel_goal()
-            return
+        #if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
+        #    print "Pre-grasp failed (x: {0}, y: {1}, z: {2}".format(goal_bl.x, goal_bl.y, goal_bl.z)
+        #    arm.reset()
+        #    arm.send_gripper_goal('close', timeout=0.01)
+        #    self._robot.head.cancel_goal()
+        #    return
 
         # Grasp
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=120, pre_grasp = True):
