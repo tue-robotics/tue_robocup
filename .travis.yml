@@ -84,6 +84,16 @@ script:
   - #rosrun challenge_speech_recognition 1_direct_speech_recognition.py mockbot
   - 
   - #rosrun challenge_speech_recognition 2_indirect_speech_recognition.py mockbot
+  -
+  - pushd . 
+  - roscd test_tools
+  - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in.
+  - sleep 5
+  - cat open_door_log.txt
+  - popd 
+  - 
+  - timeout 5m rosrun challenge_gpsr gpsr.py mockbot
+  - 
   - killall roscore #And kill the roscore afterwards
   - 
   - wget http://imgur.com/tools/imgurbash.sh
