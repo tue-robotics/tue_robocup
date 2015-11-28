@@ -213,7 +213,7 @@ class SjoerdsGrab(smach.State):
         #     ])#, timeout=20)      
 
         arm._send_joint_trajectory([
-            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(0))  
+            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(10.0))  
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Update the pose of the entity
@@ -246,7 +246,7 @@ class SjoerdsGrab(smach.State):
 
         # Pre-grasp
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
-            print "Pre-grasp failed"
+            print "Pre-grasp failed (x: {0}, y: {1}, z: {2}".format(goal_bl.x, goal_bl.y, goal_bl.z)
             arm.reset()
             arm.send_gripper_goal('close', timeout=0.01)
             self._robot.head.cancel_goal()
