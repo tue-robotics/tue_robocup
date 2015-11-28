@@ -168,6 +168,7 @@ class Reasoner(object):
         self.set_time_marker = mock.MagicMock()
         self.get_time_since = mock.MagicMock()
         self.reset = mock.MagicMock()
+        self.load_database = mock.MagicMock()
 
 class Speech(object):
     def __init__(self, *args, **kwargs):
