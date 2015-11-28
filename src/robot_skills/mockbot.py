@@ -269,7 +269,6 @@ class Mockbot(robot.Robot):
 
         # Reasoning/world modeling
         self.ed = ED()
-        self.reasoner = Reasoner()
 
         # Miscellaneous
         self.pub_target = rospy.Publisher("/target_location", geometry_msgs.msg.Pose2D, queue_size=10)
@@ -309,7 +308,6 @@ if __name__ == "__main__":
     print "   \\___/          "
     import atexit
     import util.msg_constructors as msgs
-    # from reasoner import Compound, Conjunction, Sequence, Variable
 
     rospy.init_node("mockbot_executioner", anonymous=True)
     mockbot = Mockbot(wait_services=False)
@@ -326,9 +324,6 @@ if __name__ == "__main__":
     speak = lambda sentence: mockbot.speech.speak(sentence, block=False)
     praat = lambda sentence: mockbot.speech.speak(sentence, language='nl', block=False)
     look_at_point = lambda x, y, z: mockbot.head.look_at_point(msgs.PointStamped(x, y, z, frame_id="/mockbot/base_link"))
-
-    r = mockbot.reasoner
-    q = mockbot.reasoner.query
 
     mapgo = mockbot.base.go
 
