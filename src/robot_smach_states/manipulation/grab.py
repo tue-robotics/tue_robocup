@@ -12,6 +12,7 @@ from robot_smach_states.state import State
 from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
+from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 
 class PrepareEdGrasp(State):
     def __init__(self, robot, arm, grab_entity):
@@ -181,6 +182,7 @@ class SjoerdsGrab(smach.State):
         self._robot = robot
         self.item_des = item_des
         self.arm_des = arm_des
+        self._gpd = GraspPointDeterminant(robot)
 
     def execute(self, userdata=None):
         entity = self.item_des.resolve()
@@ -211,7 +213,7 @@ class SjoerdsGrab(smach.State):
         #     ])#, timeout=20)      
 
         arm._send_joint_trajectory([
-            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(0))  
+            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(10.0))  
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Update the pose of the entity
@@ -229,6 +231,10 @@ class SjoerdsGrab(smach.State):
         segm_res = self._robot.ed.update_kinect("%s" % entity.id)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Grasp point determination
+        grasp_pose = self._gpd.get_grasp_pose(entity, arm)        
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
@@ -239,12 +245,12 @@ class SjoerdsGrab(smach.State):
             return 'failed'
 
         # Pre-grasp
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
-            print "Pre-grasp failed"
-            arm.reset()
-            arm.send_gripper_goal('close', timeout=0.01)
-            self._robot.head.cancel_goal()
-            return
+        #if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=20, pre_grasp=True, first_joint_pos_only=True):
+        #    print "Pre-grasp failed (x: {0}, y: {1}, z: {2}".format(goal_bl.x, goal_bl.y, goal_bl.z)
+        #    arm.reset()
+        #    arm.send_gripper_goal('close', timeout=0.01)
+        #    self._robot.head.cancel_goal()
+        #    return
 
         # Grasp
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=120, pre_grasp = True):

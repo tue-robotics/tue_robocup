@@ -50,14 +50,8 @@ def onTopOff(subject, container, ht=0.1):
 		return False
 
 	''' Second: turn points into KDL objects and offset '''
-	container_center_pose = poseMsgToKdlFrame(container.pose)
-	convex_hull = [] # Convex hull in map frame
-	for point in container.convex_hull:
-		p = pointMsgToKdlVector(point)
-		pf = kdl.Frame(kdl.Rotation(), p)
-		pf = pf * container_center_pose
-		point = kdl.Vector(pf.p)
-		convex_hull.append(point)
+	convex_hull_obj = [pointMsgToKdlVector(p) for p in container.convex_hull]   # convex hull in object frame
+	convex_hull = offsetConvexHull(convex_hull_obj, container_center_pose)	    # convex hull in map frame
 
 	''' Third: check if center point of entity is within convex hull of container '''
 	subject_center_pose = poseMsgToKdlFrame(subject.pose)
@@ -80,7 +74,6 @@ def onTopOffForDesignator(container_designator):
 		return onTopOff(entity, container_entity)
 	return on_top
 
-
 def pointMsgToKdlVector(point):
 	return kdl.Vector(point.x, point.y, point.z)
 
@@ -88,3 +81,19 @@ def poseMsgToKdlFrame(pose):
 	rot = kdl.Rotation.Quaternion(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
 	trans = kdl.Vector(pose.position.x ,pose.position.y, pose.position.z)
 	return kdl.Frame(rot, trans)
+
+def offsetConvexHull(input_ch, offset):
+	""" Offsets the the convex hull 'input_ch' with 'offset'. This can be used, e.g., when a convex hull is desired in map
+	frame while it is given in object frame. In that case, 'offset' represents the object pose in map frame.
+
+	:param input_ch: list with kdl Vectors
+	:param offset: KDL frame representing the offset with which to multiply the convex_hull
+	:return list with KDL vectors representing the convex hull
+	"""
+	out_ch = []
+	for p in input_ch:
+		pf = kdl.Frame(kdl.Rotation(), p)  # ToDo: is this necessary???
+		pf = pf * offset
+		p_out = kdl.Vector(pf.p)
+		out_ch.append(p_out)
+	return out_ch
