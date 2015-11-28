@@ -10,7 +10,7 @@ import multiprocessing
 
 from robot_smach_states.navigation import NavigateToObserve, NavigateToWaypoint
 from robot_smach_states.manipulation import Grab, Place
-from robot_smach_states.util.designators import Designator, UnoccupiedArmDesignator, EdEntityDesignator, ArmHoldingEntityDesignator
+import robot_smach_states.util.designators as ds
 
 ROBOTS = {}
 
@@ -170,7 +170,7 @@ def grab(p, robot):
         return
 
     arm = robot.leftArm
-    machine = Grab(robot, arm=UnoccupiedArmDesignator(robot.arms, arm), item=EdEntityDesignator(robot, id=entities[0].id))
+    machine = Grab(robot, arm=ds.UnoccupiedArmDesignator(robot.arms, arm), item=ds.EntityByIdDesignator(robot, id=entities[0].id))
 
     stop()
 
@@ -188,7 +188,7 @@ def move(p, robot):
         say("No such entities!")
         return
 
-    machine = NavigateToObserve(robot, entity_designator=EdEntityDesignator(robot, id=entities[0].id), radius=.5)
+    machine = NavigateToObserve(robot, entity_designator=ds.EntityByIdDesignator(robot, id=entities[0].id), radius=.5)
 
     stop()
 
