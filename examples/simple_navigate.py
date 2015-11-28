@@ -6,7 +6,7 @@ import sys
 import robot_skills
 from robot_smach_states import navigation
 
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, check_resolve_type
+import robot_smach_states.util.designators as ds
 from robot_smach_states.navigation import NavigateToPose, NavigateToObserve, NavigateToSymbolic
 
 if __name__ == "__main__":
@@ -28,10 +28,10 @@ if __name__ == "__main__":
     #nav_state = NavigateToPose(robot, 1, 0, 0)
     #nav_state.execute()
 
-    nav_state = NavigateToObserve(robot, EdEntityDesignator(robot=robot, id="dinnertable"))
+    nav_state = NavigateToObserve(robot, ds.EntityByIdDesignator(robot=robot, id="dinnertable"))
     nav_state.execute()
 
-    # nav_state = NavigateToSymbolic(robot, {EdEntityDesignator(robot, id="dinner_table"):"near", 
-    #                                         EdEntityDesignator(robot, id="room_living_room"):"in"}, 
-    #                                         EdEntityDesignator(robot, id="dinner_table"))
+    # nav_state = NavigateToSymbolic(robot, {ds.EntityByIdDesignator(robot, id="dinner_table"):"near",
+    #                                         ds.EntityByIdDesignator(robot, id="room_living_room"):"in"},
+    #                                         ds.EntityByIdDesignator(robot, id="dinner_table"))
     # nav_state.execute()
