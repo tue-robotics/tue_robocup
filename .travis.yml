@@ -67,7 +67,8 @@ script:
   - #rosrun challenge_person_recognition person_recognition.py mockbot
   - 
   - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in.
-  - 
+  - sleep 5
+  - cat open_door_log.txt
   - rosrun challenge_rips rips.py mockbot
   - 
   - #rosrun challenge_robonurse challenge_robonurse.py mockbot
