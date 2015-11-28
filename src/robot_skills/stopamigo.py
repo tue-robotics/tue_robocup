@@ -11,6 +11,7 @@ import perception
 import ears
 import ebutton
 import lights
+#import reasoner
 
 import tf
 import tf_server
