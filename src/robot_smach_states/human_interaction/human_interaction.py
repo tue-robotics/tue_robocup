@@ -7,7 +7,7 @@ import ed_perception.msg
 import actionlib
 from robot_smach_states.state import State
 
-from robot_smach_states.util.designators import Designator, EdEntityDesignator, VariableDesignator, check_type, check_resolve_type, writeable, is_writeable
+import robot_smach_states.util.designators as ds
 from robot_smach_states.utility import WaitForDesignator
 import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
@@ -40,12 +40,12 @@ class Say(smach.State):
     >>> #robot.speech.speak.assert_any_call('c', 'us', 'kyle', 'default', 'excited', True)"""
     def __init__(self, robot, sentence=None, language=None, personality=None, voice=None, mood=None, block=True):
         smach.State.__init__(self, outcomes=["spoken"])
-        check_type(sentence, str, list)
-        #check_type(language, str)
-        #check_type(personality, str)
-        #check_type(voice, str)
-        #check_type(mood, str)
-        check_type(block, bool)
+        ds.check_type(sentence, str, list)
+        #ds.check_type(language, str)
+        #ds.check_type(personality, str)
+        #ds.check_type(voice, str)
+        #ds.check_type(mood, str)
+        ds.check_type(block, bool)
 
         self.robot = robot
         self.sentence = sentence
@@ -139,10 +139,10 @@ class HearOptionsExtra(smach.State):
 
     Example of usage:
         from dragonfly_speech_recognition.srv import GetSpeechResponse
-        spec = Designator("((<prefix> <name>)|<name>)")
-        choices = Designator({"name"  : names_list,
+        spec = ds.Designator("((<prefix> <name>)|<name>)")
+        choices = ds.Designator({"name"  : names_list,
                               "prefix": ["My name is", "I'm called"]})
-        answer = VariableDesignator(resolve_type = GetSpeechResponse)
+        answer = ds.VariableDesignator(resolve_type = GetSpeechResponse)
         state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
@@ -151,10 +151,10 @@ class HearOptionsExtra(smach.State):
 
     >>> from robot_skills.mockbot import Mockbot
     >>> mockbot = Mockbot()
-    >>> from robot_smach_states.util.designators import Designator, VariableDesignator
-    >>> spec = Designator("I will go to the <table> in the <room>")
-    >>> choices = Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
-    >>> answer = VariableDesignator(resolve_type=GetSpeechResponse)
+    >>> import robot_smach_states.util.designators as ds
+    >>> spec = ds.Designator("I will go to the <table> in the <room>")
+    >>> choices = ds.Designator({  "room"  : ["livingroom", "bedroom", "kitchen" ], "table" : ["dinner table", "couch table", "desk"]})
+    >>> answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
     >>> state = HearOptionsExtra(mockbot, spec, choices, answer.writeable)
     >>> outcome = state.execute()
     """
@@ -167,10 +167,10 @@ class HearOptionsExtra(smach.State):
 
         self.robot = robot
 
-        check_resolve_type(spec_designator, str)
-        check_resolve_type(choices_designator, dict)
-        check_resolve_type(speech_result_designator, GetSpeechResponse)
-        is_writeable(speech_result_designator)
+        ds.check_resolve_type(spec_designator, str)
+        ds.check_resolve_type(choices_designator, dict)
+        ds.check_resolve_type(speech_result_designator, GetSpeechResponse)
+        ds.is_writeable(speech_result_designator)
 
         self.spec_designator = spec_designator
         self.choices_designator = choices_designator
@@ -220,15 +220,15 @@ class HearYesNo(smach.State):
 
     def execute(self, userdata):
         # define answer format
-        spec = Designator("(<positive_answer>|<negative_answer>)")
+        spec = ds.Designator("(<positive_answer>|<negative_answer>)")
 
         # define choices
-        choices = Designator({  "positive_answer": ["Yes", "Correct", "Right", "Yup"],
+        choices = ds.Designator({  "positive_answer": ["Yes", "Correct", "Right", "Yup"],
                                 "negative_answer": ["No", "Incorrect", "Wrong", "Nope"]})
 
-        answer = VariableDesignator(resolve_type=GetSpeechResponse)
+        answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, writeable(answer))
+        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
 
         # execute listen
         outcome = state.execute()
@@ -288,22 +288,22 @@ class AskContinue(smach.StateMachine):
 ##########################################################################################################################################
 
 
-class WaitForPersonInFront(WaitForDesignator):
+class WaitForPersonInFront(ds.WaitForDesignator):
     """
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
     """
 
     def __init__(self, robot, attempts = 1, sleep_interval = 1):
-        # TODO: add center_point in front of the robot and radius of the search on EdEntityDesignator
-        # human_entity = EdEntityDesignator(robot, center_point=gm.PointStamped(x=1.0, frame_id="base_link"), radius=1, id="human")
-        human_entity = EdEntityDesignator(robot, type="human")
-        WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
+        # TODO: add center_point in front of the robot and radius of the search on ds.EdEntityDesignator
+        # human_entity = ds.EdEntityDesignator(robot, center_point=gm.PointStamped(x=1.0, frame_id="base_link"), radius=1, id="human")
+        human_entity = ds.EdEntityDesignator(robot, type="human")
+        ds.WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
 
 
 ##########################################################################################################################################
 
 
-class NameToUserData(WaitForDesignator):
+class NameToUserData(ds.WaitForDesignator):
     """
     Pass the received name into userdata. By default use 'person_name', if its empty use a designator
     """
