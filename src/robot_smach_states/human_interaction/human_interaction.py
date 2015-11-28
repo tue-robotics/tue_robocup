@@ -288,7 +288,7 @@ class AskContinue(smach.StateMachine):
 ##########################################################################################################################################
 
 
-class WaitForPersonInFront(ds.WaitForDesignator):
+class WaitForPersonInFront(WaitForDesignator):
     """
     Waits for a person to be found in fron of the robot. Attempts to wait a number of times with a sleep interval
     """
@@ -303,7 +303,7 @@ class WaitForPersonInFront(ds.WaitForDesignator):
 ##########################################################################################################################################
 
 
-class NameToUserData(ds.WaitForDesignator):
+class NameToUserData(WaitForDesignator):
     """
     Pass the received name into userdata. By default use 'person_name', if its empty use a designator
     """
