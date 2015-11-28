@@ -238,11 +238,11 @@ class EntityByIdDesignator(Designator):
 
 
 class ReasonedEntityDesignator(Designator):
-    def __init__(self, robot, querystring, name=None):
+    def __init__(self, robot, query, name=None):
         super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         assert hasattr(robot, "reasoner")
         self.robot = robot
-        self.querystring = querystring
+        self.querystring = query
 
         self._locker = None
 
