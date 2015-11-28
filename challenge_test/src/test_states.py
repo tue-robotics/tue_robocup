@@ -6,18 +6,21 @@ import subprocess
 import inspect
 import random
 import ed_perception.msg
-import robot_skills.util.msg_constructors as msgs
 import math
+import robot_skills.util.msg_constructors as msgs
+
+from ed.msg import EntityInfo
 from smach_ros import SimpleActionState
+from collections import namedtuple
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 from robot_smach_states.util.designators import *
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra
-from ed.msg import EntityInfo
-from dragonfly_speech_recognition.srv import GetSpeechResponse
+from robot_smach_states.manipulation import SjoerdsGrab
 from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
+from robot_skills.arms import Arm
 
-from collections import namedtuple
-ClassificationResult = namedtuple("ClassificationResult", "id type probability") #Generates a class with id, type and probability.
+# ClassificationResult = namedtuple("ClassificationResult", "id type probability") #Generates a class with id, type and probability.
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -111,8 +114,6 @@ class PickUpRandomObj(smach.State):
 
         objsResolved = self.objectsIDsDes.resolve()
 
-        # import ipdb; ipdb.set_trace()
-
         if not (self.objectsIDsDes) or len(objsResolved) == 0:
             self.robot.speech.speak("I don't see any objects that i can pick up!", block=False)
             return 'no_objects'
@@ -130,11 +131,27 @@ class PickUpRandomObj(smach.State):
                     sentence+=("and a ")
 
                 sentence+=("{} ".format(objsResolved[0].type if objsResolved[0].type else "unknown object"))
-                print sentence
+            
+            # print sentence
 
+            # Anounce objects found
             self.robot.speech.speak(sentence, block=False)
             
-            self.robot.speech.speak("I am going to pick up a random object.", block=False)
+            selectedObj = random.choice(objsResolved)
 
-            return 'failed'
+            # import ipdb; ipdb.set_trace()
 
+            # anounce which object is going to be picked up
+            self.robot.speech.speak("I am going to pick up the {}".format(
+                selectedObj.type if selectedObj.type else "unknown object"), block=False)
+
+            armDes = UnoccupiedArmDesignator(self.robot.arms, self.robot.arms['right'])
+            entityDes = EdEntityDesignator(self.robot, id=selectedObj.id)
+
+            grabState = SjoerdsGrab(self.robot, entityDes, armDes)
+            result = grabState.execute()
+
+            if result == 'done':
+                return 'succeded'
+            else: 
+                return 'failed'
