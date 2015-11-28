@@ -56,7 +56,11 @@ script:
   - rosrun tf_server tf_server >> /dev/null & #Robot keeps waiting for this
   - 
   - cd #Go to home dir
+  - 
+  - pushd .
+  - roscd test_tools
   - rosrun test_tools open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
+  - popd
   -
   - rosrun challenge_test test.py mockbot
   -
@@ -66,9 +70,13 @@ script:
   - 
   - #rosrun challenge_person_recognition person_recognition.py mockbot
   - 
+  - pushd . 
+  - roscd test_tools
   - rosrun test_tools open_door.sh  > open_door_log.txt & #Make it look that the door is open so we can drive in.
   - sleep 5
   - cat open_door_log.txt
+  - popd 
+  - 
   - rosrun challenge_rips rips.py mockbot
   - 
   - #rosrun challenge_robonurse challenge_robonurse.py mockbot
