@@ -16,6 +16,7 @@ before_install:
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
 
 install:
+  - sudo rm /etc/mongodb.conf
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
   - tue-get install ros-${REPOSITORY_NAME}
   - source ~/.tue/setup.bash # source all target setup files
