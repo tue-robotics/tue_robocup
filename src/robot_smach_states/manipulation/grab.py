@@ -213,10 +213,13 @@ class SjoerdsGrab(smach.State):
         #     ])#, timeout=20)      
 
         arm._send_joint_trajectory([
-            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(10.0))  
+            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(0))  
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Update the pose of the entity
+
+        # Make sure the torso is done
+        self._robot.torso.wait_for_motion_done()
 
         # Make sure the head looks at the entity
         pos = entity.pose.position
@@ -225,7 +228,7 @@ class SjoerdsGrab(smach.State):
         # This is needed because the head is not entirely still when the
         # look_at_point function finishes
         import time
-        time.sleep(1)
+        time.sleep(0.5)
 
         # Inspect the entity
         segm_res = self._robot.ed.update_kinect("%s" % entity.id)
@@ -252,12 +255,20 @@ class SjoerdsGrab(smach.State):
         #    self._robot.head.cancel_goal()
         #    return
 
+        arm.wait_for_motion_done()
+
         # Grasp
         if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0, frame_id="/amigo/base_link", timeout=120, pre_grasp = True):
             self._robot.speech.speak("I am sorry but I cannot move my arm to the object position", block=False)
             print "Grasp failed"
-            arm.reset()
+
+            # Close gripper
             arm.send_gripper_goal('close', timeout=0.01)
+            
+            # Retracting and reset motion
+            arm._send_joint_trajectory([[-0.08, -0.24, 0.31, 2.2, 0.06, -0.29, -0.18],
+                                        [-0.09, -0.54, 0.3, 2, 0.06, -0.29, -0.18],
+                                        [-0.1, -0.2, 0.2, 0.8, 0.0, 0.0, 0.0]])
             self._robot.head.cancel_goal()
             return "failed"
 
@@ -285,7 +296,7 @@ class SjoerdsGrab(smach.State):
         # This is needed because the head is not entirely still when the
         # look_at_point function finishes
         import time
-        time.sleep(1)
+        time.sleep(0.5)
 
         # Inspect the entity
         segm_res = self._robot.ed.update_kinect("%s" % entity.id)
