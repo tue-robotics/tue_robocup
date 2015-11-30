@@ -67,6 +67,15 @@ class Torso(object):
             torso_goal.goal_tolerance.append(goal_tolerance)
 
         rospy.logdebug("Sending torso_goal: {0}".format(torso_goal))
+        
+        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
+										# to only have a queue size of 1 and runs at 1000 hz. This
+										# means that if two goals are send approximately at the same
+										# time (e.g. an arm goal and a torso goal), one of the two
+										# goals probably won't make it. This sleep makes sure the
+										# goals will always arrive in different update hooks in the
+										# hardware TrajectoryActionLib server.
+        
         self.ac_move_torso.send_goal(torso_goal)
 
         if timeout == 0.0:
@@ -91,7 +100,7 @@ class Torso(object):
         return self.send_goal('reset')
 
     def cancel_goal(self):
-        self.ac_move_torso.cancel_all_goals()
+        self.ac_move_torso.cancel_goal()
         #return True
 
     def wait_for_motion_done(self, timeout=10):

@@ -190,6 +190,14 @@ class Arm(object):
 
         self._publish_marker(grasp_precompute_goal, [0, 1, 0], "grasp_point_corrected")
 
+        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
+										# to only have a queue size of 1 and runs at 1000 hz. This
+										# means that if two goals are send approximately at the same
+										# time (e.g. an arm goal and a torso goal), one of the two
+										# goals probably won't make it. This sleep makes sure the
+										# goals will always arrive in different update hooks in the
+										# hardware TrajectoryActionLib server.
+
         # Send goal:
 
         if timeout == 0.0:
@@ -356,6 +364,15 @@ class Arm(object):
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
         rospy.logdebug("Send {0} arm to jointcoords \n{1}".format(self.side, ps))
+
+        import time; time.sleep(0.001)  # This is necessary: the rtt_actionlib in the hardware seems
+										# to only have a queue size of 1 and runs at 1000 hz. This
+										# means that if two goals are send approximately at the same
+										# time (e.g. an arm goal and a torso goal), one of the two
+										# goals probably won't make it. This sleep makes sure the
+										# goals will always arrive in different update hooks in the
+										# hardware TrajectoryActionLib server.
+        
         self._ac_joint_traj.send_goal(goal)
         if timeout != rospy.Duration(0):
             done = self._ac_joint_traj.wait_for_result(timeout*len(joints_references))
