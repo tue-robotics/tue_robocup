@@ -207,25 +207,25 @@ class Arm(object):
                 rospy.logerr('grasp precompute goal failed: \n%s', repr(myargs))
                 return False
 
-    def send_joint_goal(self, configuration):
+    def send_joint_goal(self, configuration, timeout=5.0):
         '''
         Send a named joint goal (pose) defined in the parameter default_configurations to the arm
         '''
         if configuration in self.default_configurations:
             return self._send_joint_trajectory(
                 [self.default_configurations[configuration]]
-                )
+                , timeout=rospy.Duration(timeout))
         else:
             rospy.logwarn('Default configuration {0} does not exist'.format(configuration))
             return False
 
-    def send_joint_trajectory(self, configuration):
+    def send_joint_trajectory(self, configuration, timeout=5.0):
         '''
         Send a named joint trajectory (sequence of poses) defined in the default_trajectories to
         the arm
         '''
         if configuration in self.default_trajectories:
-            return self._send_joint_trajectory(self.default_trajectories[configuration])
+            return self._send_joint_trajectory(self.default_trajectories[configuration], timeout=rospy.Duration(timeout))
         else:
             rospy.logwarn('Default trajectories {0} does not exist'.format(configuration))
             return False
@@ -363,7 +363,15 @@ class Arm(object):
                 rospy.logwarn("Cannot reach joint goal {0}".format(goal))
             return done
         else:
-            return None    
+            return None  
+
+    def wait_for_motion_done(self):
+        if self._ac_joint_traj.gh:
+            self._ac_joint_traj.wait_for_result()
+        if self._ac_grasp_precompute.gh:
+            self._ac_grasp_precompute.wait_for_result()
+        if self._ac_gripper.gh:
+            self._ac_gripper.wait_for_result()
 
     def _publish_marker(self, goal, color, ns = ""):
         marker = visualization_msgs.msg.Marker()

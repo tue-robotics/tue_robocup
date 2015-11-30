@@ -105,6 +105,12 @@ class Head():
         self._goal = None
         self._at_setpoint = False
 
+    def wait_for_motion_done(self):
+        self._at_setpoint = False
+        if self._goal:
+            while not self._at_setpoint:
+                rospy.sleep(0.1)
+
     # ---- INTERFACING THE NODE ---
 
     def _setHeadReferenceGoal(self, goal_type, pan_vel, tilt_vel, end_time, point_stamped=PointStamped(), pan=0, tilt=0, timeout=0):

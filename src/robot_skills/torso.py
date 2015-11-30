@@ -90,18 +90,24 @@ class Torso(object):
     def reset(self):
         return self.send_goal('reset')
 
-    def wait(self, timeout=10):
-        self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
-        if self.ac_move_torso.get_state() == GoalStatus.SUCCEEDED:
-            rospy.logdebug("Torso target reached")
-            return True
-        else:
-            rospy.loginfo("Reaching torso target failed")
-            return False
-
     def cancel_goal(self):
         self.ac_move_torso.cancel_all_goals()
         #return True
+
+    def wait_for_motion_done(self, timeout=10):
+        if self.ac_move_torso.gh:
+            self.ac_move_torso.wait_for_result(rospy.Duration(timeout))
+            if self.ac_move_torso.get_state() == GoalStatus.SUCCEEDED:
+                rospy.logdebug("Torso target reached")
+                return True
+            else:
+                rospy.loginfo("Reaching torso target failed")
+                return False
+
+    def wait(self, timeout=10):
+        import warnings
+        warnings.warn("Please use wait_for_motion_done instead", Warning)
+        self.wait_for_motion_done(timeout)               
 
     _lock = threading.RLock()
 
