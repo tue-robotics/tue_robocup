@@ -61,6 +61,9 @@ script:
   - 
   - cd #Go to home dir
   - 
+  - dpkg -S PyKDL.so
+  - python -c "import PyKDL; print PyKDL.__file__"
+  - 
   - pushd .
   - roscd test_tools
   - rosrun test_tools open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
