@@ -45,6 +45,7 @@ script:
   - coverage run --append src/robot_smach_states/util/designators/utility.py
   - coverage run --append src/robot_smach_states/human_interaction/human_interaction.py
   - coverage run --append src/robot_smach_states/manipulation/manipulation.py
+  - python -c "import robot_smach_states as states"
 
 after_success:
   - codecov
