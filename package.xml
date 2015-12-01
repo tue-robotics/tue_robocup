@@ -79,8 +79,8 @@
   <build_depend>dragonfly_speech_recognition</build_depend>
   <run_depend>dragonfly_speech_recognition</run_depend>
 
-  <build_depend>tue_manipulation</build_depend>
-  <run_depend>tue_manipulation</run_depend>
+  <build_depend>tue_manipulation_msgs</build_depend>
+  <run_depend>tue_manipulation_msgs</run_depend>
 
   <build_depend>text_to_speech</build_depend>
   <run_depend>text_to_speech</run_depend>
