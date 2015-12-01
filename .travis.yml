@@ -25,7 +25,7 @@ install:
   - sudo apt-get install mongodb-dev -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
 
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
-  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_rips ros-test_tools ros-challenge_gpsr # ros-challenge_navigation ros-challenge_person_recognition ros-challenge_robonurse ros-challenge_speech_recognition ros-challenge_manipulation
+  - tue-get install ros-challenge_test ros-challenge_manipulation ros-challenge_rips ros-test_tools ros-challenge_gpsr ros-challenge_navigation # ros-challenge_person_recognition ros-challenge_robonurse ros-challenge_speech_recognition ros-challenge_manipulation
   - source ~/.tue/setup.bash # source all target setup files
   - cd
 
@@ -69,8 +69,13 @@ script:
   - rosrun challenge_test test.py mockbot
   -
   - rosrun challenge_manipulation manipulation.py mockbot
+  -  
+  - pushd .
+  - roscd test_tools
+  - rosrun test_tools open_door.sh  >> /dev/null & #Make it look that the door is open so we can drive in. Its a bit hacky
+  - popd
   - 
-  - #rosrun challenge_navigation challenge_navigation.py mockbot
+  - rosrun challenge_navigation challenge_navigation.py mockbot
   - 
   - #rosrun challenge_person_recognition person_recognition.py mockbot
   - 
