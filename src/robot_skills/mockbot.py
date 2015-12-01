@@ -11,7 +11,7 @@ import arms
 import mock
 
 import random
-
+from collections import defaultdict
 from collections import namedtuple
 
 from dragonfly_speech_recognition.srv import GetSpeechResponse
@@ -198,32 +198,39 @@ class Torso(object):
         self.wait_for_motion_done = mock.MagicMock()
 
 class ED(object):
-    def __init__(self, *args, **kwargs):
-        def generate_random_entity(id=None):
+    @staticmethod
+    def generate_random_entity(id=None):
             entity = EntityInfo()
 
             if not id:
                 entity.id = str(hash(entity))
-            entity.type = "random_from_magicmock"
+            entity.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             entity.data = mock.MagicMock()
 
             return entity
 
-        self.get_entities = lambda *args, **kwargs: [generate_random_entity(), generate_random_entity()]
-        self.get_closest_entity = lambda *args, **kwargs: generate_random_entity()
-        self.get_entity = lambda id=None, parse=True: generate_random_entity(id)
-        self.reset = mock.MagicMock()
+    def __init__(self, *args, **kwargs):
+        self._entities = defaultdict(ED.generate_random_entity,
+                                     {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
+
+        self.get_entities = lambda *args, **kwargs: self._entities.values()
+        self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
+        self.get_entity = lambda id=None, parse=True: self._entities[id]
+        self.reset = lambda *args, **kwargs: self._entities.clear()
         self.navigation = mock.MagicMock()
         self.navigation.get_position_constraint = mock.MagicMock()
         self.configure_kinect_segmentation = mock.MagicMock()
         self.update_entity = mock.MagicMock()
         self.configure_perception = mock.MagicMock()
-        self.get_closest_possible_person_entity = lambda *args, **kwargs: generate_random_entity()
+        self.get_closest_possible_person_entity = lambda *args, **kwargs: ED.generate_random_entity()
         self.enable_plugins = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
-        self.classify = lambda *args, **kwargs: [mock.MagicMock() for i in range(5)]
         self.classify_with_probs = mock.MagicMock()
-        self.segment_kinect = mock.MagicMock()
+
+    def segment_kinect(self, *args, **kwargs):
+        self._entities = defaultdict(ED.generate_random_entity,
+                                     {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
+        return self._entities
 
     def update_kinect(self, *args, **kwargs):
         res = UpdateResponse()
@@ -231,6 +238,10 @@ class ED(object):
         res.updated_ids = [hash(i) for i in range(10)]
         res.deleted_ids = [hash(i) for i in range(10)]
         return res
+
+    def classify(self, ids, perception_model_name="", property ="type", types=None):
+        entities = [self._entities[_id] for _id in ids]
+        return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
 
 # class MockbotArms(arms.Arms):
 #     def __init__(self, tf_listener):
