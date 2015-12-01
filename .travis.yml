@@ -44,6 +44,7 @@ script:
   - coverage run --append src/robot_smach_states/util/designators/tests.py
   - coverage run --append src/robot_smach_states/util/designators/utility.py
   - coverage run --append src/robot_smach_states/human_interaction/human_interaction.py
+  - coverage run --append src/robot_smach_states/manipulation/manipulation.py
 
 after_success:
   - codecov
