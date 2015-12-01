@@ -77,7 +77,7 @@ script:
   - 
   - rosrun challenge_navigation challenge_navigation.py mockbot
   - 
-  - #rosrun challenge_person_recognition person_recognition.py mockbot
+  - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot
   - 
   - pushd . 
   - roscd test_tools
