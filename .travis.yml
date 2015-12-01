@@ -90,9 +90,7 @@ script:
   - 
   - rosrun challenge_robonurse challenge_robonurse.py mockbot
   - 
-  - #rosrun challenge_speech_recognition 1_direct_speech_recognition.py mockbot
-  - 
-  - #rosrun challenge_speech_recognition 2_indirect_speech_recognition.py mockbot
+  - rosrun challenge_speech_recognition speech_recognition.py mockbot
   -
   - pushd . 
   - roscd test_tools
