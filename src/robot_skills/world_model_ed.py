@@ -251,11 +251,11 @@ class ED:
         res = self._ed_segment_srv(enable_continuous_mode = (continuous == True), disable_continuous_mode = (continuous == False), max_sensor_range = max_sensor_range)
         return res.entity_ids
 
-    def update_kinect(self, area_description):
+    def update_kinect(self, area_description = "", background_padding = 0):
         # Save the image (logging)
         self.save_image(path_suffix=area_description.replace(" ", "_"))
 
-        res = self._ed_kinect_update_srv(update_space_description = area_description)
+        res = self._ed_kinect_update_srv(area_description = area_description, background_padding = background_padding)
         if res.error_msg:
             rospy.logerr("Could not segment objects: %s" % res.error_msg)
 
