@@ -9,8 +9,8 @@ from actionlib import SimpleActionClient, GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from diagnostic_msgs.msg import DiagnosticArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
-from tue_manipulation.msg import GraspPrecomputeGoal, GraspPrecomputeAction
-from tue_manipulation.msg import GripperCommandGoal, GripperCommandAction
+from tue_manipulation_msgs.msg import GraspPrecomputeGoal, GraspPrecomputeAction
+from tue_manipulation_msgs.msg import GripperCommandGoal, GripperCommandAction
 from tue_msgs.msg import GripperCommand
 
 
