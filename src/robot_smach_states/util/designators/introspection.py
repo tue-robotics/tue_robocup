@@ -159,6 +159,8 @@ def analyse_designators(statemachine=None, statemachine_name="", save_dot=False,
                 usages += [DesignatorUsedInDesignator(parent_designator, child_designator, child_role)]
 
     dot = Digraph(comment=statemachine_name + ' Designators', format=fmt)
+    dot.graph_attr['label'] = statemachine_name
+    dot.graph_attr['labelloc'] ="t"
 
     for usage in usages:
         usage.add_graphviz_edge(dot)
