@@ -143,7 +143,7 @@ def scanForHuman(robot):
         if so: recite them and lock them '''
     for i in range(0, len(id_list)):
         e_id = id_list[i]
-        e_type = entity_types[i]
+        e_type = entity_types[i].type
 
         if e_type:
             if e_type == "human":
