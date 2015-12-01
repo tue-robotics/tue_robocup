@@ -195,6 +195,7 @@ class Torso(object):
         self.cancel_goal = mock.MagicMock()
         self._receive_torso_measurement = mock.MagicMock()
         self.get_position    = mock.MagicMock()
+        self.wait_for_motion_done = mock.MagicMock()
 
 class ED(object):
     def __init__(self, *args, **kwargs):
