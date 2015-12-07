@@ -51,6 +51,7 @@ class Arm(object):
 
         self.joint_names = self.load_param('skills/arm/joint_names')
         self.joint_names = [name + "_" + self.side for name in self.joint_names]
+        self.torso_joint_names = rospy.get_param('/'+self.robot_name+'/skills/torso/joint_names')
 
         self.default_configurations = self.load_param('skills/arm/default_configurations')
         self.default_trajectories   = self.load_param('skills/arm/default_trajectories')
@@ -332,7 +333,7 @@ class Arm(object):
             [-0.2, 0.4, 0.7, 1.3, -1.75, 0.3, 0],
             [-0.2, 0.4, 0.7, 1.4, -1.75, 0.3, 0]], timeout=rospy.Duration(timeout))                    
 
-    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5)):
+    def _send_joint_trajectory(self, joints_references, timeout=rospy.Duration(5), joint_names = None):
         '''
         Low level method that sends a array of joint references to the arm.
 
@@ -348,18 +349,27 @@ class Arm(object):
             rospy.logwarn('Joint trajectory action is not present: joint goal not reached')
             return False
 
+        if not joints_references:
+            return
+
+        if not joint_names:
+            if (len(joints_references[0]) == len(self.joint_names) + len(self.torso_joint_names)):
+                joint_names = self.torso_joint_names + self.joint_names
+            else:
+                joint_names = self.joint_names
+
         time_from_start = rospy.Duration()
         ps = []
         for joints_reference in joints_references:
-            if (len(joints_reference) != len(self.joint_names)):
+            if (len(joints_reference) != len(joint_names)):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
-                              % (len(self.joint_names), len(joints_references)))
+                              % (len(joint_names), len(joints_references)))
 
             ps.append(JointTrajectoryPoint(
                 positions=joints_reference,
                 time_from_start=time_from_start))
 
-        joint_trajectory = JointTrajectory(joint_names=self.joint_names,
+        joint_trajectory = JointTrajectory(joint_names=joint_names,
                                            points=ps)
         goal = FollowJointTrajectoryGoal(trajectory=joint_trajectory, goal_time_tolerance=timeout)
 
@@ -380,7 +390,7 @@ class Arm(object):
                 rospy.logwarn("Cannot reach joint goal {0}".format(goal))
             return done
         else:
-            return None  
+            return None
 
     def wait_for_motion_done(self):
         if self._ac_joint_traj.gh:
