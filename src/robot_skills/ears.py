@@ -1,8 +1,7 @@
 #! /usr/bin/env python
 import rospy
-
-from dragonfly_speech_recognition.srv import GetSpeech, GetSpeechRequest
 from dragonfly_speech_recognition.msg import Choice
+from dragonfly_speech_recognition.srv import GetSpeech, GetSpeechRequest
 
 
 class Ears:

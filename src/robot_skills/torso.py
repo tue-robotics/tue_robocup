@@ -1,13 +1,14 @@
 #! /usr/bin/env python
-import rospy
-
-import control_msgs.msg
-import trajectory_msgs.msg
-from sensor_msgs.msg import JointState
 import threading
-import util.concurrent_util
+
 import actionlib
+import control_msgs.msg
+import rospy
+import trajectory_msgs.msg
 from actionlib_msgs.msg import GoalStatus
+from sensor_msgs.msg import JointState
+
+from .util import concurrent_util
 
 
 class Torso(object):
@@ -120,7 +121,7 @@ class Torso(object):
 
     _lock = threading.RLock()
 
-    @util.concurrent_util.synchronized(_lock)
+    @concurrent_util.synchronized(_lock)
     def _receive_torso_measurement(self, jointstate):
         """@param jointstate JointState"""
         self.current_position = jointstate

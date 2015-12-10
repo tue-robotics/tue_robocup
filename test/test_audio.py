@@ -1,10 +1,6 @@
 #! /usr/bin/env python
 import roslib; roslib.load_manifest('robot_skills')
 
-from robot_skills.ears import Ears
-from robot_skills.speech import Speech
-from robot_skills.head import Head
-
 import random
 import time
 

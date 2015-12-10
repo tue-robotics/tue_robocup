@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 
 import rospy
+import std_msgs.msg
 import tf_server
 import visualization_msgs.msg
-import std_msgs.msg
-
 from actionlib import SimpleActionClient, GoalStatus
 from control_msgs.msg import FollowJointTrajectoryGoal, FollowJointTrajectoryAction
 from diagnostic_msgs.msg import DiagnosticArray

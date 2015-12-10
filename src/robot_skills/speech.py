@@ -1,10 +1,6 @@
 #! /usr/bin/env python
 import rospy
 from text_to_speech.srv import Speak, SpeakRequest
-from std_msgs.msg import String
-from math import sqrt
-
-import thread
 
 
 class Speech(object):

@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-import rospy
-import threading
-import std_srvs.srv
-import swi_prolog.srv
 import rospkg
+import threading
+
+import rospy
+import swi_prolog.srv
 
 
 class Reasoner(object):

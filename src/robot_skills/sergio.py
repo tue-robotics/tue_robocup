@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 import robot
-import rospy
 
 
 class Sergio(robot.Robot):

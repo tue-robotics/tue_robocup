@@ -1,17 +1,16 @@
 #! /usr/bin/env python
 import rospy
-
-import actionlib
-
-from geometry_msgs.msg import Point, PointStamped
-import robot_skills.util.msg_constructors as msgs
+from actionlib import SimpleActionClient
+from geometry_msgs.msg import PointStamped
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
+
+from .util import msg_constructors as msgs
 
 
 class Head():
     def __init__(self, robot_name):
         self._robot_name = robot_name
-        self._ac_head_ref_action = actionlib.SimpleActionClient("/"+robot_name+"/head_ref/action_server",  HeadReferenceAction)
+        self._ac_head_ref_action = SimpleActionClient("/"+robot_name+"/head_ref/action_server",  HeadReferenceAction)
         self._goal = None
         self._at_setpoint = False
 

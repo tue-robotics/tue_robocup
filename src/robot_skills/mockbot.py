@@ -1,23 +1,20 @@
 #! /usr/bin/env python
-import rospy
-
-import geometry_msgs
-import std_msgs.msg
-import tf
-import robot
-import arms
-
-import mock
-
 import random
 from collections import defaultdict
-from collections import namedtuple
 
-from dragonfly_speech_recognition.srv import GetSpeechResponse
+import geometry_msgs
+import mock
+import rospy
+import std_msgs.msg
+import tf
 from dragonfly_speech_recognition.msg import Choice
+from dragonfly_speech_recognition.srv import GetSpeechResponse
 from ed.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
-from robot_skills.classification_result import ClassificationResult
+
+import arms
+import robot
+from .classification_result import ClassificationResult
 
 
 class Arm(arms.Arm):
@@ -334,7 +331,7 @@ if __name__ == "__main__":
     print "   .--  .. ----**.____)"
     print "   \\___/          "
     import atexit
-    import util.msg_constructors as msgs
+    from .util import msg_constructors as msgs
     # from reasoner import Compound, Conjunction, Sequence, Variable
 
     rospy.init_node("mockbot_executioner", anonymous=True)

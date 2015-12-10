@@ -10,7 +10,7 @@ from cb_planner_msgs_srvs.msg import PositionConstraint
 from geometry_msgs.msg import Point, PointStamped
 from math import hypot
 
-from robot_skills.util import transformations
+from .util import transformations
 
 from std_srvs.srv import Empty #Reset Ed
 
@@ -20,7 +20,7 @@ import visualization_msgs.msg
 
 import yaml
 
-from robot_skills.classification_result import ClassificationResult
+from .classification_result import ClassificationResult
 
 
 class Navigation:

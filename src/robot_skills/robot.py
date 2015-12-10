@@ -14,11 +14,9 @@ import ebutton
 import lights
 
 # Perception
-import perception
 import perception_ed
 
 # tf
-import tf
 import tf_server
 
 # Reasoning/world modeling
@@ -26,11 +24,7 @@ import world_model_ed
 import reasoner
 
 # Misc: do we need this???
-from util import transformations
 import geometry_msgs
-import std_msgs.msg
-from math import degrees, radians
-
 from collections import OrderedDict
 
 

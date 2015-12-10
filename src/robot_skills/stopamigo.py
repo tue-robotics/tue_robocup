@@ -1,18 +1,13 @@
 #! /usr/bin/env python
-import rospy
-import head
-import worldmodel
 import ros_navstack_base
+import rospy
 import spindle
-import speech
-import arms
-import perception
-import ears
-import ebutton
-import lights
-#import reasoner
 
-import tf
+import arms
+import ebutton
+import head
+# import reasoner
+
 import tf_server
 
 import geometry_msgs

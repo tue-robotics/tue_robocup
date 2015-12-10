@@ -5,16 +5,18 @@
 #  October '14
 #
 
-import rospy
-from geometry_msgs.msg import PoseStamped, Point, Twist, PoseWithCovarianceStamped
-from cb_planner_msgs_srvs.srv import *
-from cb_planner_msgs_srvs.msg import *
-import actionlib
-from util import transformations
-import tf
-import tf_server
-from util import nav_analyzer
 import math
+
+import geometry_msgs.msg
+import rospy
+import tf
+from actionlib import SimpleActionClient
+from cb_planner_msgs_srvs.msg import LocalPlannerAction, OrientationConstraint, PositionConstraint, LocalPlannerGoal
+from cb_planner_msgs_srvs.srv import GetPlan, CheckPlan
+
+from .util import nav_analyzer
+from .util import transformations
+
 
 ###########################################################################################################################
 
@@ -23,7 +25,7 @@ class LocalPlanner():
         self.analyzer = analyzer
         self._robot_name = robot_name
         self._tf_listener = tf_listener
-        self._action_client = actionlib.SimpleActionClient('/'+ robot_name +'/local_planner/action_server', LocalPlannerAction)
+        self._action_client = SimpleActionClient('/'+ robot_name +'/local_planner/action_server', LocalPlannerAction)
 
         # Public members!
         self._status = "idle" # idle, controlling, blocked, arrived
@@ -150,8 +152,8 @@ class Base(object):
     def __init__(self, robot_name, tf_listener, wait_service=True, use_2d=None):
         self._tf_listener = tf_listener
         self._robot_name = robot_name
-        self._cmd_vel = rospy.Publisher('/' + self._robot_name + '/base/references', Twist, queue_size=10)
-        self._initial_pose_publisher = rospy.Publisher('/' + self._robot_name + '/initialpose', PoseWithCovarianceStamped, queue_size=10)
+        self._cmd_vel = rospy.Publisher('/' + self._robot_name + '/base/references', geometry_msgs.msg.Twist, queue_size=10)
+        self._initial_pose_publisher = rospy.Publisher('/' + self._robot_name + '/initialpose', geometry_msgs.msg.PoseWithCovarianceStamped, queue_size=10)
 
         self.analyzer = nav_analyzer.NavAnalyzer(self._robot_name)
 
@@ -176,7 +178,7 @@ class Base(object):
         # Cancel the local planner goal
         self.local_planner.cancelCurrentPlan()
 
-        v = Twist()        # Initialize velocity
+        v = geometry_msgs.msg.Twist()        # Initialize velocity
         t_start = rospy.Time.now()
 
         # Drive

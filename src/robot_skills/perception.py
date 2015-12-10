@@ -1,6 +1,7 @@
 #! /usr/bin/env python
-import actionlib
 import collections
+
+import actionlib
 import rospy
 import tue_recorder.msg
 
