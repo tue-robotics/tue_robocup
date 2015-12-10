@@ -13,8 +13,8 @@ from ed.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
 
 import arms
-import robot
-from .classification_result import ClassificationResult
+from robot_skills import robot
+from robot_skills.classification_result import ClassificationResult
 
 
 class Arm(arms.Arm):
@@ -331,7 +331,7 @@ if __name__ == "__main__":
     print "   .--  .. ----**.____)"
     print "   \\___/          "
     import atexit
-    from .util import msg_constructors as msgs
+    from robot_skills.util import msg_constructors as msgs
     # from reasoner import Compound, Conjunction, Sequence, Variable
 
     rospy.init_node("mockbot_executioner", anonymous=True)
