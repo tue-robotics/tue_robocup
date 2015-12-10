@@ -1,10 +1,10 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import threading
 import std_srvs.srv
 import swi_prolog.srv
 import rospkg
+
 
 class Reasoner(object):
     """Interface to the robot's reasoner.

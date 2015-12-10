@@ -1,9 +1,10 @@
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import geometry_msgs.msg
 import math
+# noinspection PyPackageRequirements
 import tf
 import tf_server
+
 
 def euler_z_to_quaternion(angle):
 
@@ -19,6 +20,7 @@ def euler_z_to_quaternion(angle):
 
     return orientation_goal
 
+
 def euler_z_from_quaternion(quaternion):
 
     try:
@@ -30,6 +32,7 @@ def euler_z_from_quaternion(quaternion):
 
     return rz
 
+
 def compute_relative_angle(absolute_angle, robot_orientation):
 
     robot_rotation=[robot_orientation.x,robot_orientation.y,robot_orientation.z,robot_orientation.w]
@@ -38,6 +41,7 @@ def compute_relative_angle(absolute_angle, robot_orientation):
     relative_angle = absolute_angle - robot_absolute_angle[2]
 
     return relative_angle
+
 
 def transform_into_base_coordinates(target_position, robot_position, robot_orientation):
 
@@ -49,14 +53,14 @@ def transform_into_base_coordinates(target_position, robot_position, robot_orien
     rz = target_position.z
     return [rx, ry, rz]
 
-############################## function compute distance ##############################
+
 def compute_distance(target_position, robot_position):
         dx = target_position.x - robot_position.x
         dy = target_position.y - robot_position.y
         distance = math.sqrt(dx*dx+dy*dy)
         return distance
 
-############################## function compute angle ##############################
+
 def compute_angle(target_position, robot_position):
 
         dx = target_position.x - robot_position.x
@@ -65,7 +69,6 @@ def compute_angle(target_position, robot_position):
         return angle
 
 
-#################### in progress ########################
 def transform_into_non_conflicting_position(target_position, robot_position, radius=0.6):
 
         dx = robot_position.x - target_position.x
@@ -75,8 +78,8 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
         dx = radius * (dx / distance)
         dy = radius * (dy / distance)
 
-        target_position.x = target_position.x + dx
-        target_position.y = target_position.y + dy
+        target_position.x += dx
+        target_position.y += dy
 
         return target_position
         """
@@ -88,7 +91,6 @@ def transform_into_non_conflicting_position(target_position, robot_position, rad
 
         return target_position
         """
-
 
 
 def tf_transform(coordinates, inputframe, outputframe, tf_listener):

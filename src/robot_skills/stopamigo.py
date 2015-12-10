@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 import head
 import worldmodel
@@ -17,6 +16,7 @@ import tf
 import tf_server
 
 import geometry_msgs
+
 
 class Amigo(object):
     """

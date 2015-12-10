@@ -1,9 +1,9 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
 from dragonfly_speech_recognition.srv import GetSpeech, GetSpeechRequest
 from dragonfly_speech_recognition.msg import Choice
+
 
 class Ears:
     """

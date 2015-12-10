@@ -5,8 +5,7 @@
 #  October '14
 #
 
-import roslib, rospy
-roslib.load_manifest('robot_skills')
+import rospy
 from geometry_msgs.msg import PoseStamped, Point, Twist, PoseWithCovarianceStamped
 from cb_planner_msgs_srvs.srv import *
 from cb_planner_msgs_srvs.msg import *
@@ -47,7 +46,7 @@ class LocalPlanner():
     def cancelCurrentPlan(self):
         state = self._action_client.get_state()
         # Only cancel goal when pending or active
-        if (state ==0 or state == 1):
+        if state ==0 or state == 1:
             self._action_client.cancel_goal()
             self.__setState("idle")
 
@@ -99,8 +98,7 @@ class GlobalPlanner():
 
         self.position_constraint = position_constraint
 
-        pcs = []
-        pcs.append(position_constraint)
+        pcs = [position_constraint]
 
         start_time = rospy.Time.now()
 

@@ -1,8 +1,8 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 from amigo_msgs.msg import RGBLightCommand
 from std_msgs.msg import ColorRGBA
+
 
 class Lights:
     """

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 #import os.path
 
@@ -22,6 +21,7 @@ import geometry_msgs.msg
 
 # Robot skills
 import transformations
+
 
 class NavAnalyzer:
 

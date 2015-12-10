@@ -1,7 +1,7 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 from std_msgs.msg import Bool
+
 
 class EButton:
     """

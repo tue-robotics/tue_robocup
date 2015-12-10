@@ -1,10 +1,10 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
 import robot
 
+
 class Amigo(robot.Robot):
     """docstring for Amigo"""
-    def __init__(self, dontInclude = [], wait_services=False):
+    def __init__(self, dontInclude=[], wait_services=False):
         super(Amigo, self).__init__(robot_name="amigo", wait_services=wait_services)

@@ -292,7 +292,7 @@ class Arm(object):
         Feels if user slightly pulls or pushes the (item in the) arm. On timeout, it will return False.
         '''
 
-        succeeded = False;
+        succeeded = False
 
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_robot2human', std_msgs.msg.Bool, queue_size=1, latch = True)
         pub.publish(std_msgs.msg.Bool(True))
@@ -301,7 +301,7 @@ class Arm(object):
             rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
             print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
             return True
-        except(rospy.ROSException), e:
+        except rospy.ROSException, e:
             rospy.logerr(e)
             return False
 
@@ -313,7 +313,7 @@ class Arm(object):
         Feels if user slightly pushes an item in the gripper. On timeout, it will return False.
         '''
 
-        succeeded = False;
+        succeeded = False
 
         pub = rospy.Publisher('/'+self.robot_name+'/handoverdetector_'+self.side+'/toggle_human2robot', std_msgs.msg.Bool, queue_size=1, latch = True)
         pub.publish(std_msgs.msg.Bool(True))
@@ -322,7 +322,7 @@ class Arm(object):
             rospy.wait_for_message('/'+self.robot_name+'/handoverdetector_'+self.side+'/result', std_msgs.msg.Bool, timeout)
             print '/'+self.robot_name+'/handoverdetector_'+self.side+'/result'
             return True
-        except(rospy.ROSException), e:
+        except rospy.ROSException, e:
             rospy.logerr(e)
             return False
 
@@ -353,7 +353,7 @@ class Arm(object):
             return
 
         if not joint_names:
-            if (len(joints_references[0]) == len(self.joint_names) + len(self.torso_joint_names)):
+            if len(joints_references[0]) == len(self.joint_names) + len(self.torso_joint_names):
                 joint_names = self.torso_joint_names + self.joint_names
             else:
                 joint_names = self.joint_names
@@ -361,7 +361,7 @@ class Arm(object):
         time_from_start = rospy.Duration()
         ps = []
         for joints_reference in joints_references:
-            if (len(joints_reference) != len(joint_names)):
+            if len(joints_reference) != len(joint_names):
                 rospy.logwarn('Please use the correct %d number of joint references (current = %d'
                               % (len(joint_names), len(joints_references)))
 

@@ -1,8 +1,7 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import robot
-
 import rospy
+
 
 class Sergio(robot.Robot):
     """docstring for Sergio"""

@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
 import geometry_msgs
@@ -19,6 +18,7 @@ from dragonfly_speech_recognition.msg import Choice
 from ed.msg import EntityInfo
 from ed_sensor_integration.srv import UpdateResponse
 from robot_skills.classification_result import ClassificationResult
+
 
 class Arm(arms.Arm):
     def __init__(self, robot_name, side, tf_listener):
@@ -43,6 +43,7 @@ class Arm(arms.Arm):
         self.occupied_by = None
         self._operational = True
 
+
 class Base(object):
     def __init__(self, *args, **kwargs):
         self.move = mock.MagicMock()
@@ -57,6 +58,7 @@ class Base(object):
         self.local_planner = mock.MagicMock()
         self.local_planner.getStatus = mock.MagicMock(return_value="arrived") #always arrive for now
         self.global_planner.getPlan = mock.MagicMock(return_value=["dummy_plan"]) #always arrive for now
+
 
 class Ears(object):
     def __init__(self, *args, **kwargs):
@@ -79,11 +81,13 @@ class Ears(object):
 
         # self.recognize = lambda spec, choices, time_out=None: answer
 
+
 class EButton(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
         self._listen = mock.MagicMock()
         self.read_ebutton = mock.MagicMock()
+
 
 class Head(object):
     def __init__(self, *args, **kwargs):
@@ -109,6 +113,7 @@ class Head(object):
         self.__feedbackCallback = mock.MagicMock()
         self.__doneCallback = mock.MagicMock()
 
+
 class Lights(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
@@ -116,6 +121,7 @@ class Lights(object):
         self.on = mock.MagicMock()
         self.off = mock.MagicMock()
         self.start_sinus = mock.MagicMock()
+
 
 class Perception(object):
     def __init__(self, *args, **kwargs):
@@ -137,6 +143,7 @@ class Perception(object):
         self.rec_start = mock.MagicMock()
         self.people_detection_torso_laser = mock.MagicMock()
 
+
 class PerceptionED(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
@@ -156,6 +163,7 @@ class PerceptionED(object):
         self.rec_start = mock.MagicMock()
         self.people_detection_torso_laser = mock.MagicMock()
 
+
 class Reasoner(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
@@ -170,6 +178,7 @@ class Reasoner(object):
         self.reset = mock.MagicMock()
         self.load_database = mock.MagicMock()
 
+
 class Speech(object):
     def __init__(self, *args, **kwargs):
         self.close = mock.MagicMock()
@@ -181,6 +190,7 @@ class Speech(object):
 
     def speak(self, sentence, *args, **kwargs):
         rospy.loginfo("\x1b[1;32m'"+ sentence + "'\x1b[0m")
+
 
 class Torso(object):
     def __init__(self, *args, **kwargs):
@@ -196,6 +206,7 @@ class Torso(object):
         self._receive_torso_measurement = mock.MagicMock()
         self.get_position    = mock.MagicMock()
         self.wait_for_motion_done = mock.MagicMock()
+
 
 class ED(object):
     @staticmethod
@@ -243,9 +254,11 @@ class ED(object):
         entities = [self._entities[_id] for _id in ids]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
 
+
 # class MockbotArms(arms.Arms):
 #     def __init__(self, tf_listener):
 #         super(MockbotArms, self).__init__(tf_listener)
+
 
 class Mockbot(robot.Robot):
     """
@@ -362,7 +375,7 @@ if __name__ == "__main__":
        rot_array = [rot.w, rot.x, rot.y, rot.z]
        rot3 = tf.transformations.euler_from_quaternion(rot_array)
        print 'x={0}, y={1}, phi={2}'.format(loc.x, loc.y, rot3[0])
-       return (loc.x, loc.y, rot3[0])
+       return loc.x, loc.y, rot3[0]
 
     def hear(text):
         pub = rospy.Publisher('/pocketsphinx/output', std_msgs.msg.String, queue_size=10)

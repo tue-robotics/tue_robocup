@@ -236,7 +236,7 @@ class ED:
         fname = path + "/" + filename
 
         res = self._ed_get_image_srv(filename=filename)
-        if (res.error_msg):
+        if res.error_msg:
             rospy.logerr("Could not save image: %s" % res.error_msg)
 
         with open(fname + ".rgbd", "wb") as f:
@@ -277,12 +277,12 @@ class ED:
             return []
 
         res = self._ed_classify_srv(ids = ids, property = property, perception_models_path=path)
-        if (res.error_msg):
+        if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
 
         # if there is a set of expected types, only report the one with the highest probability
-        if (types):
+        if types:
             # for idx, id, type in enumerate (res.ids):
             print "TODO: finish type filtering in Classification"
         else:

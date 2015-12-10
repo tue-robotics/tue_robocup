@@ -1,12 +1,9 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
-import rospy
-
 import actionlib
-
 import collections
-
+import rospy
 import tue_recorder.msg
+
 
 class Perception(object):
     """Interface to amigo's perception services"""
@@ -73,7 +70,7 @@ class Perception(object):
         # If 'object_recognition' is called, this is replaced by the current default module
         modules = [module.replace("object_recognition", self.default_object_recognition_method) for module in modules]
 
-        if (len(modules) == 0):
+        if len(modules) == 0:
             modules = self.always_on_modules
 
         #''' Add always_on_modules ''' --> WILL BE REINSTATED WHEN TOGGLED OFF

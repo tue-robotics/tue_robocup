@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
 # Body parts
@@ -33,6 +32,7 @@ import std_msgs.msg
 from math import degrees, radians
 
 from collections import OrderedDict
+
 
 class Robot(object):
     """
@@ -213,7 +213,8 @@ class Robot(object):
         if rooms_dimensions:
             for x in range(0,len(rooms_dimensions)):
                 room_dimensions = rooms_dimensions[x]
-                if (target_point_stamped.point.x > float(room_dimensions["Xmin"]) and target_point_stamped.point.x < float(room_dimensions["Xmax"]) and target_point_stamped.point.y > float(room_dimensions["Ymin"]) and target_point_stamped.point.y < float(room_dimensions["Ymax"])):
+                if float(room_dimensions["Xmin"]) < target_point_stamped.point.x < float(room_dimensions["Xmax"]) \
+                    and float(room_dimensions["Ymin"]) < target_point_stamped.point.y < float(room_dimensions["Ymax"]):
                     rospy.loginfo("Point for inverse reachability in room: {0}".format(str(room_dimensions["Room"])))
                     rospy.sleep(2)
                     break
@@ -233,7 +234,7 @@ class Robot(object):
                 x_pose = base_goal_pose.position.x
                 y_pose = base_goal_pose.position.y
                 # print "x_pose = ", x_pose, ", y_pose = ", y_pose, "\n"
-                if (x_pose > x_min and x_pose < x_max and y_pose > y_min and y_pose < y_max):
+                if x_min < x_pose < x_max and y_min < y_pose < y_max:
                     # print "Pose added\n"
                     base_goal_poses.append(geometry_msgs.msg.PoseStamped())
                     base_goal_poses[-1].header.frame_id = "/map"

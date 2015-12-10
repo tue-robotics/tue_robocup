@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
 import control_msgs.msg
@@ -9,6 +8,7 @@ import threading
 import util.concurrent_util
 import actionlib
 from actionlib_msgs.msg import GoalStatus
+
 
 class Torso(object):
     def __init__(self, robot_name, wait_service=False):
@@ -41,13 +41,13 @@ class Torso(object):
     def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
         rospy.logdebug("Send torso goal {0}, timeout = {1}".format(torso_pos, timeout))
 
-        if (len(torso_pos) != len(self.joint_names)):
+        if len(torso_pos) != len(self.joint_names):
             rospy.logwarn('Length of desired torso pos {0} does not correspond with number of joints {1}'.format(len(torso_pos), len(self.joint_names)))
             return False
 
         ''' Check limits '''
         for i in range(0, len(self.joint_names)):
-            if (torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit):
+            if torso_pos[i] < self.lower_limit[i] or torso_pos[i] > self.upper_limit:
                 rospy.logwarn("Desired position {0} for joint {1} exceeds limits [{2}, {3}]".format(torso_pos[i], self.joint_names[i], self.lower_limit[i], self.upper_limit[i]))
                 return False
 
@@ -60,7 +60,7 @@ class Torso(object):
         for i in range(0,len(self.joint_names)):
             goal_tolerance = control_msgs.msg.JointTolerance()
             goal_tolerance.name = self.joint_names[i]
-            if (len(tolerance) == len(self.joint_names)):
+            if len(tolerance) == len(self.joint_names):
                 goal_tolerance.position = tolerance[i]
             else:
                 goal_tolerance.position = self.default_tolerance[i]

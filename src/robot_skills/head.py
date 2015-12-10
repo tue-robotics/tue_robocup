@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-import roslib; roslib.load_manifest('robot_skills')
 import rospy
 
 import actionlib
@@ -7,6 +6,7 @@ import actionlib
 from geometry_msgs.msg import Point, PointStamped
 import robot_skills.util.msg_constructors as msgs
 from head_ref.msg import HeadReferenceAction, HeadReferenceGoal
+
 
 class Head():
     def __init__(self, robot_name):
@@ -38,9 +38,9 @@ class Head():
         Look at the left or right hand, expects string "left" or "right"
         Optionally, keep tracking can be disabled (keep_tracking=False)
         """
-        if (side == "left"):
+        if side == "left":
             return self.look_at_point(msgs.PointStamped(0,0,0,frame_id="/"+self._robot_name+"/grippoint_left"))
-        elif (side == "right"):
+        elif side == "right":
             return self.look_at_point(msgs.PointStamped(0,0,0,frame_id="/"+self._robot_name+"/grippoint_right"))
         else:
             rospy.logerr("No side specified for look_at_hand. Give me 'left' or 'right'")

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 """Contstruct complicated ROS messages as easy as possible"""
-import roslib; roslib.load_manifest("robot_skills")
 import rospy
 
 import std_msgs.msg as std
@@ -11,6 +10,7 @@ import tf
 
 number = (int, long, float)
 
+
 def Point(x=0, y=0, z=0):
     """Make a Point
     >>> Point(1.1, 2.2, 3.3)
@@ -19,6 +19,7 @@ def Point(x=0, y=0, z=0):
     z: 3.3
     """
     return gm.Point(x,y,z)
+
 
 def Header(frame_id="/map", stamp=None):
     """Make a Header
@@ -33,6 +34,7 @@ def Header(frame_id="/map", stamp=None):
     header = std.Header(stamp=_time, frame_id=frame_id)
 
     return header
+
 
 def PointStamped(x=0, y=0, z=0, frame_id="/map", stamp=None, point=None):
     if not stamp:
@@ -55,6 +57,7 @@ def Quaternion(x=0, y=0, z=0, w=0, roll=0, pitch=0, yaw=0):
     else:
         # Assume unit quaternion
         return gm.Quaternion(0.0,0.0,0.0,1.0)
+
 
 def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
     """
@@ -80,6 +83,7 @@ def Pose(x=0, y=0, z=0, phi=0, roll=0, pitch=0, yaw=0):
     pos = Point(x ,y, z)
 
     return gm.Pose(pos, quat)
+
 
 def PoseStamped(x=0, y=0, z=0, phi=0,
     roll=0, pitch=0, yaw=0,
