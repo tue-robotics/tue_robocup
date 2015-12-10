@@ -6,7 +6,7 @@ import tf
 import tf_server
 
 def euler_z_to_quaternion(angle):
-    
+
     orientation_goal = geometry_msgs.msg.Quaternion()
     try:
         quaternion = tf.transformations.quaternion_from_euler(0,0,angle)
@@ -16,14 +16,14 @@ def euler_z_to_quaternion(angle):
     orientation_goal.y = quaternion[1]
     orientation_goal.z = quaternion[2]
     orientation_goal.w = quaternion[3]
-    
+
     return orientation_goal
 
 def euler_z_from_quaternion(quaternion):
-    
+
     try:
         [rx,ry,rz] = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
-        
+
     except TypeError, te:
         rospy.logerr("Quaternion {0} cannot be transformed to Euler".format(te))
         return None
@@ -31,16 +31,16 @@ def euler_z_from_quaternion(quaternion):
     return rz
 
 def compute_relative_angle(absolute_angle, robot_orientation):
-    
+
     robot_rotation=[robot_orientation.x,robot_orientation.y,robot_orientation.z,robot_orientation.w]
     robot_absolute_angle = tf.transformations.euler_from_quaternion(robot_rotation,'sxyz')
-    
+
     relative_angle = absolute_angle - robot_absolute_angle[2]
-    
+
     return relative_angle
-    
+
 def transform_into_base_coordinates(target_position, robot_position, robot_orientation):
-    
+
     angle = compute_angle(target_position, robot_position)
     relative_angle = compute_relative_angle(angle, robot_orientation)
     distance = compute_distance(target_position, robot_position)
@@ -58,7 +58,7 @@ def compute_distance(target_position, robot_position):
 
 ############################## function compute angle ##############################
 def compute_angle(target_position, robot_position):
-        
+
         dx = target_position.x - robot_position.x
         dy = target_position.y - robot_position.y
         angle = math.atan2(dy,dx)
@@ -67,35 +67,35 @@ def compute_angle(target_position, robot_position):
 
 #################### in progress ########################
 def transform_into_non_conflicting_position(target_position, robot_position, radius=0.6):
-    
+
         dx = robot_position.x - target_position.x
         dy = robot_position.y - target_position.y
         distance = math.sqrt(dx*dx + dy*dy)
-        
+
         dx = radius * (dx / distance)
         dy = radius * (dy / distance)
-        
+
         target_position.x = target_position.x + dx
         target_position.y = target_position.y + dy
-        
+
         return target_position
         """
         angle = atan2(dy,dx)
-    
+
         if distance > radius:
             target_position.x = robot_position.x + cos(angle)*(distance - radius)
             target_position.y = robot_position.y + sin(angle)*(distance - radius)
-            
+
         return target_position
         """
-      
+
 
 
 def tf_transform(coordinates, inputframe, outputframe, tf_listener):
     # Should probably be called transform_point
-    
+
     if isinstance(coordinates, geometry_msgs.msg.Point):
-        ps = geometry_msgs.msg.PointStamped(point=coordinates) 
+        ps = geometry_msgs.msg.PointStamped(point=coordinates)
         ps.header.frame_id = inputframe
         ps.header.stamp = rospy.Time()
     elif isinstance(coordinates, geometry_msgs.msg.PointStamped):
@@ -103,9 +103,9 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener):
         ps = coordinates
     else:
         rospy.logerr("coordinates is neither a Point nor a PointStamped? Trying my best, but might crash or work due to duck-typing")
-        ps = geometry_msgs.msg.PointStamped(point=coordinates) 
+        ps = geometry_msgs.msg.PointStamped(point=coordinates)
         ps.header.frame_id = inputframe
         ps.header.stamp = rospy.Time()
-        
+
     output_coordinates = tf_listener.transformPoint(outputframe, ps)
     return output_coordinates.point

@@ -284,7 +284,7 @@ class ED:
         # if there is a set of expected types, only report the one with the highest probability
         if (types):
             # for idx, id, type in enumerate (res.ids):
-            print "TODO: finish type filtering in Classification"    
+            print "TODO: finish type filtering in Classification"
         else:
             return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 

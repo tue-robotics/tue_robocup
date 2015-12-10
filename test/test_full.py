@@ -34,11 +34,11 @@ def show_test(message, test):
     else:
         print '{0:30s} {1:3s}'.format("\033[1m" + message + "\033[0m:", "\033[0;31mERROR\033[0m")
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #                                           HEAD
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def test_head(amigo):
 
@@ -54,7 +54,7 @@ def test_head(amigo):
     p.point.y = 0
     p.point.z = 10
     amigo.head.look_at_point(p)
-    # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])   
+    # print str(joint_positions['neck_pan_joint']) + " " + str(joint_positions['neck_tilt_joint'])
     show_test("head straight",      in_bounds(joint_positions['neck_pan_joint'], 0, max_err)
                                 and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
 
@@ -104,11 +104,11 @@ def test_head(amigo):
                                 and in_bounds(joint_positions['neck_tilt_joint'], 0, max_err))
 
 
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #
 #                                         GRIPPERS
 #
-# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def test_grippers(amigo):
     global left_gripper_meas, right_gripper_meas
@@ -142,11 +142,11 @@ if __name__ == "__main__":
     joint_positions = {}
 
     rospy.Subscriber("/amigo/neck/measurements", sensor_msgs.msg.JointState, joint_state_callback)
-    rospy.Subscriber("/amigo/torso/measurements", sensor_msgs.msg.JointState, joint_state_callback)    
+    rospy.Subscriber("/amigo/torso/measurements", sensor_msgs.msg.JointState, joint_state_callback)
     rospy.Subscriber("/amigo/left_gripper/measurements", amigo_msgs.msg.AmigoGripperMeasurement, left_gripper_callback)
     rospy.Subscriber("/amigo/right_gripper/measurements", amigo_msgs.msg.AmigoGripperMeasurement, right_gripper_callback)
 
-    amigo = robot_skills.amigo.Amigo(wait_services=True)    
+    amigo = robot_skills.amigo.Amigo(wait_services=True)
 
     test_torso(amigo)
     test_grippers(amigo)
