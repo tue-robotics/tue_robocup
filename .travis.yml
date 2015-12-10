@@ -16,10 +16,6 @@ before_install:
   - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
 
 install:
-  # hack for mongodb update
-  - sudo apt-get purge mongodb-10gen
-  - sudo apt-get install mongodb-dev -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"
-
   - source <(wget -O- https://raw.githubusercontent.com/tue-robotics/tue-env/master/installer/scripts/bootstrap-ros-$ROS_DISTRO)
   - tue-get install ros-${REPOSITORY_NAME}
   - source ~/.tue/setup.bash # source all target setup files
