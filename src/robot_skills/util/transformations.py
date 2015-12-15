@@ -1,13 +1,23 @@
+#!/usr/bin/env python
+
 import math
+
 
 import geometry_msgs.msg
 import rospy
-# noinspection PyPackageRequirements
 import tf
 
 
 def euler_z_to_quaternion(angle):
+    """Calculate a quaternion based on a Z angle
 
+    >>> from math import pi
+    >>> euler_z_to_quaternion(pi/2)
+    x: 0.0
+    y: 0.0
+    z: 0.707106781187
+    w: 0.707106781187
+    """
     orientation_goal = geometry_msgs.msg.Quaternion()
     try:
         quaternion = tf.transformations.quaternion_from_euler(0,0,angle)
@@ -22,7 +32,13 @@ def euler_z_to_quaternion(angle):
 
 
 def euler_z_from_quaternion(quaternion):
+    """Return the yaw (z) angle of a quaternion
 
+    >>> from geometry_msgs.msg import Quaternion
+    >>> q = Quaternion()
+    >>> euler_z_from_quaternion(q)
+    0.0
+    """
     try:
         [rx,ry,rz] = tf.transformations.euler_from_quaternion([quaternion.x, quaternion.y, quaternion.z, quaternion.w])
 
@@ -111,3 +127,7 @@ def tf_transform(coordinates, inputframe, outputframe, tf_listener):
 
     output_coordinates = tf_listener.transformPoint(outputframe, ps)
     return output_coordinates.point
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
