@@ -29,10 +29,10 @@ class MyTestCase(unittest.TestCase):
             if target not in unreachable.resolve() and target not in visited.resolve():
                 print "Processing target {0}".format(target)
                 if success(target):
-                    visited.current.add(target)  # This is a set so no += [...]
+                    visited.resolve().add(target)  # This is a set so no += [...]
                     print "Target {0} was successfull, its visited".format(target)
                 else:
-                    unreachable.current.add(target)  # This is a set so no += [...]
+                    unreachable.resolve().add(target)  # This is a set so no += [...]
                     print "Target {0} failed, its unreachable".format(target)
             else:
                 print "NOT processing target {0}: its unreachable or already visited".format(target)

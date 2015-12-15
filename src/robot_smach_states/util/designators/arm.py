@@ -2,7 +2,9 @@
 
 import rospy
 from robot_smach_states.util.designators.core import Designator
+from robot_smach_states.util.designators.utility import LockingDesignator
 from robot_skills.arms import Arm
+from robot_skills.mockbot import Arm as mockArm
 
 __author__ = 'loy'
 
@@ -20,7 +22,7 @@ class ArmDesignator(Designator):
         @param all_arms a dictionary of arms available on the robot
         @param preferred_arm the arm that is preferred for the operations that use this designator"""
 
-        super(ArmDesignator, self).__init__(resolve_type=Arm, name=name)
+        super(ArmDesignator, self).__init__(resolve_type=Arm , name=name)
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
 
@@ -30,7 +32,9 @@ class ArmDesignator(Designator):
         if not self.preferred_arm in self.all_arms.values():
             raise ValueError("The preferred arm is not in the list of arms. Preferred_arm should be one of the arms in the system")
 
-    def resolve(self):
+        self._locker = None
+
+    def _resolve(self):
         if self.available(self.preferred_arm) and self.preferred_arm.operational:
             return self.preferred_arm
         else:
@@ -48,6 +52,11 @@ class ArmDesignator(Designator):
     def available(self, arm):
         """Check whether the given arm is available for some function."""
         return True
+
+    def lockable(self):
+        if not self._locker:
+            self._locker = LockingDesignator(self)
+        return self._locker
 
 
 class UnoccupiedArmDesignator(ArmDesignator):

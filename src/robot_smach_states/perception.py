@@ -8,12 +8,12 @@ from geometry_msgs.msg import Point, PointStamped
 from ed.msg import EntityInfo
 
 from robot_smach_states.state import State
-from robot_smach_states.util.designators import check_type, EdEntityDesignator
+import robot_smach_states.util.designators as ds
 
 
 class LookAtEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
-        check_type(entity, EntityInfo)
+        ds.check_type(entity, EntityInfo)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -40,7 +40,7 @@ class LookAtEntity(State):
 
 class LookOnTopOfEntity(State):
     def __init__(self, robot, entity, keep_following=False, waittime=0.0):
-        check_type(entity, EntityInfo)
+        ds.check_type(entity, EntityInfo)
 
         State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
 
@@ -70,7 +70,7 @@ class LookOnTopOfEntity(State):
 # Testing
 
 def setup_statemachine(robot):
-    entity = EdEntityDesignator(robot, id='hallway_couch')
+    entity = ds.EntityByIdDesignator(robot, id='hallway_couch')
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with sm:

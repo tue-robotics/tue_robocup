@@ -23,7 +23,7 @@ class PointStampedOfEntityDesignator(Designator):
         self.entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
-    def resolve(self):
+    def _resolve(self):
         # type is a reserved keyword. Maybe unpacking a dict as kwargs is
         # cleaner
         query = SimpleQueryRequest(id=self.entity_designator.resolve())
@@ -92,7 +92,7 @@ class EdEntityCollectionDesignator(Designator):
 
         self.debug = debug
 
-    def resolve(self):
+    def _resolve(self):
         _type = self.type_designator.resolve() if self.type_designator else self.type
         _center_point = self.center_point_designator.resolve() if self.center_point_designator else self.center_point
         _id = self.id_designator.resolve() if self.id_designator else self.id
@@ -141,6 +141,7 @@ class EdEntityDesignator(Designator):
         @param center_point_designator same as center_point but dynamically resolved trhough a designator. Mutually exclusive with center_point
         @param id_designator same as id but dynamically resolved through a designator. Mutually exclusive with id"""
         super(EdEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        self.robot = robot
         self.ed = robot.ed
         if type != "" and type_designator != None:
             raise TypeError("Specify either type or type_designator, not both")
@@ -170,7 +171,10 @@ class EdEntityDesignator(Designator):
 
         self.debug = debug
 
-    def resolve(self):
+    def lockable(self):
+        return LockToId(self.robot, self)
+
+    def _resolve(self):
         if self.debug:
             import ipdb; ipdb.set_trace()
         _type = self.type_designator.resolve() if self.type_designator else self.type
@@ -204,10 +208,9 @@ class EdEntityDesignator(Designator):
 
                 if len(entities) >= 1:
                     rospy.loginfo('choosing best entity from this list (name->weight):\n\t%s', zip(names, weights))
-                    self._current = min(entities, key=self.weight_function)
+                    return min(entities, key=self.weight_function)
                 else:
-                    self._current = entities[0]
-                return self.current
+                    return entities[0]
 
         rospy.logerr("No entities found in {0}".format(self))
         return None
@@ -217,6 +220,48 @@ class EdEntityDesignator(Designator):
 
     #     return "EdEntityDesignator(robot, type={0}, center_point={1}, radius={2}, id={3}, parse={4}, criteriafuncs={5})".format(
     #         self.type, str(self.center_point).replace("\n", " "), self.radius, self.id, self.parse, pprint.pformat(criteria_code))
+
+
+class EntityByIdDesignator(Designator):
+    def __init__(self, robot, id, parse=True, name=None):
+        super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        self.ed = robot.ed
+        self.id_ = id
+        self.parse = parse
+
+    def _resolve(self):
+        entities = self.ed.get_entities(id=self.id_, parse=self.parse)
+        if entities:
+            return entities[0]
+        else:
+            return None
+
+
+class ReasonedEntityDesignator(Designator):
+    def __init__(self, robot, query, name=None):
+        super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
+        assert hasattr(robot, "reasoner")
+        self.robot = robot
+        self.querystring = query
+
+        self._locker = None
+
+    def _resolve(self):
+        first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
+        if not first_answer:
+            return None
+        print "first_answer is:", str(first_answer)
+
+        entities = self.ed.get_entities(id=str(first_answer), parse=True)
+        if entities:
+            return entities[0]
+        else:
+            return None
+
+    def lockable(self):
+        if not self._locker:
+            self._locker = LockToId(self.robot, self)
+        return self._locker
 
 
 class EmptySpotDesignator(Designator):
@@ -233,7 +278,7 @@ class EmptySpotDesignator(Designator):
         self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
         self.marker_array = MarkerArray()
 
-    def resolve(self):
+    def _resolve(self):
         place_location = self.place_location_designator.resolve()
 
         # points_of_interest = []
@@ -345,6 +390,49 @@ class EmptySpotDesignator(Designator):
         self.marker_pub.publish(self.marker_array)
 
         return points
+
+
+class LockToId(Designator):
+    """An Entity...Designator's resolve() method may return a different Entity everytime.
+    For some cases, this may be unwanted because a process has to be done with the same Entity for tha action to be
+    consistent.
+    In that case, a designator resolving to a different object every time is not usable.
+    A LockToId will resolve to the same Entity after a call to .lock() and
+    will only resolve to a different Entity after an unlock() call.
+    This is done by remembering the Entity's ID"""
+
+    def __init__(self, robot, to_be_locked, name=None):
+        super(LockToId, self).__init__(resolve_type=to_be_locked.resolve_type, name=name)
+        self.robot = robot
+        self.to_be_locked = to_be_locked
+        self._locked_to_id = None
+        self._locked = False
+
+    def lock(self):
+        self._locked = True
+
+    def unlock(self):
+        self._locked_to_id = None
+        self._locked = False
+
+    def _resolve(self):
+        if self._locked: # If we should resolve to a remembered thing
+            if not self._locked_to_id: # but we haven't remembered anything yet
+                entity = self.to_be_locked.resolve() # Then find  out what we should remember
+                if entity: # If we can find what to remember
+                    self._locked_to_id = entity.id # remember its ID.
+                else:
+                    pass # If we cannot find what to remember, to_be_locked.resolve() return None and we return that too
+                rospy.loginfo("{0} locked to ID {1}".format(self, self._locked_to_id))
+            else: # If we do remember something already, recall that remembered ID:
+                return self.robot.ed.get_entities(id=self._locked_to_id)
+        else:
+            entity = self.to_be_locked.resolve()
+            rospy.loginfo("{0} resolved to {1}, but is *not locked* to it".format(self, entity.id))
+            return entity
+
+    def __repr__(self):
+        return "LockToId({})._locked = {}".format(self.to_be_locked, self._locked)
 
 if __name__ == "__main__":
     import doctest
