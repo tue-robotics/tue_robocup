@@ -6,7 +6,8 @@ import smach
 import robot_skills.util.msg_constructors as msgs
 
 from robot_smach_states.navigation import NavigateToObserve
-from robot_smach_states.util.designators import VariableDesignator
+import robot_smach_states.util.designators as ds
+from ed.msg import EntityInfo
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -19,10 +20,10 @@ class SetPlugins(smach.State):
 
     def execute(self, userdata=None):
         if self.disable:  
-            robot.ed.disable_plugins(self.disable)
+            self.robot.ed.disable_plugins(self.disable)
 
         if self.enable:
-            robot.ed.enable_plugins(self.enable)
+            self.robot.ed.enable_plugins(self.enable)
 
         return 'done'
 
@@ -57,8 +58,12 @@ class SegmentObjects(smach.State):
     def __init__(self, robot, objectIDsDes, entityDes, searchArea="on_top_of"):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
+
+        ds.check_resolve_type(entityDes, EntityInfo)
         self.entityDes = entityDes
         self.searchArea = searchArea
+
+        ds.is_writeable(objectIDsDes)
         self.objectIDsDes = objectIDsDes
 
     def execute(self, userdata=None):
@@ -103,7 +108,7 @@ class SegmentObjects(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class Inspect(smach.StateMachine):
-    def __init__(self, robot, entityDes, objectIDsDes = VariableDesignator([]), searchArea="on_top_of"):
+    def __init__(self, robot, entityDes, objectIDsDes = ds.VariableDesignator([]), searchArea="on_top_of"):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         with self:
