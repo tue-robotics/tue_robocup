@@ -214,17 +214,20 @@ class ED(object):
                 entity.id = str(hash(entity))
             entity.type = random.choice(["random_from_magicmock", "human", "coke", "fanta"])
             entity.data = mock.MagicMock()
+            entity.pose = mock.MagicMock()
 
             return entity
 
     def __init__(self, *args, **kwargs):
-        self._entities = defaultdict(ED.generate_random_entity,
+        self._dynamic_entities = defaultdict(ED.generate_random_entity,
+                                     {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
+        self._static_entities = defaultdict(ED.generate_random_entity,
                                      {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
 
         self.get_entities = lambda *args, **kwargs: self._entities.values()
         self.get_closest_entity = lambda *args, **kwargs: random.choice(self._entities.values())
         self.get_entity = lambda id=None, parse=True: self._entities[id]
-        self.reset = lambda *args, **kwargs: self._entities.clear()
+        self.reset = lambda *args, **kwargs: self._dynamic_entities.clear()
         self.navigation = mock.MagicMock()
         self.navigation.get_position_constraint = mock.MagicMock()
         self.configure_kinect_segmentation = mock.MagicMock()
@@ -235,20 +238,27 @@ class ED(object):
         self.disable_plugins = mock.MagicMock()
         self.classify_with_probs = mock.MagicMock()
 
+    @property
+    def _entities(self):
+        return dict(self._dynamic_entities.items() + self._static_entities.items())
+
     def segment_kinect(self, *args, **kwargs):
         self._entities = defaultdict(ED.generate_random_entity,
                                      {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
         return self._entities
 
     def update_kinect(self, *args, **kwargs):
+        new_entities = {e.id:e for e in [ED.generate_random_entity() for _ in range(2)]}
+        self._dynamic_entities.update(new_entities)
+
         res = UpdateResponse()
-        res.new_ids = [hash(i) for i in range(10)]
-        res.updated_ids = [hash(i) for i in range(10)]
-        res.deleted_ids = [hash(i) for i in range(10)]
+        res.new_ids = [e.id for e in new_entities.values()]
+        res.updated_ids = [random.choice(self._dynamic_entities).id for _ in range(2)]
+        res.deleted_ids = []
         return res
 
     def classify(self, ids, perception_model_name="", property ="type", types=None):
-        entities = [self._entities[_id] for _id in ids]
+        entities = [self._entities[_id] for _id in ids if _id in self._entities]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
 
 
