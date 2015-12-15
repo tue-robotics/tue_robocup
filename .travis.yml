@@ -80,7 +80,6 @@ script:
   -
   - rosrun challenge_navigation challenge_navigation.py mockbot
   -
-  - alias mask_timeout=mask_timeout=RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi
   - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot; mask_timeout
   -
   - pushd .

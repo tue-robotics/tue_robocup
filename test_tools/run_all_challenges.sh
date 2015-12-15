@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-set +e #Enable stopping on a single error
+set -e #Enable stopping on a single error
 
 rosrun test_tools open_door.sh  >> /dev/null &
 rosrun challenge_test test.py mockbot
@@ -23,5 +23,4 @@ rosrun test_tools open_door.sh  > open_door_log.txt &
 
 timeout 5m rosrun challenge_gpsr gpsr.py mockbot
 
-set -e
 echo "All challenges passed successfully"
