@@ -23,6 +23,7 @@ initial_pose = "initial_pose"
 
 # Knowledge
 bed = 'bed'                     # This needs to be updated according to the environment
+matress_height = 0.70           #TODO: Set matress height or even better: get from models
 
 bed_nav_goal = {        
     'near' : bed,
