@@ -16,7 +16,7 @@ from robot_skills.mockbot import Mockbot
 from robocup_knowledge import load_knowledge
 from robot_smach_states.util.startup import startup
 
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, \
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, \
     analyse_designators
 
 challenge_knowledge = load_knowledge("challenge_person_recognition")
@@ -336,7 +336,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                         transitions={   'done':  'GOTO_LIVING_ROOM_1'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
-                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
+                                        states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
                                         transitions={   'arrived' : 'SAY_SEARCHING_CROWD',
                                                         'unreachable' : 'SAY_SEARCHING_CROWD',
                                                         'goal_not_defined' : 'SAY_SEARCHING_CROWD'})
@@ -351,7 +351,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed' : 'GOTO_LIVING_ROOM_2'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
-                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
+                                        states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
                                         transitions={   'arrived' : 'FIND_CROWD_2',
                                                         'unreachable' : 'FIND_CROWD_2',
                                                         'goal_not_defined' : 'FIND_CROWD_2'})
@@ -362,7 +362,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed' : 'GOTO_LIVING_ROOM_3'})
 
                 smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
-                                        states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
+                                        states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
                                         transitions={   'arrived' : 'FIND_CROWD_3',
                                                         'unreachable' : 'FIND_CROWD_3',
                                                         'goal_not_defined' : 'FIND_CROWD_3'})
@@ -411,7 +411,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'visited_all':'container_success'})
 
                 smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.current, radius=1.8),
+                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.resolve(), radius=1.8), #REVIEW: You cannot do .current of .resolve at construction
                                         transitions={   'arrived'           :   'REMOVE_LOCATION',
                                                         'unreachable'       :   'SAY_FAILED_GOTO',
                                                         'goal_not_defined'  :   'SAY_FAILED_GOTO'})
@@ -502,7 +502,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                         'failed':'SAY_CANT_CHOOSE_OPERATOR'})
 
                 smach.StateMachine.add( 'GOTO_OPERATOR',
-                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.current, radius = 1.8),
+                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.resolve(), radius = 1.8), #REVIEW: You cannot do .current of .resolve at construction
                                         transitions={   'arrived'           :   'SAY_FOUND_OPERATOR',
                                                         'unreachable'       :   'SAY_CANT_REACH',
                                                         'goal_not_defined'  :   'SAY_CANT_REACH'})

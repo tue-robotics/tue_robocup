@@ -107,7 +107,7 @@ class WakeMeUp(smach.StateMachine):
         armDesignator = LockingDesignator(ArmDesignator(robot.arms,robot.rightArm))
 
         # Waking up the operator
-        bed_des = EdEntityDesignator(robot, id=knowledge.bed)
+        bed_des = EntityByIdDesignator(robot, id=knowledge.bed)
 
         entityOnBedDesignator = EdEntityDesignator( robot, 
                                                     center_point = robot.ed.get_entity(knowledge.bed).pose.position, 
@@ -127,20 +127,22 @@ class WakeMeUp(smach.StateMachine):
         orderConfirmationCounter = VariableDesignator(0)
 
         # Getting the order from the kitchen
-        waypoint_kitchen       = EdEntityDesignator(robot, id="wakemeup_kitchen_table")
+        waypoint_kitchen       = EntityByIdDesignator(robot, id="wakemeup_kitchen_table")
         selected_gen_item_des  = VariableDesignator("")
         selected_spec_item_des = VariableDesignator("")
 
-        prep_eval_des = VariableDesignator({})
-        for item in knowledge.generic_items: 
-            prep_eval_des.current[item] = False
+        prep_eval_des = VariableDesignator({}).writeable
+        for item in knowledge.generic_items:
+            d = prep_eval_des.resolve()
+            d[item] = False
+            prep_eval_des.write(d)
 
         current_item_nav_goal_at = VariableDesignator({})
         current_item_nav_goal_lookat = VariableDesignator(resolve_type=Designator)
         
         item_designator = VariableDesignator(resolve_type=EntityInfo)
 
-        place_position = EmptySpotDesignator(robot, EdEntityDesignator(robot, id=knowledge.dinner_table))
+        place_position = EmptySpotDesignator(robot, EntityByIdDesignator(robot, id=knowledge.dinner_table))
         
 
         # ------------------------ STATE MACHINE ------------------------
@@ -167,19 +169,19 @@ class WakeMeUp(smach.StateMachine):
 
             smach.StateMachine.add( 'GO_TO_BED',
                                     states.NavigateToSymbolic(robot, {
-                                        # EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" },
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
+                                        # EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
+                                        EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
+                                        EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" },
+                                        EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
                                     transitions={   'arrived'           :'WAKEUP_CONTAINER',
                                                     'unreachable'       :'GO_TO_BED_BACKUP',
                                                     'goal_not_defined'  :'GO_TO_BED_BACKUP'})
 
             smach.StateMachine.add( 'GO_TO_BED_BACKUP',
                                     states.NavigateToSymbolic(robot, {
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" },
-                                        EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
+                                        EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
+                                        EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" },
+                                        EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
                                     transitions={   'arrived'           :'WAKEUP_CONTAINER',
                                                     'unreachable'       :'WAKEUP_CONTAINER',
                                                     'goal_not_defined'  :'WAKEUP_CONTAINER'})
@@ -323,8 +325,8 @@ class WakeMeUp(smach.StateMachine):
 
                 smach.StateMachine.add( 'GOTO_KITCHEN',
                                         states.NavigateToSymbolic(robot, {
-                                            EdEntityDesignator(robot, id=knowledge.kitchen_nav_goal['in']) : "in" }, 
-                                            EdEntityDesignator(robot, id=knowledge.kitchen_nav_goal['lookat'])),
+                                            EntityByIdDesignator(robot, id=knowledge.kitchen_nav_goal['in']) : "in" }, 
+                                            EntityByIdDesignator(robot, id=knowledge.kitchen_nav_goal['lookat'])),
                                         transitions={   'arrived':'container_succeeded',
                                                         'unreachable':'SAY_UNREACHABLE',
                                                         'goal_not_defined':'SAY_UNREACHABLE'})
@@ -396,15 +398,15 @@ class WakeMeUp(smach.StateMachine):
 
                 smach.StateMachine.add( 'GOTO_TABLE',
                                         states.NavigateToSymbolic(robot, {
-                                            EdEntityDesignator(robot, id=knowledge.table_nav_goal['in']) : "in",
-                                            EdEntityDesignator(robot, id=knowledge.table_nav_goal['in_front_of']) : "in_front_of" }, 
-                                            EdEntityDesignator(robot, id=knowledge.table_nav_goal['lookat'])),
+                                            EntityByIdDesignator(robot, id=knowledge.table_nav_goal['in']) : "in",
+                                            EntityByIdDesignator(robot, id=knowledge.table_nav_goal['in_front_of']) : "in_front_of" }, 
+                                            EntityByIdDesignator(robot, id=knowledge.table_nav_goal['lookat'])),
                                         transitions={   'arrived'           :'SCAN_TABLE',
                                                         'unreachable'       :'SAY_UNREACHABLE',
                                                         'goal_not_defined'  :'SAY_UNFINDABLE'})
 
                 smach.StateMachine.add( 'SCAN_TABLE',
-                                        wakeStates.ScanTableTop(robot, EdEntityDesignator(robot, id=knowledge.dinner_table)),
+                                        wakeStates.ScanTableTop(robot, EntityByIdDesignator(robot, id=knowledge.dinner_table)),
                                         transitions={   'done'      :'PLACE_ITEM',
                                                         'failed'    :'SAY_UNFINDABLE'})
 
@@ -451,10 +453,10 @@ class WakeMeUp(smach.StateMachine):
 
             #     smach.StateMachine.add( 'GOTO',
             #                             states.NavigateToSymbolic(robot, 
-            #                                 {EdEntityDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
-            #                                  EdEntityDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
-            #                                  EdEntityDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" }, 
-            #                                  EdEntityDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
+            #                                 {EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['near']) : "near", 
+            #                                  EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['at_bedside']) : "at_bedside", 
+            #                                  EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['in']) : "in" }, 
+            #                                  EntityByIdDesignator(robot, id=knowledge.bed_nav_goal['lookat'])),
             #                             transitions={   'arrived':'container_succeeded',
             #                                             'unreachable':'SAY_COULD_NOT_PREPARE',
             #                                             'goal_not_defined':'SAY_COULD_NOT_PREPARE'})

@@ -23,7 +23,7 @@ from robot_smach_states.util.startup import startup
 from robot_smach_states.utility import CancelHeadGoals
 
 # import designators
-from robot_smach_states.util.designators import EdEntityDesignator, VariableDesignator, DeferToRuntime, analyse_designators
+from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDesignator, VariableDesignator, DeferToRuntime, analyse_designators
 
 # import states from another file
 import test_states as test_states
@@ -63,8 +63,8 @@ class EnterContainer(smach.StateMachine):
 
             smach.StateMachine.add('NAV_TO_SYMB',
                                     states.NavigateToSymbolic(robot, 
-                                        {EdEntityDesignator(robot, id="living_room") : "in" }, 
-                                        EdEntityDesignator(robot, id="dinnertable")),
+                                        {EntityByIdDesignator(robot, id="living_room") : "in" }, 
+                                        EntityByIdDesignator(robot, id="dinnertable")),
                                     transitions={   'arrived'           :   'SAY_TEST_WAYPOINT',
                                                     'unreachable'       :   'SAY_FAILED_SYMBOLIC',
                                                     'goal_not_defined'  :   'SAY_FAILED_SYMBOLIC'})
@@ -78,7 +78,7 @@ class EnterContainer(smach.StateMachine):
                                    transitions={'spoken':'NAV_TO_WAYPOINT'})
 
             smach.StateMachine.add( 'NAV_TO_WAYPOINT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.wp_test_nav)),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.wp_test_nav)),
                                     transitions={   'arrived' : 'container_success',
                                                     'unreachable' : 'SAY_FAILED_WAYPOINT',
                                                     'goal_not_defined' : 'SAY_FAILED_WAYPOINT'})
@@ -387,14 +387,12 @@ class ChallengeTest(smach.StateMachine):
                                     PickUpContainer(robot, objectsIDsDes),
                                     transitions={   'container_success':'SEARCH_PEOPLE_CONTAINER',
                                                     'container_failed': 'SEARCH_PEOPLE_CONTAINER'})
-            
+
             # Face Recogniton Test
             smach.StateMachine.add( 'SEARCH_PEOPLE_CONTAINER',
                                     SearchPeopleContainer(robot, personNameDes),
                                     transitions={   'container_success':'END_CHALLENGE',
                                                     'container_failed': 'END_CHALLENGE'})
-
-
 
             smach.StateMachine.add( 'END_CHALLENGE',
                                     states.Say(robot,"My work here is done, goodbye!"),

@@ -12,13 +12,12 @@ import robot_smach_states as states
 import robot_skills.util.msg_constructors as msgs
 
 from robot_smach_states.util.startup import startup
-from robot_smach_states.util.designators import *
-from robot_skills.util import msg_constructors as geom
+import robot_smach_states.util.designators as ds
 import ed.msg
 
 from datetime import datetime, date, timedelta
 
-from robot_smach_states.util.geometry_helpers import *
+from robot_smach_states.util.geometry_helpers import onTopOff
 from cb_planner_msgs_srvs.msg import PositionConstraint
 
 from visualization_msgs.msg import Marker, MarkerArray
@@ -58,26 +57,26 @@ class InitializeWorldModel(smach.State):
 
         return "done"
 
-class QueryFirstAnswerDesignator(Designator):
+class QueryFirstAnswerDesignator(ds.Designator):
     def __init__(self, robot, reasoner_query):
         super(QueryFirstAnswerDesignator, self).__init__(resolve_type=str)
         self.robot = robot
         self.reasoner_query = reasoner_query
 
-    def resolve(self):
+    def _resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
         print "first_answer is:", str(first_answer)
         return str(first_answer)
 
-class ObjectGraspDesignator(Designator):
+class ObjectGraspDesignator(ds.Designator):
     def __init__(self, robot):
         super(ObjectGraspDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
         #self.object_to_find = object_to_find
 
-    def resolve(self):
+    def _resolve(self):
         object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_vb_take_object_loc',A,_)"))
         #object_type = object_to_find.resolve()
         ## FOR TESTING:
@@ -87,7 +86,7 @@ class ObjectGraspDesignator(Designator):
         #location = str(self.robot.reasoner.query_first_answer(self.query))
         ## FOR TESTING:
         #location = "hallway_couch"
-        grab_item_designator = EdEntityDesignator(QueryFirstAnswerDesignator(self.robot, "action_info('3','3_place_location',A)"))
+        grab_item_designator = ds.ReasonedEntityDesignator(self.robot, "action_info('3','3_place_location',A)")
 
         #self.robot.ed
 
@@ -96,25 +95,25 @@ class ObjectGraspDesignator(Designator):
         print "test2"
         return grab_item_designator.resolve()
 
-class PlaceLocDesignator(Designator):
+class PlaceLocDesignator(ds.Designator):
     def __init__(self, robot):
         super(PlaceLocDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
 
-    def resolve(self):
-        loc_entity = robot.ed.get_entity(id=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"))
+    def _resolve(self):
+        loc_entity = self.robot.ed.get_entity(id=QueryFirstAnswerDesignator(self.robot, "action_info('3','3_place_location',A)"))
 
         print "loc_entity in PlaceLocDesignator: \n"
         print loc_entity.resolve()
         return loc_entity.resolve()
 
-class PossibleHumanFlagsDesignator(Designator):
+class PossibleHumanFlagsDesignator(ds.Designator):
     def __init__(self, robot, room):
         super(PossibleHumanFlagsDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
         self.room = room
 
-    def resolve(self):
+    def _resolve(self):
         
         possible_humans =  self.robot.ed.get_closest_possible_person_entity(room=self.room.resolve())
         
@@ -540,7 +539,7 @@ class FindObjectInRoom(smach.StateMachine):
                                     transitions={'area_exists':'NAV_TO_LOC',
                                                  'no_such_area':'CHECK_FOR_AREA_LOC_POS2'})
 
-            room_loc_a = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "room_loc(A)"), name="room_loc_a")
+            room_loc_a = ds.ReasonedEntityDesignator(robot, query="room_loc(A)", name="room_loc_a")
             smach.StateMachine.add('NAV_TO_LOC',
                                     states.NavigateToSymbolic(robot, 
                                         {room_loc_a : "in_front_of" }, 
@@ -590,18 +589,6 @@ class FindObjectInRoom(smach.StateMachine):
                     location = str(QueryFirstAnswerDesignator(robot, "room_loc(A)").resolve())
                     print "location = ", location
                     location_ent = robot.ed.get_entity(id=location, parse=False)
-                    #print "location_ent = ", location_ent
-                    #     #print "aaaaa, test location = ", location
-                    #     grab_item_designator = EdEntityDesignator(robot, center_point=geom.PointStamped(frame_id="/"+location), radius=2.0,
-                    #                                                             criteriafuncs=[has_type], debug=False)
-
-                    #     #print "test1 \n"
-                    #     #print grab_item_designator.resolve()
-                    #     #print "\n test2"
-                    #     if grab_item_designator.resolve():
-                    #         return 'object_found'
-                    #     else:
-                    #         return 'object_not_found'
 
                     ''' Enable kinect segmentation plugin (only one image frame) '''
                     entity_ids = robot.ed.segment_kinect(max_sensor_range=2)
@@ -770,6 +757,9 @@ class FindAndGoToPerson(smach.StateMachine):
 
             #Class ChooseLocation in final amigo file. 
 
+            room_des = ds.EdEntityDesignator(robot, id_designator=room)
+            possible_human_flags_des = PossibleHumanFlagsDesignator(robot,room)
+            
             @smach.cb_interface(outcomes=['found','not_found'])
             def check_person(userdata):
                 try:
@@ -795,7 +785,6 @@ class FindAndGoToPerson(smach.StateMachine):
                                transitions={'found':'GO_TO_PERSON',
                                             'not_found':'DRIVE_TO_CENTER_ROOM'})
 
-            possible_human_flags_des = PossibleHumanFlagsDesignator(robot,room)
             smach.StateMachine.add('GO_TO_PERSON',
                                     states.NavigateToObserve(robot, possible_human_flags_des, radius=0.7),
                                     transitions={   'arrived':'LOOK_AT_PERSON_FOUND',
@@ -820,7 +809,6 @@ class FindAndGoToPerson(smach.StateMachine):
                                transitions={'spoken':'Failed'})
 
 
-            room_des = EdEntityDesignator(robot, id_designator=room)
             smach.StateMachine.add('DRIVE_TO_CENTER_ROOM',
                                     states.NavigateToWaypoint(robot, room_des, radius=0.2),
                                     transitions={   'arrived':'CHECK_FOR_PERSON_1',
@@ -953,11 +941,11 @@ class InspectLocationAndGrab(smach.State):
         
 
         # Grab correct item if correct item is seen, otherwise take one from other type. In GPSR there is a big chance that the desired object type is on the location.
-        left_arm = ArmDesignator(self.robot.arms, self.robot.leftArm)
+        left_arm = ds.ArmDesignator(self.robot.arms, self.robot.leftArm)
 
         if len(correct_object_type_ids_list)>0:
             for i in range(0, len(correct_object_type_ids_list)):
-                grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=correct_object_type_ids_list[i]), left_arm)
+                grabstate = states.Grab(self.robot, ds.EdEntityDesignator(self.robot,id=correct_object_type_ids_list[i]), left_arm)
                 result = grabstate.execute()
                 rospy.loginfo("Amigo attempts to grasp an object that is classified as the desired object type")
                 if result == 'done':
@@ -969,7 +957,7 @@ class InspectLocationAndGrab(smach.State):
             if len(not_correct_object_type_ids_list)>0:
 
                 for i in range(0, len(not_correct_object_type_ids_list)):
-                    grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=not_correct_object_type_ids_list[i]), left_arm)
+                    grabstate = states.Grab(self.robot, ds.EdEntityDesignator(self.robot,id=not_correct_object_type_ids_list[i]), left_arm)
                     result = grabstate.execute()
                     rospy.loginfo("Amigo attempts to grasp an object that is not classified as the desired object type")
                     if result == 'done':
@@ -996,9 +984,9 @@ class InspectLocationAndGrab(smach.State):
         #         # In the gpsr I assume that there will only be one coke, no multiple cokes, therefore, directly grab the coke that is seen.
         #         # In other cases, one could check which object is the closest and grab that item.
 
-        #         left_arm = ArmDesignator(self.robot.arms, self.robot.leftArm)
+        #         left_arm = ds.ArmDesignator(self.robot.arms, self.robot.leftArm)
 
-        #         grabstate = states.Grab(self.robot, EdEntityDesignator(self.robot,id=e_id), left_arm) #UnoccupiedArmDesignator(self.robot.arms, self.robot.leftArm))
+        #         grabstate = states.Grab(self.robot, ds.EdEntityDesignator(self.robot,id=e_id), left_arm) #ds.UnoccupiedArmDesignator(self.robot.arms, self.robot.leftArm))
         #         result = grabstate.execute()
 
         #         if result == 'done':
@@ -1013,12 +1001,12 @@ class InspectLocationAndGrab(smach.State):
 
         # return 'failed'
 
-# class EmptySpotDesignator(Designator):
+# class ds.EmptySpotDesignator(ds.Designator):
 #     """Designates an empty spot on the empty placement-shelve.
 #     It does this by queying ED for entities that occupy some space.
 #         If the result is no entities, then we found an open spot."""
 #     def __init__(self, robot, place_location_designator):
-#         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
+#         super(ds.EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
 #         self.robot = robot
 #         self.place_location_designator = place_location_designator
 #         self._edge_distance = 0.1                   # Distance to table edge
@@ -1027,7 +1015,7 @@ class InspectLocationAndGrab(smach.State):
 #         self.marker_pub = rospy.Publisher('/marker_array', MarkerArray, queue_size=1)
 #         self.marker_array = MarkerArray()
 
-#     def resolve(self):
+#     def _resolve(self):
 #         place_location = self.place_location_designator.resolve()
 
 #         # points_of_interest = []
@@ -1155,11 +1143,11 @@ class PlaceGrabbed(smach.State):
         place_location = str(self.robot.reasoner.query_first_answer("action_info('3','3_place_location',A)"))
         print "place_location = ", place_location
 
-        place_pose_ent = EdEntityDesignator(self.robot,id=place_location)
-        place_position = EmptySpotDesignator(self.robot, place_pose_ent)
-        arm_with_item_designator = ArmDesignator(self.robot.arms, self.robot.leftArm)
+        place_pose_ent = ds.EdEntityDesignator(self.robot,id=place_location)
+        place_position = ds.EmptySpotDesignator(self.robot, place_pose_ent)
+        arm_with_item_designator = ds.ArmDesignator(self.robot.arms, self.robot.leftArm)
 
-        placestate = states.Place(self.robot, item_to_place=EdEntityDesignator(self.robot,id=ITEM), place_pose=place_position ,arm=arm_with_item_designator)
+        placestate = states.Place(self.robot, item_to_place=ds.EdEntityDesignator(self.robot,id=ITEM), place_pose=place_position ,arm=arm_with_item_designator)
         result = placestate.execute()
 
         if result == 'done':
@@ -1178,7 +1166,7 @@ class GrabFromShelves(smach.StateMachine):
         smach.StateMachine.__init__(self, outcomes=["Success", "Failed"])
         with self:
 
-            in_front_of_loc_des = EdEntityDesignator(robot, id=location, name="in_front_of_loc_des")
+            in_front_of_loc_des = ds.EntityByIdDesignator(robot, id=location, name="in_front_of_loc_des")
             smach.StateMachine.add('NAVIGATE_TO_LOCATION_IN_FRONT_OF',
                                         states.NavigateToSymbolic(robot, 
                                             {in_front_of_loc_des : "in_front_of" }, 
@@ -1211,8 +1199,8 @@ def setup_statemachine(robot):
 
     sm = smach.StateMachine(outcomes=['Done','Aborted'])
 
-    empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-    arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
+    empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm)
+    arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.arms['left'])
 
     with sm:
 
@@ -1220,7 +1208,7 @@ def setup_statemachine(robot):
         ##################### INITIALIZE #####################             
         ######################################################
 
-        meeting_point_des = EdEntityDesignator(robot, id=data.meeting_point, name="meeting_point")
+        meeting_point_des = ds.EntityByIdDesignator(robot, id=data.meeting_point, name="meeting_point")
 
         smach.StateMachine.add("INIT_WM",
                                InitializeWorldModel(robot), 
@@ -1286,7 +1274,7 @@ def setup_statemachine(robot):
         #################################
 
         ## Navigate to specific location
-        location_1_des = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)"), name="location_1_des")
+        location_1_des = ds.ReasonedEntityDesignator(robot, query="action_info('1','1_location',A)", name="location_1_des")
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
                                     states.NavigateToSymbolic(robot, 
                                         {location_1_des : "in_front_of" }, 
@@ -1335,7 +1323,7 @@ def setup_statemachine(robot):
                                                     'failed'            :'FINISHED_TASK'})
 
         ## Navigate to a room
-        locations_rooms_des = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))
+        locations_rooms_des = ds.ReasonedEntityDesignator(robot, query="action_info('1','1_locations_rooms',A)")
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
                                     {locations_rooms_des : "in" }, 
@@ -1541,7 +1529,7 @@ def setup_statemachine(robot):
         ###### ACTION PLACE OBJECT ON LOCATION ######
 
 
-        place_3_location = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)"), name="place_3_location")
+        place_3_location = ds.ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)", name="place_3_location")
         smach.StateMachine.add('3_NAV_TO_LOC_PLACE',
                                     states.NavigateToSymbolic(robot, 
                                         {place_3_location : "in_front_of" }, 
@@ -1568,7 +1556,7 @@ def setup_statemachine(robot):
 
         ###### ACTION HANDOVER OBJECT TO PERSON IN ROOM ######
 
-        room_3 = EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_room',A)"))
+        room_3 = ds.ReasonedEntityDesignator(robot, query="action_info('3','3_room',A)")
         smach.StateMachine.add('3_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
                                     {room_3 : "in" }, 
@@ -1618,7 +1606,7 @@ def setup_statemachine(robot):
                                 transitions={'spoken':'GO_TO_EXIT'})
 
         smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.gpsr_exit, name="gpsr_exit"), radius = 0.4),
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=data.gpsr_exit, name="gpsr_exit"), radius = 0.4),
                                     transitions={   'arrived':'SAY_GOODBYE',
                                                     'unreachable':'SAY_GOODBYE',
                                                     'goal_not_defined':'SAY_GOODBYE'})
@@ -1627,29 +1615,29 @@ def setup_statemachine(robot):
                                 states.Say(robot, ["Goodbye"], block=True),
                                 transitions={'spoken':'Done'})
 
-        analyse_designators(sm, "gpsr")
+        ds.analyse_designators(sm, "gpsr")
 
     return sm
 
 
 
 def test_find_person(robot,room):    
-    findperson = FindAndGoToPerson(robot, Designator(room))
+    findperson = FindAndGoToPerson(robot, ds.Designator(room))
     findperson.execute(None)
 
 def test_placing(robot,place_location):    
     
     robot.reasoner.assertz("action_info('3','3_place_location','"+str(place_location)+"')")
 
-    nav_to_loc = states.NavigateToSymbolic(robot, {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")) : "in_front_of" }, 
-                                        EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('3','3_place_location',A)")))
+    nav_to_loc = states.NavigateToSymbolic(robot, {ds.ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)") : "in_front_of" },
+                                        ds.ReasonedEntityDesignator(robot, query="action_info('3','3_place_location',A)"))
     nav_to_loc.execute(None)
 
-    place_pose_ent = EdEntityDesignator(robot,id=place_location)
-    place_position = EmptySpotDesignator(robot, place_pose_ent)
-    arm_with_item_designator = ArmDesignator(robot.arms, robot.leftArm)
+    place_pose_ent = ds.EntityByIdDesignator(robot,id=place_location)
+    place_position = ds.EmptySpotDesignator(robot, place_pose_ent)
+    arm_with_item_designator = ds.ArmDesignator(robot.arms, robot.leftArm)
 
-    placestate = states.Place(robot, item_to_place=EdEntityDesignator(robot), place_pose=place_position ,arm=arm_with_item_designator)
+    placestate = states.Place(robot, item_to_place=ds.EdEntityDesignator(robot), place_pose=place_position ,arm=arm_with_item_designator)
     result = placestate.execute()
 
 

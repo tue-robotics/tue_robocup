@@ -87,7 +87,7 @@ class ExplorationDesignator(EdEntityDesignator):
         self.robot = robot
         self.explored_ids = []
 
-    def resolve(self):
+    def _resolve(self):
         # Get entities
         entities = self.robot.ed.get_entities(type='waypoint')
         filtered_entities = []
@@ -120,7 +120,7 @@ class PoiDesignator(EdEntityDesignator):
         self.pois = []
         self.visited_ids = []
 
-    def resolve(self):
+    def _resolve(self):
         resp = self.poi_srv()
         # Add new pois
         for i in range(len(self.pois), len(resp.pois)):
@@ -321,15 +321,9 @@ class GuiCallCallback(smach.StateMachine):
 
         point = msgs.Point(0, 0, 0)
 
-        ##### To start in a different state #####
-        # if not TEST_GRASP_LOC == None:
-        #     smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
-        #     location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
-        #########################################
-
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=INITIAL_POSE_AMIGO), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=INITIAL_POSE_AMIGO), radius = 1.0),
                                     transitions={   'arrived'           : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'unreachable'       : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
@@ -394,7 +388,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_EXIT'})
 
         smach.StateMachine.add('GOTO_EXIT',
-                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=EXIT_WAYPOINT_ID), radius = 1.0),
+                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EntityByIdDesignator(robot, id=EXIT_WAYPOINT_ID), radius = 1.0),
                                 transitions={   'arrived'           : 'Done',
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})

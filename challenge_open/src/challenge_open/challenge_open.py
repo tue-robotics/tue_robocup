@@ -98,7 +98,7 @@ class ExplorationDesignator(EdEntityDesignator):
         self.robot = robot
         self.explored_ids = []
 
-    def resolve(self):
+    def _resolve(self):
         # Get entities
         entities = self.robot.ed.get_entities(type='waypoint')
         filtered_entities = []
@@ -131,7 +131,7 @@ class PoiDesignator(EdEntityDesignator):
         self.pois = []
         self.visited_ids = []
 
-    def resolve(self):
+    def _resolve(self):
         resp = self.poi_srv()
         # Add new pois
         for i in range(len(self.pois), len(resp.pois)):
@@ -516,32 +516,14 @@ class ManipRecogSingleItem(smach.StateMachine):
         """@param manipulated_items is VariableDesignator that will be a list of items manipulated by the robot."""
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
-        # has_type = lambda entity: entity.type != ""
-        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
-
         def on_top(entity):
             container_entity = location_designator.resolve()
             return onTopOff(entity, container_entity)
 
-        # select the entity closest in x direction to the robot in base_link frame
-        # def weight_function(entity):
-        #     # TODO: return x coordinate of entity.center_point in base_link frame
-        #     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
-        #     return p.x*p.x
-
-        # current_item = LockingDesignator(EdEntityDesignator(robot,
-        #     criteriafuncs=[size, has_type, on_top, min_entity_height], weight_function=weight_function, debug=False))
         current_item = EdEntityDesignator(robot)
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
         arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
-
-        # print "{0} = pick_shelf".format(pick_shelf)
-        # print "{0} = current_item".format(current_item)
-        # print "{0} = place_position".format(place_position)
-        # print "{0} = empty_arm_designator".format(empty_arm_designator)
-        # print "{0} = arm_with_item_designator".format(arm_with_item_designator)
 
         with self:
 
@@ -584,13 +566,13 @@ class ManipRecogSingleItem(smach.StateMachine):
                                     transitions={   'done'              :'GOTO_OPERATOR_FAILED'})
 
             smach.StateMachine.add('GOTO_OPERATOR_SUCCEEDED',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
                                     transitions={   'arrived'           : 'SAY_GRASP_SUCCEEDED',
                                                     'unreachable'       : 'SAY_GRASP_SUCCEEDED',
                                                     'goal_not_defined'  : 'SAY_GRASP_SUCCEEDED'})
 
             smach.StateMachine.add('GOTO_OPERATOR_FAILED',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
                                     transitions={   'arrived'           : 'SAY_FAILED',
                                                     'unreachable'       : 'SAY_FAILED',
                                                     'goal_not_defined'  : 'SAY_FAILED'})
@@ -642,35 +624,6 @@ class GuiCallCallback(smach.StateMachine):
         location_designator = VariableDesignator(resolve_type=EntityInfo, name="location_designator")
         
         object_designator = VariableDesignator(resolve_type=str)
-        # def on_top(entity):
-        #     container_entity = pick_shelf.resolve()
-        #     return onTopOff(entity, container_entity)
-
-        # def max_width(entity):
-        #     max_bb_x = max(ch.x for ch in entity.convex_hull)
-        #     min_bb_x = min(ch.x for ch in entity.convex_hull)
-        #     max_bb_y = max(ch.y for ch in entity.convex_hull)
-        #     min_bb_y = min(ch.y for ch in entity.convex_hull)
-
-        #     x_size = abs(max_bb_x - min_bb_x)
-        #     y_size = abs(max_bb_y - min_bb_y)
-
-        #     x_ok = 0.02 < x_size < 0.15
-        #     y_ok = 0.02 < y_size < 0.15
-
-        #     return x_ok and y_ok
-
-        # # select the entity closest in x direction to the robot in base_link frame
-        # def weight_function(entity):
-        #     # TODO: return x coordinate of entity.center_point in base_link frame
-        #     p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
-        #     return p.x*p.x
-
-        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.5
-        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.10
-
-        # object_designator = LockingDesignator(EdEntityDesignator(robot,
-        #     criteriafuncs=[size, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
 
         point = msgs.Point(0, 0, 0)
 
@@ -682,7 +635,7 @@ class GuiCallCallback(smach.StateMachine):
 
         with self:
             smach.StateMachine.add('GOTO_OPERATOR',
-                                    states.NavigateToObserve(robot=robot, entity_designator=EdEntityDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
+                                    states.NavigateToObserve(robot=robot, entity_designator=EntityByIdDesignator(robot=robot, id=challenge_knowledge.operator_waypoint_id), radius = 1.0),
                                     transitions={   'arrived'           : 'HUMAN_ROBOT_INTERACTION',
                                                     'unreachable'       : 'SAY_GOTO_OPERATOR_FAILED',
                                                     'goal_not_defined'  : 'SAY_GOTO_OPERATOR_FAILED'})
@@ -807,7 +760,7 @@ def setup_statemachine(robot):
                                 transitions={   'spoken'            :   'GOTO_EXIT'})
 
         smach.StateMachine.add('GOTO_EXIT',
-                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EdEntityDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
+                                states.NavigateToWaypoint(robot=robot, waypoint_designator=EntityByIdDesignator(robot, id=challenge_knowledge.exit_waypoint_id), radius = 1.0),
                                 transitions={   'arrived'           : 'Done',
                                                 'unreachable'       : 'Done',
                                                 'goal_not_defined'  : 'Done'})

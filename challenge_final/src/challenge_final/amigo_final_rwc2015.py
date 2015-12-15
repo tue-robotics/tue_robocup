@@ -386,7 +386,7 @@ class PersonDesignator(Designator):
         self._robot = robot
         self._furniture_designator = furniture_designator
 
-    def resolve(self):
+    def _resolve(self):
         #import ipdb; ipdb.set_trace()
         # Get furniture entity
         furniture_id = self._furniture_designator.resolve()
@@ -433,12 +433,6 @@ class PickupObject(smach.StateMachine):
         object_designator = VariableDesignator(resolve_type=str)
 
         point = msgs.Point(0, 0, 0)
-
-        ##### To start in a different state #####
-        # if not TEST_GRASP_LOC == None:
-        #     smach.StateMachine.set_initial_state(self, ["GOTO_LOCATION"])
-        #     location_designator = EdEntityDesignator(robot=robot, type=TEST_GRASP_LOC)
-        #########################################
 
         with self:
             # smach.StateMachine.add('STORE_POINT',
@@ -520,7 +514,6 @@ class ManipRecogSingleItem(smach.StateMachine):
         current_item = EdEntityDesignator(robot)
 
         empty_arm_designator = UnoccupiedArmDesignator(robot.arms, robot.leftArm)
-        #arm_with_item_designator = ArmHoldingEntityDesignator(robot.arms, current_item)
         arm_with_item_designator = ArmDesignator(robot.arms, robot.arms['left'])
 
         # print "{0} = pick_shelf".format(pick_shelf)
@@ -766,10 +759,10 @@ def setup_statemachine(robot):
     global BAR_DESIGNATOR
     global BAR_TYPE_DESIGNATOR
     global OPERATOR_DESIGNATOR
-    BAR_DESIGNATOR = EdEntityDesignator(robot=robot, id='rwc2015/bar-0')
+    BAR_DESIGNATOR = EntityByIdDesignator(robot=robot, id='rwc2015/bar-0')
 
     ## DO NOT COMMIT THIS LINE UNCOMMETED BELOW, for testing (CHECKCOMMENTED)
-    #BAR_DESIGNATOR = EdEntityDesignator(robot=robot, id='bar')
+    #BAR_DESIGNATOR = EntityByIdDesignator(robot=robot, id='bar')
 
     BAR_TYPE_DESIGNATOR = Designator(initial_value='bar', resolve_type=str) # Designator that returns a string with the bar type
     OPERATOR_DESIGNATOR = PersonDesignator(robot=robot, furniture_designator=BAR_TYPE_DESIGNATOR)      # Designator that returns the operator

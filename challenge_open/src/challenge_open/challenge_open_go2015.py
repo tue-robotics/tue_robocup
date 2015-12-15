@@ -259,8 +259,8 @@ class ExploreTable(smach.StateMachine):
         with self:
             smach.StateMachine.add('GOTO_TABLE',
                                 states.NavigateToSymbolic(robot,
-                                                          {EdEntityDesignator(robot, id=table_id):"in_front_of"},
-                                                          EdEntityDesignator(robot, id=table_id)),
+                                                          {EntityByIdDesignator(robot, id=table_id):"in_front_of"},
+                                                          EntityByIdDesignator(robot, id=table_id)),
                                 transitions={   'arrived'           :   'STORE_TABLE',
                                                 'unreachable'       :   'STORE_TABLE',
                                                 'goal_not_defined'  :   'STORE_TABLE'})
@@ -270,7 +270,7 @@ class ExploreTable(smach.StateMachine):
                                     transitions={  'stored'         :   'LOOKAT_TABLE'})
 
             smach.StateMachine.add("LOOKAT_TABLE",
-                                     states.LookAtEntity(robot, EdEntityDesignator(robot, id=table_id), keep_following=True, waittime=2.0),
+                                     states.LookAtEntity(robot, EntityByIdDesignator(robot, id=table_id), keep_following=True, waittime=2.0),
                                      transitions={  'succeeded'     :   'LOCK_ENTITIES'})
 
             smach.StateMachine.add("LOCK_ENTITIES",
@@ -337,7 +337,7 @@ def setup_statemachine(robot):
                                 transitions={   'done'        :'GOTO_OPERATOR'})
 
         smach.StateMachine.add('GOTO_OPERATOR',
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="open_challenge_start"), radius = 0.75),
+                                states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="open_challenge_start"), radius = 0.75),
                                 transitions={   'arrived'           :   'Done',
                                                 'unreachable'       :   'Done',
                                                 'goal_not_defined'  :   'Done'})

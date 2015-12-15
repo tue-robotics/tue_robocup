@@ -99,7 +99,7 @@ class ExploreWaypoint(smach.StateMachine):
         """
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        waypoint_designator = EdEntityDesignator(robot, id=waypoint)
+        waypoint_designator = EntityByIdDesignator(robot, id=waypoint)
 
         with self:
             smach.StateMachine.add("GOTO_WAYPOINT",
@@ -174,7 +174,7 @@ class HumanRobotInteraction(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
 
-        waypoint_designator = EdEntityDesignator(robot, id=challenge_knowledge.task_location_sergio)
+        waypoint_designator = EntityByIdDesignator(robot, id=challenge_knowledge.task_location_sergio)
 
         with self:
             smach.StateMachine.add("GOTO_WAYPOINT",
@@ -392,7 +392,7 @@ def setup_statemachine(robot):
                                    transitions={'spoken':'GOTO_FINAL_WAYPOINT'})
 
         smach.StateMachine.add("GOTO_FINAL_WAYPOINT",
-                                states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=challenge_knowledge.end_location_sergio), radius=0.15),
+                                states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.end_location_sergio), radius=0.15),
                                 transitions={   'arrived'                  :'Done',
                                                 'unreachable'              :'Done',
                                                 'goal_not_defined'         :'Done'})

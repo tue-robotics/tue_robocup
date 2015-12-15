@@ -307,7 +307,7 @@ class QueryFirstAnswerDesignator(Designator):
         self.robot = robot
         self.reasoner_query = reasoner_query
 
-    def resolve(self):
+    def _resolve(self):
         first_answer = self.robot.reasoner.query_first_answer(self.reasoner_query)
         if not first_answer:
             return None
@@ -319,7 +319,7 @@ class ObjectTypeDesignator(Designator):
         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
         self.robot = robot
 
-    def resolve(self):
+    def _resolve(self):
         object_type = str(self.robot.reasoner.query_first_answer("action_info('2','2_object',A)"))               
         ## FOR TESTING:
         #object_type = "cola"
@@ -337,7 +337,7 @@ class ObjectTypeDesignator(Designator):
 #         super(ObjectTypeDesignator, self).__init__(resolve_type=ed.msg.EntityInfo)
 #         self.robot = robot
 
-#     def resolve(self):
+#     def _resolve(self):
 #         has_type = lambda entity: entity.type == "person"
 #         location = str(self.robot.reasoner.query_first_answer("action_info('1','1_locations_rooms',A)"))
 #         ## FOR TESTING:
@@ -369,13 +369,13 @@ def setup_statemachine(robot):
                                                     "Failed":"GO_TO_MEETING_WAYPOINT"})   # There is no transition to Failed in StartChallengeRobust (28 May)
 
         smach.StateMachine.add('GO_TO_MEETING_WAYPOINT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=data.meeting_point), radius=0.2),
                                     transitions={   'arrived':'INTRODUCE_SHORT',
                                                     'unreachable':'GO_TO_MEETING_WAYPOINT_BACKUP',
                                                     'goal_not_defined':'GO_TO_MEETING_WAYPOINT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_MEETING_WAYPOINT_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=data.meeting_point), radius=0.6),
                                     transitions={   'arrived':'INTRODUCE_SHORT',
                                                     'unreachable':'INTRODUCE_SHORT_FAILED',
                                                     'goal_not_defined':'INTRODUCE_SHORT_FAILED'})
@@ -424,7 +424,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_location',A)")), radius=0.3),
+                                    states.NavigateToWaypoint(robot, ReasonedEntityDesignator(robot, query="action_info('1','1_location',A)")), radius=0.3),
                                     transitions={   'arrived':'SAY_ARRIVED',
                                                     'unreachable':'SAY_NOT_ARRIVED',
                                                     'goal_not_defined':'SAY_NOT_ARRIVED'})
@@ -432,16 +432,16 @@ def setup_statemachine(robot):
 
         # smach.StateMachine.add('1_ACTION_NAVIGATE_TO_LOCATION',
         #                         states.NavigateToSymbolic(robot, 
-        #                             {EdEntityDesignator(robot, id="hallway_couch") : "in_front_of" }, 
-        #                             EdEntityDesignator(robot, id="hallway_couch")),
+        #                             {EntityByIdDesignator(robot, id="hallway_couch") : "in_front_of" }, 
+        #                             EntityByIdDesignator(robot, id="hallway_couch")),
         #                         transitions={   'arrived'           :   'QUERY_SPECIFIC_ACTION',
         #                                         'unreachable'       :   'QUERY_SPECIFIC_ACTION',
         #                                         'goal_not_defined'  :   'QUERY_SPECIFIC_ACTION'})
 
         smach.StateMachine.add('1_ACTION_NAVIGATE_TO_ROOM',
                                 states.NavigateToSymbolic(robot, 
-                                    {EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)")) : "in" }, 
-                                    EdEntityDesignator(robot, id_designator=QueryFirstAnswerDesignator(robot, "action_info('1','1_locations_rooms',A)"))),
+                                    {ReasonedEntityDesignator(robot, query="action_info('1','1_locations_rooms',A)")) : "in" }, 
+                                    ReasonedEntityDesignator(robot, query="action_info('1','1_locations_rooms',A)"))),
                                 transitions={   'arrived'           :   'SAY_ARRIVED',
                                                 'unreachable'       :   'SAY_NOT_ARRIVED',
                                                 'goal_not_defined'  :   'SAY_NOT_ARRIVED'}) 
@@ -492,7 +492,7 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('GO_TO_EXIT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id='exit_gpsr'), radius = 0.4),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id='exit_gpsr'), radius = 0.4),
                                     transitions={   'arrived':'SAY_GOODBYE',
                                                     'unreachable':'SAY_GOODBYE',
                                                     'goal_not_defined':'SAY_GOODBYE'})
@@ -508,13 +508,13 @@ def setup_statemachine(robot):
 
 
         smach.StateMachine.add('GO_TO_INITIAL_POINT',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.2),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=data.meeting_point), radius=0.2),
                                     transitions={   'arrived':'FINISHED_TASK',
                                                     'unreachable':'GO_TO_INITIAL_POINT_BACKUP',
                                                     'goal_not_defined':'GO_TO_INITIAL_POINT_BACKUP'})
 
         smach.StateMachine.add('GO_TO_INITIAL_POINT_BACKUP',
-                                    states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id=data.meeting_point), radius=0.6),
+                                    states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=data.meeting_point), radius=0.6),
                                     transitions={   'arrived':'FINISHED_TASK',
                                                     'unreachable':'FINISHED_TASK',
                                                     'goal_not_defined':'FINISHED_TASK'})
@@ -525,7 +525,7 @@ def setup_statemachine(robot):
                                               'tasks_completed':'GO_TO_EXIT'})
 
         # smach.StateMachine.add('GO_TO_EXIT',
-        #                             states.NavigateToWaypoint(robot, EdEntityDesignator(robot, id="exit"), radius=0.7),
+        #                             states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id="exit"), radius=0.7),
         #                             transitions={   'arrived':'Done',
         #                                             'unreachable':'Done',
         #                                             'goal_not_defined':'Done'})

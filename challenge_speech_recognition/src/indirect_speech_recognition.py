@@ -11,7 +11,7 @@ from robot_skills.util import transformations as tf
 from robot_skills.util import transformations, msg_constructors
 
 import robot_smach_states as states
-from robot_smach_states.util.designators.designator import Designator, EdEntityDesignator
+from robot_smach_states.util.designators import Designator, EdEntityDesignator
 
 from robocup_knowledge import load_knowledge
 data = load_knowledge('challenge_speech_recognition')
