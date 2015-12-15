@@ -80,7 +80,8 @@ script:
   -
   - rosrun challenge_navigation challenge_navigation.py mockbot
   -
-  - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot
+  - alias mask_timeout="RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi"
+  - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot; mask_timeout
   -
   - pushd .
   - roscd test_tools
@@ -102,7 +103,7 @@ script:
   - cat open_door_log.txt
   - popd
   -
-  - timeout 5m rosrun challenge_gpsr gpsr.py mockbot
+  - timeout 5m rosrun challenge_gpsr gpsr.py mockbot; mask_timeout
   -
   - killall roscore #And kill the roscore afterwards
   -
