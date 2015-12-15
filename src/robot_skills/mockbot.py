@@ -240,7 +240,7 @@ class ED(object):
 
     @property
     def _entities(self):
-        return dict(self._dynamic_entities.items() + self._static_entities.items())
+        return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())
 
     def segment_kinect(self, *args, **kwargs):
         self._entities = defaultdict(ED.generate_random_entity,
