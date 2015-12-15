@@ -8,8 +8,9 @@ from visualization_msgs.msg import Marker
 
 import robot_skills.util.msg_constructors as msgs
 import std_msgs.msg
+from ed.msg import EntityInfo
 from robot_smach_states.state import State
-from robot_smach_states.util.designators import *
+import robot_smach_states.util.designators as ds
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -216,8 +217,8 @@ class Counter(smach.State):
         smach.State.__init__(self, outcomes=['counted', 'limit_reached'])
         self.limit = limit
 
-        check_resolve_type(counter, int)
-        is_writeable(counter)
+        ds.check_resolve_type(counter, int)
+        ds.is_writeable(counter)
         self.counter = counter
 
     def execute(self, userdata):
@@ -274,7 +275,7 @@ class SetTimeMarker(smach.State):
     def __init__(self, robot, designator):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
-        is_writeable(designator)
+        ds.is_writeable(designator)
         self.designator = designator
 
     def execute(self, userdata=None):
@@ -288,6 +289,8 @@ class CheckTime(smach.State):
         smach.State.__init__(self, outcomes=["ok", "timeout"])
         self.robot = robot
         self.max_duration = rospy.Duration(max_duration)
+
+        ds.check_resolve_type(designator, int)
         self.designator = designator
 
     def execute(self, userdata=None):
@@ -378,6 +381,7 @@ class Evaluate(smach.State):
     dictionary of task names to booleans which indicate whether this task succeeded or not. '''
     def __init__(self, results):
         smach.State.__init__(self, outcomes=['all_succeeded','partly_succeeded','all_failed'])
+        ds.check_resolve_type(results, dict)
         self.results_designator = results
 
     def execute(self, userdata):
@@ -400,7 +404,12 @@ class AddPositiveResult(smach.State):
     resolves to. Uses the string in item_designator as key to this dict. '''
     def __init__(self, results_designator, item_designator):
         smach.State.__init__(self, outcomes=['done'])
+
+        ds.is_writeable(results_designator)
+        ds.check_resolve_type(results_designator, dict)
         self.results = results_designator
+
+        ds.check_resolve_type(item_designator, str)
         self.item = item_designator
 
     def execute(self, userdata):
@@ -450,7 +459,10 @@ class UnlockDesignator(smach.State):
 class MarkEntityInRviz(smach.State):
     def __init__(self, entity_designator, namespace="designator"):
         smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        ds.check_resolve_type(entity_designator, EntityInfo)
         self.entity_designator = entity_designator
+
         self.namespace = namespace
         self.publisher = rospy.Publisher("executive_markers", Marker)
 
@@ -531,7 +543,7 @@ class IteratorState(smach.State):
         smach.State.__init__(self, outcomes=['next', 'stop_iteration'])
         self.iterable_designator = iterable_designator
 
-        is_writeable(element_designator)
+        ds.is_writeable(element_designator)
         self.element_designator = element_designator
 
     def execute(self, userdata=None):
@@ -547,11 +559,9 @@ class IteratorState(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 def test_iteration():
-    from robot_smach_states.util.designators import Designator, VariableDesignator
-
     sm = smach.StateMachine(outcomes=['succeeded', 'failed'])
-    numbers = Designator(range(3), resolve_type=[int])
-    number = VariableDesignator(resolve_type=int)
+    numbers = ds.Designator(range(3), resolve_type=[int])
+    number = ds.VariableDesignator(resolve_type=int)
 
     global gather
     gather = []
