@@ -243,8 +243,7 @@ class ED(object):
         return defaultdict(ED.generate_random_entity, self._dynamic_entities.items() + self._static_entities.items())
 
     def segment_kinect(self, *args, **kwargs):
-        self._entities = defaultdict(ED.generate_random_entity,
-                                     {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]})
+        self._dynamic_entities = {e.id:e for e in [ED.generate_random_entity() for _ in range(5)]}
         return self._entities
 
     def update_kinect(self, *args, **kwargs):
