@@ -80,7 +80,7 @@ script:
   -
   - rosrun challenge_navigation challenge_navigation.py mockbot
   -
-  - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot; RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; OTHER COMMAND; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi #exitcode124 means timeout, so count as success.
+  - timeout 1m rosrun challenge_person_recognition person_recognition.py mockbot; RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi #exitcode124 means timeout, so count as success.
   -
   - pushd .
   - roscd test_tools
@@ -102,7 +102,7 @@ script:
   - cat open_door_log.txt
   - popd
   -
-  - timeout 5m rosrun challenge_gpsr gpsr.py mockbot; RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; OTHER COMMAND; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi; #exitcode124 means timeout, so count as success.
+  - timeout 5m rosrun challenge_gpsr gpsr.py mockbot; RET="$?"; if [[ "$RET" = "124" ]]; then echo timeout; elif [[ "$RET" -gt 0 ]]; then echo error; exit; fi; #exitcode124 means timeout, so count as success.
   -
   - killall roscore #And kill the roscore afterwards
   -
