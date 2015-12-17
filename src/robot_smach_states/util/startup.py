@@ -2,12 +2,12 @@
 State machine startup
 
 Usage:
-  challenge_{challenge_name}.py {robot}
-  challenge_{challenge_name}.py {robot} --initial=<init>
+  challenge_{challenge_name}.py {robot} [--initial=<init>] [--no_execute]
 
 Options:
   -h --help     Show this screen.
   --initial=<init>  Initial state
+  --no-execute Only construct state machine, do not execute it, i.e. only do checks.
 """
 
 
@@ -38,6 +38,7 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
                        version='robot_smach_states startup 2.0')
     robot_name = [robotname for robotname in available_robots if arguments[robotname] ][0]
     initial_state = arguments["--initial"]
+    no_execute = arguments["--no_execute"]
 
     robot = None
     if robot_name == "amigo":
@@ -73,9 +74,10 @@ def startup(statemachine_creator, initial_state=None, robot_name='', challenge_n
                 statemachine_creator.__name__, executioner, '/SM_ROOT_PRIMARY')
             introserver.start()
 
-            # Run the statemachine
-            outcome = executioner.execute()
-            print "Final outcome: {0}".format(outcome)
+            if not no_execute:
+                # Run the statemachine
+                outcome = executioner.execute()
+                print "Final outcome: {0}".format(outcome)
         except Exception, e:
             print "An exception occured"
             frame = traceback.extract_tb(sys.exc_info()[2])[0]
