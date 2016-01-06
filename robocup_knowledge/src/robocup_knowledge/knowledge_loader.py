@@ -11,7 +11,19 @@ def load_knowledge(knowledge_item):
     # Look for the correct knowledge file
     try:
         _knowledge_path = os.path.dirname(os.path.realpath(__file__)) + "/environments/%s/%s.py" % (_robot_env, knowledge_item)
-        return imp.load_source('environment_knowledge', _knowledge_path)
-    except:
-        print "Knowledge item '%s' for environment '%s' does not exist at path '%s'!"%(knowledge_item, _robot_env, _knowledge_path)
+        knowledge = imp.load_source('environment_knowledge', _knowledge_path)
+
+        knowledge_attrs = [attr for attr in dir(knowledge) if not callable(attr) and not attr.startswith("__")]
+
+        print "====================================="
+        print "==          KNOWLEDGE              =="
+        print "====================================="
+        for attr in knowledge_attrs:
+            print "==> %s = %s" % (attr, str(getattr(knowledge, attr)))
+        print "====================================="
+
+        return knowledge
+
+    except Exception as e:
+        print "Knowledge item '%s' for environment '%s' is incorrect at path '%s'! [Error = %s]"%(knowledge_item, _robot_env, _knowledge_path, e)
         sys.exit(1)
