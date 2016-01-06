@@ -1,27 +1,7 @@
-target1 = {
-    'near' : 'dinnertable',
-    'in' : 'living_room',
-    'lookat' : 'dinnertable'
-}
-
-target2 = {
-    'near' : 'bed_cabinet',
-    'in' : 'bedroom',
-    'lookat' : 'bed_cabinet',
-    'in_front_of_pos2' : 'bed_cabinet',
-}
-
-target3 = {
-    'near' : 'bed_cabinet',
-    'in' : 'bedroom',
-    'lookat' : 'bed_cabinet'
-}
-
-target4 = {
-    'near' : 'bed_cabinet',
-    'in' : 'bedroom',
-    'lookat' : 'bed_cabinet'
-}
+target1 = "living_room"
+target2 = "exit"
+target3 = "explore8"
+target4 = "hallway"
 
 radius1 = 0.1
 radius2 = 0.7
