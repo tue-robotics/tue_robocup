@@ -1,10 +1,10 @@
-# Challenge Restaurant 2015
+# Challenge Restaurant 2016
 
-Responsible: Rein 
+Responsible: Rein
 
 ## Startup
 
-1. Place the robot aside of the bar 
+1. Place the robot aside of the bar
 2. Place 5 items in the bookcase
 
 amigo1/sergio1:
