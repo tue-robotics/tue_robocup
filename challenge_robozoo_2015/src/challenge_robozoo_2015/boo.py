@@ -9,9 +9,9 @@ import robot_smach_states as states
 from psi import Compound, Conjunction, Sequence
 
 class Boo(smach.StateMachine):
-    """Amigo will look into the distance doing nothing. 
+    """Amigo will look into the distance doing nothing.
         From experience, we know people will start looking into his 'eyes'.
-        If all is well, a face will be recognized and Amigo will say 'boo!' 
+        If all is well, a face will be recognized and Amigo will say 'boo!'
             to scare the kids that is now close to the robot"""
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=["Done", "Failed", "Aborted"])

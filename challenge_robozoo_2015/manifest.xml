@@ -1,13 +1,13 @@
 <package>
-  <description brief="challenge_robo_zoo_simple">
+  <description brief="challenge_robozoo_2015">
 
-     challenge_robo_zoo_simple
+     challenge_robozoo_2015
 
   </description>
   <author>amigo</author>
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
-  <url>http://ros.org/wiki/challenge_robo_zoo_simple</url>
+  <url>http://ros.org/wiki/challenge_robozoo_2015</url>
   <depend package="rospy"/>
   <depend package="robot_skills"/>
   <depend package="robot_smach_states"/>
