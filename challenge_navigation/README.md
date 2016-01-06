@@ -1,5 +1,5 @@
-# Challenge Navigation
-Responsible: Janno and Rokus
+# Challenge Navigation 2015
+Responsible: Rein Appeldoorn
 
 ## Setup
 amigo1/sergio1:

@@ -10,20 +10,28 @@ import robot_smach_states as states
 from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_navigation')
 
+print "=============================================="
+print "==           CHALLENGE NAVIGATION           =="
+print "=============================================="
+
 class ConfigureWorldmodelForNavigation(smach.State):
     def __init__(self, robot):
         smach.State.__init__(self, outcomes=["done"])
         self.robot = robot
 
     def execute(self, userdata):
-        if self.robot.robot_name == "amigo":
-            self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
-            self.robot.torso.send_goal('navigation', timeout=4.0)
-
-        self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso", "laser_integration_base", "kinect_integration"])
-        self.robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
-        self.robot.ed.reset()
-        self.robot.head.close()
+#        if self.robot.robot_name == "amigo":
+#            self.robot.speech.speak("Get low, get low, get low, get low!", block=False)
+#            self.robot.torso.send_goal('navigation', timeout=4.0)
+#
+#        try:
+#            self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso", "laser_integration_base", "kinect_integration"])
+#            self.robot.ed.configure_kinect_segmentation(continuous=True, max_sensor_range=1.7)
+#            self.robot.ed.reset()
+#        except Exception as e:
+#            print rospy.logerr(e)
+#
+#        self.robot.head.close()
 
         return "done"
 
@@ -33,10 +41,10 @@ class ConfigureWorldmodelForFollowing(smach.State):
         self.robot = robot
 
     def execute(self, userdata):
-        self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso"])
-        self.robot.ed.disable_plugins(plugin_names=["laser_integration_base", "kinect_integration"])
-        self.robot.ed.reset()
-        self.robot.head.close()
+#        self.robot.ed.enable_plugins(plugin_names=["laser_integration_torso"])
+#        self.robot.ed.disable_plugins(plugin_names=["laser_integration_base", "kinect_integration"])
+#        self.robot.ed.reset()
+#        self.robot.head.close()
 
         return "done"
 
