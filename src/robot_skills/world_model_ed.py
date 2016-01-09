@@ -68,12 +68,14 @@ class ED:
             center_point = self._transform_center_point_to_map(center_point)
 
         self._publish_marker(center_point, radius)
+
         query = SimpleQueryRequest(id=id, type=type, center_point=center_point, radius=radius)
 
         try:
             entities = self._ed_simple_query_srv(query).entities
         except Exception, e:
-            rospy.logerr(e)
+            rospy.logerr("ERROR: robot.ed.get_entities(id=%s, type=%s, center_point=%s, radius=%s)" % (id, type, str(center_point), str(radius)))
+            rospy.logerr("L____> [%s]" % e)
             return []
 
         # Parse to data strings to yaml
