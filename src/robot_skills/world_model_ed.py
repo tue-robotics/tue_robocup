@@ -3,7 +3,7 @@ import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 # from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
-from ed_perception.srv import Classify
+from ed_perception.srv import Classify, AddTrainingInstance
 from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
 from cb_planner_msgs_srvs.msg import PositionConstraint
@@ -51,6 +51,7 @@ class ED:
         self._ed_kinect_update_srv = rospy.ServiceProxy('/%s/ed/kinect/update'%robot_name, ed_sensor_integration.srv.Update)
 
         self._ed_classify_srv = rospy.ServiceProxy('/%s/ed/classify'%robot_name, Classify)
+        self._ed_perception_add_training_instance_srv = rospy.ServiceProxy('/%s/ed/add_training_instance'%robot_name, AddTrainingInstance)
         self._ed_configure_srv = rospy.ServiceProxy('/%s/ed/configure'%robot_name, Configure)
 
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
@@ -266,19 +267,24 @@ class ED:
     #def configure_perception(self, continuous):
     #    self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
 
-    def classify(self, ids, perception_model_name = "", property = "type", types = None):
+    def get_perception_model_path(self, perception_model_name = ""):
         import rospkg
         rospack = rospkg.RosPack()
 
         try:
             import os
             robot_env = os.environ['ROBOT_ENV']
-            path = rospack.get_path('ed_perception_models') + "/models/" + robot_env + "/" + perception_model_name
+            return rospack.get_path('ed_perception_models') + "/models/" + robot_env + "/" + perception_model_name
         except KeyError:
             rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
+            return ""
+
+    def classify(self, ids, perception_model_name = "", property = "type", types = None):
+        perception_model_path = self.get_perception_model_path(perception_model_name)
+        if not perception_model_path:
             return []
 
-        res = self._ed_classify_srv(ids = ids, property = property, perception_models_path=path)
+        res = self._ed_classify_srv(ids = ids, property = property, perception_models_path = perception_model_path)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
@@ -293,6 +299,24 @@ class ED:
     def classify_with_probs(self, ids, types):
         res = self._ed_classify_srv(ids = ids, types = types)
         return zip(res.types, res.probabilities)
+
+    def add_perception_training_instance(self, id, property, value, perception_model_name = ""):
+        perception_model_path = self.get_perception_model_path(perception_model_name)
+        if not perception_model_path:
+            return False
+
+        res = self._ed_perception_add_training_instance_srv(id = id, property = property, value = value, perception_models_path = perception_model_path)
+        if res.error_msg:
+            rospy.logerr("While adding perception training instance: %s" % res.error_msg)
+            return False
+
+        return True
+
+    def learn_person(self, id, name):
+        return self.add_perception_training_instance(id=id, property="name", value=name)
+
+    def classify_person(self, id):
+        return self.classify(ids = [id], property = "name")
 
     def enable_plugins(self, plugin_names):
         return self._set_plugin_status(plugin_names, '"enabled":1')
