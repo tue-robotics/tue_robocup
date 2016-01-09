@@ -13,7 +13,7 @@ import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult #
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-
+import time
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -304,7 +304,7 @@ class WaitForPersonInFront(WaitForDesignator):
 
 ##########################################################################################################################################
 
-
+'''
 class NameToUserData(WaitForDesignator):
     """
     Pass the received name into userdata. By default use 'person_name', if its empty use a designator
@@ -336,80 +336,42 @@ class NameToUserData(WaitForDesignator):
 
         # import ipdb; ipdb.set_trace()
         return 'done'
-
+'''
 
 ##########################################################################################################################################
 
 
-class LearnPerson(smach.StateMachine):
+class LearnPerson(smach.State):
     """
-    State that provides an interface to learn a person's face through actionlib call
-
-    Keyword arguments:
-    person_name -- name of the person to be learned
-
-    tutorial for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
+        
     """
-    def __init__(self, robot, person_name = "", name_designator = None):
-        smach.StateMachine.__init__(self,
-                                    outcomes=['succeded_learning', 'failed_learning'])
+    def __init__(self, robot, person_name = "", name_designator = None, n_samples = 10):
+        smach.State.__init__(self, outcomes=['succeded_learning', 'failed_learning', 'timeout_learning'])
+        
         self.robot = robot
         self.person_name = person_name
         self.name_designator = name_designator
-        self.service_name = "/" + robot.robot_name + "/ed/face_recognition/learn_face"
+        self.n_samples = n_samples
 
-        with self:
+    def execute(self, userdata=None):
 
-            # Callback when a result is received
-            def get_result_cb(userdata, status, result):
-                print "Received result from the learning service"
+        # if person_name is empty then try to get it from designator
+        if not self.person_name:
+            person_name = self.name_designator.resolve()
 
-                # test the result and parse the message
-                if status == actionlib.GoalStatus.SUCCEEDED:
-                    if result.result_info == "Learning complete":
-                        print "Face learning complete! result: " + result.result_info
-                        return 'succeeded'
-                    else:
-                        return 'aborted'
-                else:
-                    print "Face learning aborted! result: " + result.result_info
-                    return 'aborted'
+            # if there is still no name, quit the learning
+            if not person_name:
+                print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
+                return
 
-            # --------------------------------------------------------------------------------
+        samples_completed = LearnPersonProcedure(self.robot, person_name = person_name, n_samples = self.n_samples)
 
-            # Callback when a result is sent
-            def send_goal_cb(userdata, goal):
-                # import ipdb; ipdb.set_trace()
-
-                learn_goal = FaceLearningGoal()
-                learn_goal.person_name = userdata.person_name_goal
-
-                print "Goal sent to the learning service (" + self.service_name + "), with name '" + learn_goal.person_name + "'"
-
-                return learn_goal
-
-            # --------------------------------------------------------------------------------
-
-            smach.StateMachine.add( 'NAME_TO_USERDATA',
-                                    NameToUserData(robot, person_name = self.person_name, name_designator = self.name_designator),
-                                    remapping={     'personName_out':'personName_userdata'},
-                                    transitions={   'done': 'LEARN_PERSON'})
-
-            # Create Simple Action ClientS
-            smach.StateMachine.add( 'LEARN_PERSON',
-                                    SimpleActionState(  self.service_name,
-                                                        ed_perception.msg.FaceLearningAction,
-                                                        result_cb = get_result_cb,
-                                                        goal_cb = send_goal_cb,            # create a goal inside the callback
-                                                        input_keys=['person_name_goal'],
-                                                        output_keys=['result_info_out'],
-                                                        server_wait_timeout=rospy.Duration(5.0)),
-                                                        # goal_slots = ['person_name_goal'],# or create it here directly
-                                    transitions={   'succeeded':'succeded_learning',
-                                                    'aborted': 'failed_learning',
-                                                    'preempted': 'failed_learning'},
-                                    remapping={     'person_name_goal':'personName_userdata'})
-
+        if samples_completed == 0:
+            return 'failed_learning'
+        if samples_completed < self.n_samples:
+            return 'timeout_learning'
+        else:
+            return 'succeded_learning'
 
 
 ##########################################################################################################################################
@@ -463,7 +425,7 @@ class LookAtPersonInFront(smach.State):
             # extract information from data
             faces_front = None
             try:
-                import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 # get information on the first face found (cant guarantee its the closest in case there are many)
                 faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
             except KeyError, ke:
@@ -551,6 +513,55 @@ def scanForHuman(robot, background_padding = 0.3):
     print "[scanForHuman] " + "Found {0} person(s) ({1} entities)".format(len(human_entities), len(entity_list))
 
     return human_entities
+
+
+##########################################################################################################################################
+
+
+def LearnPersonProcedure(robot, person_name = "", n_samples = 10, timeout = 5.0):
+    """
+    Starts the learning process that will save n_samples of the closest person's face.
+    It ends when the number of snapshots is reached or when a timeout occurs
+
+    Returns: number of samples saved. If smaller than what was requested, then a timeout occured
+    """
+
+    # if there is no name, quit the learning
+    if not person_name:
+        rospy.logwarn("No name was provided. Quitting the learning!")
+        return
+
+    count = 0
+    timedout = False
+    while (count < n_samples):
+
+        human_entities = scanForHuman(robot)
+
+        if not human_entities:
+            print ("[LearnPersonProcedure] " + "No person found.")
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                return count
+        else:
+            # reset timer
+            start_time = time.time()
+
+            # select human entity
+            # TODO: sort based on distance
+            human_id = human_entities[0].id
+
+            # trigger learning function
+            robot.ed.learn_person(human_id, person_name)
+            
+            count = count + 1
+
+            print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
+
+    print ("[LearnPersonProcedure] " + "Learn procedure completed!")
+
+    # print robot.ed.classify_person(human_id)
+    return count
 
 
 ##########################################################################################################################################
