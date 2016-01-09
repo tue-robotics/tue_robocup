@@ -57,11 +57,11 @@ class EnterContainer(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add('SAY_TEST_SYMBOLIC',
-                                   states.Say(robot,"Testing Navigate To Symbolic, going to the cabinet.", block=False),
-                                   transitions={'spoken':'NAV_TO_SYMB'})
+            smach.StateMachine.add( 'SAY_TEST_SYMBOLIC',
+                                    states.Say(robot,"Testing Navigate To Symbolic, going to the cabinet.", block=False),
+                                    transitions={'spoken':'NAV_TO_SYMB'})
 
-            smach.StateMachine.add('NAV_TO_SYMB',
+            smach.StateMachine.add( 'NAV_TO_SYMB',
                                     states.NavigateToSymbolic(robot, 
                                         {EntityByIdDesignator(robot, id="living_room") : "in" }, 
                                         EntityByIdDesignator(robot, id="dinnertable")),
@@ -69,13 +69,13 @@ class EnterContainer(smach.StateMachine):
                                                     'unreachable'       :   'SAY_FAILED_SYMBOLIC',
                                                     'goal_not_defined'  :   'SAY_FAILED_SYMBOLIC'})
 
-            smach.StateMachine.add('SAY_FAILED_SYMBOLIC',
-                                   states.Say(robot,"Failed Navigate To Symbolic.", block=True),
-                                   transitions={'spoken':'SAY_TEST_WAYPOINT'})
+            smach.StateMachine.add( 'SAY_FAILED_SYMBOLIC',
+                                    states.Say(robot,"Failed Navigate To Symbolic.", block=True),
+                                    transitions={'spoken':'SAY_TEST_WAYPOINT'})
 
-            smach.StateMachine.add('SAY_TEST_WAYPOINT',
-                                   states.Say(robot,"Testing Navigate To Waypoint.", block=False),
-                                   transitions={'spoken':'NAV_TO_WAYPOINT'})
+            smach.StateMachine.add( 'SAY_TEST_WAYPOINT',
+                                    states.Say(robot,"Testing Navigate To Waypoint.", block=False),
+                                    transitions={'spoken':'NAV_TO_WAYPOINT'})
 
             smach.StateMachine.add( 'NAV_TO_WAYPOINT',
                                     states.NavigateToWaypoint(robot, EntityByIdDesignator(robot, id=challenge_knowledge.wp_test_nav)),
@@ -83,9 +83,9 @@ class EnterContainer(smach.StateMachine):
                                                     'unreachable' : 'SAY_FAILED_WAYPOINT',
                                                     'goal_not_defined' : 'SAY_FAILED_WAYPOINT'})
 
-            smach.StateMachine.add('SAY_FAILED_WAYPOINT',
-                                   states.Say(robot,"Failed Navigate To Waypoint.", block=True),
-                                   transitions={'spoken':'container_success'})
+            smach.StateMachine.add( 'SAY_FAILED_WAYPOINT',
+                                    states.Say(robot,"Failed Navigate To Waypoint.", block=True),
+                                    transitions={'spoken':'container_success'})
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -98,7 +98,7 @@ class WaitPersonContainer(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add("SAY_WAITING_OPERATOR",
+            smach.StateMachine.add( "SAY_WAITING_OPERATOR",
                                     states.Say(robot,[  "I'm waiting for the operator to stand in front of me.",
                                                         "Would the operator please come forward.",
                                                         "I need an operator, please stand in front of me."], block=False),
@@ -125,7 +125,6 @@ class WaitPersonContainer(smach.StateMachine):
 
 class LearnNameContainer(smach.StateMachine):
     def __init__(self, robot, personNameDesLocal):
-
         
         @smach.cb_interface(outcomes=['spoken'])
         def sayIsYourName(userdata):
@@ -207,22 +206,22 @@ class LearnFaceContainer(smach.StateMachine):
         with self:
 
             smach.StateMachine.add( 'SAY_LOOK_AT_ME',
-                                        states.Say(robot,"Please stand in front of me and look at my camera while I learn your face.", block=False),
-                                        transitions={    'spoken':'LOOK_AT_OPERATOR'})
+                                    states.Say(robot,"Please stand in front of me and look at my camera while I learn your face.", block=False),
+                                    transitions={    'spoken':'LOOK_AT_OPERATOR'})
 
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
                                     states_interaction.LookAtPersonInFront(robot, lookDown=True),
                                     transitions={   'succeded':'LEARN_PERSON',
                                                     'failed':'SAY_LEARN_FACE_FAILED'})
 
-            smach.StateMachine.add('LEARN_PERSON',
+            smach.StateMachine.add( 'LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator = personNameDesLocal),
                                     transitions={   'succeded_learning':'CANCEL_HEAD_GOALS_SUCCESS',
                                                     'failed_learning':'SAY_LEARN_FACE_FAILED'})
 
-            smach.StateMachine.add('SAY_LEARN_FACE_FAILED',
-                                   states.Say(robot,"I could not learn your face for some reason.", block=False),
-                                   transitions={    'spoken':'CANCEL_HEAD_GOALS_FAILED'})
+            smach.StateMachine.add( 'SAY_LEARN_FACE_FAILED',
+                                    states.Say(robot,"I could not learn your face for some reason.", block=False),
+                                    transitions={    'spoken':'CANCEL_HEAD_GOALS_FAILED'})
 
             smach.StateMachine.add( 'CANCEL_HEAD_GOALS_SUCCESS',
                                     CancelHeadGoals(robot),
@@ -245,11 +244,11 @@ class PickUpContainer(smach.StateMachine):
 
         with self:
 
-            smach.StateMachine.add('SAY_SEARCHING_OBJECTS',
-                                   states.Say(robot,"I'm going to the dinning table to search for objects", block=False),
-                                   transitions={'spoken':'NAV_TO_TABLE'})
+            smach.StateMachine.add( 'SAY_SEARCHING_OBJECTS',
+                                    states.Say(robot,"I'm going to the dinning table to search for objects", block=False),
+                                    transitions={'spoken':'NAV_TO_TABLE'})
             
-            smach.StateMachine.add('NAV_TO_TABLE',
+            smach.StateMachine.add( 'NAV_TO_TABLE',
                                     states.NavigateToSymbolic(robot, 
                                         {EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ROOM_ID) : "in" }, 
                                         EdEntityDesignator(robot, id=challenge_knowledge.INSPECT_ENTITY_ID)),
@@ -308,9 +307,9 @@ class SearchPeopleContainer(smach.StateMachine):
                                                     'unreachable' : 'SAY_FAILED_WAYPOINT',
                                                     'goal_not_defined' : 'SAY_FAILED_WAYPOINT'})
 
-            smach.StateMachine.add('SAY_FAILED_WAYPOINT',
-                                   states.Say(robot,"Failed Navigate To Waypoint.", block=True),
-                                   transitions={'spoken':'SAY_SEARCHING_OPERATOR'})
+            smach.StateMachine.add( 'SAY_FAILED_WAYPOINT',
+                                    states.Say(robot,"Failed Navigate To Waypoint.", block=True),
+                                    transitions={'spoken':'SAY_SEARCHING_OPERATOR'})
 
             smach.StateMachine.add( 'SAY_SEARCHING_OPERATOR',
                                     smach.CBState(saySearchingOperatorCB),
@@ -349,7 +348,8 @@ class ChallengeTest(smach.StateMachine):
 
             smach.StateMachine.add( "INIT_WM",
                                     states.InitializeWorldModel(robot), 
-                                    transitions={   'done':'ENTER_ROOM_CONTAINER'})
+                                    # transitions={   'done':'ENTER_ROOM_CONTAINER'})
+                                    transitions={   'done':'WAIT_PERSON_CONTAINER'})
                                     # transitions={   'done':'LEARN_NAME_CONTAINER'})
                                     # transitions={   'done':'SAY_SEARCHING_OBJECTS'})
                                     # transitions={   'done':'SEARCH_PEOPLE_CONTAINER'})
@@ -423,6 +423,7 @@ Behaviours to test:
     - speach
     - listenning
     - grasping object
+    - placing object
     - test designators
 
 
