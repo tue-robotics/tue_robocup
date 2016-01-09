@@ -237,6 +237,9 @@ class ED(object):
         self.enable_plugins = mock.MagicMock()
         self.disable_plugins = mock.MagicMock()
         self.classify_with_probs = mock.MagicMock()
+        self.add_perception_training_instance = mock.MagicMock()
+
+        self._person_names = []
 
     @property
     def _entities(self):
@@ -260,6 +263,18 @@ class ED(object):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
 
+    def learn_person(self, id, name):
+    	self._person_names += [name]
+    	return True
+
+    def classify_person(self, id):
+    	if not self._person_names:
+    		return []
+
+    	import random
+    	name = random.choice(self._person_names)
+
+    	return [ClassificationResult(id, name, random.uniform(0,1))]
 
 # class MockbotArms(arms.Arms):
 #     def __init__(self, tf_listener):
