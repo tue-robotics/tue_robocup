@@ -49,10 +49,7 @@ class StateMachine(State):
 
     def add_to_graph(self, graph):
         subgraphname = "ROOT"
-        if self.parent:
-            names = {v:k for k,v  in self.parent.get_children().iteritems()}
-            subgraphname = names[self.sm_obj]
-        machine = Digraph(subgraphname)
+        machine = Digraph(self.get_name())
 
         for outcome in self.sm_obj._outcomes:
             outcomeviz = ContainerOutcome(outcome, self)
@@ -62,10 +59,19 @@ class StateMachine(State):
             childviz = State(child, self.sm_obj)
             for transition, to_name in self.sm_obj._transitions[childname].iteritems():
                 if not to_name in self.sm_obj._outcomes:
+                    if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
                     to = self.sm_obj.get_children()[to_name]
-                    to_viz = State(to, self.sm_obj)
+
+                    if isinstance(to, smach.Iterator):
+                        to_viz = Iterator(to, self.sm_obj)
+                    elif isinstance(to, smach.StateMachine):
+                        to_viz = StateMachine(to, self.sm_obj)
+                    else:
+                        to_viz = State(to, self.sm_obj)
                 else:
                     to_viz = ContainerOutcome(to_name, self)
+
+                to_viz.add_to_graph(machine)
 
                 transitionviz = Transition(childviz, to_viz, transition)
                 transitionviz.add_to_graph(machine)
@@ -75,9 +81,12 @@ class StateMachine(State):
         graph.subgraph(machine)
 
     def get_name(self):
-        names = {v:k for k,v  in self.parent.get_children().iteritems()}
-        name = names[self.sm_obj]
-        return name
+        try:
+            names = {v:k for k,v  in self.parent.get_children().iteritems()}
+            name = names[self.sm_obj]
+            return name
+        except AttributeError: #TODO: This happens when the parent is an Iterator, Instead a child inferring its name, instead its parent for its name
+            return "CHILD"
 
 class Iterator(State):
     def __init__(self, iterator_obj, parent):
@@ -86,8 +95,15 @@ class Iterator(State):
 
     def add_to_graph(self, graph):
         machine = Digraph()
-        machine.node(gv_safe(self.iterator_obj))
+        childviz = StateMachine(self.iterator_obj._state, self)
+        import ipdb; ipdb.set_trace()
+        childviz.add_to_graph(machine)
         graph.subgraph(machine)
+
+    def get_name(self):
+        names = {v:k for k,v  in self.parent.get_children().iteritems()}
+        name = names[self.iterator_obj]
+        return name
 
 
 def flatten(tree, parentname=None, sep="."):
@@ -134,7 +150,6 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
-    import ipdb; ipdb.set_trace()
     viz  = StateMachine(statemachine, None)
     viz.add_to_graph(dot)
     #_visualize_machine("ROOT", statemachine, dot)
