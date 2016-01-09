@@ -556,8 +556,8 @@ def LearnPersonProcedure(robot, person_name = "", n_samples = 10, timeout = 5.0)
             
             count = count + 1
 
-            if count > n_samples/2:
-                self.robot.speech.speak("Almost done, keep looking.", block=False)
+            if count == n_samples/2:
+                robot.speech.speak("Almost done, keep looking.", block=False)
 
             print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
 
