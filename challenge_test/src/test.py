@@ -113,10 +113,20 @@ class WaitPersonContainer(smach.StateMachine):
             smach.StateMachine.add("WAIT_FOR_OPERATOR",
                                     states_interaction.WaitForPerson(robot, attempts=5, sleep_interval=1),
                                     transitions={   'succeded':'container_success',
-                                                    'failed':'container_success'})
-                                                    # 'failed':'SAY_WAITING_OPERATOR'}) 
-                                                    # UNCOMENT THIS TO FORCE TO WAIT FOR PERSON
+                                                    'failed':'SAY_FAILED_WAITING'})
 
+            smach.StateMachine.add( 'SAY_FAILED_WAITING',
+                                    states.Say(robot,"I don't see anyone.", block=True),
+                                    transitions={'spoken':'WAIT_FOR_OPERATOR_2'})
+
+            smach.StateMachine.add("WAIT_FOR_OPERATOR_2",
+                                    states_interaction.WaitForPerson(robot, attempts=5, sleep_interval=1),
+                                    transitions={   'succeded':'container_success',
+                                                    'failed':'container_success'})
+
+            smach.StateMachine.add( 'SAY_FAILED_WAITING_AGAIN',
+                                    states.Say(robot,"I still couldn't find anyone in front of me. I will continue my task.", block=True),
+                                    transitions={'spoken':'WAIT_FOR_OPERATOR_2'})
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -348,8 +358,8 @@ class ChallengeTest(smach.StateMachine):
 
             smach.StateMachine.add( "INIT_WM",
                                     states.InitializeWorldModel(robot), 
-                                    # transitions={   'done':'ENTER_ROOM_CONTAINER'})
-                                    transitions={   'done':'WAIT_PERSON_CONTAINER'})
+                                    transitions={   'done':'ENTER_ROOM_CONTAINER'})
+                                    # transitions={   'done':'WAIT_PERSON_CONTAINER'})
                                     # transitions={   'done':'LEARN_NAME_CONTAINER'})
                                     # transitions={   'done':'SAY_SEARCHING_OBJECTS'})
                                     # transitions={   'done':'SEARCH_PEOPLE_CONTAINER'})
