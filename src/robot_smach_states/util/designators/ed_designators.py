@@ -2,6 +2,8 @@
 
 import inspect
 import pprint
+import math
+
 from cb_planner_msgs_srvs.msg import PositionConstraint
 from ed.msg import EntityInfo
 from ed.srv import SimpleQuery, SimpleQueryRequest
@@ -13,8 +15,12 @@ from visualization_msgs.msg import MarkerArray, Marker
 from robot_smach_states.util.designators.core import Designator
 from robot_smach_states.util.designators.checks import check_resolve_type
 
-__author__ = 'loy'
+from robot_smach_states.util.geometry_helpers import poseMsgToKdlFrame, pointMsgToKdlVector
+import robot_smach_states.util.geometry_helpers as geom
 
+import robot_skills.util.msg_constructors as msg_constructors
+
+__author__ = 'loy'
 
 class PointStampedOfEntityDesignator(Designator):
 
@@ -309,7 +315,7 @@ class EmptySpotDesignator(Designator):
 
         if any(open_POIs):
             best_poi = min(open_POIs, key=distance_to_poi_area)
-            placement = geom.PoseStamped(pointstamped=best_poi)
+            placement = msg_constructors.PoseStamped(pointstamped=best_poi)
             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
@@ -375,7 +381,7 @@ class EmptySpotDesignator(Designator):
                     ys = ch[i].y() + d/length*dy
 
                     ''' Shift point inwards and fill message'''
-                    ps = geom.PointStamped()
+                    ps = gm.PointStamped()
                     ps.header.frame_id = "/map"
                     ps.point.x = xs - dy/length * self._edge_distance
                     ps.point.y = ys + dx/length * self._edge_distance

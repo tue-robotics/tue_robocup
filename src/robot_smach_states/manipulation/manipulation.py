@@ -337,7 +337,7 @@ class HandoverToHuman(smach.StateMachine):
                         Say(robot, [ "Watch out, I will open my gripper in one second. Please take it from me."]),
                         transitions={   'spoken'    :'OPEN_GRIPPER_HANDOVER'})
 
-            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.OPEN, timeout=0.0),
+            smach.StateMachine.add('OPEN_GRIPPER_HANDOVER', SetGripper(robot, locked_arm, gripperstate=ArmState.OPEN, timeout=2.0),
                         transitions={'succeeded'    :   'SAY_CLOSE_NOW_GRIPPER',
                                      'failed'       :   'SAY_CLOSE_NOW_GRIPPER'})
 
