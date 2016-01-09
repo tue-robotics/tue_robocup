@@ -11,11 +11,16 @@ def gv_safe(string):
 
 class State(object):
     def __init__(self, state_obj, parent):
-        self.state_obj
+        self.state_obj = state_obj
         self.parent = parent
 
     def add_to_graph(self, graph):
-        graph.node(self.state_obj)
+        graph.node(str(self.get_name()))
+
+    def get_name(self):
+        names = {v:k for k,v  in self.parent.get_children().iteritems()}
+        name = names[self.state_obj]
+        return name
 
 class Transition(object):
     def __init__(self, from_, to, label):
@@ -24,7 +29,7 @@ class Transition(object):
         self.label = label
 
     def add_to_graph(self, graph):
-        graph.edge(self.from_, self.to, label=self.label)
+        graph.edge(str(self.from_.get_name()), str(self.to.get_name()), label=self.label)
 
 class ContainerOutcome(object):
     def __init__(self, name, parent):
@@ -32,7 +37,10 @@ class ContainerOutcome(object):
         self.parent = parent
 
     def add_to_graph(self, graph):
-        graph.node(self.state_obj)
+        graph.node(str(self.name))
+
+    def get_name(self):
+        return self.name
 
 class StateMachine(State):
     def __init__(self, sm_obj, parent):
@@ -40,19 +48,36 @@ class StateMachine(State):
         self.parent = parent
 
     def add_to_graph(self, graph):
-        machine = Digraph(self.name)
+        subgraphname = "ROOT"
+        if self.parent:
+            names = {v:k for k,v  in self.parent.get_children().iteritems()}
+            subgraphname = names[self.sm_obj]
+        machine = Digraph(subgraphname)
 
-        for outcome in self._outcomes:
-            ContainerOutcome(outcome, self).add_to_graph(machine)
+        for outcome in self.sm_obj._outcomes:
+            outcomeviz = ContainerOutcome(outcome, self)
+            outcomeviz.add_to_graph(machine)
 
-        for child in self.children:
-            for transition, to_name in self._transitions[child].iteritems():
-                to = machine.get_children()[to_name]
-                Transition(child, to, transition).add_to_graph(machine)
-            child.add_to_graph(machine)
+        for childname, child in self.sm_obj.get_children().iteritems():
+            childviz = State(child, self.sm_obj)
+            for transition, to_name in self.sm_obj._transitions[childname].iteritems():
+                if not to_name in self.sm_obj._outcomes:
+                    to = self.sm_obj.get_children()[to_name]
+                    to_viz = State(to, self.sm_obj)
+                else:
+                    to_viz = ContainerOutcome(to_name, self)
+
+                transitionviz = Transition(childviz, to_viz, transition)
+                transitionviz.add_to_graph(machine)
+            childviz.add_to_graph(machine)
 
         machine.body.append('color=blue')
         graph.subgraph(machine)
+
+    def get_name(self):
+        names = {v:k for k,v  in self.parent.get_children().iteritems()}
+        name = names[self.sm_obj]
+        return name
 
 class Iterator(State):
     def __init__(self, iterator_obj, parent):
@@ -60,10 +85,8 @@ class Iterator(State):
         self.parent = parent
 
     def add_to_graph(self, graph):
-        machine = Digraph(self.name)
-        for child in self.children:
-            child.add_to_graph(machine)
-
+        machine = Digraph()
+        machine.node(gv_safe(self.iterator_obj))
         graph.subgraph(machine)
 
 
@@ -111,8 +134,10 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
-    # import ipdb; ipdb.set_trace()
-    _visualize_machine("ROOT", statemachine, dot)
+    import ipdb; ipdb.set_trace()
+    viz  = StateMachine(statemachine, None)
+    viz.add_to_graph(dot)
+    #_visualize_machine("ROOT", statemachine, dot)
 
     # dot.subgraph(make_legend())
 
