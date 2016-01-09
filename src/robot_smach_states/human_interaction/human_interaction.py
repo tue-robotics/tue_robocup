@@ -277,7 +277,9 @@ class AskContinue(smach.StateMachine):
         with self:
             smach.StateMachine.add('SAY',
                                     Say(self.robot,
-                                        random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])),
+                                        random.choice([ "I will continue my task if you say continue.",
+                                                        "Please say continue so that I can continue my task.",
+                                                        "I will wait until you say continue."])),
                                     transitions={'spoken':'HEAR'})
 
             smach.StateMachine.add('HEAR',
@@ -461,7 +463,7 @@ class LookAtPersonInFront(smach.State):
             # extract information from data
             faces_front = None
             try:
-                # import ipdb; ipdb.set_trace()
+                import ipdb; ipdb.set_trace()
                 # get information on the first face found (cant guarantee its the closest in case there are many)
                 faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
             except KeyError, ke:
@@ -472,6 +474,9 @@ class LookAtPersonInFront(smach.State):
                 pass
             except TypeError, ke:
                 print "[LookAtPersonInFront] " + "TypeError faces_front: " + str(ke)
+                pass
+            except AttributeError, ke:
+                print "[LookAtPersonInFront]     " + "AttributeError faces_front: " + str(ke)
                 pass
 
             if faces_front:
@@ -488,7 +493,7 @@ class LookAtPersonInFront(smach.State):
         if foundFace == True:
             return 'succeded'
         else:
-            print "[LookAtPersonInFront] " + "Could not find anyone in front of the robot"
+            print "[LookAtPersonInFront] " + "Could not find a face in front of the robot"
             return 'failed'
 
 
@@ -528,70 +533,24 @@ class WaitForPerson(smach.State):
 
 def scanForHuman(robot, background_padding = 0.3):
     """
-        Scan for a human in front of the robot
+        Scan for a human in the robots field of view. Return human entities
     """
 
-    '''
+    human_entities = []
     entity_list = []
 
-    # Enable kinect segmentation plugin (only one image frame)
-    # TODO: AttributeError: ED instance has no attribute 'segment_kinect'
-    # entities_found = robot.ed.segment_kinect(max_sensor_range=3)
-    entities_found = []
-
-    print "[scanForHuman] " + "Found {0} entities".format(len(entities_found))
-
-    # Get all entities that are returned by the segmentation
-    id_list = []                
-    for entity_id in entities_found:
-        # get the entity from the ID
-        entity = robot.ed.get_entity(entity_id)
-
-        if entity:
-            id_list.append(entity.id)
-
-    # Try to classify the entities
-    # entity_types = robot.ed.classify(ids=id_list, types=['human'])
-    entity_types = robot.ed.classify(ids=id_list)
-
-    # Check all entities that were flagged to see if they have received a 'type' it_label
-    for i in range(0, len(id_list)):
-        e_id = id_list[i]
-        e_type = entity_types[i]
-
-        if e_type:
-            # If the type is human, add it to the list
-            if e_type == "human":
-                entity = robot.ed.get_entity(e_id)
-                # entity.data
-
-                print "[LookAtPersonInFront] " + "Entity with type " + e_type + " added to the list (id " + e_id + ")"
-                # robot.ed.update_entity(id=e_id, flags=[{"add": "locked"}])
-
-                entity_list = entity_list + [entity]
-            else:
-                # if the entity type is not human, ignore it
-                print "[LookAtPersonInFront] " + "Entity with type '" + e_type + "' ignored"
-
-
-    # import ipdb; ipdb.set_trace()
-    '''
-
-    human_ids = []
-    entity_list = []
-
-    res_segm = robot.ed.update_kinect(background_padding=background_padding)
+    res_segm = robot.ed.update_kinect(background_padding = background_padding)
     entity_list = res_segm.new_ids + res_segm.updated_ids
 
     # Try to determine the types of the entities just segmented
     res_classify = robot.ed.classify(entity_list)
 
     # Get the ids of all humans
-    human_ids = [e.id for e in res_classify if e.type == "human"]
+    human_entities = [e for e in res_classify if e.type == "human"]
 
-    print "[scanForHuman] " + "Found {0} person(s) ({1} entities)".format(len(human_ids), len(entity_list))
+    print "[scanForHuman] " + "Found {0} person(s) ({1} entities)".format(len(human_entities), len(entity_list))
 
-    return human_ids
+    return human_entities
 
 
 ##########################################################################################################################################

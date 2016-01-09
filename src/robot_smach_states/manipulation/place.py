@@ -28,7 +28,7 @@ class Put(State):
     def run(self, robot, item_to_place, placement_pose, arm):
         if not item_to_place:
             rospy.logerr("Could not resolve item_to_place")
-            return "failed"
+            #return "failed"
         if not placement_pose:
             rospy.logerr("Could not resolve placement_pose")
             return "failed"
@@ -76,7 +76,7 @@ class Put(State):
 
         arm.occupied_by = None
 
-	robot.base.force_drive(-0.125, 0, 0, 3)
+	robot.base.force_drive(-0.125, 0, 0, 1)
 
         x = dx
         while x > 0.3:
