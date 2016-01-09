@@ -130,7 +130,7 @@ class WaitPersonContainer(smach.StateMachine):
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#                             LEARN_PERSON_CONTAINER
+#                             LEARN_NAME_CONTAINER
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 class LearnNameContainer(smach.StateMachine):
@@ -222,12 +222,14 @@ class LearnFaceContainer(smach.StateMachine):
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
                                     states_interaction.LookAtPersonInFront(robot, lookDown=True),
                                     transitions={   'succeded':'LEARN_PERSON',
-                                                    'failed':'SAY_LEARN_FACE_FAILED'})
+                                                    # 'failed':'SAY_LEARN_FACE_FAILED'})
+                                                    'failed':'LEARN_PERSON'})
 
             smach.StateMachine.add( 'LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator = personNameDesLocal),
                                     transitions={   'succeded_learning':'CANCEL_HEAD_GOALS_SUCCESS',
-                                                    'failed_learning':'SAY_LEARN_FACE_FAILED'})
+                                                    'failed_learning':'SAY_LEARN_FACE_FAILED',
+                                                    'timeout_learning':'SAY_LEARN_FACE_FAILED'})
 
             smach.StateMachine.add( 'SAY_LEARN_FACE_FAILED',
                                     states.Say(robot,"I could not learn your face for some reason.", block=False),
