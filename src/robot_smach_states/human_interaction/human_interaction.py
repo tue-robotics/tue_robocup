@@ -580,7 +580,7 @@ def scanForHuman(robot, background_padding = 0.3):
     human_ids = []
     entity_list = []
 
-    res_segm = robot.ed.update_kinect(background_padding)
+    res_segm = robot.ed.update_kinect(background_padding=background_padding)
     entity_list = res_segm.new_ids + res_segm.updated_ids
 
     # Try to determine the types of the entities just segmented
@@ -589,7 +589,7 @@ def scanForHuman(robot, background_padding = 0.3):
     # Get the ids of all humans
     human_ids = [e.id for e in res_classify if e.type == "human"]
 
-    print "[scanForHuman] " + "Found {0} person(s) out of {1} entities".format(len(human_ids), len(entity_list))
+    print "[scanForHuman] " + "Found {0} person(s) ({1} entities)".format(len(human_ids), len(entity_list))
 
     return human_ids
 
