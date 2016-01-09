@@ -515,7 +515,7 @@ class WaitForPerson(smach.State):
 
             desgnResult = scanForHuman(self.robot)
             if desgnResult:
-                print "[LookAtPersonInFront] " + "Found a human!"
+                print "[WaitForPerson] " + "Found a human!"
                 return 'succeded'
 
             counter += 1
@@ -526,39 +526,41 @@ class WaitForPerson(smach.State):
 ##########################################################################################################################################
 
 
-def scanForHuman(robot):
+def scanForHuman(robot, background_padding = 0.3):
     """
         Scan for a human in front of the robot
     """
+
+    '''
     entity_list = []
 
-    ''' Enable kinect segmentation plugin (only one image frame) '''
+    # Enable kinect segmentation plugin (only one image frame)
     # TODO: AttributeError: ED instance has no attribute 'segment_kinect'
     # entities_found = robot.ed.segment_kinect(max_sensor_range=3)
     entities_found = []
 
-    print "[LookAtPersonInFront] " + "Found {0} entities".format(len(entities_found))
+    print "[scanForHuman] " + "Found {0} entities".format(len(entities_found))
 
-    ''' Get all entities that are returned by the segmentation '''
+    # Get all entities that are returned by the segmentation
     id_list = []                
     for entity_id in entities_found:
-        ''' get the entity from the ID '''
+        # get the entity from the ID
         entity = robot.ed.get_entity(entity_id)
 
         if entity:
             id_list.append(entity.id)
 
-    ''' Try to classify the entities '''
+    # Try to classify the entities
     # entity_types = robot.ed.classify(ids=id_list, types=['human'])
     entity_types = robot.ed.classify(ids=id_list)
 
-    ''' Check all entities that were flagged to see if they have received a 'type' it_label'''
+    # Check all entities that were flagged to see if they have received a 'type' it_label
     for i in range(0, len(id_list)):
         e_id = id_list[i]
         e_type = entity_types[i]
 
         if e_type:
-            ''' If the type is human, add it to the list '''
+            # If the type is human, add it to the list
             if e_type == "human":
                 entity = robot.ed.get_entity(e_id)
                 # entity.data
@@ -568,13 +570,28 @@ def scanForHuman(robot):
 
                 entity_list = entity_list + [entity]
             else:
-                ''' if the entity type is not human, ignore it '''
+                # if the entity type is not human, ignore it
                 print "[LookAtPersonInFront] " + "Entity with type '" + e_type + "' ignored"
 
 
     # import ipdb; ipdb.set_trace()
+    '''
 
-    return entity_list
+    human_ids = []
+    entity_list = []
+
+    res_segm = robot.ed.update_kinect(background_padding)
+    entity_list = res_segm.new_ids + res_segm.updated_ids
+
+    # Try to determine the types of the entities just segmented
+    res_classify = robot.ed.classify(entity_list)
+
+    # Get the ids of all humans
+    human_ids = [e.id for e in res_classify if e.type == "human"]
+
+    print "[scanForHuman] " + "Found {0} person(s) out of {1} entities".format(len(human_ids), len(entity_list))
+
+    return human_ids
 
 
 ##########################################################################################################################################
