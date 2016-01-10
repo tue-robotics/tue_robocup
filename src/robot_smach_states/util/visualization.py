@@ -55,6 +55,7 @@ class StateMachineViz(StateViz):
 
     def add_to_graph(self, graph):
         machine = Digraph(self.get_name())
+        machine.body.append('color=blue')
 
         for outcome in self.smach_obj._outcomes:
             outcomeviz = ContainerOutcomeViz(outcome, self)
@@ -65,6 +66,9 @@ class StateMachineViz(StateViz):
             for transition, to_name in self.smach_obj._transitions[childname].iteritems():
                 if not to_name in self.smach_obj._outcomes:
                     # if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
+                    if to_name == None:
+                        print "ERROR: Transition {} of {} to None".format(transition, childname)
+                        continue
                     to = self.smach_obj.get_children()[to_name]
 
                     if isinstance(to, smach.Iterator):
@@ -81,8 +85,6 @@ class StateMachineViz(StateViz):
                 transitionviz = TransitionViz(childviz, to_viz, transition)
                 transitionviz.add_to_graph(machine)
             childviz.add_to_graph(machine)
-
-        machine.body.append('color=blue')
         graph.subgraph(machine)
 
     def get_name(self):
@@ -102,9 +104,36 @@ class IteratorViz(StateViz):
 
     def add_to_graph(self, graph):
         machine = Digraph()
-        childviz = StateMachineViz(self.smach_obj._state, self)
-        # import ipdb; ipdb.set_trace()
-        childviz.add_to_graph(machine)
+        machine.body.append('color=red')
+
+        import ipdb; ipdb.set_trace()
+        for outcome in self.smach_obj._outcomes:
+            outcomeviz = ContainerOutcomeViz(outcome, self)
+            outcomeviz.add_to_graph(machine)
+
+        for childname, child in self.smach_obj.get_children().iteritems():
+            if isinstance(child, smach.Iterator):       childviz = IteratorViz(child, self)
+            elif isinstance(child, smach.StateMachine): childviz = StateMachineViz(child, self)
+            else:                                       childviz = StateViz(child, self)
+
+            for transition, from_, to_name in self.smach_obj.get_internal_edges():
+                if not to_name in self.smach_obj._outcomes:
+                    to = self.smach_obj.get_children()[to_name]
+
+                    if isinstance(to, smach.Iterator):
+                        to_viz = IteratorViz(to, self)
+                    elif isinstance(to, smach.StateMachine):
+                        to_viz = StateMachineViz(to, self)
+                    else:
+                        to_viz = StateViz(to, self)
+                else:
+                    to_viz = ContainerOutcomeViz(to_name, self)
+
+                to_viz.add_to_graph(machine)
+
+                transitionviz = TransitionViz(childviz, to_viz, transition)
+                transitionviz.add_to_graph(machine)
+            childviz.add_to_graph(machine)
         graph.subgraph(machine)
 
 visualization_classes = [type(None), StateViz, StateMachineViz, TransitionViz, ContainerOutcomeViz, IteratorViz]
