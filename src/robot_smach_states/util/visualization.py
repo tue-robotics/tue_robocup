@@ -10,16 +10,19 @@ def gv_safe(string):
     return str(string).replace("=", "_")
 
 class StateViz(object):
-    def __init__(self, state_obj, parent):
-        self.state_obj = state_obj
+    def __init__(self, smach_obj, parent):
+        assert type(smach_obj) not in visualization_classes
+        assert type(parent) in visualization_classes
+
+        self.smach_obj = smach_obj
         self.parent = parent
 
     def add_to_graph(self, graph):
         graph.node(str(self.get_name()))
 
     def get_name(self):
-        names = {v:k for k,v  in self.parent.get_children().iteritems()}
-        name = names[self.state_obj]
+        names = {v:k for k,v  in self.parent.smach_obj.get_children().iteritems()}
+        name = names[self.smach_obj]
         return name
 
 class TransitionViz(object):
@@ -33,6 +36,7 @@ class TransitionViz(object):
 
 class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
+        assert type(parent) in visualization_classes
         self.name = name
         self.parent = parent
 
@@ -43,30 +47,32 @@ class ContainerOutcomeViz(object):
         return self.name
 
 class StateMachineViz(StateViz):
-    def __init__(self, sm_obj, parent):
-        self.sm_obj = sm_obj
+    def __init__(self, smach_obj, parent):
+        assert type(smach_obj) not in visualization_classes
+        assert type(parent) in visualization_classes
+        self.smach_obj = smach_obj
         self.parent = parent
 
     def add_to_graph(self, graph):
         machine = Digraph(self.get_name())
 
-        for outcome in self.sm_obj._outcomes:
+        for outcome in self.smach_obj._outcomes:
             outcomeviz = ContainerOutcomeViz(outcome, self)
             outcomeviz.add_to_graph(machine)
 
-        for childname, child in self.sm_obj.get_children().iteritems():
-            childviz = StateViz(child, self.sm_obj)
-            for transition, to_name in self.sm_obj._transitions[childname].iteritems():
-                if not to_name in self.sm_obj._outcomes:
-                    if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
-                    to = self.sm_obj.get_children()[to_name]
+        for childname, child in self.smach_obj.get_children().iteritems():
+            childviz = StateViz(child, self)
+            for transition, to_name in self.smach_obj._transitions[childname].iteritems():
+                if not to_name in self.smach_obj._outcomes:
+                    # if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
+                    to = self.smach_obj.get_children()[to_name]
 
                     if isinstance(to, smach.Iterator):
-                        to_viz = IteratorViz(to, self.sm_obj)
+                        to_viz = IteratorViz(to, self)
                     elif isinstance(to, smach.StateMachine):
-                        to_viz = StateMachineViz(to, self.sm_obj)
+                        to_viz = StateMachineViz(to, self)
                     else:
-                        to_viz = StateViz(to, self.sm_obj)
+                        to_viz = StateViz(to, self)
                 else:
                     to_viz = ContainerOutcomeViz(to_name, self)
 
@@ -81,29 +87,27 @@ class StateMachineViz(StateViz):
 
     def get_name(self):
         try:
-            names = {v:k for k,v  in self.parent.get_children().iteritems()}
-            name = names[self.sm_obj]
+            names = {v:k for k,v  in self.parent.smach_obj.get_children().iteritems()}
+            name = names[self.smach_obj]
             return name
         except AttributeError: #TODO: This happens when the parent is an Iterator, Instead a child inferring its name, instead its parent for its name
             return "CHILD"
 
 class IteratorViz(StateViz):
-    def __init__(self, iterator_obj, parent):
-        self.iterator_obj = iterator_obj
+    def __init__(self, smach_obj, parent):
+        assert type(smach_obj) not in visualization_classes
+        assert type(parent) in visualization_classes
+        self.smach_obj = smach_obj
         self.parent = parent
 
     def add_to_graph(self, graph):
         machine = Digraph()
-        childviz = StateMachineViz(self.iterator_obj._state, self)
-        import ipdb; ipdb.set_trace()
+        childviz = StateMachineViz(self.smach_obj._state, self)
+        # import ipdb; ipdb.set_trace()
         childviz.add_to_graph(machine)
         graph.subgraph(machine)
 
-    def get_name(self):
-        names = {v:k for k,v  in self.parent.get_children().iteritems()}
-        name = names[self.iterator_obj]
-        return name
-
+visualization_classes = [type(None), StateViz, StateMachineViz, TransitionViz, ContainerOutcomeViz, IteratorViz]
 
 def flatten(tree, parentname=None, sep="."):
     flat = []
@@ -149,6 +153,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
+    import ipdb; ipdb.set_trace()
     viz  = StateMachineViz(statemachine, None)
     viz.add_to_graph(dot)
     #_visualize_machine("ROOT", statemachine, dot)
