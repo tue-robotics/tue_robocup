@@ -9,7 +9,7 @@ from graphviz import Digraph
 def gv_safe(string):
     return str(string).replace("=", "_")
 
-class State(object):
+class StateViz(object):
     def __init__(self, state_obj, parent):
         self.state_obj = state_obj
         self.parent = parent
@@ -22,7 +22,7 @@ class State(object):
         name = names[self.state_obj]
         return name
 
-class Transition(object):
+class TransitionViz(object):
     def __init__(self, from_, to, label):
         self.from_ = from_
         self.to = to
@@ -31,7 +31,7 @@ class Transition(object):
     def add_to_graph(self, graph):
         graph.edge(str(self.from_.get_name()), str(self.to.get_name()), label=self.label)
 
-class ContainerOutcome(object):
+class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
         self.name = name
         self.parent = parent
@@ -42,38 +42,37 @@ class ContainerOutcome(object):
     def get_name(self):
         return self.name
 
-class StateMachine(State):
+class StateMachineViz(StateViz):
     def __init__(self, sm_obj, parent):
         self.sm_obj = sm_obj
         self.parent = parent
 
     def add_to_graph(self, graph):
-        subgraphname = "ROOT"
         machine = Digraph(self.get_name())
 
         for outcome in self.sm_obj._outcomes:
-            outcomeviz = ContainerOutcome(outcome, self)
+            outcomeviz = ContainerOutcomeViz(outcome, self)
             outcomeviz.add_to_graph(machine)
 
         for childname, child in self.sm_obj.get_children().iteritems():
-            childviz = State(child, self.sm_obj)
+            childviz = StateViz(child, self.sm_obj)
             for transition, to_name in self.sm_obj._transitions[childname].iteritems():
                 if not to_name in self.sm_obj._outcomes:
                     if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
                     to = self.sm_obj.get_children()[to_name]
 
                     if isinstance(to, smach.Iterator):
-                        to_viz = Iterator(to, self.sm_obj)
+                        to_viz = IteratorViz(to, self.sm_obj)
                     elif isinstance(to, smach.StateMachine):
-                        to_viz = StateMachine(to, self.sm_obj)
+                        to_viz = StateMachineViz(to, self.sm_obj)
                     else:
-                        to_viz = State(to, self.sm_obj)
+                        to_viz = StateViz(to, self.sm_obj)
                 else:
-                    to_viz = ContainerOutcome(to_name, self)
+                    to_viz = ContainerOutcomeViz(to_name, self)
 
                 to_viz.add_to_graph(machine)
 
-                transitionviz = Transition(childviz, to_viz, transition)
+                transitionviz = TransitionViz(childviz, to_viz, transition)
                 transitionviz.add_to_graph(machine)
             childviz.add_to_graph(machine)
 
@@ -88,14 +87,14 @@ class StateMachine(State):
         except AttributeError: #TODO: This happens when the parent is an Iterator, Instead a child inferring its name, instead its parent for its name
             return "CHILD"
 
-class Iterator(State):
+class IteratorViz(StateViz):
     def __init__(self, iterator_obj, parent):
         self.iterator_obj = iterator_obj
         self.parent = parent
 
     def add_to_graph(self, graph):
         machine = Digraph()
-        childviz = StateMachine(self.iterator_obj._state, self)
+        childviz = StateMachineViz(self.iterator_obj._state, self)
         import ipdb; ipdb.set_trace()
         childviz.add_to_graph(machine)
         graph.subgraph(machine)
@@ -150,7 +149,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
-    viz  = StateMachine(statemachine, None)
+    viz  = StateMachineViz(statemachine, None)
     viz.add_to_graph(dot)
     #_visualize_machine("ROOT", statemachine, dot)
 
