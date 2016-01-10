@@ -18,12 +18,15 @@ class StateViz(object):
         self.parent = parent
 
     def add_to_graph(self, graph):
-        graph.node(str(self.get_name()))
+        graph.node(self.get_node_identifier(), label=self.get_name())
 
     def get_name(self):
         names = {v:k for k,v  in self.parent.smach_obj.get_children().iteritems()}
         name = names[self.smach_obj]
         return name
+
+    def get_node_identifier(self):
+        return "{}".format(gv_safe(self))
 
 class TransitionViz(object):
     def __init__(self, from_, to, label):
@@ -32,7 +35,7 @@ class TransitionViz(object):
         self.label = label
 
     def add_to_graph(self, graph):
-        graph.edge(str(self.from_.get_name()), str(self.to.get_name()), label=self.label)
+        graph.edge(str(self.from_.get_node_identifier()), str(self.to.get_node_identifier()), label=self.label)
 
 class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
@@ -45,6 +48,9 @@ class ContainerOutcomeViz(object):
 
     def get_name(self):
         return self.name
+
+    def get_node_identifier(self):
+        return "{}".format(gv_safe(self))
 
 class StateMachineViz(StateViz):
     def __init__(self, smach_obj, parent):
