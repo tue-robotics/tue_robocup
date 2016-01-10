@@ -35,11 +35,14 @@ class TransitionViz(object):
         self.label = label
 
     def add_to_graph(self, graph):
-        # self.from_.add_to_graph(graph)
-        # self.to.add_to_graph(graph)
+
+        to_identifier = self.to.get_node_identifier()
+        if isinstance(self.to, StateMachineViz):
+            to_identifier = self.to.make_childviz(self.to.smach_obj.get_children()[
+                self.to.smach_obj._initial_state_label]).get_node_identifier()
 
         graph.edge(self.from_.get_node_identifier(),
-                   self.to.get_node_identifier(),
+                   to_identifier,
                    label=self.label)
 
 class ContainerOutcomeViz(object):
