@@ -29,7 +29,7 @@ class NavigateToWaypoint(NavigateTo):
         e = self.waypoint_designator.resolve()
 
         if not e:
-            rospy.logerr("No such entity")
+            rospy.logerr("NavigateToWaypoint::generateConstraint: No entity could be resolved from designator '%s'" % self.waypoint_designator)
             return None
 
         try:

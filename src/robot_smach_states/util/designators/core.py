@@ -62,11 +62,16 @@ class Designator(object):
     resolve_type = property(_get_resolve_type)
     name = property(_get_name)
 
-    def __repr__(self):
-        return "Designator(" \
-                           "resolve_type={self.resolve_type}, " \
-                           "name={self._name}" \
-               ")".format(self=self)
+    def __str__(self):
+        excludes = ["current", "instances", "parse", "resolve"]
+        attrs = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("_") and attr not in excludes]
+
+        s = "\n\nDesignator("
+        for attr in attrs:
+            s += "\n  %s = %s" % (attr, str(getattr(self, attr)))
+        s += ")\n\n"
+
+        return s
 
     def lockable(self):
         """Designators can be lockable. This means their value does not change between calls to .lock and .unlock().
@@ -156,7 +161,7 @@ class VariableDesignator(Designator):
 
 
 class VariableWriter(object):
-    """When writing to a VariableDesignator you must use a writer, 
+    """When writing to a VariableDesignator you must use a writer,
         to make it explicit who changes designators so you can directly spot the changer.
     This way, the dataflow can be more accurately visualized and understood.
 
@@ -191,7 +196,7 @@ class VariableWriter(object):
             self.variable_designator._set_current_protected(value)
         else:
             raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
-                self.variable_designator, 
+                self.variable_designator,
                 self.variable_designator.resolve_type))
 
     def _set_current(self, value):

@@ -13,7 +13,7 @@ import robot_skills.util.msg_constructors as gm
 from smach_ros import SimpleActionState
 from ed_perception.msg import FaceLearningGoal, FaceLearningResult #
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-
+import time
 
 # Say: Immediate say
 # Hear: Immediate hear
@@ -277,7 +277,9 @@ class AskContinue(smach.StateMachine):
         with self:
             smach.StateMachine.add('SAY',
                                     Say(self.robot,
-                                        random.choice(["I will continue my task if you say continue.","Please say continue so that I can continue my task.","I will wait until you say continue."])),
+                                        random.choice([ "I will continue my task if you say continue.",
+                                                        "Please say continue so that I can continue my task.",
+                                                        "I will wait until you say continue."])),
                                     transitions={'spoken':'HEAR'})
 
             smach.StateMachine.add('HEAR',
@@ -302,7 +304,7 @@ class WaitForPersonInFront(WaitForDesignator):
 
 ##########################################################################################################################################
 
-
+'''
 class NameToUserData(WaitForDesignator):
     """
     Pass the received name into userdata. By default use 'person_name', if its empty use a designator
@@ -334,80 +336,42 @@ class NameToUserData(WaitForDesignator):
 
         # import ipdb; ipdb.set_trace()
         return 'done'
-
+'''
 
 ##########################################################################################################################################
 
 
-class LearnPerson(smach.StateMachine):
+class LearnPerson(smach.State):
     """
-    State that provides an interface to learn a person's face through actionlib call
-
-    Keyword arguments:
-    person_name -- name of the person to be learned
-
-    tutorial for SimpleActionState here http://wiki.ros.org/smach/Tutorials/SimpleActionState
+        
     """
-    def __init__(self, robot, person_name = "", name_designator = None):
-        smach.StateMachine.__init__(self,
-                                    outcomes=['succeded_learning', 'failed_learning'])
+    def __init__(self, robot, person_name = "", name_designator = None, n_samples = 10):
+        smach.State.__init__(self, outcomes=['succeded_learning', 'failed_learning', 'timeout_learning'])
+        
         self.robot = robot
         self.person_name = person_name
         self.name_designator = name_designator
-        self.service_name = "/" + robot.robot_name + "/ed/face_recognition/learn_face"
+        self.n_samples = n_samples
 
-        with self:
+    def execute(self, userdata=None):
 
-            # Callback when a result is received
-            def get_result_cb(userdata, status, result):
-                print "Received result from the learning service"
+        # if person_name is empty then try to get it from designator
+        if not self.person_name:
+            person_name = self.name_designator.resolve()
 
-                # test the result and parse the message
-                if status == actionlib.GoalStatus.SUCCEEDED:
-                    if result.result_info == "Learning complete":
-                        print "Face learning complete! result: " + result.result_info
-                        return 'succeeded'
-                    else:
-                        return 'aborted'
-                else:
-                    print "Face learning aborted! result: " + result.result_info
-                    return 'aborted'
+            # if there is still no name, quit the learning
+            if not person_name:
+                print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
+                return
 
-            # --------------------------------------------------------------------------------
+        samples_completed = LearnPersonProcedure(self.robot, person_name = person_name, n_samples = self.n_samples)
 
-            # Callback when a result is sent
-            def send_goal_cb(userdata, goal):
-                # import ipdb; ipdb.set_trace()
-
-                learn_goal = FaceLearningGoal()
-                learn_goal.person_name = userdata.person_name_goal
-
-                print "Goal sent to the learning service (" + self.service_name + "), with name '" + learn_goal.person_name + "'"
-
-                return learn_goal
-
-            # --------------------------------------------------------------------------------
-
-            smach.StateMachine.add( 'NAME_TO_USERDATA',
-                                    NameToUserData(robot, person_name = self.person_name, name_designator = self.name_designator),
-                                    remapping={     'personName_out':'personName_userdata'},
-                                    transitions={   'done': 'LEARN_PERSON'})
-
-            # Create Simple Action ClientS
-            smach.StateMachine.add( 'LEARN_PERSON',
-                                    SimpleActionState(  self.service_name,
-                                                        ed_perception.msg.FaceLearningAction,
-                                                        result_cb = get_result_cb,
-                                                        goal_cb = send_goal_cb,            # create a goal inside the callback
-                                                        input_keys=['person_name_goal'],
-                                                        output_keys=['result_info_out'],
-                                                        server_wait_timeout=rospy.Duration(5.0)),
-                                                        # goal_slots = ['person_name_goal'],# or create it here directly
-                                    transitions={   'succeeded':'succeded_learning',
-                                                    'aborted': 'failed_learning',
-                                                    'preempted': 'failed_learning'},
-                                    remapping={     'person_name_goal':'personName_userdata'})
-
+        if samples_completed == 0:
+            return 'failed_learning'
+        if samples_completed < self.n_samples:
+            return 'timeout_learning'
+        else:
+            return 'succeded_learning'
 
 
 ##########################################################################################################################################
@@ -461,7 +425,7 @@ class LookAtPersonInFront(smach.State):
             # extract information from data
             faces_front = None
             try:
-                # import ipdb; ipdb.set_trace()
+                #import ipdb; ipdb.set_trace()
                 # get information on the first face found (cant guarantee its the closest in case there are many)
                 faces_front = desgnResult[0].data["perception_result"]["face_detector"]["faces_front"][0]
             except KeyError, ke:
@@ -472,6 +436,9 @@ class LookAtPersonInFront(smach.State):
                 pass
             except TypeError, ke:
                 print "[LookAtPersonInFront] " + "TypeError faces_front: " + str(ke)
+                pass
+            except AttributeError, ke:
+                print "[LookAtPersonInFront]     " + "AttributeError faces_front: " + str(ke)
                 pass
 
             if faces_front:
@@ -488,7 +455,7 @@ class LookAtPersonInFront(smach.State):
         if foundFace == True:
             return 'succeded'
         else:
-            print "[LookAtPersonInFront] " + "Could not find anyone in front of the robot"
+            print "[LookAtPersonInFront] " + "Could not find a face in front of the robot"
             return 'failed'
 
 
@@ -515,7 +482,7 @@ class WaitForPerson(smach.State):
 
             desgnResult = scanForHuman(self.robot)
             if desgnResult:
-                print "[LookAtPersonInFront] " + "Found a human!"
+                print "[WaitForPerson] " + "Found a human!"
                 return 'succeded'
 
             counter += 1
@@ -526,55 +493,78 @@ class WaitForPerson(smach.State):
 ##########################################################################################################################################
 
 
-def scanForHuman(robot):
+def scanForHuman(robot, background_padding = 0.3):
     """
-        Scan for a human in front of the robot
+        Scan for a human in the robots field of view. Return human entities
     """
+
+    human_entities = []
     entity_list = []
 
-    ''' Enable kinect segmentation plugin (only one image frame) '''
-    # TODO: AttributeError: ED instance has no attribute 'segment_kinect'
-    # entities_found = robot.ed.segment_kinect(max_sensor_range=3)
-    entities_found = []
+    res_segm = robot.ed.update_kinect(background_padding = background_padding)
+    entity_list = res_segm.new_ids + res_segm.updated_ids
 
-    print "[LookAtPersonInFront] " + "Found {0} entities".format(len(entities_found))
+    # Try to determine the types of the entities just segmented
+    res_classify = robot.ed.classify(entity_list)
 
-    ''' Get all entities that are returned by the segmentation '''
-    id_list = []                
-    for entity_id in entities_found:
-        ''' get the entity from the ID '''
-        entity = robot.ed.get_entity(entity_id)
+    # Get the ids of all humans
+    human_entities = [e for e in res_classify if e.type == "human"]
 
-        if entity:
-            id_list.append(entity.id)
+    print "[scanForHuman] " + "Found {0} person(s) ({1} entities)".format(len(human_entities), len(entity_list))
 
-    ''' Try to classify the entities '''
-    # entity_types = robot.ed.classify(ids=id_list, types=['human'])
-    entity_types = robot.ed.classify(ids=id_list)
-
-    ''' Check all entities that were flagged to see if they have received a 'type' it_label'''
-    for i in range(0, len(id_list)):
-        e_id = id_list[i]
-        e_type = entity_types[i]
-
-        if e_type:
-            ''' If the type is human, add it to the list '''
-            if e_type == "human":
-                entity = robot.ed.get_entity(e_id)
-                # entity.data
-
-                print "[LookAtPersonInFront] " + "Entity with type " + e_type + " added to the list (id " + e_id + ")"
-                # robot.ed.update_entity(id=e_id, flags=[{"add": "locked"}])
-
-                entity_list = entity_list + [entity]
-            else:
-                ''' if the entity type is not human, ignore it '''
-                print "[LookAtPersonInFront] " + "Entity with type '" + e_type + "' ignored"
+    return human_entities
 
 
-    # import ipdb; ipdb.set_trace()
+##########################################################################################################################################
 
-    return entity_list
+
+def LearnPersonProcedure(robot, person_name = "", n_samples = 10, timeout = 5.0):
+    """
+    Starts the learning process that will save n_samples of the closest person's face.
+    It ends when the number of snapshots is reached or when a timeout occurs
+
+    Returns: number of samples saved. If smaller than what was requested, then a timeout occured
+    """
+
+    # if there is no name, quit the learning
+    if not person_name:
+        rospy.logwarn("No name was provided. Quitting the learning!")
+        return
+
+    count = 0
+    timedout = False
+    while (count < n_samples):
+
+        human_entities = scanForHuman(robot)
+
+        if not human_entities:
+            print ("[LearnPersonProcedure] " + "No person found.")
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                return count
+        else:
+            # reset timer
+            start_time = time.time()
+
+            # select human entity
+            # TODO: sort based on distance
+            human_id = human_entities[0].id
+
+            # trigger learning function
+            robot.ed.learn_person(human_id, person_name)
+            
+            count = count + 1
+
+            if count == n_samples/2:
+                robot.speech.speak("Almost done, keep looking.", block=False)
+
+            print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
+
+    print ("[LearnPersonProcedure] " + "Learn procedure completed!")
+
+    # print robot.ed.classify_person(human_id)
+    return count
 
 
 ##########################################################################################################################################
