@@ -40,11 +40,12 @@ class TransitionViz(object):
 class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
         assert type(parent) in visualization_classes
+        assert isinstance(name, str)
         self.name = name
         self.parent = parent
 
     def add_to_graph(self, graph):
-        graph.node(str(self.name))
+        graph.node(self.get_node_identifier(), label=self.name)
 
     def get_name(self):
         return self.name
@@ -60,7 +61,8 @@ class StateMachineViz(StateViz):
         self.parent = parent
 
     def add_to_graph(self, graph):
-        machine = Digraph(self.get_name())
+        machine = Digraph(self.get_node_identifier())
+        machine.body.append('label = "{}"'.format(self.get_name()))
         machine.body.append('color=blue')
 
         for outcome in self.smach_obj._outcomes:
@@ -94,11 +96,11 @@ class StateMachineViz(StateViz):
         graph.subgraph(machine)
 
     def get_name(self):
-        try:
+        if self.parent:
             names = {v:k for k,v  in self.parent.smach_obj.get_children().iteritems()}
             name = names[self.smach_obj]
             return name
-        except AttributeError: #TODO: This happens when the parent is an Iterator, Instead a child inferring its name, instead its parent for its name
+        else:
             return "CHILD"
 
 class IteratorViz(StateViz):
@@ -112,7 +114,7 @@ class IteratorViz(StateViz):
         machine = Digraph()
         machine.body.append('color=red')
 
-        import ipdb; ipdb.set_trace()
+        #import ipdb; ipdb.set_trace()
         for outcome in self.smach_obj._outcomes:
             outcomeviz = ContainerOutcomeViz(outcome, self)
             outcomeviz.add_to_graph(machine)
@@ -188,7 +190,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     viz  = StateMachineViz(statemachine, None)
     viz.add_to_graph(dot)
     #_visualize_machine("ROOT", statemachine, dot)
@@ -201,8 +203,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
 
     os.remove(statemachine_name + '_statemachine')
 
-
-if __name__ == "__main__":
+def testcase1():
     import smach
 
     sm = smach.StateMachine(outcomes=['Done', 'Aborted'])
@@ -217,4 +218,36 @@ if __name__ == "__main__":
                                 smach.CBState(execute),
                                 transitions={'succeeded':'Done'})
 
-    visualize(sm, "test")
+    visualize(sm, "testcase1")
+
+def testcase2():
+    import smach
+
+    toplevel = smach.StateMachine(outcomes=['Done', 'Aborted'])
+    with toplevel:
+        @smach.cb_interface(outcomes=["succeeded"])
+        def execute(userdata):
+            return "succeeded"
+        smach.StateMachine.add('TEST1',
+                                smach.CBState(execute),
+                                transitions={'succeeded':'SUBLEVEL1'})
+
+        sublevel1 = smach.StateMachine(outcomes=['Finished', 'Failed'])
+        with sublevel1:
+            smach.StateMachine.add('SUBTEST1',
+                                    smach.CBState(execute),
+                                    transitions={'succeeded':'SUBTEST2'})
+            smach.StateMachine.add('SUBTEST2',
+                                    smach.CBState(execute),
+                                    transitions={'succeeded':'Finished'})
+
+        smach.StateMachine.add('SUBLEVEL1',
+                                sublevel1,
+                                transitions={'Finished' :'Done',
+                                             'Failed'   :'Aborted'})
+
+    visualize(toplevel, "testcase2")
+
+if __name__ == "__main__":
+    testcase1()
+    testcase2()
