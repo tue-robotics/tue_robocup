@@ -26,7 +26,7 @@ class StateViz(object):
         return name
 
     def get_node_identifier(self):
-        return "{}".format(gv_safe(self))
+        return "{}_{}".format(self.get_name(), gv_safe(self.smach_obj))
 
 class TransitionViz(object):
     def __init__(self, from_, to, label):
@@ -35,7 +35,12 @@ class TransitionViz(object):
         self.label = label
 
     def add_to_graph(self, graph):
-        graph.edge(str(self.from_.get_node_identifier()), str(self.to.get_node_identifier()), label=self.label)
+        # self.from_.add_to_graph(graph)
+        # self.to.add_to_graph(graph)
+
+        graph.edge(self.from_.get_node_identifier(),
+                   self.to.get_node_identifier(),
+                   label=self.label)
 
 class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
@@ -51,9 +56,19 @@ class ContainerOutcomeViz(object):
         return self.name
 
     def get_node_identifier(self):
-        return "{}".format(gv_safe(self))
+        return "{}_{}".format(gv_safe(self.name), gv_safe(self.parent))
 
-class StateMachineViz(StateViz):
+class ContainerViz(StateViz):
+    def make_childviz(self, child):
+        if isinstance(child, smach.Iterator):
+            childviz = IteratorViz(child, self)
+        elif isinstance(child, smach.StateMachine):
+            childviz = StateMachineViz(child, self)
+        else:
+            childviz = StateViz(child, self)
+        return childviz
+
+class StateMachineViz(ContainerViz):
     def __init__(self, smach_obj, parent):
         assert type(smach_obj) not in visualization_classes
         assert type(parent) in visualization_classes
@@ -70,7 +85,8 @@ class StateMachineViz(StateViz):
             outcomeviz.add_to_graph(machine)
 
         for childname, child in self.smach_obj.get_children().iteritems():
-            childviz = StateViz(child, self)
+            childviz = self.make_childviz(child)
+
             for transition, to_name in self.smach_obj._transitions[childname].iteritems():
                 if not to_name in self.smach_obj._outcomes:
                     # if to_name == "RANGE_ITERATOR": import ipdb; ipdb.set_trace()
@@ -78,13 +94,7 @@ class StateMachineViz(StateViz):
                         print "ERROR: Transition {} of {} to None".format(transition, childname)
                         continue
                     to = self.smach_obj.get_children()[to_name]
-
-                    if isinstance(to, smach.Iterator):
-                        to_viz = IteratorViz(to, self)
-                    elif isinstance(to, smach.StateMachine):
-                        to_viz = StateMachineViz(to, self)
-                    else:
-                        to_viz = StateViz(to, self)
+                    to_viz = self.make_childviz(to)
                 else:
                     to_viz = ContainerOutcomeViz(to_name, self)
 
@@ -103,7 +113,7 @@ class StateMachineViz(StateViz):
         else:
             return "CHILD"
 
-class IteratorViz(StateViz):
+class IteratorViz(ContainerViz):
     def __init__(self, smach_obj, parent):
         assert type(smach_obj) not in visualization_classes
         assert type(parent) in visualization_classes
@@ -120,20 +130,12 @@ class IteratorViz(StateViz):
             outcomeviz.add_to_graph(machine)
 
         for childname, child in self.smach_obj.get_children().iteritems():
-            if isinstance(child, smach.Iterator):       childviz = IteratorViz(child, self)
-            elif isinstance(child, smach.StateMachine): childviz = StateMachineViz(child, self)
-            else:                                       childviz = StateViz(child, self)
+            childviz = self.make_childviz(child)
 
             for transition, from_, to_name in self.smach_obj.get_internal_edges():
                 if not to_name in self.smach_obj._outcomes:
                     to = self.smach_obj.get_children()[to_name]
-
-                    if isinstance(to, smach.Iterator):
-                        to_viz = IteratorViz(to, self)
-                    elif isinstance(to, smach.StateMachine):
-                        to_viz = StateMachineViz(to, self)
-                    else:
-                        to_viz = StateViz(to, self)
+                    to_viz = self.make_childviz(to)
                 else:
                     to_viz = ContainerOutcomeViz(to_name, self)
 
@@ -208,7 +210,7 @@ def testcase2():
                                 transitions={'Finished' :'Done',
                                              'Failed'   :'Aborted'})
 
-    visualize(toplevel, "testcase2")
+    visualize(toplevel, "testcase2", save_dot=True)
 
 if __name__ == "__main__":
     testcase1()
