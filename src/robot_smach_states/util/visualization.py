@@ -83,11 +83,12 @@ class ContainerViz(StateViz):
         return childviz
 
 class StateMachineViz(ContainerViz):
-    def __init__(self, smach_obj, parent):
+    def __init__(self, smach_obj, parent, name="CHILD"):
         assert type(smach_obj) not in visualization_classes
         assert type(parent) in visualization_classes
         self.smach_obj = smach_obj
         self.parent = parent
+        self.name = name
 
     def add_to_graph(self, graph):
         my_subgraph = Digraph(self.get_name())
@@ -135,7 +136,7 @@ class StateMachineViz(ContainerViz):
             name = names[self.smach_obj]
             return name
         else:
-            return "CHILD"
+            return self.name
 
 class IteratorViz(ContainerViz):
     def __init__(self, smach_obj, parent):
@@ -179,7 +180,7 @@ def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
 
-    viz  = StateMachineViz(statemachine, None)
+    viz  = StateMachineViz(statemachine, None, statemachine_name)
     import ipdb; ipdb.set_trace()
     viz.add_to_graph(dot)
     #_visualize_machine("ROOT", statemachine, dot)
@@ -242,8 +243,8 @@ def testcase2():
 def testcase3():
     import smach
 
-    toplevel = smach.StateMachine(outcomes=['Done'])
-    with toplevel:
+    testcase3 = smach.StateMachine(outcomes=['Done'])
+    with testcase3:
         @smach.cb_interface(outcomes=["succeeded"])
         def execute(userdata):
             return "succeeded"
@@ -263,7 +264,7 @@ def testcase3():
         smach.StateMachine.add('SUBLEVEL1',
                                 sublevel1,
                                 transitions={'Finished' :'Done'})
-    visualize(toplevel, "testcase3", save_dot=True)
+    visualize(testcase3, "testcase3", save_dot=True)
 
 def draw_subgraph():
     g = Digraph('G')
