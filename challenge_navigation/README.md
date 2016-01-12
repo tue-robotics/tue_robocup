@@ -1,5 +1,8 @@
-# Challenge Navigation 2015
+# Challenge Navigation 2016
 Responsible: Rein Appeldoorn
+
+## Test Log
+- 2016-01-12: Performed fine, same state as rwc 2015. No person detected implemented yet.
 
 ## Setup
 amigo1/sergio1:
