@@ -3,6 +3,7 @@ Responsible: Rein Appeldoorn
 
 ## Test Log
 - 2016-01-12: Performed fine, same state as rwc 2015. No person detected implemented yet.
+- 2016-01-12: Performed test with object and human recognition, works fine except for the segmentation, we need a z-min z-max option in segment function.
 
 ## Setup
 amigo1/sergio1:
