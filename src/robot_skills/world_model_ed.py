@@ -279,7 +279,19 @@ class ED:
             rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
             return ""
 
-    def classify(self, ids, perception_model_name = "", property = "type", types = None):
+    def classify(self, ids, perception_model_name="", property="type", types=None):
+        """ Classifies the entities with the given IDs. If we are simulating instead of acting on the real robot,
+        a random type from the list of possible types is given.
+        # ToDo: @Luis: how does this work???
+        Args:
+            ids: list with IDs
+            perception_model_name:
+            property:
+            types: list with types to identify
+
+        Returns: list with ClassificationResults, which is a named tuple with id, type and probability
+
+        """
         perception_model_path = self.get_perception_model_path(perception_model_name)
         if not perception_model_path:
             return []
@@ -287,7 +299,6 @@ class ED:
         res = self._ed_classify_srv(ids = ids, property = property, perception_models_path = perception_model_path)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
-
 
         # if there is a set of expected types, only report the one with the highest probability
         if types:
@@ -297,6 +308,7 @@ class ED:
             return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 
     def classify_with_probs(self, ids, types):
+        rospy.logwarn("Is classify_with_probs function deprecated?")  # ToDo: @Luis: is this true?
         res = self._ed_classify_srv(ids = ids, types = types)
         return zip(res.types, res.probabilities)
 
