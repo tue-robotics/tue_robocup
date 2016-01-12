@@ -255,7 +255,9 @@ class InspectShelves(smach.State):
                 self.robot.torso._send_goal([height], timeout=5.0)
 
                 ''' Sleep for 1 second '''
-                rospy.sleep(3.0) # ToDo: remove???
+                import os; do_wait = os.environ.get('ROBOT_REAL')
+                if do_wait == 'true':
+                    rospy.sleep(3.0) # ToDo: remove???
 
                 if DEBUG:
                     rospy.loginfo('Stopping: debug mode. Press c to continue to the next point')
@@ -264,24 +266,26 @@ class InspectShelves(smach.State):
 
                 ''' Enable kinect segmentation plugin (only one image frame) '''
                 # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
-                res = self.robot.ed.update_kinect("{} {}".format("on_top_off", shelf))
+                segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
                 # import ipdb;ipdb.set_trace();return 'no_objects_found'
 
                 ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
-                id_list = [] # List with entities that are flagged with 'perception'
-                detected_entities = []
-                for entity_id in entity_ids:
-                    e = self.robot.ed.get_entity(entity_id)
-
-                    # if e and onTopOff(e, shelf_entity) and not e.type:
-                    if e and onTopOff(e, shelf_entity) and size(e) and min_entity_height(e) and not e.type:
-                        # ToDo: filter on size in x, y, z
-                        # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
-                        id_list.append(e.id)
-                        detected_entities.append(e)
+                # # id_list = [] # List with entities that are flagged with 'perception'
+                # detected_entities = []
+                # for entity_id in entity_ids:
+                #     e = self.robot.ed.get_entity(entity_id)
+                #
+                #     # if e and onTopOff(e, shelf_entity) and not e.type:
+                #     if e and onTopOff(e, shelf_entity) and size(e) and min_entity_height(e) and not e.type:
+                #         # ToDo: filter on size in x, y, z
+                #         # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
+                #         id_list.append(e.id)
+                #         detected_entities.append(e)
 
                 ''' Try to classify the objects on the shelf '''
-                entity_types_and_probs = self.robot.ed.classify_with_probs(ids=id_list, types=OBJECT_TYPES)
+                # entity_types_and_probs = self.robot.ed.classify_with_probs(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+                entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
+                import ipdb; ipdb.set_trace();
 
                 # print "entity types: {}".format(entity_types_and_probs)
 
