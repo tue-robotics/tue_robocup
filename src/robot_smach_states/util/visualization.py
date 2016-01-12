@@ -192,21 +192,24 @@ def testcase2():
 
     toplevel = smach.StateMachine(outcomes=['Done', 'Aborted'])
     with toplevel:
-        @smach.cb_interface(outcomes=["succeeded"])
+        @smach.cb_interface(outcomes=["succeeded", 'error'])
         def execute(userdata):
             return "succeeded"
         smach.StateMachine.add('TEST1',
                                 smach.CBState(execute),
-                                transitions={'succeeded':'SUBLEVEL1'})
+                                transitions={'succeeded':'SUBLEVEL1',
+                                             'error'    :"Aborted"})
 
         sublevel1 = smach.StateMachine(outcomes=['Finished', 'Failed'])
         with sublevel1:
             smach.StateMachine.add('SUBTEST1',
                                     smach.CBState(execute),
-                                    transitions={'succeeded':'SUBTEST2'})
+                                    transitions={'succeeded':'SUBTEST2',
+                                                 'error'    :'Failed'})
             smach.StateMachine.add('SUBTEST2',
                                     smach.CBState(execute),
-                                    transitions={'succeeded':'Finished'})
+                                    transitions={'succeeded':'Finished',
+                                                 'error'    :'Failed'})
 
         smach.StateMachine.add('SUBLEVEL1',
                                 sublevel1,

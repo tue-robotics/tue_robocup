@@ -316,6 +316,8 @@ class NameToUserData(WaitForDesignator):
 
         self.robot = robot
         self.person_name = person_name
+        if name_designator:
+            ds.check_resolve_type(name_designator, str)
         self.name_designator = name_designator
 
     def execute(self, userdata):
@@ -350,6 +352,8 @@ class LearnPerson(smach.State):
         
         self.robot = robot
         self.person_name = person_name
+        if name_designator:
+            ds.check_resolve_type(name_designator, str)
         self.name_designator = name_designator
         self.n_samples = n_samples
 
