@@ -222,7 +222,7 @@ class InspectShelves(smach.State):
     """ Inspect all object shelves """
 
     def __init__(self, robot, object_shelves):
-        smach.State.__init__(self, outcomes=['succeeded','failed','nothing_found'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed', 'nothing_found'])
         self.robot = robot
         self.object_shelves = object_shelves
 
@@ -244,12 +244,13 @@ class InspectShelves(smach.State):
                 cp = shelf_entity.pose.position
 
                 ''' Look at target '''
-                self.robot.head.look_at_point(geom.PointStamped(cp.x,cp.y,cp.z,"/map"))
+                self.robot.head.look_at_point(geom.PointStamped(cp.x, cp.y, cp.z, "/map"))
 
                 ''' Move spindle
                     Implemented only for AMIGO (hence the hardcoding)
                     Assume table height of 0.8 corresponds with spindle reset = 0.35 '''
                 # def _send_goal(self, torso_pos, timeout=0.0, tolerance = []):
+                # ToDo: do head and torso simultaneously
                 height = min(0.4, max(0.1, cp.z-0.55))
                 self.robot.torso._send_goal([height], timeout=5.0)
 
@@ -262,7 +263,9 @@ class InspectShelves(smach.State):
                     continue
 
                 ''' Enable kinect segmentation plugin (only one image frame) '''
-                entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)
+                # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
+                res = self.robot.ed.update_kinect("{} {}".format("on_top_off", shelf))
+                # import ipdb;ipdb.set_trace();return 'no_objects_found'
 
                 ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
                 id_list = [] # List with entities that are flagged with 'perception'
@@ -280,7 +283,7 @@ class InspectShelves(smach.State):
                 ''' Try to classify the objects on the shelf '''
                 entity_types_and_probs = self.robot.ed.classify_with_probs(ids=id_list, types=OBJECT_TYPES)
 
-                print "entity types: {}".format(entity_types_and_probs)
+                # print "entity types: {}".format(entity_types_and_probs)
 
                 ''' Check all entities that were flagged to see if they have received a 'type' it_label
                 if so: recite them and lock them '''
@@ -356,8 +359,8 @@ class InitializeWorldModel(smach.State):
         self.robot = robot
 
     def execute(self, userdata=None):
-        self.robot.ed.configure_kinect_segmentation(continuous=False)
-        self.robot.ed.configure_perception(continuous=False)
+        # self.robot.ed.configure_kinect_segmentation(continuous=False)
+        # self.robot.ed.configure_perception(continuous=False)
         self.robot.ed.disable_plugins(plugin_names=["laser_integration"])
         self.robot.ed.reset()
 
@@ -434,11 +437,11 @@ class ManipRecogSingleItem(smach.StateMachine):
         self.empty_arm_designator = ds.UnoccupiedArmDesignator(robot.arms, robot.leftArm, name="empty_arm_designator")
         self.arm_with_item_designator = ds.ArmHoldingEntityDesignator(robot.arms, self.current_item, name="arm_with_item_designator")
 
-        print "{0} = pick_shelf".format(self.pick_shelf)
-        print "{0} = current_item".format(self.current_item)
-        print "{0} = place_position".format(self.place_position)
-        print "{0} = empty_arm_designator".format(self.empty_arm_designator)
-        print "{0} = arm_with_item_designator".format(self.arm_with_item_designator)
+        # print "{0} = pick_shelf".format(self.pick_shelf)
+        # print "{0} = current_item".format(self.current_item)
+        # print "{0} = place_position".format(self.place_position)
+        # print "{0} = empty_arm_designator".format(self.empty_arm_designator)
+        # print "{0} = arm_with_item_designator".format(self.arm_with_item_designator)
 
         with self:
             # smach.StateMachine.add( "NAV_TO_OBSERVE_PICK_SHELF",
