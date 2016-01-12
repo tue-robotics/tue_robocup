@@ -44,12 +44,16 @@ class TransitionViz(object):
     def add_to_graph(self, graph, level=0):
 
         to_identifier = self.to.get_node_identifier()
-        # if isinstance(self.to, StateMachineViz):
-        #     to_identifier = self.to.make_childviz(self.to.smach_obj.get_children()[
-        #         self.to.smach_obj._initial_state_label]).get_node_identifier()
-        #
-        # if isinstance(self.from_, ContainerOutcomeViz):
-        #     to_identifier = self.to.get_node_identifier()
+
+        #Link external transition to state machine to state machine's internal first state
+        if isinstance(self.to, StateMachineViz):
+            to_identifier = self.to.make_childviz(self.to.smach_obj.get_children()[
+                self.to.smach_obj._initial_state_label]).get_node_identifier()
+
+        if isinstance(self.from_, StateMachineViz):
+            #If we're coming from a state machine, don't draw from the state machine directly but from the internal Container outcome that is linked to this external
+            import ipdb; ipdb.set_trace()
+            #TODO
 
         # print "TransitionViz: graph.edge({},{}, label={})".format(self.from_.get_node_identifier(), to_identifier, self.label)
         graph.node(self.from_.get_node_identifier(), label=self.from_.get_name())
@@ -312,8 +316,8 @@ def draw_subgraph():
 
 
 if __name__ == "__main__":
-    testcase1()
-    testcase2()
+    # testcase1()
+    # testcase2()
     testcase3()
 
     # draw_subgraph()
