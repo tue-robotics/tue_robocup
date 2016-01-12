@@ -1,6 +1,6 @@
 target1 = "living_room"
 target2 = "exit"
-target3 = "explore8"
+target3 = "hallway"
 target4 = "hallway"
 
 radius1 = 0.1
