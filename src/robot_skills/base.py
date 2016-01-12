@@ -106,8 +106,9 @@ class GlobalPlanner():
 
         try:
             resp = self._get_plan_client(pcs)
-        except:
+        except Exception as e:
             rospy.logerr("Could not get plan from global planner via service call, is the global planner running?")
+            rospy.logerr(e)
             return None
 
         if not resp.succes:
