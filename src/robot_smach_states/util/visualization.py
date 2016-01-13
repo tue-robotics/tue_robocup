@@ -317,8 +317,8 @@ def draw_subgraph():
 
 
 if __name__ == "__main__":
-    # testcase1()
-    # testcase2()
+    testcase1()
+    testcase2()
     testcase3()
 
     # draw_subgraph()
