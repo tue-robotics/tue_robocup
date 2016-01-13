@@ -52,8 +52,9 @@ class TransitionViz(object):
 
         if isinstance(self.from_, StateMachineViz):
             #If we're coming from a state machine, don't draw from the state machine directly but from the internal Container outcome that is linked to this external
-            import ipdb; ipdb.set_trace()
-            #TODO
+            outcome = ContainerOutcomeViz(self.label, self.from_)
+            graph.edge(outcome.get_node_identifier(), self.to.get_node_identifier())
+            return
 
         # print "TransitionViz: graph.edge({},{}, label={})".format(self.from_.get_node_identifier(), to_identifier, self.label)
         graph.node(self.from_.get_node_identifier(), label=self.from_.get_name())
@@ -71,7 +72,7 @@ class ContainerOutcomeViz(object):
         self.parent = parent
 
     def add_to_graph(self, graph, level=0):
-        graph.node(self.get_node_identifier(), label=self.name)
+        graph.node(self.get_node_identifier(), label=self.name, shape='square')
 
     def get_name(self):
         return self.name
