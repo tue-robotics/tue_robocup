@@ -280,6 +280,37 @@ def testcase3():
                                 transitions={'Finished' :'Done'})
     visualize(testcase3, "testcase3", save_dot=True)
 
+
+def testcase4():
+    import smach
+
+    testcase4 = smach.StateMachine(outcomes=['Done'])
+    with testcase4:
+        @smach.cb_interface(outcomes=["succeeded", 'error'])
+        def execute(userdata):
+            return "succeeded"
+        smach.StateMachine.add('TEST1',
+                                smach.CBState(execute),
+                                transitions={'succeeded':'SUBLEVEL1',
+                                             'error'    :'SUBLEVEL1'})
+
+        sublevel1 = smach.StateMachine(outcomes=['Finished', 'Failed'])
+        with sublevel1:
+            smach.StateMachine.add('SUBTEST1',
+                                    smach.CBState(execute),
+                                    transitions={'succeeded':'SUBTEST2',
+                                                 'error'    :'SUBTEST2'})
+            smach.StateMachine.add('SUBTEST2',
+                                    smach.CBState(execute),
+                                    transitions={'succeeded':'Finished',
+                                                 'error'    :'Failed'})
+
+        smach.StateMachine.add('SUBLEVEL1',
+                                sublevel1,
+                                transitions={'Finished' :'Done',
+                                             'Failed'   :'Done'})
+    visualize(testcase4, "testcase4", save_dot=True)
+
 def draw_subgraph():
     g = Digraph('G')
 
@@ -320,5 +351,6 @@ if __name__ == "__main__":
     testcase1()
     testcase2()
     testcase3()
+    testcase4()
 
     # draw_subgraph()
