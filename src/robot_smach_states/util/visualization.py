@@ -35,6 +35,15 @@ class StateViz(object):
     def get_node_identifier(self):
         return str(id(self.smach_obj)) #"{}_{}".format(self.get_name(), gv_safe(self.smach_obj))
 
+    def __eq__(self, other):
+        return self.smach_obj == other.smach_obj
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash(self.smach_obj) + hash(self.parent)
+
 class TransitionViz(object):
     def __init__(self, from_, to, label):
         self.from_ = from_
@@ -63,6 +72,15 @@ class TransitionViz(object):
         graph.edge(self.from_.get_node_identifier(),
                    to_identifier,
                    label=self.label)
+
+    def __eq__(self, other):
+        return self.from_ == other.from_ and self.to == other.to
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return hash(self.from_) + hash(self.to)
 
 class ContainerOutcomeViz(object):
     def __init__(self, name, parent):
@@ -110,6 +128,7 @@ class StateMachineViz(ContainerViz):
         #     childviz = self.make_childviz(child)
 
         print level*'\t' + "self.smach_obj._transitions = {}".format(self.smach_obj._transitions)
+        element_viz_set = set()
         for childname in self.smach_obj._transitions.keys():
             print level*'\t' + "child {}".format(childname)
             child = self.smach_obj.get_children()[childname]
@@ -128,11 +147,16 @@ class StateMachineViz(ContainerViz):
                 else:
                     to_viz = ContainerOutcomeViz(to_name, self)
 
-                to_viz.add_to_graph(my_subgraph, level=level+1)
+                element_viz_set.add(to_viz)
 
                 # print "TransitionViz({}, {}, {})".format(childviz, to_viz, transition)
                 transitionviz = TransitionViz(childviz, to_viz, transition)
-                transitionviz.add_to_graph(my_subgraph, level=level+1)
+                element_viz_set.add(transitionviz)
+
+        for elem_viz in element_viz_set:
+            if isinstance(elem_viz, TransitionViz):
+                print "Adding transition: {} --> {}".format(elem_viz.to.get_node_identifier(), elem_viz.from_.get_node_identifier())
+            elem_viz.add_to_graph(my_subgraph, level=level+1)
 
         my_subgraph.body.append('label = "{}"'.format(self.get_name()))
         my_subgraph.body.append('color=blue')
@@ -280,7 +304,6 @@ def testcase3():
                                 transitions={'Finished' :'Done'})
     visualize(testcase3, "testcase3", save_dot=True)
 
-
 def testcase4():
     import smach
 
@@ -310,6 +333,7 @@ def testcase4():
                                 transitions={'Finished' :'Done',
                                              'Failed'   :'Done'})
     visualize(testcase4, "testcase4", save_dot=True)
+
 
 def draw_subgraph():
     g = Digraph('G')
@@ -348,9 +372,9 @@ def draw_subgraph():
 
 
 if __name__ == "__main__":
-    testcase1()
-    testcase2()
-    testcase3()
+    # testcase1()
+    # testcase2()
+    # testcase3()
     testcase4()
 
     # draw_subgraph()
