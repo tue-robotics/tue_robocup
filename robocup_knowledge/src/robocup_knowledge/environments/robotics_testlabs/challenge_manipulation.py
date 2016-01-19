@@ -11,4 +11,4 @@ place_shelf="bookcase/shelf1"
 room="living_room"
 
 '''Object types that can be recognized'''
-object_types=['coke']
+object_types=['coke', 'sprite', 'fanta']  # ToDo: update...

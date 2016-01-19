@@ -50,7 +50,7 @@ ROOM = challenge_knowledge.room
 OBJECT_TYPES = challenge_knowledge.object_types
 MAX_NUM_ENTITIES_IN_PDF = 10
 
-DETECTED_OBJECTS_WITH_PROBS = []
+DETECTED_OBJECTS_WITH_PROBS = []  # List with entities and types. This is used to write to PDF
 
 DEBUG = False
 
@@ -285,24 +285,46 @@ class InspectShelves(smach.State):
                 ''' Try to classify the objects on the shelf '''
                 # entity_types_and_probs = self.robot.ed.classify_with_probs(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
                 entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
-                import ipdb; ipdb.set_trace();
+                # import ipdb; ipdb.set_trace();
 
                 # print "entity types: {}".format(entity_types_and_probs)
 
                 ''' Check all entities that were flagged to see if they have received a 'type' it_label
                 if so: recite them and lock them '''
-                for i in range(0, len(id_list)):
-                    e_id = id_list[i]
-                    (e_type, e_type_prob) = entity_types_and_probs[i]
+                # for i in range(0, len(id_list)):
+                #     e_id = id_list[i]
+                #     (e_type, e_type_prob) = entity_types_and_probs[i]
+                #
+                #     e = detected_entities[i]
+                #     e.type = e_type
+                #
+                #     if e_type:
+                #         self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
+                #         self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
+                #
+                #         DETECTED_OBJECTS_WITH_PROBS += [(e, e_type_prob)]
 
-                    e = detected_entities[i]
-                    e.type = e_type
 
-                    if e_type:
-                        self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
-                        self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
+                # Recite entities
+                for etp in entity_types_and_probs:
+                    self.robot.speech.speak("I have seen {0}".format(etp.type), block=False)
 
-                        DETECTED_OBJECTS_WITH_PROBS += [(e, e_type_prob)]
+                # Lock entities
+                self.robot.ed.lock_entities(lock_ids=[e.id for e in entity_types_and_probs], unlock_ids=[])
+
+                # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in entity_types_and_probs]
+                # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
+                for e in entity_types_and_probs:
+                    entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
+                    import os
+                    if not os.environ.get('ROBOT_REAL', 'false') in ['true', 'True', 'TRUE']:
+                        entity.type = e.type
+                    DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+                print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+                DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
+                print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+
+                    # self.robot.ed.update_entity(id=etp.id, flags=[{"add": "locked"}])
 
                 # TODO: Store the entities in the pdf (and let AMIGO name them)
                 # ...
@@ -329,7 +351,7 @@ class InspectShelves(smach.State):
             return "nothing_found"
 
         # Sort based on probability
-        DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
+        # DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
 
         return 'succeeded'
 
