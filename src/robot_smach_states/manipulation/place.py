@@ -17,6 +17,13 @@ from geometry_msgs.msg import PoseStamped
 class Put(State):
 
     def __init__(self, robot, item_to_place, placement_pose, arm):
+        """
+        Drive the robot back a little and move the designated arm to place the designated item at the designated pose
+        :param robot: Robot to execute state with
+        :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
+        :param placement_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
+        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via ArmHoldingEntityDesignator
+        """
         #Check types or designator resolve types
 
         check_type(item_to_place, ed.msg.EntityInfo)
@@ -99,6 +106,13 @@ class Put(State):
 class Place(smach.StateMachine):
 
     def __init__(self, robot, item_to_place, place_pose, arm):
+        """
+        Drive the robot to be close to the designated place_pose and move the designated arm to place the designated item there
+        :param robot: Robot to execute state with
+        :param item_to_place: Designator that resolves to the entity to place. e.g EntityByIdDesignator
+        :param place_pose: Designator that resolves to the pose to place at. E.g. an EmptySpotDesignator
+        :param arm: Designator -> arm to place with, so Arm that holds entity_to_place, e.g. via ArmHoldingEntityDesignator
+        """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         #Check types or designator resolve types
