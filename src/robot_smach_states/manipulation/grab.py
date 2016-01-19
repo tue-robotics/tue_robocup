@@ -16,6 +16,12 @@ from robot_smach_states.manipulation.grasp_point_determination import GraspPoint
 
 class PrepareEdGrasp(State):
     def __init__(self, robot, arm, grab_entity):
+        """
+        Set the arm in the appropriate position before actually grabbing
+        :param robot: robot to execute state with
+        :param arm: designator that resolves to arm to grab with
+        :param grab_entity: designator that resolves to the entity to grab
+        """
         # Check that the entity_designator resolves to an Entity or is an entity
         check_type(grab_entity, ed.msg.EntityInfo)
 
@@ -44,6 +50,12 @@ class PrepareEdGrasp(State):
 
 class PickUp(State):
     def __init__(self, robot, arm, grab_entity):
+        """
+        Pick up an item given an arm and an entity to be picked up
+        :param robot: robot to execute this state with
+        :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
+        :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignators
+        """
         # Check that the entity_designator resolves to an Entity or is an entity
         check_type(grab_entity, ed.msg.EntityInfo)
 
@@ -153,6 +165,13 @@ class PickUp(State):
 
 class Grab(smach.StateMachine):
     def __init__(self, robot, item, arm):
+        """
+        Let the given robot move to an entity and grab that entity using some arm
+        :param robot: Robot to use
+        :param item: Designator that resolves to the item to grab. E.g. EntityByIdDesignator
+        :param arm: Designator that resolves to the arm to use for grabbing. Eg. UnoccupiedArmDesignator
+        :return:
+        """
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
 
         # Check types or designator resolve types
@@ -178,6 +197,12 @@ class Grab(smach.StateMachine):
 class SjoerdsGrab(smach.State):
 
     def __init__(self, robot, item_des, arm_des):
+        """
+        Let the robot move to an entity grab that entity
+        :param robot: Robot to execute this with
+        :param item_des: Designator that resolves to the entity to grab, e.g. EntityByIdDesignator
+        :param arm_des: Designator that resolves to the arm to use for grabbing. E.g. UnoccupiedArmDesignator
+        """
         smach.State.__init__(self, outcomes=["done", 'failed'])
         self._robot = robot
         self.item_des = item_des
@@ -187,6 +212,8 @@ class SjoerdsGrab(smach.State):
     def execute(self, userdata=None):
         entity = self.item_des.resolve()
 
+        #TODO REVIEW: This is not the way to include other SMs.
+        # We could remove this and include this instead of Pickup into the Grab above
         self.fsm = NavigateToGrasp(self._robot, self.item_des, self.arm_des)
         self.fsm.execute()
 
