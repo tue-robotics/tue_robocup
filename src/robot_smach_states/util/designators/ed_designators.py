@@ -23,10 +23,12 @@ import robot_skills.util.msg_constructors as msg_constructors
 __author__ = 'loy'
 
 class PointStampedOfEntityDesignator(Designator):
-
     def __init__(self, entity_designator, name=None):
-        super(VariableDesignator, self).__init__(resolve_type=gm.PointStamped, name=name)
-        self.entity_designator
+        """Resolves to the PointStamped-part of the designated entity
+        :param entity_designator entity of which we want to know the position as a PointStamped
+        """
+        super(PointStampedOfEntityDesignator, self).__init__(resolve_type=gm.PointStamped, name=name)
+        self.entity_designator = entity_designator
         self.ed = rospy.ServiceProxy('/ed/simple_query', SimpleQuery)
 
     def _resolve(self):
@@ -230,6 +232,13 @@ class EdEntityDesignator(Designator):
 
 class EntityByIdDesignator(Designator):
     def __init__(self, robot, id, parse=True, name=None):
+        """
+        Designate an entity by its ID. Resolves to the entity with that ID
+        :param robot: Robot who's worldmodel to use
+        :param id: ID of the entity. If no such ID, resolves to None
+        :param parse: Whether to parse the Entity's data-field
+        :param name: Name of the designator for introspection purposes
+        """
         super(EntityByIdDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         self.ed = robot.ed
         self.id_ = id
@@ -245,6 +254,12 @@ class EntityByIdDesignator(Designator):
 
 class ReasonedEntityDesignator(Designator):
     def __init__(self, robot, query, name=None):
+        """
+        Designate an entity by its ID. Resolves to the entity with that ID
+        :param robot: Robot who's worldmodel and reasoner to use. Robot must have a reasoner
+        :param query: query to the reasoner. The first answer is cast to string and used as ID
+        :param name: Name of the designator for introspection purposes
+        """
         super(ReasonedEntityDesignator, self).__init__(resolve_type=EntityInfo, name=name)
         assert hasattr(robot, "reasoner")
         self.robot = robot
@@ -275,8 +290,15 @@ class EmptySpotDesignator(Designator):
     It does this by queying ED for entities that occupy some space.
         If the result is no entities, then we found an open spot."""
     def __init__(self, robot, place_location_designator, name=None):
+        """
+        Designate an empty spot (as PoseStamped) on some designated entity
+        :param robot: Robot whose worldmodel to use
+        :param place_location_designator: Designator resolving to an Entity, e.g. EntityByIdDesignator
+        :param name: name for introspection purposes
+        """
         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped, name=name)
         self.robot = robot
+
         self.place_location_designator = place_location_designator
         self._edge_distance = 0.1                   # Distance to table edge
         self._spacing = 0.15
