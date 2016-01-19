@@ -294,16 +294,32 @@ class ED:
         """
         perception_model_path = self.get_perception_model_path(perception_model_name)
         if not perception_model_path:
+            rospy.logerr("No perception model path")
             return []
 
-        res = self._ed_classify_srv(ids = ids, property = property, perception_models_path = perception_model_path)
+        res = self._ed_classify_srv(ids=ids, property=property, perception_models_path=perception_model_path)
         if res.error_msg:
             rospy.logerr("While classifying entities: %s" % res.error_msg)
 
         # if there is a set of expected types, only report the one with the highest probability
         if types:
-            # for idx, id, type in enumerate (res.ids):
-            print "TODO: finish type filtering in Classification"
+            import os
+            if os.environ.get('ROBOT_REAL', 'false') in ['true', 'True', 'TRUE']:
+                # This is what we do for real
+                # for idx, id, type in enumerate (res.ids):
+                # print "TODO: finish type filtering in Classification"
+                return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities) if exp_val in types]
+            else:
+                # This is what we do in simulation
+                import random
+                extypes = types + [""]
+                exvalues = []
+                exprobs = []
+                for id in ids:
+                    exvalues.append(random.choice(extypes))
+                    exprobs.append(random.random())
+                    print "ID: {0}: {1} (prob = {2})".format(id, exvalues[-1], exprobs[-1])
+                return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(ids, exvalues, exprobs) if exp_val in types]
         else:
             return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 
