@@ -19,8 +19,8 @@ class PrepareEdGrasp(State):
         """
         Set the arm in the appropriate position before actually grabbing
         :param robot: robot to execute state with
-        :param arm: designator that resolves to arm to grab with
-        :param grab_entity: designator that resolves to the entity to grab
+        :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
+        :param grab_entity: designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
         # Check that the entity_designator resolves to an Entity or is an entity
         check_type(grab_entity, ed.msg.EntityInfo)
@@ -54,7 +54,7 @@ class PickUp(State):
         Pick up an item given an arm and an entity to be picked up
         :param robot: robot to execute this state with
         :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
-        :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignators
+        :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
         # Check that the entity_designator resolves to an Entity or is an entity
         check_type(grab_entity, ed.msg.EntityInfo)

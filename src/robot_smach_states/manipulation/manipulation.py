@@ -34,6 +34,12 @@ from robot_skills.arms import Arm
 
 class ArmToJointConfig(smach.State):
     def __init__(self, robot, arm_designator, configuration):
+        """
+        Put arm of robot in some joint configuration
+        :param robot: robot to execute state with
+        :param arm_designator: designator that resolves to arm to put in given configuration
+        :param configuration: joint configuration to put arm in
+        """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
@@ -52,6 +58,12 @@ class ArmToJointConfig(smach.State):
 
 class ArmToJointTrajectory(smach.State):
     def __init__(self, robot, arm_designator, trajectory):
+        """
+        Make arm of robot follow a joint trajectory
+        :param robot: robot to execute state with
+        :param arm_designator: designator that resolves to arm that must follow the given joint trajectory
+        :param trajectory: joint trajectory for the arm
+        """
         smach.State.__init__(self, outcomes=['succeeded','failed'])
 
         self.robot = robot
@@ -68,6 +80,7 @@ class ArmToJointTrajectory(smach.State):
             return 'succeeded'
         return "failed"
 
+#TODO: Obsolete, this even uses the reasoner still
 class PrepareGraspSafe(smach.State):
     def __init__(self, robot, arm_designator, grab_entity_designator):
         # Similar to PrepareGrasp but has a more elaborate joint trajectory to avoid hitting the table when standing close to it
@@ -115,6 +128,7 @@ class PrepareGraspSafe(smach.State):
 
 ########################################### State Grab ###############################################
 
+#TODO: Obsolete, this even uses the reasoner still
 class GrabMachine(smach.StateMachine):
     def __init__(self, robot, arm_designator, grab_entity_designator):
         """@param grab_entity_designator resolves to an entity to grab.
@@ -161,9 +175,16 @@ class GrabMachine(smach.StateMachine):
                         transitions={'succeeded'    :   'failed',
                                      'failed'       :   'failed'})
 
-
+#TODO: Merge with grab-states in manipulation/grab.py
 class GrabWithVisualServoing(smach.State):
     def __init__(self, robot, arm_designator, grab_point_designator):
+        """
+        Grab an entity using visual servoing.
+        :param robot: Robot to use for grabbing
+        :param arm_designator: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
+        :param grab_point_designator: Designator that resolves to a PointStamped
+        :return:
+        """
         smach.State.__init__(self, outcomes=['succeeded','failed','target_lost'])
 
         self.robot = robot
