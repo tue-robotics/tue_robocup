@@ -54,7 +54,7 @@ def onTopOff(subject, container, ht=0.1):
 
     ''' Second: turn points into KDL objects and offset '''
     convex_hull_obj = [pointMsgToKdlVector(p) for p in container.convex_hull]   # convex hull in object frame
-    convex_hull = offsetConvexHull(convex_hull_obj, container_center_pose)      # convex hull in map frame
+    convex_hull = offsetConvexHull(convex_hull_obj, poseMsgToKdlFrame(container.pose))  # convex hull in map frame
 
     ''' Third: check if center point of entity is within convex hull of container '''
     subject_center_pose = poseMsgToKdlFrame(subject.pose)
