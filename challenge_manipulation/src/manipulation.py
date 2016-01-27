@@ -99,7 +99,7 @@ class FormattedSentenceDesignator(ds.Designator):
         self.kwargs = kwargs
 
     def _resolve(self):
-        kwargs_resolved = {key:value.resolve() for key,value in self.kwargs.iteritems()}
+        kwargs_resolved = {key: value.resolve() for key, value in self.kwargs.iteritems()}
         return self.fmt.format(**kwargs_resolved)
 
 
@@ -527,15 +527,23 @@ class ManipRecogSingleItem(smach.StateMachine):
 
             @smach.cb_interface(outcomes=['stored'])
             def store_as_manipulated(userdata):
-                manipulated_items.current += [self.current_item.current]
+                # manipulated_items.current += [self.current_item.current]
+                item_list = manipulated_items.resolve()
+                item_list += [self.current_item.resolve()]
+                w = ds.VariableWriter(manipulated_items)
+                w.write(item_list)
                 return 'stored'
 
             smach.StateMachine.add('STORE_ITEM',
                                    smach.CBState(store_as_manipulated),
                                    transitions={'stored':'ANNOUNCE_CLASS'})
 
+            # smach.StateMachine.add( "ANNOUNCE_CLASS",
+            #                         states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item, name="item_type_sentence"), block=False),
+            #                         transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
+
             smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item, name="item_type_sentence"), block=False),
+                                    states.Say(robot, "This is a {0}".format(self.current_item.resolve().type), block=False),
                                     transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
