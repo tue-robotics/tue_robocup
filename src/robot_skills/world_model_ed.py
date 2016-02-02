@@ -358,6 +358,7 @@ class ED:
                 for id in ids:
                     exvalues.append(random.choice(extypes))
                     exprobs.append(random.random())
+                    self.update_entity(id=id, type=exvalues[-1])
                     print "ID: {0}: {1} (prob = {2})".format(id, exvalues[-1], exprobs[-1])
                 return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(ids, exvalues, exprobs) if exp_val in types]
         else:
