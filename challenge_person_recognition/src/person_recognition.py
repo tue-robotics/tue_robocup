@@ -239,6 +239,53 @@ class WaitForStart(smach.StateMachine):
                                          'failed'    :'failed'})
 
 
+class FindCrowdByDrivingAround(smach.StateMachine):
+    def __init__(self, robot, locationsToVisitDes):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        with self:
+            smach.StateMachine.add( 'RESET_ED_1',
+                                        PersonRecStates.ResetEd(robot),
+                                        transitions={   'done':  'GOTO_LIVING_ROOM_1'})
+
+            smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
+                                    transitions={   'arrived' : 'SAY_SEARCHING_CROWD',
+                                                    'unreachable' : 'SAY_SEARCHING_CROWD',
+                                                    'goal_not_defined' : 'SAY_SEARCHING_CROWD'})
+
+            smach.StateMachine.add( 'SAY_SEARCHING_CROWD',
+                                    states.Say(robot, "I'm searching for the crowd.", block=False),
+                                    transitions={   'spoken':'FIND_CROWD'})
+
+            smach.StateMachine.add( 'FIND_CROWD',
+                                    PersonRecStates.FindCrowd(robot, locationsToVisitDes),
+                                    transitions={   'succeded' : 'succeeded',
+                                                    'failed' : 'GOTO_LIVING_ROOM_2'})
+
+            smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
+                                    transitions={   'arrived' : 'FIND_CROWD_2',
+                                                    'unreachable' : 'FIND_CROWD_2',
+                                                    'goal_not_defined' : 'FIND_CROWD_2'})
+
+            smach.StateMachine.add( 'FIND_CROWD_2',
+                                    PersonRecStates.FindCrowd(robot, locationsToVisitDes),
+                                    transitions={   'succeded' : 'succeeded',
+                                                    'failed' : 'GOTO_LIVING_ROOM_3'})
+
+            smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
+                                    states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
+                                    transitions={   'arrived' : 'FIND_CROWD_3',
+                                                    'unreachable' : 'FIND_CROWD_3',
+                                                    'goal_not_defined' : 'FIND_CROWD_3'})
+
+            smach.StateMachine.add( 'FIND_CROWD_3',
+                                    PersonRecStates.FindCrowd(robot, locationsToVisitDes),
+                                    transitions={   'succeded':  'succeeded',
+                                                    'failed':   'failed'})
+
+
 
 class ChallengePersonRecognition(smach.StateMachine):
     def __init__(self, robot):
@@ -338,67 +385,21 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'WAIT_CONTINUE_ITERATOR',
                                     WaitForStart(robot),
                                     {   'failed':'SAY_NO_CONTINUE',
-                                        'succeeded':'FIND_CROWD_CONTAINER'})
+                                        'succeeded':'FIND_CROWD_BY_DRIVING_AROUND'})
 
             smach.StateMachine.add( 'SAY_NO_CONTINUE',
                                     states.Say(robot, "I didn't hear continue, but I will move on.", block=False),
-                                    transitions={   'spoken':'FIND_CROWD_CONTAINER'})
+                                    transitions={   'spoken':'FIND_CROWD_BY_DRIVING_AROUND'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                                   FIND_CROWD_CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-            # container for this stage
-            findCrowndContainer = smach.StateMachine(   outcomes = ['container_success', 'container_failed'])
-            with findCrowndContainer:
-
-                smach.StateMachine.add( 'RESET_ED_1',
-                                        PersonRecStates.ResetEd(robot),
-                                        transitions={   'done':  'GOTO_LIVING_ROOM_1'})
-
-                smach.StateMachine.add( 'GOTO_LIVING_ROOM_1',
-                                        states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_1)),
-                                        transitions={   'arrived' : 'SAY_SEARCHING_CROWD',
-                                                        'unreachable' : 'SAY_SEARCHING_CROWD',
-                                                        'goal_not_defined' : 'SAY_SEARCHING_CROWD'})
-
-                smach.StateMachine.add( 'SAY_SEARCHING_CROWD',
-                                        states.Say(robot, "I'm searching for the crowd.", block=False),
-                                        transitions={   'spoken':'FIND_CROWD'})
-
-                smach.StateMachine.add( 'FIND_CROWD',
-                                        PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded' : 'container_success',
-                                                        'failed' : 'GOTO_LIVING_ROOM_2'})
-
-                smach.StateMachine.add( 'GOTO_LIVING_ROOM_2',
-                                        states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_2)),
-                                        transitions={   'arrived' : 'FIND_CROWD_2',
-                                                        'unreachable' : 'FIND_CROWD_2',
-                                                        'goal_not_defined' : 'FIND_CROWD_2'})
-
-                smach.StateMachine.add( 'FIND_CROWD_2',
-                                        PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded' : 'container_success',
-                                                        'failed' : 'GOTO_LIVING_ROOM_3'})
-
-                smach.StateMachine.add( 'GOTO_LIVING_ROOM_3',
-                                        states.NavigateToWaypoint(robot, ds.EntityByIdDesignator(robot, id=challenge_knowledge.waypoint_living_room_3)),
-                                        transitions={   'arrived' : 'FIND_CROWD_3',
-                                                        'unreachable' : 'FIND_CROWD_3',
-                                                        'goal_not_defined' : 'FIND_CROWD_3'})
-
-                smach.StateMachine.add( 'FIND_CROWD_3',
-                                        PersonRecStates.FindCrowd(robot, locationsToVisitDes),
-                                        transitions={   'succeded':  'container_success',
-                                                        'failed':   'container_failed'})             
-
-            #add container to the main state machine
-            smach.StateMachine.add( 'FIND_CROWD_CONTAINER',
-                                    findCrowndContainer,
-                                    transitions={   'container_success':'SAY_FOUND_CROWD',
-                                                    'container_failed': 'SAY_FAILED_FIND_CROWD'})
+            smach.StateMachine.add( 'FIND_CROWD_BY_DRIVING_AROUND',
+                                    FindCrowdByDrivingAround(robot, locationsToVisitDes),
+                                    transitions={   'succeeded':'SAY_FOUND_CROWD',
+                                                    'failed': 'SAY_FAILED_FIND_CROWD'})
                 
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                     states.Say(robot,[  "I think I found some people.",
@@ -407,13 +408,11 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add('SAY_FAILED_FIND_CROWD',
                                    states.Say(robot,"Still Searching for the crowd", block=False),
-                                   transitions={    'spoken':'FIND_CROWD_CONTAINER'})
+                                   transitions={    'spoken':'FIND_CROWD_BY_DRIVING_AROUND'})
 
             smach.StateMachine.add( 'RESET_ED_2',
                         PersonRecStates.ResetEd(robot),
                         transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
-
-
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                               FIND_OPERATOR_CONTAINER
@@ -585,7 +584,7 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',
                                         states.Say(robot,"I will search again!", block=False),
-                                        transitions={   'spoken':'FIND_CROWD_CONTAINER'})
+                                        transitions={   'spoken':'FIND_CROWD_BY_DRIVING_AROUND'})
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                             END CHALLENGE
