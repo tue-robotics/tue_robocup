@@ -41,6 +41,7 @@ class Navigation:
         return PositionConstraint(constraint=res.position_constraint_map_frame, frame="/map")
 
 class ED:
+
     def __init__(self, robot_name, tf_listener, wait_service=False):
         self._ed_simple_query_srv = rospy.ServiceProxy('/%s/ed/simple_query'%robot_name, SimpleQuery)
         self._ed_entity_info_query_srv = rospy.ServiceProxy('/%s/ed/gui/get_entity_info'%robot_name, GetEntityInfo)
@@ -63,6 +64,46 @@ class ED:
         self.navigation = Navigation(robot_name, tf_listener, wait_service)
 
         self._marker_publisher = rospy.Publisher("/" + robot_name + "/ed/simple_query",  visualization_msgs.msg.Marker, queue_size=10)
+
+    # ----------------------------------------------------------------------------------------------------
+    #                                           CONFIGURATION
+    # ----------------------------------------------------------------------------------------------------
+
+    def enable_plugins(self, plugin_names):
+        """Enables the specified plugins in ED"""
+        return self._set_plugin_status(plugin_names, '"enabled":1')
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+    def disable_plugins(self, plugin_names):
+        """Disables the specified plugins in ED"""
+        return self._set_plugin_status(plugin_names, '"enabled":0')
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+    def _set_plugin_status(self, plugin_names, status):
+        if not plugin_names:
+            return
+
+        yaml = '{"plugins":['
+        for name in plugin_names:
+            yaml += '{"name":"%s",%s},' % (name, status)
+
+        # remove last comma
+        yaml = yaml[:-1]
+        yaml += ']}'
+
+        resp = self._ed_configure_srv(request=yaml)
+        if not resp.error_msg:
+            return True
+
+        rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
+        return False
+
+
+    # ----------------------------------------------------------------------------------------------------
+    #                                             QUERYING
+    # ----------------------------------------------------------------------------------------------------
 
     def get_entities(self, type="", center_point=Point(), radius=0, id="", parse=True):
         if isinstance(center_point, PointStamped):
@@ -117,34 +158,19 @@ class ED:
     def get_entity_info(self, id):
         return self._ed_entity_info_query_srv(id=id, measurement_image_border=20)
 
+    # ----------------------------------------------------------------------------------------------------
+    #                                             UPDATING
+    # ----------------------------------------------------------------------------------------------------
+
     def reset(self):
+        """Removes all non-mesh objects from ED"""
         try:
             self._ed_reset_srv()
         except rospy.ServiceException, e:
             rospy.logerr("Could not reset ED: {0}".format(e))
         rospy.sleep(1.0)
 
-    def _transform_center_point_to_map(self, pointstamped):
-        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
-        return point_in_map
-
-    def _publish_marker(self, center_point, radius):
-        marker = visualization_msgs.msg.Marker()
-        marker.header.frame_id = "/map"
-        marker.header.stamp = rospy.Time.now()
-        marker.type = 2
-        marker.pose.position.x = center_point.x
-        marker.pose.position.y = center_point.y
-        marker.pose.position.z = center_point.z
-        marker.lifetime = rospy.Duration(20.0)
-        marker.scale.x = radius
-        marker.scale.y = radius
-        marker.scale.z = radius
-
-        marker.color.a = 0.5
-        marker.color.r = 1
-
-        self._marker_publisher.publish(marker)
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     def update_entity(self, id, type = None, posestamped = None, flags = None, add_flags = [], remove_flags = []):
         """
@@ -152,8 +178,9 @@ class ED:
         :param id: entity id
         :param type: entity type
         :param posestamped: ???
-        :param flags: (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,
-        e.g., 'perception'
+        :param flags: (OBSOLETE, use add_flags and remove_flags): (list of) dict(s) containing key 'add' or 'remove' and value of the flag to set,  e.g., 'perception'
+        :param add_flags: list of flags which will be added to the specified entity
+        :param remove_flags: list of flags which will removed from the specified entity
         """
         json_entity = '"id" : "%s"' % id
         if type:
@@ -201,60 +228,72 @@ class ED:
 
         return self._ed_update_srv(request=json)
 
-    def _set_plugin_status(self, plugin_names, status):
-        if not plugin_names:
-            return
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        yaml = '{"plugins":['
-        for name in plugin_names:
-            yaml += '{"name":"%s",%s},' % (name, status)
+    def lock_entities(self, lock_ids, unlock_ids):
+        for eid in lock_ids:
+            self.update_entity(id=eid, add_flags=['locked'])
 
-        # remove last comma
-        yaml = yaml[:-1]
-        yaml += ']}'
+        for eid in unlock_ids:
+            self.update_entity(id=eid, remove_flags=['locked'])
 
-        resp = self._ed_configure_srv(request=yaml)
-        if not resp.error_msg:
-            return True
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        rospy.logerr("[ED]: While requesting '%s': %s" % (yaml, resp.error_msg))
-        return False
+    def get_closest_possible_person_entity(self, type="", center_point=Point(), radius=0, room = ""):
+        if isinstance(center_point, PointStamped):
+            center_point = self._transform_center_point_to_map(center_point)
 
-    def save_image(self, path = "", path_suffix = "", filename = ""):
-        import os
-        import time
+        entities = self.get_entities(type="", center_point=center_point, radius=radius)
+        #print "entities 1 in get_closest_possible_person_entity = ", entities
 
-        if not path:
-            home_dir = os.environ["HOME"]
-            path = home_dir + "/ed/kinect/" + time.strftime("%Y-%m-%d")
-            if path_suffix:
-                path += "/" + path_suffix
+        # HACK
+        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
+        #print "entities 2 in get_closest_possible_person_entity = ", entities
 
-        if not os.path.exists(path):
-            os.makedirs(path)
+        # if only the persons in a certain room should be found:
+        # if not (room == "" and len(entities) == 0):
+        #     print "room in ed = ", room
+        #     room_entity = self.get_entity(id=str(room))
+        #     x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
+        #     print "x_max_room = ", x_max_room
+        #     x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
+        #     print "x_min_room = ", x_min_room
+        #     y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
+        #     print "y_max_room = ", y_max_room
+        #     y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
+        #     print "y_min_room = ", y_min_room
 
-        if not filename:
-            filename = time.strftime("%Y-%m-%d-%H-%M-%S")
+        #     entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
 
-        fname = path + "/" + filename
+        #     print "entities sorted in room = ", entities
 
-        res = self._ed_get_image_srv(filename=filename)
-        if res.error_msg:
-            rospy.logerr("Could not save image: %s" % res.error_msg)
+        if len(entities) == 0:
+            return None
 
-        with open(fname + ".rgbd", "wb") as f:
-            f.write(bytearray(res.rgbd_data))
+        # Sort by distance
+        try:
+            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
+            print "entities sorted closest to robot = ", entities
+        except:
+            print "Failed to sort entities"
+            return None
 
-        with open(fname + ".json", "w") as f:
-            f.write(res.json_meta_data)
+        return entities[0]
 
-    # If continuous is None, the continuous mode of segmentation is left unchanged (on if it was on, off if it was off). However,
-    # if 'continuous' is NOT None, it actively sets the mode of segmentation (True = on, False = off)
-    def configure_kinect_segmentation(self, continuous=None, max_sensor_range=0):
-        res = self._ed_segment_srv(enable_continuous_mode = (continuous == True), disable_continuous_mode = (continuous == False), max_sensor_range = max_sensor_range)
-        return res.entity_ids
+    # ----------------------------------------------------------------------------------------------------
+    #                                  KINECT INTEGRATION AND PERCEPTION
+    # ----------------------------------------------------------------------------------------------------
 
-    def update_kinect(self, area_description = "", background_padding = 0):
+    def update_kinect(self, area_description="", background_padding=0):
+        """ 
+        Update ED based on kinect (depth) images
+
+        :param area_description An entity id or area description, e.g. "cabinet-11" or "on_top_of cabinet-11"
+        :param background_padding The maximum distance to which kinect data points are associated to existing objects (in meters).
+               Or, in other words: the padding that is added to existing objects before they are removed from the point cloud
+        :returns Update result
+        """
+
         # Save the image (logging)
         self.save_image(path_suffix=area_description.replace(" ", "_"))
 
@@ -264,8 +303,7 @@ class ED:
 
         return res
 
-    #def configure_perception(self, continuous):
-    #    self._ed_classify_srv(enable_continuous_mode = continuous, disable_continuous_mode = (not continuous))
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     def get_perception_model_path(self, perception_model_name = ""):
         import rospkg
@@ -278,6 +316,8 @@ class ED:
         except KeyError:
             rospy.logerr("Wile classifying: could not get 'ROBOT_ENV' environment variable.")
             return ""
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     def classify(self, ids, perception_model_name="", property="type", types=None):
         """ Classifies the entities with the given IDs. If we are simulating instead of acting on the real robot,
@@ -323,10 +363,14 @@ class ED:
         else:
             return [ClassificationResult(_id, exp_val, exp_prob) for _id, exp_val, exp_prob in zip(res.ids, res.expected_values, res.expected_value_probabilities)]
 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
     def classify_with_probs(self, ids, types):
         rospy.logwarn("Is classify_with_probs function deprecated?")  # ToDo: @Luis: is this true?
         res = self._ed_classify_srv(ids = ids, types = types)
         return zip(res.types, res.probabilities)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     def add_perception_training_instance(self, id, property, value, perception_model_name = ""):
         perception_model_path = self.get_perception_model_path(perception_model_name)
@@ -340,28 +384,55 @@ class ED:
 
         return True
 
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
     def learn_person(self, id, name):
         return self.add_perception_training_instance(id=id, property="name", value=name)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     def classify_person(self, id):
         return self.classify(ids = [id], property = "name")
 
-    def enable_plugins(self, plugin_names):
-        return self._set_plugin_status(plugin_names, '"enabled":1')
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-    def disable_plugins(self, plugin_names):
-        return self._set_plugin_status(plugin_names, '"enabled":0')
+    def save_image(self, path = "", path_suffix = "", filename = ""):
+        import os
+        import time
 
-    def lock_entities(self, lock_ids, unlock_ids):
-        for eid in lock_ids:
-            self.update_entity(id=eid, add_flags=['locked'])
+        if not path:
+            home_dir = os.environ["HOME"]
+            path = home_dir + "/ed/kinect/" + time.strftime("%Y-%m-%d")
+            if path_suffix:
+                path += "/" + path_suffix
 
-        for eid in unlock_ids:
-            self.update_entity(id=eid, remove_flags=['locked'])
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        if not filename:
+            filename = time.strftime("%Y-%m-%d-%H-%M-%S")
+
+        fname = path + "/" + filename
+
+        res = self._ed_get_image_srv(filename=filename)
+        if res.error_msg:
+            rospy.logerr("Could not save image: %s" % res.error_msg)
+
+        with open(fname + ".rgbd", "wb") as f:
+            f.write(bytearray(res.rgbd_data))
+
+        with open(fname + ".json", "w") as f:
+            f.write(res.json_meta_data)
+
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     def mesh_entity_in_view(self, id, type=""):
         # Takes the biggest one in view
         return self._ed_mesh_entity_in_view_srv(id=id, type=type)
+
+    # ----------------------------------------------------------------------------------------------------
+    #                                                MISC
+    # ----------------------------------------------------------------------------------------------------
 
     def get_full_id(self, short_id):
         """Get an entity's full ID based on the first characters of its ID like you can do with git hashes"""
@@ -369,45 +440,39 @@ class ED:
         matches = filter(lambda fill_id: fill_id.startswith(short_id), [entity.id for entity in all_entities])
         return matches
 
-    def get_closest_possible_person_entity(self, type="", center_point=Point(), radius=0, room = ""):
-        if isinstance(center_point, PointStamped):
-            center_point = self._transform_center_point_to_map(center_point)
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        entities = self.get_entities(type="", center_point=center_point, radius=radius)
-        #print "entities 1 in get_closest_possible_person_entity = ", entities
+    def _transform_center_point_to_map(self, pointstamped):
+        point_in_map = transformations.tf_transform(pointstamped.point, pointstamped.header.frame_id, "/map", self._tf_listener)
+        return point_in_map
 
-        # HACK
-        entities = [ e for e in entities if len(e.convex_hull) > 0 and e.type == "" and 'possible_human' in e.flags ]
-        #print "entities 2 in get_closest_possible_person_entity = ", entities
+    # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-        # if only the persons in a certain room should be found:
-        # if not (room == "" and len(entities) == 0):
-        #     print "room in ed = ", room
-        #     room_entity = self.get_entity(id=str(room))
-        #     x_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['x']+room_entity.data['pose']['x']
-        #     print "x_max_room = ", x_max_room
-        #     x_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['x']+room_entity.data['pose']['x']
-        #     print "x_min_room = ", x_min_room
-        #     y_max_room = room_entity.data['areas'][0]['shape'][0]['box']['max']['y']+room_entity.data['pose']['y']
-        #     print "y_max_room = ", y_max_room
-        #     y_min_room = room_entity.data['areas'][0]['shape'][0]['box']['min']['y']+room_entity.data['pose']['y']
-        #     print "y_min_room = ", y_min_room
+    def _publish_marker(self, center_point, radius):
+        marker = visualization_msgs.msg.Marker()
+        marker.header.frame_id = "/map"
+        marker.header.stamp = rospy.Time.now()
+        marker.type = 2
+        marker.pose.position.x = center_point.x
+        marker.pose.position.y = center_point.y
+        marker.pose.position.z = center_point.z
+        marker.lifetime = rospy.Duration(20.0)
+        marker.scale.x = radius
+        marker.scale.y = radius
+        marker.scale.z = radius
 
-        #     entities = [e for e in entities if e.pose.position.x > x_min_room and e.pose.position.x < x_max_room and e.pose.position.y > y_min_room and e.pose.position.y < y_max_room]
+        marker.color.a = 0.5
+        marker.color.r = 1
 
-        #     print "entities sorted in room = ", entities
+        self._marker_publisher.publish(marker)   
 
-        if len(entities) == 0:
-            return None
+    # ----------------------------------------------------------------------------------------------------
+    #                                               OBSOLETE
+    # ----------------------------------------------------------------------------------------------------
 
-        # Sort by distance
-        try:
-            entities = sorted(entities, key=lambda entity: hypot(center_point.x - entity.pose.position.x, center_point.y - entity.pose.position.y))
-            print "entities sorted closest to robot = ", entities
-        except:
-            print "Failed to sort entities"
-            return None
-
-        return entities[0]
+    def configure_kinect_segmentation(self, continuous=None, max_sensor_range=0):
+        raise NotImplementedError("Method 'configure_kinect_segmentation' has become obsolete - don't use it")
 
 
+    def configure_perception(self, continuous):
+        raise NotImplementedError("Method 'configure_perception' has become obsolete - don't use it")
