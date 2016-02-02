@@ -338,7 +338,7 @@ class EmptySpotDesignator(Designator):
         if any(open_POIs):
             best_poi = min(open_POIs, key=distance_to_poi_area)
             placement = msg_constructors.PoseStamped(pointstamped=best_poi)
-            rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
+            # rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
             return placement
         else:
             rospy.logerr("Could not find an empty spot")
@@ -451,7 +451,7 @@ class LockToId(Designator):
                     self._locked_to_id = entity.id # remember its ID.
                 else:
                     pass # If we cannot find what to remember, to_be_locked.resolve() return None and we return that too
-                rospy.loginfo("{0} locked to ID {1}".format(self, self._locked_to_id))
+                # rospy.loginfo("{0} locked to ID {1}".format(self, self._locked_to_id))
             else: # If we do remember something already, recall that remembered ID:
                 return self.robot.ed.get_entities(id=self._locked_to_id)
         else:
