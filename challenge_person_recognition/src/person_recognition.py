@@ -44,6 +44,7 @@ class Start(smach.StateMachine):
                                     states.InitializeWorldModel(robot),
                                     transitions={    'done':'succeeded'})
 
+
 class LearnOperatorName(smach.StateMachine):
     def __init__(self, robot, operatorNameDes):
         smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
@@ -201,6 +202,44 @@ class LearnOperatorFace(smach.StateMachine):
                                    transitions={'spoken':   'succeeded'})
 
 
+class WaitForStart(smach.StateMachine):
+    def __init__(self, robot):
+        smach.StateMachine.__init__(self, outcomes=['succeeded','failed'])
+
+        with self:
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            #                             WAIT_CONTINUE_ITERATOR
+            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+            waitContinueIterator = smach.Iterator(  outcomes=['succeeded', 'failed'],
+                                                    it = lambda:range(0, 3),
+                                                    it_label='waitCounter',
+                                                    input_keys=[],
+                                                    output_keys=[],
+                                                    exhausted_outcome = 'failed')
+            with waitContinueIterator:
+
+                waitContinueContainer = smach.StateMachine( outcomes = ['succeeded', 'heard_nothing'])
+
+                with waitContinueContainer:
+
+                    smach.StateMachine.add("ASK_CONTINUE",
+                                            states.AskContinue(robot),
+                                            transitions={   'continue':'succeeded',
+                                                            'no_response':'heard_nothing'})
+
+                smach.Iterator.set_contained_state( 'WAIT_CONTINUE_CONTAINER',
+                                                     waitContinueContainer,
+                                                     # loop_outcomes=['heard_nothing'],
+                                                     break_outcomes=['succeeded'])
+
+            smach.StateMachine.add( 'WAIT',
+                        waitContinueIterator,
+                        transitions={    'succeeded' :'succeeded',
+                                         'failed'    :'failed'})
+
+
+
 class ChallengePersonRecognition(smach.StateMachine):
     def __init__(self, robot):
         smach.StateMachine.__init__(self, outcomes=['Done','Aborted'])
@@ -220,37 +259,37 @@ class ChallengePersonRecognition(smach.StateMachine):
         # resolves to another designator is a bit weird
 
         # ------------------ SIMULATION ------------------------------------
+        if False:
+            locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
+                                                                        visited = False,
+                                                                        attempts = 0)]
 
-        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.386, y=0.261, z= 1.272, frame_id="/map"),
-        #                                                             visited = False, 
-        #                                                             attempts = 0)]
+            locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.452, y=0.363, z=1.248, frame_id="/map"),
+                                                                        visited = False,
+                                                                        attempts = 0)]
 
-        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.452, y=0.363, z=1.248, frame_id="/map"),
-        #                                                             visited = False, 
-        #                                                             attempts = 0)]
+            locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.234, y=0.912, z=1.248, frame_id="/map"),
+                                                                        visited = False,
+                                                                        attempts = 0)]
 
-        # locationsToVisitDes.current += [PersonRecStates.Location(   point_stamped = msgs.PointStamped(x=0.234, y=0.912, z=1.248, frame_id="/map"),
-        #                                                             visited = False, 
-        #                                                             attempts = 0)]
-
-        # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.439086, y=0.786736, z=1.6135, frame_id="/map"),
-        #                                                             name = "Mr. Operator",
-        #                                                             score = 0.410413)]
-        # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=1.71268, y=-0.49675, z=1.40221, frame_id="/map"),
-        #                                                             name = "Mr. Operator",
-        #                                                             score = 0.131082)]
-        # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.594543, y=0.292026, z=1.61433, frame_id="/map"),
-        #                                                             name = "Mr. Operator",
-        #                                                             score = 0.140992)]
-        # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.601418, y=0.140883, z=1.63293, frame_id="/map"),
-        #                                                             name = "max",
-        #                                                             score = 0.257553)]
-        # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.433752, y=0.83502, z=1.62124, frame_id="/map"),
-        #                                                             name = "Mr. Operator",
-        #                                                             score = 0.455918)]
-        # facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.601418, y=0.140883, z=1.63293, frame_id="/map"),
-        #                                                             name = "max",
-        #                                                             score = 0.257553)]
+            facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.439086, y=0.786736, z=1.6135, frame_id="/map"),
+                                                                        name = "Mr. Operator",
+                                                                        score = 0.410413)]
+            facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=1.71268, y=-0.49675, z=1.40221, frame_id="/map"),
+                                                                        name = "Mr. Operator",
+                                                                        score = 0.131082)]
+            facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.594543, y=0.292026, z=1.61433, frame_id="/map"),
+                                                                        name = "Mr. Operator",
+                                                                        score = 0.140992)]
+            facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.601418, y=0.140883, z=1.63293, frame_id="/map"),
+                                                                        name = "max",
+                                                                        score = 0.257553)]
+            facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.433752, y=0.83502, z=1.62124, frame_id="/map"),
+                                                                        name = "Mr. Operator",
+                                                                        score = 0.455918)]
+            facesAnalyzedDes.current += [PersonRecStates.FaceAnalysed(  point_stamped = msgs.PointStamped(x=0.601418, y=0.140883, z=1.63293, frame_id="/map"),
+                                                                        name = "max",
+                                                                        score = 0.257553)]
 
         #  -----------------------------------------------------------------
 
@@ -295,38 +334,11 @@ class ChallengePersonRecognition(smach.StateMachine):
                                     transitions={    'succeeded' :'WAIT_CONTINUE_ITERATOR',
                                                      'failed'    :'WAIT_CONTINUE_ITERATOR'})
 
-
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                             WAIT_CONTINUE_ITERATOR
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-            waitContinueIterator = smach.Iterator(  outcomes=['container_success', 'container_failed'], 
-                                                    it = lambda:range(0, 3),
-                                                    it_label='waitCounter',
-                                                    input_keys=[],
-                                                    output_keys=[],
-                                                    exhausted_outcome = 'container_failed')
-            with waitContinueIterator:
-
-                waitContinueContainer = smach.StateMachine( outcomes = ['container_success', 'heard_nothing'])
-
-                with waitContinueContainer:
-
-                    smach.StateMachine.add("ASK_CONTINUE",
-                                            states.AskContinue(robot),
-                                            transitions={   'continue':'container_success',
-                                                            'no_response':'heard_nothing'})
-
-                smach.Iterator.set_contained_state( 'WAIT_CONTINUE_CONTAINER', 
-                                                     waitContinueContainer, 
-                                                     # loop_outcomes=['heard_nothing'],
-                                                     break_outcomes=['container_success'])
-
             # add the lookoutIterator to the main state machine
             smach.StateMachine.add( 'WAIT_CONTINUE_ITERATOR',
-                                    waitContinueIterator,
-                                    {   'container_failed':'SAY_NO_CONTINUE',
-                                        'container_success':'FIND_CROWD_CONTAINER'})
+                                    WaitForStart(robot),
+                                    {   'failed':'SAY_NO_CONTINUE',
+                                        'succeeded':'FIND_CROWD_CONTAINER'})
 
             smach.StateMachine.add( 'SAY_NO_CONTINUE',
                                     states.Say(robot, "I didn't hear continue, but I will move on.", block=False),
