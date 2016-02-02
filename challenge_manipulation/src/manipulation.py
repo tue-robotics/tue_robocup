@@ -29,11 +29,10 @@ import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
+from robot_smach_states.util.geometry_helpers import *
 
 # Robot Skills
-from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
-from robot_skills.util import transformations
 from robot_skills.util import transformations
 
 # RoboCup knowledge
@@ -67,10 +66,9 @@ ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor','room']
 PLACE_HEIGHT = 1.0
 
-
+# Criteria
 not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
 size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
-# not_manipulated = lambda entity: not entity in manipulated_items.resolve()
 has_type = lambda entity: entity.type != ""
 min_height = lambda entity: entity.min_z > 0.3
 min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
@@ -88,6 +86,8 @@ def max_width(entity):
     y_ok = 0.02 < y_size < 0.15
 
     return x_ok and y_ok
+
+# ----------------------------------------------------------------------------------------------------
 
 class FormattedSentenceDesignator(ds.Designator):
     """docstring for FormattedSentenceDesignator"""
@@ -239,30 +239,7 @@ class ManipRecogSingleItem(smach.StateMachine):
         self.pick_shelf = ds.EntityByIdDesignator(robot, id=PICK_SHELF, name="pick_shelf")
         self.place_shelf = ds.EntityByIdDesignator(robot, id=PLACE_SHELF, name="place_shelf")
 
-        # TODO: Designate items that are
-        # inside pick_shelf
-        # and are _not_:
-        #   already placed
-        #   on the placement-shelve.
-        # not_ignored = lambda entity: not entity.type in ignore_types and not entity.id in ignore_ids
-        # size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
         not_manipulated = lambda entity: not entity in self.manipulated_items.resolve()
-        # has_type = lambda entity: entity.type != ""
-        # min_height = lambda entity: entity.min_z > 0.3
-        # min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
-        # def max_width(entity):
-        #     max_bb_x = max(ch.x for ch in entity.convex_hull)
-        #     min_bb_x = min(ch.x for ch in entity.convex_hull)
-        #     max_bb_y = max(ch.y for ch in entity.convex_hull)
-        #     min_bb_y = min(ch.y for ch in entity.convex_hull)
-
-        #     x_size = abs(max_bb_x - min_bb_x)
-        #     y_size = abs(max_bb_y - min_bb_y)
-
-        #     x_ok = 0.02 < x_size < 0.15
-        #     y_ok = 0.02 < y_size < 0.15
-
-        #     return x_ok and y_ok
 
         def on_top(entity):
             container_entity = self.pick_shelf.resolve()
@@ -274,12 +251,6 @@ class ManipRecogSingleItem(smach.StateMachine):
             p = transformations.tf_transform(entity.pose.position, "/map", robot.robot_name+"/base_link", robot.tf_listener)
             return p.x*p.x
 
-        # self.current_item = EntityByIdDesignator(robot, id="beer1")  # TODO: For testing only
-        # self.current_item = LockingDesignator(EdEntityDesignator(robot,
-        #     center_point=geom.PointStamped(frame_id="/"+PICK_SHELF), radius=2.0,
-        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top], debug=False))
-        # self.current_item = LockingDesignator(EdEntityDesignator(robot,
-        #     criteriafuncs=[not_ignored, size, not_manipulated, has_type, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False))
         self.current_item = ds.LockingDesignator(ds.EdEntityDesignator(robot,
             criteriafuncs=[not_ignored, size, not_manipulated, on_top, min_entity_height, max_width], weight_function=weight_function, debug=False, name="item"), name="current_item")
 
@@ -307,10 +278,6 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add("LOOKAT_PICK_SHELF",
                                      states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
                                      transitions={  'succeeded'         :'LOCK_ITEM'})
-
-            # smach.StateMachine.add( "SAY_LOOKAT_PICK_SHELF",
-            #                         states.Say(robot, ["I'm looking at the self.pick_shelf to see what items I can find"]),
-            #                         transitions={   'spoken'            :'LOCK_ITEM'})
 
             @smach.cb_interface(outcomes=['locked'])
             def lock(userdata):
@@ -367,10 +334,6 @@ class ManipRecogSingleItem(smach.StateMachine):
             smach.StateMachine.add( "ANNOUNCE_CLASS",
                                     states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item), block=False),
                                     transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
-
-            # smach.StateMachine.add( "ANNOUNCE_CLASS",
-            #                         states.Say(robot, "This is a {0}".format(self.current_item.resolve().type), block=False),
-            #                         transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
                                      states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
@@ -431,19 +394,12 @@ def setup_statemachine(robot):
         pick_shelf = ds.EntityByIdDesignator(robot, id=PICK_SHELF)
         room = ds.EntityByIdDesignator(robot, id=ROOM)
         smach.StateMachine.add( "NAV_TO_START",
-                                #states.NavigateToObserve(robot, pick_shelf),
                                 states.NavigateToSymbolic(robot,
                                                           {pick_shelf:"in_front_of", room:"in"},
                                                           pick_shelf),
                                 transitions={   'arrived'           :'RESET_ED',
                                                 'unreachable'       :'RESET_ED',
                                                 'goal_not_defined'  :'RESET_ED'})
-
-        # smach.StateMachine.add("NAV_TO_START",
-        #                         states.NavigateToWaypoint(robot, start_waypoint),
-        #                         transitions={'arrived'                  :'RESET_ED',
-        #                                      'unreachable'              :'RESET_ED',
-        #                                      'goal_not_defined'         :'RESET_ED'})
 
         smach.StateMachine.add("RESET_ED",
                                 states.ResetED(robot),
