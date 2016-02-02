@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package>
-  <name>challenge_navigation</name>
+  <name>challenge_following_and_guiding</name>
   <version>0.0.0</version>
   <description>No description available</description>
 
-  <maintainer email="todo@tue.nl">todo</maintainer>
+  <maintainer email="reinzor@gmail.com">Rein Appeldoorn</maintainer>
 
   <license>TODO</license>
 
