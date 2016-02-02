@@ -15,7 +15,6 @@ from robot_smach_states.util.designators import EdEntityDesignator, EntityByIdDe
 from robot_skills.util import transformations, msg_constructors
 
 from robocup_knowledge import load_knowledge
-common_knowledge = load_knowledge("common")
 knowledge = load_knowledge("challenge_following_and_guiding")
 
 class StoreRobocupArena(smach.State):
@@ -58,8 +57,6 @@ class WaitForOperatorCommand(smach.State):
 
         base_pose = self._robot.base.get_location()
 
-        choices = knowledge.guiding_choices
-
         self._robot.head.look_at_standing_person()
         result = self._robot.ears.recognize(knowledge.guiding_spec, knowledge.guiding_choices, time_out = rospy.Duration(5)) # Wait 5 secs
 
@@ -86,10 +83,10 @@ def setup_statemachine(robot):
 
         smach.StateMachine.add('SAY_INTRO', states.Say(robot, "Hi, Guide me out of the arena please."), transitions={ 'spoken' :'FOLLOW_INITIAL'})
 
-        smach.StateMachine.add('FOLLOW_INITIAL', states.FollowOperator(robot, operator_timeout=30), transitions={ 'stopped':'STORE', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
+        smach.StateMachine.add('FOLLOW_INITIAL', states.FollowOperator(robot, operator_timeout=30), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
 
         smach.StateMachine.add('FOLLOW', states.FollowOperator(robot, operator_timeout=30, ask_follow=False), transitions={ 'stopped':'WAIT_FOR_OPERATOR_COMMAND', 'lost_operator':'FOLLOW_INITIAL', 'no_operator':'FOLLOW_INITIAL'})
-        smach.StateMachine.add('WAIT_FOR_OPERATOR_COMMAND', WaitForOperatorCommand(robot), transitions={ 'timeout':'FOLLOW', 'command':'SAY_GUIDE' })
+        smach.StateMachine.add('WAIT_FOR_OPERATOR_COMMAND', WaitForOperatorCommand(robot), transitions={ 'follow':'FOLLOW', 'command':'SAY_GUIDE' })
 
         smach.StateMachine.add('SAY_GUIDE', states.Say(robot, "I will guide you back to the robocup arena!"), transitions={ 'spoken' :'GUIDE_TO_ROBOCUP_ARENA'})
 
@@ -100,6 +97,8 @@ def setup_statemachine(robot):
                                 transitions={'arrived': 'SAY_BACK', 'unreachable':'SAY_BACK', 'goal_not_defined':'SAY_BACK'})
 
         smach.StateMachine.add('SAY_BACK', states.Say(robot, "We are back in the robocup arena!"), transitions={ 'spoken' :'done'})
+
+        return sm
 
 ############################## initializing program ######################
 if __name__ == '__main__':
