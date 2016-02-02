@@ -21,27 +21,27 @@ Afterwards, a PDF report has to be made:
 
 import rospy
 import smach
-import sys
 import random
-import math
 
+# Robot Smach States
 import robot_smach_states.util.designators as ds
 import robot_smach_states as states
 from robot_smach_states.util.startup import startup
 from robot_smach_states import Grab
 from robot_smach_states import Place
-from robot_smach_states import world_model
+
+# Robot Skills
 from robot_smach_states.util.geometry_helpers import *
 from robot_skills.util import msg_constructors as geom
 from robot_skills.util import transformations
-import geometry_msgs.msg as gm
 from robot_skills.util import transformations
-from cb_planner_msgs_srvs.msg import PositionConstraint
 
+# RoboCup knowledge
+from robocup_knowledge import load_knowledge
 
+# PDF writer
 import pdf
 
-from robocup_knowledge import load_knowledge
 challenge_knowledge = load_knowledge('challenge_manipulation')
 OBJECT_SHELVES = challenge_knowledge.object_shelves
 PICK_SHELF = challenge_knowledge.grasp_shelf
@@ -65,9 +65,6 @@ if not PICK_SHELF in OBJECT_SHELVES:
 
 ignore_ids = ['robotics_testlabs']
 ignore_types = ['waypoint', 'floor','room']
-#PICK_SHELF = "plastic_cabinet_shelf_1"
-#PLACE_SHELF = "plastic_cabinet_shelf_2"
-#ROOM = "room_living_room"
 PLACE_HEIGHT = 1.0
 
 
@@ -77,6 +74,7 @@ size = lambda entity: abs(entity.z_max - entity.z_min) < 0.4
 has_type = lambda entity: entity.type != ""
 min_height = lambda entity: entity.min_z > 0.3
 min_entity_height = lambda entity: abs(entity.z_max - entity.z_min) > 0.04
+
 def max_width(entity):
     max_bb_x = max(ch.x for ch in entity.convex_hull)
     min_bb_x = min(ch.x for ch in entity.convex_hull)
@@ -102,6 +100,7 @@ class FormattedSentenceDesignator(ds.Designator):
         kwargs_resolved = {key: value.resolve() for key, value in self.kwargs.iteritems()}
         return self.fmt.format(**kwargs_resolved)
 
+# ----------------------------------------------------------------------------------------------------
 
 class EntityDescriptionDesignator(ds.Designator):
     """EntityDescriptionDesignator"""
@@ -122,101 +121,7 @@ class EntityDescriptionDesignator(ds.Designator):
         sentence = fmt.format(type=typ, id=short_id)
         return sentence
 
-
-# class EmptySpotDesignator(ds.Designator):
-#     """Designates an empty spot on the empty placement-shelve.
-#     It does this by queying ED for entities that occupy some space.
-#         If the result is no entities, then we found an open spot."""
-#     def __init__(self, robot, closet_designator):
-#         super(EmptySpotDesignator, self).__init__(resolve_type=gm.PoseStamped)
-#         self.robot = robot
-#         self.closet_designator = closet_designator
-#         self._edge_distance = 0.1                   # Distance to table edge
-#         self._spacing = 0.15
-
-#     def _resolve(self):
-#         closet = self.closet_designator.resolve()
-
-#         # points_of_interest = []
-#         points_of_interest = self.determinePointsOfInterest(closet)
-
-#         def is_poi_occupied(poi):
-#             entities_at_poi = self.robot.ed.get_entities(center_point=poi, radius=self._spacing)
-#             return not any(entities_at_poi)
-
-#         open_POIs = filter(is_poi_occupied, points_of_interest)
-
-#         def distance_to_poi_area(poi):
-#             #Derived from navigate_to_place
-#             radius = math.hypot(self.robot.grasp_offset.x, self.robot.grasp_offset.y)
-#             x = poi.point.x
-#             y = poi.point.y
-#             ro = "(x-%f)^2+(y-%f)^2 < %f^2"%(x, y, radius+0.075)
-#             ri = "(x-%f)^2+(y-%f)^2 > %f^2"%(x, y, radius-0.075)
-#             pos_constraint = PositionConstraint(constraint=ri+" and "+ro, frame="/map")
-
-#             plan_to_poi = self.robot.base.global_planner.getPlan(pos_constraint)
-
-#             distance = 10**10 #Just a really really big number for empty plans so they seem far away and are thus unfavorable
-#             if plan_to_poi:
-#                 distance = len(plan_to_poi)
-#             print "Distance: %s"%distance
-#             return distance
-
-#         if any(open_POIs):
-#             best_poi = min(open_POIs, key=distance_to_poi_area)
-#             placement = geom.PoseStamped(pointstamped=best_poi)
-#             rospy.loginfo("Placement = {0}".format(placement).replace('\n', ' '))
-#             return placement
-#         else:
-#             rospy.logerr("Could not find an empty spot")
-#             return None
-
-#     def determinePointsOfInterest(self, e):
-
-#         points = []
-
-#         x = e.pose.position.x
-#         y = e.pose.position.y
-
-#         if len(e.convex_hull) == 0:
-#             rospy.logerr('Entity: {0} has an empty convex hull'.format(e.id))
-#             return []
-
-#         ''' Convert convex hull to map frame '''
-#         center_pose = poseMsgToKdlFrame(e.pose)
-#         ch = []
-#         for point in e.convex_hull:
-#             p = pointMsgToKdlVector(point)
-#             p = center_pose * p
-#             ch.append(p)
-
-#         ''' Loop over hulls '''
-#         ch.append(ch[0])
-#         for i in xrange(len(ch) - 1):
-#                 dx = ch[i+1].x() - ch[i].x()
-#                 dy = ch[i+1].y() - ch[i].y()
-#                 length = math.hypot(dx, dy)
-
-#                 d = self._edge_distance
-#                 while d < (length-self._edge_distance):
-
-#                     ''' Point on edge '''
-#                     xs = ch[i].x() + d/length*dx
-#                     ys = ch[i].y() + d/length*dy
-
-#                     ''' Shift point inwards and fill message'''
-#                     ps = geom.PointStamped()
-#                     ps.header.frame_id = "/map"
-#                     ps.point.x = xs - dy/length * self._edge_distance
-#                     ps.point.y = ys + dx/length * self._edge_distance
-#                     ps.point.z = e.pose.position.z + e.z_max
-#                     points.append(ps)
-
-#                     # ToDo: check if still within hull???
-#                     d += self._spacing
-
-#         return points
+# ----------------------------------------------------------------------------------------------------
 
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
@@ -267,43 +172,8 @@ class InspectShelves(smach.State):
                 ''' Enable kinect segmentation plugin (only one image frame) '''
                 # entity_ids = self.robot.ed.segment_kinect(max_sensor_range=2)  ## Old
                 segmented_entities = self.robot.ed.update_kinect("{} {}".format("on_top_of", shelf))
-                # import ipdb;ipdb.set_trace();return 'no_objects_found'
 
-                ''' Get all entities that are returned by the segmentation and are on top of the shelf '''
-                # # id_list = [] # List with entities that are flagged with 'perception'
-                # detected_entities = []
-                # for entity_id in entity_ids:
-                #     e = self.robot.ed.get_entity(entity_id)
-                #
-                #     # if e and onTopOff(e, shelf_entity) and not e.type:
-                #     if e and onTopOff(e, shelf_entity) and size(e) and min_entity_height(e) and not e.type:
-                #         # ToDo: filter on size in x, y, z
-                #         # self.robot.ed.update_entity(id=e.id, flags=[{"add":"perception"}])
-                #         id_list.append(e.id)
-                #         detected_entities.append(e)
-
-                ''' Try to classify the objects on the shelf '''
-                # entity_types_and_probs = self.robot.ed.classify_with_probs(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
                 entity_types_and_probs = self.robot.ed.classify(ids=segmented_entities.new_ids, types=OBJECT_TYPES)
-                # import ipdb; ipdb.set_trace();
-
-                # print "entity types: {}".format(entity_types_and_probs)
-
-                ''' Check all entities that were flagged to see if they have received a 'type' it_label
-                if so: recite them and lock them '''
-                # for i in range(0, len(id_list)):
-                #     e_id = id_list[i]
-                #     (e_type, e_type_prob) = entity_types_and_probs[i]
-                #
-                #     e = detected_entities[i]
-                #     e.type = e_type
-                #
-                #     if e_type:
-                #         self.robot.speech.speak("I have seen {0}".format(e_type), block=False)
-                #         self.robot.ed.update_entity(id=e.id, flags=[{"add": "locked"}])
-                #
-                #         DETECTED_OBJECTS_WITH_PROBS += [(e, e_type_prob)]
-
 
                 # Recite entities
                 for etp in entity_types_and_probs:
@@ -324,29 +194,6 @@ class InspectShelves(smach.State):
                 DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
                 # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
 
-                    # self.robot.ed.update_entity(id=etp.id, flags=[{"add": "locked"}])
-
-                # TODO: Store the entities in the pdf (and let AMIGO name them)
-                # ...
-                # for e in entities:
-                #     Say e.type
-                #     Store e in pdf
-                #
-                #      OR
-                #
-                # Lock the items in the world model, and create the pdf afterwards
-                # ...
-                # for e in entities:
-                #     self.robot.ed.update_entity(e.id, flags=["locked"])
-                #
-                # ... (later)
-                # # Getting all locked entities:
-                # for e in entities:
-                #     if "locked" in e.flags:
-                #         ...
-
-                # self.robot.ed.disable_plugins(["kinect_integration", "perception"])
-
         if not DETECTED_OBJECTS_WITH_PROBS:
             return "nothing_found"
 
@@ -354,27 +201,6 @@ class InspectShelves(smach.State):
         # DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda o: o[1], reverse=True)
 
         return 'succeeded'
-
-# class InspectEntity(smach.State):
-#     """Inspect an entity, i.e. look at all points that make up some entity"""
-#     # ToDo: Is this obsolete???
-
-#     def __init__(self, robot, entity_designator):
-#         smach.State.__init__(self, outcomes=['succeeded','failed'])
-#         self.robot = robot
-#         self.entity_designator = entity_designator
-
-#     def execute(self, userdata=None):
-#         entity = self.entity_designator.resolve()
-
-#         if not entity:
-#             return "failed"
-
-#         for point in entity.convex_hull:
-#             point_stamped = geom.PointStamped(point=point, frame_id=entity.id)
-#             self.robot.head.look_at_point(point_stamped, timeout=1)
-
-#         return "succeeded"
 
 # ----------------------------------------------------------------------------------------------------
 
