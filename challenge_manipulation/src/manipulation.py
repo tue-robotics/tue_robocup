@@ -63,7 +63,7 @@ if not PICK_SHELF in OBJECT_SHELVES:
     OBJECT_SHELVES.append(PICK_SHELF)
 
 ignore_ids = ['robotics_testlabs']
-ignore_types = ['waypoint', 'floor','room']
+ignore_types = ['waypoint', 'floor', 'room']
 PLACE_HEIGHT = 1.0
 
 # Criteria
@@ -89,6 +89,7 @@ def max_width(entity):
 
 # ----------------------------------------------------------------------------------------------------
 
+
 class FormattedSentenceDesignator(ds.Designator):
     """docstring for FormattedSentenceDesignator"""
     def __init__(self, fmt, **kwargs):
@@ -101,6 +102,7 @@ class FormattedSentenceDesignator(ds.Designator):
         return self.fmt.format(**kwargs_resolved)
 
 # ----------------------------------------------------------------------------------------------------
+
 
 class EntityDescriptionDesignator(ds.Designator):
     """EntityDescriptionDesignator"""
@@ -122,6 +124,7 @@ class EntityDescriptionDesignator(ds.Designator):
         return sentence
 
 # ----------------------------------------------------------------------------------------------------
+
 
 class InspectShelves(smach.State):
     """ Inspect all object shelves """
@@ -186,10 +189,8 @@ class InspectShelves(smach.State):
                 # DETECTED_OBJECTS_WITH_PROBS = [(e.id, e.type) for e in sorted(entity_types_and_probs, key=lambda o: o[1], reverse=True)]
                 for e in entity_types_and_probs:
                     entity = self.robot.ed.get_entity(id=e.id, parse=False)  # In simulation, the entity type is not yet updated...
-                    import os
-                    if not os.environ.get('ROBOT_REAL', 'false') in ['true', 'True', 'TRUE']:
-                        entity.type = e.type
                     DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
+
                 # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
                 DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
                 # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
