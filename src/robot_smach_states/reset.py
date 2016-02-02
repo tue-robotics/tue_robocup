@@ -116,6 +116,7 @@ class SetSpindle(smach.State):
 
 class ResetED(smach.State):
     def __init__(self, robot):
+        self.robot = robot
         smach.State.__init__(self, outcomes=["done"])
 
     def execute(self, userdata=None):
