@@ -1,159 +1,197 @@
 #! /usr/bin/env python
 import rospy
-from robot_smach_states.state import State
+import smach
 
 ############################## Atomic Reset States ##############################
 
-class ResetHead(State):
+class ResetHead(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
         rospy.logwarn("Better use another function, what do you want to achieve, straight or cancel???")
-        robot.head.reset(timeout=timeout)
+        self.robot.head.reset(timeout=self.timeout)
         return "done"
 
-class CancelHead(State):
+class CancelHead(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
         rospy.logwarn("Better use another function, what do you want to achieve, straight or cancel???")
-        robot.head.cancel_goal()
+        self.robot.head.cancel_goal()
         return "done"
 
-class ResetLeftArm(State):
+class ResetLeftArm(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close', timeout=timeout)
+    def execute(self, userdata=None):
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
         return "done"
 
-class ResetRightArm(State):
+class ResetRightArm(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close', timeout=timeout)
+    def execute(self, userdata=None):
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
         return "done"
 
-class ResetArms(State):
+class ResetArms(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close', timeout=timeout)
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close', timeout=timeout)
+    def execute(self, userdata=None):
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
         return "done"
 
-class ResetArm(State):
+class ResetArm(smach.State):
     def __init__(self, robot, side, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        """
+        :param side an arm of the robot or a designator resolving to an Arm (some ArmDesignator)
+        """
+        self.robot = robot
+        self.timeout = timeout
+        self.side = side
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, side, timeout):
+    def execute(self, userdata=None):
+        if hasattr(self.side, "resolve"):
+            side = self.side.resolve()
+        else:
+            side = self.side
         side.reset()
-        side.send_gripper_goal('close', timeout=timeout)
+        side.send_gripper_goal('close', timeout=self.timeout)
         return "done"
 
-class ResetSpindle(State):
+class ResetSpindle(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
-        robot.spindle.reset()
+    def execute(self, userdata=None):
+        self.robot.spindle.reset()
         return "done"
 
-class ResetTorso(State):
+class ResetTorso(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
-        robot.torso.reset()
+    def execute(self, userdata=None):
+        self.robot.torso.reset()
         return "done"
 
-class SetSpindle(State):
+class SetSpindle(smach.State):
     def __init__(self, robot, timeout=0.0, height=0.35):
-        State.__init__(self, locals(), outcomes=["done"])
+        """
+        :param height Height to which to set the spindle
+        """
+        self.robot = robot
+        self.timeout = timeout
+        self.height = height
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout, height):
-        robot.spindle.send_goal(height)
+    def execute(self, userdata=None):
+        self.robot.spindle.send_goal(self.height)
         return "done"
 
-class ResetED(State):
+class ResetED(smach.State):
     def __init__(self, robot):
-        State.__init__(self, locals(), outcomes=["done"])
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot):
-        robot.lights.set_color(r=1.0,g=0.0,b=0.0,a=1.0) # Red
-        robot.ed.reset()                                # Reset ed
-        robot.lights.set_color(r=0.0,g=0.0,b=1.0,a=1.0) # Blue
+    def execute(self, userdata=None):
+        self.robot.lights.set_color(r=1.0,g=0.0,b=0.0,a=1.0) # Red
+        self.robot.ed.reset()                                # Reset ed
+        self.robot.lights.set_color(r=0.0,g=0.0,b=1.0,a=1.0) # Blue
         return 'done'
-############################## Combination Reset States ##############################
+############################## Combination Reset smach.States ##############################
 
-class ResetArmsSpindle(State):
+class ResetArmsSpindle(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
 
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close', timeout=timeout)
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close', timeout=timeout)
-        robot.spindle.reset()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.spindle.reset()
         return "done"
 
-class ResetArmsHead(State):
+class ResetArmsHead(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
 
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close', timeout=timeout)
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close', timeout=timeout)
-        robot.head.reset(timeout=timeout)
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.head.reset(timeout=self.timeout)
         return "done"
 
-class ResetHeadSpindle(State):
+class ResetHeadSpindle(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
 
-        robot.spindle.reset()
-        robot.head.reset(timeout=timeout)
+        self.robot.spindle.reset()
+        self.robot.head.reset(timeout=self.timeout)
         return "done"
 
-class ResetArmsSpindleHead(State):
+class ResetArmsSpindleHead(smach.State):
     # Checks how many tasks have been done and if another task is needed
     # Does this check with the database in the reasoner
     def __init__(self,robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
 
-        robot.leftArm.reset()
-        robot.leftArm.send_gripper_goal('close', timeout=timeout)
-        robot.rightArm.reset()
-        robot.rightArm.send_gripper_goal('close', timeout=timeout)
-        robot.head.reset(timeout=timeout)
-        robot.spindle.reset()
+        self.robot.leftArm.reset()
+        self.robot.leftArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.rightArm.reset()
+        self.robot.rightArm.send_gripper_goal('close', timeout=self.timeout)
+        self.robot.head.reset(timeout=self.timeout)
+        self.robot.spindle.reset()
 
         return "done"
 
-class ResetSpindleHeadUp(State):
+class ResetSpindleHeadUp(smach.State):
     def __init__(self, robot, timeout=0.0):
-        State.__init__(self, locals(), outcomes=["done"])
+        self.robot = robot
+        self.timeout = timeout
+        smach.State.__init__(self, outcomes=["done"])
 
-    def run(self, robot, timeout):
+    def execute(self, userdata=None):
 
-        robot.spindle.reset()
-        robot.head.reset()
+        self.robot.spindle.reset()
+        self.robot.head.reset()
         return "done"
