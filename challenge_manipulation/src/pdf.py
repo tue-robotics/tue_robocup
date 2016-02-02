@@ -1,11 +1,8 @@
 #!/usr/bin/python
 import rospy
 
-from markdown import markdown
 from xhtml2pdf import pisa
 
-from ed_gui_server.srv import *
-import time
 import os
 
 from robot_skills import world_model_ed
@@ -26,7 +23,6 @@ Test list
 - item 3
     '''
 
-# ed_get_measurements = rospy.ServiceProxy('/ed/get_measurements', SimpleQuery)
 
 def html2pdf(sourceHtml, outputFilename):
     with open(outputFilename, "w+b") as resultFile:
@@ -67,8 +63,8 @@ def save_entity_image_to_file(world_model_ed, entityID):
 
     return file_name
 
+
 def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb"):
-    rospy.logdebug("TODO: Exporting PDF")
 
     html = "<html>"
     html += "<head>"
@@ -102,19 +98,15 @@ def entities_to_pdf(world_model_ed, entities, name, directory = "/home/amigo/usb
     filename = "%s_%s.pdf"%(name, date_str)
 
     try:
-
-
         html2pdf(html, "%s/%s"%(directory, filename))
-
-
     except IOError, ioerror:
         rospy.logerr(ioerror)
         rospy.logwarn("Writing to local file instead")
-        html2pdf(html, "%s"%(filename))
+        html2pdf(html, "%s"%filename)
 
 if __name__ == '__main__':
     rospy.init_node("testpdf")
     pisa.showLogging()
 
-    ed = world_model_ed.ED("amigo","nbanana");
+    ed = world_model_ed.ED("amigo", "nbanana");
     entities_to_pdf(ed, ed.get_entities(), "all_entities")

@@ -56,9 +56,7 @@ DEBUG = False
 ''' Sanity check '''
 if PLACE_SHELF in OBJECT_SHELVES:
     rospy.logerr("Place shelve {0} will not contain objects, but is still in object shelves, will remove".format(PLACE_SHELF))
-    # ToDo
-    #import ipdb; ipdb.set_trace()
-if not PICK_SHELF in OBJECT_SHELVES:
+if PICK_SHELF not in OBJECT_SHELVES:
     rospy.logerr("Pick shelf {0} not in object shelves, will add".format(PICK_SHELF))
     OBJECT_SHELVES.append(PICK_SHELF)
 
