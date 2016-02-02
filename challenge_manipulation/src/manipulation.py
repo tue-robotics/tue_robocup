@@ -320,9 +320,9 @@ class InspectShelves(smach.State):
                     if not os.environ.get('ROBOT_REAL', 'false') in ['true', 'True', 'TRUE']:
                         entity.type = e.type
                     DETECTED_OBJECTS_WITH_PROBS.append((entity, e.probability))
-                print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+                # print "Detected obs with props 1: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
                 DETECTED_OBJECTS_WITH_PROBS = sorted(DETECTED_OBJECTS_WITH_PROBS, key=lambda  o: o[1], reverse=True)
-                print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
+                # print "Detected obs with props 2: {0}".format(DETECTED_OBJECTS_WITH_PROBS)
 
                     # self.robot.ed.update_entity(id=etp.id, flags=[{"add": "locked"}])
 
@@ -538,13 +538,13 @@ class ManipRecogSingleItem(smach.StateMachine):
                                    smach.CBState(store_as_manipulated),
                                    transitions={'stored':'ANNOUNCE_CLASS'})
 
-            # smach.StateMachine.add( "ANNOUNCE_CLASS",
-            #                         states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item, name="item_type_sentence"), block=False),
-            #                         transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
-
             smach.StateMachine.add( "ANNOUNCE_CLASS",
-                                    states.Say(robot, "This is a {0}".format(self.current_item.resolve().type), block=False),
+                                    states.Say(robot, FormattedSentenceDesignator("This is a {item.type}.", item=self.current_item), block=False),
                                     transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
+
+            # smach.StateMachine.add( "ANNOUNCE_CLASS",
+            #                         states.Say(robot, "This is a {0}".format(self.current_item.resolve().type), block=False),
+            #                         transitions={   'spoken'            :'LOOKAT_PLACE_SHELF'})
 
             smach.StateMachine.add("LOOKAT_PLACE_SHELF",
                                      states.LookAtEntity(robot, self.pick_shelf, keep_following=True),
