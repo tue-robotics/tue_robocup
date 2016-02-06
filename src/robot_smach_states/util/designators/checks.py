@@ -23,7 +23,24 @@ def check_resolve_type(designator, *allowed_types):
     Traceback (most recent call last):
       ...
     TypeError: ...
+
+    >>> d5 = Designator(["a", "b", "c"], resolve_type=[str])
+
+    >>> d6 = Designator(["a", "b", "c"], resolve_type=[str])
+    >>> #The resolve_type is actually [str] but we check for [int], thus get an exception
+    >>> check_resolve_type(d6, [int])  # doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+      ...
+    TypeError: ...
     """
+
+    if isinstance(designator.resolve_type, list):
+        real_resolve_type = designator.resolve_type[0]
+        real_allowed_type = allowed_types[0][0] #allowed_types is a list (because of the *).
+
+        if not real_resolve_type == real_allowed_type:
+            raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
+
     if not designator.resolve_type in allowed_types:
         raise TypeError("{0} resolves to {1} but should resolve to one of {2}".format(designator, designator.resolve_type, allowed_types))
 

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 __author__ = 'loy'
 from deprecation_warnings import deprecated, get_caller_info
+import unittest
 
 class Designator(object):
 
@@ -16,13 +17,6 @@ class Designator(object):
     >>> d.resolve()
     'Initial value'
 
-    >>> assert(issubclass(d.resolve_type, str))
-
-    >>> d2 = Designator("not an integer", name="tester2", resolve_type=int)
-    >>> d2.resolve()
-    Traceback (most recent call last):
-    ...
-    TypeError: Designator(resolve_type=<type 'int'>, name=tester2) resolved to a '<type 'str'>' instead of expected '<type 'int'>'
     >>> assert(issubclass(d.resolve_type, str))
     """
 
@@ -44,7 +38,16 @@ class Designator(object):
     def resolve(self):
         """Selects a new goal and sets it as the current value."""
         result = self._resolve()
-        if result != None and not isinstance(result, self.resolve_type):
+        result_type = type(result)
+        resolve_type = self.resolve_type
+
+        if isinstance(result, list):
+            result_type = type(result[0])
+
+        if isinstance(self.resolve_type, list):
+            resolve_type = self.resolve_type[0]
+
+        if result != None and result_type != resolve_type:
             raise TypeError("{} resolved to a '{}' instead of expected '{}'".format(self, type(result), self.resolve_type))
         return result
 
@@ -72,6 +75,9 @@ class Designator(object):
         s += ")\n\n"
 
         return s
+
+    def __repr__(self):
+        return "Designator(resolve_type={}, name={})".format(self.resolve_type, self.name)
 
     def lockable(self):
         """Designators can be lockable. This means their value does not change between calls to .lock and .unlock().
@@ -142,8 +148,12 @@ class VariableDesignator(Designator):
         except TypeError:
             pass
 
-        if not issubclass(type(value), resolve_type):
-            raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
+        if isinstance(value, list) and isinstance(self.resolve_type, list):
+            if not issubclass(type(value[0]), resolve_type[0]):
+                raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
+        else:
+            if not issubclass(type(value), resolve_type):
+                raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         self._current = value
 
     def _resolve(self):
@@ -182,6 +192,14 @@ class VariableWriter(object):
     >>> w.write('World')
     >>> v.resolve() #Now it works!
     'World'
+
+    >>> v2 = VariableDesignator(['a', 'b', 'c'])
+    >>> v2.resolve()
+    ['a', 'b', 'c']
+    >>> v2w = v2.writeable
+    >>> v2w.write(v2.resolve() + ['d'])
+    >>> v2.resolve()
+    ['a', 'b', 'c', 'd']
     """
 
     instances = []
@@ -192,7 +210,14 @@ class VariableWriter(object):
         VariableWriter.instances += [self]
 
     def write(self, value):
-        if isinstance(value, self.variable_designator.resolve_type):
+        if isinstance(value, list) and isinstance(self.variable_designator.resolve_type, list):
+            if isinstance(value[0], self.variable_designator.resolve_type[0]):
+                self.variable_designator._set_current_protected(value)
+            else:
+                raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
+                    self.variable_designator,
+                    self.variable_designator.resolve_type))
+        elif isinstance(value, self.variable_designator.resolve_type):
             self.variable_designator._set_current_protected(value)
         else:
             raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
@@ -218,10 +243,21 @@ class VariableWriter(object):
 
     resolve_type = property(_get_resolve_type)
 
+    def __repr__(self):
+        return "VariableWriter({}(..., name={}))".format(type(self.variable_designator), self.variable_designator.name)
+
 
 writeable = VariableWriter
 
+class TestDesignators(unittest.TestCase):
+    def test_resolve_types(self):
+        d2 = Designator("not an integer", name="tester2", resolve_type=int)
+        with self.assertRaises(TypeError):
+            d2.resolve()
+        self.assertTrue(issubclass(d2.resolve_type, int))
 
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+    unittest.main() #Some tests could not be expressed well as doctests because of the format in Designator.__str__

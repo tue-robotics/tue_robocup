@@ -537,6 +537,7 @@ def LearnPersonProcedure(robot, person_name = "", n_samples = 10, timeout = 5.0)
 
     count = 0
     timedout = False
+    start_time = time.time()
     while (count < n_samples):
 
         human_entities = scanForHuman(robot)
