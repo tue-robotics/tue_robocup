@@ -9,10 +9,11 @@ import ed_perception.msg
 import robot_skills.util.msg_constructors as msgs
 import math
 from smach_ros import SimpleActionState
-from robot_smach_states.util.designators import *
+import robot_smach_states.util.designators as ds
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra, scanForHuman
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
+from ed_perception.msg import PersonDetection
 from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
 
@@ -81,7 +82,7 @@ class FaceAnalysed(object):
 # ----------------------------------------------------------------------------------------------------
 
 
-class PointDesignator(Designator):
+class PointDesignator(ds.Designator):
     """ Returns a more or less hardcoded designator"""
     def __init__(self, point_stamped=None):
         super(PointDesignator, self).__init__(resolve_type=EntityInfo)
@@ -135,7 +136,7 @@ class CancelHeadGoals(smach.State):
 
 class FindCrowd(smach.State):
     def __init__(self, robot, locations):
-        smach.State.__init__(   self, outcomes=['succeded', 'failed'])
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed'])
         self.robot = robot
         self.locations = locations
 
@@ -232,115 +233,120 @@ class FindCrowd(smach.State):
 
         return 'failed'
 
+# ----------------------------------------------------------------------------------------------------
+
+class RecognizePersons(smach.State):
+    def __init__(self, robot, detectedPersonsDes):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        self.robot = robot
+
+        ds.check_resolve_type(detectedPersonsDes, [PersonDetection])
+        ds.is_writeable(detectedPersonsDes)
+        self.detectedPersonsDes = detectedPersonsDes
+
+    def execute(self, userdata=None):
+        self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,1, self.robot.robot_name + "/base_link"), end_time=0, timeout=8)
+
+
+        alice = PersonDetection(name="Alice", age=27, gender=PersonDetection.FEMALE, body_pose="standing", pose=msgs.PoseStamped(2, -0.5, 1.7))
+        bob = PersonDetection(name="Bob", age=25, gender=PersonDetection.MALE, body_pose="sitting", pose=msgs.PoseStamped(2, 0.5, 1.2))
+        charlie = PersonDetection(name="Charlie", age=23, gender=PersonDetection.MALE, body_pose="lying", pose=msgs.PoseStamped(1.5, 0, 0.3))
+
+        # detections = self.detectedPersonsDes.write(self.robot.ed.detect_persons())
+        # if not detections:
+        #     return 'failed'
+
+        detections = [alice, bob, charlie]
+        self.detectedPersonsDes.write(detections)
+
+        return 'succeeded'
 
 # ----------------------------------------------------------------------------------------------------
 
 class DescribePeople(smach.State):
-    def __init__(self, robot, facesAnalyzedDes, operatorNameDes):
-        smach.State.__init__(   self, 
-                                input_keys=['operatorIdx_in'],
-                                outcomes=['done'])
+    def __init__(self, robot, detected_persons_des, operator_des):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
-        self.facesAnalyzedDes = facesAnalyzedDes
-        self.operatorNameDes = operatorNameDes
-        self.first_time = True
+
+        ds.check_resolve_type(detected_persons_des, [PersonDetection])
+        self.detected_persons_des = detected_persons_des
+
+        ds.check_resolve_type(operator_des, PersonDetection)
+        self.operatorPersonDes = operator_des
+
         self.numberMale = 0
         self.numberFemale = 0
+        self.numberKids = 0
         self.operatorIdx = 0
 
     def execute(self, userdata):
         printOk("DescribePeople")
 
-        faceList = None
-        position = 1
-
         # try to resolve the crowd designator
-        faceList = self.facesAnalyzedDes.resolve()
-        if not faceList:
-            printFail("Could not resolve facesAnalyzedDes")
-            pass
+        persons = self.detected_persons_des.resolve()
+        if not persons:
+            printError("Could not resolve facesAnalyzedDes")
+            self.robot.speech.speak("I could not find any faces during the challenge.",  block=False)
+            return 'failed'
+        else:
+            # convert to base_link for relative positions
+            positions_in_baselink = {}
+            for person in persons:
+                point_in_base_link = transformations.tf_transform(person.pose, person.pose.header.frame_id, "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
+                #person.pose = msgs.PointStamped(pointstamped_in_base_link.x, pointstamped_in_base_link.y, pointstamped_in_base_link.z, frame_id="/"+self.robot.robot_name+"/base_link")
+                positions_in_baselink[person] = point_in_base_link
 
-        if not faceList == None:
+            # order list by face Y location wrt base_link
+            # persons.sort(key=lambda k: k.point_stamped.point.y)
+            import operator as op
+            ordered_persons = sorted(positions_in_baselink.items(), key=lambda pair: pair[1].y)
+            ordered_persons = [pair[0] for pair in ordered_persons]
 
-            # there's a bug somewhere, if the function is ran twice it presents a different descriptio, so... fixed for now
-            if self.first_time == True:
-                self.first_time = False
-                # import ipdb; ipdb.set_trace()
+            # Compute crowd and operator details
+            for idx, person in enumerate(ordered_persons):
+                printOk("Name: {name}, Location: ({loc.x}, {loc.y}, {loc.z}), body_pose: {body_pose}, Gender: {gender}".format(
+                    name=str(person.name),
+                    loc=positions_in_baselink[person].point_stamped.point,
+                    body_pose=str(person.body_pose),
+                    gender=str(person.gender)
+                    ))
 
-                # convert map frame to base_link frame
-                for face in faceList:
-                    in_map = msgs.PointStamped(point=face.point_stamped.point, frame_id="/map")
-                    in_base_link = transformations.tf_transform(in_map, "/map", "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
-                    face.point_stamped.point.x = in_base_link.x
-                    face.point_stamped.point.y = in_base_link.y
-                    face.point_stamped.point.z = in_base_link.z
+            # count number of males and females
+            males = filter(lambda person: person.gender==PersonDetection.MALE, ordered_persons)
+            females = filter(lambda person: person.gender==PersonDetection.FEMALE, ordered_persons)
+            children = filter(lambda person: person.age <= 12, ordered_persons)
 
-                # order list by face Y location wrt base_link
-                faceList.sort(key=lambda k: k.point_stamped.point.y)
+            self.numberMale = len(males)
+            self.numberFemale = len(females)
+            self.numberKids = len(children)
 
-                # Compute crowd and operator details
-                for idx, face in enumerate(faceList):
-                    printOk("Name: {0}, Score: {1}, Location: ({2},{3},{4}), Pose: {5}, Gender: {6}, Main crowd: {7}, Position: {8}, Operator: {9}".format(
-                        str(face.name),
-                        str(face.score),
-                        str(face.point_stamped.point.x), str(face.point_stamped.point.y), str(face.point_stamped.point.z),
-                        str(face.pose),
-                        str(face.gender),
-                        str(face.inMainCrowd),
-                        str(face.orderedPosition),
-                        str(face.operator)))
-
-                    # count number of males and females
-                    if face.inMainCrowd == True:
-                        if face.gender == challenge_knowledge.Gender.Male:
-                            self.numberMale += 1
-                        else:
-                            self.numberFemale += 1
-
-                    # translate position number to word
-                    if idx + 1 == 1 : face.orderedPosition = "first"
-                    if idx + 1 == 2 : face.orderedPosition = "second"
-                    if idx + 1 == 3 : face.orderedPosition = "third"
-                    if idx + 1 == 4 : face.orderedPosition = "fourth"
-                    if idx + 1 == 5 : face.orderedPosition = "fifth"
-                    if idx + 1 == 6 : face.orderedPosition = "sixth"
-                    if idx + 1 == 7 : face.orderedPosition = "seventh"
-                    if idx + 1 == 8 : face.orderedPosition = "eighth"
-                    if idx + 1 == 9 : face.orderedPosition = "ninth"
-                    if idx + 1 == 10 : face.orderedPosition = "tenth"
-
-                    if face.operator == True:
-                        self.operatorIdx = idx
-
+            position_names = {0:'first', 1:'second', 2:'third', 3:'fourth', 4:'fifth', 5:'sixth',
+                              6:'seventh', 7:'eighth', 8:'ninth', 9:'tenth', 10:'eleventh'}
 
             self.robot.speech.speak("I counted {0} persons in this crowd. {1} males and {2} females.".format(
                 str(self.numberMale + self.numberFemale),
                 self.numberMale if self.numberMale > 0 else "no",
                 self.numberFemale if self.numberFemale > 0 else "no"),
+                block=True)
+
+            self.robot.speech.speak("There are {0} people under 12 in the crowd".format(
+                self.numberKids if self.numberKids > 0 else "no"),
                 block=False)
 
             try:
                 # just to be safe, test this...
-                if self.operatorIdx < 0 or self.operatorIdx >= len(faceList):
-                    printFail("Operator index from the list is invalid. (" + self.operatorIdx + "). Reseting to 0")
-                    self.operatorIdx = 0
-                
-                self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from my right.".format(
-                    name = self.operatorNameDes.resolve(),
-                    order = faceList[self.operatorIdx].orderedPosition,
-                    gender = "man" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "woman",
-                    pronoun = "he" if faceList[self.operatorIdx].gender == challenge_knowledge.Gender.Male else "she",
-                    pose =  "standing up" if faceList[self.operatorIdx].pose == challenge_knowledge.Pose.Standing else "sitting down"), block=True)
-
-            except KeyError, ke:
-                    printOk("KeyError self.operatorIdx:" + str(ke))
-                    pass
-
-        else:
-            self.robot.speech.speak("I could not find any faces during the challenge.",  block=False)
-
-        return 'done'
-
+                operator = self.operatorPersonDes.resolve()
+                if operator:
+                    self.robot.speech.speak("My operator is a {gender}, and {pronoun} is {pose}. {name} is the {order} person in the crowd, starting from my right.".format(
+                        name = operator.name,
+                        order = position_names[ordered_persons.index(operator)],
+                        gender = "man" if operator.gender == PersonDetection.MALE else "woman",
+                        pronoun = "he" if operator.gender == PersonDetection.MALE else "she",
+                        pose =  "standing up" if operator.pose == challenge_knowledge.Pose.Standing else "sitting down"), block=True)
+            except:
+                pass
+            return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -371,7 +377,7 @@ class AskPersonName(smach.State):
 
         self.robot = robot
 
-        is_writeable(operatorNameDes)
+        ds.is_writeable(operatorNameDes)
         self.operatorNameDes = operatorNameDes
 
     def execute(self, userdata):
@@ -379,14 +385,14 @@ class AskPersonName(smach.State):
 
         self.robot.speech.speak("What is your name?", block=True)
 
-        spec = Designator("((<prefix> <name>)|<name>)")
+        spec = ds.Designator("((<prefix> <name>)|<name>)")
 
-        choices = Designator({"name"  : common_knowledge.names,
+        choices = ds.Designator({"name"  : common_knowledge.names,
                               "prefix": ["My name is", "I'm called", "I am"]})
 
-        answer = VariableDesignator(resolve_type=GetSpeechResponse)
+        answer = ds.VariableDesignator(resolve_type=GetSpeechResponse)
 
-        state = HearOptionsExtra(self.robot, spec, choices, writeable(answer))
+        state = HearOptionsExtra(self.robot, spec, choices, answer.writeable)
         outcome = state.execute()
 
         if not outcome == "heard":
@@ -521,10 +527,43 @@ class ChooseOperator(smach.State):
             return 'succeeded'
 
         else:
-            printFail("No faces were analysed!")
+            printError("No faces were analysed!")
             return 'failed'
 
 
+class SelectOperator(smach.State):
+    def __init__(self, robot, operator_name_des, detected_persons_des, operator_person_des):
+        """
+        :param operator_name_des: designator resolving to the name of the operator
+        :param detected_persons_des: designator resolving to a list of PersonDetections
+        :param operator_person_des: VariableDesignator to which the PersonDetection of the operator wil be written
+        """
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+
+        self.robot = robot
+        ds.check_resolve_type(detected_persons_des, [PersonDetection])
+        ds.check_resolve_type(operator_person_des, PersonDetection)
+        ds.is_writeable(operator_person_des)
+        ds.check_resolve_type(operator_name_des, str)
+
+        self.detectedPersonsDes = detected_persons_des
+        self.operatorNameDes = operator_name_des
+        self.OperatorPersonDes = operator_person_des
+
+    def execute(self, userdata=None):
+        detected_persons = self.detectedPersonsDes.resolve()
+        if not detected_persons:
+            return "failed"
+
+        operator_name = self.operatorNameDes.resolve()
+
+        operator_candidates = [candidate for candidate in detected_persons if candidate.name==operator_name]
+
+        if operator_candidates:
+            self.OperatorPersonDes.write(operator_candidates[0])
+            return 'succeeded'
+        else:
+            return "failed"
 # ----------------------------------------------------------------------------------------------------
 
 
@@ -654,51 +693,49 @@ class AnalysePerson(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 
-class GetNextLocation(smach.State):
+class GetNextPerson(smach.State):
     """
-    From a list of locations to visit, choose the next one and go there
+    From a list of persons to visit, choose the next one and go there
     """
-    def __init__(self, robot, locations, nextLocation):
-        smach.State.__init__(   self, outcomes=['done', 'visited_all'])
-
+    def __init__(self, robot, all_persons, next_person, remaining_persons):
+        smach.State.__init__(self, outcomes=['next_selected', 'visited_all'])
         self.robot = robot
-        self.locations = locations
-        self.nextLocation = nextLocation
+
+        ds.check_resolve_type(all_persons, [PersonDetection])
+        self.all_persons = all_persons
+
+        ds.check_resolve_type(next_person, PersonDetection)
+        ds.is_writeable(next_person)
+        self.next_person = next_person
+
+        ds.check_resolve_type(remaining_persons, [PersonDetection])
+        ds.is_writeable(remaining_persons)
+        self.remaining_persons = remaining_persons
+
+        self.INITIALIZER = PersonDetection(name="Dummy")
+
+        import ipdb; ipdb.set_trace()
+        self.remaining_persons.write([self.INITIALIZER])
 
     def execute(self, userdata):
-        printOk("GetNextLocation")
+        printOk("GetNextPerson")
 
-        availableLocations = self.locations.resolve()
+        import ipdb; ipdb.set_trace()
+        remaining_persons = self.remaining_persons.resolve()
+        if not remaining_persons:
+            return "visited_all"
+        elif remaining_persons == [self.INITIALIZER]:
+            #We'll use this as initial content
+            self.remaining_persons.write(self.all_persons.resolve()) #Initialize with real content on first execute.
+            remaining_persons = self.remaining_persons.resolve()
 
-        # if there are locations not visited yet, choose one
-        if availableLocations:
-            printOk(str(len(availableLocations)) + " locations in the list")
+        next_person = remaining_persons.pop(0)
+        self.next_person.write(next_person)
+        self.remaining_persons.write(remaining_persons) #Write back with first element removed
 
-            chosenLocation = None
-            
-            for loc in availableLocations:
+        printOk("Selected {} as next person".format(next_person).replace("\n", " "))
 
-                if loc.visited == False:
-                    if loc.attempts < 5:
-                        chosenLocation = loc.point_stamped
-                        loc.attempts += 1
-                        break
-                    else:
-                        printOk('Tried to visit this location several times and it never worked. Ignoring it')
-
-            if not chosenLocation:
-                printOk('All locations are marked as visited')
-                return 'visited_all'
-            else:
-                self.nextLocation.current.setPoint(point_stamped = chosenLocation)
-                printOk("Next location: " + str(chosenLocation.point))
-
-                return 'done'
-
-        # If there are not more loactions to visit then report back to the operator
-        else:
-            printOk("Visited all locations")
-            return 'visited_all'
+        return "next_selected"
 
 
 # ----------------------------------------------------------------------------------------------------
