@@ -1,0 +1,89 @@
+T[{action1: A1}] -> C[A1]
+T[{action1: A1, action2: A2}] -> C[A1] and C[A2]
+T[{action1: A1, action2: A2, action3: A3}] -> C[A1] C[A2] and C[A3]
+
+C[{A}] -> VP[A]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Grasping
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP[A] -> VP_GRASP[A]
+VP[A, "side": S] -> VP_GRASP[A] with SIDE[S]
+VP[A, "loc": Y] -> VP_GRASP[A] from NP[Y]
+VP[A, "loc": Y, "side": S] -> VP_GRASP[A] from NP[Y] with SIDE[S]
+
+VP_GRASP["action": A, "entity": X] -> V_GRASP[A] SMALL_OBJECT[X]
+
+V_GRASP["pick-up"] -> grab | grasp | pick up
+
+SIDE["left"] -> left
+SIDE["right"] -> right
+
+VP["action": "send-arm-goal", "symbolic": "reset", "side": S] -> reset SIDE[S] arm 
+
+VP["action": "send-gripper-goal", "goal": GSTATE, "side": S] -> GRIPPER_STATE[GSTATE] SIDE[S] gripper
+
+GRIPPER_STATE["open"] -> open
+GRIPPER_STATE["close"] -> close
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Looking
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "look-at"] -> look at nothing
+VP["action": "look-at", "entity": X] -> look at NP[X]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Bringing
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "bring", "entity": X, "from": Y, "to": Z] -> bring NP[X] from NP[Y] to NP[Z]
+
+# VP["action": A, "entity": X, "loc": Y] -> V_BRING[A] NP[X] to NP[Y]
+# V_BRING["transport"] -> bring | transport
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Moving
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": X] -> V_MOVE[A] NP[X]
+VP["action": A, "coordinate": C] -> V_MOVE[A] COORDINATE_2D[C]
+V_MOVE["navigate"] -> move to | goto | go to | drive to | navigate to
+
+VP["action": A, "degrees": -90] -> V_ROTATE[A] left
+VP["action": A, "degrees": 90] -> V_ROTATE[A] right
+VP["action": A, "degrees": 180] -> V_ROTATE[A] around
+VP["action": A, "degrees": -N] -> V_ROTATE[A] NUM[N] degrees left
+VP["action": A, "degrees": N] -> V_ROTATE[A] NUM[N] degrees right
+V_ROTATE["rotate"] -> turn | rotate
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Inspecting
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": A, "entity": X] -> V_INSPECT[A] NP[X]
+V_INSPECT["inspect"] -> inspect
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Finding
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "find", "entity" : X] -> find NP[X]
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Questions
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+VP["action": "answer-question", "answer" : ANSWER] -> Q[ANSWER]
+
+Q["time"] -> tell the time
+
+VP["action": "reset-wm"] -> reset world model
+
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+# Entities
+# - - - - - - - - - - - - - - - - - - - - - - - - -
+
+NP[M] -> SMALL_OBJECT[M]
+NP[M] -> ROOM[M]
