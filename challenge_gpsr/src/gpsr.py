@@ -35,6 +35,8 @@ object_to_location = {}
 def navigate(robot, parameters):
     entity_descr = parameters["entity"]
 
+    robot.speech.speak("I am going to the %s" % entity_descr)
+
     if entity_descr in challenge_knowledge.rooms:
         nwc =  NavigateToSymbolic(robot, 
                                         { EntityByIdDesignator(robot, id=entity_descr) : "in" }, 
@@ -59,6 +61,9 @@ def pick_up(robot, parameters):
 
     location = object_to_location[entity_descr]
 
+    robot.speech.speak("I am going to the %s to pick up the %s" % (location, entity_descr))
+
+
     # Move to the location
     nwc = NavigateToObserve(robot,
                      entity_designator=robot_smach_states.util.designators.EdEntityDesignator(robot, id=location),
@@ -75,10 +80,6 @@ def find(robot, parameters):
     entity_descr = parameters["entity"]
 
     robot.speech.speak("I should find a %s, but that is not implemented yet" % entity_descr)
-
-# ------------------------------------------------------------------------------------------------------------------------
-
-
 
 # ------------------------------------------------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------------------------------------------------
@@ -107,6 +108,8 @@ def execute_command(sentence, parser, action_functions, robot):
             action_functions[action_type](robot, a)
         else:
             print "Unknown action type: '%s'" % action_type
+
+# ------------------------------------------------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------------------------------------------------
 
@@ -175,6 +178,12 @@ def main():
     for rooms in challenge_knowledge.rooms:
         parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
         parser.add_rule("ROOM[\"%s\"] -> the %s" % (rooms, rooms))
+
+    for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
+            parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
+            parser.add_rule("NP[\"%s\"] -> the %s" % (obj, alias))
+            parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))        
+
 
     action_functions = {}
     action_functions["navigate"] = navigate
