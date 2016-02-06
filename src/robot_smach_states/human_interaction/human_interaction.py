@@ -189,7 +189,6 @@ class HearOptionsExtra(smach.State):
             rospy.logerr("Could not resolve choices")
             return "no_result"
 
-
         if self.look_at_standing_person:
             self.robot.head.look_at_standing_person()
 
@@ -301,44 +300,6 @@ class WaitForPersonInFront(WaitForDesignator):
         human_entity = ds.EdEntityDesignator(robot, type="human")
         ds.WaitForDesignator.__init__(self, robot, human_entity, attempts, sleep_interval)
 
-
-##########################################################################################################################################
-
-'''
-class NameToUserData(WaitForDesignator):
-    """
-    Pass the received name into userdata. By default use 'person_name', if its empty use a designator
-    """
-    def __init__(self, robot, person_name = "", name_designator = None):
-        smach.State.__init__(   self,
-                                output_keys=['personName_out'],
-                                outcomes=['done'])
-
-        self.robot = robot
-        self.person_name = person_name
-        if name_designator:
-            ds.check_resolve_type(name_designator, str)
-        self.name_designator = name_designator
-
-    def execute(self, userdata):
-        print "NameToUserData"
-
-        name = ""
-        # if the name was given in person_name parameter use it, otherwise use designator
-        if self.person_name:
-            name = self.person_name
-        elif self.name_designator:
-            name = self.name_designator.resolve()
-        else:
-            name = "Default"
-            print "ERROR: Could not get the goal name for the person! Using '" + name + "'"
-
-        userdata.personName_out = name
-        print "NameToUserData: param -> {0}".format(name)
-
-        # import ipdb; ipdb.set_trace()
-        return 'done'
-'''
 
 ##########################################################################################################################################
 
@@ -540,31 +501,22 @@ def LearnPersonProcedure(robot, person_name = "", n_samples = 10, timeout = 5.0)
     start_time = time.time()
     while (count < n_samples):
 
-        human_entities = scanForHuman(robot)
-
-        if not human_entities:
-            print ("[LearnPersonProcedure] " + "No person found.")
-            elapsed_time = time.time() - start_time
-            if elapsed_time > timeout:
-                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
-                return count
-        else:
+        if robot.ed.learn_person(person_name):
             # reset timer
             start_time = time.time()
-
-            # select human entity
-            # TODO: sort based on distance
-            human_id = human_entities[0].id
-
-            # trigger learning function
-            robot.ed.learn_person(human_id, person_name)
-            
+           
             count = count + 1
 
             if count == n_samples/2:
                 robot.speech.speak("Almost done, keep looking.", block=False)
+        else:
+            print ("[LearnPersonProcedure] " + "No person found.")
+            elapsed_time = time.time() - start_time
+            if elapsed_time > timeout:
+                print ("[LearnPersonProcedure] " + "Learn procedure timed out!")
+                return count            
 
-            print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
+        print ("[LearnPersonProcedure] " + "Completed {0}/{1}".format(count, n_samples))
 
     print ("[LearnPersonProcedure] " + "Learn procedure completed!")
 
