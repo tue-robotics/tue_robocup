@@ -165,7 +165,7 @@ class LearnOperatorFace(smach.StateMachine):
                                     transitions={    'spoken':'LOOK_AT_OPERATOR'})
 
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
-                                    PersonRecStates.LookAtPersonInFront(robot, lookDown=True),
+                                    states.LookAtPersonInFront(robot, lookDown=True),
                                     transitions={   'succeded':'TOGGLE_PERCEPTION_ON',
                                                     'failed':'TOGGLE_PERCEPTION_ON'})
 
@@ -176,7 +176,8 @@ class LearnOperatorFace(smach.StateMachine):
             smach.StateMachine.add('LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator=operatorNameDes),
                                     transitions={   'succeded_learning':'TOGGLE_PERCEPTION_OFF_SUCCESS',
-                                                    'failed_learning':'TOGGLE_PERCEPTION_OFF_FAILED'})
+                                                    'failed_learning':'TOGGLE_PERCEPTION_OFF_FAILED',
+                                                    'timeout_learning':'TOGGLE_PERCEPTION_OFF_FAILED'})
 
             # ------- FAILED -----
 
@@ -186,7 +187,7 @@ class LearnOperatorFace(smach.StateMachine):
 
             smach.StateMachine.add( 'SAY_FAILED_LEARNING',
                                     states.Say(robot,"I could not learn my operator's face. Let me try again.", block=True),
-                                    transitions={    'spoken':'LEARN_OPERATOR_CONTAINER'})
+                                    transitions={    'spoken':'failed'})
 
             smach.StateMachine.add('SAY_LEARN_FACE_FAILED',
                                    states.Say(robot,"I could not learn your face for some reason. Let's try again.", block=False),
@@ -286,6 +287,162 @@ class FindCrowdByDrivingAround(smach.StateMachine):
                                                     'failed':   'failed'})
 
 
+class FindOperator(smach.StateMachine):
+    def __init__(self, robot, operatorNameDes, locationsToVisitDes, facesAnalyzedDes):
+        smach.StateMachine.__init__(self, outcomes=['succeeded', 'failed'])
+
+        self.robot = robot
+
+        #REVIEW: A designator resolving to a designator is weird. Can't you use a ds.VariableDesignator directly?
+        nextLocationDes = ds.VariableDesignator(PersonRecStates.PointDesignator())
+
+        operatorLocationDes = ds.VariableDesignator(PersonRecStates.PointDesignator()) #REVIEW: a designator that
+
+        @smach.cb_interface(outcomes=['done'])
+        def removeLocation(userdata):
+            locationsList = locationsToVisitDes.resolve()
+            locToRemove = nextLocationDes.resolve().resolve()
+            updated = False
+
+            printOk("removeLocationCB")
+
+            # printOk(str(len(locationsList)) + " locations available")
+
+            ''' iterate through all locations on the list and update the correct one '''
+            for loc in locationsList:
+                if locToRemove.pose.position == loc.point_stamped.point and loc.visited == False:
+                    printOk("Updading this location to visited:\n" + str(loc.point_stamped.point))
+                    loc.visited = True
+                    updated = True
+                    break
+
+            if not updated:
+                printError("Location not found in the list!")
+
+            return 'done'
+
+        with self:
+            smach.StateMachine.add( 'SAY_LOOKING_OPERATOR',
+                                        states.Say(robot,"I'm looking for my operator.", block=False),
+                                        transitions={   'spoken':'GET_NEXT_LOCATION'})
+
+            smach.StateMachine.add( 'GET_NEXT_LOCATION',
+                                    PersonRecStates.GetNextLocation(robot, locationsToVisitDes, nextLocationDes),
+                                    transitions={   'done':'GOTO_LOCATION',
+                                                    'visited_all':'succeeded'})
+
+            smach.StateMachine.add( 'GOTO_LOCATION',
+                                    states.NavigateToObserve(robot, entity_designator = nextLocationDes.resolve(), radius=1.8), #REVIEW: You cannot do .current of .resolve at construction
+                                    transitions={   'arrived'           :   'REMOVE_LOCATION',
+                                                    'unreachable'       :   'SAY_FAILED_GOTO',
+                                                    'goal_not_defined'  :   'SAY_FAILED_GOTO'})
+
+            smach.StateMachine.add( 'REMOVE_LOCATION',
+                                    smach.CBState(removeLocation),
+                                    transitions={   'done':'SAY_LOOK_AT_ME'})
+
+            smach.StateMachine.add( 'SAY_LOOK_AT_ME',
+                                    states.Say(robot,[  "Please look at me.",
+                                                        "Would you look into my camera?",
+                                                        "Let me see who is here, please face me."], block=False),
+                                    transitions={   'spoken':'ANALYSE_ITERATOR'})
+
+            analyzeIterator = smach.Iterator(   outcomes=['container_success', 'container_failed'],
+                                                it = lambda:range(0, 5),
+                                                it_label='counter',
+                                                input_keys=[],
+                                                output_keys=[],
+                                                exhausted_outcome = 'container_failed')
+            with analyzeIterator:
+
+                analyzeIterator = smach.StateMachine( outcomes = ['container_success', 'container_failed'])
+
+                with analyzeIterator:
+
+                    smach.StateMachine.add("LOOK_AT_PERSON",
+                                    states.LookAtPersonInFront(robot, lookDown=True),
+                                    transitions={   'succeded':'ANALYZE_PERSON',
+                                                    'failed':'ANALYZE_PERSON'})
+
+                    smach.StateMachine.add( 'ANALYZE_PERSON',
+                                            PersonRecStates.AnalysePerson(robot, facesAnalyzedDes),
+                                            transitions={   'succeded':'CANCEL_HEAD_GOALS',
+                                                            'failed':'container_failed'})
+
+                    smach.StateMachine.add( 'CANCEL_HEAD_GOALS',
+                                PersonRecStates.CancelHeadGoals(robot),
+                                transitions={    'done':'container_success'})
+
+
+                smach.Iterator.set_contained_state( 'ANALYZE_CONTAINER',
+                                                     analyzeIterator,
+                                                     # loop_outcomes=['container_failed'],
+                                                     break_outcomes=['container_success'])
+
+            # add the lookoutIterator to the main state machine
+            smach.StateMachine.add( 'ANALYSE_ITERATOR',
+                                    analyzeIterator,
+                                    {   'container_failed':'CANCEL_HEAD_GOALS_3',
+                                        'container_success':'GET_NEXT_LOCATION'})
+
+            smach.StateMachine.add( 'CANCEL_HEAD_GOALS_3',
+                                PersonRecStates.CancelHeadGoals(robot),
+                                transitions={    'done':'SAY_FAILED_ANALYSIS'})
+
+            smach.StateMachine.add( 'SAY_FAILED_ANALYSIS',
+                                    states.Say(robot,[  "I could not find a person here",
+                                                        "I don't see any faces here",
+                                                        "I guess there is no one here"], block=False),
+                                    transitions={   'spoken':'GET_NEXT_LOCATION'})
+
+            smach.StateMachine.add( 'SAY_FAILED_GOTO',
+                                    states.Say(robot,[  "I could not go to the chosen location",
+                                                        "I can't reach that location",
+                                                        "I can't get there"], block=False),
+                                    transitions={   'spoken':'GET_NEXT_LOCATION'})
+
+            smach.StateMachine.add( 'GET_OPERATOR_LOCATION',
+                                        PersonRecStates.ChooseOperator(robot, facesAnalyzedDes, operatorNameDes, operatorLocationDes),
+                                        remapping={     'operatorIdx_out':'operatorIdx_userData'},
+                                        transitions={   'succeeded': 'GOTO_OPERATOR',
+                                                        'failed':'SAY_CANT_CHOOSE_OPERATOR'})
+
+            smach.StateMachine.add( 'GOTO_OPERATOR',
+                                    states.NavigateToObserve(robot, entity_designator = operatorLocationDes.resolve(), radius = 1.8), #REVIEW: You cannot do .current of .resolve at construction
+                                    transitions={   'arrived'           :   'SAY_FOUND_OPERATOR',
+                                                    'unreachable'       :   'SAY_CANT_REACH',
+                                                    'goal_not_defined'  :   'SAY_CANT_REACH'})
+
+            smach.StateMachine.add( 'SAY_FOUND_OPERATOR',
+                                    states.Say(robot,"This is my operator!", block=False),
+                                    transitions={   'spoken':'POINT_AT_OPERATOR'})
+
+            smach.StateMachine.add( 'SAY_CANT_CHOOSE_OPERATOR',
+                                    states.Say(robot,"I couldn't find my operator.", block=False),
+                                    transitions={   'spoken':'failed'})
+
+            smach.StateMachine.add( 'SAY_CANT_REACH',
+                                    states.Say(robot,"I could not reach my operator but i will point at anyway.", block=False),
+                                    transitions={   'spoken':'POINT_AT_OPERATOR'})
+
+            smach.StateMachine.add( 'POINT_AT_OPERATOR',
+                                    PersonRecStates.PointAtOperator(robot),
+                                    transitions={   'succeeded':'GREET_OPERATOR',
+                                                    'failed':'SAY_CANT_POINT'})
+
+            smach.StateMachine.add( 'SAY_CANT_POINT',
+                                    states.Say(robot,"Sorry but i can't point at my operator!", block=False),
+                                    transitions={   'spoken':'failed'})
+
+            @smach.cb_interface(outcomes=['spoken'])
+            def greetOperatorCB(userdata):
+                robot.speech.speak( "I have found you {0}.".format(operatorNameDes.resolve()), block=False)
+                return 'spoken'
+            smach.StateMachine.add( 'GREET_OPERATOR',
+                                    smach.CBState(greetOperatorCB),
+                                    transitions={   'spoken':'succeeded'})
+
+
 
 class ChallengePersonRecognition(smach.StateMachine):
     def __init__(self, robot):
@@ -295,14 +452,9 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         operatorNameDes = ds.VariableDesignator("", name="operatorName")
 
-        #REVIEW: A designator resolving to a designator is weird. Can't you use a ds.VariableDesignator directly?
-        nextLocationDes = ds.VariableDesignator(PersonRecStates.PointDesignator())
-
         locationsToVisitDes = ds.VariableDesignator([])
 
         facesAnalyzedDes = ds.VariableDesignator([])
-
-        operatorLocationDes = ds.VariableDesignator(PersonRecStates.PointDesignator()) #REVIEW: a designator that
         # resolves to another designator is a bit weird
 
         # ------------------ SIMULATION ------------------------------------
@@ -340,31 +492,6 @@ class ChallengePersonRecognition(smach.StateMachine):
 
         #  -----------------------------------------------------------------
 
-        @smach.cb_interface(outcomes=['done'])
-        def removeLocation(userdata):
-            locationsList = locationsToVisitDes.resolve()
-            locToRemove = nextLocationDes.resolve().resolve()
-            updated = False
-
-            printOk("removeLocationCB")
-
-            # printOk(str(len(locationsList)) + " locations available")
-
-            ''' iterate through all locations on the list and update the correct one '''
-            for loc in locationsList:
-                if locToRemove.pose.position == loc.point_stamped.point and loc.visited == False:
-                    printOk("Updading this location to visited:\n" + str(loc.point_stamped.point))
-                    loc.visited = True
-                    updated = True
-                    break
-
-            if not updated:
-                printError("Location not found in the list!")
-
-            return 'done'
-
-        #  -----------------------------------------------------------------
-
         with self:
             smach.StateMachine.add( 'START',
                                     Start(robot),
@@ -377,7 +504,7 @@ class ChallengePersonRecognition(smach.StateMachine):
                                                     'failed'    :'LEARN_OPERATOR_FACE'})
 
             smach.StateMachine.add( 'LEARN_OPERATOR_FACE',
-                                    LearnOperatorName(robot, operatorNameDes.writeable),
+                                    LearnOperatorFace(robot, operatorNameDes),
                                     transitions={    'succeeded' :'WAIT_CONTINUE_ITERATOR',
                                                      'failed'    :'WAIT_CONTINUE_ITERATOR'})
 
@@ -412,183 +539,23 @@ class ChallengePersonRecognition(smach.StateMachine):
 
             smach.StateMachine.add( 'RESET_ED_2',
                         PersonRecStates.ResetEd(robot),
-                        transitions={   'done':  'FIND_OPERATOR_CONTAINER'})
-
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                               FIND_OPERATOR_CONTAINER
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-            # container for this stage
-            findOperatorContainer = smach.StateMachine( outcomes=['container_success', 'container_failed'])
-            with findOperatorContainer:
-
-                smach.StateMachine.add( 'SAY_LOOKING_OPERATOR',
-                                        states.Say(robot,"I'm looking for my operator.", block=False),
-                                        transitions={   'spoken':'GET_NEXT_LOCATION'})
-                
-                smach.StateMachine.add( 'GET_NEXT_LOCATION',
-                                        PersonRecStates.GetNextLocation(robot, locationsToVisitDes, nextLocationDes),
-                                        transitions={   'done':'GOTO_LOCATION',
-                                                        'visited_all':'container_success'})
-
-                smach.StateMachine.add( 'GOTO_LOCATION',
-                                        states.NavigateToObserve(robot, entity_designator = nextLocationDes.resolve(), radius=1.8), #REVIEW: You cannot do .current of .resolve at construction
-                                        transitions={   'arrived'           :   'REMOVE_LOCATION',
-                                                        'unreachable'       :   'SAY_FAILED_GOTO',
-                                                        'goal_not_defined'  :   'SAY_FAILED_GOTO'})
-
-                smach.StateMachine.add( 'REMOVE_LOCATION',
-                                        smach.CBState(removeLocation),
-                                        transitions={   'done':'SAY_LOOK_AT_ME'})
-
-                smach.StateMachine.add( 'SAY_LOOK_AT_ME',
-                                        states.Say(robot,[  "Please look at me.",
-                                                            "Would you look into my camera?",
-                                                            "Let me see who is here, please face me."], block=False),
-                                        transitions={   'spoken':'ANALYSE_ITERATOR'})
-
-                analyzeIterator = smach.Iterator(   outcomes=['container_success', 'container_failed'], 
-                                                    it = lambda:range(0, 5),
-                                                    it_label='counter',
-                                                    input_keys=[],
-                                                    output_keys=[],
-                                                    exhausted_outcome = 'container_failed')
-                with analyzeIterator:
-
-                    analyzeIterator = smach.StateMachine( outcomes = ['container_success', 'container_failed'])
-
-                    with analyzeIterator:
-
-                        smach.StateMachine.add("LOOK_AT_PERSON",
-                                        states.LookAtPersonInFront(robot, lookDown=True),
-                                        transitions={   'succeded':'ANALYZE_PERSON',
-                                                        'failed':'ANALYZE_PERSON'})
-
-                        smach.StateMachine.add( 'ANALYZE_PERSON',
-                                                PersonRecStates.AnalysePerson(robot, facesAnalyzedDes),
-                                                transitions={   'succeded':'CANCEL_HEAD_GOALS',
-                                                                'failed':'container_failed'})
-
-                        smach.StateMachine.add( 'CANCEL_HEAD_GOALS',
-                                    PersonRecStates.CancelHeadGoals(robot),
-                                    transitions={    'done':'container_success'})
-
-
-                    smach.Iterator.set_contained_state( 'ANALYZE_CONTAINER',
-                                                         analyzeIterator,
-                                                         # loop_outcomes=['container_failed'],
-                                                         break_outcomes=['container_success'])
-
-                # add the lookoutIterator to the main state machine
-                smach.StateMachine.add( 'ANALYSE_ITERATOR',
-                                        analyzeIterator,
-                                        {   'container_failed':'CANCEL_HEAD_GOALS_3',
-                                            'container_success':'GET_NEXT_LOCATION'})
-
-                smach.StateMachine.add( 'CANCEL_HEAD_GOALS_3',
-                                    PersonRecStates.CancelHeadGoals(robot),
-                                    transitions={    'done':'SAY_FAILED_ANALYSIS'})
-
-                smach.StateMachine.add( 'SAY_FAILED_ANALYSIS',
-                                        states.Say(robot,[  "I could not find a person here",
-                                                            "I don't see any faces here",
-                                                            "I guess there is no one here"], block=False),
-                                        transitions={   'spoken':'GET_NEXT_LOCATION'})
-
-                smach.StateMachine.add( 'SAY_FAILED_GOTO',
-                                        states.Say(robot,[  "I could not go to the chosen location",
-                                                            "I can't reach that location",
-                                                            "I can't get there"], block=False),
-                                        transitions={   'spoken':'GET_NEXT_LOCATION'})
+                        transitions={   'done':  'FIND_OPERATOR'})
 
             #add container to the main state machine
-            smach.StateMachine.add( 'FIND_OPERATOR_CONTAINER',
-                                    findOperatorContainer,
-                                    transitions={   'container_success':'DESCRIBE_CROWD_CONTAINER',
-                                                    'container_failed':'DESCRIBE_CROWD_CONTAINER'})
-
+            smach.StateMachine.add( 'FIND_OPERATOR',
+                                    FindOperator(robot, operatorNameDes, locationsToVisitDes, facesAnalyzedDes),
+                                    transitions={   'succeeded':'DESCRIBE_PEOPLE',
+                                                    'failed':'DESCRIBE_PEOPLE'})
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                             DESCRIBE CROWD AND OPERATOR
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-            # container for this stage
-            describeCrowdContainer = smach.StateMachine(  outcomes = ['container_success', 'container_failed'])
-            with describeCrowdContainer:
+            smach.StateMachine.add( 'DESCRIBE_PEOPLE',
+                                    PersonRecStates.DescribePeople(robot, facesAnalyzedDes, operatorNameDes),
+                                    remapping={     'operatorIdx_in':'operatorIdx_userData'},
+                                    transitions={   'done':'END_CHALLENGE'})
 
-                smach.StateMachine.add( 'GET_OPERATOR_LOCATION',
-                                        PersonRecStates.ChooseOperator(robot, facesAnalyzedDes, operatorNameDes, operatorLocationDes),
-                                        remapping={     'operatorIdx_out':'operatorIdx_userData'},
-                                        transitions={   'succeeded': 'GOTO_OPERATOR',
-                                                        'failed':'SAY_CANT_CHOOSE_OPERATOR'})
-
-                smach.StateMachine.add( 'GOTO_OPERATOR',
-                                        states.NavigateToObserve(robot, entity_designator = operatorLocationDes.resolve(), radius = 1.8), #REVIEW: You cannot do .current of .resolve at construction
-                                        transitions={   'arrived'           :   'SAY_FOUND_OPERATOR',
-                                                        'unreachable'       :   'SAY_CANT_REACH',
-                                                        'goal_not_defined'  :   'SAY_CANT_REACH'})
-
-                smach.StateMachine.add( 'SAY_FOUND_OPERATOR',
-                                        states.Say(robot,"This is my operator!", block=False),
-                                        transitions={   'spoken':'POINT_AT_OPERATOR'})
-
-                smach.StateMachine.add( 'SAY_CANT_CHOOSE_OPERATOR',
-                                        states.Say(robot,"I couldn't find my operator.", block=False),
-                                        transitions={   'spoken':'container_failed'})
-
-                smach.StateMachine.add( 'SAY_CANT_REACH',
-                                        states.Say(robot,"I could not reach my operator but i will point at anyway.", block=False),
-                                        transitions={   'spoken':'POINT_AT_OPERATOR'})
-
-                smach.StateMachine.add( 'POINT_AT_OPERATOR',
-                                        PersonRecStates.PointAtOperator(robot),
-                                        transitions={   'succeeded':'GREET_OPERATOR',
-                                                        'failed':'SAY_CANT_POINT'})
-
-                smach.StateMachine.add( 'SAY_CANT_POINT',
-                                        states.Say(robot,"Sorry but i can't point at my operator!", block=False),
-                                        transitions={   'spoken':'GREET_OPERATOR'})
-
-                @smach.cb_interface(outcomes=['spoken'])
-                def greetOperatorCB(userdata):
-                    robot.speech.speak( "I have found you {0}.".format(operatorNameDes.resolve()), block=False)
-                    return 'spoken'
-                smach.StateMachine.add( 'GREET_OPERATOR',
-                                        smach.CBState(greetOperatorCB),
-                                        transitions={   'spoken':'DESCRIBE_PEOPLE'})
-
-                smach.StateMachine.add( 'DESCRIBE_PEOPLE',
-                                        PersonRecStates.DescribePeople(robot, facesAnalyzedDes, operatorNameDes),
-                                        remapping={     'operatorIdx_in':'operatorIdx_userData'},
-                                        transitions={   'done':'SAY_REPEAT'})
-
-                smach.StateMachine.add( 'SAY_REPEAT',
-                                        states.Say(robot,"Would you like me to repeat the crowd description?", block=True),
-                                        transitions={   'spoken':'HEAR_YES_NO_2'})
-
-                smach.StateMachine.add( 'HEAR_YES_NO_2',
-                                                states.HearYesNo(robot),
-                                                transitions={   'heard_yes' : 'DESCRIBE_PEOPLE',
-                                                                'heard_no' : 'container_success', 
-                                                                'heard_failed' : 'container_success'})
-
-            #add container to the main state machine
-            smach.StateMachine.add( 'DESCRIBE_CROWD_CONTAINER',
-                                    describeCrowdContainer,
-                                    transitions={   'container_success':'END_CHALLENGE',
-                                                    'container_failed':'RESET_SEARCH'})
-
-            smach.StateMachine.add( 'RESET_SEARCH',
-                                    PersonRecStates.ResetSearch(robot, locationsToVisitDes.writeable),
-                                    transitions={   'done':'SAY_FIND_CROWD_AGAIN'})
-
-            smach.StateMachine.add( 'SAY_FIND_CROWD_AGAIN',
-                                        states.Say(robot,"I will search again!", block=False),
-                                        transitions={   'spoken':'FIND_CROWD_BY_DRIVING_AROUND'})
-
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-            #                             END CHALLENGE
-            # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
             smach.StateMachine.add('END_CHALLENGE',
                                    states.Say(robot,"My work here is done, goodbye!"),
