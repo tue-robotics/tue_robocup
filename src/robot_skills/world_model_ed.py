@@ -3,6 +3,7 @@ import rospy
 from ed.srv import SimpleQuery, SimpleQueryRequest, UpdateSrv, Configure
 # from ed_sensor_integration.srv import LockEntities, MeshEntityInView, Segment
 import ed_sensor_integration.srv
+import ed_perception.srv
 from ed_perception.srv import Classify, AddTrainingInstance
 from ed_gui_server.srv import GetEntityInfo
 from ed_navigation.srv import GetGoalConstraint
@@ -58,6 +59,10 @@ class ED:
         self._ed_reset_srv = rospy.ServiceProxy('/%s/ed/reset'%robot_name, Empty)
 
         self._ed_get_image_srv = rospy.ServiceProxy('/%s/ed/kinect/get_image'%robot_name, ed_sensor_integration.srv.GetImage)
+
+        # Person recognition        
+        self._learn_person_srv = rospy.ServiceProxy('/%s/learn_person'%robot_name, ed_perception.srv.LearnPerson)
+        self._recognize_person_srv = rospy.ServiceProxy('/%s/recognize_person'%robot_name, ed_perception.srv.RecognizePerson)
 
         self._tf_listener = tf_listener
 
@@ -387,13 +392,22 @@ class ED:
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-    def learn_person(self, id, name):
-        return self.add_perception_training_instance(id=id, property="name", value=name)
+    def learn_person(self, name):
+        res = self._learn_person_srv(person_name=name)
+        if res.error_msg:
+            rospy.logerr("Learn person failed: %s" % res.error_msg)
+            return False
+        return True
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-    def classify_person(self, id):
-        return self.classify(ids = [id], property = "name")
+    def detect_persons(self):
+        res = self._recognize_person_srv()
+        if res.error_msg:
+            rospy.logerr("Detect persons failed: %s" % res.error_msg)
+            return None
+        else:
+            return res.person_detections
 
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
