@@ -53,7 +53,7 @@ class Designator(object):
         if isinstance(self.resolve_type, list):
             resolve_type = self.resolve_type[0]
 
-        if result != None and result_type != resolve_type:
+        if result != None and not issubclass(result_type, resolve_type):
             raise TypeError("{} resolved to a '{}' instead of expected '{}'".format(self, type(result), self.resolve_type))
         return result
 
