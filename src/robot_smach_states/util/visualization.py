@@ -134,6 +134,7 @@ class StateMachineViz(ContainerViz):
             child = self.smach_obj.get_children()[childname]
             childviz = self.make_childviz(child)
             # childviz.add_to_graph(my_subgraph, level=level+1)
+            element_viz_set.add(childviz)
 
             for transition, to_name in self.smach_obj._transitions[childname].iteritems():
                 print level*'\t' + "transition {} --{}--> {}".format(childname, transition, to_name)
@@ -210,7 +211,7 @@ class IteratorViz(ContainerViz):
 visualization_classes = [type(None), StateViz, StateMachineViz, TransitionViz, ContainerOutcomeViz, IteratorViz]
 
 def visualize(statemachine, statemachine_name, save_dot=False, fmt='png'):
-    dot = Digraph(comment=statemachine_name, format=fmt)
+    dot = Digraph(statemachine_name, comment=statemachine_name, format=fmt)
     
     dot.graph_attr['label'] = statemachine_name
     dot.graph_attr['labelloc'] ="t"
@@ -336,18 +337,23 @@ def testcase4():
 
 
 def draw_subgraph():
-    g = Digraph('G')
+    g = Digraph('G', format='png')
 
     c0 = Digraph('cluster_0')
     c0.body.append('style=filled')
     c0.body.append('color=lightgrey')
     c0.node_attr.update(style='filled', color='white')
-    c0.edges([('a0', 'a1'), ('a1', 'a2'), ('a2', 'a3')])
+    c0.edge('a0', 'a1')
+    c0.edge('a1', 'a2')
+    c0.edge('a2', 'a3')
     c0.body.append('label = "process #1"')
 
     c1 = Digraph('cluster_1')
     c1.node_attr.update(style='filled')
-    c1.edges([('b0', 'b1'), ('b1', 'b2'), ('b2', 'b3')])
+    c1.edge('b0', 'b1')
+    c1.edge('b1', 'b2')
+    c1.edge('b2', 'b3')
+    c1.edge('b3', 'b2')
     c1.body.append('label = "process #2"')
     c1.body.append('color=blue')
 
@@ -368,7 +374,7 @@ def draw_subgraph():
     g.save('draw_subgraph.dot')
     g.render('draw_subgraph')
 
-    g.view()
+    # g.view()
 
 
 if __name__ == "__main__":
@@ -377,4 +383,4 @@ if __name__ == "__main__":
     # testcase3()
     testcase4()
 
-    # draw_subgraph()
+    draw_subgraph()
