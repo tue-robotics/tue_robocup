@@ -29,7 +29,13 @@ class Designator(object):
 
         self.__initial_value = initial_value
         if not resolve_type:
-            self._resolve_type = type(self.__initial_value)
+            if isinstance(self.__initial_value, list):
+                if self.__initial_value:
+                    self._resolve_type = [type(self.__initial_value[0])]
+                else:
+                    raise TypeError("resolve_type could not be inferred from empty list.")
+            else:
+                self._resolve_type = type(self.__initial_value)
         else:
             self._resolve_type = resolve_type
 
@@ -113,27 +119,14 @@ class VariableDesignator(Designator):
     >>> v.resolve() #No surprise, it resolves to the given string!
     'Hello'
 
-    >>> #Getting from .current will fail because it is deprecated
-    >>> v.current  # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    DeprecationWarning: ...
-
-    >>> #Writing to the designator directly will fail.
-    >>> v.current = 'World'   # doctest: +IGNORE_EXCEPTION_DETAIL
-    Traceback (most recent call last):
-      ...
-    DeprecationWarning: ...
-
-    >>> v.resolve() #Still unchanged
-    'Hello'
+    You cannot directly set a VariableDesignator though, you must obtain a VariableWriter through the
+    .writeable-attribute
     """
 
     def __init__(self, initial_value=None, resolve_type=None, name=None):
-        if not resolve_type:
-            resolve_type = type(initial_value)
-            if resolve_type == type(None): #If the initial value is None, then the resolve_type cannot be interred and thus we raise an exception
-                raise TypeError("VariableDesignator requires to set resolve_type to ensure user can use it")
+        if not resolve_type and not initial_value:
+            raise TypeError("VariableDesignator requires to set either initial_value or resolve_type to ensure user "
+                            "can use it")
 
         super(VariableDesignator, self).__init__(initial_value, resolve_type, name=name)
 
@@ -193,7 +186,7 @@ class VariableWriter(object):
     >>> v.resolve() #Now it works!
     'World'
 
-    >>> v2 = VariableDesignator(['a', 'b', 'c'])
+    >>> v2 = VariableDesignator(['a', 'b', 'c'], resolve_type=[str])
     >>> v2.resolve()
     ['a', 'b', 'c']
     >>> v2w = v2.writeable
@@ -249,12 +242,75 @@ class VariableWriter(object):
 
 writeable = VariableWriter
 
-class TestDesignators(unittest.TestCase):
-    def test_resolve_types(self):
+class TestDesignator(unittest.TestCase):
+    def test_resolve_type(self):
+        d1 = Designator("some string", name="tester1", resolve_type=str)
+        result = d1.resolve()
+        self.assertEqual(result, "some string")
+
+    def test_wrong_resolve_type(self):
         d2 = Designator("not an integer", name="tester2", resolve_type=int)
         with self.assertRaises(TypeError):
             d2.resolve()
         self.assertTrue(issubclass(d2.resolve_type, int))
+
+    def test_list(self):
+        v = Designator(['a', 'b', 'c'])
+        self.assertEqual(v.resolve_type, [str])
+        self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
+
+class TestVariableDesignator(unittest.TestCase):
+    def test_basics(self):
+        v = VariableDesignator('Hello')
+        self.assertEqual(v.resolve_type, str)
+        self.assertEqual(v.resolve(),  "Hello")
+
+    def test_current_deprecated(self):
+        v = VariableDesignator('Hello')
+        with self.assertRaises(DeprecationWarning):
+            result = v.current
+
+    def test_write_not_possible(self):
+        v = VariableDesignator('Hello')
+
+        with self.assertRaises(DeprecationWarning):
+            v.current = "Goodbye"
+
+        self.assertEqual(v.resolve(), "Hello") #No change
+
+    def test_list(self):
+        # import ipdb; ipdb.set_trace()
+        v = VariableDesignator(['a', 'b', 'c'])
+        self.assertEqual(v.resolve_type, [str])
+        self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
+
+class TestVariableWriter(unittest.TestCase):
+    def test_basics(self):
+        v = VariableDesignator('Hello')
+        self.assertEqual(v.resolve(),  "Hello")
+
+        w = v.writeable
+        w.write("Goodbye")
+        self.assertEqual(v.resolve(),  "Goodbye")
+
+    def test_list_write(self):
+        v = VariableDesignator(['a', 'b', 'c'])
+        vw = v.writeable
+        self.assertEqual(vw.resolve_type, [str])
+        self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
+
+        vw.write(v.resolve() + ['d'])
+        self.assertListEqual(v.resolve(), ['a', 'b', 'c', 'd'])
+
+    def test_list_write_with_wrong_type(self):
+        v = VariableDesignator(['a', 'b', 'c'])
+        vw = v.writeable
+        self.assertEqual(vw.resolve_type, [str])
+        self.assertListEqual(v.resolve(), ['a', 'b', 'c'])
+
+        with self.assertRaises(TypeError):
+            vw.write([1,2,3,4])
+
 
 if __name__ == "__main__":
     import doctest
