@@ -20,10 +20,10 @@ class MyTestCase(unittest.TestCase):
         targets = Designator(target_list)
 
         unreachable_set = set()
-        unreachable = VariableDesignator(unreachable_set)
+        unreachable = VariableDesignator(unreachable_set, resolve_type=set)
 
         visited_set = set()
-        visited = VariableDesignator(visited_set)
+        visited = VariableDesignator(visited_set, resolve_type=set)
 
         for target in target_list:
             if target not in unreachable.resolve() and target not in visited.resolve():
