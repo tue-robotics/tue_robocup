@@ -8,6 +8,7 @@ import robot_skills.util.msg_constructors as msgs
 from robot_smach_states.navigation import NavigateToObserve
 import robot_smach_states.util.designators as ds
 from ed.msg import EntityInfo
+from robot_skills.classification_result import ClassificationResult
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -63,6 +64,7 @@ class SegmentObjects(smach.State):
         self.entityDes = entityDes
         self.searchArea = searchArea
 
+        ds.check_resolve_type(objectIDsDes, [ClassificationResult])
         ds.is_writeable(objectIDsDes)
         self.objectIDsDes = objectIDsDes
 
@@ -108,8 +110,11 @@ class SegmentObjects(smach.State):
 # ----------------------------------------------------------------------------------------------------
 
 class Inspect(smach.StateMachine):
-    def __init__(self, robot, entityDes, objectIDsDes = ds.VariableDesignator([]), searchArea="on_top_of"):
+    def __init__(self, robot, entityDes, objectIDsDes=None, searchArea="on_top_of"):
         smach.StateMachine.__init__(self, outcomes=['done', 'failed'])
+
+        if not objectIDsDes:
+            objectIDsDes = ds.VariableDesignator([], resolve_type=[ClassificationResult])
 
         with self:
             smach.StateMachine.add('NAVIGATE_TO_INSPECT', NavigateToObserve(robot, entityDes, radius=1.0),
