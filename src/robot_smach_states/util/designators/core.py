@@ -48,6 +48,8 @@ class Designator(object):
         resolve_type = self.resolve_type
 
         if isinstance(result, list):
+            if not result:
+                return None
             result_type = type(result[0])
 
         if isinstance(self.resolve_type, list):
