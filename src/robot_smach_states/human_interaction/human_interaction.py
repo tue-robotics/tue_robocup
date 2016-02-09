@@ -309,7 +309,7 @@ class LearnPerson(smach.State):
         
     """
     def __init__(self, robot, person_name = "", name_designator = None, n_samples = 10):
-        smach.State.__init__(self, outcomes=['succeded_learning', 'failed_learning', 'timeout_learning'])
+        smach.State.__init__(self, outcomes=['succeeded_learning', 'failed_learning', 'timeout_learning'])
         
         self.robot = robot
         self.person_name = person_name
@@ -329,14 +329,14 @@ class LearnPerson(smach.State):
                 print ("[LearnPerson] " + "No name was provided. Quitting the learning!")
                 return
 
-        samples_completed = LearnPersonProcedure(self.robot, person_name = person_name, n_samples = self.n_samples)
+        samples_completed = learn_person_procedure(self.robot, person_name = person_name, n_samples = self.n_samples)
 
         if samples_completed == 0:
             return 'failed_learning'
         if samples_completed < self.n_samples:
             return 'timeout_learning'
         else:
-            return 'succeded_learning'
+            return 'succeeded_learning'
 
 
 ##########################################################################################################################################
@@ -349,7 +349,7 @@ class LookAtPersonInFront(smach.State):
             look down, to search for example of shorter or sitting down people
     """
     def __init__(self, robot, lookDown = False):
-        smach.State.__init__(self, outcomes=['succeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
         self.lookDown = lookDown
 
@@ -418,7 +418,7 @@ class LookAtPersonInFront(smach.State):
                 foundFace == False 
 
         if foundFace == True:
-            return 'succeded'
+            return 'succeeded'
         else:
             print "[LookAtPersonInFront] " + "Could not find a face in front of the robot"
             return 'failed'
@@ -427,13 +427,13 @@ class LookAtPersonInFront(smach.State):
 ##########################################################################################################################################
 
 
-class WaitForPerson(smach.State):
+class WaitForPersonEntity(smach.State):
     """
         Wait until a person is seen/scanned in front of the robot.
             Use paramaterers to costumize number of retries and sleep between retries
     """
     def __init__(self, robot, attempts = 1, sleep_interval = 1):
-        smach.State.__init__(self, outcomes=['succeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
         self.robot = robot
         self.attempts = attempts
         self.sleep_interval = sleep_interval
@@ -448,7 +448,35 @@ class WaitForPerson(smach.State):
             desgnResult = scanForHuman(self.robot)
             if desgnResult:
                 print "[WaitForPerson] " + "Found a human!"
-                return 'succeded'
+                return 'succeeded'
+
+            counter += 1
+            rospy.sleep(self.sleep_interval)
+
+        return 'failed'
+
+class WaitForPersonDetection(smach.State):
+    """
+        Wait until a person is seen/scanned in front of the robot.
+            Use paramaterers to costumize number of retries and sleep between retries
+    """
+    def __init__(self, robot, attempts = 1, sleep_interval = 1):
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
+        self.robot = robot
+        self.attempts = attempts
+        self.sleep_interval = sleep_interval
+
+    def execute(self, userdata=None):
+        counter = 0
+        desgnResult = None
+
+        while counter < self.attempts:
+            print "WaitForPerson: waiting {0}/{1}".format(counter, self.attempts)
+
+            detections = self.robot.ed.detect_persons()
+            if detections:
+                print "[WaitForPersonDetection] " + "Found a human!"
+                return 'succeeded'
 
             counter += 1
             rospy.sleep(self.sleep_interval)
@@ -483,7 +511,7 @@ def scanForHuman(robot, background_padding = 0.3):
 ##########################################################################################################################################
 
 
-def LearnPersonProcedure(robot, person_name = "", n_samples = 10, timeout = 5.0):
+def learn_person_procedure(robot, person_name = "", n_samples = 10, timeout = 5.0):
     """
     Starts the learning process that will save n_samples of the closest person's face.
     It ends when the number of snapshots is reached or when a timeout occurs
