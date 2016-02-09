@@ -263,9 +263,9 @@ class ED(object):
         entities = [self._entities[_id] for _id in ids if _id in self._entities]
         return [ClassificationResult(e.id, e.type, random.uniform(0,1)) for e in entities]
 
-    def learn_person(self, id, name):
-    	self._person_names += [name]
-    	return True
+    def learn_person(self, id=None, name=None):
+        self._person_names += [name]
+        return True
 
     def classify_person(self, id):
     	if not self._person_names:
