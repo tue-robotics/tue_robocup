@@ -57,7 +57,7 @@ class AskPersonName(smach.State):
         Ask the person's name, and try to hear one of the names in common_knowledge
     """
     def __init__(self, robot, personNameDes, defaultName = 'Operator'):
-        smach.State.__init__(   self, outcomes=['succeded', 'failed'])
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed'])
 
         self.robot = robot
         self.personNameDes = personNameDes
@@ -94,7 +94,7 @@ class AskPersonName(smach.State):
                 printOk("KeyError resolving the name heard: " + str(ke))
                 pass
 
-        return 'succeded'
+        return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -105,7 +105,7 @@ class PickUpRandomObj(smach.State):
         Ask the person's name, and try to hear one of the names in common_knowledge
     """
     def __init__(self, robot, objectsIDsDes):
-        smach.State.__init__(   self, outcomes=['succeded', 'failed', 'no_objects'])
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed', 'no_objects'])
 
         self.robot = robot
         self.objectsIDsDes = objectsIDsDes
@@ -153,7 +153,7 @@ class PickUpRandomObj(smach.State):
             result = grabState.execute()
 
             if result == 'done':
-                return 'succeded'
+                return 'succeeded'
             else: 
                 return 'failed'
 
@@ -166,7 +166,7 @@ class RecognizePeople(smach.State):
         Attempt to recognize the peolpe in front of the robot and say their names
     """
     def __init__(self, robot):
-        smach.State.__init__(   self, outcomes=['succeded', 'failed', 'no_people'])
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed', 'no_people'])
 
         self.robot = robot
 
@@ -190,7 +190,7 @@ class RecognizePeople(smach.State):
 
                 self.robot.speech.speak("Hello {0}!".format(det.name), block=True)
 
-        return 'succeded'
+        return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------

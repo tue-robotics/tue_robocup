@@ -224,7 +224,7 @@ class FindCrowd(smach.State):
 
             ''' if the number of found faces is not enough, continue searching '''
             if len(self.locations.current) >= challenge_knowledge.min_faces_found:
-                return 'succeded'
+                return 'succeeded'
             else:
                 return 'failed'                
 
@@ -367,7 +367,7 @@ class PointAtOperator(smach.State):
 class AskPersonName(smach.State):
     def __init__(self, robot, operatorNameDes):
         smach.State.__init__(   self, 
-                                outcomes=['succeded', 'failed'])
+                                outcomes=['succeeded', 'failed'])
 
         self.robot = robot
 
@@ -405,7 +405,7 @@ class AskPersonName(smach.State):
                 printOk("KeyError resolving the name heard: " + str(ke))
                 pass
 
-        return 'succeded'
+        return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -563,7 +563,7 @@ class SelectOperator(smach.State):
 
 class AnalysePerson(smach.State):
     def __init__(self, robot, facesAnalysedDes):
-        smach.State.__init__(self, outcomes=['succeded', 'failed'])
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
         self.robot = robot
         self.facesAnalysedDes = facesAnalysedDes
@@ -678,7 +678,7 @@ class AnalysePerson(smach.State):
                     printError("KeyError faceList:" + str(ke))
                     pass
 
-            return 'succeded'
+            return 'succeeded'
         else:
             printWarning("Could not find anyone in front of the robot.")
             return 'failed'

@@ -18,6 +18,7 @@ import robot_smach_states.human_interaction.human_interaction as states_interact
 from robot_skills.amigo import Amigo
 from robot_skills.sergio import Sergio
 from robot_skills.mockbot import Mockbot
+from robot_skills.classification_result import ClassificationResult
 from robocup_knowledge import load_knowledge
 from robot_smach_states.util.startup import startup
 from robot_smach_states.utility import CancelHeadGoals
@@ -42,8 +43,8 @@ challenge_knowledge = load_knowledge("challenge_test")
 printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Test] ")
 
 
-personNameDes = VariableDesignator("")
-objectsIDsDes = VariableDesignator([])
+personNameDes = VariableDesignator("", resolve_type=str)
+objectsIDsDes = VariableDesignator([], resolve_type=[ClassificationResult])
 
 
 
@@ -109,13 +110,13 @@ class WaitPersonContainer(smach.StateMachine):
 
             smach.StateMachine.add('LOOK_AT_OPERATOR',
                                     states_interaction.LookAtPersonInFront(robot, lookDown=False),
-                                    transitions={   'succeded':'WAIT_FOR_OPERATOR',
+                                    transitions={   'succeeded':'WAIT_FOR_OPERATOR',
                                                     'failed':'WAIT_FOR_OPERATOR'})
 
 
             smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                                    states_interaction.WaitForPerson(robot, attempts=5, sleep_interval=1),
-                                    transitions={   'succeded':'container_success',
+                                    states_interaction.WaitForPersonDetection(robot, attempts=5, sleep_interval=1),
+                                    transitions={   'succeeded':'container_success',
                                                     'failed':'SAY_FAILED_WAITING'})
 
             smach.StateMachine.add( 'SAY_FAILED_WAITING',
@@ -123,8 +124,8 @@ class WaitPersonContainer(smach.StateMachine):
                                     transitions={'spoken':'WAIT_FOR_OPERATOR_2'})
 
             smach.StateMachine.add("WAIT_FOR_OPERATOR_2",
-                                    states_interaction.WaitForPerson(robot, attempts=5, sleep_interval=1),
-                                    transitions={   'succeded':'container_success',
+                                    states_interaction.WaitForPersonDetection(robot, attempts=5, sleep_interval=1),
+                                    transitions={   'succeeded':'container_success',
                                                     'failed':'container_success'})
 
             smach.StateMachine.add( 'SAY_FAILED_WAITING_AGAIN',
@@ -170,7 +171,7 @@ class LearnNameContainer(smach.StateMachine):
 
                     smach.StateMachine.add( 'ASK_PERSON_NAME',
                                             test_states.AskPersonName(robot, personNameDesLocal.writeable),
-                                            transitions={   'succeded':'SAY_IS_YOUR_NAME',
+                                            transitions={   'succeeded':'SAY_IS_YOUR_NAME',
                                                             'failed':'SAY_HEAR_FAILED'})
 
                     smach.StateMachine.add( 'SAY_IS_YOUR_NAME',
@@ -224,13 +225,13 @@ class LearnFaceContainer(smach.StateMachine):
 
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
                                     states_interaction.LookAtPersonInFront(robot, lookDown=True),
-                                    transitions={   'succeded':'LEARN_PERSON',
+                                    transitions={   'succeeded':'LEARN_PERSON',
                                                     # 'failed':'SAY_LEARN_FACE_FAILED'})
                                                     'failed':'LEARN_PERSON'})
 
             smach.StateMachine.add( 'LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator = personNameDesLocal),
-                                    transitions={   'succeded_learning':'CANCEL_HEAD_GOALS_SUCCESS',
+                                    transitions={   'succeeded_learning':'CANCEL_HEAD_GOALS_SUCCESS',
                                                     'failed_learning':'SAY_LEARN_FACE_FAILED',
                                                     'timeout_learning':'SAY_LEARN_FACE_FAILED'})
 
@@ -286,7 +287,7 @@ class PickUpContainer(smach.StateMachine):
 
             smach.StateMachine.add( 'PICKUP_OBJECT',
                                     test_states.PickUpRandomObj(robot, objectsIDsDesLocal),
-                                    transitions={   'succeded':'SAY_I_HAVE_OBJ',
+                                    transitions={   'succeeded':'SAY_I_HAVE_OBJ',
                                                     'failed':'SAY_PICKUP_FAILED',
                                                     'no_objects' : 'SAY_NO_OBJECTS'})
 
@@ -368,12 +369,12 @@ class RecognizePeopleContainer(smach.StateMachine):
 
             smach.StateMachine.add('LOOK_AT_OPERATOR',
                                     states_interaction.LookAtPersonInFront(robot, lookDown=False),
-                                    transitions={   'succeded':'RECOGNIZE_PEOPLE',
+                                    transitions={   'succeeded':'RECOGNIZE_PEOPLE',
                                                     'failed':'RECOGNIZE_PEOPLE'})
 
             smach.StateMachine.add('RECOGNIZE_PEOPLE',
                                     test_states.RecognizePeople(robot),
-                                    transitions={   'succeded':'container_success',
+                                    transitions={   'succeeded':'container_success',
                                                     'failed':'SAY_NO_PEOPLE',
                                                     'no_people':'SAY_NO_PEOPLE'})
 

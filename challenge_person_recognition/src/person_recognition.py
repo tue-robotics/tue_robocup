@@ -95,13 +95,13 @@ class LearnOperatorName(smach.StateMachine):
 
                 smach.StateMachine.add('LOOK_AT_OPERATOR',
                                         states.LookAtPersonInFront(robot, lookDown=False),
-                                        transitions={   'succeded':'WAIT_FOR_OPERATOR',
+                                        transitions={   'succeeded':'WAIT_FOR_OPERATOR',
                                                         'failed':'WAIT_FOR_OPERATOR'})
 
 
                 smach.StateMachine.add("WAIT_FOR_OPERATOR",
-                                        states.WaitForPerson(robot, attempts=8, sleep_interval=1),
-                                        transitions={   'succeded':'LEARN_NAME_ITERATOR',
+                                        states.WaitForPersonDetection(robot, attempts=8, sleep_interval=1),
+                                        transitions={   'succeeded':'LEARN_NAME_ITERATOR',
                                                         'failed':'SAY_WAITING_OPERATOR'})
 
 
@@ -124,7 +124,7 @@ class LearnOperatorName(smach.StateMachine):
                         smach.StateMachine.add( 'ASK_PERSON_NAME',
                                                 PersonRecStates.AskPersonName(robot, operatorNameDes),
                                                 remapping={     'personName_out':'personName_userData'},
-                                                transitions={   'succeded':'SAY_IS_YOUR_NAME',
+                                                transitions={   'succeeded':'SAY_IS_YOUR_NAME',
                                                                 'failed':'SAY_HEAR_FAILED'})
 
                         smach.StateMachine.add( 'SAY_IS_YOUR_NAME',
@@ -184,7 +184,7 @@ class LearnOperatorFace(smach.StateMachine):
 
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
                                     states.LookAtPersonInFront(robot, lookDown=True),
-                                    transitions={   'succeded':'TOGGLE_PERCEPTION_ON',
+                                    transitions={   'succeeded':'TOGGLE_PERCEPTION_ON',
                                                     'failed':'TOGGLE_PERCEPTION_ON'})
 
             smach.StateMachine.add( 'TOGGLE_PERCEPTION_ON',
@@ -193,7 +193,7 @@ class LearnOperatorFace(smach.StateMachine):
 
             smach.StateMachine.add('LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator=operatorNameDes),
-                                    transitions={   'succeded_learning':'TOGGLE_PERCEPTION_OFF_SUCCESS',
+                                    transitions={   'succeeded_learning':'TOGGLE_PERCEPTION_OFF_SUCCESS',
                                                     'failed_learning':'TOGGLE_PERCEPTION_OFF_FAILED',
                                                     'timeout_learning':'TOGGLE_PERCEPTION_OFF_FAILED'})
 
@@ -371,12 +371,12 @@ class FindOperatorByInspectingAll(smach.StateMachine):
 
                     smach.StateMachine.add("LOOK_AT_PERSON",
                                     states.LookAtPersonInFront(robot, lookDown=True),
-                                    transitions={   'succeded':'ANALYZE_PERSON',
+                                    transitions={   'succeeded':'ANALYZE_PERSON',
                                                     'failed':'ANALYZE_PERSON'})
 
                     smach.StateMachine.add( 'ANALYZE_PERSON',
                                             PersonRecStates.AnalysePerson(robot),
-                                            transitions={   'succeded':'CANCEL_HEAD_GOALS',
+                                            transitions={   'succeeded':'CANCEL_HEAD_GOALS',
                                                             'failed':'container_failed'})
 
                     smach.StateMachine.add( 'CANCEL_HEAD_GOALS',
