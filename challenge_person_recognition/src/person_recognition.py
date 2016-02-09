@@ -34,7 +34,7 @@ class EntityOfPersonDetection(ds.Designator):
         person_detection = self.persondetectionDes.resolve()
 
         entity = EntityInfo()
-        entity.id = "PersonDetection"+str(person_detection.id)
+        entity.id = "PersonDetection"+str(id(person_detection))
         entity.pose = person_detection.pose
         return entity
 
@@ -184,18 +184,14 @@ class LearnOperatorFace(smach.StateMachine):
 
             smach.StateMachine.add( 'LOOK_AT_OPERATOR',
                                     states.LookAtPersonInFront(robot, lookDown=True),
-                                    transitions={   'succeeded':'TOGGLE_PERCEPTION_ON',
-                                                    'failed':'TOGGLE_PERCEPTION_ON'})
-
-            smach.StateMachine.add( 'TOGGLE_PERCEPTION_ON',
-                                    PersonRecStates.TogglePerceptionMode(robot, toggle_mode=True),
-                                    transitions={   'done':'LEARN_PERSON'})
+                                    transitions={   'succeeded':'LEARN_PERSON',
+                                                    'failed':'LEARN_PERSON'})
 
             smach.StateMachine.add('LEARN_PERSON',
                                     states.LearnPerson(robot, name_designator=operatorNameDes),
-                                    transitions={   'succeeded_learning':'TOGGLE_PERCEPTION_OFF_SUCCESS',
-                                                    'failed_learning':'TOGGLE_PERCEPTION_OFF_FAILED',
-                                                    'timeout_learning':'TOGGLE_PERCEPTION_OFF_FAILED'})
+                                    transitions={   'succeeded_learning':'SAY_OPERATOR_LEARNED',
+                                                    'failed_learning':'SAY_FAILED_LEARNING',
+                                                    'timeout_learning':'SAY_FAILED_LEARNING'})
 
             # ------- FAILED -----
 
