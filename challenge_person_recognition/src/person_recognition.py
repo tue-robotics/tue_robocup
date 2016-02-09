@@ -35,7 +35,8 @@ class EntityOfPersonDetection(ds.Designator):
 
         entity = EntityInfo()
         entity.id = "PersonDetection"+str(id(person_detection))
-        entity.pose = person_detection.pose
+        point_in_map = transformations.tf_transform(person_detection.pose, person_detection.pose.header.frame_id, "/map", self.robot.tf_listener)
+        entity.pose.position = point_in_map
         return entity
 
 def printOk(sentence):
