@@ -13,9 +13,9 @@ import robot_smach_states.util.designators as ds
 from robot_smach_states.human_interaction.human_interaction import HearOptionsExtra, scanForHuman
 from ed.msg import EntityInfo
 from dragonfly_speech_recognition.srv import GetSpeechResponse
-from ed_perception.msg import PersonDetection
 from robocup_knowledge import load_knowledge
 from robot_skills.util import transformations
+from ed_perception.msg import PersonDetection
 
 # ----------------------------------------------------------------------------------------------------
 
@@ -248,16 +248,10 @@ class RecognizePersons(smach.State):
     def execute(self, userdata=None):
         self.robot.head.look_at_point(point_stamped=msgs.PointStamped(3,-3,1, self.robot.robot_name + "/base_link"), end_time=0, timeout=8)
 
+        detections = self.robot.ed.detect_persons()
+        if not detections:
+            return 'failed'
 
-        alice = PersonDetection(name="Alice", age=27, gender=PersonDetection.FEMALE, body_pose="standing", pose=msgs.PoseStamped(2, -0.5, 1.7))
-        bob = PersonDetection(name="Bob", age=25, gender=PersonDetection.MALE, body_pose="sitting", pose=msgs.PoseStamped(2, 0.5, 1.2))
-        charlie = PersonDetection(name="Charlie", age=23, gender=PersonDetection.MALE, body_pose="lying", pose=msgs.PoseStamped(1.5, 0, 0.3))
-
-        # detections = self.detectedPersonsDes.write(self.robot.ed.detect_persons())
-        # if not detections:
-        #     return 'failed'
-
-        detections = [alice, bob, charlie]
         self.detectedPersonsDes.write(detections)
 
         return 'succeeded'

@@ -506,8 +506,8 @@ class ChallengePersonRecognition(smach.StateMachine):
                                     transitions={   'spoken':'RESET_ED_2'})
 
             smach.StateMachine.add('SAY_FAILED_FIND_CROWD',
-                                   states.Say(robot,"Still Searching for the crowd", block=False),
-                                   transitions={    'spoken':'FIND_CROWD_BY_DRIVING_AROUND'})
+                                   states.Say(robot,"Could not find the crowd, sorry", block=False),
+                                   transitions={    'spoken':'RESET_ED_2'})
 
             smach.StateMachine.add( 'RESET_ED_2',
                         PersonRecStates.ResetEd(robot),
