@@ -15,6 +15,8 @@ from ed_sensor_integration.srv import UpdateResponse
 import arms
 from robot_skills import robot
 from robot_skills.classification_result import ClassificationResult
+from ed_perception.msg import PersonDetection
+import robot_skills.util.msg_constructors as msgs
 
 
 class Arm(arms.Arm):
@@ -275,6 +277,13 @@ class ED(object):
     	name = random.choice(self._person_names)
 
     	return [ClassificationResult(id, name, random.uniform(0,1))]
+
+    def detect_persons(self):
+        alice = PersonDetection(name="Alice", age=27, gender=PersonDetection.FEMALE, body_pose="standing", pose=msgs.PoseStamped(2, -0.5, 1.7))
+        bob = PersonDetection(name="Bob", age=25, gender=PersonDetection.MALE, body_pose="sitting", pose=msgs.PoseStamped(2, 0.5, 1.2))
+        charlie = PersonDetection(name="Charlie", age=23, gender=PersonDetection.MALE, body_pose="lying", pose=msgs.PoseStamped(1.5, 0, 0.3))
+        detections = [alice, bob, charlie]
+        return detections
 
 # class MockbotArms(arms.Arms):
 #     def __init__(self, tf_listener):
