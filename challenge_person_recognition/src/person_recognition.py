@@ -484,22 +484,39 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'WAIT_CONTINUE_ITERATOR',
                                     WaitForStart(robot),
                                     {   'failed':'SAY_NO_CONTINUE',
-                                        'succeeded':'FIND_CROWD_BY_DRIVING_AROUND'})
+                                        'succeeded':'FIND_CROWD_ITERATOR'})
 
             smach.StateMachine.add( 'SAY_NO_CONTINUE',
                                     states.Say(robot, "I didn't hear continue, but I will move on.", block=False),
-                                    transitions={   'spoken':'FIND_CROWD_BY_DRIVING_AROUND'})
+                                    transitions={   'spoken':'FIND_CROWD_ITERATOR'})
 
 
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             #                                   FIND_CROWD_CONTAINER
             # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            find_crowd_iterator = smach.Iterator(   outcomes=['succeeded', 'failed'],
+                                                it = lambda:range(0, 5),
+                                                it_label='counter',
+                                                input_keys=[],
+                                                output_keys=[],
+                                                exhausted_outcome = 'failed')
+            with find_crowd_iterator:
+                find_crowd = smach.StateMachine( outcomes = ['succeeded', 'failed'])
+                with find_crowd:
+                    smach.StateMachine.add( 'FIND_CROWD_BY_DRIVING_AROUND',
+                                            FindCrowdByDrivingAround(robot, detectedPersonsListDes.writeable),
+                                            transitions={   'succeeded':'succeeded',
+                                                            'failed': 'failed'}) # TODO: Limit number of iterations
+                smach.Iterator.set_contained_state( 'FIND_CROWD_CONTAINER',
+                                                     find_crowd,
+                                                     loop_outcomes=['failed'],
+                                                     break_outcomes=['succeeded'])
 
-            smach.StateMachine.add( 'FIND_CROWD_BY_DRIVING_AROUND',
-                                    FindCrowdByDrivingAround(robot, detectedPersonsListDes.writeable),
-                                    transitions={   'succeeded':'SAY_FOUND_CROWD',
-                                                    'failed': 'FIND_CROWD_BY_DRIVING_AROUND'}) # TODO: Limit number of iterations
-                
+            smach.StateMachine.add( 'FIND_CROWD_ITERATOR',
+                                    find_crowd_iterator,
+                                    {   'failed':'SAY_FAILED_FIND_CROWD',
+                                        'succeeded':'SAY_FOUND_CROWD'})
+
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                     states.Say(robot,[  "I think I found some people.",
                                                         "I think I saw several people over there"], block=False),
