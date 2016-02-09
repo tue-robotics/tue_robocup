@@ -9,6 +9,7 @@ import person_recognition_states as PersonRecStates
 import robot_smach_states as states
 import geometry_msgs.msg as gm
 import robot_skills.util.msg_constructors as msgs
+from robot_skills.util import transformations
 
 from robocup_knowledge import load_knowledge
 from robot_smach_states.util.startup import startup
@@ -20,7 +21,7 @@ from ed.msg import EntityInfo
 challenge_knowledge = load_knowledge("challenge_person_recognition")
 
 class EntityOfPersonDetection(ds.Designator):
-    def __init__(self, persondetection_designator, name=None):
+    def __init__(self, robot, persondetection_designator, name=None):
         """
         Resolve to an entity based on a PersonDetection.
         This is needed because most tates only understand Entities rather than PersonDetections
@@ -28,6 +29,8 @@ class EntityOfPersonDetection(ds.Designator):
         :param persondetection_designator: a designator resolving to an ed_perception.msg.PersonDetection, which will be converted to an entity
         """
         super(EntityOfPersonDetection, self).__init__(resolve_type=EntityInfo, name=name)
+
+	self.robot = robot
         self.persondetectionDes = persondetection_designator
 
     def _resolve(self):
@@ -35,7 +38,7 @@ class EntityOfPersonDetection(ds.Designator):
 
         entity = EntityInfo()
         entity.id = "PersonDetection"+str(id(person_detection))
-        point_in_map = transformations.tf_transform(person_detection.pose, person_detection.pose.header.frame_id, "/map", self.robot.tf_listener)
+        point_in_map = transformations.tf_transform(person_detection.pose.pose.position, person_detection.pose.header.frame_id, "/map", self.robot.tf_listener)
         entity.pose.position = point_in_map
         return entity
 
@@ -286,7 +289,7 @@ class IndicateWhichPersonIsOperator(smach.StateMachine):
 
         ds.check_resolve_type(operatorNameDes, str)
         ds.check_resolve_type(operatorPersonDes, PersonDetection)
-        operator_entity = EntityOfPersonDetection(operatorPersonDes, name="operator_entity")
+        operator_entity = EntityOfPersonDetection(robot, operatorPersonDes, name="operator_entity")
 
         with self:
             smach.StateMachine.add( 'GOTO_OPERATOR',
@@ -495,7 +498,7 @@ class ChallengePersonRecognition(smach.StateMachine):
             smach.StateMachine.add( 'FIND_CROWD_BY_DRIVING_AROUND',
                                     FindCrowdByDrivingAround(robot, detectedPersonsListDes.writeable),
                                     transitions={   'succeeded':'SAY_FOUND_CROWD',
-                                                    'failed': 'SAY_FAILED_FIND_CROWD'})
+                                                    'failed': 'FIND_CROWD_BY_DRIVING_AROUND'}) # TODO: Limit number of iterations
                 
             smach.StateMachine.add( 'SAY_FOUND_CROWD',
                                     states.Say(robot,[  "I think I found some people.",
@@ -541,5 +544,5 @@ class ChallengePersonRecognition(smach.StateMachine):
 
 if __name__ == "__main__":
     rospy.init_node('person_recognition_exec')
-
+    
     startup(ChallengePersonRecognition, challenge_name="person_recognition")

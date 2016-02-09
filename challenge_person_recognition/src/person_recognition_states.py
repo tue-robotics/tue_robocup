@@ -280,14 +280,14 @@ class DescribePeople(smach.State):
         # try to resolve the crowd designator
         persons = self.detected_persons_des.resolve()
         if not persons:
-            printError("Could not resolve facesAnalyzedDes")
+            printError("Could not resolve detected_persons_des")
             self.robot.speech.speak("I could not find any faces during the challenge.",  block=False)
             return 'failed'
         else:
             # convert to base_link for relative positions
             positions_in_baselink = {}
             for person in persons:
-                point_in_base_link = transformations.tf_transform(person.pose, person.pose.header.frame_id, "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
+                point_in_base_link = transformations.tf_transform(person.pose.pose.position, person.pose.header.frame_id, "/"+self.robot.robot_name+"/base_link", self.robot.tf_listener)
                 #person.pose = msgs.PointStamped(pointstamped_in_base_link.x, pointstamped_in_base_link.y, pointstamped_in_base_link.z, frame_id="/"+self.robot.robot_name+"/base_link")
                 positions_in_baselink[person] = point_in_base_link
 
@@ -301,7 +301,7 @@ class DescribePeople(smach.State):
             for idx, person in enumerate(ordered_persons):
                 printOk("Name: {name}, Location: ({loc.x}, {loc.y}, {loc.z}), body_pose: {body_pose}, Gender: {gender}".format(
                     name=str(person.name),
-                    loc=positions_in_baselink[person].point_stamped.point,
+                    loc=positions_in_baselink[person],
                     body_pose=str(person.body_pose),
                     gender=str(person.gender)
                     ))
