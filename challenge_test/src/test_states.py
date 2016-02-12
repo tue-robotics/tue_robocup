@@ -34,18 +34,19 @@ printOk, printError, printWarning = common_knowledge.make_prints("[Challenge Tes
 
 # ----------------------------------------------------------------------------------------------------
 
-class PointAtOperator(smach.State):
-    def __init__(self, robot):
-        smach.State.__init__(self, outcomes=['done'])
-        self.robot = robot
+# OBSELETE! BUT MIGHT BE USEFULL
+# class PointAtOperator(smach.State):
+#     def __init__(self, robot):
+#         smach.State.__init__(self, outcomes=['done'])
+#         self.robot = robot
 
-    def execute(self, robot):
-        printOk("PointAtOperator")
+#     def execute(self, robot):
+#         printOk("PointAtOperator")
 
-        # Get information about the operator and point at the location
-        self.robot.rightArm.send_goal(0.5, -0.2, 0.9, 0, 0, 0, 60)
+#         # Get information about the operator and point at the location
+#         self.robot.rightArm.send_goal(0.5, -0.2, 0.9, 0, 0, 0, 60)
 
-        return 'done'
+#         return 'done'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -56,7 +57,7 @@ class AskPersonName(smach.State):
         Ask the person's name, and try to hear one of the names in common_knowledge
     """
     def __init__(self, robot, personNameDes, defaultName = 'Operator'):
-        smach.State.__init__(   self, outcomes=['succeded', 'failed'])
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed'])
 
         self.robot = robot
         self.personNameDes = personNameDes
@@ -93,7 +94,7 @@ class AskPersonName(smach.State):
                 printOk("KeyError resolving the name heard: " + str(ke))
                 pass
 
-        return 'succeded'
+        return 'succeeded'
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -104,7 +105,7 @@ class PickUpRandomObj(smach.State):
         Ask the person's name, and try to hear one of the names in common_knowledge
     """
     def __init__(self, robot, objectsIDsDes):
-        smach.State.__init__(   self, outcomes=['succeded', 'failed', 'no_objects'])
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed', 'no_objects'])
 
         self.robot = robot
         self.objectsIDsDes = objectsIDsDes
@@ -152,6 +153,59 @@ class PickUpRandomObj(smach.State):
             result = grabState.execute()
 
             if result == 'done':
-                return 'succeded'
+                return 'succeeded'
             else: 
                 return 'failed'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class RecognizePeople(smach.State):
+    """
+        Attempt to recognize the peolpe in front of the robot and say their names
+    """
+    def __init__(self, robot):
+        smach.State.__init__(   self, outcomes=['succeeded', 'failed', 'no_people'])
+
+        self.robot = robot
+
+    def execute(self, userdata):
+        printOk("RecognizePeople")
+
+        detections = self.robot.ed.detect_persons()
+        # detections is a list of ed_perception.msg.PersonDetection
+
+        if not detections:
+            return no_people
+        else:
+
+            self.robot.speech.speak("I see {0} {1}".format(len(detections),
+                    "person" if len(detections) == 1 else "people"), block=False)
+
+            # import ipdb; ipdb.set_trace()
+            
+            for det in detections:
+                printOk("Name: {} \tAge:{} \tGender:{} Pose:{}".format(det.name, det.age, det.gender, det.pose))
+
+                self.robot.speech.speak("Hello {0}!".format(det.name), block=True)
+
+        return 'succeeded'
+
+
+# ----------------------------------------------------------------------------------------------------
+
+
+class SelectNextTest(smach.State):
+    """
+        Select a new test to be executed, either by a certain order, random or on repeat
+    """
+    def __init__(self, robot, random = False, repeat = 0):
+        smach.State.__init__(   self, outcomes=['goto1', 'goto2', 'goto3'])
+
+        self.robot = robot
+        self.random = random
+
+    def execute(self, userdata):
+        printOk("SelectNextTest")
+
