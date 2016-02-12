@@ -66,7 +66,7 @@ class WaitForOperatorCommand(smach.State):
             if result:
                 if result.result == "yes":
                     self._robot.head.cancel_goal()
-                    return "done"
+                    return "command"
 
         self._robot.head.cancel_goal()
 
