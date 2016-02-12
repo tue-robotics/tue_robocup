@@ -136,11 +136,22 @@ class FollowOperator(smach.State):
             Z = transformations.euler_z_from_quaternion(self._robot.base.get_location().pose.orientation)
             print "robot yaw: %f"%Z
             print "Desired yaw: %f"%yaw
+
             plan = []
-            for i in range(0, int( (length - self._operator_radius) / res)):
+
+            start = 0
+            end = int( (length - self._operator_radius) / res)
+
+            # TODO: Proper fix for this (maybe a path of only 1m before the operator?)
+            if end > 20:
+                start = 18
+
+            for i in range(start, end):
                 x = r_point.x + i * dx_norm * res
                 y = r_point.y + i * dy_norm * res
                 plan.append(msg_constructors.PoseStamped(x = x, y = y, z = 0, yaw = yaw))
+
+            # TODO: Visualization marker for path
 
         if plan:
             # Communicate to local planner
