@@ -59,6 +59,8 @@ class DetermineObject(smach.State):
         # Try to determine the types of the entities just segmented
         res_classify = self.robot.ed.classify(ids)
 
+	rospy.loginfo("Classification result: %s" % res_classify)
+
         # Get the ids of all humans
         human_ids = [e.id for e in res_classify if e.type == "human"]
 
