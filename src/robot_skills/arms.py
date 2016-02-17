@@ -70,17 +70,18 @@ class Arm(object):
         self._ac_joint_traj = SimpleActionClient(
             "/" + robot_name + "/body/joint_trajectory_action", FollowJointTrajectoryAction)
 
-        # ToDo: don't hardcode?
+        # ToDo: don't hardcode? // Comment from @reinzor, this always fails on
+        # startup of action server, why do we need this, who uses this info?
         server_timeout = 0.25
         self._ac_gripper_present = self._ac_gripper.wait_for_server(timeout=rospy.Duration(server_timeout))
         if not self._ac_gripper_present:
-            rospy.logwarn("Cannot find gripper {0} server".format(self.side))
+            rospy.loginfo("Cannot find gripper {0} server".format(self.side))
         self._ac_grasp_precompute_present  = self._ac_grasp_precompute.wait_for_server(timeout=rospy.Duration(server_timeout))
         if not self._ac_grasp_precompute_present:
-            rospy.logwarn("Cannot find grasp precompute {0} server".format(self.side))
+            rospy.loginfo("Cannot find grasp precompute {0} server".format(self.side))
         self._ac_joint_traj_present = self._ac_joint_traj.wait_for_server(timeout=rospy.Duration(server_timeout))
         if not self._ac_joint_traj_present:
-            rospy.logwarn("Cannot find joint trajectory action server {0}".format(self.side))
+            rospy.loginfo("Cannot find joint trajectory action server {0}".format(self.side))
 
         # Init marker publisher
         self._marker_publisher = rospy.Publisher(
