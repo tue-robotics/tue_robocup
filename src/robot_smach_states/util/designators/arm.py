@@ -92,6 +92,18 @@ class UnoccupiedArmDesignator(ArmDesignator):
         return arm.occupied_by == None
 
 
+class OccupiedArmDesignator(ArmDesignator):
+    """An OccupiedArmDesignator resolves to an arm that is occupied by an entity.
+    .resolve() returns None when no such arm can be found
+    """
+    def __init__(self, all_arms, preferred_arm, name=None):
+        super(OccupiedArmDesignator, self).__init__(all_arms, preferred_arm, name=name)
+
+    def available(self, arm):
+        """Check that there is an entity occupying the arm"""
+        return arm.occupied_by is not None
+
+
 class ArmHoldingEntityDesignator(ArmDesignator):
     """An UnoccupiedArmDesignator resolves to an arm that is not occupied by an entity.
     .resolve() returns None when no such arm can be found
