@@ -514,8 +514,8 @@ class MarkEntityInRviz(smach.State):
 class IteratorState(smach.State):
     """
     >>> import robot_smach_states.util.designators as ds
-    >>> iterable = ds.VariableDesignator(range(3), resolve_type=int) #Set up the collection we want to iterate over
-    >>> i = ds.VariableDesignator(resolve_type=[int]) #iterable is a collection of integers (range(3))
+    >>> iterable = ds.VariableDesignator(range(3), resolve_type=[int]) #Set up the collection we want to iterate over
+    >>> i = ds.VariableDesignator(resolve_type=int) #iterable is a collection of integers (range(3))
     >>>
     >>> iterator_state = IteratorState(iterable.writeable, i.writeable)
     >>> iterable.resolve()
