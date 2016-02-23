@@ -83,7 +83,13 @@ def main():
     robot.head.look_at_standing_person()
 
     while not rospy.is_shutdown():
-        print robot.ears.recognize(grammar_string)
+        print "---------------------------------------------------------------"
+
+        sentence = robot.ears.recognize(grammar_string).result
+        print "Sentence: %s" % sentence
+
+        semantics_str = parser.parse("T", sentence.strip().split(" "))
+        print "Semantics: %s" % semantics_str
 
 # ----------------------------------------------------------------------------------------------------
 
