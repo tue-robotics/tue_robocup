@@ -121,7 +121,7 @@ class Place(smach.StateMachine):
         assert(arm.resolve_type == Arm or type(arm) == Arm)
 
         with self:
-            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_pose, arm),  # TODO: Navigate to place
+            smach.StateMachine.add('NAVIGATE_TO_PLACE', NavigateToPlace(robot, place_pose, arm),  # TODO: Navigate to place, shouldn't this be navigatetosymbolic?
                 transitions={ 'unreachable' : 'failed',
                               'goal_not_defined' : 'failed',
                               'arrived' : 'PUT'})
