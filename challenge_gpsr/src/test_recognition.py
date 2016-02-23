@@ -76,11 +76,14 @@ def main():
     for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
             parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
             parser.add_rule("NP[\"%s\"] -> the %s" % (obj, alias))
-            parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))        
+            parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))
 
     grammar_string = unwrap_grammar("T", parser)
 
-    print robot.ears.recognize(grammar_string)
+    robot.head.look_at_standing_person()
+
+    while not rospy.is_shutdown():
+        print robot.ears.recognize(grammar_string)
 
 # ----------------------------------------------------------------------------------------------------
 
