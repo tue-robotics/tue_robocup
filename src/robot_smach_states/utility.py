@@ -346,7 +346,7 @@ class WaitForDesignator(smach.State):
 
 # ----------------------------------------------------------------------------------------------------
 
-class CallFunction(State):
+class CallFunction(smach.State):
     """Call a (lambda) function with the given arguments
 
     >>> def p2(robot, val1, val2): print robot, val1, val2
@@ -362,13 +362,15 @@ class CallFunction(State):
     'failed'
     """
     def __init__(self, robot, function, *args, **kwargs):
-        State.__init__(self, locals(), outcomes=["succeeded", "failed"])
+        smach.State.__init__(self, outcomes=["succeeded", "failed"])
+        self.robot = robot
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
 
-    def run(self, robot, function, *args, **kwargs):
-        args = kwargs['args'] #This is because of the State-class that passes on its contructor variables
-        kwargs = kwargs['kwargs'] #This is because of the State-class that passes on its contructor variables
+    def execute(self, userdata=None):
         try:
-            function(robot, *args, **kwargs)
+            self.function(self.robot, *self.args, **self.kwargs)
             return 'succeeded'
         except Exception, e:
             rospy.logerr(e)
