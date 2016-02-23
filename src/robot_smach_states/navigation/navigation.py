@@ -350,7 +350,7 @@ class Navigate(smach.StateMachine):
 
 ################ TESTS ##################
 
-def testNavigateWithConstraints(robot, constraint="x^2+y^2<1", frame="/map"):
+def navigate_with_constraints(robot=None, constraint="x^2+y^2<1", frame="/map"):
     p = PositionConstraint()
     p.constraint = constraint
     p.frame = frame
