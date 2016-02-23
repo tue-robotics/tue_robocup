@@ -243,7 +243,7 @@ class Arm(object):
         '''
         Put the arm into the 'reset' pose
         '''
-        return self.send_joint_goal('reset')
+        return self.send_joint_goal('reset', timeout=0.0)
 
     @property
     def occupied_by(self):
@@ -392,13 +392,29 @@ class Arm(object):
         else:
             return None
 
-    def wait_for_motion_done(self):
+    def wait_for_motion_done(self, timeout=10.0):
+        # rospy.loginfo('Waiting for ac_joint_traj')
+        starttime = rospy.Time.now()
         if self._ac_joint_traj.gh:
-            self._ac_joint_traj.wait_for_result()
+            self._ac_joint_traj.wait_for_result(rospy.Duration(10.0))
+
+        passed_time = (rospy.Time.now() - starttime).to_sec()
+        if passed_time > timeout:
+            return False
+
+        # rospy.loginfo('Waiting for ac_grasp_precompute')
         if self._ac_grasp_precompute.gh:
-            self._ac_grasp_precompute.wait_for_result()
+            self._ac_grasp_precompute.wait_for_result(rospy.Duration(timeout-passed_time))
+
+        passed_time = (rospy.Time.now() - starttime).to_sec()
+        if passed_time > timeout:
+            return False
+
+        # rospy.loginfo('Waiting for ac_gripper')
         if self._ac_gripper.gh:
-            self._ac_gripper.wait_for_result()
+            rospy.logwarn('Not waiting for gripper action')
+            return True
+            return self._ac_gripper.wait_for_result(rospy.Duration(timeout-passed_time))
 
     def _publish_marker(self, goal, color, ns = ""):
         marker = visualization_msgs.msg.Marker()
