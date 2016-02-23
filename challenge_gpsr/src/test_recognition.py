@@ -63,18 +63,21 @@ def main():
     parser = cfgparser.CFGParser.fromfile(os.path.dirname(sys.argv[0]) + "/grammar.fcfg")
 
     for (furniture, objects) in challenge_knowledge.furniture_to_objects.iteritems():
+        #parser.add_rule("FURNITURE[\"%s\"] -> %s" % (furniture, furniture))
+        parser.add_rule("FURNITURE[\"%s\"] -> the %s" % (furniture, furniture))
+        parser.add_rule("FURNITURE[\"%s\"] -> a %s" % (furniture, furniture))
+
         for obj in objects:
-            # object_to_location[obj] = furniture
-            parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
+            #parser.add_rule("SMALL_OBJECT[\"%s\"] -> %s" % (obj, obj))
             parser.add_rule("SMALL_OBJECT[\"%s\"] -> the %s" % (obj, obj))
             parser.add_rule("SMALL_OBJECT[\"%s\"] -> a %s" % (obj, obj))
 
     for rooms in challenge_knowledge.rooms:
-        parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
+        #parser.add_rule("ROOM[\"%s\"] -> %s" % (rooms, rooms))
         parser.add_rule("ROOM[\"%s\"] -> the %s" % (rooms, rooms))
 
     for (alias, obj) in challenge_knowledge.object_aliases.iteritems():
-            parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
+            #parser.add_rule("NP[\"%s\"] -> %s" % (obj, alias))
             parser.add_rule("NP[\"%s\"] -> the %s" % (obj, alias))
             parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))
 
