@@ -511,12 +511,11 @@ class MarkEntityInRviz(smach.State):
 
 class IteratorState(smach.State):
     """
-    >>> from robot_smach_states.util.designators import *
-    >>> iterable = Designator(range(3), resolve_type=int) #Set up the collection we want to iterate over
-    >>> i = VariableDesignator(resolve_type=[int]) #iterable is a collection of integers (range(3))
+    >>> import robot_smach_states.util.designators as ds
+    >>> iterable = ds.VariableDesignator(range(3), resolve_type=int) #Set up the collection we want to iterate over
+    >>> i = ds.VariableDesignator(resolve_type=[int]) #iterable is a collection of integers (range(3))
     >>>
-    >>> # import ipdb; ipdb.set_trace()
-    >>> iterator_state = IteratorState(iterable, i)
+    >>> iterator_state = IteratorState(iterable.writeable, i.writeable)
     >>> iterable.resolve()
     [0, 1, 2]
     >>> iterator_state.execute()
@@ -549,8 +548,11 @@ class IteratorState(smach.State):
     def execute(self, userdata=None):
         elements = self.iterable_designator.resolve()
         if elements:
-            self.element_designator.write(elements.pop(0))
-            rospy.loginfo("{0} iterates to next: {1}".format(self, str(self.element_designator.current)[:20]))
+
+            element = elements.pop(0)
+            self.element_designator.write(element)
+            self.iterable_designator.write(elements)
+            rospy.loginfo("{0} iterates to next: {1}".format(self, str(element)[:20]))
             return "next"
         else:
             # self.element_designator.write(None)
@@ -560,7 +562,7 @@ class IteratorState(smach.State):
 
 def test_iteration():
     sm = smach.StateMachine(outcomes=['succeeded', 'failed'])
-    numbers = ds.Designator(range(3), resolve_type=[int])
+    numbers = ds.VariableDesignator(range(3), resolve_type=[int])
     number = ds.VariableDesignator(resolve_type=int)
 
     global gather
@@ -568,7 +570,7 @@ def test_iteration():
 
     with sm:
         smach.StateMachine.add( "STEP",
-                                IteratorState(numbers, number),
+                                IteratorState(numbers.writeable, number.writeable),
                                 transitions={   "next"          :"USE_NUMBER",
                                                 "stop_iteration":"succeeded"})
 
@@ -584,10 +586,16 @@ def test_iteration():
 
     sm.execute()
     print "gather = {0}".format(gather)
+    print "numbers.resolve() = {0}".format(numbers.resolve())
+
+    assert numbers.resolve() == []
+    assert gather == [0, 1, 2]
 
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
+
+    test_iteration()
 
 # ----------------------------------------------------------------------------------------------------
 

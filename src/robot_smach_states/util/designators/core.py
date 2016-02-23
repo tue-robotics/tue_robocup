@@ -49,7 +49,7 @@ class Designator(object):
 
         if isinstance(result, list):
             if not result:
-                return None
+                return []
             result_type = type(result[0])
 
         if isinstance(self.resolve_type, list):
@@ -144,7 +144,7 @@ class VariableDesignator(Designator):
             pass
 
         if isinstance(value, list) and isinstance(self.resolve_type, list):
-            if not issubclass(type(value[0]), resolve_type[0]):
+            if value and not issubclass(type(value[0]), resolve_type[0]):
                 raise TypeError("Assigned value does not match resolve_type for {0}. Expected a (subclass of) {1} but got a {2}".format(self, self.resolve_type, type(value)))
         else:
             if not issubclass(type(value), resolve_type):
@@ -205,8 +205,23 @@ class VariableWriter(object):
         VariableWriter.instances += [self]
 
     def write(self, value):
+        '''
+        Write a value to the designator this writer is associated with.
+        :param value: the value to be written
+        :return: None
+
+        Value can be either a singular object or a list, which may be empty or not.
+        The singular object's type has to fit the resolve_type.
+        If the value is a list, then resolve_type must also be a list,
+            which the only element being the type each value-element must have.
+        In case the value-list has an element,
+            this element must be of the type specified by the only element in the resolve_type-list
+        In case the value-list is empty, we simply assign that empty list without any type checking.
+        '''
         if isinstance(value, list) and isinstance(self.variable_designator.resolve_type, list):
-            if isinstance(value[0], self.variable_designator.resolve_type[0]):
+            if value == []:
+                self.variable_designator._set_current_protected(value)
+            elif isinstance(value[0], self.variable_designator.resolve_type[0]):
                 self.variable_designator._set_current_protected(value)
             else:
                 raise TypeError("Cannot assign {} to {} which has resolve_type {}".format(type(value),
