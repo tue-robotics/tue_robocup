@@ -10,6 +10,8 @@ import robot_smach_states.util.designators as ds
 from ed.msg import EntityInfo
 from robot_skills.classification_result import ClassificationResult
 
+import time
+
 # ----------------------------------------------------------------------------------------------------
 
 class SetPlugins(smach.State):
@@ -72,12 +74,37 @@ class SegmentObjects(smach.State):
         entity = self.entityDes.resolve()
         objIDs = []
 
+        # Make sure the spindle is at the appropriate height if we are AMIGO
+        if self.robot.robot_name == "amigo":
+            d = entity.data
+
+            look_at_point_z = 0.7
+
+            # Check if we have areas
+            if "areas" in entity.data:
+                search_area = next((x for x in d["areas"] if x["name"] == self.searchArea), None)
+
+                # check if search area
+                if search_area:
+                    try:
+                        look_at_point_z = a["shape"][0]["box"]["min"]["z"]
+                    except:
+                        pass
+
+            # Send spindle goal to bring head to a suitable location
+            # Correction for standard height: with a table heigt of 0.76 a spindle position
+            # of 0.35 is desired, hence offset = 0.76-0.35 = 0.41
+            # Minimum: 0.15 (to avoid crushing the arms), maximum 0.4
+            spindle_target = max(0.15, min(look_at_point_z - 0.41, self.robot.torso.upper_limit[0]))
+
+            self.robot.torso._send_goal([spindle_target], timeout=10.0)
+
+
         # Make sure the head looks at the entity
         pos = entity.pose.position
         self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, 0.8, "/map"), timeout=10)
 
         # This is needed because the head is not entirely still when the look_at_point function finishes
-        import time
         time.sleep(1)
 
         # Inspect 'on top of' the entity
