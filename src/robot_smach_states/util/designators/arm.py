@@ -23,6 +23,9 @@ class ArmDesignator(Designator):
         @param preferred_arm the arm that is preferred for the operations that use this designator"""
 
         super(ArmDesignator, self).__init__(resolve_type=Arm , name=name)
+        if not all_arms:
+            raise AssertionError("all_arms cannot be None or empty list")
+
         self.all_arms = all_arms
         self.preferred_arm = preferred_arm
 
@@ -39,12 +42,18 @@ class ArmDesignator(Designator):
             return self.preferred_arm
         else:
             # import ipdb; ipdb.set_trace()
-            available_arms = filter(self.available, self.all_arms.values())
-            rospy.loginfo("Found %d available arms" % len(available_arms))
-            available_arms = filter(lambda arm: arm.operational, available_arms)
-            rospy.loginfo("For those arms, there are %d arms operational" % len(available_arms))
-            if any(available_arms):
-                return available_arms[0]
+            arm2name = {arm:name for name,arm in self.all_arms.items()}
+            all_arms = self.all_arms.values()
+            rospy.loginfo("Robot has %d arms" % len(all_arms))
+
+            available_arms = filter(self.available, all_arms)
+            rospy.loginfo("Found {} available arms: {}".format(len(available_arms), [arm2name[arm] for arm in available_arms]))
+
+            operational_arms = filter(lambda arm: arm.operational, available_arms)
+            rospy.loginfo("Found {} operational arms: {}".format(len(operational_arms), [arm2name[arm] for arm in operational_arms]))
+
+            if any(operational_arms):
+                return operational_arms[0]
             else:
                 rospy.logerr("ArmDesignator {0} could not resolve to an arm".format(self))
                 return None
