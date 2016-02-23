@@ -8,13 +8,12 @@ import robot_skills.util.msg_constructors as msgs
 import robot_skills.util.transformations as transformations
 
 from robot_skills.arms import Arm
-from robot_smach_states.state import State
 from robot_smach_states.util.designators import check_type
 
 from robot_smach_states.navigation import NavigateToGrasp
 from robot_smach_states.manipulation.grasp_point_determination import GraspPointDeterminant
 
-class PrepareEdGrasp(State):
+class PrepareEdGrasp(smach.State):
     def __init__(self, robot, arm, grab_entity):
         """
         Set the arm in the appropriate position before actually grabbing
@@ -22,33 +21,46 @@ class PrepareEdGrasp(State):
         :param arm: Designator that resolves to arm to grab with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        # Check that the entity_designator resolves to an Entity or is an entity
-        check_type(grab_entity, ed.msg.EntityInfo)
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
-        # Check that the arm is a designator that resolves to an Arm or is an Arm
-        check_type(arm, Arm)
+        # Assign member variables
+        self.robot = robot
+        self.arm_designator = arm
+        self.grab_entity_designator = grab_entity
 
-        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
+    def execute(self, userdata):
 
-    def run(self, robot, arm, grab_entity):
-        if not grab_entity:
+        entity = self.grab_entity_designator.resolve()
+        if not entity:
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
+
+        arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
 
+        # Open gripper (non-blocking)
+        arm.send_gripper_goal('open', timeout=0)
+
+        # Torso up (non-blocking)
+        self.robot.torso.high()
+
         # Arm to position in a safe way
-        arm.send_joint_trajectory('prepare_grasp')
+        arm.send_joint_trajectory('prepare_grasp', timeout=0)
 
         # Open gripper
         arm.send_gripper_goal('open', timeout=0.0)
+
+        # Make sure the head looks at the entity
+        pos = entity.pose.position
+        self.robot.head.look_at_point(msgs.PointStamped(pos.x, pos.y, pos.z, "/map"), timeout=0.0)
 
         return 'succeeded'
 
 
 
-class PickUp(State):
+class PickUp(smach.State):
     def __init__(self, robot, arm, grab_entity):
         """
         Pick up an item given an arm and an entity to be picked up
@@ -56,26 +68,25 @@ class PickUp(State):
         :param arm: Designator that resolves to the arm to grab the grab_entity with. E.g. UnoccupiedArmDesignator
         :param grab_entity: Designator that resolves to the entity to grab. e.g EntityByIdDesignator
         """
-        # Check that the entity_designator resolves to an Entity or is an entity
-        check_type(grab_entity, ed.msg.EntityInfo)
+        smach.State.__init__(self, outcomes=['succeeded', 'failed'])
 
-        # Check that the arm is a designator that resolves to an Arm or is an Arm
-        check_type(arm, Arm)
+        # Assign member variables
+        self.robot = robot
+        self.arm_designator = arm
+        self.grab_entity_designator = grab_entity
+        self._gpd = GraspPointDeterminant(robot)
 
-        State.__init__(self, locals(), outcomes=['succeeded', 'failed'])
+    def execute(self, userdata):  #robot, arm, grab_entity):
 
-    def run(self, robot, arm, grab_entity):
+        grab_entity = self.grab_entity_designator.resolve()
         if not grab_entity:
             rospy.logerr("Could not resolve grab_entity")
             return "failed"
+
+        arm = self.arm_designator.resolve()
         if not arm:
             rospy.logerr("Could not resolve arm")
             return "failed"
-
-        rospy.loginfo('PickUp!')
-
-        # Trigger perception once again to update object pose
-        # robot.ed.segment_kinect(max_sensor_range=2)
 
         # goal in map frame
         goal_map = msgs.Point(0, 0, 0)
@@ -83,8 +94,8 @@ class PickUp(State):
         try:
             # Transform to base link frame
             goal_bl = transformations.tf_transform(
-                goal_map, grab_entity.id, robot.robot_name+'/base_link',
-                tf_listener=robot.tf_listener
+                goal_map, grab_entity.id, self.robot.robot_name+'/base_link',
+                tf_listener=self.robot.tf_listener
             )
             if goal_bl is None:
                 rospy.logerr('Transformation of goal to base failed')
@@ -93,18 +104,35 @@ class PickUp(State):
             rospy.logerr('Transformation of goal to base failed: {0}'.format(tfe))
             return 'failed'
 
-        rospy.loginfo(goal_bl)
+        # Make sure the torso and the arm are done
+        self.robot.torso.wait_for_motion_done()
+        arm.wait_for_motion_done()
 
-        # # Arm to position in a safe way
-        # arm.send_joint_trajectory('prepare_grasp')
+        # This is needed because the head is not entirely still when the
+        # look_at_point function finishes
+        rospy.sleep(rospy.Duration(0.5))
 
-        # # Open gripper
-        # arm.send_gripper_goal('open', timeout=0.0)
+        # Inspect the entity
+        segm_res = self.robot.ed.update_kinect("%s" % grab_entity.id)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        # Grasp point determination
+        grasp_pose = self._gpd.get_grasp_pose(grab_entity, arm)
+
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+        # goal in map frame
+        goal_map = msgs.Point(0, 0, 0)
+
+        # Transform to base link frame
+        goal_bl = transformations.tf_transform(goal_map, grab_entity.id, "/amigo/base_link", tf_listener=self.robot.tf_listener)
+        if goal_bl == None:
+            return 'failed'
 
         # Pre-grasp
-        rospy.loginfo('Starting Pre-grasp')
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z+0.1, 0, 0, 0,
-                             frame_id='/'+robot.robot_name+'/base_link',
+        # rospy.loginfo('Starting Pre-grasp')
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+                             frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=20, pre_grasp=True, first_joint_pos_only=True
                              ):
             rospy.logerr('Pre-grasp failed:')
@@ -114,12 +142,13 @@ class PickUp(State):
             return 'failed'
 
         # Grasp
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z+0.08, 0, 0, 0,
-                             frame_id='/'+robot.robot_name+'/base_link',
+        # rospy.loginfo('Start grasping')
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z, 0, 0, 0,
+                             frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=120, pre_grasp=True,
                              allowed_touch_objects=[grab_entity.id]
                              ):
-            robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
+            self.robot.speech.speak('I am sorry but I cannot move my arm to the object position', block=False)
             rospy.logerr('Grasp failed')
             arm.reset()
             arm.send_gripper_goal('close', timeout=None)
@@ -131,34 +160,31 @@ class PickUp(State):
         arm.occupied_by = grab_entity
 
         # Lift
-        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.1, 0.0, 0.0, 0.0,
-                             frame_id='/'+robot.robot_name+'/base_link',
+        # rospy.loginfo('Start lifting')
+        if not arm.send_goal(goal_bl.x, goal_bl.y, goal_bl.z + 0.05, 0.0, 0.0, 0.0,
+                             frame_id='/'+self.robot.robot_name+'/base_link',
                              timeout=20, allowed_touch_objects=[grab_entity.id]
                              ):
             rospy.logerr('Failed lift')
 
-        robot.base.force_drive(-0.125,0,0,3)
-
         # Retract
-        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.15, 0.0, 0.0, 0.0,
-                             frame_id='/'+robot.robot_name+'/base_link',
-                             timeout=20, allowed_touch_objects=[grab_entity.id]
+        # rospy.loginfo('Start retracting')
+        if not arm.send_goal(goal_bl.x - 0.1, goal_bl.y, goal_bl.z + 0.05, 0.0, 0.0, 0.0,
+                             frame_id='/'+self.robot.robot_name+'/base_link',
+                             timeout=0.0, allowed_touch_objects=[grab_entity.id]
                              ):
             rospy.logerr('Failed retract')
 
+        self.robot.base.force_drive(-0.125, 0, 0, 2.0)
+
+        arm.wait_for_motion_done()
+
         # Carrying pose
-        if arm.side == 'left':
-            y_home = 0.2
-        else:
-            y_home = -0.2
+        # rospy.loginfo('start moving to carrying pose')
+        arm.send_joint_goal('carrying_pose')
 
-        rospy.loginfo('y_home = ' + str(y_home))
-
-        rospy.loginfo('start moving to carrying pose')
-        if not arm.send_goal(0.18, y_home, 0.6, 0, 0.3, 0,
-                             timeout=60
-                             ):
-            rospy.logerr('Failed carrying pose')
+        # Reset head
+        self.robot.head.cancel_goal()
 
         return 'succeeded'
 
@@ -237,10 +263,10 @@ class SjoerdsGrab(smach.State):
         #     [-0.1,-0.8,0.1,1.6,0.0,0.2,0.0],
         #     [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0],
         #     [-0.1,-0.5,0.1,2.0,0.0,0.3,0.0],
-        #     ])#, timeout=20)      
+        #     ])#, timeout=20)
 
         arm._send_joint_trajectory([
-            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(0))  
+            [-0.1,-1.0,0.1,2.0,0.0,0.3,0.0]], timeout=rospy.Duration(0))
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Update the pose of the entity
@@ -262,7 +288,7 @@ class SjoerdsGrab(smach.State):
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         # Grasp point determination
-        grasp_pose = self._gpd.get_grasp_pose(entity, arm)        
+        grasp_pose = self._gpd.get_grasp_pose(entity, arm)
 
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -291,7 +317,7 @@ class SjoerdsGrab(smach.State):
 
             # Close gripper
             arm.send_gripper_goal('close', timeout=0.01)
-            
+
             # Retracting and reset motion
             arm._send_joint_trajectory([[-0.08, -0.24, 0.31, 2.2, 0.06, -0.29, -0.18],
                                         [-0.09, -0.54, 0.3, 2, 0.06, -0.29, -0.18],
