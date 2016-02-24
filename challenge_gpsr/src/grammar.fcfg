@@ -26,10 +26,15 @@ VP["action": "look-at", "entity": X] -> look at SMALL_OBJECT[X]
 # Bringing
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 
-VP["action": "bring", "entity": X, "from": Y, "to": Z] -> bring SMALL_OBJECT[X] from LOC[Y] to LOC[Z]
+VP["action" : "bring", "entity" : X, "to" : Y ] -> bring SMALL_OBJECT[X] to LOC[Y]
+VP["action" : "bring", "entity" : X, "to" : "operator" ] -> V_BRING_ME me SMALL_OBJECT[X]
+VP["action" : "bring", "entity" : X, "from" : Y, "to" : "operator" ] -> V_BRING_ME me SMALL_OBJECT[X] from LOC[Y]
+VP["action" : "bring", "entity" : X, "from" : Y, "to" : Z] -> bring SMALL_OBJECT[X] from LOC[Y] to LOC[Z]
 
 # VP["action": A, "entity": X, "loc": Y] -> V_BRING[A] NP[X] to NP[Y]
 # V_BRING["transport"] -> bring | transport
+
+V_BRING_ME -> give | bring | hand
 
 # - - - - - - - - - - - - - - - - - - - - - - - - -
 # Moving
