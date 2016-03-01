@@ -181,7 +181,7 @@ class PickUp(smach.State):
 
         # Carrying pose
         # rospy.loginfo('start moving to carrying pose')
-        arm.send_joint_goal('carrying_pose')
+        arm.send_joint_goal('carrying_pose', timeout=0.0)
 
         # Reset head
         self.robot.head.cancel_goal()
