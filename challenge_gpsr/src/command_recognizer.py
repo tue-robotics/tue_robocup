@@ -65,7 +65,14 @@ class CommandRecognizer:
             self.parser.add_rule("NP[\"%s\"] -> a %s" % (obj, alias))
 
         self.grammar_string = unwrap_grammar("T", self.parser)
-        
+
+    def parse(self, sentence):
+        semantics = self.parser.parse("T", sentence.strip().split(" "))
+
+        if not semantics:
+            return None
+
+        return (sentence, semantics)        
 
     def recognize(self, robot):
         sentence = robot.ears.recognize(self.grammar_string).result
@@ -73,4 +80,4 @@ class CommandRecognizer:
         if not sentence:
             return None
 
-        return (sentence, self.parser.parse("T", sentence.strip().split(" ")))
+        return self.parse(sentence)
