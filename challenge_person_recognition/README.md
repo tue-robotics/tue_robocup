@@ -1,6 +1,6 @@
-# Responsible: Luis
+# Responsible: Loy
 
-amigo1/sergio1: 
+amigo1/sergio1:
 
     - astart/sstart # (if not already running)
 
@@ -31,3 +31,7 @@ During the challenge:
     - When he found enough people (setting in tue_knowledge), he will move to the people found one by one to recognize them
     - when he finishes visiting every person he will choose the most likely to be the operator and point at him
     - Finally the robot has to describe the crowd, saying how many males and females are present as well as their pose
+
+#TODO
+- Look at standing person when learning faces
+- Wait for speaking to finish when talking to a human to be less confusing. Block=True is Say-states
